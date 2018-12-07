@@ -74,4 +74,33 @@ public class SwitchStatementDensity
 
         };
     }
+
+    public void ruleBaseSwitch(String s) {
+        <warning descr="'switch' has too low of a branch density (9%)">switch</warning> (s) {
+            case "one" -> {
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+                System.out.println(1);
+            }
+            case "two" -> {
+                System.out.println(2);
+            }
+        }
+    }
 }
