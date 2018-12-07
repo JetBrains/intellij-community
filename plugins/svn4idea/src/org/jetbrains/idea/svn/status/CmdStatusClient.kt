@@ -6,8 +6,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.util.ObjectUtils.notNull
-import com.intellij.util.containers.ContainerUtil.*
+import com.intellij.util.containers.ContainerUtil.find
+import com.intellij.util.containers.ContainerUtil.newHashMap
 import com.intellij.util.containers.Convertor
 import org.jetbrains.idea.svn.SvnUtil.append
 import org.jetbrains.idea.svn.SvnUtil.isSvnVersioned
@@ -25,9 +25,23 @@ import java.io.IOException
 import java.util.function.Supplier
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
+import kotlin.collections.set
+
+private fun putParameters(parameters: MutableList<String>,
+                          path: File,
+                          depth: Depth?,
+                          remote: Boolean,
+                          reportAll: Boolean,
+                          includeIgnored: Boolean) {
+  CommandUtil.put(parameters, path)
+  CommandUtil.put(parameters, depth)
+  CommandUtil.put(parameters, remote, "-u")
+  CommandUtil.put(parameters, reportAll, "--verbose")
+  CommandUtil.put(parameters, includeIgnored, "--no-ignore")
+  parameters.add("--xml")
+}
 
 class CmdStatusClient : BaseSvnClient(), StatusClient {
-
   @Throws(SvnBindException::class)
   override fun doStatus(path: File,
                         depth: Depth,
@@ -38,7 +52,7 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
                         handler: StatusConsumer) {
     val base = requireExistingParent(path)
     val infoBase = myFactory.createInfoClient().doInfo(base, null)
-    val parameters = newArrayList<String>()
+    val parameters = mutableListOf<String>()
 
     putParameters(parameters, path, depth, remote, reportAll, includeIgnored)
 
@@ -47,11 +61,14 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
   }
 
   @Throws(SvnBindException::class)
-  private fun parseResult(path: File,
-                          handler: StatusConsumer,
-                          base: File,
-                          infoBase: Info?,
-                          command: CommandExecutor) {
+  override fun doStatus(path: File, remote: Boolean): Status? {
+    val status = Ref.create<Status>()
+    doStatus(path, Depth.EMPTY, remote, false, false, false) { status.set(it) }
+    return status.get()
+  }
+
+  @Throws(SvnBindException::class)
+  private fun parseResult(path: File, handler: StatusConsumer, base: File, infoBase: Info?, command: CommandExecutor) {
     val result = command.output
 
     if (StringUtil.isEmptyOrSpaces(result)) {
@@ -78,7 +95,7 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
           val status = Status()
           status.file = path
           status.itemStatus = StatusType.STATUS_NORMAL
-          status.setInfoProvider(Getter { createInfoGetter().convert(path) })
+          status.infoProvider = Getter { createInfoGetter().convert(path) }
           handler.consume(status)
         }
       }
@@ -102,49 +119,25 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
 
   }
 
-  fun createStatusHandler(handler: StatusConsumer,
-                          base: File,
-                          infoBase: Info?,
-                          statusSupplier: Supplier<Status>): SvnStatusHandler {
+  private fun createStatusHandler(handler: StatusConsumer,
+                                  base: File,
+                                  infoBase: Info?,
+                                  statusSupplier: Supplier<Status>): SvnStatusHandler {
     val callback = createStatusCallback(handler, base, infoBase, statusSupplier)
 
     return SvnStatusHandler(callback, base, createInfoGetter())
   }
 
-  private fun createInfoGetter(): Convertor<File, Info> {
-    return Convertor { file ->
-      try {
-        myFactory.createInfoClient().doInfo(file, null)
-      }
-      catch (e: SvnBindException) {
-        throw SvnExceptionWrapper(e)
-      }
+  private fun createInfoGetter() = Convertor<File, Info> {
+    try {
+      myFactory.createInfoClient().doInfo(it, null)
     }
-  }
-
-  @Throws(SvnBindException::class)
-  override fun doStatus(path: File, remote: Boolean): Status? {
-    val status = Ref.create<Status>()
-    doStatus(path, Depth.EMPTY, remote, false, false, false) { status.set(it) }
-    return status.get()
+    catch (e: SvnBindException) {
+      throw SvnExceptionWrapper(e)
+    }
   }
 
   companion object {
-
-    private fun putParameters(parameters: MutableList<String>,
-                              path: File,
-                              depth: Depth?,
-                              remote: Boolean,
-                              reportAll: Boolean,
-                              includeIgnored: Boolean) {
-      CommandUtil.put(parameters, path)
-      CommandUtil.put(parameters, depth)
-      CommandUtil.put(parameters, remote, "-u")
-      CommandUtil.put(parameters, reportAll, "--verbose")
-      CommandUtil.put(parameters, includeIgnored, "--no-ignore")
-      parameters.add("--xml")
-    }
-
     @JvmStatic
     fun createStatusCallback(handler: StatusConsumer,
                              base: File,
@@ -159,8 +152,8 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
           pending.changeListName = changelistName.get()
           try {
             val pendingFile = pending.file
-            val externalsBase = find(externalsMap.keys) { file -> isAncestor(file, pendingFile!!, false) }
-            val baseFile = notNull(externalsBase, base)
+            val externalsBase = find(externalsMap.keys) { isAncestor(it, pendingFile!!, false) }
+            val baseFile = externalsBase ?: base
             val baseInfo = if (externalsBase != null) externalsMap[externalsBase] else infoBase
 
             if (baseInfo != null) {
@@ -174,12 +167,9 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
           catch (e: SvnBindException) {
             throw SvnExceptionWrapper(e)
           }
-
         }
 
-        override fun switchChangeList(newList: String) {
-          changelistName.set(newList)
-        }
+        override fun switchChangeList(newList: String) = changelistName.set(newList)
       }
     }
   }
