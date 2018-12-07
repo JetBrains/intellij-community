@@ -509,12 +509,23 @@ public class AbstractPopup implements JBPopup {
     RelativePoint location = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
     if (myLocateWithinScreen) {
       Point screenPoint = location.getScreenPoint();
-      Rectangle rectangle = new Rectangle(screenPoint, getSize());
+      Rectangle rectangle = new Rectangle(screenPoint, getSizeForPositioning());
       Rectangle screen = ScreenUtil.getScreenRectangle(screenPoint);
       ScreenUtil.moveToFit(rectangle, screen, null);
       location = new RelativePoint(rectangle.getLocation()).getPointOn(location.getComponent());
     }
     return location;
+  }
+
+  private Dimension getSizeForPositioning() {
+    Dimension size = getSize();
+    if (size == null && myDimensionServiceKey != null) {
+      size = DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
+    }
+    if (size == null) {
+      size = myContent.getPreferredSize();
+    }
+    return size;
   }
 
   @Override
