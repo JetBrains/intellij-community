@@ -33,6 +33,8 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState.myShellIntegration = state.myShellIntegration
     myState.myShellPath = state.myShellPath
     myState.myHighlightHyperlinks = state.myHighlightHyperlinks
+    myState.myUserSpecifiedEnvs = LinkedHashMap(state.myUserSpecifiedEnvs)
+    myState.myPassParentEnvs = state.myPassParentEnvs
   }
 
   fun closeSessionOnLogout(): Boolean {
@@ -80,7 +82,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
-    var myUserSpecifiedEnvs: Map<String, String> = hashMapOf()
+    var myUserSpecifiedEnvs: Map<String, String> = LinkedHashMap()
     var myPassParentEnvs = true
   }
 
