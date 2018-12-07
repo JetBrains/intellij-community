@@ -54,7 +54,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     myProject = project;
     myDebuggerManager = debuggerManager;
     myDependentBreakpointManager = new XDependentBreakpointManager(this);
-    myLineBreakpointManager = new XLineBreakpointManager(project, myDependentBreakpointManager);
+    myLineBreakpointManager = new XLineBreakpointManager(project);
     if (!project.isDefault()) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         HttpFileSystem.getInstance().addFileListener(this::updateBreakpointInFile, project);

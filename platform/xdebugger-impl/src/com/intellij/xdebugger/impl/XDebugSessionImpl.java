@@ -34,6 +34,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
@@ -86,7 +87,6 @@ public class XDebugSessionImpl implements XDebugSession {
   private boolean myIsTopFrame;
   private volatile XSourcePosition myTopFramePosition;
   private final AtomicBoolean myPaused = new AtomicBoolean();
-  private MyDependentBreakpointListener myDependentBreakpointListener;
   private XValueMarkers<?, ?> myValueMarkers;
   private final String mySessionName;
   private @Nullable XDebugSessionTab mySessionTab;
@@ -301,6 +301,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   public void reset() {
     breakpointsInitialized = false;
+    removeBreakpointListeners();
     unsetPaused();
     clearPausedData();
     rebuildViews();
@@ -312,18 +313,14 @@ public class XDebugSessionImpl implements XDebugSession {
     LOG.assertTrue(!breakpointsInitialized);
     breakpointsInitialized = true;
 
-    XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
-    XDependentBreakpointManager dependentBreakpointManager = breakpointManager.getDependentBreakpointManager();
-    disableSlaveBreakpoints(dependentBreakpointManager);
+    disableSlaveBreakpoints();
     processAllBreakpoints(true, false);
 
     if (myBreakpointListenerDisposable == null) {
       myBreakpointListenerDisposable = Disposer.newDisposable();
-      myProject.getMessageBus().connect(myBreakpointListenerDisposable).subscribe(XBreakpointListener.TOPIC, new MyBreakpointListener());
-    }
-    if (myDependentBreakpointListener == null) {
-      myDependentBreakpointListener = new MyDependentBreakpointListener();
-      dependentBreakpointManager.addListener(myDependentBreakpointListener);
+      MessageBusConnection busConnection = myProject.getMessageBus().connect(myBreakpointListenerDisposable);
+      busConnection.subscribe(XBreakpointListener.TOPIC, new MyBreakpointListener());
+      busConnection.subscribe(XDependentBreakpointListener.TOPIC, new MyDependentBreakpointListener());
     }
   }
 
@@ -354,8 +351,8 @@ public class XDebugSessionImpl implements XDebugSession {
     return mySessionData;
   }
 
-  private void disableSlaveBreakpoints(final XDependentBreakpointManager dependentBreakpointManager) {
-    Set<XBreakpoint<?>> slaveBreakpoints = dependentBreakpointManager.getAllSlaveBreakpoints();
+  private void disableSlaveBreakpoints() {
+    Set<XBreakpoint<?>> slaveBreakpoints = myDebuggerManager.getBreakpointManager().getDependentBreakpointManager().getAllSlaveBreakpoints();
     if (slaveBreakpoints.isEmpty()) {
       return;
     }
@@ -890,17 +887,7 @@ public class XDebugSessionImpl implements XDebugSession {
     }
 
     try {
-      if (breakpointsInitialized) {
-        XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
-        Disposable breakpointListenerDisposable = myBreakpointListenerDisposable;
-        if (breakpointListenerDisposable != null) {
-          myBreakpointListenerDisposable = null;
-          Disposer.dispose(breakpointListenerDisposable);
-        }
-        if (myDependentBreakpointListener != null) {
-          breakpointManager.getDependentBreakpointManager().removeListener(myDependentBreakpointListener);
-        }
-      }
+      removeBreakpointListeners();
     }
     finally {
       //noinspection unchecked
@@ -940,6 +927,14 @@ public class XDebugSessionImpl implements XDebugSession {
           myRegisteredBreakpoints.clear();
         }
       });
+    }
+  }
+
+  private void removeBreakpointListeners() {
+    Disposable breakpointListenerDisposable = myBreakpointListenerDisposable;
+    if (breakpointListenerDisposable != null) {
+      myBreakpointListenerDisposable = null;
+      Disposer.dispose(breakpointListenerDisposable);
     }
   }
 
