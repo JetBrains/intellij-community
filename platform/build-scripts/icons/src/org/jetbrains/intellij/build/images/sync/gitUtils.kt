@@ -323,8 +323,8 @@ private fun configureUser(repo: File, user: String, email: String) {
   execute(repo, GIT, "config", "user.email", email)
 }
 
-internal fun gitStatus(repo: File) =
-  execute(repo, GIT, "status", "--short", "--untracked-files=no", "--ignored=no")
+internal fun gitStatus(repo: File, includeUntracked: Boolean = false) =
+  execute(repo, GIT, "status", "--short", "--untracked-files=${if (includeUntracked) "all" else "no"}", "--ignored=no")
     .lineSequence()
     .map(String::trim)
     .filter(String::isNotEmpty)
