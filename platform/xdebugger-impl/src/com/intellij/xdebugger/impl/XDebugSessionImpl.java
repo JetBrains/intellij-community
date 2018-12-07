@@ -205,6 +205,8 @@ public class XDebugSessionImpl implements XDebugSession {
     return myExtraStopActions;
   }
 
+  // used externally
+  @SuppressWarnings("unused")
   public void addExtraStopActions(AnAction... extraStopActions) {
     if (extraStopActions != null) {
       Collections.addAll(myExtraStopActions, extraStopActions);
@@ -275,7 +277,7 @@ public class XDebugSessionImpl implements XDebugSession {
     return myTopFramePosition;
   }
 
-  XDebugSessionTab init(@NotNull XDebugProcess process, @Nullable RunContentDescriptor contentToReuse) {
+  void init(@NotNull XDebugProcess process, @Nullable RunContentDescriptor contentToReuse) {
     LOG.assertTrue(myDebugProcess == null);
     myDebugProcess = process;
 
@@ -295,8 +297,6 @@ public class XDebugSessionImpl implements XDebugSession {
     if (!myShowTabOnSuspend.get()) {
       initSessionTab(contentToReuse);
     }
-
-    return mySessionTab;
   }
 
   public void reset() {
