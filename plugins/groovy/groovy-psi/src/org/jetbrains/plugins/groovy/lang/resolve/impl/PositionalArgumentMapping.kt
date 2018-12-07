@@ -58,23 +58,23 @@ private fun <Arg, Param> mapByPosition(arguments: List<Arg>,
     return null
   }
 
-  val result = LinkedHashMap<Param, Arg?>(parameterCount)
+  val result = ArrayList<Pair<Param, Arg?>>(parameterCount)
   val argumentIterator = arguments.iterator()
   var optionalArgsLeft = argumentsCount - requiredParametersCount
   for (parameter in parameters) {
     val optional = isOptional(parameter)
-    if (argumentIterator.hasNext()) {
+    val argument = if (argumentIterator.hasNext()) {
       if (!optional) {
-        result[parameter] = argumentIterator.next()
+        argumentIterator.next()
       }
       else if (optionalArgsLeft > 0) {
         optionalArgsLeft--
-        result[parameter] = argumentIterator.next()
+        argumentIterator.next()
       }
       else {
         // No argument passed for this parameter.
         // Don't call next() on argument iterator, so current argument will be used for next parameter.
-        result[parameter] = null
+        null
       }
     }
     else {
@@ -82,13 +82,13 @@ private fun <Arg, Param> mapByPosition(arguments: List<Arg>,
       require(optional || partial) {
         "argumentsCount < requiredParameters. This should happen only in partial mode"
       }
-      result[parameter] = null
+      null
     }
+    result += Pair(parameter, argument)
   }
   require(!argumentIterator.hasNext() || partial) {
     "argumentsCount > parametersCount. This should happen only in partial mode."
   }
 
-  require(result.size == parameterCount)
-  return result
+  return result.toMap(LinkedHashMap())
 }
