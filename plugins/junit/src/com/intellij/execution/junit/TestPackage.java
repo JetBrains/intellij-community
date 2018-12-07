@@ -95,7 +95,7 @@ public class TestPackage extends TestObject {
         try {
           String packageName = getPackageName(data);
           String filters = getFilters(myClasses, packageName);
-          if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner()) && filterOutputByDirectoryForJunit5(myClasses) && module != null) {
+          if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner()) && module != null && filterOutputByDirectoryForJunit5(myClasses)) {
             JUnitStarter.printClassesList(composeDirectoryFilter(module), packageName, "", filters, myTempFile);
           }
           else {

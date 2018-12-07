@@ -110,13 +110,15 @@ class TestDirectory extends TestPackage {
 
   @Override
   protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiClass> classes) throws CantRunException {
-    PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
-    PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(directory);
-    if (aPackage != null && module != null) {
-      PsiDirectory[] directories =
-        aPackage.getDirectories(module.getModuleScope(true).intersectWith(GlobalSearchScopesCore.projectTestScope(getConfiguration().getProject())));
-      if (directories.length > 1) {//need to enumerate classes in one of multiple test source roots
-        collectClassesRecursively(directory, Condition.TRUE, classes);
+    if (module != null) {
+      PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
+      PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(directory);
+      if (aPackage != null) {
+        PsiDirectory[] directories =
+          aPackage.getDirectories(module.getModuleScope(true).intersectWith(GlobalSearchScopesCore.projectTestScope(getConfiguration().getProject())));
+        if (directories.length > 1) {//need to enumerate classes in one of multiple test source roots
+          collectClassesRecursively(directory, Condition.TRUE, classes);
+        }
       }
     }
   }
