@@ -210,18 +210,24 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
       String caseValuesText = caseValues == null ? "" : ct.text(caseValues);
       PsiStatement body = rule.getBody();
       String finalBody;
-      if (!(body instanceof PsiBlockStatement) && body != null) {
+      if (body == null) {
+        finalBody = "";
+      } else if (!(body instanceof PsiBlockStatement)) {
         finalBody = generateExpressionBranch(body, ct);
       } else {
-        finalBody = StreamEx.of(ControlFlowUtils.unwrapBlock(body))
-          .map(el -> ct.text(el))
-          .joining("\n");
+        finalBody = generateBlockBranch(body, ct);
       }
       ct.grabComments(rule);
 
 
       String prefix = rule.isDefaultCase() ? "default" : "case " + caseValuesText;
       return prefix + ":" + finalBody;
+    }
+
+    String generateBlockBranch(@NotNull PsiStatement statement, CommentTracker ct) {
+      return StreamEx.of(ControlFlowUtils.unwrapBlock(statement))
+        .map(el -> ct.text(el))
+        .joining("\n");
     }
 
     abstract void handleBreakInside(@NotNull PsiBreakStatement breakStatement, CommentTracker ct);
@@ -289,6 +295,14 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     @Override
     String generateExpressionBranch(@NotNull PsiStatement statement, CommentTracker ct) {
       return ct.text(statement) + "\nbreak;";
+    }
+
+    @Override
+    String generateBlockBranch(@NotNull PsiStatement statement, CommentTracker ct) {
+      if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
+        return super.generateBlockBranch(statement, ct) + "\nbreak;";
+      }
+      return super.generateBlockBranch(statement, ct);
     }
   }
 }
