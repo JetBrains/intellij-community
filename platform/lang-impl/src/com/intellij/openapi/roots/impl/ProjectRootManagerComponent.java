@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -187,7 +188,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     if (myProject.isDefault()) return null;
 
     final Set<String> recursiveDirs = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
-    final Set<String> recursiveDirUrls = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
     final Set<String> files = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
     final String projectFilePath = myProject.getProjectFilePath();
@@ -195,7 +195,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     if (projectDirFile != null && projectDirFile.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
       String absolutePath = projectDirFile.getAbsolutePath();
       recursiveDirs.add(absolutePath);
-      recursiveDirUrls.add(VfsUtilCore.pathToUrl(absolutePath));
     }
     else {
       files.add(projectFilePath);
@@ -206,13 +205,11 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
       Collection<VirtualFile> toWatch = extension.getRootsToWatch(myProject);
       recursiveDirs.addAll(ContainerUtil.map(toWatch, VirtualFile::getPath));
-      recursiveDirUrls.addAll(ContainerUtil.map(toWatch, VirtualFile::getUrl));
     }
 
     for (WatchedRootsProvider extension : WatchedRootsProvider.EP_NAME.getExtensions(myProject)) {
       Set<String> toWatch = extension.getRootsToWatch();
       recursiveDirs.addAll(toWatch);
-      recursiveDirUrls.addAll(ContainerUtil.map(toWatch, p->VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(p))));
     }
 
     Disposable oldDisposable = myRootPointersDisposable;
@@ -221,6 +218,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     // create container with these urls with the sole purpose to get events to getRootsValidityChangedListener() when these roots change
     VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(myRootPointersDisposable, getRootsValidityChangedListener());
 
+    List<String> recursiveDirUrls = ContainerUtil.map(recursiveDirs, path -> VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path)));
     ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(recursiveDirUrls, true);
     files.forEach(path -> container.add(VfsUtilCore.pathToUrl(path)));
 
