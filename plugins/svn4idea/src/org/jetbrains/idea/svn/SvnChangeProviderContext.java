@@ -185,7 +185,7 @@ class SvnChangeProviderContext implements StatusReceiver {
       loadEntriesFile(filePath);
     }
 
-    FileStatus fStatus = SvnStatusConvertor.convertStatus(status);
+    FileStatus fStatus = Status.convertStatus(status);
 
     if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_NONE)) {
       final VirtualFile file = filePath.getVirtualFile();
@@ -350,8 +350,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     ContentRevision beforeRevision =
       !svnStatus.isProperty(StatusType.STATUS_ADDED) || deletedStatus != null ? createPropertyRevision(change, beforeFile, true) : null;
     ContentRevision afterRevision = !svnStatus.isProperty(StatusType.STATUS_DELETED) ? createPropertyRevision(change, ioFile, false) : null;
-    FileStatus status =
-      deletedStatus != null ? FileStatus.MODIFIED : SvnStatusConvertor.convertPropertyStatus(svnStatus.getPropertyStatus());
+    FileStatus status = deletedStatus != null ? FileStatus.MODIFIED : Status.convertPropertyStatus(svnStatus.getPropertyStatus());
 
     return new Change(beforeRevision, afterRevision, status);
   }

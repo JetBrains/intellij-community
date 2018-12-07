@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.diff;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,7 +12,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnStatusConvertor;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
@@ -38,7 +23,7 @@ import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
-import org.jetbrains.idea.svn.status.SvnStatusHandler;
+import org.jetbrains.idea.svn.status.Status;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.*;
@@ -46,6 +31,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jetbrains.idea.svn.status.SvnStatusHandler.getStatus;
 
 public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
@@ -158,8 +145,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     FilePath target1Path = createFilePath(subTarget1, diffPath.isDirectory());
     FilePath target2Path = createFilePath(subTarget2, diffPath.isDirectory());
 
-    FileStatus status = SvnStatusConvertor
-      .convertStatus(SvnStatusHandler.getStatus(diffPath.itemStatus), SvnStatusHandler.getStatus(diffPath.propertiesStatus));
+    FileStatus status = Status.convertStatus(getStatus(diffPath.itemStatus), getStatus(diffPath.propertiesStatus), false, false);
 
     // statuses determine changes needs to be done to "target1" to get "target2" state
     ContentRevision beforeRevision = status == FileStatus.ADDED
