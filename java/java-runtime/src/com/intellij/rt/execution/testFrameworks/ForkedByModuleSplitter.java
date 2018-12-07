@@ -150,7 +150,8 @@ public abstract class ForkedByModuleSplitter {
             classNames.add(className);
           }
 
-          final int childResult = startPerModuleFork(moduleName, classNames, packageName, workingDir, classpath, repeatCount, result);
+          String filters = perDirReader.readLine();
+          final int childResult = startPerModuleFork(moduleName, classNames, packageName, workingDir, classpath, repeatCount, result, filters != null ? filters : "");
           result = Math.min(childResult, result);
         }
         catch (Exception e) {
@@ -171,7 +172,9 @@ public abstract class ForkedByModuleSplitter {
                                             String packageName,
                                             String workingDir,
                                             String classpath,
-                                            String repeatCount, int result) throws Exception;
+                                            String repeatCount, 
+                                            int result, 
+                                            String filters) throws Exception;
 
   protected abstract String getStarterName();
 

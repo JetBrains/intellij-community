@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
+import java.util.LinkedHashSet;
+
 public class JUnitForkIntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
 
   @Override
@@ -39,6 +41,10 @@ public class JUnitForkIntegrationTest extends AbstractTestFrameworkCompilingInte
       String contentUrl = getTestContentRoot() + "/module2";
       ContentEntry contentEntry = model.addContentEntry(contentUrl);
       contentEntry.addSourceFolder(contentUrl + "/test", true);
+      //add dependency between modules
+      if (getTestName(false).endsWith("WithDependency")) {
+        model.addModuleOrderEntry(myModule);
+      }
     });
 
     JpsMavenRepositoryLibraryDescriptor junit4Lib =
@@ -53,7 +59,24 @@ public class JUnitForkIntegrationTest extends AbstractTestFrameworkCompilingInte
   }
 
   public void testForkPerModule() throws ExecutionException {
-    JUnitConfiguration configuration = createRunPackageConfiguration("junit4");
+    doTestForkPerModule(createRunPackageConfiguration("junit4"));
+  }
+
+  public void testForkPerModuleWithDependency() throws ExecutionException {
+    doTestForkPerModule(createRunPackageConfiguration("junit4"));
+  }
+
+  public void testForkPatternPerModuleWithDependency() throws ExecutionException {
+    JUnitConfiguration configuration = new JUnitConfiguration("pattern", getProject());
+    JUnitConfiguration.Data data = configuration.getPersistentData();
+    data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
+    LinkedHashSet<String> pattern = new LinkedHashSet<>();
+    pattern.add(".*MyTest.*");
+    data.setPatterns(pattern);
+    doTestForkPerModule(configuration);
+  }
+
+  private static void doTestForkPerModule(final JUnitConfiguration configuration) throws ExecutionException {
     configuration.setWorkingDirectory("$MODULE_WORKING_DIR$");
     configuration.setSearchScope(TestSearchScope.WHOLE_PROJECT);
 
@@ -65,7 +88,7 @@ public class JUnitForkIntegrationTest extends AbstractTestFrameworkCompilingInte
   }
 
   @NotNull
-  public JUnitConfiguration createRunPackageConfiguration(final String packageName) {
+  private JUnitConfiguration createRunPackageConfiguration(final String packageName) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
     assertNotNull(aPackage);
     RunConfiguration configuration = createConfiguration(aPackage);

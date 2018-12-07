@@ -30,12 +30,10 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
@@ -43,7 +41,6 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,9 +96,7 @@ public class TestPackage extends TestObject {
           String packageName = getPackageName(data);
           String filters = getFilters(myClasses, packageName);
           if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner()) && filterOutputByDirectoryForJunit5(myClasses) && module != null) {
-            VirtualFile[] rootPaths = OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().withoutDepModules().classes().getRoots();
-            JUnitStarter.printClassesList(
-              ContainerUtil.map(rootPaths, root -> "\u002B" + root.getPath()), packageName, "", filters, myTempFile);
+            JUnitStarter.printClassesList(composeDirectoryFilter(module), packageName, "", filters, myTempFile);
           }
           else {
             addClassesListToJavaParameters(myClasses, CLASS_NAME_FUNCTION, packageName, createTempFiles(), getJavaParameters(), filters);

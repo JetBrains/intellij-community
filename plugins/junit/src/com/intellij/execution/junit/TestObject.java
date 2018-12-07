@@ -25,6 +25,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
@@ -51,6 +52,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
@@ -118,7 +120,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
               for (PsiDirectory directory : directories) {
                 Module module = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), project);
                 if (module != null) {
-                  perModule.put(module, Collections.emptyList());
+                  perModule.put(module, composeDirectoryFilter(module));
                 }
               }
             }
@@ -159,7 +161,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                               : JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT) ? data.getTags().replaceAll(" ", "") : "";
       JUnitStarter.printClassesList(testNames, packageName, category, filters, myTempFile);
 
-      writeClassesPerModule(packageName, javaParameters, perModule);
+      writeClassesPerModule(packageName, javaParameters, perModule, filters);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -223,6 +225,18 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     String junit5Name = junit4Rt.isDirectory() ? junit4Name.replace("junit", "junit.v5")
                                                : junit4Name.replace("junit", "junit5");
     return new File(junit4Rt.getParent(), junit5Name);
+  }
+
+  /**
+   * Junit 5 searches for tests in the classpath. 
+   * When 2 modules have e.g. the same package, one depends on another, and tests have to run in single module only, 
+   * by configuration settings or to avoid repetition in fork by module mode, additional filters per output directories are required
+   */
+  protected static List<String> composeDirectoryFilter(@NotNull Module module) {
+    return ContainerUtil.map(OrderEnumerator.orderEntries(module)
+                               .withoutSdk()
+                               .withoutLibraries()
+                               .withoutDepModules().classes().getRoots(), root -> "\u002B" + root.getPath());
   }
 
   @Override

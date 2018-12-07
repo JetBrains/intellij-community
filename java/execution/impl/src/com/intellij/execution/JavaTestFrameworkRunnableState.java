@@ -409,7 +409,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
   }
 
-  protected void writeClassesPerModule(String packageName, JavaParameters javaParameters, Map<Module, List<String>> perModule)
+  protected void writeClassesPerModule(String packageName,
+                                       JavaParameters javaParameters,
+                                       Map<Module, List<String>> perModule,
+                                       @NotNull String filters)
     throws FileNotFoundException, UnsupportedEncodingException, CantRunException {
     if (perModule != null) {
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
@@ -444,6 +447,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
           for (String className : classNames) {
             wWriter.println(className);
           }
+          wWriter.println(filters);
         }
       }
     }
