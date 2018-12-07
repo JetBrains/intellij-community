@@ -250,9 +250,6 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
         if (ruleBody != null) {
           currentBranch.addStatement(ruleBody);
         }
-        if (rule.isDefaultCase()) {
-          currentBranch.setAlwaysExecuted(defaultAlwaysExecuted);
-        }
         currentBranch.addCaseValues(rule, commentTracker);
         openBranches.add(currentBranch);
         allBranches.add(currentBranch);
