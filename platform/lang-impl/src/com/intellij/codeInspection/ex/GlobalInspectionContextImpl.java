@@ -67,6 +67,7 @@ import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -84,7 +85,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private static final int MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES = SystemProperties.getIntProperty("max.open.global.inspection.xml.files", 50);
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextImpl.class);
   @SuppressWarnings("StaticNonFinalField")
-  public static volatile boolean CREATE_VIEW_FORCE;
+  @TestOnly
+  public static volatile boolean TESTING_VIEW;
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION);
 
   private final NotNullLazyValue<? extends ContentManager> myContentManager;
@@ -372,7 +374,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @Override
   protected void notifyInspectionsFinished(@NotNull final AnalysisScope scope) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && !CREATE_VIEW_FORCE) return;
+    if (ApplicationManager.getApplication().isUnitTestMode() && !TESTING_VIEW) return;
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
     LOG.info("Code inspection finished. Took " + elapsed + "ms");
@@ -1082,7 +1084,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   private void addProblemsToView(List<Tools> tools) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !CREATE_VIEW_FORCE) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !TESTING_VIEW) {
       return;
     }
     if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(tools, this, new InspectionRVContentProviderImpl())).booleanValue()) {

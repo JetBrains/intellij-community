@@ -24,13 +24,13 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    GlobalInspectionContextImpl.CREATE_VIEW_FORCE = true;
+    GlobalInspectionContextImpl.TESTING_VIEW = true;
     InspectionProfileImpl.INIT_INSPECTIONS = true;
   }
 
   @Override
   public void tearDown() {
-    GlobalInspectionContextImpl.CREATE_VIEW_FORCE = false;
+    GlobalInspectionContextImpl.TESTING_VIEW = false;
     InspectionProfileImpl.INIT_INSPECTIONS = false;
     super.tearDown();
   }

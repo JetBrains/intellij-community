@@ -249,7 +249,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     if (context.isViewClosed() || !(refElement instanceof RefElement)) {
       return;
     }
-    if (myToolWrapper instanceof LocalInspectionToolWrapper && (!ApplicationManager.getApplication().isUnitTestMode() || GlobalInspectionContextImpl.CREATE_VIEW_FORCE)) {
+    if (myToolWrapper instanceof LocalInspectionToolWrapper && (!ApplicationManager.getApplication().isUnitTestMode() || GlobalInspectionContextImpl.TESTING_VIEW)) {
       context.initializeViewIfNeed().doWhenDone(() -> context.getView().addProblemDescriptors(myToolWrapper, refElement, descriptors));
     }
   }
