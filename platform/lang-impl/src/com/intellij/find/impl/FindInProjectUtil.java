@@ -2,7 +2,6 @@
 
 package com.intellij.find.impl;
 
-import com.intellij.BundleBase;
 import com.intellij.find.*;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.icons.AllIcons;
@@ -342,7 +341,7 @@ public class FindInProjectUtil {
     presentation.setScopeText(scope);
     if (stringToFind.isEmpty()) {
       presentation.setTabText("Files");
-      presentation.setToolwindowTitle(BundleBase.format("Files in {0}", scope));
+      presentation.setToolwindowTitle("Files in " + scope);
       presentation.setUsagesString("files");
     }
     else {
