@@ -12,14 +12,14 @@ internal fun ExternalizableScheme.renameScheme(newName: String) {
   }
 }
 
-internal inline fun catchAndLog(fileName: String, runnable: (fileName: String) -> Unit) {
+internal inline fun catchAndLog(file: String, runnable: () -> Unit) {
   try {
-    runnable(fileName)
+    runnable()
   }
   catch (e: ProcessCanceledException) {
     throw e
   }
   catch (e: Throwable) {
-    LOG.error("Cannot read scheme $fileName", e)
+    LOG.error("Cannot read scheme $file", e)
   }
 }

@@ -198,8 +198,9 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
               continue
             }
 
-            catchAndLog(file.fileName.toString()) { filename ->
-              file.inputStream().use { schemeLoader.loadScheme(filename, it) }
+            val fileName = file.fileName.toString()
+            catchAndLog(fileName) {
+              file.inputStream().use { schemeLoader.loadScheme(fileName, it) }
             }
           }
         }
