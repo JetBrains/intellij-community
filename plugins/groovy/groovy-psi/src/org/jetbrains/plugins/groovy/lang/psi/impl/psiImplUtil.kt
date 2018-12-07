@@ -36,11 +36,11 @@ internal fun getScriptDeclarations(fileImpl: GroovyFileImpl, topLevelOnly: Boole
   val tree = fileImpl.stubTree ?: return fileImpl.collectScriptDeclarations(topLevelOnly)
   return if (topLevelOnly) {
     val root: StubElement<*> = tree.root
-    root.getChildrenByType(GroovyElementTypes.VARIABLE_DEFINITION, GrVariableDeclaration.EMPTY_ARRAY)
+    root.getChildrenByType(GroovyElementTypes.VARIABLE_DECLARATION, GrVariableDeclaration.EMPTY_ARRAY)
   }
   else {
     tree.plainList.filter {
-      it.stubType === GroovyElementTypes.VARIABLE_DEFINITION
+      it.stubType === GroovyElementTypes.VARIABLE_DECLARATION
     }.map {
       it.psi as GrVariableDeclaration
     }.toTypedArray()

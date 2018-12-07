@@ -21,7 +21,7 @@ import java.util.List;
 public class GrTraitTypeDefinitionImpl extends GrTypeDefinitionImpl implements GrTraitTypeDefinition {
 
   public GrTraitTypeDefinitionImpl(GrTypeDefinitionStub stub) {
-    super(stub, GroovyElementTypes.TRAIT_DEFINITION);
+    super(stub, GroovyElementTypes.TRAIT_TYPE_DEFINITION);
   }
 
   public GrTraitTypeDefinitionImpl(@NotNull ASTNode node) {

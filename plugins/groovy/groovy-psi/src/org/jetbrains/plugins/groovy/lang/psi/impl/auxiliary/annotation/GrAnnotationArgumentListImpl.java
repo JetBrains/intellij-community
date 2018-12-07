@@ -24,7 +24,7 @@ public class GrAnnotationArgumentListImpl extends GrStubElementBase<EmptyStub>
   private static final Logger LOG = Logger.getInstance(GrAnnotationArgumentListImpl.class);
 
   public GrAnnotationArgumentListImpl(@NotNull EmptyStub stub) {
-    super(stub, GroovyElementTypes.ANNOTATION_ARGUMENTS);
+    super(stub, GroovyElementTypes.ANNOTATION_ARGUMENT_LIST);
   }
 
   public GrAnnotationArgumentListImpl(@NotNull ASTNode node) {

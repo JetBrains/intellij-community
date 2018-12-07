@@ -102,7 +102,7 @@ public class GroovyParserDefinition implements ParserDefinition {
     if (rType == GroovyTokenTypes.kIMPORT && lType != TokenType.WHITE_SPACE) {
       return SpaceRequirements.MUST_LINE_BREAK;
     }
-    else if (lType == MODIFIERS && rType == MODIFIERS) {
+    else if (lType == MODIFIER_LIST && rType == MODIFIER_LIST) {
       return SpaceRequirements.MUST;
     }
     if (lType == GroovyTokenTypes.mSEMI) {

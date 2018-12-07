@@ -52,7 +52,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
   }
 
   public GrVariableDeclarationImpl(@NotNull GrVariableDeclarationStub stub) {
-    super(stub, GroovyElementTypes.VARIABLE_DEFINITION);
+    super(stub, GroovyElementTypes.VARIABLE_DECLARATION);
   }
 
   @Override
@@ -68,7 +68,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
   @Override
   @NotNull
   public GrModifierList getModifierList() {
-    return getRequiredStubOrPsiChild(GroovyElementTypes.MODIFIERS);
+    return getRequiredStubOrPsiChild(GroovyElementTypes.MODIFIER_LIST);
   }
 
   @Override

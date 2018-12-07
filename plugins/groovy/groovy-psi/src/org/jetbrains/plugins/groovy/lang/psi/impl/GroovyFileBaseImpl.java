@@ -101,10 +101,10 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   public GrMethod[] getMethods() {
     final StubElement<?> stub = getGreenStub();
     if (stub != null) {
-      return stub.getChildrenByType(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
+      return stub.getChildrenByType(GroovyElementTypes.METHOD, GrMethod.ARRAY_FACTORY);
     }
 
-    return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
+    return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.METHOD, GrMethod.ARRAY_FACTORY);
   }
 
   @Override

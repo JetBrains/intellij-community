@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class GrThrowsClauseImpl extends GrReferenceListImpl implements GrThrowsClause {
   public GrThrowsClauseImpl(GrReferenceListStub stub) {
-    super(stub, GroovyElementTypes.THROW_CLAUSE);
+    super(stub, GroovyElementTypes.THROWS_CLAUSE);
   }
 
   @Override

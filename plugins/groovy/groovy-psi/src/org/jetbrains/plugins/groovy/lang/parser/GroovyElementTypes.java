@@ -1,25 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser;
 
-import com.intellij.psi.stubs.EmptyStubElementType;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IStubFileElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.*;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.*;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrMethodElementType;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
@@ -28,41 +12,18 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
  *
  * @author Dmitry.Krasilschikov, ilyas
  */
-public interface GroovyElementTypes {
+public interface GroovyElementTypes extends GroovyStubElementTypes, GroovyEmptyStubElementTypes {
 
-  /*
-  Stub elements
-   */
-  GrStubElementType<GrTypeDefinitionStub, GrClassDefinition> CLASS_DEFINITION = CLASS_TYPE_DEFINITION;
-  GrStubElementType<GrTypeDefinitionStub, GrInterfaceDefinition> INTERFACE_DEFINITION = INTERFACE_TYPE_DEFINITION;
-  GrStubElementType<GrTypeDefinitionStub, GrEnumTypeDefinition> ENUM_DEFINITION = ENUM_TYPE_DEFINITION;
-  GrStubElementType<GrTypeDefinitionStub, GrAnnotationTypeDefinition> ANNOTATION_DEFINITION = ANNOTATION_TYPE_DEFINITION;
-  GrStubElementType<GrTypeDefinitionStub, GrAnonymousClassDefinition> ANONYMOUS_CLASS_DEFINITION = ANONYMOUS_TYPE_DEFINITION;
-  GrStubElementType<GrTypeDefinitionStub, GrTraitTypeDefinition> TRAIT_DEFINITION = TRAIT_TYPE_DEFINITION;
-  GrStubElementType<GrTypeDefinitionStub, GrEnumConstantInitializer> ENUM_CONSTANT_INITIALIZER = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ENUM_CONSTANT_INITIALIZER;
-
-  GrStubElementType<GrFieldStub, GrEnumConstant> ENUM_CONSTANT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ENUM_CONSTANT;
-  GrStubElementType<GrFieldStub, GrField> FIELD = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.FIELD;
+  @Deprecated
   GrMethodElementType METHOD_DEFINITION = METHOD;
-  GrStubElementType<GrMethodStub, GrMethod> ANNOTATION_METHOD = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ANNOTATION_METHOD;
-
-  GrReferenceListElementType<GrImplementsClause> IMPLEMENTS_CLAUSE = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IMPLEMENTS_CLAUSE;
-  GrReferenceListElementType<GrExtendsClause> EXTENDS_CLAUSE = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.EXTENDS_CLAUSE;
-
-  IElementType NONE = new GroovyElementType("no token"); //not a node
 
   GroovyElementType LITERAL = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LITERAL;
-  //Packaging
-  GrPackageDefinitionElementType PACKAGE_DEFINITION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.PACKAGE_DEFINITION;
 
   GrCodeBlockElementType CLOSABLE_BLOCK = CLOSURE;
   GrCodeBlockElementType OPEN_BLOCK = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.OPEN_BLOCK;
   GrCodeBlockElementType CONSTRUCTOR_BODY = CONSTRUCTOR_BLOCK;
 
   IElementType BLOCK_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_STATEMENT;
-
-  EmptyStubElementType<GrEnumConstantList> ENUM_CONSTANTS = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ENUM_CONSTANTS;
-  GrImportStatementElementType IMPORT_STATEMENT = IMPORT;
 
   IElementType ASSERT_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ASSERT_STATEMENT;
   // Expression statements
@@ -123,28 +84,7 @@ public interface GroovyElementTypes {
 
   IElementType TYPE_ARGUMENTS = TYPE_ARGUMENT_LIST;
   IElementType TYPE_ARGUMENT = WILDCARD_TYPE_ELEMENT;
-  EmptyStubElementType<GrTypeParameterList> TYPE_PARAMETER_LIST = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TYPE_PARAMETER_LIST;
 
-  GrStubElementType<GrTypeParameterStub, GrTypeParameter> TYPE_PARAMETER = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TYPE_PARAMETER;
-
-  IStubElementType<GrReferenceListStub, GrReferenceList> TYPE_PARAMETER_EXTENDS_BOUND_LIST = TYPE_PARAMETER_BOUNDS_LIST;
-
-  GrMethodElementType CONSTRUCTOR_DEFINITION = CONSTRUCTOR;
-
-  GrReferenceListElementType<GrThrowsClause> THROW_CLAUSE = THROWS_CLAUSE;
-  //annotation
-  GrAnnotationArgumentListElementType ANNOTATION_ARGUMENTS = ANNOTATION_ARGUMENT_LIST;
-  GrNameValuePairElementType ANNOTATION_MEMBER_VALUE_PAIR = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ANNOTATION_MEMBER_VALUE_PAIR;
-
-  GrStubElementType<GrAnnotationStub, GrAnnotation> ANNOTATION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ANNOTATION;
-  //parameters
-  EmptyStubElementType<GrParameterList> PARAMETERS_LIST = PARAMETER_LIST;
-
-  GrStubElementType<GrParameterStub, GrParameter> PARAMETER = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.PARAMETER;
-
-  EmptyStubElementType<GrTypeDefinitionBody> CLASS_BODY = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLASS_BODY;
-
-  EmptyStubElementType<GrEnumDefinitionBody> ENUM_BODY = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ENUM_BODY;
   //statements
   IElementType IF_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IF_STATEMENT;
   IElementType SWITCH_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SWITCH_STATEMENT;
@@ -158,14 +98,5 @@ public interface GroovyElementTypes {
   IElementType FINALLY_CLAUSE = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.FINALLY_CLAUSE;
   IElementType CLASS_INITIALIZER = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLASS_INITIALIZER;
 
-  GrVariableDeclarationElementType VARIABLE_DEFINITION = VARIABLE_DECLARATION;
-  GrVariableElementType VARIABLE = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.VARIABLE;
-
-  //modifiers
-  GrStubElementType<GrModifierListStub, GrModifierList> MODIFIERS = MODIFIER_LIST;
-
-  //types
   IElementType CLASS_TYPE_ELEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLASS_TYPE_ELEMENT;
-
-  IStubFileElementType GROOVY_FILE = GroovyParserDefinition.GROOVY_FILE;
 }

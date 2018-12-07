@@ -309,7 +309,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   @NotNull
   public GrParameterList getParameterList() {
-    final GrParameterList parameterList = getStubOrPsiChild(GroovyElementTypes.PARAMETERS_LIST);
+    final GrParameterList parameterList = getStubOrPsiChild(GroovyElementTypes.PARAMETER_LIST);
     LOG.assertTrue(parameterList != null);
     return parameterList;
   }
@@ -317,7 +317,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   @NotNull
   public PsiReferenceList getThrowsList() {
-    return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.THROW_CLAUSE));
+    return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.THROWS_CLAUSE));
   }
 
   @Override
@@ -397,7 +397,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   @NotNull
   public GrModifierList getModifierList() {
-    return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.MODIFIERS));
+    return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.MODIFIER_LIST));
   }
 
   @Override
