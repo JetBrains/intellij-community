@@ -890,7 +890,6 @@ public class XDebugSessionImpl implements XDebugSession {
       removeBreakpointListeners();
     }
     finally {
-      //noinspection unchecked
       myDebugProcess.stopAsync().onSuccess(aVoid -> {
         if (!myProject.isDisposed()) {
           myProject.getMessageBus().syncPublisher(XDebuggerManager.TOPIC).processStopped(myDebugProcess);
