@@ -103,5 +103,9 @@ no instance(s) of type variable(s) exist so that Integer conforms to String">() 
         };
       }
     };
+
+    Runnable r = () -> <error descr="Target type for switch expression cannot be void">switch</error>(0) {
+      default -> throw new IllegalArgumentException();
+    };
   }
 }

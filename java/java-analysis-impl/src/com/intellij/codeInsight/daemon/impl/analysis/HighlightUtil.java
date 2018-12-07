@@ -1452,6 +1452,10 @@ public class HighlightUtil extends HighlightUtilBase {
                       .create());
         }
       }
+
+      if (PsiType.VOID.equals(switchExpressionType)) {
+        infos.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(switchExpression.getFirstChild()).descriptionAndTooltip("Target type for switch expression cannot be void").create());
+      }
     }
 
     return infos;
