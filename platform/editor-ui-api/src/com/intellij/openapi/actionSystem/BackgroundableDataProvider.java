@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +16,6 @@ public interface BackgroundableDataProvider extends DataProvider {
   @Nullable
   @Override
   default Object getData(@NotNull String dataId) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     DataProvider async = createBackgroundDataProvider();
     return async == null ? null : async.getData(dataId);
   }

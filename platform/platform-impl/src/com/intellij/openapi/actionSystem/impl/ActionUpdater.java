@@ -146,6 +146,7 @@ class ActionUpdater {
   CancellablePromise<List<AnAction>> expandActionGroupAsync(ActionGroup group, boolean hideDisabled) {
     AsyncPromise<List<AnAction>> promise = new AsyncPromise<>();
     ProgressIndicator indicator = new ProgressIndicatorBase(true);
+    indicator.setModalityProgress(indicator);
     promise.onError(__ -> {
       indicator.cancel();
       ActionUpdateEdtExecutor.computeOnEdt(() -> {

@@ -6,7 +6,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.dataRules.*;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionUpdateEdtExecutor;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -24,9 +23,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.KeyedLazyInstanceEP;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.SwingHelper;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -37,9 +34,12 @@ import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.List;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -53,12 +53,10 @@ public class DataManagerImpl extends DataManager {
   }
 
   @Nullable
-  private Object getData(@NotNull String dataId, List<WeakReference<Component>> hierarchy, Map<Component, DataProvider> dataProviders) {
+  private Object getData(@NotNull String dataId, final Component focusedComponent) {
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
-      for (WeakReference<Component> reference : hierarchy) {
-        Component component = SoftReference.dereference(reference);
-        if (component == null) continue;
-        DataProvider dataProvider = dataProviders.get(component);
+      for (Component c = focusedComponent; c != null; c = c.getParent()) {
+        final DataProvider dataProvider = getDataProviderEx(c);
         if (dataProvider == null) continue;
         Object data = getDataFromProvider(dataProvider, dataId, null);
         if (data != null) return data;
@@ -93,9 +91,8 @@ public class DataManagerImpl extends DataManager {
     }
   }
 
-  @SuppressWarnings("deprecation")
   @Nullable
-  public static DataProvider getDataProviderEx(Component component) {
+  public static DataProvider getDataProviderEx(Object component) {
     DataProvider dataProvider = null;
     if (component instanceof DataProvider) {
       dataProvider = (DataProvider)component;
@@ -318,54 +315,13 @@ public class DataManagerImpl extends DataManager {
     // To prevent memory leak we have to wrap passed component into
     // the weak reference. For example, Swing often remembers menu items
     // that have DataContext as a field.
-    private final List<WeakReference<Component>> myHierarchy;
-    @SuppressWarnings("deprecation")
-    private final Map<Component, DataProvider> myProviders = new ConcurrentFactoryMap<Component, DataProvider>() {
-      @Nullable
-      @Override
-      protected DataProvider create(Component key) {
-        return ActionUpdateEdtExecutor.computeOnEdt(() -> {
-          DataProvider provider = getDataProviderEx(key);
-          if (provider == null) return null;
-
-          if (provider instanceof BackgroundableDataProvider) {
-            return ((BackgroundableDataProvider)provider).createBackgroundDataProvider();
-          }
-          return dataKey -> {
-            boolean bg = !ApplicationManager.getApplication().isDispatchThread();
-            return ActionUpdateEdtExecutor.computeOnEdt(() -> {
-              long start = System.currentTimeMillis();
-              try {
-                return provider.getData(dataKey);
-              }
-              finally {
-                long elapsed = System.currentTimeMillis() - start;
-                if (elapsed > 100 && bg) {
-                  LOG.warn("Slow data provider " + provider + " took " + elapsed + "ms on " + dataKey +
-                           ". Consider speeding it up and/or implementing BackgroundableDataProvider.");
-                }
-              }
-            });
-          };
-        });
-      }
-
-      @NotNull
-      @Override
-      protected ConcurrentMap<Component, DataProvider> createMap() {
-        return ContainerUtil.createConcurrentWeakKeySoftValueMap();
-      }
-    };
+    private final Reference<Component> myRef;
     private Map<Key, Object> myUserData;
     private final Map<String, Object> myCachedData = ContainerUtil.createWeakValueMap();
 
     public MyDataContext(@Nullable Component component) {
       myEventCount = -1;
-      List<Component> hierarchy = JBIterable.generate(component, Component::getParent).toList();
-      for (Component each : hierarchy) {
-        myProviders.get(each);
-      }
-      myHierarchy = ContainerUtil.map(hierarchy, WeakReference::new);
+      myRef = component == null ? null : new WeakReference<>(component);
     }
 
     public void setEventCount(int eventCount, Object caller) {
@@ -401,7 +357,7 @@ public class DataManagerImpl extends DataManager {
 
     @Nullable
     private Object doGetData(@NotNull String dataId) {
-      Component component = SoftReference.dereference(ContainerUtil.getFirstItem(myHierarchy));
+      Component component = SoftReference.dereference(myRef);
       if (PlatformDataKeys.IS_MODAL_CONTEXT.is(dataId)) {
         if (component == null) {
           return null;
@@ -415,16 +371,19 @@ public class DataManagerImpl extends DataManager {
         return component != null ? ModalityState.stateForComponent(component) : ModalityState.NON_MODAL;
       }
       if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId)) {
-        Editor editor = (Editor)((DataManagerImpl)DataManager.getInstance()).getData(dataId, myHierarchy, myProviders);
-        return validateEditor(editor);
+        return validateEditor((Editor)calcData(dataId, component));
       }
-      return ((DataManagerImpl)DataManager.getInstance()).getData(dataId, myHierarchy, myProviders);
+      return calcData(dataId, component);
+    }
+
+    protected Object calcData(@NotNull String dataId, Component component) {
+      return ((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
     }
 
     @Override
     @NonNls
     public String toString() {
-      return "component=" + SoftReference.dereference(ContainerUtil.getFirstItem(myHierarchy));
+      return "component=" + SoftReference.dereference(myRef);
     }
 
     @Override

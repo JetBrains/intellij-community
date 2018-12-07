@@ -1130,9 +1130,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private void updateActionsImpl(boolean transparentOnly, boolean forced) {
     DataContext dataContext = getDataContext();
-    ActionUpdater updater = new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory, dataContext, myPlace,
-                                              false, true, transparentOnly);
-    if (myAlreadyUpdated && Registry.is("actionSystem.update.actions.asynchronously") && ourToolbars.contains(this)) {
+    boolean async = myAlreadyUpdated && Registry.is("actionSystem.update.actions.asynchronously") && ourToolbars.contains(this) && isShowing();
+    ActionUpdater updater = new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory,
+                                              async ? new AsyncDataContext(dataContext) : dataContext,
+                                              myPlace, false, true, transparentOnly);
+    if (async) {
       if (myLastUpdate != null) myLastUpdate.cancel();
 
       myLastUpdate = updater.expandActionGroupAsync(myActionGroup, false);
