@@ -37,6 +37,7 @@ import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.PositionTracker;
@@ -59,6 +60,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 @State(
@@ -397,10 +399,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
   @Override
   public void dispose() {
-    for (String id : new ArrayList<>(myId2StripeButton.keySet())) {
-      unregisterToolWindow(id);
-    }
-
     LOG.assertTrue(myId2StripeButton.isEmpty(), myId2StripeButton);
   }
 
@@ -489,7 +487,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     final ToolWindowFactory factory = bean.getToolWindowFactory();
     ToolWindow window = registerToolWindow(bean.id, label, toolWindowAnchor, false, bean.canCloseContents,
                                            DumbService.isDumbAware(factory), factory.shouldBeAvailable(myProject));
-    final ToolWindowImpl toolWindow = (ToolWindowImpl)registerDisposable(bean.id, myProject, window);
+    final ToolWindowImpl toolWindow = (ToolWindowImpl)window;
     toolWindow.setContentFactory(factory);
     if (bean.icon != null && toolWindow.getIcon() == null) {
       Icon icon = IconLoader.findIcon(bean.icon, factory.getClass());
@@ -1011,7 +1009,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
                                        @NotNull ToolWindowAnchor anchor,
                                        @NotNull Disposable parentDisposable,
                                        boolean canWorkInDumbMode, boolean canCloseContents) {
-    return registerDisposable(id, parentDisposable, registerToolWindow(id, component, anchor, false, canCloseContents, canWorkInDumbMode, true));
+    return registerToolWindow(id, component, anchor, false, canCloseContents, canWorkInDumbMode, true);
   }
 
   @NotNull
@@ -1048,8 +1046,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
                                        @NotNull Disposable parentDisposable,
                                        boolean canWorkInDumbMode,
                                        boolean secondary) {
-    ToolWindow window = registerToolWindow(id, null, anchor, secondary, canCloseContent, canWorkInDumbMode, true);
-    return registerDisposable(id, parentDisposable, window);
+    return registerToolWindow(id, null, anchor, secondary, canCloseContent, canWorkInDumbMode, true);
   }
 
   @NotNull
@@ -1080,6 +1077,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     // Create decorator
 
     ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, canCloseContent, component);
+    Disposer.register(this, toolWindow);
     toolWindow.setAvailable(shouldBeAvailable, null);
     InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow, canWorkInDumbMode);
     ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow);
@@ -1091,6 +1089,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     // Create and show tool button
 
     final StripeButton button = new StripeButton(decorator, myToolWindowsPane);
+    Disposer.register(toolWindow, button);
     myId2StripeButton.put(id, button);
     List<FinalizableCommand> commandsList = new ArrayList<>();
     appendAddButtonCmd(button, info, commandsList);
@@ -1114,14 +1113,12 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     return toolWindow;
   }
 
-  @NotNull
-  private ToolWindow registerDisposable(@NotNull final String id, @NotNull final Disposable parentDisposable, @NotNull ToolWindow window) {
-    Disposer.register(parentDisposable, () -> unregisterToolWindow(id));
-    return window;
-  }
-
   @Override
   public void unregisterToolWindow(@NotNull final String id) {
+    Disposer.dispose((ToolWindowImpl)getToolWindow(id));
+  }
+
+  void doUnregisterToolWindow(@NotNull String id) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: unregisterToolWindow(" + id + ")");
     }
@@ -1154,8 +1151,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     toolWindow.removePropertyChangeListener(myToolWindowPropertyChangeListener);
 
     // Destroy stripe button
-    final StripeButton button = getStripeButton(id);
-    Disposer.dispose(button);
     myId2StripeButton.remove(id);
     //
     ToolWindowFocusWatcher watcher = (ToolWindowFocusWatcher)myId2FocusWatcher.remove(id);
@@ -1166,8 +1161,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     decorator.dispose();
     decorator.removeInternalDecoratorListener(myInternalDecoratorListener);
     myId2InternalDecorator.remove(id);
-
-    ((ToolWindowImpl)toolWindow).dispose();
   }
 
   private void applyInfo(@NotNull String id, WindowInfoImpl info, List<FinalizableCommand> commandsList) {
@@ -1327,13 +1320,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     final Balloon balloon = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), icon, type.getTitleForeground(), type.getPopupBackground(), listenerWrapper)
       .setBorderColor(type.getBorderColor()).setHideOnClickOutside(false).setHideOnFrameResize(false).createBalloon();
-    NotificationsManagerImpl.frameActivateBalloonListener(balloon, () -> {
-      final Alarm alarm = new Alarm();
-      alarm.addRequest(() -> {
-        ((BalloonImpl)balloon).setHideOnClickOutside(true);
-        Disposer.dispose(alarm);
-      }, 100);
-    });
+    NotificationsManagerImpl.frameActivateBalloonListener(balloon, () ->
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(()->((BalloonImpl)balloon).setHideOnClickOutside(true), 100, TimeUnit.MILLISECONDS)
+    );
     listenerWrapper.myBalloon = balloon;
     myWindow2Balloon.put(toolWindowId, balloon);
     Disposer.register(balloon, () -> {
