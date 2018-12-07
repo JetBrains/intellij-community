@@ -16,7 +16,6 @@ import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.io.delete
-import com.intellij.util.loadElement
 import gnu.trove.THashMap
 import org.jdom.Attribute
 import org.jdom.Element
@@ -51,7 +50,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       if (useStreamProvider && provider != null) {
         isLoadLocalData = !provider.read(fileSpec, roamingType) { inputStream ->
           inputStream?.let {
-            element = loadElement(inputStream)
+            element = JDOMUtil.load(inputStream)
             providerDataStateChanged(createDataWriterForElement(element!!, toString()), DataStateChanged.LOADED)
           }
         }

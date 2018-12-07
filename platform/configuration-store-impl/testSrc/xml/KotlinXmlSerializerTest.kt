@@ -4,7 +4,7 @@ package com.intellij.configurationStore.xml
 import com.intellij.configurationStore.AState
 import com.intellij.configurationStore.deserialize
 import com.intellij.openapi.components.BaseState
-import com.intellij.util.loadElement
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
@@ -86,25 +86,25 @@ class KotlinXmlSerializerTest {
       </option>
     </bean>""", data)
 
-    assertThat(loadElement("""<bean>
-      <option name="PLACES_MAP">
-        <entry key="">
-          <PlaceSettings>
-            <option name="IGNORE_POLICY" />
-          </PlaceSettings>
-        </entry>
-      </option>
-    </bean>""").deserialize<Foo>().PLACES_MAP.get("")!!.IGNORE_POLICY).isEqualTo(IgnorePolicy.DEFAULT)
+    assertThat(JDOMUtil.load("""<bean>
+          <option name="PLACES_MAP">
+            <entry key="">
+              <PlaceSettings>
+                <option name="IGNORE_POLICY" />
+              </PlaceSettings>
+            </entry>
+          </option>
+        </bean>""").deserialize<Foo>().PLACES_MAP.get("")!!.IGNORE_POLICY).isEqualTo(IgnorePolicy.DEFAULT)
 
-    val value = loadElement("""<bean>
-      <option name="PLACES_MAP">
-        <entry key="">
-          <PlaceSettings>
-            <option name="SOME_UNKNOWN_VALUE" />
-          </PlaceSettings>
-        </entry>
-      </option>
-    </bean>""").deserialize<Foo>()
+    val value = JDOMUtil.load("""<bean>
+          <option name="PLACES_MAP">
+            <entry key="">
+              <PlaceSettings>
+                <option name="SOME_UNKNOWN_VALUE" />
+              </PlaceSettings>
+            </entry>
+          </option>
+        </bean>""").deserialize<Foo>()
     assertThat(value).isNotNull()
     val placeSettings = value.PLACES_MAP.get("")
     assertThat(placeSettings).isNotNull()

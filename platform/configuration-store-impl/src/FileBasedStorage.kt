@@ -13,6 +13,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.debugOrInfoIfTestMode
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -178,7 +179,7 @@ open class FileBasedStorage(file: Path,
     else {
       val data = file.readChars()
       lineSeparator = detectLineSeparators(data, if (isUseXmlProlog) null else LineSeparator.LF)
-      return loadElement(data)
+      return JDOMUtil.load(data)
     }
     return null
   }

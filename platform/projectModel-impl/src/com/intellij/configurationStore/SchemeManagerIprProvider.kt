@@ -2,9 +2,13 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.*
+import com.intellij.util.ArrayUtil
+import com.intellij.util.PathUtilRt
+import com.intellij.util.isEmpty
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.util.toByteArray
 import org.jdom.Element
 import java.io.InputStream
 import java.util.*
@@ -106,7 +110,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
         names.sortWith(comparator)
       }
       for (name in names) {
-        nameToData.get(name)?.let { state.addContent(loadElement(it.inputStream())) }
+        nameToData.get(name)?.let { state.addContent(JDOMUtil.load(it.inputStream())) }
       }
     }
   }

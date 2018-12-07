@@ -40,16 +40,19 @@ fun Parent.write(output: OutputStream, lineSeparator: String = "\n") {
 }
 
 @Throws(IOException::class, JDOMException::class)
+@Deprecated("Use JDOMUtil.load directly", ReplaceWith("JDOMUtil.load(chars)", "com.intellij.openapi.util.JDOMUtil"))
 fun loadElement(chars: CharSequence): Element = JDOMUtil.load(chars)
 
 @Throws(IOException::class, JDOMException::class)
+@Deprecated("Use JDOMUtil.load directly", ReplaceWith("JDOMUtil.load(reader)", "com.intellij.openapi.util.JDOMUtil"))
 fun loadElement(reader: Reader): Element = JDOMUtil.load(reader)
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElement(stream: InputStream): Element = JDOMUtil.load(stream.bufferedReader())
+@Deprecated("Use JDOMUtil.load directly", ReplaceWith("JDOMUtil.load(stream)", "com.intellij.openapi.util.JDOMUtil"))
+fun loadElement(stream: InputStream): Element = JDOMUtil.load(stream)
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElement(path: Path): Element = loadElement(path.inputStream())
+fun loadElement(path: Path): Element = JDOMUtil.load(path.inputStream())
 
 fun Element?.isEmpty(): Boolean = this == null || JDOMUtil.isEmpty(this)
 
