@@ -768,4 +768,15 @@ public class StringUtilTest {
     assertTrue(String.valueOf(last.getClass()), last instanceof CharSequenceSubSequence);
     assertEquals("t", last.toString());
   }
+
+  @Test
+  public void testEnglishOrdinals() {
+    assertEquals("100th", StringUtil.formatOrdinal(100));
+    assertEquals("101st", StringUtil.formatOrdinal(101));
+    assertEquals("111th", StringUtil.formatOrdinal(111));
+    assertEquals("122nd", StringUtil.formatOrdinal(122));
+
+    assertEquals("-3rd", StringUtil.formatOrdinal(-3));
+    assertEquals("-9223372036854775808th", StringUtil.formatOrdinal(Long.MIN_VALUE));
+  }
 }

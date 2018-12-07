@@ -2,10 +2,12 @@
 package com.intellij;
 
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.text.OrdinalFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
+import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
@@ -18,9 +20,9 @@ public abstract class BundleBase {
 
   public static boolean assertKeyIsFound = false;
 
-  public static String messageOrDefault(@Nullable final ResourceBundle bundle,
+  public static String messageOrDefault(@Nullable ResourceBundle bundle,
                                         @NotNull String key,
-                                        @Nullable final String defaultValue,
+                                        @Nullable String defaultValue,
                                         @NotNull Object... params) {
     if (bundle == null) return defaultValue;
 
@@ -42,7 +44,14 @@ public abstract class BundleBase {
 
     value = replaceMnemonicAmpersand(value);
 
-    return format(value, params);
+    if (params.length > 0 && value.indexOf('{') >= 0) {
+      Locale locale = bundle.getLocale();
+      MessageFormat format = locale != null ? new MessageFormat(value, locale) : new MessageFormat(value);
+      OrdinalFormat.apply(format);
+      value = format.format(params);
+    }
+
+    return value;
   }
 
   @NotNull

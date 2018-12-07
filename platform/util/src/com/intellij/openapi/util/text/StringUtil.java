@@ -8,10 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharSequenceSubSequence;
-import com.intellij.util.text.MergingCharSequence;
-import com.intellij.util.text.StringFactory;
+import com.intellij.util.text.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +22,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.*;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1634,23 +1632,11 @@ public class StringUtil extends StringUtilRt {
     return sb.toString();
   }
 
-  public static String formatOrdinal(int i) {
-    int mod = i % 100;
-    if (mod == 11 || mod == 12 || mod == 13) {
-      return i + "th";
-    }
-
-    mod = mod % 10;
-    if (mod == 1) {
-      return i + "st";
-    }
-    else if (mod == 2) {
-      return i + "nd";
-    }
-    else if (mod == 3) {
-      return i + "rd";
-    }
-    return i + "th";
+  /**
+   * Appends English ordinal suffix to the given number.
+   */
+  public static String formatOrdinal(long num) {
+    return OrdinalFormat.formatEnglish(num);
   }
 
   /**
