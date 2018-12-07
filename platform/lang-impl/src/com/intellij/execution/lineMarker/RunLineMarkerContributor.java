@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,17 @@ public abstract class RunLineMarkerContributor {
   protected static String getText(@NotNull AnAction action, @NotNull PsiElement element) {
     DataContext parent = DataManager.getInstance().getDataContext();
     DataContext dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.getName(), element, parent);
-    return action instanceof ExecutorAction ? ((ExecutorAction)action).getActionName(dataContext) : null;
+    if (!(action instanceof ExecutorAction)) {
+      return null;
+    }
+//    return ((ExecutorAction)action).getActionName(dataContext);
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
+    action.update(event);
+    if (!event.getPresentation().isEnabledAndVisible()) {
+      return null;
+    }
+    String name = ((ExecutorAction)action).getActionName(dataContext);
+    return name == null ? null : UIUtil.removeMnemonic(name);
   }
 
   @NotNull
