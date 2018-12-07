@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,17 +56,22 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
   @NotNull
   protected String buildErrorString(Object... infos) {
     final Integer branchCount = (Integer)infos[0];
-    if (branchCount == 0) {
-      return InspectionGadgetsBundle.message("switch.statement.with.single.default.message");
+    final PsiSwitchBlock block = (PsiSwitchBlock)infos[1];
+    if (block instanceof PsiSwitchExpression) {
+      return branchCount == 0
+             ? InspectionGadgetsBundle.message("switch.expression.with.single.default.message")
+             : InspectionGadgetsBundle.message("switch.expression.with.too.few.branches.problem.descriptor", branchCount);
     }
-    return InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.problem.descriptor", branchCount);
+    return branchCount == 0
+           ? InspectionGadgetsBundle.message("switch.statement.with.single.default.message")
+           : InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.problem.descriptor", branchCount);
   }
 
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final Integer branchCount = (Integer)infos[0];
-    return (Boolean)infos[1] ? new UnwrapSwitchStatementFix(branchCount) : null;
+    return (Boolean)infos[2] ? new UnwrapSwitchStatementFix(branchCount) : null;
   }
 
   @Override
@@ -74,11 +80,24 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
   }
 
   private class SwitchStatementWithTooFewBranchesVisitor extends BaseInspectionVisitor {
+    @Override
+    public void visitSwitchExpression(PsiSwitchExpression expression) {
+      Object[] infos = processSwitch(expression);
+      if (infos == null) return;
+      registerError(expression.getFirstChild(), infos);
+    }
 
     @Override
     public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) return;
+      Object[] infos = processSwitch(statement);
+      if (infos == null) return;
+      registerStatementError(statement, infos);
+    }
+
+    @Nullable
+    public Object[] processSwitch(@NotNull PsiSwitchBlock block) {
+      final PsiCodeBlock body = block.getBody();
+      if (body == null) return null;
       int branches = 0;
       boolean defaultFound = false;
       for (final PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)) {
@@ -89,23 +108,37 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
           PsiExpressionList values = child.getCaseValues();
           if (values == null) {
             // Erroneous switch: compilation error is reported instead
-            return;
+            return null;
           }
           branches += values.getExpressionCount();
           if (branches >= m_limit) {
-            return;
+            return null;
           }
         }
       }
       if (branches == 0 && !defaultFound) {
         // Empty switch is reported by another inspection
-        return;
+        return null;
       }
-      registerStatementError(statement, Integer.valueOf(branches), ConvertSwitchToIfIntention.isAvailable(statement));
+      boolean fixIsAvailable;
+      if (block instanceof PsiSwitchStatement) {
+        fixIsAvailable = ConvertSwitchToIfIntention.isAvailable((PsiSwitchStatement)block);
+      }
+      else {
+        PsiStatement[] statements = body.getStatements();
+        if (statements.length == 1 && statements[0] instanceof PsiSwitchLabeledRuleStatement) {
+          PsiSwitchLabeledRuleStatement statement = (PsiSwitchLabeledRuleStatement)statements[0];
+          fixIsAvailable = statement.isDefaultCase() && statement.getBody() instanceof PsiExpressionStatement;
+        }
+        else {
+          fixIsAvailable = false;
+        }
+      }
+      return new Object[]{Integer.valueOf(branches), block, fixIsAvailable};
     }
   }
 
-  private static class UnwrapSwitchStatementFix extends InspectionGadgetsFix {
+  public static class UnwrapSwitchStatementFix extends InspectionGadgetsFix {
     int myBranchCount;
 
     private UnwrapSwitchStatementFix(int branchCount) {
@@ -123,14 +156,32 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
     @NotNull
     @Override
     public String getFamilyName() {
-      return CommonQuickFixBundle.message("fix.unwrap.statement", PsiKeyword.SWITCH);
+      return CommonQuickFixBundle.message("fix.unwrap", PsiKeyword.SWITCH);
     }
 
     @Override
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiSwitchStatement statement = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiSwitchStatement.class);
-      if (statement == null) return;
-      ConvertSwitchToIfIntention.doProcessIntention(statement);
+      PsiSwitchBlock block = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiSwitchBlock.class);
+      if (block instanceof PsiSwitchStatement) {
+        ConvertSwitchToIfIntention.doProcessIntention((PsiSwitchStatement)block);
+      } else if (block instanceof PsiSwitchExpression) {
+        unwrapExpression((PsiSwitchExpression)block);
+      }
+    }
+
+    /**
+     * Unwraps switch expression if it consists of single expression-branch; does nothing otherwise
+     * @param switchExpression expression to unwrap
+     */
+    public static void unwrapExpression(PsiSwitchExpression switchExpression) {
+      PsiCodeBlock body = switchExpression.getBody();
+      if (body == null) return;
+      PsiStatement[] statements = body.getStatements();
+      if (statements.length != 1 || !(statements[0] instanceof PsiSwitchLabeledRuleStatement)) return;
+      PsiSwitchLabeledRuleStatement rule = (PsiSwitchLabeledRuleStatement)statements[0];
+      PsiStatement ruleBody = rule.getBody();
+      if (!(ruleBody instanceof PsiExpressionStatement)) return;
+      new CommentTracker().replaceAndRestoreComments(switchExpression, ((PsiExpressionStatement)ruleBody).getExpression());
     }
   }
 }

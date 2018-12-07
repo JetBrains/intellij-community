@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.controlflow.SwitchStatementWithTooFewBranchesInspection.UnwrapSwitchStatementFix;
 import com.siyeh.ig.psiutils.BreakConverter;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
@@ -55,12 +56,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       converter.process();
       unwrapStatement(labelStatement, (PsiSwitchStatement)block);
     } else {
-      if (labelStatement instanceof PsiSwitchLabeledRuleStatement) {
-        PsiSwitchLabeledRuleStatement ruleStatement = (PsiSwitchLabeledRuleStatement)labelStatement;
-        if (ruleStatement.getBody() instanceof PsiExpressionStatement) {
-          new CommentTracker().replaceAndRestoreComments(block, ((PsiExpressionStatement)ruleStatement.getBody()).getExpression());
-        }
-      }
+      UnwrapSwitchStatementFix.unwrapExpression((PsiSwitchExpression)block);
     }
   }
 
