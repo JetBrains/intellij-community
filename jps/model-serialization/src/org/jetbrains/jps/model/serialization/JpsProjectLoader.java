@@ -131,7 +131,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
     Element externalData = null;
     for (Element child : JDOMUtil.getChildren(loadRootElement(externalConfigDir.resolve(configFile.getFileName())))) {
       // be ready to handle both original name and prefixed
-      if (child.getName().equals(prefixedComponentName) || child.getName().equals(componentName)) {
+      if (child.getName().equals(prefixedComponentName) || JDomSerializationUtil.isComponent(prefixedComponentName, child) ||
+          child.getName().equals(componentName) || JDomSerializationUtil.isComponent(componentName, child)) {
         externalData = child;
         break;
       }
