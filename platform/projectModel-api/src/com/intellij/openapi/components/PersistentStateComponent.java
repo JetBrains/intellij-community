@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +27,11 @@ public interface PersistentStateComponent<T> {
   /**
    * This method is called when new component state is loaded. The method can and will be called several times, if
    * config files were externally changed while IDEA running.
+   *
+   * State object should be used directly, defensive copying is not required.
+   *
    * @param state loaded component state
-   * @see com.intellij.util.xmlb.XmlSerializerUtil#copyBean(Object, Object) 
+   * @see com.intellij.util.xmlb.XmlSerializerUtil#copyBean(Object, Object)
    */
   void loadState(@NotNull T state);
 
