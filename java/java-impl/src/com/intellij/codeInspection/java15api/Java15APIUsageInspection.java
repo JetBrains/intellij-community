@@ -260,7 +260,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
             if (!methods.isEmpty()) {
               PsiElement element2Highlight = aClass.getNameIdentifier();
               if (element2Highlight == null) {
-                element2Highlight = aClass;
+                element2Highlight = aClass instanceof PsiAnonymousClass ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass;
               }
               myHolder.registerProblem(element2Highlight,
                                        methods.size() == 1 ? InspectionsBundle.message("inspection.1.8.problem.single.descriptor", methods.get(0).getName(), getJdkName(effectiveLanguageLevel))

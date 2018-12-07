@@ -1,4 +1,4 @@
-class Test {
+class RawInheritFromNewlyGenerified {
   private AbstractCCM<String> myModel;
 }
 
