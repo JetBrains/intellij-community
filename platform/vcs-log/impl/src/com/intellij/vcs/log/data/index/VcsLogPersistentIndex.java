@@ -224,7 +224,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     }
     return false;
   }
-  
+
   @Override
   public synchronized boolean isIndexed(@NotNull VirtualFile root) {
     return isIndexingEnabled(root) &&
@@ -390,7 +390,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     @NotNull private final HeavyAwareExecutor myHeavyAwareExecutor;
 
     MySingleTaskController(@NotNull Project project, @NotNull Disposable parent) {
-      super(project, "index", EmptyConsumer.getInstance(), parent);
+      super("index", EmptyConsumer.getInstance(), parent);
       myHeavyAwareExecutor = new HeavyAwareExecutor(project, 50, 100, VcsLogPersistentIndex.this);
     }
 

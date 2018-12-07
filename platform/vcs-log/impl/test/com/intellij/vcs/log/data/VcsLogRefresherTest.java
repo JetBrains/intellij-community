@@ -201,7 +201,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     VcsLogRefresherImpl refresher =
       new VcsLogRefresherImpl(myProject, myLogData.getStorage(), myLogProviders, myLogData.getUserRegistry(),
                               myLogData.getModifiableIndex(),
-                              new VcsLogProgress(myProject, myLogData),
+                              new VcsLogProgress(myLogData),
                               myLogData.getTopCommitsCache(), dataPackConsumer, RECENT_COMMITS_COUNT
       ) {
         @Override

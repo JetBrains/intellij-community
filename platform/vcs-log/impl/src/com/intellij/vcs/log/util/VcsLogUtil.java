@@ -4,7 +4,6 @@ package com.intellij.vcs.log.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -219,26 +218,6 @@ public class VcsLogUtil {
                                               new Date(detail.getCommitTime()),
                                               detail.getChanges(),
                                               convertToRevisionNumber(detail.getId()));
-  }
-
-  /**
-   * Registers disposable on both provided parent and project. When project is disposed, disposable is still accessed through parent,
-   * while when parent is disposed, disposable gets removed from memory. So this method is suitable for parents that depend on project,
-   * but could be created and disposed several times through one project life.
-   *
-   * @param parent     parent to register disposable on.
-   * @param project    project to register disposable on.
-   * @param disposable disposable to register.
-   */
-  public static void registerWithParentAndProject(@NotNull Disposable parent, @NotNull Project project, @NotNull Disposable disposable) {
-    /*
-     Wrapping in another Disposable is required in order to register on several parents.
-     Otherwise the second `register` call will remove disposable from the first parent.
-     See com.intellij.openapi.util.objectTree.ObjectTree.register.
-    */
-    //noinspection SSBasedInspection
-    Disposer.register(parent, () -> Disposer.dispose(disposable));
-    Disposer.register(project, disposable);
   }
 
   @NotNull

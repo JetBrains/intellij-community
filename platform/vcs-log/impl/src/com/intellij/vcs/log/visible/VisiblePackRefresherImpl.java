@@ -55,7 +55,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     myLogId = logId;
     myState = new State(filters, sortType);
 
-    myTaskController = new SingleTaskController<Request, State>(project, "visible " + StringUtil.trimMiddle(logId, 40), state -> {
+    myTaskController = new SingleTaskController<Request, State>("visible " + StringUtil.trimMiddle(logId, 40), state -> {
       boolean hasChanges = myState.getVisiblePack() != state.getVisiblePack();
       myState = state;
       if (hasChanges) {
