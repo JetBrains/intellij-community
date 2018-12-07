@@ -38,12 +38,12 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   private FileColorProjectLevelConfigurationManager myProjectLevelConfigurationManager;
 
   private static final Map<String, Color> ourDefaultColors = ContainerUtil.<String, Color>immutableMapBuilder()
-    .put("Blue", JBColor.namedColor("FileColor.Blue", new JBColor(0xdcf0ff, 0x3C476B)))
-    .put("Green", JBColor.namedColor("FileColor.Green", new JBColor(0xe7fadb, 0x425444)))
-    .put("Orange", JBColor.namedColor("FileColor.Orange", new JBColor(0xf6e0ca, 0x804A33)))
-    .put("Rose", JBColor.namedColor("FileColor.Rose", new JBColor(0xf2ceca, 0x6E414E)))
-    .put("Violet", JBColor.namedColor("FileColor.Violet", new JBColor(0xded5f1, 0x504157)))
-    .put("Yellow", JBColor.namedColor("FileColor.Yellow", new JBColor(0xffffe4, 0x4F4838)))
+    .put("Blue", JBColor.namedColor("FileColor.Blue", new JBColor(0xeaf6ff, 0x4f556b)))
+    .put("Green", JBColor.namedColor("FileColor.Green", new JBColor(0xeffae7, 0x49544a)))
+    .put("Orange", JBColor.namedColor("FileColor.Orange", new JBColor(0xf6e9dc, 0x806052)))
+    .put("Rose", JBColor.namedColor("FileColor.Rose", new JBColor(0xf2dcda, 0x6e535b)))
+    .put("Violet", JBColor.namedColor("FileColor.Violet", new JBColor(0xe6e0f1, 0x534a57)))
+    .put("Yellow", JBColor.namedColor("FileColor.Yellow", new JBColor(0xffffe4, 0x4f4b41)))
     .build();
 
   public FileColorManagerImpl(@NotNull final Project project) {
