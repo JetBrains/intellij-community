@@ -12,6 +12,10 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
  */
 @CompileStatic
 class CommunityRepositoryModules {
+  /**
+   * @deprecated use {@link ProductModulesLayout#productApiModules} instead of {@link ProductModulesLayout#platformApiModules} to avoid
+   * using this property
+   */
   static List<String> PLATFORM_API_MODULES = [
     "intellij.platform.analysis",
     "intellij.platform.builtInServer",
@@ -41,6 +45,10 @@ class CommunityRepositoryModules {
     "intellij.xml.structureView",
   ]
 
+  /**
+   * @deprecated use {@link ProductModulesLayout#productImplementationModules} instead of {@link ProductModulesLayout#platformImplementationModules}
+   * to avoid using this property
+   */
   static List<String> PLATFORM_IMPLEMENTATION_MODULES = [
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
