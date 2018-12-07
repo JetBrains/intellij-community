@@ -36,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.reflect.Field;
+import java.text.MessageFormat;
+import java.text.ParsePosition;
 import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -83,7 +85,7 @@ public class ExpectedHighlightingData {
   private final PsiFile myFile;
   private final String myText;
   private boolean myIgnoreExtraHighlighting;
-  private final ResourceBundle myMessagesBundle;
+  private final ResourceBundle[] myMessageBundles;
 
   public ExpectedHighlightingData(@NotNull Document document, boolean checkWarnings, boolean checkInfos) {
     this(document, checkWarnings, false, checkInfos);
@@ -106,32 +108,19 @@ public class ExpectedHighlightingData {
                                   boolean checkWeakWarnings,
                                   boolean checkInfos,
                                   boolean ignoreExtraHighlighting,
-                                  @Nullable PsiFile file) {
-    this(document, checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, file, null);
-  }
-
-  public ExpectedHighlightingData(@NotNull Document document,
-                                  boolean checkWarnings,
-                                  boolean checkWeakWarnings,
-                                  boolean checkInfos,
-                                  boolean ignoreExtraHighlighting,
                                   @Nullable PsiFile file,
-                                  @Nullable ResourceBundle messagesBundle) {
-    this(document, file, messagesBundle);
+                                  ResourceBundle... messageBundles) {
+    this(document, file, messageBundles);
     myIgnoreExtraHighlighting = ignoreExtraHighlighting;
     if (checkWarnings) checkWarnings();
     if (checkWeakWarnings) checkWeakWarnings();
     if (checkInfos) checkInfos();
   }
 
-  public ExpectedHighlightingData(@NotNull Document document, @Nullable PsiFile file) {
-    this(document, file, null);
-  }
-
-  public ExpectedHighlightingData(@NotNull Document document, @Nullable PsiFile file, @Nullable ResourceBundle messagesBundle) {
+  public ExpectedHighlightingData(@NotNull Document document, @Nullable PsiFile file, ResourceBundle... messageBundles) {
     myDocument = document;
     myFile = file;
-    myMessagesBundle = messagesBundle;
+    myMessageBundles = messageBundles;
     myText = document.getText();
 
     registerHighlightingType(ERROR_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, false, true));
@@ -352,9 +341,17 @@ public class ExpectedHighlightingData {
       if (forcedAttributes != null) builder.textAttributes(forcedAttributes);
       if (forcedTextAttributesKey != null) builder.textAttributes(forcedTextAttributesKey);
       if (bundleMessage != null) {
-        assertNotNull("messagesBundle must be provided for bundleKey tags in test data", myMessagesBundle);
+        assertTrue("messageBundles must be provided for bundleKey tags in test data", myMessageBundles.length > 0);
         List<String> split = StringUtil.split(bundleMessage, "|");
-        descr = CommonBundle.message(myMessagesBundle, split.get(0), split.stream().skip(1).toArray());
+        String key = split.get(0);
+        Object[] params = split.stream().skip(1).toArray();
+        for (ResourceBundle bundle : myMessageBundles) {
+          String message = CommonBundle.messageOrDefault(bundle, key, null, params);
+          if (message != null) {
+            if (descr != null) fail("Key " + key + " is not unique in bundles for expected highlighting data");
+            descr = message;
+          }
+        }
       }
       if (descr != null) {
         builder.description(descr);
@@ -485,7 +482,7 @@ public class ExpectedHighlightingData {
   }
 
   private void compareTexts(Collection<HighlightInfo> infos, String text, String failMessage, @Nullable String filePath) {
-    String actual = composeText(myHighlightingTypes, infos, text, myMessagesBundle);
+    String actual = composeText(myHighlightingTypes, infos, text, myMessageBundles);
     if (filePath != null && !myText.equals(actual)) {
       // uncomment to overwrite, don't forget to revert on commit!
       //VfsTestUtil.overwriteTestData(filePath, actual);
@@ -503,14 +500,11 @@ public class ExpectedHighlightingData {
     return entry != null ? entry.getKey() : null;
   }
 
-  public static String composeText(Map<String, ExpectedHighlightingSet> types, Collection<HighlightInfo> infos, String text) {
-    return composeText(types, infos, text, null);
-  }
-
-  private static String composeText(Map<String, ExpectedHighlightingSet> types,
-                                    Collection<HighlightInfo> infos,
-                                    String text,
-                                    ResourceBundle messagesBundle) {
+  @NotNull
+  public static String composeText(@NotNull Map<String, ExpectedHighlightingSet> types,
+                                   @NotNull Collection<HighlightInfo> infos,
+                                   @NotNull String text,
+                                   @NotNull ResourceBundle... messageBundles) {
     // filter highlighting data and map each highlighting to a tag name
     List<Pair<String, HighlightInfo>> list = infos.stream()
       .map(info -> pair(findTag(types, info), info))
@@ -544,7 +538,7 @@ public class ExpectedHighlightingData {
 
     // combine highlighting data with original text
     StringBuilder sb = new StringBuilder();
-    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, showAttributesKeys, messagesBundle);
+    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, showAttributesKeys, messageBundles);
     sb.insert(0, text.substring(0, offsets[1]));
     return sb.toString();
   }
@@ -553,7 +547,7 @@ public class ExpectedHighlightingData {
                                    List<? extends Pair<String, HighlightInfo>> list, int index,
                                    String text, int endPos, int startPos,
                                    boolean showAttributesKeys,
-                                   ResourceBundle messagesBundle) {
+                                   ResourceBundle... messageBundles) {
     int i = index;
     while (i < list.size()) {
       Pair<String, HighlightInfo> pair = list.get(i);
@@ -569,7 +563,7 @@ public class ExpectedHighlightingData {
       sb.insert(0, "</" + severity + '>');
       endPos = info.endOffset;
       if (prev != null && prev.endOffset > info.startOffset) {
-        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys, messagesBundle);
+        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys, messageBundles);
         i = offsets[0] - 1;
         endPos = offsets[1];
       }
@@ -577,18 +571,29 @@ public class ExpectedHighlightingData {
 
       String str = '<' + severity + " ";
       String bundleKey = null;
-      if (messagesBundle != null) {
-        Enumeration<String> keys = messagesBundle.getKeys();
+      Object[] bundleMsgParams = null;
+      for (ResourceBundle bundle : messageBundles) {
+        Enumeration<String> keys = bundle.getKeys();
         while (keys.hasMoreElements()) {
           String key = keys.nextElement();
-          if (messagesBundle.getString(key).equals(info.getDescription())) {
+          ParsePosition position = new ParsePosition(0);
+          Object[] parse = new MessageFormat(bundle.getString(key)).parse(info.getDescription(), position);
+          if (parse != null && position.getIndex() == info.getDescription().length() && position.getErrorIndex() == -1) {
+            if (bundleKey != null) {
+              bundleKey = null;
+              break; // several keys matched, don't suggest bundle key
+            }
             bundleKey = key;
-            break;
+            bundleMsgParams = parse;
           }
         }
       }
       if (bundleKey != null) {
-        str += "bundleKey=\"" + StringUtil.escapeQuotes(bundleKey) + '"';
+        String bundleMsg = bundleKey;
+        if (bundleMsgParams.length > 0) {
+          bundleMsg += '|' + StringUtil.join(ContainerUtil.map(bundleMsgParams, Objects::toString), "|");
+        }
+        str += "bundleMsg=\"" + StringUtil.escapeQuotes(bundleMsg) + '"';
       }
       else {
         str += "descr=\"" + StringUtil.escapeQuotes(String.valueOf(info.getDescription())) + '"';
