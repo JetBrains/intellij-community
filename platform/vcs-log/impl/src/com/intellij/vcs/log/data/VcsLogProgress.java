@@ -24,7 +24,7 @@ public class VcsLogProgress implements Disposable {
   private boolean myDisposed = false;
 
   public VcsLogProgress(@NotNull Project project, @NotNull Disposable parent) {
-    Disposer.register(parent, this);
+    Disposer.register(parent, () -> Disposer.dispose(this));
     Disposer.register(project, this);
   }
 
