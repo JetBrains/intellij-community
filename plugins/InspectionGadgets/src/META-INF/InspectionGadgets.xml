@@ -770,7 +770,7 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryContinueInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryDefault" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.default.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryDefaultInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryLabelOnBreakStatement" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.label.on.break.statement.display.name" groupBundle="messages.InspectionsBundle"

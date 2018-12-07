@@ -2,7 +2,9 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -14,9 +16,66 @@ public class UnnecessaryDefaultInspectionTest extends LightInspectionTestCase {
     doTest();
   }
 
+  public void testSwitchExpression() {
+    doTest("class X {\n" +
+           "  boolean x(E e) {\n" +
+           "    return switch (e) {\n" +
+           "      case A, B -> true;\n" +
+           "      /*'default' branch is unnecessary*//*_*/default/**/ -> false;\n" +
+           "    };\n" +
+           "  }\n" +
+           "}");
+    checkQuickFix("Remove 'default' branch",
+                  "class X {\n" +
+                  "  boolean x(E e) {\n" +
+                  "    return switch (e) {\n" +
+                  "      case A, B -> true;\n" +
+                  "    };\n" +
+                  "  }\n" +
+                  "}");
+  }
+
+  public void testSwitchFallthrough() {
+    doTest("class X {\n" +
+           "  void x(E e) {\n" +
+           "    switch (e) {\n" +
+           "      case A,B:\n" +
+           "          System.out.println(e);\n" +
+           "      /*'default' branch is unnecessary*/default/*_*//**/:\n" +
+           "          System.out.println();\n" +
+           "    }\n" +
+           "  }\n" +
+           "}\n");
+    checkQuickFix("Remove 'default' branch",
+                  "class X {\n" +
+                  "  void x(E e) {\n" +
+                  "    switch (e) {\n" +
+                  "      case A,B:\n" +
+                  "          System.out.println(e);\n" +
+                  "          System.out.println();\n" +
+                  "    }\n" +
+                  "  }\n" +
+                  "}\n");
+  }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "enum E { A, B }"
+    };
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new UnnecessaryDefaultInspection();
+    final UnnecessaryDefaultInspection inspection = new UnnecessaryDefaultInspection();
+    inspection.onlyReportSwitchExpressions = false;
+    return inspection;
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_12;
   }
 }
