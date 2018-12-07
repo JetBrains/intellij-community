@@ -78,8 +78,10 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
         return myCodeStyleSettings;
       }
 
+      Element element = dataHolder.read();
+      // nullize only after element is successfully read, otherwise our state will be undefined - both myDataHolder and myCodeStyleSettings are null
       myDataHolder = null;
-      settings = init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), dataHolder.read());
+      settings = init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), element);
       dataHolder.updateDigest(this);
       myParentSchemeName = null;
     }
