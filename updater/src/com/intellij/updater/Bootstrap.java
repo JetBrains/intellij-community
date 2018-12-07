@@ -3,30 +3,34 @@ package com.intellij.updater;
 
 import java.io.*;
 import java.lang.reflect.Method;
-import java.net.JarURLConnection;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.stream.Stream;
+import java.net.*;
+import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class Bootstrap {
-  private static final String IJ_PLATFORM_UPDATER = "ijPlatformUpdater";
-
   /**
    * This property allows applying patches without creating backups. In this case a callee is responsible for that.
    * Example: JetBrains Toolbox App copies a tool it wants to update and then applies the patch.
    */
   private static final String NO_BACKUP_PROPERTY = "no.backup";
 
-  public static void main(String[] args) throws Exception {
-    if (args.length != 1) return;
+  public static void main(String[] args) {
+    try {
+      mainNoExceptionsCatch(args);
+    }
+    catch (Throwable t) {
+      //noinspection CallToPrintStackTrace
+      t.printStackTrace();
+      System.exit(1);
+    }
+  }
+
+  private static void mainNoExceptionsCatch(String[] args) throws Exception {
+    if (args.length != 1) throw new Exception("Expected one argument: path to application installation");
 
     String path = args[0].endsWith("\\") || args[0].endsWith("/") ? args[0] : args[0] + File.separator;
     if (isMac() && path.endsWith(".app/")) {
@@ -36,46 +40,20 @@ public class Bootstrap {
       }
     }
 
-    cleanUp();
-
     ClassLoader cl = Bootstrap.class.getClassLoader();
-    URL dependencies = cl.getResource("dependencies.txt");
-    if (dependencies == null) {
-      log("missing dependencies file");
-      return;
+    URL dependenciesTxt = cl.getResource("dependencies.txt");
+    if (dependenciesTxt == null) throw new Exception("Missing dependencies.txt file in classpath");
+
+    Map<String, byte[]> classes = new HashMap<>();
+    for (File dependencyFile : readDependenciesTxt(path, dependenciesTxt)) {
+      // Load dependency JARs in memory not to lock them on disk
+      collectClassesFromJar(dependencyFile, classes);
     }
 
-    List<URL> urls = new ArrayList<>();
-    List<File> files = new ArrayList<>();
+    URL jarsInMemoryUrl = createInMemoryUrlClassesRoot(classes);
+    URL updaterUrl = Bootstrap.class.getProtectionDomain().getCodeSource().getLocation();
 
-    urls.add(((JarURLConnection)dependencies.openConnection()).getJarFileURL());
-
-    try (BufferedReader br = new BufferedReader(new InputStreamReader(dependencies.openStream()))) {
-      String line;
-      while ((line = br.readLine()) != null) {
-        File file = new File(path + line);
-        Path tmp = Files.createTempFile(IJ_PLATFORM_UPDATER + file.getName(), "");
-        try (OutputStream targetStream = Files.newOutputStream(tmp)) {
-          Files.copy(file.toPath(), targetStream);
-        }
-        urls.add(tmp.toFile().toURI().toURL());
-        files.add(tmp.toFile());
-      }
-    }
-
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      log(System.getProperty("os.name"));
-      try {
-        for (File file : files) {
-          log("Deleting " + file.getName() + " - " + (file.delete() ? "OK" : "FAIL"));
-        }
-      }
-      catch (Exception e) {
-        log(e);
-      }
-    }));
-
-    try (URLClassLoader loader = new URLClassLoader(urls.toArray(new URL[0]), null)) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[]{updaterUrl, jarsInMemoryUrl}, null)) {
       Class<?> runner = loader.loadClass("com.intellij.updater.Runner");
       Method main = runner.getMethod("main", String[].class);
 
@@ -92,39 +70,62 @@ public class Bootstrap {
     }
   }
 
-  private static void cleanUp() {
-    log("Cleaning up...");
-    try {
-      Path file = Files.createTempFile("", "");
-      try (Stream<Path> listing = Files.list(file.getParent())) {
-        listing.forEach((p) -> {
-          if (!p.toFile().isDirectory() && p.toFile().getName().startsWith(IJ_PLATFORM_UPDATER)) {
-            try {
-              log("Deleting " + p.toString());
-              Files.delete(p);
-            }
-            catch (IOException e) {
-              log("Can't delete " + p.toString());
-              log(e);
-            }
-          }
-        });
+  private static void collectClassesFromJar(File jarFile, Map<String, byte[]> classes) throws IOException {
+    byte[] buffer = new byte[1024];
+
+    try (InputStream fileInputStream = new FileInputStream(jarFile);
+         JarInputStream is = new JarInputStream(fileInputStream)) {
+      JarEntry nextEntry;
+      while ((nextEntry = is.getNextJarEntry()) != null) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(Math.max((int)nextEntry.getSize(), 1024));
+
+        int len;
+        while ((len = is.read(buffer)) > 0) {
+          outputStream.write(buffer, 0, len);
+        }
+
+        classes.put("/" + nextEntry.getName(), outputStream.toByteArray());
       }
-      Files.delete(file);
-    }
-    catch (IOException e) {
-      log(e);
     }
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static void log(String msg) {
-    System.out.println(msg);
+  private static URL createInMemoryUrlClassesRoot(Map<String, byte[]> classes) throws MalformedURLException {
+    return new URL("x-in-memory", null, -1, "/", new URLStreamHandler() {
+      @Override
+      protected URLConnection openConnection(URL u) throws IOException {
+        final byte[] data = classes.get(u.getFile());
+        if (data == null) {
+          throw new FileNotFoundException(u.getFile());
+        }
+
+        return new URLConnection(u) {
+          @Override
+          public void connect() {
+          }
+
+          @Override
+          public InputStream getInputStream() {
+            return new ByteArrayInputStream(data);
+          }
+        };
+      }
+    });
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static void log(Throwable ex) {
-    ex.printStackTrace(System.err);
+  private static List<File> readDependenciesTxt(String basePath, URL dependenciesTxtUrl) throws Exception {
+    List<File> files = new ArrayList<>();
+
+    try (BufferedReader br = new BufferedReader(new InputStreamReader(dependenciesTxtUrl.openStream()))) {
+      String line;
+      while ((line = br.readLine()) != null) {
+        File file = new File(basePath + line);
+        if (!file.exists()) throw new Exception("File from dependencies.txt is not found: " + file);
+
+        files.add(file);
+      }
+    }
+
+    return files;
   }
 
   private static boolean isMac() {
