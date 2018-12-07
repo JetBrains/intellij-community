@@ -4,8 +4,6 @@ package org.jetbrains.intellij.build.images.sync
 import org.jetbrains.intellij.build.images.ImageExtension
 import org.jetbrains.intellij.build.images.imageSize
 import org.jetbrains.intellij.build.images.isImage
-import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
 import java.io.IOException
@@ -224,8 +222,9 @@ private fun searchTestRoots(devRepoDir: String) = try {
   JpsSerializationManager.getInstance()
     .loadModel(devRepoDir, null)
     .project.modules.flatMap {
-    it.getSourceRoots(JavaSourceRootType.TEST_SOURCE) +
-    it.getSourceRoots(JavaResourceRootType.TEST_RESOURCE)
+    it.sourceRoots.filter { root ->
+      root.rootType.isForTests
+    }
   }.mapTo(mutableSetOf()) { it.file }
 }
 catch (e: IOException) {
