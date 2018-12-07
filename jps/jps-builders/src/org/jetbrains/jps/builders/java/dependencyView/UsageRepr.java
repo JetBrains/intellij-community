@@ -227,12 +227,11 @@ class UsageRepr {
 
       final MethodUsage that = (MethodUsage)o;
 
-      if (!Arrays.equals(myArgumentTypes, that.myArgumentTypes)) return false;
       if (myReturnType != null ? !myReturnType.equals(that.myReturnType) : that.myReturnType != null) return false;
       if (myName != that.myName) return false;
       if (myOwner != that.myOwner) return false;
 
-      return true;
+      return Arrays.equals(myArgumentTypes, that.myArgumentTypes);
     }
 
     @Override
