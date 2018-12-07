@@ -352,7 +352,7 @@
     <testFinder implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestFinder"/>
     <testCreator language="Python" implementationClass="com.jetbrains.python.codeInsight.testIntegration.PyTestCreator"/>
 
-    <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
+    <stubElementTypeHolder class="com.jetbrains.python.PyStubElementTypes" externalIdPrefix="py."/>
     <localInspection language="Python" shortName="PyTestParametrizedInspection" suppressId="PyTestParametrized"
                      bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.pytest-parametrized" groupKey="INSP.GROUP.python"
                      enabledByDefault="true" level="WARNING"
