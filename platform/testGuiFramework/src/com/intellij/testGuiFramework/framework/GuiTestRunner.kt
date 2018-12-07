@@ -37,6 +37,7 @@ import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
 import com.intellij.testGuiFramework.remote.transport.*
 import com.intellij.testGuiFramework.testCases.PluginTestCase.Companion.PLUGINS_INSTALLED
 import com.intellij.testGuiFramework.testCases.SystemPropertiesTestCase.Companion.SYSTEM_PROPERTIES
+import com.intellij.util.io.exists
 import org.junit.Assert
 import org.junit.AssumptionViolatedException
 import org.junit.internal.runners.model.EachTestNotifier
@@ -104,7 +105,7 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
           if (restartIdeAfterTest && message.content.type == Type.FINISHED) {
             restartIde(ide = getIdeFromMethod(method), runIde = ::runIde)
             //we're removing config/options/recentProjects.xml to avoid auto-opening of the previous project
-            Files.delete(Paths.get(PathManager.getConfigPath(), "options", "recentProjects.xml"))
+            deleteRecentProjectsSettings()
             SERVER_LOG.info("Restarting IDE...")
           }
           testIsRunning = processJUnitEvent(message.content, eachNotifier)
@@ -143,6 +144,15 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
         testIsRunning = false
       }
     }
+  }
+
+  private fun deleteRecentProjectsSettings() {
+    val recentProjects = Paths.get(PathManager.getConfigPath(), "options", "recentProjects.xml")
+    if (recentProjects.exists())
+      Files.delete(recentProjects)
+    val recentProjectDirectories = Paths.get(PathManager.getConfigPath(), "options", "recentProjectDirectories.xml")
+    if (recentProjectDirectories.exists())
+      Files.delete(recentProjectDirectories)
   }
 
   private fun sendRunTestCommand(method: FrameworkMethod, testName: String) {
