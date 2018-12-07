@@ -260,7 +260,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return settings != null && !(settings instanceof GenericDebuggerRunnerSettings);
   }
 
-  protected void appendForkInfo(Executor executor) throws ExecutionException {
+  public void appendForkInfo(Executor executor) throws ExecutionException {
     final String forkMode = getForkMode();
     if (Comparing.strEqual(forkMode, "none")) {
       if (forkPerModule()) {

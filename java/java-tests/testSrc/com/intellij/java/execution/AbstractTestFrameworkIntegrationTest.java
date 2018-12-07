@@ -47,10 +47,12 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     ExecutionEnvironment
       environment = new ExecutionEnvironment(executor, ProgramRunnerUtil.getRunner(DefaultRunExecutor.EXECUTOR_ID, settings), settings, project);
     JavaTestFrameworkRunnableState state = ((JavaTestConfigurationBase)configuration).getState(executor, environment);
+    state.appendForkInfo(executor);
     state.appendRepeatMode();
 
     JavaParameters parameters = state.getJavaParameters();
     parameters.setUseDynamicClasspath(project);
+    //parameters.getVMParametersList().addParametersString("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5007");
     GeneralCommandLine commandLine = parameters.toCommandLine();
 
     OSProcessHandler process = new OSProcessHandler(commandLine);
@@ -97,6 +99,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
         }
         catch (ParseException e) {
           e.printStackTrace();
+          System.err.println(text);
         }
       }
     });
