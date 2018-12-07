@@ -10,7 +10,7 @@
   <icon size32="/PyCharmEdu32.png" size16="/PyCharmEdu16.png" ico="PyCharmEdu.ico" svg="/PyCharmEdu.svg"/>
   <icon-eap svg="/PyCharmEdu-eap.svg"/>
   <package code="__PACKAGE_CODE__"/>
-  <names product="PyCharm" edition="Edu" script="charm"/>
+  <names product="PyCharm" edition="Edu" script="pycharm" default-launcher-name="charm"/>
 
   <welcome-screen logo-url="/PyCharmEduWelcomeScreen.png"/>
 
