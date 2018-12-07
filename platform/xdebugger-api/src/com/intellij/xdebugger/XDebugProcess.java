@@ -167,7 +167,7 @@ public abstract class XDebugProcess {
   }
 
   @NotNull
-  public Promise<Void> stopAsync() {
+  public Promise<Object> stopAsync() {
     stop();
     return Promises.resolvedPromise();
   }
