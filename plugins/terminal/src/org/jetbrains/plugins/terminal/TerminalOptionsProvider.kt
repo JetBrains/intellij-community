@@ -11,10 +11,9 @@ import java.io.File
 /**
  * @author traff
  */
-
 @State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml"))])
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
-  private val myState = State()
+  private var myState = State()
 
   var shellPath: String? by ValueWithDefault(State::myShellPath, myState) { defaultShellPath }
 
@@ -23,18 +22,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   override fun loadState(state: State) {
-    myState.myCloseSessionOnLogout = state.myCloseSessionOnLogout
-    myState.myReportMouse = state.myReportMouse
-    myState.mySoundBell = state.mySoundBell
-    myState.myTabName = state.myTabName
-    myState.myCopyOnSelection = state.myCopyOnSelection
-    myState.myPasteOnMiddleMouseButton = state.myPasteOnMiddleMouseButton
-    myState.myOverrideIdeShortcuts = state.myOverrideIdeShortcuts
-    myState.myShellIntegration = state.myShellIntegration
-    myState.myShellPath = state.myShellPath
-    myState.myHighlightHyperlinks = state.myHighlightHyperlinks
-    myState.myUserSpecifiedEnvs = LinkedHashMap(state.myUserSpecifiedEnvs)
-    myState.myPassParentEnvs = state.myPassParentEnvs
+    myState = state
   }
 
   fun closeSessionOnLogout(): Boolean {
