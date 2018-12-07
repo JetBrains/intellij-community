@@ -25,6 +25,7 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   private TestPlan myTestPlan;
@@ -85,6 +86,7 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
     }
   }
 
+  private static final Object FAKE_ROOT = new Object();
   @Override
   public Object getTestToStart(String[] args, String name) {
     final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, new String[1]);
@@ -92,26 +94,40 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
     myTestPlan = launcher.discover(discoveryRequest);
     final Set<TestIdentifier> roots = myTestPlan.getRoots();
     if (roots.isEmpty()) return null;
-    return roots.stream()
+    List<TestIdentifier> nonEmptyRoots = roots.stream()
       .filter(identifier -> !myTestPlan.getChildren(identifier).isEmpty())
-      .findFirst()
-      .orElse(null);
+      .collect(Collectors.toList());
+    if (nonEmptyRoots.isEmpty()) return null;
+    return nonEmptyRoots.size() == 1 ? nonEmptyRoots.get(0) : FAKE_ROOT;
   }
 
   @Override
   public List getChildTests(Object description) {
+    if (description == FAKE_ROOT) {
+      return myTestPlan.getRoots()
+        .stream()
+        .flatMap(root -> myTestPlan.getChildren(root).stream())
+        .collect(Collectors.toList());
+    }
     return new ArrayList<>(myTestPlan.getChildren((TestIdentifier)description));
   }
 
+  /**
+   * {@link com.intellij.execution.junit.TestClass#getForkMode()} 
+   */
   @Override
   public String getStartDescription(Object child) {
+    if (!myTestPlan.getParent((TestIdentifier)child).isPresent()) {
+      //if fork mode is "repeat", then the only child is the corresponding class
+      child = myTestPlan.getChildren((TestIdentifier)child).iterator().next();
+    }
     final TestIdentifier testIdentifier = (TestIdentifier)child;
     final String className = JUnit5TestExecutionListener.getClassName(testIdentifier);
     final String methodSignature = JUnit5TestExecutionListener.getMethodSignature(testIdentifier);
     if (methodSignature != null) {
       return className + "," + methodSignature;
     }
-    return className != null ? className : (testIdentifier).getDisplayName();
+    return className != null ? className : testIdentifier.getDisplayName();
   }
 
   @Override

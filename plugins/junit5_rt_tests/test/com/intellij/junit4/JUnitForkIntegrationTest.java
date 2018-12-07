@@ -13,9 +13,11 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
+import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.TestFailed;
+import jetbrains.buildServer.messages.serviceMessages.TestStarted;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
@@ -85,6 +87,54 @@ public class JUnitForkIntegrationTest extends AbstractTestFrameworkCompilingInte
     assertTrue(processOutput.sys.toString().contains("-junit5"));
     assertEmpty(processOutput.out);
     assertSize(2, ContainerUtil.filter(processOutput.messages, TestFailed.class::isInstance));
+  }
+
+  public void testForkPerClassOnTwoEngines() throws ExecutionException {
+    final JUnitConfiguration configuration = createRunPackageConfiguration("klass");
+    configuration.setSearchScope(TestSearchScope.SINGLE_MODULE);
+    configuration.setModule(myModule);
+    configuration.setForkMode(JUnitConfiguration.FORK_KLASS);
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    assertTrue(processOutput.sys.toString().contains("-junit5"));
+    assertEmpty(processOutput.out);
+    assertSize(2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
+  }
+
+  public void testForkPerClassOnTwoEnginesWithRepeat() throws ExecutionException {
+    final JUnitConfiguration configuration = createRunPackageConfiguration("klass");
+    configuration.setSearchScope(TestSearchScope.SINGLE_MODULE);
+    configuration.setModule(myModule);
+    configuration.setForkMode(JUnitConfiguration.FORK_KLASS);
+
+    configuration.setRepeatCount(2);
+    configuration.setRepeatMode(RepeatCount.N);
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    assertTrue(processOutput.sys.toString().contains("-junit5"));
+    assertEmpty(processOutput.out);
+    assertSize(4, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
+  }
+
+  public void testForkPerClassOnRepeat() throws ExecutionException {
+    PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("klass");
+    assertNotNull(aPackage);
+    JUnitConfiguration configuration = createConfiguration(aPackage);
+    configuration.setModule(myModule);
+    configuration.setForkMode(JUnitConfiguration.FORK_KLASS);
+    configuration.setRepeatCount(2);
+    configuration.setRepeatMode(RepeatCount.N);
+    JUnitConfiguration.Data data = configuration.getPersistentData();
+    data.TEST_OBJECT = JUnitConfiguration.TEST_CLASS;
+    data.MAIN_CLASS_NAME = "klass.MyTest5";
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    assertTrue(processOutput.sys.toString().contains("-junit5"));
+    assertEmpty(processOutput.out);
+    assertSize(2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
   }
 
   @NotNull
