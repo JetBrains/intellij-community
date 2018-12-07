@@ -131,8 +131,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     getPicoContainer().registerComponentInstance(Application.class, this);
     getPicoContainer().registerComponentInstance(TransactionGuard.class.getName(), myTransactionGuard);
 
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    IconLoader.setStrictGlobally(BundleBase.assertKeyIsFound = isUnitTestMode || isInternal);
+    boolean strictMode = isUnitTestMode || isInternal;
+    BundleBase.assertOnMissedKeys(strictMode);
+    IconLoader.setStrictGlobally(strictMode);
 
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
 
