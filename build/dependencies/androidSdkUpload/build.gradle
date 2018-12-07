@@ -1,0 +1,35 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+plugins {
+  id 'com.jfrog.bintray' version '1.8.4'
+}
+
+def bintrayUser = System.properties['user'] ?: ''
+def bintrayKey = System.properties['key'] ?: ''
+def sdkVersion = System.properties['version'] ?: ''
+def skdPath = System.properties['path'] ?: ''
+def skdPackage = System.properties['package'] ?: ''
+
+bintray {
+  publish = true
+  user = bintrayUser
+  key = bintrayKey
+  filesSpec {
+    from skdPath
+  }
+  pkg {
+    userOrg = 'jetbrains'
+    repo = 'intellij-third-party-dependencies/android-sdk'
+    name = skdPackage
+    version {
+      name = sdkVersion
+    }
+  }
+}
+
+task uploadAndroidSdk(dependsOn: bintrayUpload)
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '4.10'
+  distributionUrl = "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-${gradleVersion}-bin.zip"
+}

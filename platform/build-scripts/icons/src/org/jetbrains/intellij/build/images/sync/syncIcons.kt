@@ -14,14 +14,14 @@ internal fun syncDevRepo(context: Context) {
   if (context.doSyncDevRepo) {
     log("Syncing ${context.devRepoName}:")
     syncAdded(context.byDesigners.added, context.icons, context.devRepoDir) { changesToReposMap(it) }
-    syncModified(context.byDesigners.modified, context.devIcons, context.icons)
+    syncModified(context.devRepoRoot, context.byDesigners.modified, context.devIcons, context.icons)
     if (context.doSyncRemovedIconsInDev) syncRemoved(context.byDesigners.removed, context.devIcons)
   }
 }
 
 internal fun syncIconsRepo(context: Context, byDev: Changes) {
   syncAdded(byDev.added, context.devIcons, context.iconsRepoDir) { context.iconsRepo }
-  syncModified(byDev.modified, context.icons, context.devIcons)
+  syncModified(context.iconsRepoDir, byDev.modified, context.icons, context.devIcons)
   syncRemoved(byDev.removed, context.icons)
 }
 
@@ -48,19 +48,29 @@ private fun syncAdded(added: MutableCollection<String>,
   }
 }
 
-private fun syncModified(modified: MutableCollection<String>,
+private fun syncModified(targetRoot: File,
+                         modified: MutableCollection<String>,
                          targetRepoMap: Map<String, GitObject>,
                          sourceRepoMap: Map<String, GitObject>) {
   stageFiles(modified) { file, skip, stage ->
-    val target = targetRepoMap[file]!!
     val source = sourceRepoMap[file]!!
-    if (target.hash == source.hash) {
-      log("$file is not modified, skipping")
-      skip()
+    if (targetRepoMap.containsKey(file)) {
+      val target = targetRepoMap[file]!!
+      if (target.hash == source.hash) {
+        log("$file is not modified, skipping")
+        skip()
+      }
+      else {
+        source.file.copyTo(target.file, overwrite = true)
+        stage(target.repo, target.path)
+      }
     }
     else {
-      source.file.copyTo(target.file, overwrite = true)
-      stage(target.repo, target.path)
+      log("$file should be modified but not exist, creating")
+      val targetFile = targetRoot.resolve(file)
+      val repo = changesToReposMap(targetFile)
+      source.file.copyTo(targetFile)
+      stage(repo, targetFile.toRelativeString(repo))
     }
   }
 }

@@ -46,7 +46,7 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
     }
     else log("No changes are found")
   }
-  else if (isUnderTeamCity()) {
+  else if (true) {
     findCommitsToSync(context)
     createReviews(context)
     val investigator = if (context.isFail() && context.assignInvestigation) {
