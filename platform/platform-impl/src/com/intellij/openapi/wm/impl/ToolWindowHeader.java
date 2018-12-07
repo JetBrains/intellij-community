@@ -17,7 +17,6 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.Producer;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -31,12 +30,13 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.util.function.Supplier;
 
 /**
  * @author pegov
  */
 public abstract class ToolWindowHeader extends JPanel implements Disposable, UISettingsListener {
-  @NotNull private final Producer<? extends ActionGroup> myGearProducer;
+  @NotNull private final Supplier<? extends ActionGroup> myGearProducer;
 
   private ToolWindow myToolWindow;
   private BufferedImage myImage;
@@ -46,11 +46,11 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   private final DefaultActionGroup myActionGroup = new DefaultActionGroup();
   private final DefaultActionGroup myActionGroupWest = new DefaultActionGroup();
 
-  private ActionToolbar myToolbar;
+  private final ActionToolbar myToolbar;
   private ActionToolbar myToolbarWest;
   private final JPanel myWestPanel;
 
-  ToolWindowHeader(final ToolWindowImpl toolWindow, @NotNull final Producer<? extends ActionGroup> gearProducer) {
+  ToolWindowHeader(final ToolWindowImpl toolWindow, @NotNull final Supplier<? extends ActionGroup> gearProducer) {
     myGearProducer = gearProducer;
     setLayout(new BorderLayout());
     AccessibleContextUtil.setName(this, "Tool Window Header");
@@ -117,9 +117,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     myWestPanel.add(toolWindow.getContentUI().getTabComponent());
     ToolWindowContentUi.initMouseListeners(myWestPanel, toolWindow.getContentUI(), true);
 
-    JComponent component;
-    int padding;
-
     myToolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLWINDOW_TITLE,
       new DefaultActionGroup(myActionGroup, new ShowOptionsAction(), new HideAction()),
@@ -128,8 +125,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myToolbar.setReservePlaceAutoPopupIcon(false);
 
-    component = myToolbar.getComponent();
-    padding = JBUI.CurrentTheme.ToolWindow.tabVerticalPadding();
+    JComponent component = myToolbar.getComponent();
+    int padding = JBUI.CurrentTheme.ToolWindow.tabVerticalPadding();
     component.setBorder(BorderFactory.createEmptyBorder(padding, 0, padding, 0));
     component.setOpaque(false);
     add(component, BorderLayout.EAST);
@@ -217,7 +214,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     myToolWindow = null;
   }
 
-  void setTabActions(AnAction[] actions) {
+  void setTabActions(@NotNull AnAction[] actions) {
     if (myToolbarWest == null) {
       initWestToolBar(myWestPanel);
     }
@@ -231,7 +228,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     }
   }
 
-  void setAdditionalTitleActions(AnAction[] actions) {
+  void setAdditionalTitleActions(@NotNull AnAction[] actions) {
     myActionGroup.removeAll();
     myActionGroup.addAll(actions);
     if (actions.length > 0) {
@@ -322,13 +319,9 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
   protected abstract void hideToolWindow();
 
-  protected abstract void sideHidden();
-
-  protected abstract void toolWindowTypeChanged(@NotNull ToolWindowType type);
-
   private class ShowOptionsAction extends DumbAwareAction {
     ShowOptionsAction() {
-      copyFrom(myGearProducer.produce());
+      copyFrom(myGearProducer.get());
     }
 
     @Override
@@ -336,7 +329,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       final InputEvent inputEvent = e.getInputEvent();
       final ActionPopupMenu popupMenu =
         ((ActionManagerImpl)ActionManager.getInstance())
-          .createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, myGearProducer.produce(), new MenuItemPresentationFactory(true));
+          .createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, myGearProducer.get(), new MenuItemPresentationFactory(true));
 
       int x = 0;
       int y = 0;

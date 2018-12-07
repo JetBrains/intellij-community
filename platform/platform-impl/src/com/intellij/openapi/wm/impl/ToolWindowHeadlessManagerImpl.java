@@ -202,10 +202,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public String getLastActiveToolWindowId(Condition<JComponent> condition) {
+  public String getLastActiveToolWindowId(Condition<? super JComponent> condition) {
     return null;
   }
 
+  @NotNull
   @Override
   public DesktopLayout getLayout() {
     return new DesktopLayout();

@@ -335,11 +335,7 @@ public final class TestWindowManager extends WindowManagerEx {
 
     @Override
     public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody) {
-      return new BalloonHandler() {
-        @Override
-        public void hide() {
-        }
-      };
+      return () -> { };
     }
 
     @Override
@@ -347,11 +343,7 @@ public final class TestWindowManager extends WindowManagerEx {
                                                   @NotNull String htmlBody,
                                                   @Nullable Icon icon,
                                                   @Nullable HyperlinkListener listener) {
-      return new BalloonHandler() {
-        @Override
-        public void hide() {
-        }
-      };
+      return () -> { };
     }
   }
 }
