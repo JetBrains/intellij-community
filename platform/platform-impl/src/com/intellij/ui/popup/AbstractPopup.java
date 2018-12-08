@@ -555,13 +555,7 @@ public class AbstractPopup implements JBPopup {
   @NotNull
   private RelativePoint guessBestPopupLocation(@NotNull Editor editor) {
     RelativePoint preferredLocation = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-    Dimension targetSize = myDimensionServiceKey == null ? null : DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
-    if (targetSize == null) {
-      targetSize = getSize();
-    }
-    if (targetSize == null) {
-      targetSize = myComponent.getPreferredSize();
-    }
+    Dimension targetSize = getSizeForPositioning();
     Point preferredPoint = preferredLocation.getScreenPoint();
     Point result = getLocationAboveEditorLineIfPopupIsClippedAtTheBottom(preferredPoint, targetSize, editor);
     if (myLocateWithinScreen) {
