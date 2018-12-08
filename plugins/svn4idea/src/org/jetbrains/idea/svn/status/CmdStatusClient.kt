@@ -137,6 +137,12 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
   }
 
   companion object {
+    fun parseResult(base: File, result: String): Status? {
+      val ref = Ref<Status?>()
+      parseResult(base, null, Convertor { null }, result, StatusConsumer(ref::set))
+      return ref.get()
+    }
+
     @JvmStatic
     fun createStatusCallback(handler: StatusConsumer,
                              base: File,

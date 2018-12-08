@@ -1,5 +1,5 @@
 <status>
-  <target path=".">
+  <changelist name="list1">
     <entry path="file1.txt">
       <wc-status item="deleted" props="modified" revision="10" wc-locked="true" copied="true" switched="true" tree-conflicted="true">
         <commit revision="9">
@@ -22,6 +22,5 @@
         </lock>
       </repos-status>
     </entry>
-    <against revision="10"/>
-  </target>
+  </changelist>
 </status>
