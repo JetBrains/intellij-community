@@ -4,6 +4,7 @@ package org.jetbrains.idea.svn.status
 import com.intellij.openapi.util.Getter
 import com.intellij.openapi.vcs.FileStatus
 import org.jetbrains.idea.svn.SvnFileStatus
+import org.jetbrains.idea.svn.api.BaseNodeDescription
 import org.jetbrains.idea.svn.api.NodeKind
 import org.jetbrains.idea.svn.api.Revision
 import org.jetbrains.idea.svn.api.Url
@@ -12,10 +13,7 @@ import org.jetbrains.idea.svn.lock.Lock
 import org.jetbrains.idea.svn.status.StatusType.*
 import java.io.File
 
-/**
- * TODO: Could also inherit BaseNodeDescription when myNodeKind becomes final.
- */
-class Status private constructor(builder: Builder) {
+class Status private constructor(builder: Builder) : BaseNodeDescription(builder.nodeKind) {
   private val infoProvider = builder.infoProvider
   val info by lazy { if (itemStatus != STATUS_NONE) infoProvider.get() else null }
 
@@ -26,8 +24,7 @@ class Status private constructor(builder: Builder) {
     get() = field ?: info?.file
 
   private val fileExists = builder.fileExists
-  val nodeKind = builder.nodeKind
-    get() = if (fileExists) field else info?.nodeKind ?: field
+  override val nodeKind get() = if (fileExists) super.nodeKind else info?.nodeKind ?: super.nodeKind
 
   val revision: Revision = builder.revision
     get() {
