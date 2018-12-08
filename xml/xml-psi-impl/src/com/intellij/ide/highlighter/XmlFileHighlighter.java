@@ -108,7 +108,10 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
   @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-    return ourMap.get(tokenType).toArray(EMPTY);
+    //noinspection SynchronizationOnGetClass,SynchronizeOnThis
+    synchronized (getClass()) {
+      return ourMap.get(tokenType).toArray(EMPTY);
+    }
   }
 
   public static synchronized void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
