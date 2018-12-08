@@ -93,9 +93,10 @@ class SwitchStatementBranch {
     return Collections.unmodifiableSet(myPendingDeclarations);
   }
 
-  void addCaseValues(PsiSwitchLabelStatementBase label, CommentTracker commentTracker) {
+  void addCaseValues(PsiSwitchLabelStatementBase label, boolean defaultAlwaysExecuted, CommentTracker commentTracker) {
     if (label.isDefaultCase()) {
       setDefault();
+      setAlwaysExecuted(defaultAlwaysExecuted);
     }
     else {
       PsiExpressionList values = label.getCaseValues();

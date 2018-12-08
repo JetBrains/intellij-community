@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.BreakConverter;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -212,15 +213,15 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     final List<SwitchStatementBranch> allBranches = new ArrayList<>();
     SwitchStatementBranch currentBranch = null;
     final PsiElement[] children = body.getChildren();
-    boolean defaultAlwaysExecuted = true;
+    List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class);
+    boolean defaultAlwaysExecuted = !labels.isEmpty() &&
+                                    Objects.requireNonNull(ContainerUtil.getLastItem(labels)).isDefaultCase() &&
+                                    fallThroughTargets.containsAll(labels.subList(1, labels.size()));
     for (int i = 1; i < children.length - 1; i++) {
       final PsiElement statement = children[i];
       if (statement instanceof PsiSwitchLabelStatement) {
         final PsiSwitchLabelStatement label = (PsiSwitchLabelStatement)statement;
         if (currentBranch == null || !fallThroughTargets.contains(statement)) {
-          if (currentBranch != null) {
-            defaultAlwaysExecuted = false;
-          }
           openBranches.clear();
           currentBranch = new SwitchStatementBranch();
           currentBranch.addPendingDeclarations(declaredElements);
@@ -232,17 +233,13 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
           allBranches.add(currentBranch);
           openBranches.add(currentBranch);
         }
-        if (label.isDefaultCase()) {
-          currentBranch.setAlwaysExecuted(defaultAlwaysExecuted);
-          if (defaultAlwaysExecuted) {
-            openBranches.retainAll(Collections.singleton(currentBranch));
-          }
+        if (label.isDefaultCase() && defaultAlwaysExecuted) {
+          openBranches.retainAll(Collections.singleton(currentBranch));
         }
-        currentBranch.addCaseValues(label, commentTracker);
+        currentBranch.addCaseValues(label, defaultAlwaysExecuted, commentTracker);
       }
       else if (statement instanceof PsiSwitchLabeledRuleStatement) {
         openBranches.clear();
-        defaultAlwaysExecuted = false;
         PsiSwitchLabeledRuleStatement rule = (PsiSwitchLabeledRuleStatement)statement;
         currentBranch = new SwitchStatementBranch();
 
@@ -250,7 +247,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
         if (ruleBody != null) {
           currentBranch.addStatement(ruleBody);
         }
-        currentBranch.addCaseValues(rule, commentTracker);
+        currentBranch.addCaseValues(rule, defaultAlwaysExecuted, commentTracker);
         openBranches.add(currentBranch);
         allBranches.add(currentBranch);
       }
