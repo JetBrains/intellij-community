@@ -29,6 +29,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -170,24 +171,20 @@ public class ReferenceExpressionCompletionContributor {
   @NotNull 
   public static Set<PsiField> findConstantsUsedInSwitch(@Nullable PsiElement position) {
     return JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position)
-           ? findConstantsUsedInSwitch(ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(position, PsiSwitchStatement.class)))
+           ? findConstantsUsedInSwitch(ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)))
            : Collections.emptySet();
   }
 
   @NotNull
-  public static Set<PsiField> findConstantsUsedInSwitch(@NotNull PsiSwitchStatement sw) {
+  public static Set<PsiField> findConstantsUsedInSwitch(@NotNull PsiSwitchBlock sw) {
     final PsiCodeBlock body = sw.getBody();
     if (body == null) return Collections.emptySet();
 
     Set<PsiField> used = ContainerUtil.newLinkedHashSet();
     for (PsiStatement statement : body.getStatements()) {
-      if (statement instanceof PsiSwitchLabelStatement) {
-        final PsiExpression value = ((PsiSwitchLabelStatement)statement).getCaseValue();
-        if (value instanceof PsiReferenceExpression) {
-          final PsiElement target = ((PsiReferenceExpression)value).resolve();
-          if (target instanceof PsiField) {
-            used.add(CompletionUtil.getOriginalOrSelf((PsiField)target));
-          }
+      if (statement instanceof PsiSwitchLabelStatementBase) {
+        for (PsiEnumConstant constant : SwitchUtils.findEnumConstants((PsiSwitchLabelStatementBase)statement)) {
+          used.add(CompletionUtil.getOriginalOrSelf(constant));
         }
       }
     }

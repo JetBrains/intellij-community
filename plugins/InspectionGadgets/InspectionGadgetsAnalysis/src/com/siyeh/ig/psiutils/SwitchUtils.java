@@ -142,7 +142,7 @@ public class SwitchUtils {
    * @return true if given switch block has a rule-based format; false if it has conventional label-based format (like 'case 0:')
    * If switch body has no labels yet and language level permits, rule-based format is assumed.
    */
-  public static boolean isRuleFormatSwitch(PsiSwitchBlock block) {
+  public static boolean isRuleFormatSwitch(@NotNull PsiSwitchBlock block) {
     if (PsiUtil.getLanguageLevel(block).isLessThan(LanguageLevel.JDK_12_PREVIEW)) {
       return false;
     }

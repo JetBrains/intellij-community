@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.lookup.*;
@@ -81,13 +82,13 @@ public class JavaCompletionContributor extends CompletionContributor {
        psiElement().afterLeaf("(").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)));
 
   public static final ElementPattern<PsiElement> IN_SWITCH_LABEL =
-    psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2, PsiSwitchStatement.class)));
+    psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2, PsiSwitchBlock.class)));
   private static final ElementPattern IN_ENUM_SWITCH_LABEL =
     psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2,
-      psiElement(PsiSwitchStatement.class).with(new PatternCondition<PsiSwitchStatement>("enumExpressionType") {
+      psiElement(PsiSwitchBlock.class).with(new PatternCondition<PsiSwitchBlock>("enumExpressionType") {
         @Override
-        public boolean accepts(@NotNull PsiSwitchStatement psiSwitchStatement, ProcessingContext context) {
-          PsiExpression expression = psiSwitchStatement.getExpression();
+        public boolean accepts(@NotNull PsiSwitchBlock psiSwitchBlock, ProcessingContext context) {
+          PsiExpression expression = psiSwitchBlock.getExpression();
           if (expression == null) return false;
           PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
           return aClass != null && aClass.isEnum();
@@ -426,7 +427,13 @@ public class JavaCompletionContributor extends CompletionContributor {
     MultiMap<CompletionResultSet, LookupElement> items = MultiMap.create();
     final PsiElement position = parameters.getPosition();
     final boolean first = parameters.getInvocationCount() <= 1;
-    final boolean isSwitchLabel = IN_ENUM_SWITCH_LABEL.accepts(position);
+    final TailType switchLabelTail;
+    if (IN_ENUM_SWITCH_LABEL.accepts(position)) {
+      PsiSwitchBlock block = Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class));
+      switchLabelTail = TailTypes.forSwitchLabel(block);
+    } else {
+      switchLabelTail = null;
+    }
     final boolean isAfterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(position);
     final PsiType[] expectedTypes = ExpectedTypesGetter.getExpectedTypes(parameters.getPosition(), true);
@@ -453,8 +460,8 @@ public class JavaCompletionContributor extends CompletionContributor {
               continue;
             }
 
-            if (isSwitchLabel) {
-              items.putValue(result1, new IndentingDecorator(TailTypeDecorator.withTail(element, TailType.createSimpleTailType(':'))));
+            if (switchLabelTail != null) {
+              items.putValue(result1, new IndentingDecorator(TailTypeDecorator.withTail(element, switchLabelTail)));
             }
             else {
               final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
