@@ -68,6 +68,14 @@ public class AllIcons {
     public static final Icon Move_to_button = IconLoader.getIcon("/actions/move-to-button.svg"); // 12x12
     public static final Icon MoveDown = IconLoader.getIcon("/actions/moveDown.svg"); // 16x16
     public static final Icon MoveTo2 = IconLoader.getIcon("/actions/MoveTo2.svg"); // 16x16
+    public static final Icon MoveToBottomLeft = IconLoader.getIcon("/actions/moveToBottomLeft.svg"); // 16x16
+    public static final Icon MoveToBottomRight = IconLoader.getIcon("/actions/moveToBottomRight.svg"); // 16x16
+    public static final Icon MoveToLeftBottom = IconLoader.getIcon("/actions/moveToLeftBottom.svg"); // 16x16
+    public static final Icon MoveToLeftTop = IconLoader.getIcon("/actions/moveToLeftTop.svg"); // 16x16
+    public static final Icon MoveToRightBottom = IconLoader.getIcon("/actions/moveToRightBottom.svg"); // 16x16
+    public static final Icon MoveToRightTop = IconLoader.getIcon("/actions/moveToRightTop.svg"); // 16x16
+    public static final Icon MoveToTopLeft = IconLoader.getIcon("/actions/moveToTopLeft.svg"); // 16x16
+    public static final Icon MoveToTopRight = IconLoader.getIcon("/actions/moveToTopRight.svg"); // 16x16
     public static final Icon MoveUp = IconLoader.getIcon("/actions/moveUp.svg"); // 16x16
     public static final Icon New = IconLoader.getIcon("/actions/new.svg"); // 16x16
     public static final Icon NewFolder = IconLoader.getIcon("/actions/newFolder.svg"); // 16x16
