@@ -31,6 +31,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelecti
 import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsComponent
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
+import org.jetbrains.plugins.github.util.GithubSharedSettings
 import javax.swing.JComponent
 
 
@@ -41,7 +42,8 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                                   private val avatarLoader: CachingGithubUserAvatarLoader,
                                                   private val imageResizer: GithubImageResizer,
                                                   private val actionManager: ActionManager,
-                                                  private val autoPopupController: AutoPopupController) {
+                                                  private val autoPopupController: AutoPopupController,
+                                                  private val sharedSettings: GithubSharedSettings) {
 
   fun createComponent(requestExecutor: GithubApiRequestExecutor,
                       repository: GitRepository, remote: GitRemote,
@@ -63,7 +65,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
     private val dataLoader = GithubPullRequestsDataLoader(project, progressManager, git, requestExecutor, repository, remote,
                                                           account.server, repoDetails.fullPath)
     private val stateService = GithubPullRequestsStateServiceImpl(project, progressManager, dataLoader, requestExecutor,
-                                                                  account.server, repoDetails.fullPath)
+                                                                  account.server, repoDetails.fullPath, sharedSettings)
 
     private val changes = GithubPullRequestChangesComponent(project).apply {
       diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)

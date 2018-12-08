@@ -140,10 +140,14 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
       closeButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GithubIssueState.open
       closeAction.isEnabled = closeButton.isVisible && !busy
 
+      val canMerge = stateService.areMergeActionsAllowed()
+
       mergeButton.isVisible = state.editAllowed && state.state == GithubIssueState.open && !state.merged
-      mergeAction.isEnabled = mergeButton.isVisible && (state.mergeable ?: false) && !busy
-      rebaseMergeAction.isEnabled = mergeButton.isVisible && (state.rebaseable ?: false) && !busy
-      squashMergeAction.isEnabled = mergeButton.isVisible && (state.mergeable ?: false) && !busy
+      mergeAction.isEnabled = mergeButton.isVisible && (state.mergeable ?: false) && !busy && canMerge
+      rebaseMergeAction.isEnabled = mergeButton.isVisible && (state.rebaseable ?: false) && !busy && canMerge
+      squashMergeAction.isEnabled = mergeButton.isVisible && (state.mergeable ?: false) && !busy && canMerge
+
+      mergeButton.optionTooltipText = if (canMerge) null else "Merge actions are disabled for this project"
 
       val allowedActions = mutableListOf<Action>()
       if (state.mergeAllowed) allowedActions.add(mergeAction)

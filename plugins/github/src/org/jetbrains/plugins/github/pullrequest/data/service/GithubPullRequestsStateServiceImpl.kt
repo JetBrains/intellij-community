@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessa
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.GithubNotifications
+import org.jetbrains.plugins.github.util.GithubSharedSettings
 import java.util.*
 
 class GithubPullRequestsStateServiceImpl internal constructor(private val project: Project,
@@ -30,7 +31,8 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
                                                               private val dataLoader: GithubPullRequestsDataLoader,
                                                               private val requestExecutor: GithubApiRequestExecutor,
                                                               private val serverPath: GithubServerPath,
-                                                              private val repoPath: GithubFullPath)
+                                                              private val repoPath: GithubFullPath,
+                                                              private val sharedSettings: GithubSharedSettings)
   : GithubPullRequestsStateService {
 
   private val busySet = ContainerUtil.newConcurrentSet<Long>()
@@ -227,6 +229,11 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
 
   @CalledInAwt
   override fun isBusy(pullRequest: Long) = busySet.contains(pullRequest)
+
+  @CalledInAwt
+  override fun areMergeActionsAllowed(): Boolean {
+    return sharedSettings.areMergeActionsAllowed()
+  }
 
   override fun addPullRequestBusyStateListener(disposable: Disposable, listener: (Long) -> Unit) =
     busyChangeEventDispatcher.addListener(object : GithubPullRequestBusyStateListener {

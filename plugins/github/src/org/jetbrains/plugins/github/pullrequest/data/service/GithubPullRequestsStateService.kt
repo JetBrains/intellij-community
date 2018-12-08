@@ -25,4 +25,7 @@ interface GithubPullRequestsStateService {
 
   fun addPullRequestBusyStateListener(disposable: Disposable, listener: (Long) -> Unit)
 
+  @CalledInAwt
+  fun areMergeActionsAllowed(): Boolean
+
 }
