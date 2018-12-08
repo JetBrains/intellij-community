@@ -35,7 +35,7 @@ public class SvnStatusHandler extends DefaultHandler {
     return result;
   }
 
-  private org.jetbrains.idea.svn.status.Status myPending;
+  private org.jetbrains.idea.svn.status.Status.Builder myPending;
   private boolean myInRemoteStatus;
   private Lock.Builder myLockBuilder;
 
@@ -102,12 +102,12 @@ public class SvnStatusHandler extends DefaultHandler {
   }
 
   private void newPending(final Convertor<File, Info> infoGetter) {
-    final org.jetbrains.idea.svn.status.Status status = new org.jetbrains.idea.svn.status.Status();
+    final org.jetbrains.idea.svn.status.Status.Builder status = new org.jetbrains.idea.svn.status.Status.Builder();
     myPending = status;
     status.setInfoProvider(() -> infoGetter.convert(status.getFile()));
   }
 
-  public org.jetbrains.idea.svn.status.Status getPending() {
+  public org.jetbrains.idea.svn.status.Status.Builder getPending() {
     return myPending;
   }
 
@@ -206,7 +206,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock) {
     }
 
     @Override
@@ -218,7 +218,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
     }
   }
 
@@ -228,7 +228,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock) {
     }
 
     @Override
@@ -240,7 +240,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
     }
   }
 
@@ -250,7 +250,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock) {
     }
 
     @Override
@@ -262,7 +262,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
     }
   }
 
@@ -277,7 +277,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock) {
       final String revision = attributes.getValue("revision");
       if (!StringUtil.isEmpty(revision)) {
         status.setCommittedRevision(Revision.of(Long.valueOf(revision)));
@@ -293,7 +293,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
     }
   }
 
@@ -329,7 +329,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock) {
     }
 
     @Override
@@ -341,7 +341,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
       lock.setCreationDate(SvnUtil.parseDate(s));
     }
   }
@@ -352,7 +352,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock) {
     }
 
     @Override
@@ -364,7 +364,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
       lock.setComment(s);
     }
   }
@@ -375,7 +375,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock) {
     }
 
     @Override
@@ -387,7 +387,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
       lock.setOwner(s);
     }
   }
@@ -398,7 +398,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock) {
     }
 
     @Override
@@ -410,7 +410,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
       lock.setToken(s);
     }
   }
@@ -421,7 +421,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock) {
     }
 
     @Override
@@ -439,7 +439,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
     }
   }
 
@@ -449,7 +449,8 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) throws SAXException {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock)
+      throws SAXException {
       final StatusType propertiesStatus = parsePropertiesStatus(attributes);
       status.setRemotePropertyStatus(propertiesStatus);
 
@@ -472,7 +473,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
     }
   }
 
@@ -494,7 +495,8 @@ public class SvnStatusHandler extends DefaultHandler {
        revision="120">*/
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) throws SAXException {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock)
+      throws SAXException {
       final StatusType propertiesStatus = parsePropertiesStatus(attributes);
       status.setPropertyStatus(propertiesStatus);
       final StatusType contentsStatus = parseContentsStatus(attributes);
@@ -540,7 +542,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
     }
   }
 
@@ -553,14 +555,16 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) throws SAXException {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock)
+      throws SAXException {
       final String path = attributes.getValue("path");
       assertSAX(path != null);
       final File file = SvnUtil.resolvePath(myBase, path);
       status.setFile(file);
       final boolean exists = file.exists();
       if (exists) {
-        status.setNodeKind(exists, NodeKind.from(file.isDirectory()));
+        status.setFileExists(exists);
+        status.setNodeKind(NodeKind.from(file.isDirectory()));
       }
       else {
         // this is a hack. This is done so because of strange svn native client output:
@@ -596,12 +600,14 @@ c:\TestProjects\sortedProjects\Subversion\local\withExt82420\mod4>dir
 and no "mod4" under
 
         */
-        if (myBase.getName().equals(path) && !status.is(StatusType.MISSING, StatusType.STATUS_DELETED)) {
-          status.setNodeKind(true, NodeKind.DIR);
+        if (myBase.getName().equals(path) && StatusType.MISSING != status.getItemStatus() && StatusType.STATUS_DELETED != status.getItemStatus()) {
+          status.setFileExists(true);
+          status.setNodeKind(NodeKind.DIR);
           status.setFile(myBase);
           return;
         }
-        status.setNodeKind(exists, NodeKind.UNKNOWN);
+        status.setFileExists(exists);
+        status.setNodeKind(NodeKind.UNKNOWN);
       }
     }
 
@@ -615,7 +621,7 @@ and no "mod4" under
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
     }
   }
 
@@ -627,7 +633,8 @@ and no "mod4" under
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) throws SAXException {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock)
+      throws SAXException {
       final String name = attributes.getValue("name");
       assertSAX(!StringUtil.isEmptyOrSpaces(name));
       myName = name;
@@ -643,7 +650,7 @@ and no "mod4" under
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
     }
   }
 
@@ -653,7 +660,7 @@ and no "mod4" under
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock) {
     }
 
     @Override
@@ -665,7 +672,7 @@ and no "mod4" under
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
     }
   }
 
@@ -675,7 +682,7 @@ and no "mod4" under
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock) {
     }
 
     @Override
@@ -687,7 +694,7 @@ and no "mod4" under
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
     }
   }
 
@@ -697,7 +704,7 @@ and no "mod4" under
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) {
+    protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock) {
     }
 
     @Override
@@ -709,7 +716,7 @@ and no "mod4" under
     }
 
     @Override
-    public void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock) {
+    public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
     }
   }
 
@@ -722,7 +729,8 @@ and no "mod4" under
       myAwaitedChildrenMultiple = new HashSet<>(Arrays.asList(awaitedChildrenMultiple));
     }
 
-    protected abstract void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) throws SAXException;
+    protected abstract void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock)
+      throws SAXException;
 
     public abstract void postEffect(final DataCallback callback);
 
@@ -735,7 +743,7 @@ and no "mod4" under
       return myAwaitedChildren.remove(qName);
     }
 
-    public abstract void characters(String s, org.jetbrains.idea.svn.status.Status pending, Lock.Builder lock);
+    public abstract void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock);
 
     public void preAttributesEffect(DataCallback callback) {}
   }

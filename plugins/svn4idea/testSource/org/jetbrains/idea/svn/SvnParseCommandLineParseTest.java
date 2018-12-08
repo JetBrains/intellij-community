@@ -149,7 +149,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
       SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {
       @Override
       public void switchPath() {
-        statuses.add(handlerArr[0].getPending());
+        statuses.add(handlerArr[0].getPending().build());
         handlerArr[0].getPending().getNodeKind();
       }
 
@@ -215,9 +215,9 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
       SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {
       @Override
       public void switchPath() {
-        final Status pending = handlerArr[0].getPending();
+        final Status.Builder pending = handlerArr[0].getPending();
         pending.setChangeListName(clName[0]);
-        statuses.add(pending);
+        statuses.add(pending.build());
         pending.getNodeKind();
       }
 

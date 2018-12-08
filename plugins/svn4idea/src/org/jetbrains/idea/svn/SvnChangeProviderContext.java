@@ -240,11 +240,11 @@ class SvnChangeProviderContext implements StatusReceiver {
     final Info svnInfo = myVcs.getInfo(file);
 
     if (svnInfo != null) {
-      final Status svnStatus = new Status();
+      Status.Builder svnStatus = new Status.Builder();
       svnStatus.setRevision(svnInfo.getRevision());
       svnStatus.setNodeKind(NodeKind.from(filePath.isDirectory()));
       processChangeInList(SvnContentRevision.createBaseRevision(myVcs, filePath, svnInfo.getRevision()),
-                          CurrentContentRevision.create(filePath), FileStatus.MODIFIED, svnStatus);
+                          CurrentContentRevision.create(filePath), FileStatus.MODIFIED, svnStatus.build());
     }
   }
 

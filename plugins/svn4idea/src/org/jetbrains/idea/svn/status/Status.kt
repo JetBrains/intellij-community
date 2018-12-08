@@ -15,53 +15,69 @@ import java.io.File
 /**
  * TODO: Could also inherit BaseNodeDescription when myNodeKind becomes final.
  */
-class Status {
-  var infoProvider = Getter<Info?> { null }
+class Status private constructor(builder: Builder) {
+  private val infoProvider = builder.infoProvider
   val info by lazy { if (itemStatus != STATUS_NONE) infoProvider.get() else null }
 
-  var url: Url? = null
+  val url = builder.url
     get() = field ?: info?.url
 
-  var file: File? = null
+  val file = builder.file
     get() = field ?: info?.file
 
-  private var myFileExists = false
+  private val fileExists = builder.fileExists
+  val nodeKind = builder.nodeKind
+    get() = if (fileExists) field else info?.nodeKind ?: field
 
-  var nodeKind = NodeKind.UNKNOWN
-    get() = if (myFileExists) field else info?.nodeKind ?: field
-
-  fun setNodeKind(exists: Boolean, nodeKind: NodeKind) {
-    myFileExists = exists
-    this.nodeKind = nodeKind
-  }
-
-  var revision = Revision.UNDEFINED
+  val revision: Revision = builder.revision
     get() {
-      val revision = field
-
-      return if (revision.isValid || `is`(STATUS_NONE, STATUS_UNVERSIONED, STATUS_ADDED)) revision
-      else info?.revision ?: revision
+      return if (field.isValid || `is`(STATUS_NONE, STATUS_UNVERSIONED, STATUS_ADDED)) field else info?.revision ?: field
     }
 
   val copyFromUrl get() = if (isCopied) info?.copyFromUrl else null
   val treeConflict get() = if (isTreeConflicted) info?.treeConflict else null
   val repositoryRootUrl get() = info?.repositoryRootUrl
 
-  var committedRevision = Revision.UNDEFINED
-  var itemStatus = STATUS_NONE
-  var propertyStatus = STATUS_NONE
-  var remoteItemStatus: StatusType? = null
-  var remotePropertyStatus: StatusType? = null
-  var isWorkingCopyLocked = false
-  var isCopied = false
-  var isSwitched = false
-  var remoteLock: Lock? = null
-  var localLock: Lock? = null
-  var changeListName: String? = null
-  var isTreeConflicted = false
+  val committedRevision = builder.committedRevision
+  val itemStatus = builder.itemStatus
+  val propertyStatus = builder.propertyStatus
+  val remoteItemStatus = builder.remoteItemStatus
+  val remotePropertyStatus = builder.remotePropertyStatus
+  val isWorkingCopyLocked = builder.isWorkingCopyLocked
+  val isCopied = builder.isCopied
+  val isSwitched = builder.isSwitched
+  val remoteLock = builder.remoteLock
+  val localLock = builder.localLock
+  val changeListName = builder.changeListName
+  val isTreeConflicted = builder.isTreeConflicted
 
   fun `is`(vararg types: StatusType) = itemStatus in types
   fun isProperty(vararg types: StatusType) = propertyStatus in types
+
+  class Builder {
+    var infoProvider = Getter<Info?> { null }
+
+    var url: Url? = null
+    var file: File? = null
+    var fileExists = false
+    var nodeKind = NodeKind.UNKNOWN
+    var revision = Revision.UNDEFINED
+
+    var committedRevision = Revision.UNDEFINED
+    var itemStatus = STATUS_NONE
+    var propertyStatus = STATUS_NONE
+    var remoteItemStatus: StatusType? = null
+    var remotePropertyStatus: StatusType? = null
+    var isWorkingCopyLocked = false
+    var isCopied = false
+    var isSwitched = false
+    var remoteLock: Lock? = null
+    var localLock: Lock? = null
+    var changeListName: String? = null
+    var isTreeConflicted = false
+
+    fun build() = Status(this)
+  }
 
   companion object {
     @JvmStatic

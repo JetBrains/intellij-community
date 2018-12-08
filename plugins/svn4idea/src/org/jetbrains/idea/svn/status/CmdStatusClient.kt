@@ -92,11 +92,11 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
           // </status>
           // so it does not contain any <entry> element and current parsing logic returns null
 
-          val status = Status()
+          val status = Status.Builder()
           status.file = path
           status.itemStatus = StatusType.STATUS_NORMAL
           status.infoProvider = Getter { createInfoGetter().convert(path) }
-          handler.consume(status)
+          handler.consume(status.build())
         }
       }
     }
@@ -122,7 +122,7 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
   private fun createStatusHandler(handler: StatusConsumer,
                                   base: File,
                                   infoBase: Info?,
-                                  statusSupplier: Supplier<Status>): SvnStatusHandler {
+                                  statusSupplier: Supplier<Status.Builder>): SvnStatusHandler {
     val callback = createStatusCallback(handler, base, infoBase, statusSupplier)
 
     return SvnStatusHandler(callback, base, createInfoGetter())
@@ -142,7 +142,7 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
     fun createStatusCallback(handler: StatusConsumer,
                              base: File,
                              infoBase: Info?,
-                             statusSupplier: Supplier<out Status>): SvnStatusHandler.ExternalDataCallback {
+                             statusSupplier: Supplier<Status.Builder>): SvnStatusHandler.ExternalDataCallback {
       val externalsMap = newHashMap<File, Info?>()
       val changelistName = Ref.create<String>()
 
@@ -159,10 +159,11 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
             if (baseInfo != null) {
               pending.url = append(baseInfo.url!!, toSystemIndependentName(getRelativePath(baseFile, pendingFile)!!))
             }
-            if (pending.`is`(StatusType.STATUS_EXTERNAL)) {
-              externalsMap[pending.file] = pending.info
+            val status = pending.build()
+            if (status.`is`(StatusType.STATUS_EXTERNAL)) {
+              externalsMap[pending.file] = status.info
             }
-            handler.consume(pending)
+            handler.consume(status)
           }
           catch (e: SvnBindException) {
             throw SvnExceptionWrapper(e)
