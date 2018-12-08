@@ -8,9 +8,10 @@
       TOML language support
     ]]></description>
 
+    <!-- TODO: create normal change note list -->
     <change-notes><![CDATA[
         <ul>
-            <li>More completion-friendly TOML grammar.</li>
+            <li>Support multiline todo in comments.</li>
         </ul>
     ]]>
     </change-notes>
@@ -26,6 +27,8 @@
         <lang.commenter language="TOML" implementationClass="org.toml.ide.TomlCommenter"/>
         <lang.braceMatcher language="TOML" implementationClass="org.toml.ide.TomlBraceMatcher"/>
         <lang.quoteHandler language="TOML" implementationClass="org.toml.ide.TomlQuoteHandler"/>
+        <indexPatternBuilder implementation="org.toml.ide.todo.TomlTodoIndexPatternBuilder"/>
+        <todoIndexer filetype="TOML" implementationClass="org.toml.ide.todo.TomlTodoIndexer"/>
         <annotator language="TOML" implementationClass="org.toml.ide.TomlAnnotator"/>
     </extensions>
 </idea-plugin>
