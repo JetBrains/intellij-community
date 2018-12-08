@@ -4,7 +4,7 @@ package org.jetbrains.idea.svn.status
 import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil.*
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.containers.ContainerUtil.find
 import com.intellij.util.containers.ContainerUtil.newHashMap
@@ -18,6 +18,7 @@ import org.jetbrains.idea.svn.api.Target
 import org.jetbrains.idea.svn.commandLine.*
 import org.jetbrains.idea.svn.commandLine.CommandUtil.requireExistingParent
 import org.jetbrains.idea.svn.info.Info
+import org.jetbrains.idea.svn.status.CmdStatusClient.Companion.createStatusCallback
 import org.xml.sax.SAXException
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -41,6 +42,30 @@ private fun putParameters(parameters: MutableList<String>,
   parameters.add("--xml")
 }
 
+private fun parseResult(base: File,
+                        infoBase: Info?,
+                        infoProvider: Convertor<File, Info>,
+                        result: String,
+                        handler: StatusConsumer): Boolean {
+  try {
+    val parsingHandler = Ref.create<SvnStatusHandler>()
+    val callback = createStatusCallback(handler, base, infoBase, Supplier { parsingHandler.get().pending })
+    parsingHandler.set(SvnStatusHandler(callback, base, infoProvider))
+    val parser = SAXParserFactory.newInstance().newSAXParser()
+    parser.parse(ByteArrayInputStream(result.trim { it <= ' ' }.toByteArray(CharsetToolkit.UTF8_CHARSET)), parsingHandler.get())
+    return parsingHandler.get().isAnythingReported
+  }
+  catch (e: SvnExceptionWrapper) {
+    throw SvnBindException(e.cause)
+  }
+  catch (e: IOException) {
+    throw SvnBindException(e)
+  }
+  catch (e: ParserConfigurationException) {
+    throw SvnBindException(e)
+  }
+}
+
 class CmdStatusClient : BaseSvnClient(), StatusClient {
   @Throws(SvnBindException::class)
   override fun doStatus(path: File,
@@ -57,7 +82,7 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
     putParameters(parameters, path, depth, remote, reportAll, includeIgnored)
 
     val command = execute(myVcs, Target.on(path), SvnCommandName.st, parameters, null)
-    parseResult(path, handler, base, infoBase, command)
+    parseResult(path, base, infoBase, command, handler)
   }
 
   @Throws(SvnBindException::class)
@@ -68,21 +93,14 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
   }
 
   @Throws(SvnBindException::class)
-  private fun parseResult(path: File, handler: StatusConsumer, base: File, infoBase: Info?, command: CommandExecutor) {
+  private fun parseResult(path: File, base: File, infoBase: Info?, command: CommandExecutor, handler: StatusConsumer) {
     val result = command.output
-
-    if (StringUtil.isEmptyOrSpaces(result)) {
-      throw SvnBindException("Status request returned nothing for command: " + command.commandText)
-    }
+    if (isEmptyOrSpaces(result)) throw SvnBindException("Status request returned nothing for command: ${command.commandText}")
 
     try {
-      val parsingHandler = Ref.create<SvnStatusHandler>()
-      parsingHandler.set(createStatusHandler(handler, base, infoBase, Supplier { parsingHandler.get().pending }))
-      val parser = SAXParserFactory.newInstance().newSAXParser()
-      parser.parse(ByteArrayInputStream(result.trim { it <= ' ' }.toByteArray(CharsetToolkit.UTF8_CHARSET)), parsingHandler.get())
-      if (!parsingHandler.get().isAnythingReported) {
+      if (!parseResult(base, infoBase, createInfoGetter(), result, handler)) {
         if (!isSvnVersioned(myVcs, path)) {
-          throw SvnBindException(ErrorCode.WC_NOT_WORKING_COPY, "Command - " + command.commandText + ". Result - " + result)
+          throw SvnBindException(ErrorCode.WC_NOT_WORKING_COPY, "Command - ${command.commandText}. Result - $result")
         }
         else {
           // return status indicating "NORMAL" state
@@ -100,15 +118,6 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
         }
       }
     }
-    catch (e: SvnExceptionWrapper) {
-      throw SvnBindException(e.cause)
-    }
-    catch (e: IOException) {
-      throw SvnBindException(e)
-    }
-    catch (e: ParserConfigurationException) {
-      throw SvnBindException(e)
-    }
     catch (e: SAXException) {
       // status parsing errors are logged separately as sometimes there are parsing errors connected to terminal output handling.
       // these errors primarily occur when status output is rather large.
@@ -116,16 +125,6 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
       command.logCommand()
       throw SvnBindException(e)
     }
-
-  }
-
-  private fun createStatusHandler(handler: StatusConsumer,
-                                  base: File,
-                                  infoBase: Info?,
-                                  statusSupplier: Supplier<Status.Builder>): SvnStatusHandler {
-    val callback = createStatusCallback(handler, base, infoBase, statusSupplier)
-
-    return SvnStatusHandler(callback, base, createInfoGetter())
   }
 
   private fun createInfoGetter() = Convertor<File, Info> {
