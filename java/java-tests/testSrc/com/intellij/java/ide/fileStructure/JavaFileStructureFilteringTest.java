@@ -34,6 +34,17 @@ public class JavaFileStructureFilteringTest extends JavaFileStructureTestCase {
   public void testSelectLeafFirst3()  {checkTree("clear");}
   public void testSelectLeafFirst4()  {checkTree("clear");}
 
+  public void testResolveByInitialImport() {checkTree("dis");}
+  public void testResolveByInitialClass()  {checkTree("dis");}
+  public void testResolveByBetterMethod()  {checkTree("dis");}
+  public void testResolveByWorseMethod()   {checkTree("dis");}
+  public void testResolveByHiddenMethod()  {checkTree("dis");}
+
+  public void testResolveChildrenBeforeSiblings()      {checkTree("dis");}
+  public void testResolveSiblingsBeforeGrandChildren() {checkTree("dis");}
+  public void testResolveGrandChildrenBefore()         {checkTree("dis");}
+  public void testResolveNoSiblingsAndChildren()       {checkTree("dis");}
+
   public void testMatcher()           {checkTree("dis");}
 
   public void testMatcher1()          {checkTree("ico");}
