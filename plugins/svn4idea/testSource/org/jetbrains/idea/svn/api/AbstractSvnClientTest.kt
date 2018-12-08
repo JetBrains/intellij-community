@@ -5,6 +5,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase
 import org.jetbrains.idea.svn.SvnTestCase.getPluginHome
 import org.jetbrains.idea.svn.SvnUtil.parseDate
+import org.jetbrains.idea.svn.checkin.CommitInfo
 import org.jetbrains.idea.svn.lock.Lock
 import org.junit.Before
 import java.io.File
@@ -23,6 +24,12 @@ abstract class AbstractSvnClientTest : AbstractJunitVcsTestCase() {
   fun getTestData(): Path {
     val fileName = PlatformTestUtil.getTestName(testName.removePrefix("parse").trim(), true)
     return Paths.get(getPluginHome(), "testData", "parse", "$fileName.xml")
+  }
+
+  protected fun assertCommitInfo(commitInfo: CommitInfo) {
+    assertEquals(9, commitInfo.revisionNumber)
+    assertEquals("author1", commitInfo.author)
+    assertEquals(COMMIT_DATE, commitInfo.date)
   }
 
   protected fun assertLock(actual: Lock?) {

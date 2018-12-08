@@ -241,6 +241,7 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
+      pending.getCommitInfo().setDate(SvnUtil.parseDate(s));
     }
   }
 
@@ -263,6 +264,7 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, org.jetbrains.idea.svn.status.Status.Builder pending, Lock.Builder lock) {
+      pending.getCommitInfo().setAuthor(s);
     }
   }
 
@@ -280,7 +282,7 @@ public class SvnStatusHandler extends DefaultHandler {
     protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status.Builder status, Lock.Builder lock) {
       final String revision = attributes.getValue("revision");
       if (!StringUtil.isEmpty(revision)) {
-        status.setCommittedRevision(Revision.of(Long.valueOf(revision)));
+        status.getCommitInfo().setRevisionNumber(Long.valueOf(revision));
       }
     }
 

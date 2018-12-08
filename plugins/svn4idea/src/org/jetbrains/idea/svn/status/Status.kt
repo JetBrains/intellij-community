@@ -8,6 +8,7 @@ import org.jetbrains.idea.svn.api.BaseNodeDescription
 import org.jetbrains.idea.svn.api.NodeKind
 import org.jetbrains.idea.svn.api.Revision
 import org.jetbrains.idea.svn.api.Url
+import org.jetbrains.idea.svn.checkin.CommitInfo
 import org.jetbrains.idea.svn.info.Info
 import org.jetbrains.idea.svn.lock.Lock
 import org.jetbrains.idea.svn.status.StatusType.*
@@ -35,7 +36,7 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
   val treeConflict get() = if (isTreeConflicted) info?.treeConflict else null
   val repositoryRootUrl get() = info?.repositoryRootUrl
 
-  val committedRevision = builder.committedRevision
+  val commitInfo = builder.commitInfo.build()
   val itemStatus = builder.itemStatus
   val propertyStatus = builder.propertyStatus
   val remoteItemStatus = builder.remoteItemStatus
@@ -60,7 +61,7 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
     var nodeKind = NodeKind.UNKNOWN
     var revision = Revision.UNDEFINED
 
-    var committedRevision = Revision.UNDEFINED
+    var commitInfo = CommitInfo.Builder()
     var itemStatus = STATUS_NONE
     var propertyStatus = STATUS_NONE
     var remoteItemStatus: StatusType? = null

@@ -40,7 +40,7 @@ class CmdStatusClientTest : AbstractSvnClientTest() {
     assertEquals(true, actual.isCopied)
     assertEquals(true, actual.isSwitched)
     assertEquals(true, actual.isTreeConflicted)
-    assertEquals(Revision.of(9), actual.committedRevision)
+    assertCommitInfo(actual.commitInfo)
     //    TODO Fix issues with lock parsing
     //    assertLock(actual.localLock)
 
