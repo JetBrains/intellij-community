@@ -38,7 +38,7 @@ private fun listGitTree(
     execute(repo, GIT, "pull", "--rebase")
   }
   catch (e: Exception) {
-    callSafely {
+    callSafely(printStackTrace = false) {
       execute(repo, GIT, "rebase", "--abort")
     }
     log("Unable to pull changes for $repo: ${e.message}")
@@ -303,7 +303,7 @@ internal data class CommitInfo(
 )
 
 internal fun <T> withUser(repo: File, user: String, email: String, block: () -> T): T {
-  val (originalUser, originalEmail) = callSafely {
+  val (originalUser, originalEmail) = callSafely(printStackTrace = false) {
     execute(repo, GIT, "config", "user.name").removeSuffix(System.lineSeparator()) to
       execute(repo, GIT, "config", "user.email").removeSuffix(System.lineSeparator())
   } ?: "" to ""

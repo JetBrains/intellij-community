@@ -54,11 +54,11 @@ internal fun <T> List<T>.split(eachSize: Int): List<List<T>> {
   return result
 }
 
-internal fun <T> callSafely(call: () -> T): T? = try {
+internal fun <T> callSafely(printStackTrace: Boolean = false, call: () -> T): T? = try {
   call()
 }
 catch (e: Exception) {
-  log(e.message ?: e::class.java.simpleName)
+  if (printStackTrace) e.printStackTrace() else log(e.message ?: e::class.java.simpleName)
   null
 }
 
