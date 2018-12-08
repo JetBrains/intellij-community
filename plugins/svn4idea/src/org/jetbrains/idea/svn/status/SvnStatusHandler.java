@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -36,9 +35,6 @@ public class SvnStatusHandler extends DefaultHandler {
     return result;
   }
 
-  private String myChangelistName;
-  private List<org.jetbrains.idea.svn.status.Status> myDefaultListStatuses;
-  private MultiMap<String, org.jetbrains.idea.svn.status.Status> myCurrentListChanges;
   private org.jetbrains.idea.svn.status.Status myPending;
   private boolean myInRemoteStatus;
   private Lock.Builder myLockBuilder;
@@ -50,7 +46,7 @@ public class SvnStatusHandler extends DefaultHandler {
   private final StringBuilder mySb;
   private boolean myAnythingReported;
 
-  public SvnStatusHandler(final ExternalDataCallback dataCallback, File base, final Convertor<File, Info> infoGetter) {
+  public SvnStatusHandler(@NotNull ExternalDataCallback dataCallback, File base, final Convertor<File, Info> infoGetter) {
     myBase = base;
     myParseStack = new ArrayList<>();
     myParseStack.add(new Fake());
@@ -58,93 +54,45 @@ public class SvnStatusHandler extends DefaultHandler {
     myElementsMap = new HashMap<>();
     fillElements();
 
-    if (dataCallback != null) {
-      myDataCallback = new DataCallback() {
-        @Override
-        public void startLock() {
-          myLockBuilder = new Lock.Builder();
-        }
+    myDataCallback = new DataCallback() {
+      @Override
+      public void startLock() {
+        myLockBuilder = new Lock.Builder();
+      }
 
-        @Override
-        public void endLock() {
-          if (myInRemoteStatus) {
-            myPending.setRemoteLock(myLockBuilder.build());
-          }
-          else {
-            myPending.setLocalLock(myLockBuilder.build());
-          }
-          myLockBuilder = null;
+      @Override
+      public void endLock() {
+        if (myInRemoteStatus) {
+          myPending.setRemoteLock(myLockBuilder.build());
         }
+        else {
+          myPending.setLocalLock(myLockBuilder.build());
+        }
+        myLockBuilder = null;
+      }
 
-        @Override
-        public void startRemoteStatus() {
-          myInRemoteStatus = true;
-        }
+      @Override
+      public void startRemoteStatus() {
+        myInRemoteStatus = true;
+      }
 
-        @Override
-        public void endRemoteStatus() {
-          myInRemoteStatus = false;
-        }
+      @Override
+      public void endRemoteStatus() {
+        myInRemoteStatus = false;
+      }
 
-        @Override
-        public void switchPath() {
-          myAnythingReported = true;
-          dataCallback.switchPath();
-          newPending(infoGetter);
-        }
+      @Override
+      public void switchPath() {
+        myAnythingReported = true;
+        dataCallback.switchPath();
+        newPending(infoGetter);
+      }
 
-        @Override
-        public void switchChangeList(String newList) {
-          dataCallback.switchChangeList(newList);
-        }
-      };
-    }
-    else {
-      myDataCallback = new DataCallback() {
-        @Override
-        public void startLock() {
-          myLockBuilder = new Lock.Builder();
-        }
-
-        @Override
-        public void endLock() {
-          if (myInRemoteStatus) {
-            myPending.setRemoteLock(myLockBuilder.build());
-          }
-          else {
-            myPending.setLocalLock(myLockBuilder.build());
-          }
-          myLockBuilder = null;
-        }
-
-        @Override
-        public void startRemoteStatus() {
-          myInRemoteStatus = true;
-        }
-
-        @Override
-        public void endRemoteStatus() {
-          myInRemoteStatus = false;
-        }
-
-        @Override
-        public void switchPath() {
-          myAnythingReported = true;
-          if (myChangelistName == null) {
-            myDefaultListStatuses.add(myPending);
-          }
-          else {
-            myCurrentListChanges.putValue(myChangelistName, myPending);
-          }
-          newPending(infoGetter);
-        }
-
-        @Override
-        public void switchChangeList(String newList) {
-          myChangelistName = newList;
-        }
-      };
-    }
+      @Override
+      public void switchChangeList(String newList) {
+        dataCallback.switchChangeList(newList);
+      }
+    };
     newPending(infoGetter);
     mySb = new StringBuilder();
   }
@@ -161,14 +109,6 @@ public class SvnStatusHandler extends DefaultHandler {
 
   public org.jetbrains.idea.svn.status.Status getPending() {
     return myPending;
-  }
-
-  public List<org.jetbrains.idea.svn.status.Status> getDefaultListStatuses() {
-    return myDefaultListStatuses;
-  }
-
-  public MultiMap<String, org.jetbrains.idea.svn.status.Status> getCurrentListChanges() {
-    return myCurrentListChanges;
   }
 
   private void fillElements() {

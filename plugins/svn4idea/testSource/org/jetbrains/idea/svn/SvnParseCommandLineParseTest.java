@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.api.Revision;
@@ -94,7 +93,6 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
     final String osChecked = readText(getTestData());
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
     parser.parse(new ByteArrayInputStream(osChecked.getBytes(CharsetToolkit.UTF8_CHARSET)), handler);
-    final MultiMap<String, Status> changes = handler.getCurrentListChanges();
   }
 
   private String changePathsIfNix(String s) {
@@ -139,7 +137,6 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
     }));
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
     parser.parse(inputStream(getTestData()), handler.get());
-    final MultiMap<String, Status> changes = handler.get().getCurrentListChanges();
   }
 
   @Test
