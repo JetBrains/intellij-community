@@ -780,7 +780,7 @@ fun ProjectStructureDialogScenarios.checkGradleFacets(
         )
       }
       QualifiedNames -> {
-        val qualifiedProjectName = "${gradleOptions.group}.${gradleOptions.artifact}"
+        val qualifiedProjectName = gradleOptions.artifact
         mapOf(
           listOf(qualifiedProjectName, "main", "Kotlin") to expectedFacet,
           listOf(qualifiedProjectName, "test", "Kotlin") to expectedFacet
