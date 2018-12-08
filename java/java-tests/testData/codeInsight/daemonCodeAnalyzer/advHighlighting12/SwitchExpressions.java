@@ -58,4 +58,10 @@ class SwitchExpressions {
       });
     }
   }
+  
+  enum Empty {}
+  
+  boolean testEmpty(Empty e) {
+    return switch (<error descr="'switch' expression does not have any case clauses">e</error>) {};
+  }
 }

@@ -1996,7 +1996,7 @@ public class HighlightUtil extends HighlightUtilBase {
       Set<String> missingConstants = new HashSet<>();
       boolean exhaustive = hasDefaultCase;
       if (!exhaustive) {
-        if (selectorType instanceof PsiClassType) {
+        if (!values.isEmpty() && selectorType instanceof PsiClassType) {
           PsiClass type = ((PsiClassType)selectorType).resolve();
           if (type != null && type.isEnum()) {
             for (PsiField field : type.getFields()) {
