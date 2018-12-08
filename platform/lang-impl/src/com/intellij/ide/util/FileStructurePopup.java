@@ -80,6 +80,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.util.function.BiPredicate;
 
 /**
  * @author Konstantin Bulenkov
@@ -110,7 +111,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private final List<JBCheckBox> myAutoClicked = new ArrayList<>();
   private String myTestSearchFilter;
   private final ActionCallback myTreeHasBuilt = new ActionCallback();
-  private boolean myInitialNodeIsLeaf;
   private final List<Pair<String, JBCheckBox>> myTriggeredCheckboxes = new ArrayList<>();
   private final TreeExpander myTreeExpander;
   private final CopyPasteDelegator myCopyPasteDelegator;
@@ -174,7 +174,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     FileStructurePopupFilter filter = new FileStructurePopupFilter();
     myFilteringStructure = new FilteringTreeStructure(filter, myTreeStructure, false);
 
-    myStructureTreeModel = new StructureTreeModel(myFilteringStructure);
+    myStructureTreeModel = new StructureTreeModel<>(myFilteringStructure);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, this);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
@@ -389,10 +389,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       myTree.expandPath(path);
       TreeUtil.selectPath(myTree, path);
       TreeUtil.ensureSelection(myTree);
-      Object userObject = TreeUtil.getLastUserObject(path);
-      if (userObject != null && Comparing.equal(element, StructureViewComponent.unwrapValue(userObject))) {
-        myInitialNodeIsLeaf = myFilteringStructure.getChildElements(userObject).length == 0;
-      }
       return Promises.resolvedPromise(path);
     };
     Function<TreePath, Promise<TreePath>> fallback = new Function<TreePath, Promise<TreePath>>() {
@@ -991,9 +987,48 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     @Override
     public Object findElement(String s) {
       List<SpeedSearchObjectWithWeight> elements = SpeedSearchObjectWithWeight.findElement(s, this);
-      return elements.isEmpty() ? null : findClosestTo(myInitialElement, elements);
+      SpeedSearchObjectWithWeight best = ContainerUtil.getFirstItem(elements);
+      if (best == null) return null;
+      if (myInitialElement instanceof PsiElement) {
+        PsiElement initial = (PsiElement)myInitialElement;
+        // find children of the initial element
+        SpeedSearchObjectWithWeight bestForParent = find(initial, elements, FileStructurePopup::isParent);
+        if (bestForParent != null) return bestForParent.node;
+        // find siblings of the initial element
+        PsiElement parent = initial.getParent();
+        if (parent != null) {
+          SpeedSearchObjectWithWeight bestSibling = find(parent, elements, FileStructurePopup::isParent);
+          if (bestSibling != null) return bestSibling.node;
+        }
+        // find grand children of the initial element
+        SpeedSearchObjectWithWeight bestForAncestor = find(initial, elements, FileStructurePopup::isAncestor);
+        if (bestForAncestor != null) return bestForAncestor.node;
+      }
+      return best.node;
     }
+  }
 
+  @Nullable
+  private static SpeedSearchObjectWithWeight find(@NotNull PsiElement element,
+                                                  @NotNull List<SpeedSearchObjectWithWeight> objects,
+                                                  @NotNull BiPredicate<PsiElement, TreePath> predicate) {
+    return ContainerUtil.find(objects, object -> predicate.test(element, ObjectUtils.tryCast(object.node, TreePath.class)));
+  }
+
+  private static boolean isElement(@NotNull PsiElement element, @Nullable TreePath path) {
+    return element.equals(StructureViewComponent.unwrapValue(TreeUtil.getLastUserObject(FilteringTreeStructure.FilteringNode.class, path)));
+  }
+
+  private static boolean isParent(@NotNull PsiElement parent, @Nullable TreePath path) {
+    return path != null && isElement(parent, path.getParentPath());
+  }
+
+  private static boolean isAncestor(@NotNull PsiElement ancestor, @Nullable TreePath path) {
+    while (path != null) {
+      if (isElement(ancestor, path)) return true;
+      path = path.getParentPath();
+    }
+    return false;
   }
 
   static class MyTree extends DnDAwareTree implements PlaceProvider<String> {
@@ -1013,59 +1048,5 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     public String getPlace() {
       return ActionPlaces.STRUCTURE_VIEW_POPUP;
     }
-  }
-
-
-  // todo remove ASAP ------------------------------------
-
-  @Nullable
-  private Object findClosestTo(Object path, List<SpeedSearchObjectWithWeight> paths) {
-    if (path == null || !(myInitialElement instanceof PsiElement)) {
-      return paths.get(0).node;
-    }
-    Collection<PsiElement> parents = getAllParents((PsiElement)myInitialElement);
-    List<SpeedSearchObjectWithWeight> cur = new ArrayList<>();
-    int max = -1;
-    for (SpeedSearchObjectWithWeight p : paths) {
-      Object component = ((TreePath)p.node).getLastPathComponent();
-      FilteringTreeStructure.FilteringNode node = TreeUtil.getUserObject(FilteringTreeStructure.FilteringNode.class, component);
-      if (node != null) {
-        List<PsiElement> elements = new ArrayList<>();
-        FilteringTreeStructure.FilteringNode candidate = node;
-
-        while (node != null) {
-          elements.add(getPsi(node));
-          node = node.getParentNode();
-        }
-        final int size = ContainerUtil.intersection(parents, elements).size();
-        if (size == elements.size() - 1 && size == parents.size() - (myInitialNodeIsLeaf ? 1 : 0) && candidate.children().isEmpty()) {
-          return p.node;
-        }
-        if (size > max) {
-          max = size;
-          cur.clear();
-          cur.add(p);
-        }
-        else if (size == max) {
-          cur.add(p);
-        }
-      }
-    }
-
-    Collections.sort(cur, (o1, o2) -> {
-      final int i = o1.compareWith(o2);
-      return i != 0 ? i
-                    : ((TreePath)o2.node).getPathCount() - ((TreePath)o1.node).getPathCount();
-    });
-    return cur.isEmpty() ? null : cur.get(0).node;
-  }
-
-  @Nullable
-  private static PsiElement getPsi(FilteringTreeStructure.FilteringNode n) {
-    return ObjectUtils.tryCast(StructureViewComponent.unwrapValue(n), PsiElement.class);
-  }
-
-  private static Collection<PsiElement> getAllParents(PsiElement element) {
-    return PsiTreeUtil.collectParents(element, PsiElement.class, true, e -> e instanceof PsiDirectory);
   }
 }
