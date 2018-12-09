@@ -85,7 +85,8 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
       tabState.myCommandHistoryFileName = historyFilePath != null ? PathUtil.getFileName(historyFilePath) : null;
       arrangementState.myTabStates.add(tabState);
     }
-    arrangementState.mySelectedTabIndex = contentManager.getIndexOfContent(contentManager.getSelectedContent());
+    Content selectedContent = contentManager.getSelectedContent();
+    arrangementState.mySelectedTabIndex = selectedContent == null ? -1 : contentManager.getIndexOfContent(selectedContent);
     deleteUnusedCommandHistoryFiles(getCommandHistoryFileNames(arrangementState));
     return arrangementState;
   }

@@ -522,6 +522,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return null;
     }
 
+    @NotNull
     @Override
     public List<AnAction> getAdditionalPopupActions(@NotNull final Content content) {
       return Collections.emptyList();
@@ -558,7 +559,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public Content getContent(final JComponent component) {
+    public Content getContent(@NotNull final JComponent component) {
       Content[] contents = getContents();
       for (Content content : contents) {
         if (Comparing.equal(component, content.getComponent())) {
@@ -586,7 +587,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public int getIndexOfContent(final Content content) {
+    public int getIndexOfContent(@NotNull final Content content) {
       return myContents.indexOf(content);
     }
 

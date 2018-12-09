@@ -98,7 +98,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     if (myContentManager != null) {
       // all panel were constructed
       Content content = myContentManager.getSelectedContent();
-      state.selectedIndex = myContentManager.getIndexOfContent(content);
+      state.selectedIndex = content == null ? -1 : myContentManager.getIndexOfContent(content);
     }
     return state;
   }

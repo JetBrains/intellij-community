@@ -162,7 +162,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   @Override
-  public void setDisposer(Disposable disposer) {
+  public void setDisposer(@NotNull Disposable disposer) {
     myDisposer = disposer;
   }
 
