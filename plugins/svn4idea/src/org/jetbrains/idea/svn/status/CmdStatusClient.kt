@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
 import com.intellij.util.containers.ContainerUtil.find
-import com.intellij.util.containers.ContainerUtil.newHashMap
 import com.intellij.util.containers.Convertor
 import org.jetbrains.idea.svn.SvnUtil
 import org.jetbrains.idea.svn.SvnUtil.append
@@ -44,14 +43,14 @@ private fun parseResult(base: File,
                         infoProvider: Convertor<File, Info>,
                         result: String,
                         handler: StatusConsumer): Boolean {
-  val externalsMap = newHashMap<File, Info?>()
+  val externalsMap = mutableMapOf<File, Info?>()
   var hasEntries = false
 
   fun setUrlAndNotifyHandler(builder: Status.Builder) {
     builder.infoProvider = Getter { infoProvider.convert(builder.file) }
 
     val file = builder.file
-    val externalsBase = find(externalsMap.keys) { isAncestor(it, file!!, false) }
+    val externalsBase = find(externalsMap.keys) { isAncestor(it, file, false) }
     val baseFile = externalsBase ?: base
     val baseInfo = if (externalsBase != null) externalsMap[externalsBase] else infoBase
 
@@ -134,8 +133,7 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
           // </status>
           // so it does not contain any <entry> element and current parsing logic returns null
 
-          val status = Status.Builder()
-          status.file = path
+          val status = Status.Builder(path)
           status.itemStatus = StatusType.STATUS_NORMAL
           status.infoProvider = Getter { createInfoGetter().convert(path) }
           handler.consume(status.build())
@@ -213,10 +211,9 @@ private class Entry {
   @XmlElement(name = "repos-status")
   var repositoryStatus: RepositoryStatus? = null
 
-  fun toBuilder(base: File) = Status.Builder().apply {
-    file = SvnUtil.resolvePath(base, path)
-    fileExists = file!!.exists()
-    nodeKind = if (fileExists) NodeKind.from(file!!.isDirectory) else NodeKind.UNKNOWN
+  fun toBuilder(base: File) = Status.Builder(SvnUtil.resolvePath(base, path)).apply {
+    fileExists = file.exists()
+    nodeKind = if (fileExists) NodeKind.from(file.isDirectory) else NodeKind.UNKNOWN
     if (!fileExists) fixInvalidOutputForUnversionedBase(base, this)
 
     itemStatus = localStatus.itemStatus

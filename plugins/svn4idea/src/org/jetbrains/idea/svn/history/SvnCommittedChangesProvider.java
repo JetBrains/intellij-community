@@ -347,7 +347,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         File file = status.getFile();
         boolean changedOnServer = isNotNone(status.getRemoteItemStatus()) || isNotNone(status.getRemotePropertyStatus());
 
-        if (file != null && changedOnServer) {
+        if (changedOnServer) {
           result.add(VcsUtil.getFilePath(file));
         }
       });

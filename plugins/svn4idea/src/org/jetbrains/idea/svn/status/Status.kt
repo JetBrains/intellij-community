@@ -21,9 +21,6 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
   val url = builder.url
     get() = field ?: info?.url
 
-  val file = builder.file
-    get() = field ?: info?.file
-
   private val fileExists = builder.fileExists
   override val nodeKind get() = if (fileExists) super.nodeKind else info?.nodeKind ?: super.nodeKind
 
@@ -36,6 +33,7 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
   val treeConflict get() = if (isTreeConflicted) info?.treeConflict else null
   val repositoryRootUrl get() = info?.repositoryRootUrl
 
+  val file = builder.file
   val commitInfo: CommitInfo = builder.commitInfo?.build() ?: CommitInfo.EMPTY
   val itemStatus = builder.itemStatus
   val propertyStatus = builder.propertyStatus
@@ -52,11 +50,10 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
   fun `is`(vararg types: StatusType) = itemStatus in types
   fun isProperty(vararg types: StatusType) = propertyStatus in types
 
-  class Builder {
+  class Builder(var file: File) {
     var infoProvider = Getter<Info?> { null }
 
     var url: Url? = null
-    var file: File? = null
     var fileExists = false
     var nodeKind = NodeKind.UNKNOWN
     var revision = Revision.UNDEFINED

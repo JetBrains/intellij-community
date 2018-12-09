@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativePath;
 import static org.jetbrains.idea.svn.history.SvnLazyPropertyContentRevision.getPropertyList;
@@ -240,7 +241,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     final Info svnInfo = myVcs.getInfo(file);
 
     if (svnInfo != null) {
-      Status.Builder svnStatus = new Status.Builder();
+      Status.Builder svnStatus = new Status.Builder(virtualToIoFile(file));
       svnStatus.setRevision(svnInfo.getRevision());
       svnStatus.setNodeKind(NodeKind.from(filePath.isDirectory()));
       processChangeInList(SvnContentRevision.createBaseRevision(myVcs, filePath, svnInfo.getRevision()),
