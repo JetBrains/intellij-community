@@ -51,11 +51,10 @@ class CmdStatusClientTest : AbstractSvnClientTest() {
     assertEquals(true, actual.isSwitched)
     assertEquals(true, actual.isTreeConflicted)
     assertCommitInfo(actual.commitInfo)
-    //    TODO Fix issues with lock parsing
-    //    assertLock(actual.localLock)
+    assertLock(actual.localLock)
 
     assertEquals(StatusType.STATUS_ADDED, actual.remoteItemStatus)
     assertEquals(StatusType.STATUS_MODIFIED, actual.remotePropertyStatus)
-    //    assertLock(actual.remoteLock)
+    assertLock(actual.remoteLock)
   }
 }

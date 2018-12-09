@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.diff;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -24,6 +25,7 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.*;
@@ -32,9 +34,9 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.idea.svn.status.SvnStatusHandler.getStatus;
-
 public class CmdDiffClient extends BaseSvnClient implements DiffClient {
+
+  private static final Logger LOG = Logger.getInstance(CmdDiffClient.class);
 
   @NotNull
   @Override
@@ -175,6 +177,17 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
         return false;
       }
     };
+  }
+
+  @Nullable
+  private static StatusType getStatus(@NotNull String code) {
+    StatusType result = StatusType.forStatusOperation(code);
+
+    if (result == null) {
+      LOG.info("Unknown status type " + code);
+    }
+
+    return result;
   }
 
   @XmlRootElement(name = "diff")

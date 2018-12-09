@@ -36,7 +36,7 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
   val treeConflict get() = if (isTreeConflicted) info?.treeConflict else null
   val repositoryRootUrl get() = info?.repositoryRootUrl
 
-  val commitInfo = builder.commitInfo.build()
+  val commitInfo: CommitInfo = builder.commitInfo?.build() ?: CommitInfo.EMPTY
   val itemStatus = builder.itemStatus
   val propertyStatus = builder.propertyStatus
   val remoteItemStatus = builder.remoteItemStatus
@@ -44,8 +44,8 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
   val isWorkingCopyLocked = builder.isWorkingCopyLocked
   val isCopied = builder.isCopied
   val isSwitched = builder.isSwitched
-  val remoteLock = builder.remoteLock
-  val localLock = builder.localLock
+  val remoteLock = builder.remoteLock?.build()
+  val localLock = builder.localLock?.build()
   val changeListName = builder.changeListName
   val isTreeConflicted = builder.isTreeConflicted
 
@@ -61,7 +61,7 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
     var nodeKind = NodeKind.UNKNOWN
     var revision = Revision.UNDEFINED
 
-    var commitInfo = CommitInfo.Builder()
+    var commitInfo: CommitInfo.Builder? = null
     var itemStatus = STATUS_NONE
     var propertyStatus = STATUS_NONE
     var remoteItemStatus: StatusType? = null
@@ -69,8 +69,8 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
     var isWorkingCopyLocked = false
     var isCopied = false
     var isSwitched = false
-    var remoteLock: Lock? = null
-    var localLock: Lock? = null
+    var remoteLock: Lock.Builder? = null
+    var localLock: Lock.Builder? = null
     var changeListName: String? = null
     var isTreeConflicted = false
 

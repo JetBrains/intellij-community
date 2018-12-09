@@ -5,28 +5,25 @@ import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.containers.ContainerUtil.find
 import com.intellij.util.containers.ContainerUtil.newHashMap
 import com.intellij.util.containers.Convertor
+import org.jetbrains.idea.svn.SvnUtil
 import org.jetbrains.idea.svn.SvnUtil.append
 import org.jetbrains.idea.svn.SvnUtil.isSvnVersioned
-import org.jetbrains.idea.svn.api.BaseSvnClient
-import org.jetbrains.idea.svn.api.Depth
-import org.jetbrains.idea.svn.api.ErrorCode
+import org.jetbrains.idea.svn.api.*
 import org.jetbrains.idea.svn.api.Target
+import org.jetbrains.idea.svn.checkin.CommitInfo
 import org.jetbrains.idea.svn.commandLine.*
+import org.jetbrains.idea.svn.commandLine.CommandUtil.parse
 import org.jetbrains.idea.svn.commandLine.CommandUtil.requireExistingParent
 import org.jetbrains.idea.svn.info.Info
-import org.jetbrains.idea.svn.status.CmdStatusClient.Companion.createStatusCallback
-import org.xml.sax.SAXException
-import java.io.ByteArrayInputStream
+import org.jetbrains.idea.svn.lock.Lock
 import java.io.File
-import java.io.IOException
-import java.util.function.Supplier
-import javax.xml.parsers.ParserConfigurationException
-import javax.xml.parsers.SAXParserFactory
-import kotlin.collections.set
+import javax.xml.bind.JAXBException
+import javax.xml.bind.annotation.*
+import javax.xml.bind.annotation.adapters.XmlAdapter
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter
 
 private fun putParameters(parameters: MutableList<String>,
                           path: File,
@@ -47,23 +44,50 @@ private fun parseResult(base: File,
                         infoProvider: Convertor<File, Info>,
                         result: String,
                         handler: StatusConsumer): Boolean {
-  try {
-    val parsingHandler = Ref.create<SvnStatusHandler>()
-    val callback = createStatusCallback(handler, base, infoBase, Supplier { parsingHandler.get().pending })
-    parsingHandler.set(SvnStatusHandler(callback, base, infoProvider))
-    val parser = SAXParserFactory.newInstance().newSAXParser()
-    parser.parse(ByteArrayInputStream(result.trim { it <= ' ' }.toByteArray(CharsetToolkit.UTF8_CHARSET)), parsingHandler.get())
-    return parsingHandler.get().isAnythingReported
+  val externalsMap = newHashMap<File, Info?>()
+  var hasEntries = false
+
+  fun setUrlAndNotifyHandler(builder: Status.Builder) {
+    builder.infoProvider = Getter { infoProvider.convert(builder.file) }
+
+    val file = builder.file
+    val externalsBase = find(externalsMap.keys) { isAncestor(it, file!!, false) }
+    val baseFile = externalsBase ?: base
+    val baseInfo = if (externalsBase != null) externalsMap[externalsBase] else infoBase
+
+    if (baseInfo != null) {
+      builder.url = append(baseInfo.url!!, toSystemIndependentName(getRelativePath(baseFile, file)!!))
+    }
+    val status = builder.build()
+    if (status.`is`(StatusType.STATUS_EXTERNAL)) {
+      externalsMap[status.file] = try {
+        status.info
+      }
+      catch (e: SvnExceptionWrapper) {
+        throw SvnBindException(e.cause)
+      }
+    }
+    hasEntries = true
+    handler.consume(status)
   }
-  catch (e: SvnExceptionWrapper) {
-    throw SvnBindException(e.cause)
+
+  val statusRoot = parse(result, StatusRoot::class.java)
+  if (statusRoot != null) {
+    statusRoot.target?.entries?.forEach { entry ->
+      val builder = entry.toBuilder(base)
+      setUrlAndNotifyHandler(builder)
+    }
+
+    for (changeList in statusRoot.changeLists) {
+      changeList.entries.forEach { entry ->
+        val builder = entry.toBuilder(base)
+        builder.changeListName = changeList.name
+        setUrlAndNotifyHandler(builder)
+      }
+    }
   }
-  catch (e: IOException) {
-    throw SvnBindException(e)
-  }
-  catch (e: ParserConfigurationException) {
-    throw SvnBindException(e)
-  }
+
+  return hasEntries
 }
 
 class CmdStatusClient : BaseSvnClient(), StatusClient {
@@ -118,7 +142,7 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
         }
       }
     }
-    catch (e: SAXException) {
+    catch (e: JAXBException) {
       // status parsing errors are logged separately as sometimes there are parsing errors connected to terminal output handling.
       // these errors primarily occur when status output is rather large.
       // and status output could be large, for instance, when working copy is locked (seems that each file is listed in status output).
@@ -142,41 +166,121 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
       parseResult(base, null, Convertor { null }, result, StatusConsumer(ref::set))
       return ref.get()
     }
+  }
+}
 
-    @JvmStatic
-    fun createStatusCallback(handler: StatusConsumer,
-                             base: File,
-                             infoBase: Info?,
-                             statusSupplier: Supplier<Status.Builder>): SvnStatusHandler.ExternalDataCallback {
-      val externalsMap = newHashMap<File, Info?>()
-      val changelistName = Ref.create<String>()
+private class StatusRevisionNumberAdapter : XmlAdapter<String, Long>() {
+  override fun marshal(v: Long) = throw UnsupportedOperationException()
 
-      return object : SvnStatusHandler.ExternalDataCallback {
-        override fun switchPath() {
-          val pending = statusSupplier.get()
-          pending.changeListName = changelistName.get()
-          try {
-            val pendingFile = pending.file
-            val externalsBase = find(externalsMap.keys) { isAncestor(it, pendingFile!!, false) }
-            val baseFile = externalsBase ?: base
-            val baseInfo = if (externalsBase != null) externalsMap[externalsBase] else infoBase
+  override fun unmarshal(v: String) = when (v) {
+    Revision.UNDEFINED.toString() -> -1L
+    else -> v.toLong()
+  }
+}
 
-            if (baseInfo != null) {
-              pending.url = append(baseInfo.url!!, toSystemIndependentName(getRelativePath(baseFile, pendingFile)!!))
-            }
-            val status = pending.build()
-            if (status.`is`(StatusType.STATUS_EXTERNAL)) {
-              externalsMap[pending.file] = status.info
-            }
-            handler.consume(status)
-          }
-          catch (e: SvnBindException) {
-            throw SvnExceptionWrapper(e)
-          }
-        }
+@XmlRootElement(name = "status")
+@XmlAccessorType(XmlAccessType.FIELD)
+private class StatusRoot {
+  var target: StatusTarget? = null
 
-        override fun switchChangeList(newList: String) = changelistName.set(newList)
-      }
+  @XmlElement(name = "changelist")
+  val changeLists = mutableListOf<ChangeList>()
+}
+
+@XmlAccessorType(XmlAccessType.NONE)
+private class StatusTarget {
+  @XmlElement(name = "entry")
+  val entries = mutableListOf<Entry>()
+}
+
+@XmlAccessorType(XmlAccessType.FIELD)
+private class ChangeList {
+  @XmlAttribute(required = true)
+  var name: String = ""
+
+  @XmlElement(name = "entry")
+  val entries = mutableListOf<Entry>()
+}
+
+@XmlAccessorType(XmlAccessType.FIELD)
+private class Entry {
+  @XmlAttribute(required = true)
+  var path: String = ""
+
+  @XmlElement(name = "wc-status")
+  var localStatus = WorkingCopyStatus()
+
+  @XmlElement(name = "repos-status")
+  var repositoryStatus: RepositoryStatus? = null
+
+  fun toBuilder(base: File) = Status.Builder().apply {
+    file = SvnUtil.resolvePath(base, path)
+    fileExists = file!!.exists()
+    nodeKind = if (fileExists) NodeKind.from(file!!.isDirectory) else NodeKind.UNKNOWN
+    if (!fileExists) fixInvalidOutputForUnversionedBase(base, this)
+
+    itemStatus = localStatus.itemStatus
+    propertyStatus = localStatus.propertyStatus
+    revision = Revision.of(localStatus.revision ?: -1L)
+    isWorkingCopyLocked = localStatus.isWorkingCopyLocked
+    isCopied = localStatus.isCopied
+    isSwitched = localStatus.isSwitched
+    isTreeConflicted = localStatus.isTreeConflicted
+    commitInfo = localStatus.commit
+    localLock = localStatus.lock
+
+    remoteItemStatus = repositoryStatus?.itemStatus
+    remotePropertyStatus = repositoryStatus?.propertyStatus
+    remoteLock = repositoryStatus?.lock
+  }
+
+  /**
+   * Reproducible with svn 1.7 clients
+   */
+  fun fixInvalidOutputForUnversionedBase(base: File, status: Status.Builder) {
+    if (base.name == path && StatusType.MISSING != status.itemStatus && StatusType.STATUS_DELETED != status.itemStatus) {
+      status.fileExists = true
+      status.nodeKind = NodeKind.DIR
+      status.file = base
     }
   }
+}
+
+@XmlAccessorType(XmlAccessType.FIELD)
+private class WorkingCopyStatus {
+  @XmlAttribute(name = "item", required = true)
+  var itemStatus = StatusType.STATUS_NONE
+
+  @XmlAttribute(name = "props", required = true)
+  var propertyStatus = StatusType.STATUS_NONE
+
+  @XmlJavaTypeAdapter(StatusRevisionNumberAdapter::class)
+  @XmlAttribute
+  var revision: Long? = null
+
+  @XmlAttribute(name = "wc-locked")
+  var isWorkingCopyLocked = false
+
+  @XmlAttribute(name = "copied")
+  var isCopied = false
+
+  @XmlAttribute(name = "switched")
+  var isSwitched = false
+
+  @XmlAttribute(name = "tree-conflicted")
+  var isTreeConflicted = false
+
+  var commit: CommitInfo.Builder? = null
+  var lock: Lock.Builder? = null
+}
+
+@XmlAccessorType(XmlAccessType.FIELD)
+private class RepositoryStatus {
+  @XmlAttribute(name = "item", required = true)
+  var itemStatus = StatusType.STATUS_NONE
+
+  @XmlAttribute(name = "props", required = true)
+  var propertyStatus = StatusType.STATUS_NONE
+
+  var lock: Lock.Builder? = null
 }

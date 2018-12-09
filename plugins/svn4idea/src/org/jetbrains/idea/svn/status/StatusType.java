@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.xml.bind.annotation.XmlEnumValue;
 import java.util.Map;
 
 public enum StatusType {
@@ -14,23 +15,23 @@ public enum StatusType {
   MISSING("missing"),
   OBSTRUCTED("obstructed"),
   CHANGED("changed"),
-  MERGED("merged"),
+  @XmlEnumValue("merged") MERGED("merged"),
   CONFLICTED("conflicted"),
 
-  STATUS_NONE("none"),
-  STATUS_NORMAL("normal", ' '),
-  STATUS_MODIFIED("modified", 'M'),
-  STATUS_ADDED("added", 'A'),
-  STATUS_DELETED("deleted", 'D'),
-  STATUS_UNVERSIONED("unversioned", '?'),
-  STATUS_MISSING("missing", '!'),
-  STATUS_REPLACED("replaced", 'R'),
-  STATUS_CONFLICTED("conflicted", 'C'),
-  STATUS_OBSTRUCTED("obstructed", '~'),
-  STATUS_IGNORED("ignored", 'I'),
+  @XmlEnumValue("none") STATUS_NONE("none"),
+  @XmlEnumValue("normal") STATUS_NORMAL("normal", ' '),
+  @XmlEnumValue("modified") STATUS_MODIFIED("modified", 'M'),
+  @XmlEnumValue("added") STATUS_ADDED("added", 'A'),
+  @XmlEnumValue("deleted") STATUS_DELETED("deleted", 'D'),
+  @XmlEnumValue("unversioned") STATUS_UNVERSIONED("unversioned", '?'),
+  @XmlEnumValue("missing") STATUS_MISSING("missing", '!'),
+  @XmlEnumValue("replaced") STATUS_REPLACED("replaced", 'R'),
+  @XmlEnumValue("conflicted") STATUS_CONFLICTED("conflicted", 'C'),
+  @XmlEnumValue("obstructed") STATUS_OBSTRUCTED("obstructed", '~'),
+  @XmlEnumValue("ignored") STATUS_IGNORED("ignored", 'I'),
   // directory is incomplete - checkout or update was interrupted
-  STATUS_INCOMPLETE("incomplete", '!'),
-  STATUS_EXTERNAL("external", 'X');
+  @XmlEnumValue("incomplete") STATUS_INCOMPLETE("incomplete", '!'),
+  @XmlEnumValue("external") STATUS_EXTERNAL("external", 'X');
 
   private static final String STATUS_PREFIX = "STATUS_";
 
