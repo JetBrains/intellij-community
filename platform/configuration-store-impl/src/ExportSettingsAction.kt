@@ -134,8 +134,8 @@ fun exportInstalledPlugins(zipOut: ZipOutputStream) {
 }
 
 // onlyPaths - include only specified paths (relative to config dir, ends with "/" if directory)
-fun getExportableComponentsMap(onlyExisting: Boolean,
-                               computePresentableNames: Boolean,
+fun getExportableComponentsMap(isOnlyExisting: Boolean,
+                               isComputePresentableNames: Boolean,
                                storageManager: StateStorageManager = ApplicationManager.getApplication().stateStore.storageManager,
                                onlyPaths: Set<String>? = null): Map<Path, List<ExportableItem>> {
   val result = LinkedHashMap<Path, MutableList<ExportableItem>>()
@@ -147,8 +147,10 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     }
   }
 
+  val app = ApplicationManager.getApplication() as ApplicationImpl
+
   @Suppress("DEPRECATION")
-  ApplicationManager.getApplication().getComponents(ExportableApplicationComponent::class.java).forEach(processor)
+  app.getComponents(ExportableApplicationComponent::class.java).forEach(processor)
   @Suppress("DEPRECATION")
   ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent::class.java).forEach(processor)
 
@@ -165,16 +167,16 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
       }
     }
 
-    return onlyExisting && !file.exists()
+    return isOnlyExisting && !file.exists()
   }
 
-  if (onlyExisting || onlyPaths != null) {
+  if (isOnlyExisting || onlyPaths != null) {
     result.keys.removeAll(::isSkipFile)
   }
 
   val fileToContent = THashMap<Path, String>()
 
-  ServiceManagerImpl.processAllImplementationClasses(ApplicationManager.getApplication() as ApplicationImpl) { aClass, pluginDescriptor ->
+  ServiceManagerImpl.processAllImplementationClasses(app) { aClass, pluginDescriptor ->
     val stateAnnotation = StoreUtil.getStateSpec(aClass)
     @Suppress("DEPRECATION")
     if (stateAnnotation == null || stateAnnotation.name.isEmpty() || ExportableComponent::class.java.isAssignableFrom(aClass)) {
@@ -186,32 +188,18 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
       return@processAllImplementationClasses true
     }
 
-    var additionalExportFile: Path? = null
-    val additionalExportPath = stateAnnotation.additionalExportFile
-    if (additionalExportPath.isNotEmpty()) {
-      // backward compatibility - path can contain macro
-      if (additionalExportPath[0] == '$') {
-        additionalExportFile = Paths.get(storageManager.expandMacros(additionalExportPath))
-      }
-      else {
-        additionalExportFile = Paths.get(storageManager.expandMacros(ROOT_CONFIG), additionalExportPath)
-      }
-      if (isSkipFile(additionalExportFile)) {
-        additionalExportFile = null
-      }
-    }
-
+    val additionalExportFile = getAdditionalExportFile(stateAnnotation, storageManager, ::isSkipFile)
     val file = Paths.get(storageManager.expandMacros(storage.path))
     val isFileIncluded = !isSkipFile(file)
     if (isFileIncluded || additionalExportFile != null) {
-      if (computePresentableNames && onlyExisting && additionalExportFile == null && file.fileName.toString().endsWith(".xml")) {
+      if (isComputePresentableNames && isOnlyExisting && additionalExportFile == null && file.fileName.toString().endsWith(".xml")) {
         val content = fileToContent.getOrPut(file) { file.readText() }
         if (!content.contains("""<component name="${stateAnnotation.name}"""")) {
           return@processAllImplementationClasses true
         }
       }
 
-      val presentableName = if (computePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else ""
+      val presentableName = if (isComputePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else ""
       if (isFileIncluded) {
         result.putValue(file, ExportableItem(file, presentableName, storage.roamingType))
       }
@@ -232,6 +220,23 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     }
   }
   return result
+}
+
+private inline fun getAdditionalExportFile(stateAnnotation: State, storageManager: StateStorageManager, isSkipFile: (file: Path) -> Boolean): Path? {
+  val additionalExportPath = stateAnnotation.additionalExportFile
+  if (!additionalExportPath.isNotEmpty()) {
+    return null
+  }
+
+  var additionalExportFile: Path? = null
+  // backward compatibility - path can contain macro
+  if (additionalExportPath[0] == '$') {
+    additionalExportFile = Paths.get(storageManager.expandMacros(additionalExportPath))
+  }
+  else {
+    additionalExportFile = Paths.get(storageManager.expandMacros(ROOT_CONFIG), additionalExportPath)
+  }
+  return if (isSkipFile(additionalExportFile)) null else additionalExportFile
 }
 
 private fun isStorageExportable(storage: Storage): Boolean {
