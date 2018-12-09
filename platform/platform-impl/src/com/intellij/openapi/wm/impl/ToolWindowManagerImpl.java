@@ -43,7 +43,6 @@ import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -257,58 +256,53 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       }
     }
 
-    Set<Integer> vks = getActivateToolWindowVKs();
+    int vks = getActivateToolWindowVKsMask();
 
-    if (vks.isEmpty()) {
+    if (vks == 0) {
       resetHoldState();
       return false;
     }
 
-    if (vks.contains(e.getKeyCode())) {
+    int mouseMask = InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK;
+    if (BitUtil.isSet(vks, keyCodeToInputMask(e.getKeyCode())) && (e.getModifiersEx() & mouseMask) == 0) {
       boolean pressed = e.getID() == KeyEvent.KEY_PRESSED;
       int modifiers = e.getModifiers();
-
-      int mouseMask = InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK;
-      if ((e.getModifiersEx() & mouseMask) == 0) {
-        if (areAllModifiersPressed(modifiers, vks) || !pressed) {
-          processState(pressed);
-        }
-        else {
-          resetHoldState();
-        }
+      if (areAllModifiersPressed(modifiers, vks) || !pressed) {
+        processState(pressed);
+      }
+      else {
+        resetHoldState();
       }
     }
-
 
     return false;
   }
 
-  private static boolean areAllModifiersPressed(@JdkConstants.InputEventMask int modifiers, Set<Integer> modifierCodes) {
-    int mask = 0;
-    for (Integer each : modifierCodes) {
-      if (each == KeyEvent.VK_SHIFT) {
-        mask |= InputEvent.SHIFT_MASK;
-      }
-
-      if (each == KeyEvent.VK_CONTROL) {
-        mask |= InputEvent.CTRL_MASK;
-      }
-
-      if (each == KeyEvent.VK_META) {
-        mask |= InputEvent.META_MASK;
-      }
-
-      if (each == KeyEvent.VK_ALT) {
-        mask |= InputEvent.ALT_MASK;
-      }
-    }
-
+  private static boolean areAllModifiersPressed(@JdkConstants.InputEventMask int modifiers, @JdkConstants.InputEventMask int mask) {
     return (modifiers ^ mask) == 0;
   }
 
-  @NotNull
-  private static Set<Integer> getActivateToolWindowVKs() {
-    if (ApplicationManager.getApplication() == null) return new HashSet<>();
+  @JdkConstants.InputEventMask
+  private static int keyCodeToInputMask(int code) {
+    int mask = 0;
+    if (code == KeyEvent.VK_SHIFT) {
+      mask = InputEvent.SHIFT_MASK;
+    }
+    if (code == KeyEvent.VK_CONTROL) {
+      mask = InputEvent.CTRL_MASK;
+    }
+    if (code == KeyEvent.VK_META) {
+      mask = InputEvent.META_MASK;
+    }
+    if (code == KeyEvent.VK_ALT) {
+      mask = InputEvent.ALT_MASK;
+    }
+    return mask;
+  }
+
+  @JdkConstants.InputEventMask
+  private static int getActivateToolWindowVKsMask() {
+    if (ApplicationManager.getApplication() == null) return 0;
 
     Keymap keymap = Objects.requireNonNull(KeymapManager.getInstance()).getActiveKeymap();
     Shortcut[] baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow");
@@ -322,28 +316,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         }
       }
     }
-    return getModifiersVKs(baseModifiers);
-  }
-
-  @NotNull
-  private static Set<Integer> getModifiersVKs(int mask) {
-    Set<Integer> codes = new THashSet<>();
-    if ((mask & InputEvent.SHIFT_MASK) > 0) {
-      codes.add(KeyEvent.VK_SHIFT);
-    }
-    if ((mask & InputEvent.CTRL_MASK) > 0) {
-      codes.add(KeyEvent.VK_CONTROL);
-    }
-
-    if ((mask & InputEvent.META_MASK) > 0) {
-      codes.add(KeyEvent.VK_META);
-    }
-
-    if ((mask & InputEvent.ALT_MASK) > 0) {
-      codes.add(KeyEvent.VK_ALT);
-    }
-
-    return codes;
+    return baseModifiers;
   }
 
   private void resetHoldState() {
@@ -662,7 +635,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   private void activateToolWindowImpl(@NotNull String id,
-                                      @NotNull List<FinalizableCommand> commandList,
+                                      @NotNull List<? super FinalizableCommand> commandList,
                                       boolean forced,
                                       boolean autoFocusContents) {
     ToolWindowCollector.getInstance().recordActivation(id);
@@ -1504,7 +1477,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     activateToolWindow(id, false, false);
   }
 
-  private void setSplitModeImpl(@NotNull String id, final boolean isSplit, @NotNull List<FinalizableCommand> commandList) {
+  private void setSplitModeImpl(@NotNull String id, final boolean isSplit, @NotNull List<? super FinalizableCommand> commandList) {
     final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     if (isSplit == info.isSplit()) {
       return;
@@ -1568,7 +1541,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     execute(commandList);
   }
 
-  private void setToolWindowAutoHideImpl(@NotNull String id, final boolean autoHide, @NotNull List<FinalizableCommand> commandsList) {
+  private void setToolWindowAutoHideImpl(@NotNull String id, final boolean autoHide, @NotNull List<? super FinalizableCommand> commandsList) {
     final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     if (info.isAutoHide() == autoHide) {
       return;
@@ -1588,7 +1561,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     execute(commandList);
   }
 
-  private void setToolWindowTypeImpl(@NotNull String id, @NotNull ToolWindowType type, @NotNull List<FinalizableCommand> commandsList) {
+  private void setToolWindowTypeImpl(@NotNull String id, @NotNull ToolWindowType type, @NotNull List<? super FinalizableCommand> commandsList) {
     final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     if (info.getType() == type) {
       return;
@@ -2271,7 +2244,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       return;
     }
     info.setShowStripeButton(visibleOnPanel);
-    triggerUsage("StripeButton[" + id + "]." + (visibleOnPanel ? "shown" : "hidden"));
 
     List<FinalizableCommand> commandList = new ArrayList<>();
     appendApplyWindowInfoCmd(info, commandList);
@@ -2298,8 +2270,5 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         });
       }
     }
-  }
-
-  private static void triggerUsage(@NotNull String feature) {
   }
 }
