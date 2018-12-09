@@ -31,6 +31,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.putValue
 import com.intellij.util.io.*
+import com.intellij.util.io.ZipUtil.addFileToZip
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import java.io.IOException
@@ -98,19 +99,23 @@ open class ExportSettingsAction : AnAction(), DumbAware {
 }
 
 fun exportSettings(exportFiles: Set<Path>, out: OutputStream, configPath: String) {
-  ZipOutputStream(out).use {
+  ZipOutputStream(out).use { zipOut ->
     val writtenItemRelativePaths = THashSet<String>()
     for (file in exportFiles) {
-      if (file.exists()) {
-        val relativePath = FileUtilRt.getRelativePath(configPath, file.toAbsolutePath().systemIndependentPath, '/')!!
-        ZipUtil.addFileOrDirRecursively(it, null, file.toFile(), relativePath, null, writtenItemRelativePaths)
+      val fileInfo = file.basicAttributesIfExists() ?: continue
+      val relativePath = FileUtilRt.getRelativePath(configPath, file.toAbsolutePath().systemIndependentPath, '/')!!
+      if (fileInfo.isDirectory) {
+        ZipUtil.addDirToZipRecursively(zipOut, null, file.toFile(), relativePath, null, writtenItemRelativePaths)
+      }
+      else {
+        addFileToZip(zipOut, file.toFile(), relativePath, writtenItemRelativePaths, null)
       }
     }
 
-    exportInstalledPlugins(it)
+    exportInstalledPlugins(zipOut)
 
-    it.putNextEntry(ZipEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER))
-    it.closeEntry()
+    zipOut.putNextEntry(ZipEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER))
+    zipOut.closeEntry()
   }
 }
 
