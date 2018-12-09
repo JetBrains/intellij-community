@@ -1111,7 +1111,10 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
   @Override
   public void unregisterToolWindow(@NotNull final String id) {
-    Disposer.dispose((ToolWindowImpl)getToolWindow(id));
+    ToolWindowImpl window = (ToolWindowImpl)getToolWindow(id);
+    if (window != null) {
+      Disposer.dispose(window);
+    }
   }
 
   void doUnregisterToolWindow(@NotNull String id) {
