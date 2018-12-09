@@ -62,12 +62,7 @@ internal class ConfigureIcsAction : DumbAwareAction() {
       return
     }
 
-    if (icsManager.isActive) {
-      e.presentation.isEnabledAndVisible = true
-    }
-    else {
-      e.presentation.isEnabledAndVisible = !(application.stateStore.storageManager as StateStorageManagerImpl).compoundStreamProvider.enabled
-    }
+    e.presentation.isEnabledAndVisible = icsManager.isActive || !(application.stateStore.storageManager as StateStorageManagerImpl).compoundStreamProvider.enabled
     e.presentation.icon = null
   }
 }
