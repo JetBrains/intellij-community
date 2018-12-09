@@ -106,11 +106,11 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   /**
    * Clones the given source repository into a bare parent.git and adds the remote origin.
    */
-  protected fun prepareRemoteRepo(source: GitRepository, target: File = File(testRoot, "parent.git")): File {
+  protected fun prepareRemoteRepo(source: GitRepository, target: File = File(testRoot, "parent.git"), remoteName: String = "origin"): File {
     cd(testRoot)
     git("clone --bare '${source.root.path}' ${target.path}")
     cd(source)
-    git("remote add origin '${target.path}'")
+    git("remote add ${remoteName} '${target.path}'")
     return target
   }
 
