@@ -25,12 +25,12 @@ public class ZipUtil {
   public interface FileContentProcessor {
     FileContentProcessor STANDARD = new FileContentProcessor() {
       @Override
-      public InputStream getContent(File file) throws IOException {
+      public InputStream getContent(@NotNull File file) throws IOException {
         return new FileInputStream(file);
       }
     };
 
-    InputStream getContent(File file) throws IOException;
+    InputStream getContent(@NotNull File file) throws IOException;
   }
 
   public static boolean addFileToZip(@NotNull ZipOutputStream zos,

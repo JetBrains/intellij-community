@@ -48,6 +48,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -204,7 +205,7 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     final VirtualFile descriptionFile = getDescriptionFile(project, path);
     if (descriptionFile == null) {
       stream.putNextEntry(new ZipEntry(prefix + "/" + path));
-      stream.write(text.getBytes());
+      stream.write(text.getBytes(StandardCharsets.UTF_8));
       stream.closeEntry();
     }
     else if (overwrite) {
@@ -415,7 +416,7 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
                                myPrefix + "/" + relativePath, null, null,
                                new ZipUtil.FileContentProcessor() {
                                  @Override
-                                 public InputStream getContent(final File file) throws IOException {
+                                 public InputStream getContent(@NotNull final File file) throws IOException {
                                    if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName()))
                                      return STANDARD.getContent(file);
                                    String result =
