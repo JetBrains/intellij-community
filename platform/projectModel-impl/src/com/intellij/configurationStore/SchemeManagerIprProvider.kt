@@ -17,9 +17,11 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
   private val lock = ReentrantReadWriteLock()
   private var nameToData = LinkedHashMap<String, ByteArray>()
 
+  override val isExclusive = false
+
   override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
     lock.read {
-      nameToData.get(PathUtilRt.getFileName(fileSpec))?.let(ByteArray::inputStream).let { consumer(it) }
+      consumer(nameToData.get(PathUtilRt.getFileName(fileSpec))?.let(ByteArray::inputStream))
     }
     return true
   }

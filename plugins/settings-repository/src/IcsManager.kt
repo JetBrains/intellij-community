@@ -158,8 +158,8 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     override val enabled: Boolean
       get() = this@IcsManager.isActive
 
-    override val isDisableExportAction: Boolean
-      get() = this@IcsManager.isRepositoryActive
+    override val isExclusive: Boolean
+      get() = isRepositoryActive
 
     override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = isRepositoryActive
 

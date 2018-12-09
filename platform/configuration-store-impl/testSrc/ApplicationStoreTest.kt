@@ -408,6 +408,8 @@ internal class ApplicationStoreTest {
   private fun writeConfig(fileName: String, @Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
 
   private class MyStreamProvider : StreamProvider {
+    override val isExclusive = true
+
     override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean) = true
 
     val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
