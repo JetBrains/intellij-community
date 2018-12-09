@@ -66,6 +66,9 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
         getExtensionPoint().unregisterExtension(myMockCreator);
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

@@ -129,7 +129,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   @Override
   public void unregisterToolWindow(@NotNull String id) {
-    myToolWindows.remove(id);
+    ToolWindow toolWindow = myToolWindows.remove(id);
+    if (toolWindow != null) {
+      Disposer.dispose(((MockToolWindow)toolWindow).myContentManager);
+    }
   }
 
   @Override
@@ -199,10 +202,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public String getLastActiveToolWindowId(Condition<JComponent> condition) {
+  public String getLastActiveToolWindowId(Condition<? super JComponent> condition) {
     return null;
   }
 
+  @NotNull
   @Override
   public DesktopLayout getLayout() {
     return new DesktopLayout();
@@ -236,7 +240,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   public static class MockToolWindow implements ToolWindowEx {
-    ContentManager myContentManager = new MockContentManager();
+    final ContentManager myContentManager = new MockContentManager();
 
     public MockToolWindow(@NotNull Project project) {
       Disposer.register(project, myContentManager);
@@ -633,7 +637,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @NotNull
     @Override
-    public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean trackFocus, boolean implicitFocus) {
+    public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean requestFocus, boolean implicitFocus) {
       removeContent(content, dispose);
       return ActionCallback.DONE;
     }

@@ -2,6 +2,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.SettingsEditor;
@@ -167,5 +168,9 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   }
 
   default void setAllowRunningInParallel(boolean value) {
+  }
+
+  default boolean processRunSame(@NotNull ExecutionEnvironment environment) {
+    return false;
   }
 }

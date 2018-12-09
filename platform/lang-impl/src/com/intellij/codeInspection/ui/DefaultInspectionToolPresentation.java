@@ -56,8 +56,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   protected static final Logger LOG = Logger.getInstance(DefaultInspectionToolPresentation.class);
 
   @NotNull private final InspectionToolWrapper myToolWrapper;
-  @NotNull private final GlobalInspectionContextImpl myContext;
-  protected InspectionNode myToolNode;
+  @NotNull protected final GlobalInspectionContextImpl myContext;
 
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myProblemElements = createBidiMap();
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> mySuppressedElements = createBidiMap();
@@ -253,11 +252,6 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     if (myToolWrapper instanceof LocalInspectionToolWrapper && (!ApplicationManager.getApplication().isUnitTestMode() || GlobalInspectionContextImpl.CREATE_VIEW_FORCE)) {
       context.initializeViewIfNeed().doWhenDone(() -> context.getView().addProblemDescriptors(myToolWrapper, refElement, descriptors));
     }
-  }
-
-  @Override
-  public InspectionNode getToolNode() {
-    return myToolNode;
   }
 
   protected boolean isDisposed() {
@@ -462,15 +456,6 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   @NotNull
   public SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> getProblemElements() {
     return myProblemElements;
-  }
-
-  @Override
-  public void createToolNode(@NotNull GlobalInspectionContextImpl globalInspectionContext, @NotNull InspectionNode node,
-                             @NotNull InspectionRVContentProvider provider,
-                             @NotNull InspectionTreeNode parentNode,
-                             boolean showStructure,
-                             boolean groupBySeverity) {
-    myToolNode = node;
   }
 
   @Override

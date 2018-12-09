@@ -70,9 +70,6 @@ public final class ActionMenu extends JBMenu {
     if (SystemInfo.isMacSystemMenu) {
       installSynchronizer();
     }
-    if (UIUtil.isUnderIntelliJLaF()) {
-      setOpaque(true);
-    }
 
     // Triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
     getPopupMenu();

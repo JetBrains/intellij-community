@@ -81,6 +81,9 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
       myState2 = null;
       myState3 = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

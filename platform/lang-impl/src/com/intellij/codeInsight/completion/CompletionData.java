@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.patterns.CharPattern;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.ObjectPattern;
 import com.intellij.psi.*;
@@ -27,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.patterns.StandardPatterns.character;
 import static com.intellij.patterns.StandardPatterns.not;
 
 /**
@@ -36,7 +36,7 @@ import static com.intellij.patterns.StandardPatterns.not;
 @Deprecated
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionData");
-  public static final ObjectPattern.Capture<Character> NOT_JAVA_ID = not(character().javaIdentifierPart());
+  public static final ObjectPattern.Capture<Character> NOT_JAVA_ID = not(CharPattern.javaIdentifierPartCharacter());
   private final List<CompletionVariant> myCompletionVariants = new ArrayList<>();
 
   protected CompletionData(){ }

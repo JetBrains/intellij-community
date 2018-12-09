@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -101,8 +102,9 @@ public class JavaAnalysisScope extends AnalysisScope {
   @Override
   protected void initFilesSet() {
     if (myType == PACKAGE) {
-      myFilesSet = new HashSet<>();
+      myFilesSet = new CompactVirtualFileSet();
       accept(createFileSearcher());
+      myFilesSet.freeze();
       return;
     }
     super.initFilesSet();

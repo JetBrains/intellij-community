@@ -20,6 +20,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -36,6 +37,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,15 +46,14 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionToolbarImpl");
 
-  private static final List<ActionToolbarImpl> ourToolbars = new LinkedList<>();
+  private static final Set<ActionToolbarImpl> ourToolbars = new LinkedHashSet<>();
   private static final String RIGHT_ALIGN_KEY = "RIGHT_ALIGN";
 
   static {
@@ -228,6 +229,19 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   public void removeNotify() {
     super.removeNotify();
     ourToolbars.remove(this);
+
+    CancellablePromise<List<AnAction>> lastUpdate = myLastUpdate;
+    if (lastUpdate != null) {
+      lastUpdate.cancel();
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        try {
+          lastUpdate.blockingGet(1, TimeUnit.DAYS);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
   }
 
   @NotNull
@@ -1112,13 +1126,28 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myUpdater.updateActions(true, false);
   }
 
+  private boolean myAlreadyUpdated = false;
+
   private void updateActionsImpl(boolean transparentOnly, boolean forced) {
     DataContext dataContext = getDataContext();
-    List<AnAction> newVisibleActions =
-      new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory, dataContext, myPlace,
-                        false, true, transparentOnly)
-        .expandActionGroupWithTimeout(myActionGroup, false);
+    boolean async = myAlreadyUpdated && Registry.is("actionSystem.update.actions.asynchronously") && ourToolbars.contains(this) && isShowing();
+    ActionUpdater updater = new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory,
+                                              async ? new AsyncDataContext(dataContext) : dataContext,
+                                              myPlace, false, true, transparentOnly);
+    if (async) {
+      if (myLastUpdate != null) myLastUpdate.cancel();
 
+      myLastUpdate = updater.expandActionGroupAsync(myActionGroup, false);
+      myLastUpdate.onSuccess(actions -> actionsUpdated(forced, actions)).onProcessed(__ -> myLastUpdate = null);
+    } else {
+      actionsUpdated(forced, updater.expandActionGroupWithTimeout(myActionGroup, false));
+      myAlreadyUpdated = true;
+    }
+  }
+
+  private CancellablePromise<List<AnAction>> myLastUpdate;
+
+  private void actionsUpdated(boolean forced, List<AnAction> newVisibleActions) {
     if (forced || !newVisibleActions.equals(myVisibleActions)) {
       boolean shouldRebuildUI = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
       myVisibleActions = newVisibleActions;

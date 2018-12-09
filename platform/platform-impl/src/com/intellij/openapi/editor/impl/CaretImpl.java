@@ -219,7 +219,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       boolean newLeansRight = lineShift == 0 && columnShift != 0 ? columnShift < 0 : visualCaret.leansRight;
 
       if (desiredX >= 0) {
-        newColumnNumber = myEditor.xyToVisualPosition(new Point(desiredX, Math.max(0, newLineNumber) * myEditor.getLineHeight())).column;
+        newColumnNumber = myEditor.xyToVisualPosition(new Point(desiredX, myEditor.visualLineToY(newLineNumber))).column;
       }
 
       Document document = myEditor.getDocument();

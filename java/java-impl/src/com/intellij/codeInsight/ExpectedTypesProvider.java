@@ -570,13 +570,13 @@ public class ExpectedTypesProvider {
         getExpectedArgumentsTypesForNewExpression((PsiNewExpression)parent.getParent(), list);
       }
       else if (parent instanceof PsiSwitchLabelStatementBase) {
-        PsiSwitchStatement switchStatement = ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchStatement();
-        if (switchStatement != null) {
-          PsiExpression expression = switchStatement.getExpression();
+        PsiSwitchBlock switchBlock = ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchBlock();
+        if (switchBlock != null) {
+          PsiExpression expression = switchBlock.getExpression();
           if (expression != null) {
             PsiType type = expression.getType();
             if (type != null) {
-              myResult.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.CASE_COLON));
+              myResult.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.forSwitchLabel(switchBlock)));
             }
           }
         }

@@ -154,6 +154,19 @@ public class ComparisonManagerImpl extends ComparisonManager {
                                               @NotNull LineOffsets lineOffsets1,
                                               @NotNull LineOffsets lineOffsets2,
                                               @NotNull ComparisonPolicy policy,
+                                              boolean innerFragments,
+                                              @NotNull ProgressIndicator indicator) throws DiffTooBigException {
+    InnerFragmentsPolicy fragmentsPolicy = innerFragments ? InnerFragmentsPolicy.WORDS : InnerFragmentsPolicy.NONE;
+    return compareLinesInner(range, text1, text2, lineOffsets1, lineOffsets2, policy, fragmentsPolicy, indicator);
+  }
+
+  @NotNull
+  public List<LineFragment> compareLinesInner(@NotNull Range range,
+                                              @NotNull CharSequence text1,
+                                              @NotNull CharSequence text2,
+                                              @NotNull LineOffsets lineOffsets1,
+                                              @NotNull LineOffsets lineOffsets2,
+                                              @NotNull ComparisonPolicy policy,
                                               @NotNull InnerFragmentsPolicy fragmentsPolicy,
                                               @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     List<LineFragment> lineFragments = compareLines(range, text1, text2, lineOffsets1, lineOffsets2, policy, indicator);

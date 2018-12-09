@@ -110,7 +110,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   }
 
   private boolean isRevisionCanBeSpecifiedForRoot() {
-    final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot.getIOFile());
+    final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot);
     if (info != null) {
       boolean isExternalOrSwitched = NestedCopyType.external.equals(info.getType()) || NestedCopyType.switched.equals(info.getType());
       if (isExternalOrSwitched) {
@@ -166,14 +166,14 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
 
   @Nullable
   private Url getBranchForUrl(@Nullable Url url) {
-    final RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot.getIOFile());
+    final RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot);
 
     return rootInfo != null && url != null ? SvnUtil.getBranchForUrl(myVcs, rootInfo.getVirtualFile(), url) : null;
   }
 
   @Nullable
   private SvnBranchConfigurationNew getBranchConfiguration() {
-    final RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot.getIOFile());
+    final RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot);
 
     return rootInfo != null ? SvnBranchConfigurationManager.getInstance(myVcs.getProject()).get(rootInfo.getVirtualFile()) : null;
   }

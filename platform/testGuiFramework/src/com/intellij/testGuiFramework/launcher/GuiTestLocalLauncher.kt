@@ -287,6 +287,7 @@ object GuiTestLocalLauncher {
       .plus("-Didea.config.path=${GuiTestOptions.configPath}")
       .plus("-Didea.system.path=${GuiTestOptions.systemPath}")
       .plus("-Dfile.encoding=${GuiTestOptions.encoding}")
+      .plusIf(System.getProperty("java.io.tmpdir") != null, "-Djava.io.tmpdir=${System.getProperty("java.io.tmpdir")}")
       .plusIf(!ide.ideType.platformPrefix.isNullOrEmpty(), "-Didea.platform.prefix=${ide.ideType.platformPrefix}")
       .plus(ide.ideType.ideSpecificOptions)
       .plus(customVmOptions)

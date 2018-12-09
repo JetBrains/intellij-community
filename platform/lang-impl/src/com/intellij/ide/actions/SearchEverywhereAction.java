@@ -17,6 +17,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -856,9 +857,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     history.add(0, new HistoryItem(text, type == null ? null : type.name(), fqn));
 
-    if (history.size() > MAX_SEARCH_EVERYWHERE_HISTORY) {
-      history = history.subList(0, MAX_SEARCH_EVERYWHERE_HISTORY);
-    }
+    history = ContainerUtil.getFirstItems(history, MAX_SEARCH_EVERYWHERE_HISTORY);
     final String[] newValues = new String[history.size()];
     for (int i = 0; i < newValues.length; i++) {
       newValues[i] = history.get(i).toString();
@@ -976,6 +975,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       super(false, "SearchEveryWhereHistory");
       JTextField editor = getTextEditor();
       editor.setOpaque(false);
+      editor.putClientProperty(SearchEverywhereUI.SEARCH_EVERYWHERE_SEARCH_FILED_KEY, true);
       if (UIUtil.isUnderDefaultMacTheme()) {
         editor.setUI((MacIntelliJTextFieldUI)MacIntelliJTextFieldUI.createUI(editor));
         editor.setBorder(new MacIntelliJTextBorder());
@@ -989,16 +989,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         editor.setBackground(Gray._45);
         editor.setForeground(Gray._240);
       }
-    }
-
-    @Override
-    protected boolean isSearchControlUISupported() {
-      return true;
-    }
-
-    @Override
-    protected boolean hasIconsOutsideOfTextField() {
-      return false;
     }
 
     @Override
@@ -1592,7 +1582,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     @Nullable
     private ChooseRunConfigurationPopup.ItemWrapper getRunConfigurationByName(String name) {
-      final ChooseRunConfigurationPopup.ItemWrapper[] wrappers =
+      final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers =
         ChooseRunConfigurationPopup.createSettingsList(project, new ExecutorProvider() {
           @Override
           public Executor getExecutor() {
@@ -1629,7 +1619,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         return configurations;
       }
       final MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
-      final ChooseRunConfigurationPopup.ItemWrapper[] wrappers =
+      final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers =
         ChooseRunConfigurationPopup.createSettingsList(project, new ExecutorProvider() {
           @Override
           public Executor getExecutor() {
@@ -1927,7 +1917,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         SwingUtilities.invokeLater(() -> {
           if (isCanceled()) return;
 
-          for (Object element : new ArrayList(elements)) {
+          for (Object element : new ArrayList<>(elements)) {
             if (element instanceof AnAction) {
               if (!isEnabled((AnAction)element)) {
                 elements.remove(element);
@@ -2150,7 +2140,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                  int shift = 0;
                  int i = index+1;
                  for (Object o : result) {
-                   //noinspection unchecked
                    myListModel.insertElementAt(o, i);
                    shift++;
                    i++;

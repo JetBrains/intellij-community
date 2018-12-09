@@ -566,11 +566,18 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
     if (hasStatements) {
       final PsiMethod[] superMethods = javaMethod.findSuperMethods();
+      int defaultCount = 0;
       for (PsiMethod superMethod : superMethods) {
         if (VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(superMethod.getModifierList()),
                                    VisibilityUtil.getVisibilityModifier(javaMethod.getModifierList())) > 0) {
           return false;
         }
+        if (superMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+          defaultCount++;
+        }
+      }
+      if (defaultCount > 1) {
+        return false;
       }
     }
     return hasStatements;

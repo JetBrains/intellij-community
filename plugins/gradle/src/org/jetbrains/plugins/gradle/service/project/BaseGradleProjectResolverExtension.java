@@ -142,16 +142,14 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final String mainModuleFileDirectoryPath = mainModuleData.getModuleFileDirectoryPath();
     final String jdkName = getJdkName(gradleModule);
 
+    String[] moduleGroup = null;
+    if (!resolverCtx.isUseQualifiedModuleNames()) {
+      moduleGroup = getIdeModuleGroup(mainModuleData.getInternalName(), gradleModule);
+      mainModuleData.setIdeModuleGroup(moduleGroup);
+    }
+
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (resolverCtx.isResolveModulePerSourceSet() && externalProject != null) {
-      String[] moduleGroup = null;
-      if (!resolverCtx.isUseQualifiedModuleNames()) {
-        String gradlePath = gradleModule.getGradleProject().getPath();
-        final boolean isRootModule = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
-        moduleGroup = isRootModule ? new String[]{mainModuleData.getInternalName()} : ArrayUtil.remove(gradlePath.split(":"), 0);
-        mainModuleData.setIdeModuleGroup(isRootModule ? null : moduleGroup);
-      }
-
       for (ExternalSourceSet sourceSet : externalProject.getSourceSets().values()) {
         final String moduleId = getModuleId(resolverCtx, gradleModule, sourceSet);
         final String moduleExternalName = gradleModule.getName() + ":" + sourceSet.getName();
@@ -229,6 +227,18 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     return mainModuleNode;
   }
 
+  @NotNull
+  protected String[] getIdeModuleGroup(String moduleName, IdeaModule gradleModule) {
+    String[] moduleGroup;
+    final String gradlePath = gradleModule.getGradleProject().getPath();
+    final String rootName = gradleModule.getProject().getName();
+    final boolean isRootModule = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
+    moduleGroup = isRootModule
+                  ? new String[]{ moduleName }
+                  : (rootName + gradlePath).split(":");
+    return moduleGroup;
+  }
+
   @Nullable
   private static String getJdkName(@NotNull IdeaModule gradleModule) {
     try {
@@ -285,10 +295,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         List<? extends IdeaSourceDirectory> resourceDirectories = Collections.emptyList();
         List<? extends IdeaSourceDirectory> testResourceDirectories = Collections.emptyList();
         try {
+          final Set<File> notResourceDirs = collectExplicitNonResourceDirectories(externalProject);
+
           resourceDirectories = gradleContentRoot.getResourceDirectories().getAll();
-          removeAll(sourceDirectories, resourceDirectories);
+          removeDuplicateResources(sourceDirectories, resourceDirectories, notResourceDirs);
           testResourceDirectories = gradleContentRoot.getTestResourceDirectories().getAll();
-          removeAll(testDirectories, testResourceDirectories);
+          removeDuplicateResources(testDirectories, testResourceDirectories, notResourceDirs);
         }
         catch (UnsupportedMethodException e) {
           oldGradle = true;
@@ -340,6 +352,28 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         }
       }
     });
+  }
+
+  private static void removeDuplicateResources(@NotNull List<? extends IdeaSourceDirectory> sourceDirectories,
+                                               @NotNull List<? extends IdeaSourceDirectory> resourceDirectories,
+                                               @NotNull Set<File> notResourceDirs) {
+
+
+    resourceDirectories.removeIf(ideaSourceDirectory -> notResourceDirs.contains(ideaSourceDirectory.getDirectory()));
+    removeAll(sourceDirectories, resourceDirectories);
+  }
+
+  @NotNull
+  private static Set<File> collectExplicitNonResourceDirectories(@Nullable ExternalProject externalProject) {
+    if (externalProject == null) {
+      return Collections.emptySet();
+    }
+
+    return externalProject.getSourceSets().values().stream()
+      .flatMap(ss -> ss.getSources().entrySet().stream()
+        .filter(e -> !e.getKey().isResource())
+        .flatMap(e -> e.getValue().getSrcDirs().stream()))
+      .collect(Collectors.toCollection(() -> ContainerUtil.newTroveSet(FileUtil.FILE_HASHING_STRATEGY)));
   }
 
   private static void removeAll(List<? extends IdeaSourceDirectory> list, List<? extends IdeaSourceDirectory> toRemove) {
@@ -580,6 +614,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, taskPath, task.getDescription());
         taskData.setGroup(taskGroup);
         taskData.setType(task.getType());
+        taskData.setTest(task.isTest());
         ideModule.createChild(ProjectKeys.TASK, taskData);
         taskData.setInherited(StringUtil.equals(task.getName(), task.getQName()));
         tasks.add(taskData);

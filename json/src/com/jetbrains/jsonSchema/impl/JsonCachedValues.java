@@ -6,7 +6,6 @@ import com.intellij.json.navigation.JsonQualifiedNameProvider;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -17,7 +16,8 @@ import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.JsonPointerUtil;
+import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +71,8 @@ public class JsonCachedValues {
   @Nullable
   static String fetchSchemaUrl(@Nullable PsiFile psiFile) {
     if (!(psiFile instanceof JsonFile)) return null;
-    return JsonSchemaFileValuesIndex.readTopLevelProps(psiFile.getFileType(), psiFile.getText()).get(URL_CACHE_KEY);
+    final String url = JsonSchemaFileValuesIndex.readTopLevelProps(psiFile.getFileType(), psiFile.getText()).get(URL_CACHE_KEY);
+    return url == null || JsonSchemaFileValuesIndex.NULL.equals(url) ? null : url;
   }
 
   static final String ID_CACHE_KEY = "JsonSchemaIdCache";
@@ -81,17 +82,13 @@ public class JsonCachedValues {
   public static String getSchemaId(@NotNull final VirtualFile schemaFile,
                                    @NotNull final Project project) {
     String value = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, ID_CACHE_KEY);
-    if (value != null) {
-      return JsonSchemaFileValuesIndex.NULL.equals(value) ? null : JsonSchemaService.normalizeId(value);
-    }
-
-    value = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, OBSOLETE_ID_CACHE_KEY);
-    if (value != null) {
-      return JsonSchemaFileValuesIndex.NULL.equals(value) ? null : JsonSchemaService.normalizeId(value);
-    }
+    if (value != null && !JsonSchemaFileValuesIndex.NULL.equals(value)) return JsonPointerUtil.normalizeId(value);
+    String obsoleteValue = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, OBSOLETE_ID_CACHE_KEY);
+    if (obsoleteValue != null && !JsonSchemaFileValuesIndex.NULL.equals(obsoleteValue)) return JsonPointerUtil.normalizeId(obsoleteValue);
+    if (JsonSchemaFileValuesIndex.NULL.equals(value) || JsonSchemaFileValuesIndex.NULL.equals(obsoleteValue)) return null;
 
     final String result = computeForFile(schemaFile, project, JsonCachedValues::fetchSchemaId, SCHEMA_ID_CACHE_KEY);
-    return result == null ? null : JsonSchemaService.normalizeId(result);
+    return result == null ? null : JsonPointerUtil.normalizeId(result);
   }
 
   @Nullable
@@ -128,20 +125,21 @@ public class JsonCachedValues {
     if (!(psiFile instanceof JsonFile)) return null;
     final Map<String, String> props = JsonSchemaFileValuesIndex.readTopLevelProps(psiFile.getFileType(), psiFile.getText());
     final String id = props.get(ID_CACHE_KEY);
-    if (id != null) return id;
-    return props.get(OBSOLETE_ID_CACHE_KEY);
+    if (id != null && !JsonSchemaFileValuesIndex.NULL.equals(id)) return id;
+    final String obsoleteId = props.get(OBSOLETE_ID_CACHE_KEY);
+    return obsoleteId == null || JsonSchemaFileValuesIndex.NULL.equals(obsoleteId) ? null : obsoleteId;
   }
 
 
-  private static final Key<CachedValue<List<Pair<Collection<String>, String>>>> SCHEMA_CATALOG_CACHE_KEY = Key.create("JsonSchemaCatalogCache");
+  private static final Key<CachedValue<List<JsonSchemaCatalogEntry>>> SCHEMA_CATALOG_CACHE_KEY = Key.create("JsonSchemaCatalogCache");
   @Nullable
-  public static List<Pair<Collection<String>, String>> getSchemaCatalog(@NotNull final VirtualFile catalog,
+  public static List<JsonSchemaCatalogEntry> getSchemaCatalog(@NotNull final VirtualFile catalog,
                                    @NotNull final Project project) {
     if (!catalog.isValid()) return null;
     return computeForFile(catalog, project, JsonCachedValues::computeSchemaCatalog, SCHEMA_CATALOG_CACHE_KEY);
   }
 
-  private static List<Pair<Collection<String>, String>> computeSchemaCatalog(PsiFile catalog) {
+  private static List<JsonSchemaCatalogEntry> computeSchemaCatalog(PsiFile catalog) {
     if (!catalog.isValid()) return null;
     JsonValue value = AstLoadingFilter.forceAllowTreeLoading(catalog, () -> ((JsonFile)catalog).getTopLevelValue());
     if (!(value instanceof JsonObject)) return null;
@@ -151,26 +149,36 @@ public class JsonCachedValues {
 
     JsonValue schemasValue = schemas.getValue();
     if (!(schemasValue instanceof JsonArray)) return null;
-    List<Pair<Collection<String>, String>> catalogMap = ContainerUtil.newArrayList();
+    List<JsonSchemaCatalogEntry> catalogMap = ContainerUtil.newArrayList();
     fillMap((JsonArray)schemasValue, catalogMap);
     return catalogMap;
   }
 
-  private static void fillMap(@NotNull JsonArray array, @NotNull List<Pair<Collection<String>, String>> catalogMap) {
+  private static void fillMap(@NotNull JsonArray array, @NotNull List<JsonSchemaCatalogEntry> catalogMap) {
     for (JsonValue value: array.getValueList()) {
-      if (!(value instanceof JsonObject)) continue;
-      JsonProperty fileMatch = ((JsonObject)value).findProperty("fileMatch");
+      JsonObject obj = ObjectUtils.tryCast(value, JsonObject.class);
+      if (obj == null) continue;
+      JsonProperty fileMatch = obj.findProperty("fileMatch");
       Collection<String> masks = fileMatch == null ? ContainerUtil.emptyList() : resolveMasks(fileMatch.getValue());
-      JsonProperty url = ((JsonObject)value).findProperty("url");
-      if (url == null) continue;
-      JsonValue urlValue = url.getValue();
-      if (urlValue instanceof JsonStringLiteral) {
-        String urlStringValue = ((JsonStringLiteral)urlValue).getValue();
-        if (!StringUtil.isEmpty(urlStringValue)) {
-          catalogMap.add(Pair.create(masks, urlStringValue));
-        }
+      final String urlString = readStringValue(obj.findProperty("url"));
+      if (urlString == null) continue;
+      catalogMap.add(new JsonSchemaCatalogEntry(masks, urlString,
+                                                readStringValue(obj.findProperty("name")),
+                                                readStringValue(obj.findProperty("description"))));
+    }
+  }
+
+  @Nullable
+  private static String readStringValue(@Nullable JsonProperty property) {
+    if (property == null) return null;
+    JsonValue urlValue = property.getValue();
+    if (urlValue instanceof JsonStringLiteral) {
+      String urlStringValue = ((JsonStringLiteral)urlValue).getValue();
+      if (!StringUtil.isEmpty(urlStringValue)) {
+        return urlStringValue;
       }
     }
+    return null;
   }
 
   @NotNull

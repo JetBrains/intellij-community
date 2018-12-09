@@ -40,7 +40,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   }
 
   public GrEnumTypeDefinitionImpl(GrTypeDefinitionStub stub) {
-    super(stub, GroovyElementTypes.ENUM_DEFINITION);
+    super(stub, GroovyElementTypes.ENUM_TYPE_DEFINITION);
   }
 
   @Override

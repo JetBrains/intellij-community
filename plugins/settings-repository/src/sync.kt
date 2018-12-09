@@ -227,10 +227,10 @@ private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateS
   }
 }
 
-enum class SyncType {
-  MERGE,
-  OVERWRITE_LOCAL,
-  OVERWRITE_REMOTE
+enum class SyncType(val messageKey: String) {
+  MERGE("Merge"),
+  OVERWRITE_LOCAL("ResetToTheirs"),
+  OVERWRITE_REMOTE("ResetToMy")
 }
 
 class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.message, cause)

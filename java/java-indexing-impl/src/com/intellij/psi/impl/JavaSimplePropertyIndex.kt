@@ -3,6 +3,7 @@ package com.intellij.psi.impl
 
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.LighterASTNode
+import com.intellij.lang.java.JavaParserDefinition
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
@@ -193,7 +194,7 @@ class JavaSimplePropertyIndex : FileBasedIndexExtension<Int, PropertyIndexValue>
   override fun getName(): ID<Int, PropertyIndexValue> = indexId
 
   override fun getInputFilter(): FileBasedIndex.InputFilter = object : DefaultFileTypeSpecificInputFilter(JavaFileType.INSTANCE) {
-    override fun acceptInput(file: VirtualFile): Boolean = JavaStubElementTypes.JAVA_FILE.shouldBuildStubFor(file)
+    override fun acceptInput(file: VirtualFile): Boolean = JavaParserDefinition.JAVA_FILE.shouldBuildStubFor(file)
   }
 
   override fun dependsOnFileContent(): Boolean = true

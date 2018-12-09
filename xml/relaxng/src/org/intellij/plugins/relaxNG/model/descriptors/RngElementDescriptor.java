@@ -17,22 +17,24 @@
 package org.intellij.plugins.relaxNG.model.descriptors;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.PsiCachedValueImpl;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.AstLoadingFilter;
-import com.intellij.util.CachedValueImpl;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -403,15 +405,20 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return myElementPattern;
   }
 
-  private static class RncLocationPsiElement extends FakePsiElement {
+  private static class RncLocationPsiElement extends FakePsiElement implements NavigationItem {
     private final PsiFile myFile;
     private final int myStartOffset;
     private final int myColumn;
 
-    public RncLocationPsiElement(PsiFile file, int startOffset, int column) {
+    private RncLocationPsiElement(PsiFile file, int startOffset, int column) {
       myFile = file;
       myStartOffset = startOffset;
       myColumn = column;
+    }
+
+    @Override
+    public String getName() {
+      return getNavigationElement().getText();
     }
 
     @NotNull

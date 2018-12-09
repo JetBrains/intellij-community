@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -34,7 +35,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
-import com.intellij.util.loadElement
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import gnu.trove.THashMap
@@ -169,7 +169,7 @@ object UpdateChecker {
           .connect {
             try {
               if (settings.isPlatformUpdateEnabled)
-                UpdatesInfo(loadElement(it.reader))
+                UpdatesInfo(JDOMUtil.load(it.reader))
               else
                 null
             }
@@ -203,7 +203,7 @@ object UpdateChecker {
       .forceHttps(settings.canUseSecureConnection())
       .connect {
         try {
-          UpdatesInfo(loadElement(it.reader))
+          UpdatesInfo(JDOMUtil.load(it.reader))
         }
         catch (e: JDOMException) {
           // corrupted content, don't bother telling user
@@ -543,13 +543,13 @@ object UpdateChecker {
     val newBuild: BuildInfo?
     val patches: UpdateChain?
     if (forceUpdate) {
-      val node = loadElement(updateInfoText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException("//channel missing")
+      val node = JDOMUtil.load(updateInfoText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException("//channel missing")
       channel = UpdateChannel(node)
       newBuild = channel.builds.firstOrNull() ?: throw IllegalArgumentException("//build missing")
       patches = newBuild.patches.firstOrNull()?.let { UpdateChain(listOf(it.fromBuild, newBuild.number), it.size) }
     }
     else {
-      val updateInfo = UpdatesInfo(loadElement(updateInfoText))
+      val updateInfo = UpdatesInfo(JDOMUtil.load(updateInfoText))
       val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo)
       val checkForUpdateResult = strategy.checkForUpdates()
       channel = checkForUpdateResult.updatedChannel

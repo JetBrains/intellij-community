@@ -272,11 +272,11 @@ class GitBranchPopupActions {
       return new AnAction[]{
         new CheckoutAction(myProject, myRepositories, myBranchName),
         new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
+        new CheckoutWithRebaseAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
         new Separator(),
         new RebaseAction(myProject, myRepositories, myBranchName),
-        new CheckoutWithRebaseAction(myProject, myRepositories, myBranchName),
         new MergeAction(myProject, myRepositories, myBranchName, true),
         new Separator(),
         new RenameBranchAction(myProject, myRepositories, myBranchName),

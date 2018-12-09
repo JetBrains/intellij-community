@@ -26,6 +26,7 @@ import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     String result = getGroup() == null ? "" : getGroup().getText(null);
     synchronized (this) {
       List<Node> children = myChildren;
-      return result + children.subList(0, Math.min(10, children.size()));
+      return result + ContainerUtil.getFirstItems(children, 10);
     }
   }
 

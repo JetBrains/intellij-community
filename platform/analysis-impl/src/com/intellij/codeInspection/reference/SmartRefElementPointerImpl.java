@@ -36,15 +36,19 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
   private final String myType;
 
   public SmartRefElementPointerImpl(RefEntity ref, boolean isPersistent) {
-      myIsPersistent = isPersistent;
-      myRefElement = ref;
-      myFQName = ref.getExternalName();
-      myType = ref.getRefManager().getType(ref);
-      LOG.assertTrue(myFQName != null, "Name: " + ref.getName() +
-                                       ", qName: " + ref.getQualifiedName() +
-                                       "; type: " + myType +
-                                       (ref instanceof RefElement ? ("; containing file: " + getContainingFileName((RefElement)ref)) : ""));
+    myIsPersistent = isPersistent;
+    myRefElement = ref;
+    myFQName = ref.getExternalName();
+    myType = ref.getRefManager().getType(ref);
+    if (myFQName == null) {
+      boolean psiExists = ref instanceof RefElement && ((RefElement)ref).getPsiElement() != null;
+      LOG.error("Name: " + ref.getName() +
+                ", qName: " + ref.getQualifiedName() +
+                "; type: " + myType +
+                "; psi exists: " + psiExists +
+                (ref instanceof RefElement ? ("; containing file: " + getContainingFileName((RefElement)ref)) : ""));
     }
+  }
 
 
   public SmartRefElementPointerImpl(Element jDomElement) {

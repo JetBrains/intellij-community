@@ -103,6 +103,9 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       UIUtil.dispatchAllInvocationEvents(); // let vfs update pass
       LaterInvocator.dispatchPendingFlushes();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

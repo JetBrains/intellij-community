@@ -726,7 +726,7 @@ public class IconUtil {
    * Creates new icon with the filter applied.
    */
   @Nullable
-  public static Icon filterIcon(@NotNull Icon icon, RGBImageFilter filter, @Nullable Component ancestor) {
-    return IconLoader.filterIcon(icon, filter, ancestor);
+  public static Icon filterIcon(@NotNull Icon icon, Producer<RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
+    return IconLoader.filterIcon(icon, filterSupplier, ancestor);
   }
 }

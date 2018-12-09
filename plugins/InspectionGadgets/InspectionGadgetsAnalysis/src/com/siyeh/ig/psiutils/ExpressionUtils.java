@@ -156,11 +156,6 @@ public class ExpressionUtils {
         return false;
       }
       final PsiElement element = referenceExpression.resolve();
-      if (element instanceof PsiField) {
-        final PsiField field = (PsiField)element;
-        final PsiExpression initializer = field.getInitializer();
-        return field.hasModifierProperty(PsiModifier.FINAL) && isEvaluatedAtCompileTime(initializer);
-      }
       if (element instanceof PsiVariable) {
         final PsiVariable variable = (PsiVariable)element;
         if (PsiTreeUtil.isAncestor(variable, expression, true)) {
@@ -1346,13 +1341,24 @@ public class ExpressionUtils {
   /**
    * Returns true if expression is evaluated in void context (i.e. its return value is not used)
    * @param expression expression to check
-   * @return true if expression is evaluated in void context. More precisely if its parent is expression statement or lambda with void SAM
+   * @return true if expression is evaluated in void context.
    */
   public static boolean isVoidContext(PsiExpression expression) {
     PsiElement element = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    return element instanceof PsiExpressionStatement ||
-           (element instanceof PsiLambdaExpression &&
-            PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)element)));
+    if (element instanceof PsiExpressionStatement) {
+      if (element.getParent() instanceof PsiSwitchLabeledRuleStatement) {
+        PsiSwitchBlock block = ((PsiSwitchLabeledRuleStatement)element.getParent()).getEnclosingSwitchBlock();
+        return !(block instanceof PsiSwitchExpression);
+      }
+      return true;
+    }
+    if (element instanceof PsiExpressionList && element.getParent() instanceof PsiExpressionListStatement) {
+      return true;
+    }
+    if (element instanceof PsiLambdaExpression) {
+      if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)element))) return true;
+    }
+    return false;
   }
 
   /**

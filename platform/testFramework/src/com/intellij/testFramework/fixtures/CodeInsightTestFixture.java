@@ -207,7 +207,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * Enables inspections for highlighting tests.
-   * Should be called BEFORE {@link #setUp()}. And do not forget to call {@link #tearDown()}
    *
    * @param inspections inspections to be enabled in highlighting tests.
    * @see #enableInspections(InspectionToolProvider...)

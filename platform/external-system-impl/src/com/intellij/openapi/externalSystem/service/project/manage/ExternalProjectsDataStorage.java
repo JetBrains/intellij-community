@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -21,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -378,6 +380,10 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     final Path configurationFile = getProjectConfigurationFile(project);
     if (!configurationFile.toFile().isFile()) return projects;
 
+    if (isInvalidated(configurationFile)) {
+      throw new IOException("External projects data storage was invalidated");
+    }
+
     DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(configurationFile)));
 
     try {
@@ -403,6 +409,21 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
       in.close();
     }
     return projects;
+  }
+
+  private static boolean isInvalidated(@NotNull Path configurationFile) {
+    if (!Registry.is("external.system.invalidate.storage", true)) return false;
+
+    long lastModified = configurationFile.toFile().lastModified();
+    if (lastModified == 0) return true;
+    File brokenMarkerFile = getBrokenMarkerFile();
+    if (brokenMarkerFile.exists() && lastModified < brokenMarkerFile.lastModified()) {
+      if (!FileUtil.delete(configurationFile.toFile())) {
+        LOG.warn("Cannot delete invalidated external project cache file");
+      }
+      return true;
+    }
+    return false;
   }
 
   @NotNull
@@ -449,6 +470,23 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   private static boolean isIgnored(@NotNull ProjectState projectState, @Nullable ModuleState moduleState, @NotNull Key<?> key) {
     return projectState.isInclusion ^ (moduleState != null && moduleState.set.contains(key.getDataType()));
+  }
+
+  public static synchronized void invalidateCaches() {
+    if (!Registry.is("external.system.invalidate.storage", true)) return;
+
+    File markerFile = getBrokenMarkerFile();
+    try {
+      FileUtil.writeToFile(markerFile, String.valueOf(System.currentTimeMillis()));
+    }
+    catch (IOException e) {
+      LOG.warn("Cannot update the invalidation marker file", e);
+    }
+  }
+
+  @NotNull
+  private static File getBrokenMarkerFile() {
+    return PathManagerEx.getAppSystemDir().resolve("external_build_system").resolve(".broken").toFile();
   }
 
   static class State {

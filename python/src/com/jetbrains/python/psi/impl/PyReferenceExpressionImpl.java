@@ -72,7 +72,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyExpression qualifier = getQualifier();
 
     // Return special reference
-    final ConsoleCommunication communication = getContainingFile().getCopyableUserData(PydevConsoleRunner.CONSOLE_KEY);
+    final ConsoleCommunication communication = getContainingFile().getCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY);
     if (communication != null) {
       final String prefix = qualifier == null ? "" : qualifier.getText() + ".";
       return new PydevConsoleReference(this, communication, prefix, context.allowRemote());

@@ -37,6 +37,7 @@ import static javax.swing.SwingConstants.WEST;
 /**
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("UnregisteredNamedColor")
 public class DarculaUIUtil {
   public enum Outline {
     error {
@@ -462,21 +463,22 @@ public class DarculaUIUtil {
 
   public static Color getOutlineColor(boolean enabled, boolean focused) {
     return enabled ?
-            focused ? JBColor.namedColor("Component.focusedBorderColor", 0x87AFDA) : JBColor.namedColor("Component.borderColor", Gray.xBF) :
-           JBColor.namedColor("Component.disabledBorderColor", Gray.xCF);
+            focused ? JBColor.namedColor("Component.focusedBorderColor", JBColor.namedColor("Outline.focusedColor", 0x87AFDA)) :
+            JBColor.namedColor("Component.borderColor", JBColor.namedColor("Outline.color", Gray.xBF)) :
+           JBColor.namedColor("Component.disabledBorderColor", JBColor.namedColor("Outline.disabledColor", Gray.xCF));
   }
 
   public static Color getArrowButtonBackgroundColor(boolean enabled, boolean editable) {
     return enabled ?
-      editable ? JBColor.namedColor("ComboBox.darcula.editable.arrowButtonBackground", Gray.xFC) :
-                 JBColor.namedColor("ComboBox.darcula.arrowButtonBackground", Gray.xFC)
+      editable ? JBColor.namedColor("ComboBox.ArrowButton.background", JBColor.namedColor("ComboBox.darcula.editable.arrowButtonBackground", Gray.xFC)) :
+                 JBColor.namedColor("ComboBox.ArrowButton.nonEditableBackground", JBColor.namedColor("ComboBox.darcula.arrowButtonBackground", Gray.xFC))
       : UIUtil.getPanelBackground();
   }
 
   public static Color getArrowButtonForegroundColor(boolean enabled) {
     return enabled ?
-      JBColor.namedColor("ComboBox.darcula.arrowButtonForeground", Gray.x66) :
-      JBColor.namedColor("ComboBox.darcula.arrowButtonDisabledForeground", Gray.xAB);
+      JBColor.namedColor("ComboBox.ArrowButton.iconColor", JBColor.namedColor("ComboBox.darcula.arrowButtonForeground", Gray.x66)) :
+      JBColor.namedColor("ComboBox.ArrowButton.disabledIconColor", JBColor.namedColor("ComboBox.darcula.arrowButtonDisabledForeground", Gray.xAB));
   }
 
   public static Dimension maximize(@Nullable Dimension s1, @NotNull Dimension s2) {
@@ -491,6 +493,10 @@ public class DarculaUIUtil {
     Color fg = button.getForeground();
     if (fg instanceof UIResource && DarculaButtonUI.isDefaultButton(button)) {
       Color selectedFg = UIManager.getColor("Button.default.foreground");
+      if (selectedFg == null) {
+        selectedFg = UIManager.getColor("Button.darcula.selectedButtonForeground");
+      }
+
       if (selectedFg != null) {
         return selectedFg;
       }

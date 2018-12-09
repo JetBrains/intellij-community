@@ -164,18 +164,18 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
       }, project.getDisposed());
     };
 
-    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
-      @Override
-      public void rootsChanged(@NotNull final ModuleRootEvent event) {
-        if (!myAlarm.isDisposed() && event.getSource() instanceof Project) {
-          myAlarm.cancelAllRequests();
-          myAlarm.addRequest(syncTask, 300L);
-        }
-      }
-    });
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+        private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
+        @Override
+        public void rootsChanged(@NotNull final ModuleRootEvent event) {
+          if (!myAlarm.isDisposed() && event.getSource() instanceof Project) {
+            myAlarm.cancelAllRequests();
+            myAlarm.addRequest(syncTask, 300L);
+          }
+        }
+      });
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         removeDuplicatedUrlsFromRepositoryLibraries(project);
         syncTask.run();

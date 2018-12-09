@@ -857,6 +857,10 @@ public class InferenceSession {
       return getTargetTypeFromParentLambda(PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, true, PsiMethod.class),
                                            errorMessage, inferParent);
     }
+    PsiSwitchExpression switchExpression = PsiTreeUtil.getParentOfType(parent, PsiSwitchExpression.class);
+    if (switchExpression  != null && PsiUtil.getSwitchResultExpressions(switchExpression).contains(context)) {
+      return getTargetType(switchExpression);
+    }
     return null;
   }
 
@@ -1310,7 +1314,8 @@ public class InferenceSession {
     variables = new ArrayList<>(variables);
     ((ArrayList<InferenceVariable>)variables).sort((v1, v2) -> Comparing.compare(v1.getName(), v2.getName()));
     final String variablesEnumeration = StringUtil.join(variables, variable -> variable.getParameter().getName(), ", ");
-    registerIncompatibleErrorMessage("no instance(s) of type variable(s) " + variablesEnumeration + " exist so that " + incompatibleTypesMessage);
+    registerIncompatibleErrorMessage("no instance(s) of type variable(s) " + variablesEnumeration + 
+                                     (variablesEnumeration.isEmpty() ? "" : " ") + "exist so that " + incompatibleTypesMessage);
   }
   
   public void registerIncompatibleErrorMessage(@NotNull String incompatibleBoundsMessage) {
@@ -1715,6 +1720,9 @@ public class InferenceSession {
     for (int i = 0; i < paramsLength; i++) {
       PsiType sType = getParameterType(parameters1, i, siteSubstitutor1, false);
       PsiType tType = session.substituteWithInferenceVariables(getParameterType(parameters2, i, siteSubstitutor1, varargs));
+      if (PsiUtil.isRawSubstitutor(m2, siteSubstitutor1)) {
+        tType = TypeConversionUtil.erasure(tType);
+      }
       if (sType instanceof PsiClassType &&
           tType instanceof PsiClassType &&
           LambdaUtil.isFunctionalType(sType) && LambdaUtil.isFunctionalType(tType) && !relates(sType, tType)) {

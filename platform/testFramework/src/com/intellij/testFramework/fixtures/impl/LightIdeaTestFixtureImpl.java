@@ -15,6 +15,8 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author mike
  */
@@ -55,6 +57,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
           myCodeStyleSettingsTracker.checkForSettingsDamage();
         }
       })
+      .append(() -> PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS))
       .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open
       .append(() -> {
         if (project != null) {

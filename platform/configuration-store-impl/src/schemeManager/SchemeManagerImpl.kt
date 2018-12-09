@@ -15,6 +15,7 @@ import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -198,8 +199,9 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
               continue
             }
 
-            catchAndLog(file.fileName.toString()) { filename ->
-              file.inputStream().use { schemeLoader.loadScheme(filename, it) }
+            val fileName = file.fileName.toString()
+            catchAndLog(fileName) {
+              file.inputStream().use { schemeLoader.loadScheme(fileName, it) }
             }
           }
         }
@@ -597,14 +599,24 @@ internal fun nameIsMissed(bytes: ByteArray): RuntimeException {
 internal class SchemeDataHolderImpl<out T : Any, in MUTABLE_SCHEME : T>(private val processor: SchemeProcessor<T, MUTABLE_SCHEME>,
                                                                         private val bytes: ByteArray,
                                                                         private val externalInfo: ExternalInfo) : SchemeDataHolder<MUTABLE_SCHEME> {
-  override fun read(): Element = loadElement(bytes.inputStream())
+  override fun read(): Element {
+    try {
+      return JDOMUtil.load(bytes.inputStream())
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Exception) {
+      throw RuntimeException("Cannot read ${externalInfo.fileName}", e)
+    }
+  }
 
   override fun updateDigest(scheme: MUTABLE_SCHEME) {
     try {
       updateDigest(processor.writeScheme(scheme) as Element)
     }
     catch (e: WriteExternalException) {
-      LOG.error("Cannot update digest", e)
+      LOG.error("Cannot update digest for ${externalInfo.fileName}", e)
     }
   }
 

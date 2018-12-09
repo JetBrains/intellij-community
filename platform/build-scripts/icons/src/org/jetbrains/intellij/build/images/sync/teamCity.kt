@@ -5,8 +5,6 @@ import org.apache.http.HttpHeaders
 import org.apache.http.client.methods.HttpRequestBase
 import org.apache.http.entity.ContentType
 import java.io.File
-import java.net.URLEncoder
-import java.text.SimpleDateFormat
 import java.util.*
 
 internal fun isUnderTeamCity() = BUILD_SERVER != null
@@ -27,26 +25,14 @@ private fun HttpRequestBase.teamCityAuth() {
   basicAuth(System.getProperty("pin.builds.user.name"), System.getProperty("pin.builds.user.password"))
 }
 
-private val DATE_FORMAT = SimpleDateFormat("yyyyMMdd'T'HHmmsszzz")
-private val NOTIFICATIONS_MIN_INTERVAL_HOURS = System.getProperty("notifications.min.interval.hours")?.toInt() ?: 12
-
-internal fun isNotificationRequired(context: Context): Boolean {
-  val calendar = Calendar.getInstance()
-  if (calendar.get(Calendar.DAY_OF_WEEK).let {
-      it == Calendar.SATURDAY || it == Calendar.SUNDAY
-    }) return false
-  val request = "builds?locator=buildType:$BUILD_CONF,count:1"
-  val intervalStart = DATE_FORMAT.format(with(calendar) {
-    add(Calendar.HOUR, -NOTIFICATIONS_MIN_INTERVAL_HOURS)
-    time
-  }).let { URLEncoder.encode(it, Charsets.UTF_8.name()) }
-  val noNotificationsSinceIntervalStart = teamCityGet("$request,sinceDate:$intervalStart").contains("count=\"0\"")
-  return noNotificationsSinceIntervalStart &&
-         // remind of failure
-         (context.isFail() ||
-          // or check previous build and notify on fail -> success
-          teamCityGet(request).contains("status=\"FAILURE\""))
-}
+internal fun isNotificationRequired(context: Context) =
+  isScheduled() && Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+    // not weekend
+    .let { it != Calendar.SATURDAY && it != Calendar.SUNDAY } &&
+  // remind of failure every day
+  (context.isFail() ||
+   // or check previous build and notify on fail -> success
+   isPreviousBuildFailed())
 
 internal val DEFAULT_INVESTIGATOR by lazy {
   System.getProperty("intellij.icons.sync.default.investigator")?.takeIf { it.isNotBlank() } ?: error("Specify default investigator")
@@ -57,15 +43,39 @@ internal class Investigator(val email: String = DEFAULT_INVESTIGATOR,
                             var isAssigned: Boolean = false)
 
 internal fun assignInvestigation(investigator: Investigator, context: Context): Investigator {
-  try {
-    val assignee = teamCityGet("investigations?locator=buildType:$BUILD_CONF")
-    val id = teamCityGet("users/email:${investigator.email}/id")
-    if (assignee.contains(id)) {
-      log("Investigation is already assigned to ${investigator.email}")
-      return investigator
+  val report = context.report().let { if (it.isNotEmpty()) "$it, " else it }
+  assignInvestigation(investigator, report)
+  if (!investigator.isAssigned) {
+    var nextAttempts = listOf(teamCityEmail(investigator.email), investigator.email.toLowerCase())
+    if (!isInvestigationAssigned()) nextAttempts += DEFAULT_INVESTIGATOR
+    nextAttempts.forEach {
+      if (it != investigator.email) {
+        val next = Investigator(it, investigator.commits)
+        assignInvestigation(next, report)
+        if (next.isAssigned) return next
+      }
     }
-    val text = context.report().let { if (it.isNotEmpty()) "$it, " else it } +
-               (if (investigator.commits.isNotEmpty()) "commits: ${investigator.commits.description()}," else "") +
+  }
+  return investigator
+}
+
+private val investigation by lazy {
+  teamCityGet("investigations?locator=buildType:$BUILD_CONF")
+}
+
+private fun isInvestigationAssigned() = with(investigation) {
+  contains("assignee") && !contains("GIVEN_UP")
+}
+
+private fun assignInvestigation(investigator: Investigator, report: String) {
+  try {
+    val id = teamCityGet("users/email:${investigator.email}/id")
+    if (investigation.contains(id)) {
+      log("Investigation is already assigned to ${investigator.email}")
+      investigator.isAssigned = true
+      return
+    }
+    val text = report + (if (investigator.commits.isNotEmpty()) "commits: ${investigator.commits.description()}," else "") +
                " build: ${thisBuildReportableLink()}," +
                " see also: https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
     teamCityPost("investigations", """
@@ -88,15 +98,11 @@ internal fun assignInvestigation(investigator: Investigator, context: Context): 
   catch (e: Exception) {
     log("Unable to assign investigation to ${investigator.email}, ${e.message}")
   }
-  return when {
-    !investigator.isAssigned && investigator.email != investigator.email.toLowerCase() -> {
-      assignInvestigation(Investigator(investigator.email.toLowerCase(), investigator.commits), context)
-    }
-    !investigator.isAssigned && investigator.email != DEFAULT_INVESTIGATOR -> {
-      assignInvestigation(Investigator(DEFAULT_INVESTIGATOR, investigator.commits), context)
-    }
-    else -> investigator
-  }
+}
+
+private fun teamCityEmail(email: String): String {
+  val (username, domain) = email.split("@")
+  return username.splitNotBlank(".").joinToString(".", transform = String::capitalize) + "@$domain"
 }
 
 internal fun thisBuildReportableLink() =
@@ -106,3 +112,7 @@ internal fun triggeredBy() = System.getProperty("teamcity.build.triggeredBy.user
   ?.takeIf { it.isNotBlank() }
   ?.let { teamCityGet("users/username:$it/email") }
   ?.removeSuffix(System.lineSeparator())
+
+internal fun isScheduled() = System.getProperty("teamcity.build.triggeredBy")?.contains("Schedule") == true
+
+internal fun isPreviousBuildFailed() = teamCityGet("builds?locator=buildType:$BUILD_CONF,count:1").contains("status=\"FAILURE\"")

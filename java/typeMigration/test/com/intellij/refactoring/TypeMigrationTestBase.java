@@ -176,7 +176,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
         writer.print(report);
       }
 
-      System.out.println("Pattern not found, file " + patternName + " created.");
+      System.err.println("Pattern not found, file " + patternName + " created.");
 
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(patternFile);
     }

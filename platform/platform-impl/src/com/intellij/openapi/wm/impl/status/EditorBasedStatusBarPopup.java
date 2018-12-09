@@ -71,16 +71,22 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     VirtualFile newFile = event.getNewFile();
-    fileChanged(newFile);
-  }
 
-  private void fileChanged(VirtualFile newFile) {
     Project project = getProject();
     assert project != null;
     FileEditor fileEditor = newFile == null ? null : FileEditorManager.getInstance(project).getSelectedEditor(newFile);
     Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     myEditor = new WeakReference<>(editor);
+
+    fileChanged(newFile);
+  }
+
+  private void fileChanged(VirtualFile newFile) {
+    handleFileChange(newFile);
     update();
+  }
+
+  protected void handleFileChange(VirtualFile file) {
   }
 
   @Override
@@ -266,7 +272,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
      */
     public static final WidgetState NO_CHANGE_MAKE_VISIBLE = new WidgetState();
 
-    private final String toolTip;
+    protected final String toolTip;
     private final String text;
     private final boolean actionEnabled;
     private Icon icon;

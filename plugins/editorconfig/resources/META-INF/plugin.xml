@@ -23,6 +23,7 @@
         serviceImplementation="org.editorconfig.plugincomponents.EditorConfigNotifier"/>
     <generalCodeStyleOptionsProvider instance="org.editorconfig.settings.EditorConfigConfigurable"/>
     <codeStyleSettingsProvider implementation="org.editorconfig.settings.EditorConfigConfigurable"/>
+    <codeStyleSettingsModifier implementation="org.editorconfig.configmanagement.EditorConfigCodeStyleSettingsModifier" order="first"/>
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" order="first"/>
     <applicationService
         serviceInterface="org.editorconfig.plugincomponents.SettingsProviderComponent"

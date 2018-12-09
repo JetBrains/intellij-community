@@ -138,6 +138,9 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
       ((FileTemplateManagerImpl)FileTemplateManager.getDefaultInstance()).setTestDate(null);
       PropertiesComponent.getInstance().unsetValue(ProjectTemplateParameterFactory.IJ_BASE_PACKAGE);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

@@ -461,10 +461,12 @@ public class StatementParser {
   }
 
   @NotNull
-  private static PsiBuilder.Marker parseBreakStatement(PsiBuilder builder) {
+  private PsiBuilder.Marker parseBreakStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
-    expect(builder, JavaTokenType.IDENTIFIER);
+    if (builder.getTokenType() != JavaTokenType.SEMICOLON) {
+      myParser.getExpressionParser().parse(builder);
+    }
     semicolon(builder);
     done(statement, JavaElementType.BREAK_STATEMENT);
     return statement;

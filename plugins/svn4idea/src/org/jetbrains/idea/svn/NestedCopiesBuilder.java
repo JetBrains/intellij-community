@@ -15,6 +15,8 @@ import org.jetbrains.idea.svn.status.StatusType;
 import java.io.File;
 import java.util.Set;
 
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
+
 public class NestedCopiesBuilder implements StatusReceiver {
 
   @NotNull private final Set<NestedCopyInfo> myCopies;
@@ -67,7 +69,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
   @Override
   public void bewareRoot(@NotNull VirtualFile vf, Url url) {
     final File ioFile = VfsUtilCore.virtualToIoFile(vf);
-    final RootUrlInfo info = myMapping.getWcRootForFilePath(ioFile);
+    final RootUrlInfo info = myMapping.getWcRootForFilePath(getFilePath(vf));
 
     if (info != null && FileUtil.filesEqual(ioFile, info.getIoFile()) && !info.getUrl().equals(url)) {
       myVcs.invokeRefreshSvnRoots();

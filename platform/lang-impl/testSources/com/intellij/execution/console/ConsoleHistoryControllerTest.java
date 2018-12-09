@@ -133,9 +133,11 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
   @Override
   public void tearDown() throws Exception {
     try {
-
       Disposer.dispose(myConsole);
       myVFile = null;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

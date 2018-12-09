@@ -6,8 +6,8 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -16,12 +16,18 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 import org.junit.rules.TestName;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
@@ -35,7 +41,41 @@ import static org.junit.Assert.*;
 /**
  * @author yole
  */
-public class NotNullVerifyingInstrumenterTest {
+public abstract class NotNullVerifyingInstrumenterTest {
+  @Retention(RetentionPolicy.RUNTIME)
+  private @interface TestDirectory { String value(); }
+
+  @TestDirectory("members")
+  public static class MembersTargetTest extends NotNullVerifyingInstrumenterTest { }
+  @TestDirectory("types")
+  public static class TypesTargetTest extends NotNullVerifyingInstrumenterTest { }
+  @TestDirectory("mixed")
+  public static class MixedTargetTest extends NotNullVerifyingInstrumenterTest { }
+
+  private static final String TEST_DATA_PATH = "/compiler/notNullVerification/";
+
+  private static class AnnotationCompiler extends ExternalResource {
+    private File classes;
+
+    @Override
+    public Statement apply(Statement base, Description description) {
+      TestDirectory annotation = description.getAnnotation(TestDirectory.class);
+      if (annotation == null) throw new IllegalArgumentException("Class " + description.getTestClass() + " misses @TestDirectory annotation");
+      File source = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH + annotation.value() + "/NotNull.java");
+      if (!source.isFile()) throw new IllegalArgumentException("Cannot find annotation file at " + source);
+      classes = IoTestUtil.createTestDir("test-notNullInstrumenter-" + annotation.value());
+      IdeaTestUtil.compileFile(source, classes);
+      return super.apply(base, description);
+    }
+
+    @Override
+    protected void after() {
+      IoTestUtil.delete(classes);
+    }
+  }
+
+  @ClassRule public static final AnnotationCompiler annotation = new AnnotationCompiler();
+
   @Rule public TempDirectory tempDir = new TempDirectory();
   @Rule public TestName testName = new TestName();
 
@@ -160,14 +200,18 @@ public class NotNullVerifyingInstrumenterTest {
 
   @Test
   public void testNonStaticInnerClass() throws Exception {
-    Class aClass = prepareTest();
-    assertNotNull(aClass.newInstance());
+    Class<?> testClass = prepareTest();
+    assertNotNull(testClass.newInstance());
+    verifyCallThrowsException(
+      "Argument 1 for @NotNull parameter of NonStaticInnerClass$Inner.<init> must not be null", null, testClass.getMethod("fail"));
   }
 
   @Test
   public void testGroovyInnerClass() throws Exception {
-    Class aClass = prepareTest();
-    assertNotNull(aClass.newInstance());
+    Class<?> testClass = prepareTest();
+    assertNotNull(testClass.newInstance());
+    verifyCallThrowsException(
+      "Argument for @NotNull parameter 's2' of GroovyInnerClass$Inner.<init> must not be null", null, testClass.getMethod("fail"));
   }
 
   @Test
@@ -285,12 +329,10 @@ public class NotNullVerifyingInstrumenterTest {
   }
 
   private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnotations) throws IOException {
-    String testDir = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification/";
     String testName = PlatformTestUtil.getTestName(this.testName.getMethodName(), false);
-    File testFile = IdeaTestUtil.findSourceFile(testDir + testName);
+    File testFile = IdeaTestUtil.findSourceFile((JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH) + testName);
     File classesDir = tempDir.newFolder("output");
-    List<String> libRoots = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("jetbrains-annotations-java5");
-    List<String> args = ContainerUtil.newArrayList("-cp", StringUtil.join(libRoots, File.pathSeparator));
+    List<String> args = ContainerUtil.newArrayList("-cp", annotation.classes.getPath());
     if (withDebugInfo) args.add("-g");
     IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(args));
 

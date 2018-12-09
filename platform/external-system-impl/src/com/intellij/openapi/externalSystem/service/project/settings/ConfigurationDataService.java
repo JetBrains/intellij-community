@@ -83,7 +83,7 @@ public class ConfigurationDataService extends AbstractProjectDataService<Configu
       }
 
       for (ConfigurationHandler handler : ConfigurationHandler.EP_NAME.getExtensions()) {
-        handler.apply(project, modelsProvider, data);
+        handler.apply(project, projectData, modelsProvider, data);
       }
     }
 

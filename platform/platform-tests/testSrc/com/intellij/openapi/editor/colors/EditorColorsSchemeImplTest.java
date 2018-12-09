@@ -23,7 +23,13 @@ import java.util.Arrays;
 import java.util.Collections;
 
 public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
-  private EditorColorsSchemeImpl myScheme = new EditorColorsSchemeImpl(null);
+  private EditorColorsSchemeImpl myScheme;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myScheme = new EditorColorsSchemeImpl(null);
+  }
 
   @Override
   protected void tearDown() throws Exception {

@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -73,6 +74,16 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   private WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
+  private final AtomicNotNullLazyValue<InspectionToolWrapper> myDummyWrapper = new AtomicNotNullLazyValue<InspectionToolWrapper>() {
+    @NotNull
+    @Override
+    protected InspectionToolWrapper compute() {
+      InspectionToolWrapper toolWrapper = new GlobalInspectionToolWrapper(new DummyEntryPointsEP());
+      toolWrapper.initialize(myContext);
+      return toolWrapper;
+    }
+  };
+
   @NonNls private static final String DELETE = "delete";
   @NonNls private static final String COMMENT = "comment";
 
@@ -410,24 +421,21 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public void createToolNode(@NotNull GlobalInspectionContextImpl context,
-                             @NotNull InspectionNode node,
-                             @NotNull InspectionRVContentProvider provider,
-                             @NotNull InspectionTreeNode parentNode,
-                             boolean showStructure,
-                             boolean groupByStructure) {
-    final EntryPointsNode entryPointsNode = new EntryPointsNode(context);
-    InspectionToolWrapper dummyToolWrapper = entryPointsNode.getToolWrapper();
-    InspectionToolPresentation presentation = context.getPresentation(dummyToolWrapper);
+  public void patchToolNode(@NotNull InspectionTreeNode node,
+                            @NotNull InspectionRVContentProvider provider,
+                            boolean showStructure,
+                            boolean groupByStructure) {
+    InspectionTreeModel model = myContext.getView().getTree().getInspectionTreeModel();
+    EntryPointsNode epNode = model.createCustomNode(myDummyWrapper.getValue(), () -> new EntryPointsNode(myDummyWrapper.getValue(), myContext, model), node);
+    InspectionToolPresentation presentation = myContext.getPresentation(myDummyWrapper.getValue());
     presentation.updateContent();
-    provider.appendToolNodeContent(context, entryPointsNode, node, showStructure, groupByStructure);
-    myToolNode = entryPointsNode;
+    provider.appendToolNodeContent(myContext, myDummyWrapper.getValue(), epNode, showStructure, groupByStructure);
   }
 
   @NotNull
   @Override
-  public RefElementNode createRefNode(@Nullable RefEntity entity) {
-    return new RefElementNode(entity, this) {
+  public RefElementNode createRefNode(@Nullable RefEntity entity, @NotNull InspectionTreeModel model) {
+    return new RefElementNode(entity, this, model) {
       @Nullable
       @Override
       public String getTailText() {
@@ -677,7 +685,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public int getProblemsCount(@NotNull InspectionTree tree) {
-    return 0;
+  public boolean showProblemCount() {
+    return false;
   }
 }

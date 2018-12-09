@@ -44,6 +44,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createTypeByFQClassName;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -136,7 +139,7 @@ public class GrClosureSignatureUtil {
   }
 
   @Nullable
-  public static PsiType getReturnType(@NotNull final List<GrSignature> signatures, @Nullable PsiType[] args, @NotNull GroovyPsiElement context) {
+  public static PsiType getReturnType(@NotNull final List<GrSignature> signatures, @Nullable PsiType[] args, @NotNull PsiElement context) {
     if (signatures.size() == 1) {
       return signatures.get(0).getReturnType();
     }
@@ -631,7 +634,7 @@ public class GrClosureSignatureUtil {
       if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP) ||
           type == null ||
           type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-        innerArgs.add(new InnerArg(GrMapType.create(context.getResolveScope()), namedArgs));
+        innerArgs.add(new InnerArg(createTypeByFQClassName(JAVA_UTIL_LINKED_HASH_MAP, context), namedArgs));
       }
       else {
         return null;

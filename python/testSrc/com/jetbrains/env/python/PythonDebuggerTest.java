@@ -85,7 +85,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testPydevMonkey() {
     unittests("tests_pydevd_python/test_pydev_monkey.py", null);
   }
@@ -1157,7 +1156,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForPause();
         List<String> referrersNames = getNumberOfReferringObjects("l");
-        assertNotNull(getRefWithWordInName(referrersNames, "frame"));
         assertNotNull(getRefWithWordInName(referrersNames, "module"));
         assertNotNull(getRefWithWordInName(referrersNames, "dict"));
       }

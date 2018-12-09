@@ -214,12 +214,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public void loadState(@NotNull final Element element) {
     String className = null;
-    String themeId = null;
     UIManager.LookAndFeelInfo laf = null;
     Element lafElement = element.getChild(ELEMENT_LAF);
     if (lafElement != null) {
       className = lafElement.getAttributeValue(ATTRIBUTE_CLASS_NAME);
-      themeId = lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME);
+      String themeId = lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME);
       if (themeId != null) {
         for (UIManager.LookAndFeelInfo f : myLaFs) {
           if (f instanceof UIThemeBasedLookAndFeelInfo) {
@@ -241,11 +240,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     // If LAF is undefined (wrong class name or something else) we have set default LAF anyway.
     if (laf == null) {
       laf = getDefaultLaf();
-    }
-
-    if (myCurrentLaf != null && !laf.getClassName().equals(myCurrentLaf.getClassName())) {
-      setCurrentLookAndFeel(laf);
-      updateUI();
     }
 
     myCurrentLaf = laf;
@@ -512,16 +506,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     fixOptionButton(uiDefaults);
 
     for (Frame frame : Frame.getFrames()) {
-      // OSX/Aqua fix: Some image caching components like ToolWindowHeader use
-      // com.apple.laf.AquaNativeResources$CColorPaintUIResource
-      // a Java wrapper for ObjC MagicBackgroundColor class (Java RGB values ignored).
-      // MagicBackgroundColor always reports current Frame background.
-      // So we need to set frames background to exact and correct value.
-      if (SystemInfo.isMac) {
-        //noinspection UseJBColor
-        frame.setBackground(new Color(UIUtil.getPanelBackground().getRGB()));
-      }
-
       updateUI(frame);
     }
 
@@ -629,7 +613,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static void fixSeparatorColor(UIDefaults uiDefaults) {
     if (UIUtil.isUnderAquaLookAndFeel()) {
       uiDefaults.put("Separator.background", UIUtil.AQUA_SEPARATOR_BACKGROUND_COLOR);
-      uiDefaults.put("Separator.foreground", UIUtil.AQUA_SEPARATOR_FOREGROUND_COLOR);
+      uiDefaults.put("Separator.separatorColor", UIUtil.AQUA_SEPARATOR_FOREGROUND_COLOR);
     }
   }
 

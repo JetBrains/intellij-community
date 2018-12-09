@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -478,10 +479,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
     try {
       WriteAction.runAndWait(() -> {
         if (advanceStamps) {
-          file.setBinaryContent(content.getBytes(), -1, file.getTimeStamp() + 4000);
+          file.setBinaryContent(content.getBytes(StandardCharsets.UTF_8), -1, file.getTimeStamp() + 4000);
         }
         else {
-          file.setBinaryContent(content.getBytes(), file.getModificationStamp(), file.getTimeStamp());
+          file.setBinaryContent(content.getBytes(StandardCharsets.UTF_8), file.getModificationStamp(), file.getTimeStamp());
         }
       });
     }

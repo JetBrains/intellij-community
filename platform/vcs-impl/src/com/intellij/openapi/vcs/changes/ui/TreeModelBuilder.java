@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.*;
@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import java.io.File;
 import java.util.*;
 import java.util.function.Function;
 
@@ -373,8 +372,8 @@ public class TreeModelBuilder {
     }
 
     StaticFilePath pathKey = getKey(change);
-    ChangesBrowserNode<?> parentNode =
-      notNull(GROUPING_POLICY.getRequired(subtreeRoot).getParentNodeFor(pathKey, subtreeRoot), subtreeRoot);
+    ChangesBrowserNode<?> parentNode = ReadAction.compute(
+      () -> notNull(GROUPING_POLICY.getRequired(subtreeRoot).getParentNodeFor(pathKey, subtreeRoot), subtreeRoot));
     ChangesBrowserNode<?> cachingRoot = BaseChangesGroupingPolicy.getCachingRoot(parentNode, subtreeRoot);
 
     myModel.insertNodeInto(node, parentNode, myModel.getChildCount(parentNode));
@@ -476,11 +475,7 @@ public class TreeModelBuilder {
 
   @NotNull
   public static StaticFilePath staticFrom(@NotNull FilePath fp) {
-    final String path = fp.getPath();
-    if (fp.isNonLocal() && (! FileUtil.isAbsolute(path) || VcsUtil.isPathRemote(path))) {
-      return new StaticFilePath(fp.isDirectory(), fp.getIOFile().getPath().replace('\\', '/'), fp.getVirtualFile());
-    }
-    return new StaticFilePath(fp.isDirectory(), new File(fp.getIOFile().getPath().replace('\\', '/')).getAbsolutePath(), fp.getVirtualFile());
+    return new StaticFilePath(fp.isDirectory(), fp.getPath(), fp.getVirtualFile());
   }
 
   @NotNull
@@ -508,7 +503,7 @@ public class TreeModelBuilder {
 
   @NotNull
   private static ChangesBrowserNode createPathNode(@NotNull StaticFilePath path) {
-    FilePath filePath = path.getVf() == null ? VcsUtil.getFilePath(path.getPath(), true) : VcsUtil.getFilePath(path.getVf());
+    FilePath filePath = VcsUtil.getFilePath(path.getPath(), path.isDirectory());
     return ChangesBrowserNode.createFilePath(filePath);
   }
 

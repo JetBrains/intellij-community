@@ -3,6 +3,9 @@ package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.ide.GeneratedSourceFileChangeTracker;
+import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -159,6 +162,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   public static void doAutodetectPlatformPrefix() {
     if (ourPlatformPrefixInitialized) {
+      return;
+    }
+    if (System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) != null) {
+      ourPlatformPrefixInitialized = true;
       return;
     }
     for (String candidate : PREFIX_CANDIDATES) {
@@ -497,6 +504,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     Project project = myProject;
     if (project != null && !project.isDisposed()) {
       AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
+      waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
     }
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
@@ -521,7 +529,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         getTempDir().deleteAll();
         LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
         LaterInvocator.dispatchPendingFlushes();
-        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).waitForVfsEventsExecuted(1, TimeUnit.MINUTES);
       })
       .append(() -> {
         if (!myAssertionsInTestDetected) {
@@ -939,5 +946,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     File moduleDir = new File(PathUtil.getParentPath(module.getModuleFilePath()));
     FileUtil.ensureExists(moduleDir);
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir);
+  }
+
+  public static void waitForProjectLeakingThreads(@NotNull Project project, long timeout, @NotNull TimeUnit timeUnit) throws Exception {
+    DaemonCodeAnalyzerImpl.waitForAllEditorsFinallyLoaded(project, timeout, timeUnit);
+    GeneratedSourceFileChangeTrackerImpl tracker = (GeneratedSourceFileChangeTrackerImpl)project.getComponent(GeneratedSourceFileChangeTracker.class);
+    if (tracker != null) {
+      tracker.cancelAllAndWait(timeout, timeUnit);
+    }
   }
 }

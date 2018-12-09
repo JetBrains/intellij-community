@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.Gray;
 import com.intellij.ui.InplaceButton;
@@ -61,7 +62,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private final StatusPanel myInfoPanel = new StatusPanel();
   private final JPanel myRefreshAndInfoPanel = new JPanel();
-  private final AnimatedIcon myProgressIcon;
+  private final AsyncProcessIcon myProgressIcon;
 
   private final List<ProgressIndicatorEx> myOriginals = new ArrayList<>();
   private final List<TaskInfo> myInfos = new ArrayList<>();
@@ -73,8 +74,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private boolean myShouldClosePopupAndOnProcessFinish;
 
-  private final Alarm myRefreshAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final AnimatedIcon myRefreshIcon;
+  private final JLabel myRefreshIcon = new JLabel(new AnimatedIcon.FS());
 
   private String myCurrentRequestor;
   private boolean myDisposed;
@@ -98,8 +98,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     setOpaque(false);
 
-    myRefreshIcon = new RefreshFileSystemIcon();
-    myRefreshIcon.setPaintPassiveIcon(false);
+    myRefreshIcon.setVisible(false);
 
     myRefreshAndInfoPanel.setLayout(new BorderLayout());
     myRefreshAndInfoPanel.setOpaque(false);
@@ -494,19 +493,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   void setRefreshVisible(final boolean visible) {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      myRefreshAlarm.cancelAllRequests();
-      myRefreshAlarm.addRequest(() -> {
-        if (visible) {
-          myRefreshIcon.resume();
-        }
-        else {
-          myRefreshIcon.suspend();
-        }
-        myRefreshIcon.revalidate();
-        myRefreshIcon.repaint();
-      }, visible ? 100 : 300);
-    });
+    UIUtil.invokeLaterIfNeeded(() -> myRefreshIcon.setVisible(visible));
   }
 
   void setRefreshToolTipText(final String tooltip) {

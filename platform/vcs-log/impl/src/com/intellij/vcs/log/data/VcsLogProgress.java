@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +25,7 @@ public class VcsLogProgress implements Disposable {
   private boolean myDisposed = false;
 
   public VcsLogProgress(@NotNull Project project, @NotNull Disposable parent) {
-    Disposer.register(parent, () -> Disposer.dispose(this));
-    Disposer.register(project, this);
+    VcsLogUtil.registerWithParentAndProject(parent, project, this);
   }
 
   @NotNull

@@ -567,6 +567,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   private static class MethodAnnotationCollectingVisitor extends MethodVisitor {
     private final PsiMethodStub myOwner;
+    @NotNull
     private final PsiModifierListStub myModList;
     private final PsiParameterStubImpl[] myParamStubs;
     private final int myParamCount;
@@ -579,7 +580,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private List<Set<String>> myFilters;
 
     private MethodAnnotationCollectingVisitor(PsiMethodStub owner,
-                                              PsiModifierListStub modList,
+                                              @NotNull PsiModifierListStub modList,
                                               PsiParameterStubImpl[] paramStubs,
                                               int paramIgnoreCount,
                                               int localVarIgnoreCount,

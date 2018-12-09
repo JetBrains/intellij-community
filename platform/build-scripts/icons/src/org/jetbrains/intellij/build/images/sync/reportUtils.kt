@@ -6,34 +6,61 @@ import java.util.*
 import java.util.stream.Stream
 import kotlin.streams.toList
 
-internal fun report(context: Context, root: File, devIcons: Int, icons: Int, skipped: Int, consistent: Collection<String>) {
-  if (isUnderTeamCity()) {
-    createReviews(root, context)
-    val investigator = if (context.isFail() && context.assignInvestigation) {
-      assignInvestigation(root, context)
-    }
-    else null
-    if (context.notifySlack) sendNotification(investigator, context)
-  }
+internal fun report(context: Context, skipped: Int): String {
+  val (devIcons, icons) = context.devIcons.size to context.icons.size
   log("Skipped $skipped dirs")
   fun Collection<String>.logIcons(description: String) = "$size $description${if (size < 100) ": ${joinToString()}" else ""}"
-  val report = """
-    |$devIcons icons are found in dev repo:
-    | ${context.addedByDev.logIcons("added")}
-    | ${context.removedByDev.logIcons("removed")}
-    | ${context.modifiedByDev.logIcons("modified")}
-    |$icons icons are found in icons repo:
-    | ${context.addedByDesigners.logIcons("added")}
-    | ${context.removedByDesigners.logIcons("removed")}
-    | ${context.modifiedByDesigners.logIcons("modified")}
-    |${consistent.size} consistent icons in both repos
-    |${if (context.createdReviews.isNotEmpty()) "Created reviews: ${context.createdReviews.map(Review::url)}" else ""}
-  """.trimMargin()
-  log(report)
-  if (isUnderTeamCity() && context.isFail()) context.doFail(report)
+  @Suppress("Duplicates")
+  var report = when {
+    context.iconsCommitHashesToSync.isNotEmpty() -> """
+      |${context.iconsRepoName} commits ${context.iconsCommitHashesToSync.joinToString()} are synced into ${context.devRepoName}:
+      | ${context.byDesigners.added.logIcons("added")}
+      | ${context.byDesigners.removed.logIcons("removed")}
+      | ${context.byDesigners.modified.logIcons("modified")}
+    """.trimMargin()
+    context.devIconsCommitHashesToSync.isNotEmpty() -> """
+      |${context.devRepoName} commits ${context.devIconsCommitHashesToSync.joinToString()} are synced into ${context.iconsRepoName}:
+      | ${context.byDev.added.logIcons("added")}
+      | ${context.byDev.removed.logIcons("removed")}
+      | ${context.byDev.modified.logIcons("modified")}
+    """.trimMargin()
+    else -> """
+      |$devIcons icons are found in ${context.devRepoName}:
+      | ${context.byDev.added.logIcons("added")}
+      | ${context.byDev.removed.logIcons("removed")}
+      | ${context.byDev.modified.logIcons("modified")}
+      |$icons icons are found in ${context.iconsRepoName}:
+      | ${context.byDesigners.added.logIcons("added")}
+      | ${context.byDesigners.removed.logIcons("removed")}
+      | ${context.byDesigners.modified.logIcons("modified")}
+      |${context.consistent.size} consistent icons in both repos
+    """.trimMargin()
+  }
+  if (context.createdReviews.isNotEmpty()) {
+    report += "\nCreated reviews: ${context.createdReviews.joinToString { it.url }}"
+  }
+  return report
 }
 
-internal fun Map<File, Collection<CommitInfo>>.description() = entries.joinToString(System.lineSeparator()) { entry ->
+internal fun findCommitsToSync(context: Context) {
+  // TODO: refactor it
+  fun guessGitObject(repo: File, file: File) = GitObject(file.toRelativeString(repo), "-1", repo)
+  if (context.doSyncDevRepo && context.devSyncRequired()) {
+    context.iconsCommitsToSync = findCommitsByRepo(context, UPSOURCE_DEV_PROJECT_ID, context.iconsRepoDir, context.byDesigners) {
+      context.devIcons[it] ?: {
+        val change = context.devRepoRoot.resolve(it)
+        guessGitObject(changesToReposMap(change), change)
+      }()
+    }
+  }
+  if (context.doSyncIconsRepo && context.iconsSyncRequired()) {
+    context.devCommitsToSync = findCommitsByRepo(context, UPSOURCE_ICONS_PROJECT_ID, context.devRepoRoot, context.byDev) {
+      context.icons[it] ?: guessGitObject(context.iconsRepo, context.iconsRepoDir.resolve(it))
+    }
+  }
+}
+
+internal fun Map<File, Collection<CommitInfo>>.description() = entries.joinToString { entry ->
   "${getOriginUrl(entry.key)}: ${entry.value.joinToString { it.hash }}"
 }
 
@@ -52,36 +79,19 @@ private fun withTmpBranch(repos: Collection<File>, action: (String) -> Review?):
   }
 }
 
-private fun createReviewForDev(root: File, context: Context, user: String, email: String): Review? {
-  if (!context.doSyncDevIconsAndCreateReview) return null
-  val changes = context.addedByDesigners + context.modifiedByDesigners + if (context.doSyncRemovedIconsInDev) {
-    context.removedByDesigners
-  }
-  else emptyList()
-  if (changes.isEmpty()) return null
-  val repos = changes.asSequence()
-    .map { File(root, it).absolutePath }
-    .map { findGitRepoRoot(it, silent = true) }
-    .distinct()
-    .toList()
-  val commits = findCommitsByRepo(UPSOURCE_DEV_PROJECT_ID, File(context.iconsRepoDir), changes)
-  if (commits.isEmpty()) return null
-  val verificationPassed = try {
-    context.verifyDevIcons()
-    repos.forEach { repo ->
-      val status = gitStatus(repo)
-      if (status.isNotEmpty()) {
-        addChangesToGit(status, repo)
-      }
-    }
-    true
-  }
-  catch (e: Exception) {
-    e.printStackTrace()
-    false
+private fun createReviewForDev(context: Context, user: String, email: String): Review? {
+  if (context.iconsCommitsToSync.isEmpty()) return null
+  val repos = context.iconsChanges().map {
+    changesToReposMap(context.devRepoRoot.resolve(it))
+  }.distinct()
+  verifyDevIcons(context, repos)
+  if (repos.all { gitStage(it).isEmpty() }) {
+    log("Nothing to commit")
+    context.byDesigners.clear()
+    return null
   }
   return withTmpBranch(repos) { branch ->
-    val commitsForReview = commitAndPush(branch, user, email, commits.commitMessage(), repos)
+    val commitsForReview = commitAndPush(branch, user, email, context.iconsCommitsToSync.commitMessage(), repos)
     val projectId = UPSOURCE_DEV_PROJECT_ID
     if (projectId.isNullOrEmpty()) {
       log("WARNING: unable to create Upsource review for ${context.devRepoName}, just plain old branch review")
@@ -91,7 +101,7 @@ private fun createReviewForDev(root: File, context: Context, user: String, email
       val review = createReview(projectId, branch, commitsForReview)
       try {
         addReviewer(projectId, review, triggeredBy() ?: DEFAULT_INVESTIGATOR)
-        postVerificationResultToReview(verificationPassed, review)
+        postVerificationResultToReview(review)
         review
       }
       catch (e: Exception) {
@@ -102,79 +112,152 @@ private fun createReviewForDev(root: File, context: Context, user: String, email
   }
 }
 
-private fun postVerificationResultToReview(success: Boolean, review: Review) {
-  val runConfigurations = System.getProperty("sync.dev.icons.checks")?.splitNotBlank(";") ?: return
-  val comment = if (success) "Following checks were successful:" else "Some of the following checks failed:"
-  postComment(UPSOURCE_DEV_PROJECT_ID, review, "$comment ${runConfigurations.joinToString()}, see build log ${thisBuildReportableLink()}")
-}
-
-private fun createReviewForIcons(root: File, context: Context, user: String, email: String): Review? {
-  if (!context.doSyncIconsAndCreateReview) return null
-  val changes = context.addedByDev + context.removedByDev + context.modifiedByDev
-  if (changes.isEmpty()) return null
-  val commits = findCommitsByRepo(UPSOURCE_ICONS_PROJECT_ID, root, changes)
-  if (commits.isEmpty()) return null
-  val repos = listOf(context.iconsRepo)
-  return withTmpBranch(repos) { branch ->
-    val commitsForReview = commitAndPush(branch, user, email, commits.commitMessage(), repos)
-    val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, commitsForReview)
-    commits.values.parallelStream()
-      .flatMap { it.stream() }
-      .map { it.committerEmail }
-      .distinct()
-      .forEach { addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, it) }
-    review
+private fun verifyDevIcons(context: Context, repos: Collection<File>) {
+  callSafely {
+    context.verifyDevIcons(repos)
+  }
+  repos.forEach { repo ->
+    val status = gitStatus(repo)
+    if (status.isNotEmpty()) {
+      log("Staging ${status.joinToString("," + System.lineSeparator()) {
+        repo.resolve(it).toString()
+      }}")
+      status.forEach {
+        stageFiles(listOf(it), repo)
+      }
+      log("Staged: " + gitStage(repo))
+    }
   }
 }
 
-private fun createReviews(root: File, context: Context) = callSafely {
+private fun postVerificationResultToReview(review: Review) {
+  val runConfigurations = System.getProperty("sync.dev.icons.checks")?.splitNotBlank(";") ?: return
+  postComment(UPSOURCE_DEV_PROJECT_ID, review,
+              "Following configurations were run: ${runConfigurations.joinToString()}, see build ${thisBuildReportableLink()}")
+}
+
+private fun createReviewForIcons(context: Context, user: String, email: String): Collection<Review> {
+  if (context.devCommitsToSync.isEmpty()) return emptyList()
+  if (gitStage(context.iconsRepo).isEmpty()) {
+    log("Nothing to commit")
+    context.byDev.clear()
+    return emptyList()
+  }
+  val repos = listOf(context.iconsRepo)
+  return context.devCommitsToSync.values.flatten()
+    .groupBy(CommitInfo::committerEmail)
+    .entries.parallelStream()
+    .map {
+      val (committer, commits) = it
+      withTmpBranch(repos) { branch ->
+        commits.forEach { commit ->
+          val change = context.byCommit[commit.hash] ?: error("Unable to find changes for commit ${commit.hash} by $committer")
+          log("[$committer] syncing ${commit.hash} in ${context.iconsRepoName}")
+          syncIconsRepo(context, change)
+        }
+        val commitsForReview = commitAndPush(branch, user, email, commits.groupBy(CommitInfo::repo).commitMessage(), repos)
+        val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, commitsForReview)
+        addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, committer)
+        review
+      }
+    }.filter(Objects::nonNull).map { it as Review }.toList()
+}
+
+internal fun createReviews(context: Context) = callSafely {
   val (user, email) = System.getProperty("upsource.user.name") to System.getProperty("upsource.user.email")
   context.createdReviews = Stream.of(
-    { createReviewForDev(root, context, user, email) },
-    { createReviewForIcons(root, context, user, email) }
-  ).parallel().map { it() }
+    { createReviewForDev(context, user, email)?.let { listOf(it) } ?: emptyList() },
+    { createReviewForIcons(context, user, email) }
+  ).parallel().flatMap { it().stream() }
     .filter(Objects::nonNull)
     .map { it as Review }
     .toList()
 }
 
-private fun assignInvestigation(root: File, context: Context): Investigator? =
+internal fun assignInvestigation(context: Context): Investigator? =
   callSafely {
-    assignInvestigation(findInvestigator(root, context.addedByDev.asSequence() +
-                                               context.removedByDev.asSequence() +
-                                               context.modifiedByDev.asSequence()), context)
+    val commits = if (context.iconsSyncRequired()) context.devCommitsToSync else context.iconsCommitsToSync
+    if (commits.isEmpty()) {
+      log("No commits, no investigation")
+      return@callSafely null
+    }
+    val investigator = commits.flatMap { it.value }.maxBy(CommitInfo::timestamp)?.let {
+      log("Assigning investigation to ${it.committerEmail} as author of latest change ${it.hash}")
+      Investigator(it.committerEmail, commits)
+    } ?: Investigator()
+    assignInvestigation(investigator, context)
   }
 
-private fun findInvestigator(root: File, changes: Sequence<String>): Investigator {
-  val commits = findCommits(root, changes)
-  return commits.maxBy(CommitInfo::timestamp)?.let {
-    Investigator(it.committerEmail, commits.groupBy(CommitInfo::repo))
-  } ?: Investigator()
-}
-
-private fun findCommitsByRepo(
-  projectId: String, root: File, changes: Collection<String>
+private fun findCommitsByRepo(context: Context, projectId: String?, root: File, changes: Changes,
+                              resolveGitObject: (String) -> GitObject
 ): Map<File, Collection<CommitInfo>> {
-  val commits = findCommits(root, changes.asSequence()).toList()
+  var alreadyInReview = emptyList<String>()
+  var commits = findCommits(context, root, changes)
   if (commits.isEmpty()) return emptyMap()
-  val alreadyInReview = getOpenIconsReviewTitles(projectId)
-  return commits.filter { commit ->
-    alreadyInReview.none { it.contains(commit.hash) }
-  }.groupBy(CommitInfo::repo)
+  val titles = if (!projectId.isNullOrEmpty()) getOpenIconsReviewTitles(projectId!!) else emptyList()
+  val before = commits.size
+  commits = commits.filterNot { entry ->
+    val (commit, change) = entry
+    val skip = titles.any {
+      it.contains(commit.hash)
+    }
+    if (skip) alreadyInReview += change
+    skip
+  }
+  log("$projectId: ${before - commits.size} commits already in review")
+  alreadyInReview
+    .map { resolveGitObject(it) }
+    .groupBy({ it.repo }, { it.path })
+    .forEach {
+      val (repo, skipped) = it
+      log("Already in review, skipping: $skipped")
+      unStageFiles(skipped, repo)
+    }
+  log("$projectId: ${commits.size} commits found")
+  return commits.map { it.key }.groupBy(CommitInfo::repo)
 }
 
-private fun findCommits(root: File, changes: Sequence<String>) = changes
-  .map { File(root, it).absolutePath }
-  .map { latestChangeCommit(it) }
-  .filterNotNull()
-  .distinctBy(CommitInfo::hash)
-
-private fun commitAndPush(branch: String, user: String, email: String, message: String, repos: Collection<File>) = repos.map {
-  initGit(it, user, email)
-  commitAndPush(it, branch, message)
+@Volatile
+private var changesToReposMap = emptyMap<File, File>()
+private val changesToReposMapGuard = Any()
+internal fun changesToReposMap(change: File): File {
+  if (!changesToReposMap.containsKey(change)) synchronized(changesToReposMapGuard) {
+    if (!changesToReposMap.containsKey(change)) {
+      changesToReposMap += change to findGitRepoRoot(change, silent = true)
+    }
+  }
+  return changesToReposMap[change]!!
 }
 
-private fun sendNotification(investigator: Investigator?, context: Context) {
+private fun findCommits(context: Context, root: File, changes: Changes) = changes.all()
+  .mapNotNull { change ->
+    val absoluteFile = root.resolve(change)
+    val repo = changesToReposMap(absoluteFile)
+    val commit = latestChangeCommit(absoluteFile.toRelativeString(repo), repo)
+    if (commit != null) commit to change else null
+  }.onEach {
+    val commit = it.first.hash
+    val change = it.second
+    if (!context.byCommit.containsKey(commit)) context.byCommit[commit] = Changes(changes.includeRemoved)
+    val commitChange = context.byCommit[commit]!!
+    when {
+      changes.added.contains(change) -> commitChange.added += change
+      changes.modified.contains(change) -> commitChange.modified += change
+      changes.removed.contains(change) -> commitChange.removed += change
+    }
+  }.groupBy({ it.first }, { it.second })
+
+private fun commitAndPush(branch: String,
+                          user: String,
+                          email: String,
+                          message: String,
+                          repos: Collection<File>) = repos.parallelStream().map {
+  withUser(it, user, email) {
+    commitAndPush(it, branch, message)
+  }
+}.toList()
+
+internal fun sendNotification(investigator: Investigator?, context: Context) {
   callSafely {
     if (isNotificationRequired(context)) {
       notifySlackChannel(investigator, context)
@@ -185,17 +268,18 @@ private fun sendNotification(investigator: Investigator?, context: Context) {
 private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
 
 internal fun Context.report(slack: Boolean = false): String {
-  val iconsSync = when {
-    iconsSyncRequired() && iconsReview() != null -> iconsReview()!!.let {
-      val link = if (slack) slackLink(it.id, it.url) else it.url
-      "To sync $iconsRepoName see $link\n"
-    }
-    else -> ""
+  val iconsSync = if (iconsSyncRequired() && iconsReviews().isNotEmpty()) {
+    "To sync $iconsRepoName see ${iconsReviews().joinToString {
+      if (slack) slackLink(it.id, it.url) else it.url
+    }}" + if (slack) "\n" else ""
   }
-  val devSync = devReview()?.let {
-    val link = if (slack) slackLink(it.id, it.url) else it.url
-    "To sync $devRepoName see $link\n"
-  } ?: ""
+  else ""
+  val devSync = if (devReviews().isNotEmpty()) {
+    "To sync $devRepoName see ${devReviews().joinToString {
+      if (slack) slackLink(it.id, it.url) else it.url
+    }}" + if (slack) "\n" else ""
+  }
+  else ""
   return iconsSync + devSync
 }
 

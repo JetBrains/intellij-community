@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind.*
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
+import org.jetbrains.plugins.groovy.lang.psi.impl.explicitTypeArguments
 import org.jetbrains.plugins.groovy.lang.psi.util.contexts
 import org.jetbrains.plugins.groovy.lang.psi.util.skipSameTypeParents
 import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUp
@@ -107,12 +108,11 @@ private fun GrCodeReferenceElement.resolveReference(): Collection<GroovyResolveR
   else if (isQualified) {
     val clazz = resolveClassFqn()
     if (clazz != null) {
-      val substitutor = PsiSubstitutor.EMPTY.putAll(clazz, typeArguments)
-      return listOf(ClassResolveResult(clazz, this, null, substitutor))
+      return listOf(ClassResolveResult(clazz, this, ResolveState.initial(), explicitTypeArguments))
     }
   }
 
-  val processor = ClassProcessor(name, this, typeArguments, isAnnotationReference())
+  val processor = ClassProcessor(name, this, explicitTypeArguments, isAnnotationReference())
   val state = ResolveState.initial()
   processClasses(processor, state)
   val classes = processor.results

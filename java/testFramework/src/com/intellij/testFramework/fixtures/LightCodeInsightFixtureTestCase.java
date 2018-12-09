@@ -80,7 +80,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
+    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, getTempDirFixture());
 
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
@@ -90,10 +90,18 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
   }
 
+  @NotNull
+  protected TempDirTestFixture getTempDirFixture() {
+    return new LightTempDirTestFixtureImpl(true);
+  }
+
   @Override
   protected void tearDown() throws Exception {
     try {
       myFixture.tearDown();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       myFixture = null;

@@ -163,15 +163,15 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public boolean removeContent(@NotNull Content content, final boolean dispose) {
-    return removeContent(content, true, dispose).isDone();
+    return removeContent(content, dispose, UIUtil.isFocusAncestor(content.getComponent()), false).isDone();
   }
 
   @NotNull
   @Override
-  public ActionCallback removeContent(@NotNull Content content, boolean dispose, final boolean trackFocus, final boolean forcedFocus) {
+  public ActionCallback removeContent(@NotNull Content content, boolean dispose, final boolean requestFocus, final boolean forcedFocus) {
     final ActionCallback result = new ActionCallback();
     removeContent(content, true, dispose).doWhenDone(() -> {
-      if (trackFocus) {
+      if (requestFocus) {
         Content current = getSelectedContent();
         if (current != null) {
           setSelectedContent(current, true, true, !forcedFocus).notify(result);
@@ -622,11 +622,13 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public void beforeTreeDispose() {
+    if (myDisposed) return;
     myUI.beforeDispose();
   }
 
   @Override
   public void dispose() {
+    if (myDisposed) return;
     myDisposed = true;
 
     myContents.clear();

@@ -6,8 +6,8 @@ import com.intellij.configurationStore.DataWriterFilter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.io.*
-import com.intellij.util.loadElement
 import org.jdom.Element
 import java.nio.file.Path
 
@@ -80,7 +80,7 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
     }
 
     return nameToPath(name).inputStreamIfExists()?.use {
-      loadElement(it)
+      JDOMUtil.load(it)
     }
   }
 

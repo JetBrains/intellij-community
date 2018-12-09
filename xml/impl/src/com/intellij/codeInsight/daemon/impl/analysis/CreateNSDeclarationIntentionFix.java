@@ -172,16 +172,12 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
           }
           final int offset = editor.getCaretModel().getOffset();
           final RangeMarker marker = editor.getDocument().createRangeMarker(offset, offset);
-          final XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(file);
-          helper.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(namespace), prefix,
-                                               new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
-                                                 @Override
-                                                 public void run(final String param) throws IncorrectOperationException {
-                                                   if (!namespace.isEmpty()) {
-                                                     editor.getCaretModel().moveToOffset(marker.getStartOffset());
-                                                   }
-                                                 }
-                                               });
+          final XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(xmlFile);
+          helper.insertNamespaceDeclaration(xmlFile, editor, Collections.singleton(namespace), prefix, __ -> {
+            if (!namespace.isEmpty()) {
+              editor.getCaretModel().moveToOffset(marker.getStartOffset());
+            }
+          });
         }
       }, getTitle(),
       this,

@@ -82,12 +82,14 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
       myModule = null;
       myProject = null;
       myBusConnection = null;
-
       super.tearDown();
     }
   }

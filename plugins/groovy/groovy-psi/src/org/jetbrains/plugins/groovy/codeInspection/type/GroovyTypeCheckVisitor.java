@@ -41,7 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrBu
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -55,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Appli
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 
 import java.util.List;
@@ -62,12 +62,16 @@ import java.util.Map;
 
 import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
+import static org.jetbrains.plugins.groovy.codeInspection.type.ImplKt.processConstructor;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.isImplicitReturnStatement;
 
 public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
   private static final Logger LOG = Logger.getInstance(GroovyAssignabilityCheckInspection.class);
 
+  private final HighlightSink myHighlightSink = (highlightElement, highlightType, message, fixes) ->
+    registerError(highlightElement, message, fixes, highlightType);
+  
   private boolean checkCallApplicability(@Nullable PsiType type,
                                          boolean checkUnknownArgs,
                                          @NotNull CallInfo<? extends GroovyPsiElement> info) {
@@ -552,7 +556,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                                            @NotNull PsiElement context,
                                                            @NotNull PsiElement elementToHighlight) {
     if (targetType == null || actualType == null) return;
-    final ConversionResult result = TypesUtil.canAssignWithinMultipleAssignment(targetType, actualType, context);
+    final ConversionResult result = TypesUtil.canAssignWithinMultipleAssignment(targetType, actualType);
     if (result == ConversionResult.OK) return;
     registerError(
       elementToHighlight,
@@ -664,14 +668,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   }
 
   @Override
-  public void visitEnumConstant(@NotNull GrEnumConstant enumConstant) {
-    super.visitEnumConstant(enumConstant);
-    GrEnumConstantInfo info = new GrEnumConstantInfo(enumConstant);
-    processConstructorCall(info);
-    checkNamedArgumentsType(info);
-  }
-
-  @Override
   public void visitReturnStatement(@NotNull GrReturnStatement returnStatement) {
     super.visitReturnStatement(returnStatement);
     final GrExpression value = returnStatement.getReturnValue();
@@ -708,15 +704,46 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   public void visitNewExpression(@NotNull GrNewExpression newExpression) {
     super.visitNewExpression(newExpression);
-    if (newExpression.getArrayCount() > 0) return;
+    if (hasErrorElements(newExpression) || hasErrorElements(newExpression.getArgumentList())) return;
 
-    GrCodeReferenceElement refElement = newExpression.getReferenceElement();
-    if (refElement == null) return;
+    final GroovyCallReference reference = newExpression.getConstructorReference();
+    if (reference == null) return;
 
-    GrNewExpressionInfo info = new GrNewExpressionInfo(newExpression);
-    processConstructorCall(info);
+    final GrNewExpressionInfo info = new GrNewExpressionInfo(newExpression);
+    if (processConstructor(reference, newExpression.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
+      return;
+    }
+
+    checkNamedArgumentsType(info);
   }
 
+  @Override
+  public void visitEnumConstant(@NotNull GrEnumConstant enumConstant) {
+    super.visitEnumConstant(enumConstant);
+    if (hasErrorElements(enumConstant) || hasErrorElements(enumConstant.getArgumentList())) return;
+
+    final GrEnumConstantInfo info = new GrEnumConstantInfo(enumConstant);
+    final GroovyCallReference reference = enumConstant.getConstructorReference();
+    if (processConstructor(reference, enumConstant.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
+      return;
+    }
+
+    checkNamedArgumentsType(info);
+  }
+
+  @Override
+  public void visitConstructorInvocation(@NotNull GrConstructorInvocation invocation) {
+    super.visitConstructorInvocation(invocation);
+    if (hasErrorElements(invocation) || hasErrorElements(invocation.getArgumentList())) return;
+
+    final GrConstructorInvocationInfo info = new GrConstructorInvocationInfo(invocation);
+    final GroovyCallReference reference = invocation.getConstructorReference();
+    if (processConstructor(reference, invocation.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
+      return;
+    }
+    checkNamedArgumentsType(info);
+  }
+  
   @Override
   public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
     super.visitAssignmentExpression(assignment);
@@ -832,14 +859,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         parameter
       );
     }
-  }
-
-  @Override
-  public void visitConstructorInvocation(@NotNull GrConstructorInvocation invocation) {
-    super.visitConstructorInvocation(invocation);
-    GrConstructorInvocationInfo info = new GrConstructorInvocationInfo(invocation);
-    processConstructorCall(info);
-    checkNamedArgumentsType(info);
   }
 
   @Override

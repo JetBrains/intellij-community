@@ -2634,6 +2634,17 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "try (InputStream in = new FileInputStream(\"tmp\")) {\n" +
                  "  }",
                  matches3.get(0).getMatchImage());
+
+    String source2 = "class X {{" +
+                     "  try {} catch (Thowable e) {} finally {}" +
+                     "  try {} finally {}" +
+                     "}}";
+    String pattern10 = "try { '_st1*; } catch ('_E '_e{0,0}) { '_St2*; } finally { '_St3*; }";
+    final List<MatchResult> matches4 = findMatches(source2, pattern10, StdFileTypes.JAVA);
+    assertEquals(1, matches4.size());
+    assertEquals("Should find try without catch blocks",
+                 "try {} finally {}",
+                 matches4.get(0).getMatchImage());
   }
 
   public void testFindAsserts() {

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
@@ -164,16 +165,40 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list, boolean silently);
 
   @NotNull
+  public abstract Set<IgnoredFileDescriptor> getPotentiallyIgnoredFiles();
+
+  /**
+   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
+   * To get all potentially ignored files use {@link #getPotentiallyIgnoredFiles()} instead.
+   */
+  @Deprecated
+  @NotNull
   public abstract IgnoredFileBean[] getFilesToIgnore();
 
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
 
+  /**
+   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
+   */
+  @Deprecated
   public abstract void setFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles);
 
+  /**
+   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
+   */
+  @Deprecated
   public abstract void addFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles);
 
+  /**
+   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
+   */
+  @Deprecated
   public abstract void addDirectoryToIgnoreImplicitly(@NotNull String path);
 
+  /**
+   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
+   */
+  @Deprecated
   public abstract void removeImplicitlyIgnoredDirectory(@NotNull String path);
 
 

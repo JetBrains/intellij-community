@@ -7,7 +7,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 class EditorConfigStructureViewTest : LightCodeInsightFixtureTestCase() {
   override fun getBasePath() =
-    "/plugins/editorconfig/testSrc/org/editorconfig/language/structureview/"
+    "/plugins/editorconfig/testData/org/editorconfig/language/structureview/"
 
   fun doTest(expected: String) {
     myFixture.configureByFile(getTestName(true) + "/.editorconfig")

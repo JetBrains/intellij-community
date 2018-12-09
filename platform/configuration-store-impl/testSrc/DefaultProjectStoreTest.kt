@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
@@ -95,7 +96,8 @@ internal class DefaultProjectStoreTest {
   @Test fun `new project from default - directory-based storage`() {
     val defaultProject = ProjectManager.getInstance().defaultProject
     val defaultTestComponent = TestComponent()
-    defaultTestComponent.loadState(loadElement("""<component><main name="$TEST_COMPONENT_NAME"/><sub name="foo" /><sub name="bar" /></component>"""))
+    defaultTestComponent.loadState(
+      JDOMUtil.load("""<component><main name="$TEST_COMPONENT_NAME"/><sub name="foo" /><sub name="bar" /></component>"""))
     val stateStore = defaultProject.stateStore as ComponentStoreImpl
     stateStore.initComponent(defaultTestComponent, true)
     try {

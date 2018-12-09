@@ -10,8 +10,12 @@ class LightJava12HighlightingTest : LightCodeInsightFixtureTestCase() {
 
   fun testEnhancedSwitchStatements() = doTest()
   fun testSwitchExpressions() = doTest()
+  fun testValueBreaks() = doTest()
   fun testSwitchNumericPromotion() = doTest()
   fun testSimpleInferenceCases() = doTest()
+  fun testEnhancedSwitchDefinitelyAssigned() = doTest()
+  fun testEnhancedSwitchUnreachable() = doTest()
+  fun testSwitchExpressionHasResult() = doTest()
 
   private fun doTest() {
     myFixture.configureByFile(getTestName(false) + ".java")

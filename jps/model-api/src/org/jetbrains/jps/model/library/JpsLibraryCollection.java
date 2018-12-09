@@ -43,6 +43,8 @@ public interface JpsLibraryCollection {
 
   void addLibrary(@NotNull JpsLibrary library);
 
+  void removeLibrary(@NotNull JpsLibrary library);
+
   @Nullable
   JpsLibrary findLibrary(@NotNull String name);
 

@@ -18,7 +18,9 @@ package com.intellij.unscramble;
 import com.intellij.openapi.application.ClipboardAnalyzeListener;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFrame;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
@@ -26,11 +28,18 @@ import java.util.regex.Pattern;
 /**
  * @author Konstantin Bulenkov
  */
-public class UnscrambleListener extends ClipboardAnalyzeListener {
+class UnscrambleListener extends ClipboardAnalyzeListener {
 
   private static final Pattern STACKTRACE_LINE =
     Pattern.compile(
       "[\t]*at [[_a-zA-Z0-9]+\\.]+[_a-zA-Z$0-9]+\\.[a-zA-Z0-9_]+\\([A-Za-z0-9_]+\\.java:[\\d]+\\)+[ [~]*\\[[a-zA-Z0-9\\.\\:/]\\]]*");
+
+  @Override
+  public void applicationActivated(@NotNull IdeFrame ideFrame) {
+    if (!Registry.is("analyze.exceptions.on.the.fly")) return;
+
+    super.applicationActivated(ideFrame);
+  }
 
   @Override
   public boolean canHandle(@NotNull String value) {

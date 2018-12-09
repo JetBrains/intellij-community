@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.FocusModeModel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.registry.Registry;
@@ -32,7 +33,9 @@ public class FocusModePassFactory implements TextEditorHighlightingPassFactory {
   @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    return isEnabled() && EditorUtil.isRealFileEditor(editor) ? new FocusModePass(editor, file) : null;
+    return isEnabled() && EditorUtil.isRealFileEditor(editor) && editor instanceof EditorImpl
+           ? new FocusModePass(editor, file)
+           : null;
   }
 
   private static boolean isEnabled() {
@@ -52,13 +55,13 @@ public class FocusModePassFactory implements TextEditorHighlightingPassFactory {
 
   public static void setToEditor(@NotNull List<? extends Segment> zones, Editor editor) {
     Document document = editor.getDocument();
-    List<RangeMarker> before = editor.getUserData(EditorImpl.FOCUS_MODE_RANGES);
+    List<RangeMarker> before = editor.getUserData(FocusModeModel.FOCUS_MODE_RANGES);
     if (before != null) {
       before.forEach(o -> o.dispose());
     }
 
     List<RangeMarker> rangeMarkers = ContainerUtil.map(zones, z -> document.createRangeMarker(z.getStartOffset(), z.getEndOffset()));
-    editor.putUserData(EditorImpl.FOCUS_MODE_RANGES, rangeMarkers);
+    editor.putUserData(FocusModeModel.FOCUS_MODE_RANGES, rangeMarkers);
   }
 
   private static class FocusModePass extends EditorBoundHighlightingPass {
@@ -77,6 +80,7 @@ public class FocusModePassFactory implements TextEditorHighlightingPassFactory {
     public void doApplyInformationToEditor() {
       if (myZones != null) {
         setToEditor(myZones, myEditor);
+        ((EditorImpl)myEditor).applyFocusMode();
       }
     }
   }

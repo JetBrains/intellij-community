@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij;
 
 import com.intellij.idea.Bombed;
@@ -165,16 +164,14 @@ public class TestCaseLoader {
         return true;
       }
     }
-    catch (NoSuchMethodException ignored) {
-    }
+    catch (NoSuchMethodException ignored) { }
 
-    return TestFrameworkUtil.isJUnit4TestClass(testCaseClass);
+    return TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false);
   }
 
   private boolean shouldExcludeTestClass(String moduleName, Class testCaseClass) {
     if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass)) return true;
     String className = testCaseClass.getName();
-
     return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass) || isExcludeFromTestDiscovery(testCaseClass);
   }
 
@@ -223,8 +220,7 @@ public class TestCaseLoader {
       try {
         return FileUtil.loadLines(filePath);
       }
-      catch (IOException ignored) {
-      }
+      catch (IOException ignored) { }
     }
 
     return Collections.emptyList();
@@ -322,8 +318,7 @@ public class TestCaseLoader {
     }
     long after = System.currentTimeMillis();
 
-    String message = "Number of test classes found: " + getClasses().size()
-                     + " time to load: " + (after - before) / 1000 + "s.";
+    String message = "Number of test classes found: " + getClasses().size() + " time to load: " + (after - before) / 1000 + "s.";
     System.out.println(message);
     TeamCityLogger.info(message);
   }

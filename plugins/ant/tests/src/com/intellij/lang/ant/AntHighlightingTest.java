@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @by Maxim.Mossienko
+ * @author Maxim.Mossienko
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class AntHighlightingTest extends DaemonAnalyzerTestCase {

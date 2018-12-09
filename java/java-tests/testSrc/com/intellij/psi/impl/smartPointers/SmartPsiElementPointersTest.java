@@ -514,7 +514,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
         //System.out.println("file = " + file);
       }
       else {
-        System.out.println("already loaded file = " + file);
+        LOG.debug("already loaded file = " + file);
       }
     }
   }

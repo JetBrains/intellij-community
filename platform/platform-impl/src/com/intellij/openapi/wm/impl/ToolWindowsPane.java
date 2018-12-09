@@ -38,7 +38,7 @@ import java.util.*;
 import static com.intellij.util.ui.UIUtil.useSafely;
 
 /**
- * This panel contains all tool stripes and JLayeredPanle at the center area. All tool windows are
+ * This panel contains all tool stripes and JLayeredPane at the center area. All tool windows are
  * located inside this layered pane.
  *
  * @author Anton Katilin
@@ -49,10 +49,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   private final IdeFrameImpl myFrame;
 
-  private final HashMap<String, StripeButton> myId2Button = new HashMap<>();
-  private final HashMap<String, InternalDecorator> myId2Decorator = new HashMap<>();
-  private final HashMap<InternalDecorator, WindowInfoImpl> myDecorator2Info = new HashMap<>();
-  private final HashMap<String, Float> myId2SplitProportion = new HashMap<>();
+  private final Map<String, StripeButton> myId2Button = new HashMap<>();
+  private final Map<String, InternalDecorator> myId2Decorator = new HashMap<>();
+  private final Map<InternalDecorator, WindowInfoImpl> myDecorator2Info = new HashMap<>();
+  private final Map<String, Float> myId2SplitProportion = new HashMap<>();
   private Pair<ToolWindow, Integer> myMaximizedProportion;
   /**
    * This panel is the layered pane where all sliding tool windows are located. The DEFAULT
@@ -1097,9 +1097,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           // Prepare top image. This image is scrolling over bottom image. It contains
           // picture of component is being removed.
           final Image topImage = myLayeredPane.getTopImage();
-          useSafely(topImage.getGraphics(), topGraphics -> {
-            myComponent.paint(topGraphics);
-          });
+          useSafely(topImage.getGraphics(), topGraphics -> myComponent.paint(topGraphics));
 
           // Prepare bottom image. This image contains picture of component that is located
           // under the component to is being removed.
@@ -1201,7 +1199,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private static class ImageRef extends SoftReference<BufferedImage> {
-    private @Nullable BufferedImage myStrongRef;
+    @Nullable private BufferedImage myStrongRef;
 
     ImageRef(@NotNull BufferedImage image) {
       super(image);
@@ -1234,7 +1232,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private final class MyLayeredPane extends JBLayeredPane {
-    private final Function<ScaleContext, ImageRef> myImageProvider = (ctx) -> {
+    private final Function<ScaleContext, ImageRef> myImageProvider = __ -> {
       int width = Math.max(Math.max(1, getWidth()), myFrame.getWidth());
       int height = Math.max(Math.max(1, getHeight()), myFrame.getHeight());
       return new ImageRef(UIUtil.createImage(getGraphicsConfiguration(), width, height, BufferedImage.TYPE_INT_RGB));
@@ -1290,8 +1288,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         }
 
         float weight = info.getAnchor().isHorizontal()
-                             ? (float)component.getHeight() / (float)getHeight()
-                             : (float)component.getWidth() / (float)getWidth();
+                             ? (float)component.getHeight() / getHeight()
+                             : (float)component.getWidth() / getWidth();
         setBoundsInPaletteLayer(component, info.getAnchor(), weight);
       }
     }

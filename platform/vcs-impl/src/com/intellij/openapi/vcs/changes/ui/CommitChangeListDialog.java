@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -328,7 +329,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
 
       MultipleLocalChangeListsBrowser browser = new MultipleLocalChangeListsBrowser(project, true, true,
-                                                                                    myShowVcsCommit, myEnablePartialCommit);
+                                                                                    myShowVcsCommit, myEnablePartialCommit) {
+        @Override
+        protected List<? extends AnAction> createAdditionalRollbackActions() {
+          return StreamEx.of(myAffectedVcses)
+            .map(AbstractVcs::getRollbackEnvironment)
+            .nonNull()
+            .flatCollection(RollbackEnvironment::createCustomRollbackActions)
+            .toList();
+        }
+      };
       myBrowser = browser;
 
       CurrentBranchComponent branchComponent = new CurrentBranchComponent(project, myBrowser);

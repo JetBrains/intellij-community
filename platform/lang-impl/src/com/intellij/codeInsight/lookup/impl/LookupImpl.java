@@ -76,7 +76,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     // 'myList' is focused when "Screen Reader" mode is enabled
     @Override
     protected void processKeyEvent(@NotNull final KeyEvent e) {
-      myEditor.getContentComponent().dispatchEvent(e); // let user change the lookup text in the editor
+      if (e.getKeyCode() != KeyEvent.VK_UP && e.getKeyCode() != KeyEvent.VK_DOWN) {
+        myEditor.getContentComponent().dispatchEvent(e); // let user change the lookup text in the editor
+      }
       super.processKeyEvent(e);
     }
 

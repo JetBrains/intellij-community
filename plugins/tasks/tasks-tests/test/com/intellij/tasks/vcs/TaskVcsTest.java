@@ -508,11 +508,13 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
       myTaskManager.setRepositories(Collections.emptyList());
       AllVcses.getInstance(getProject()).unregisterManually(myVcs);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myTaskManager = null;
       myVcs = null;
       myChangeListManager = null;
-
       super.tearDown();
     }
   }

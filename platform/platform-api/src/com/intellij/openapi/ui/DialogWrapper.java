@@ -3,6 +3,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
@@ -143,6 +144,7 @@ public abstract class DialogWrapper {
   protected Action myCancelAction;
   protected Action myHelpAction;
   private final Map<Action, JButton> myButtonMap = new LinkedHashMap<>();
+  private final boolean myCreateSouthSection;
 
   private boolean myClosed = false;
 
@@ -214,7 +216,12 @@ public abstract class DialogWrapper {
   }
 
   protected DialogWrapper(@Nullable Project project, @Nullable Component parentComponent, boolean canBeParent, @NotNull IdeModalityType ideModalityType) {
+    this(project, parentComponent, canBeParent, ideModalityType, true);
+  }
+
+  protected DialogWrapper(@Nullable Project project, @Nullable Component parentComponent, boolean canBeParent, @NotNull IdeModalityType ideModalityType, boolean createSouth) {
     myPeer = parentComponent == null ? createPeer(project, canBeParent, project == null ? IdeModalityType.IDE : ideModalityType) : createPeer(parentComponent, canBeParent);
+    myCreateSouthSection = createSouth;
     final Window window = myPeer.getWindow();
     if (window != null) {
       myResizeListener = new ComponentAdapter() {
@@ -281,6 +288,7 @@ public abstract class DialogWrapper {
     else {
       myPeer = createPeer(null, canBeParent, applicationModalIfPossible);
     }
+    myCreateSouthSection = true;
     createDefaultActions();
   }
 
@@ -292,6 +300,7 @@ public abstract class DialogWrapper {
    */
   protected DialogWrapper(@NotNull Component parent, boolean canBeParent) {
     ensureEventDispatchThread();
+    myCreateSouthSection = true;
     myPeer = createPeer(parent, canBeParent);
     createDefaultActions();
   }
@@ -521,6 +530,11 @@ public abstract class DialogWrapper {
     helpButton.setText("");
     helpButton.setMargin(insets);
     setHelpTooltip(helpButton);
+    helpButton.addPropertyChangeListener("ancestor", evt -> {
+      if (evt.getNewValue() == null) {
+        HelpTooltip.dispose((JComponent)evt.getSource());
+      }
+    });
     return helpButton;
   }
 
@@ -1295,16 +1309,18 @@ public abstract class DialogWrapper {
       root.setBorder(createContentPaneBorder());
     }
 
-    final JPanel southSection = new JPanel(new BorderLayout());
-    if (!isVisualPaddingCompensatedOnComponentLevel) {
-      southSection.setBorder(JBUI.Borders.empty(0, 12, 8, 12));
-    }
-    root.add(southSection, BorderLayout.SOUTH);
+    if (myCreateSouthSection) {
+      final JPanel southSection = new JPanel(new BorderLayout());
+      if (!isVisualPaddingCompensatedOnComponentLevel) {
+        southSection.setBorder(JBUI.Borders.empty(0, 12, 8, 12));
+      }
+      root.add(southSection, BorderLayout.SOUTH);
 
-    southSection.add(myErrorText, BorderLayout.CENTER);
-    final JComponent south = createSouthPanel();
-    if (south != null) {
-      southSection.add(south, BorderLayout.SOUTH);
+      southSection.add(myErrorText, BorderLayout.CENTER);
+      final JComponent south = createSouthPanel();
+      if (south != null) {
+        southSection.add(south, BorderLayout.SOUTH);
+      }
     }
 
     MnemonicHelper.init(root);

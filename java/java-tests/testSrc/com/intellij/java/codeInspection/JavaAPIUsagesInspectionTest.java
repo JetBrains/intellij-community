@@ -17,45 +17,52 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
+public class JavaAPIUsagesInspectionTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/usage1.5/";
   }
 
-  private void doTest() {
-    final Java15APIUsageInspection usageInspection = new Java15APIUsageInspection();
-    doTest("usage1.5/" + getTestName(true), new LocalInspectionToolWrapper(usageInspection), "java 1.5");
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new Java15APIUsageInspection());
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   public void testConstructor() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_4, this::doTest);
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.getModule(), LanguageLevel.JDK_1_4);
+    myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
   public void testIgnored() {
-    doTest();
+    myFixture.addClass("package java.awt.geom; public class GeneralPath {public void moveTo(int x, int y){}}");
+    doTest(); 
   }
-
-  public void testAnnotation() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
-  }
-
-  public void testDefaultMethods() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
-  }
-
-  public void testOverrideAnnotation() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
-  }
-
+  public void testAnnotation() { doTest(); }
+  public void testDefaultMethods() { doTest(); }
+  public void testOverrideAnnotation() { doTest(); }
   public void testRawInheritFromNewlyGenerified() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
+    myFixture.addClass("package javax.swing; public class AbstractListModel<K> {}");
+    doTest(); 
+  }
+  
+  private void doTest() {
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.getModule(), LanguageLevel.JDK_1_6);
+    myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
   //generate apiXXX.txt

@@ -3,7 +3,7 @@ package com.intellij.internal.heatmap.settings
 
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
-import com.intellij.credentialStore.SERVICE_NAME_PREFIX
+import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.heatmap.actions.ShareType
@@ -100,7 +100,7 @@ class ClickMapSettingsDialog(myProject: Project, private var myDialogForm: Click
     myDialogForm.setSelectedItem(myServiceUrl)
     myDialogForm.shareType = myShareType
 
-    //load versions filter 
+    //load versions filter
     val filterVersions = props.getBoolean(FILTER_VERSIONS_KEY, false)
     myDialogForm.myFilterVersionsSelected = filterVersions
     val isIncludeEap = props.getBoolean(INCLUDE_EAP_KEY, false)
@@ -185,12 +185,10 @@ class ClickMapSettingsDialog(myProject: Project, private var myDialogForm: Click
   }
 
   private fun createAttributes(memoryOnly: Boolean): CredentialAttributes {
-    val serviceName = "$SERVICE_NAME_PREFIX IDE Heat Map - Analytics"
-    return CredentialAttributes(serviceName, null, null, memoryOnly)
+    return CredentialAttributes(generateServiceName("IDE Heat Map", "Analytics"), null, null, memoryOnly)
   }
 
   override fun createCenterPanel(): JComponent? {
     return myDialogForm.myJPanel
   }
-
 }

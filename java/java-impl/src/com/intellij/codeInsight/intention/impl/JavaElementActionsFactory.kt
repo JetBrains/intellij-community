@@ -9,6 +9,8 @@ import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 import java.util.*
@@ -19,14 +21,21 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
     request) {
     val declaration = target as PsiModifierListOwner
     if (declaration.language != JavaLanguage.INSTANCE) return@with emptyList()
-    listOf(ModifierFix(declaration.modifierList, renderer.render(modifier), shouldPresent, false))
+    listOf(ModifierFix(declaration, renderer.render(modifier), shouldPresent, false))
   }
 
   override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
     val declaration = target as PsiModifierListOwner
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
-    val fix = object : ModifierFix(declaration.modifierList, renderer.render(request.modifier), request.shouldBePresent(), false) {
+    val fix = object : ModifierFix(declaration, renderer.render(request.modifier), request.shouldBePresent(), true) {
       override fun isAvailable(): Boolean = request.isValid && super.isAvailable()
+
+      override fun isAvailable(project: Project,
+                               file: PsiFile,
+                               editor: Editor?,
+                               startElement: PsiElement,
+                               endElement: PsiElement): Boolean =
+        request.isValid && super.isAvailable(project, file, editor, startElement, endElement)
     }
     return listOf(fix)
   }

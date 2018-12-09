@@ -83,6 +83,9 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
         fail("Only one refresh should have happened, an error happened instead: " + myDataWaiter.getExceptionText());
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

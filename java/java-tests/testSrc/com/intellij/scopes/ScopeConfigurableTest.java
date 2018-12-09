@@ -39,7 +39,7 @@ public class ScopeConfigurableTest extends CodeInsightTestCase {
     manager.addScope(utilscope);
     try {
       for (NamedScope scope : manager.getScopes()) {
-        System.out.println("scope = " + scope);
+        LOG.debug("scope = " + scope);
         ScopeConfigurable configurable = new ScopeConfigurable(scope, true, getProject(), null);
         configurable.reset();
         assertFalse("Configurable " + configurable + " is modified immediately after creation", configurable.isModified());

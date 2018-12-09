@@ -16,6 +16,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 /**
  * @author nik
@@ -136,7 +137,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     @Override
     @NotNull
     public Promise<XExpression> calculateEvaluationExpression() {
-      return Promise.resolve(myExpression);
+      return Promises.resolvedPromise(myExpression);
     }
 
     @Override

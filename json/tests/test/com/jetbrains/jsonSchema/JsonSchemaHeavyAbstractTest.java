@@ -35,7 +35,11 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
       //WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
       final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
       instance.setState(Collections.emptyMap());
-    } finally {
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
       super.tearDown();
     }
   }

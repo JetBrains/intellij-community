@@ -23,6 +23,8 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -31,7 +33,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,30 +56,43 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<? super String> classNames) {
+  protected boolean filterOutputByDirectoryForJunit5(Set<PsiClass> classNames) {
+    return super.filterOutputByDirectoryForJunit5(classNames) && classNames.isEmpty();
+  }
+
+  @Override
+  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiClass> classes) {
+    searchTests(module, classFilter, classes, true);
+  }
+
+  @Override
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes) {
+    searchTests(module, classFilter, classes, false);
+  }
+
+  private void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes, boolean junit5) {
     JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     Project project = getConfiguration().getProject();
     for (String className : data.getPatterns()) {
       final PsiClass psiClass = ReadAction.compute(() -> getTestClass(project, className));
       if (psiClass != null) {
         if (ReadAction.compute(() -> JUnitUtil.isTestClass(psiClass))) {
-          classNames.add(className); //with method, comma separated
+          classes.add(psiClass); //with method, comma separated
         }
       }
       else {
-        classNames.clear();
-        Set<PsiClass> classes = new THashSet<>();
-        ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
-        classes.forEach(aClass -> ReadAction.compute(() -> classNames.add(JavaExecutionUtil.getRuntimeQualifiedName(aClass))));
+        classes.clear();
+        if (!junit5) {//junit 5 process tests automatically
+          ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
+        }
         return;
       }
     }
   }
 
   @Override
-  protected boolean acceptClassName(String className) {
-    String pattern = getConfiguration().getPersistentData().getPatternPresentation();
-    return TestClassFilter.getClassNamePredicate(pattern).test(className);
+  protected String getFilters(Set<PsiClass> foundClasses, String packageName) {
+    return foundClasses.isEmpty() ? getConfiguration().getPersistentData().getPatternPresentation() : "";
   }
 
   private PsiClass getTestClass(Project project, String className) {
@@ -158,6 +172,9 @@ public class TestsPattern extends TestPackage {
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
+    JavaParametersUtil.checkAlternativeJRE(getConfiguration());
+    ProgramParametersUtil.checkWorkingDirectoryExist(getConfiguration(), getConfiguration().getProject(),
+                                                     getConfiguration().getConfigurationModule().getModule());
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Set<String> patterns = data.getPatterns();
     if (patterns.isEmpty()) {

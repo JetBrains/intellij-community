@@ -6,9 +6,11 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
@@ -43,6 +45,8 @@ public class ComponentValidator {
   private HyperlinkListener hyperlinkListener;
 
   private ValidationInfo validationInfo;
+  private final Alarm popupAlarm = new Alarm();
+  private boolean isOverPopup;
 
   private ComponentPopupBuilder popupBuilder;
   private JBPopup popup;
@@ -194,6 +198,8 @@ public class ComponentValidator {
           tipComponent.setBackground(validationInfo.warning ? warningBackgroundColor() : errorBackgroundColor());
           tipComponent.setOpaque(true);
           tipComponent.setBorder(getBorder());
+          tipComponent.addMouseListener(new TipComponentMouseListener());
+
           popupSize = tipComponent.getPreferredSize();
 
           popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(tipComponent, null).
@@ -240,8 +246,13 @@ public class ComponentValidator {
 
   private void hidePopup() {
     if (popup != null && popup.isVisible()) {
-      popup.cancel();
-      popup = null;
+      popupAlarm.cancelAllRequests();
+      popupAlarm.addRequest(() -> {
+        if (popup != null && (!isOverPopup || hyperlinkListener == null)) {
+          popup.cancel();
+          popup = null;
+        }
+      }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
     }
   }
 
@@ -285,6 +296,26 @@ public class ComponentValidator {
         getFocusable(validationInfo.component).ifPresent(fc -> {
           if (!fc.hasFocus()) {
             hidePopup();
+          }
+        });
+      }
+    }
+  }
+
+  private class TipComponentMouseListener extends MouseAdapter {
+    @Override
+    public void mouseEntered(MouseEvent e) {
+      isOverPopup = true;
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+      isOverPopup = false;
+      if (popup != null) {
+        getFocusable(validationInfo.component).ifPresent(fc -> {
+          if (!fc.hasFocus()) {
+            popup.cancel();
+            popup = null;
           }
         });
       }

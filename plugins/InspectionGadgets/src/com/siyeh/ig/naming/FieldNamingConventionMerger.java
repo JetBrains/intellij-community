@@ -6,6 +6,7 @@ package com.siyeh.ig.naming;
 import com.intellij.codeInspection.naming.AbstractNamingConventionMerger;
 import com.intellij.psi.PsiField;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -15,7 +16,7 @@ public class FieldNamingConventionMerger extends AbstractNamingConventionMerger<
   }
 
   @Override
-  protected Element getSourceElement(Map<String, Element> inspectionElements, String sourceToolName) {
+  protected Element getSourceElement(@NotNull Map<String, Element> inspectionElements, @NotNull String sourceToolName) {
     if (sourceToolName.equals(ConstantWithMutableFieldTypeNamingConvention.CONSTANT_WITH_MUTABLE_FIELD_TYPE_NAMING_CONVENTION_SHORT_NAME)) {
       Element element = inspectionElements.get(ConstantNamingConvention.CONSTANT_NAMING_CONVENTION_SHORT_NAME);
       if (element != null) {

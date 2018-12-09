@@ -19,6 +19,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -32,13 +35,11 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FoldingUpdate {
@@ -232,7 +233,13 @@ public class FoldingUpdate {
                                      boolean quick) {
     final FileViewProvider viewProvider = file.getViewProvider();
     TextRange docRange = TextRange.from(0, document.getTextLength());
-    for (final Language language : viewProvider.getLanguages()) {
+    Comparator<Language> preferBaseLanguage = Comparator.comparing((Language l) -> l != viewProvider.getBaseLanguage());
+    List<Language> languages = ContainerUtil.sorted(viewProvider.getLanguages(), preferBaseLanguage.thenComparing(Language::getID));
+
+    DocumentEx copyDoc = languages.size() > 1 ? new DocumentImpl(document.getImmutableCharSequence()) : null;
+    List<RangeMarker> hardRefToRangeMarkers = new ArrayList<>();
+
+    for (Language language : languages) {
       final PsiFile psi = viewProvider.getPsi(language);
       final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
       if (psi != null && foldingBuilder != null) {
@@ -242,15 +249,40 @@ public class FoldingUpdate {
             LOG.error("No PSI for folding descriptor " + descriptor);
             continue;
           }
-          if (!docRange.contains(descriptor.getRange())) {
+          TextRange range = descriptor.getRange();
+          if (!docRange.contains(range)) {
             diagnoseIncorrectRange(psi, document, language, foldingBuilder, descriptor, psiElement);
             continue;
           }
+
+          if (copyDoc != null && !addNonConflictingRegion(copyDoc, range, hardRefToRangeMarkers)) {
+            continue;
+          }
+
           RegionInfo regionInfo = new RegionInfo(descriptor, psiElement, foldingBuilder);
           elementsToFold.add(regionInfo);
         }
       }
     }
+  }
+
+  private static boolean addNonConflictingRegion(DocumentEx document, TextRange range, List<RangeMarker> hardRefToRangeMarkers) {
+    int start = range.getStartOffset();
+    int end = range.getEndOffset();
+    if (!document.processRangeMarkersOverlappingWith(start, end, rm -> !areConflicting(range, TextRange.create(rm)))) {
+      return false;
+    }
+    RangeMarker marker = document.createRangeMarker(start, end);
+    hardRefToRangeMarkers.add(marker); //prevent immediate GC
+    return true;
+  }
+
+  private static boolean areConflicting(TextRange range1, TextRange range2) {
+    if (range1.equals(range2)) return true;
+    if (range1.contains(range2) || range2.contains(range1)) return false;
+
+    TextRange intersection = range1.intersection(range2);
+    return intersection != null && !intersection.isEmpty();
   }
 
   private static void diagnoseIncorrectRange(@NotNull PsiFile file,

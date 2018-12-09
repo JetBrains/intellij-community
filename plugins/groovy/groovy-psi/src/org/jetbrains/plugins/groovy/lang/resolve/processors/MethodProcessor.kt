@@ -1,26 +1,23 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
-import com.intellij.psi.ResolveState
+import com.intellij.psi.*
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind
 import com.intellij.psi.scope.JavaScopeProcessorEvent
 import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.ProcessorWithHints
 import com.intellij.psi.scope.PsiScopeProcessor.Event
-import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
+import org.jetbrains.plugins.groovy.lang.resolve.BaseMethodResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.impl.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
 
 class MethodProcessor(
@@ -66,7 +63,22 @@ class MethodProcessor(
       }
     }
     if (name != getName(state, element)) return true
-    myCandidates += MethodResolveResult(element, place, state, arguments, typeArguments)
+
+    myCandidates += when {
+      !element.hasTypeParameters() -> {
+        // ignore explicit type arguments if there are no type parameters => no inference needed
+        BaseMethodResolveResult(element, place, state, arguments)
+      }
+      typeArguments.isEmpty() -> {
+        // generic method call without explicit type arguments => needs inference
+        MethodResolveResult(element, place, state, arguments)
+      }
+      else -> {
+        // generic method call with explicit type arguments => inference happens right here
+        val substitutor = state[PsiSubstitutor.KEY].putAll(element.typeParameters, typeArguments)
+        BaseMethodResolveResult(element, place, state.put(PsiSubstitutor.KEY, substitutor), arguments)
+      }
+    }
     myApplicable = null
     return true
   }
@@ -80,11 +92,7 @@ class MethodProcessor(
   private fun computeApplicableCandidates(): Pair<List<GroovyMethodResult>, Boolean> {
     return myCandidates
       .correctStaticScope()
-      .applicable(erasedArgumentTypes, place)
-  }
-
-  private val erasedArgumentTypes by lazy {
-    arguments?.map(Argument::topLevelType)?.map(TypeConversionUtil::erasure)?.toTypedArray()
+      .findApplicable()
   }
 
   val applicableCandidates: List<GroovyMethodResult>?

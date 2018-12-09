@@ -30,13 +30,13 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <K, V> HashMap<K, V> newHashMap() {
-    return ContainerUtilRt.newHashMap();
+    return new HashMap<K, V>();
   }
 
   @NotNull
   @Contract(pure=true)
   public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
-    return ContainerUtilRt.newHashMap(map);
+    return new HashMap<K, V>(map);
   }
 
   @NotNull
@@ -279,13 +279,13 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> HashSet<T> newHashSet() {
-    return ContainerUtilRt.newHashSet();
+    return new HashSet<T>();
   }
 
   @NotNull
   @Contract(pure=true)
   public static <T> HashSet<T> newHashSet(int initialCapacity) {
-    return ContainerUtilRt.newHashSet(initialCapacity);
+    return new HashSet<T>(initialCapacity);
   }
 
   @NotNull
@@ -587,10 +587,10 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <K, V> Map<K, V> intersection(@NotNull Map<? extends K, ? extends V> map1, @NotNull Map<? extends K, ? extends V> map2) {
-    final Map<K, V> res = newHashMap();
-    final Set<K> keys = newHashSet();
+    final Set<K> keys = new HashSet<K>();
     keys.addAll(map1.keySet());
     keys.addAll(map2.keySet());
+    final Map<K, V> res = new HashMap<K, V>();
     for (K k : keys) {
       V v1 = map1.get(k);
       V v2 = map2.get(k);
@@ -604,10 +604,10 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <K, V> Map<K,Couple<V>> diff(@NotNull Map<? extends K, ? extends V> map1, @NotNull Map<? extends K, ? extends V> map2) {
-    final Map<K, Couple<V>> res = newHashMap();
-    final Set<K> keys = newHashSet();
+    final Set<K> keys = new HashSet<K>();
     keys.addAll(map1.keySet());
     keys.addAll(map2.keySet());
+    final Map<K, Couple<V>> res = new HashMap<K, Couple<V>>();
     for (K k : keys) {
       V v1 = map1.get(k);
       V v2 = map2.get(k);
@@ -724,7 +724,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <T> Set<T> collectSet(@NotNull Iterator<? extends T> iterator) {
     if (!iterator.hasNext()) return Collections.emptySet();
-    Set<T> hashSet = newHashSet();
+    Set<T> hashSet = new HashSet<T>();
     addAll(hashSet, iterator);
     return hashSet;
   }
@@ -732,7 +732,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure = true)
   public static <K, V> Map<K, V> newMapFromKeys(@NotNull Iterator<? extends K> keys, @NotNull Convertor<? super K, ? extends V> valueConvertor) {
-    Map<K, V> map = newHashMap();
+    Map<K, V> map = new HashMap<K, V>();
     while (keys.hasNext()) {
       K key = keys.next();
       map.put(key, valueConvertor.convert(key));
@@ -743,7 +743,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure = true)
   public static <K, V> Map<K, V> newMapFromValues(@NotNull Iterator<? extends V> values, @NotNull Convertor<? super V, ? extends K> keyConvertor) {
-    Map<K, V> map = newHashMap();
+    Map<K, V> map = new HashMap<K, V>();
     fillMapWithValues(map, values, keyConvertor);
     return map;
   }
@@ -1000,7 +1000,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure = true)
   public static <K, V> Map<K, V> filter(@NotNull Map<? extends K, ? extends V> map, @NotNull Condition<? super K> keyFilter) {
-    Map<K, V> result = newHashMap();
+    Map<K, V> result = new HashMap<K, V>();
     for (Map.Entry<? extends K, ? extends V> entry : map.entrySet()) {
       if (keyFilter.value(entry.getKey())) {
         result.put(entry.getKey(), entry.getValue());
@@ -1084,7 +1084,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   public static <T> void removeDuplicates(@NotNull Collection<T> collection) {
-    Set<T> collected = newHashSet();
+    Set<T> collected = new HashSet<T>();
     for (Iterator<T> iterator = collection.iterator(); iterator.hasNext();) {
       T t = iterator.next();
       if (!collected.contains(t)) {
@@ -1099,7 +1099,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static Map<String, String> stringMap(@NotNull final String... keyValues) {
-    final Map<String, String> result = newHashMap();
+    final Map<String, String> result = new HashMap<String, String>();
     for (int i = 0; i < keyValues.length - 1; i+=2) {
       result.put(keyValues[i], keyValues[i+1]);
     }
@@ -1604,12 +1604,15 @@ public class ContainerUtil extends ContainerUtilRt {
    * @param items list
    * @param maxItems size of the result will be equal or less than {@code maxItems}
    * @param <T> type of list
-   * @return new list with no more than {@code maxItems} first elements
+   * @return list with no more than {@code maxItems} first elements
    */
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> getFirstItems(@NotNull final List<T> items, int maxItems) {
-    return items.subList(0, Math.min(maxItems, items.size()));
+    if (maxItems < 0) {
+      throw new IllegalArgumentException("Expected non-negative maxItems; got: "+maxItems);
+    }
+    return maxItems >= items.size() ? items : items.subList(0, maxItems);
   }
 
   @Nullable
@@ -1712,7 +1715,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Collection<T> subtract(@NotNull Collection<? extends T> from, @NotNull Collection<? extends T> what) {
-    final Set<T> set = newHashSet(from);
+    final Set<T> set = ContainerUtilRt.newHashSet(from);
     set.removeAll(what);
     return set.isEmpty() ? ContainerUtil.<T>emptyList() : set;
   }
@@ -2019,7 +2022,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> set(@NotNull T ... items) {
-    return newHashSet(items);
+    return ContainerUtilRt.newHashSet(items);
   }
 
   public static <K, V> void putIfAbsent(final K key, @Nullable V value, @NotNull final Map<? super K, ? super V> result) {
@@ -2421,7 +2424,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <A,B> Map<B,A> reverseMap(@NotNull Map<A,B> map) {
-    final Map<B,A> result = newHashMap();
+    final Map<B,A> result = new HashMap<B, A>();
     for (Map.Entry<A, B> entry : map.entrySet()) {
       result.put(entry.getValue(), entry.getKey());
     }

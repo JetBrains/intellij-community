@@ -60,13 +60,20 @@ public class VirtualFilePointerTest extends LightPlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    Disposer.dispose(disposable);
-    Collection<VirtualFilePointer> pointersAfter = myVirtualFilePointerManager.dumpPointers();
-    int nListeners = myVirtualFilePointerManager.numberOfListeners();
-    myVirtualFilePointerManager = null;
-    assertEquals(numberOfListenersBefore, nListeners);
-    assertEquals(pointersBefore, pointersAfter);
-    super.tearDown();
+    try {
+      Disposer.dispose(disposable);
+      Collection<VirtualFilePointer> pointersAfter = myVirtualFilePointerManager.dumpPointers();
+      int nListeners = myVirtualFilePointerManager.numberOfListeners();
+      myVirtualFilePointerManager = null;
+      assertEquals(numberOfListenersBefore, nListeners);
+      assertEquals(pointersBefore, pointersAfter);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private static class LoggingListener implements VirtualFilePointerListener {

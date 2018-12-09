@@ -192,6 +192,10 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     // SSH_ASKPASS is ignored if DISPLAY variable is not set
     String displayEnv = StringUtil.nullize(System.getenv(GitNativeSshAskPassXmlRpcHandler.DISPLAY_ENV));
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.DISPLAY_ENV, StringUtil.notNullize(displayEnv, ":0.0"));
+
+    if (Registry.is("git.use.setsid.for.native.ssh")) {
+      myHandler.withNoTty();
+    }
   }
 
   private void cleanupNativeSshAuth() {

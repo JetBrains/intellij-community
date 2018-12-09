@@ -107,7 +107,6 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
 
       val fileName = file.name
       val changedScheme = findExternalizableSchemeByFileName(fileName)
-
       if (callSchemeContentChangedIfSupported(changedScheme, fileName, file)) {
         continue
       }

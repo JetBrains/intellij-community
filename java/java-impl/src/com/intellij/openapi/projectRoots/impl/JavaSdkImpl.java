@@ -329,9 +329,10 @@ public class JavaSdkImpl extends JavaSdk {
     ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);
     SdkModificator sdkModificator = jdk.getSdkModificator();
 
-    String path = home.replace(File.separatorChar, '/');
-    sdkModificator.setHomePath(path);
-    sdkModificator.setVersionString(jdkName); // must be set after home path, otherwise setting home path clears the version string
+    sdkModificator.setHomePath(FileUtil.toSystemIndependentName(home));
+    if (JdkVersionDetector.isVersionString(jdkName)) {
+      sdkModificator.setVersionString(jdkName);  // must be set after home path, otherwise setting home path clears the version string
+    }
 
     File jdkHomeFile = new File(home);
     addClasses(jdkHomeFile, sdkModificator, isJre);
@@ -358,8 +359,7 @@ public class JavaSdkImpl extends JavaSdk {
       @Override public void setVersionString(String versionString) { throw new UnsupportedOperationException(); }
       @Override public SdkAdditionalData getSdkAdditionalData() { throw new UnsupportedOperationException(); }
       @Override public void setSdkAdditionalData(SdkAdditionalData data) { throw new UnsupportedOperationException(); }
-      @NotNull
-      @Override public VirtualFile[] getRoots(@NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
+      @Override public @NotNull VirtualFile[] getRoots(@NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
       @Override public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
       @Override public void removeRoots(@NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
       @Override public void removeAllRoots() { throw new UnsupportedOperationException(); }

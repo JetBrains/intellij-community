@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -196,6 +197,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     final RunManager runManager = RunManager.getInstance(context.getProject());
     final List<RunnerAndConfigurationSettings> configurations = getConfigurationSettingsList(runManager);
     for (RunnerAndConfigurationSettings configurationSettings : configurations) {
+      ProgressManager.checkCanceled();
       //noinspection unchecked
       if (isConfigurationFromContext((T) configurationSettings.getConfiguration(), context)) {
         return configurationSettings;

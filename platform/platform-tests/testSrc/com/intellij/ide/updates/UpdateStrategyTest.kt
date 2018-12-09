@@ -3,8 +3,8 @@ package com.intellij.ide.updates
 
 import com.intellij.openapi.updateSettings.impl.*
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
-import com.intellij.util.loadElement
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -268,13 +268,13 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
                     selectedChannel: ChannelStatus,
                     testData: String,
                     ignoredBuilds: List<String> = emptyList()): CheckForUpdateResult {
-    val updates = UpdatesInfo(loadElement("""
-      <products>
-        <product name="IntelliJ IDEA">
-          <code>IU</code>
-          ${testData}
-        </product>
-      </products>"""))
+    val updates = UpdatesInfo(JDOMUtil.load("""
+          <products>
+            <product name="IntelliJ IDEA">
+              <code>IU</code>
+              ${testData}
+            </product>
+          </products>"""))
     val settings = UpdateSettings()
     settings.selectedChannelStatus = selectedChannel
     settings.ignoredBuildNumbers += ignoredBuilds

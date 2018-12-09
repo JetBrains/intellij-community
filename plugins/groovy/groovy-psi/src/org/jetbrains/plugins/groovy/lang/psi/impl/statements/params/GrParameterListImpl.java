@@ -38,7 +38,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
   }
 
   public GrParameterListImpl(EmptyStub stub) {
-    super(stub, GroovyElementTypes.PARAMETERS_LIST);
+    super(stub, GroovyElementTypes.PARAMETER_LIST);
   }
 
   @Override

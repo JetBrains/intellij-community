@@ -43,8 +43,7 @@ import java.util.Set;
 
 public class ShowRunningListAction extends AnAction {
   public ShowRunningListAction() {
-    super(ExecutionBundle.message("show.running.list.action.name"), ExecutionBundle.message("show.running.list.action.description"),
-          LayeredIcon.create(AllIcons.Actions.ListFiles, AllIcons.Nodes.RunnableMark));
+    super(ExecutionBundle.message("show.running.list.action.name"), ExecutionBundle.message("show.running.list.action.description"), null);
   }
 
   @Override

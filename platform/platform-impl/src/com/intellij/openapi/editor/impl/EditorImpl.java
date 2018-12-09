@@ -121,9 +121,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntFunction;
 
-import static com.intellij.openapi.editor.markup.HighlighterTargetArea.EXACT_RANGE;
-import static com.intellij.openapi.editor.markup.TextAttributes.ERASE_MARKER;
-
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable,
                                                                     CodeStyleSettingsListener {
   public static final int TEXT_ALIGNMENT_LEFT = 0;
@@ -154,6 +151,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
+  private final FocusModeModel myFocusModeModel;
   private volatile long myLastTypedActionTimestamp = -1;
   private String myLastTypedAction;
 
@@ -549,103 +547,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     CodeStyleSettingsManager.getInstance(myProject).addListener(this);
 
-    myScrollingModel.addVisibleAreaListener(e -> {
-      AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-      if (event instanceof MouseEvent) {
-        clearFocusMode(); // clear when scrolling with touchpad or mouse
-      }
-      else {
-        applyFocusMode(); // apply the focus mode when jumping to the next line, e.g. Cmd+G
-      }
-    });
-
-    myCaretModel.addCaretListener(new CaretListener() {
-      @Override
-      public void caretAdded(@NotNull CaretEvent event) {
-        process(event);
-      }
-
-      @Override
-      public void caretPositionChanged(@NotNull CaretEvent event) {
-        process(event);
-      }
-
-      @Override
-      public void caretRemoved(@NotNull CaretEvent event) {
-        process(event);
-      }
-
-      private void process(@NotNull CaretEvent event) {
-        Caret caret = event.getCaret();
-        if (caret == myCaretModel.getPrimaryCaret()) {
-          applyFocusMode(caret);
-        }
-      }
-    });
+    myFocusModeModel = new FocusModeModel(this);
   }
 
   public void applyFocusMode() {
-    applyFocusMode(myCaretModel.getPrimaryCaret());
-  }
-
-  private void applyFocusMode(@NotNull Caret caret) {
-    List<RangeMarker> data = getUserData(FOCUS_MODE_RANGES);
-    clearFocusMode();
-    RangeMarker startMarker = findFocusMarker(caret.getSelectionStart(), data);
-    if (startMarker != null) {
-      RangeMarker endMarker = findFocusMarker(caret.getSelectionEnd(), data);
-      applyFocusMode(endMarker == null ? startMarker : new TextRange(startMarker.getStartOffset(), endMarker.getEndOffset()));
-    }
-  }
-
-  private void applyFocusMode(@NotNull Segment focusRange) {
-    EditorColorsScheme scheme = ObjectUtils.notNull(getColorsScheme(), EditorColorsManager.getInstance().getGlobalScheme());
-    Color background = scheme.getDefaultBackground();
-    //noinspection UseJBColor
-    Color foreground = Registry.getColor(ColorUtil.isDark(background) ? "editor.focus.mode.color.dark" : "editor.focus.mode.color.light", Color.GRAY);
-    TextAttributes attributes = new TextAttributes(foreground, background, background, null, Font.PLAIN);
-    putUserData(EditorImpl.FOCUS_MODE_ATTRIBUTES, attributes);
-
-    MarkupModel markupModel = getMarkupModel();
-    int textLength = getDocument().getTextLength();
-
-    int before = focusRange.getStartOffset();
-    int layer = 10_000;
-    myFocusModeMarkup.add(markupModel.addRangeHighlighter(0, before, layer, ERASE_MARKER, EXACT_RANGE));
-    myFocusModeMarkup.add(markupModel.addRangeHighlighter(0, before, layer, attributes, EXACT_RANGE));
-
-    int end = focusRange.getEndOffset();
-    myFocusModeMarkup.add(markupModel.addRangeHighlighter(end, textLength, layer, ERASE_MARKER, EXACT_RANGE));
-    myFocusModeMarkup.add(markupModel.addRangeHighlighter(end, textLength, layer, attributes, EXACT_RANGE));
-  }
-
-  @Nullable
-  private static RangeMarker findFocusMarker(int offset, @Nullable List<RangeMarker> data) {
-    if (data == null) return null;
-    for (RangeMarker marker : data) {
-      if (marker.getStartOffset() <= offset && offset <= marker.getEndOffset()) {
-        return marker;
-      }
-    }
-    return null;
-  }
-
-  private void clearFocusMode() {
-    myFocusModeMarkup.forEach(myMarkupModel::removeHighlighter);
-    myFocusModeMarkup.clear();
+    myFocusModeModel.applyFocusMode(myCaretModel.getPrimaryCaret());
   }
 
   public boolean isInFocusMode(FoldRegion region) {
-    return myFocusModeMarkup.stream().anyMatch(highlighter -> intersects(highlighter, region));
+    return myFocusModeModel.isInFocusMode(region);
   }
 
-  private static boolean intersects(RangeMarker a, RangeMarker b) {
-    return Math.max(a.getStartOffset(), b.getStartOffset()) < Math.min(a.getEndOffset(), b.getEndOffset());
+  public Segment getFocusModeRange() {
+    return myFocusModeModel.getFocusModeRange();
   }
-
-  public static final Key<List<RangeMarker>> FOCUS_MODE_RANGES = Key.create("focus.mode.ranges");
-  public static final Key<TextAttributes> FOCUS_MODE_ATTRIBUTES = Key.create("editor.focus.mode.attributes");
-  private final List<RangeHighlighter> myFocusModeMarkup = ContainerUtil.newSmartList();
 
   private boolean canImpactGutterSize(@NotNull RangeHighlighterEx highlighter) {
     if (highlighter.getGutterIconRenderer() != null) return true;
@@ -1039,6 +954,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         editorNotifications.updateNotifications(myVirtualFile);
       }
     }
+
+    putUserData(FocusModeModel.FOCUS_MODE_RANGES, null);
+    myFocusModeModel.clearFocusMode();
   }
 
   /**
@@ -1193,7 +1111,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           int caretLine = caret.getLogicalPosition().line;
           repaintLines(caretLine, caretLine);
         }
-        fireFocusGained();
+        fireFocusGained(e);
       }
 
       @Override
@@ -1203,7 +1121,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           int caretLine = caret.getLogicalPosition().line;
           repaintLines(caretLine, caretLine);
         }
-        fireFocusLost();
+        fireFocusLost(e);
       }
     });
 
@@ -1357,15 +1275,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     EditorActionManager.getInstance().getTypedAction().actionPerformed(this, c, dataContext);
   }
 
-  private void fireFocusLost() {
+  private void fireFocusLost(@NotNull FocusEvent event) {
     for (FocusChangeListener listener : myFocusListeners) {
-      listener.focusLost(this);
+      listener.focusLost(this, event);
     }
   }
 
-  private void fireFocusGained() {
+  private void fireFocusGained(@NotNull FocusEvent event) {
     for (FocusChangeListener listener : myFocusListeners) {
-      listener.focusGained(this);
+      listener.focusGained(this, event);
     }
   }
 
@@ -2070,6 +1988,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPlaceholderAttributes = attributes;
   }
 
+  @Nullable
   public TextAttributes getPlaceholderAttributes() {
     return myPlaceholderAttributes;
   }
@@ -2437,7 +2356,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGutterComponent.validateMousePointer(e);
     }
     else {
-      myGutterComponent.setActiveFoldRegion(null);
+      myGutterComponent.setActiveFoldRegions(Collections.emptyList());
       myDefaultCursor = getDefaultCursor(e);
       updateEditorCursor();
     }
@@ -3690,10 +3609,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         () -> CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(runnable), "", getDocument(), UndoConfirmationPolicy.DEFAULT, getDocument()));
     }
 
+    private boolean hasRelevantCommittedText(@NotNull InputMethodEvent e) {
+      if (e.getCommittedCharacterCount() <= 0) return false;
+      AttributedCharacterIterator text = e.getText();
+      return text == null || text.first() != 0xA5 /* Yen character */;
+    }
+
     private void replaceInputMethodText(@NotNull InputMethodEvent e) {
       if (myNeedToSelectPreviousChar && SystemInfo.isMac &&
           (Registry.is("ide.mac.pressAndHold.brute.workaround") || Registry.is("ide.mac.pressAndHold.workaround") &&
-                                                                   (e.getCommittedCharacterCount() > 0 || e.getCaret() == null))) {
+                                                                   (hasRelevantCommittedText(e) || e.getCaret() == null))) {
         // This is required to support input of accented characters using press-and-hold method (http://support.apple.com/kb/PH11264).
         // JDK currently properly supports this functionality only for TextComponent/JTextComponent descendants.
         // For our editor component we need this workaround.

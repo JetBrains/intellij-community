@@ -22,7 +22,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -58,10 +57,8 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
                                    final boolean rememberScope,
                                    @NotNull AnalysisUIOptions analysisUIOptions,
                                    @Nullable PsiElement context) {
-    this(title, analysisNoon, project, standardItems(project, scope,
-                                                                              moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null,
-                                                                              context),
-         analysisUIOptions, rememberScope, ModuleUtil.isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE));
+    this(title, analysisNoon, project, standardItems(project, scope, moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null, context),
+         analysisUIOptions, rememberScope);
   }
 
   @NotNull
@@ -77,12 +74,21 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   public BaseAnalysisActionDialog(@NotNull String title,
-                                   @NotNull String analysisNoon,
-                                   @NotNull Project project,
-                                   @NotNull List<? extends ModelScopeItem> items,
-                                   @NotNull AnalysisUIOptions options,
-                                   final boolean rememberScope,
-                                   final boolean showInspectTestSource) {
+                                @NotNull String analysisNoon,
+                                @NotNull Project project,
+                                @NotNull List<? extends ModelScopeItem> items,
+                                @NotNull AnalysisUIOptions options,
+                                final boolean rememberScope) {
+    this(title, analysisNoon, project, items, options, rememberScope, ModuleUtil.hasTestSourceRoots(project));
+  }
+
+  public BaseAnalysisActionDialog(@NotNull String title,
+                                  @NotNull String analysisNoon,
+                                  @NotNull Project project,
+                                  @NotNull List<? extends ModelScopeItem> items,
+                                  @NotNull AnalysisUIOptions options,
+                                  final boolean rememberScope,
+                                  final boolean showInspectTestSource) {
     super(true);
     myAnalysisNoon = analysisNoon;
     myProject = project;

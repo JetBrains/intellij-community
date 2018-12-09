@@ -215,7 +215,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     PowerSupplyKit.checkPowerSupply();
   }
 
-  protected IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager) {
+  @NotNull
+  private IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager) {
     return new IdeRootPane(actionManager, dataManager, this);
   }
 
@@ -333,10 +334,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
       Builder builder = new Builder().append(title).append(fileTitle);
       if (Boolean.getBoolean("ide.ui.version.in.title")) {
-        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion() + getElevationSuffix());
+        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion() + getElevationSuffix());
       }
       else if (!SystemInfo.isMac || builder.isEmpty()) {
-        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + getElevationSuffix());
+        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + getElevationSuffix());
       }
       frame.setTitle(builder.toString());
     }

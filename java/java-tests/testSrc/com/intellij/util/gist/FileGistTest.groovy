@@ -34,10 +34,12 @@ import com.intellij.util.FileContentUtilCore
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.io.EnumeratorIntegerDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
+import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
+@CompileStatic
 class FileGistTest extends LightCodeInsightFixtureTestCase {
 
   void "test get data"() {

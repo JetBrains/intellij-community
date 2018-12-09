@@ -124,6 +124,11 @@ public final class IdeMouseEventDispatcher {
   public boolean dispatchMouseEvent(MouseEvent e) {
     Component c = e.getComponent();
 
+    // dispatch tray events by default
+    if (c == null && e.getSource() instanceof TrayIcon) {
+      return false;
+    }
+
     //frame activation by mouse click
     if (e.getID() == MOUSE_PRESSED && c instanceof IdeFrame && !c.hasFocus()) {
       IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();

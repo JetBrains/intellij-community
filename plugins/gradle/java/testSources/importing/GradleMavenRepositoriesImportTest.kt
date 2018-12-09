@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.openapi.util.SystemInfo
 import org.junit.Test
 
 class GradleMavenRepositoriesImportTest: GradleImportingTestCase() {
@@ -22,7 +23,13 @@ class GradleMavenRepositoriesImportTest: GradleImportingTestCase() {
 
       val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(myProject)
 
-      assertContainsElements(repositoriesConfiguration.repositories, RemoteRepositoryDescription("test", "test", "file:////tmp/repo"))
+      val expectedUrl = if (SystemInfo.isWindows) {
+        "file:////tmp/repo"
+      } else {
+        "file:/tmp/repo"
+      }
+
+      assertContainsElements(repositoriesConfiguration.repositories, RemoteRepositoryDescription("test", "test", expectedUrl))
     } finally {
       currentExternalProjectSettings.isResolveExternalAnnotations = false
     }

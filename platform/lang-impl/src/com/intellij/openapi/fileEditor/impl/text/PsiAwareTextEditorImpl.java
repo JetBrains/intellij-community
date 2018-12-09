@@ -12,6 +12,7 @@ import com.intellij.codeInsight.daemon.impl.focusMode.FocusModePassFactory;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
@@ -27,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -112,18 +114,24 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
       }
     }
 
+    @Nullable
     @Override
-    public Object getData(@NotNull final String dataId) {
-      if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
-        final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(myProject).getActiveLookup();
-        if (lookup != null && lookup.isVisible()) {
-          return lookup.getBounds();
+    public DataProvider createBackgroundDataProvider() {
+      DataProvider superProvider = super.createBackgroundDataProvider();
+      if (superProvider == null) return null;
+
+      return dataId -> {
+        if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
+          LookupImpl lookup = (LookupImpl)LookupManager.getInstance(myProject).getActiveLookup();
+          if (lookup != null && lookup.isVisible()) {
+            return lookup.getBounds();
+          }
         }
-      }
-      if (LangDataKeys.MODULE.is(dataId)) {
-        return ModuleUtilCore.findModuleForFile(myFile, myProject);
-      }
-      return super.getData(dataId);
+        if (LangDataKeys.MODULE.is(dataId)) {
+          return ModuleUtilCore.findModuleForFile(myFile, myProject);
+        }
+        return superProvider.getData(dataId);
+      };
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,15 +55,22 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    if (myRealCodeStyleManger != null) registerCodeStyleManager(myRealCodeStyleManger);
-    if (myMockPlainTextFormattingModelBuilder != null) {
-      LanguageFormatting.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
+    try {
+      if (myRealCodeStyleManger != null) registerCodeStyleManager(myRealCodeStyleManger);
+      if (myMockPlainTextFormattingModelBuilder != null) {
+        LanguageFormatting.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
+      }
+      if (myWorkingDirectory != null) TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
     }
-    if (myWorkingDirectory != null) TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
-    myRealCodeStyleManger = null;
-    myMockCodeStyleManager = null;
-    myMockPlainTextFormattingModelBuilder = null;
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      myRealCodeStyleManger = null;
+      myMockCodeStyleManager = null;
+      myMockPlainTextFormattingModelBuilder = null;
+      super.tearDown();
+    }
   }
 
   private static void registerCodeStyleManager(@NotNull CodeStyleManager manager) {

@@ -100,6 +100,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
             result.addAll(findCodeSmells(filesToCheck, progress));
           }
           catch (ProcessCanceledException e) {
+            LOG.info("Code analysis canceled", e);
             exception.set(e);
           }
           catch (Exception e) {

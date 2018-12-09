@@ -409,7 +409,12 @@ public final class IconLoader {
 
     Icon disabledIcon = ourIcon2DisabledIcon.get(icon);
     if (disabledIcon == null) {
-      disabledIcon = filterIcon(icon, UIUtil.getGrayFilter(), null); // [tav] todo: lack ancestor
+      disabledIcon = filterIcon(icon, new Producer<RGBImageFilter>() {
+        @Override
+        public RGBImageFilter produce() {
+          return UIUtil.getGrayFilter(); // returns laf-aware instance
+        }
+      }, null); // [tav] todo: lack ancestor
       ourIcon2DisabledIcon.put(icon, disabledIcon);
     }
     return disabledIcon;
@@ -419,7 +424,7 @@ public final class IconLoader {
    * Creates new icon with the filter applied.
    */
   @Nullable
-  public static Icon filterIcon(@NotNull Icon icon, RGBImageFilter filter, @Nullable Component ancestor) {
+  public static Icon filterIcon(@NotNull Icon icon, @NotNull Producer<RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
     if (icon instanceof LazyIcon) icon = ((LazyIcon)icon).getOrComputeIcon();
     if (icon == null) return null;
 
@@ -428,7 +433,7 @@ public final class IconLoader {
       return EMPTY_ICON;
     }
     if (icon instanceof CachedImageIcon) {
-      icon = ((CachedImageIcon)icon).createWithFilter(filter);
+      icon = ((CachedImageIcon)icon).createWithFilter(filterSupplier);
     } else {
       final float scale;
       if (icon instanceof JBUI.ScaleContextAware) {
@@ -448,7 +453,7 @@ public final class IconLoader {
 
       graphics.dispose();
 
-      Image img = ImageUtil.filter(image, filter);
+      Image img = ImageUtil.filter(image, filterSupplier.produce());
       if (UIUtil.isJreHiDPI(ancestor)) img = RetinaImage.createFrom(img, scale, null);
 
       icon = new JBImageIcon(img);
@@ -542,7 +547,7 @@ public final class IconLoader {
     @NotNull private volatile IconTransform myTransform;
     private final boolean myUseCacheOnLoad;
 
-    @Nullable private final ImageFilter myLocalFilter;
+    @Nullable private final Producer<RGBImageFilter> myLocalFilterSupplier; // [tav] todo: replace with Supplier at 1.8 level
     private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
 
     public CachedImageIcon(@NotNull URL url) {
@@ -563,14 +568,14 @@ public final class IconLoader {
                             @Nullable Boolean darkOverridden,
                             boolean useCacheOnLoad,
                             @NotNull IconTransform transform,
-                            @Nullable ImageFilter localFilter)
+                            @Nullable Producer<RGBImageFilter> localFilterSupplier)
     {
       myOriginalPath = originalPath;
       myResolver = resolver;
       myDarkOverridden = darkOverridden;
       myUseCacheOnLoad = useCacheOnLoad;
       myTransform = transform;
-      myLocalFilter = localFilter;
+      myLocalFilterSupplier = localFilterSupplier;
       // For instance, ShadowPainter updates the context from outside.
       getScaleContext().addUpdateListener(new UpdateListener() {
         @Override
@@ -703,7 +708,7 @@ public final class IconLoader {
 
     @Override
     public Icon getDarkIcon(boolean isDark) {
-      return new CachedImageIcon(myOriginalPath, myResolver, isDark, myUseCacheOnLoad, myTransform, myLocalFilter);
+      return new CachedImageIcon(myOriginalPath, myResolver, isDark, myUseCacheOnLoad, myTransform, myLocalFilterSupplier);
     }
 
     @Override
@@ -718,12 +723,12 @@ public final class IconLoader {
     @NotNull
     @Override
     public CachedImageIcon copy() {
-      return new CachedImageIcon(myOriginalPath, myResolver, myDarkOverridden, myUseCacheOnLoad, myTransform, myLocalFilter);
+      return new CachedImageIcon(myOriginalPath, myResolver, myDarkOverridden, myUseCacheOnLoad, myTransform, myLocalFilterSupplier);
     }
 
     @NotNull
-    private Icon createWithFilter(@NotNull RGBImageFilter filter) {
-      return new CachedImageIcon(myOriginalPath, myResolver, myDarkOverridden, myUseCacheOnLoad, myTransform, filter);
+    private Icon createWithFilter(@NotNull Producer<RGBImageFilter> filterSupplier) {
+      return new CachedImageIcon(myOriginalPath, myResolver, myDarkOverridden, myUseCacheOnLoad, myTransform, filterSupplier);
     }
     
     private boolean isDark() {
@@ -733,7 +738,7 @@ public final class IconLoader {
     @Nullable
     private ImageFilter[] getFilters() {
       ImageFilter global = myTransform.getFilter();
-      ImageFilter local = myLocalFilter;
+      ImageFilter local = myLocalFilterSupplier != null ? myLocalFilterSupplier.produce() : null;
       if (global != null && local != null) {
         return new ImageFilter[] {global, local};
       }

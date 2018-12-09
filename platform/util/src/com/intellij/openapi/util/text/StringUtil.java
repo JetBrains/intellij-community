@@ -8,10 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharSequenceSubSequence;
-import com.intellij.util.text.MergingCharSequence;
-import com.intellij.util.text.StringFactory;
+import com.intellij.util.text.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +22,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.*;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1632,6 +1630,13 @@ public class StringUtil extends StringUtilRt {
     }
     sb.insert(0, count);
     return sb.toString();
+  }
+
+  /**
+   * Appends English ordinal suffix to the given number.
+   */
+  public static String formatOrdinal(long num) {
+    return OrdinalFormat.formatEnglish(num);
   }
 
   /**

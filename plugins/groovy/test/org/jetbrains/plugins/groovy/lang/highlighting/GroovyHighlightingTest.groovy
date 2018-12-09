@@ -133,7 +133,7 @@ class A {
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java")
   }
 
-  void testSuperConstructorInvocation() { doTest() }
+  void testSuperConstructorInvocation() { doTest(new GroovyAssignabilityCheckInspection()) }
 
   void testDuplicateMapKeys() { doTest() }
 

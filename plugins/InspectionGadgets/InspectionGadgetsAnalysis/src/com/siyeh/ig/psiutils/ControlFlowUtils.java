@@ -120,6 +120,10 @@ public class ControlFlowUtils {
     else if (statement instanceof PsiSwitchStatement) {
       return switchStatementMayCompleteNormally((PsiSwitchStatement)statement);
     }
+    else if (statement instanceof PsiSwitchLabeledRuleStatement) {
+      PsiStatement body = ((PsiSwitchLabeledRuleStatement)statement).getBody();
+      return body != null && statementMayCompleteNormally(body);
+    }
     else if (statement instanceof PsiTemplateStatement || statement instanceof PsiClassLevelDeclarationStatement) {
       return true;
     }
@@ -201,7 +205,7 @@ public class ControlFlowUtils {
       }
       if (statement instanceof PsiBreakStatement) {
         final PsiBreakStatement breakStatement = (PsiBreakStatement)statement;
-        if (breakStatement.getLabelIdentifier() == null) {
+        if (breakStatement.getLabelExpression() == null) {
           return true;
         }
       }
@@ -398,7 +402,7 @@ public class ControlFlowUtils {
     return PsiTreeUtil.getParentOfType(expression, PsiThrowStatement.class) != null;
   }
 
-  @Nullable
+  @Contract("null -> null; !null -> !null")
   public static PsiStatement stripBraces(@Nullable PsiStatement statement) {
     if (statement instanceof PsiBlockStatement) {
       final PsiBlockStatement block = (PsiBlockStatement)statement;
@@ -430,14 +434,18 @@ public class ControlFlowUtils {
       if (container == null) {
         return false;
       }
+      if (container instanceof PsiLoopStatement) {
+        return false;
+      }
       if (container instanceof PsiCodeBlock) {
+        if (statementToCheck instanceof PsiSwitchLabeledRuleStatement) {
+          return true;
+        }
         if (!statementIsLastInBlock((PsiCodeBlock)container, (PsiStatement)statementToCheck)) {
           return false;
         }
       }
-      if (container instanceof PsiLoopStatement) {
-        return false;
-      }
+      
       statementToCheck = container;
     }
   }
@@ -456,6 +464,9 @@ public class ControlFlowUtils {
         return false;
       }
       if (container instanceof PsiCodeBlock) {
+        if (statementToCheck instanceof PsiSwitchLabeledRuleStatement) {
+          return true;
+        }
         if (!statementIsLastInBlock((PsiCodeBlock)container, (PsiStatement)statementToCheck)) {
           return false;
         }
@@ -613,7 +624,7 @@ public class ControlFlowUtils {
   @Contract("null, _ -> false")
   public static boolean statementBreaksLoop(PsiStatement statement, PsiLoopStatement loop) {
     if(statement instanceof PsiBreakStatement) {
-      return ((PsiBreakStatement)statement).findExitedStatement() == loop;
+      return ((PsiBreakStatement)statement).findExitedElement() == loop;
     }
     if(statement instanceof PsiReturnStatement) {
       PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
@@ -1121,7 +1132,7 @@ public class ControlFlowUtils {
 
     @Override
     public void visitBreakStatement(PsiBreakStatement statement) {
-      if (statement.getLabelIdentifier() != null) {
+      if (statement.getLabelExpression() != null) {
         return;
       }
       m_found = true;
@@ -1235,7 +1246,7 @@ public class ControlFlowUtils {
         return;
       }
       super.visitBreakStatement(statement);
-      final PsiStatement exitedStatement = statement.findExitedStatement();
+      final PsiStatement exitedStatement = ObjectUtils.tryCast(statement.findExitedElement(), PsiStatement.class);
       if (exitedStatement == null) {
         return;
       }

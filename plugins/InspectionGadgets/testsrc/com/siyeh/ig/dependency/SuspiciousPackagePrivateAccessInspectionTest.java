@@ -42,6 +42,9 @@ public class SuspiciousPackagePrivateAccessInspectionTest extends LightInspectio
     try {
       myProjectDescriptor.cleanUpSources();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

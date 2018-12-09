@@ -188,7 +188,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   @Override
   @NotNull
   public GrModifierList getModifierList() {
-    return getRequiredStubOrPsiChild(GroovyElementTypes.MODIFIERS);
+    return getRequiredStubOrPsiChild(GroovyElementTypes.MODIFIER_LIST);
   }
 
   @Override

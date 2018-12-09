@@ -14,8 +14,8 @@ class BraceStyleAccessor extends CodeStylePropertyAccessor<Integer> {
   static {
     BRACE_STYLE_MAP.put(CommonCodeStyleSettings.END_OF_LINE, "end_of_line");
     BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE, "next_line");
-    BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE_SHIFTED, "next_line_shifted");
-    BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE_SHIFTED2, "next_line_shifted_2");
+    BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE_SHIFTED, "whitesmiths");
+    BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE_SHIFTED2, "gnu");
   }
 
   BraceStyleAccessor(@NotNull Object object, @NotNull Field field) {

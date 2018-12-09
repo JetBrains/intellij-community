@@ -42,6 +42,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -251,7 +252,7 @@ public class FSOperations {
     final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     final Ref<Boolean> allFilesMarked = Ref.create(Boolean.TRUE);
 
-    Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(file.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
         return rootIndex.isDirectoryAccepted(dir.toFile(), rd)? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
@@ -270,7 +271,7 @@ public class FSOperations {
           boolean markDirty = forceDirty;
           if (!markDirty) {
             // for symlinks the attr structure reflects the symlink's timestamp and not symlink's target timestamp
-            markDirty = tsStorage.getStamp(_file, rd.getTarget()) != (attrs.isRegularFile()? attrs.lastModifiedTime().toMillis() : lastModified(f));
+            markDirty = tsStorage.getStamp(_file, rd.getTarget()) != attrs.lastModifiedTime().toMillis();
           }
           if (markDirty) {
             // if it is full project rebuild, all storages are already completely cleared;
@@ -353,6 +354,14 @@ public class FSOperations {
     try {
       try {
         Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
+      }
+      catch (AccessDeniedException e) {
+        if (!Files.isWritable(to) && toFile.setWritable(true)) {
+          Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING); // repeat once the file seems to be writable again
+        }
+        else {
+          throw e;
+        }
       }
       catch (NoSuchFileException e) {
         final File parent = toFile.getParentFile();

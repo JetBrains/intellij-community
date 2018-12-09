@@ -78,6 +78,11 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("some. strange. text");
   }
 
+  // Ambiguity in dot splitting
+  public void testDoNotPasteKeysWithBadPattern3() {
+    doTest("some.strange..text");
+  }
+
   public void testDoNotPasteArrayAsKeys() {
     doTest("[x.y]");
   }
@@ -112,6 +117,11 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
   // It is disputable behaviour
   public void testPasteKeysWithStrangeSymbols1() {
     doTest("workspace{w1}/next.^sub[Key]*(%magic%)");
+  }
+
+  // It is disputable behaviour
+  public void testPasteKeysWithLeadingDot() {
+    doTest(".leading.subKey");
   }
 
   private void doTest(@NotNull String pasteText) {

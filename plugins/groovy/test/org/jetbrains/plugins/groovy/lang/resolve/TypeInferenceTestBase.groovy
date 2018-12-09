@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import org.intellij.lang.annotations.Language
@@ -37,15 +37,15 @@ abstract class TypeInferenceTestBase extends GroovyResolveTestCase {
   }
 
   protected void doCSExprTest(@Language("Groovy") String text, @Nullable String expectedType) {
-    GroovyFile file = myFixture.configureByText('_.groovy', """
-import groovy.transform.CompileStatic
-@CompileStatic 
+    GroovyFile file = myFixture.configureByText('_.groovy', """\
+@groovy.transform.CompileStatic 
 def m() {
-  $text<caret>
+  $text
 }
 """) as GroovyFile
-    def ref = file.findReferenceAt(myFixture.editor.caretModel.offset - 1) as GrReferenceExpression
-    def actual = ref.type
+    def lastStatement = file.methods.first().block.statements.last()
+    def expression = assertInstanceOf lastStatement, GrExpression
+    def actual = expression.type
     assertType(expectedType, actual)
   }
 }

@@ -21,6 +21,9 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
 
   RefFieldImpl(@NotNull RefElement owner, UField field, PsiElement psi, RefManager manager) {
     super(field, psi, manager);
+    if (psi instanceof UElement) {
+      LOG.error(new Exception("psi should not be uast element: " + psi));
+    }
 
     ((WritableRefEntity)owner).add(this);
 
@@ -149,7 +152,8 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   public String getExternalName() {
     return ReadAction.compute(() -> {
       UField uField = getUastElement();
-      return uField != null ? PsiFormatUtil.getExternalName((PsiModifierListOwner)uField.getJavaPsi()) : null;
+      if (uField == null) return null;
+      return PsiFormatUtil.getExternalName((PsiModifierListOwner)uField.getJavaPsi());
     });
   }
 

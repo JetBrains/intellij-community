@@ -20,7 +20,7 @@ public class GrClassDefinitionImpl extends GrTypeDefinitionImpl implements GrCla
   }
 
   public GrClassDefinitionImpl(final GrTypeDefinitionStub stub) {
-    super(stub, GroovyElementTypes.CLASS_DEFINITION);
+    super(stub, GroovyElementTypes.CLASS_TYPE_DEFINITION);
   }
 
   @Override

@@ -14,8 +14,20 @@
   <item name='java.lang.Boolean java.lang.Boolean valueOf(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.Byte int intValue()'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="java.lang.Byte.MIN_VALUE"/>
+      <val name="to" val="java.lang.Byte.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name='java.lang.Byte java.lang.Byte valueOf(byte)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Byte long longValue()'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="java.lang.Byte.MIN_VALUE"/>
+      <val name="to" val="java.lang.Byte.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name="java.lang.CharSequence java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -122,6 +134,12 @@
     </item>
   <item name='java.lang.Integer java.lang.Integer valueOf(java.lang.String, int)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Integer long longValue()'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="java.lang.Integer.MIN_VALUE"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name='java.lang.Iterable java.util.Iterator&lt;T&gt; iterator()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -270,6 +288,12 @@
       <val name="valuesFromClass" val="java.lang.reflect.Member.class" />
     </annotation>
   </item>
+  <item name='java.lang.Short int intValue()'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="java.lang.Short.MIN_VALUE"/>
+      <val name="to" val="java.lang.Short.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name='java.lang.Short java.lang.Short decode(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -281,6 +305,12 @@
   </item>
   <item name='java.lang.Short java.lang.Short valueOf(short)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Short long longValue()'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="java.lang.Short.MIN_VALUE"/>
+      <val name="to" val="java.lang.Short.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name='java.lang.String String(byte[])'>
     <annotation name='org.jetbrains.annotations.Contract'>

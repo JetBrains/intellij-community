@@ -75,6 +75,9 @@ import java.util.stream.IntStream;
  */
 public class SearchEverywhereUI extends BigPopupUI implements DataProvider, QuickSearchComponent {
   private static final Logger LOG = Logger.getInstance(SearchEverywhereUI.class);
+
+  public static final String SEARCH_EVERYWHERE_SEARCH_FILED_KEY = "search-everywhere-textfield"; //only for testing purposes
+
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
   public static final int THROTTLING_TIMEOUT = 200;
@@ -110,7 +113,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       myBufferedListener = null;
     } else {
       myBufferedListener = new ThrottlingListenerWrapper(THROTTLING_TIMEOUT, mySearchListener, Runnable::run);
-      mySearcher = new MultithreadSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run), equalityProviders);
+      mySearcher = new MultiThreadSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run), equalityProviders);
     }
 
     myServiceContributors = serviceContributors;
@@ -195,7 +198,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
                      .orElse(IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName()));
     if (checkBoxText.indexOf(UIUtil.MNEMONIC) != -1) {
       DialogUtil.setTextWithMnemonic(myNonProjectCB, checkBoxText);
-    } else {
+    }
+    else {
       myNonProjectCB.setText(checkBoxText);
       myNonProjectCB.setDisplayedMnemonicIndex(-1);
       myNonProjectCB.setMnemonic(0);
@@ -206,6 +210,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
     if (mySearchField instanceof ExtendableTextField) {
       ExtendableTextField textField = (ExtendableTextField)mySearchField;
+
       Boolean commandsSupported = mySelectedTab.getContributor()
         .map(contributor -> !contributor.getSupportedCommands().isEmpty())
         .orElse(true);
@@ -215,10 +220,38 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       else {
         textField.removeExtension(hintExtension);
       }
+
+      textField.removeExtension(myAdvertisement);
+      if (!commandsSupported) {
+        tab.getContributor().map(c -> c.getAdvertisement()).
+          ifPresent(s -> textField.addExtension(myAdvertisement.withText(s)));
+      }
     }
 
     repaint();
     rebuildList();
+  }
+
+  private final MyAdvertisement myAdvertisement = new MyAdvertisement();
+
+  private final class MyAdvertisement implements ExtendableTextComponent.Extension {
+    private final TextIcon icon;
+    String message = "";
+
+    {
+      icon = new TextIcon(message, JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground(), null, 0);
+      icon.setFont(RelativeFont.SMALL.derive(getFont()));
+    }
+
+    MyAdvertisement withText(@NotNull String text) {
+      icon.setText(text);
+      return this;
+    }
+
+    @Override
+    public Icon getIcon(boolean hovered) {
+      return icon;
+    }
   }
 
   public String getSelectedContributorID() {
@@ -240,6 +273,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
       return getSearchPattern();
     }
+    if (PlatformDataKeys.PROJECT.is(dataId))
+      return myProject;
 
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       List<PsiElement> elements = indicesStream.mapToObj(i -> {
@@ -335,11 +370,11 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   @NotNull
   @Override
   protected ExtendableTextField createSearchField() {
-    return new SearchField() {
+    SearchField res = new SearchField() {
       @NotNull
       @Override
-      protected ExtendableTextComponent.Extension getLeftExtension() {
-        return new ExtendableTextField.Extension() {
+      protected Extension getLeftExtension() {
+        return new Extension() {
           @Override
           public Icon getIcon(boolean hovered) {
             return AllIcons.Actions.Find;
@@ -357,6 +392,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         };
       }
     };
+    res.putClientProperty(SEARCH_EVERYWHERE_SEARCH_FILED_KEY, true);
+    return res;
   }
 
   @Override
@@ -859,7 +896,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       }
 
       if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {
-        component = groupTitleRenderer.withDisplayedData(contributor.getGroupName(), component);
+        component = groupTitleRenderer.withDisplayedData(contributor.getFullGroupName(), component);
       }
 
       return wrap(component, 1, 0);
@@ -990,7 +1027,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         return;
       }
 
-      while (listElements.get(index).getContributor() == contributor) {
+      while (index < listElements.size() && listElements.get(index).getContributor() == contributor) {
         if (item.equals(listElements.get(index).getElement())) {
           listElements.remove(index);
           fireIntervalRemoved(this, index, index);
@@ -1330,7 +1367,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
   private String getNotFoundText() {
     return mySelectedTab.getContributor()
-                        .map(c -> IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", c.getGroupName()))
+                        .map(c -> IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", c.getFullGroupName()))
                         .orElse(IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere"));
   }
 

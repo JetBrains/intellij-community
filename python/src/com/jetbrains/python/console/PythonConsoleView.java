@@ -70,7 +70,7 @@ import java.util.concurrent.TimeUnit;
  * @author traff
  */
 public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor {
-
+  static Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
   private final ConsolePromptDecorator myPromptView;
   private final boolean myTestMode;
@@ -93,7 +93,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     super(project, title, PythonLanguage.getInstance());
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
-    getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
+    VirtualFile virtualFile = getVirtualFile();
+    virtualFile.putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
+    virtualFile.putUserData(CONSOLE_KEY, true);
     // Mark editor as console one, to prevent autopopup completion
     getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
     getHistoryViewer().putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true);
@@ -113,7 +115,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
-    getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
+    getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY, communication);
 
     if (isShowVars && communication instanceof PydevConsoleCommunication) {
       showVariables((PydevConsoleCommunication)communication);

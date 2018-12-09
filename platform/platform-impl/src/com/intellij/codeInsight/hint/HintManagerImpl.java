@@ -258,6 +258,7 @@ public class HintManagerImpl extends HintManager {
    * So, first of all, editor will be scrolled to make the caret position visible.
    */
   public void showEditorHint(final LightweightHint hint, final Editor editor, @PositionFlags final short constraint, @HideFlags final int flags, final int timeout, final boolean reviveOnEditorChange) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     editor.getScrollingModel().runActionOnScrollingFinished(() -> {
       LogicalPosition pos = editor.getCaretModel().getLogicalPosition();

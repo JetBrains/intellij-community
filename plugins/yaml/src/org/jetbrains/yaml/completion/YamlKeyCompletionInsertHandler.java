@@ -8,6 +8,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -17,6 +18,7 @@ import org.jetbrains.yaml.YAMLElementGenerator;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLMapping;
 import org.jetbrains.yaml.psi.YAMLValue;
 
 public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> implements InsertHandler<T> {
@@ -32,7 +34,9 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
     final YAMLDocument holdingDocument = PsiTreeUtil.getParentOfType(currentElement, YAMLDocument.class);
     assert holdingDocument != null;
 
-    final YAMLValue oldValue = deleteLookupTextAndRetrieveOldValue(context, currentElement);
+    final YAMLValue oldValue = (holdingDocument.getTopLevelValue() instanceof YAMLMapping) ?
+                               deleteLookupTextAndRetrieveOldValue(context, currentElement) :
+                               null; // Inheritors must handle lookup text removal since otherwise holdingDocument may become invalid.
     final YAMLKeyValue created = createNewEntry(holdingDocument, item);
 
     context.getEditor().getCaretModel().moveToOffset(created.getTextRange().getEndOffset());
@@ -62,6 +66,14 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
     assert keyValue != null;
     assert keyValue.getParentMapping() != null;
 
+    Document document = context.getDocument();
+    String text = document.getText(TextRange.create(context.getStartOffset(), context.getTailOffset()));
+    if (!keyValue.getKeyText().equals(text)) {
+      // Insertion was performed at the start of existing keyValue, we should delete only inserted text from the key.
+      document.deleteString(context.getStartOffset(), context.getTailOffset());
+      context.commitDocument();
+      return null;
+    }
     context.commitDocument();
     if (keyValue.getValue() != null) {
       // Save old value somewhere

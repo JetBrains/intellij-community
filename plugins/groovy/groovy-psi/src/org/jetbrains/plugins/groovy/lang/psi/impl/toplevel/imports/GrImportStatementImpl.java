@@ -150,7 +150,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
   public GrModifierList getAnnotationList() {
     GrImportStatementStub stub = getStub();
     if (stub != null) {
-      return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.MODIFIERS));
+      return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.MODIFIER_LIST));
     }
     return findNotNullChildByClass(GrModifierList.class);
   }

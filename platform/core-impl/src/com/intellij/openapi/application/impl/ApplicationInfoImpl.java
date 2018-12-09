@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.JBImageIcon;
@@ -451,8 +452,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public boolean usesJetBrainsPluginRepository() {
-    return DEFAULT_PLUGINS_HOST.equalsIgnoreCase(myPluginManagerUrl) ||
-           (DEFAULT_PLUGINS_HOST + "/").equalsIgnoreCase(myPluginManagerUrl);//see ***ApplicationInfo.xml
+    return DEFAULT_PLUGINS_HOST.equalsIgnoreCase(myPluginManagerUrl);
   }
 
   @Override
@@ -801,36 +801,40 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     Element pluginsElement = getChild(parentNode, ELEMENT_PLUGINS);
     if (pluginsElement != null) {
       String url = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
-      myPluginManagerUrl = url != null ? url : DEFAULT_PLUGINS_HOST;
-      boolean closed = StringUtil.endsWith(myPluginManagerUrl, "/");
+      if (url != null) {
+        myPluginManagerUrl = StringUtil.trimEnd(url, "/");
+      }
 
       String listUrl = pluginsElement.getAttributeValue(ATTRIBUTE_LIST_URL);
-      myPluginsListUrl = listUrl != null ? listUrl : myPluginManagerUrl + (closed ? "" : "/") + "plugins/list/";
+      if (listUrl != null) {
+        myPluginsListUrl = listUrl;
+      }
 
       String channelListUrl = pluginsElement.getAttributeValue(ATTRIBUTE_CHANNEL_LIST_URL);
-      myChannelsListUrl = channelListUrl != null ? channelListUrl  : myPluginManagerUrl + (closed ? "" : "/") + "channels/list/";
+      if (channelListUrl != null) {
+        myChannelsListUrl = channelListUrl;
+      }
 
       String downloadUrl = pluginsElement.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
-      myPluginsDownloadUrl = downloadUrl != null ? downloadUrl : myPluginManagerUrl + (closed ? "" : "/") + "pluginManager/";
+      if (downloadUrl != null) {
+        myPluginsDownloadUrl = downloadUrl;
+      }
 
       if (!getBuild().isSnapshot()) {
         myBuiltinPluginsUrl = StringUtil.nullize(pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL));
       }
     }
-    else {
-      myPluginManagerUrl = DEFAULT_PLUGINS_HOST;
-      myPluginsListUrl = DEFAULT_PLUGINS_HOST + "/plugins/list/";
-      myChannelsListUrl = DEFAULT_PLUGINS_HOST + "/channels/list/";
-      myPluginsDownloadUrl = DEFAULT_PLUGINS_HOST + "/pluginManager/";
-    }
 
     final String pluginsHost = System.getProperty("idea.plugins.host");
     if (pluginsHost != null) {
-      myPluginManagerUrl = pluginsHost;
-      myPluginsListUrl = myPluginsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
-      myChannelsListUrl = myChannelsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
-      myPluginsDownloadUrl = myPluginsDownloadUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
+      myPluginManagerUrl = StringUtil.trimEnd(pluginsHost, "/");
+      myPluginsListUrl = myChannelsListUrl = myPluginsDownloadUrl = null;
     }
+
+    myPluginManagerUrl = ObjectUtils.coalesce(myPluginsListUrl, DEFAULT_PLUGINS_HOST);
+    myPluginsListUrl = ObjectUtils.coalesce(myPluginsListUrl, myPluginManagerUrl + "/plugins/list/");
+    myChannelsListUrl = ObjectUtils.coalesce(myChannelsListUrl, myPluginManagerUrl + "/channels/list/");
+    myPluginsDownloadUrl = ObjectUtils.coalesce(myPluginsDownloadUrl, myPluginManagerUrl + "/pluginManager/");
 
     Element keymapElement = getChild(parentNode, ELEMENT_KEYMAP);
     if (keymapElement != null) {
@@ -857,7 +861,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     }
     else {
       myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
-      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v2-assistant.xml";
+      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v2-01-assistant.xml";
     }
 
     Element tvElement = getChild(parentNode, ELEMENT_JB_TV);

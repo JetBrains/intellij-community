@@ -15,13 +15,11 @@
  */
 package com.intellij.ide.codeStyleSettings;
 
-import com.intellij.idea.Bombed;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Calendar;
 import java.util.Map;
 
 public class NewProjectSettingsTest extends CodeStyleTestCase {
@@ -46,6 +44,9 @@ public class NewProjectSettingsTest extends CodeStyleTestCase {
   public void tearDown() throws Exception {
     try {
       restoreDefaults();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

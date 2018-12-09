@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -76,8 +75,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.im.InputContext;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * This class is automaton with finite number of state.
@@ -610,7 +609,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
     @Override
     public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
       e.consume();
-      ShortcutsCollector.record(actionEvent);
 
       DataContext ctx = actionEvent.getDataContext();
       if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {

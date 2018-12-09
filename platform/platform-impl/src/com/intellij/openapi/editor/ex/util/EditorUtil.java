@@ -13,6 +13,8 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.event.SelectionEvent;
+import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -364,7 +366,7 @@ public final class EditorUtil {
     }
     float tabSizePixels = tabSize * plainSpaceWidth;
 
-    int nTabs = (int) (x / tabSizePixels);
+    int nTabs = (int) ((x + plainSpaceWidth / 2) / tabSizePixels);
     return (nTabs + 1) * tabSizePixels;
   }
 
@@ -832,5 +834,47 @@ public final class EditorUtil {
       sum += inlay.getHeightInPixels();
     }
     return sum;
+  }
+
+  /**
+   * This is similar to {@link SelectionModel#addSelectionListener(SelectionListener, Disposable)}, but when selection changes happen within
+   * the scope of {@link CaretModel#runForEachCaret(CaretAction)} call, there will be only one notification at the end of iteration over
+   * carets.
+   */
+  public static void addBulkSelectionListener(@NotNull Editor editor, @NotNull SelectionListener listener, @NotNull Disposable disposable) {
+    Ref<Pair<int[], int[]>> selectionBeforeBulkChange = new Ref<>();
+    Ref<Boolean> selectionChangedDuringBulkChange = new Ref<>();
+    editor.getSelectionModel().addSelectionListener(new SelectionListener() {
+      @Override
+      public void selectionChanged(@NotNull SelectionEvent e) {
+        if (selectionBeforeBulkChange.isNull()) {
+          listener.selectionChanged(e);
+        }
+        else {
+          selectionChangedDuringBulkChange.set(Boolean.TRUE);
+        }
+      }
+    }, disposable);
+    editor.getCaretModel().addCaretActionListener(new CaretActionListener() {
+      @Override
+      public void beforeAllCaretsAction() {
+        selectionBeforeBulkChange.set(getSelectionOffsets());
+        selectionChangedDuringBulkChange.set(null);
+      }
+
+      @Override
+      public void afterAllCaretsAction() {
+        if (!selectionChangedDuringBulkChange.isNull()) {
+          Pair<int[], int[]> beforeBulk = selectionBeforeBulkChange.get();
+          Pair<int[], int[]> afterBulk = getSelectionOffsets();
+          listener.selectionChanged(new SelectionEvent(editor, beforeBulk.first, beforeBulk.second, afterBulk.first, afterBulk.second));
+        }
+        selectionBeforeBulkChange.set(null);
+      }
+
+      private Pair<int[], int[]> getSelectionOffsets() {
+        return Pair.create(editor.getSelectionModel().getBlockSelectionStarts(), editor.getSelectionModel().getBlockSelectionEnds());
+      }
+    }, disposable);
   }
 }

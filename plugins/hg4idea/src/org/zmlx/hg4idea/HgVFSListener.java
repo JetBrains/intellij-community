@@ -59,6 +59,7 @@ public class HgVFSListener extends VcsVFSListener {
 
   @Override
   protected void executeAdd(@NotNull final List<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copyFromMap) {
+    saveUnsavedVcsIgnoreFiles();
     // if a file is copied from another repository, then 'hg add' should be used instead of 'hg copy'.
     // Thus here we remove such files from the copyFromMap.
     for (Iterator<Map.Entry<VirtualFile, VirtualFile>> it = copyFromMap.entrySet().iterator(); it.hasNext(); ) {
@@ -118,7 +119,8 @@ public class HgVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copyFromMap) {
+  protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copiedFilesFrom) {
+    Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<>(copiedFilesFrom);
     (new Task.ConditionalModal(myProject,
                                HgVcsMessages.message("hg4idea.add.progress"),
                                false,

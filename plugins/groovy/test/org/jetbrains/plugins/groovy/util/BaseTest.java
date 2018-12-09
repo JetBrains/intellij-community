@@ -25,33 +25,37 @@ public interface BaseTest {
   }
 
   @NotNull
-  default GrExpression getLastExpression() {
-    final GrStatement lastStatement = getLastElement(getGroovyFile().getStatements());
-    return assertInstanceOf(lastStatement, GrExpression.class);
-  }
-
-  @NotNull
   default GroovyFile configureByText(@NotNull String text) {
     getFixture().configureByText("_.groovy", text);
     return getGroovyFile();
   }
 
   @NotNull
-  default GrExpression configureByExpression(@NotNull String text) {
-    configureByText(text);
-    return getLastExpression();
-  }
-
-  @NotNull
-  default <T extends GrExpression> T configureByExpression(@NotNull String text, @NotNull Class<T> clazz) {
-    configureByText(text);
-    return assertInstanceOf(getLastExpression(), clazz);
-  }
-
-  @NotNull
   default <T extends PsiElement> T elementUnderCaret(@NotNull String text, @NotNull Class<T> clazz) {
-    GroovyFile file = configureByText(text);
-    T element = getParentOfType(file.findElementAt(getFixture().getCaretOffset()), clazz);
+    configureByText(text);
+    return elementUnderCaret(clazz);
+  }
+
+  @NotNull
+  default <T extends PsiElement> T elementUnderCaret(@NotNull Class<T> clazz) {
+    T element = getParentOfType(getFixture().getFile().findElementAt(getFixture().getCaretOffset()), clazz);
     return Objects.requireNonNull(element);
+  }
+
+  @NotNull
+  default <T extends GrExpression> T lastExpression(@NotNull String text, Class<T> clazz) {
+    return clazz.cast(lastExpression(text));
+  }
+
+  @NotNull
+  default GrExpression lastExpression(@NotNull String text) {
+    configureByText(text);
+    return lastExpression();
+  }
+
+  @NotNull
+  default GrExpression lastExpression() {
+    final GrStatement lastStatement = getLastElement(getGroovyFile().getStatements());
+    return assertInstanceOf(lastStatement, GrExpression.class);
   }
 }

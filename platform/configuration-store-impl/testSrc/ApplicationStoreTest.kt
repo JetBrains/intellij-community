@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.refreshVfs
@@ -17,6 +18,7 @@ import com.intellij.util.io.writeChild
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import gnu.trove.THashMap
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.data.MapEntry
 import org.intellij.lang.annotations.Language
 import org.junit.Before
@@ -200,9 +202,14 @@ internal class ApplicationStoreTest {
   private open class A : PersistentStateComponent<TestState> {
     var options = TestState()
 
+    var isThrowErrorOnLoadState = false
+
     override fun getState() = options
 
     override fun loadState(state: TestState) {
+      if (isThrowErrorOnLoadState) {
+        throw ProcessCanceledException()
+      }
       this.options = state
     }
   }
@@ -230,6 +237,23 @@ internal class ApplicationStoreTest {
     <application>
       <component name="A" foo="1" bar="2" />
     </application>""")
+  }
+
+  @Test
+  fun `loadState failed with exception it won't be called next time`() {
+    writeConfig("a.xml", """<application><component name="A" foo="old" deprecated="old"/></application>""")
+    testAppConfig.refreshVfs()
+
+    val component = A()
+    component.isThrowErrorOnLoadState = true
+    assertThatThrownBy {
+      componentStore.initComponent(component, false)
+    }.isInstanceOf(ProcessCanceledException::class.java)
+    assertThat(component.options).isEqualTo(TestState())
+
+    component.isThrowErrorOnLoadState = false
+    componentStore.initComponent(component, false)
+    assertThat(component.options).isEqualTo(TestState("old"))
   }
 
   @Test

@@ -1,13 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -24,6 +24,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
+
+import static com.intellij.icons.AllIcons.Ide.IncomingChangesOn;
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * @author yole
@@ -104,20 +107,24 @@ public class IncomingChangesIndicator {
   }
 
   private static class IndicatorComponent implements StatusBarWidget, StatusBarWidget.IconPresentation {
+
+    private static final Icon INCOMING_ICON = IncomingChangesOn;
+    private static final Icon DISABLED_INCOMING_ICON = notNull(IconLoader.getDisabledIcon(IncomingChangesOn), IncomingChangesOn);
+
     private StatusBar myStatusBar;
 
-    private Icon myCurrentIcon = AllIcons.Ide.IncomingChangesOff;
+    private Icon myCurrentIcon = DISABLED_INCOMING_ICON;
     private String myToolTipText;
 
     private IndicatorComponent() {
     }
 
     void clear() {
-      update(AllIcons.Ide.IncomingChangesOff, "No incoming changelists available");
+      update(DISABLED_INCOMING_ICON, "No incoming changelists available");
     }
 
     void setChangesAvailable(@NotNull final String toolTipText) {
-      update(AllIcons.Ide.IncomingChangesOn, toolTipText);
+      update(INCOMING_ICON, toolTipText);
     }
 
     private void update(@NotNull final Icon icon, @Nullable final String toolTipText) {

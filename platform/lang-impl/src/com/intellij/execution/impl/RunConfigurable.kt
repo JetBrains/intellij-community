@@ -860,12 +860,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   }
 
   fun createNewConfiguration(factory: ConfigurationFactory): SingleConfigurationConfigurable<RunConfiguration> {
-    var node: DefaultMutableTreeNode
-    var selectedNode: DefaultMutableTreeNode? = null
-    val selectionPath = tree.selectionPath
-    if (selectionPath != null) {
-      selectedNode = selectionPath.lastPathComponent as? DefaultMutableTreeNode
-    }
     var typeNode = getConfigurationTypeNode(factory.type)
     if (typeNode == null) {
       typeNode = DefaultMutableTreeNode(factory.type)
@@ -873,18 +867,19 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       sortTopLevelBranches()
       (tree.model as DefaultTreeModel).reload()
     }
-    node = typeNode
+
+    val selectedNode = tree.selectionPath?.lastPathComponent as? DefaultMutableTreeNode
+    var node = typeNode
     if (selectedNode != null && typeNode.isNodeDescendant(selectedNode)) {
       node = selectedNode
       if (getKind(node).isConfiguration) {
         node = node.parent as DefaultMutableTreeNode
       }
     }
+
     val settings = runManager.createConfiguration("", factory)
     val configuration = settings.configuration
-    val suggestedName = suggestName(configuration)
-    val name = createUniqueName(typeNode, suggestedName, CONFIGURATION, TEMPORARY_CONFIGURATION)
-    configuration.name = name
+    configuration.name = createUniqueName(typeNode, suggestName(configuration), CONFIGURATION, TEMPORARY_CONFIGURATION)
     (configuration as? LocatableConfigurationBase<*>)?.setNameChangedByUser(false)
     callNewConfigurationCreated(factory, configuration)
     return createNewConfiguration(settings, node, selectedNode)

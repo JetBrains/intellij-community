@@ -19,8 +19,6 @@
                     serviceImplementation="com.intellij.openapi.diff.impl.dir.DirDiffManagerImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.VcsConfiguration"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings"/>
-    <projectService serviceImplementation="com.intellij.openapi.diff.impl.settings.MergeToolSettings"/>
-    <projectService serviceImplementation="com.intellij.openapi.diff.impl.settings.DiffToolSettings"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.roots.VcsRootDetector"
                     serviceImplementation="com.intellij.openapi.vcs.roots.VcsRootDetectorImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.VcsNotifier"/>

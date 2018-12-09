@@ -105,16 +105,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       protected void hideToolWindow() {
         fireHidden();
       }
-
-      @Override
-      protected void toolWindowTypeChanged(@NotNull ToolWindowType type) {
-        fireTypeChanged(type);
-      }
-
-      @Override
-      protected void sideHidden() {
-        fireHiddenSide();
-      }
     };
 
     init(dumbAware);
@@ -283,7 +273,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
     AncestorListener ancestorListener = new AncestorListener() {
 
-      private final static String FOCUS_EDITOR_ACTION_KEY = "FOCUS_EDITOR_ACTION_KEY";
+      private static final String FOCUS_EDITOR_ACTION_KEY = "FOCUS_EDITOR_ACTION_KEY";
 
       @Override
       public void ancestorAdded(AncestorEvent event) {
@@ -312,11 +302,11 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     Disposer.register(myProject, () -> removeAncestorListener(ancestorListener));
   }
 
-  public void setTitleActions(AnAction[] actions) {
+  public void setTitleActions(@NotNull AnAction[] actions) {
     myHeader.setAdditionalTitleActions(actions);
   }
 
-  public void setTabActions(AnAction[] actions) {
+  void setTabActions(@NotNull AnAction[] actions) {
     myHeader.setTabActions(actions);
   }
 
@@ -403,11 +393,13 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
 
-  public final ActionGroup createPopupGroup() {
+  @NotNull
+  final ActionGroup createPopupGroup() {
     return createPopupGroup(false);
   }
 
-  public final ActionGroup createPopupGroup(boolean skipHideAction) {
+  @NotNull
+  private ActionGroup createPopupGroup(boolean skipHideAction) {
     final DefaultActionGroup group = createGearPopupGroup();
     if (myInfo == null) {
       return group;
@@ -482,6 +474,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return group;
   }
 
+  @NotNull
   private DefaultActionGroup createGearPopupGroup() {
     return new GearActionGroup();
   }
@@ -728,7 +721,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   private final class HideAction extends AnAction implements DumbAware {
-    @NonNls public static final String HIDE_ACTIVE_WINDOW_ACTION_ID = InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID;
+    @NonNls static final String HIDE_ACTIVE_WINDOW_ACTION_ID = InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID;
 
     HideAction() {
       copyFrom(ActionManager.getInstance().getAction(HIDE_ACTIVE_WINDOW_ACTION_ID));
@@ -914,7 +907,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
    * this policy does not handle KeyEvent.VK_ESCAPE, so it can delegate the handling
    * to a ThreeComponentSplitter instance.
    */
-  public static void installFocusTraversalPolicy(@NotNull Container container, @NotNull FocusTraversalPolicy policy) {
+  static void installFocusTraversalPolicy(@NotNull Container container, @NotNull FocusTraversalPolicy policy) {
     container.setFocusCycleRoot(true);
     container.setFocusTraversalPolicyProvider(true);
     container.setFocusTraversalPolicy(policy);

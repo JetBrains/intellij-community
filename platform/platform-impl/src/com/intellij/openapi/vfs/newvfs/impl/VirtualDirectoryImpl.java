@@ -399,13 +399,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
               " is wrongly placed before " +
               verboseToString(mySegment.vfsData.getFileById(id, this)), getArraySafely(), details);
       }
-      if (myData.isAdoptedName(name)) {
-        try {
-          error("In "+verboseToString(this)+" file '"+name+"' is both child and adopted",
-                getArraySafely(), "Adopted: " + myData.getAdoptedNames() + ";\n " + details);
-        }
-        finally {
-          myData.removeAdoptedName(name);
+      synchronized (myData) {
+        if (myData.isAdoptedName(name)) {
+          try {
+            error("In " + verboseToString(this) + " file '" + name + "' is both child and adopted",
+                  getArraySafely(), "Adopted: " + myData.getAdoptedNames() + ";\n " + details);
+          }
+          finally {
+            myData.removeAdoptedName(name);
+          }
         }
       }
     }

@@ -26,6 +26,9 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
 public class TipDialog extends DialogWrapper {
+  private static TipDialog ourInstance;
+
+
   private TipPanel myTipPanel;
 
   @Nullable
@@ -89,9 +92,26 @@ public class TipDialog extends DialogWrapper {
     super.dispose();
   }
 
-  public static TipDialog createForProject(final Project project) {
-    final Window w = WindowManagerEx.getInstanceEx().suggestParentWindow(project);
-    return (w == null) ? new TipDialog() : new TipDialog(w);
+  public static void showForProject(@Nullable Project project) {
+    createForProject(project);
+    ourInstance.show();
+  }
+
+  /** @deprecated Use {@link #showForProject(Project)} instead */
+  @Deprecated
+  public static TipDialog createForProject(@Nullable Project project) {
+    Window w = WindowManagerEx.getInstanceEx().suggestParentWindow(project);
+    if (ourInstance != null && ourInstance.isVisible()) {
+      ourInstance.dispose();
+    }
+    return ourInstance = (w == null) ? new TipDialog() : new TipDialog(w);
+  }
+
+  public static void hideForProject(@Nullable Project project) {
+    if (ourInstance != null) {
+      ourInstance.dispose();
+      ourInstance = null;
+    }
   }
 
   private class OpenTipsAction extends AbstractAction {

@@ -22,8 +22,9 @@ import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 
-@SuppressWarnings(["ALL"])
+@CompileStatic
 public class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/smartType";
 

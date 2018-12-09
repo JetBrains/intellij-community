@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="22" height="22" viewBox="0 0 22 22">
+  <defs>
+    <linearGradient id="checkboxindeterminateselecteddisabled-a" x1="50%" x2="50%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#D1D1D1"/>
+      <stop offset="100%" stop-color="#DEDEDE"/>
+    </linearGradient>
+    <rect id="checkboxindeterminateselecteddisabled-c" width="13" height="13" x="4.5" y="4.5" rx="2.75"/>
+    <filter id="checkboxindeterminateselecteddisabled-b" width="123.1%" height="123.1%" x="-11.5%" y="-11.5%" filterUnits="objectBoundingBox">
+      <feGaussianBlur in="SourceAlpha" result="shadowBlurInner1" stdDeviation=".75"/>
+      <feOffset dy="1.5" in="shadowBlurInner1" result="shadowOffsetInner1"/>
+      <feComposite in="shadowOffsetInner1" in2="SourceAlpha" k2="-1" k3="1" operator="arithmetic" result="shadowInnerInner1"/>
+      <feColorMatrix in="shadowInnerInner1" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.06 0"/>
+    </filter>
+    <rect id="checkboxindeterminateselecteddisabled-e" width="10" height="2" x="6" y="10" rx="1"/>
+    <filter id="checkboxindeterminateselecteddisabled-d" width="147%" height="335%" x="-23.5%" y="-77.5%" filterUnits="objectBoundingBox">
+      <feMorphology in="SourceAlpha" operator="dilate" radius=".15" result="shadowSpreadOuter1"/>
+      <feOffset dy=".8" in="shadowSpreadOuter1" result="shadowOffsetOuter1"/>
+      <feGaussianBlur in="shadowOffsetOuter1" result="shadowBlurOuter1" stdDeviation=".5"/>
+      <feColorMatrix in="shadowBlurOuter1" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.08 0"/>
+    </filter>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <rect width="13.5" height="13.5" x="4.25" y="4.25" fill="#FFF" stroke="url(#checkboxindeterminateselecteddisabled-a)" stroke-width=".5" rx="3"/>
+    <use fill="#000" filter="url(#checkboxindeterminateselecteddisabled-b)" xlink:href="#checkboxindeterminateselecteddisabled-c"/>
+    <use fill="#000" filter="url(#checkboxindeterminateselecteddisabled-d)" xlink:href="#checkboxindeterminateselecteddisabled-e"/>
+    <use fill="#B2B2B2" xlink:href="#checkboxindeterminateselecteddisabled-e"/>
+  </g>
+</svg>

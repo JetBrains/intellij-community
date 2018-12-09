@@ -2,6 +2,7 @@
 package com.intellij.openapi.util.registry
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.xmlb.annotations.Attribute
 
 /**
@@ -21,7 +22,14 @@ class RegistryKeyBean {
 class RegistryExtensionCollector {
   init {
     for (extension in RegistryKeyBean.EP_NAME.extensions) {
-      Registry.addKey(extension.key, extension.description, extension.defaultValue, extension.restartRequired)
+      Registry.addKey(extension.key, extension.description.unescapeString(), extension.defaultValue, extension.restartRequired)
     }
+  }
+
+  private companion object {
+    val LINE_CONTINUATION_REGEX = """\\[ \t]+""".toRegex()  // the real '\n' after the '\\' is swallowed by the XML reader
+
+    fun String.unescapeString(): String =
+      if ('\\' !in this) this else StringUtil.unescapeStringCharacters(replace(LINE_CONTINUATION_REGEX, ""))
   }
 }

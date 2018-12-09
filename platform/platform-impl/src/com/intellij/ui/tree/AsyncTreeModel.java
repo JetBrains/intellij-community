@@ -288,7 +288,9 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
    * @return {@code true} if this model is updating its structure
    */
   public boolean isProcessing() {
-    return processor.getTaskCount() > 0 || tree.queue.get().isPending();
+    if (processor.getTaskCount() > 0) return true;
+    ObsolescentCommand command = tree.queue.get();
+    return command != null && command.isPending();
   }
 
   private boolean isValidThread() {

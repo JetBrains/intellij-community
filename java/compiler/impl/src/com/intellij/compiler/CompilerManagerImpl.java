@@ -4,6 +4,8 @@ package com.intellij.compiler;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.compiler.impl.*;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.Compiler;
@@ -20,6 +22,7 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -36,12 +39,10 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.incremental.BinaryContent;
-import org.jetbrains.jps.javac.DiagnosticOutputConsumer;
-import org.jetbrains.jps.javac.ExternalJavacManager;
-import org.jetbrains.jps.javac.OutputFileConsumer;
-import org.jetbrains.jps.javac.OutputFileObject;
+import org.jetbrains.jps.javac.*;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -367,7 +368,6 @@ public class CompilerManagerImpl extends CompilerManager {
                                                  Collection<File> sourcePath,
                                                  Collection<File> files,
                                                  File outputDir) throws IOException, CompilationException {
-
     final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
 
     final Sdk sdk = runtime.getFirst();
@@ -407,10 +407,12 @@ public class CompilerManagerImpl extends CompilerManager {
     final Map<File, Set<File>> outs = Collections.singletonMap(outputDir, sourceRoots);
 
     final ExternalJavacManager javacManager = getJavacManager();
+    final CompilationPaths paths = CompilationPaths.create(platformCp, classpath, upgradeModulePath, modulePath, sourcePath);
+    // do not keep process alive in tests since every test expects all spawned processes to terminate in teardown
     boolean compiledOk = javacManager != null && javacManager.forkJavac(
-      javaHome, -1, Collections.emptyList(), options, platformCp, classpath, upgradeModulePath, modulePath, sourcePath, files, outs, diagnostic, outputCollector,
-      new JavacCompilerTool(), CanceledStatus.NULL
-    );
+      javaHome, -1, Collections.emptyList(), options, paths, files, outs, diagnostic, outputCollector,
+      new JavacCompilerTool(), CanceledStatus.NULL, !ApplicationManager.getApplication().isUnitTestMode()
+    ).get();
 
     if (!compiledOk) {
       final List<CompilationException.Message> messages = new SmartList<>();
@@ -460,9 +462,12 @@ public class CompilerManagerImpl extends CompilerManager {
             return null; // should not happen for real projects
           }
           final int listenPort = NetUtils.findAvailableSocketPort();
-          manager = new ExternalJavacManager(compilerWorkingDir);
+          manager = new ExternalJavacManager(
+            compilerWorkingDir, ProcessIOExecutorService.INSTANCE, Registry.intValue("compiler.external.javac.keep.alive.timeout", 5*60*1000)
+          );
           manager.start(listenPort);
           myExternalJavacManager = manager;
+          IdeEventQueue.getInstance().addIdleListener(new IdleTask(manager), IdleTask.CHECK_PERIOD);
         }
       }
     }
@@ -580,4 +585,22 @@ public class CompilerManagerImpl extends CompilerManager {
     }
   }
 
+  private static class IdleTask implements Runnable {
+    private static final int CHECK_PERIOD = 10000; // check idle javac processes every 10 second when IDE is idle
+    private final ExternalJavacManager myManager;
+
+    IdleTask(@NotNull ExternalJavacManager manager) {
+      myManager = manager;
+    }
+
+    @Override
+    public void run() {
+      if (myManager.isRunning()) {
+        myManager.shutdownIdleProcesses();
+      }
+      else {
+        IdeEventQueue.getInstance().removeIdleListener(this);
+      }
+    }
+  }
 }

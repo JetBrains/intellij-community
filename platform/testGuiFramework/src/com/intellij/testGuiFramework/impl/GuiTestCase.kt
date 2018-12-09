@@ -25,9 +25,11 @@ import org.fest.swing.fixture.JTableFixture
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
-import org.junit.ClassRule
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import java.awt.Component
 import java.io.File
@@ -64,15 +66,15 @@ import javax.swing.text.JTextComponent
 @RunWith(GuiTestLocalRunner::class)
 open class GuiTestCase {
 
-  companion object {
-    @ClassRule
-    @JvmField
-    val projectsFolder: TemporaryFolder = TemporaryFolder()
-  }
+  @Rule
+  @JvmField
+  val screenshotsDuringTest = ScreenshotsDuringTest(500) // 0.5 sec
 
   @Rule
   @JvmField
-  val guiTestRule = GuiTestRule(projectsFolder.apply{ create() }.root.canonicalFile)
+  val guiTestRule = GuiTestRule()
+
+  val projectsFolder: TemporaryFolder = guiTestRule.projectsFolder
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   //  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
@@ -80,6 +82,18 @@ open class GuiTestCase {
   val slash: String = File.separator
 
   private val screenshotTaker: ScreenshotTaker = ScreenshotTaker()
+
+  @Rule
+  @JvmField
+  val testMethod = TestName()
+
+  @Rule
+  @JvmField
+  val logActionsDuringTest = LogActionsDuringTest()
+
+  val projectFolder: String by lazy {
+    projectsFolder.newFolder(testMethod.methodName).canonicalPath
+  }
 
   fun robot() = guiTestRule.robot()
 
@@ -135,8 +149,8 @@ open class GuiTestCase {
   }
 
   fun settingsDialog(timeout: Timeout = Timeouts.defaultTimeout,
-                      needToKeepDialog: Boolean = false,
-                      func: JDialogFixture.() -> Unit) {
+                     needToKeepDialog: Boolean = false,
+                     func: JDialogFixture.() -> Unit) {
     if (isMac()) dialog(title = "Preferences", func = func)
     else dialog(title = "Settings", func = func)
   }
@@ -147,7 +161,7 @@ open class GuiTestCase {
     if (!needToKeepDialog) pluginDialog.waitTillGone()
   }
 
-  fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout) : PluginDialogFixture{
+  fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout): PluginDialogFixture {
     return PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
   }
 
@@ -347,7 +361,10 @@ open class GuiTestCase {
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one) and returns created JDialogFixture
    */
-  fun dialog(title: String? = null, ignoreCaseTitle: Boolean, predicate: FinderPredicate = Predicate.equality, timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
+  fun dialog(title: String? = null,
+             ignoreCaseTitle: Boolean,
+             predicate: FinderPredicate = Predicate.equality,
+             timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
     if (title == null) {
       val jDialog = waitUntilFound(null, JDialog::class.java, timeout) { true }
       return JDialogFixture(robot(), jDialog)
@@ -465,5 +482,17 @@ open class GuiTestCase {
     }, timeoutToDisappear)
 
   }
+
+  @Before
+  open fun setUp() {
+    logStartTest(testMethod.methodName)
+  }
+
+  @After
+  open fun tearDown() {
+    logEndTest(testMethod.methodName)
+  }
+
+  open fun isIdeFrameRun(): Boolean = true
 
 }

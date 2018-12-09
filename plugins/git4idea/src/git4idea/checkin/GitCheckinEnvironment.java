@@ -28,8 +28,8 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.ex.PartialCommitHelper;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.PartialCommitHelper;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
@@ -1370,7 +1370,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     public boolean isDefaultAuthor(@NotNull VcsUser author) {
-      Collection<VirtualFile> affectedGitRoots = filter(myCheckinProjectPanel.getRoots(), virtualFile -> findGitDir(virtualFile) != null);
+      GitRepositoryManager manager = getRepositoryManager(myProject);
+      Collection<VirtualFile> affectedGitRoots = filter(myCheckinProjectPanel.getRoots(),
+                                                        root -> manager.getRepositoryForRoot(root) != null);
       GitUserRegistry gitUserRegistry = GitUserRegistry.getInstance(myProject);
       return of(affectedGitRoots).map(vf -> gitUserRegistry.getUser(vf)).allMatch(user -> user != null && isSamePerson(author, user));
     }

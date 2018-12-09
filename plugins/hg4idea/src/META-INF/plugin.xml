@@ -125,7 +125,7 @@
         <keyboard-shortcut first-keystroke="alt shift G" keymap="$default"/>
       </action>
       <action class="org.zmlx.hg4idea.action.mq.HgQPushActionFromPatches" id="hg4idea.QPushAction" text="Move and Push"
-              description="Apply only selected patch" icon="AllIcons.Actions.MoveToAnotherChangelist">
+              description="Apply only selected patch" icon="AllIcons.Actions.MoveTo2">
         <keyboard-shortcut first-keystroke="alt shift P" keymap="$default"/>
       </action>
       <action class="org.zmlx.hg4idea.action.mq.HgQFoldActionFromPatches" id="hg4idea.QFold" text="Fold"

@@ -1,0 +1,44 @@
+public class Main {
+    private static fun getString() : java.lang.String {
+        var str: var = "abc"
+        final var numericString: java.lang.String = switch (str)
+            "foo" -> {
+                System.out.println("here")
+                break
+            }
+
+            "bar" -> {
+                "BAR"
+            }
+
+            "baz" -> {
+                "bAz"
+            }
+
+            else -> {
+                "default"
+            }
+
+
+        final var numericString2: java.lang.String = switch (str)
+            "foo" -> {
+                break
+            }
+
+            "bar" -> {
+                break
+            }
+
+            "baz" -> {
+                System.out.println("here")
+                break
+            }
+
+            else -> {
+                break
+            }
+
+
+        return numericString + numericString2
+    }
+}

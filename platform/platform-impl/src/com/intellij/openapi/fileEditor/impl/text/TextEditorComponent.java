@@ -2,11 +2,13 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.BackgroundableDataProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -45,7 +47,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-class TextEditorComponent extends JBLoadingPanel implements DataProvider, Disposable {
+class TextEditorComponent extends JBLoadingPanel implements DataProvider, Disposable, BackgroundableDataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.TextEditorComponent");
 
   private final Project myProject;
@@ -236,24 +238,29 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
     return myEditor;
   }
 
+  @Nullable
   @Override
-  public Object getData(@NotNull final String dataId) {
+  public DataProvider createBackgroundDataProvider() {
     final Editor e = validateCurrentEditor();
     if (e == null || e.isDisposed()) return null;
 
     // There's no FileEditorManager for default project (which is used in diff command-line application)
-    if (!myProject.isDisposed() && !myProject.isDefault()) {
-      final Object o = FileEditorManager.getInstance(myProject).getData(dataId, e, e.getCaretModel().getCurrentCaret());
-      if (o != null) return o;
-    }
+    FileEditorManager fileEditorManager = !myProject.isDisposed() && !myProject.isDefault() ? FileEditorManager.getInstance(myProject) : null;
+    Caret currentCaret = e.getCaretModel().getCurrentCaret();
+    return dataId -> {
+      if (fileEditorManager != null) {
+        Object o = fileEditorManager.getData(dataId, e, currentCaret);
+        if (o != null) return o;
+      }
 
-    if (CommonDataKeys.EDITOR.is(dataId)) {
-      return e;
-    }
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return myFile.isValid()? myFile : null;  // fix for SCR 40329
-    }
-    return null;
+      if (CommonDataKeys.EDITOR.is(dataId)) {
+        return e;
+      }
+      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+        return myFile.isValid()? myFile : null;  // fix for SCR 40329
+      }
+      return null;
+    };
   }
 
   /**

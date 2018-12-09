@@ -835,6 +835,17 @@
         <constraint name="f" within="" contains="" />
         <constraint name="m" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Suppressed exceptions are ignored" text="try {&#10;  $TryStatement$;&#10;} &#10;finally {&#10;  $s1$;&#10;  super.tearDown();&#10;  $s2$;&#10;}" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="try {&#10;  $TryStatement$;&#10;} &#10;catch (Throwable e) {&#10;  addSuppressedException(e);&#10;}&#10;finally {&#10;  $s1$; super.tearDown(); $s2$;&#10;}">
+        <constraint name="__context__" script="com.intellij.psi.PsiTryStatement ts = com.intellij.psi.util.PsiTreeUtil.getParentOfType(__context__, com.intellij.psi.PsiTryStatement.class, false); return ts != null &amp;&amp; ts.getCatchSections().length == 0" within="" contains="" />
+        <constraint name="TryStatement" maxCount="2147483647" within="" contains="" />
+        <constraint name="s1" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="s2" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Too convoluted &quot;register(()-&gt;dispose())&quot; (wastes memory)" text="Disposer.register($myRoot$, () -&gt; Disposer.dispose($myFolder2$));" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="Disposer.register($myRoot$, $myFolder2$);">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="myRoot" within="" contains="" />
+        <constraint name="myFolder2" within="" contains="" />
+      </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />
@@ -968,6 +979,7 @@
     <inspection_tool class="UnreachableCodeJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UnresolvedReference" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="UnsortedPropertiesFile" enabled="false" level="INFO" enabled_by_default="false" />
+    <inspection_tool class="UnstableApiUsage" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UnterminatedStatementJS" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreSemicolonAtEndOfBlock" value="true" />
     </inspection_tool>

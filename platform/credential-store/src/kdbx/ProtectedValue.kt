@@ -51,7 +51,7 @@ internal class UnsavedProtectedValue(val secureString: StringProtectedByStreamCi
   override fun getText() = throw IllegalStateException("Must be converted to ProtectedValue for serialization")
 }
 
-internal class ProtectedXmlWriter(private val streamCipher: SkippingStreamCipher) : JbXmlOutputter("\n", null, null, null) {
+internal class ProtectedXmlWriter(private val streamCipher: SkippingStreamCipher) : JbXmlOutputter(isForbidSensitiveData = false) {
   override fun writeContent(out: Writer, element: Element, level: Int): Boolean {
     if (element.name == KdbxEntryElementNames.value) {
       val value = element.content.firstOrNull()

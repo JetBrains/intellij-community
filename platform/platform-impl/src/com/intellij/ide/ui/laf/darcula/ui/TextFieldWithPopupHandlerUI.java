@@ -91,7 +91,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
    * @return a clear icon in one of the four states or {@code null} to hide it
    */
   protected Icon getClearIcon(boolean hovered, boolean clickable) {
-    return !clickable ? null : hovered ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight;
+    return !clickable ? null : hovered ? AllIcons.Actions.CloseHovered : AllIcons.Actions.Close;
   }
 
   /**
@@ -128,14 +128,12 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     for (IconHolder holder : icons.values()) {
       int gap = holder.extension.getIconGap();
       if (holder.extension.isIconBeforeText()) {
-        int offset = holder.extension.getBeforeIconOffset();
-        bounds.x += offset;
-        bounds.width -= offset;
+        int offset = holder.extension.getAfterIconOffset();
         holder.bounds.x = bounds.x;
         bounds.width -= holder.bounds.width + gap;
-        bounds.x += holder.bounds.width + gap;
+        bounds.x += holder.bounds.width + gap + offset;
 
-        margin.left += offset + holder.bounds.width + gap;
+        margin.left += holder.bounds.width + gap + offset;
       }
       else {
         bounds.width -= holder.bounds.width + gap;
@@ -592,7 +590,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
 
     @Override
-    public int getBeforeIconOffset() {
+    public int getAfterIconOffset() {
       Integer gap = (Integer)getComponent().getClientProperty("JTextField.Search.Gap");
       return gap == null ? 0 : gap;
     }
@@ -600,11 +598,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public int getIconGap() {
       return getSearchIconGap();
-    }
-
-    @Override
-    public int getPreferredSpace() {
-      return getSearchIconPreferredSpace();
     }
 
     @Override
@@ -646,11 +639,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public int getIconGap() {
       return getClearIconGap();
-    }
-
-    @Override
-    public int getPreferredSpace() {
-      return getClearIconPreferredSpace();
     }
 
     @Override

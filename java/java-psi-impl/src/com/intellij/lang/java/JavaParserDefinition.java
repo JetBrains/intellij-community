@@ -13,12 +13,13 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class JavaParserDefinition implements ParserDefinition {
+  public static final IStubFileElementType JAVA_FILE = new JavaFileElementType();
+
   @Override
   @NotNull
   public Lexer createLexer(@Nullable Project project) {
@@ -46,7 +49,7 @@ public class JavaParserDefinition implements ParserDefinition {
 
   @Override
   public IFileElementType getFileNodeType() {
-    return JavaStubElementTypes.JAVA_FILE;
+    return JAVA_FILE;
   }
 
   @Override

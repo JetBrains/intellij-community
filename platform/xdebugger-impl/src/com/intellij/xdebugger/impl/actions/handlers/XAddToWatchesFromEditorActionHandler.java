@@ -13,6 +13,7 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -46,18 +47,18 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
   protected static Promise<String> getTextToEvaluate(DataContext dataContext, XDebugSession session) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
-      return Promise.resolve(null);
+      return Promises.resolvedPromise(null);
     }
 
     String text = editor.getSelectionModel().getSelectedText();
     if (text != null) {
-      return Promise.resolve(StringUtil.nullize(text, true));
+      return Promises.resolvedPromise(StringUtil.nullize(text, true));
     }
     XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
     if (evaluator != null) {
       return XDebuggerEvaluateActionHandler.getExpressionText(evaluator, editor.getProject(), editor).then(s -> StringUtil.nullize(s, true));
     }
-    return Promise.resolve(null);
+    return Promises.resolvedPromise(null);
   }
 
   @Override

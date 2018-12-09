@@ -153,7 +153,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
   @NotNull
   private static String toVfString(@NotNull Collection<VirtualFile> list) {
-    List<VirtualFile> sub = new ArrayList<>(list).subList(0, Math.min(list.size(), 100));
+    List<VirtualFile> sub = ContainerUtil.getFirstItems(new ArrayList<>(list), 100);
     return list.size() + " files: " + StringUtil.join(sub, file -> file.getName(), ", ") + (list.size() == sub.size() ? "" : "...");
   }
 

@@ -52,6 +52,9 @@ public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
       myModel.selectScheme(myDefaultScheme, null);
       myModel.apply();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

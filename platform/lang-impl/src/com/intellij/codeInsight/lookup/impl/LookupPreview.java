@@ -92,7 +92,7 @@ class LookupPreview {
   }
 
   private void addInlay(String suffix, int caretOffset) {
-    Inlay inlay = myLookup.getTopLevelEditor().getInlayModel().addInlineElement(caretOffset, createGrayRenderer(suffix));
+    Inlay inlay = myLookup.getTopLevelEditor().getInlayModel().addInlineElement(caretOffset, true, createGrayRenderer(suffix));
     if (inlay != null) {
       myInlays.add(inlay);
       Disposer.register(myLookup, inlay);

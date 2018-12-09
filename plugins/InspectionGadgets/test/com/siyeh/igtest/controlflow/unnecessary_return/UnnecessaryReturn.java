@@ -113,3 +113,17 @@ class Incomplete {
     };
   }
 }
+
+class Switch {
+  enum E { A, B, C}
+    void x(E e) {
+        switch (e) {
+            case A, B, C -> {
+                <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
+            }
+            default -> {
+                <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
+            }
+        }
+    }
+}

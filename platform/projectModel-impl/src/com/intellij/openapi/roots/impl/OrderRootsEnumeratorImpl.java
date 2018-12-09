@@ -63,11 +63,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
       final OrderRootsCache cache = myOrderEnumerator.getCache();
       if (cache != null) {
         final int flags = myOrderEnumerator.getFlags();
-        final VirtualFile[] cached = cache.getCachedRoots(myRootType, flags);
-        if (cached == null) {
-          return cache.setCachedRoots(myRootType, flags, computeRootsUrls()).getFiles();
-        }
-        return cached;
+        return cache.getOrComputeRoots(myRootType, flags, this::computeRootsUrls);
       }
     }
 
@@ -82,11 +78,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
       final OrderRootsCache cache = myOrderEnumerator.getCache();
       if (cache != null) {
         final int flags = myOrderEnumerator.getFlags();
-        String[] cached = cache.getCachedUrls(myRootType, flags);
-        if (cached == null) {
-          return cache.setCachedRoots(myRootType, flags, computeRootsUrls()).getUrls();
-        }
-        return cached;
+        return cache.getOrComputeUrls(myRootType, flags, this::computeRootsUrls);
       }
     }
     return ArrayUtil.toStringArray(computeRootsUrls());

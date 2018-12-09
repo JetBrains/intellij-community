@@ -985,6 +985,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @VisibleForTesting
+  @TestOnly
   public void clearUncommittedDocuments() {
     myUncommittedInfos.clear();
     myUncommittedDocuments.clear();

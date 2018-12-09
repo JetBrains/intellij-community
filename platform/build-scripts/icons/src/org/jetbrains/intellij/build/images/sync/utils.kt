@@ -54,11 +54,11 @@ internal fun <T> List<T>.split(eachSize: Int): List<List<T>> {
   return result
 }
 
-internal fun <T> callSafely(call: () -> T): T? = try {
+internal fun <T> callSafely(printStackTrace: Boolean = false, call: () -> T): T? = try {
   call()
 }
 catch (e: Exception) {
-  e.printStackTrace()
+  if (printStackTrace) e.printStackTrace() else log(e.message ?: e::class.java.simpleName)
   null
 }
 
@@ -92,7 +92,3 @@ internal fun <T> retry(maxRetries: Int = 20,
   }
   error("Unable to complete")
 }
-
-internal fun File.isAncestor(file: File): Boolean = this == file ||
-                                                    file.parentFile != null &&
-                                                    this.isAncestor(file.parentFile)

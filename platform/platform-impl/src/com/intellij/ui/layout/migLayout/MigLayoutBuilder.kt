@@ -172,7 +172,10 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
 
     fun processRows(rows: List<MigLayoutRow>) {
       for (row in rows) {
-        configureComponents(row)
+        // configureComponents will increase rowIndex, but if row doesn't have components, it is synthetic row (e.g. titled row that contains only sub rows)
+        if (!row.components.isEmpty()) {
+          configureComponents(row)
+        }
         row.subRows?.let {
           processRows(it)
         }

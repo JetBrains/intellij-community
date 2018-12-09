@@ -445,6 +445,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest()).
       append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
       append(() -> ((StructureViewFactoryImpl)StructureViewFactory.getInstance(project)).cleanupForNextTest()).
+      append(() -> PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
       append(() -> ourTestCase = null).

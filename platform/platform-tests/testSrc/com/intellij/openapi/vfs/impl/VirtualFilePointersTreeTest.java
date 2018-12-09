@@ -57,6 +57,18 @@ public class VirtualFilePointersTreeTest extends LightPlatformTestCase {
     assertPointersUnder(dir2, "", parentPointer, dir2Pointer);
   }
 
+  public void testRecursivePointersUnderSiblingDirectory() {
+    VirtualFilePointer innerPointer = createRecursivePointer("file:///parent/dir/subdir1/inner");
+    createPointer("file:///parent/anotherDir");
+    LightVirtualFile root = new LightVirtualFile("/");
+    LightVirtualFile parent = new LightVirtualFileWithParent("parent", root);
+    LightVirtualFile dir = new LightVirtualFileWithParent("dir", parent);
+    LightVirtualFile subdir1 = new LightVirtualFileWithParent("subdir1", dir);
+    LightVirtualFile subdir2 = new LightVirtualFileWithParent("subdir2", dir);
+    assertPointersUnder(subdir1, "xxx.txt", innerPointer);
+    assertPointersUnder(subdir2, "xxx.txt");
+  }
+
   public void testUrlsHavingOnlyStartingSlashInCommon() {
     VirtualFilePointer p1 = createPointer("file:///a/p1");
     VirtualFilePointer p2 = createPointer("file:///b/p2");

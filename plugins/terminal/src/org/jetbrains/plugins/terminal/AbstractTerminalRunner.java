@@ -228,6 +228,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
         }, modalityState);
       }
       catch (Exception e) {
+        LOG.info("Cannot open " + runningTargetName(), e);
         ApplicationManager.getApplication().invokeLater(() -> showCannotOpenTerminalDialog(e), modalityState);
       }
     });

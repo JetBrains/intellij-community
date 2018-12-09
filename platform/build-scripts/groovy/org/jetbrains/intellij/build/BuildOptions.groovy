@@ -35,25 +35,27 @@ class BuildOptions {
    */
   Set<String> buildStepsToSkip = System.getProperty("intellij.build.skip.build.steps", "").split(",") as Set<String>
   /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
-  static final SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
-  static final PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
-  static final SOURCES_ARCHIVE_STEP = "sources_archive"
-  static final SCRAMBLING_STEP = "scramble"
-  static final NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
+  static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
+  static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
+  static final String SOURCES_ARCHIVE_STEP = "sources_archive"
+  static final String SCRAMBLING_STEP = "scramble"
+  static final String NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
   /** Build Maven artifacts for IDE modules. */
-  static final MAVEN_ARTIFACTS_STEP = "maven_artifacts"
+  static final String MAVEN_ARTIFACTS_STEP = "maven_artifacts"
   /** Build macOS artifacts. */
-  static final MAC_ARTIFACTS_STEP = "mac_artifacts"
+  static final String MAC_ARTIFACTS_STEP = "mac_artifacts"
   /** Build .dmg file for macOS. If skipped, only .sit archive will be produced. */
-  static final MAC_DMG_STEP = "mac_dmg"
+  static final String MAC_DMG_STEP = "mac_dmg"
   /** Sign additional binary files in macOS distribution. */
-  static final MAC_SIGN_STEP = "mac_sign"
+  static final String MAC_SIGN_STEP = "mac_sign"
   /** Build Linux artifacts. */
-  static final LINUX_ARTIFACTS_STEP = "linux_artifacts"
+  static final String LINUX_ARTIFACTS_STEP = "linux_artifacts"
   /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced. */
-  static final WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
+  static final String WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
   /** Build Frankenstein artifacts. */
-  static final CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
+  static final String CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
+  /** Toolbox links generator step */
+  static final String TOOLBOX_LITE_GEN_STEP = "toolbox_lite_gen"
 
   /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
@@ -123,4 +125,19 @@ class BuildOptions {
    * Specifies JRE build to be bundled with distributions. If {@code null} then jdkBuild from gradle.properties will be used.
    */
   String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
+
+
+  /**
+   * if {@code true} the build will use JetBrains Toolbox LiteGen to generate a toolbox one-click
+   * install link for the product(s) from the current build.
+   * @see #toolboxLiteGenVersion
+   */
+  boolean buildToolboxLiteGenLink = Boolean.getBoolean("intellij.build.toolbox.litegen")
+
+  /**
+   * specifies the version of JetBrains Toolbox LiteGen used to generate a toolbox one-click
+   * install link for the product(s) from the current build.
+   * @see #buildToolboxLiteGenLink
+   */
+  String toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
 }

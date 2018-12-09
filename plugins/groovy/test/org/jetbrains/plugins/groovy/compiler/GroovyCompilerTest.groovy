@@ -749,13 +749,8 @@ public class Main {
     setFileText(foo, 'class Foo implements Runnabl {}')
 
     def compilerTempRoot = BuildManager.instance.getProjectSystemDirectory(project).absolutePath
-    try {
-      VfsRootAccess.allowRootAccess(compilerTempRoot) //because compilation error points to file under 'groovyStubs' directory
-      shouldFail { make() }
-    }
-    finally {
-      VfsRootAccess.disallowRootAccess(compilerTempRoot)
-    }
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), compilerTempRoot) //because compilation error points to file under 'groovyStubs' directory
+    shouldFail { make() }
 
     setFileText(foo, 'class Foo {}')
 

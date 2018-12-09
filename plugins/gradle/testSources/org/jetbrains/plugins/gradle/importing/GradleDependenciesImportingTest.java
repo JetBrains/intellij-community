@@ -26,6 +26,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,6 +38,7 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
@@ -614,10 +616,10 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       "    apply plugin: \"java\" \n" +
       "}\n" +
       "project(':projectA') {\n" +
-      "  sourceSets.main.output.dir file('/generated/projectA')\n" +
+      "  sourceSets.main.output.dir file('generated/projectA')\n" +
       "}\n" +
       "project(':projectB') {\n" +
-      "  sourceSets.main.output.dir file('/generated/projectB')\n" +
+      "  sourceSets.main.output.dir file('generated/projectB')\n" +
       "  dependencies {\n" +
       "    implementation project(':projectA')\n" +
       "  }\n" +
@@ -638,10 +640,13 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project.projectC.main", "project.projectA.main", DependencyScope.RUNTIME);
     assertModuleModuleDepScope("project.projectC.main", "project.projectB.main", DependencyScope.COMPILE);
 
-    final String pathA = "/generated/projectA";
+    final String pathA =
+      FileUtil.toSystemIndependentName(new File(getProjectPath(), "projectA/generated/projectA").getAbsolutePath());
     final String classesPathA = "file://" + pathA;
     final String depNameA = PathUtil.toPresentableUrl(pathA);
-    final String pathB = "/generated/projectB";
+
+    final String pathB =
+      FileUtil.toSystemIndependentName(new File(getProjectPath(), "projectB/generated/projectB").getAbsolutePath());
     final String classesPathB = "file://" + pathB;
     final String depNameB = PathUtil.toPresentableUrl(pathB);
 

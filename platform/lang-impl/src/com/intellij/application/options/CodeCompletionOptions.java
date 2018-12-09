@@ -27,8 +27,13 @@ public class CodeCompletionOptions extends CompositeConfigurable<UnnamedConfigur
   @Override
   public JComponent createComponent() {
     List<UnnamedConfigurable> configurables = getConfigurables();
-    List<JComponent> components = ContainerUtil.map(configurables, UnnamedConfigurable::createComponent);
-    myPanel = new CodeCompletionPanel(components);
+    List<JComponent> addonComponents = ContainerUtil.newArrayListWithCapacity(configurables.size());
+    List<JComponent> sectionComponents = ContainerUtil.newArrayListWithCapacity(configurables.size());
+    for (UnnamedConfigurable configurable : configurables) {
+      if (configurable instanceof CodeCompletionOptionsCustomSection) sectionComponents.add(configurable.createComponent());
+      else addonComponents.add(configurable.createComponent());
+    }
+    myPanel = new CodeCompletionPanel(addonComponents, sectionComponents);
     return myPanel.myPanel;
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -107,15 +93,15 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       if (newParams.size() == 1) {
         final ParameterInfoImpl p = newParams.iterator().next();
         return QuickFixBundle
-          .message("add.parameter.from.usage.text", p.getTypeText(), (ArrayUtil.find(myNewParametersInfo, p) + 1), targetMethodName);
+          .message("add.parameter.from.usage.text", p.getTypeText(), ArrayUtil.find(myNewParametersInfo, p) + 1, targetMethodName);
       }
       if (removedParams.size() == 1) {
         final ParameterInfoImpl p = removedParams.iterator().next();
-        return QuickFixBundle.message("remove.parameter.from.usage.text", (p.getOldIndex() + 1), targetMethodName);
+        return QuickFixBundle.message("remove.parameter.from.usage.text", p.getOldIndex() + 1, targetMethodName);
       }
       if (changedParams.size() == 1) {
         final ParameterInfoImpl p = changedParams.iterator().next();
-        return QuickFixBundle.message("change.parameter.from.usage.text", (p.getOldIndex() + 1), targetMethodName,
+        return QuickFixBundle.message("change.parameter.from.usage.text", p.getOldIndex() + 1, targetMethodName,
                                       myTargetMethod.getParameterList().getParameters()[p.getOldIndex()].getType().getPresentableText(),
                                       p.getTypeText());
       }

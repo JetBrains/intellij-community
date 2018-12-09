@@ -10,6 +10,13 @@ import java.util.List;
 
 @ApiStatus.Experimental
 public interface FocusModeProvider {
+  /**
+   * Please return ranges in a order from the top to the bottom.
+   * <br>
+   * For example:
+   * <pre>(() ()) (() () ()) </pre>
+   * @see FocusModePassFactory#calcFocusZones
+   */
   @NotNull
   List<? extends Segment> calcFocusZones(@NotNull PsiFile file);
 }

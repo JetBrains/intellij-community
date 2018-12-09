@@ -20,11 +20,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -308,6 +310,114 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createProjectSubFile("test-src/java/BTest.java");
 
     assertTestSources("project", "test-src/java");
+  }
+
+
+  @Test
+  public void testSourceAndResourceFoldersCollision() throws Exception {
+    createProjectSubFile("src/A.java");
+    createProjectSubFile("src/production.properties");
+    createProjectSubFile("test/Test.java");
+    createProjectSubFile("test/test.properties");
+
+    importProject("apply plugin: 'java'\n" +
+                  "sourceSets {\n" +
+                  "  main {\n" +
+                  "    java {\n" +
+                  "      srcDir 'src'\n" +
+
+                  "    }\n" +
+                  "    resources {\n" +
+                  "      srcDir 'src'\n" +
+                  "    }\n" +
+                  "  }\n" +
+                  "  test {\n" +
+                  "    java {\n" +
+                  "      srcDir 'test'\n" +
+                  "    }\n" +
+                  "    resources {\n" +
+                  "      srcDir 'test'\n" +
+                  "    }\n" +
+                  "  }\n" +
+                  "}\n");
+    assertModules("project", "project.main", "project.test");
+    assertSources("project.main", "");
+    // assert relative to linked project path because several content roots are created for "project.test" module
+    assertTestSources("project.test", "test");
+
+    importProjectUsingSingeModulePerGradleProject();
+
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+    assertSources("project", "src");
+    assertTestSources("project", "test");
+    assertResources("project");
+    assertTestResources("project");
+  }
+
+  @Test
+  public void testModuleGroupingFollowGradleProjectStructure() throws Exception {
+    /*
+    - Gradle project hierarchy
+    project
+       \--- project1
+              \--- project2
+              \--- project3
+
+    - Folder hierarchy
+     project
+        \--- project1
+        |       \--- project2
+        \--- project3
+                \--- src
+                       \--- main
+                       \--- test
+     */
+    createProjectSubFile("settings.gradle"
+      , "include (':project1', ':project1:project2', ':project1:project3')\n" +
+        "project(':project1:project3').projectDir = file('project3')\n" +
+        "rootProject.name = 'rootName'");
+
+    createProjectSubFile("build.gradle",
+                         "project(':').group = 'my.test.rootProject.group'\n" +
+                         "project(':project1').group = 'my.test.project1.group'\n" +
+                         "project(':project1:project2').group = 'my.test.project2.group'\n" +
+                         "project(':project1:project3').group = 'my.test.project3.group'");
+
+    createProjectSubFile("project1/build.gradle");
+    createProjectSubFile("project1/project2/build.gradle");
+    createProjectSubFile("project3/build.gradle", "apply plugin: 'java'");
+    createProjectSubFile("project3/src/main/java/AClass.java");
+    createProjectSubFile("project3/src/test/java/AClassTest.java");
+
+    importProject();
+
+    assertModules("rootName",
+                  "rootName.project1",
+                  "rootName.project1.project2",
+                  "rootName.project1.project3",
+                  "rootName.project1.project3.main",
+                  "rootName.project1.project3.test");
+    assertContentRoots("rootName.project1.project3",
+                       FileUtil.toSystemIndependentName(new File(getProjectPath(), "project3").getAbsolutePath()));
+
+    getCurrentExternalProjectSettings().setUseQualifiedModuleNames(false);
+
+    importProject();
+    assertModules("rootName",
+                  "project1",
+                  "project2",
+                  "project3",
+                  "project3_main",
+                  "project3_test");
+
+    assertContentRoots("project3",
+                       FileUtil.toSystemIndependentName(new File(getProjectPath(), "project3").getAbsolutePath()));
+
+    assertModuleGroupPath("rootName", "rootName");
+    assertModuleGroupPath("project1", "rootName", "project1");
+    assertModuleGroupPath("project2", "rootName", "project1", "project2");
+    assertModuleGroupPath("project3", "rootName", "project1", "project3");
   }
 
   protected void assertDefaultGradleJavaProjectFolders(@NotNull String mainModuleName) {

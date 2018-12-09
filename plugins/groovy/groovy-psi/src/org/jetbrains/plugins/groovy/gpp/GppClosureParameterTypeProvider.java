@@ -30,7 +30,7 @@ import java.util.*;
  */
 public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnhancer {
   @Override
-  protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
+  protected PsiType getClosureParameterType(@NotNull GrClosableBlock closure, int index) {
     final PsiElement parent = closure.getParent();
     if (parent instanceof GrNamedArgument) {
       final Pair<PsiMethod, PsiSubstitutor> pair = getOverriddenMethod((GrNamedArgument)parent);

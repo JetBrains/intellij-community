@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -26,7 +25,6 @@ import java.util.List;
 /**
  * @see UiDefaultsHardcodedKeys
  */
-//TODO test
 public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
   private static final String JB_COLOR_FQN = JBColor.class.getCanonicalName();
   private static final String NAMED_COLOR_METHOD_NAME = "namedColor";
@@ -148,11 +146,9 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
         PsiExpressionList argumentList = ((PsiMethodCallExpression)initializer).getArgumentList();
         PsiExpression additionalArgument = JavaPsiFacade.getElementFactory(project)
           .createExpressionFromText("\"" + absentKey + "\"", null);
-        WriteAction.run(() -> {
-          PsiElement addedArgument = argumentList.add(additionalArgument);
-          PsiElement newLineElement = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n");
-          argumentList.addAfter(newLineElement, addedArgument);
-        });
+        PsiElement addedArgument = argumentList.add(additionalArgument);
+        PsiElement newLineElement = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n");
+        argumentList.addAfter(newLineElement, addedArgument);
       }
     };
   }

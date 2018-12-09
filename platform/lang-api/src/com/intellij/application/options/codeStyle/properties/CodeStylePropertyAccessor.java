@@ -17,16 +17,18 @@ public abstract class CodeStylePropertyAccessor<T> {
     myField = field;
   }
 
-  public void set(@NotNull String str) {
+  public boolean set(@NotNull String str) {
     try {
       T value = parseString(str);
       if (value != null) {
         myField.set(myObject, value);
+        return true;
       }
     }
     catch (IllegalAccessException e) {
       // Ignore and skip
     }
+    return false;
   }
 
   @Nullable
@@ -34,7 +36,7 @@ public abstract class CodeStylePropertyAccessor<T> {
     try {
       //noinspection unchecked
       T value = (T)myField.get(myObject);
-      return !isEmpty(value) ? asString(value) : null;
+      return value != null && !isEmpty(value) ? asString(value) : null;
     }
     catch (IllegalAccessException e) {
       // Ignore and return null
@@ -56,4 +58,8 @@ public abstract class CodeStylePropertyAccessor<T> {
 
   @NotNull
   protected abstract String asString(@NotNull T value);
+
+  public String getPropertyName() {
+    return PropertyNameUtil.getPropertyName(myField.getName());
+  }
 }

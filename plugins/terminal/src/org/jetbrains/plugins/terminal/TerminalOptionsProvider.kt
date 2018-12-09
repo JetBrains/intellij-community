@@ -7,15 +7,13 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.SystemInfo
 import java.io.File
-import java.util.HashMap
 
 /**
  * @author traff
  */
-
 @State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml"))])
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
-  private val myState = State()
+  private var myState = State()
 
   var shellPath: String? by ValueWithDefault(State::myShellPath, myState) { defaultShellPath }
 
@@ -24,16 +22,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   override fun loadState(state: State) {
-    myState.myCloseSessionOnLogout = state.myCloseSessionOnLogout
-    myState.myReportMouse = state.myReportMouse
-    myState.mySoundBell = state.mySoundBell
-    myState.myTabName = state.myTabName
-    myState.myCopyOnSelection = state.myCopyOnSelection
-    myState.myPasteOnMiddleMouseButton = state.myPasteOnMiddleMouseButton
-    myState.myOverrideIdeShortcuts = state.myOverrideIdeShortcuts
-    myState.myShellIntegration = state.myShellIntegration
-    myState.myShellPath = state.myShellPath
-    myState.myHighlightHyperlinks = state.myHighlightHyperlinks
+    myState = state
   }
 
   fun closeSessionOnLogout(): Boolean {
@@ -81,7 +70,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
-    var myUserSpecifiedEnvs: Map<String, String> = hashMapOf("PROJECT_DIR" to "\$PROJECT_DIR$")
+    var myUserSpecifiedEnvs: Map<String, String> = LinkedHashMap()
     var myPassParentEnvs = true
   }
 

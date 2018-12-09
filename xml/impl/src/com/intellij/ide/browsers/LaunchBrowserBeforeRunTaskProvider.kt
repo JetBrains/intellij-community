@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.xml.XmlBundle
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.resolvedPromise
 import javax.swing.Icon
 import javax.swing.border.EmptyBorder
 
@@ -79,7 +80,7 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
     if (startJavaScriptDebuggerCheckBox != null) {
       state.withDebugger = startJavaScriptDebuggerCheckBox.isSelected
     }
-    return Promise.resolve(modificationCount != state.modificationCount)
+    return resolvedPromise(modificationCount != state.modificationCount)
   }
 
   override fun executeTask(context: DataContext, configuration: RunConfiguration, env: ExecutionEnvironment, task: LaunchBrowserBeforeRunTask): Boolean {

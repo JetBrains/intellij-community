@@ -9,6 +9,10 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityActionWrapper;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.JvmModifiersOwner;
+import com.intellij.lang.jvm.actions.JvmElementActionFactories;
+import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -86,9 +90,9 @@ public class HighlightFixUtil {
 
     PsiClass packageLocalClassInTheMiddle = getPackageLocalClassInTheMiddle(place);
     if (packageLocalClassInTheMiddle != null) {
-      IntentionAction fix =
-        QUICK_FIX_FACTORY.createModifierListFix(packageLocalClassInTheMiddle, PsiModifier.PUBLIC, true, true);
-      QuickFixAction.registerQuickFixAction(errorResult, fix);
+      List<IntentionAction> fix =
+        JvmElementActionFactories.createModifierActions(packageLocalClassInTheMiddle, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
+      QuickFixAction.registerQuickFixActions(errorResult, fix);
       return;
     }
 
@@ -188,12 +192,12 @@ public class HighlightFixUtil {
 
   static void registerStaticProblemQuickFixAction(@NotNull PsiElement refElement, HighlightInfo errorResult, @NotNull PsiJavaCodeReferenceElement place) {
     if (refElement instanceof PsiModifierListOwner) {
-      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix((PsiModifierListOwner)refElement, PsiModifier.STATIC, true, false));
+      QuickFixAction.registerQuickFixActions(errorResult, JvmElementActionFactories.createModifierActions((JvmModifiersOwner)refElement, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true)));
     }
     // make context non static
     PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, null);
     if (staticParent != null && isInstanceReference(place)) {
-      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(staticParent, PsiModifier.STATIC, false, false));
+      QuickFixAction.registerQuickFixActions(errorResult, JvmElementActionFactories.createModifierActions(staticParent, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
     }
     if (place instanceof PsiReferenceExpression && refElement instanceof PsiField) {
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createCreateFieldFromUsageFix((PsiReferenceExpression)place));

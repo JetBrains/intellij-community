@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.stdlib.*
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -149,7 +150,7 @@ class PyDataclassInspection : PyInspection() {
                           ProblemHighlightType.GENERIC_ERROR)
         }
 
-        if (leftClass == rightClass && leftDataclassParameters?.order == false) {
+        if (leftClass == rightClass && leftDataclassParameters?.order == false && !definedReferencedOperator(leftClass, node)) {
           registerProblem(node.psiOperator,
                           "'${node.referencedName}' not supported between instances of '${leftClass.name}'",
                           ProblemHighlightType.GENERIC_ERROR)
@@ -215,6 +216,17 @@ class PyDataclassInspection : PyInspection() {
       if (parseDataclassParameters(cls, myTypeEvalContext)?.frozen == true) {
         registerProblem(expression, "'${cls.name}' object attribute '${expression.name}' is read-only", ProblemHighlightType.GENERIC_ERROR)
       }
+    }
+
+    private fun definedReferencedOperator(cls: PyClass, node: PyBinaryExpression): Boolean {
+      val type = cls.getType(myTypeEvalContext) ?: return false
+      val leftOperator = node.referencedName ?: return false
+
+      val direction = AccessDirection.of(node)
+      if (!type.resolveMember(leftOperator, node, direction, resolveContext).isNullOrEmpty()) return true
+
+      val rightOperator = PyNames.leftToRightOperatorName(leftOperator)
+      return rightOperator != null && !type.resolveMember(rightOperator, node, direction, resolveContext).isNullOrEmpty()
     }
 
     private fun getInstancePyClass(element: PyTypedElement?): PyClass? {

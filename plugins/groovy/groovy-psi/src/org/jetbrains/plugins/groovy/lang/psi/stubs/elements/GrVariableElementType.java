@@ -58,7 +58,7 @@ public final class GrVariableElementType extends GrStubElementType<GrVariableStu
   public boolean shouldCreateStub(ASTNode node) {
     ASTNode parent = node.getTreeParent();
     return parent != null &&
-           parent.getElementType() == GroovyElementTypes.VARIABLE_DEFINITION &&
-           GroovyElementTypes.VARIABLE_DEFINITION.shouldCreateStub(parent);
+           parent.getElementType() == GroovyElementTypes.VARIABLE_DECLARATION &&
+           GroovyElementTypes.VARIABLE_DECLARATION.shouldCreateStub(parent);
   }
 }

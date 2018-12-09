@@ -188,9 +188,9 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     return frame instanceof Window && ((Window)frame).isActive();
   }
 
-  private static final Color TEXT_COLOR = JBColor.namedColor("Notification.Error.foreground", NotificationsManagerImpl.DEFAULT_TEXT_COLOR);
-  private static final Color FILL_COLOR = JBColor.namedColor("Notification.Error.background", new JBColor(0XF5E6E7, 0X593D41));
-  private static final Color BORDER_COLOR = JBColor.namedColor("Notification.Error.borderColor", new JBColor(0XE0A8A9, 0X73454B));
+  private static final Color TEXT_COLOR = JBColor.namedColor("Notification.errorForeground", NotificationsManagerImpl.DEFAULT_TEXT_COLOR);
+  private static final Color FILL_COLOR = JBColor.namedColor("Notification.errorBackground", new JBColor(0XF5E6E7, 0X593D41));
+  private static final Color BORDER_COLOR = JBColor.namedColor("Notification.errorBorderColor", new JBColor(0XE0A8A9, 0X73454B));
 
   private void showErrorNotification(@NotNull Project project) {
     String title = DiagnosticBundle.message("error.new.notification.title");

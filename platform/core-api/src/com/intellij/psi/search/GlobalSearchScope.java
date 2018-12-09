@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -357,7 +358,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    */
   @NotNull
   @Contract(pure = true)
-  public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+  public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files) {
     return filesScope(project, files, null);
   }
 
@@ -369,20 +370,20 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    */
   @NotNull
   @Contract(pure = true)
-  public static GlobalSearchScope filesWithoutLibrariesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+  public static GlobalSearchScope filesWithoutLibrariesScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files) {
     if (files.isEmpty()) return EMPTY_SCOPE;
     return new FilesScope(project, files, false, false);
   }
 
   @NotNull
   @Contract(pure = true)
-  public static GlobalSearchScope filesWithLibrariesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+  public static GlobalSearchScope filesWithLibrariesScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files) {
     return filesWithLibrariesScope(project, files, false);
   }
 
   @NotNull
   @Contract(pure = true)
-  public static GlobalSearchScope filesWithLibrariesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files,
+  public static GlobalSearchScope filesWithLibrariesScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files,
                                                           boolean searchOutsideRootModel) {
     if (files.isEmpty()) return EMPTY_SCOPE;
     return new FilesScope(project, files, true, searchOutsideRootModel);
@@ -393,7 +394,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    */
   @NotNull
   @Contract(pure = true)
-  public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files, @Nullable final String displayName) {
+  public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files, @Nullable final String displayName) {
     if (files.isEmpty()) return EMPTY_SCOPE;
     return files.size() == 1? fileScope(project, files.iterator().next(), displayName) : new FilesScope(project, files) {
       @NotNull
@@ -425,8 +426,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private boolean containsScope(@NotNull GlobalSearchScope scope) {
       if (myScope1.equals(scope) || myScope2.equals(scope) || equals(scope)) return true;
       if (myScope1 instanceof IntersectionScope && ((IntersectionScope)myScope1).containsScope(scope)) return true;
-      if (myScope2 instanceof IntersectionScope && ((IntersectionScope)myScope2).containsScope(scope)) return true;
-      return false;
+      return myScope2 instanceof IntersectionScope && ((IntersectionScope)myScope2).containsScope(scope);
     }
 
     @NotNull
@@ -494,6 +494,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public int calcHashCode() {
+      //noinspection deprecation
       return 31 * myScope1.hashCode() + myScope2.hashCode();
     }
 
@@ -791,19 +792,20 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   public static class FilesScope extends GlobalSearchScope implements Iterable<VirtualFile> {
-    private final Collection<VirtualFile> myFiles;
+    private final Set<? extends VirtualFile> myFiles;
     private final boolean mySearchOutsideRootModel;
     private volatile Boolean myHasFilesOutOfProjectRoots;
 
-    private FilesScope(@Nullable Project project, @NotNull Collection<VirtualFile> files) {
+    private FilesScope(@Nullable Project project, @NotNull Collection<? extends VirtualFile> files) {
       this(project, files, null, false);
     }
 
     // Optimization
-    private FilesScope(@Nullable  Project project, @NotNull Collection<VirtualFile> files, @Nullable Boolean hasFilesOutOfProjectRoots,
+    private FilesScope(@Nullable  Project project, @NotNull Collection<? extends VirtualFile> files, @Nullable Boolean hasFilesOutOfProjectRoots,
                        boolean searchOutsideRootModel) {
       super(project);
-      myFiles = files;
+      myFiles = new CompactVirtualFileSet(files);
+      ((CompactVirtualFileSet)myFiles).freeze();
       mySearchOutsideRootModel = searchOutsideRootModel;
       myHasFilesOutOfProjectRoots = hasFilesOutOfProjectRoots;
     }
@@ -839,21 +841,23 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
         Project project = getProject();
         myHasFilesOutOfProjectRoots = result =
           project != null && !project.isDefault() &&
-          myFiles.stream().anyMatch(file -> FileIndexFacade.getInstance(project).getModuleForFile(file) == null);
+          ContainerUtil.find(myFiles, file -> FileIndexFacade.getInstance(project).getModuleForFile(file) != null) == null;
       }
       return result;
     }
 
     @Override
     public String toString() {
-      List<VirtualFile> files = myFiles.size() <= 20 ? new ArrayList<>(myFiles) : new ArrayList<>(myFiles).subList(0, 20);
+      List<VirtualFile> files = ContainerUtil.getFirstItems(new ArrayList<>(myFiles), 20);
       return "Files: ("+ files +"); search in libraries: " + (myHasFilesOutOfProjectRoots != null ? myHasFilesOutOfProjectRoots : "unknown");
     }
 
     @NotNull
     @Override
     public Iterator<VirtualFile> iterator() {
-      return myFiles.iterator();
+      //noinspection unchecked
+      return (Iterator<VirtualFile>) // optimization hack: avoid copying in `new ArrayList(myFiles).iterator()`
+        myFiles.iterator();
     }
 
     @Override
