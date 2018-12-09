@@ -1,4 +1,5 @@
 import org.gradle.tooling.GradleConnector
+import org.gradle.util.GradleVersion
 
 plugins {
   id "base"
