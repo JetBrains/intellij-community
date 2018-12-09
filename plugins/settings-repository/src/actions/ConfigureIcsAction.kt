@@ -17,22 +17,25 @@ import kotlin.properties.Delegates
 
 internal class ConfigureIcsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    var urlTextField: TextFieldWithBrowseButton by Delegates.notNull()
     icsManager.runInAutoCommitDisabledMode {
+      var urlTextField: TextFieldWithBrowseButton by Delegates.notNull()
       val panel = panel {
         row(icsMessage("settings.upstream.url")) {
           urlTextField = textFieldWithBrowseButton(value = icsManager.repositoryManager.getUpstream(),
                                                    browseDialogTitle = "Choose Local Git Repository",
                                                    fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
         }
+
+        noteRow("See the docs <a href=\"https://www.jetbrains.com/help/idea/sharing-your-ide-settings.html#settings-repository\">Share settings through a settings repository</a> for more info.")
       }
       dialog(title = icsMessage("settings.panel.title"),
              panel = panel,
              focusedComponent = urlTextField,
              project = e.project,
              createActions = {
-                                          createMergeActions(e.project, urlTextField, it)
-                                        }).show()
+               createMergeActions(e.project, urlTextField, it)
+             })
+        .show()
     }
   }
 
@@ -42,7 +45,7 @@ internal class ConfigureIcsAction : DumbAwareAction() {
       return
     }
 
-    e.presentation.isEnabledAndVisible = icsManager.isActive || !(application.stateStore.storageManager as StateStorageManagerImpl).compoundStreamProvider.enabled
+    e.presentation.isEnabledAndVisible = icsManager.isActive || !(application.stateStore.storageManager as StateStorageManagerImpl).compoundStreamProvider.isExclusivelyEnabled
     e.presentation.icon = null
   }
 }

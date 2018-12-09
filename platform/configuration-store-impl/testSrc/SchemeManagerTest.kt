@@ -157,6 +157,8 @@ internal class SchemeManagerTest {
 
     // use provider to specify exact order of files (it is critical to test both variants - old, new or new, old)
     val schemeManager = SchemeManagerImpl(FILE_SPEC, ATestSchemesProcessor(), object : StreamProvider {
+      override val isExclusive = true
+
       override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
         getFile(fileSpec).write(content, 0, size)
       }
