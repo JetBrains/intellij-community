@@ -33,7 +33,7 @@ public interface PsiBreakStatement extends PsiStatement {
    */
   @Nullable PsiElement findExitedElement();
 
-  /** @deprecated the PSI structure has changed since 2019.1; use {@link #getLabelExpression()}} instead */
+  /** @deprecated the PSI structure has changed since 2019.1; use {@link #getLabelExpression()} instead */
   @Deprecated
   default PsiIdentifier getLabelIdentifier() {
     PsiReferenceExpression expression = getLabelExpression();
