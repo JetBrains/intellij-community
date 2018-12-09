@@ -17,8 +17,8 @@ fun showOkNoDialog(@Nls(capitalization = Nls.Capitalization.Title) title: String
 @Messages.OkCancelResult
 fun showOkCancelDialog(@Nls(capitalization = Nls.Capitalization.Title) title: String,
                        @Nls(capitalization = Nls.Capitalization.Sentence) message: String,
-                       okText: String = Messages.OK_BUTTON,
-                       cancelText: String,
+                       okText: String,
+                       cancelText: String = Messages.CANCEL_BUTTON,
                        icon: Icon? = null,
                        doNotAskOption: DialogWrapper.DoNotAskOption? = null,
                        project: Project? = null): Int {

@@ -82,7 +82,6 @@ open class ExportSettingsAction : AnAction(), DumbAware {
           title = IdeBundle.message("title.file.already.exists"),
           message = IdeBundle.message("prompt.overwrite.settings.file", saveFile.toString()),
           okText = IdeBundle.message("action.overwrite"),
-          cancelText = Messages.CANCEL_BUTTON,
           icon = Messages.getWarningIcon()) != Messages.OK) {
         return
       }
@@ -228,7 +227,7 @@ private inline fun getAdditionalExportFile(stateAnnotation: State, storageManage
     return null
   }
 
-  var additionalExportFile: Path? = null
+  val additionalExportFile: Path?
   // backward compatibility - path can contain macro
   if (additionalExportPath[0] == '$') {
     additionalExportFile = Paths.get(storageManager.expandMacros(additionalExportPath))
