@@ -26,7 +26,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.putValue
@@ -122,11 +121,11 @@ fun exportSettings(exportFiles: Set<Path>, out: OutputStream, configPath: String
 data class ExportableItem(val file: Path, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
 
 fun exportInstalledPlugins(zipOut: ZipOutputStream) {
-  val plugins = PluginManagerCore.getPlugins().filter { !it.isBundled && it.isEnabled }.map { it.pluginId.idString }
+  val plugins = PluginManagerCore.getPlugins().mapNotNull { if (!it.isBundled && it.isEnabled) it.pluginId.idString else null }
   if (!plugins.isEmpty()) {
     zipOut.putNextEntry(ZipEntry(PluginManager.INSTALLED_TXT))
     try {
-      PluginManagerCore.writePluginsList(plugins, OutputStreamWriter(zipOut, CharsetToolkit.UTF8_CHARSET))
+      PluginManagerCore.writePluginsList(plugins, OutputStreamWriter(zipOut, Charsets.UTF_8))
     }
     finally {
       zipOut.closeEntry()
