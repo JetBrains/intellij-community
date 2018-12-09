@@ -43,6 +43,7 @@ import java.util.regex.Pattern
 
 private val LOG = logger<GitFetchSupportImpl>()
 private val PRUNE_PATTERN = Pattern.compile("\\s*x\\s*\\[deleted\\].*->\\s*(\\S*)") // x [deleted]  (none) -> origin/branch
+private const val MAX_SSH_CONNECTIONS = 10 // by default SSH server has a limit of 10 multiplexed ssh connection
 
 internal class GitFetchSupportImpl(git: Git,
                                    private val project: Project,
@@ -118,7 +119,7 @@ internal class GitFetchSupportImpl(git: Git,
 
   private fun fetchInParallel(remotes: List<Pair<GitRepository, GitRemote>>): List<FetchTask> {
     val tasks = mutableListOf<FetchTask>()
-    val maxThreads = Math.min(getMaxThreads(remotes.size), 10)
+    val maxThreads = getMaxThreads(remotes.size)
     LOG.debug("Fetching $remotes using $maxThreads threads")
     val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitFetch pool", maxThreads)
     val commonIndicator = progressManager.progressIndicator ?: EmptyProgressIndicator()
@@ -140,14 +141,16 @@ internal class GitFetchSupportImpl(git: Git,
   }
 
   private fun getMaxThreads(numberOfRemotes: Int): Int {
-    val maxThreads = Registry.intValue("git.parallel.fetch.threads")
-    return when {
-      maxThreads > 0 -> maxThreads
-      maxThreads == -1 -> Runtime.getRuntime().availableProcessors()
-      maxThreads == -2 -> numberOfRemotes
-      maxThreads == -3 -> Math.min(numberOfRemotes, Runtime.getRuntime().availableProcessors() * 2)
+    val config = Registry.intValue("git.parallel.fetch.threads")
+    val maxThreads = when {
+      config > 0 -> config
+      config == -1 -> Runtime.getRuntime().availableProcessors()
+      config == -2 -> numberOfRemotes
+      config == -3 -> Math.min(numberOfRemotes, Runtime.getRuntime().availableProcessors() * 2)
       else -> 1
     }
+
+    return Math.min(maxThreads, MAX_SSH_CONNECTIONS)
   }
 
   private fun waitForFetchTasks(tasks: List<FetchTask>): List<SingleRemoteResult> {
