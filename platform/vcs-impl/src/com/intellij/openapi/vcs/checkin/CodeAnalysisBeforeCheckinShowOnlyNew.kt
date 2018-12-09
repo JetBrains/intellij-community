@@ -59,10 +59,8 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
 
     val commonCodeSmells = HashSet<CodeSmellInfo>()
     runAnalysisAfterShelvingSync(project, progressIndicator) {
-      WriteAction.runAndWait<Exception> {
-        VfsUtil.markDirtyAndRefresh(false, false, false, *files4Update)
-        PsiDocumentManagerImpl.getInstance(project).commitAllDocuments()
-      }
+      VfsUtil.markDirtyAndRefresh(false, false, false, *files4Update)
+      WriteAction.runAndWait<Exception> { PsiDocumentManagerImpl.getInstance(project).commitAllDocuments() }
       codeSmellDetector.findCodeSmells(selectedFiles.filter { it.exists() }).forEach { oldCodeSmell ->
         val file = FileDocumentManager.getInstance().getFile(oldCodeSmell.document) ?: return@forEach
         location2CodeSmell[Pair(file, oldCodeSmell.startLine)].forEach inner@{ newCodeSmell ->
