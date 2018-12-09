@@ -148,11 +148,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Override
   public void restorePopupBehavior() {
-    if (myPreviouslyFocused != null) {
-      IdeFocusManager.getInstance(myProject).requestFocus(myPreviouslyFocused, true);
-    }
     super.restorePopupBehavior();
-    updateComponent(true);
+    if (myPreviouslyFocused != null && myPreviouslyFocused.isShowing()) {
+      IdeFocusManager.getInstance(myProject).requestFocus(myPreviouslyFocused, true);
+      updateComponent(true);
+    }
   }
 
   @Override
