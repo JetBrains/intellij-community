@@ -172,10 +172,10 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
           replaceAssertLiteralWithAssertEquals(callExpression, position, assertTrueFalseHint.getMessage(), assertTrueFalseHint.getArgIndex(), "assertEquals");
         }
         else if (assertTrue && isNegatedCondition(position)) {
-          negateBooleanAssertion(callExpression, (PsiPrefixExpression) position, "assertFalse");
+          replaceWithNegatedBooleanAssertion(callExpression, (PsiPrefixExpression) position, "assertFalse");
         }
         else if (assertFalse && isNegatedCondition(position)) {
-          negateBooleanAssertion(callExpression, (PsiPrefixExpression) position, "assertTrue");
+          replaceWithNegatedBooleanAssertion(callExpression, (PsiPrefixExpression) position, "assertTrue");
         }
         else if (isAssertThatCouldBeFail(position, !assertTrue)) {
           replaceAssertWithFail(callExpression, assertTrueFalseHint.getMessage());
@@ -325,12 +325,15 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
              (PsiType.DOUBLE.equals(rhsType) && PsiType.FLOAT.equals(rhsType));
     }
 
-    private void negateBooleanAssertion(PsiMethodCallExpression callExpression, PsiPrefixExpression binaryExpression, String target) {
+    private void replaceWithNegatedBooleanAssertion(PsiMethodCallExpression callExpression, PsiPrefixExpression binaryExpression, String newMethodName) {
       PsiExpression operand = binaryExpression.getOperand();
       if (operand == null) {
         return;
       }
-      PsiReplacementUtil.replaceExpressionAndShorten(callExpression, target + "(" + operand.getText() + ")");
+      StringBuilder builder = new StringBuilder();
+      addStaticImportOrQualifier(newMethodName, callExpression, builder);
+      builder.append(newMethodName).append("(").append(operand.getText()).append(")");
+      PsiReplacementUtil.replaceExpressionAndShorten(callExpression, builder.toString());
     }
 
     private void replaceAssertWithAssertNull(PsiMethodCallExpression callExpression,
