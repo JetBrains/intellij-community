@@ -28,7 +28,8 @@ public class GitPreservingExecutor implements VcsPreservingExecutor {
     if (!areRootsUnderGit(rootsToSave, gitRepositoryManager)) {
       return false;
     }
-    new GitPreservingProcess(project, Git.getInstance(), rootsToSave, operationTitle, "", GitVcsSettings.UpdateChangesPolicy.STASH,
+    new GitPreservingProcess(project, Git.getInstance(), rootsToSave, operationTitle, "",
+                             GitVcsSettings.getInstance(project).updateChangesPolicy(),
                              indicator, operation).execute();
     return true;
   }
