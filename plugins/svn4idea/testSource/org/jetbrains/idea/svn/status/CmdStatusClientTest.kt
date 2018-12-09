@@ -29,6 +29,16 @@ class CmdStatusClientTest : AbstractSvnClientTest() {
     assertEquals("list1", actual.changeListName)
   }
 
+  @Test
+  fun `parse status with undefined revision`() {
+    val actual = parseTestData()
+
+    assertEquals(File(base, "file1.txt"), actual.file)
+    assertEquals(StatusType.STATUS_ADDED, actual.itemStatus)
+    assertEquals(StatusType.STATUS_NONE, actual.propertyStatus)
+    assertEquals(Revision.UNDEFINED, actual.revision)
+  }
+
   private fun parseTestData(): Status = CmdStatusClient.parseResult(base, getTestData().readText()) ?: fail("Could not parse status")
 
   private fun assertStatus(actual: Status) {
