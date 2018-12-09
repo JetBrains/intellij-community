@@ -49,7 +49,6 @@ public abstract class ContractValue {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     DfaValue[] argValues = new DfaValue[parameters.length];
     for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
       DfaValue argValue = null;
       if (i < args.length && (!varArgCall || i < parameters.length - 1)) {
         argValue = factory.createValue(args[i]);
@@ -161,7 +160,7 @@ public abstract class ContractValue {
 
     @Override
     public String toString() {
-      return "arg#" + myIndex;
+      return "param" + (myIndex + 1);
     }
   }
 
