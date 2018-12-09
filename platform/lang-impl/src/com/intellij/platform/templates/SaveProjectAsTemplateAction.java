@@ -29,7 +29,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -417,13 +416,14 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
                                new ZipUtil.FileContentProcessor() {
                                  @Override
                                  public InputStream getContent(@NotNull final File file) throws IOException {
-                                   if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName()))
+                                   if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName())) {
                                      return STANDARD.getContent(file);
+                                   }
                                    String result =
                                      getEncodedContent(virtualFile, myProject, myParameters, getFileHeaderTemplateName(), myShouldEscape);
-                                   return new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET));
+                                   return new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8));
                                  }
-                               });
+                               }, false);
         }
         catch (IOException e) {
           LOG.error(e);

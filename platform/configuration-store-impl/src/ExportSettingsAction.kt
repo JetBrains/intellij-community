@@ -108,7 +108,7 @@ fun exportSettings(exportFiles: Set<Path>, out: OutputStream, configPath: String
         ZipUtil.addDirToZipRecursively(zipOut, null, file.toFile(), relativePath, null, writtenItemRelativePaths)
       }
       else {
-        addFileToZip(zipOut, file.toFile(), relativePath, writtenItemRelativePaths, null)
+        addFileToZip(zipOut, file.toFile(), relativePath, writtenItemRelativePaths, null, ZipUtil.FileContentProcessor { file.inputStream() }, false)
       }
     }
 

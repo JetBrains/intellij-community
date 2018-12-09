@@ -38,7 +38,7 @@ public class ZipUtil {
                                      @NotNull String relativeName,
                                      @Nullable Set<? super String> writtenItemRelativePaths,
                                      @Nullable FileFilter fileFilter) throws IOException {
-    return addFileToZip(zos, file, relativeName, writtenItemRelativePaths, fileFilter, FileContentProcessor.STANDARD);
+    return addFileToZip(zos, file, relativeName, writtenItemRelativePaths, fileFilter, FileContentProcessor.STANDARD, file.isDirectory());
   }
 
   /*
@@ -49,12 +49,12 @@ public class ZipUtil {
                                      @NotNull String relativeName,
                                      @Nullable Set<? super String> writtenItemRelativePaths,
                                      @Nullable FileFilter fileFilter,
-                                     @NotNull FileContentProcessor contentProcessor) throws IOException {
+                                     @NotNull FileContentProcessor contentProcessor,
+                                     boolean isDir) throws IOException {
     while (!relativeName.isEmpty() && relativeName.charAt(0) == '/') {
       relativeName = relativeName.substring(1);
     }
 
-    boolean isDir = file.isDirectory();
     if (isDir && !StringUtil.endsWithChar(relativeName, '/')) {
       relativeName += "/";
     }
@@ -77,7 +77,7 @@ public class ZipUtil {
     if (!isDir) {
       InputStream is = contentProcessor.getContent(file);
       try {
-        FileUtil.copy(is, zos);
+        FileUtilRt.copy(is, zos);
       }
       finally {
         is.close();
@@ -111,8 +111,9 @@ public class ZipUtil {
       return false;
     }
     if (!relativePath.isEmpty()) {
-      addFileToZip(outputStream, dir, relativePath, writtenItemRelativePaths, fileFilter);
+      addFileToZip(outputStream, dir, relativePath, writtenItemRelativePaths, fileFilter, FileContentProcessor.STANDARD, true);
     }
+
     File[] children = dir.listFiles();
     if (children != null) {
       for (File child : children) {
