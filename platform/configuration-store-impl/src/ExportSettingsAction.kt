@@ -24,6 +24,7 @@ import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PlatformUtils
@@ -77,9 +78,12 @@ open class ExportSettingsAction : AnAction(), DumbAware {
 
     val saveFile = dialog.exportFile
     try {
-      if (saveFile.exists() && Messages.showOkCancelDialog(
-          IdeBundle.message("prompt.overwrite.settings.file", saveFile.toString()),
-          IdeBundle.message("title.file.already.exists"), Messages.getWarningIcon()) != Messages.OK) {
+      if (saveFile.exists() && showOkCancelDialog(
+          title = IdeBundle.message("title.file.already.exists"),
+          message = IdeBundle.message("prompt.overwrite.settings.file", saveFile.toString()),
+          okText = IdeBundle.message("action.overwrite"),
+          cancelText = Messages.CANCEL_BUTTON,
+          icon = Messages.getWarningIcon()) != Messages.OK) {
         return
       }
 
@@ -87,8 +91,8 @@ open class ExportSettingsAction : AnAction(), DumbAware {
       ShowFilePathAction.showDialog(getEventProject(e), IdeBundle.message("message.settings.exported.successfully"),
                                     IdeBundle.message("title.export.successful"), saveFile.toFile(), null)
     }
-    catch (e1: IOException) {
-      Messages.showErrorDialog(IdeBundle.message("error.writing.settings", e1.toString()), IdeBundle.message("title.error.writing.file"))
+    catch (e: IOException) {
+      Messages.showErrorDialog(IdeBundle.message("error.writing.settings", e.toString()), IdeBundle.message("title.error.writing.file"))
     }
   }
 }
