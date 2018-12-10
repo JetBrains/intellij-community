@@ -393,7 +393,7 @@ idea.fatal.error.notification=disabled
             else {
               String[] liteGenArgs = [
                 'runToolboxLiteGen',
-                "-Pintellij.litegen.build=${toolboxLiteGenVersion}",
+                "-Pintellij.build.toolbox.litegen.version=${toolboxLiteGenVersion}",
                 //NOTE[jo]: right now we assume all installer files are created under the same path
                 "-Pintellij.build.artifacts=${buildContext.paths.artifacts}",
                 "-Pintellij.build.productCode=${buildContext.productProperties.productCode}",
