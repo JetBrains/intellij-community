@@ -105,6 +105,8 @@ class PyDataclassInspection : PyInspection() {
 
           PyNamedTupleInspection.inspectFieldsOrder(
             node,
+            { parseDataclassParameters(it, myTypeEvalContext) != null },
+            myTypeEvalContext,
             this::registerProblem,
             {
               val stub = it.stub

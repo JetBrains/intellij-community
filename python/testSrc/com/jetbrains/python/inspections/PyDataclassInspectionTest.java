@@ -56,6 +56,16 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-28506, PY-31762
+  public void testFieldsOrderInInheritance() {
+    doTest();
+  }
+
+  // PY-28506, PY-31762
+  public void testFieldsOrderInMixedInheritance() {
+    doTest();
+  }
+
   // PY-27398
   public void testComparisonForOrdered() {
     doTest();
