@@ -297,7 +297,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   public static class CaptureAsyncStackTraceProvider implements AsyncStackTraceProvider {
     @Nullable
     @Override
-    public List<StackFrameItem> getAsyncStackTrace(JavaStackFrame stackFrame, SuspendContextImpl suspendContext) {
+    public List<StackFrameItem> getAsyncStackTrace(@NotNull JavaStackFrame stackFrame, @NotNull SuspendContextImpl suspendContext) {
       if (AsyncStacksToggleAction.isAsyncStacksEnabled((XDebugSessionImpl)suspendContext.getDebugProcess().getXdebugProcess().getSession())) {
         return getRelatedStack(stackFrame.getStackFrameProxy(), suspendContext);
       }
