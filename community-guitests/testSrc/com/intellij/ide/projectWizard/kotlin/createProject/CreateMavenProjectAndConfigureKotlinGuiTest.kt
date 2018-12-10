@@ -35,7 +35,8 @@ class CreateMavenProjectAndConfigureKotlinGuiTest(private val testParameters: Te
     if (!isIdeFrameRun()) return
     createMavenProject(
       projectPath = projectFolder,
-      artifact = projectName)
+      artifact = projectName,
+      projectSdk = testParameters.project.projectSdk)
     waitAMoment()
     when(testParameters.kotlinKind){
       KotlinKind.Jvm -> configureKotlinJvmFromMaven(kotlinVersion)
