@@ -21,12 +21,6 @@ public final class QuickFixAction {
     registerQuickFixAction(info, null, action, key);
   }
 
-  public static void registerQuickFixActions(@Nullable HighlightInfo info, @NotNull List<IntentionAction> actions) {
-    for (IntentionAction action : actions) {
-      registerQuickFixAction(info, null, action);
-    }
-  }
-
   public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable IntentionAction action) {
     registerQuickFixAction(info, null, action);
   }

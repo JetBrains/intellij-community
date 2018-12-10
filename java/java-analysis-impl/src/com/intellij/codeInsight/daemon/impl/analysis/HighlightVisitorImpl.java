@@ -1394,8 +1394,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               !((PsiMethod)method).isConstructor() &&
               !((PsiMethod)method).hasModifierProperty(PsiModifier.ABSTRACT)) {
             boolean shouldHave = !((PsiMethod)method).hasModifierProperty(PsiModifier.STATIC);
-            QuickFixAction.registerQuickFixActions(info, JvmElementActionFactories.createModifierActions(
-              (JvmModifiersOwner)method, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, shouldHave)));
+            QuickFixAction.registerQuickFixActions(info, null, JvmElementActionFactories.createModifierActions(
+                      (JvmModifiersOwner)method, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, shouldHave)));
           }
           myHolder.add(info);
         }

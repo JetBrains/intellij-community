@@ -102,14 +102,14 @@ public class HighlightClassUtil {
           JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, superClass)) {
         QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createImplementMethodsFix(implementsFixElement));
       } else {
-        QuickFixAction.registerQuickFixActions(errorResult, JvmElementActionFactories.createModifierActions(anyMethodToImplement, MemberRequestsKt.modifierRequest(JvmModifier.PROTECTED, true)));
-        QuickFixAction.registerQuickFixActions(errorResult, JvmElementActionFactories.createModifierActions(anyMethodToImplement, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true)));
+        QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(anyMethodToImplement, MemberRequestsKt.modifierRequest(JvmModifier.PROTECTED, true)));
+        QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(anyMethodToImplement, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true)));
       }
     }
     if (!(aClass instanceof PsiAnonymousClass) && 
         !aClass.isEnum()
         && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {
-      QuickFixAction.registerQuickFixActions(errorResult, JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.ABSTRACT, true)));
+      QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.ABSTRACT, true)));
     }
     return errorResult;
   }
@@ -136,8 +136,7 @@ public class HighlightClassUtil {
       final PsiMethod anyAbstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
       if (!aClass.isInterface() && anyAbstractMethod == null) {
         // suggest to make not abstract only if possible
-        QuickFixAction.registerQuickFixActions(errorResult,
-                                               JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.ABSTRACT, false)));
+        QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.ABSTRACT, false)));
       }
       if (anyAbstractMethod != null && highlightElement instanceof PsiNewExpression && ((PsiNewExpression)highlightElement).getClassReference() != null) {
         QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createImplementAbstractClassMethodsFix(highlightElement));
@@ -344,7 +343,7 @@ public class HighlightClassUtil {
     if (PsiUtilCore.hasErrorElementChild(method)) return null;
     String message = JavaErrorMessages.message("static.declaration.in.inner.class");
     HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
-    QuickFixAction.registerQuickFixActions(result, JvmElementActionFactories.createModifierActions(method, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
+    QuickFixAction.registerQuickFixActions(result, null, JvmElementActionFactories.createModifierActions(method, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
     registerMakeInnerClassStatic((PsiClass)keyword.getParent().getParent().getParent(), result);
     return result;
   }
@@ -358,7 +357,7 @@ public class HighlightClassUtil {
     if (PsiUtilCore.hasErrorElementChild(initializer)) return null;
     String message = JavaErrorMessages.message("static.declaration.in.inner.class");
     HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
-    QuickFixAction.registerQuickFixActions(result, JvmElementActionFactories.createModifierActions(initializer, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
+    QuickFixAction.registerQuickFixActions(result, null, JvmElementActionFactories.createModifierActions(initializer, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
     registerMakeInnerClassStatic((PsiClass)keyword.getParent().getParent().getParent(), result);
     return result;
   }
@@ -407,7 +406,7 @@ public class HighlightClassUtil {
     String message = JavaErrorMessages.message("static.declaration.in.inner.class");
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
     if (context != keyword) {
-      QuickFixAction.registerQuickFixActions(info, JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
+      QuickFixAction.registerQuickFixActions(info, null, JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
     }
     PsiClass containingClass = aClass.getContainingClass();
     registerMakeInnerClassStatic(containingClass, info);
@@ -491,8 +490,7 @@ public class HighlightClassUtil {
       String message = JavaErrorMessages.message("inheritance.from.final.class", superClass.getQualifiedName(), superClass.isEnum() ? PsiKeyword.ENUM : PsiKeyword.FINAL);
       errorResult =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message).create();
-      QuickFixAction.registerQuickFixActions(errorResult,
-                                             JvmElementActionFactories.createModifierActions(superClass, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
+      QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(superClass, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
     }
     return errorResult;
   }
@@ -726,7 +724,7 @@ public class HighlightClassUtil {
         String description = JavaErrorMessages.message("qualified.new.of.static.class");
         info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
         if (!aClass.isEnum()) {
-          QuickFixAction.registerQuickFixActions(info, JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
+          QuickFixAction.registerQuickFixActions(info, null, JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
         }
 
       } else if (aClass instanceof PsiAnonymousClass) {
@@ -922,11 +920,9 @@ public class HighlightClassUtil {
       HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(description).create();
       // make context not static or referenced class static
-      QuickFixAction.registerQuickFixActions(highlightInfo,
-                                             JvmElementActionFactories.createModifierActions(staticParent, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
+      QuickFixAction.registerQuickFixActions(highlightInfo, null, JvmElementActionFactories.createModifierActions(staticParent, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
       if (aClass != null && HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, aClass.getModifierList()) == null) {
-        QuickFixAction.registerQuickFixActions(highlightInfo,
-                                               JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true)));
+        QuickFixAction.registerQuickFixActions(highlightInfo, null, JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true)));
       }
       return highlightInfo;
     }
