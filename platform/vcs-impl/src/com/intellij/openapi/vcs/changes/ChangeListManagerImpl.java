@@ -12,7 +12,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -32,12 +35,15 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value;
 import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater;
 import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation;
+import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.impl.*;
+import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
+import com.intellij.openapi.vcs.impl.ContentRevisionCache;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -1215,131 +1221,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void addUnversionedFiles(@NotNull final LocalChangeList list, @NotNull final List<VirtualFile> files) {
-    addUnversionedFiles(list, files, getDefaultUnversionedFileCondition(), null);
-  }
-
-  // TODO this is for quick-fix for GitAdd problem. To be removed after proper fix
-  // (which should introduce something like VcsAddRemoveEnvironment)
-  @Deprecated
-  @NotNull
-  public List<VcsException> addUnversionedFiles(@NotNull final LocalChangeList list,
-                                                @NotNull final List<VirtualFile> files,
-                                                @NotNull final Condition<? super FileStatus> statusChecker,
-                                                @Nullable Consumer<? super List<Change>> changesConsumer) {
-    final List<VcsException> exceptions = new ArrayList<>();
-    final Set<VirtualFile> allProcessedFiles = new HashSet<>();
-    ChangesUtil.processVirtualFilesByVcs(myProject, files, (vcs, items) -> {
-      final CheckinEnvironment environment = vcs.getCheckinEnvironment();
-      if (environment != null) {
-        Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
-        Set<VirtualFile> parents = getUnversionedParents(vcs, items, statusChecker);
-
-        // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
-        // (inside the method) - so common add logic just needs to refresh statuses of parents
-        final List<VcsException> result = ContainerUtil.newArrayList();
-        ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding Files to VCS...", true) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            indicator.setIndeterminate(true);
-            List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
-            if (exs != null) {
-              ContainerUtil.addAll(result, exs);
-            }
-          }
-        });
-
-        allProcessedFiles.addAll(descendants);
-        allProcessedFiles.addAll(parents);
-        exceptions.addAll(result);
-      }
-    });
-
-    if (!exceptions.isEmpty()) {
-      StringBuilder message = new StringBuilder(VcsBundle.message("error.adding.files.prompt"));
-      for (VcsException ex : exceptions) {
-        message.append("\n").append(ex.getMessage());
-      }
-      Messages.showErrorDialog(myProject, message.toString(), VcsBundle.message("error.adding.files.title"));
-    }
-
-    for (VirtualFile file : allProcessedFiles) {
-      myFileStatusManager.fileStatusChanged(file);
-    }
-    VcsDirtyScopeManager.getInstance(myProject).filesDirty(allProcessedFiles, null);
-
-    final boolean moveRequired = !list.isDefault();
-    boolean syncUpdateRequired = changesConsumer != null;
-
-    if (moveRequired || syncUpdateRequired) {
-      // find the changes for the added files and move them to the necessary changelist
-      InvokeAfterUpdateMode updateMode =
-        syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
-
-      invokeAfterUpdate(() -> {
-        List<Change> newChanges = ContainerUtil.filter(getDefaultChangeList().getChanges(), change -> {
-          FilePath path = ChangesUtil.getAfterPath(change);
-          return path != null && allProcessedFiles.contains(path.getVirtualFile());
-        });
-
-        if (moveRequired && !newChanges.isEmpty()) {
-          moveChangesTo(list, newChanges.toArray(new Change[0]));
-        }
-
-        myChangesViewManager.scheduleRefresh();
-
-        if (changesConsumer != null) {
-          changesConsumer.consume(newChanges);
-        }
-      }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);
-    }
-    else {
-      myChangesViewManager.scheduleRefresh();
-    }
-
-    return exceptions;
+    ScheduleForAdditionAction.addUnversionedFilesToVcs(myProject, list, files, getDefaultUnversionedFileCondition(), null);
   }
 
   @NotNull
   public static Condition<FileStatus> getDefaultUnversionedFileCondition() {
     return status -> status == FileStatus.UNKNOWN;
-  }
-
-  @NotNull
-  private Set<VirtualFile> getUnversionedDescendantsRecursively(@NotNull List<? extends VirtualFile> items,
-                                                                @NotNull final Condition<? super FileStatus> condition) {
-    final Set<VirtualFile> result = ContainerUtil.newHashSet();
-    Processor<VirtualFile> addToResultProcessor = file -> {
-      if (condition.value(getStatus(file))) {
-        result.add(file);
-      }
-      return true;
-    };
-
-    for (VirtualFile item : items) {
-      VcsRootIterator.iterateVfUnderVcsRoot(myProject, item, addToResultProcessor);
-    }
-
-    return result;
-  }
-
-  @NotNull
-  private Set<VirtualFile> getUnversionedParents(@NotNull AbstractVcs vcs,
-                                                 @NotNull Collection<? extends VirtualFile> items,
-                                                 @NotNull Condition<? super FileStatus> condition) {
-    if (!vcs.areDirectoriesVersionedItems()) return Collections.emptySet();
-
-    HashSet<VirtualFile> result = ContainerUtil.newHashSet();
-
-    for (VirtualFile item : items) {
-      VirtualFile parent = item.getParent();
-
-      while (parent != null && condition.value(getStatus(parent))) {
-        result.add(parent);
-        parent = parent.getParent();
-      }
-    }
-
-    return result;
   }
 
   @Override

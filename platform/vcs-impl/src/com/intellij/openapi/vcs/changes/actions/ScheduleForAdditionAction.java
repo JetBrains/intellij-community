@@ -7,25 +7,30 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -86,7 +91,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     if (targetChangeList == null) targetChangeList = manager.getDefaultChangeList();
 
     FileDocumentManager.getInstance().saveAllDocuments();
-    List<VcsException> exceptions = manager.addUnversionedFiles(targetChangeList, files, unversionedFileCondition, changesConsumer);
+    List<VcsException> exceptions = addUnversionedFilesToVcs(project, targetChangeList, files, unversionedFileCondition, changesConsumer);
     return exceptions.isEmpty();
   }
 
@@ -124,5 +129,129 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
    */
   protected boolean checkVirtualFiles(@NotNull AnActionEvent e) {
     return ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES));
+  }
+
+  @NotNull
+  public static List<VcsException> addUnversionedFilesToVcs(@NotNull Project project,
+                                                            @NotNull final LocalChangeList list,
+                                                            @NotNull final List<VirtualFile> files,
+                                                            @NotNull final Condition<? super FileStatus> statusChecker,
+                                                            @Nullable Consumer<? super List<Change>> changesConsumer) {
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+
+    final List<VcsException> exceptions = new ArrayList<>();
+    final Set<VirtualFile> allProcessedFiles = new HashSet<>();
+    ChangesUtil.processVirtualFilesByVcs(project, files, (vcs, items) -> {
+      final CheckinEnvironment environment = vcs.getCheckinEnvironment();
+      if (environment != null) {
+        Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(project, items, statusChecker);
+        Set<VirtualFile> parents = getUnversionedParents(project, vcs, items, statusChecker);
+
+        // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
+        // (inside the method) - so common add logic just needs to refresh statuses of parents
+        final List<VcsException> result = ContainerUtil.newArrayList();
+        ProgressManager.getInstance().run(new Task.Modal(project, "Adding Files to VCS...", true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            indicator.setIndeterminate(true);
+            List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
+            if (exs != null) {
+              ContainerUtil.addAll(result, exs);
+            }
+          }
+        });
+
+        allProcessedFiles.addAll(descendants);
+        allProcessedFiles.addAll(parents);
+        exceptions.addAll(result);
+      }
+    });
+
+    if (!exceptions.isEmpty()) {
+      StringBuilder message = new StringBuilder(VcsBundle.message("error.adding.files.prompt"));
+      for (VcsException ex : exceptions) {
+        message.append("\n").append(ex.getMessage());
+      }
+      Messages.showErrorDialog(project, message.toString(), VcsBundle.message("error.adding.files.title"));
+    }
+
+    FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
+    for (VirtualFile file : allProcessedFiles) {
+      fileStatusManager.fileStatusChanged(file);
+    }
+    VcsDirtyScopeManager.getInstance(project).filesDirty(allProcessedFiles, null);
+
+    final boolean moveRequired = !list.isDefault();
+    boolean syncUpdateRequired = changesConsumer != null;
+
+    if (moveRequired || syncUpdateRequired) {
+      // find the changes for the added files and move them to the necessary changelist
+      InvokeAfterUpdateMode updateMode =
+        syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
+
+      changeListManager.invokeAfterUpdate(() -> {
+        List<Change> newChanges = ContainerUtil.filter(changeListManager.getDefaultChangeList().getChanges(), change -> {
+          FilePath path = ChangesUtil.getAfterPath(change);
+          return path != null && allProcessedFiles.contains(path.getVirtualFile());
+        });
+
+        if (moveRequired && !newChanges.isEmpty()) {
+          changeListManager.moveChangesTo(list, newChanges.toArray(new Change[0]));
+        }
+
+        ChangesViewManager.getInstance(project).scheduleRefresh();
+
+        if (changesConsumer != null) {
+          changesConsumer.consume(newChanges);
+        }
+      }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);
+    }
+    else {
+      ChangesViewManager.getInstance(project).scheduleRefresh();
+    }
+
+    return exceptions;
+  }
+
+  @NotNull
+  private static Set<VirtualFile> getUnversionedDescendantsRecursively(@NotNull Project project,
+                                                                       @NotNull List<? extends VirtualFile> items,
+                                                                       @NotNull Condition<? super FileStatus> condition) {
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    final Set<VirtualFile> result = ContainerUtil.newHashSet();
+    Processor<VirtualFile> addToResultProcessor = file -> {
+      if (condition.value(changeListManager.getStatus(file))) {
+        result.add(file);
+      }
+      return true;
+    };
+
+    for (VirtualFile item : items) {
+      VcsRootIterator.iterateVfUnderVcsRoot(project, item, addToResultProcessor);
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private static Set<VirtualFile> getUnversionedParents(@NotNull Project project,
+                                                        @NotNull AbstractVcs vcs,
+                                                        @NotNull Collection<? extends VirtualFile> items,
+                                                        @NotNull Condition<? super FileStatus> condition) {
+    if (!vcs.areDirectoriesVersionedItems()) return Collections.emptySet();
+
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    HashSet<VirtualFile> result = ContainerUtil.newHashSet();
+
+    for (VirtualFile item : items) {
+      VirtualFile parent = item.getParent();
+
+      while (parent != null && condition.value(changeListManager.getStatus(parent))) {
+        result.add(parent);
+        parent = parent.getParent();
+      }
+    }
+
+    return result;
   }
 }
