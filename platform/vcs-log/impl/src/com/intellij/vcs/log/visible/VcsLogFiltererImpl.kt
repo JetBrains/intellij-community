@@ -114,8 +114,8 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     var commitCount = commitCount
     var matchingCommits: Set<Int>? = null
     if (commitCount == CommitCountStage.INITIAL) {
-      matchingCommits = getMatchedCommitIndex(filterInMemory(graph, detailsFilters, matchingHeads))
-      if (matchingCommits!!.size < commitCount.count) {
+      matchingCommits = filterInMemory(graph, detailsFilters, matchingHeads).toCommitIndexes()
+      if (matchingCommits.size < commitCount.count) {
         commitCount = commitCount.next()
         matchingCommits = null
       }
@@ -123,7 +123,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
     if (matchingCommits == null) {
       try {
-        matchingCommits = getMatchedCommitIndex(getFilteredDetailsFromTheVcs(logProviders, filters, commitCount.count))
+        matchingCommits = getFilteredDetailsFromTheVcs(logProviders, filters, commitCount.count).toCommitIndexes()
       }
       catch (e: VcsException) {
         //TODO show an error balloon or something else for non-ea guys.
@@ -206,18 +206,15 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   private fun getMatchingHeads(refs: VcsLogRefs, filter: VcsLogBranchFilter): Set<Int> {
-    return ContainerUtil.map2SetNotNull<VcsRef, Int>(refs.branches) { ref ->
-      val acceptRef = filter.matches(ref.name)
-      if (acceptRef) storage.getCommitIndex(ref.commitHash, ref.root) else null
-    }
+    return refs.branches.filter { filter.matches(it.name) }.toReferencedCommitIndexes()
   }
 
   private fun getMatchingHeads(roots: Collection<VirtualFile>, filter: VcsLogRevisionFilter): Set<Int> {
-    return filter.heads.filter { roots.contains(it.root) }.mapTo(mutableSetOf()) { storage.getCommitIndex(it.hash, it.root) }
+    return filter.heads.filter { roots.contains(it.root) }.toCommitIndexes()
   }
 
   private fun getMatchingHeads(refs: VcsLogRefs, roots: Collection<VirtualFile>): Set<Int> {
-    return refs.branches.filter { roots.contains(it.root) }.mapTo(mutableSetOf()) { storage.getCommitIndex(it.commitHash, it.root) }
+    return refs.branches.filter { roots.contains(it.root) }.toReferencedCommitIndexes()
   }
 
   private fun filterInMemory(permanentGraph: PermanentGraph<Int>,
@@ -259,16 +256,17 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       Computable<VcsCommitMetadata> { commitDetailsGetter.getCommitDataIfAvailable(commitIndex) })
   }
 
-  private fun getMatchedCommitIndex(commits: Collection<CommitId>?): Set<Int>? {
-    return if (commits == null) {
-      null
-    }
-    else ContainerUtil.map2Set(commits) { commitId ->
+  private fun Collection<CommitId>.toCommitIndexes(): Set<Int> {
+    return this.mapTo(mutableSetOf()) { commitId ->
       storage.getCommitIndex(commitId.hash, commitId.root)
     }
-
   }
 
+  private fun Collection<VcsRef>.toReferencedCommitIndexes(): Set<Int> {
+    return this.mapTo(mutableSetOf()) { ref ->
+      storage.getCommitIndex(ref.commitHash, ref.root)
+    }
+  }
 }
 
 private val LOG = Logger.getInstance(VcsLogFiltererImpl::class.java)
