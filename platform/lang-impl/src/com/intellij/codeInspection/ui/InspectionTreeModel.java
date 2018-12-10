@@ -205,6 +205,9 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
       while (parentPath != null) {
         treeStructureChanged(parentPath, null, null);
         parentPath = parentPath.getParentPath();
+        if (parentPath == null || parentPath.getLastPathComponent() == myRoot) {
+          break;
+        }
       }
     }
     //noinspection unchecked
