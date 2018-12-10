@@ -10,7 +10,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLevelSession
-import org.jetbrains.plugins.groovy.util.lazyPreventingRecursion
+import org.jetbrains.plugins.groovy.util.recursionPreventingLazy
 import kotlin.reflect.jvm.isAccessible
 
 class MethodResolveResult(
@@ -28,9 +28,9 @@ class MethodResolveResult(
     GroovyInferenceSessionBuilder(place, myCandidate, contextSubstitutor).build().inferSubst()
   }
 
-  override fun getSubstitutor(): PsiSubstitutor = fullSubstitutor
+  override fun getSubstitutor(): PsiSubstitutor = fullSubstitutor ?: error("Recursion prevented")
 
-  private val fullSubstitutor by lazyPreventingRecursion {
+  private val fullSubstitutor by recursionPreventingLazy {
     buildTopLevelSession(place).inferSubst(this)
   }
 

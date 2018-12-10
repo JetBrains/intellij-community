@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLevelSession
-import org.jetbrains.plugins.groovy.util.lazyPreventingRecursion
+import org.jetbrains.plugins.groovy.util.recursionPreventingLazy
 
 class ClassResolveResult(
   clazz: PsiClass,
@@ -24,13 +24,13 @@ class ClassResolveResult(
   }
 
   override fun getSubstitutor(): PsiSubstitutor = if (shouldInfer) {
-    inferredSubstitutor
+    inferredSubstitutor ?: error("Recursion prevented")
   }
   else {
     contextSubstitutor
   }
 
-  private val inferredSubstitutor: PsiSubstitutor by lazyPreventingRecursion {
+  private val inferredSubstitutor: PsiSubstitutor? by recursionPreventingLazy {
     buildTopLevelSession(place).inferSubst(this)
   }
 }

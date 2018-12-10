@@ -1,9 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util
 
-import com.intellij.openapi.util.RecursionGuard
-import com.intellij.openapi.util.RecursionManager
-import com.intellij.util.lazyPub
 import java.util.function.Consumer
 import com.intellij.util.Consumer as JBConsumer
 
@@ -28,10 +25,4 @@ fun <T> Array<T>.init(): List<T> {
   return dropLast(1)
 }
 
-fun <T : Any> lazyPreventingRecursion(initializer: () -> T): Lazy<T> {
-  return lazyPub {
-    ourGuard.doPreventingRecursion(initializer, false, initializer) ?: error("Recursion prevented")
-  }
-}
-
-private val ourGuard: RecursionGuard = RecursionManager.createGuard("lazyPub")
+fun <T : Any> recursionPreventingLazy(initializer: () -> T): Lazy<T?> = RecursionPreventingSafePublicationLazy(initializer)
