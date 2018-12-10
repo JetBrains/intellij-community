@@ -272,9 +272,9 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
   }
 
   private static void addXalan(SimpleJavaParameters parameters, File pluginPath) {
-    final File xalan = findTransformerJar(pluginPath, "xalan.jar");
+    final File xalan = findTransformerJar(pluginPath, "xalan-2.7.2.jar");
     parameters.getClassPath().addTail(xalan.getAbsolutePath());
-    parameters.getClassPath().addTail(new File(xalan.getParentFile(), "serializer.jar").getAbsolutePath());
+    parameters.getClassPath().addTail(new File(xalan.getParentFile(), "serializer-2.7.2.jar").getAbsolutePath());
   }
 
   private static void addSaxon(SimpleJavaParameters parameters, File pluginPath, final String saxonJar) {
