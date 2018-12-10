@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -21,10 +22,7 @@ import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.IconUtil;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,6 +66,13 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   public static boolean addUnversioned(@NotNull Project project,
                                        @NotNull List<VirtualFile> files,
                                        @Nullable ChangesBrowserBase browser) {
+    return addUnversioned(project, files, browser, null);
+  }
+
+  protected static boolean addUnversioned(@NotNull Project project,
+                                          @NotNull List<VirtualFile> files,
+                                          @Nullable ChangesBrowserBase browser,
+                                          @Nullable PairConsumer<ProgressIndicator, List<VcsException>> additionalTask) {
     if (files.isEmpty()) return true;
 
     LocalChangeList targetChangeList = browser instanceof CommitDialogChangesBrowser
@@ -77,7 +82,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     Consumer<List<Change>> changeConsumer = browser != null ? changes -> browser.getViewer().includeChanges(changes) : null;
 
     FileDocumentManager.getInstance().saveAllDocuments();
-    return addUnversionedFilesToVcs(project, targetChangeList, files, changeConsumer);
+    return addUnversionedFilesToVcs(project, targetChangeList, files, changeConsumer, additionalTask);
   }
 
   @NotNull
@@ -105,36 +110,29 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   }
 
   public static boolean addUnversionedFilesToVcs(@NotNull Project project,
-                                                 @NotNull final LocalChangeList list,
-                                                 @NotNull final List<VirtualFile> files,
-                                                 @Nullable Consumer<? super List<Change>> changesConsumer) {
+                                                 @NotNull LocalChangeList list,
+                                                 @NotNull List<VirtualFile> files) {
+    return addUnversionedFilesToVcs(project, list, files, null, null);
+  }
+
+  protected static boolean addUnversionedFilesToVcs(@NotNull Project project,
+                                                    @NotNull LocalChangeList list,
+                                                    @NotNull List<VirtualFile> files,
+                                                    @Nullable Consumer<? super List<Change>> changesConsumer,
+                                                    @Nullable PairConsumer<? super ProgressIndicator, ? super List<VcsException>> additionalTask) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 
     final List<VcsException> exceptions = new ArrayList<>();
     final Set<VirtualFile> allProcessedFiles = new HashSet<>();
-    ChangesUtil.processVirtualFilesByVcs(project, files, (vcs, items) -> {
-      final CheckinEnvironment environment = vcs.getCheckinEnvironment();
-      if (environment != null) {
-        Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(project, items);
-        Set<VirtualFile> parents = getUnversionedParents(project, vcs, items);
 
-        // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
-        // (inside the method) - so common add logic just needs to refresh statuses of parents
-        final List<VcsException> result = ContainerUtil.newArrayList();
-        ProgressManager.getInstance().run(new Task.Modal(project, "Adding Files to VCS...", true) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            indicator.setIndeterminate(true);
-            List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
-            if (exs != null) {
-              ContainerUtil.addAll(result, exs);
-            }
-          }
+    ProgressManager.getInstance().run(new Task.Modal(project, "Adding Files to VCS...", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        ChangesUtil.processVirtualFilesByVcs(project, files, (vcs, files) -> {
+          addUnversionedFilesToVcs(project, vcs, files, allProcessedFiles, exceptions);
+
+          if (additionalTask != null) additionalTask.consume(indicator, exceptions);
         });
-
-        allProcessedFiles.addAll(descendants);
-        allProcessedFiles.addAll(parents);
-        exceptions.addAll(result);
       }
     });
 
@@ -152,7 +150,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     }
     VcsDirtyScopeManager.getInstance(project).filesDirty(allProcessedFiles, null);
 
-    final boolean moveRequired = !list.isDefault();
+    boolean moveRequired = !list.isDefault() && !allProcessedFiles.isEmpty();
     boolean syncUpdateRequired = changesConsumer != null;
 
     if (moveRequired || syncUpdateRequired) {
@@ -182,6 +180,26 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     }
 
     return exceptions.isEmpty();
+  }
+
+  private static void addUnversionedFilesToVcs(@NotNull Project project,
+                                               @NotNull AbstractVcs vcs,
+                                               @NotNull List<VirtualFile> items,
+                                               @NotNull Set<VirtualFile> allProcessedFiles,
+                                               @NotNull List<VcsException> exceptions) {
+    CheckinEnvironment environment = vcs.getCheckinEnvironment();
+    if (environment == null) return;
+
+    Set<VirtualFile> descendants = ReadAction.compute(() -> getUnversionedDescendantsRecursively(project, items));
+    Set<VirtualFile> parents = ReadAction.compute(() -> getUnversionedParents(project, vcs, items));
+
+    // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
+    // (inside the method) - so common add logic just needs to refresh statuses of parents
+    List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
+    if (exs != null) exceptions.addAll(exs);
+
+    allProcessedFiles.addAll(descendants);
+    allProcessedFiles.addAll(parents);
   }
 
   @NotNull

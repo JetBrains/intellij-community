@@ -17,12 +17,7 @@ package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -38,6 +33,7 @@ import git4idea.GitVcs;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -78,32 +74,25 @@ public class GitAdd extends ScheduleForAdditionAction {
 
     List<VirtualFile> unversionedFiles = getUnversionedFiles(e, project).collect(Collectors.toList());
 
-    addUnversioned(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY));
+    addUnversioned(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY),
+                   (indicator, exceptions) -> addPathsToVcs(project, toAdd, exceptions));
+  }
 
-    Ref<VcsException> exceptionRef = new Ref<>();
-    ProgressManager.getInstance().run(new Task.Modal(project, "Adding Files to VCS...", true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        VcsUtil.groupByRoots(project, toAdd, identity()).forEach((vcsRoot, paths) -> {
-          try {
-            if (!(vcsRoot.getVcs() instanceof GitVcs)) return;
+  private static void addPathsToVcs(@NotNull Project project, @NotNull Collection<FilePath> toAdd, @NotNull List<VcsException> exceptions) {
+    VcsUtil.groupByRoots(project, toAdd, identity()).forEach((vcsRoot, paths) -> {
+      try {
+        if (!(vcsRoot.getVcs() instanceof GitVcs)) return;
 
-            VirtualFile root = vcsRoot.getPath();
-            if (root == null) return;
+        VirtualFile root = vcsRoot.getPath();
+        if (root == null) return;
 
-            GitFileUtils.addPaths(project, root, paths);
-            VcsFileUtil.markFilesDirty(project, paths);
-          }
-          catch (VcsException ex) {
-            exceptionRef.set(ex);
-          }
-        });
+        GitFileUtils.addPaths(project, root, paths);
+        VcsFileUtil.markFilesDirty(project, paths);
+      }
+      catch (VcsException ex) {
+        exceptions.add(ex);
       }
     });
-
-    if (!exceptionRef.isNull()) {
-      Messages.showErrorDialog(project, exceptionRef.get().getMessage(), VcsBundle.message("error.adding.files.title"));
-    }
   }
 
   @NotNull
