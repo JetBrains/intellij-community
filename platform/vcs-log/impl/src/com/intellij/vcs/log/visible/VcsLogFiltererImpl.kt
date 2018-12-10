@@ -93,16 +93,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
     val filteredWithVcs = filterWithVcs(dataPack.permanentGraph, filters, detailsFilters, matchingHeads, commitCount)
 
-    val filteredCommits: Set<Int>?
-    if (filteredWidthIndex == null) {
-      filteredCommits = filteredWithVcs.matchingCommits
-    }
-    else if (filteredWithVcs.matchingCommits == null) {
-      filteredCommits = filteredWidthIndex
-    }
-    else {
-      filteredCommits = ContainerUtil.union(filteredWidthIndex, filteredWithVcs.matchingCommits)
-    }
+    val filteredCommits: Set<Int>? = union(filteredWidthIndex, filteredWithVcs.matchingCommits)
     return FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount)
   }
 
@@ -319,4 +310,10 @@ fun areFiltersAffectedByIndexing(filters: VcsLogFilterCollection, roots: List<Vi
 
 internal fun <T> Collection<T>?.matchesNothing(): Boolean {
   return this != null && this.isEmpty()
+}
+
+internal fun <T> union(c1: Set<T>?, c2: Set<T>?): Set<T>? {
+  if (c1 == null) return c2
+  if (c2 == null) return c1
+  return ContainerUtil.union(c1, c2)
 }
