@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.xmlb.annotations.Property
 import java.io.File
 
 /**
@@ -70,8 +72,8 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
-    var myUserSpecifiedEnvs: Map<String, String> = LinkedHashMap()
-    var myPassParentEnvs = true
+    @get:Property(surroundWithTag = false, flat = true)
+    var envDataOptions = EnvironmentVariablesDataOptions()
   }
 
   fun setCloseSessionOnLogout(closeSessionOnLogout: Boolean) {
@@ -110,20 +112,24 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState.myHighlightHyperlinks = highlight
   }
 
-  fun getUserSpecifiedEnvs(): Map<String, String> {
-    return myState.myUserSpecifiedEnvs
+  private fun getEnvData(): EnvironmentVariablesData {
+    return myState.envDataOptions.get()
   }
 
-  fun setUserSpecifiedEnvs(userSpecifiedEnvs: Map<String, String>) {
-    myState.myUserSpecifiedEnvs = userSpecifiedEnvs
+  fun getUserSpecifiedEnvs(): Map<String, String> {
+    return getEnvData().envs
+  }
+
+  fun setUserSpecifiedEnvs(userSpecifiedEnvs: MutableMap<String, String>) {
+    myState.envDataOptions.envs = userSpecifiedEnvs
   }
 
   fun setPassParentEnvs(passParentEnvs: Boolean) {
-    myState.myPassParentEnvs = passParentEnvs
+    myState.envDataOptions.isPassParentEnvs = passParentEnvs
   }
 
   fun passParentEnvs(): Boolean {
-    return myState.myPassParentEnvs
+    return myState.envDataOptions.isPassParentEnvs
   }
 
   val defaultShellPath: String
