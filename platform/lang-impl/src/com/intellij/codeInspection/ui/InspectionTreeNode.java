@@ -77,7 +77,7 @@ public abstract class InspectionTreeNode implements TreeNode {
 
   void dropProblemCountCaches() {
     InspectionTreeNode current = this;
-    while (current != null) {
+    while (current != null && myModel.getRoot() != current) {
       current.myProblemLevels.drop();
       current = current.getParent();
     }
