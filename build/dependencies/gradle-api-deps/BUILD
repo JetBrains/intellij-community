@@ -6,3 +6,7 @@ iml_module(
     iml_files = ["intellij.tools.dependencies.gradle.iml"],
     visibility = ["//visibility:public"],
 )
+
+# Used in tools/adt/idea to generate the idea gradle-api jar at build time
+# rather than relying on prebuilts, as the idea build does.
+exports_files(["build.gradle"])
