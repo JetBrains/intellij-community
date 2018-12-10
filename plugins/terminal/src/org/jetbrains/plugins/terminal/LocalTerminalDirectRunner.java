@@ -17,6 +17,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -125,7 +126,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
                                                                    : ContainerUtil.canonicalStrategy());
 
-    if (TerminalOptionsProvider.Companion.getInstance().passParentEnvs()) {
+    EnvironmentVariablesData envData = TerminalOptionsProvider.Companion.getInstance().getEnvData();
+    if (envData.isPassParentEnvs()) {
       envs.putAll(System.getenv());
     }
 
@@ -139,7 +141,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
-    for (Map.Entry<String, String> env : TerminalOptionsProvider.Companion.getInstance().getUserSpecifiedEnvs().entrySet()) {
+    for (Map.Entry<String, String> env : envData.getEnvs().entrySet()) {
       envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
     }
     return envs;

@@ -112,24 +112,12 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState.myHighlightHyperlinks = highlight
   }
 
-  private fun getEnvData(): EnvironmentVariablesData {
+  fun getEnvData(): EnvironmentVariablesData {
     return myState.envDataOptions.get()
   }
 
-  fun getUserSpecifiedEnvs(): Map<String, String> {
-    return getEnvData().envs
-  }
-
-  fun setUserSpecifiedEnvs(userSpecifiedEnvs: MutableMap<String, String>) {
-    myState.envDataOptions.envs = userSpecifiedEnvs
-  }
-
-  fun setPassParentEnvs(passParentEnvs: Boolean) {
-    myState.envDataOptions.isPassParentEnvs = passParentEnvs
-  }
-
-  fun passParentEnvs(): Boolean {
-    return myState.envDataOptions.isPassParentEnvs
+  fun setEnvData(envData: EnvironmentVariablesData) {
+    myState.envDataOptions.set(envData)
   }
 
   val defaultShellPath: String
