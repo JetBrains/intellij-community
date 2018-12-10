@@ -29,7 +29,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -183,8 +182,14 @@ public class ReferenceExpressionCompletionContributor {
     Set<PsiField> used = ContainerUtil.newLinkedHashSet();
     for (PsiStatement statement : body.getStatements()) {
       if (statement instanceof PsiSwitchLabelStatementBase) {
-        for (PsiEnumConstant constant : SwitchUtils.findEnumConstants((PsiSwitchLabelStatementBase)statement)) {
-          used.add(CompletionUtil.getOriginalOrSelf(constant));
+        final PsiExpressionList values = ((PsiSwitchLabelStatementBase)statement).getCaseValues();
+        if (values != null) {
+          for (PsiExpression value : values.getExpressions()) {
+            final PsiElement target = ((PsiReferenceExpression)value).resolve();
+            if (target instanceof PsiField) {
+              used.add(CompletionUtil.getOriginalOrSelf((PsiField)target));
+            }
+          }
         }
       }
     }
