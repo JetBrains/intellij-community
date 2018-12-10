@@ -87,7 +87,7 @@ inline fun <reified T : UElement> uastReferenceProvider(noinline provider: (T, P
   uastReferenceProvider(T::class.java, provider)
 
 private val cachedUElement = Key.create<UElement>("UastReferenceRegistrar.cachedUElement")
-internal val REQUESTED_PSI_ELEMENT = Key.create<PsiElement>("UastReferenceRegistrar.cachedUElement")
+internal val REQUESTED_PSI_ELEMENT = Key.create<PsiElement>("REQUESTED_PSI_ELEMENT")
 
 private fun getOrCreateCachedElement(element: PsiElement,
                                      context: ProcessingContext?,
