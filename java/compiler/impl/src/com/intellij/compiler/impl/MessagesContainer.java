@@ -33,14 +33,14 @@ public class MessagesContainer {
   private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new EnumMap<>(CompilerMessageCategory.class);
   private final int myTabSize;
 
-  public MessagesContainer(Project project) {
+  public MessagesContainer(@NotNull Project project) {
     myProject = project;
-    myTabSize = getTabSize();
+    myTabSize = getTabSize(project);
   }
 
-  private static int getTabSize() {
+  private static int getTabSize(@NotNull Project project) {
     try {
-      return CodeStyle.getDefaultSettings().getTabSize(StdFileTypes.JAVA);
+      return CodeStyle.getSettings(project).getTabSize(StdFileTypes.JAVA);
     }
     catch (ProcessCanceledException e) {
       throw e;
