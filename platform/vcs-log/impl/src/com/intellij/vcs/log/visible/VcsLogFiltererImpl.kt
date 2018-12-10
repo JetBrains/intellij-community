@@ -28,6 +28,8 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                          private val commitDetailsGetter: DataGetter<out VcsFullCommitDetails>,
                          private val index: VcsLogIndex) : VcsLogFilterer {
 
+  override fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean = false
+
   override fun filter(dataPack: DataPack,
                       sortType: PermanentGraph.SortType,
                       allFilters: VcsLogFilterCollection,
@@ -118,10 +120,6 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       LOG.error(e)
       return FilterByDetailsResult(emptySet(), true, commitCountToTry)
     }
-  }
-
-  override fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean {
-    return false
   }
 
   private fun applyHashFilter(dataPack: DataPack,
