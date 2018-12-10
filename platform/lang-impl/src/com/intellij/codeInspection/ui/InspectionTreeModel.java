@@ -18,6 +18,8 @@ import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.Invoker;
+import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.TreeTraversal;
@@ -29,9 +31,14 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.function.Supplier;
 
-public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
+public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> implements InvokerSupplier {
   private static final Logger LOG = Logger.getInstance(InspectionTreeModel.class);
   private final InspectionRootNode myRoot = new InspectionRootNode(this);
+  private Invoker.BackgroundThread myInvoker;
+
+  public InspectionTreeModel() {
+    myInvoker = new Invoker.BackgroundThread(this);
+  }
 
   @Override
   public int getIndexOfChild(Object object, Object child) {
@@ -202,5 +209,11 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
     }
     //noinspection unchecked
     return (T)node;
+  }
+
+  @NotNull
+  @Override
+  public Invoker getInvoker() {
+    return myInvoker;
   }
 }

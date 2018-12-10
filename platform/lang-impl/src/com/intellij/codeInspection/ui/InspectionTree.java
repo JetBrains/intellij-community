@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
@@ -69,7 +70,8 @@ public class InspectionTree extends Tree {
                         @NotNull InspectionResultsView view) {
     myView = view;
     myModel = new InspectionTreeModel();
-    setModel(new AsyncTreeModel(myModel, view));
+    Disposer.register(view, myModel);
+    setModel(new AsyncTreeModel(myModel, false, view));
 
     setCellRenderer(new InspectionTreeCellRenderer(view));
     setRootVisible(false);
