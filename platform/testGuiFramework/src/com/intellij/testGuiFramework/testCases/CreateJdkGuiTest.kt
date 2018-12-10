@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.testCases
 
-import com.intellij.testGuiFramework.impl.GuiTestCase
+import com.intellij.testGuiFramework.impl.GuiTestCaseExt
 import com.intellij.testGuiFramework.impl.createJdk
 import org.junit.Ignore
 import org.junit.Test
 
-class CreateJdkGuiTest : GuiTestCase() {
+class CreateJdkGuiTest : GuiTestCaseExt() {
 
   private val javaHome = "JAVA_HOME"
   private val java18Home = "JAVA18_HOME"
