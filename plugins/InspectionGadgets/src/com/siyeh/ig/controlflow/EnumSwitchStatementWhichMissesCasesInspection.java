@@ -132,7 +132,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
         CreateMissingSwitchBranchesFix fix = new CreateMissingSwitchBranchesFix(switchBlock, constants);
         if (highlighting == ProblemHighlightType.INFORMATION ||
             InspectionProjectProfileManager.isInformationLevel(getShortName(), switchBlock)) {
-          holder.registerProblem(switchBlock, message, ProblemHighlightType.INFORMATION, fix);
+          holder.registerProblem(switchBlock, message, highlighting, fix);
         }
         else {
           int length = switchBlock.getFirstChild().getTextLength();
