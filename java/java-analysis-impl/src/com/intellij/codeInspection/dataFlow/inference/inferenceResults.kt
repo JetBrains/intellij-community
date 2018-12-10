@@ -47,8 +47,18 @@ data class PurityInferenceResult(internal val mutatedRefs: List<ExpressionRange>
   private fun callsOnlyPureMethods(body: () -> PsiCodeBlock): Boolean {
     if (singleCall == null) return true
 
-    val called = (singleCall.restoreExpression(body()) as PsiCall).resolveMethod()
-    return called != null && JavaMethodContractUtil.isPure(called)
+    val psiCall = singleCall.restoreExpression(body()) as PsiCall
+    val method = psiCall.resolveMethod()
+    if (method != null) {
+      return JavaMethodContractUtil.isPure(method)
+    } else if (psiCall is PsiNewExpression && psiCall.argumentList?.expressionCount == 0) {
+      val psiClass = psiCall.classOrAnonymousClassReference?.resolve() as? PsiClass
+      if (psiClass != null) {
+        val superClass = psiClass.superClass
+        return superClass == null || superClass.qualifiedName == CommonClassNames.JAVA_LANG_OBJECT
+      }
+    }
+    return false
   }
 
   private fun isLocalVarReference(expression: PsiExpression?, scope: PsiMethod): Boolean {
