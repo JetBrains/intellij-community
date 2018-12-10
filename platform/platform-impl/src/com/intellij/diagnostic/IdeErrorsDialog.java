@@ -852,10 +852,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  /**
-   * @return (plugin name, version)
-   * @deprecated use {@link #getPlugin(IdeaLoggingEvent)} instead and take the plugin id, name and version from the returned instance
-   */
+  /** @deprecated use {@link #getPlugin(IdeaLoggingEvent)} instead and take the plugin name and version from the returned instance */
   @Deprecated
   public static @Nullable Pair<String, String> getPluginInfo(@NotNull IdeaLoggingEvent event) {
     IdeaPluginDescriptor plugin = getPlugin(event);
