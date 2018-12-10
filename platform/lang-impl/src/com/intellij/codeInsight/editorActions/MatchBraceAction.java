@@ -18,7 +18,10 @@ import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Denis Zhdanov
+ * Moves caret to the the matching brace:
+ * - If caret is on the closing brace - moves to the matching opening
+ * - If caret is on the opening brace - moves to the matching closing brace
+ * - Otherwise algorithm is clumsy from user perspective: look for the previous opening or close brace and move to the matching one
  */
 public class MatchBraceAction extends EditorAction {
   public MatchBraceAction() {
@@ -35,6 +38,16 @@ public class MatchBraceAction extends EditorAction {
       final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
       if (file == null) return;
 
+      int offsetFromBraceMatcher = getOffsetFromBraceMatcher(editor, file);
+      if (offsetFromBraceMatcher > -1) {
+        moveCaret(editor, editor.getCaretModel().getCurrentCaret(), offsetFromBraceMatcher);
+      }
+    }
+
+    /**
+     * @return offset to move caret to, computed from the brace matcher. If it's not possible to compute - returns {@code -1}
+     */
+    private static int getOffsetFromBraceMatcher(@NotNull Editor editor, PsiFile file) {
       final Caret caret = editor.getCaretModel().getCurrentCaret();
       final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
       final CharSequence text = editor.getDocument().getCharsSequence();
@@ -55,26 +68,26 @@ public class MatchBraceAction extends EditorAction {
         }
       }
 
-      if (offset < 0) return;
+      if (offset < 0) return -1;
 
       iterator = highlighter.createIterator(offset);
       fileType = getFileType(file, iterator.getStart());
 
       while (!BraceMatchingUtil.isLBraceToken(iterator, text, fileType) &&
              !BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
-        if (iterator.getStart() == 0) return;
+        if (iterator.getStart() == 0) return -1;
         iterator.retreat();
         offset = iterator.getStart();
       }
 
       if (BraceMatchingUtil.matchBrace(text, fileType, iterator, true)) {
-        moveCaret(editor, caret, iterator.getEnd());
-        return;
+        return iterator.getEnd();
       }
       iterator = highlighter.createIterator(offset);
       if (BraceMatchingUtil.matchBrace(text, fileType, iterator, false)) {
-        moveCaret(editor, caret, iterator.getStart());
+        return iterator.getStart();
       }
+      return -1;
     }
   }
 
