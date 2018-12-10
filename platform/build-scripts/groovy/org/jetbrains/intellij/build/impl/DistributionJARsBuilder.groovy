@@ -211,6 +211,7 @@ class DistributionJARsBuilder {
     buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
       def productLayout = buildContext.productProperties.productLayout
       def modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
+      - "intellij.clion.plugin" // TODO [AK] temporary solution to fix CLion build
       def targetDirectory = getSearchableOptionsDir()
       buildContext.messages.progress("Building searchable options for ${modulesToIndex.size()} modules")
       buildContext.messages.debug("Searchable options are going to be built for the following modules: $modulesToIndex")
