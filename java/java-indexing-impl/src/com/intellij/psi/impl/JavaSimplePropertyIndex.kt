@@ -10,7 +10,6 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiField
 import com.intellij.psi.impl.cache.RecordUtil
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes
 import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.JavaLightTreeUtil
 import com.intellij.psi.impl.source.PsiMethodImpl
@@ -164,16 +163,16 @@ class JavaSimplePropertyIndex : FileBasedIndexExtension<Int, PropertyIndexValue>
           .singleOrNull { ElementType.JAVA_STATEMENT_BIT_SET.contains(it.tokenType) }
           ?.takeIf { it.tokenType == JavaElementType.RETURN_STATEMENT}
           ?.let { LightTreeUtil.firstChildOfType(tree, it, allowedExpressions) }
-          ?.takeIf(this::checkQulifiers)
+          ?.takeIf(this::checkQualifiers)
           ?.let { LightTreeUtil.toFilteredString(tree, it, null) }
       }
 
-      private fun checkQulifiers(expression: LighterASTNode): Boolean {
+      private fun checkQualifiers(expression: LighterASTNode): Boolean {
         if (!allowedExpressions.contains(expression.tokenType)) {
           return false
         }
         val qualifier = JavaLightTreeUtil.findExpressionChild(tree, expression)
-        return qualifier == null || checkQulifiers(qualifier)
+        return qualifier == null || checkQualifiers(qualifier)
       }
     }.visitNode(tree.root)
     result
