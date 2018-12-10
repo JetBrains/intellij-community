@@ -9,12 +9,15 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit.InheritorChooser;
+import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -94,7 +97,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(module))) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
-    final String testFilter = createTestFilter(containingClass, psiMethod);
+    final String testFilter = createTestFilter(contextLocation, containingClass, psiMethod);
     return testFilter != null && scriptParameters.contains(testFilter);
   }
 
@@ -156,7 +159,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
 
     StringBuilder buf = new StringBuilder();
     for (PsiClass aClass : containingClasses) {
-      final String filter = createTestFilter(aClass, psiMethod);
+      final String filter = createTestFilter(context.getLocation(), aClass, psiMethod);
       if(filter != null) {
         buf.append(filter);
       }
@@ -168,14 +171,42 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
   }
 
   @Nullable
-  private static String createTestFilter(@NotNull PsiClass aClass, @NotNull PsiMethod psiMethod) {
-    return createTestFilter(TestClassGradleConfigurationProducer.getRuntimeQualifiedName(aClass), psiMethod.getName());
+  private static String createTestFilter(@Nullable Location location, @NotNull PsiClass aClass, @NotNull PsiMethod psiMethod) {
+    return createTestFilter(location,
+                            TestClassGradleConfigurationProducer.getRuntimeQualifiedName(aClass),
+                            psiMethod.getName(),
+                            isParameterized(aClass));
   }
 
   @Nullable
   public static String createTestFilter(@Nullable String aClass, @Nullable String method) {
+    return createTestFilter(null, aClass, method, false);
+  }
+
+  @Nullable
+  private static String createTestFilter(@Nullable Location location,
+                                         @Nullable String aClass,
+                                         @Nullable String method,
+                                         boolean isParameterized) {
     if (aClass == null) return null;
     String testFilterPattern = aClass + (method == null ? "" : '.' + method);
+    if (method != null) {
+      if (location instanceof PsiMemberParameterizedLocation) {
+        String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
+        if (StringUtil.isNotEmpty(paramSetName)) {
+          paramSetName = StringUtil.trimStart(StringUtil.trimEnd(paramSetName, ']'), "[");
+          testFilterPattern += "[*" + paramSetName + "*]";
+        }
+      }
+      else if (isParameterized) {
+        testFilterPattern += "[*]";
+      }
+    }
     return String.format("--tests \"%s\" ", testFilterPattern.replace('\"', '*'));
+  }
+
+  private static boolean isParameterized(PsiClass clazz) {
+    PsiAnnotation annotation = JUnitUtil.getRunWithAnnotation(clazz);
+    return annotation != null && JUnitUtil.isParameterized(annotation);
   }
 }
