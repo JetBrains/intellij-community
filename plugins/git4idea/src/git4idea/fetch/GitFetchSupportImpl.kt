@@ -33,6 +33,7 @@ import git4idea.commands.Git
 import git4idea.commands.GitAuthenticationGate
 import git4idea.commands.GitImpl
 import git4idea.commands.GitRestrictingAuthenticationGate
+import git4idea.config.GitConfigUtil
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
@@ -119,7 +120,7 @@ internal class GitFetchSupportImpl(git: Git,
 
   private fun fetchInParallel(remotes: List<Pair<GitRepository, GitRemote>>): List<FetchTask> {
     val tasks = mutableListOf<FetchTask>()
-    val maxThreads = getMaxThreads(remotes.size)
+    val maxThreads = getMaxThreads(remotes.mapTo(HashSet()) {it.first}, remotes.size)
     LOG.debug("Fetching $remotes using $maxThreads threads")
     val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitFetch pool", maxThreads)
     val commonIndicator = progressManager.progressIndicator ?: EmptyProgressIndicator()
@@ -140,7 +141,7 @@ internal class GitFetchSupportImpl(git: Git,
     return tasks
   }
 
-  private fun getMaxThreads(numberOfRemotes: Int): Int {
+  private fun getMaxThreads(repositories: Collection<GitRepository>, numberOfRemotes: Int): Int {
     val config = Registry.intValue("git.parallel.fetch.threads")
     val maxThreads = when {
       config > 0 -> config
@@ -150,7 +151,15 @@ internal class GitFetchSupportImpl(git: Git,
       else -> 1
     }
 
+    if (isStoreCredentialsHelperUsed(repositories)) {
+      return 1
+    }
+
     return Math.min(maxThreads, MAX_SSH_CONNECTIONS)
+  }
+
+  private fun isStoreCredentialsHelperUsed(repositories: Collection<GitRepository>): Boolean {
+    return repositories.any { GitConfigUtil.getValue(project, it.root, "credential.helper").equals("store", ignoreCase = true) }
   }
 
   private fun waitForFetchTasks(tasks: List<FetchTask>): List<SingleRemoteResult> {
@@ -199,8 +208,6 @@ internal class GitFetchSupportImpl(git: Git,
     val matcher = PRUNE_PATTERN.matcher(line)
     return if (matcher.matches()) matcher.group(1) else null
   }
-
-  private fun resultOf(results: Map<GitRepository, RepoResult>) = FetchResultImpl(project, vcsNotifier, results)
 
   private class FetchTask(val repository: GitRepository, val remote: GitRemote, val future: Future<SingleRemoteResult>)
 
