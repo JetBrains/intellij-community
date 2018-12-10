@@ -80,7 +80,12 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
       List<? extends InspectionTreeNode> children = p.getChildren();
       int idx = getIndexOfChild(p, n1);
       InspectionTreeNode[] arr = children.toArray(InspectionTreeNode.EMPTY_ARRAY);
-      List<? extends InspectionTreeNode> sublist = Arrays.asList(arr).subList(idx + ((n1 == node) ? 0 : 1), children.size());
+      List<? extends InspectionTreeNode> sublist;
+      if (direction) {
+        sublist = Arrays.asList(arr).subList(idx + ((n1 == node) ? 0 : 1), children.size());
+      } else {
+        sublist = ContainerUtil.reverse(Arrays.asList(arr).subList(0, idx));
+      }
       return TreeTraversal.PRE_ORDER_DFS.traversal(sublist, (InspectionTreeNode n) -> direction ? getChildren(n) : ContainerUtil.reverse(getChildren(n)));
     });
   }
