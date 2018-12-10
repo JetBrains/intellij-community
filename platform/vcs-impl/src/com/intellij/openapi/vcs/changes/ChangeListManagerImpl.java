@@ -1221,12 +1221,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void addUnversionedFiles(@NotNull final LocalChangeList list, @NotNull final List<VirtualFile> files) {
-    ScheduleForAdditionAction.addUnversionedFilesToVcs(myProject, list, files, getDefaultUnversionedFileCondition(), null);
-  }
-
-  @NotNull
-  public static Condition<FileStatus> getDefaultUnversionedFileCondition() {
-    return status -> status == FileStatus.UNKNOWN;
+    ScheduleForAdditionAction.addUnversionedFilesToVcs(myProject, list, files, null);
   }
 
   @Override

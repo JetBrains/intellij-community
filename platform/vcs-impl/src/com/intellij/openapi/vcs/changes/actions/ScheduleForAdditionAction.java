@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
@@ -41,7 +40,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean enabled = e.getProject() != null && !isEmpty(getUnversionedFiles(e, e.getProject()));
+    boolean enabled = isEnabled(e);
 
     e.getPresentation().setEnabled(enabled);
     if (ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION.equals(e.getPlace()) ||
@@ -59,12 +58,15 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     List<VirtualFile> unversionedFiles = getUnversionedFiles(e, project).collect(Collectors.toList());
 
-    addUnversioned(project, unversionedFiles, this::isStatusForAddition, e.getData(ChangesBrowserBase.DATA_KEY));
+    addUnversioned(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY));
+  }
+
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
+    return e.getProject() != null && !isEmpty(getUnversionedFiles(e, e.getProject()));
   }
 
   public static boolean addUnversioned(@NotNull Project project,
                                        @NotNull List<VirtualFile> files,
-                                       @NotNull Condition<FileStatus> unversionedFileCondition,
                                        @Nullable ChangesBrowserBase browser) {
     if (files.isEmpty()) return true;
 
@@ -75,48 +77,36 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     Consumer<List<Change>> changeConsumer = browser != null ? changes -> browser.getViewer().includeChanges(changes) : null;
 
     FileDocumentManager.getInstance().saveAllDocuments();
-    return addUnversionedFilesToVcs(project, targetChangeList, files, unversionedFileCondition, changeConsumer);
+    return addUnversionedFilesToVcs(project, targetChangeList, files, changeConsumer);
   }
 
   @NotNull
-  private Stream<VirtualFile> getUnversionedFiles(@NotNull AnActionEvent e, @NotNull Project project) {
+  protected static Stream<VirtualFile> getUnversionedFiles(@NotNull AnActionEvent e, @NotNull Project project) {
     boolean hasExplicitUnversioned = !isEmpty(e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY));
     if (hasExplicitUnversioned) return e.getRequiredData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
 
-    if (!canHaveUnversionedFiles(e)) return Stream.empty();
+    // As an optimization, we assume that if {@link ChangesListView#UNVERSIONED_FILES_DATA_KEY} is empty, but {@link VcsDataKeys#CHANGES} is
+    // not, then there will be either versioned (files from changes, hijacked files, locked files, switched files) or ignored files in
+    // {@link VcsDataKeys#VIRTUAL_FILE_STREAM}. So there will be no files with {@link FileStatus#UNKNOWN} status and we should not explicitly
+    // check {@link VcsDataKeys#VIRTUAL_FILE_STREAM} files in this case.
+    if (!ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES))) return Stream.empty();
 
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     return notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).filter(file -> isFileUnversioned(file, vcsManager, changeListManager));
   }
 
-  private boolean isFileUnversioned(@NotNull VirtualFile file,
-                                    @NotNull ProjectLevelVcsManager vcsManager,
-                                    @NotNull ChangeListManager changeListManager) {
+  private static boolean isFileUnversioned(@NotNull VirtualFile file,
+                                           @NotNull ProjectLevelVcsManager vcsManager,
+                                           @NotNull ChangeListManager changeListManager) {
     AbstractVcs vcs = vcsManager.getVcsFor(file);
     return vcs != null && !vcs.areDirectoriesVersionedItems() && file.isDirectory() ||
-           isStatusForAddition(changeListManager.getStatus(file));
-  }
-
-  protected boolean isStatusForAddition(FileStatus status) {
-    return status == FileStatus.UNKNOWN;
-  }
-
-  /**
-   * {@link #isStatusForAddition(FileStatus)} checks file status to be {@link FileStatus#UNKNOWN} (if not overridden).
-   * As an optimization, we assume that if {@link ChangesListView#UNVERSIONED_FILES_DATA_KEY} is empty, but {@link VcsDataKeys#CHANGES} is
-   * not, then there will be either versioned (files from changes, hijacked files, locked files, switched files) or ignored files in
-   * {@link VcsDataKeys#VIRTUAL_FILE_STREAM}. So there will be no files with {@link FileStatus#UNKNOWN} status and we should not explicitly
-   * check {@link VcsDataKeys#VIRTUAL_FILE_STREAM} files in this case.
-   */
-  protected boolean canHaveUnversionedFiles(@NotNull AnActionEvent e) {
-    return ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES));
+           changeListManager.getStatus(file) == FileStatus.UNKNOWN;
   }
 
   public static boolean addUnversionedFilesToVcs(@NotNull Project project,
                                                  @NotNull final LocalChangeList list,
                                                  @NotNull final List<VirtualFile> files,
-                                                 @NotNull final Condition<? super FileStatus> statusChecker,
                                                  @Nullable Consumer<? super List<Change>> changesConsumer) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 
@@ -125,8 +115,8 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     ChangesUtil.processVirtualFilesByVcs(project, files, (vcs, items) -> {
       final CheckinEnvironment environment = vcs.getCheckinEnvironment();
       if (environment != null) {
-        Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(project, items, statusChecker);
-        Set<VirtualFile> parents = getUnversionedParents(project, vcs, items, statusChecker);
+        Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(project, items);
+        Set<VirtualFile> parents = getUnversionedParents(project, vcs, items);
 
         // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
         // (inside the method) - so common add logic just needs to refresh statuses of parents
@@ -196,12 +186,11 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
   @NotNull
   private static Set<VirtualFile> getUnversionedDescendantsRecursively(@NotNull Project project,
-                                                                       @NotNull List<? extends VirtualFile> items,
-                                                                       @NotNull Condition<? super FileStatus> condition) {
+                                                                       @NotNull List<? extends VirtualFile> items) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     final Set<VirtualFile> result = ContainerUtil.newHashSet();
     Processor<VirtualFile> addToResultProcessor = file -> {
-      if (condition.value(changeListManager.getStatus(file))) {
+      if (changeListManager.getStatus(file) == FileStatus.UNKNOWN) {
         result.add(file);
       }
       return true;
@@ -217,8 +206,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   @NotNull
   private static Set<VirtualFile> getUnversionedParents(@NotNull Project project,
                                                         @NotNull AbstractVcs vcs,
-                                                        @NotNull Collection<? extends VirtualFile> items,
-                                                        @NotNull Condition<? super FileStatus> condition) {
+                                                        @NotNull Collection<? extends VirtualFile> items) {
     if (!vcs.areDirectoriesVersionedItems()) return Collections.emptySet();
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
@@ -227,7 +215,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     for (VirtualFile item : items) {
       VirtualFile parent = item.getParent();
 
-      while (parent != null && condition.value(changeListManager.getStatus(parent))) {
+      while (parent != null && changeListManager.getStatus(parent) == FileStatus.UNKNOWN) {
         result.add(parent);
         parent = parent.getParent();
       }
