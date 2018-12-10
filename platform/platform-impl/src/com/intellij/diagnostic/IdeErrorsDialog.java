@@ -819,18 +819,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     private String detailsText() {
-      AbstractMessage message = first;
-      if (message instanceof GroupedLogMessage) {
-        message = ((GroupedLogMessage)message).getMessages().get(0);
-      }
-
-      Throwable t = message.getThrowable();
+      Throwable t = first.getThrowable();
       if (t instanceof MessagePool.TooManyErrorsException) {
         return t.getMessage();
       }
 
-      String userMessage = message.getMessage();
-      String stacktrace = message.getThrowableText();
+      String userMessage = first.getMessage();
+      String stacktrace = first.getThrowableText();
       return StringUtil.isEmptyOrSpaces(userMessage) ? stacktrace : userMessage + "\n\n" + stacktrace;
     }
 
