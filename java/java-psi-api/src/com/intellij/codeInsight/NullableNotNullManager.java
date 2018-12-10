@@ -121,10 +121,15 @@ public abstract class NullableNotNullManager {
 
   @Nullable
   private static PsiAnnotation copyAnnotation(@NotNull PsiAnnotation annotation, @NotNull PsiModifierListOwner target) {
-    // type annotations are part of target's type and should not to be copied explicitly to avoid duplication
-    if (!AnnotationTargetUtil.isTypeAnnotation(annotation)) {
-      String qualifiedName = annotation.getQualifiedName();
-      if (qualifiedName != null) {
+    String qualifiedName = annotation.getQualifiedName();
+    if (qualifiedName != null) {
+      if (JavaPsiFacade.getInstance(annotation.getProject()).findClass(qualifiedName, target.getResolveScope()) == null) {
+        return null;
+      }
+
+      // type annotations are part of target's type and should not to be copied explicitly to avoid duplication
+      if (!AnnotationTargetUtil.isTypeAnnotation(annotation)) {
+
         PsiModifierList modifierList = target.getModifierList();
         if (modifierList != null && !modifierList.hasAnnotation(qualifiedName)) {
           return modifierList.addAnnotation(qualifiedName);
