@@ -91,8 +91,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     if (targetChangeList == null) targetChangeList = manager.getDefaultChangeList();
 
     FileDocumentManager.getInstance().saveAllDocuments();
-    List<VcsException> exceptions = addUnversionedFilesToVcs(project, targetChangeList, files, unversionedFileCondition, changesConsumer);
-    return exceptions.isEmpty();
+    return addUnversionedFilesToVcs(project, targetChangeList, files, unversionedFileCondition, changesConsumer);
   }
 
   @NotNull
@@ -131,12 +130,11 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     return ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES));
   }
 
-  @NotNull
-  public static List<VcsException> addUnversionedFilesToVcs(@NotNull Project project,
-                                                            @NotNull final LocalChangeList list,
-                                                            @NotNull final List<VirtualFile> files,
-                                                            @NotNull final Condition<? super FileStatus> statusChecker,
-                                                            @Nullable Consumer<? super List<Change>> changesConsumer) {
+  public static boolean addUnversionedFilesToVcs(@NotNull Project project,
+                                                 @NotNull final LocalChangeList list,
+                                                 @NotNull final List<VirtualFile> files,
+                                                 @NotNull final Condition<? super FileStatus> statusChecker,
+                                                 @Nullable Consumer<? super List<Change>> changesConsumer) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 
     final List<VcsException> exceptions = new ArrayList<>();
@@ -210,7 +208,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
       ChangesViewManager.getInstance(project).scheduleRefresh();
     }
 
-    return exceptions;
+    return exceptions.isEmpty();
   }
 
   @NotNull
