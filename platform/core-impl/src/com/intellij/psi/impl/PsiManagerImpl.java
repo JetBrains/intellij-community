@@ -81,7 +81,6 @@ public class PsiManagerImpl extends PsiManagerEx {
   public void dropResolveCaches() {
     myFileManager.processQueue();
     beforeChange(true);
-    beforeChange(false);
   }
 
   @Override
