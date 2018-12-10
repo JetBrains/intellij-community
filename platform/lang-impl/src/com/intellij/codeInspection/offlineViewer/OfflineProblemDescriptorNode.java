@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionTreeModel;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -19,8 +20,8 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   public OfflineProblemDescriptorNode(OfflineDescriptorResolveResult descriptorResolveResult,
                                       @NotNull InspectionToolPresentation presentation,
                                       @NotNull OfflineProblemDescriptor offlineDescriptor,
-                                      InspectionTreeModel model) {
-    super(descriptorResolveResult.getResolvedEntity(), descriptorResolveResult.getResolvedDescriptor(), presentation, offlineDescriptor::getLine, model);
+                                      @NotNull InspectionTreeNode parent) {
+    super(descriptorResolveResult.getResolvedEntity(), descriptorResolveResult.getResolvedDescriptor(), presentation, offlineDescriptor::getLine, parent);
     myDescriptorResolveResult = descriptorResolveResult;
     myOfflineDescriptor = offlineDescriptor;
   }
@@ -28,10 +29,12 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   public static OfflineProblemDescriptorNode create(@NotNull OfflineProblemDescriptor offlineDescriptor,
                                                     @NotNull OfflineDescriptorResolveResult resolveResult,
                                                     @NotNull InspectionToolPresentation presentation,
-                                                    InspectionTreeModel model) {
+                                                    InspectionTreeModel model,
+                                                    @NotNull InspectionTreeNode parent) {
     return new OfflineProblemDescriptorNode(resolveResult,
                                             presentation,
-                                            offlineDescriptor, model);
+                                            offlineDescriptor,
+                                            parent);
   }
 
   @NotNull

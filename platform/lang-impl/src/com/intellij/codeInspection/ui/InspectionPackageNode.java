@@ -24,8 +24,8 @@ import javax.swing.Icon;
 public class InspectionPackageNode extends InspectionTreeNode {
   private final String myPackageName;
 
-  public InspectionPackageNode(@NotNull String packageName, InspectionTreeModel model) {
-    super(model);
+  public InspectionPackageNode(@NotNull String packageName, InspectionTreeNode parent) {
+    super(parent);
     myPackageName = packageName;
   }
 

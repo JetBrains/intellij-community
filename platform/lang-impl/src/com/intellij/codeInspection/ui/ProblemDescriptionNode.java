@@ -37,16 +37,16 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   public ProblemDescriptionNode(RefEntity element,
                                 @NotNull CommonProblemDescriptor descriptor,
                                 @NotNull InspectionToolPresentation presentation,
-                                @NotNull InspectionTreeModel model) {
-    this(element, descriptor, presentation, null, model);
+                                @NotNull InspectionTreeNode parent) {
+    this(element, descriptor, presentation, null, parent);
   }
 
   protected ProblemDescriptionNode(@Nullable RefEntity element,
                                    CommonProblemDescriptor descriptor,
                                    @NotNull InspectionToolPresentation presentation,
                                    @Nullable IntSupplier lineNumberCounter,
-                                   @NotNull InspectionTreeModel model) {
-    super(presentation, model);
+                                   @NotNull InspectionTreeNode parent) {
+    super(presentation, parent);
     myElement = element;
     myDescriptor = descriptor;
     myLevel = ObjectUtils.notNull(calculatePreciseLevel(element, descriptor, presentation), () -> {

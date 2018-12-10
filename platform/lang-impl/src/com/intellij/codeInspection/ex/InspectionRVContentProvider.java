@@ -61,7 +61,7 @@ public abstract class InspectionRVContentProvider {
           return (RefElementNode)parent;
         }
       }
-      return model.createRefElementNode(myEntity, () -> presentation.createRefNode(myEntity, model), parent);
+      return model.createRefElementNode(myEntity, () -> presentation.createRefNode(myEntity, model, parent), parent);
     }
 
     @Nullable

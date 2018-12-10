@@ -426,7 +426,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
                             boolean showStructure,
                             boolean groupByStructure) {
     InspectionTreeModel model = myContext.getView().getTree().getInspectionTreeModel();
-    EntryPointsNode epNode = model.createCustomNode(myDummyWrapper.getValue(), () -> new EntryPointsNode(myDummyWrapper.getValue(), myContext, model), node);
+    EntryPointsNode epNode = model.createCustomNode(myDummyWrapper.getValue(), () -> new EntryPointsNode(myDummyWrapper.getValue(), myContext, node), node);
     InspectionToolPresentation presentation = myContext.getPresentation(myDummyWrapper.getValue());
     presentation.updateContent();
     provider.appendToolNodeContent(myContext, myDummyWrapper.getValue(), epNode, showStructure, groupByStructure);
@@ -434,8 +434,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @NotNull
   @Override
-  public RefElementNode createRefNode(@Nullable RefEntity entity, @NotNull InspectionTreeModel model) {
-    return new RefElementNode(entity, this, model) {
+  public RefElementNode createRefNode(@Nullable RefEntity entity, @NotNull InspectionTreeModel model, @NotNull InspectionTreeNode parent) {
+    return new RefElementNode(entity, this, parent) {
       @Nullable
       @Override
       public String getTailText() {

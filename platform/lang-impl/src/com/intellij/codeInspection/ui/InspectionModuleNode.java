@@ -25,8 +25,8 @@ public class InspectionModuleNode extends InspectionTreeNode {
   @NotNull
   private final Module myModule;
 
-  public InspectionModuleNode(@NotNull Module module, InspectionTreeModel model) {
-    super(model);
+  public InspectionModuleNode(@NotNull Module module, @NotNull InspectionTreeNode parent) {
+    super(parent);
     myModule = module;
   }
 

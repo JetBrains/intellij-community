@@ -6,7 +6,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.WeakInterner;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
@@ -52,10 +52,11 @@ public abstract class InspectionTreeNode implements TreeNode {
     }
   };
   @NotNull
-  private final InspectionTreeModel myModel;
+  final Children myChildren = new Children();
+  final InspectionTreeNode myParent;
 
-  protected InspectionTreeNode(@NotNull InspectionTreeModel model) {
-    myModel = model;
+  protected InspectionTreeNode(InspectionTreeNode parent) {
+    myParent = parent;
   }
 
   protected boolean doesNeedInternProblemLevels() {
@@ -77,7 +78,7 @@ public abstract class InspectionTreeNode implements TreeNode {
 
   void dropProblemCountCaches() {
     InspectionTreeNode current = this;
-    while (current != null && myModel.getRoot() != current) {
+    while (current != null && getParent() != null) {
       current.myProblemLevels.drop();
       current = current.getParent();
     }
@@ -135,11 +136,6 @@ public abstract class InspectionTreeNode implements TreeNode {
     dropProblemCountCaches();
   }
 
-  public void remove(int childIndex) {
-    myModel.removeChild(this, childIndex);
-    dropProblemCountCaches();
-  }
-
   public RefEntity getContainingFileLocalEntity() {
     RefEntity current = null;
     for (InspectionTreeNode child : getChildren()) {
@@ -161,12 +157,12 @@ public abstract class InspectionTreeNode implements TreeNode {
 
   @NotNull
   public List<? extends InspectionTreeNode> getChildren() {
-    return ObjectUtils.notNull(myModel.getChildren(this), Collections.emptyList());
+    return Collections.unmodifiableList(Arrays.asList(myChildren.myChildren));
   }
 
   @Override
   public InspectionTreeNode getParent() {
-    return myModel.getParent(this);
+    return myParent;
   }
 
   @Override
@@ -179,13 +175,9 @@ public abstract class InspectionTreeNode implements TreeNode {
     return getChildren().get(idx);
   }
 
-  public void removeAllChildren() {
-    myModel.removeChildren(this);
-  }
-
   @Override
   public int getIndex(TreeNode node) {
-    return myModel.getIndexOfChild(this, node);
+    return Collections.binarySearch(getChildren(), (InspectionTreeNode)node, InspectionResultsViewComparator.INSTANCE);
   }
 
   @Override
@@ -201,5 +193,17 @@ public abstract class InspectionTreeNode implements TreeNode {
   @Override
   public String toString() {
     return getPresentableText();
+  }
+
+  static class Children {
+    private static final InspectionTreeNode[] EMPTY_ARRAY = new InspectionTreeNode[0];
+
+    volatile InspectionTreeNode[] myChildren = EMPTY_ARRAY;
+    final BidirectionalMap<Object, InspectionTreeNode> myUserObject2Node = new BidirectionalMap<>();
+
+    void clear() {
+      myChildren = EMPTY_ARRAY;
+      myUserObject2Node.clear();
+    }
   }
 }

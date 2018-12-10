@@ -18,7 +18,7 @@ package com.intellij.codeInspection.ui;
 
 public class InspectionRootNode extends InspectionTreeNode {
   protected InspectionRootNode(InspectionTreeModel model) {
-    super(model);
+    super(null);
   }
 
   @Override

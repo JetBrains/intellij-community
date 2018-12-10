@@ -18,44 +18,33 @@ import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.TreeTraversal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
   private static final Logger LOG = Logger.getInstance(InspectionTreeModel.class);
   private final InspectionRootNode myRoot = new InspectionRootNode(this);
-  private final Map<InspectionTreeNode, Children> myChildren = new ConcurrentHashMap<>();
-  private final Map<InspectionTreeNode, InspectionTreeNode> myParents = new ConcurrentHashMap<>();
 
   @Override
   public int getIndexOfChild(Object object, Object child) {
-    return Collections.binarySearch(getChildren(object), (InspectionTreeNode)child, InspectionResultsViewComparator.INSTANCE);
+    return ((InspectionTreeNode)object).getIndex((TreeNode)child);
   }
 
   public void reload() {
     treeNodesChanged(null, null, null);
   }
 
-  private static class Children {
-    private static final InspectionTreeNode[] EMPTY_ARRAY = new InspectionTreeNode[0];
-
-    private volatile InspectionTreeNode[] myChildren = EMPTY_ARRAY;
-    private final BidirectionalMap<Object, InspectionTreeNode> myUserObject2Node = new BidirectionalMap<>();
-  }
-
   @Override
   public List<? extends InspectionTreeNode> getChildren(Object parent) {
-    Children nodes = myChildren.get(((InspectionTreeNode)parent));
-    return nodes == null ? Collections.emptyList() : Collections.unmodifiableList(Arrays.asList(nodes.myChildren));
+    return ((InspectionTreeNode)parent).getChildren();
   }
 
   @Override
@@ -65,7 +54,7 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
 
   @Nullable
   public InspectionTreeNode getParent(InspectionTreeNode node) {
-    return myParents.get(node);
+    return node.myParent;
   }
 
   public JBIterable<InspectionTreeNode> traverse(InspectionTreeNode node) {
@@ -91,7 +80,7 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
   }
 
   public void removeChild(@NotNull InspectionTreeNode node, int childIndex) {
-    InspectionTreeNode removed = myChildren.get(node).myChildren[childIndex];
+    InspectionTreeNode removed = node.myChildren.myChildren[childIndex];
     remove(removed);
     treeNodesChanged(null, null, null);
     treeStructureChanged(null, null, null);
@@ -114,9 +103,9 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
       doRemove(child, skip);
     }
     if (node != skip) {
-      InspectionTreeNode parent = myParents.remove(node);
+      InspectionTreeNode parent = getParent(node);
       if (parent != null) {
-        Children parentChildren = myChildren.get(parent);
+        InspectionTreeNode.Children parentChildren = parent.myChildren;
         if (parentChildren != null) {
           parentChildren.myChildren = ArrayUtil.remove(parentChildren.myChildren, node);
           parentChildren.myUserObject2Node.removeValue(node);
@@ -126,28 +115,27 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
   }
 
   public synchronized void clearTree() {
-    myChildren.clear();
-    myParents.clear();
+    myRoot.myChildren.clear();
   }
 
   @NotNull
   public InspectionModuleNode createModuleNode(@NotNull Module module, @NotNull InspectionTreeNode parent) {
-    return getOrAdd(module, () -> new InspectionModuleNode(module, this), parent);
+    return getOrAdd(module, () -> new InspectionModuleNode(module, parent), parent);
   }
 
   @NotNull
   public InspectionPackageNode createPackageNode(String packageName, @NotNull InspectionTreeNode parent) {
-    return getOrAdd(packageName, () -> new InspectionPackageNode(packageName, this), parent);
+    return getOrAdd(packageName, () -> new InspectionPackageNode(packageName, parent), parent);
   }
 
   @NotNull
   public InspectionGroupNode createGroupNode(String group, @NotNull InspectionTreeNode parent) {
-    return getOrAdd(group, () -> new InspectionGroupNode(group, this), parent);
+    return getOrAdd(group, () -> new InspectionGroupNode(group, parent), parent);
   }
 
   @NotNull
   public InspectionSeverityGroupNode createSeverityGroupNode(SeverityRegistrar severityRegistrar, HighlightDisplayLevel level, @NotNull InspectionTreeNode parent) {
-    return getOrAdd(level, () -> new InspectionSeverityGroupNode(severityRegistrar, level, this), parent);
+    return getOrAdd(level, () -> new InspectionSeverityGroupNode(severityRegistrar, level, parent), parent);
   }
 
   @NotNull
@@ -163,14 +151,14 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
 
   @NotNull
   public InspectionNode createInspectionNode(@NotNull InspectionToolWrapper toolWrapper, InspectionProfileImpl profile, @NotNull InspectionTreeNode parent) {
-    return getOrAdd(toolWrapper.getShortName(), () -> new InspectionNode(toolWrapper, profile, this), parent);
+    return getOrAdd(toolWrapper.getShortName(), () -> new InspectionNode(toolWrapper, profile, parent), parent);
   }
 
   public void createProblemDescriptorNode(RefEntity element,
                                           @NotNull CommonProblemDescriptor descriptor,
                                           @NotNull InspectionToolPresentation presentation,
                                           @NotNull InspectionTreeNode parent) {
-    getOrAdd(descriptor, () -> ReadAction.compute(() -> new ProblemDescriptionNode(element, descriptor, presentation, this)), parent);
+    getOrAdd(descriptor, () -> ReadAction.compute(() -> new ProblemDescriptionNode(element, descriptor, presentation, parent)), parent);
   }
 
   public void createOfflineProblemDescriptorNode(@NotNull OfflineProblemDescriptor offlineDescriptor,
@@ -178,16 +166,16 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
                                                  @NotNull InspectionToolPresentation presentation,
                                                  @NotNull InspectionTreeNode parent) {
     getOrAdd(offlineDescriptor,
-             () -> ReadAction.compute(() -> new OfflineProblemDescriptorNode(resolveResult, presentation, offlineDescriptor, this)),
+             () -> ReadAction.compute(() -> new OfflineProblemDescriptorNode(resolveResult, presentation, offlineDescriptor, parent)),
              parent);
   }
 
   private synchronized <T extends InspectionTreeNode> T getOrAdd(Object userObject, Supplier<T> supplier, InspectionTreeNode parent) {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || !ApplicationManager.getApplication().isDispatchThread());
-    Children children = myChildren.computeIfAbsent(parent, __ -> new Children());
     if (userObject == null) {
       userObject = ObjectUtils.NULL;
     }
+    InspectionTreeNode.Children children = parent.myChildren;
     InspectionTreeNode node = children.myUserObject2Node.get(userObject);
     if (node == null) {
       node = supplier.get();
@@ -196,7 +184,6 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
       // it's allowed to have idx >= 0 for example for problem descriptor nodes.
       int insertionPoint = idx >= 0 ? idx : -idx - 1;
       children.myChildren = ArrayUtil.insert(children.myChildren, insertionPoint, node);
-      myParents.put(node, parent);
       children.myUserObject2Node.put(userObject, node);
 
       LOG.assertTrue(children.myChildren.length == children.myUserObject2Node.size());

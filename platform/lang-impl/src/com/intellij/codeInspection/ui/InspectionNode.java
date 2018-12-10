@@ -25,8 +25,10 @@ public class InspectionNode extends InspectionTreeNode {
   @NotNull private final InspectionToolWrapper myToolWrapper;
   @NotNull private final InspectionProfileImpl myProfile;
 
-  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionProfileImpl profile, @NotNull InspectionTreeModel model) {
-    super(model);
+  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper,
+                        @NotNull InspectionProfileImpl profile,
+                        @NotNull InspectionTreeNode parent) {
+    super(parent);
     myToolWrapper = toolWrapper;
     myProfile = profile;
   }

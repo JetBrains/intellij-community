@@ -41,8 +41,10 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   }
 
   @NotNull
-  default RefElementNode createRefNode(@Nullable RefEntity entity, @NotNull InspectionTreeModel model) {
-    return new RefElementNode(entity, this, model);
+  default RefElementNode createRefNode(@Nullable RefEntity entity,
+                                       @NotNull InspectionTreeModel model,
+                                       @NotNull InspectionTreeNode parent) {
+    return new RefElementNode(entity, this, parent);
   }
 
   void updateContent();

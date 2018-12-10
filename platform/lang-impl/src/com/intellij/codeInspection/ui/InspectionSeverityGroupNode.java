@@ -17,8 +17,8 @@ public class InspectionSeverityGroupNode extends InspectionTreeNode{
 
   public InspectionSeverityGroupNode(@NotNull SeverityRegistrar severityRegistrar,
                                      @NotNull HighlightDisplayLevel level,
-                                     @NotNull InspectionTreeModel model) {
-    super(model);
+                                     @NotNull InspectionTreeNode parent) {
+    super(parent);
     myLevel = level;
     mySeverityRegistrar = severityRegistrar;
   }

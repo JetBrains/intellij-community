@@ -16,8 +16,8 @@ public class EntryPointsNode extends InspectionNode {
 
   public EntryPointsNode(@NotNull InspectionToolWrapper dummyWrapper,
                          @NotNull GlobalInspectionContextImpl context,
-                         @NotNull InspectionTreeModel model) {
-    super(dummyWrapper, context.getCurrentProfile(), model);
+                         @NotNull InspectionTreeNode parent) {
+    super(dummyWrapper, context.getCurrentProfile(), parent);
   }
 
   @Override

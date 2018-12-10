@@ -24,8 +24,10 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   private final Icon myIcon;
   @Nullable private final RefEntity myRefEntity;
 
-  public RefElementNode(@Nullable RefEntity refEntity, @NotNull InspectionToolPresentation presentation, InspectionTreeModel model) {
-    super(presentation, model);
+  public RefElementNode(@Nullable RefEntity refEntity,
+                        @NotNull InspectionToolPresentation presentation,
+                        @NotNull InspectionTreeNode parent) {
+    super(presentation, parent);
     myRefEntity = refEntity;
     myIcon = refEntity == null ? null : refEntity.getIcon(false);
   }

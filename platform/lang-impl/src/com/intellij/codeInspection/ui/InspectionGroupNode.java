@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
 public class InspectionGroupNode extends InspectionTreeNode {
   private final String myGroup;
 
-  InspectionGroupNode(@NotNull String group, @NotNull InspectionTreeModel model) {
-    super(model);
+  InspectionGroupNode(@NotNull String group, @NotNull InspectionTreeNode parent) {
+    super(parent);
     myGroup = group;
   }
 
