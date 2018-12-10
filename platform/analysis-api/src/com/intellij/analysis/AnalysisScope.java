@@ -244,7 +244,7 @@ public class AnalysisScope {
             @NotNull
             @Override
             public Result visitFileEx(@NotNull VirtualFile file) {
-              boolean ignored = fileIndex.isExcluded(file);
+              boolean ignored = ReadAction.compute(() -> fileIndex.isExcluded(file));
               if (!ignored && !file.isDirectory()) {
                 myFilesSet.add(file);
               }
