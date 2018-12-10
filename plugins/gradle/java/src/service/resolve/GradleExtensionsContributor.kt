@@ -317,7 +317,7 @@ fun processExtension(processor: PsiScopeProcessor,
     }
 
     val objectTypeFqn = extension.namedObjectTypeFqn?.let { if (it.isNotBlank()) it else null } ?: return true
-    if (place.parent is GrMethodCallExpression) {
+    if (shouldProcessMethods && place.parent is GrMethodCallExpression) {
       val methodBuilder = GradleResolverUtil.createMethodWithClosure(placeText, objectTypeFqn, null, place)
       if (methodBuilder != null) {
         place.putUserData(RESOLVED_CODE, true)
