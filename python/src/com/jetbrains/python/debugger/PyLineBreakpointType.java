@@ -21,7 +21,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -48,13 +47,13 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   public static final String ID = "python-line";
   private static final String NAME = "Python Line Breakpoint";
 
-  public final static Set<IElementType> UNSTOPPABLE_ELEMENT_TYPES = Sets.newHashSet(PyTokenTypes.TRIPLE_QUOTED_STRING,
+  private final static Set<IElementType> UNSTOPPABLE_ELEMENT_TYPES = Sets.newHashSet(PyTokenTypes.TRIPLE_QUOTED_STRING,
                                                                                      PyTokenTypes.SINGLE_QUOTED_STRING,
                                                                                      PyTokenTypes.SINGLE_QUOTED_UNICODE,
                                                                                      PyTokenTypes.DOCSTRING);
 
 
-  public final static Class[] UNSTOPPABLE_ELEMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
+  private final static Class[] UNSTOPPABLE_ELEMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
 
 
   public PyLineBreakpointType() {
@@ -78,14 +77,14 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
 
   protected boolean isSuitableFileType(@NotNull Project project, @NotNull VirtualFile file) {
     return file.getFileType() == getFileType() ||
-           (ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file) == getLanguage());
+           (ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file) == getFileLanguage());
   }
 
   protected FileType getFileType() {
     return PythonFileType.INSTANCE;
   }
 
-  protected Language getLanguage() {
+  protected Language getFileLanguage() {
     return PythonLanguage.INSTANCE;
   }
 
@@ -97,6 +96,10 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     return UNSTOPPABLE_ELEMENTS;
   }
 
+  protected boolean isPsiElementStoppable(PsiElement psiElement) {
+    return psiElement.getLanguage() == PythonLanguage.INSTANCE;
+  }
+
   protected void lineHasStoppablePsi(@NotNull Project project,
                                      @NotNull VirtualFile file,
                                      int line,
@@ -106,14 +109,12 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
                                      Ref<? super Boolean> stoppable) {
     if (!isSkeleton(project, file)) {
       XDebuggerUtil.getInstance().iterateLine(project, document, line, psiElement -> {
-        if (PsiTreeUtil.getNonStrictParentOfType(psiElement, unstoppablePsiElements) != null) {
-          return true;
-        }
-
+        if (PsiTreeUtil.getNonStrictParentOfType(psiElement, unstoppablePsiElements) != null) return true;
         if (psiElement.getNode() != null && unstoppableElementTypes.contains(psiElement.getNode().getElementType())) return true;
-
-        // Python debugger seems to be able to stop on pretty much everything
-        stoppable.set(true);
+        if (isPsiElementStoppable(psiElement)) {
+          // Python debugger seems to be able to stop on pretty much everything
+          stoppable.set(true);
+        }
         return false;
       });
 
