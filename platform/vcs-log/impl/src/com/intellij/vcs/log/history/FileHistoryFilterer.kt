@@ -28,11 +28,7 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
-import com.intellij.vcs.log.visible.CommitCountStage
-import com.intellij.vcs.log.visible.VcsLogFilterer
-import com.intellij.vcs.log.visible.VcsLogFiltererImpl
-import com.intellij.vcs.log.visible.VcsLogFiltererImpl.matchesNothing
-import com.intellij.vcs.log.visible.VisiblePack
+import com.intellij.vcs.log.visible.*
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 
 internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
@@ -171,7 +167,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
         return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, data.buildPathsMap())
       }
 
-      if (matchesNothing(matchingHeads) || data.isEmpty) {
+      if (matchingHeads.matchesNothing() || data.isEmpty) {
         return VisiblePack.EMPTY
       }
 

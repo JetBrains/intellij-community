@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
 
-import static com.intellij.vcs.log.visible.VcsLogFiltererImpl.areFiltersAffectedByIndexing;
+import static com.intellij.vcs.log.visible.VcsLogFiltererImplKt.areFiltersAffectedByIndexing;
 
 public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposable {
   private static final Logger LOG = Logger.getInstance(VisiblePackRefresherImpl.class);
