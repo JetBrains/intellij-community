@@ -444,12 +444,16 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     IdeaPluginDescriptor plugin = cluster.plugin;
 
     StringBuilder info = new StringBuilder();
+    String url = null;
 
     if (pluginId != null) {
-      String versionText = plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())
-                           ? DiagnosticBundle.message("error.list.message.plugin.version", plugin.getVersion())
-                           : "";
-      info.append(DiagnosticBundle.message("error.list.message.blame.plugin", plugin != null ? plugin.getName() : pluginId, versionText));
+      String name = plugin != null ? plugin.getName() : pluginId.toString();
+      if (plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())) {
+        info.append(DiagnosticBundle.message("error.list.message.blame.plugin.version", name, plugin.getVersion()));
+      }
+      else {
+        info.append(DiagnosticBundle.message("error.list.message.blame.plugin", name));
+      }
     }
     else if (t instanceof AbstractMethodError) {
       info.append(DiagnosticBundle.message("error.list.message.blame.unknown.plugin"));
@@ -462,7 +466,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     String date = DateFormatUtil.formatPrettyDateTime(cluster.messages.get(count - 1).getDate());
     info.append(' ').append(DiagnosticBundle.message("error.list.message.info", date, count));
 
-    String url = null;
     if (message.isSubmitted()) {
       SubmittedReportInfo submissionInfo = message.getSubmissionInfo();
       appendSubmissionInformation(submissionInfo, info);
@@ -631,8 +634,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       String disable = DiagnosticBundle.message("error.dialog.disable.plugin.action.disable");
       String cancel = IdeBundle.message("button.cancel");
 
-      boolean doDisable;
-      boolean doRestart;
+      boolean doDisable, doRestart;
       if (canRestart) {
         String restart = DiagnosticBundle.message("error.dialog.disable.plugin.action.disableAndRestart");
         int result = Messages.showYesNoCancelDialog(myProject, message, title, disable, restart, cancel, Messages.getQuestionIcon());
@@ -802,9 +804,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private static class MessageCluster {
     private final AbstractMessage first;
-    @Nullable private final PluginId pluginId;
-    @Nullable private final IdeaPluginDescriptor plugin;
-    @Nullable private final ErrorReportSubmitter submitter;
+    private final @Nullable PluginId pluginId;
+    private final @Nullable IdeaPluginDescriptor plugin;
+    private final @Nullable ErrorReportSubmitter submitter;
     private String detailsText;
     private final List<AbstractMessage> messages = new ArrayList<>();
 
@@ -859,15 +861,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
    * @return (plugin name, version)
    * @deprecated use {@link #getPlugin(IdeaLoggingEvent)} instead and take the plugin id, name and version from the returned instance
    */
-  @Nullable
   @Deprecated
-  public static Pair<String, String> getPluginInfo(@NotNull IdeaLoggingEvent event) {
+  public static @Nullable Pair<String, String> getPluginInfo(@NotNull IdeaLoggingEvent event) {
     IdeaPluginDescriptor plugin = getPlugin(event);
     return plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate()) ? pair(plugin.getName(), plugin.getVersion()) : null;
   }
 
-  @Nullable
-  public static IdeaPluginDescriptor getPlugin(@NotNull IdeaLoggingEvent event) {
+  public static @Nullable IdeaPluginDescriptor getPlugin(@NotNull IdeaLoggingEvent event) {
     IdeaPluginDescriptor plugin = null;
     if (event instanceof IdeaReportingEvent) {
       plugin = ((IdeaReportingEvent)event).getPlugin();
@@ -881,8 +881,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return plugin;
   }
 
-  @Nullable
-  public static PluginId findPluginId(@NotNull Throwable t) {
+  public static @Nullable PluginId findPluginId(@NotNull Throwable t) {
     if (t instanceof PluginException) {
       return ((PluginException)t).getPluginId();
     }
@@ -973,8 +972,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  @Nullable
-  static ErrorReportSubmitter getSubmitter(@NotNull Throwable t, PluginId pluginId) {
+  static @Nullable ErrorReportSubmitter getSubmitter(@NotNull Throwable t, PluginId pluginId) {
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     return getSubmitter(t, pluginId, plugin);
   }
