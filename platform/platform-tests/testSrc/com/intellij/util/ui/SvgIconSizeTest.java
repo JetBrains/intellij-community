@@ -38,7 +38,7 @@ public class SvgIconSizeTest {
     test(ScaleContext.create(SYS_SCALE.of(1)));
     test(ScaleContext.create(SYS_SCALE.of(2)));
 
-    /**
+    /*
      * Test overridden size.
      */
     URL url = new File(getSvgIconPath("20x10")).toURI().toURL();
@@ -52,7 +52,7 @@ public class SvgIconSizeTest {
   private static void test(ScaleContext ctx) {
     int scale = (int)ctx.getScale(SYS_SCALE);
 
-    /**
+    /*
      * Test default unit ("px").
      */
     BufferedImage image = loadImage(getSvgIconPath("20x10"), ctx);
@@ -60,7 +60,7 @@ public class SvgIconSizeTest {
     assertEquals("wrong image width", 20 * scale, image.getWidth());
     assertEquals("wrong image height", 10 * scale, image.getHeight());
 
-    /**
+    /*
      * Test "px" unit.
      */
     image = loadImage(getSvgIconPath("20px10px"), ctx);
@@ -68,13 +68,13 @@ public class SvgIconSizeTest {
     assertEquals("wrong image width", 20 * scale, image.getWidth());
     assertEquals("wrong image height", 10 * scale, image.getHeight());
 
-    /**
+    /*
      * Test default size.
      */
     image = loadImage(getSvgIconPath("default"), ctx);
     assertNotNull(image);
-    assertEquals("wrong image width", 16 * scale, image.getWidth());
-    assertEquals("wrong image height", 16 * scale, image.getHeight());
+    assertEquals("wrong image width", SVGLoader.ICON_DEFAULT_SIZE * scale, image.getWidth());
+    assertEquals("wrong image height", SVGLoader.ICON_DEFAULT_SIZE * scale, image.getHeight());
   }
 
   private static String getSvgIconPath(String size) {
