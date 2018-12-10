@@ -565,7 +565,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
     VirtualFile virtualFile = file.getVirtualFile();
     String url = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
-    incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, url);
 
     final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, range.getStartOffset(),
                                                                range.getEndOffset(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
@@ -605,6 +604,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       LOG.error("In file: " + file.getName(), e);
     }
     finally {
+      incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, url);
       InjectedLanguageManager.getInstance(getProject()).dropFileCaches(file);
     }
   }
