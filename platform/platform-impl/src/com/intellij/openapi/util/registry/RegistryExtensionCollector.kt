@@ -27,9 +27,10 @@ class RegistryExtensionCollector {
   }
 
   private companion object {
-    val LINE_CONTINUATION_REGEX = """\\[ \t]+""".toRegex()  // the real '\n' after the '\\' is swallowed by the XML reader
+    // Since the XML parser removes all the '\n' chars joining indented lines together,
+    // we can't really tell whether multiple whitespaces actually refer to indentation spaces or just regular ones.
+    val CONSECUTIVE_SPACES_REGEX = """\s{2,}""".toRegex()
 
-    fun String.unescapeString(): String =
-      if ('\\' !in this) this else StringUtil.unescapeStringCharacters(replace(LINE_CONTINUATION_REGEX, ""))
+    fun String.unescapeString(): String = StringUtil.unescapeStringCharacters(replace(CONSECUTIVE_SPACES_REGEX, " "))
   }
 }
