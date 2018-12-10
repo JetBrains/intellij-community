@@ -8,6 +8,8 @@ import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil.enclosingClass
+import org.jetbrains.plugins.groovy.lang.resolve.BaseMethodResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.DiamondResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
@@ -26,6 +28,7 @@ abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachin
     val classCandidate = resolveClass() ?: return emptyList()
     val constructedClass = classCandidate.element as? PsiClass ?: return emptyList()
     val substitutor = classCandidate.contextSubstitutor
+    val needsInference = classCandidate is DiamondResolveResult
 
     val allConstructors = getAllConstructors(constructedClass, element)
     val userArguments = arguments
@@ -37,7 +40,7 @@ abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachin
 
     val enclosingClassArgument = enclosingClassArgument(element, constructedClass)?.let(::listOf) ?: emptyList()
     val realArguments = enclosingClassArgument + userArguments
-    val (realApplicable, realResults) = tryArguments(allConstructors, state, realArguments)
+    val (realApplicable, realResults) = tryArguments(allConstructors, state, needsInference, realArguments)
     if (realApplicable || !supportsMapInvocation) {
       return realResults
     }
@@ -50,7 +53,7 @@ abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachin
       return realResults
     }
 
-    return tryArguments(allConstructors, state, enclosingClassArgument).second
+    return tryArguments(allConstructors, state, needsInference, enclosingClassArgument).second
   }
 
   private fun enclosingClassArgument(place: PsiElement, constructedClass: PsiClass): Argument? {
@@ -61,9 +64,15 @@ abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachin
 
   private fun tryArguments(constructors: List<PsiMethod>,
                            state: ResolveState,
+                           diamond: Boolean,
                            arguments: Arguments): Pair<Boolean, List<GroovyMethodResult>> {
     val allResults = constructors.map {
-      MethodResolveResult(it, element, state, arguments)
+      if (diamond || it.typeParameters.isNotEmpty()) {
+        MethodResolveResult(it, element, state, arguments)
+      }
+      else {
+        BaseMethodResolveResult(it, element, state, arguments)
+      }
     }
     val applicable = chooseConstructors(allResults, arguments)
     return if (applicable != null) {

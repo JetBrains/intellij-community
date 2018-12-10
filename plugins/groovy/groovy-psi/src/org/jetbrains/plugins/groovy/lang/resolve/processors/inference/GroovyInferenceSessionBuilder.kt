@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
@@ -25,6 +26,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
+import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 
 class GroovyInferenceSessionBuilder constructor(
@@ -85,7 +88,7 @@ fun getMostTopLevelExpression(start: GrExpression): GrExpression {
     }
     else if (parent is GrArgumentList) {
       val grandParent = parent.parent
-      if (grandParent is GrCallExpression) {
+      if (grandParent is GrCallExpression && grandParent.advancedResolve() is MethodResolveResult) {
         grandParent
       }
       else {
@@ -129,6 +132,12 @@ private fun getExpectedType(expression: GrExpression): PsiType? {
       val lValue = expressions.getOrNull(index)
       return (lValue?.staticReference?.resolve() as? GrVariable)?.declaredType
     }
+  }
+  else if (parent is GrArgumentList) {
+    val call = parent.parent as? GrCallExpression ?: return null
+    val result = call.advancedResolve() as? GroovyMethodResult ?: return null
+    val mapping = result.candidate?.argumentMapping ?: return null
+    return result.substitutor.substitute(mapping.expectedType(ExpressionArgument(expression)))
   }
 
   return null

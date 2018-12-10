@@ -64,6 +64,16 @@ class IdCallable {
   }
 
   @Test
+  void 'diamond in new expression'() {
+    typingTest('new C<PG>(new<caret> C<>())', GrNewExpression, 'C<PG>')
+  }
+
+  @Test
+  void 'diamond type from argument'() {
+    expressionTypeTest('new C<>(new C<Integer>())', 'C<java.lang.Integer>')
+  }
+
+  @Test
   void 'call in argument of diamond in variable initializer'() {
     typingTest('''\
 def <T> T theMethod() {}
@@ -95,11 +105,6 @@ def <T> T theMethod() {}
 def <T> T first(List<T> arg) {}
 I<PG> l = first(theMethod<caret>())
 ''', GrMethodCall, 'java.util.List<I<PG>>')
-  }
-
-  @Test
-  void 'diamond type from argument'() {
-    expressionTypeTest('new ArrayList<>(new ArrayList<Integer>())', 'java.util.ArrayList<java.lang.Integer>')
   }
 
   @Test
