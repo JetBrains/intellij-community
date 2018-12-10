@@ -261,6 +261,9 @@ public abstract class AbstractValueHint {
                                                      HintManager.HIDE_BY_TEXT_CHANGE |
                                                      HintManager.HIDE_BY_SCROLLING, 0, false,
                                                      hint);
+    if (myHighlighter == null) { // hint text update
+      createHighlighter();
+    }
     setHighlighterAttributes();
     myInsideShow = false;
     return true;
