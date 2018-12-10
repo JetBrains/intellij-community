@@ -15,11 +15,8 @@
  */
 package com.siyeh.ig.testFrameworks;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,36 +170,6 @@ public class AssertHint {
     }
     return JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(qualifiedName) ||
           JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSUMPTIONS.equals(qualifiedName);
-  }
-
-  public static String areExpectedActualTypesCompatible(PsiMethodCallExpression expression, boolean checkTestNG) {
-    final AssertHint assertHint = createAssertEqualsHint(expression, checkTestNG);
-    if (assertHint == null) return null;
-    final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
-    final int argIndex = assertHint.getArgIndex();
-    final PsiType type1 = arguments[argIndex].getType();
-    if (type1 == null) {
-      return null;
-    }
-    final PsiType type2 = arguments[argIndex + 1].getType();
-    if (type2 == null) {
-      return null;
-    }
-    final PsiParameter[] parameters = assertHint.getMethod().getParameterList().getParameters();
-    final PsiType parameterType1 = parameters[argIndex].getType();
-    final PsiType parameterType2 = parameters[argIndex + 1].getType();
-    final PsiClassType objectType = TypeUtils.getObjectType(expression);
-    if (!objectType.equals(parameterType1) || !objectType.equals(parameterType2)) {
-      return null;
-    }
-    if (TypeUtils.areConvertible(type1, type2) || TypeUtils.mayBeEqualByContract(type1, type2)) {
-      return null;
-    }
-    final String comparedTypeText = type1.getPresentableText();
-    final String comparisonTypeText = type2.getPresentableText();
-    return InspectionGadgetsBundle.message("assertequals.between.inconvertible.types.problem.descriptor",
-                                           StringUtil.escapeXmlEntities(comparedTypeText),
-                                           StringUtil.escapeXmlEntities(comparisonTypeText));
   }
 
   public static class JUnitCommonAssertNames {
