@@ -27,7 +27,8 @@ public class GitAdd extends ScheduleForAdditionAction {
     return status == FileStatus.UNKNOWN ||
            status == FileStatus.MODIFIED ||
            status == FileStatus.MERGED_WITH_CONFLICTS ||
-           status == FileStatus.ADDED;
+           status == FileStatus.ADDED ||
+           status == FileStatus.DELETED;
   }
 
   @Override
