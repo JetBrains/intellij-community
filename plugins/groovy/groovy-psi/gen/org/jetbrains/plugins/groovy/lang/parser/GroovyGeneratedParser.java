@@ -3685,13 +3685,25 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // &<<extendedStatement>> | &';' | block_or_statement
+  // &';'
+  static boolean followed_by_semi(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "followed_by_semi")) return false;
+    if (!nextTokenIsFast(b, T_SEMI)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeTokenFast(b, T_SEMI);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // &<<extendedStatement>> | followed_by_semi | block_or_statement
   static boolean for_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_body")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, null, "<loop body>");
     r = for_body_0(b, l + 1);
-    if (!r) r = for_body_1(b, l + 1);
+    if (!r) r = followed_by_semi(b, l + 1);
     if (!r) r = block_or_statement(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -3703,16 +3715,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b, l, _AND_);
     r = extendedStatement(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // &';'
-  private static boolean for_body_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_body_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _AND_);
-    r = consumeToken(b, T_SEMI);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -7053,7 +7055,17 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'while' ('(' mb_nl expression mb_nl ')' mb_nl branch)
+  // followed_by_semi | branch
+  static boolean while_body(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "while_body")) return false;
+    boolean r;
+    r = followed_by_semi(b, l + 1);
+    if (!r) r = branch(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // 'while' ('(' mb_nl expression mb_nl ')' mb_nl while_body)
   public static boolean while_statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "while_statement")) return false;
     if (!nextTokenIs(b, KW_WHILE)) return false;
@@ -7066,7 +7078,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // '(' mb_nl expression mb_nl ')' mb_nl branch
+  // '(' mb_nl expression mb_nl ')' mb_nl while_body
   private static boolean while_statement_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "while_statement_1")) return false;
     boolean r, p;
@@ -7078,7 +7090,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = p && report_error_(b, mb_nl(b, l + 1)) && r;
     r = p && report_error_(b, consumeToken(b, T_RPAREN)) && r;
     r = p && report_error_(b, mb_nl(b, l + 1)) && r;
-    r = p && branch(b, l + 1) && r;
+    r = p && while_body(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }

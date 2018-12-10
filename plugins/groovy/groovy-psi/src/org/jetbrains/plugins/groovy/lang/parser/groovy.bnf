@@ -737,10 +737,8 @@ finally_clause ::= 'finally' (mb_nl lazy_block)
   pin = 1
 }
 
-while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl branch)
-{
-  pin('.*') = 1
-}
+while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl while_body) { pin('.*') = 1 }
+private while_body ::= followed_by_semi | branch
 
 do_while_statement ::= 'do' mb_nl branch mb_nl 'while' '(' expression ')' { pin = 1 }
 
@@ -768,7 +766,7 @@ private fvd_tail ::= variable_declaration_tail <<wrapLeft>>
 expression_list ::= expression (',' expression)*
 
 // FIXME get rid of this weird logic
-private for_body ::= &<<extendedStatement>> | &';' | block_or_statement { name = 'loop body' }
+private for_body ::= &<<extendedStatement>> | followed_by_semi | block_or_statement { name = 'loop body' }
 
 synchronized_statement ::= 'synchronized' '(' expression ')' mb_nl lazy_block
 {
@@ -1233,6 +1231,8 @@ private fast_question ::= '?'
 private fast_colon ::= ':'
 private fast_comma ::= ','
 private fast_l_angle ::= '<'
+
+private followed_by_semi ::= &';' { consumeTokenMethod = 'fast' }
 
 private string_literal_tokens ::= STRING_SQ | STRING_TSQ | STRING_DQ | STRING_TDQ { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
