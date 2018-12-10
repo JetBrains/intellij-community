@@ -100,29 +100,24 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                             detailsFilters: List<VcsLogDetailsFilter>,
                             matchingHeads: Set<Int>?,
                             commitCount: CommitCountStage): FilterByDetailsResult {
-    var commitCount = commitCount
-    var matchingCommits: Set<Int>? = null
-    if (commitCount == CommitCountStage.INITIAL) {
-      matchingCommits = filterInMemory(graph, detailsFilters, matchingHeads).toCommitIndexes()
-      if (matchingCommits.size < commitCount.count) {
-        commitCount = commitCount.next()
-        matchingCommits = null
+    var commitCountToTry = commitCount
+    if (commitCountToTry == CommitCountStage.INITIAL) {
+      val commitsFromMemory = filterInMemory(graph, detailsFilters, matchingHeads).toCommitIndexes()
+      if (commitsFromMemory.size >= commitCountToTry.count) {
+        return FilterByDetailsResult(commitsFromMemory, true, commitCountToTry)
       }
+      commitCountToTry = commitCountToTry.next()
     }
 
-    if (matchingCommits == null) {
-      try {
-        matchingCommits = getFilteredDetailsFromTheVcs(logProviders, filters, commitCount.count).toCommitIndexes()
-      }
-      catch (e: VcsException) {
-        //TODO show an error balloon or something else for non-ea guys.
-        matchingCommits = emptySet()
-        LOG.error(e)
-      }
-
+    try {
+      val commitsFromVcs = getFilteredDetailsFromTheVcs(logProviders, filters, commitCountToTry.count).toCommitIndexes()
+      return FilterByDetailsResult(commitsFromVcs, commitsFromVcs.size >= commitCountToTry.count, commitCountToTry)
     }
-
-    return FilterByDetailsResult(matchingCommits, matchingCommits!!.size >= commitCount.count, commitCount)
+    catch (e: VcsException) {
+      //TODO show an error balloon or something else for non-ea guys.
+      LOG.error(e)
+      return FilterByDetailsResult(emptySet(), true, commitCountToTry)
+    }
   }
 
   override fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean {
