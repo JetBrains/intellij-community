@@ -17,6 +17,7 @@
 
 package com.intellij.psi
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.ElementPatternCondition
@@ -111,7 +112,16 @@ fun ElementPattern<out UElement>.asPsiPattern(vararg supportedUElementTypes: Cla
 private class UastReferenceProviderAdapter(val provider: UastReferenceProvider) : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val uElement = getOrCreateCachedElement(element, context, provider.supportedUElementTypes) ?: return PsiReference.EMPTY_ARRAY
-    return provider.getReferencesByElement(uElement, context)
+    val references = provider.getReferencesByElement(uElement, context)
+    if (ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isInternal) {
+      for (reference in references) {
+        if (reference.element !== element)
+          throw AssertionError(
+            """reference $reference was created for $element but targets ${reference.element}, provider $provider"""
+          )
+      }
+    }
+    return references
   }
 
   override fun acceptsTarget(target: PsiElement): Boolean = provider.acceptsTarget(target)
