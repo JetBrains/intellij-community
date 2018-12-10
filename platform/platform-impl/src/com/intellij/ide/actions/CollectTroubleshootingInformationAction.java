@@ -18,7 +18,6 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.troubleshooting.TroubleInfoCollector;
 import com.intellij.troubleshooting.ui.CollectTroubleshootingInformationDialog;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +30,6 @@ public class CollectTroubleshootingInformationAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(e.getProject() != null && TroubleInfoCollector.EP_SETTINGS.getExtensions().length > 0);
+    e.getPresentation().setEnabled(e.getProject() != null);
   }
 }
