@@ -34,10 +34,10 @@ import java.util.function.Supplier;
 public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> implements InvokerSupplier {
   private static final Logger LOG = Logger.getInstance(InspectionTreeModel.class);
   private final InspectionRootNode myRoot = new InspectionRootNode(this);
-  private Invoker.BackgroundThread myInvoker;
+  private Invoker myInvoker;
 
   public InspectionTreeModel() {
-    myInvoker = new Invoker.BackgroundThread(this);
+    myInvoker = ApplicationManager.getApplication().isUnitTestMode() ? new Invoker.EDT(this) : new Invoker.BackgroundThread(this);
   }
 
   @Override
