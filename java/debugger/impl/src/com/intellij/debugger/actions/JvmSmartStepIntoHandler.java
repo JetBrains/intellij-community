@@ -95,7 +95,7 @@ public abstract class JvmSmartStepIntoHandler {
     final PsiElement highlightElement = target.getHighlightElement();
     if (highlightElement != null) {
       LOG.assertTrue(PsiTreeUtil.isAncestor(position.getFile(), highlightElement, false),
-                     "Highlight element " + highlightElement + " is not from the current file");
+                     "Highlight element " + highlightElement + " in " + target + " is not from the current file");
       popupStep.getScopeHighlighter().highlight(highlightElement, Collections.singletonList(highlightElement));
     }
   }
