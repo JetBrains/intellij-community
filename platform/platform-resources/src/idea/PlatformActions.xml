@@ -486,11 +486,8 @@
           <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction"/>
           <action id="MaximizeToolWindow" class="com.intellij.openapi.wm.impl.MaximizeToolWindowAction"/>
           <separator/>
-          <action id="TogglePinnedMode" class="com.intellij.ide.actions.TogglePinnedModeAction"/>
-          <action id="ToggleDockMode" class="com.intellij.ide.actions.ToggleDockModeAction"/>
-          <action id="ToggleFloatingMode" class="com.intellij.ide.actions.ToggleFloatingModeAction"/>
-          <action id="ToggleWindowedMode" class="com.intellij.ide.actions.ToggleWindowedModeAction"/>
-          <action id="ToggleSideMode" class="com.intellij.ide.actions.ToggleSideModeAction"/>
+          <group id="TW.ViewModeGroup" class="com.intellij.ide.actions.ToolWindowViewModeAction$Group"/>
+          <group id="TW.MoveToGroup" class="com.intellij.ide.actions.ToolWindowMoveAction$Group"/>
           <action id="ToggleContentUiTypeMode" class="com.intellij.ide.actions.ToggleContentUiTypeAction"/>
           <action id="ShowContent" class="com.intellij.ide.actions.ShowContentAction"/>
           <group id="ResizeToolWindowGroup" popup="true">
@@ -941,6 +938,22 @@
       <reference id="MoveEditorToOppositeTabGroup"/>
       <reference id="OpenEditorInOppositeTabGroup"/>
 
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+    <group id="TWViewModes" text="Tool Windows View Modes">
+      <action id="DockPinnedMode" class="com.intellij.ide.actions.ToolWindowDockPinnedAction"/>
+      <action id="DockUnpinnedMode" class="com.intellij.ide.actions.ToolWindowDockUnpinnedAction"/>
+      <action id="UndockMode" class="com.intellij.ide.actions.ToolWindowUndockAction"/>
+      <action id="FloatMode" class="com.intellij.ide.actions.ToolWindowFloatAction"/>
+      <action id="WindowMode" class="com.intellij.ide.actions.ToolWindowWindowAction"/>
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+    <group id="TWViewModesLegacy" text="Tool Windows Legacy View Modes (deprecated)">
+      <action id="TogglePinnedMode" class="com.intellij.ide.actions.TogglePinnedModeAction"/>
+      <action id="ToggleDockMode" class="com.intellij.ide.actions.ToggleDockModeAction"/>
+      <action id="ToggleFloatingMode" class="com.intellij.ide.actions.ToggleFloatingModeAction"/>
+      <action id="ToggleWindowedMode" class="com.intellij.ide.actions.ToggleWindowedModeAction"/>
+      <action id="ToggleSideMode" class="com.intellij.ide.actions.ToggleSideModeAction"/>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
     <group id="ToolWindowContextMenu"/>

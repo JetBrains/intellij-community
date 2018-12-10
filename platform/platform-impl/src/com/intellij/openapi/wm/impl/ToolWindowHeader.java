@@ -329,7 +329,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       final InputEvent inputEvent = e.getInputEvent();
       final ActionPopupMenu popupMenu =
         ((ActionManagerImpl)ActionManager.getInstance())
-          .createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, myGearProducer.get(), new MenuItemPresentationFactory(true));
+          .createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, myGearProducer.get(), new MenuItemPresentationFactory());
 
       int x = 0;
       int y = 0;

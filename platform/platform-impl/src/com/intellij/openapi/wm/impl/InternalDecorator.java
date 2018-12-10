@@ -3,9 +3,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.ide.actions.ResizeToolWindowAction;
-import com.intellij.ide.actions.ToggleToolbarAction;
+import com.intellij.ide.actions.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -53,24 +51,22 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   /*
    * Actions
    */
-  private final TogglePinnedModeAction myToggleAutoHideModeAction;
-  private final ToggleDockModeAction myToggleDockModeAction;
-  private final ToggleFloatingModeAction myToggleFloatingModeAction;
-  private final ToggleWindowedModeAction myToggleWindowedModeAction;
-  private final ToggleSideModeAction myToggleSideModeAction;
   private final ToggleContentUiTypeAction myToggleContentUiTypeAction;
-  private final RemoveStripeButtonAction myHideStripeButtonAction;
+  private final RemoveStripeButtonAction myRemoveFromSideBarAction;
 
   private ActionGroup myAdditionalGearActions;
   /**
    * Catches all event from tool window and modifies decorator's appearance.
    */
   @NonNls static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
-  @NonNls public static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
-  @NonNls public static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
-  @NonNls public static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
-  @NonNls public static final String TOGGLE_WINDOWED_MODE_ACTION_ID = "ToggleWindowedMode";
-  @NonNls public static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
+
+  //See ToolWindowViewModeAction and ToolWindowMoveAction
+  @NonNls @Deprecated public static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
+  @NonNls @Deprecated public static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
+  @NonNls @Deprecated public static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
+  @NonNls @Deprecated public static final String TOGGLE_WINDOWED_MODE_ACTION_ID = "ToggleWindowedMode";
+  @NonNls @Deprecated public static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
+
   @NonNls private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
 
   private ToolWindowHeader myHeader;
@@ -83,14 +79,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myToolWindow.setDecorator(this);
     myDivider = new MyDivider();
 
-    myToggleFloatingModeAction = new ToggleFloatingModeAction();
-    myToggleWindowedModeAction = new ToggleWindowedModeAction();
-    myToggleSideModeAction = new ToggleSideModeAction();
-    myToggleDockModeAction = new ToggleDockModeAction();
-    myToggleAutoHideModeAction = new TogglePinnedModeAction();
     myToggleContentUiTypeAction = new ToggleContentUiTypeAction();
-    myHideStripeButtonAction = new RemoveStripeButtonAction();
+    myRemoveFromSideBarAction = new RemoveStripeButtonAction();
     myToggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(myProject, myToolWindow);
+    if (!ToolWindowId.PREVIEW.equals(info.getId())) {
+      ((DefaultActionGroup)myToggleToolbarGroup).addAction(myToggleContentUiTypeAction);
+    }
 
     setFocusable(false);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
@@ -200,14 +194,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myProject = null;
   }
 
-  private void fireAnchorChanged(@NotNull ToolWindowAnchor anchor) {
-    myDispatcher.getMulticaster().anchorChanged(this, anchor);
-  }
-
-  private void fireAutoHideChanged(boolean autoHide) {
-    myDispatcher.getMulticaster().autoHideChanged(this, autoHide);
-  }
-
   /**
    * Fires event that "hide" button has been pressed.
    */
@@ -229,16 +215,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myDispatcher.getMulticaster().activated(this);
   }
 
-  private void fireTypeChanged(@NotNull ToolWindowType type) {
-    myDispatcher.getMulticaster().typeChanged(this, type);
-  }
-
   final void fireResized() {
     myDispatcher.getMulticaster().resized(this);
-  }
-
-  private void fireSideStatusChanged(boolean isSide) {
-    myDispatcher.getMulticaster().sideStatusChanged(this, isSide);
   }
 
   private void fireContentUiTypeChanges(@NotNull ToolWindowContentUiType type) {
@@ -400,44 +378,11 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   @NotNull
   private ActionGroup createPopupGroup(boolean skipHideAction) {
-    final DefaultActionGroup group = createGearPopupGroup();
+    final DefaultActionGroup group = new GearActionGroup();
     if (myInfo == null) {
       return group;
     }
-    if (!ToolWindowId.PREVIEW.equals(myInfo.getId())) {
-      group.add(myToggleContentUiTypeAction);
-    }
 
-    final DefaultActionGroup moveGroup = new DefaultActionGroup(UIBundle.message("tool.window.move.to.action.group.name"), true);
-    final ToolWindowAnchor anchor = myInfo.getAnchor();
-    if (anchor != ToolWindowAnchor.TOP) {
-      final AnAction topAction = new ChangeAnchorAction(UIBundle.message("tool.window.move.to.top.action.name"), ToolWindowAnchor.TOP);
-      moveGroup.add(topAction);
-    }
-    if (anchor != ToolWindowAnchor.LEFT) {
-      final AnAction leftAction = new ChangeAnchorAction(UIBundle.message("tool.window.move.to.left.action.name"), ToolWindowAnchor.LEFT);
-      moveGroup.add(leftAction);
-    }
-    if (anchor != ToolWindowAnchor.BOTTOM) {
-      final AnAction bottomAction =
-        new ChangeAnchorAction(UIBundle.message("tool.window.move.to.bottom.action.name"), ToolWindowAnchor.BOTTOM);
-      moveGroup.add(bottomAction);
-    }
-    if (anchor != ToolWindowAnchor.RIGHT) {
-      final AnAction rightAction =
-        new ChangeAnchorAction(UIBundle.message("tool.window.move.to.right.action.name"), ToolWindowAnchor.RIGHT);
-      moveGroup.add(rightAction);
-    }
-    group.add(moveGroup);
-
-    DefaultActionGroup resize = new DefaultActionGroup(ActionsBundle.groupText("ResizeToolWindowGroup"), true);
-    resize.add(new ResizeToolWindowAction.Left(myToolWindow, this));
-    resize.add(new ResizeToolWindowAction.Right(myToolWindow, this));
-    resize.add(new ResizeToolWindowAction.Up(myToolWindow, this));
-    resize.add(new ResizeToolWindowAction.Down(myToolWindow, this));
-    resize.add(ActionManager.getInstance().getAction("MaximizeToolWindow"));
-
-    group.add(resize);
     if (!skipHideAction) {
       group.addSeparator();
       group.add(new HideAction());
@@ -475,8 +420,14 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   @NotNull
-  private DefaultActionGroup createGearPopupGroup() {
-    return new GearActionGroup();
+  private DefaultActionGroup createResizeActionGroup() {
+    DefaultActionGroup resize = new DefaultActionGroup(ActionsBundle.groupText("ResizeToolWindowGroup"), true);
+    resize.add(new ResizeToolWindowAction.Left(myToolWindow, this));
+    resize.add(new ResizeToolWindowAction.Right(myToolWindow, this));
+    resize.add(new ResizeToolWindowAction.Up(myToolWindow, this));
+    resize.add(new ResizeToolWindowAction.Down(myToolWindow, this));
+    resize.add(ActionManager.getInstance().getAction("MaximizeToolWindow"));
+    return resize;
   }
 
   private class GearActionGroup extends DefaultActionGroup {
@@ -493,32 +444,16 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
         }
         addSeparator();
       }
+
       addAction(myToggleToolbarGroup).setAsSecondary(true);
-      if (myInfo.isDocked()) {
-        add(myToggleAutoHideModeAction);
-        add(myToggleDockModeAction);
-        add(myToggleFloatingModeAction);
-        add(myToggleWindowedModeAction);
-        add(myToggleSideModeAction);
-      }
-      else if (myInfo.isFloating()) {
-        add(myToggleAutoHideModeAction);
-        add(myToggleFloatingModeAction);
-        add(myToggleWindowedModeAction);
-      }
-      else if (myInfo.isWindowed()) {
-        add(myToggleFloatingModeAction);
-        add(myToggleWindowedModeAction);
-      }
-      else if (myInfo.isSliding()) {
-        if (!ToolWindowId.PREVIEW.equals(myInfo.getId())) {
-          add(myToggleDockModeAction);
-        }
-        add(myToggleFloatingModeAction);
-        add(myToggleWindowedModeAction);
-        add(myToggleSideModeAction);
-      }
-      add(myHideStripeButtonAction);
+      addSeparator();
+
+      add(new ToolWindowViewModeAction.Group());
+      add(new ToolWindowMoveAction.Group());
+      add(createResizeActionGroup());
+      addSeparator();
+
+      add(myRemoveFromSideBarAction);
     }
   }
 
@@ -585,121 +520,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   void showStripeButton() {
     fireVisibleOnPanelChanged(true);
     fireActivated();
-  }
-
-  private final class ChangeAnchorAction extends AnAction implements DumbAware {
-    @NotNull private final ToolWindowAnchor myAnchor;
-
-    ChangeAnchorAction(@NotNull String title, @NotNull ToolWindowAnchor anchor) {
-      super(title);
-      myAnchor = anchor;
-    }
-
-    @Override
-    public final void actionPerformed(@NotNull final AnActionEvent e) {
-      fireAnchorChanged(myAnchor);
-    }
-  }
-
-  private final class TogglePinnedModeAction extends ToggleAction implements DumbAware {
-    TogglePinnedModeAction() {
-      copyFrom(ActionManager.getInstance().getAction(TOGGLE_PINNED_MODE_ACTION_ID));
-    }
-
-    @Override
-    public final boolean isSelected(@NotNull final AnActionEvent event) {
-      return !myInfo.isAutoHide();
-    }
-
-    @Override
-    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
-      fireAutoHideChanged(!myInfo.isAutoHide());
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setVisible(myInfo.getType() != ToolWindowType.FLOATING && myInfo.getType() != ToolWindowType.WINDOWED);
-    }
-  }
-
-  private final class ToggleDockModeAction extends ToggleAction implements DumbAware {
-    ToggleDockModeAction() {
-      copyFrom(ActionManager.getInstance().getAction(TOGGLE_DOCK_MODE_ACTION_ID));
-    }
-
-    @Override
-    public final boolean isSelected(@NotNull final AnActionEvent event) {
-      return myInfo.isDocked();
-    }
-
-    @Override
-    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
-      if (myInfo.isDocked()) {
-        fireTypeChanged(ToolWindowType.SLIDING);
-      }
-      else if (myInfo.isSliding()) {
-        fireTypeChanged(ToolWindowType.DOCKED);
-      }
-    }
-  }
-
-  private final class ToggleFloatingModeAction extends ToggleAction implements DumbAware {
-    ToggleFloatingModeAction() {
-      copyFrom(ActionManager.getInstance().getAction(TOGGLE_FLOATING_MODE_ACTION_ID));
-    }
-
-    @Override
-    public final boolean isSelected(@NotNull final AnActionEvent event) {
-      return myInfo.isFloating();
-    }
-
-    @Override
-    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
-      if (myInfo.isFloating()) {
-        fireTypeChanged(myInfo.getInternalType());
-      }
-      else {
-        fireTypeChanged(ToolWindowType.FLOATING);
-      }
-    }
-  }
-
-  private final class ToggleWindowedModeAction extends ToggleAction implements DumbAware {
-    ToggleWindowedModeAction() {
-      copyFrom(ActionManager.getInstance().getAction(TOGGLE_WINDOWED_MODE_ACTION_ID));
-    }
-
-    @Override
-    public final boolean isSelected(@NotNull final AnActionEvent event) {
-      return myInfo.isWindowed();
-    }
-
-    @Override
-    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
-      if (myInfo.isWindowed()) {
-        fireTypeChanged(myInfo.getInternalType());
-      }
-      else {
-        fireTypeChanged(ToolWindowType.WINDOWED);
-      }
-    }
-  }
-
-  private final class ToggleSideModeAction extends ToggleAction implements DumbAware {
-    ToggleSideModeAction() {
-      copyFrom(ActionManager.getInstance().getAction(TOGGLE_SIDE_MODE_ACTION_ID));
-    }
-
-    @Override
-    public final boolean isSelected(@NotNull final AnActionEvent event) {
-      return myInfo.isSplit();
-    }
-
-    @Override
-    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
-      fireSideStatusChanged(flag);
-    }
   }
 
   private final class RemoveStripeButtonAction extends AnAction implements DumbAware {
