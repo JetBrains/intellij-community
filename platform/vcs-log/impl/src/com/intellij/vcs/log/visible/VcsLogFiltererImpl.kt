@@ -122,6 +122,36 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     }
   }
 
+  @Throws(VcsException::class)
+  private fun getFilteredDetailsFromTheVcs(providers: Map<VirtualFile, VcsLogProvider>,
+                                           filterCollection: VcsLogFilterCollection,
+                                           maxCount: Int): Collection<CommitId> {
+    val commits = ContainerUtil.newArrayList<CommitId>()
+
+    val visibleRoots = VcsLogUtil.getAllVisibleRoots(providers.keys, filterCollection)
+    for (root in visibleRoots) {
+
+      val userFilter = filterCollection.get(VcsLogFilterCollection.USER_FILTER)
+      if (userFilter != null && userFilter.getUsers(root).isEmpty()) {
+        // there is a structure or user filter, but it doesn't match this root
+        continue
+      }
+
+      val filesForRoot = VcsLogUtil.getFilteredFilesForRoot(root, filterCollection)
+      val rootSpecificCollection = if (filesForRoot.isEmpty()) {
+        filterCollection.without(VcsLogFilterCollection.STRUCTURE_FILTER)
+      }
+      else {
+        filterCollection.with(VcsLogFilterObject.fromPaths(filesForRoot))
+      }
+
+      val matchingCommits = providers[root]!!.getCommitsMatchingFilter(root, rootSpecificCollection, maxCount)
+      commits.addAll(matchingCommits.map { commit -> CommitId(commit.id, root) })
+    }
+
+    return commits
+  }
+
   private fun applyHashFilter(dataPack: DataPack,
                               hashes: Collection<String>,
                               sortType: PermanentGraph.SortType,
@@ -256,36 +286,6 @@ private val LOG = Logger.getInstance(VcsLogFiltererImpl::class.java)
 internal class FilterByDetailsResult(val matchingCommits: Set<Int>?,
                                      val canRequestMore: Boolean,
                                      val commitCount: CommitCountStage)
-
-@Throws(VcsException::class)
-private fun getFilteredDetailsFromTheVcs(providers: Map<VirtualFile, VcsLogProvider>,
-                                         filterCollection: VcsLogFilterCollection,
-                                         maxCount: Int): Collection<CommitId> {
-  val commits = ContainerUtil.newArrayList<CommitId>()
-
-  val visibleRoots = VcsLogUtil.getAllVisibleRoots(providers.keys, filterCollection)
-  for (root in visibleRoots) {
-
-    val userFilter = filterCollection.get(VcsLogFilterCollection.USER_FILTER)
-    if (userFilter != null && userFilter.getUsers(root).isEmpty()) {
-      // there is a structure or user filter, but it doesn't match this root
-      continue
-    }
-
-    val filesForRoot = VcsLogUtil.getFilteredFilesForRoot(root, filterCollection)
-    val rootSpecificCollection = if (filesForRoot.isEmpty()) {
-      filterCollection.without(VcsLogFilterCollection.STRUCTURE_FILTER)
-    }
-    else {
-      filterCollection.with(VcsLogFilterObject.fromPaths(filesForRoot))
-    }
-
-    val matchingCommits = providers[root]!!.getCommitsMatchingFilter(root, rootSpecificCollection, maxCount)
-    commits.addAll(matchingCommits.map { commit -> CommitId(commit.id, root) })
-  }
-
-  return commits
-}
 
 fun areFiltersAffectedByIndexing(filters: VcsLogFilterCollection, roots: List<VirtualFile>): Boolean {
   val detailsFilters = filters.detailsFilters
