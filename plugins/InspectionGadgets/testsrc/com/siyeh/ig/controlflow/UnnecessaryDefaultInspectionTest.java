@@ -58,6 +58,32 @@ public class UnnecessaryDefaultInspectionTest extends LightInspectionTestCase {
                   "}\n");
   }
 
+  public void testDeclarationInBranch() {
+    doTest("class X {" +
+           "  void x(E e) {" +
+           "    switch (e) {" +
+           "      /*'default' branch is unnecessary*/default/*_*//**/:" +
+           "        int x = 1;" +
+           "        System.out.println(x);" +
+           "      case A,B:" +
+           "        x = 2;" +
+           "        System.out.println(x);" +
+           "      }" +
+           "   }" +
+           "}");
+    checkQuickFix("Remove 'default' branch",
+                  "class X {" +
+                  "  void x(E e) {" +
+                  "    switch (e) {\n" +
+                  "    case A,B:\n" +
+                  "        int x;\n" +
+                  "        x = 2;" +
+                  "        System.out.println(x);" +
+                  "      }" +
+                  "   }" +
+                  "}");
+  }
+
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {

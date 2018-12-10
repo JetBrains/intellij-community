@@ -137,6 +137,26 @@ public class UnnecessaryDefault{
             }
         };
     }
+
+    void notAllEnumConstantsCovered(MyEnum e) {
+        switch (e) {
+            case foo,bar:
+                System.out.println(1);
+                break;
+            default:
+                System.out.println(2);
+        }
+    }
+
+    void brokenCode(MyEnum e) {
+        switch (e) {
+            case <error descr="Duplicate label 'foo'">foo</error>:
+            case <error descr="Duplicate label 'foo'">foo</error>:
+            case <error descr="Duplicate label 'foo'">foo</error>:
+                System.out.println(9);
+            default: break;
+        };
+    }
 }
 enum MyEnum{
     foo, bar, baz;

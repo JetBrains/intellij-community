@@ -17,6 +17,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -31,12 +32,14 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
@@ -84,23 +87,8 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (element instanceof PsiSwitchLabeledRuleStatement) {
-        element.delete();
-      }
-      else if (element instanceof PsiSwitchLabelStatement) {
-        final PsiStatement previousStatement = PsiTreeUtil.getPrevSiblingOfType(element, PsiStatement.class);
-        if (previousStatement != null && ControlFlowUtils.statementMayCompleteNormally(previousStatement)) {
-          element.delete();
-        }
-        else {
-          PsiElement last = element;
-          PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(element, PsiStatement.class);
-          while (nextStatement != null && !(nextStatement instanceof PsiSwitchLabelStatement)) {
-            last = nextStatement;
-            nextStatement = PsiTreeUtil.getNextSiblingOfType(nextStatement, PsiStatement.class);
-          }
-          element.getParent().deleteChildRange(element, last);
-        }
+      if (element instanceof PsiSwitchLabelStatementBase) {
+        DeleteSwitchLabelFix.deleteLabel((PsiSwitchLabelStatementBase)element);
       }
     }
   }
@@ -268,10 +256,9 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
     if (body == null) {
       return null;
     }
-    final PsiStatement[] statements = body.getStatements();
-    int numCases = 0;
+    final Set<PsiEnumConstant> coveredConstants = new THashSet<>();
     PsiSwitchLabelStatementBase result = null;
-    for (PsiStatement statement : statements) {
+    for (PsiStatement statement : body.getStatements()) {
       if (!(statement instanceof PsiSwitchLabelStatementBase)) {
         continue;
       }
@@ -280,22 +267,22 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
         result = labelStatement;
       }
       else {
-        final PsiExpressionList values = labelStatement.getCaseValues();
-        if (values != null) {
-          numCases += values.getExpressionCount();
+        final List<PsiEnumConstant> constants = SwitchUtils.findEnumConstants(labelStatement);
+        for (PsiEnumConstant constant : constants) {
+          if (!coveredConstants.add(constant)) {
+            return null; // broken code
+          }
         }
       }
     }
     if (result == null) {
       return null;
     }
-    final PsiField[] fields = aClass.getFields();
-    int numEnums = 0;
-    for (final PsiField field : fields) {
-      if (field instanceof PsiEnumConstant) {
-        numEnums++;
+    for (PsiField field : aClass.getFields()) {
+      if (field instanceof PsiEnumConstant && !coveredConstants.remove(field)) {
+        return null;
       }
     }
-    return (numEnums != numCases) ? null : result;
+    return !coveredConstants.isEmpty() ? null : result;
   }
 }
