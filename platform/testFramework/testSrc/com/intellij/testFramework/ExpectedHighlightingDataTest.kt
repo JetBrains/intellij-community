@@ -35,7 +35,8 @@ class ExpectedHighlightingDataTest {
       arrayOf<Any>("one.param.start", "{0}foo"),
       arrayOf<Any>("one.param.end", "foo{0}"),
       arrayOf<Any>("two.params", "A {0} B {1} C"),
-      arrayOf<Any>("special.chars", "\"|'")
+      arrayOf<Any>("special.chars", "\"|'"),
+      arrayOf<Any>("expected.lbrace.or.semicolon", "expected { or ;")
     )
 
     override fun getContents(): Array<Array<Any>> = CONTENTS
@@ -138,13 +139,16 @@ class ExpectedHighlightingDataTest {
     doTest("text", listOf(error(0, 4, "A 1 B 2 C")), """<err bundleMsg="two.params|1|2">text</err>""", TEST_BUNDLE)
 
   @Test fun bundleMsgSpecialChars() =
-    doTest("text", listOf(error(0, 4, "\"|")), """<err bundleMsg="special.chars">text</err>""", TEST_BUNDLE, TEST_BUNDLE_2)
+    doTest("text", listOf(error(0, 4, "\"|'")), """<err bundleMsg="special.chars">text</err>""", TEST_BUNDLE, TEST_BUNDLE_2)
 
   @Test fun bundleMsgUniqueFromTwoBundles() =
     doTest("text", listOf(error(0, 4, "My text")), """<err descr="My text">text</err>""", TEST_BUNDLE, TEST_BUNDLE_2)
 
   @Test fun bundleMsgMultipleMatchFromTwoBundles() =
     doTest("text", listOf(error(0, 4, "Another text")), """<err bundleMsg="another.single.value">text</err>""", TEST_BUNDLE, TEST_BUNDLE_2)
+
+  @Test fun bundleMessageUnclosedBrace() =
+    doTest("text", listOf(error(0, 4, "expected { or ;")), """<err bundleMsg="expected.lbrace.or.semicolon">text</err>""", TEST_BUNDLE)
 
 
   private fun doTest(original: String, highlighting: Collection<HighlightInfo>, expected: String, vararg bundles: ResourceBundle) =

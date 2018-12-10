@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -617,8 +618,18 @@ public class ExpectedHighlightingData {
       while (keys.hasMoreElements()) {
         String key = keys.nextElement();
         ParsePosition position = new ParsePosition(0);
-        Object[] parse = new MessageFormat(bundle.getString(key)).parse(info.getDescription(), position);
-        if (parse != null && position.getIndex() == info.getDescription().length() && position.getErrorIndex() == -1) {
+        String value = bundle.getString(key);
+        Object[] parse;
+        boolean matched;
+        if (value.contains("{0")) {
+          parse = new MessageFormat(value).parse(info.getDescription(), position);
+          matched = parse != null && position.getIndex() == info.getDescription().length() && position.getErrorIndex() == -1;
+        }
+        else {
+          parse = ArrayUtil.EMPTY_OBJECT_ARRAY;
+          matched = value.equals(info.getDescription());
+        }
+        if (matched) {
           if (bundleKey != null) {
             bundleKey = null;
             break; // several keys matched, don't suggest bundle key
