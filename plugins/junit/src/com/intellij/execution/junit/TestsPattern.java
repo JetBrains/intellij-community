@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ConfigurationUtil;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
@@ -123,6 +109,7 @@ public class TestsPattern extends TestPackage {
         final RefactoringElementListener listeners =
           RefactoringListeners.getListeners(testClass, new RefactoringListeners.Accessor<PsiClass>() {
             private String myOldName = testClass.getQualifiedName();
+
             @Override
             public void setName(String qualifiedName) {
               final Set<String> replaced = new LinkedHashSet<>();
@@ -130,7 +117,8 @@ public class TestsPattern extends TestPackage {
                 if (myOldName.equals(currentPattern)) {
                   replaced.add(qualifiedName);
                   myOldName = qualifiedName;
-                } else {
+                }
+                else {
                   replaced.add(currentPattern);
                 }
               }
@@ -164,9 +152,6 @@ public class TestsPattern extends TestPackage {
                                        PsiMethod testMethod,
                                        PsiPackage testPackage,
                                        PsiDirectory testDir) {
-    /*if (testMethod != null && Comparing.strEqual(testMethod.getName(), configuration.getPersistentData().METHOD_NAME)) {
-      return true;
-    }*/
     return false;
   }
 
@@ -178,17 +163,17 @@ public class TestsPattern extends TestPackage {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Set<String> patterns = data.getPatterns();
     if (patterns.isEmpty()) {
-      throw new RuntimeConfigurationWarning("No pattern selected");
+      throw new RuntimeConfigurationWarning(ExecutionBundle.message("no.pattern.error.message"));
     }
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(getConfiguration().getProject());
     for (String pattern : patterns) {
       final String className = pattern.contains(",") ? StringUtil.getPackageName(pattern, ',') : pattern;
       final PsiClass psiClass = JavaExecutionUtil.findMainClass(getConfiguration().getProject(), className, searchScope);
       if (psiClass != null && !JUnitUtil.isTestClass(psiClass)) {
-        throw new RuntimeConfigurationWarning("Class " + className + " not a test");
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.not.test.error.message", className));
       }
       if (psiClass == null && !pattern.contains("*")) {
-        throw new RuntimeConfigurationWarning("Class " + className + " not found");
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.not.found.error.message", className));
       }
     }
   }
