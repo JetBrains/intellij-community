@@ -66,32 +66,16 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
                                        @NotNull List<VirtualFile> files,
                                        @NotNull Condition<FileStatus> unversionedFileCondition,
                                        @Nullable ChangesBrowserBase browser) {
-    LocalChangeList targetChangeList = null;
-    Consumer<List<Change>> changeConsumer = null;
-
-    if (browser instanceof CommitDialogChangesBrowser) {
-      targetChangeList = ((CommitDialogChangesBrowser)browser).getSelectedChangeList();
-    }
-
-    if (browser != null) {
-      changeConsumer = changes -> browser.getViewer().includeChanges(changes);
-    }
-
-    return addUnversioned(project, files, targetChangeList, changeConsumer, unversionedFileCondition);
-  }
-
-  private static boolean addUnversioned(@NotNull Project project,
-                                        @NotNull List<VirtualFile> files,
-                                        @Nullable LocalChangeList targetChangeList,
-                                        @Nullable Consumer<List<Change>> changesConsumer,
-                                        @NotNull Condition<FileStatus> unversionedFileCondition) {
     if (files.isEmpty()) return true;
 
-    ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(project);
-    if (targetChangeList == null) targetChangeList = manager.getDefaultChangeList();
+    LocalChangeList targetChangeList = browser instanceof CommitDialogChangesBrowser
+                                       ? ((CommitDialogChangesBrowser)browser).getSelectedChangeList()
+                                       : ChangeListManager.getInstance(project).getDefaultChangeList();
+
+    Consumer<List<Change>> changeConsumer = browser != null ? changes -> browser.getViewer().includeChanges(changes) : null;
 
     FileDocumentManager.getInstance().saveAllDocuments();
-    return addUnversionedFilesToVcs(project, targetChangeList, files, unversionedFileCondition, changesConsumer);
+    return addUnversionedFilesToVcs(project, targetChangeList, files, unversionedFileCondition, changeConsumer);
   }
 
   @NotNull
