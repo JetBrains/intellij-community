@@ -134,7 +134,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   @NotNull
   private String getShortcut() {
     if (myIsDoubleCtrlRegistered) {
-      return " (Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : " Ctrl") + ")";
+      return " " + IdeBundle
+        .message("run.anything.double.ctrl.shortcut", SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : " Ctrl");
     }
     //keymap shortcut is added automatically
     return "";
