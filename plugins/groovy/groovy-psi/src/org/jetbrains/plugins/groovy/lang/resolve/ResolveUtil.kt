@@ -169,3 +169,17 @@ fun getResolveKind(element: PsiNamedElement): GroovyResolveKind? {
     else -> null
   }
 }
+
+fun GroovyResolveResult?.asJavaClassResult(): PsiClassType.ClassResolveResult {
+  if (this == null) return PsiClassType.ClassResolveResult.EMPTY
+  val clazz = element as? PsiClass ?: return PsiClassType.ClassResolveResult.EMPTY
+  return object : PsiClassType.ClassResolveResult {
+    override fun getElement(): PsiClass? = clazz
+    override fun getSubstitutor(): PsiSubstitutor = this@asJavaClassResult.substitutor
+    override fun isPackagePrefixPackageReference(): Boolean = false
+    override fun isAccessible(): Boolean = true
+    override fun isStaticsScopeCorrect(): Boolean = true
+    override fun getCurrentFileResolveScope(): PsiElement? = null
+    override fun isValidResult(): Boolean = true
+  }
+}

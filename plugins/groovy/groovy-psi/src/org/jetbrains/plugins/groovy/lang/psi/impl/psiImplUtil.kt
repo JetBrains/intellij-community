@@ -16,6 +16,7 @@ import com.intellij.util.toArray
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
@@ -103,6 +104,10 @@ fun GrMethodCall.isImplicitCall(): Boolean {
 
 fun GrCodeReferenceElement.getDiamondTypes(): Array<out PsiType?> {
   val result = advancedResolve()
+  return getTypeArgumentsFromResult(result)
+}
+
+fun getTypeArgumentsFromResult(result: GroovyResolveResult): Array<out PsiType?> {
   val clazz = result.element as? PsiClass ?: return PsiType.EMPTY_ARRAY
   val substitutor = result.substitutor // this may start inference session
   return clazz.typeParameters.map(substitutor::substitute).toArray(PsiType.EMPTY_ARRAY)

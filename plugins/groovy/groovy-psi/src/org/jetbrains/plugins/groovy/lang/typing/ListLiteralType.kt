@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 
-class ListLiteralType(val literal: GrListOrMap) : GrTupleType(literal) {
+open class ListLiteralType(private val literal: GrListOrMap) : GrTupleType(literal) {
 
   override fun isValid(): Boolean = literal.isValid
 

@@ -14,13 +14,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
 class DefaultListOrMapTypeCalculator : GrTypeCalculator<GrListOrMap> {
 
-  override fun getType(expression: GrListOrMap): PsiType? {
-    if (expression.isMap) {
-      return getMapTypeFromDiamond(expression) ?: GrMapType.createFromNamedArgs(expression, expression.namedArguments)
-    }
-    else {
-      return getListTypeFromDiamond(expression) ?: ListLiteralType(expression)
-    }
+  override fun getType(expression: GrListOrMap): PsiType? = when {
+    expression.isMap -> getMapTypeFromDiamond(expression) ?: GrMapType.createFromNamedArgs(expression, expression.namedArguments)
+    expression.isEmpty -> EmptyListLiteralType(expression)
+    else -> ListLiteralType(expression)
   }
 
   private fun getMapTypeFromDiamond(expression: GrListOrMap): PsiType? {
@@ -39,36 +36,5 @@ class DefaultListOrMapTypeCalculator : GrTypeCalculator<GrListOrMap> {
       substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 0, false),
       substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 1, false)
     )
-  }
-
-  private fun getListTypeFromDiamond(expression: GrListOrMap): PsiType? {
-    val initializers = expression.initializers
-    if (initializers.isNotEmpty()) return null
-
-    val lType = PsiImplUtil.inferExpectedTypeForDiamond(expression)
-    if (lType !is PsiClassType) return null
-    val scope = expression.resolveScope
-    val facade = JavaPsiFacade.getInstance(expression.project)
-
-    if (isInheritor(lType, CommonClassNames.JAVA_UTIL_LIST)) {
-      val arrayList = facade.findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST, scope) ?:
-                      facade.findClass(CommonClassNames.JAVA_UTIL_LIST, scope) ?: return null
-
-      return facade.elementFactory.createType(
-        arrayList,
-        substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_LIST, 0, false)
-      )
-    }
-    if (isInheritor(lType, CommonClassNames.JAVA_UTIL_SET)) {
-      val set = facade.findClass("java.util.LinkedHashSet", scope) ?:
-                      facade.findClass(CommonClassNames.JAVA_UTIL_SET, scope) ?: return null
-
-      return facade.elementFactory.createType(
-        set,
-        substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_SET, 0, false)
-      )
-
-    }
-    return null
   }
 }

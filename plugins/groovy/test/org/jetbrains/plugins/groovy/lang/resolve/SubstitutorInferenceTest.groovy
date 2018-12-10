@@ -2,12 +2,14 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
 import org.jetbrains.plugins.groovy.util.TypingTest
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 @CompileStatic
@@ -152,5 +154,57 @@ F<Integer, String> w = new Wrapper<>({} <caret>as F)
   @Test
   void 'vararg method call type from array argument'() {
     expressionTypeTest('static <T> List<T> foo(T... t) {}; foo("".split(""))', 'java.util.List<java.lang.String>')
+  }
+
+  @Test
+  void 'empty list literal from variable'() {
+    typingTest('List<List<Integer>> l = [<caret>]', GrListOrMap, 'java.util.List<java.util.List<java.lang.Integer>>')
+  }
+
+  @Test
+  void 'empty list literal from new expression'() {
+    typingTest 'new ArrayList<Integer>([<caret>])', GrListOrMap, 'java.util.List<java.lang.Integer>'
+  }
+
+  @Test
+  void 'empty list literal from diamond in new expression'() {
+    typingTest 'new ArrayList<Integer>(new ArrayList<>([<caret>]))', GrListOrMap, 'java.util.List<java.lang.Integer>'
+  }
+
+  @Test
+  void 'empty list literal from nested diamond in variable initializer'() {
+    typingTest 'List<Integer> l = new ArrayList<>(new ArrayList<>([<caret>]))', GrListOrMap, 'java.util.List<java.lang.Integer>'
+  }
+
+  @Ignore("Requires list literal inference from both arguments and context type")
+  @Test
+  void 'empty list literal from outer list literal'() {
+    typingTest('List<List<Integer>> l = [[<caret>]]', GrListOrMap, 'java.util.List<java.lang.Integer>')
+  }
+
+  /**
+   * This test is wrong and exists only to preserve behaviour
+   * and should fail when 'empty list literal from outer list literal' will pass.
+   */
+  @Test
+  void 'list literal with empty list literal'() {
+    typingTest('List<List<Integer>> l = <caret>[[]]', GrListOrMap, 'java.util.List<java.util.List<java.lang.Object>>')
+    typingTest('List<List<Integer>> l = [[<caret>]]', GrListOrMap, 'java.util.List<java.lang.Object>')
+  }
+
+  @Ignore("Requires list literal inference from both arguments and context type")
+  @Test
+  void 'diamond from outer list literal'() {
+    typingTest 'List<List<String>> l = [new <caret>ArrayList<>()]', GrNewExpression, 'java.util.ArrayList<java.lang.String>'
+  }
+
+  /**
+   * This test is wrong and exists only to preserve behaviour
+   * and should fail when 'diamond from outer list literal' will pass.
+   */
+  @Test
+  void 'list literal with diamond'() {
+    typingTest 'List<List<String>> l = [new <caret>ArrayList<>()]', GrNewExpression, 'java.util.ArrayList<java.lang.Object>'
+    typingTest 'List<List<String>> l = <caret>[new ArrayList<>()]', GrListOrMap, 'java.util.List<java.util.ArrayList<java.lang.Object>>'
   }
 }
