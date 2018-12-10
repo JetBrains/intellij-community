@@ -36,7 +36,6 @@ public class LombokElementFinder extends PsiElementFinder {
 
   @Nullable
   @Override
-  @SuppressWarnings("deprecation")
   public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     final int lastDot = qualifiedName.lastIndexOf('.');
     if (lastDot < 0) {
@@ -51,12 +50,12 @@ public class LombokElementFinder extends PsiElementFinder {
 
     final PsiClass parentClass = getPsiClassAndPreventRecursionCalls(parentName, scope);
     if (null != parentClass) {
-      if (PsiAnnotationSearchUtil.isAnnotatedWith(parentClass, Builder.class, lombok.experimental.Builder.class)) {
+      if (PsiAnnotationSearchUtil.isAnnotatedWith(parentClass, Builder.class)) {
         return parentClass.findInnerClassByName(shortName, false);
       } else {
         final Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassMethodsIntern(parentClass);
         for (PsiMethod psiMethod : psiMethods) {
-          if (PsiAnnotationSearchUtil.isAnnotatedWith(psiMethod, Builder.class, lombok.experimental.Builder.class)) {
+          if (PsiAnnotationSearchUtil.isAnnotatedWith(psiMethod, Builder.class)) {
             return parentClass.findInnerClassByName(shortName, false);
           }
         }

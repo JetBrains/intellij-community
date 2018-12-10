@@ -110,12 +110,10 @@ jacocoTestReport {
 // Configurations
 configurations {
   lombok
-  lombok_dep
 }
 
 dependencies {
   lombok group: 'org.projectlombok', name: 'lombok', version: '1.18.2', classifier: 'sources', ext: 'jar'
-  lombok_dep group: 'org.projectlombok', name: 'lombok', version: '1.16.20', classifier: 'sources', ext: 'jar'
 
   testCompile group: 'junit', name: 'junit', version: '4.12'
   testCompile group: 'org.mockito', name: 'mockito-core', version: '1.+'
@@ -145,15 +143,6 @@ copy {
     include 'lombok/var.java'
     include 'lombok/Singular.java'
     include 'lombok/core/handlers/Singulars.java'
-  }
-  into("generated/src")
-}
-
-copy {
-  includeEmptyDirs = false
-  from({ zipTree(configurations.lombok_dep.singleFile) }) {
-    include 'lombok/experimental/Value.java'
-    include 'lombok/experimental/Builder.java'
   }
   into("generated/src")
 }

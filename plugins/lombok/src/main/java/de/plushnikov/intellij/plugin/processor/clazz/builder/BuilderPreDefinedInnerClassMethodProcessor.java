@@ -23,9 +23,8 @@ import java.util.stream.Collectors;
  */
 public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderPreDefinedInnerClassProcessor {
 
-  @SuppressWarnings({"deprecation", "unchecked"})
   public BuilderPreDefinedInnerClassMethodProcessor(@NotNull BuilderHandler builderHandler) {
-    super(builderHandler, PsiMethod.class, Builder.class, lombok.experimental.Builder.class);
+    super(builderHandler, PsiMethod.class, Builder.class);
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiClass psiBuilderClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {

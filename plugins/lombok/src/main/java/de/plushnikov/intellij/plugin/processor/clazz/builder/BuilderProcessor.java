@@ -38,9 +38,8 @@ public class BuilderProcessor extends AbstractClassProcessor {
   private final BuilderHandler builderHandler;
   private final AllArgsConstructorProcessor allArgsConstructorProcessor;
 
-  @SuppressWarnings({"deprecation", "unchecked"})
   public BuilderProcessor(@NotNull AllArgsConstructorProcessor allArgsConstructorProcessor, @NotNull BuilderHandler builderHandler) {
-    super(PsiMethod.class, Builder.class, lombok.experimental.Builder.class);
+    super(PsiMethod.class, Builder.class);
     this.builderHandler = builderHandler;
     this.allArgsConstructorProcessor = allArgsConstructorProcessor;
   }

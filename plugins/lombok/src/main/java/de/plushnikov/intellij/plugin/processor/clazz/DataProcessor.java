@@ -109,7 +109,7 @@ public class DataProcessor extends AbstractClassProcessor {
     boolean result = false;
     // create required constructor only if there are no other constructor annotations
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class,
-      Builder.class, lombok.experimental.Builder.class)) {
+      Builder.class)) {
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       filterToleratedElements(definedConstructors);
 

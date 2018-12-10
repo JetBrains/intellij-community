@@ -24,9 +24,8 @@ public class BuilderMethodProcessor extends AbstractMethodProcessor {
 
   private final BuilderHandler builderHandler;
 
-  @SuppressWarnings({"deprecation", "unchecked"})
   public BuilderMethodProcessor(@NotNull BuilderHandler builderHandler) {
-    super(PsiMethod.class, Builder.class, lombok.experimental.Builder.class);
+    super(PsiMethod.class, Builder.class);
     this.builderHandler = builderHandler;
   }
 

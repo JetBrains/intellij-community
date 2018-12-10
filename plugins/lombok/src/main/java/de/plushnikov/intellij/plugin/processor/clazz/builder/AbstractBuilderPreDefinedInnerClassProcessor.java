@@ -27,6 +27,12 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
   protected final BuilderHandler builderHandler;
 
   AbstractBuilderPreDefinedInnerClassProcessor(@NotNull BuilderHandler builderHandler, @NotNull Class<? extends PsiElement> supportedClass,
+    @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+    super(supportedClass, supportedAnnotationClass);
+    this.builderHandler = builderHandler;
+  }
+
+  AbstractBuilderPreDefinedInnerClassProcessor(@NotNull BuilderHandler builderHandler, @NotNull Class<? extends PsiElement> supportedClass,
                                                @NotNull Class<? extends Annotation> supportedAnnotationClass,
                                                @NotNull Class<? extends Annotation>... equivalentAnnotationClasses) {
     super(supportedClass, supportedAnnotationClass, equivalentAnnotationClasses);

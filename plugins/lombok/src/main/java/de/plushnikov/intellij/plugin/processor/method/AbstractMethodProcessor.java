@@ -27,6 +27,10 @@ import java.util.List;
  */
 public abstract class AbstractMethodProcessor extends AbstractProcessor implements MethodProcessor {
 
+  AbstractMethodProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+    super(supportedClass, supportedAnnotationClass);
+  }
+
   AbstractMethodProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass, Class<? extends Annotation>... equivalentAnnotationClasses) {
     super(supportedClass, supportedAnnotationClass, equivalentAnnotationClasses);
   }

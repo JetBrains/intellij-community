@@ -1,4 +1,4 @@
-@lombok.experimental.Builder
+@lombok.Builder
 public class BuilderPredefined {
   private String name;
   private int age;

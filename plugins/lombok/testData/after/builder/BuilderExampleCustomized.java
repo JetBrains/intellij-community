@@ -19,12 +19,14 @@ public class BuilderExampleCustomized {
     HelloWorldBuilder() {
     }
 
-    public void setName(String name) {
+    public HelloWorldBuilder name(String name) {
       this.name = name;
+      return this;
     }
 
-    public void setAge(int age) {
+    public HelloWorldBuilder age(int age) {
       this.age = age;
+      return this;
     }
 
     public BuilderExampleCustomized execute() {

@@ -37,10 +37,6 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
-  public void testBuilder$BuilderChainAndFluent() {
-    doTest(true);
-  }
-
   public void testBuilder$BuilderWithAccessors() {
     doTest(true);
   }

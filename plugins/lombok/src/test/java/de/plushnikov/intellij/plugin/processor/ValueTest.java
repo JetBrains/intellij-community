@@ -22,11 +22,7 @@ public class ValueTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
-  public void testValue$ValueExperimental() {
-    doTest(true);
-  }
-
-  public void testValue$ValueExperimentalStarImport() {
+  public void testValue$ValueStarImport() {
     doTest(true);
   }
 

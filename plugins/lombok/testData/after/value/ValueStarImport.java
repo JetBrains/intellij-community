@@ -2,10 +2,10 @@
 
 import lombok.experimental.*;
 
-final class ValueExperimentalStarImport {
+final class ValueStarImport {
 	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
-	public ValueExperimentalStarImport() {
+	public ValueStarImport() {
 	}
 
 	@java.lang.Override
