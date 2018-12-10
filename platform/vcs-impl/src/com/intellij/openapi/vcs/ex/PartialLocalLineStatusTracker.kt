@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
@@ -61,7 +60,7 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
 
   fun hasPartialChangesToCommit(): Boolean
 
-  fun handlePartialCommit(side: Side, changelistIds: List<String>): PartialCommitHelper
+  fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper
   fun rollbackChangelistChanges(changelistsIds: List<String>, rollbackRangesExcludedFromCommit: Boolean)
 
 
@@ -496,9 +495,12 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   }
 
   @CalledInAwt
-  override fun handlePartialCommit(side: Side, changelistIds: List<String>): PartialCommitHelper {
+  override fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper {
     val markers = changelistIds.mapTo(HashSet()) { ChangeListMarker(it) }
-    val toCommitCondition: (Block) -> Boolean = { markers.contains(it.marker) && !it.excludedFromCommit }
+    val toCommitCondition: (Block) -> Boolean = {
+      markers.contains(it.marker) &&
+      (!honorExcludedFromCommit || !it.excludedFromCommit)
+    }
 
     val contentToCommit = documentTracker.getContentWithPartiallyAppliedBlocks(side, toCommitCondition)
 
@@ -525,7 +527,8 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   override fun rollbackChangelistChanges(changelistsIds: List<String>, rollbackRangesExcludedFromCommit: Boolean) {
     val idsSet = changelistsIds.toSet()
     runBulkRollback {
-      idsSet.contains(it.marker.changelistId) && (rollbackRangesExcludedFromCommit || !it.excludedFromCommit)
+      idsSet.contains(it.marker.changelistId) &&
+      (rollbackRangesExcludedFromCommit || !it.excludedFromCommit)
     }
   }
 

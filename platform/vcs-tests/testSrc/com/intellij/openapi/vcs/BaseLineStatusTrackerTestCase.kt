@@ -382,8 +382,8 @@ abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest(
     }
 
 
-    fun handlePartialCommit(side: Side, list: String): PartialCommitHelper {
-      return partialTracker.handlePartialCommit(side, listOf(list.asListNameToId()))
+    fun handlePartialCommit(side: Side, list: String, honorExcludedFromCommit: Boolean = true): PartialCommitHelper {
+      return partialTracker.handlePartialCommit(side, listOf(list.asListNameToId()), honorExcludedFromCommit)
     }
 
 

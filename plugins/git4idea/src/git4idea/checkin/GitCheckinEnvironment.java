@@ -373,7 +373,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           }
 
           if (tracker.hasPartialChangesToCommit()) {
-            helpers.add(tracker.handlePartialCommit(Side.LEFT, Collections.singletonList(changelistId)));
+            helpers.add(tracker.handlePartialCommit(Side.LEFT, Collections.singletonList(changelistId), true));
             partialChanges.add(change);
           }
         }
