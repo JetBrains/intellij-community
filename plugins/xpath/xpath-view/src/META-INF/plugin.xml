@@ -237,7 +237,7 @@
       <reference id="XPathView.Actions.Evaluate" />
       <reference id="XPathView.Actions.ShowPath" />
 
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="RefactoringMenu" />
+      <add-to-group group-id="EditorPopupLanguageMenu" anchor="after" relative-to-action="RefactoringMenu" />
     </group>
 
     <group id="XPathView.XSLT.Associations" popup="true"

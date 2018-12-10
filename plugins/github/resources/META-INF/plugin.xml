@@ -63,7 +63,7 @@
       <add-to-group group-id="Git.Menu"/>
     </action>
     <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GithubOpenInBrowserActionGroup">
-      <add-to-group group-id="EditorPopupMenu"/>
+      <add-to-group group-id="EditorPopupGitVcsMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="Git.LogContextMenu"/>
@@ -72,7 +72,7 @@
       <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
     </action>
     <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction">
-      <add-to-group group-id="EditorPopupMenu"/>
+      <add-to-group group-id="EditorPopupGitVcsMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="ConsoleEditorPopupMenu"/>

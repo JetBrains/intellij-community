@@ -608,24 +608,51 @@
 
     <group id="NavBarVcsGroup"/>
 
+    <group id="SmartCopyGroup" popup="true" text="Smart Copy" class="com.intellij.openapi.actionSystem.DefaultAlwaysVisibleActionGroup"/>
+
+
+
+    <!--<group id="EditorPopupExecutionMenu"/>-->
+    <!--<group id="EditorPopupNavigateMenu"/>-->
+    <!--<group id="EditorPopupGitVcsMenu"/>-->
+    <!--<group id="EditorPopupLanguageMenu"/>-->
+
+    <group id="EditorPopupReformatMenu" popup="true" class="com.intellij.openapi.actionSystem.DefaultAlwaysVisibleActionGroup"/>
+
     <group id="EditorPopupMenu">
-      <reference ref="$Cut"/>
-      <reference ref="$Copy"/>
-      <reference ref="$Paste"/>
-      <reference ref="PasteMultiple"/>
-      <reference ref="EditorPasteSimple"/>
-      <reference ref="EditorToggleColumnMode"/>
+      <group id="EditorPopupLanguageMenu" />
       <separator/>
+
       <group id="EditorPopupMenu1"/>
       <separator/>
       <group id="EditorPopupMenu2"/>
       <separator/>
       <group id="EditorPopupMenu3"/>
       <separator/>
-      <action id="$SearchWeb" class="com.intellij.ide.actions.SearchWebAction"/>
-      <separator/>
-      <reference ref="CompareClipboardWithSelection"/>
+      <reference ref="EditorToggleColumnMode"/>
       <reference ref="ChangeFileEncodingAction"/>
+    </group>
+
+    <group id="EditorPopupMenuSimple">
+      <reference ref="$Cut"/>
+      <reference ref="$Copy"/>
+      <reference ref="SmartCopyGroup"/>
+      <reference ref="$Paste"/>
+      <reference ref="PasteMultiple"/>
+      <reference ref="EditorPasteSimple"/>
+      <separator/>
+      <group id="EditorPopupExecutionMenu" popup="true" text="Execution" class="com.intellij.openapi.actionSystem.DefaultAlwaysVisibleActionGroup"/>
+      <reference ref="EditorPopupReformatMenu"/>
+      <group id="EditorPopupLookUpMenu" popup="true" text="Look Up" class="com.intellij.openapi.actionSystem.DefaultAlwaysVisibleActionGroup">
+        <action id="$SearchWeb" class="com.intellij.ide.actions.SearchWebAction"/>
+      </group>
+      <group id="EditorPopupGitVcsMenu" popup="true" text="Git/VCS" class="com.intellij.openapi.actionSystem.DefaultAlwaysVisibleActionGroup"/>
+
+      <reference ref="CompareClipboardWithSelection"/>
+
+      <group id="TempMore" text="More" popup="true" class="com.intellij.openapi.actionSystem.DefaultAlwaysVisibleActionGroup">
+        <reference ref="EditorPopupMenu" />
+      </group>
     </group>
 
     <group id="BasicEditorPopupMenu">

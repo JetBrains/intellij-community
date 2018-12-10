@@ -104,6 +104,7 @@ public interface IdeActions {
   @NonNls String GROUP_MAIN_MENU = "MainMenu";
   @NonNls String GROUP_MAIN_TOOLBAR = "MainToolBar";
   @NonNls String GROUP_EDITOR_POPUP = "EditorPopupMenu";
+  @NonNls String GROUP_EDITOR_POPUP_SIMPLE = "EditorPopupMenuSimple";
   @NonNls String GROUP_BASIC_EDITOR_POPUP = "BasicEditorPopupMenu";
   @NonNls String GROUP_CONSOLE_EDITOR_POPUP = "ConsoleEditorPopupMenu";
   @NonNls String GROUP_CUT_COPY_PASTE = "CutCopyPasteGroup";

@@ -37,6 +37,7 @@
 
     <group id="VersionControlsGroup">
       <reference ref="VcsFileGroupPopup"/>
+      <add-to-group group-id="EditorPopupGitVcsMenu"/>
     </group>
 
     <group id="GoToChangeMarkerGroup">

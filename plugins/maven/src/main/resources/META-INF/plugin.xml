@@ -425,7 +425,7 @@
             text="Add as Maven Project"
             description="Add and import Maven project to the projects tree"
             icon="AllIcons.General.Add">
-      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="Maven.GlobalProjectMenu"/>
+      <add-to-group group-id="EditorPopupLanguageMenu" anchor="before" relative-to-action="Maven.GlobalProjectMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="Maven.GlobalProjectMenu"/>
     </action>
 
@@ -610,7 +610,7 @@
 
     <group id="Maven.GlobalProjectMenu" class="org.jetbrains.idea.maven.utils.actions.MavenActionGroup" popup="true" text="Maven"
            icon="MavenIcons.MavenLogo">
-      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+      <add-to-group group-id="EditorPopupLanguageMenu" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
       <reference ref="Maven.BaseProjectMenu"/>
     </group>

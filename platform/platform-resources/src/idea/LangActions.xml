@@ -89,7 +89,7 @@
 
     <action id="ChangeTemplateDataLanguage" class="com.intellij.psi.templateLanguages.ChangeTemplateDataLanguageAction">
       <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
-      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
+      <add-to-group group-id="EditorPopupLanguageMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
     </action>
 
@@ -103,17 +103,17 @@
     <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
+      <add-to-group group-id="SmartCopyGroup"/>
     </action>
 
     <action id="CopyAsRichText" class="com.intellij.openapi.editor.richcopy.CopyAsRichTextAction">
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
+      <add-to-group group-id="SmartCopyGroup"/>
     </action>
 
     <action id="CopyAsPlainText" class="com.intellij.openapi.editor.richcopy.CopyAsPlainTextAction">
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
+      <add-to-group group-id="SmartCopyGroup"/>
     </action>
 
     <group id="EditSelectWordGroup">
@@ -633,15 +633,14 @@
       <reference ref="Generate"/>
       <separator/>
 
-      <group id="EditorPopupMenu.Run">
-        <reference ref="RunContextPopupGroup"/>
-      </group>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-      <separator/>
       <reference ref="ExternalToolsGroup"/>
 
       <add-to-group group-id="EditorPopupMenu" relative-to-action="CompareClipboardWithSelection" anchor="before"/>
+    </group>
+
+    <group id="EditorPopupMenu.Run">
+      <reference ref="RunContextPopupGroup"/>
+      <add-to-group group-id="EditorPopupExecutionMenu" anchor="first"/>
     </group>
 
     <group id="EditorTabPopupMenuEx">

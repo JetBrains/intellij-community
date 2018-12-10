@@ -886,7 +886,7 @@
             class="com.jetbrains.python.actions.PyExecuteSelectionAction"
             text="Execute selection in console"
             description="Executes selected code fragment in Python/Django console">
-      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
+      <add-to-group group-id="EditorPopupExecutionMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
 
       <keyboard-shortcut keymap="$default" first-keystroke="alt shift E"/>
       <keyboard-shortcut keymap="Mac OS X" first-keystroke="control shift E" />
@@ -896,7 +896,7 @@
     </action>
 
     <action id="PyRunFileInConsole" class="com.jetbrains.python.actions.PyRunFileInConsoleAction">
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ExecuteInPyConsoleAction"/>
+      <add-to-group group-id="EditorPopupExecutionMenu" anchor="after" relative-to-action="ExecuteInPyConsoleAction"/>
     </action>
 
     <action id="NewPythonFile" class="com.jetbrains.python.actions.CreatePythonFileAction">

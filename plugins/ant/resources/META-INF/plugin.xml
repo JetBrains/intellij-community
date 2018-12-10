@@ -91,7 +91,7 @@
     </group>
     <action id="AddAntBuildFile" class="com.intellij.lang.ant.config.actions.AddAntBuildFile">
       <add-to-group group-id="ToolsXmlGroup" relative-to-action="GenerateDTD" anchor="before"/>
-      <add-to-group group-id="EditorPopupMenu" relative-to-action="PackageFile" anchor="after"/>
+      <add-to-group group-id="EditorPopupLanguageMenu" />
       <add-to-group group-id="ProjectViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
       <add-to-group group-id="FavoritesViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
       <add-to-group group-id="ScopeViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>

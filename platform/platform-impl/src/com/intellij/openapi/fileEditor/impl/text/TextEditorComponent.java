@@ -149,7 +149,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
 
     ((EditorEx) editor).setFile(myFile);
 
-    ((EditorEx)editor).setContextMenuGroupId(IdeActions.GROUP_EDITOR_POPUP);
+    ((EditorEx)editor).setContextMenuGroupId(IdeActions.GROUP_EDITOR_POPUP_SIMPLE);
 
     ((EditorImpl) editor).setDropHandler(new FileDropHandler(editor));
 
