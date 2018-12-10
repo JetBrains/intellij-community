@@ -31,7 +31,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -45,8 +44,6 @@ import java.util.Map;
 
 public class AutoUnboxingInspection extends BaseInspection {
 
-  /**
-   */
   @NonNls static final Map<String, String> s_unboxingMethods = new HashMap<>(8);
 
   static {
@@ -111,6 +108,7 @@ public class AutoUnboxingInspection extends BaseInspection {
       return true;
     }
     final PsiStatement statement = PsiTreeUtil.getParentOfType(parent, PsiStatement.class);
+    assert statement != null;
     final LocalSearchScope scope = new LocalSearchScope(statement);
     final Query<PsiReference> query = ReferencesSearch.search(element, scope);
     final Collection<PsiReference> references = query.findAll();
@@ -351,7 +349,7 @@ public class AutoUnboxingInspection extends BaseInspection {
           return;
         }
         final PsiType functionalInterfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(methodReferenceExpression);
-        if (functionalInterfaceReturnType == null || !ClassUtils.isPrimitive(functionalInterfaceReturnType) ||
+        if (!TypeConversionUtil.isPrimitiveAndNotNull(functionalInterfaceReturnType) ||
             !functionalInterfaceReturnType.isAssignableFrom(unboxedType)) {
           return;
         }
@@ -381,6 +379,12 @@ public class AutoUnboxingInspection extends BaseInspection {
     @Override
     public void visitTypeCastExpression(PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
+      checkExpression(expression);
+    }
+
+    @Override
+    public void visitSwitchExpression(PsiSwitchExpression expression) {
+      super.visitSwitchExpression(expression);
       checkExpression(expression);
     }
 
