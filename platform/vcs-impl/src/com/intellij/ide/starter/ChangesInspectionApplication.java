@@ -11,8 +11,10 @@ import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -34,19 +36,23 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.Invoker;
+import com.sun.awt.AWTUtilities;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * @author max
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
-public class InspectionApplication {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionApplication");
+public class ChangesInspectionApplication {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ChangesInspectionApplication");
 
   public InspectionToolCmdlineOptionHelpProvider myHelpProvider;
   public String myProjectPath;
@@ -83,14 +89,26 @@ public class InspectionApplication {
     System.out.println(System.currentTimeMillis() - openingProjectTime);
 
     Ref<List<CodeSmellInfo>> codeSmells = Ref.create();
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("checking.code.smells.progress.title"), true) {
+
+    application.executeOnPooledThread(() -> {
+      runAnalysis(codeSmells);
+      ReadAction.run(() -> printInfo(codeSmells.get()));
+      application.invokeLater(() -> closeProject());
+      System.exit(0);
+    });
+  }
+
+  private void runAnalysis(Ref<List<CodeSmellInfo>> codeSmells) {
+    ProgressManager.getInstance().run(new Task.Modal(myProject, VcsBundle.message("checking.code.smells.progress.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           assert myProject != null;
           indicator.setIndeterminate(true);
-          codeSmells.set(CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(myProject, ChangeListManager.getInstance(myProject).getAffectedFiles(), indicator));
-        } catch (ProcessCanceledException e) {
+          codeSmells.set(CodeAnalysisBeforeCheckinShowOnlyNew
+                           .runAnalysis(myProject, ChangeListManager.getInstance(myProject).getAffectedFiles(), indicator));
+        }
+        catch (ProcessCanceledException e) {
           LOG.info("Code analysis canceled", e);
         }
         catch (Exception e) {
@@ -98,7 +116,6 @@ public class InspectionApplication {
         }
       }
     });
-    printInfo(codeSmells.get());
   }
 
   private void openProject() {

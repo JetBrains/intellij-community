@@ -411,7 +411,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void freeze(@NotNull String reason) {
-    assert !ApplicationManager.getApplication().isDispatchThread() || ApplicationManager.getApplication().isHeadlessEnvironment();
+    assert !ApplicationManager.getApplication().isDispatchThread();
 
     myUpdater.setIgnoreBackgroundOperation(true);
     Semaphore sem = new Semaphore();

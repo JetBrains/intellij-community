@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationStarter;
 import java.util.Arrays;
 
 public class ChangesInspectionMain implements ApplicationStarter {
-  private InspectionApplication myApplication;
+  private ChangesInspectionApplication myApplication;
 
   @Override
   public String getCommandName() {
@@ -25,7 +25,7 @@ public class ChangesInspectionMain implements ApplicationStarter {
     }
 
     //System.setProperty("idea.load.plugins.category", "inspection");
-    myApplication = new InspectionApplication();
+    myApplication = new ChangesInspectionApplication();
 
     myApplication.myHelpProvider = new InspectionToolCmdlineOptionHelpProvider() {
       @Override
