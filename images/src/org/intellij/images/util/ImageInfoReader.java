@@ -25,6 +25,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
+import java.awt.geom.Dimension2D;
 import java.io.ByteArrayInputStream;
 import java.util.Iterator;
 
@@ -61,8 +62,8 @@ public class ImageInfoReader {
 
   private static Info tryReadSvg(byte[] data) {
     try {
-      Couple<Integer> couple = SVGLoader.loadInfo(null, new ByteArrayInputStream(data), 1.0f);
-      return new Info(couple.first, couple.second, 32);
+      Dimension2D size = SVGLoader.loadInfo(null, new ByteArrayInputStream(data), 1.0f);
+      return new Info((int)Math.round(size.getWidth()), (int)Math.round(size.getHeight()), 32);
     }
     catch (Throwable e) {
       return null;
