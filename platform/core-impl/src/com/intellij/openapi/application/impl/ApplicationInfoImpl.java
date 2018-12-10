@@ -958,7 +958,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   public List<String> getEssentialPluginsIds() {
-    return Collections.unmodifiableList(Arrays.asList(myEssentialPluginsIds));
+    return ContainerUtil.immutableList(myEssentialPluginsIds);
   }
 
   private static class UpdateUrlsImpl implements UpdateUrls {

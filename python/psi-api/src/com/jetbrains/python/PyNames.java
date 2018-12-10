@@ -17,6 +17,7 @@ package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,7 @@ public class PyNames {
   /**
    * Any string type
    */
-  public static final List<String> TYPE_STRING_TYPES = Collections.unmodifiableList(Arrays.asList(TYPE_UNICODE, TYPE_STR));
+  public static final List<String> TYPE_STRING_TYPES = ContainerUtil.immutableList(TYPE_UNICODE, TYPE_STR);
   /**
    * date type
    */

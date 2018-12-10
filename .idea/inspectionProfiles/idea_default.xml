@@ -846,6 +846,10 @@
         <constraint name="myRoot" within="" contains="" />
         <constraint name="myFolder2" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="simplifyable immutable array" text="Collections.unmodifiableList(Arrays.asList($c$))" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.immutableList($c$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="c" maxCount="32000" within="" contains="" />
+      </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />
