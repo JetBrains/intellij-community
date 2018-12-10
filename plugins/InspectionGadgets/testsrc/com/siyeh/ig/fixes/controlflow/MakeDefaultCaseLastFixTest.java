@@ -16,4 +16,6 @@ public class MakeDefaultCaseLastFixTest extends IGQuickFixesTestCase {
 
   public void testLabeledSwitchRule() { doTest(); }
   public void testOldStyleSwitchStatement() { doTest(); }
+  public void testOldStyleSwitchStatementNoBreakThrough() { assertQuickfixNotAvailable(); }
+  public void testOldStyleSwitchStatementNoBreakThrough1() { assertQuickfixNotAvailable(); }
 }

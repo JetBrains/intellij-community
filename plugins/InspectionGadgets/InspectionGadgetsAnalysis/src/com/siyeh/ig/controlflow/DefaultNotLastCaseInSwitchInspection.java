@@ -38,12 +38,24 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("default.not.last.case.in.switch.problem.descriptor", infos[0]);
+    return InspectionGadgetsBundle.message("default.not.last.case.in.switch.problem.descriptor", infos[1]);
   }
 
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
+    PsiSwitchLabelStatementBase lbl = (PsiSwitchLabelStatementBase)infos[0];
+    if (lbl instanceof PsiSwitchLabelStatement) {
+      PsiElement lastDefaultStmt = PsiTreeUtil.skipWhitespacesAndCommentsBackward(PsiTreeUtil.getNextSiblingOfType(lbl, PsiSwitchLabelStatementBase.class));
+      if (!(lastDefaultStmt instanceof PsiBreakStatement)) {
+        return null;
+      }
+
+      PsiSwitchLabelStatementBase prevLbl = PsiTreeUtil.getPrevSiblingOfType(lbl, PsiSwitchLabelStatementBase.class);
+      if (prevLbl != null && !(PsiTreeUtil.skipWhitespacesAndCommentsBackward(lbl) instanceof PsiBreakStatement)) {
+        return null;
+      }
+    }
     return new InspectionGadgetsFix() {
       @Override
       protected void doFix(Project project, ProblemDescriptor descriptor) {
@@ -103,7 +115,7 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
           final PsiSwitchLabelStatementBase label = (PsiSwitchLabelStatementBase)child;
           if (label.isDefaultCase()) {
             if (labelSeen) {
-              registerStatementError(label, locationDescription);
+              registerStatementError(label, label, locationDescription);
             }
             return;
           }
