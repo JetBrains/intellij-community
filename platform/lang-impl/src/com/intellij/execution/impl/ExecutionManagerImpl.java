@@ -400,16 +400,21 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
         if (!runningOfTheSameType.isEmpty() &&
             (runningOfTheSameType.size() > 1 || contentToReuse == null || runningOfTheSameType.get(0) != contentToReuse)) {
 
-          if (configuration.getConfiguration().processRunSame(environment)) {
+          final RunConfiguration.RestartSingletonResult result = configuration.getConfiguration().restartSingleton(environment);
+
+          if (result == RunConfiguration.RestartSingletonResult.NO_FURTHER_ACTION) {
             return;
           }
 
-          if (!userApprovesStopForSameTypeConfigurations(environment.getProject(), configuration.getName(), runningOfTheSameType.size())) {
+          if (result == RunConfiguration.RestartSingletonResult.ASK_AND_RESTART &&
+              !userApprovesStopForSameTypeConfigurations(environment.getProject(), configuration.getName(), runningOfTheSameType.size())) {
+
             return;
           }
         }
         if (!runningIncompatible.isEmpty() &&
             !userApprovesStopForIncompatibleConfigurations(myProject, configuration.getName(), runningIncompatible)) {
+
           return;
         }
       }
