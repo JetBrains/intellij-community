@@ -1267,7 +1267,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     VcsDirtyScopeManager.getInstance(myProject).filesDirty(allProcessedFiles, null);
 
-    final Ref<List<Change>> foundChanges = Ref.create();
     final boolean moveRequired = !list.isDefault();
     boolean syncUpdateRequired = changesConsumer != null;
 
@@ -1277,26 +1276,21 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
 
       invokeAfterUpdate(() -> {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          synchronized (myDataLock) {
-            List<Change> newChanges = ContainerUtil.filter(getDefaultChangeList().getChanges(), change -> {
-              FilePath path = ChangesUtil.getAfterPath(change);
-              return path != null && allProcessedFiles.contains(path.getVirtualFile());
-            });
-            foundChanges.set(newChanges);
-
-            if (moveRequired && !newChanges.isEmpty()) {
-              moveChangesTo(list, newChanges.toArray(new Change[0]));
-            }
-          }
+        List<Change> newChanges = ContainerUtil.filter(getDefaultChangeList().getChanges(), change -> {
+          FilePath path = ChangesUtil.getAfterPath(change);
+          return path != null && allProcessedFiles.contains(path.getVirtualFile());
         });
 
-        myChangesViewManager.scheduleRefresh();
-      }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);
+        if (moveRequired && !newChanges.isEmpty()) {
+          moveChangesTo(list, newChanges.toArray(new Change[0]));
+        }
 
-      if (changesConsumer != null) {
-        changesConsumer.consume(foundChanges.get());
-      }
+        myChangesViewManager.scheduleRefresh();
+
+        if (changesConsumer != null) {
+          changesConsumer.consume(newChanges);
+        }
+      }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);
     }
     else {
       myChangesViewManager.scheduleRefresh();
