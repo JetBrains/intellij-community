@@ -37,7 +37,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public static final AtomicBoolean ALT_IS_PRESSED = new AtomicBoolean(false);
   static final String RUN_ANYTHING = "RunAnything";
 
-  private boolean isDoubleCtrlRegistered;
+  private boolean myIsDoubleCtrlRegistered;
 
   private static final NotNullLazyValue<Boolean> IS_ACTION_ENABLED = new NotNullLazyValue<Boolean>() {
     @NotNull
@@ -87,15 +87,15 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID).getShortcuts().length == 0) {
-      if (!isDoubleCtrlRegistered) {
+      if (!myIsDoubleCtrlRegistered) {
         ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
-        isDoubleCtrlRegistered = true;
+        myIsDoubleCtrlRegistered = true;
       }
     }
     else {
-      if (isDoubleCtrlRegistered) {
+      if (myIsDoubleCtrlRegistered) {
         ModifierKeyDoubleClickHandler.getInstance().unregisterAction(RUN_ANYTHING_ACTION_ID);
-        isDoubleCtrlRegistered = false;
+        myIsDoubleCtrlRegistered = false;
       }
     }
 
@@ -133,7 +133,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   @NotNull
   private String getShortcut() {
-    if (isDoubleCtrlRegistered) {
+    if (myIsDoubleCtrlRegistered) {
       return " (Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : " Ctrl") + ")";
     }
     //keymap shortcut is added automatically
