@@ -279,13 +279,13 @@ internal class FilterByDetailsResult(val matchingCommits: Set<Int>?,
 private fun getFilteredDetailsFromTheVcs(providers: Map<VirtualFile, VcsLogProvider>,
                                          filterCollection: VcsLogFilterCollection,
                                          maxCount: Int): Collection<CommitId> {
-  val visibleRoots = VcsLogUtil.getAllVisibleRoots(providers.keys, filterCollection)
-
   val commits = ContainerUtil.newArrayList<CommitId>()
-  for ((root, provider) in providers) {
+
+  val visibleRoots = VcsLogUtil.getAllVisibleRoots(providers.keys, filterCollection)
+  for (root in visibleRoots) {
 
     val userFilter = filterCollection.get(VcsLogFilterCollection.USER_FILTER)
-    if (!visibleRoots.contains(root) || userFilter != null && userFilter.getUsers(root).isEmpty()) {
+    if (userFilter != null && userFilter.getUsers(root).isEmpty()) {
       // there is a structure or user filter, but it doesn't match this root
       continue
     }
@@ -298,7 +298,7 @@ private fun getFilteredDetailsFromTheVcs(providers: Map<VirtualFile, VcsLogProvi
       filterCollection.with(VcsLogFilterObject.fromPaths(filesForRoot))
     }
 
-    val matchingCommits = provider.getCommitsMatchingFilter(root, rootSpecificCollection, maxCount)
+    val matchingCommits = providers[root]!!.getCommitsMatchingFilter(root, rootSpecificCollection, maxCount)
     commits.addAll(matchingCommits.map { commit -> CommitId(commit.id, root) })
   }
 
