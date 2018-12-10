@@ -945,6 +945,7 @@ public class ControlFlowUtils {
                 (!((PsiLocalVariable)ternaryParent).getTypeElement().isInferredType() || 
                  PsiTypesUtil.isDenotableType(((PsiLocalVariable)ternaryParent).getType(), ternaryParent))) ||
                (ternaryParent instanceof PsiAssignmentExpression && ternaryParent.getParent() instanceof PsiExpressionStatement &&
+                !(ternaryParent.getParent().getParent() instanceof PsiSwitchLabeledRuleStatement) &&
                 PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)ternaryParent).getRExpression()) == parent);
       }
       if(parent instanceof PsiMethodCallExpression) {
