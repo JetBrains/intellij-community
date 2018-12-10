@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
-import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
+import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 
 open class BaseGroovyResolveResult<out T : PsiElement>(
   element: T,
@@ -25,13 +25,13 @@ open class BaseGroovyResolveResult<out T : PsiElement>(
     spreadState = state[SpreadState.SPREAD_STATE]
   )
 
-  private val accessible by lazyPub {
+  private val accessible by recursionAwareLazy {
     element !is PsiMember || PsiUtil.isAccessible(place, element)
   }
 
   override fun isAccessible(): Boolean = accessible
 
-  private val staticsOk by lazyPub {
+  private val staticsOk by recursionAwareLazy {
     resolveContext is GrImportStatement ||
     element !is PsiModifierListOwner ||
     GrStaticChecker.isStaticsOK(element, place, resolveContext, false)

@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.*
-import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.util.isEffectivelyVarArgs
 import org.jetbrains.plugins.groovy.lang.psi.util.isOptional
@@ -10,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.applicable
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
+import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 
 class MethodCandidateImpl(
   override val receiver: PsiType?,
@@ -19,7 +19,7 @@ class MethodCandidateImpl(
   context: PsiElement
 ) : GroovyMethodCandidate {
 
-  override val argumentMapping: ArgumentMapping? by lazyPub {
+  override val argumentMapping: ArgumentMapping? by recursionAwareLazy {
     when {
       arguments == null -> null
       method.isEffectivelyVarArgs -> {

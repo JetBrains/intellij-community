@@ -26,3 +26,5 @@ fun <T> Array<T>.init(): List<T> {
 }
 
 fun <T : Any> recursionPreventingLazy(initializer: () -> T): Lazy<T?> = RecursionPreventingSafePublicationLazy(initializer)
+
+fun <T> recursionAwareLazy(initializer: () -> T): Lazy<T> = RecursionAwareSafePublicationLazy(initializer)

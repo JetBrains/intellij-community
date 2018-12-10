@@ -3,12 +3,12 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.*
 import com.intellij.util.containers.ComparatorUtil.min
-import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.util.init
+import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 
 private typealias MapWithVarargs = Pair<Map<Argument, PsiParameter>, Set<Argument>>
 
@@ -22,7 +22,7 @@ class VarargArgumentMapping(
 
   private val varargType: PsiType = (varargParameter.type as PsiArrayType).componentType
 
-  private val mapping: MapWithVarargs? by lazyPub(fun(): MapWithVarargs? {
+  private val mapping: MapWithVarargs? by recursionAwareLazy(fun(): MapWithVarargs? {
     val parameters = method.parameterList.parameters
     val regularParameters = parameters.init()
     val regularParametersCount = regularParameters.size
