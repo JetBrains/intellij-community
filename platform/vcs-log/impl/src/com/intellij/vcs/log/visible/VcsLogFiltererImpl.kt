@@ -104,7 +104,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                             commitCount: CommitCountStage): FilterByDetailsResult {
     var commitCountToTry = commitCount
     if (commitCountToTry == CommitCountStage.INITIAL) {
-      val commitsFromMemory = filterInMemory(graph, detailsFilters, matchingHeads).toCommitIndexes()
+      val commitsFromMemory = filterDetailsInMemory(graph, detailsFilters, matchingHeads).toCommitIndexes()
       if (commitsFromMemory.size >= commitCountToTry.count) {
         return FilterByDetailsResult(commitsFromMemory, true, commitCountToTry)
       }
@@ -112,7 +112,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     }
 
     try {
-      val commitsFromVcs = getFilteredDetailsFromTheVcs(logProviders, filters, commitCountToTry.count).toCommitIndexes()
+      val commitsFromVcs = filteredDetailsInVcs(logProviders, filters, commitCountToTry.count).toCommitIndexes()
       return FilterByDetailsResult(commitsFromVcs, commitsFromVcs.size >= commitCountToTry.count, commitCountToTry)
     }
     catch (e: VcsException) {
@@ -123,9 +123,9 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   @Throws(VcsException::class)
-  private fun getFilteredDetailsFromTheVcs(providers: Map<VirtualFile, VcsLogProvider>,
-                                           filterCollection: VcsLogFilterCollection,
-                                           maxCount: Int): Collection<CommitId> {
+  private fun filteredDetailsInVcs(providers: Map<VirtualFile, VcsLogProvider>,
+                                   filterCollection: VcsLogFilterCollection,
+                                   maxCount: Int): Collection<CommitId> {
     val commits = ContainerUtil.newArrayList<CommitId>()
 
     val visibleRoots = VcsLogUtil.getAllVisibleRoots(providers.keys, filterCollection)
@@ -229,9 +229,9 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return refs.branches.filter { roots.contains(it.root) }.toReferencedCommitIndexes()
   }
 
-  private fun filterInMemory(permanentGraph: PermanentGraph<Int>,
-                             detailsFilters: List<VcsLogDetailsFilter>,
-                             matchingHeads: Set<Int>?): Collection<CommitId> {
+  private fun filterDetailsInMemory(permanentGraph: PermanentGraph<Int>,
+                                    detailsFilters: List<VcsLogDetailsFilter>,
+                                    matchingHeads: Set<Int>?): Collection<CommitId> {
     val result = ContainerUtil.newArrayList<CommitId>()
     for (commit in permanentGraph.allCommits) {
       val data = getDetailsFromCache(commit.id)
