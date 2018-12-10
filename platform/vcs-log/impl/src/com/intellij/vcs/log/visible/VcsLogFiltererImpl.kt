@@ -30,22 +30,21 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
   override fun filter(dataPack: DataPack,
                       sortType: PermanentGraph.SortType,
-                      filters: VcsLogFilterCollection,
+                      allFilters: VcsLogFilterCollection,
                       commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
-    var filters = filters
+    val hashFilter = allFilters.get(VcsLogFilterCollection.HASH_FILTER)
+    val filters = allFilters.without(VcsLogFilterCollection.HASH_FILTER)
+
     val start = System.currentTimeMillis()
 
-    val hashFilter = filters.get(VcsLogFilterCollection.HASH_FILTER)
     if (hashFilter != null && !hashFilter.hashes.isEmpty()) { // hashes should be shown, no matter if they match other filters or not
       val hashFilterResult = applyHashFilter(dataPack, hashFilter.hashes, sortType, commitCount)
       if (hashFilterResult != null) {
-        LOG.debug(
-          StopWatch.formatTime(System.currentTimeMillis() - start) + " for filtering by " + hashFilterResult.getFirst().filters)
+        LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
+                  " for filtering by " + hashFilterResult.first.filters)
         return hashFilterResult
       }
     }
-
-    filters = filters.without(VcsLogFilterCollection.HASH_FILTER)
 
     val visibleRoots = VcsLogUtil.getAllVisibleRoots(dataPack.logProviders.keys, filters)
     val matchingHeads = getMatchingHeads(dataPack.refsModel, visibleRoots, filters)
@@ -75,23 +74,22 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                               commitCount: CommitCountStage,
                               visibleRoots: Collection<VirtualFile>,
                               matchingHeads: Set<Int>?): FilterByDetailsResult {
-    var matchingHeads = matchingHeads
     val detailsFilters = filters.detailsFilters
     if (detailsFilters.isEmpty()) return FilterByDetailsResult(null, false, commitCount)
 
-    var filteredWidthIndex: Set<Int>? = null
     val dataGetter = index.dataGetter
-    if (dataGetter != null && dataGetter.canFilter(detailsFilters)) {
-      val notIndexedRoots = ContainerUtil.filter(visibleRoots) { root -> !index.isIndexed(root) }
-
-      if (notIndexedRoots.size < visibleRoots.size) {
-        filteredWidthIndex = dataGetter.filter(detailsFilters)
-        if (notIndexedRoots.isEmpty()) return FilterByDetailsResult(filteredWidthIndex, false, commitCount)
-        matchingHeads = getMatchingHeads(dataPack.refsModel, notIndexedRoots, filters)
-      }
+    val (rootsForIndex, rootsForVcs) = if (dataGetter != null && dataGetter.canFilter(detailsFilters)) {
+      visibleRoots.partition { index.isIndexed(it) }
+    }
+    else {
+      kotlin.Pair(emptyList(), visibleRoots.toList())
     }
 
-    val filteredWithVcs = filterWithVcs(dataPack.permanentGraph, filters, detailsFilters, matchingHeads, commitCount)
+    val filteredWidthIndex: Set<Int>? = if (rootsForIndex.isNotEmpty()) dataGetter?.filter(detailsFilters) else null
+
+    val headsForVcs = if (rootsForVcs.containsAll(visibleRoots)) matchingHeads
+    else getMatchingHeads(dataPack.refsModel, rootsForVcs, filters)
+    val filteredWithVcs = filterWithVcs(dataPack.permanentGraph, filters, detailsFilters, headsForVcs, commitCount)
 
     val filteredCommits: Set<Int>? = union(filteredWidthIndex, filteredWithVcs.matchingCommits)
     return FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount)
