@@ -526,7 +526,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     //return null;
   }
 
-  private void markPathRecent(@SystemIndependent String path, @NotNull Project project) {
+  private void markPathRecent(@NotNull @SystemIndependent String path, @NotNull Project project) {
     synchronized (myStateLock) {
       if (path.endsWith(File.separator)) {
         path = path.substring(0, path.length() - File.separator.length());
@@ -534,6 +534,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       myState.lastPath = path;
       ProjectGroup group = getProjectGroup(path);
       removePath(path);
+
       myState.recentPaths.add(0, path);
       if (group != null) {
         List<String> projects = group.getProjects();
@@ -553,8 +554,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Nullable
-  private ProjectGroup getProjectGroup(@SystemIndependent String path) {
-    if (path == null) return null;
+  private ProjectGroup getProjectGroup(@NotNull @SystemIndependent String path) {
     for (ProjectGroup group : myState.groups) {
       if (group.getProjects().contains(path)) {
         return group;
