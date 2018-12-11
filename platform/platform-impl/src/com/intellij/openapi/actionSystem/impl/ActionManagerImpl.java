@@ -58,7 +58,6 @@ import javax.swing.Timer;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
 
@@ -162,9 +161,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     AnAction anAction = (AnAction)obj;
     stub.initAction(anAction);
-    if (StringUtil.isNotEmpty(stub.getText())) {
-      anAction.getTemplatePresentation().setText(stub.getText());
-    }
     String iconPath = stub.getIconPath();
     if (iconPath != null) {
       Class<? extends AnAction> actionClass = anAction.getClass();
@@ -548,47 +544,34 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
    */
   @Nullable
   private AnAction processActionElement(Element element, final ClassLoader loader, PluginId pluginId) {
-    final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
-
-    if (!ACTION_ELEMENT_NAME.equals(element.getName())) {
-      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
-      return null;
-    }
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null || className.isEmpty()) {
       reportActionError(pluginId, "action element should have specified \"class\" attribute");
       return null;
     }
     // read ID and register loaded action
-    String id = element.getAttributeValue(ID_ATTR_NAME);
-    if (id == null || id.isEmpty()) {
-      id = StringUtil.getShortName(className);
-    }
+    String id = obtainActionId(element, className);
     if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
       myNotRegisteredInternalActionIds.add(id);
       return null;
     }
 
-    String text = loadTextForElement(element, bundle, id, ACTION_ELEMENT_NAME);
-
     String iconPath = element.getAttributeValue(ICON_ATTR_NAME);
-
-    if (text == null) {
-      String message = "'text' attribute is mandatory (action ID=" + id + ";" +
-                               (plugin == null ? "" : " plugin path: "+plugin.getPath()) + ")";
-      reportActionError(pluginId, message);
-      return null;
-    }
-
     String projectType = element.getAttributeValue(PROJECT_TYPE);
-    ActionStub stub = new ActionStub(className, id, text, loader, pluginId, iconPath, projectType);
-    Presentation presentation = stub.getTemplatePresentation();
-    presentation.setText(text);
 
-    // description
-
-    presentation.setDescription(loadDescriptionForElement(element, bundle, id, ACTION_ELEMENT_NAME));
+    ActionStub stub = new ActionStub(className, id, loader, pluginId, iconPath, projectType, () -> {
+      IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+      ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
+      String text = loadTextForElement(element, bundle, id, ACTION_ELEMENT_NAME);
+      if (text == null) {
+        reportActionError(pluginId, "'text' attribute is mandatory (action ID=" + id + ";" +
+                                    (plugin == null ? "" : " plugin path: "+plugin.getPath()) + ")");
+      }
+      Presentation presentation = new Presentation();
+      presentation.setText(text);
+      presentation.setDescription(loadDescriptionForElement(element, bundle, id, ACTION_ELEMENT_NAME));
+      return presentation;
+    });
 
     // process all links and key bindings if any
     for (Element e : element.getChildren()) {
@@ -615,6 +598,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     registerOrReplaceActionInner(element, id, stub, pluginId);
     return stub;
+  }
+
+  private static String obtainActionId(Element element, String className) {
+    String id = element.getAttributeValue(ID_ATTR_NAME);
+    return StringUtil.isEmpty(id) ? StringUtil.getShortName(className) : id;
   }
 
   private void registerOrReplaceActionInner(@NotNull Element element, @NotNull String id, @NotNull AnAction action, @Nullable PluginId pluginId) {
