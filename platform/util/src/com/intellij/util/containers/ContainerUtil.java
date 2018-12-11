@@ -1349,7 +1349,11 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> concat(@NotNull Iterable<? extends Collection<? extends T>> list) {
-    List<T> result = new ArrayList<T>();
+    int totalSize = 0;
+    for (final Collection<? extends T> ts : list) {
+      totalSize += ts.size();
+    }
+    List<T> result = new ArrayList<T>(totalSize);
     for (final Collection<? extends T> ts : list) {
       result.addAll(ts);
     }
@@ -1896,7 +1900,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T,V> List<V> map(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends V> mapping) {
-    List<V> result = new ArrayList<V>();
+    List<V> result = new ArrayList<V>(iterable instanceof Collection ? ((Collection<T>)iterable).size() : 10);
     for (T t : iterable) {
       result.add(mapping.fun(t));
     }
@@ -2312,7 +2316,11 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <E> List<E> flatten(@NotNull Iterable<? extends Collection<? extends E>> collections) {
-    List<E> result = new ArrayList<E>();
+    int totalSize = 0;
+    for (Collection<? extends E> list : collections) {
+      totalSize += list.size();
+    }
+    List<E> result = new ArrayList<E>(totalSize);
     for (Collection<? extends E> list : collections) {
       result.addAll(list);
     }
@@ -2326,7 +2334,11 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <E> List<E> flattenIterables(@NotNull Iterable<? extends Iterable<E>> collections) {
-    List<E> result = new ArrayList<E>();
+    int totalSize = 0;
+    for (Iterable<E> list : collections) {
+      totalSize += list instanceof Collection ? ((Collection)list).size() : 10;
+    }
+    List<E> result = new ArrayList<E>(totalSize);
     for (Iterable<E> list : collections) {
       for (E e : list) {
         result.add(e);

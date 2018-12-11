@@ -126,7 +126,7 @@ public class DataManagerImpl extends DataManager {
   private GetDataRule getRuleFromMap(@NotNull String dataId) {
     GetDataRule rule = myDataConstantToRuleMap.get(dataId);
     if (rule == null && !myDataConstantToRuleMap.containsKey(dataId)) {
-      for (KeyedLazyInstanceEP<GetDataRule> ruleEP : GetDataRule.EP_NAME.getExtensionList()) {
+      for (KeyedLazyInstanceEP<GetDataRule> ruleEP : GetDataRule.EP_NAME.getExtensions()) {
         if (ruleEP.key.equals(dataId)) {
           rule = ruleEP.getInstance();
         }

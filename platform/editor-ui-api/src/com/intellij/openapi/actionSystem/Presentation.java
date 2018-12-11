@@ -328,8 +328,10 @@ public final class Presentation implements Cloneable {
 
     Set<String> allKeys = new HashSet<>(presentation.myUserMap.keySet());
     allKeys.addAll(myUserMap.keySet());
-    for (String key : allKeys) {
-      putClientProperty(key, presentation.getClientProperty(key));
+    if (!allKeys.isEmpty()) {
+      for (String key : allKeys) {
+        putClientProperty(key, presentation.getClientProperty(key));
+      }
     }
   }
 

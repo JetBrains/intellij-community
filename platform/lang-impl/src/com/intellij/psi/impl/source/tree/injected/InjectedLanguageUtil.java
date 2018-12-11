@@ -337,7 +337,7 @@ public class InjectedLanguageUtil {
       if ("EL".equals(current.getLanguage().getID())) break;
       ParameterizedCachedValue<InjectionResult, PsiElement> data = current.getUserData(INJECTED_PSI);
       if (data == null || (result = data.getValue(current)) == null || !result.isValid()) {
-        result = InjectedPsiCachedValueProvider.doCompute(current, injectedManager, project, hostPsiFile);
+        result = injectedManager.processInPlaceInjectorsFor(hostPsiFile, current);
       }
 
       current = current.getParent(); // cache no injection for current
