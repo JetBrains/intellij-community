@@ -15,18 +15,18 @@ import java.util.List;
  * is unwrapped.
  */
 public class BreakConverter {
-  private final PsiSwitchBlock mySwitchStatement;
+  private final PsiSwitchBlock mySwitchBlock;
   private final String myReplacement;
 
-  public BreakConverter(PsiSwitchBlock switchStatement, String replacement) {
-    mySwitchStatement = switchStatement;
+  public BreakConverter(PsiSwitchBlock switchBlock, String replacement) {
+    mySwitchBlock = switchBlock;
     myReplacement = replacement;
   }
 
   public void process() {
     List<PsiBreakStatement> breaks = collectBreaks();
     for (PsiBreakStatement breakStatement : breaks) {
-      if (isRemovable(mySwitchStatement, breakStatement)) {
+      if (isRemovable(mySwitchBlock, breakStatement)) {
         DeleteUnnecessaryStatementFix.deleteUnnecessaryStatement(breakStatement);
       } else {
         assert myReplacement != null;
@@ -38,11 +38,11 @@ public class BreakConverter {
   @NotNull
   private List<PsiBreakStatement> collectBreaks() {
     List<PsiBreakStatement> breaks = new ArrayList<>();
-    mySwitchStatement.accept(new JavaRecursiveElementWalkingVisitor() {
+    mySwitchBlock.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitBreakStatement(PsiBreakStatement statement) {
         super.visitBreakStatement(statement);
-        if (statement.findExitedElement() == mySwitchStatement) {
+        if (statement.findExitedElement() == mySwitchBlock) {
           breaks.add(statement);
         }
       }
