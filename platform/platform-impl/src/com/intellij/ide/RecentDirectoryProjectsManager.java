@@ -14,7 +14,7 @@ import org.jetbrains.annotations.SystemIndependent;
 
 @State(name = "RecentDirectoryProjectsManager", storages = @Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED))
 public class RecentDirectoryProjectsManager extends RecentProjectsManagerBase {
-  public RecentDirectoryProjectsManager(MessageBus messageBus) {
+  public RecentDirectoryProjectsManager(@NotNull MessageBus messageBus) {
     super(messageBus);
   }
 
