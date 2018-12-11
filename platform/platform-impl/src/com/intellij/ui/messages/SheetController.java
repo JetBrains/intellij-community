@@ -175,7 +175,7 @@ public class SheetController implements Disposable {
       String text = title.substring(0, mIdx) + title.substring(mIdx + 1);
 
       buttons[i].setText(text);
-      buttons[i].setDisplayedMnemonicIndex(mIdx);
+      buttons[i].setMnemonic(text.charAt(mIdx));
       return true;
     }
     else {
