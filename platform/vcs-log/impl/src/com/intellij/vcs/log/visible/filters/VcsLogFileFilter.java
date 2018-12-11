@@ -32,4 +32,20 @@ public class VcsLogFileFilter implements VcsLogFilter {
   public VcsLogFilterCollection.FilterKey<?> getKey() {
     return VcsLogFilterCollection.FilterKey.create("file");
   }
+
+  @NotNull
+  @Override
+  public String getPresentation() {
+    StringBuilder result = new StringBuilder();
+    if (myRootFilter != null) {
+      result.append(myRootFilter.getPresentation());
+    }
+    if (myStructureFilter != null) {
+      if (result.length() > 0) {
+        result.append(" ");
+      }
+      result.append(myStructureFilter.getPresentation());
+    }
+    return result.toString();
+  }
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.OpenTHashSet
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.VcsLogFilterCollection.FilterKey
+import com.intellij.vcs.log.VcsLogFilterCollection.HASH_FILTER
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogDateFilterImpl
@@ -191,6 +192,28 @@ fun VcsLogFilterCollection.without(filterKey: FilterKey<*>): VcsLogFilterCollect
   val filterSet = createFilterSet()
   this.filters.forEach { if (it.key != filterKey) filterSet.add(it) }
   return MyVcsLogFilterCollectionImpl(filterSet)
+}
+
+fun VcsLogFilterCollection.getPresentation(): String {
+  if (get(HASH_FILTER) != null) {
+    return get(HASH_FILTER)!!.presentation
+  }
+  return filters.joinToString(" ") { filter ->
+    val prefix = if (filters.size != 1) filter.getPrefix() else ""
+    prefix + filter.presentation
+  }
+}
+
+private fun VcsLogFilter.getPrefix(): String {
+  when {
+    this is VcsLogTextFilter -> return "containing "
+    this is VcsLogUserFilter -> return "by "
+    this is VcsLogDateFilter -> return "made "
+    this is VcsLogBranchFilter -> return "on "
+    this is VcsLogRootFilter -> return "in "
+    this is VcsLogStructureFilter -> return "for "
+  }
+  return ""
 }
 
 private fun createFilterSet() = OpenTHashSet<VcsLogFilter>(FilterByKeyHashingStrategy())

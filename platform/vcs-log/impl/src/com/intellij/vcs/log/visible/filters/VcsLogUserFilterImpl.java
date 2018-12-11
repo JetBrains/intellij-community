@@ -111,6 +111,12 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
     return result;
   }
 
+  @NotNull
+  @Override
+  public String getPresentation() {
+    return StringUtil.join(getUserNamesForPresentation(), ", ");
+  }
+
   @Override
   public String toString() {
     return "author: " + StringUtil.join(myUsers, ", ");
