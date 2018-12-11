@@ -1,10 +1,10 @@
-// "Replace with enhanced 'switch' statement" "true"
+// "Replace with 'switch' expression" "true"
 import java.util.*;
 
 class SwitchExpressionMigration {
     private static void m(int i) {
       String a;
-      fo:
+      fo/*label*/:
       switch<caret> (i) {
         case 0:
           a = "asd";
