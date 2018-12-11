@@ -20,9 +20,7 @@ import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.CompileScopeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompileStatusNotification;
-import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -37,6 +35,7 @@ import com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings;
 import com.intellij.task.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,11 +57,19 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
                   @NotNull ProjectTaskContext context,
                   @Nullable ProjectTaskNotification callback,
                   @NotNull Collection<? extends ProjectTask> tasks) {
+    MessageBusConnection connection = project.getMessageBus().connect(project);
+    connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
+      @Override
+      public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
+        context.fileGenerated(outputRoot, relativePath);
+      }
+    });
     CompileStatusNotification compileNotification = (aborted, errors, warnings, compileContext) -> {
       context.putUserData(CompileContextImpl.CONTEXT_KEY, compileContext);
       if (callback != null) {
         callback.finished(new ProjectTaskResult(aborted, errors, warnings));
       }
+      connection.disconnect();
     };
 
     Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = groupBy(tasks);

@@ -18,8 +18,11 @@ package com.intellij.task;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
@@ -30,6 +33,8 @@ public class ProjectTaskContext extends UserDataHolderBase {
   @Nullable
   private final RunConfiguration myRunConfiguration;
   private final boolean myAutoRun;
+  private final MultiMap<String, String> myGeneratedFiles;
+  private boolean myCollectGeneratedFiles;
 
   public ProjectTaskContext() {
     this(null, null, false);
@@ -51,6 +56,7 @@ public class ProjectTaskContext extends UserDataHolderBase {
     mySessionId = sessionId;
     myRunConfiguration = runConfiguration;
     myAutoRun = autoRun;
+    myGeneratedFiles = MultiMap.createSmart();
   }
 
   @Nullable
@@ -68,6 +74,26 @@ public class ProjectTaskContext extends UserDataHolderBase {
    */
   public boolean isAutoRun() {
     return myAutoRun;
+  }
+
+  public void collectGeneratedFiles() {
+    myCollectGeneratedFiles = true;
+  }
+
+  @NotNull
+  public Collection<String> getGeneratedFilesRoots() {
+    return myGeneratedFiles.keySet();
+  }
+
+  @NotNull
+  public Collection<String> getGeneratedFilesRelativePaths(@NotNull String root) {
+    return myGeneratedFiles.get(root);
+  }
+
+  public void fileGenerated(@NotNull String root, @NotNull String relativePath) {
+    if (myCollectGeneratedFiles) {
+      myGeneratedFiles.putValue(root, relativePath);
+    }
   }
 
   public <T> ProjectTaskContext withUserData(@NotNull Key<T> key, @Nullable T value) {

@@ -8,10 +8,13 @@ public interface ProjectTaskListener {
   Topic<ProjectTaskListener> TOPIC = new Topic<>("project task events", ProjectTaskListener.class);
 
   /**
+   * Start tasks execution notification
+   */
+  default void started(@NotNull ProjectTaskContext context) {}
+
+  /**
    * @param context         tasks execution context
    * @param executionResult provides aggregated information about the {@link ProjectTask} execution
    */
   default void finished(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult executionResult) {}
-
-  default void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {}
 }

@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.containers.ContainerUtil.list;
 import static com.intellij.util.containers.ContainerUtil.map;
@@ -155,6 +154,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     };
     visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
 
+    myEventPublisher.started(context);
     if (toRun.isEmpty()) {
       sendSuccessNotify(new ListenerNotificator(context, callback));
       return;

@@ -16,7 +16,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.compiler.DummyCompileContext;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -41,7 +40,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class HotSwapUIImpl extends HotSwapUI {
@@ -97,7 +95,7 @@ public class HotSwapUIImpl extends HotSwapUI {
     return sessions.stream().anyMatch(DebuggerSession::isPaused);
   }
 
-  private void hotSwapSessions(final List<DebuggerSession> sessions, @Nullable final Map<String, List<String>> generatedPaths,
+  private void hotSwapSessions(final List<DebuggerSession> sessions, @Nullable final Map<String, Collection<String>> generatedPaths,
                                @Nullable final HotSwapStatusListener callback) {
     final boolean shouldAskBeforeHotswap = myAskBeforeHotswap;
     myAskBeforeHotswap = true;
@@ -315,7 +313,6 @@ public class HotSwapUIImpl extends HotSwapUI {
 
   private class MyCompilationStatusListener implements ProjectTaskListener {
 
-    private final AtomicReference<Map<String, List<String>>> myGeneratedPaths = new AtomicReference<>(new HashMap<>());
     private final THashSet<File> myOutputRoots;
 
     private MyCompilationStatusListener() {
@@ -326,23 +323,17 @@ public class HotSwapUIImpl extends HotSwapUI {
     }
 
     @Override
-    public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
-      if (StringUtil.endsWith(relativePath, ".class") && JpsPathUtil.isUnder(myOutputRoots, new File(outputRoot))) {
-        // collect only classes
-        myGeneratedPaths.get().computeIfAbsent(outputRoot, k -> new ArrayList<>()).add(relativePath);
-      }
+    public void started(@NotNull ProjectTaskContext context) {
+      context.collectGeneratedFiles();
     }
 
     @Override
     public void finished(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult executionResult) {
+      if (myProject.isDisposed()) {
+        return;
+      }
       try {
         if (!hasCompilationResults(executionResult)) return;
-
-        Map<String, List<String>> generated = myGeneratedPaths.getAndSet(new HashMap<>());
-        generated = generated.isEmpty() ? null : generated;
-        if (myProject.isDisposed()) {
-          return;
-        }
 
         int errors = executionResult.getErrors();
         boolean aborted = executionResult.isAborted();
@@ -355,8 +346,30 @@ public class HotSwapUIImpl extends HotSwapUI {
 
           List<DebuggerSession> sessions = getHotSwappableDebugSessions();
           if (!sessions.isEmpty()) {
+            Map<String, Collection<String>> generatedPaths;
+            Collection<String> generatedFilesRoots = context.getGeneratedFilesRoots();
+            if (!generatedFilesRoots.isEmpty()) {
+              generatedPaths = new HashMap<>();
+              for (String outputRoot : generatedFilesRoots) {
+                // collect only classes under IDE output roots
+                if (!JpsPathUtil.isUnder(myOutputRoots, new File(outputRoot))) continue;
+                Collection<String> relativePaths = context.getGeneratedFilesRelativePaths(outputRoot).stream()
+                  .filter(relativePath -> StringUtil.endsWith(relativePath, ".class"))
+                  .collect(Collectors.toCollection(SmartList::new));
+                if (!relativePaths.isEmpty()) {
+                  generatedPaths.put(outputRoot, relativePaths);
+                }
+              }
+              if (generatedPaths.isEmpty()) {
+                generatedPaths = null;
+              }
+            }
+            else {
+              generatedPaths = null;
+            }
+
             HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
-            hotSwapSessions(sessions, generated, callback);
+            hotSwapSessions(sessions, generatedPaths, callback);
           }
         }
       }
