@@ -47,13 +47,20 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   @NotNull private final Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToPush = newConcurrentMap();
   @NotNull private final MultiMap<GitRepository, GitRemote> myErrorMap = MultiMap.createConcurrentSet();
   @NotNull private final Project myProject;
+  @NotNull private final Git myGit;
+  @NotNull private final GitVcsSettings myGitSettings;
   @Nullable private ScheduledFuture<?> myPeriodicalUpdater;
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @Nullable private MessageBusConnection myConnection;
   @NotNull private final MultiMap<GitRepository, GitRemote> myAuthSuccessMap = MultiMap.createConcurrentSet();
 
-  GitBranchIncomingOutgoingManager(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager) {
+  GitBranchIncomingOutgoingManager(@NotNull Project project,
+                                   @NotNull Git git,
+                                   @NotNull GitVcsSettings gitProjectSettings,
+                                   @NotNull GitRepositoryManager repositoryManager) {
     myProject = project;
+    myGit = git;
+    myGitSettings = gitProjectSettings;
     myRepositoryManager = repositoryManager;
   }
 
@@ -84,7 +91,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
       }
       forceUpdateBranches(false);
       if (myPeriodicalUpdater == null) {
-        int updateTime = GitVcsSettings.getInstance(myProject).getBranchInfoUpdateTime();
+        int updateTime = myGitSettings.getBranchInfoUpdateTime();
         myPeriodicalUpdater = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> updateBranchesToPull(), updateTime, updateTime,
                                                                                  TimeUnit.MINUTES);
         Disposer.register(myProject, new Disposable() {
@@ -196,8 +203,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
       List<String> params = newArrayList("--heads", remote.getName());
       params.addAll(refs);
-      GitCommandResult lsRemoteResult = Git.getInstance().runCommand(() -> createLsRemoteHandler(repository, remote, params,
-                                                                                                 authenticationMode));
+      GitCommandResult lsRemoteResult = myGit.runCommand(() -> createLsRemoteHandler(repository, remote, params, authenticationMode));
       if (lsRemoteResult.success()) {
         Map<String, String> hashWithNameMap = map2MapNotNull(lsRemoteResult.getOutput(), GitRefUtil::parseRefsLine);
         result.putAll(getResolvedHashes(hashWithNameMap));
@@ -232,7 +238,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   @NotNull
-  private static Map<GitLocalBranch, Hash> calculateBranchesToPush(@NotNull GitRepository gitRepository) {
+  private Map<GitLocalBranch, Hash> calculateBranchesToPush(@NotNull GitRepository gitRepository) {
     Map<GitLocalBranch, Hash> branchesToPush = newHashMap();
     GitBranchesCollection branchesCollection = gitRepository.getBranches();
     for (GitLocalBranch branch : branchesCollection.getLocalBranches()) {
@@ -247,7 +253,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     return branchesToPush;
   }
 
-  private static boolean hasCommitsForBranch(@NotNull GitRepository repository, @NotNull GitLocalBranch localBranch, boolean incoming) {
+  private boolean hasCommitsForBranch(@NotNull GitRepository repository, @NotNull GitLocalBranch localBranch, boolean incoming) {
     //run git rev-list --count localName@{push}..localName for outgoing or
     //git rev-list --count localName..localName@{u} for incoming
 
@@ -256,7 +262,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     String branchName = localBranch.getName();
     handler.addParameters("--count", incoming ? branchName + ".." + branchName + "@{u}" : branchName + "@{push}.." + branchName);
     try {
-      String output = Git.getInstance().runCommand(handler).getOutputOrThrow().trim();
+      String output = myGit.runCommand(handler).getOutputOrThrow().trim();
       return !StringUtil.startsWithChar(output, '0');
     }
     catch (VcsException e) {
