@@ -117,6 +117,26 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
                  "print(Test > Test)");
   }
 
+  // PY-28506
+  public void testComparisonInStdInheritance() {
+    doTest();
+  }
+
+  // PY-28506
+  public void testComparisonForManuallyOrderedInStdInheritance() {
+    doTest();
+  }
+
+  // PY-31762
+  public void testComparisonInAttrsInheritance() {
+    doTest();
+  }
+
+  // PY-31762
+  public void testComparisonForManuallyOrderedInAttrsInheritance() {
+    doTest();
+  }
+
   // PY-27398
   public void testHelpersArgument() {
     doTest();

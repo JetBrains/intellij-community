@@ -33,6 +33,10 @@ class PyDataclassInspection : PyInspection() {
                                       "attr.astuple",
                                       "attr.assoc",
                                       "attr.evolve")
+
+    private enum class ClassOrder {
+      MANUALLY, DC_ORDERED, DC_UNORDERED, UNKNOWN
+    }
   }
 
   override fun buildVisitor(holder: ProblemsHolder,
@@ -136,27 +140,39 @@ class PyDataclassInspection : PyInspection() {
       }
     }
 
-    override fun visitPyBinaryExpression(node: PyBinaryExpression?) {
+    override fun visitPyBinaryExpression(node: PyBinaryExpression) {
       super.visitPyBinaryExpression(node)
 
-      if (node != null && ORDER_OPERATORS.contains(node.referencedName)) {
+      val leftOperator = node.referencedName
+      if (leftOperator != null && ORDER_OPERATORS.contains(leftOperator)) {
         val leftClass = getInstancePyClass(node.leftExpression) ?: return
         val rightClass = getInstancePyClass(node.rightExpression) ?: return
 
-        val leftDataclassParameters = parseDataclassParameters(leftClass, myTypeEvalContext)
+        val (leftOrder, leftType) = getDataclassHierarchyOrder(leftClass, leftOperator)
+        if (leftOrder == ClassOrder.MANUALLY) return
 
-        if (leftClass != rightClass &&
-            leftDataclassParameters != null &&
-            parseDataclassParameters(rightClass, myTypeEvalContext) != null) {
-          registerProblem(node.psiOperator,
-                          "'${node.referencedName}' not supported between instances of '${leftClass.name}' and '${rightClass.name}'",
-                          ProblemHighlightType.GENERIC_ERROR)
+        val (rightOrder, _) = getDataclassHierarchyOrder(rightClass, PyNames.leftToRightOperatorName(leftOperator))
+
+        if (leftClass == rightClass) {
+          if (leftOrder == ClassOrder.DC_UNORDERED && rightOrder != ClassOrder.MANUALLY) {
+            registerProblem(node.psiOperator,
+                            "'$leftOperator' not supported between instances of '${leftClass.name}'",
+                            ProblemHighlightType.GENERIC_ERROR)
+          }
         }
+        else {
+          if (leftOrder == ClassOrder.DC_ORDERED ||
+              leftOrder == ClassOrder.DC_UNORDERED ||
+              rightOrder == ClassOrder.DC_ORDERED ||
+              rightOrder == ClassOrder.DC_UNORDERED) {
+            if (leftOrder == ClassOrder.DC_ORDERED &&
+                leftType == PyDataclassParameters.Type.ATTRS &&
+                rightClass.isSubclass(leftClass, myTypeEvalContext)) return // attrs allows to compare ancestor and its subclass
 
-        if (leftClass == rightClass && leftDataclassParameters?.order == false && !definedReferencedOperator(leftClass, node)) {
-          registerProblem(node.psiOperator,
-                          "'${node.referencedName}' not supported between instances of '${leftClass.name}'",
-                          ProblemHighlightType.GENERIC_ERROR)
+            registerProblem(node.psiOperator,
+                            "'$leftOperator' not supported between instances of '${leftClass.name}' and '${rightClass.name}'",
+                            ProblemHighlightType.GENERIC_ERROR)
+          }
         }
       }
     }
@@ -227,15 +243,31 @@ class PyDataclassInspection : PyInspection() {
       }
     }
 
-    private fun definedReferencedOperator(cls: PyClass, node: PyBinaryExpression): Boolean {
-      val type = cls.getType(myTypeEvalContext) ?: return false
-      val leftOperator = node.referencedName ?: return false
+    private fun getDataclassHierarchyOrder(cls: PyClass, operator: String?): Pair<ClassOrder, PyDataclassParameters.Type?> {
+      var seenUnordered: Pair<ClassOrder, PyDataclassParameters.Type?>? = null
 
-      val direction = AccessDirection.of(node)
-      if (!type.resolveMember(leftOperator, node, direction, resolveContext).isNullOrEmpty()) return true
+      for (current in StreamEx.of(cls).append(cls.getAncestorClasses(myTypeEvalContext))) {
+        val order = getDataclassOrder(current, operator)
 
-      val rightOperator = PyNames.leftToRightOperatorName(leftOperator)
-      return rightOperator != null && !type.resolveMember(rightOperator, node, direction, resolveContext).isNullOrEmpty()
+        // `order=False` just does not add comparison methods
+        // but it makes sense when no one in the hierarchy defines any of such methods
+        if (order.first == ClassOrder.DC_UNORDERED) seenUnordered = order
+        else if (order.first != ClassOrder.UNKNOWN) return order
+      }
+
+      return if (seenUnordered != null) seenUnordered else ClassOrder.UNKNOWN to null
+    }
+
+    private fun getDataclassOrder(cls: PyClass, operator: String?): Pair<ClassOrder, PyDataclassParameters.Type?> {
+      val type = cls.getType(myTypeEvalContext)
+      if (operator != null &&
+          type != null &&
+          !type.resolveMember(operator, null, AccessDirection.READ, resolveContext, false).isNullOrEmpty()) {
+        return ClassOrder.MANUALLY to null
+      }
+
+      val parameters = parseDataclassParameters(cls, myTypeEvalContext) ?: return ClassOrder.UNKNOWN to null
+      return if (parameters.order) ClassOrder.DC_ORDERED to parameters.type else ClassOrder.DC_UNORDERED to parameters.type
     }
 
     private fun getInstancePyClass(element: PyTypedElement?): PyClass? {
