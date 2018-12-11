@@ -54,6 +54,9 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
                                     boolean leaf,
                                     int row,
                                     boolean hasFocus) {
+    if (value instanceof InspectionRootNode) {
+      return;
+    }
     if (value instanceof LoadingNode) {
       append(((LoadingNode)value).getText());
       return;
