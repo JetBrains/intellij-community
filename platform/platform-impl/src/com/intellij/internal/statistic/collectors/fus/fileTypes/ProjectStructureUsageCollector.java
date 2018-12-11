@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +34,7 @@ public class ProjectStructureUsageCollector extends ProjectUsagesCollector {
     Map<? extends JpsModuleSourceRootType<?>, String> typeNames = JBIterable.from(JpsModelSerializerExtension.getExtensions())
       .flatMap(JpsModelSerializerExtension::getModuleSourceRootPropertiesSerializers)
       .toMap(JpsElementPropertiesSerializer::getType, JpsElementPropertiesSerializer::getTypeId);
+    boolean packagePrefixUsed = false;
 
     Set<UsageDescriptor> result = new HashSet<>();
     TObjectIntHashMap<String> types = new TObjectIntHashMap<>();
@@ -44,6 +47,7 @@ public class ProjectStructureUsageCollector extends ProjectUsagesCollector {
       result.add(getCountingUsage("excluded.roots.count", rootManager.getExcludeRoots().length));
       for (ContentEntry entry : rootManager.getContentEntries()) {
         for (SourceFolder source : entry.getSourceFolders()) {
+          packagePrefixUsed = packagePrefixUsed || StringUtil.isNotEmpty(source.getPackagePrefix());
           String key = typeNames.get(source.getRootType());
           if (key == null) continue;
           if (!types.increment(key)) {
@@ -53,6 +57,9 @@ public class ProjectStructureUsageCollector extends ProjectUsagesCollector {
       }
       types.forEachEntry((key, count) -> result.add(getCountingUsage("source.root." + key, count)));
       types.clear();
+    }
+    if (PlatformUtils.isIntelliJ()) {
+      result.add(new UsageDescriptor(packagePrefixUsed ? "package.prefix.used" : "package.prefix.not.used"));
     }
     return result;
   }
