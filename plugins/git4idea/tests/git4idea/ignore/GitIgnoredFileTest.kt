@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore
 
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
@@ -41,7 +43,7 @@ class GitIgnoredFileTest : GitPlatformTest() {
   }
 
   override fun setUpModule() {
-    WriteCommandAction.writeCommandAction(project).run<RuntimeException> {
+    WriteAction.runAndWait<RuntimeException> {
       myModule = createMainModule()
       val moduleDir = myModule.moduleFile!!.parent
       myModule.addContentRoot(moduleDir)
@@ -90,6 +92,27 @@ class GitIgnoredFileTest : GitPlatformTest() {
         /$EXCLUDED_CHILD/
         /$OUT/
     """)
+  }
+
+  fun `test do not add already ignored directories to gitignore`() {
+    val shelfDir = WriteAction.computeAndWait<VirtualFile, RuntimeException> {
+      val moduleDir = myModule.moduleFile!!.parent
+      moduleDir.findOrCreateDir("subdir").findOrCreateDir("shelf")
+    }
+    val vcsConfiguration = VcsConfiguration.getInstance(project)
+    vcsConfiguration.USE_CUSTOM_SHELF_PATH = true
+    vcsConfiguration.CUSTOM_SHELF_PATH = shelfDir.path
+
+    assertTrue(File("$projectPath/$GITIGNORE").apply {
+      writeText("/subdir/shelf")
+      LocalFileSystem.getInstance().refreshIoFiles(setOf(this))
+    }.exists())
+
+    GitUtil.generateGitignoreFileIfNeeded(project, shelfDir.parent)
+
+    val subdirGitIgnore = File("${shelfDir.parent.path}/$GITIGNORE")
+
+    assertFalse(subdirGitIgnore.exists())
   }
 
   private fun assertGitignoreValid(ignoreFile: File, gitIgnoreExpectedContent: String) {

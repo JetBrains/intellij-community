@@ -4,6 +4,7 @@ package git4idea.ignore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.NotIgnored
 import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vcs.changes.IgnoreSettingsType.*
@@ -18,9 +19,12 @@ import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
+import java.io.File
 import java.lang.System.lineSeparator
 
 open class GitIgnoredFileContentProvider(private val project: Project) : IgnoredFileContentProvider {
+
+  private val gitIgnoreChecker = GitIgnoreChecker(project)
 
   override fun getSupportedVcs(): VcsKey = GitVcs.getKey()
 
@@ -78,6 +82,7 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     FileUtil.exists(ignoredBean.path)
     && FileUtil.isAncestor(ignoreFileRoot.path, ignoredBean.path!!, false)
     && Comparing.equal(vcsRoot, VcsUtil.getVcsRootFor(project, vcsContextFactory.createFilePath(ignoredBean.path!!, true)))
+    && gitIgnoreChecker.isIgnored(vcsRoot!!, File(ignoredBean.path!!)) is NotIgnored
     && shouldNotConsiderInternalIgnoreFile(ignoredBean, ignoreFileRoot)
 
   private fun shouldIgnoreFile(ignoredBean: IgnoredFileDescriptor,
