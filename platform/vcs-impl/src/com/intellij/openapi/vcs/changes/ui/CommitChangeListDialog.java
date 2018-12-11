@@ -505,7 +505,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void initComment(@Nullable LocalChangeList initialSelection, @Nullable String comment) {
     if (comment != null) {
       setCommitMessage(comment);
-      myLastKnownComment = comment;
       myLastSelectedListName = notNull(initialSelection, myBrowser.getSelectedChangeList()).getName();
     } else {
       updateComment();
