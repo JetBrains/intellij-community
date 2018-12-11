@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.ProductIcons;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -21,7 +22,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.SystemDock;
@@ -46,8 +46,13 @@ import org.jetbrains.annotations.SystemIndependent;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 
@@ -632,6 +637,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     if (cached != null) {
       return cached;
     }
+
     myNamesResolver.cancelAllRequests();
     synchronized (myNamesToResolve) {
       myNamesToResolve.add(path);
@@ -639,7 +645,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     myNamesResolver.addRequest(() -> {
       final Set<String> paths;
       synchronized (myNamesToResolve) {
-        paths = new HashSet<>(myNamesToResolve);
+        paths = new THashSet<>(myNamesToResolve);
         myNamesToResolve.clear();
       }
       for (String p : paths) {
@@ -651,25 +657,25 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   private static String readProjectName(@NotNull String path) {
-    final File file = new File(path);
-    if (file.isDirectory()) {
-      final File nameFile = new File(new File(path, Project.DIRECTORY_STORE_FOLDER), ProjectImpl.NAME_FILE);
-      if (nameFile.exists()) {
-        try {
-          try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), CharsetToolkit.UTF8_CHARSET))) {
-            String name = in.readLine();
-            if (!StringUtil.isEmpty(name)) {
-              return name.trim();
-            }
-          }
-        }
-        catch (IOException ignored) { }
+    final Path file = Paths.get(path);
+    //noinspection SSBasedInspection
+    if (!Files.isDirectory(file)) {
+      return FileUtilRt.getNameWithoutExtension(file.getFileName().toString());
+    }
+
+    final Path nameFile = file.resolve(Project.DIRECTORY_STORE_FOLDER).resolve(ProjectImpl.NAME_FILE);
+    try {
+      String result = StorageUtilKt.readProjectNameFile(nameFile);
+      if (result != null) {
+        return result;
       }
-      return file.getName();
     }
-    else {
-      return FileUtilRt.getNameWithoutExtension(file.getName());
+    catch (NoSuchFileException ignore) {
+      // ignore not found
     }
+    catch (IOException ignored) {
+    }
+    return file.getFileName().toString();
   }
 
   protected boolean willReopenProjectOnStart() {

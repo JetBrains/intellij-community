@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.createDirectories
+import com.intellij.util.io.inputStream
 import com.intellij.util.io.systemIndependentPath
 import gnu.trove.THashSet
 import org.jetbrains.annotations.TestOnly
@@ -28,7 +29,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 
-const val NOTIFICATION_GROUP_ID: String = "Load Error"
+const val NOTIFICATION_GROUP_ID = "Load Error"
 
 @TestOnly
 var DEBUG_LOG: String? = null
@@ -134,4 +135,9 @@ fun getOrCreateVirtualFile(requestor: Any?, file: Path): VirtualFile {
     return parentVirtualFile.createChildData(requestor, file.fileName.toString())
   }
   return runUndoTransparentWriteAction { parentVirtualFile.createChildData(requestor, file.fileName.toString()) }
+}
+
+@Throws(IOException::class)
+fun readProjectNameFile(nameFile: Path): String? {
+  return nameFile.inputStream().reader().useLines { line -> line.firstOrNull { !it.isEmpty() }?.trim() }
 }
