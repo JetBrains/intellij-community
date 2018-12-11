@@ -61,8 +61,8 @@ else:
 #=======================================================================================================================
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 cdef class PyDBAdditionalThreadInfo:
-    # ELSE
-    # class PyDBAdditionalThreadInfo(object):
+# ELSE
+# class PyDBAdditionalThreadInfo(object):
     # ENDIF
 
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
@@ -81,22 +81,22 @@ cdef class PyDBAdditionalThreadInfo:
     cdef public int pydev_next_line;
     cdef public str pydev_func_name;
     # ELSE
-    #     __slots__ = [
-    #         'pydev_state',
-    #         'pydev_step_stop',
-    #         'pydev_step_cmd',
-    #         'pydev_notify_kill',
-    #         'pydev_smart_step_stop',
-    #         'pydev_django_resolve_frame',
-    #         'pydev_call_from_jinja2',
-    #         'pydev_call_inside_jinja2',
-    #         'is_tracing',
-    #         'conditional_breakpoint_exception',
-    #         'pydev_message',
-    #         'suspend_type',
-    #         'pydev_next_line',
-    #         'pydev_func_name',
-    #     ]
+#     __slots__ = [
+#         'pydev_state',
+#         'pydev_step_stop',
+#         'pydev_step_cmd',
+#         'pydev_notify_kill',
+#         'pydev_smart_step_stop',
+#         'pydev_django_resolve_frame',
+#         'pydev_call_from_jinja2',
+#         'pydev_call_inside_jinja2',
+#         'is_tracing',
+#         'conditional_breakpoint_exception',
+#         'pydev_message',
+#         'suspend_type',
+#         'pydev_next_line',
+#         'pydev_func_name',
+#     ]
     # ENDIF
 
     def __init__(self):
@@ -216,12 +216,12 @@ def handle_breakpoint_expression(breakpoint, info, new_frame):
 #=======================================================================================================================
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 cdef class PyDBFrame:
-    # ELSE
-    # class PyDBFrame:
-    #     '''This makes the tracing for a given frame, so, the trace_dispatch
-    #     is used initially when we enter into a new context ('call') and then
-    #     is reused for the entire context.
-    #     '''
+# ELSE
+# class PyDBFrame:
+#     '''This makes the tracing for a given frame, so, the trace_dispatch
+#     is used initially when we enter into a new context ('call') and then
+#     is reused for the entire context.
+#     '''
     # ENDIF
 
 
@@ -239,12 +239,12 @@ cdef class PyDBFrame:
         self._args = args # In the cython version we don't need to pass the frame
         self.should_skip = -1  # On cythonized version, put in instance.
     # ELSE
-    #     should_skip = -1  # Default value in class (put in instance on set).
-    #
-    #     def __init__(self, args):
-    #         #args = main_debugger, filename, base, info, t, frame
-    #         #yeap, much faster than putting in self and then getting it from self later on
-    #         self._args = args
+#     should_skip = -1  # Default value in class (put in instance on set).
+# 
+#     def __init__(self, args):
+#         #args = main_debugger, filename, base, info, t, frame
+#         #yeap, much faster than putting in self and then getting it from self later on
+#         self._args = args
     # ENDIF
 
     def set_suspend(self, *args, **kwargs):
@@ -256,9 +256,9 @@ cdef class PyDBFrame:
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
     def trace_exception(self, frame, str event, arg):
         cdef bint flag;
-        # ELSE
-        #     def trace_exception(self, frame, event, arg):
-        # ENDIF
+    # ELSE
+#     def trace_exception(self, frame, event, arg):
+    # ENDIF
         if event == 'exception':
             flag, frame = self.should_stop_on_exception(frame, event, arg)
 
@@ -278,9 +278,9 @@ cdef class PyDBFrame:
     def should_stop_on_exception(self, frame, str event, arg):
         cdef PyDBAdditionalThreadInfo info;
         cdef bint flag;
-        # ELSE
-        #     def should_stop_on_exception(self, frame, event, arg):
-        # ENDIF
+    # ELSE
+#     def should_stop_on_exception(self, frame, event, arg):
+    # ENDIF
 
         # main_debugger, _filename, info, _thread = self._args
         main_debugger = self._args[0]
@@ -516,6 +516,11 @@ cdef class PyDBFrame:
             main_debugger.remove_return_values_flag = False
             traceback.print_exc()
 
+    def clear_run_state(self, info):
+        info.pydev_step_stop = None
+        info.pydev_step_cmd = -1
+        info.pydev_state = STATE_RUN
+
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
     cpdef trace_dispatch(self, frame, str event, arg):
         cdef str filename;
@@ -537,9 +542,9 @@ cdef class PyDBFrame:
         cdef int breakpoints_in_line_cache;
         cdef int breakpoints_in_frame_cache;
         cdef bint has_breakpoint_in_frame;
-        # ELSE
-        #     def trace_dispatch(self, frame, event, arg):
-        # ENDIF
+    # ELSE
+#     def trace_dispatch(self, frame, event, arg):
+    # ENDIF
 
         main_debugger, filename, info, thread, frame_skips_cache, frame_cache_key = self._args
         # print('frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, event, info.pydev_step_cmd)
@@ -586,7 +591,7 @@ cdef class PyDBFrame:
                 breakpoints_for_file = None
                 # CMD_STEP_OVER = 108
                 if stop_frame and stop_frame is not frame and step_cmd == 108 and \
-                        arg[0] in (StopIteration, GeneratorExit) and arg[2] is None:
+                                arg[0] in (StopIteration, GeneratorExit) and arg[2] is None:
                     info.pydev_step_cmd = 107  # CMD_STEP_INTO = 107
                     info.pydev_step_stop = None
             else:
@@ -758,7 +763,8 @@ cdef class PyDBFrame:
                     if breakpoint is None and not (is_return or is_exception_event):
                         # No stop from anyone and no breakpoint found in line (cache that).
                         frame_skips_cache[line_cache_key] = 0
-
+            except KeyboardInterrupt:
+                self.clear_run_state(info)
             except:
                 traceback.print_exc()
                 raise
@@ -878,11 +884,10 @@ cdef class PyDBFrame:
                             self.do_wait_suspend(thread, back, event, arg)
                         else:
                             #in jython we may not have a back frame
-                            info.pydev_step_stop = None
-                            info.pydev_step_cmd = -1
-                            info.pydev_state = STATE_RUN
+                            self.clear_run_state(info)
 
             except KeyboardInterrupt:
+                self.clear_run_state(info)
                 raise
             except:
                 try:
@@ -953,36 +958,36 @@ def trace_dispatch(py_db, frame, event, arg):
         additional_info = t.additional_info = PyDBAdditionalThreadInfo()
 
     thread_tracer = ThreadTracer((py_db, t, additional_info, global_cache_skips, global_cache_frame_skips))
-    # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
     t._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
-    # ELSE
-    # ENDIF
+# ELSE
+# ENDIF
     SetTrace(thread_tracer.__call__)
     return thread_tracer.__call__(frame, event, arg)
 
 
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 cdef class SafeCallWrapper:
-    cdef method_object
-    def __init__(self, method_object):
-        self.method_object = method_object
-    def  __call__(self, *args):
-        #Cannot use 'self' once inside the delegate call since we are borrowing the self reference f_trace field
-        #in the frame, and that reference might get destroyed by set trace on frame and parents
-        cdef PyObject* method_obj = <PyObject*> self.method_object
-        Py_INCREF(<object>method_obj)
-        ret = (<object>method_obj)(*args)
-        Py_XDECREF (method_obj)
-        return SafeCallWrapper(ret) if ret is not None else None
+  cdef method_object
+  def __init__(self, method_object):
+      self.method_object = method_object
+  def  __call__(self, *args):
+      #Cannot use 'self' once inside the delegate call since we are borrowing the self reference f_trace field
+      #in the frame, and that reference might get destroyed by set trace on frame and parents
+      cdef PyObject* method_obj = <PyObject*> self.method_object
+      Py_INCREF(<object>method_obj)
+      ret = (<object>method_obj)(*args)
+      Py_XDECREF (method_obj)
+      return SafeCallWrapper(ret) if ret is not None else None
 cdef class ThreadTracer:
     cdef public tuple _args;
     def __init__(self, tuple args):
         self._args = args
-    # ELSE
-    # class ThreadTracer:
-    #     def __init__(self, args):
-    #         self._args = args
-    #
+# ELSE
+# class ThreadTracer:
+#     def __init__(self, args):
+#         self._args = args
+# 
     # ENDIF
 
     def __call__(self, frame, event, arg):
@@ -1088,8 +1093,8 @@ cdef class ThreadTracer:
             # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
             return SafeCallWrapper(ret)
             # ELSE
-        #             return ret
-        # ENDIF
+#             return ret
+            # ENDIF
 
         except SystemExit:
             return None
