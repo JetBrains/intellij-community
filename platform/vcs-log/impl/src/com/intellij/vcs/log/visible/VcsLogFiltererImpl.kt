@@ -4,6 +4,7 @@ package com.intellij.vcs.log.visible
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
@@ -171,6 +172,14 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         if (commitId != null) hashFilterResult.add(storage.getCommitIndex(commitId.hash, commitId.root))
       }
     }
+    if (!Registry.`is`("vcs.log.filter.messages.by.hash")) {
+      if (hashFilterResult.isEmpty()) return null
+
+      val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, hashFilterResult)
+      val visiblePack = VisiblePack(dataPack, visibleGraph, false, VcsLogFilterObject.collection(fromHashes(hashes)))
+      return Pair.create(visiblePack, CommitCountStage.ALL)
+    }
+
     val textFilter = VcsLogFilterObject.fromPatternsList(ContainerUtil.newArrayList(hashes), false)
     val textFilterResult = filterByDetails(dataPack, VcsLogFilterObject.collection(textFilter),
                                            commitCount, dataPack.logProviders.keys, null)
