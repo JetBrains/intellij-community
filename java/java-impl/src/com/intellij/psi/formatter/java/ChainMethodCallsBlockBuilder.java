@@ -150,19 +150,6 @@ class ChainMethodCallsBlockBuilder {
     return result;
   }
 
-  /**
-   * @return true if current list should be finished
-   */
-  private static boolean tryFinishChunk(ASTNode node, List<ASTNode> current, List<ChainedCallChunk> result) {
-    if (node.getElementType() == JavaTokenType.DOT || node.getPsi() instanceof PsiComment) {
-      if (!current.isEmpty()) {
-        result.add(new ChainedCallChunk(current));
-      }
-      return true;
-    }
-    return false;
-  }
-
   private Alignment createCallChunkAlignment(int chunkIndex, @NotNull List<ChainedCallChunk> methodCall) {
     ChainedCallChunk current = methodCall.get(chunkIndex);
     return shouldAlignMethod(current, methodCall)
