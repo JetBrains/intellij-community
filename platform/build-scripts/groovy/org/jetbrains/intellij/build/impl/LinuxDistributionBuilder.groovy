@@ -244,6 +244,9 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           include(name: "bin/fsnotifier*")
           customizer.extraExecutables.each { include(name: it) }
         }
+        fileset(dir: buildContext.paths.distAll){
+          customizer.extraExecutables.each { include(name: it) }
+        }
         fileset(dir: jreDirectoryPath) {
           include(name: "jre64/bin/*")
         }
