@@ -381,7 +381,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     mySplitter.setProportion(PropertiesComponent.getInstance().getFloat(SPLITTER_PROPORTION_OPTION, SPLITTER_PROPORTION_OPTION_DEFAULT));
 
     if (!myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
-      initComment(initialSelection, comment);
+      initComment(comment);
     }
 
     //noinspection unchecked
@@ -502,13 +502,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return StreamEx.of(executors).select(HelpIdProvider.class).map(HelpIdProvider::getHelpId).nonNull().findFirst().orElse(null);
   }
 
-  private void initComment(@Nullable LocalChangeList initialSelection, @Nullable String comment) {
+  private void initComment(@Nullable String comment) {
+    LocalChangeList list = myBrowser.getSelectedChangeList();
+    myLastSelectedListName = list.getName();
+
     if (comment != null) {
       setCommitMessage(comment);
-      myLastSelectedListName = notNull(initialSelection, myBrowser.getSelectedChangeList()).getName();
     } else {
-      LocalChangeList list = myBrowser.getSelectedChangeList();
-      myLastSelectedListName = list.getName();
       myCommitMessageArea.setText(getCommentFromChangelist(list));
 
       if (StringUtil.isEmptyOrSpaces(myCommitMessageArea.getComment())) {
