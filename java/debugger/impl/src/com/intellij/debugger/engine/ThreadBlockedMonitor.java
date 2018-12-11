@@ -12,19 +12,20 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.BitUtil;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.sun.jdi.IncompatibleThreadStateException;
-import com.sun.jdi.ObjectCollectedException;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ThreadReference;
+import com.sun.jdi.*;
+import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author egor
@@ -40,6 +41,25 @@ public class ThreadBlockedMonitor {
   public ThreadBlockedMonitor(DebugProcessImpl process, Disposable disposable) {
     myProcess = process;
     Disposer.register(disposable, this::cancelTask);
+  }
+
+  static int getSingleThreadedEvaluationThreshold() {
+    return Registry.intValue("debugger.evaluate.single.threaded.timeout", 1000);
+  }
+
+  @Nullable
+  public InvocationWatcher startInvokeWatching(int invokePolicy,
+                                               @Nullable ThreadReferenceProxyImpl thread,
+                                               @NotNull SuspendContextImpl context) {
+    int threshold = getSingleThreadedEvaluationThreshold();
+    if (thread != null && threshold > 0 &&
+        context.getSuspendPolicy() == EventRequest.SUSPEND_ALL &&
+        BitUtil.isSet(invokePolicy, ObjectReference.INVOKE_SINGLE_THREADED)) {
+      AtomicBoolean obsolete = new AtomicBoolean();
+      return new InvocationWatcher(obsolete, thread, JobScheduler.getScheduler().schedule(
+        () -> checkInvocation(thread, obsolete), threshold, TimeUnit.MILLISECONDS));
+    }
+    return null;
   }
 
   public void startWatching(@Nullable ThreadReferenceProxy thread) {
@@ -134,5 +154,51 @@ public class ThreadBlockedMonitor {
         }
       }
     });
+  }
+
+  private void checkInvocation (@NotNull ThreadReferenceProxyImpl thread, @NotNull AtomicBoolean obsolete){
+    myProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+      @Override
+      protected void action() {
+        if (obsolete.get()) return;
+        VirtualMachine virtualMachine = thread.getVirtualMachine().getVirtualMachine();
+        virtualMachine.suspend();
+        try {
+          ThreadReference threadReference = thread.getThreadReference();
+          if (!obsolete.get() && threadReference.suspendCount() == 1) { // extra check for invocation in progress
+            // resume all but this
+            threadReference.suspend();
+            virtualMachine.resume();
+          }
+        }
+        finally {
+          virtualMachine.resume();
+        }
+      }
+    });
+  }
+
+  public static class InvocationWatcher {
+    private final AtomicBoolean myObsolete;
+    private final Future myTask;
+    private final ThreadReferenceProxyImpl myThread;
+
+    public InvocationWatcher(@NotNull AtomicBoolean obsolete, @NotNull ThreadReferenceProxyImpl thread, @NotNull Future task) {
+      myObsolete = obsolete;
+      myTask = task;
+      myThread = thread;
+    }
+
+    void invocationFinished() {
+      myObsolete.set(true);
+      if (myTask.isDone()) {
+        // suspend all threads but the current one (which should be suspended already
+        myThread.getVirtualMachine().getVirtualMachine().suspend();
+        myThread.getThreadReference().resume();
+      }
+      else {
+        myTask.cancel(true);
+      }
+    }
   }
 }
