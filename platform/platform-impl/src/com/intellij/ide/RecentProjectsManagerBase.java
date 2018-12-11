@@ -712,14 +712,14 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Override
-  public void addGroup(ProjectGroup group) {
+  public void addGroup(@NotNull ProjectGroup group) {
     if (!myState.groups.contains(group)) {
       myState.groups.add(group);
     }
   }
 
   @Override
-  public void removeGroup(ProjectGroup group) {
+  public void removeGroup(@NotNull ProjectGroup group) {
     myState.groups.remove(group);
   }
 
