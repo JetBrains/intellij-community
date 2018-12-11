@@ -220,8 +220,9 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   }
 
   private NodeState calculateState() {
+    NodeState state = new NodeState(isValid(), isAlreadySuppressedFromView(), isQuickFixAppliedFromView(), isExcluded());
     synchronized (NodeState.INTERNER) {
-      return NodeState.INTERNER.intern(new NodeState(isValid(), isAlreadySuppressedFromView(), isQuickFixAppliedFromView(), isExcluded()));
+      return NodeState.INTERNER.intern(state);
     }
   }
 }
