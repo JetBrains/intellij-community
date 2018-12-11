@@ -175,10 +175,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val textFilterResult = filterByDetails(dataPack, VcsLogFilterObject.collection(textFilter),
                                            commitCount, dataPack.logProviders.keys, null)
     if (hashFilterResult.isEmpty() && textFilterResult.matchingCommits.matchesNothing()) return null
-    val filterResult = if (textFilterResult.matchingCommits == null)
-      hashFilterResult
-    else
-      ContainerUtil.union(hashFilterResult, textFilterResult.matchingCommits)
+    val filterResult = union(textFilterResult.matchingCommits, hashFilterResult)
 
     val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, filterResult)
     val visiblePack = VisiblePack(dataPack, visibleGraph, textFilterResult.canRequestMore,
