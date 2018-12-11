@@ -1016,7 +1016,7 @@ class PyDB:
                 frame = frame.f_back
         del frame
 
-    def prepare_to_run(self):
+    def prepare_to_run(self, enable_tracing_from_start=True):
         ''' Shared code to prepare debugging by installing traces and registering threads '''
         if self.signature_factory is not None or self.thread_analyser is not None:
             # we need all data to be sent to IDE even after program finishes
@@ -1025,9 +1025,8 @@ class PyDB:
             self.frame_eval_func = None
 
         self.patch_threads()
-        pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
-        # There is no need to set tracing function if frame evaluation is available. Moreover, there is no need to patch thread
-        # functions, because frame evaluation function is set to all threads by default.
+        if enable_tracing_from_start:
+            pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
 
         PyDBCommandThread(self).start()
 
