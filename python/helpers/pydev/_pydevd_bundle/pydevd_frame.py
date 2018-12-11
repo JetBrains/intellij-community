@@ -387,6 +387,11 @@ class PyDBFrame:
             main_debugger.remove_return_values_flag = False
             traceback.print_exc()
 
+    def clear_run_state(self, info):
+        info.pydev_step_stop = None
+        info.pydev_step_cmd = -1
+        info.pydev_state = STATE_RUN
+
     # IFDEF CYTHON
     # cpdef trace_dispatch(self, frame, str event, arg):
     #     cdef str filename;
@@ -629,7 +634,8 @@ class PyDBFrame:
                     if breakpoint is None and not (is_return or is_exception_event):
                         # No stop from anyone and no breakpoint found in line (cache that).
                         frame_skips_cache[line_cache_key] = 0
-
+            except KeyboardInterrupt:
+                self.clear_run_state(info)
             except:
                 traceback.print_exc()
                 raise
@@ -749,11 +755,10 @@ class PyDBFrame:
                             self.do_wait_suspend(thread, back, event, arg)
                         else:
                             #in jython we may not have a back frame
-                            info.pydev_step_stop = None
-                            info.pydev_step_cmd = -1
-                            info.pydev_state = STATE_RUN
+                            self.clear_run_state(info)
 
             except KeyboardInterrupt:
+                self.clear_run_state(info)
                 raise
             except:
                 try:
