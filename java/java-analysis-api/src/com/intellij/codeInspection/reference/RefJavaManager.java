@@ -66,8 +66,6 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
 
   public abstract String getAppletQName();
 
-  public abstract PsiClass getServlet();
-
   public abstract String getServletQName();
 
   public abstract EntryPointsManager getEntryPointsManager();
