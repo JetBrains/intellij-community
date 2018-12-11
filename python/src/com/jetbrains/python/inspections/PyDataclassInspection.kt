@@ -214,18 +214,15 @@ class PyDataclassInspection : PyInspection() {
       if (node != null && node.isQualified) {
         val cls = getInstancePyClass(node.qualifier) ?: return
 
-        if (parseStdDataclassParameters(cls, myTypeEvalContext) != null) {
-          cls.processClassLevelDeclarations { element, _ ->
-            if (element is PyTargetExpression && element.name == node.name && isInitVar(element)) {
-              registerProblem(node.lastChild,
-                              "'${cls.name}' object could have no attribute '${element.name}' because it is declared as init-only",
-                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-
-              return@processClassLevelDeclarations false
-            }
-
-            true
-          }
+        if (node
+            .getReference(resolveContext)
+            .multiResolve(false)
+            .asSequence()
+            .map { it.element }
+            .all { it is PyTargetExpression && isInitVar(it) }) {
+          registerProblem(node.lastChild,
+                          "'${cls.name}' object could have no attribute '${node.name}' because it is declared as init-only",
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         }
       }
     }

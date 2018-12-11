@@ -162,6 +162,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-28506, PY-31762
+  public void testAccessToInitVarInHierarchy() {
+    doTest();
+  }
+
   // PY-27398
   public void testUselessInitVar() {
     doTest();
