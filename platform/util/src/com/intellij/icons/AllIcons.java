@@ -2873,6 +2873,7 @@ public class AllIcons {
     public static final Icon CheckSpelling = IconLoader.getIcon("/vcs/checkSpelling.png"); // 16x16
     public static final Icon CommitNode = IconLoader.getIcon("/vcs/commitNode.svg"); // 16x16
     public static final Icon Equal = IconLoader.getIcon("/vcs/equal.svg"); // 16x16
+    public static final Icon Folders = IconLoader.getIcon("/vcs/folders.svg"); // 16x16
     public static final Icon History = IconLoader.getIcon("/vcs/history.svg"); // 16x16
     public static final Icon MapBase = IconLoader.getIcon("/vcs/mapBase.png"); // 16x16
     public static final Icon Merge = IconLoader.getIcon("/vcs/merge.svg"); // 16x16
@@ -2882,14 +2883,10 @@ public class AllIcons {
     public static final Icon Patch_file = IconLoader.getIcon("/vcs/patch_file.svg"); // 16x16
     public static final Icon Push = IconLoader.getIcon("/vcs/push.svg"); // 16x16
     public static final Icon Remove = IconLoader.getIcon("/vcs/remove.svg"); // 16x16
-    public static final Icon ResetStrip = IconLoader.getIcon("/vcs/resetStrip.png"); // 16x16
     public static final Icon RestoreDefaultSize = IconLoader.getIcon("/vcs/restoreDefaultSize.png"); // 16x16
     public static final Icon Shelve = IconLoader.getIcon("/vcs/Shelve.svg"); // 16x16
     public static final Icon ShelveSilent = IconLoader.getIcon("/vcs/shelveSilent.svg"); // 16x16
     public static final Icon ShowUnversionedFiles = IconLoader.getIcon("/vcs/ShowUnversionedFiles.svg"); // 16x16
-    public static final Icon StripDown = IconLoader.getIcon("/vcs/stripDown.png"); // 16x16
-    public static final Icon StripNull = IconLoader.getIcon("/vcs/stripNull.png"); // 16x16
-    public static final Icon StripUp = IconLoader.getIcon("/vcs/stripUp.png"); // 16x16
     public static final Icon Unshelve = IconLoader.getIcon("/vcs/Unshelve.svg"); // 16x16
     public static final Icon UnshelveSilent = IconLoader.getIcon("/vcs/unshelveSilent.svg"); // 16x16
 
@@ -2902,6 +2899,26 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon MergeSourcesTree = AllIcons.Actions.ShowAsTree;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ResetStrip = IconLoader.getIcon("/vcs/resetStrip.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon StripDown = IconLoader.getIcon("/vcs/stripDown.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon StripNull = IconLoader.getIcon("/vcs/stripNull.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon StripUp = IconLoader.getIcon("/vcs/stripUp.png");
 
   }
 
