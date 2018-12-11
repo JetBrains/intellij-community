@@ -21,7 +21,7 @@ class EmptyListLiteralType(literal: GrListOrMap) : ListLiteralType(literal) {
 
   override fun resolveGenerics(): ClassResolveResult = resolveResult.asJavaClassResult()
 
-  override fun getParameters(): Array<out PsiType?> = resolveResult?.let(::getTypeArgumentsFromResult) ?: PsiType.EMPTY_ARRAY
+  override fun getParameters(): Array<out PsiType?> = resolveResult?.getTypeArgumentsFromResult() ?: PsiType.EMPTY_ARRAY
 
   override fun setLanguageLevel(languageLevel: LanguageLevel): PsiClassType = error("This method must not be called")
 

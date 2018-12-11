@@ -104,12 +104,12 @@ fun GrMethodCall.isImplicitCall(): Boolean {
 
 fun GrCodeReferenceElement.getDiamondTypes(): Array<out PsiType?> {
   val result = advancedResolve()
-  return getTypeArgumentsFromResult(result)
+  return result.getTypeArgumentsFromResult()
 }
 
-fun getTypeArgumentsFromResult(result: GroovyResolveResult): Array<out PsiType?> {
-  val clazz = result.element as? PsiClass ?: return PsiType.EMPTY_ARRAY
-  val substitutor = result.substitutor // this may start inference session
+fun GroovyResolveResult.getTypeArgumentsFromResult(): Array<out PsiType?> {
+  val clazz = element as? PsiClass ?: return PsiType.EMPTY_ARRAY
+  val substitutor = substitutor // this may start inference session
   return clazz.typeParameters.map(substitutor::substitute).toArray(PsiType.EMPTY_ARRAY)
 }
 
