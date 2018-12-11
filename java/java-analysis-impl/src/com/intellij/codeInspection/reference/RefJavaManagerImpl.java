@@ -45,8 +45,12 @@ import java.util.stream.Stream;
  * @author anna
  */
 public class RefJavaManagerImpl extends RefJavaManager {
-  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION = Conditions
-    .and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class, PsiJavaModule.class), Conditions.notInstanceOf(PsiTypeParameter.class));
+  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION =
+    Conditions.or(Conditions.instanceOf(PsiFile.class, PsiJavaModule.class),
+                  Conditions.and(Conditions.notInstanceOf(PsiTypeParameter.class), psi -> {
+                    UDeclaration decl = UastContextKt.toUElement(psi, UDeclaration.class);
+                    return decl != null && (decl instanceof UField || !(decl instanceof UVariable));
+                  }));
 
   private static final Logger LOG = Logger.getInstance(RefJavaManagerImpl.class);
   public static final String JAVAX_SERVLET_SERVLET = "javax.servlet.Servlet";
