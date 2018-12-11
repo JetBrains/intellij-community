@@ -28,6 +28,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -66,6 +67,15 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
     ourMap.putValue(XML_ENTITY_REF_TOKEN, XmlHighlighterColors.HTML_ENTITY_REFERENCE);
 
     ourMap.putValue(XML_BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
+
+    for (EmbeddedTokenHighlighter highlighter : XmlFileHighlighter.EMBEDDED_HIGHLIGHTERS.getExtensionList()) {
+      MultiMap<IElementType, TextAttributesKey> attributes = highlighter.getEmbeddedTokenAttributes();
+      for (Map.Entry<IElementType, Collection<TextAttributesKey>> entry : attributes.entrySet()) {
+        if (!ourMap.containsKey(entry.getKey())) {
+          ourMap.putValues(entry.getKey(), entry.getValue());
+        }
+      }
+    }
   }
 
   @Override
@@ -83,8 +93,12 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
     }
   }
 
+  /**
+   * @deprecated use {@link EmbeddedTokenHighlighter} extension
+   */
+  @Deprecated
   public static synchronized void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
-                                                           Map<IElementType, TextAttributesKey> _keys2) {
+                                                     Map<IElementType, TextAttributesKey> _keys2) {
     HashSet<IElementType> existingKeys = new HashSet<>(ourMap.keySet());
     XmlFileHighlighter.addMissing(_keys1, existingKeys, ourMap);
     XmlFileHighlighter.addMissing(_keys2, existingKeys, ourMap);
