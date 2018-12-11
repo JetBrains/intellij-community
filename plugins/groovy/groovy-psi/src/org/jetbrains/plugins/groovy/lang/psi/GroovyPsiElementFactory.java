@@ -50,9 +50,6 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   public abstract GrCodeReferenceElement createCodeReferenceElementFromClass(@NotNull PsiClass aClass);
 
   @NotNull
-  public abstract GrCodeReferenceElement createCodeReferenceElementFromText(@NotNull String text);
-
-  @NotNull
   public abstract GrReferenceExpression createThisExpression(@Nullable PsiClass psiClass);
 
   @NotNull
@@ -136,12 +133,12 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   public abstract GrReferenceExpression createReferenceElementForClass(@NotNull PsiClass clazz);
 
   @NotNull
-  public GrCodeReferenceElement createReferenceElementFromText(@NotNull String refName) {
-    return createReferenceElementFromText(refName, null);
+  public GrCodeReferenceElement createCodeReference(@NotNull String text) {
+    return createCodeReference(text, null);
   }
 
   @NotNull
-  public abstract GrCodeReferenceElement createReferenceElementFromText(@NotNull String refName, @Nullable PsiElement context);
+  public abstract GrCodeReferenceElement createCodeReference(@NotNull String text, @Nullable PsiElement context);
 
   @NotNull
   public GrExpression createExpressionFromText(@NotNull CharSequence exprText) {

@@ -121,8 +121,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public GrCodeReferenceElement createReferenceElementFromText(@NotNull String refName, final PsiElement context) {
-    return createElementFromText(refName, context, CODE_REFERENCE, GrCodeReferenceElement.class);
+  public GrCodeReferenceElement createCodeReference(@NotNull String text, @Nullable PsiElement context) {
+    return createElementFromText(text, context, CODE_REFERENCE, GrCodeReferenceElement.class);
   }
 
   @NotNull
@@ -183,7 +183,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     final PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
     final PsiClass refClass = resolveResult.getElement();
     assert refClass != null : type;
-    return createCodeReferenceElementFromText(type.getCanonicalText());
+    return createCodeReference(type.getCanonicalText());
   }
 
   @NotNull
@@ -724,25 +724,11 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @NotNull
   @Override
   public GrCodeReferenceElement createCodeReferenceElementFromClass(@NotNull PsiClass aClass) {
-    if (aClass instanceof PsiAnonymousClass) {
-      throw new IncorrectOperationException("cannot create code reference element for anonymous class " + aClass.getText());
+    String qualifiedName = aClass.getQualifiedName();
+    if (qualifiedName == null) {
+      throw new IncorrectOperationException("cannot create code reference element for class " + aClass.getText());
     }
-
-    return createCodeReferenceElementFromText(aClass.getQualifiedName());
-
-  }
-
-  @NotNull
-  @Override
-  public GrCodeReferenceElement createCodeReferenceElementFromText(@NotNull String text) {
-    GroovyFile file = createGroovyFileChecked("class X extends " + text + "{}");
-    PsiClass[] classes = file.getClasses();
-    if (classes.length != 1) throw new IncorrectOperationException("cannot create code reference element for class" + text);
-    GrExtendsClause extendsClause = ((GrTypeDefinition)classes[0]).getExtendsClause();
-    if (extendsClause == null) throw new IncorrectOperationException("cannot create code reference element for class" + text);
-    GrCodeReferenceElement[] refElements = extendsClause.getReferenceElementsGroovy();
-    if (refElements.length != 1) throw new IncorrectOperationException("cannot create code reference element for class" + text);
-    return refElements[0];
+    return createCodeReference(qualifiedName);
   }
 
   @NotNull
