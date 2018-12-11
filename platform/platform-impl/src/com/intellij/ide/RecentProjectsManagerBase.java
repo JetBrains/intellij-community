@@ -57,8 +57,9 @@ import java.util.*;
  */
 public abstract class RecentProjectsManagerBase extends RecentProjectsManager implements PersistentStateComponent<RecentProjectsManagerBase.State> {
   private static final int MAX_PROJECTS_IN_MAIN_MENU = 6;
-  private static final Map<String, MyIcon> ourProjectIcons = new HashMap<>();
   private static Icon ourSmallAppIcon;
+
+  private final Map<String, MyIcon> myProjectIcons = new THashMap<>();
   private final Alarm myNamesResolver = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private final Set<String> myNamesToResolve = new HashSet<>(MAX_PROJECTS_IN_MAIN_MENU);
 
@@ -158,7 +159,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private final Object myStateLock = new Object();
   private State myState = new State();
 
-  private final Map<String, String> myNameCache = Collections.synchronizedMap(new THashMap<String, String>());
+  private final Map<String, String> myNameCache = Collections.synchronizedMap(new THashMap<>());
   private boolean myBatchOpening;
 
   protected RecentProjectsManagerBase(@NotNull MessageBus messageBus) {
@@ -292,8 +293,8 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Nullable
-  public static Icon getProjectIcon(@SystemIndependent String path, boolean isDark) {
-    final MyIcon icon = ourProjectIcons.get(path);
+  public Icon getProjectIcon(@NotNull @SystemIndependent String path, boolean isDark) {
+    final MyIcon icon = myProjectIcons.get(path);
     if (icon != null) {
       return icon.getIcon();
     }
@@ -303,18 +304,18 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Nullable
-  protected static Icon calculateIcon(@SystemIndependent String path, boolean isDark) {
+  protected Icon calculateIcon(@NotNull @SystemIndependent String path, boolean isDark) {
     File file = new File(path + (isDark ? "/.idea/icon_dark.png" : "/.idea/icon.png"));
     if (file.exists()) {
       final long timestamp = file.lastModified();
-      MyIcon icon = ourProjectIcons.get(path);
+      MyIcon icon = myProjectIcons.get(path);
       if (icon != null && icon.getTimestamp() == timestamp) {
         return icon.getIcon();
       }
       try {
         Icon ico = createIcon(file);
         icon = new MyIcon(ico, timestamp);
-        ourProjectIcons.put(path, icon);
+        myProjectIcons.put(path, icon);
         return icon.getIcon();
       }
       catch (Exception e) {
@@ -371,7 +372,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     return null;
   }
 
-  public static Icon getProjectOrAppIcon(String path) {
+  public Icon getProjectOrAppIcon(@NotNull String path) {
     Icon icon = getProjectIcon(path, UIUtil.isUnderDarcula());
     if (icon != null) {
       return icon;
@@ -506,7 +507,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  protected /* for Rider */ AnAction createOpenAction(@SystemIndependent String path, Set<String> duplicates) {
+  protected /* for Rider */ AnAction createOpenAction(@NotNull @SystemIndependent String path, Set<String> duplicates) {
     String projectName = getProjectName(path);
     String displayName;
     synchronized (myStateLock) {
