@@ -74,7 +74,7 @@ public abstract class CellPluginComponent extends JPanel {
   }
 
   protected void updateIcon(boolean errors, boolean disabled) {
-    myIconLabel.setIcon(PluginLogoInfo.getIcon(false, PluginManagerConfigurableNew.isJBPlugin(myPlugin), errors, disabled));
+    myIconLabel.setIcon(PluginLogo.getIcon(myPlugin, false, PluginManagerConfigurableNew.isJBPlugin(myPlugin), errors, disabled));
   }
 
   protected void addDescriptionComponent(@NotNull JPanel parent, @Nullable String description, @NotNull LineFunction function) {
