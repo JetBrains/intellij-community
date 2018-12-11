@@ -143,11 +143,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
 
   companion object {
     val instance: TerminalOptionsProvider
+      @JvmStatic
       get() = ServiceManager.getService(TerminalOptionsProvider::class.java)
   }
 }
-
-
-
-
-

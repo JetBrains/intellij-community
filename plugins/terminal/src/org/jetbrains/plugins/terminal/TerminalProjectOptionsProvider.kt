@@ -84,7 +84,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
   companion object {
     private val LOG = Logger.getInstance(TerminalProjectOptionsProvider::class.java)
 
-
+    @JvmStatic
     fun getInstance(project: Project): TerminalProjectOptionsProvider {
       return ServiceManager.getService(project, TerminalProjectOptionsProvider::class.java)
     }
@@ -103,6 +103,3 @@ class ValueWithDefault<S>(val prop: KMutableProperty1<S, String?>, val state: S,
     prop.set(state, if (value == default() || value.isNullOrEmpty()) null else value)
   }
 }
-
-
-
