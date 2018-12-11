@@ -74,7 +74,7 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
       super.onTestingFinished(testsRoot);
       if (testsRoot.isEmptySuite()) {
         testsRoot.setPresentation(EMPTY_SUITE);
-        testsRoot.setTestIgnored(EMPTY_SUITE, null);
+        testsRoot.setTestFailed(EMPTY_SUITE, null, false);
       }
     }
 
