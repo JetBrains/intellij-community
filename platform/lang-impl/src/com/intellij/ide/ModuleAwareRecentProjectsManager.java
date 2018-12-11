@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class RecentDirectoryProjectsManagerEx extends RecentDirectoryProjectsManager {
-  public RecentDirectoryProjectsManagerEx(MessageBus messageBus) {
+final class ModuleAwareRecentProjectsManager extends RecentDirectoryProjectsManager {
+  ModuleAwareRecentProjectsManager(@NotNull MessageBus messageBus) {
     super(messageBus);
   }
 
