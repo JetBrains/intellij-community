@@ -617,7 +617,8 @@ class PyDataclassInspection : PyInspection() {
 
       val allowDefinition = calleeQName == "dataclasses.fields"
 
-      if (isNotExpectedDataclass(myTypeEvalContext.getType(argument), PyDataclassParameters.Type.STD, allowDefinition, true)) {
+      val type = myTypeEvalContext.getType(argument)
+      if (!isExpectedDataclass(type, PyDataclassParameters.Type.STD, allowDefinition, true, calleeQName != "dataclasses.asdict")) {
         val message = "'$calleeQName' method should be called on dataclass instances" + if (allowDefinition) " or types" else ""
 
         registerProblem(argument, message)
@@ -629,7 +630,7 @@ class PyDataclassInspection : PyInspection() {
 
       val instance = calleeQName != "attr.fields" && calleeQName != "attr.fields_dict"
 
-      if (isNotExpectedDataclass(myTypeEvalContext.getType(argument), PyDataclassParameters.Type.ATTRS, !instance, instance)) {
+      if (!isExpectedDataclass(myTypeEvalContext.getType(argument), PyDataclassParameters.Type.ATTRS, !instance, instance, true)) {
         val message = "'$calleeQName' method should be called on attrs " + if (instance) "instances" else "types"
 
         registerProblem(argument, message)
@@ -640,17 +641,25 @@ class PyDataclassInspection : PyInspection() {
       return (myTypeEvalContext.getType(field) as? PyClassType)?.classQName == DATACLASSES_INITVAR_TYPE
     }
 
-    private fun isNotExpectedDataclass(type: PyType?,
-                                       dataclassType: PyDataclassParameters.Type,
-                                       allowDefinition: Boolean,
-                                       allowInstance: Boolean): Boolean {
-      if (type is PyStructuralType || PyTypeChecker.isUnknown(type, myTypeEvalContext)) return false
-      if (type is PyUnionType) return type.members.all { isNotExpectedDataclass(it, dataclassType, allowDefinition, allowInstance) }
+    private fun isExpectedDataclass(type: PyType?,
+                                    dataclassType: PyDataclassParameters.Type,
+                                    allowDefinition: Boolean,
+                                    allowInstance: Boolean,
+                                    allowSubclass: Boolean): Boolean {
+      if (type is PyStructuralType || PyTypeChecker.isUnknown(type, myTypeEvalContext)) return true
+      if (type is PyUnionType) return type.members.any {
+        isExpectedDataclass(it, dataclassType, allowDefinition, allowInstance, allowSubclass)
+      }
 
-      return type !is PyClassType ||
-             !allowDefinition && type.isDefinition ||
-             !allowInstance && !type.isDefinition ||
-             parseDataclassParameters(type.pyClass, myTypeEvalContext)?.type != dataclassType
+      return type is PyClassType &&
+             (allowDefinition || !type.isDefinition) &&
+             (allowInstance || type.isDefinition) &&
+             (
+               parseDataclassParameters(type.pyClass, myTypeEvalContext)?.type == dataclassType ||
+               allowSubclass && type.getAncestorTypes(myTypeEvalContext).any {
+                 isExpectedDataclass(it, dataclassType, true, false, false)
+               }
+             )
     }
   }
 }
