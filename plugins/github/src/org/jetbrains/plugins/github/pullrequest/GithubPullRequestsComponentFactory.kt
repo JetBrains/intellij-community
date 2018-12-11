@@ -32,7 +32,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelecti
 import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsComponent
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
-import org.jetbrains.plugins.github.util.GithubSharedSettings
+import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 import javax.swing.JComponent
 
 
@@ -44,7 +44,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                                   private val imageResizer: GithubImageResizer,
                                                   private val actionManager: ActionManager,
                                                   private val autoPopupController: AutoPopupController,
-                                                  private val sharedSettings: GithubSharedSettings,
+                                                  private val sharedProjectSettings: GithubSharedProjectSettings,
                                                   private val pullRequestUiSettings: GithubPullRequestsProjectUISettings) {
 
   fun createComponent(requestExecutor: GithubApiRequestExecutor,
@@ -69,12 +69,12 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
     private val dataLoader = GithubPullRequestsDataLoader(project, progressManager, git, requestExecutor, repository, remote,
                                                           account.server, repoDetails.fullPath)
     private val stateService = GithubPullRequestsStateServiceImpl(project, progressManager, dataLoader, requestExecutor,
-                                                                  account.server, repoDetails.fullPath, sharedSettings)
+                                                                  account.server, repoDetails.fullPath)
 
     private val changes = GithubPullRequestChangesComponent(project, pullRequestUiSettings).apply {
       diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
     }
-    private val details = GithubPullRequestDetailsComponent(dataLoader, stateService, avatarIconsProviderFactory,
+    private val details = GithubPullRequestDetailsComponent(sharedProjectSettings, dataLoader, stateService, avatarIconsProviderFactory,
                                                             accountDetails, repoDetails)
     private val preview = GithubPullRequestPreviewComponent(changes, details)
 

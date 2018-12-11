@@ -17,15 +17,18 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import org.jetbrains.plugins.github.pullrequest.ui.GithubDataLoadingComponent
+import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 import java.awt.BorderLayout
 
-internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubPullRequestsDataLoader,
+internal class GithubPullRequestDetailsComponent(sharedProjectSettings: GithubSharedProjectSettings,
+                                                 private val dataLoader: GithubPullRequestsDataLoader,
                                                  stateService: GithubPullRequestsStateService,
                                                  iconProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                                  accountDetails: GithubAuthenticatedUser,
                                                  repoDetails: GithubRepoDetailed)
   : GithubDataLoadingComponent<GithubPullRequestDetailedWithHtml>(), Disposable {
-  private val detailsPanel = GithubPullRequestDetailsPanel(stateService, iconProviderFactory, accountDetails, repoDetails)
+  private val detailsPanel = GithubPullRequestDetailsPanel(sharedProjectSettings, stateService, iconProviderFactory,
+                                                           accountDetails, repoDetails)
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
     isOpaque = false
   }
