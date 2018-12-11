@@ -33,6 +33,7 @@ import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import java.awt.Component
 import java.io.File
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.swing.JDialog
@@ -74,7 +75,7 @@ open class GuiTestCase {
   @JvmField
   val guiTestRule = GuiTestRule()
 
-  val projectsFolder: TemporaryFolder = guiTestRule.projectsFolder
+  val projectsFolder: File = guiTestRule.projectsFolder
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   //  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
@@ -92,7 +93,11 @@ open class GuiTestCase {
   val logActionsDuringTest = LogActionsDuringTest()
 
   val projectFolder: String by lazy {
-    projectsFolder.newFolder(testMethod.methodName).canonicalPath
+    val dir = File(projectsFolder, testMethod.methodName)
+    if (!dir.mkdirs()) {
+      throw IOException("project dir creation failed")
+    }
+    dir.canonicalPath
   }
 
   fun robot() = guiTestRule.robot()
