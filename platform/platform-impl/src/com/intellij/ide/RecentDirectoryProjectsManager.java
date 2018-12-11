@@ -12,13 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
-@State(
-  name = "RecentDirectoryProjectsManager",
-  storages = {
-    @Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "RecentDirectoryProjectsManager", storages = @Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED))
 public class RecentDirectoryProjectsManager extends RecentProjectsManagerBase {
   public RecentDirectoryProjectsManager(MessageBus messageBus) {
     super(messageBus);
