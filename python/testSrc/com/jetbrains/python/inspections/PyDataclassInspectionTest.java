@@ -192,6 +192,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-28506
+  public void testWrongDunderPostInitSignatureInStdHierarchy() {
+    doTest();
+  }
+
   // PY-27398
   public void testFieldDefaultAndDefaultFactory() {
     doTest();

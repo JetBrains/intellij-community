@@ -74,13 +74,13 @@ class PyDataclassInspection : PyInspection() {
             processDataclassParameters(node, dataclassParameters)
 
             val postInit = node.findMethodByName(DUNDER_POST_INIT, false, myTypeEvalContext)
-            val initVars = mutableListOf<PyTargetExpression>()
+            val localInitVars = mutableListOf<PyTargetExpression>()
 
             node.processClassLevelDeclarations { element, _ ->
               if (element is PyTargetExpression) {
                 if (!PyTypingTypeProvider.isClassVar(element, myTypeEvalContext)) {
                   processDefaultFieldValue(element)
-                  processAsInitVar(element, postInit)?.let { initVars.add(it) }
+                  processAsInitVar(element, postInit)?.let { localInitVars.add(it) }
                 }
 
                 processFieldFunctionCall(element)
@@ -90,7 +90,7 @@ class PyDataclassInspection : PyInspection() {
             }
 
             if (postInit != null) {
-              processPostInitDefinition(postInit, dataclassParameters, initVars)
+              processPostInitDefinition(node, postInit, dataclassParameters, localInitVars)
             }
           }
           else if (dataclassParameters.type == PyDataclassParameters.Type.ATTRS) {
@@ -570,26 +570,46 @@ class PyDataclassInspection : PyInspection() {
       }
     }
 
-    private fun processPostInitDefinition(postInit: PyFunction,
+    private fun processPostInitDefinition(cls: PyClass,
+                                          postInit: PyFunction,
                                           dataclassParameters: PyDataclassParameters,
-                                          initVars: List<PyTargetExpression>) {
+                                          localInitVars: List<PyTargetExpression>) {
       if (!dataclassParameters.init) {
         registerProblem(postInit.nameIdentifier,
                         "'$DUNDER_POST_INIT' would not be called until 'init' parameter is set to True",
                         ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+
+        return
       }
+
+      val allInitVars = mutableListOf<PyTargetExpression>()
+      for (ancestor in cls.getAncestorClasses(myTypeEvalContext).asReversed()) {
+        if (parseStdDataclassParameters(ancestor, myTypeEvalContext) == null) continue
+
+        ancestor.processClassLevelDeclarations { element, _ ->
+          if (element is PyTargetExpression && isInitVar(element)) {
+            allInitVars.add(element)
+          }
+
+          return@processClassLevelDeclarations true
+        }
+      }
+      allInitVars.addAll(localInitVars)
 
       val implicitParameters = postInit.getParameters(myTypeEvalContext)
       val parameters = if (implicitParameters.isEmpty()) emptyList<PyCallableParameter>() else ContainerUtil.subList(implicitParameters, 1)
-      val message = "'$DUNDER_POST_INIT' should take all init-only variables in the same order as they are defined"
+      val message = "'$DUNDER_POST_INIT' " +
+                    "should take all init-only variables" +
+                    "${if (allInitVars.size != localInitVars.size) " (incl. inherited)" else ""} " +
+                    "in the same order as they are defined"
 
-      if (parameters.size != initVars.size) {
+      if (parameters.size != allInitVars.size) {
         registerProblem(postInit.parameterList, message, ProblemHighlightType.GENERIC_ERROR)
       }
       else {
         parameters
           .asSequence()
-          .zip(initVars.asSequence())
+          .zip(allInitVars.asSequence())
           .all { it.first.name == it.second.name }
           .also { if (!it) registerProblem(postInit.parameterList, message) }
       }
