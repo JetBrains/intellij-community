@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind.*
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter
 import org.jetbrains.plugins.groovy.lang.psi.impl.explicitTypeArguments
 import org.jetbrains.plugins.groovy.lang.psi.util.contexts
 import org.jetbrains.plugins.groovy.lang.psi.util.skipSameTypeParents
@@ -237,6 +238,9 @@ private fun GrCodeReferenceElement.getActualParent(): PsiElement? = containingFi
 private fun PsiElement.getCurrentClass(): GrTypeDefinition? {
   for (context in contexts()) {
     if (context !is GrTypeDefinition) {
+      continue
+    }
+    else if (context is GrTypeParameter) {
       continue
     }
     else if (context is GrAnonymousClassDefinition && this === context.baseClassReferenceGroovy) {
