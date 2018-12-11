@@ -28,18 +28,20 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.InlineVariableFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class UnnecessaryLocalVariableInspection extends BaseInspection {
   /**
@@ -125,6 +127,9 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       else if (!m_ignoreImmediatelyReturnedVariables && isImmediatelyThrown(variable)) {
         registerVariableError(variable);
       }
+      else if (isImmediatelyUsedByBreak(variable)) {
+        registerVariableError(variable);
+      }
       else if (isImmediatelyAssigned(variable)) {
         registerVariableError(variable);
       }
@@ -145,7 +150,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         return false;
       }
       final PsiReferenceExpression reference = (PsiReferenceExpression)initializer;
-      final PsiVariable initialization = ObjectUtils.tryCast(reference.resolve(), PsiVariable.class);
+      final PsiVariable initialization = tryCast(reference.resolve(), PsiVariable.class);
       if (initialization == null) {
         return false;
       }
@@ -234,7 +239,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         if (!(qualifier instanceof PsiReferenceExpression)) break;
         PsiReferenceExpression qualifierReference = (PsiReferenceExpression)qualifier;
         qualifier = PsiUtil.skipParenthesizedExprDown(qualifierReference.getQualifierExpression());
-        variable = ObjectUtils.tryCast(qualifierReference.resolve(), PsiVariable.class);
+        variable = tryCast(qualifierReference.resolve(), PsiVariable.class);
       }
       return false;
     }
@@ -263,6 +268,22 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       if (referent == null || !referent.equals(variable)) {
         return false;
       }
+      return !isVariableUsedInFollowingDeclarations(variable, declarationStatement);
+    }
+
+    private boolean isImmediatelyUsedByBreak(PsiVariable variable) {
+      final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
+      if (containingScope == null) {
+        return false;
+      }
+      PsiDeclarationStatement declarationStatement = tryCast(variable.getParent(), PsiDeclarationStatement.class);
+      if (declarationStatement == null) return false;
+      PsiBreakStatement breakStatement =
+        tryCast(PsiTreeUtil.getNextSiblingOfType(declarationStatement, PsiStatement.class), PsiBreakStatement.class);
+      if (breakStatement == null) return false;
+      final PsiExpression returnValue = ParenthesesUtils.stripParentheses(breakStatement.getValueExpression());
+      if (!(returnValue instanceof PsiReferenceExpression)) return false;
+      if (!ExpressionUtils.isReferenceTo(returnValue, variable)) return false;
       return !isVariableUsedInFollowingDeclarations(variable, declarationStatement);
     }
 
