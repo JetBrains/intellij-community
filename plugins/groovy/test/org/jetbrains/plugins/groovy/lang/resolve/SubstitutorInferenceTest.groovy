@@ -207,4 +207,9 @@ F<Integer, String> w = new Wrapper<>({} <caret>as F)
     typingTest 'List<List<String>> l = [new <caret>ArrayList<>()]', GrNewExpression, 'java.util.ArrayList<java.lang.Object>'
     typingTest 'List<List<String>> l = <caret>[new ArrayList<>()]', GrListOrMap, 'java.util.List<java.util.ArrayList<java.lang.Object>>'
   }
+
+  @Test
+  void 'empty map literal in variable initializer'() {
+    typingTest('Map<String, Integer> m = <caret>[:]', GrListOrMap, 'java.util.LinkedHashMap<java.lang.String, java.lang.Integer>')
+  }
 }

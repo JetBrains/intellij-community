@@ -50,6 +50,10 @@ public abstract class GrMapType extends GrLiteralClassType {
     super(languageLevel, scope, facade);
   }
 
+  protected GrMapType(@NotNull PsiElement context) {
+    super(LanguageLevel.JDK_1_5, context);
+  }
+
   @NotNull
   @Override
   protected String getJavaClassName() {

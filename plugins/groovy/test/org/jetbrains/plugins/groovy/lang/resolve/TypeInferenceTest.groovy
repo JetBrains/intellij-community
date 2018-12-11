@@ -268,18 +268,7 @@ map['i'] += 2
   }
 
   void testIndexPropertyInLHS() {
-    assertTypeEquals("java.util.LinkedHashMap", 'a.groovy')
-  }
-
-  void testEmptyMapTypeArgs() {
-    myFixture.configureByText('a.groovy', '''
-class X<A, B> implements Map<A, B> {}
-
-X<String, Integer> x = [:]
-''')
-
-    def type = ((myFixture.file as GroovyFile).statements[0] as GrVariableDeclaration).variables[0].initializerGroovy.type
-    assertEquals("java.util.LinkedHashMap<java.lang.String,java.lang.Integer>", type.canonicalText)
+    assertTypeEquals("java.util.LinkedHashMap<java.lang.Object, java.lang.Object>", 'a.groovy')
   }
 
   void testRawCollectionsInCasts() {
