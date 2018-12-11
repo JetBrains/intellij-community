@@ -20,8 +20,8 @@
       </list>
     </option>
   </component>
-  <component name="GithubSharedSettings">
-    <option name="MERGE_ACTIONS_ALLOWED" value="false" />
+  <component name="GithubSharedProjectSettings">
+    <option name="pullRequestMergeForbidden" value="true" />
   </component>
   <component name="IssueNavigationConfiguration">
     <option name="links">
