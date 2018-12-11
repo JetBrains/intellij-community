@@ -56,7 +56,7 @@ public class ProjectTaskContext extends UserDataHolderBase {
     mySessionId = sessionId;
     myRunConfiguration = runConfiguration;
     myAutoRun = autoRun;
-    myGeneratedFiles = MultiMap.createSmart();
+    myGeneratedFiles = MultiMap.createConcurrentSet();
   }
 
   @Nullable
