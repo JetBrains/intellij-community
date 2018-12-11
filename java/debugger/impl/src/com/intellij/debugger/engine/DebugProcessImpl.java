@@ -2255,6 +2255,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return getSuspendManager().getPausedContext() != null;
   }
 
+  public boolean isEvaluationPossible(SuspendContextImpl suspendContext) {
+    return mySuspendManager.hasPausedContext(suspendContext);
+  }
+
   public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread) {
     if (myReturnValueWatcher != null) {
       myReturnValueWatcher.enable(thread.getThreadReference());
