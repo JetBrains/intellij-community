@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.inspections;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.util.Consumer;
@@ -76,7 +77,13 @@ public class IdentifierSplitter extends BaseSplitter {
       for (TextRange word : words) {
         boolean uc = Strings.isUpperCased(text, word);
         boolean flag = (uc && !isAllWordsAreUpperCased);
-        Matcher matcher = WORD.matcher(newBombedCharSequence(text.substring(word.getStartOffset(), word.getEndOffset()), 500));
+        Matcher matcher = null;
+        try {
+          matcher = WORD.matcher(newBombedCharSequence(text.substring(word.getStartOffset(), word.getEndOffset()), 500));
+        }
+        catch (ProcessCanceledException e) {
+          return;
+        }
         if (matcher.find()) {
           TextRange found = matcherRange(word, matcher);
           addWord(consumer, flag, found);

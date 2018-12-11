@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.inspections;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -52,16 +53,21 @@ public class PlainTextSplitter extends BaseSplitter {
     if (StringUtil.isEmpty(text)) {
       return;
     }
-
-    final String substring = range.substring(text).replace('\b', '\n').replace('\f', '\n');
-    if (Verifier.checkCharacterData(SPLIT_PATTERN.matcher(newBombedCharSequence(substring, DELAY)).replaceAll("")) != null) {
-      return;
-    }
-
-    final TextSplitter ws = TextSplitter.getInstance();
+     final TextSplitter ws = TextSplitter.getInstance();
     int from = range.getStartOffset();
     int till;
-    Matcher matcher = SPLIT_PATTERN.matcher(newBombedCharSequence(range.substring(text), DELAY));
+
+    Matcher matcher;
+    try {
+      final String substring = range.substring(text).replace('\b', '\n').replace('\f', '\n');
+      if (Verifier.checkCharacterData(SPLIT_PATTERN.matcher(newBombedCharSequence(substring, DELAY)).replaceAll("")) != null) {
+        return;
+      }
+      matcher = SPLIT_PATTERN.matcher(newBombedCharSequence(range.substring(text), DELAY));
+    }
+    catch (ProcessCanceledException e) {
+      return;
+    }
     while (true) {
       checkCancelled();
       List<TextRange> toCheck;

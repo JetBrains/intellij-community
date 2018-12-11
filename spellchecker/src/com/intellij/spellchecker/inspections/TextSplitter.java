@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.inspections;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -45,7 +46,13 @@ public class TextSplitter extends BaseSplitter {
 
   protected void doSplit(@NotNull String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
     final WordSplitter ws = WordSplitter.getInstance();
-    Matcher matcher = EXTENDED_WORD_AND_SPECIAL.matcher(newBombedCharSequence(text, 500));
+    Matcher matcher = null;
+    try {
+      matcher = EXTENDED_WORD_AND_SPECIAL.matcher(newBombedCharSequence(text, 500));
+    }
+    catch (ProcessCanceledException e) {
+      return;
+    }
     matcher.region(range.getStartOffset(), range.getEndOffset());
     while (matcher.find()) {
       TextRange found = new TextRange(matcher.start(), matcher.end());
