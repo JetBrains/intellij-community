@@ -314,21 +314,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     for (PsiExpression label : trueLabels) {
       PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
       PsiSwitchBlock statement = labelStatement.getEnclosingSwitchBlock();
-      if (statement == null) continue;
-      if (PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class).size() == 1 &&
-          Objects.requireNonNull(labelStatement.getCaseValues()).getExpressionCount() == 1) {
-        boolean canUnwrap;
-        if (statement instanceof PsiSwitchStatement) {
-          canUnwrap = BreakConverter.from(statement) != null;
-        }
-        else {
-          canUnwrap = labelStatement instanceof PsiSwitchLabeledRuleStatement &&
-                      ((PsiSwitchLabeledRuleStatement)labelStatement).getBody() instanceof PsiExpressionStatement;
-        }
-        if (!canUnwrap) {
-          continue;
-        }
-      }
+      if (statement == null || !canRemoveUnreachableBranches(labelStatement, statement)) continue;
       if (!StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatementBase.class))
         .skip(1).map(PsiSwitchLabelStatementBase::getCaseValues)
         .nonNull().flatArray(PsiExpressionList::getExpressions).allMatch(falseLabels::contains)) {
@@ -345,6 +331,21 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                new DeleteSwitchLabelFix(label));
       }
     }
+  }
+
+  private static boolean canRemoveUnreachableBranches(PsiSwitchLabelStatementBase labelStatement, PsiSwitchBlock statement) {
+    if (Objects.requireNonNull(labelStatement.getCaseValues()).getExpressionCount() != 1) return true;
+    List<PsiSwitchLabelStatementBase> allBranches =
+      PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class);
+    if (statement instanceof PsiSwitchStatement) {
+      // Cannot do anything if we have already single branch and we cannot restore flow due to non-terminal breaks
+      return allBranches.size() != 1 || BreakConverter.from(statement) != null;
+    }
+    // Expression switch: if we cannot unwrap existing branch and the other one is default case, we cannot kill it either 
+    return (allBranches.size() <= 2 &&
+           !allBranches.stream().allMatch(branch -> branch == labelStatement || branch.isDefaultCase())) ||
+           (labelStatement instanceof PsiSwitchLabeledRuleStatement &&
+            ((PsiSwitchLabeledRuleStatement)labelStatement).getBody() instanceof PsiExpressionStatement);
   }
 
   private void reportConstants(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {

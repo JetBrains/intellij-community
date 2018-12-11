@@ -36,10 +36,12 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
     PsiSwitchBlock block = labelStatement.getEnclosingSwitchBlock();
     if (block == null) return;
     List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(block.getBody(), PsiSwitchLabelStatementBase.class);
+    boolean shouldKeepDefault = block instanceof PsiSwitchExpression &&
+                                !(labelStatement instanceof PsiSwitchLabeledRuleStatement &&
+                                  ((PsiSwitchLabeledRuleStatement)labelStatement).getBody() instanceof PsiExpressionStatement);
     for (PsiSwitchLabelStatementBase otherLabel : labels) {
-      if (otherLabel != labelStatement) {
-        DeleteSwitchLabelFix.deleteLabel(otherLabel);
-      }
+      if (otherLabel == labelStatement || (shouldKeepDefault && otherLabel.isDefaultCase())) continue;
+      DeleteSwitchLabelFix.deleteLabel(otherLabel);
     }
     for (PsiExpression expression : Objects.requireNonNull(labelStatement.getCaseValues()).getExpressions()) {
       if (expression != label) {

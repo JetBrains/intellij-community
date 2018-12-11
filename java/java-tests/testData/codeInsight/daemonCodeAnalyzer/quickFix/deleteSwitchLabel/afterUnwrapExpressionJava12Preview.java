@@ -13,7 +13,7 @@ class Main {
                 }
                 //6
                 //7
-                //other
+                default -> "and more"; //other
             });
         }
     }
