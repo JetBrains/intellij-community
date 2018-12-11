@@ -1900,7 +1900,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T,V> List<V> map(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends V> mapping) {
-    List<V> result = new ArrayList<V>(iterable instanceof Collection ? ((Collection<T>)iterable).size() : 10);
+    List<V> result = new ArrayList<V>(iterable instanceof Collection ? ((Collection)iterable).size() : 10);
     for (T t : iterable) {
       result.add(mapping.fun(t));
     }
