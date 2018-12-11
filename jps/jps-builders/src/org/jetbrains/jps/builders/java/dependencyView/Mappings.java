@@ -23,6 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Function;
 
 /**
  * @author: db
@@ -38,6 +39,7 @@ public class Mappings {
   private static final IntInlineKeyDescriptor INT_KEY_DESCRIPTOR = new IntInlineKeyDescriptor();
   private static final int DEFAULT_SET_CAPACITY = 32;
   private static final float DEFAULT_SET_LOAD_FACTOR = 0.98f;
+  private static final String IMPORT_WILDCARD_SUFFIX = ".*";
 
   private final boolean myIsDelta;
   private final boolean myDeltaIsTransient;
@@ -2782,38 +2784,63 @@ public class Mappings {
         associate(classFileName, Collections.singleton(sourceFileName), cr);
       }
 
+      /** @noinspection Duplicates
+       * work in progress*/
       @Override
-      public void registerImports(final String className, final Collection<String> imports, Collection<String> staticImports) {
-        final List<String> allImports = new ArrayList<>();
-        for (String anImport : imports) {
-          if (!anImport.endsWith("*")) {
-            allImports.add(anImport); // filter out wildcard imports
-          }
-        }
-        for (final String s : staticImports) {
-          int i = s.length() - 1;
-          while (s.charAt(i) != '.') {
-            i--;
-          }
-          final String anImport = s.substring(0, i);
-          if (!anImport.endsWith("*")) {
-            allImports.add(anImport); // filter out wildcard imports
-          }
-        }
-
-        if (!allImports.isEmpty()) {
+      public void registerImports(final String className, final Collection<String> classImports, Collection<String> fieldImports, Collection<String> methodImports) {
+        if (!classImports.isEmpty() || !fieldImports.isEmpty() || !methodImports.isEmpty()) {
           myPostPasses.offer(() -> {
             final int rootClassName = myContext.get(className.replace(".", "/"));
             final Collection<File> fileNames = myClassToSourceFile.get(rootClassName);
             final ClassRepr repr = fileNames != null && !fileNames.isEmpty()? getClassReprByName(fileNames.iterator().next(), rootClassName) : null;
 
-            for (final String i : allImports) {
-              final int iname = myContext.get(i.replace('.', '/'));
+            boolean usageAdded = false;
+
+            final Function<String, Boolean> addClassUsage = anImport -> {
+              final int iname = myContext.get(anImport.replace('.', '/'));
               myClassToClassDependency.put(iname, rootClassName);
-              if (repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname))) {
-                for (File fileName : fileNames) {
-                  mySourceFileToClasses.put(fileName, repr);
+              return repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname));
+            };
+
+            for (final String anImport : classImports) {
+              if (!anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
+                usageAdded |= addClassUsage.apply(anImport);
+              }
+            }
+
+            for (String anImport : fieldImports) {
+              if (anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
+                usageAdded |= addClassUsage.apply(anImport.substring(0, anImport.length() - IMPORT_WILDCARD_SUFFIX.length()));
+                // todo: all-fields usage
+              }
+              else {
+                final int i = anImport.lastIndexOf('.');
+                if (i > 0 && i < anImport.length() - 1) {
+                  usageAdded |= addClassUsage.apply(anImport.substring(0, i));
+                  //final int fieldName = myContext.get(anImport.substring(i+1));
+                  //usageAdded |= repr.addUsage(UsageRepr.createFieldUsage(myContext, fieldName, ownerName, 0 /*todo! descr is not known here*/));
                 }
+              }
+            }
+
+            for (String anImport : methodImports) {
+              if (anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
+                usageAdded |= addClassUsage.apply(anImport.substring(0, anImport.length() - IMPORT_WILDCARD_SUFFIX.length()));
+                // todo: all-method usage
+              }
+              else {
+                final int i = anImport.lastIndexOf('.');
+                if (i > 0 && i < anImport.length() - 1) {
+                  usageAdded |= addClassUsage.apply(anImport.substring(0, i));
+                  //final int methodName = myContext.get(anImport.substring(i+1));
+                  //usageAdded |= repr.addUsage(UsageRepr.createMethodUsage(myContext, methodName, ownerName, 0 /*todo! descr is not known here*/));
+                }
+              }
+            }
+
+            if (usageAdded && fileNames != null) {
+              for (File fileName : fileNames) {
+                mySourceFileToClasses.put(fileName, repr);
               }
             }
           });

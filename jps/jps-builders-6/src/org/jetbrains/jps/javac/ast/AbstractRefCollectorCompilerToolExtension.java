@@ -22,24 +22,26 @@ import org.jetbrains.jps.javac.DiagnosticOutputConsumer;
 import org.jetbrains.jps.javac.JavaCompilerToolExtension;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
 import java.util.Collection;
 
 public abstract class AbstractRefCollectorCompilerToolExtension extends JavaCompilerToolExtension {
   @Override
   public final void beforeCompileTaskExecution(@NotNull JavaCompilingTool compilingTool,
-                                         @NotNull JavaCompiler.CompilationTask task,
-                                         @NotNull Collection<String> options,
-                                         @NotNull DiagnosticOutputConsumer diagnosticConsumer) {
+                                               @NotNull JavaCompiler.CompilationTask task,
+                                               @NotNull Collection<String> options,
+                                               @NotNull final DiagnosticOutputConsumer diagnosticConsumer) {
     if (isEnabled()) {
-      JavacReferenceCollector.installOn(task, divideImportsRefs(), getFileDataConsumer(diagnosticConsumer));
+      JavacReferenceCollector.installOn(task, divideImportsRefs(), new Consumer<JavacFileData>() {
+        @Override
+        public void consume(JavacFileData data) {
+          diagnosticConsumer.registerJavacFileData(data);
+        }
+      });
     }
   }
 
   protected abstract boolean isEnabled();
 
   protected abstract boolean divideImportsRefs();
-
-  @NotNull
-  protected abstract Consumer<JavacFileData> getFileDataConsumer(@NotNull DiagnosticOutputConsumer diagnosticConsumer);
 }

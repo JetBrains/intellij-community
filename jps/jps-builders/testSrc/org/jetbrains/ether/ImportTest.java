@@ -15,21 +15,29 @@
  */
 package org.jetbrains.ether;
 
-/**
- * Created with IntelliJ IDEA.
- * @author: db
- * To change this template use File | Settings | File Templates.
- */
-public class ImportTest { //extends IncrementalTestCase {
+public class ImportTest extends IncrementalTestCase {
   public ImportTest() {
-    //super("imports");
+    super("imports");
   }
 
-  //public void testClassImport() throws Exception {
-  //  doTest();
-  //}
+  public void testUnusedClassImport() {
+    doTest();
+  }
 
-  //public void testStaticImport() throws Exception {
-  //  doTest();
-  //}
+  public void testUnusedStaticWildcardImport() {
+    doTest();
+  }
+
+  public void testUnusedStaticImportClassDeleted() {
+    doTest();
+  }
+
+  /*
+  // todo: not yet implemented
+  public void testUnusedStaticImportFieldDeleted() {
+    setupInitialProject();
+    setupModules();
+    doTestBuild(1).assertFailed();
+  }
+  */
 }

@@ -40,6 +40,7 @@ import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.javac.*;
+import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
@@ -548,7 +549,7 @@ public class CompilerManagerImpl extends CompilerManager {
     }
 
     @Override
-    public void registerImports(String className, Collection<String> imports, Collection<String> staticImports) {
+    public void registerJavacFileData(JavacFileData data) {
       // ignore
     }
 
