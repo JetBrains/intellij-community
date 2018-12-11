@@ -17,6 +17,8 @@ package org.zmlx.hg4idea.roots;
 
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsRootChecker;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -31,6 +33,11 @@ public class HgRootChecker extends VcsRootChecker {
   @Override
   public boolean isRoot(@NotNull String path) {
     return new File(path, HgUtil.DOT_HG).exists();
+  }
+
+  @Override
+  public boolean isRoot(@NotNull VirtualFile maybeRoot) {
+    return VfsUtil.refreshAndFindChild(maybeRoot, HgUtil.DOT_HG) != null;
   }
 
   @NotNull

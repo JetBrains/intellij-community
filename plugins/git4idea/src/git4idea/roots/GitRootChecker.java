@@ -40,6 +40,11 @@ public class GitRootChecker extends VcsRootChecker {
   }
 
   @Override
+  public boolean isRoot(@NotNull VirtualFile maybeRoot) {
+    return GitUtil.findGitDir(maybeRoot) != null;
+  }
+
+  @Override
   @NotNull
   public VcsKey getSupportedVcs() {
     return GitVcs.getKey();

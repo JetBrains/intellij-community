@@ -143,9 +143,8 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @Nullable
   private AbstractVcs getVcsFor(@NotNull VirtualFile maybeRoot, @Nullable VirtualFile dirToCheckForIgnore) {
-    String path = maybeRoot.getPath();
     for (VcsRootChecker checker : myCheckers) {
-      if (checker.isRoot(path) && (dirToCheckForIgnore == null || !checker.isIgnored(maybeRoot, dirToCheckForIgnore))) {
+      if (checker.isRoot(maybeRoot) && (dirToCheckForIgnore == null || !checker.isIgnored(maybeRoot, dirToCheckForIgnore))) {
         return myVcsManager.findVcsByName(checker.getSupportedVcs().getName());
       }
     }
