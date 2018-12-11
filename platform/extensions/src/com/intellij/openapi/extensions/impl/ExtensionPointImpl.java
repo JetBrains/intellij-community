@@ -179,13 +179,8 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         result = myExtensionsCache;
         if (result == null) {
           T[] array = processAdapters();
-          if (array == null) {
-            result = Collections.emptyList();
-          }
-          else {
-            myExtensionsCacheAsArray = array;
-            result = Collections.unmodifiableList(Arrays.asList(array));
-          }
+          myExtensionsCacheAsArray = array;
+          result = array.length == 0 ? Collections.emptyList() : ContainerUtil.immutableList(array);
           myExtensionsCache = result;
         }
       }
@@ -196,12 +191,17 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   @Override
   @NotNull
   public T[] getExtensions() {
-    List<T> list = getExtensionList();
-    if (list.isEmpty()) {
-      //noinspection unchecked
-      return (T[])Array.newInstance(getExtensionClass(), 0);
+    T[] array = myExtensionsCacheAsArray;
+    if (array == null) {
+      synchronized (this) {
+        array = myExtensionsCacheAsArray;
+        if (array == null) {
+          myExtensionsCacheAsArray = array = processAdapters();
+          myExtensionsCache = array.length == 0 ? Collections.emptyList() : ContainerUtil.immutableList(array);
+        }
+      }
     }
-    return myExtensionsCacheAsArray.clone();
+    return array.length == 0 ? array : array.clone();
   }
 
   @NotNull
@@ -222,34 +222,36 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private boolean processingAdaptersNow; // guarded by this
-  @Nullable("null means empty")
+  @NotNull
   private T[] processAdapters() {
     if (processingAdaptersNow) {
       throw new IllegalStateException("Recursive processAdapters() detected. You must have called 'getExtensions()' from within your extension constructor - don't. Either pass extension via constructor parameter or call getExtensions() later.");
     }
     int totalSize = myExtensionAdapters.size() + myLoadedAdapters.size();
+    Class<T> extensionClass = getExtensionClass();
+    @SuppressWarnings("unchecked")
+    T[] result = (T[])Array.newInstance(extensionClass, totalSize);
     if (totalSize == 0) {
-      return null;
+      return result;
     }
 
     processingAdaptersNow = true;
     try {
-      Class<T> extensionClass = getExtensionClass();
-      @SuppressWarnings("unchecked") T[] result = (T[])Array.newInstance(extensionClass, totalSize);
-      List<ExtensionComponentAdapter> adapters = ContainerUtil.newArrayListWithCapacity(totalSize);
-      adapters.addAll(myExtensionAdapters);
-      adapters.addAll(myLoadedAdapters);
+      ExtensionComponentAdapter[] adapters = new ExtensionComponentAdapter[totalSize];
+      myExtensionAdapters.toArray(adapters);
+      ArrayUtil.copy(myLoadedAdapters, adapters, myExtensionAdapters.size());
       LoadingOrder.sort(adapters);
-      myExtensionAdapters = new LinkedHashSet<>(adapters);
+      myExtensionAdapters = new LinkedHashSet<>(adapters.length);
+      ContainerUtil.addAll(myExtensionAdapters, adapters);
 
       Set<ExtensionComponentAdapter> loaded = ContainerUtil.newHashOrEmptySet(myLoadedAdapters);
-      OpenTHashSet<T> duplicates = new OpenTHashSet<>(adapters.size());
+      OpenTHashSet<T> duplicates = new OpenTHashSet<>(adapters.length);
 
       myLoadedAdapters = Collections.emptyList();
       boolean errorHappened = false;
-      for (int i = 0; i < adapters.size(); i++) {
+      for (int i = 0; i < adapters.length; i++) {
         CHECK_CANCELED.run();
-        ExtensionComponentAdapter adapter = adapters.get(i);
+        ExtensionComponentAdapter adapter = adapters[i];
         try {
           @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
           if (extension == null) {
@@ -316,7 +318,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   @Override
   public synchronized boolean hasExtension(@NotNull T extension) {
     T[] extensions = processAdapters();
-    return extensions != null && ArrayUtil.contains(extension, extensions);
+    return ArrayUtil.contains(extension, extensions);
   }
 
   @Override
