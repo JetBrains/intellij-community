@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiClass
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
@@ -429,6 +428,22 @@ class Test {
 class Test {
     {
       Co<caret>llection = 2;
+    }
+}
+'''
+    assert !myFixture.filterAvailableIntentions("Import class")
+  }
+
+  void "test don't import class if already imported but not accessible"() {
+    myFixture.addClass '''
+package foo;
+class Foo {}
+'''
+    myFixture.configureByText 'a.java', '''
+import foo.Foo;
+class Test {
+    {
+      F<caret>oo 
     }
 }
 '''

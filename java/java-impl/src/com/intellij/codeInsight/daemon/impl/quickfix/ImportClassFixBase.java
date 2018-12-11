@@ -96,7 +96,9 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       PsiElement element = result.getElement();
       // already imported
       // can happen when e.g. class name happened to be in a method position
-      if (element instanceof PsiClass && result.isValidResult()) return Collections.emptyList();
+      if (element instanceof PsiClass && (result.isValidResult() || result.getCurrentFileResolveScope() instanceof PsiImportStatement)) {
+        return Collections.emptyList();
+      }
     }
 
     String name = getReferenceName(myRef);
