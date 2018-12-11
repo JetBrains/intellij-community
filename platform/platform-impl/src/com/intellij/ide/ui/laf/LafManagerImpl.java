@@ -320,6 +320,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    */
   @Override
   public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
+    UIManager.LookAndFeelInfo oldLaf = myCurrentLaf;
+
+    if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
+      ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).dispose();
+    }
+
     if (findLaf(lookAndFeelInfo.getClassName()) == null) {
       LOG.error("unknown LookAndFeel : " + lookAndFeelInfo);
       return;
@@ -398,12 +404,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       installMacOSXFonts(UIManager.getLookAndFeelDefaults());
     }
 
-    if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
-      ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).dispose();
-    }
-
-
-    final UIManager.LookAndFeelInfo oldLaf = myCurrentLaf;
     myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
 
     if (!myFirstSetup) {
