@@ -523,22 +523,15 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         }
         parent.isChecked = true;
 
-        final DataNode modifiedParentDataNode = getModifiableDataNode(parent.myDataNode);
-        modifiedParentDataNode.setIgnored(false);
+        setNodeIgnored(parent.myDataNode, false);
 
         if (moduleNode != null) {
           moduleNode.isChecked = true;
         }
-        ExternalSystemApiUtil.visit(moduleNode == null ? myDataNode : moduleNode.myDataNode, node -> {
-          final DataNode modifiedDataNode = getModifiableDataNode(node);
-          modifiedDataNode.setIgnored(false);
-        });
+        setNodeIgnored(moduleNode == null ? myDataNode : moduleNode.myDataNode, false);
       }
       else {
-        ExternalSystemApiUtil.visit(myDataNode, node -> {
-          final DataNode modifiedDataNode = getModifiableDataNode(node);
-          modifiedDataNode.setIgnored(true);
-        });
+        setNodeIgnored(myDataNode, true);
         if (myShowSelectedRowsOnly) {
           final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
           TreePath[] before = myTree.getSelectionPaths();
@@ -575,6 +568,12 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       if (selectionState.getValue().isRequiredSelectionEnabled && isCheckCompleted) {
         warnAboutMissedDependencies(checked);
       }
+    }
+
+    private void setNodeIgnored(@Nullable DataNode node, boolean ignored) {
+      if (node == null) return;
+      final DataNode modifiedDataNode = getModifiableDataNode(node);
+      modifiedDataNode.setIgnored(ignored);
     }
 
     private void warnAboutMissedDependencies(boolean checked) {
