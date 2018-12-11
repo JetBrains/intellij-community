@@ -126,7 +126,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
                                                                    : ContainerUtil.canonicalStrategy());
 
-    EnvironmentVariablesData envData = TerminalOptionsProvider.Companion.getInstance().getEnvData();
+    EnvironmentVariablesData envData = TerminalOptionsProvider.getInstance().getEnvData();
     if (envData.isPassParentEnvs()) {
       envs.putAll(System.getenv());
     }
@@ -175,10 +175,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     try {
-      TerminalUsageTriggerCollector.Companion.trigger(myProject, "local.exec", FUSUsageContext.create(
+      TerminalUsageTriggerCollector.trigger(myProject, "local.exec", FUSUsageContext.create(
         FUSUsageContext.getOSNameContextData(),
         SystemInfo.getOsNameAndVersion(),
-        TerminalUsageTriggerCollector.Companion.getShellNameForStat(command[0]))
+        TerminalUsageTriggerCollector.getShellNameForStat(command[0]))
       );
       String workingDir = getWorkingDirectory(directory);
       long startNano = System.nanoTime();
@@ -197,7 +197,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Nullable
   private String getWorkingDirectory(@Nullable String directory) {
     if (directory != null) return directory;
-    return TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory();
+    return TerminalProjectOptionsProvider.getInstance(myProject).getStartingDirectory();
   }
 
   @Override
@@ -233,11 +233,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
     String shellPath = getShellPath();
 
-    return getCommand(shellPath, envs, TerminalOptionsProvider.Companion.getInstance().shellIntegration());
+    return getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration());
   }
 
   private static String getShellPath() {
-    return TerminalOptionsProvider.Companion.getInstance().getShellPath();
+    return TerminalOptionsProvider.getInstance().getShellPath();
   }
 
   @NotNull

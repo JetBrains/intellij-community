@@ -181,7 +181,7 @@ public class TerminalView {
     TerminalToolWindowPanel panel = new TerminalToolWindowPanel(PropertiesComponent.getInstance(myProject), toolWindow);
 
     String tabName = ObjectUtils.notNull(tabState != null ? tabState.myTabName : null,
-                                         TerminalOptionsProvider.Companion.getInstance().getTabName());
+                                         TerminalOptionsProvider.getInstance().getTabName());
 
     Content[] contents = myToolWindow.getContentManager().getContents();
 
