@@ -507,7 +507,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       setCommitMessage(comment);
       myLastSelectedListName = notNull(initialSelection, myBrowser.getSelectedChangeList()).getName();
     } else {
-      updateComment();
+      LocalChangeList list = myBrowser.getSelectedChangeList();
+      myLastSelectedListName = list.getName();
+      myCommitMessageArea.setText(getCommentFromChangelist(list));
 
       if (StringUtil.isEmptyOrSpaces(myCommitMessageArea.getComment())) {
         setCommitMessage(myVcsConfiguration.LAST_COMMIT_MESSAGE);
