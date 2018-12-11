@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 import static com.intellij.util.containers.ContainerUtil.or;
 
@@ -125,6 +124,13 @@ public class PackageDirectoryCache {
       }
     }
     return Collections.unmodifiableSet(result);
+  }
+
+  @NotNull
+  public static PackageDirectoryCache createCache(@NotNull List<? extends VirtualFile> roots) {
+    MultiMap<String, VirtualFile> map = MultiMap.create();
+    map.putValues("", roots);
+    return new PackageDirectoryCache(map);
   }
 
   private class PackageInfo {
