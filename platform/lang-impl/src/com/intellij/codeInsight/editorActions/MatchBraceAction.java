@@ -4,6 +4,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.highlighting.BraceHighlightingHandler;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.codeInsight.highlighting.CodeBlockSupportHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
@@ -15,6 +16,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
@@ -40,10 +42,37 @@ public class MatchBraceAction extends EditorAction {
       final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
       if (file == null) return;
 
-      int offsetFromBraceMatcher = getOffsetFromBraceMatcher(editor, file);
-      if (offsetFromBraceMatcher > -1) {
-        moveCaret(editor, editor.getCaretModel().getCurrentCaret(), offsetFromBraceMatcher);
+
+      int targetOffset = getClosestTargetOffset(editor, file);
+
+      if (targetOffset > -1) {
+        moveCaret(editor, editor.getCaretModel().getCurrentCaret(), targetOffset);
       }
+    }
+
+    /**
+     * Attempts to find closest target offset for the caret. Uses {@link BraceMatcher} and {@link CodeBlockSupportHandler}
+     *
+     * @return target caret offset or -1 if uncomputable.
+     */
+    private static int getClosestTargetOffset(@NotNull Editor editor, @NotNull PsiFile file) {
+      int offsetFromBraceMatcher = getOffsetFromBraceMatcher(editor, file);
+      TextRange rangeFromCodeBlockSupport = CodeBlockSupportHandler.findCodeBlockRange(editor, file);
+      if (rangeFromCodeBlockSupport.isEmpty() || rangeFromCodeBlockSupport.contains(offsetFromBraceMatcher)) {
+        return offsetFromBraceMatcher;
+      }
+
+      final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+      int caretOffset = editor.getCaretModel().getOffset();
+      HighlighterIterator iterator = highlighter.createIterator(caretOffset);
+
+      // end of file or at block closing token
+      if (iterator.atEnd() || iterator.getEnd() == rangeFromCodeBlockSupport.getEndOffset() ||
+          // edge case - end of closing token
+          (caretOffset > 0 && highlighter.createIterator(caretOffset - 1).getEnd() == rangeFromCodeBlockSupport.getEndOffset())) {
+        return rangeFromCodeBlockSupport.getStartOffset();
+      }
+      return rangeFromCodeBlockSupport.getEndOffset();
     }
 
     /**
