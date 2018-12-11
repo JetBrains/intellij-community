@@ -34,7 +34,7 @@ import java.util.function.Supplier;
 public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> implements InvokerSupplier {
   private static final Logger LOG = Logger.getInstance(InspectionTreeModel.class);
   private final InspectionRootNode myRoot = new InspectionRootNode(this);
-  private Invoker myInvoker;
+  private final Invoker myInvoker;
 
   public InspectionTreeModel() {
     myInvoker = ApplicationManager.getApplication().isUnitTestMode() ? new Invoker.EDT(this) : new Invoker.BackgroundThread(this);
@@ -69,17 +69,16 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
   }
 
   @NotNull
-  public JBIterable<InspectionTreeNode> traverseFrom(InspectionTreeNode node, boolean direction) {
+  JBIterable<InspectionTreeNode> traverseFrom(InspectionTreeNode node, boolean direction) {
     return JBIterable.generate(node, n -> getParent(n)).filter(n -> getParent(n) != null).flatMap(n1 -> {
       InspectionTreeNode p = getParent(n1);
-      @SuppressWarnings("ConstantConditions")
-      List<? extends InspectionTreeNode> children = p.getChildren();
       int idx = getIndexOfChild(p, n1);
-      InspectionTreeNode[] arr = children.toArray(InspectionTreeNode.EMPTY_ARRAY);
+      InspectionTreeNode[] arr = p.myChildren.myChildren;
       List<? extends InspectionTreeNode> sublist;
       if (direction) {
-        sublist = Arrays.asList(arr).subList(idx + ((n1 == node) ? 0 : 1), children.size());
-      } else {
+        sublist = Arrays.asList(arr).subList(idx + (n1 == node ? 0 : 1), arr.length);
+      }
+      else {
         sublist = ContainerUtil.reverse(Arrays.asList(arr).subList(0, idx));
       }
       return TreeTraversal.PRE_ORDER_DFS.traversal(sublist, (InspectionTreeNode n) -> direction ? getChildren(n) : ContainerUtil.reverse(getChildren(n)));
@@ -113,15 +112,13 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
       InspectionTreeNode parent = getParent(node);
       if (parent != null) {
         InspectionTreeNode.Children parentChildren = parent.myChildren;
-        if (parentChildren != null) {
-          parentChildren.myChildren = ArrayUtil.remove(parentChildren.myChildren, node);
-          parentChildren.myUserObject2Node.removeValue(node);
-        }
+        parentChildren.myChildren = ArrayUtil.remove(parentChildren.myChildren, node);
+        parentChildren.myUserObject2Node.removeValue(node);
       }
     }
   }
 
-  public synchronized void clearTree() {
+  synchronized void clearTree() {
     myRoot.myChildren.clear();
   }
 
@@ -136,12 +133,14 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
   }
 
   @NotNull
-  public InspectionGroupNode createGroupNode(String group, @NotNull InspectionTreeNode parent) {
+  InspectionGroupNode createGroupNode(String group, @NotNull InspectionTreeNode parent) {
     return getOrAdd(group, () -> new InspectionGroupNode(group, parent), parent);
   }
 
   @NotNull
-  public InspectionSeverityGroupNode createSeverityGroupNode(SeverityRegistrar severityRegistrar, HighlightDisplayLevel level, @NotNull InspectionTreeNode parent) {
+  InspectionSeverityGroupNode createSeverityGroupNode(SeverityRegistrar severityRegistrar,
+                                                      HighlightDisplayLevel level,
+                                                      @NotNull InspectionTreeNode parent) {
     return getOrAdd(level, () -> new InspectionSeverityGroupNode(severityRegistrar, level, parent), parent);
   }
 
@@ -157,7 +156,9 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
   }
 
   @NotNull
-  public InspectionNode createInspectionNode(@NotNull InspectionToolWrapper toolWrapper, InspectionProfileImpl profile, @NotNull InspectionTreeNode parent) {
+  InspectionNode createInspectionNode(@NotNull InspectionToolWrapper toolWrapper,
+                                      InspectionProfileImpl profile,
+                                      @NotNull InspectionTreeNode parent) {
     return getOrAdd(toolWrapper.getShortName(), () -> new InspectionNode(toolWrapper, profile, parent), parent);
   }
 
