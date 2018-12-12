@@ -659,6 +659,12 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     }
 
     @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(e.getData(TODO_PANEL_DATA_KEY) != null);
+      super.update(e);
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       TodoPanel todoPanel = e.getData(TODO_PANEL_DATA_KEY);
       return todoPanel != null && todoPanel.mySettings.arePackagesShown;
@@ -677,6 +683,12 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   public static final class MyShowModulesAction extends ToggleAction {
     public MyShowModulesAction() {
       super(IdeBundle.message("action.group.by.modules"), null, AllIcons.Actions.GroupByModule);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(e.getData(TODO_PANEL_DATA_KEY) != null);
+      super.update(e);
     }
 
     @Override
@@ -705,7 +717,6 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       TodoPanel todoPanel = e.getData(TODO_PANEL_DATA_KEY);
-
       e.getPresentation().setEnabled(todoPanel != null && todoPanel.mySettings.arePackagesShown);
     }
 
