@@ -10,8 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -57,10 +56,12 @@ import java.util.List;
 import java.util.*;
 
 /**
- * @author yole
- * @author Konstantin Bulenkov
+ * Used directly by IntelliJ IDEA.
+ *
+ * @see RecentDirectoryProjectsManager base class primary for minor IDEs on IntelliJ Platform
  */
-public abstract class RecentProjectsManagerBase extends RecentProjectsManager implements PersistentStateComponent<RecentProjectsManagerBase.State> {
+@State(name = "RecentProjectsManager", storages = @Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED))
+public class RecentProjectsManagerBase extends RecentProjectsManager implements PersistentStateComponent<RecentProjectsManagerBase.State> {
   private static final int MAX_PROJECTS_IN_MAIN_MENU = 6;
   private static Icon ourSmallAppIcon;
 
@@ -570,7 +571,9 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Nullable
   @SystemIndependent
-  protected abstract String getProjectPath(@NotNull Project project);
+  protected String getProjectPath(@NotNull Project project) {
+    return PathUtil.toSystemIndependentName(project.getPresentableUrl());
+  }
 
   public Project doOpenProject(@NotNull @SystemIndependent String projectPath, Project projectToClose, boolean forceOpenInNewFrame) {
     VirtualFile dotIdea  = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(

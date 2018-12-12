@@ -115,7 +115,7 @@
     <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
 
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
-                        serviceImplementation="com.intellij.ide.RecentProjectsManagerImpl"/>
+                        serviceImplementation="com.intellij.ide.RecentProjectsManagerBase"/>
 
     <applicationService serviceInterface="com.intellij.util.descriptors.ConfigFileFactory"
                         serviceImplementation="com.intellij.util.descriptors.impl.ConfigFileFactoryImpl"/>

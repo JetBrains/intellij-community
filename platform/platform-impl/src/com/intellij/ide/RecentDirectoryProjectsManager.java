@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
+// todo the only difference - usage of ProjectBaseDirectory Is it really make sense?
 @State(name = "RecentDirectoryProjectsManager", storages = @Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED))
 public class RecentDirectoryProjectsManager extends RecentProjectsManagerBase {
   public RecentDirectoryProjectsManager(@NotNull MessageBus messageBus) {

@@ -7,10 +7,10 @@ import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * Used by IDEs where <a href="https://www.jetbrains.com/help/phpstorm/opening-multiple-projects.html">attaching modules</a> is supported.
  */
-final class ModuleAwareRecentProjectsManager extends RecentDirectoryProjectsManager {
-  ModuleAwareRecentProjectsManager(@NotNull MessageBus messageBus) {
+final class AttachedModuleAwareRecentProjectsManager extends RecentDirectoryProjectsManager {
+  AttachedModuleAwareRecentProjectsManager(@NotNull MessageBus messageBus) {
     super(messageBus);
   }
 
