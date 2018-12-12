@@ -38,24 +38,20 @@ public class ImportReferencesRegistrar implements JavacFileReferencesRegistrar {
       return;
     }
     final Set<String> classImports = new HashSet<>();
-    final Set<String> fieldImports = new HashSet<>();
-    final Set<String> methodImports = new HashSet<>();
+    final Set<String> staticImports = new HashSet<>();
     for (Object key : refs.keys()) {
       final JavacRef ref = (JavacRef)key;
       if (ref instanceof JavacRef.JavacClass) {
         classImports.add(ref.getName());
         final JavacRef.ImportProperties props = ref.getImportProperties();
         if (props != null && props.isStatic() && props.isOnDemand()) {
-          final String memberImport = ref.getName() + ".*";
-          fieldImports.add(memberImport);
-          methodImports.add(memberImport);
+          staticImports.add(ref.getName() + ".*");
         }
       }
-      else if (ref instanceof JavacRef.JavacField) {
-        fieldImports.add(ref.getOwnerName() + "." + ref.getName());
-      }
-      else if (ref instanceof JavacRef.JavacMethod) {
-        methodImports.add(ref.getOwnerName() + "." + ref.getName());
+      else {
+        if (ref instanceof JavacRef.JavacField || ref instanceof JavacRef.JavacMethod) {
+          staticImports.add(ref.getOwnerName() + "." + ref.getName());
+        }
       }
     }
     final List<String> definedClasses = new ArrayList<>();
@@ -67,10 +63,10 @@ public class ImportReferencesRegistrar implements JavacFileReferencesRegistrar {
         }
       }
     }
-    if (!definedClasses.isEmpty() && (!classImports.isEmpty() || !fieldImports.isEmpty() || !methodImports.isEmpty())) {
+    if (!definedClasses.isEmpty() && (!classImports.isEmpty() || !staticImports.isEmpty())) {
       final Callbacks.Backend deps = JavaBuilderUtil.getDependenciesRegistrar(context);
       for (String aClass : definedClasses) {
-        deps.registerImports(aClass, classImports, fieldImports, methodImports);
+        deps.registerImports(aClass, classImports, staticImports);
       }
     }
   }

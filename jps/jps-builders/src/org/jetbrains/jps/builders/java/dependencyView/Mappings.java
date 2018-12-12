@@ -23,7 +23,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.function.Function;
 
 /**
  * @author: db
@@ -300,24 +299,16 @@ public class Mappings {
     }
 
     TIntHashSet propagateFieldAccess(final int name, final int className) {
-      return propagateMemberAccess(true, new MemberComparator() {
-        @Override
-        public boolean isSame(ProtoMember member) {
-          return member.name == name;
-        }
-      }, className);
+      return propagateMemberAccess(true, member -> member.name == name, className);
     }
 
     TIntHashSet propagateMethodAccess(final MethodRepr m, final int className) {
-      return propagateMemberAccess(false, new MemberComparator() {
-        @Override
-        public boolean isSame(ProtoMember member) {
-          if (member instanceof MethodRepr) {
-            final MethodRepr memberMethod = (MethodRepr)member;
-            return memberMethod.name == m.name && Arrays.equals(memberMethod.myArgumentTypes, m.myArgumentTypes);
-          }
-          return false;
+      return propagateMemberAccess(false, member -> {
+        if (member instanceof MethodRepr) {
+          final MethodRepr memberMethod = (MethodRepr)member;
+          return memberMethod.name == m.name && Arrays.equals(memberMethod.myArgumentTypes, m.myArgumentTypes);
         }
+        return false;
       }, className);
     }
 
@@ -440,7 +431,7 @@ public class Mappings {
         visitedClasses.add(fromClass.name);
       }
       for (int superName : fromClass.getSupers()) {
-        if (!visitedClasses.add(superName)) {
+        if (!visitedClasses.add(superName) || superName == myObjectClassName) {
           continue;  // prevent SOE
         }
         final ClassRepr superClass = classReprByName(superName);
@@ -674,6 +665,36 @@ public class Mappings {
         }
         debug("Affect field usage referenced of class ", p);
         affectedUsages.add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(myContext, p) : field.createUsage(myContext, p));
+        return true;
+      });
+    }
+
+    void affectStaticMemberImportUsages(final int memberName, int ownerName, final TIntHashSet classes, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
+      debug("Affect static member import usage referenced of class ", ownerName);
+      affectedUsages.add(UsageRepr.createImportStaticMemberUsage(myContext, memberName, ownerName));
+
+      classes.forEach(cls -> {
+        final TIntHashSet deps = myClassToClassDependency.get(cls);
+        if (deps != null) {
+          addAll(dependents, deps);
+        }
+        debug("Affect static member import usage referenced of class ", cls);
+        affectedUsages.add(UsageRepr.createImportStaticMemberUsage(myContext, memberName, cls));
+        return true;
+      });
+    }
+
+    void affectStaticMemberOnDemandUsages(int ownerClass, final TIntHashSet classes, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
+      debug("Affect static member on-demand import usage referenced of class ", ownerClass);
+      affectedUsages.add(UsageRepr.createImportStaticOnDemandUsage(myContext, ownerClass));
+      
+      classes.forEach(cls -> {
+        final TIntHashSet deps = myClassToClassDependency.get(cls);
+        if (deps != null) {
+          addAll(dependents, deps);
+        }
+        debug("Affect static member on-demand import usage referenced of class ", cls);
+        affectedUsages.add(UsageRepr.createImportStaticOnDemandUsage(myContext, cls));
         return true;
       });
     }
@@ -1210,6 +1231,10 @@ public class Mappings {
             propagated = myFuture.propagateMethodAccess(m, it.name);
           }
 
+          if (m.isStatic()) {
+            myFuture.affectStaticMemberOnDemandUsages(it.name, propagated, state.myAffectedUsages, state.myDependants);
+          }
+
           final Collection<MethodRepr> lessSpecific = it.findMethods(myFuture.lessSpecific(m));
 
           for (final MethodRepr mm : lessSpecific) {
@@ -1309,6 +1334,11 @@ public class Mappings {
         final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = myFuture.findOverriddenMethods(m, it);
         final TIntHashSet propagated = myFuture.propagateMethodAccess(m, it.name);
 
+        if (!m.isPrivate() && m.isStatic()) {
+          debug("The method was static --- affecting static method import usages");
+          myFuture.affectStaticMemberImportUsages(m.name, it.name, propagated, state.myAffectedUsages, state.myDependants);
+        }
+
         if (overridenMethods.size() == 0) {
           debug("No overridden methods found, affecting method usages");
           myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
@@ -1346,7 +1376,7 @@ public class Mappings {
           }
         }
 
-        if (!m.isAbstract()) {
+        if (!m.isAbstract() && !m.isStatic()) {
           propagated.forEach(p -> {
             if (p != it.name) {
               final ClassRepr s = myFuture.classReprByName(p);
@@ -1491,6 +1521,17 @@ public class Mappings {
               if ((d.addedModifiers() & Opcodes.ACC_STATIC) != 0) {
                 debug("Added static specifier --- affecting subclasses");
                 myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
+
+                if (!m.isPrivate()) {
+                  debug("Added static modifier --- affecting static member on-demand import usages");
+                  myFuture.affectStaticMemberOnDemandUsages(it.name, propagated, state.myAffectedUsages, state.myDependants);
+                }
+              }
+              else if ((d.removedModifiers() & Opcodes.ACC_STATIC) != 0) {
+                if (!m.isPrivate()) {
+                  debug("Removed static modifier --- affecting static method import usages");
+                  myFuture.affectStaticMemberImportUsages(m.name, it.name, propagated, state.myAffectedUsages, state.myDependants);
+                }
               }
             }
             else {
@@ -1598,6 +1639,9 @@ public class Mappings {
             debug("Affecting field usages referenced from subclass ", subClass);
             final TIntHashSet propagated = myFuture.propagateFieldAccess(f.name, subClass);
             myFuture.affectFieldUsages(f, propagated, f.createUsage(myContext, subClass), state.myAffectedUsages, state.myDependants);
+            if (f.isStatic()) {
+              myFuture.affectStaticMemberOnDemandUsages(subClass, propagated, state.myAffectedUsages, state.myDependants);
+            }
 
             final TIntHashSet deps = myClassToClassDependency.get(subClass);
 
@@ -1679,6 +1723,10 @@ public class Mappings {
 
         final TIntHashSet propagated = myFuture.propagateFieldAccess(f.name, it.name);
         myFuture.affectFieldUsages(f, propagated, f.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+        if (!f.isPrivate() && f.isStatic()) {
+          debug("The field was static --- affecting static field import usages");
+          myFuture.affectStaticMemberImportUsages(f.name, it.name, propagated, state.myAffectedUsages, state.myDependants);
+        }
       }
       debug("End of removed fields processing");
 
@@ -1740,6 +1788,16 @@ public class Mappings {
               myFuture.affectFieldUsages(
                 field, propagated, field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants
               );
+              if (!field.isPrivate()) {
+                if ((d.addedModifiers() & Opcodes.ACC_STATIC) != 0) {
+                  debug("Added static modifier --- affecting static member on-demand import usages");
+                  myFuture.affectStaticMemberOnDemandUsages(it.name, propagated, state.myAffectedUsages, state.myDependants);
+                }
+                else if ((d.removedModifiers() & Opcodes.ACC_STATIC) != 0) {
+                  debug("Removed static modifier --- affecting static field import usages");
+                  myFuture.affectStaticMemberImportUsages(field.name, it.name, propagated, state.myAffectedUsages, state.myDependants);
+                }
+              }
             }
             else {
               final Set<UsageRepr.Usage> usages = new THashSet<>();
@@ -2784,61 +2842,43 @@ public class Mappings {
         associate(classFileName, Collections.singleton(sourceFileName), cr);
       }
 
-      /** @noinspection Duplicates
-       * work in progress*/
       @Override
-      public void registerImports(final String className, final Collection<String> classImports, Collection<String> fieldImports, Collection<String> methodImports) {
-        if (!classImports.isEmpty() || !fieldImports.isEmpty() || !methodImports.isEmpty()) {
+      public void registerImports(String className, Collection<String> classImports, Collection<String> staticImports) {
+        if (!classImports.isEmpty() || !staticImports.isEmpty()) {
           myPostPasses.offer(() -> {
             final int rootClassName = myContext.get(className.replace(".", "/"));
             final Collection<File> fileNames = myClassToSourceFile.get(rootClassName);
             final ClassRepr repr = fileNames != null && !fileNames.isEmpty()? getClassReprByName(fileNames.iterator().next(), rootClassName) : null;
-
             boolean usageAdded = false;
-
-            final Function<String, Boolean> addClassUsage = anImport -> {
-              final int iname = myContext.get(anImport.replace('.', '/'));
-              myClassToClassDependency.put(iname, rootClassName);
-              return repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname));
-            };
 
             for (final String anImport : classImports) {
               if (!anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
-                usageAdded |= addClassUsage.apply(anImport);
+                final int iname = myContext.get(anImport.replace('.', '/'));
+                myClassToClassDependency.put(iname, rootClassName);
+                usageAdded |= repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname));
               }
             }
 
-            for (String anImport : fieldImports) {
+            for (String anImport : staticImports) {
               if (anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
-                usageAdded |= addClassUsage.apply(anImport.substring(0, anImport.length() - IMPORT_WILDCARD_SUFFIX.length()));
-                // todo: all-fields usage
+                final int iname = myContext.get(anImport.substring(0, anImport.length() - IMPORT_WILDCARD_SUFFIX.length()).replace('.', '/'));
+                myClassToClassDependency.put(iname, rootClassName);
+                usageAdded |= repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname));
+                usageAdded |= repr != null && repr.addUsage(UsageRepr.createImportStaticOnDemandUsage(myContext, iname));
               }
               else {
                 final int i = anImport.lastIndexOf('.');
                 if (i > 0 && i < anImport.length() - 1) {
-                  usageAdded |= addClassUsage.apply(anImport.substring(0, i));
-                  //final int fieldName = myContext.get(anImport.substring(i+1));
-                  //usageAdded |= repr.addUsage(UsageRepr.createFieldUsage(myContext, fieldName, ownerName, 0 /*todo! descr is not known here*/));
+                  final int iname = myContext.get(anImport.substring(0, i).replace('.', '/'));
+                  final int memberName = myContext.get(anImport.substring(i+1));
+                  myClassToClassDependency.put(iname, rootClassName);
+                  usageAdded |= repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname));
+                  usageAdded |= repr != null && repr.addUsage(UsageRepr.createImportStaticMemberUsage(myContext, memberName, iname));
                 }
               }
             }
 
-            for (String anImport : methodImports) {
-              if (anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
-                usageAdded |= addClassUsage.apply(anImport.substring(0, anImport.length() - IMPORT_WILDCARD_SUFFIX.length()));
-                // todo: all-method usage
-              }
-              else {
-                final int i = anImport.lastIndexOf('.');
-                if (i > 0 && i < anImport.length() - 1) {
-                  usageAdded |= addClassUsage.apply(anImport.substring(0, i));
-                  //final int methodName = myContext.get(anImport.substring(i+1));
-                  //usageAdded |= repr.addUsage(UsageRepr.createMethodUsage(myContext, methodName, ownerName, 0 /*todo! descr is not known here*/));
-                }
-              }
-            }
-
-            if (usageAdded && fileNames != null) {
+            if (usageAdded) {
               for (File fileName : fileNames) {
                 mySourceFileToClasses.put(fileName, repr);
               }

@@ -21,23 +21,81 @@ public class ImportTest extends IncrementalTestCase {
   }
 
   public void testUnusedClassImport() {
-    doTest();
+    setupInitialProject();
+    doTestBuild(1).assertFailed();
   }
 
   public void testUnusedStaticWildcardImport() {
-    doTest();
+    setupInitialProject();
+    doTestBuild(1).assertFailed();
   }
 
   public void testUnusedStaticImportClassDeleted() {
-    doTest();
+    setupInitialProject();
+    doTestBuild(1).assertFailed();
   }
 
-  /*
-  // todo: not yet implemented
   public void testUnusedStaticImportFieldDeleted() {
     setupInitialProject();
     setupModules();
     doTestBuild(1).assertFailed();
   }
-  */
+
+  public void testUnusedStaticImportFieldBecameNonstatic() {
+    setupInitialProject();
+    setupModules();
+    doTestBuild(1).assertFailed();
+  }
+
+  public void testUnusedStaticImportMethodDeleted() {
+    setupInitialProject();
+    setupModules();
+    doTestBuild(1).assertFailed();
+  }
+
+  public void testUnusedStaticImportMethodBecameNonstatic() {
+    setupInitialProject();
+    setupModules();
+    doTestBuild(1).assertFailed();
+  }
+
+  public void testUnusedStaticImportInheritedFieldDeleted() {
+    setupInitialProject();
+    doTestBuild(1).assertFailed();
+  }
+
+  public void testUnusedStaticImportInheritedFieldBecameNonstatic() {
+    setupInitialProject();
+    doTestBuild(1).assertFailed();
+  }
+
+  public void testUnusedStaticImportInheritedMethodDeleted() {
+    setupInitialProject();
+    doTestBuild(1).assertFailed();
+  }
+
+  public void testUnusedStaticImportInheritedMethodBecameNonstatic() {
+    setupInitialProject();
+    doTestBuild(1).assertFailed();
+  }
+
+  public void testWildcardStaticImportFieldAdded() {
+    setupInitialProject();
+    doTestBuild(1).assertFailed();
+  }
+
+  public void testWildcardStaticImportMethodAdded() {
+    setupInitialProject();
+    doTestBuild(1).assertFailed();
+  }
+
+  public void testWildcardStaticImportFieldBecameStatic() {
+    setupInitialProject();
+    doTestBuild(1).assertFailed();
+  }
+
+  public void testWildcardStaticImportMethodBecameStatic() {
+    setupInitialProject();
+    doTestBuild(1).assertFailed();
+  }
 }
