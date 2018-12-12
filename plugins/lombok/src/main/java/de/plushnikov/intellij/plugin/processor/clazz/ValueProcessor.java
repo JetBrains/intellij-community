@@ -67,7 +67,7 @@ public class ValueProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
 
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, Getter.class)) {
