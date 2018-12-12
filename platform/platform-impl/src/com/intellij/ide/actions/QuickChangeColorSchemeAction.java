@@ -58,9 +58,10 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
     boolean isDarkEditorTheme = ColorUtil.isDark(scheme.getDefaultBackground());
 
     UIManager.LookAndFeelInfo suitableLaf = null;
+    String schemeName = SchemeManager.getDisplayName(scheme);
     for (UIManager.LookAndFeelInfo laf : lafManager.getInstalledLookAndFeels()) {
       if (laf instanceof UIThemeBasedLookAndFeelInfo &&
-               scheme.getName().contains(((UIThemeBasedLookAndFeelInfo)laf).getTheme().getEditorSchemeName())) {
+               schemeName.equals(((UIThemeBasedLookAndFeelInfo)laf).getTheme().getEditorSchemeName())) {
         suitableLaf = laf;
         break;
       }
