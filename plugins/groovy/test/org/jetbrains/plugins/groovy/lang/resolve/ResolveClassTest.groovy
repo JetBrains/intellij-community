@@ -665,5 +665,20 @@ class A {
 ''', PsiClass
   }
 
+  void "test no recursion when resolving inner class in implements list"() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    fixture.addClass '''\
+package com.foo;
+public interface I {
+  interface Inner {}
+}
+'''
+    resolveByText '''\
+import com.foo.I;
+class A implements I.<caret>Inner {}
+''', PsiClass
+  }
+
+
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }
 }

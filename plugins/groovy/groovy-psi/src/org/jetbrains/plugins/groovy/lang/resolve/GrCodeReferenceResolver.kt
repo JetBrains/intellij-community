@@ -221,7 +221,8 @@ private fun GrCodeReferenceElement.processQualifier(qualifier: GrCodeReferenceEl
 }
 
 private fun GrCodeReferenceElement.canResolveToInnerClassOfCurrentClass(): Boolean {
-  val parent = getActualParent()
+  val (_, outerMostReference) = skipSameTypeParents()
+  val parent = outerMostReference.getActualParent()
   return parent !is GrExtendsClause &&
          parent !is GrImplementsClause &&
          (parent !is GrAnnotation || parent.classReference != this) // annotation's can't be inner classes of current class
