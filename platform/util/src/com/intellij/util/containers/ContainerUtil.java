@@ -582,6 +582,20 @@ public class ContainerUtil extends ContainerUtilRt {
     public int size() {
       return myStore.length;
     }
+
+    // override for more efficient arraycopy vs. iterator() creation/traversing
+    @NotNull
+    @Override
+    public <T> T[] toArray(@NotNull T[] a) {
+      int size = size();
+      //noinspection unchecked
+      T[] result = a.length >= size ? a : (T[])Array.newInstance(a.getClass().getComponentType(), size);
+      System.arraycopy(myStore, 0, result, 0, size);
+      if (result.length > size) {
+        result[size] = null;
+      }
+      return result;
+    }
   }
 
   @NotNull
