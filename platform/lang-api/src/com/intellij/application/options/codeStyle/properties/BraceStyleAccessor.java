@@ -7,15 +7,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.List;
 
-class BraceStyleAccessor extends CodeStylePropertyAccessor<Integer> {
+class BraceStyleAccessor extends CodeStylePropertyAccessor<Integer> implements CodeStyleChoiceList {
   private final static BidirectionalMap<Integer, String> BRACE_STYLE_MAP = new BidirectionalMap<>();
+
+  public static final String VALUE_END_OF_LINE = "end_of_line";
+  public static final String VALUE_NEXT_LINE = "next_line";
+  public static final String VALUE_WHITESMITHS = "whitesmiths";
+  public static final String VALUE_GNU = "gnu";
+
+  private final static List<String> ALL_VALUES = Arrays.asList(VALUE_END_OF_LINE, VALUE_NEXT_LINE, VALUE_WHITESMITHS, VALUE_GNU);
+
   static {
-    BRACE_STYLE_MAP.put(CommonCodeStyleSettings.END_OF_LINE, "end_of_line");
-    BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE, "next_line");
-    BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE_SHIFTED, "whitesmiths");
-    BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE_SHIFTED2, "gnu");
+    BRACE_STYLE_MAP.put(CommonCodeStyleSettings.END_OF_LINE, VALUE_END_OF_LINE);
+    BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE, VALUE_NEXT_LINE);
+    BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE_SHIFTED, VALUE_WHITESMITHS);
+    BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE_SHIFTED2, VALUE_GNU);
   }
 
   BraceStyleAccessor(@NotNull Object object, @NotNull Field field) {
@@ -33,5 +42,11 @@ class BraceStyleAccessor extends CodeStylePropertyAccessor<Integer> {
   @Override
   protected String asString(@NotNull Integer value) {
     return BRACE_STYLE_MAP.get(value);
+  }
+
+  @NotNull
+  @Override
+  public List<String> getChoices() {
+    return ALL_VALUES;
   }
 }

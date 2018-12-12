@@ -5,10 +5,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.List;
 
-class BooleanAccessor extends CodeStylePropertyAccessor<Boolean> {
+public class BooleanAccessor extends CodeStylePropertyAccessor<Boolean> implements CodeStyleChoiceList {
 
-  BooleanAccessor(@NotNull Object object, @NotNull Field field) {
+  private final static List<String> BOOLEAN_VALS = Arrays.asList("false", "true");
+
+  public BooleanAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
   }
 
@@ -22,5 +26,11 @@ class BooleanAccessor extends CodeStylePropertyAccessor<Boolean> {
   @Override
   protected String asString(@NotNull Boolean value) {
     return value.toString();
+  }
+
+  @NotNull
+  @Override
+  public List<String> getChoices() {
+    return BOOLEAN_VALS;
   }
 }

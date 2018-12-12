@@ -23,7 +23,7 @@
         serviceImplementation="org.editorconfig.plugincomponents.EditorConfigNotifier"/>
     <generalCodeStyleOptionsProvider instance="org.editorconfig.settings.EditorConfigConfigurable"/>
     <codeStyleSettingsProvider implementation="org.editorconfig.settings.EditorConfigConfigurable"/>
-    <codeStyleSettingsModifier implementation="org.editorconfig.configmanagement.EditorConfigCodeStyleSettingsModifier" order="first"/>
+    <codeStyleSettingsModifier implementation="org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier" order="first"/>
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" order="first"/>
     <applicationService
         serviceInterface="org.editorconfig.plugincomponents.SettingsProviderComponent"
@@ -427,6 +427,7 @@
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigBasicOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigRoslynOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigReSharperOptionDescriptorProvider"/>
+    <optionDescriptorProvider implementation="org.editorconfig.configmanagement.extended.IntellijConfigOptionDescriptorProvider"/>
   </extensions>
 
 

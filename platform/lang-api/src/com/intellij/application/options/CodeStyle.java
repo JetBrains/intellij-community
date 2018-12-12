@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
-import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -12,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -346,4 +346,6 @@ public class CodeStyle {
     }
     return false;
   }
+
+
 }

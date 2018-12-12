@@ -136,6 +136,10 @@ public abstract class AbstractCodeStylePropertyMapper {
     }
   }
 
+  public CodeStylePropertyAccessor getAccessor(@NotNull String property) {
+    return myAccessorMap.getValue().get(property);
+  }
+
   protected boolean useDeclaredFields() {
     return false;
   }
