@@ -143,32 +143,7 @@ public class AnimatedIcon implements Icon {
     }
 
     public Blinking(int delay, @NotNull Icon icon) {
-      super(
-        new Frame() {
-          @NotNull
-          @Override
-          public Icon getIcon() {
-            return icon;
-          }
-
-          @Override
-          public int getDelay() {
-            return delay;
-          }
-        },
-        new Frame() {
-          @NotNull
-          @Override
-          public Icon getIcon() {
-            return notNull(getDisabledIcon(icon), icon);
-          }
-
-          @Override
-          public int getDelay() {
-            return delay;
-          }
-        }
-      );
+      super(delay, icon, notNull(getDisabledIcon(icon), icon));
     }
   }
 
