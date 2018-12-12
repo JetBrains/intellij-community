@@ -17,17 +17,8 @@ import java.util.Map;
  * @author peter
  */
 public abstract class ScanningIdIndexer implements IdIndexer {
-  private volatile WordsScanner myScanner;
 
   protected abstract WordsScanner createScanner();
-
-  private WordsScanner obtainScanner() {
-    WordsScanner scanner = myScanner;
-    if (scanner == null) {
-      myScanner = scanner = createScanner();
-    }
-    return scanner;
-  }
 
   @Override
   @NotNull
@@ -35,7 +26,7 @@ public abstract class ScanningIdIndexer implements IdIndexer {
     final CharSequence chars = inputData.getContentAsText();
     final char[] charsArray = CharArrayUtil.fromSequenceWithoutCopying(chars);
     final IdDataConsumer consumer = new IdDataConsumer();
-    obtainScanner().processWords(chars, new Processor<WordOccurrence>() {
+    createScanner().processWords(chars, new Processor<WordOccurrence>() {
       @Override
       public boolean process(final WordOccurrence t) {
         if (charsArray != null && t.getBaseText() == chars) {
@@ -63,7 +54,7 @@ public abstract class ScanningIdIndexer implements IdIndexer {
 
   @Override
   public int getVersion() {
-    WordsScanner scanner = obtainScanner();
+    WordsScanner scanner = createScanner();
     return scanner instanceof VersionedWordsScanner ? ((VersionedWordsScanner)scanner).getVersion() : -1;
   }
 }
