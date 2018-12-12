@@ -57,6 +57,12 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
   }
 
   @Override
+  public boolean isLeaf(Object object) {
+    if (object == myRoot) return false;
+    return super.isLeaf(object);
+  }
+
+  @Override
   public int getChildCount(Object object) {
     return ((InspectionTreeNode)object).getChildren().size();
   }
