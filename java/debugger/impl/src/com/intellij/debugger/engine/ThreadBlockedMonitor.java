@@ -51,13 +51,10 @@ public class ThreadBlockedMonitor {
   public InvocationWatcher startInvokeWatching(int invokePolicy,
                                                @Nullable ThreadReferenceProxyImpl thread,
                                                @NotNull SuspendContextImpl context) {
-    int threshold = getSingleThreadedEvaluationThreshold();
-    if (thread != null && threshold > 0 &&
+    if (thread != null && getSingleThreadedEvaluationThreshold() > 0 &&
         context.getSuspendPolicy() == EventRequest.SUSPEND_ALL &&
         BitUtil.isSet(invokePolicy, ObjectReference.INVOKE_SINGLE_THREADED)) {
-      AtomicBoolean obsolete = new AtomicBoolean();
-      return new InvocationWatcher(obsolete, thread, JobScheduler.getScheduler().schedule(
-        () -> checkInvocation(thread, obsolete), threshold, TimeUnit.MILLISECONDS));
+      return new InvocationWatcher(myProcess, thread);
     }
     return null;
   }
@@ -156,42 +153,22 @@ public class ThreadBlockedMonitor {
     });
   }
 
-  private void checkInvocation (@NotNull ThreadReferenceProxyImpl thread, @NotNull AtomicBoolean obsolete){
-    myProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-      @Override
-      protected void action() {
-        if (obsolete.get()) return;
-        VirtualMachine virtualMachine = thread.getVirtualMachine().getVirtualMachine();
-        virtualMachine.suspend();
-        try {
-          ThreadReference threadReference = thread.getThreadReference();
-          if (!obsolete.get() && threadReference.suspendCount() == 1) { // extra check for invocation in progress
-            // resume all but this
-            threadReference.suspend();
-            virtualMachine.resume();
-          }
-        }
-        finally {
-          virtualMachine.resume();
-        }
-      }
-    });
-  }
-
   public static class InvocationWatcher {
-    private final AtomicBoolean myObsolete;
+    private final AtomicBoolean myObsolete = new AtomicBoolean();;
+    private final AtomicBoolean myAllResumed = new AtomicBoolean();;
     private final Future myTask;
     private final ThreadReferenceProxyImpl myThread;
+    private final DebugProcessImpl myProcess;
 
-    public InvocationWatcher(@NotNull AtomicBoolean obsolete, @NotNull ThreadReferenceProxyImpl thread, @NotNull Future task) {
-      myObsolete = obsolete;
-      myTask = task;
+    private InvocationWatcher(DebugProcessImpl process, @NotNull ThreadReferenceProxyImpl thread) {
+      myProcess = process;
       myThread = thread;
+      myTask = JobScheduler.getScheduler().schedule(this::checkInvocation, getSingleThreadedEvaluationThreshold(), TimeUnit.MILLISECONDS);
     }
 
     void invocationFinished() {
       myObsolete.set(true);
-      if (myTask.isDone()) {
+      if (myTask.isDone() && myAllResumed.get()) {
         // suspend all threads but the current one (which should be suspended already
         myThread.getVirtualMachine().getVirtualMachine().suspend();
         myThread.getThreadReference().resume();
@@ -199,6 +176,29 @@ public class ThreadBlockedMonitor {
       else {
         myTask.cancel(true);
       }
+    }
+
+    private void checkInvocation() {
+      myProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+        @Override
+        protected void action() {
+          if (myObsolete.get()) return;
+          VirtualMachine virtualMachine = myThread.getVirtualMachine().getVirtualMachine();
+          virtualMachine.suspend();
+          try {
+            ThreadReference threadReference = myThread.getThreadReference();
+            if (!myObsolete.get() && threadReference.suspendCount() == 1) { // extra check for invocation in progress
+              // resume all but this
+              myAllResumed.set(true);
+              threadReference.suspend();
+              virtualMachine.resume();
+            }
+          }
+          finally {
+            virtualMachine.resume();
+          }
+        }
+      });
     }
   }
 }
