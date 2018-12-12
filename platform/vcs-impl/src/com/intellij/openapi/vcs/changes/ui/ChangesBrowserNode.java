@@ -7,7 +7,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
@@ -50,7 +49,6 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   protected static final int REPOSITORY_SORT_WEIGHT = 3;
   protected static final int DIRECTORY_PATH_SORT_WEIGHT = 4;
   protected static final int FILE_PATH_SORT_WEIGHT = 5;
-  protected static final int GENERIC_FILE_PATH_SORT_WEIGHT = 6;
   protected static final int CHANGE_SORT_WEIGHT = 7;
   protected static final int VIRTUAL_FILE_SORT_WEIGHT = 8;
   protected static final int UNVERSIONED_SORT_WEIGHT = 9;
@@ -107,11 +105,6 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   @NotNull
   public static ChangesBrowserNode createLocallyDeleted(@NotNull LocallyDeletedChange change) {
     return new ChangesBrowserLocallyDeletedNode(change);
-  }
-
-  @NotNull
-  public static ChangesBrowserNode createGeneric(@NotNull FilePath filePath, @NotNull FileStatus fileStatus, @NotNull Object userObject) {
-    return new ChangesBrowserGenericNode(filePath, fileStatus, userObject);
   }
 
   @NotNull

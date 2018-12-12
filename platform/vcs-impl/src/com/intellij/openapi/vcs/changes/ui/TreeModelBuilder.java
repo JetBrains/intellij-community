@@ -296,15 +296,6 @@ public class TreeModelBuilder {
     return this;
   }
 
-  public void setGenericNodes(@NotNull Collection<GenericNodeData> nodesData, @Nullable Object tag) {
-    ChangesBrowserNode<?> parentNode = createTagNode(tag);
-
-    for (GenericNodeData data : sorted(nodesData, comparing(data -> data.myFilePath, PATH_COMPARATOR))) {
-      ChangesBrowserNode node = ChangesBrowserNode.createGeneric(data.myFilePath, data.myStatus, data.myUserData);
-      insertChangeNode(data.myFilePath, parentNode, node);
-    }
-  }
-
   @NotNull
   public TreeModelBuilder setSwitchedRoots(@Nullable Map<VirtualFile, String> switchedRoots) {
     if (ContainerUtil.isEmpty(switchedRoots)) return this;
@@ -524,17 +515,5 @@ public class TreeModelBuilder {
   @Deprecated
   public DefaultTreeModel buildModel(@NotNull List<Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {
     return setChanges(changes, changeNodeDecorator).build();
-  }
-
-  public static class GenericNodeData {
-    @NotNull private final FilePath myFilePath;
-    @NotNull private final FileStatus myStatus;
-    @NotNull private final Object myUserData;
-
-    public GenericNodeData(@NotNull FilePath filePath, @NotNull FileStatus status, @NotNull Object userData) {
-      myFilePath = filePath;
-      myStatus = status;
-      myUserData = userData;
-    }
   }
 }
