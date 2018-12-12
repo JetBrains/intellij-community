@@ -61,10 +61,12 @@ import java.util.*;
 
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
 import static com.intellij.util.ArrayUtil.isEmpty;
 import static com.intellij.util.ArrayUtil.toObjectArray;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
@@ -512,7 +514,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     } else {
       myCommitMessageArea.setText(getCommentFromChangelist(list));
 
-      if (StringUtil.isEmptyOrSpaces(myCommitMessageArea.getComment())) {
+      if (isEmptyOrSpaces(myCommitMessageArea.getComment())) {
         myLastKnownComment = myVcsConfiguration.LAST_COMMIT_MESSAGE;
         myCommitMessageArea.setText(myVcsConfiguration.LAST_COMMIT_MESSAGE);
         String messageFromVcs = getInitialMessageFromVcs();
@@ -734,7 +736,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       saveCommentIntoChangeList();
 
       myLastSelectedListName = list.getName();
-      myCommitMessageArea.setText(getCommentFromChangelist(list));
+      myCommitMessageArea.setText(chooseNotNull(getCommentFromChangelist(list), myLastKnownComment));
     }
   }
 
@@ -745,11 +747,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       if (message != null) return message;
     }
 
-    String listComment = list.getComment();
-    if (StringUtil.isEmptyOrSpaces(listComment)) {
-      listComment = !list.hasDefaultName() ? list.getName() : myLastKnownComment;
-    }
-    return listComment;
+    String changeListComment = list.getComment();
+    if (!isEmptyOrSpaces(changeListComment)) return changeListComment;
+
+    if (!list.hasDefaultName()) return list.getName();
+    return null;
   }
 
   @Override
