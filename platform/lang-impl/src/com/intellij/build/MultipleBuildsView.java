@@ -15,13 +15,20 @@
  */
 package com.intellij.build;
 
+import static com.intellij.build.events.MessageEvent.Kind.ERROR;
+import static com.intellij.build.events.MessageEvent.Kind.WARNING;
+
 import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.EventResult;
+import com.intellij.build.events.FailureResult;
 import com.intellij.build.events.FinishBuildEvent;
+import com.intellij.build.events.MessageEventResult;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
@@ -40,18 +47,31 @@ import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
+import javax.swing.DefaultListModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -72,6 +92,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   private volatile Content myContent;
   private volatile DefaultActionGroup myToolbarActions;
   private volatile boolean myDisposed;
+
 
   public MultipleBuildsView(Project project,
                             BuildContentManager buildContentManager,
@@ -221,6 +242,8 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           myProgressWatcher.stopBuild(buildInfo);
           ((BuildContentManagerImpl)myBuildContentManager).finishBuildNotified(buildInfo, buildInfo.content);
           myViewManager.onBuildFinish(buildInfo);
+          // scroll to first error (or first warning if no errors are found) after remaining nodes are created
+          ApplicationManager.getApplication().invokeLater(() -> selectLastErrorOrWarning(buildInfo));
         }
         else {
           buildInfo.statusMessage = event.getMessage();
@@ -309,6 +332,101 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     }
   }
 
+  private void selectLastErrorOrWarning(@NotNull AbstractViewManager.BuildInfo buildInfo) {
+    // Make sure build is finished before proceeding
+    if (buildInfo.isRunning()) {
+      ApplicationManager.getApplication().invokeLater(() -> selectLastErrorOrWarning(buildInfo));
+      return;
+    }
+    BuildView buildView = myViewMap.get(buildInfo);
+    String eventViewName = BuildTreeConsoleView.class.getName();
+    BuildTreeConsoleView eventView = buildView.getView(eventViewName, BuildTreeConsoleView.class);
+    if (eventView != null) {
+      JComponent component = eventView.getPreferredFocusableComponent();
+      if (component instanceof JTree) {
+        JTree tree = ((JTree)component);
+        TreePath[] selectedPaths = tree.getSelectionPaths();
+        if (selectedPaths != null && selectedPaths.length > 0) {
+          // Do not scroll if user has selected something already
+          return;
+        }
+        Object root = tree.getModel().getRoot();
+        if (root instanceof ExecutionNode) {
+          eventView.scheduleUpdate((ExecutionNode)root);
+        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          TreeNode[] expandedPath = selectLastErrorOrWarning(tree, tree.getModel().getRoot());
+          if (expandedPath != null) {
+            TreePath currentPath = new TreePath(expandedPath);
+            tree.scrollPathToVisible(currentPath);
+            tree.setSelectionPath(currentPath);
+          }
+        });
+      }
+    }
+  }
+
+  @Nullable
+  private static TreeNode[] selectLastErrorOrWarning(@NotNull JTree tree, @NotNull Object currentNode) {
+    ErrorWarningPair errorWarningPair = selectLastErrorAndWarningPair(tree, currentNode);
+    if (errorWarningPair == null) {
+      return null;
+    }
+    if (errorWarningPair.error instanceof DefaultMutableTreeNode) {
+      return ((DefaultMutableTreeNode)errorWarningPair.error).getPath();
+    }
+    if (errorWarningPair.warning instanceof DefaultMutableTreeNode) {
+      return ((DefaultMutableTreeNode)errorWarningPair.warning).getPath();
+    }
+    return null;
+  }
+
+  @Nullable
+  private static ErrorWarningPair selectLastErrorAndWarningPair(@NotNull JTree tree, @NotNull Object currentNode) {
+    // First go to children to get first error on them
+    ErrorWarningPair pair = null;
+    int childCount = tree.getModel().getChildCount(currentNode);
+    for (int childIndex = 0; childIndex < childCount; childIndex++) {
+      Object child = tree.getModel().getChild(currentNode, childIndex);
+      ErrorWarningPair childPair = selectLastErrorAndWarningPair(tree, child);
+      if (childPair == null) {
+        continue;
+      }
+      if (childPair.error != null) {
+        pair = childPair;
+        break;
+      }
+      if (pair == null) {
+        pair = childPair;
+      }
+    }
+    if (pair != null && pair.error != null) {
+      // One of the children has an error, return it
+      return pair;
+    }
+    // Check if current node has an error
+    if (currentNode instanceof DefaultMutableTreeNode) {
+      Object userObject = ((DefaultMutableTreeNode)currentNode).getUserObject();
+      if (userObject instanceof ExecutionNode) {
+        EventResult result = ((ExecutionNode)userObject).getResult();
+        if (result instanceof FailureResult) {
+          return new ErrorWarningPair(currentNode, null);
+        }
+        else if (result instanceof MessageEventResult) {
+          if (((MessageEventResult)result).getKind() == ERROR) {
+            // current node has an error, return it
+            return new ErrorWarningPair(currentNode, null);
+          }
+          else if ((pair == null) && ((MessageEventResult)result).getKind() == WARNING) {
+            // current node has a warning, save it, but also check if children have an error
+            return new ErrorWarningPair(null, currentNode);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   private void clearOldBuilds(List<Runnable> runOnEdt, StartBuildEvent startBuildEvent) {
     long currentTime = System.currentTimeMillis();
     DefaultListModel<AbstractViewManager.BuildInfo> listModel = (DefaultListModel<AbstractViewManager.BuildInfo>)myBuildsList.getModel();
@@ -352,6 +470,16 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
 
   public boolean hasRunningBuilds() {
     return !myProgressWatcher.myBuilds.isEmpty();
+  }
+
+  private static class ErrorWarningPair {
+    public Object error;
+    public Object warning;
+
+    private ErrorWarningPair(@Nullable Object error, @Nullable Object warning) {
+      this.error = error;
+      this.warning = warning;
+    }
   }
 
   private class ProgressWatcher implements Runnable {
