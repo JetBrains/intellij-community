@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -63,11 +64,11 @@ public class DomFileMetaData extends AbstractExtensionPointBean {
         instance = instantiate(findClass(implementation), ApplicationManager.getApplication().getPicoContainer(), true);
         if (StringUtil.isEmpty(rootTagName)) {
           if (!instance.acceptsOtherRootTagNames()) {
-            throw new AssertionError(implementation + " should either specify a root tag name in XML, or return true from 'acceptsOtherRootTagNames'");
+            throw new PluginException(implementation + " should either specify a root tag name in XML, or return true from 'acceptsOtherRootTagNames'", getPluginId());
           }
         }
         else if (!rootTagName.equals(instance.getRootTagName())) {
-          throw new AssertionError(implementation + " XML declaration should have " + instance.getRootTagName() + " root tag name");
+          throw new PluginException(implementation + " XML declaration should have " + instance.getRootTagName() + " root tag name", getPluginId());
         }
         DomApplicationComponent.getInstance().initDescription(instance);
         lazyInstance = instance;
