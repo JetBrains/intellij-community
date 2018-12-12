@@ -52,15 +52,22 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     this(ConfigurationTypeUtil.findConfigurationType(type));
   }
 
+  @SuppressWarnings("unused")
+  RunConfigurationProducer(@Nullable String internalUsageOnly) {
+    myConfigurationFactory = null;
+  }
+
   protected RunConfigurationProducer(@NotNull ConfigurationType configurationType) {
     myConfigurationFactory = configurationType.getConfigurationFactories()[0];
   }
 
+  @NotNull
   public ConfigurationFactory getConfigurationFactory() {
     return myConfigurationFactory;
   }
 
-  public ConfigurationType getConfigurationType() {
+  @NotNull
+  public final ConfigurationType getConfigurationType() {
     return myConfigurationFactory.getType();
   }
 
