@@ -508,21 +508,19 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     LocalChangeList list = myBrowser.getSelectedChangeList();
     myLastSelectedListName = list.getName();
 
-    if (comment != null) {
-      myLastKnownComment = comment;
-      myCommitMessageArea.setText(comment);
-    } else {
-      myCommitMessageArea.setText(getCommentFromChangelist(list));
+    if (comment == null) {
+      comment = getCommentFromChangelist(list);
 
-      if (isEmptyOrSpaces(myCommitMessageArea.getComment())) {
+      if (isEmptyOrSpaces(comment)) {
         myLastKnownComment = myVcsConfiguration.LAST_COMMIT_MESSAGE;
-        myCommitMessageArea.setText(myVcsConfiguration.LAST_COMMIT_MESSAGE);
-        String messageFromVcs = getInitialMessageFromVcs();
-        if (messageFromVcs != null) {
-          myCommitMessageArea.setText(messageFromVcs);
-        }
+        comment = chooseNotNull(getInitialMessageFromVcs(), myVcsConfiguration.LAST_COMMIT_MESSAGE);
       }
     }
+    else {
+      myLastKnownComment = comment;
+    }
+
+    myCommitMessageArea.setText(comment);
   }
 
   private void showDetailsIfSaved() {
