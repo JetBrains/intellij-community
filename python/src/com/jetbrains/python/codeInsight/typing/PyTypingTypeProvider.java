@@ -1157,7 +1157,19 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static PyType getGenericTypeBound(@NotNull PyExpression[] typeVarArguments, @NotNull Context context) {
     final List<PyType> types = new ArrayList<>();
     for (int i = 1; i < typeVarArguments.length; i++) {
-      types.add(Ref.deref(getType(typeVarArguments[i], context)));
+      final PyExpression argument = typeVarArguments[i];
+
+      if (argument instanceof PyKeywordArgument) {
+        if ("bound".equals(((PyKeywordArgument)argument).getKeyword())) {
+          final PyExpression value = ((PyKeywordArgument)argument).getValueExpression();
+          return value == null ? null : Ref.deref(getType(value, context));
+        }
+        else {
+          break; // covariant, contravariant
+        }
+      }
+
+      types.add(Ref.deref(getType(argument, context)));
     }
     return PyUnionType.union(types);
   }

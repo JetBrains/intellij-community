@@ -720,4 +720,17 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "f(<warning descr=\"Expected type 'Type[T]', got 'Type[C]' instead\">C</warning>, 3)")
     );
   }
+
+  // PY-32375
+  public void testMatchingReturnAgainstBoundedTypeVar() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("from typing import TypeVar\n" +
+                         "\n" +
+                         "F = TypeVar('F', bound=int)\n" +
+                         "\n" +
+                         "def deco(func: F) -> F:\n" +
+                         "    return <warning descr=\"Expected type 'F', got 'str' instead\">\"\"</warning>")
+    );
+  }
 }
