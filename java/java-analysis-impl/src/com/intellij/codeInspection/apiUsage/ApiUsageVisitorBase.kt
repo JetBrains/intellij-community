@@ -3,6 +3,7 @@ package com.intellij.codeInspection.apiUsage
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.infos.MethodCandidateInfo
 
 /**
@@ -14,7 +15,7 @@ abstract class ApiUsageVisitorBase : PsiElementVisitor(), ApiUsageDetector {
 
   final override fun visitElement(element: PsiElement) {
     super.visitElement(element)
-    if (element is PsiLanguageInjectionHost) {
+    if (element is PsiLanguageInjectionHost || element is LeafPsiElement) {
       //Better performance.
       return
     }
