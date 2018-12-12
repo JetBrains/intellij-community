@@ -10,15 +10,14 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.CellRendererPane;
 import javax.swing.Icon;
 import javax.swing.Timer;
-import java.awt.AlphaComposite;
 import java.awt.Component;
-import java.awt.Composite;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.List;
 
 import static com.intellij.openapi.util.IconLoader.getDisabledIcon;
 import static com.intellij.util.ObjectUtils.notNull;
+import static java.awt.AlphaComposite.SrcAtop;
 import static java.util.Arrays.asList;
 
 /**
@@ -173,15 +172,19 @@ public class AnimatedIcon implements Icon {
           long time = (System.currentTimeMillis() - this.time) % period;
           float alpha = (float)((Math.cos(2 * Math.PI * time / period) + 1) / 2);
           if (alpha > 0) {
-            Runnable restore = null;
             if (alpha < 1 && g instanceof Graphics2D) {
-              Graphics2D g2d = (Graphics2D)g;
-              Composite old = g2d.getComposite();
-              restore = () -> g2d.setComposite(old);
-              g2d.setComposite(AlphaComposite.SrcAtop.derive(alpha));
+              Graphics2D g2d = (Graphics2D)g.create();
+              try {
+                g2d.setComposite(SrcAtop.derive(alpha));
+                icon.paintIcon(c, g2d, x, y);
+              }
+              finally {
+                g2d.dispose();
+              }
             }
-            icon.paintIcon(c, g, x, y);
-            if (restore != null) restore.run();
+            else {
+              icon.paintIcon(c, g, x, y);
+            }
           }
         }
       });
