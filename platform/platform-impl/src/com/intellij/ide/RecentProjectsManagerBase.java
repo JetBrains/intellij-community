@@ -192,7 +192,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       }
 
       // it is not good to have timestamps in state data, anyway, now state saved not on "timer" (not more than once in 5 minutes),
-      // but if modification counter changed (that's why updateOpenProjectsTimestamps is not called in getModificationCounter as validateRecentProjects)
+      // but if modification counter changed
       myState.updateOpenProjectsTimestamps(this);
       return myState;
     }
@@ -307,8 +307,10 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
           }
         }
       }
+      myState.validateRecentProjects(myModCounter);
     }
 
+    // for simplicity, for now just increment and don't check is something really changed
     myModCounter.incrementAndGet();
   }
 
@@ -652,6 +654,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
           markPathRecent(path, openProject);
         }
       }
+      updateLastProjectPath();
       updateUI();
     }
   }
@@ -757,7 +760,6 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   @Override
   public long getModificationCount() {
-    myState.validateRecentProjects(myModCounter);
     return myModCounter.get();
   }
 
@@ -779,17 +781,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
 
     @Override
-    public void projectFrameClosed() {
-      updateLastProjectPath();
-    }
-
-    @Override
     public void projectOpenFailed() {
-      updateLastProjectPath();
-    }
-
-    @Override
-    public void appClosing() {
       updateLastProjectPath();
     }
   }
