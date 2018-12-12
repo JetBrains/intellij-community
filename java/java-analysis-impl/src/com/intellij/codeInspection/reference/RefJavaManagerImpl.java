@@ -49,7 +49,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     Conditions.or(Conditions.instanceOf(PsiFile.class, PsiJavaModule.class),
                   Conditions.and(Conditions.notInstanceOf(PsiTypeParameter.class), psi -> {
                     UDeclaration decl = UastContextKt.toUElement(psi, UDeclaration.class);
-                    return decl != null && (!(decl instanceof UField) || !(decl instanceof UVariable)) && (!(decl instanceof UClassInitializer));
+                    return decl != null && (decl instanceof UField || !(decl instanceof UVariable)) && (!(decl instanceof UClassInitializer));
                   }));
 
   private static final Logger LOG = Logger.getInstance(RefJavaManagerImpl.class);
@@ -291,7 +291,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
   @Nullable
   @Override
   public PsiNamedElement getElementContainer(@NotNull PsiElement psiElement) {
-    return (PsiNamedElement)PsiTreeUtil.findFirstParent(psiElement, PROBLEM_ELEMENT_CONDITION);
+    PsiNamedElement cont = (PsiNamedElement)PsiTreeUtil.findFirstParent(psiElement, PROBLEM_ELEMENT_CONDITION);
+    System.out.println(cont);
+    return cont;
   }
 
   @Override
