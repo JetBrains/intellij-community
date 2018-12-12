@@ -581,7 +581,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       super.drop(event);
       Object attachedObject = event.getAttachedObject();
       if (attachedObject instanceof ShelvedChangeListDragBean) {
-        unshelveSilentlyWithDnd(myProject,(ShelvedChangeListDragBean)attachedObject, getDropRootNode(myView, event));
+        unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attachedObject, getDropRootNode(myView, event),
+                                !ChangesDnDSupport.isCopyAction(event));
       }
     }
 

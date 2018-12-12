@@ -109,7 +109,7 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
       shelvedChangeListPairs.forEach { (local, shelved) ->
         progressIndicator.fraction = (i++).toDouble() / size.toDouble()
         progressIndicator.text = VcsBundle.message("searching.for.code.smells.unshelving", shelved.name)
-        shelveChangeManager.unshelveChangeList(shelved, null, null, local, false, true, false, null, null)
+        shelveChangeManager.unshelveChangeList(shelved, null, null, local, false, true, false, null, null, true)
       }
     }
   }

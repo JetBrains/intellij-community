@@ -648,7 +648,18 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                  @Nullable final List<ShelvedBinaryFile> binaryFiles,
                                  @Nullable final LocalChangeList targetChangeList,
                                  boolean showSuccessNotification) {
-    unshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, false, false, null, null);
+    unshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, isRemoveFilesFromShelf());
+  }
+
+  @CalledInAny
+  private void unshelveChangeList(final ShelvedChangeList changeList,
+                                  @Nullable final List<ShelvedChange> changes,
+                                  @Nullable final List<ShelvedBinaryFile> binaryFiles,
+                                  @Nullable final LocalChangeList targetChangeList,
+                                  boolean showSuccessNotification,
+                                  boolean removeFilesFromShelf) {
+    unshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, false, false, null, null,
+                       removeFilesFromShelf);
   }
 
   @CalledInAny
@@ -660,7 +671,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                  final boolean systemOperation,
                                  final boolean reverse,
                                  final String leftConflictTitle,
-                                 final String rightConflictTitle) {
+                                 final String rightConflictTitle,
+                                 boolean removeFilesFromShelf) {
     final List<FilePatch> remainingPatches = new ArrayList<>();
 
     final CommitContext commitContext = new CommitContext();
@@ -689,7 +701,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                            patches, targetChangeList, commitContext, reverse, leftConflictTitle,
                            rightConflictTitle);
       patchApplier.execute(showSuccessNotification, systemOperation);
-      if (isRemoveFilesFromShelf() || systemOperation) {
+      if (removeFilesFromShelf) {
         remainingPatches.addAll(patchApplier.getRemainingPatches());
         updateListAfterUnshelve(changeList, remainingPatches, remainingBinaries, commitContext);
       }
@@ -885,13 +897,15 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   @CalledInAwt
   public static void unshelveSilentlyWithDnd(@NotNull Project project,
                                              @NotNull ShelvedChangeListDragBean shelvedChangeListDragBean,
-                                             @Nullable ChangesBrowserNode dropRootNode) {
+                                             @Nullable ChangesBrowserNode dropRootNode,
+                                             boolean removeFilesFromShelf) {
     FileDocumentManager.getInstance().saveAllDocuments();
     LocalChangeList predefinedChangeList =
       dropRootNode != null ? ObjectUtils.tryCast(dropRootNode.getUserObject(), LocalChangeList.class) : null;
     getInstance(project).unshelveSilentlyAsynchronously(project, shelvedChangeListDragBean.getShelvedChangelists(),
                                                         shelvedChangeListDragBean.getChanges(),
-                                                        shelvedChangeListDragBean.getBinaryFiles(), predefinedChangeList);
+                                                        shelvedChangeListDragBean.getBinaryFiles(), predefinedChangeList,
+                                                        removeFilesFromShelf);
   }
 
   public void unshelveSilentlyAsynchronously(@NotNull final Project project,
@@ -899,6 +913,15 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                              @NotNull final List<ShelvedChange> selectedChanges,
                                              @NotNull final List<ShelvedBinaryFile> selectedBinaryChanges,
                                              @Nullable final LocalChangeList forcePredefinedOneChangelist) {
+    unshelveSilentlyAsynchronously(project, selectedChangeLists, selectedChanges, selectedBinaryChanges, forcePredefinedOneChangelist,
+                                   isRemoveFilesFromShelf());
+  }
+
+  private void unshelveSilentlyAsynchronously(@NotNull final Project project,
+                                              @NotNull final List<ShelvedChangeList> selectedChangeLists,
+                                              @NotNull final List<ShelvedChange> selectedChanges,
+                                              @NotNull final List<ShelvedBinaryFile> selectedBinaryChanges,
+                                              @Nullable final LocalChangeList forcePredefinedOneChangelist, boolean removeFilesFromShelf) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, VcsBundle.getString("unshelve.changes.progress.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -911,7 +934,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
           unshelveChangeList(changeList, shouldUnshelveAllList ? null : changesForChangelist,
                              shouldUnshelveAllList ? null : binariesForChangelist,
                              forcePredefinedOneChangelist != null ? forcePredefinedOneChangelist : getChangeListUnshelveTo(changeList),
-                             true);
+                             true, removeFilesFromShelf);
         }
       }
     });
