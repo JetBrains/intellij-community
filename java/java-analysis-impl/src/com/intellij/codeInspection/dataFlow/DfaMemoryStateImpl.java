@@ -1085,15 +1085,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     Number value1 = ObjectUtils.tryCast(const1.getValue(), Number.class);
     Number value2 = ObjectUtils.tryCast(const2.getValue(), Number.class);
     if (value1 == null || value2 == null) return null;
-    int cmp;
     if (value1 instanceof Long && value2 instanceof Long) {
-      cmp = Long.compare((Long)value1, (Long)value2);
-    } else {
-      double double1 = value1.doubleValue();
-      double double2 = value2.doubleValue();
-      if (double1 == 0.0 && double2 == 0.0) return RelationType.EQ;
-      cmp = Double.compare(double1, double2);
+      // No need to track: should be covered by factmap/LongRangeSet
+      return null;
     }
+    double double1 = value1.doubleValue();
+    double double2 = value2.doubleValue();
+    if (double1 == 0.0 && double2 == 0.0) return RelationType.EQ;
+    int cmp = Double.compare(double1, double2);
     return cmp == 0 ? RelationType.EQ : cmp < 0 ? RelationType.LT : RelationType.GT;
   }
 
