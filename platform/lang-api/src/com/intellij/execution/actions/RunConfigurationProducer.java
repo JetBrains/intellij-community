@@ -56,8 +56,10 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     this(ConfigurationTypeUtil.findConfigurationType(type));
   }
 
-  @SuppressWarnings("unused")
-  RunConfigurationProducer(@Nullable String internalUsageOnly) {
+  /**
+   * Do NOT use directly.
+   */
+  public RunConfigurationProducer(@SuppressWarnings("unused") boolean internalUsageOnly) {
     myConfigurationFactory = null;
   }
 

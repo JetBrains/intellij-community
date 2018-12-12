@@ -10,6 +10,6 @@ import com.intellij.execution.configurations.RunConfiguration
  * Approach to pass configuration factory as [RunConfigurationProducer] constructor parameter is better in terms of design,
  * but problem is that iteration of producer list leads to loading of not required configuration factories (in turn, it leads to loading more and more not required classes)
  */
-abstract class LazyRunConfigurationProducer<T : RunConfiguration> : RunConfigurationProducer<T>(null) {
+abstract class LazyRunConfigurationProducer<T : RunConfiguration> : RunConfigurationProducer<T>(true) {
   abstract override fun getConfigurationFactory(): ConfigurationFactory
 }
