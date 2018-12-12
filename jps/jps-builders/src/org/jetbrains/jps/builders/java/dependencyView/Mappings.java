@@ -1700,7 +1700,7 @@ public class Mappings {
       if (removed.isEmpty()) {
         return true;
       }
-      assert myFuture != null;
+      assert myPresent != null;
 
       debug("Processing removed fields:");
 
@@ -1721,11 +1721,11 @@ public class Mappings {
           }
         }
 
-        final TIntHashSet propagated = myFuture.propagateFieldAccess(f.name, it.name);
-        myFuture.affectFieldUsages(f, propagated, f.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+        final TIntHashSet propagated = myPresent.propagateFieldAccess(f.name, it.name);
+        myPresent.affectFieldUsages(f, propagated, f.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
         if (!f.isPrivate() && f.isStatic()) {
           debug("The field was static --- affecting static field import usages");
-          myFuture.affectStaticMemberImportUsages(f.name, it.name, propagated, state.myAffectedUsages, state.myDependants);
+          myPresent.affectStaticMemberImportUsages(f.name, it.name, propagated, state.myAffectedUsages, state.myDependants);
         }
       }
       debug("End of removed fields processing");
