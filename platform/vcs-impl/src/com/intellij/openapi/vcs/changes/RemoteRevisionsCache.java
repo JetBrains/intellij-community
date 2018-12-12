@@ -175,14 +175,14 @@ public class RemoteRevisionsCache implements VcsListener {
   /**
    * @return false if not up to date
    */
-  public boolean isUpToDate(final Change change) {
+  public boolean isUpToDate(@NotNull Change change) {
     final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);
     if (vcs == null) return true;
     final RemoteDifferenceStrategy strategy = vcs.getRemoteDifferenceStrategy();
     if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(strategy)) {
-      return myRemoteRevisionsStateCache.isUpToDate(change);
+      return myRemoteRevisionsStateCache.isUpToDate(change, vcs);
     } else {
-      return myRemoteRevisionsNumbersCache.isUpToDate(change);
+      return myRemoteRevisionsNumbersCache.isUpToDate(change, vcs);
     }
   }
 

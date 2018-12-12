@@ -305,7 +305,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   }
 
   @Override
-  public boolean isUpToDate(final Change change) {
+  public boolean isUpToDate(@NotNull Change change, @NotNull AbstractVcs vcs) {
     if (change.getBeforeRevision() != null && change.getAfterRevision() != null && (! change.isMoved()) && (! change.isRenamed())) {
       return getRevisionState(change.getBeforeRevision());
     }
