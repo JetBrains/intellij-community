@@ -97,7 +97,7 @@ class StateQueue {
       memoryStates.add((DfaMemoryStateImpl)anotherState);
     }
 
-    if (memoryStates.size() > 1) {
+    if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
       memoryStates = squash(memoryStates);
     }
 
