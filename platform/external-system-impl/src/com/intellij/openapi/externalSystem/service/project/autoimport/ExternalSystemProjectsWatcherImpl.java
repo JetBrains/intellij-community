@@ -148,6 +148,9 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   @Override
   public void markDirty(String projectPath) {
     scheduleUpdate(projectPath);
+    for (Contributor contributor : EP_NAME.getExtensions()) {
+      contributor.markDirty(projectPath);
+    }
   }
 
   public synchronized void start() {
@@ -736,5 +739,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     void markDirtyAllExternalProjects(@NotNull Project project);
 
     void markDirty(@NotNull Module module);
+
+    default void markDirty(@NotNull String projectPath) {}
   }
 }
