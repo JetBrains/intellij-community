@@ -77,16 +77,15 @@ public class IdentifierSplitter extends BaseSplitter {
       for (TextRange word : words) {
         boolean uc = Strings.isUpperCased(text, word);
         boolean flag = (uc && !isAllWordsAreUpperCased);
-        Matcher matcher = null;
         try {
-          matcher = WORD.matcher(newBombedCharSequence(text.substring(word.getStartOffset(), word.getEndOffset()), 500));
+          Matcher matcher = WORD.matcher(newBombedCharSequence(text.substring(word.getStartOffset(), word.getEndOffset()), 500));
+          if (matcher.find()) {
+            TextRange found = matcherRange(word, matcher);
+            addWord(consumer, flag, found);
+          }
         }
         catch (ProcessCanceledException e) {
           return;
-        }
-        if (matcher.find()) {
-          TextRange found = matcherRange(word, matcher);
-          addWord(consumer, flag, found);
         }
       }
     }
