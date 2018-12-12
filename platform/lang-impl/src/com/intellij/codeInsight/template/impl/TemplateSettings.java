@@ -9,6 +9,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
@@ -471,6 +472,9 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       }
     }
     catch (Exception e) {
+      if (e instanceof ControlFlowException) {
+        throw (RuntimeException)e;
+      }
       LOG.error(e);
     }
   }
