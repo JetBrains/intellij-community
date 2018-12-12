@@ -37,6 +37,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Pattern;
+
 public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
   private static final String WHITESPACE = " \t";
 
@@ -118,6 +120,9 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
 
   private static boolean isTodoText(@NotNull CharSequence text, int startOffset, int endOffset) {
     CharSequence input = text.subSequence(startOffset, endOffset);
-    return ContainerUtil.exists(TodoConfiguration.getInstance().getTodoPatterns(), pattern -> pattern.getPattern().matcher(input).find());
+    return ContainerUtil.exists(TodoConfiguration.getInstance().getTodoPatterns(), pattern -> {
+      Pattern p = pattern.getPattern();
+      return p != null && p.matcher(input).find();
+    });
   }
 }
