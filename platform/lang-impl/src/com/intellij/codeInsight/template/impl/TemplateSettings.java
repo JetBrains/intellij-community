@@ -9,12 +9,12 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -471,10 +471,10 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
         }
       }
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Exception e) {
-      if (e instanceof ControlFlowException) {
-        throw (RuntimeException)e;
-      }
       LOG.error(e);
     }
   }
