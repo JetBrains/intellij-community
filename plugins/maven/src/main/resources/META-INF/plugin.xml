@@ -96,11 +96,11 @@
     <projectTemplateFileProcessor implementation="org.jetbrains.idea.maven.utils.MavenTemplateFileProcessor"/>
 
     <xml.elementDescriptorProvider implementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorProvider"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProfilesModelDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomOldProfilesModelDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomSettingsModelDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomPluginModelDescription"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription" rootTagName="project"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomProfilesModelDescription" rootTagName="profilesXml"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomOldProfilesModelDescription" rootTagName="profiles"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomSettingsModelDescription" rootTagName="settings"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomPluginModelDescription" rootTagName="plugin"/>
 
     <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenModelDocumentationProvider"
                                 order="first"/>
