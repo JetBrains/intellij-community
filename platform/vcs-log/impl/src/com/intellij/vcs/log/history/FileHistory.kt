@@ -173,7 +173,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
     LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph).walk(row, this)
 
     pathsForCommits.forEach { commit, path ->
-      if (path != null && !namesData.affects(commit, path)) {
+      if (path != null && !namesData.affects(commit, path, true)) {
         excluded.add(commit)
       }
     }
@@ -195,14 +195,14 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
 
       currentPath = if (down) {
         val pathGetter = { parentIndex: Int ->
-          namesData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath.filePath)
+          namesData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
         }
         val path = findPathWithoutConflict(previousNodeId, pathGetter)
         path ?: pathGetter(permanentLinearGraph.getCorrespondingParent(previousNodeId, currentNodeId, visibilityBuffer))
       }
       else {
         val pathGetter = { parentIndex: Int ->
-          namesData.getPathInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath.filePath)
+          namesData.getPathInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
         }
         val path = findPathWithoutConflict(currentNodeId, pathGetter)
         // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
@@ -281,27 +281,59 @@ abstract class FileNamesData(filePath: FilePath) {
     return null
   }
 
-  fun getPathInParentRevision(commit: Int, parent: Int, childPath: FilePath): MaybeDeletedFilePath {
-    val commits = UnorderedPair(commit, parent)
-    val otherPath = commitToRename.get(commits).firstNotNull { rename -> rename.getOtherPath(commit, childPath) }
-    if (otherPath != null) return MaybeDeletedFilePath(otherPath)
+  fun getPathInParentRevision(commit: Int, parent: Int, childPath: MaybeDeletedFilePath): MaybeDeletedFilePath {
+    val childFilePath = childPath.filePath
+    val changeKind = affectedCommits[childFilePath]?.get(commit)?.get(parent) ?: return childPath
+    if (changeKind == ChangeKind.NOT_CHANGED) return childPath
 
-    val changes = affectedCommits[childPath]?.get(commit) ?: return MaybeDeletedFilePath(childPath)
-    return MaybeDeletedFilePath(childPath, changes[parent] == ChangeKind.ADDED)
+    val renames = commitToRename.get(UnorderedPair(commit, parent))
+    if (!childPath.deleted) {
+      val otherPath = renames.firstNotNull { rename -> rename.getOtherPath(commit, childFilePath) }
+      if (otherPath != null) return MaybeDeletedFilePath(otherPath)
+      return MaybeDeletedFilePath(childFilePath, changeKind == ChangeKind.ADDED)
+    }
+
+    if (changeKind == ChangeKind.REMOVED) {
+      // checking if this is actually an unrelated rename
+      if (renames.firstNotNull { rename -> rename.getOtherPath(parent, childFilePath) } != null) return childPath
+    }
+    return MaybeDeletedFilePath(childFilePath, changeKind != ChangeKind.REMOVED)
   }
 
-  fun getPathInChildRevision(commit: Int, parent: Int, parentPath: FilePath): MaybeDeletedFilePath {
-    val commits = UnorderedPair(commit, parent)
-    val otherPath = commitToRename.get(commits).firstNotNull { rename -> rename.getOtherPath(parent, parentPath) }
-    if (otherPath != null) return MaybeDeletedFilePath(otherPath)
+  fun getPathInChildRevision(commit: Int, parent: Int, parentPath: MaybeDeletedFilePath): MaybeDeletedFilePath {
+    val parentFilePath = parentPath.filePath
+    val changeKind = affectedCommits[parentFilePath]?.get(commit)?.get(parent) ?: return parentPath
+    if (changeKind == ChangeKind.NOT_CHANGED) return parentPath
 
-    val changes = affectedCommits[parentPath]?.get(commit) ?: return MaybeDeletedFilePath(parentPath)
-    return MaybeDeletedFilePath(parentPath, changes[parent] == ChangeKind.REMOVED)
+    val renames = commitToRename.get(UnorderedPair(commit, parent))
+    if (!parentPath.deleted) {
+      val otherPath = renames.firstNotNull { rename -> rename.getOtherPath(parent, parentFilePath) }
+      if (otherPath != null) return MaybeDeletedFilePath(otherPath)
+      return MaybeDeletedFilePath(parentFilePath, changeKind == ChangeKind.REMOVED)
+    }
+
+    if (changeKind == ChangeKind.ADDED) {
+      // checking if this is actually an unrelated rename
+      if (renames.firstNotNull { rename -> rename.getOtherPath(commit, parentFilePath) } != null) return parentPath
+    }
+    return MaybeDeletedFilePath(parentFilePath, changeKind != ChangeKind.ADDED)
   }
 
-  fun affects(commit: Int, path: MaybeDeletedFilePath): Boolean {
+  fun affects(commit: Int, path: MaybeDeletedFilePath, verify: Boolean = false): Boolean {
     val changes = affectedCommits[path.filePath]?.get(commit) ?: return false
-    if (path.deleted) return changes.containsValue(ChangeKind.REMOVED)
+    if (path.deleted) {
+      if (!changes.containsValue(ChangeKind.REMOVED)) return false
+      if (!verify) return true
+      for (parent in changes.keys()) {
+        if (commitToRename.get(UnorderedPair(commit, parent)).firstNotNull { rename ->
+            rename.getOtherPath(parent, path.filePath)
+          } != null) {
+          // this is a rename from path to something else, we should not match this commit
+          return false
+        }
+      }
+      return true
+    }
     return !changes.containsValue(ChangeKind.REMOVED)
   }
 
