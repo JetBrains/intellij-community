@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 public enum LanguageLevel {
   JDK_1_3(3), JDK_1_4(4), JDK_1_5(5), JDK_1_6(6), JDK_1_7(7), JDK_1_8(8), JDK_1_9(9), JDK_10(10), JDK_11(11), JDK_12(12), JDK_12_PREVIEW(12), JDK_X(13);
 
+  public static final LanguageLevel HIGHEST = JDK_11;
+
   private final JavaVersion myVersion;
 
   LanguageLevel(int major) {
