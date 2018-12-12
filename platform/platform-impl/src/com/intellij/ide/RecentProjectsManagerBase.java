@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -54,6 +55,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Used directly by IntelliJ IDEA.
@@ -61,9 +63,12 @@ import java.util.*;
  * @see RecentDirectoryProjectsManager base class primary for minor IDEs on IntelliJ Platform
  */
 @State(name = "RecentProjectsManager", storages = @Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED))
-public class RecentProjectsManagerBase extends RecentProjectsManager implements PersistentStateComponent<RecentProjectsManagerBase.State> {
+public class RecentProjectsManagerBase extends RecentProjectsManager implements PersistentStateComponent<RecentProjectsManagerBase.State>,
+                                                                                ModificationTracker {
   private static final int MAX_PROJECTS_IN_MAIN_MENU = 6;
   private static Icon ourSmallAppIcon;
+
+  private final AtomicLong myModCounter = new AtomicLong();
 
   private final Map<String, MyIcon> myProjectIcons = new THashMap<>();
   private final Alarm myNamesResolver = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
@@ -84,17 +89,21 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
     public String lastProjectLocation;
 
-    void validateRecentProjects() {
-      //noinspection StatementWithEmptyBody
-      while (recentPaths.remove(null)) ;
+    private void validateRecentProjects(@NotNull AtomicLong modCounter) {
+      while (recentPaths.remove(null)) {
+        modCounter.incrementAndGet();
+      }
+
       Collection<String> displayNames = names.values();
-      //noinspection StatementWithEmptyBody
-      while (displayNames.remove("")) ;
+      while (displayNames.remove("")) {
+        modCounter.incrementAndGet();
+      }
 
       while (recentPaths.size() > Registry.intValue("ide.max.recent.projects")) {
         int index = recentPaths.size() - 1;
         names.remove(recentPaths.get(index));
         recentPaths.remove(index);
+        modCounter.incrementAndGet();
       }
     }
 
@@ -151,10 +160,10 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       }
     }
 
-    public void updateOpenProjectsTimestamps(RecentProjectsManagerBase mgr) {
+    private void updateOpenProjectsTimestamps(@NotNull RecentProjectsManagerBase mgr) {
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-        String path = PathUtil.toSystemIndependentName(mgr.getProjectPath(project));
-        RecentProjectMetaInfo info = additionalInfo.get(path);
+        String path = mgr.getProjectPath(project);
+        RecentProjectMetaInfo info = path == null ? null : additionalInfo.get(path);
         if (info != null) {
           info.projectOpenTimestamp = System.currentTimeMillis();
         }
@@ -181,8 +190,9 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         //todo[kb] uncomment when we will fix JRE-251 The pid is needed for 3rd parties like Toolbox App to show the project is open now
         myState.pid = "";//OSProcessUtil.getApplicationPid();
       }
-      updateLastProjectPath();
-      myState.validateRecentProjects();
+
+      // it is not good to have timestamps in state data, anyway, now state saved not on "timer" (not more than once in 5 minutes),
+      // but if modification counter changed (that's why updateOpenProjectsTimestamps is not called in getModificationCounter as validateRecentProjects)
       myState.updateOpenProjectsTimestamps(this);
       return myState;
     }
@@ -210,7 +220,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
   }
 
-  protected void removeDuplicates(State state) {
+  private static void removeDuplicates(@NotNull State state) {
     for (String path : new ArrayList<>(state.recentPaths)) {
       if (path.endsWith("/")) {
         state.recentPaths.remove(path);
@@ -220,7 +230,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
   }
 
-  private static void removePathFrom(List<String> items, String path) {
+  private static void removePathFrom(@NotNull List<String> items, @NotNull String path) {
     for (Iterator<String> iterator = items.iterator(); iterator.hasNext();) {
       final String next = iterator.next();
       if (SystemInfo.isFileSystemCaseSensitive ? path.equals(next) : path.equalsIgnoreCase(next)) {
@@ -242,6 +252,9 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         group.removeProject(path);
       }
     }
+
+    // for simplicity, for now just increment and don't check is something really changed
+    myModCounter.incrementAndGet();
   }
 
   @Override
@@ -263,7 +276,11 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   @Override
   public void setLastProjectCreationLocation(@Nullable @SystemIndependent String lastProjectLocation) {
     String location = StringUtil.nullize(lastProjectLocation, true);
-    myState.lastProjectLocation = PathUtil.toSystemIndependentName(location);
+    String newValue = PathUtil.toSystemIndependentName(location);
+    if (!Objects.equals(newValue, myState.lastProjectLocation)) {
+      myState.lastProjectLocation = newValue;
+      myModCounter.incrementAndGet();
+    }
   }
 
   @Override
@@ -291,6 +308,8 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         }
       }
     }
+
+    myModCounter.incrementAndGet();
   }
 
   @NotNull
@@ -439,7 +458,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   public AnAction[] getRecentProjectsActions(boolean forMainMenu, boolean useGroups) {
     final Set<String> paths;
     synchronized (myStateLock) {
-      myState.validateRecentProjects();
+      myState.validateRecentProjects(myModCounter);
       paths = ContainerUtil.newLinkedHashSet(myState.recentPaths);
     }
 
@@ -552,6 +571,8 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       String additionalMetadata = getRecentProjectMetadata(path, project);
       myState.additionalInfo.put(path, RecentProjectMetaInfo.create(additionalMetadata));
     }
+
+    myModCounter.incrementAndGet();
   }
 
   @Nullable
@@ -600,6 +621,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       if (path != null) {
         markPathRecent(path, project);
       }
+      updateLastProjectPath();
       updateUI();
     }
 
@@ -731,6 +753,12 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   @Override
   public void removeGroup(@NotNull ProjectGroup group) {
     myState.groups.remove(group);
+  }
+
+  @Override
+  public long getModificationCount() {
+    myState.validateRecentProjects(myModCounter);
+    return myModCounter.get();
   }
 
   private class MyAppLifecycleListener implements AppLifecycleListener {
