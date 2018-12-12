@@ -10,8 +10,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.CellRendererPane;
 import javax.swing.Icon;
 import javax.swing.Timer;
+import java.awt.AlphaComposite;
 import java.awt.Component;
+import java.awt.Composite;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.util.List;
 
 import static com.intellij.openapi.util.IconLoader.getDisabledIcon;
@@ -166,6 +169,47 @@ public class AnimatedIcon implements Icon {
           }
         }
       );
+    }
+  }
+
+  @ApiStatus.Experimental
+  public static class Fading extends AnimatedIcon {
+    public Fading(@NotNull Icon icon) {
+      this(1000, icon);
+    }
+
+    public Fading(int period, @NotNull Icon icon) {
+      super(50, new Icon() {
+        private final long time = System.currentTimeMillis();
+
+        @Override
+        public int getIconWidth() {
+          return icon.getIconWidth();
+        }
+
+        @Override
+        public int getIconHeight() {
+          return icon.getIconHeight();
+        }
+
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+          assert period > 0 : "unexpected";
+          long time = (System.currentTimeMillis() - this.time) % period;
+          float alpha = (float)((Math.cos(2 * Math.PI * time / period) + 1) / 2);
+          if (alpha > 0) {
+            Runnable restore = null;
+            if (alpha < 1 && g instanceof Graphics2D) {
+              Graphics2D g2d = (Graphics2D)g;
+              Composite old = g2d.getComposite();
+              restore = () -> g2d.setComposite(old);
+              g2d.setComposite(AlphaComposite.SrcAtop.derive(alpha));
+            }
+            icon.paintIcon(c, g, x, y);
+            if (restore != null) restore.run();
+          }
+        }
+      });
     }
   }
 

@@ -2,7 +2,9 @@
 package com.intellij.diagnostic;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AnimatedIcon.Blinking;
+import com.intellij.ui.AnimatedIcon.Fading;
 
 import javax.swing.*;
 import java.awt.Cursor;
@@ -15,7 +17,11 @@ class IdeErrorsIcon extends JLabel {
 
   IdeErrorsIcon(boolean enableBlink) {
     myReadIcon = AllIcons.Ide.FatalError_read;
-    myUnreadIcon = !enableBlink ? AllIcons.Ide.FatalError : new Blinking(AllIcons.Ide.FatalError);
+    myUnreadIcon = !enableBlink
+                   ? AllIcons.Ide.FatalError
+                   : Registry.is("ide.errors.icon.fading")
+                     ? new Fading(AllIcons.Ide.FatalError)
+                     : new Blinking(AllIcons.Ide.FatalError);
     setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
   }
 
