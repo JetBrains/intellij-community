@@ -48,6 +48,10 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     myConfigurationFactory = configurationFactory;
   }
 
+  /**
+   * @deprecated Use {@link LazyRunConfigurationProducer}.
+   */
+  @Deprecated
   protected RunConfigurationProducer(@NotNull Class<? extends ConfigurationType> type) {
     this(ConfigurationTypeUtil.findConfigurationType(type));
   }
