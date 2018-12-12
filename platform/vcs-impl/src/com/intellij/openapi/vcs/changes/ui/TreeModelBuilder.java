@@ -53,13 +53,16 @@ public class TreeModelBuilder {
     int sortWeightDiff = Comparing.compare(node1.getSortWeight(), node2.getSortWeight());
     if (sortWeightDiff != 0) return sortWeightDiff;
 
-    if (node1 instanceof Comparable && node1.getClass().equals(node2.getClass())) {
+    Class<?> clazz1 = node1.getClass();
+    Class<?> clazz2 = node2.getClass();
+    if (!clazz1.equals(clazz2)) return Comparing.compare(clazz1.getName(), clazz2.getName());
+
+    if (node1 instanceof Comparable) {
       return ((Comparable)node1).compareTo(node2);
     }
-    if (!node1.getClass().equals(node2.getClass())) {
-      return String.CASE_INSENSITIVE_ORDER.compare(node1.getTextPresentation(), node2.getTextPresentation());
+    else {
+      return node1.compareUserObjects(node2.getUserObject());
     }
-    return node1.compareUserObjects(node2.getUserObject());
   };
 
   protected final static Comparator<FilePath> PATH_COMPARATOR = comparingInt(path -> path.getPath().length());
