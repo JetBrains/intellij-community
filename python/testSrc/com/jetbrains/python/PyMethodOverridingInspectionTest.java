@@ -18,6 +18,7 @@ package com.jetbrains.python;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyMethodOverridingInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -102,6 +103,11 @@ public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
                  "    @my_decorator\n" +
                  "    def method(self, arg1, arg2):\n" +
                  "        pass\n");
+  }
+
+  // PY-28506
+  public void testDunderPostInitInDataclassHierarchy() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
   }
 
   @NotNull

@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
@@ -46,9 +47,14 @@ public class PyMethodOverridingInspection extends PyInspection {
       final PyClass cls = function.getContainingClass();
       if (cls == null) return;
       final String name = function.getName();
+
       if (PyNames.INIT.equals(name) ||
           PyNames.NEW.equals(name) ||
-          PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, myTypeEvalContext)) return;
+          PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, myTypeEvalContext) ||
+          ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensions(), e -> e.ignoreMethodParameters(function, myTypeEvalContext))) {
+        return;
+      }
+
       for (PsiElement psiElement : PySuperMethodsSearch.search(function, myTypeEvalContext)) {
         if (psiElement instanceof PyFunction) {
           final PyFunction baseMethod = (PyFunction)psiElement;
