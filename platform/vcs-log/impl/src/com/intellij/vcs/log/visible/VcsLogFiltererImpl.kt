@@ -88,13 +88,13 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       kotlin.Pair(emptyList(), visibleRoots.toList())
     }
 
-    val filteredWidthIndex: Set<Int>? = if (rootsForIndex.isNotEmpty()) dataGetter?.filter(detailsFilters) else null
+    val filteredWithIndex: Set<Int>? = if (rootsForIndex.isNotEmpty()) dataGetter?.filter(detailsFilters) else null
 
     val headsForVcs = if (rootsForVcs.containsAll(visibleRoots)) matchingHeads
     else getMatchingHeads(dataPack.refsModel, rootsForVcs, filters)
     val filteredWithVcs = filterWithVcs(dataPack.permanentGraph, filters, detailsFilters, headsForVcs, commitCount)
 
-    val filteredCommits: Set<Int>? = union(filteredWidthIndex, filteredWithVcs.matchingCommits)
+    val filteredCommits: Set<Int>? = union(filteredWithIndex, filteredWithVcs.matchingCommits)
     return FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount)
   }
 
