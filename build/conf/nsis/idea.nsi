@@ -852,6 +852,9 @@ uninstall_dialog:
   Call checkProductVersion
   ${If} $6 != "duplicated"
     IntOp $8 $8 + 1
+    !insertmacro INSTALLOPTIONS_READ $6 "UninstallOldVersions.ini" "Field $7" "Text"
+    ;text of checkbox is not yet prepared?
+    StrCmp $6 "An old installation" 0 get_next_key
     Call getShiftPositionForCheckbox
     Pop $9
     !insertmacro INSTALLOPTIONS_READ $7  "UninstallOldVersions.ini" "Field $8" "Top"
