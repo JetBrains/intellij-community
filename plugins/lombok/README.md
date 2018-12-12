@@ -133,6 +133,7 @@ Developed By
 - [**@Lekanich** Aleksandr Lekanich](https://github.com/Lekanich)
 - [**@mg6maciej** Maciej Górski](https://github.com/mg6maciej)
 - [**@mlueders** Mike Lueders](https://github.com/mlueders)
+- [**@RohanTalip** Rohan Talip](https://github.com/RohanTalip)
 - [**@ruurd** Ruurd Pels](https://github.com/ruurd)
 - [**@Sheigutn** Florian Böhm](https://github.com/Sheigutn)
 - [**@siosio** siosio](https://github.com/siosio)
