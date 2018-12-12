@@ -10,19 +10,16 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
-import com.intellij.openapi.vcs.changes.ui.CustomChangesBrowserNode
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.containers.isNullOrEmpty
+import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.ComponentWithEmptyText
-import com.intellij.xml.util.XmlStringUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
+import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitCommit
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import java.awt.BorderLayout
@@ -102,15 +99,14 @@ internal class GithubPullRequestChangesComponent(project: Project,
     override fun createViewerBorder(): Border = IdeBorderFactory.createBorder(SideBorder.TOP)
 
     override fun buildTreeModel(): DefaultTreeModel {
-      val builder = TreeModelBuilder(myProject, grouping)
+      val builder = MyTreeModelBuilder(myProject, grouping)
       if (projectUiSettings.zipChanges) {
         val zipped = CommittedChangesTreeBrowser.zipChanges(commits.reversed().flatMap { it.changes })
         builder.setChanges(zipped, null)
       }
       else {
         for (commit in commits) {
-          val tag = CommitTag(commit)
-          builder.setChanges(commit.changes, null, tag)
+          builder.addCommit(commit)
         }
       }
       return builder.build()
@@ -119,7 +115,19 @@ internal class GithubPullRequestChangesComponent(project: Project,
     override fun dispose() {}
   }
 
-  private data class CommitTag(val commit: GitCommit) : CustomChangesBrowserNode.Provider {
+  private class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory) : TreeModelBuilder(project, grouping) {
+    fun addCommit(commit: GitCommit) {
+      val parentNode = CommitTagBrowserNode(commit)
+      parentNode.markAsHelperNode()
+
+      myModel.insertNodeInto(parentNode, myRoot, myRoot.childCount)
+      for (change in commit.changes) {
+        insertChangeNode(change, parentNode, createChangeNode(change, null))
+      }
+    }
+  }
+
+  private class CommitTagBrowserNode(val commit: GitCommit) : ChangesBrowserNode<Any>(commit) {
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
       renderer.icon = AllIcons.Vcs.CommitNode
       renderer.append(commit.subject, SimpleTextAttributes.REGULAR_ATTRIBUTES)
@@ -135,10 +143,6 @@ internal class GithubPullRequestChangesComponent(project: Project,
 
     override fun getTextPresentation(): String {
       return commit.subject
-    }
-
-    override fun getUserObject(): Any {
-      return commit
     }
   }
 

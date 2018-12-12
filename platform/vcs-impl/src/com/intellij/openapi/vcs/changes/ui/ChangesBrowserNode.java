@@ -115,11 +115,6 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   @NotNull
-  public static ChangesBrowserNode createCustom(@NotNull CustomChangesBrowserNode.Provider customProvider) {
-    return new CustomChangesBrowserNode(customProvider);
-  }
-
-  @NotNull
   public static ChangesBrowserNode createObject(@NotNull Object userObject) {
     return new ChangesBrowserNode<>(userObject);
   }
@@ -141,9 +136,6 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     }
     if (userObject instanceof ChangesBrowserLogicallyLockedFile) {
       return (ChangesBrowserNode) userObject;
-    }
-    if (userObject instanceof CustomChangesBrowserNode.Provider) {
-      return new CustomChangesBrowserNode((CustomChangesBrowserNode.Provider)userObject);
     }
     return new ChangesBrowserNode<>(userObject);
   }

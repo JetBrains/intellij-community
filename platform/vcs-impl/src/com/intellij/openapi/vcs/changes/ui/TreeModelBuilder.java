@@ -257,13 +257,7 @@ public class TreeModelBuilder {
   protected ChangesBrowserNode createTagNode(@Nullable Object tag) {
     if (tag == null) return myRoot;
 
-    ChangesBrowserNode subtreeRoot;
-    if (tag instanceof CustomChangesBrowserNode.Provider) {
-      subtreeRoot = ChangesBrowserNode.createCustom((CustomChangesBrowserNode.Provider)tag);
-    }
-    else {
-      subtreeRoot = ChangesBrowserNode.createObject(tag);
-    }
+    ChangesBrowserNode subtreeRoot = ChangesBrowserNode.createObject(tag);
     subtreeRoot.markAsHelperNode();
 
     myModel.insertNodeInto(subtreeRoot, myRoot, myRoot.getChildCount());
