@@ -23,10 +23,13 @@ allprojects {
   apply plugin: 'jacoco'
 
   group pluginGroup
-  version = pluginVersion
+  
+  def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
+  ideaVersion = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
+  version = pluginVersion + "." + ideaVersion
 
-  sourceCompatibility = javaVersion
-  targetCompatibility = javaVersion
+  sourceCompatibility = JavaVersion.VERSION_1_8
+  targetCompatibility = JavaVersion.VERSION_1_8
 
   tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 
