@@ -291,9 +291,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   @Nullable
   @Override
   public PsiNamedElement getElementContainer(@NotNull PsiElement psiElement) {
-    PsiNamedElement cont = (PsiNamedElement)PsiTreeUtil.findFirstParent(psiElement, PROBLEM_ELEMENT_CONDITION);
-    System.out.println(cont);
-    return cont;
+    return (PsiNamedElement)PsiTreeUtil.findFirstParent(psiElement, PROBLEM_ELEMENT_CONDITION);
   }
 
   @Override
