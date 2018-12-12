@@ -30,6 +30,19 @@ notifications:
   webhooks:
     urls:
       - https://webhooks.gitter.im/e/33baacd26d1b840aebaa
-    on_success: always  # options: [always|never|change] default: always
-    on_failure: always  # options: [always|never|change] default: always
-    on_start: never     # options: [always|never|change] default: always
+    on_success: always  
+    on_failure: always  
+    on_start: never     
+
+deploy:
+  provider: releases
+  api_key:
+    secure: "${GITHUB_KEY}"
+  skip_cleanup: true
+  file_glob: true
+  file: "build/distributions/lombok-intellij-plugin-*.zip"
+  on:
+    tags: true
+#    condition: "$TRAVIS_TAG =~ ^v[0-9]+.*$"
+#after_deploy:
+#  - ./gradlew publishPlugin
