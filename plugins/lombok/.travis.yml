@@ -40,7 +40,7 @@ deploy:
     secure: "${GITHUB_KEY}"
   skip_cleanup: true
   file_glob: true
-  file: "build/distributions/lombok-intellij-plugin-*.zip"
+  file: "build/distributions/lombok-plugin-*.zip"
   on:
     tags: true
 #    condition: "$TRAVIS_TAG =~ ^v[0-9]+.*$"
