@@ -654,7 +654,6 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
           markPathRecent(path, openProject);
         }
       }
-      updateLastProjectPath();
       updateUI();
     }
   }
@@ -782,6 +781,13 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
     @Override
     public void projectOpenFailed() {
+      updateLastProjectPath();
+    }
+
+    @Override
+    public void projectFrameClosed() {
+      // ProjectManagerListener.projectClosed cannot be used to call updateLastProjectPath,
+      // because called even if project closed on app exit
       updateLastProjectPath();
     }
   }
