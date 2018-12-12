@@ -130,6 +130,7 @@ public class ExecutionUtil {
 
       NotificationListener notificationListener = _listener == null ? null : (notification, event) -> {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          notification.expire();
           _listener.hyperlinkUpdate(event);
         }
       };
