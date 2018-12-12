@@ -3,7 +3,8 @@ public class ConstConfig {
     
     void test(X x) {
         switch (x) {
-            case BAR, FO<caret> -> {}
+            case BAR, FO<caret>   ->
+              System.out.println();
         }
     }
 }
