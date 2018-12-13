@@ -131,6 +131,7 @@ covariant
 cplusplus
 cron
 ctrl
+cubemx
 customizer
 customizers
 cyclomatic
@@ -498,6 +499,7 @@ onclick
 online
 openid
 openjdk
+openocd
 openssl
 opensymphony
 optnone
