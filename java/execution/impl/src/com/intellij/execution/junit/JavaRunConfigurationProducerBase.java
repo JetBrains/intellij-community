@@ -19,6 +19,10 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public abstract class JavaRunConfigurationProducerBase<T extends ModuleBasedConfiguration> extends RunConfigurationProducer<T> {
+  /**
+   * @deprecated Override {@link #getConfigurationFactory()}.
+   */
+  @Deprecated
   protected JavaRunConfigurationProducerBase(ConfigurationFactory configurationFactory) {
     super(configurationFactory);
   }
@@ -28,7 +32,7 @@ public abstract class JavaRunConfigurationProducerBase<T extends ModuleBasedConf
    */
   @Deprecated
   protected JavaRunConfigurationProducerBase(@NotNull ConfigurationType configurationType) {
-    this(configurationType.getConfigurationFactories()[0]);
+    super(configurationType.getConfigurationFactories()[0]);
   }
 
   protected JavaRunConfigurationProducerBase() {

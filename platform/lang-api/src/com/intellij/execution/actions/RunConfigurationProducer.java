@@ -44,6 +44,10 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
 
   private final ConfigurationFactory myConfigurationFactory;
 
+  /**
+   * @deprecated Use {@link LazyRunConfigurationProducer}.
+   */
+  @Deprecated
   protected RunConfigurationProducer(@NotNull ConfigurationFactory configurationFactory) {
     myConfigurationFactory = configurationFactory;
   }
