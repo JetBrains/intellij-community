@@ -278,7 +278,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                               PyBundle.message("runcfg.tests.empty_suite"),
                               runner.getTestProxy().getPresentation());
           Assert.assertEquals("Wrong empty suite tree", "Test tree:\n" +
-                                                        "[root](~)\n", runner.getFormattedTestTree());
+                                                        "[root](-)\n", runner.getFormattedTestTree());
 
           runner.getFormattedTestTree();
         }
