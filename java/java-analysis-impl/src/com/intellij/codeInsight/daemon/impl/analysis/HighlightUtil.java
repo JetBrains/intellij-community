@@ -805,13 +805,13 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkContinueOutsideLoop(@NotNull PsiContinueStatement statement) {
+  static HighlightInfo checkContinueOutsideLoop(@NotNull PsiContinueStatement statement, LanguageLevel languageLevel) {
     if (PsiImplUtil.findEnclosingLoop(statement) == null) {
       String message = JavaErrorMessages.message("continue.outside.loop");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
     }
-
-    return null;
+    
+    return checkContinueOutsideOfSwitchExpression(statement,statement.findContinuedStatement(), languageLevel);
   }
 
   @Nullable
@@ -827,12 +827,19 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
     }
 
+    return checkContinueOutsideOfSwitchExpression(statement, continuedStatement, level);
+  }
+
+  private static HighlightInfo checkContinueOutsideOfSwitchExpression(@NotNull PsiContinueStatement statement,
+                                                                      PsiStatement continuedStatement,
+                                                                      @NotNull LanguageLevel level) {
     if (level.isAtLeast(LanguageLevel.JDK_12_PREVIEW)) {
       PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(statement);
       if (enclosing instanceof PsiSwitchExpression && PsiTreeUtil.isAncestor(continuedStatement, enclosing, true)) {
         String message = JavaErrorMessages.message("continue.outside.switch.expr");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
       }
+      return null;
     }
 
     return null;

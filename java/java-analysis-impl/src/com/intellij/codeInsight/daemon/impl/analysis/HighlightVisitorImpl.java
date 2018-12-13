@@ -454,7 +454,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitContinueStatement(statement);
     if (!myHolder.hasErrorResults()) {
       PsiIdentifier label = statement.getLabelIdentifier();
-      myHolder.add(label == null ? HighlightUtil.checkContinueOutsideLoop(statement)
+      myHolder.add(label == null ? HighlightUtil.checkContinueOutsideLoop(statement, myLanguageLevel)
                                  : HighlightUtil.checkContinueTarget(statement, label, myLanguageLevel));
     }
   }
