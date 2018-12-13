@@ -82,11 +82,7 @@ class ChainMethodCallsBlockBuilder {
         }
       }
       else {
-        if (!myJavaSettings.PLACE_DOT_ON_NEXT_LINE) {
-          wrap = Wrap.createWrap(mySettings.METHOD_CALL_CHAIN_WRAP, true);
-        } else {
-          wrap = null;
-        }
+        wrap = null;
         chainedCallsAlignment = null;
       }
 
@@ -127,26 +123,24 @@ class ChainMethodCallsBlockBuilder {
   }
 
   @NotNull
-  private List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<? extends ASTNode> nodes) {
+  private static List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<? extends ASTNode> nodes) {
     List<ChainedCallChunk> result = new ArrayList<>();
 
     List<ASTNode> current = new ArrayList<>();
-    boolean placeDotOnNextLine = myJavaSettings.PLACE_DOT_ON_NEXT_LINE;
     for (ASTNode node : nodes) {
-      if (!placeDotOnNextLine) {
-        current.add(node);
-      }
       if (node.getElementType() == JavaTokenType.DOT || node.getPsi() instanceof PsiComment) {
-        result.add(new ChainedCallChunk(current));
+        if (!current.isEmpty()) {
+          result.add(new ChainedCallChunk(current));
+        }
         current = new ArrayList<>();
       }
-      if (placeDotOnNextLine) {
-        current.add(node);
-      }
+      current.add(node);
     }
+    
     if (!current.isEmpty()) {
       result.add(new ChainedCallChunk(current));
     }
+    
     return result;
   }
 

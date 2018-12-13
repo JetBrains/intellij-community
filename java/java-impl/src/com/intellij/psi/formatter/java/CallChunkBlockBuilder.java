@@ -58,31 +58,7 @@ public class CallChunkBlockBuilder {
       }
       return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings, Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrap);
     }
-
-    // Support for groovy style dot placement
-    if (!subNodes.isEmpty()) {
-      final ASTNode lastNode = subNodes.get(subNodes.size() - 1);
-      if (lastNode.getElementType() == JavaTokenType.DOT) {
-        AlignmentStrategy strategy = AlignmentStrategy.getNullStrategy();
-        subNodes.remove(subNodes.size() - 1);
-        if (!subNodes.isEmpty()) {
-          subBlocks.add(create(subNodes, wrap, null));
-        }
-        Block block =
-          newJavaBlock(lastNode, mySettings, myJavaSettings, Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, true), strategy,
-                       myFormattingMode);
-        subBlocks.add(block);
-        return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings,
-                                      Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrap);
-      }
-    }
-    List<Block> blocks = createJavaBlocks(subNodes);
-
-    // Last line not contains '.', but needs to be wrapped
-    final Wrap finalWrap = myJavaSettings.PLACE_DOT_ON_NEXT_LINE ? null : wrap;
-    return new SyntheticCodeBlock(blocks, alignment, mySettings, myJavaSettings,
-                                  Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS),
-                                  finalWrap);
+    return new SyntheticCodeBlock(createJavaBlocks(subNodes), alignment, mySettings, myJavaSettings, Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), null);
   }
 
   @NotNull
