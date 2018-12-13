@@ -6,7 +6,7 @@ import com.intellij.testGuiFramework.impl.GuiTestCase
 import java.text.SimpleDateFormat
 
 val GuiTestCase.logger: Logger
-  get() = Logger.getInstance(this::class.java)
+  get() = Logger.getInstance(this::class.java.canonicalName)
 
 fun GuiTestCase.logInfo(message: String) {
   println(message)

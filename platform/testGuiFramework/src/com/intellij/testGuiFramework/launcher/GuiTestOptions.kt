@@ -29,6 +29,7 @@ object GuiTestOptions {
 
   val configPath: String by lazy { getSystemProperty("idea.config.path", configDefaultPath) }
   val systemPath: String by lazy { getSystemProperty("idea.system.path", systemDefaultPath) }
+  val guiTestLogFile: String by lazy { javaClass.classLoader.getResource("gui-test-log.xml").file }
   val guiTestRootDirPath: String? by lazy { System.getProperty("idea.gui.tests.root.dir.path", null) }
   val isGradleRunner: Boolean by lazy { getSystemProperty("idea.gui.tests.gradle.runner", false) }
 

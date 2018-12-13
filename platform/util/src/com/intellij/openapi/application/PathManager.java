@@ -37,6 +37,7 @@ public class PathManager {
   public static final String PROPERTY_SCRATCH_PATH = "idea.scratch.path";
   public static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
   public static final String PROPERTY_LOG_PATH = "idea.log.path";
+  public static final String PROPERTY_GUI_TEST_LOG_FILE = "idea.gui.tests.log.file";
   public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
   public static final String DEFAULT_OPTIONS_FILE_NAME = "other";
 
@@ -617,5 +618,17 @@ public class PathManager {
     catch (IOException e) {
       return path;
     }
+  }
+
+  public static File getLogFile() throws FileNotFoundException {
+    String logXmlPath = System.getProperty(PROPERTY_GUI_TEST_LOG_FILE);
+    if (logXmlPath != null) {
+      File logXmlFile = new File(logXmlPath);
+      if (logXmlFile.exists()) return logXmlFile;
+      else {
+        throw new FileNotFoundException(String.format("'%s' not found.", logXmlPath));
+      }
+    }
+    return findBinFileWithException("log.xml");
   }
 }
