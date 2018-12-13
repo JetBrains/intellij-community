@@ -96,6 +96,14 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     return UNSTOPPABLE_ELEMENTS;
   }
 
+  /**
+   * We can't rely only on file type, because there are Cython files which contain
+   * Python & Cython elements and there are Jupyter files which contain Python & Markdown elements
+   * That's why we should check that there is at least one stoppable psiElement at the line
+   *
+   * @param psiElement to check
+   * @return true if psiElement is compatible with breakpoint type and false otherwise
+   */
   protected boolean isPsiElementStoppable(PsiElement psiElement) {
     return psiElement.getLanguage() == PythonLanguage.INSTANCE;
   }
