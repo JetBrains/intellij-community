@@ -751,7 +751,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(HighlightNamesUtil.highlightClassName((PsiClass)resolved, ref, colorsScheme));
       }
       else {
-        myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(ref, colorsScheme));
         if (referenceNameElement != null) {
           if (resolved instanceof PsiVariable) {
             myHolder.add(HighlightNamesUtil.highlightVariableName((PsiVariable)resolved, referenceNameElement, colorsScheme));
@@ -868,7 +867,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       PsiElement methodNameElement = element.getReferenceNameElement();
       if (method != null && methodNameElement != null&& !(methodNameElement instanceof PsiKeyword)) {
         myHolder.add(HighlightNamesUtil.highlightMethodName(method, methodNameElement, false, colorsScheme));
-        myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(element, colorsScheme));
       }
     }
     else if (parent instanceof PsiConstructorCall) {
@@ -1146,7 +1144,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           myHolder.add(HighlightNamesUtil.highlightVariableName(variable, nameElement, colorsScheme));
         }
       }
-      myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(ref, colorsScheme));
     }
     else {
       highlightReferencedMethodOrClassName(ref, resolved);
@@ -1353,7 +1350,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)method, methodNameElement, false, colorsScheme));
         }
       }
-      myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(expression, colorsScheme));
     }
 
     if (!LambdaUtil.isValidLambdaContext(parent)) {
