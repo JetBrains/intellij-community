@@ -37,13 +37,6 @@ public abstract class VcsRootChecker {
   }
 
   /**
-   * Checks if the given directory is a root of the supported VCS.
-   */
-  public boolean isRoot(@NotNull VirtualFile maybeRoot) {
-    return isRoot(maybeRoot.getPath());
-  }
-
-  /**
    * Returns the VCS supported by this checker.
    */
   @NotNull
