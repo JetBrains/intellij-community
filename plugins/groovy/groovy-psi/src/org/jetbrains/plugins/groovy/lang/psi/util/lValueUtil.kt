@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
-import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.UnknownArgument
 
 /**
  * The expression is a rValue when it is in rValue position or it's a lValue of operator assignment.
@@ -39,7 +39,7 @@ class RValue(val argument: Argument)
 fun GrExpression.getRValue(): RValue? {
   val parent = parent
   return when (parent) {
-    is GrTuple -> RValue(JustTypeArgument(null))
+    is GrTuple -> RValue(UnknownArgument)
     is GrAssignmentExpression -> if (this !== parent.lValue) null else RValue(ExpressionArgument(parent))
     else -> null
   }
