@@ -211,6 +211,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "parentheses_expression_left_paren_wrap = false\n" +
       "parentheses_expression_right_paren_wrap = false\n" +
       "place_assignment_sign_on_next_line = false\n" +
+      "place_dot_on_next_line = true\n" +
       "prefer_longer_names = true\n" +
       "prefer_parameters_wrap = false\n" +
       "repeat_synchronized = true\n" +
