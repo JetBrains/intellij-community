@@ -19,7 +19,7 @@ public abstract class TaskDialogPanelProvider {
 
   private final static ExtensionPointName<TaskDialogPanelProvider> EP_NAME = ExtensionPointName.create("com.intellij.tasks.dialogPanelProvider");
 
-  public static List<TaskDialogPanel> getOpenTaskPanels(@NotNull Project project, @NotNull Task task) {
+  public static List<TaskDialogPanel> getOpenTaskPanels(@NotNull Project project, @NotNull LocalTask task) {
     return ContainerUtil.mapNotNull(EP_NAME.getExtensionList(),
                                     (NullableFunction<TaskDialogPanelProvider, TaskDialogPanel>)provider -> provider.getOpenTaskPanel(project, task));
   }
@@ -29,8 +29,14 @@ public abstract class TaskDialogPanelProvider {
                                     (NullableFunction<TaskDialogPanelProvider, TaskDialogPanel>)provider -> provider.getCloseTaskPanel(project, task));
   }
 
+  @Deprecated
   @Nullable
   public abstract TaskDialogPanel getOpenTaskPanel(@NotNull Project project, @NotNull Task task);
+
+  @Nullable
+  public TaskDialogPanel getOpenTaskPanel(@NotNull Project project, @NotNull LocalTask task) {
+    return getOpenTaskPanel(project, (Task)task);
+  }
 
   @Nullable
   public abstract TaskDialogPanel getCloseTaskPanel(@NotNull Project project, @NotNull LocalTask task);
