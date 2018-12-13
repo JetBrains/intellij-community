@@ -396,19 +396,19 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   public void testIds() {
     LocalTaskImpl task = new LocalTaskImpl("", "");
     assertEquals("", task.getNumber());
-    assertEquals(null, task.getProject());
+    assertNull(task.getProject());
 
     task = new LocalTaskImpl("-", "");
     assertEquals("-", task.getNumber());
-    assertEquals(null, task.getProject());
+    assertNull(task.getProject());
 
     task = new LocalTaskImpl("foo", "");
     assertEquals("foo", task.getNumber());
-    assertEquals(null, task.getProject());
+    assertNull(task.getProject());
 
     task = new LocalTaskImpl("112", "");
     assertEquals("112", task.getNumber());
-    assertEquals(null, task.getProject());
+    assertNull(task.getProject());
   }
 
   public void testRestoreChangelist() {
@@ -532,9 +532,8 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
   @NotNull
   private String dumpChangeListManager() {
-    return StringUtil.join(myChangeListManager.getChangeLists(), list -> {
-      return String.format("list: %s (%s) changes: %s", list.getName(), list.getId(), StringUtil.join(list.getChanges(), ", "));
-    }, "\n");
+    return StringUtil.join(myChangeListManager.getChangeLists(), list -> String
+      .format("list: %s (%s) changes: %s", list.getName(), list.getId(), StringUtil.join(list.getChanges(), ", ")), "\n");
   }
 
   private static class MyMockChangeProvider implements ChangeProvider {
