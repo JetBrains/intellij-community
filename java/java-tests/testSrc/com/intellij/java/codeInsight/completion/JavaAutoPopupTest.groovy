@@ -1771,6 +1771,21 @@ class Foo {{
     assert lookup
   }
 
+  void "test show popup with single live template if show_live_tempate_in_completion option is enabled"() {
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, myFixture.getTestRootDisposable())
+    myFixture.configureByText "a.java", """
+class Foo {{
+ita<caret>
+"""
+    type 'r'
+    assert lookup == null
+
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
+    type '\br'
+    assert lookup
+    assert myFixture.lookupElementStrings == ['itar']
+  }
+
   void "test expand class list when typing more or moving caret"() {
     myFixture.addClass 'package foo; public class KimeFamilyRange {}'
     myFixture.addClass 'package foo; public class FamiliesRangesMetaData {}'
