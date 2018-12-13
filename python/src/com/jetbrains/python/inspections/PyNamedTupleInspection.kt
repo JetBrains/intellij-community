@@ -20,21 +20,48 @@ class PyNamedTupleInspection : PyInspection() {
   companion object {
     fun inspectFieldsOrder(cls: PyClass,
                            ancestorsFilter: (PyClass) -> Boolean,
+                           checkInheritedOrder: Boolean,
                            context: TypeEvalContext,
                            callback: (PsiElement, String, ProblemHighlightType) -> Unit,
                            fieldsFilter: (PyTargetExpression) -> Boolean = { true },
                            hasAssignedValue: (PyTargetExpression) -> Boolean = PyTargetExpression::hasAssignedValue) {
       val fieldsProcessor = processFields(cls, fieldsFilter, hasAssignedValue)
 
+      val ancestors = cls.getAncestorClasses(context)
+      val ancestorsFields = ancestors.map {
+        when {
+          !ancestorsFilter(it) -> Ancestor.FILTERED
+          processFields(it, fieldsFilter, hasAssignedValue).fieldsWithDefaultValue.isNotEmpty() -> Ancestor.HAS_FIELD_WITH_DEFAULT_VALUE
+          else -> Ancestor.HAS_NOT_FIELD_WITH_DEFAULT_VALUE
+        }
+      }
+
+      if (checkInheritedOrder) {
+        var seenAncestorHavingFieldWithDefaultValue: PyClass? = null
+        for (ancestorAndFields in ancestors.zip(ancestorsFields).asReversed()) {
+          if (ancestorAndFields.second == Ancestor.HAS_FIELD_WITH_DEFAULT_VALUE) seenAncestorHavingFieldWithDefaultValue = ancestorAndFields.first
+          else if (ancestorAndFields.second == Ancestor.HAS_NOT_FIELD_WITH_DEFAULT_VALUE && seenAncestorHavingFieldWithDefaultValue != null) {
+            callback(
+              cls.superClassExpressionList!!,
+              "Inherited non-default argument(s) defined in ${ancestorAndFields.first.name} follows " +
+              "inherited default argument defined in ${seenAncestorHavingFieldWithDefaultValue.name}",
+              ProblemHighlightType.GENERIC_ERROR
+            )
+
+            break
+          }
+        }
+      }
+
       val lastFieldWithoutDefaultValue = fieldsProcessor.lastFieldWithoutDefaultValue
       if (lastFieldWithoutDefaultValue != null) {
-        val ancestorsHavingFieldsWithDefaultValue = cls.getAncestorClasses(context).filter {
-          ancestorsFilter(it) && processFields(it, fieldsFilter, hasAssignedValue).fieldsWithDefaultValue.isNotEmpty()
-        }
-
-        if (ancestorsHavingFieldsWithDefaultValue.isNotEmpty()) {
+        if (ancestorsFields.contains(Ancestor.HAS_FIELD_WITH_DEFAULT_VALUE)) {
           cls.nameIdentifier?.let { name ->
-            val ancestorsNames = ancestorsHavingFieldsWithDefaultValue.joinToString { "'${it.name}'" }
+            val ancestorsNames = ancestors
+              .asSequence()
+              .zip(ancestorsFields.asSequence())
+              .filter { it.second == Ancestor.HAS_FIELD_WITH_DEFAULT_VALUE }
+              .joinToString { "'${it.first.name}'" }
 
             callback(name,
                      "Non-default argument(s) follows default argument(s) defined in $ancestorsNames",
@@ -58,6 +85,10 @@ class PyNamedTupleInspection : PyInspection() {
 
       return fieldsProcessor
     }
+
+    private enum class Ancestor {
+      FILTERED, HAS_FIELD_WITH_DEFAULT_VALUE, HAS_NOT_FIELD_WITH_DEFAULT_VALUE
+    }
   }
 
   override fun buildVisitor(holder: ProblemsHolder,
@@ -72,7 +103,7 @@ class PyNamedTupleInspection : PyInspection() {
       if (node != null &&
           LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36) &&
           PyNamedTupleTypeProvider.isTypingNamedTupleDirectInheritor(node, myTypeEvalContext)) {
-        inspectFieldsOrder(node, { false }, myTypeEvalContext, this::registerProblem)
+        inspectFieldsOrder(node, { false }, false, myTypeEvalContext, this::registerProblem)
       }
     }
   }

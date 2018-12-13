@@ -28,3 +28,28 @@ class A3:
 @dataclasses.dataclass
 class B3(A3):
     y1: str
+
+@dataclasses.dataclass
+class A41:
+    field1: int
+
+@dataclasses.dataclass
+class A42:
+    field2: str = "1"
+
+@dataclasses.dataclass
+class B4<error descr="Inherited non-default argument(s) defined in A41 follows inherited default argument defined in A42">(A41, A42)</error>:
+    pass
+
+@attr.dataclass
+class A51:
+    field1: int
+
+@attr.dataclass
+class A52:
+    field2: str = "1"
+
+@attr.dataclass
+class B5(A51, A52):
+    pass
+

@@ -110,6 +110,7 @@ class PyDataclassInspection : PyInspection() {
           PyNamedTupleInspection.inspectFieldsOrder(
             node,
             { parseDataclassParameters(it, myTypeEvalContext) != null },
+            dataclassParameters.type == PyDataclassParameters.Type.STD,
             myTypeEvalContext,
             this::registerProblem,
             {
