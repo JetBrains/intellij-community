@@ -38,8 +38,8 @@ private fun getTypeFromResult(result: GroovyResolveResult, expression: GrMethodC
 
 private fun getBaseTypeFromResult(result: GroovyResolveResult, expression: GrMethodCall): PsiType? {
   return when {
-    result is GroovyMethodResult -> getTypeFromCandidate(result, expression)
     result.isInvokedOnProperty -> getTypeFromPropertyCall(result.element, expression)
+    result is GroovyMethodResult -> getTypeFromCandidate(result, expression)
     else -> null
   }
 }

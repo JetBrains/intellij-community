@@ -8,7 +8,6 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.PsiImmediateClassType
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -231,10 +230,6 @@ class TypeInferenceTest extends TypeInferenceTestBase {
 
   void testMultiTypeParameter() {
     assertTypeEquals("X | Y", "a.groovy")
-  }
-
-  void testTypeArgsInAccessor() {
-    assertTypeEquals("Foo<java.lang.String>", "a.groovy")
   }
 
   void testSingleParameterInStringInjection() {

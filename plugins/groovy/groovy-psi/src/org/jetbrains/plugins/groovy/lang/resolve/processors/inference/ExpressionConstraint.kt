@@ -6,10 +6,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.Constrain
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 
 class ExpressionConstraint(private val leftType: PsiType?, private val expression: GrExpression) : GrConstraintFormula() {
 
@@ -23,6 +20,19 @@ class ExpressionConstraint(private val leftType: PsiType?, private val expressio
       is GrClosableBlock -> if (leftType != null) constraints.add(ClosureConstraint(expression, leftType))
       is GrSafeCastExpression -> if (leftType != null) constraints.add(SafeCastConstraint(leftType, expression))
       is GrListOrMap -> constraints.add(ListConstraint(leftType, expression))
+      is GrReferenceExpression -> {
+        val result = expression.rValueReference?.advancedResolve()
+        if (result is GroovyMethodResult) {
+          constraints += MethodCallConstraint(leftType, result, expression)
+        }
+        else if (leftType != null) {
+          constraints += TypeConstraint(leftType, expression.type, expression)
+        }
+      }
+      is GrAssignmentExpression -> {
+        val result = (expression.lValue as? GrReferenceExpression)?.lValueReference?.advancedResolve() as? GroovyMethodResult ?: return true
+        constraints.add(MethodCallConstraint(null, result, expression))
+      }
       else -> if (leftType != null) constraints.add(TypeConstraint(leftType, expression.type, expression))
     }
     return true

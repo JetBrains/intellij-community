@@ -38,9 +38,17 @@ class RValue(val argument: Argument)
  */
 fun GrExpression.getRValue(): RValue? {
   val parent = parent
-  return when (parent) {
-    is GrTuple -> RValue(UnknownArgument)
-    is GrAssignmentExpression -> if (this !== parent.lValue) null else RValue(ExpressionArgument(parent))
+  return when {
+    parent is GrTuple -> RValue(UnknownArgument)
+    parent is GrAssignmentExpression && parent.lValue === this -> {
+      val argument = if (parent.isOperatorAssignment) {
+        ExpressionArgument(parent)
+      }
+      else {
+        parent.rValue?.let(::ExpressionArgument) ?: UnknownArgument
+      }
+      RValue(argument)
+    }
     else -> null
   }
 }
