@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PatternCondition;
@@ -80,18 +79,14 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
             ensureTemplatesShown(templatesShown, templates, finalResult);
           }
 
-          Ref<Boolean> showTemplatesInPopup = Ref.create(!parameters.isAutoPopup());
           result.runRemainingContributors(parameters, completionResult -> {
-            showTemplatesInPopup.set(Boolean.TRUE);
             finalResult.passResult(completionResult);
             if (completionResult.isStartMatch()) {
               ensureTemplatesShown(templatesShown, templates, finalResult);
             }
           });
 
-          if (showTemplatesInPopup.get() == Boolean.TRUE) {
-            ensureTemplatesShown(templatesShown, templates, result);
-          }
+          ensureTemplatesShown(templatesShown, templates, result);
           showCustomLiveTemplates(parameters, result);
           return;
         }
