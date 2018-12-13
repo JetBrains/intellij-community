@@ -1420,4 +1420,36 @@ public class ExpressionUtils {
       }
     }
   }
+
+  public static PsiElement getPassThroughParent(PsiExpression expression) {
+    while (true) {
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression) {
+        expression = (PsiExpression)parent;
+        continue;
+      }
+      else if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != expression) {
+        expression = (PsiExpression)parent;
+        continue;
+      }
+      else if (parent instanceof PsiExpressionStatement) {
+        final PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof PsiSwitchLabeledRuleStatement) {
+          final PsiSwitchBlock block = ((PsiSwitchLabeledRuleStatement)grandParent).getEnclosingSwitchBlock();
+          if (block instanceof PsiSwitchExpression) {
+            expression = (PsiExpression)block;
+            continue;
+          }
+        }
+      }
+      else if (parent instanceof PsiBreakStatement) {
+        final PsiElement exitedElement = ((PsiBreakStatement)parent).findExitedElement();
+        if (exitedElement instanceof PsiSwitchExpression) {
+          expression = (PsiExpression)exitedElement;
+          continue;
+        }
+      }
+      return parent;
+    }
+  }
 }
