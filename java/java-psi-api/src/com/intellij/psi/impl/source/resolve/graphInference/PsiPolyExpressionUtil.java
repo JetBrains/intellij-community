@@ -130,10 +130,16 @@ public class PsiPolyExpressionUtil {
   }
 
   private static boolean isSwitchExpressionAssignmentOrInvocationContext(PsiExpression expr) {
-    PsiSwitchExpression switchExpression = PsiTreeUtil.getParentOfType(expr, PsiSwitchExpression.class);
-    return switchExpression  != null && 
-           PsiUtil.getSwitchResultExpressions(switchExpression).contains(expr) && 
-           isInAssignmentOrInvocationContext(switchExpression);
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expr).getParent();
+    if (parent instanceof PsiExpressionStatement && parent.getParent() instanceof PsiSwitchLabeledRuleStatement || 
+        parent instanceof PsiBreakStatement || 
+        parent instanceof PsiThrowStatement) {
+      PsiSwitchExpression switchExpression = PsiTreeUtil.getParentOfType(expr, PsiSwitchExpression.class, true, PsiMember.class, PsiLambdaExpression.class);
+      return switchExpression  != null &&
+             PsiUtil.getSwitchResultExpressions(switchExpression).contains(expr) &&
+             isInAssignmentOrInvocationContext(switchExpression);
+    }
+    return false;
   }
 
   private static boolean isAssignmentContext(PsiExpression expr, PsiElement context) {
