@@ -227,6 +227,15 @@
     <lang.treePatcher language="JAVA" implementationClass="com.intellij.psi.templateLanguages.MiddleTreePatcher"/>
     <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.JavaFactoryProvider"/>
     <dom.uiControlsProvider implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.JvmPsiTypeConverter"
+                   implementationClass="com.intellij.util.xml.JvmPsiTypeConverterImpl"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.CanonicalPsiTypeConverter"
+                   implementationClass="com.intellij.util.xml.CanonicalPsiTypeConverterImpl"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.converters.values.ClassValueConverter"
+                   implementationClass="com.intellij.util.xml.converters.ClassValueConverterImpl"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.converters.values.ClassArrayConverter"
+                   implementationClass="com.intellij.util.xml.converters.ClassArrayConverterImpl"/>
+
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
     <psiViewerExtension implementation="com.intellij.internal.psiView.PsiViewerExpressionExtension"/>
     <psiViewerExtension implementation="com.intellij.internal.psiView.PsiViewerCodeFragmentExtension"/>
