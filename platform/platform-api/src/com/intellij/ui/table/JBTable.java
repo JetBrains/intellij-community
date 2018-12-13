@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
@@ -566,6 +567,17 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       ((JCheckBox)renderer).getModel().setRollover(rollOverCell != null && rollOverCell.at(row, column));
     }
     return result;
+  }
+
+  @Override
+  protected void processMouseEvent(MouseEvent e) {
+    MouseEvent e2 = e;
+
+    if (SystemInfo.isMac) {
+      e2 = MacUIUtil.fixMacContextMenuIssue(e);
+    }
+
+    super.processMouseEvent(e2);
   }
 
   private final class MyCellEditorRemover extends Activatable.Adapter implements PropertyChangeListener {
