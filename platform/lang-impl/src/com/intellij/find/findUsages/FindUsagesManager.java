@@ -39,10 +39,8 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.search.*;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
@@ -347,6 +345,8 @@ public class FindUsagesManager {
       Project project = ReadAction.compute(() -> scopeFile != null ? scopeFile.getProject() : primaryElements[0].getProject());
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       LOG.assertTrue(indicator != null, "Must run under progress. see ProgressManager.run*");
+
+      ((PsiManagerImpl)PsiManager.getInstance(project)).dropResolveCacheRegularly(indicator);
 
       if (scopeFile != null) {
         optionsClone.searchScope = new LocalSearchScope(scopeFile);
