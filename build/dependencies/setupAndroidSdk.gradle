@@ -64,7 +64,7 @@ task setupOfflineRepo(dependsOn: downloadOfflineRepo, type: Copy) {
 
 task downloadAndroidSdk(type: Download) {
   def osFamily = currentOs.familyName
-  src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk/linux.3.1.2/android-sdk.tar.gz"
+  src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk/${osFamily}.3.1.2/android-sdk.tar.gz"
   dest "$buildDir/android-sdk/${osFamily}.tar.gz"
   onlyIfNewer true
   onlyIf { !currentOs.isMacOsX() }
