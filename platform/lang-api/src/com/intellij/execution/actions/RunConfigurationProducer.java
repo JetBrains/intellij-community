@@ -67,6 +67,10 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     myConfigurationFactory = null;
   }
 
+  /**
+   * @deprecated Use {@link LazyRunConfigurationProducer}.
+   */
+  @Deprecated
   protected RunConfigurationProducer(@NotNull ConfigurationType configurationType) {
     myConfigurationFactory = configurationType.getConfigurationFactories()[0];
   }
