@@ -28,8 +28,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
+import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -41,6 +41,7 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitRepository;
+import git4idea.util.GitFileUtils;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -180,14 +181,10 @@ public class GitMergeUtil {
                                         boolean isReversed) throws VcsException {
     final FilePath path = VcsUtil.getFilePath(file.getPath());
 
-    GitFileRevision original = new GitFileRevision(project, path, new GitRevisionNumber(":" + ORIGINAL_REVISION_NUM));
-    GitFileRevision current = new GitFileRevision(project, path, new GitRevisionNumber(":" + yoursRevision(isReversed)));
-    GitFileRevision last = new GitFileRevision(project, path, new GitRevisionNumber(":" + theirsRevision(isReversed)));
-
     MergeData mergeData = new MergeData();
-    mergeData.ORIGINAL = loadOriginalContent(original, file);
-    mergeData.CURRENT = loadRevisionCatchingErrors(current);
-    mergeData.LAST = loadRevisionCatchingErrors(last);
+    mergeData.ORIGINAL = loadOriginalContent(project, root, path, file);
+    mergeData.CURRENT = loadRevisionCatchingErrors(project, root, path, yoursRevision(isReversed));
+    mergeData.LAST = loadRevisionCatchingErrors(project, root, path, theirsRevision(isReversed));
 
     // TODO: can be done once for a root
     mergeData.CURRENT_REVISION_NUMBER = findCurrentRevisionNumber(project, root, isReversed);
@@ -286,9 +283,13 @@ public class GitMergeUtil {
     }
   }
 
-  private static byte[] loadOriginalContent(@NotNull GitFileRevision revision, @NotNull VirtualFile file) {
+  @NotNull
+  private static byte[] loadOriginalContent(@NotNull Project project,
+                                            @NotNull VirtualFile root,
+                                            @NotNull FilePath path,
+                                            @NotNull VirtualFile file) {
     try {
-      return revision.loadContent();
+      return loadRevisionContent(project, root, path, ORIGINAL_REVISION_NUM);
     }
     catch (Exception ex) {
       /// unable to load original revision, use the current instead
@@ -303,9 +304,13 @@ public class GitMergeUtil {
     }
   }
 
-  private static byte[] loadRevisionCatchingErrors(@NotNull GitFileRevision revision) throws VcsException {
+  @NotNull
+  private static byte[] loadRevisionCatchingErrors(@NotNull Project project,
+                                                   @NotNull VirtualFile root,
+                                                   @NotNull FilePath path,
+                                                   int stageNum) throws VcsException {
     try {
-      return revision.loadContent();
+      return loadRevisionContent(project, root, path, stageNum);
     }
     catch (VcsException e) {
       String m = e.getMessage().trim();
@@ -320,6 +325,14 @@ public class GitMergeUtil {
         throw e;
       }
     }
+  }
+
+  @NotNull
+  private static byte[] loadRevisionContent(@NotNull Project project,
+                                            @NotNull VirtualFile root,
+                                            @NotNull FilePath path,
+                                            int stageNum) throws VcsException {
+    return GitFileUtils.getFileContent(project, root, ":" + stageNum, VcsFileUtil.relativePath(root, path));
   }
 
   @NotNull
