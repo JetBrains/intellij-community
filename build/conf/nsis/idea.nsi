@@ -50,6 +50,7 @@ Var control_fields
 Var max_fields
 Var bottom_position
 Var max_length
+Var line_width
 Var extra_space
 
 ; position of controls for Installation Options dialog
@@ -775,30 +776,23 @@ Function getUninstallOldVersionVars
   !insertmacro INSTALLOPTIONS_READ $control_fields "UninstallOldVersions.ini" "Settings" "ControlFields"
   !insertmacro INSTALLOPTIONS_READ $bottom_position "UninstallOldVersions.ini" "Settings" "BottomPosition"
   !insertmacro INSTALLOPTIONS_READ $max_length "UninstallOldVersions.ini" "Settings" "MaxLength"
+  !insertmacro INSTALLOPTIONS_READ $line_width "UninstallOldVersions.ini" "Settings" "LineWidth"
   !insertmacro INSTALLOPTIONS_READ $extra_space "UninstallOldVersions.ini" "Settings" "ExtraSpace"
 FunctionEnd
 
 
-Function getShiftPositionForCheckbox
-; return
-;    0 if no need additional space for controls
-;    and no 0 if it needs.
+Function getPosition
+; return:
+;    0 if it is first checkbox which do not require special position
+;    Bottom position of previous checkbox which equals for Top position of current one.
   IntOp $R8 $8 - 1
-  StrCmp $R8 $control_fields noCheckboxesFound 0
   !insertmacro INSTALLOPTIONS_READ $R7 "UninstallOldVersions.ini" "Field $R8" "Bottom"
   !insertmacro INSTALLOPTIONS_READ $7  "UninstallOldVersions.ini" "Field $8"  "Top"
-  ${If} $R7 == $7
-  ; no shift. there are only one-line checkboxes so far
-    Goto noShift
-  ${Else}
-  ; shift. there is(are) multi-line checkbox(es)
-    IntOp $7 $R7 - $7
-    Push $7
+  StrCmp $R8 $control_fields noCheckboxesFound 0
+    Push $R7
     Goto done
-  ${EndIf}
 noCheckboxesFound:
-noShift:
-  Push 0
+    Push $7
 done:
 FunctionEnd
 
@@ -839,6 +833,7 @@ Function uninstallOldVersionDialog
   StrCpy $0 "HKLM"
   StrCpy $4 0
   StrCpy $8 $control_fields
+  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 2" "State" "0"
 
 get_installation_info:
   StrCpy $1 "Software\${MANUFACTURER}\${MUI_PRODUCT}"
@@ -852,27 +847,22 @@ uninstall_dialog:
   Call checkProductVersion
   ${If} $6 != "duplicated"
     IntOp $8 $8 + 1
-    !insertmacro INSTALLOPTIONS_READ $6 "UninstallOldVersions.ini" "Field $7" "Text"
-    ;text of checkbox is not yet prepared?
-    StrCmp $6 "An old installation" 0 get_next_key
-    Call getShiftPositionForCheckbox
-    Pop $9
-    !insertmacro INSTALLOPTIONS_READ $7  "UninstallOldVersions.ini" "Field $8" "Top"
-    !insertmacro INSTALLOPTIONS_READ $R7 "UninstallOldVersions.ini" "Field $8" "Bottom"
-    IntOp $7 $7 + $9
-    IntOp $R7 $R7 + $9
+    Call getPosition
+    Pop $7
+    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Top" "$7"
+    IntOp $R7 $7 + $line_width
     Call getAdditionalSpaceForCheckbox
     Pop $R9
     IntOp $R7 $R7 + $R9
-    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Top" "$7"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Bottom" "$R7"
+    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "State" "0"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Text" "$3"
     Call haveSpaceForTheCheckbox
     Pop $9
     StrCmp $9 0 0 complete
   ${EndIf}
 get_next_key:
-  IntOp $4 $4 + 1 ;to check next record from registry
+  IntOp $4 $4 + 1 ;next record from registry
   goto get_installation_info
 
 next_registry_root:
