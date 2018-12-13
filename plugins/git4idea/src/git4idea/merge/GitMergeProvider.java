@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -103,12 +104,12 @@ public class GitMergeProvider implements MergeProvider2 {
   public MergeData loadRevisions(@NotNull final VirtualFile file) throws VcsException {
     final Ref<MergeData> mergeDataRef = new Ref<>(new MergeData());
     final VirtualFile root = GitUtil.getGitRoot(file);
+    final FilePath path = VcsUtil.getFilePath(file);
 
     VcsRunnable runnable = new VcsRunnable() {
       @Override
-      @SuppressWarnings({"ConstantConditions"})
       public void run() throws VcsException {
-        mergeDataRef.set(GitMergeUtil.loadMergeData(myProject, root, file, myReverseRoots.contains(root)));
+        mergeDataRef.set(GitMergeUtil.loadMergeData(myProject, root, path, myReverseRoots.contains(root)));
       }
     };
     VcsUtil.runVcsProcessWithProgress(runnable, GitBundle.message("merge.load.files"), false, myProject);
