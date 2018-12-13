@@ -16,6 +16,7 @@
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -26,6 +27,7 @@ import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -135,8 +137,9 @@ public class AutoUnboxingInspection extends BaseInspection {
       if (unboxedType == null) {
         return;
       }
-      CommentTracker commentTracker = new CommentTracker();
-      final String newExpressionText = buildNewExpressionText(expression, unboxedType, commentTracker);
+      final CommentTracker commentTracker = new CommentTracker();
+      final PsiExpression enhancedExpression = ObjectUtils.notNull(AddTypeArgumentsFix.addTypeArguments(expression, null), expression);
+      final String newExpressionText = buildNewExpressionText(enhancedExpression, unboxedType, commentTracker);
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
       final PsiElement parent = expression.getParent();
