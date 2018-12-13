@@ -4,7 +4,6 @@ package com.intellij.execution.testframework;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -34,10 +33,6 @@ import org.jetbrains.annotations.Contract;
 import java.util.*;
 
 public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestConfigurationBase> extends JavaRunConfigurationProducerBase<T> {
-  protected AbstractJavaTestConfigurationProducer(ConfigurationFactory configurationFactory) {
-    super(configurationFactory);
-  }
-
   /**
    * @deprecated Override {@link #getConfigurationFactory()}.
    */

@@ -3,6 +3,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -38,9 +39,12 @@ public final class TestInClassConfigurationProducer extends JUnitConfigurationPr
     return myDelegate.isApplicableTestType(type, context);
   }
 
-  private static class JUnitInClassConfigurationProducerDelegate
-    extends AbstractInClassConfigurationProducer<JUnitConfiguration> {
-    JUnitInClassConfigurationProducerDelegate() {super(JUnitConfigurationType.getInstance());}
+  private static class JUnitInClassConfigurationProducerDelegate extends AbstractInClassConfigurationProducer<JUnitConfiguration> {
+    @NotNull
+    @Override
+    public ConfigurationFactory getConfigurationFactory() {
+      return JUnitConfigurationType.getInstance().getConfigurationFactories()[0];
+    }
 
     @Override
     protected boolean isApplicableTestType(String type, ConfigurationContext context) {

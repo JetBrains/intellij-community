@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.JavaTestConfigurationBase;
@@ -27,10 +26,16 @@ import java.util.List;
 public abstract class AbstractInClassConfigurationProducer<T extends JavaTestConfigurationBase> extends AbstractJavaTestConfigurationProducer<T> {
   private static final Logger LOG = Logger.getInstance(AbstractInClassConfigurationProducer.class);
 
+  /**
+   * @deprecated Override {@link #getConfigurationFactory()}.
+   */
+  @Deprecated
   protected AbstractInClassConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }
 
+  protected AbstractInClassConfigurationProducer() {
+  }
 
   @Override
   public void onFirstRun(@NotNull final ConfigurationFromContext configuration,

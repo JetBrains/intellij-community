@@ -3,7 +3,7 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -11,7 +11,7 @@ import com.theoryinpractice.testng.model.TestType;
 import org.jetbrains.annotations.NotNull;
 
 public class TestNGInClassConfigurationProducer extends TestNGConfigurationProducer {
-  private final TestNGInClassConfigurationProducerDelegate myDelegate = new TestNGInClassConfigurationProducerDelegate(TestNGConfigurationType.getInstance());
+  private final TestNGInClassConfigurationProducerDelegate myDelegate = new TestNGInClassConfigurationProducerDelegate();
 
   @Override
   public void onFirstRun(@NotNull ConfigurationFromContext configuration,
@@ -33,8 +33,10 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
   }
 
   private static class TestNGInClassConfigurationProducerDelegate extends AbstractInClassConfigurationProducer<TestNGConfiguration> {
-    protected TestNGInClassConfigurationProducerDelegate(ConfigurationType configurationType) {
-      super(configurationType);
+    @NotNull
+    @Override
+    public ConfigurationFactory getConfigurationFactory() {
+      return TestNGConfigurationType.getInstance();
     }
 
     @Override
