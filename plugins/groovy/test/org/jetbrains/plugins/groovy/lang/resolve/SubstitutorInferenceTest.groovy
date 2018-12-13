@@ -131,6 +131,15 @@ F<Integer, String> w = new Wrapper<>({} <caret>as F)
   }
 
   @Test
+  void 'explicit closure safe cast as argument of generic method'() {
+    typingTest('''\
+interface Producer<T> {}
+static <T> T ppp(Producer<T> p) {}
+<caret>ppp({} as Producer<String>)
+''', GrMethodCall, 'java.lang.String')
+  }
+
+  @Test
   void 'implicit call in variable initializer'() {
     typingTest('String s = <caret>new IdCallable()()', GrMethodCall, 'java.lang.String')
   }
