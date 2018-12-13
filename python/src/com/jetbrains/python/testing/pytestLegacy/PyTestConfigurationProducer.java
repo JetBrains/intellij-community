@@ -1,9 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.pytestLegacy;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -33,10 +34,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.List;
 
-public class PyTestConfigurationProducer extends PythonTestLegacyConfigurationProducer<PyTestRunConfiguration> {
-
-  public PyTestConfigurationProducer() {
-    super(PythonTestConfigurationType.getInstance().LEGACY_PYTEST_FACTORY);
+public final class PyTestConfigurationProducer extends PythonTestLegacyConfigurationProducer<PyTestRunConfiguration> {
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return PythonTestConfigurationType.getInstance().LEGACY_PYTEST_FACTORY;
   }
 
   @Override

@@ -655,8 +655,8 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> :
 /**
  * Only one producer is registered with EP, but it uses factory configured by user to produce different configs
  */
-object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<PyAbstractTestConfiguration>(
-  PythonTestConfigurationType.getInstance()) {
+object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<PyAbstractTestConfiguration>() {
+  override fun getConfigurationFactory() = PythonTestConfigurationType.getInstance().configurationFactories[0]
 
   override val configurationClass: Class<PyAbstractTestConfiguration> = PyAbstractTestConfiguration::class.java
 

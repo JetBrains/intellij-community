@@ -2,6 +2,7 @@
 package com.jetbrains.python.testing.nosetestLegacy;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -14,10 +15,11 @@ import com.jetbrains.python.testing.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PythonNoseTestConfigurationProducer extends
-                                                 PythonTestLegacyConfigurationProducer {
-  public PythonNoseTestConfigurationProducer() {
-    super(PythonTestConfigurationType.getInstance().LEGACY_NOSETEST_FACTORY);
+public final class PythonNoseTestConfigurationProducer extends PythonTestLegacyConfigurationProducer {
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return PythonTestConfigurationType.getInstance().LEGACY_NOSETEST_FACTORY;
   }
 
   @Override

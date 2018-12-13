@@ -47,6 +47,7 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
     return super.getConfigurationFactories();
   });
 
+  @NotNull
   public static PythonTestConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(PythonTestConfigurationType.class);
   }
