@@ -178,45 +178,49 @@ public class GitMergeUtil {
                                         @NotNull VirtualFile root,
                                         @NotNull FilePath path,
                                         boolean isReversed) throws VcsException {
-    MergeData mergeData = new MergeData();
-    mergeData.ORIGINAL = loadOriginalContent(project, root, path);
-    mergeData.CURRENT = loadRevisionCatchingErrors(project, root, path, yoursRevision(isReversed));
-    mergeData.LAST = loadRevisionCatchingErrors(project, root, path, theirsRevision(isReversed));
+    byte[] originalContent = loadOriginalContent(project, root, path);
+    byte[] yoursContent = loadRevisionCatchingErrors(project, root, path, YOURS_REVISION_NUM);
+    byte[] theirsContent = loadRevisionCatchingErrors(project, root, path, THEIRS_REVISION_NUM);
 
     // TODO: can be done once for a root
-    mergeData.CURRENT_REVISION_NUMBER = findCurrentRevisionNumber(project, root, isReversed);
-    mergeData.LAST_REVISION_NUMBER = findLastRevisionNumber(project, root, isReversed);
-    mergeData.ORIGINAL_REVISION_NUMBER =
-      findOriginalRevisionNumber(project, root, mergeData.CURRENT_REVISION_NUMBER, mergeData.LAST_REVISION_NUMBER);
+    GitRevisionNumber yoursRevision = resolveHead(project, root);
+    GitRevisionNumber theirsRevision = resolveMergeHead(project, root);
+    GitRevisionNumber originalRevision = findOriginalRevisionNumber(project, root, yoursRevision, theirsRevision);
 
 
-    Trinity<String, String, String> blobs = getAffectedBlobs(project, root, path, isReversed);
+    Trinity<String, String, String> blobs = getAffectedBlobs(project, root, path);
 
-    mergeData.CURRENT_FILE_PATH = getBlobPathInRevision(project, root, path, blobs.getFirst(), mergeData.CURRENT_REVISION_NUMBER);
-    mergeData.ORIGINAL_FILE_PATH = getBlobPathInRevision(project, root, path, blobs.getSecond(), mergeData.ORIGINAL_REVISION_NUMBER);
-    mergeData.LAST_FILE_PATH = getBlobPathInRevision(project, root, path, blobs.getThird(), mergeData.LAST_REVISION_NUMBER);
+    FilePath originalPath = getBlobPathInRevision(project, root, path, blobs.getFirst(), originalRevision);
+    FilePath yoursPath = getBlobPathInRevision(project, root, path, blobs.getSecond(), yoursRevision);
+    FilePath theirsPath = getBlobPathInRevision(project, root, path, blobs.getThird(), theirsRevision);
+
+
+    MergeData mergeData = new MergeData();
+
+    mergeData.ORIGINAL = originalContent;
+    mergeData.CURRENT = !isReversed ? yoursContent : theirsContent;
+    mergeData.LAST = isReversed ? yoursContent : theirsContent;
+
+    mergeData.ORIGINAL_REVISION_NUMBER = originalRevision;
+    mergeData.CURRENT_REVISION_NUMBER = !isReversed ? yoursRevision : theirsRevision;
+    mergeData.LAST_REVISION_NUMBER = isReversed ? yoursRevision : theirsRevision;
+
+    mergeData.ORIGINAL_FILE_PATH = originalPath;
+    mergeData.CURRENT_FILE_PATH = !isReversed ? yoursPath : theirsPath;
+    mergeData.LAST_FILE_PATH = isReversed ? yoursPath : theirsPath;
 
     return mergeData;
   }
 
-  @Nullable
-  private static GitRevisionNumber findLastRevisionNumber(@NotNull Project project, @NotNull VirtualFile root, boolean isReversed) {
-    return isReversed ? resolveHead(project, root) : resolveMergeHead(project, root);
-  }
-
-  @Nullable
-  private static GitRevisionNumber findCurrentRevisionNumber(@NotNull Project project, @NotNull VirtualFile root, boolean isReversed) {
-    return isReversed ? resolveMergeHead(project, root) : resolveHead(project, root);
-  }
 
   @Nullable
   private static GitRevisionNumber findOriginalRevisionNumber(@NotNull Project project,
                                                               @NotNull VirtualFile root,
-                                                              @Nullable VcsRevisionNumber currentRevision,
-                                                              @Nullable VcsRevisionNumber lastRevision) {
-    if (currentRevision == null || lastRevision == null) return null;
+                                                              @Nullable VcsRevisionNumber yoursRevision,
+                                                              @Nullable VcsRevisionNumber theirsRevision) {
+    if (yoursRevision == null || theirsRevision == null) return null;
     try {
-      return GitHistoryUtils.getMergeBase(project, root, currentRevision.asString(), lastRevision.asString());
+      return GitHistoryUtils.getMergeBase(project, root, yoursRevision.asString(), theirsRevision.asString());
     }
     catch (VcsException e) {
       LOG.warn(e);
@@ -339,11 +343,11 @@ public class GitMergeUtil {
     return GitFileUtils.getFileContent(project, root, ":" + stageNum, VcsFileUtil.relativePath(root, path));
   }
 
+
   @NotNull
   private static Trinity<String, String, String> getAffectedBlobs(@NotNull Project project,
                                                                   @NotNull VirtualFile root,
-                                                                  @NotNull FilePath path,
-                                                                  boolean isReversed) {
+                                                                  @NotNull FilePath path) {
     try {
       GitLineHandler h = new GitLineHandler(project, root, GitCommand.LS_FILES);
       h.addParameters("--exclude-standard", "--unmerged", "-z");
@@ -353,9 +357,9 @@ public class GitMergeUtil {
       String output = Git.getInstance().runCommand(h).getOutputOrThrow();
       StringScanner s = new StringScanner(output);
 
-      String lastBlob = null;
-      String currentBlob = null;
       String originalBlob = null;
+      String yoursBlob = null;
+      String theirsBlob = null;
 
       while (s.hasMoreData()) {
         s.spaceToken(); // permissions
@@ -363,20 +367,21 @@ public class GitMergeUtil {
         int source = Integer.parseInt(s.tabToken()); // stage
         s.boundedToken('\u0000'); // file name
 
-        if (source == theirsRevision(isReversed)) {
-          lastBlob = blob;
-        }
-        else if (source == yoursRevision(isReversed)) {
-          currentBlob = blob;
-        }
-        else if (source == ORIGINAL_REVISION_NUM) {
+        if (source == ORIGINAL_REVISION_NUM) {
           originalBlob = blob;
         }
+        else if (source == YOURS_REVISION_NUM) {
+          yoursBlob = blob;
+        }
+        else if (source == THEIRS_REVISION_NUM) {
+          theirsBlob = blob;
+        }
+
         else {
           throw new IllegalStateException("Unknown revision " + source + " for the file: " + path);
         }
       }
-      return Trinity.create(currentBlob, originalBlob, lastBlob);
+      return Trinity.create(originalBlob, yoursBlob, theirsBlob);
     }
     catch (VcsException e) {
       LOG.warn(e);
@@ -444,13 +449,5 @@ public class GitMergeUtil {
 
     if (pathAmbiguous[0]) return null;
     return result[0];
-  }
-
-  private static int yoursRevision(boolean isReversed) {
-    return isReversed ? THEIRS_REVISION_NUM : YOURS_REVISION_NUM;
-  }
-
-  private static int theirsRevision(boolean isReversed) {
-    return isReversed ? YOURS_REVISION_NUM : THEIRS_REVISION_NUM;
   }
 }
