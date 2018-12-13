@@ -825,7 +825,9 @@ public abstract class InplaceRefactoring {
 
   protected void showBalloon() {
     final JComponent component = getComponent();
-    if (component == null || component.getComponentCount() == 0) return;
+    if (component == null) return;
+    Dimension size = component.getPreferredSize();
+    if (size.height == 0 && size.width == 0) return;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null).setSmallVariant(true);
 
