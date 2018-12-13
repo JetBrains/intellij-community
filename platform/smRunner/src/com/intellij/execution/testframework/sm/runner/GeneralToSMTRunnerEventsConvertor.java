@@ -77,6 +77,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   @Override
   public void onFinishTesting() {
+    fireOnBeforeTestingFinished(myTestsRootProxy);
     // has been already invoked!
     // We don't know whether process was destroyed by user
     // or it finished after all tests have been run
