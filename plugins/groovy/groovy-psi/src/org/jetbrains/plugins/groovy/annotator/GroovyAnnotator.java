@@ -904,12 +904,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
-    PsiElement resolved = refElement.resolve();
-    if (resolved instanceof PsiClass &&
-        (((PsiClass)resolved).isAnnotationType() ||
-                                         GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved) != null &&
-                                         refElement.getParent() instanceof GrAnnotation)) {
-      myHolder.createInfoAnnotation(refElement, null).setTextAttributes(GroovySyntaxHighlighter.ANNOTATION);
+    if (refElement.getParent() instanceof GrAnnotation) {
+      PsiElement resolved = refElement.resolve();
+      if (resolved instanceof PsiClass && !((PsiClass)resolved).isAnnotationType() &&
+          GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved) != null) {
+        myHolder.createInfoAnnotation(refElement, null).setTextAttributes(GroovySyntaxHighlighter.ANNOTATION);
+      }
     }
   }
 
@@ -1631,12 +1631,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
           return;
         }
 
-        if (PsiTreeUtil.isAncestor(resolved, ref, true)) {
-          if (PsiUtil.hasEnclosingInstanceInScope((PsiClass)resolved, ref, true)) {
-            holder.createInfoAnnotation(nameElement, null).setTextAttributes(GroovySyntaxHighlighter.KEYWORD);
-          }
-        }
-        else {
+        if (!PsiTreeUtil.isAncestor(resolved, ref, true)) {
           String qname = ((PsiClass)resolved).getQualifiedName();
           assert qname != null;
           holder.createErrorAnnotation(ref, GroovyBundle.message("is.not.enclosing.class", qname));
