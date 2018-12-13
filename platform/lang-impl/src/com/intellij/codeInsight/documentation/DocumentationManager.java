@@ -12,6 +12,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.util.PropertiesComponent;
@@ -70,6 +71,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.nio.file.Files;
@@ -578,6 +580,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myDocInfoHintRef = new WeakReference<>(hint);
 
     findQuickSearchComponent().ifPresent(quickSearch -> quickSearch.registerHint(hint));
+
+    IdeEventQueue.getInstance().addDispatcher(e -> {
+      if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getSource() == hint.getPopupWindow()) {
+        myCloseOnSneeze = false;
+      }
+      return false;
+    }, component);
   }
 
   static String getTitle(@NotNull PsiElement element, boolean isShort) {
