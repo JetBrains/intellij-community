@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
@@ -34,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -44,13 +31,13 @@ import java.util.Set;
 /**
  * @author Vladislav.Soroka
  */
-public class PatternGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
+public final class PatternGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
+  private final GradlePatternBasedConfigurationProducer myBaseConfigurationProducer = new GradlePatternBasedConfigurationProducer();
 
-  private final AbstractPatternBasedConfigurationProducer myBaseConfigurationProducer;
-
-  protected PatternGradleConfigurationProducer() {
-    super(GradleExternalTaskConfigurationType.getInstance());
-    myBaseConfigurationProducer = new GradlePatternBasedConfigurationProducer(GradleExternalTaskConfigurationType.getInstance());
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return GradleExternalTaskConfigurationType.getInstance().getFactory();
   }
 
   @Override
@@ -121,8 +108,10 @@ public class PatternGradleConfigurationProducer extends GradleTestRunConfigurati
   }
 
   private static class GradlePatternBasedConfigurationProducer extends AbstractPatternBasedConfigurationProducer {
-    GradlePatternBasedConfigurationProducer(ConfigurationType configurationType) {
-      super(configurationType);
+    @NotNull
+    @Override
+    public ConfigurationFactory getConfigurationFactory() {
+      return GradleExternalTaskConfigurationType.getInstance().getFactory();
     }
 
     @Override
