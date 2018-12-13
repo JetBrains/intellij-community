@@ -1000,8 +1000,8 @@ java_library(
 java_library(
     name = "auto-value-annotations",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value-annotations/1.6:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value-annotations/1.6:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value-annotations/1.6.2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value-annotations/1.6.2:jar"],
 )
 
 filegroup(
