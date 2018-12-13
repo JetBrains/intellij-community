@@ -57,8 +57,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
@@ -90,11 +90,6 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     myCloseBranch = false;
     myMqNewPatch = false;
     myRepos = null;
-  }
-
-  @Override
-  public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    return null;
   }
 
   @Override
