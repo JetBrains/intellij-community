@@ -38,8 +38,15 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     super(configurationFactory);
   }
 
+  /**
+   * @deprecated Override {@link #getConfigurationFactory()}.
+   */
+  @Deprecated
   protected AbstractJavaTestConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
+  }
+
+  protected AbstractJavaTestConfigurationProducer() {
   }
 
   @Contract("null->false")
@@ -92,8 +99,8 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     final Module predefinedModule = templateConfiguration.getConfigurationModule().getModule();
     final String vmParameters;
     if (predefinedConfiguration != null) {
-      vmParameters = predefinedConfiguration instanceof CommonJavaRunConfigurationParameters 
-                     ? ((CommonJavaRunConfigurationParameters)predefinedConfiguration).getVMParameters() 
+      vmParameters = predefinedConfiguration instanceof CommonJavaRunConfigurationParameters
+                     ? ((CommonJavaRunConfigurationParameters)predefinedConfiguration).getVMParameters()
                      : null;
     }
     else {

@@ -24,7 +24,7 @@ public abstract class JavaRunConfigurationProducerBase<T extends ModuleBasedConf
   }
 
   /**
-   * @deprecated Override {@link LazyRunConfigurationProducer}.
+   * @deprecated Override {@link #getConfigurationFactory()}.
    */
   @Deprecated
   protected JavaRunConfigurationProducerBase(@NotNull ConfigurationType configurationType) {
