@@ -947,4 +947,22 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(getPsiDocumentManager().isCommitted(document));
     assertTrue(calledPerformWhenAllCommitted[0]);
   }
+
+  public void testCommitWithoutReparseLeavesPsiConsistentWithText() {
+    PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("a.txt", PlainTextFileType.INSTANCE, "", 0, true);
+    Document document = file.getViewProvider().getDocument();
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      document.setText("a");
+      getPsiDocumentManager().doCommitWithoutReparse(document);
+    });
+
+    assertFalse(getPsiDocumentManager().hasUncommitedDocuments());
+    assertEquals("a", file.getText());
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      document.setText("b");
+      getPsiDocumentManager().commitAllDocuments();
+    });
+    assertEquals("b", file.getText());
+  }
 }
