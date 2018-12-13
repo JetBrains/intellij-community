@@ -12,6 +12,7 @@ import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -80,9 +81,17 @@ public class TypeInferenceHelper {
     }
   }
 
+  @NotNull
+  @Contract(pure = true)
   public static InferenceContext getCurrentContext() {
     InferenceContext context = ourInferenceContext.get();
-    return context != null ? context : InferenceContext.TOP_CONTEXT;
+    return context != null ? context : getTopContext();
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static InferenceContext getTopContext() {
+    return InferenceContext.TOP_CONTEXT;
   }
 
   @Nullable
