@@ -140,7 +140,6 @@
     <annotator language="JQL" implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlAnnotator"/>
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
-    <vcs.commitMessageProvider implementation="com.intellij.tasks.impl.TaskCommitMessageProvider"/>
     <!-- YouTrack support -->
     <!--<annotator language="TEXT" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackHighlightingAnnotator"/>-->
     <lang.parserDefinition language="YouTrack" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackParserDefinition"/>

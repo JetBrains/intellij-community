@@ -21,11 +21,13 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vcs.VcsTaskHandler;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.ui.TaskDialogPanel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
@@ -59,11 +61,13 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
   private VcsTaskHandler myVcsTaskHandler;
   private static final String START_FROM_BRANCH = "start.from.branch";
   private final TaskManagerImpl myTaskManager;
+  private final Project myProject;
   private final LocalTask myPreviousTask;
 
   public VcsOpenTaskPanel(Project project, Task task) {
 
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(project);
+    myProject = project;
     myPreviousTask = myTaskManager.getActiveTask();
     ActionListener listener = new ActionListener() {
       @Override
@@ -198,6 +202,11 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     }
     if (myCreateChangelist.isSelected()) {
       myTaskManager.createChangeList(localTask, myChangelistName.getText());
+    }
+    else {
+      ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+      String comment = TaskUtil.getChangeListComment(localTask);
+      changeListManager.editComment(changeListManager.getDefaultListName(), comment);
     }
     if (myCreateBranch.isSelected()) {
       VcsTaskHandler.TaskInfo branchFrom = (VcsTaskHandler.TaskInfo)myBranchFrom.getSelectedItem();

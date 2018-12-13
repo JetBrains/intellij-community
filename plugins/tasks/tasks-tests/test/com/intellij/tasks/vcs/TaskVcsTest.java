@@ -34,7 +34,10 @@ import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tasks.*;
 import com.intellij.tasks.actions.OpenTaskDialog;
-import com.intellij.tasks.impl.*;
+import com.intellij.tasks.impl.LocalTaskImpl;
+import com.intellij.tasks.impl.TaskChangelistSupport;
+import com.intellij.tasks.impl.TaskCheckinHandlerFactory;
+import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -449,36 +452,44 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     myTaskManager.getState().shelveChanges = true;
     LocalTaskImpl task = new LocalTaskImpl("id", "summary");
-    OpenTaskDialog dialog = new OpenTaskDialog(getProject(), task);
-    try {
-      dialog.createTask();
-      assertEquals(dumpChangeListManager(), activeTask.getSummary(), activeTask.getShelfName());
+    runOpenTaskDialog(task);
 
-      List<ShelvedChangeList> lists = ShelveChangesManager.getInstance(getProject()).getShelvedChangeLists();
-      assertTrue(lists.stream().anyMatch(list -> list.DESCRIPTION.equals(activeTask.getShelfName())));
+    assertEquals(dumpChangeListManager(), activeTask.getSummary(), activeTask.getShelfName());
 
-      assertEmpty(myChangeListManager.getDefaultChangeList().getChanges());
-      myTaskManager.activateTask(activeTask, true);
-      Collection<Change> changes = myChangeListManager.getDefaultChangeList().getChanges();
-      assertNotEmpty(changes);
-    }
-    finally {
-      dialog.close(DialogWrapper.OK_EXIT_CODE);
-    }
-    UIUtil.dispatchAllInvocationEvents();
+    List<ShelvedChangeList> lists = ShelveChangesManager.getInstance(getProject()).getShelvedChangeLists();
+    assertTrue(lists.stream().anyMatch(list -> list.DESCRIPTION.equals(activeTask.getShelfName())));
+
+    assertEmpty(myChangeListManager.getDefaultChangeList().getChanges());
+    myTaskManager.activateTask(activeTask, true);
+    Collection<Change> changes = myChangeListManager.getDefaultChangeList().getChanges();
+    assertNotEmpty(changes);
   }
 
   public void testAssociatedChangelist() {
-    ChangeListManager changeListManager = ChangeListManager.getInstance(getProject());
-    LocalChangeList changeList = changeListManager.getDefaultChangeList();
+    LocalChangeList changeList = myChangeListManager.getDefaultChangeList();
     assertNotNull(changeList);
     assertEquals(myTaskManager.getActiveTask(), myTaskManager.getAssociatedTask(changeList));
     LocalTaskImpl bond = new LocalTaskImpl("007", "Bond");
     TestRepository repository = new TestRepository();
     repository.setShouldFormatCommitMessage(true);
     bond.setRepository(repository);
-    myTaskManager.activateTask(bond, false);
-    assertEquals("007 Bond", new TaskCommitMessageProvider().getCommitMessage(changeList, getProject()));
+
+    myTaskManager.getState().createChangelist = false;
+    runOpenTaskDialog(bond);
+    assertEquals(1, bond.getChangeLists().size());
+    assertEquals(changeList.getId(), bond.getChangeLists().get(0).id);
+    assertEquals("007 Bond", myChangeListManager.getDefaultChangeList().getComment());
+  }
+
+  private void runOpenTaskDialog(LocalTaskImpl task) {
+    OpenTaskDialog dialog = new OpenTaskDialog(getProject(), task);
+    try {
+      dialog.createTask();
+    }
+    finally {
+      dialog.close(DialogWrapper.OK_EXIT_CODE);
+    }
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   @Override
