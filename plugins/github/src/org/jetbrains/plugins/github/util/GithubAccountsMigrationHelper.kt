@@ -104,7 +104,6 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
         }
       }
     }
-    if (!dialogCancelled) clearOldAuth()
     return !dialogCancelled
   }
 
@@ -121,11 +120,6 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
     accountManager.accounts += account
     accountManager.updateAccountToken(account, token)
     LOG.debug("Registered account $account")
-  }
-
-  private fun clearOldAuth() {
-    settings.clearAuth()
-    passwordSafe.setPassword(GithubSettings::class.java, GITHUB_SETTINGS_PASSWORD_KEY, null)
   }
 
   companion object {

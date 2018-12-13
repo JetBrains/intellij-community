@@ -29,7 +29,6 @@ import java.util.zip.ZipFile;
 
 /**
  * @author Dmitry Avdeev
- * @since 12/07/2011
  */
 public class JarMemoryLoader {
   /** Special entry to keep the number of reordered classes in jar. */

@@ -24,7 +24,7 @@ import java.io.File;
  */
 public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   protected static class ProjectDescriptor extends DefaultLightProjectDescriptor {
-    private final LanguageLevel myLanguageLevel;
+    protected final LanguageLevel myLanguageLevel;
     private final boolean myWithAnnotations;
 
     public ProjectDescriptor(@NotNull LanguageLevel languageLevel) {
@@ -60,6 +60,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   @NotNull public static final LightProjectDescriptor JAVA_10 = new ProjectDescriptor(LanguageLevel.JDK_10);
   @NotNull public static final LightProjectDescriptor JAVA_10_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_10, true);
   @NotNull public static final LightProjectDescriptor JAVA_11 = new ProjectDescriptor(LanguageLevel.JDK_11);
+  @NotNull public static final LightProjectDescriptor JAVA_12 = new ProjectDescriptor(LanguageLevel.JDK_12_PREVIEW);
   @NotNull public static final LightProjectDescriptor JAVA_X = new ProjectDescriptor(LanguageLevel.JDK_X);
 
   public static final LightProjectDescriptor JAVA_LATEST = new ProjectDescriptor(LanguageLevel.HIGHEST) {
@@ -79,20 +80,28 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
+    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, getTempDirFixture());
 
-    myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
 
     myModule = myFixture.getModule();
 
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
   }
 
+  @NotNull
+  protected TempDirTestFixture getTempDirFixture() {
+    return new LightTempDirTestFixtureImpl(true);
+  }
+
   @Override
   protected void tearDown() throws Exception {
     try {
       myFixture.tearDown();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       myFixture = null;
@@ -137,7 +146,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   }
 
   public PsiElementFactory getElementFactory() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    return JavaPsiFacade.getElementFactory(getProject());
   }
 
   protected PsiFile createLightFile(FileType fileType, String text) {

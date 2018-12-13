@@ -22,6 +22,7 @@ import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NotNull;
+import sun.misc.Signal;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -39,9 +40,9 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 public class UnixProcessManager {
   private static final Logger LOG = Logger.getInstance(UnixProcessManager.class);
 
-  public static final int SIGINT = 2;
-  public static final int SIGKILL = 9;
-  public static final int SIGTERM = 15;
+  public static final int SIGINT = getSignalNumber("INT");
+  public static final int SIGKILL = getSignalNumber("KILL");
+  public static final int SIGTERM = getSignalNumber("TERM");
 
   @SuppressWarnings("SpellCheckingInspection")
   private interface CLib extends Library {
@@ -81,6 +82,26 @@ public class UnixProcessManager {
 
   public static int getCurrentProcessId() {
     return C_LIB != null ? C_LIB.getpid() : 0;
+  }
+
+  /**
+   * @param signalName without the 'SIG' prefix ('INT', not 'SIGINT')
+   * @return -1 for unknown signal
+   */
+  public static int getSignalNumber(@NotNull String signalName) {
+    final Signal signal;
+    try {
+      signal = new Signal(signalName);
+    }
+    catch (IllegalArgumentException e) {
+      return -1;
+    }
+    return signal.getNumber();
+  }
+
+  public static int sendSignal(int pid, @NotNull String signalName) {
+    final int signalNumber = getSignalNumber(signalName);
+    return (signalNumber == -1) ? -1 : sendSignal(pid, signalNumber);
   }
 
   public static int sendSignal(int pid, int signal) {

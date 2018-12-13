@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell.frontend;
 
 import com.intellij.execution.jshell.protocol.*;
@@ -10,25 +11,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-
 /**
  * @author Eugene Zhuravlev
- *
- * @noinspection UseOfSystemOutOrSystemErr
  */
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class Main {
   private static final String ARG_CLASSPATH = "--class-path";
   private static final String ARG_CLASSPATH_FILE = "--@class-path";
   private static final Consumer<String> NULL_CONSUMER = s -> {};
 
-  //private static Request createTestRequest() {
-  //  return new Request(UUID.randomUUID().toString(), Request.Command.EVAL, "int a = 77;\n" +
-  //                                                                         "int b = a + 3");
-  //}
-
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) {
     final MessageReader<Request> reader = new MessageReader<>(new BufferedInputStream(System.in), Request.class);
-    final MessageWriter<Response> writer = new MessageWriter<>(new BufferedOutputStream(System.out), Response.class);
+    final MessageWriter<Response> writer = new MessageWriter<>(new BufferedOutputStream(System.out));
 
     try (JShell shell = JShell.create()) {
       configureJShell(args, shell);
@@ -42,9 +36,7 @@ public class Main {
           return;
         }
 
-        final Response response = new Response();
-        response.setUid(request.getUid());
-
+        final Response response = new Response(request.getUid());
         try {
           // first, handle eval classpath if any
           final List<String> cp = request.getClassPath();
@@ -53,7 +45,7 @@ public class Main {
               shell.addToClasspath(path);
             }
           }
-          
+
           if (command == Request.Command.DROP_STATE) {
             shell.snippets().forEach(snippet -> exportEvents(shell, shell.drop(snippet), response));
           }
@@ -104,7 +96,6 @@ public class Main {
         convertEnum(event.previousStatus(), CodeSnippet.Status.class),
         event.value()
       );
-      //noinspection ThrowableNotThrown
       final JShellException exception = event.exception();
       if (exception != null) {
         e.setExceptionText(exception.getMessage());
@@ -212,8 +203,7 @@ public class Main {
       try {
         return Enum.valueOf(toEnumOfClass, from.name());
       }
-      catch (IllegalArgumentException ignored) {
-      }
+      catch (IllegalArgumentException ignored) { }
     }
     return Enum.valueOf(toEnumOfClass, "UNKNOWN");
   }

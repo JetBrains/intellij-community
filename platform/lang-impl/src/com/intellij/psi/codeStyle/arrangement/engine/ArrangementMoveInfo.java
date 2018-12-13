@@ -17,7 +17,6 @@ package com.intellij.psi.codeStyle.arrangement.engine;
 
 /**
  * @author Denis Zhdanov
- * @since 11/21/12 12:51 PM
  */
 public class ArrangementMoveInfo {
 

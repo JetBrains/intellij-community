@@ -169,7 +169,7 @@ public class JavaTestGenerator implements TestGenerator {
     final PsiReferenceList extendsList = targetClass.getExtendsList();
     if (extendsList == null) return;
 
-    PsiElementFactory ef = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory ef = JavaPsiFacade.getElementFactory(project);
     PsiJavaCodeReferenceElement superClassRef;
 
     PsiClass superClass = findClass(project, superClassName);
@@ -223,7 +223,7 @@ public class JavaTestGenerator implements TestGenerator {
                                                                             targetClass, sourceClass, null, true, existingNames);
     JVMElementFactory elementFactory = JVMElementFactories.getFactory(targetClass.getLanguage(), targetClass.getProject());
     final String prefix = elementFactory != null ? elementFactory.createMethodFromText(template.getTemplateText(), targetClass).getName() : "";
-    existingNames.addAll(ContainerUtil.map(targetClass.getMethods(), method -> StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix))));
+    existingNames.addAll(ContainerUtil.map(targetClass.getAllMethods(), method -> StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix))));
 
     for (MemberInfo m : methods) {
       anchor = generateMethod(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, sourceClass, editor, m.getMember().getName(), existingNames, anchor);

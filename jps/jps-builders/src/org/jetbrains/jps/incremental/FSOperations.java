@@ -40,11 +40,9 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -254,7 +252,7 @@ public class FSOperations {
     final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     final Ref<Boolean> allFilesMarked = Ref.create(Boolean.TRUE);
 
-    Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(file.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
         return rootIndex.isDirectoryAccepted(dir.toFile(), rd)? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
@@ -272,6 +270,7 @@ public class FSOperations {
         else {
           boolean markDirty = forceDirty;
           if (!markDirty) {
+            // for symlinks the attr structure reflects the symlink's timestamp and not symlink's target timestamp
             markDirty = tsStorage.getStamp(_file, rd.getTarget()) != attrs.lastModifiedTime().toMillis();
           }
           if (markDirty) {
@@ -336,13 +335,49 @@ public class FSOperations {
   }
 
   public static long lastModified(File file) {
+    return lastModified(file.toPath());
+  }
+
+  private static long lastModified(Path path) {
     try {
-      return Files.getLastModifiedTime(file.toPath()).toMillis();
+      return Files.getLastModifiedTime(path).toMillis();
     }
     catch (IOException e) {
       LOG.warn(e);
     }
     return 0L;
+  }
+
+  public static void copy(File fromFile, File toFile) throws IOException {
+    final Path from = fromFile.toPath();
+    final Path to = toFile.toPath();
+    try {
+      try {
+        Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
+      }
+      catch (AccessDeniedException e) {
+        if (!Files.isWritable(to) && toFile.setWritable(true)) {
+          Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING); // repeat once the file seems to be writable again
+        }
+        else {
+          throw e;
+        }
+      }
+      catch (NoSuchFileException e) {
+        final File parent = toFile.getParentFile();
+        if (parent != null && parent.mkdirs()) {
+          Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING); // repeat on successful target dir creation
+        }
+        else {
+          throw e;
+        }
+      }
+    }
+    catch (IOException e) {
+      // fallback: trying 'classic' copying via streams
+      LOG.info("Error copying "+ fromFile.getPath() + " to " + toFile.getPath() + " with NIO API", e);
+      FileUtil.copyContent(fromFile, toFile);
+    }
   }
 
   public static boolean isMarkedDirty(CompileContext context, BuildTarget<?> target) {

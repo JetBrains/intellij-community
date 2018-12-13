@@ -33,6 +33,7 @@ import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
+import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher
 import com.intellij.testGuiFramework.util.*
 import com.intellij.ui.KeyStrokeAdapter
@@ -78,7 +79,7 @@ import javax.swing.*
 import javax.swing.text.JTextComponent
 
 object GuiTestUtil {
-  val GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite"
+  const val GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite"
 
   private val LOG = Logger.getInstance("#com.intellij.tests.gui.framework.GuiTestUtil")
 
@@ -86,9 +87,9 @@ object GuiTestUtil {
    * Environment variable pointing to the JDK to be used for tests
    */
 
-  val JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS"
-  val TEST_DATA_DIR = "GUI_TEST_DATA_DIR"
-  val FIRST_START = "GUI_FIRST_START"
+  const val JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS"
+  const val TEST_DATA_DIR = "GUI_TEST_DATA_DIR"
+  const val FIRST_START = "GUI_FIRST_START"
   private val SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().systemEventQueue
 
   val gradleHomePath: File?
@@ -178,8 +179,8 @@ object GuiTestUtil {
     return null
   }
 
-  fun setUpDefaultProjectCreationLocationPath(projectsFolder: File) {
-    RecentProjectsManager.getInstance().lastProjectCreationLocation = PathUtil.toSystemIndependentName(projectsFolder.path)
+  fun setUpDefaultProjectCreationLocationPath() {
+    RecentProjectsManager.getInstance().lastProjectCreationLocation = PathUtil.toSystemIndependentName(GuiTestOptions.projectsDir.path)
   }
 
   // Called by GuiTestPaths via reflection.
@@ -758,15 +759,37 @@ object GuiTestUtil {
   }
 
   fun fileSearchAndReplace(fileName: Path, condition: (String) -> String) {
-    val buffer = mutableListOf<String>()
-    for (line in Files.readAllLines(fileName)) {
-      buffer.add(condition(line))
-    }
+    saveToFile(
+      fileName = fileName,
+      linesToSave = Files.readAllLines(fileName).map { condition(it) }
+    )
+  }
+
+  fun isFileContainsLine(fileName: Path, line: String): Boolean {
+    return Files.readAllLines(fileName).any { it.contains(line) }
+  }
+
+  fun fileInsertFromBegin(fileName: Path, lines: List<String>) {
+    saveToFile(
+      fileName = fileName,
+      linesToSave = lines + Files.readAllLines(fileName)
+    )
+  }
+
+  private fun saveToFile(fileName: Path, linesToSave: List<String>){
     val tmpFile = Files.createTempFile(fileName.fileName.toString(), "tmp")
-    Files.write(tmpFile, buffer)
+    Files.write(tmpFile, linesToSave)
     Files.copy(tmpFile, fileName, StandardCopyOption.REPLACE_EXISTING)
     tmpFile.toFile().deleteOnExit()
   }
+
+fun printFileContent(fileName: Path) {
+  println("--------------------------------------------")
+  println("--- File: $fileName ---")
+  println("--------------------------------------------")
+  Files.readAllLines(fileName).forEach { println("    $it") }
+  println("--------------------------------------------")
+}
 
   fun Long.toMs(): Long = this * 1000
 

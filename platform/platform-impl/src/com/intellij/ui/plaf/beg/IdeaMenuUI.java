@@ -3,6 +3,7 @@ package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -68,11 +69,10 @@ public class IdeaMenuUI extends BasicMenuUI{
     Icon allowedIcon = getAllowedIcon();
     Insets insets = comp.getInsets();
     resetRects();
+
     ourViewRect.setBounds(0, 0, jMenu.getWidth(), jMenu.getHeight());
-    ourViewRect.x += insets.left;
-    ourViewRect.y += insets.top;
-    ourViewRect.width -= insets.right + ourViewRect.x;
-    ourViewRect.height -= insets.bottom + ourViewRect.y;
+    JBInsets.removeFrom(ourViewRect, insets);
+
     Font font = g.getFont();
     Font font1 = comp.getFont();
     g.setFont(font1);
@@ -110,7 +110,6 @@ public class IdeaMenuUI extends BasicMenuUI{
           }
           else {
             g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
-            g.setColor(selectionBackground);
           }
         }
       }
@@ -171,6 +170,10 @@ public class IdeaMenuUI extends BasicMenuUI{
       }
     }
     if (arrowIcon != null){
+      if (SystemInfo.isMac) {
+        ourArrowIconRect.y += JBUI.scale(1);
+      }
+
       if (buttonmodel.isArmed() || buttonmodel.isSelected()){
         g.setColor(selectionForeground);
       }

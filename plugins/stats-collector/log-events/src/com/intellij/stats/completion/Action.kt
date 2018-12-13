@@ -25,5 +25,6 @@ enum class Action {
     COMPLETION_CANCELED,
     EXPLICIT_SELECT,
     TYPED_SELECT,
-    CUSTOM
+    CUSTOM,
+    PERFORMANCE
 }

@@ -142,8 +142,8 @@ public abstract class ContentRootPanel extends JPanel {
     if (getContentEntry().getFile() == null) {
       headerLabel.setForeground(JBColor.RED);
     }
-    final IconActionComponent deleteIconComponent = new IconActionComponent(AllIcons.Modules.DeleteContentRoot,
-                                                                            AllIcons.Modules.DeleteContentRootRollover,
+    final IconActionComponent deleteIconComponent = new IconActionComponent(AllIcons.Actions.Close,
+                                                                            AllIcons.Actions.CloseHovered,
                                                                             ProjectBundle.message("module.paths.remove.content.tooltip"),
                                                                             () -> myCallback.deleteContentEntry());
     final ResizingWrapper wrapper = new ResizingWrapper(headerLabel);
@@ -247,7 +247,7 @@ public abstract class ContentRootPanel extends JPanel {
     else {
       tooltipText = ProjectBundle.message("module.paths.remove.tooltip");
     }
-    return new IconActionComponent(AllIcons.Modules.DeleteContentFolder, AllIcons.Modules.DeleteContentFolderRollover, tooltipText,
+    return new IconActionComponent(AllIcons.Actions.Close, AllIcons.Actions.CloseHovered, tooltipText,
                                    () -> myCallback.deleteContentFolder(getContentEntry(), folder));
   }
 

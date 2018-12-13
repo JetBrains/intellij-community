@@ -12,7 +12,6 @@ import java.io.Serializable;
  * This class serves as an id of a system which defines project structure, i.e. it might be any external system or the ide itself.
  * 
  * @author Denis Zhdanov
- * @since 2/14/12 12:59 PM
  */
 public class ProjectSystemId implements Serializable {
 

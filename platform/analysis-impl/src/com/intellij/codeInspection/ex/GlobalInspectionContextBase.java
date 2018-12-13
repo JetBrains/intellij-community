@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class GlobalInspectionContextBase extends UserDataHolderBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
@@ -63,6 +64,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   final Map<String, Tools> myTools = new THashMap<>();
 
+  @NonNls public static final String PROBLEMS_TAG_NAME = "problems";
   @NonNls public static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
 
   public GlobalInspectionContextBase(@NotNull Project project) {
@@ -228,12 +230,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   @NotNull
   protected PerformInBackgroundOption createOption() {
-    return new PerformInBackgroundOption(){
-      @Override
-      public boolean shouldStartInBackground() {
-        return true;
-      }
-    };
+    return () -> true;
   }
 
   protected void notifyInspectionsFinished(@NotNull AnalysisScope scope) {
@@ -354,27 +351,47 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                           @NotNull InspectionProfile profile,
                           @Nullable String commandName,
                           @Nullable Runnable postRunnable,
-                          final boolean modal) {}
+                          final boolean modal,
+                          @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {}
+
+  public void codeCleanup(@NotNull AnalysisScope scope,
+                          @NotNull InspectionProfile profile,
+                          @Nullable String commandName,
+                          @Nullable Runnable postRunnable,
+                          final boolean modal) {
+    codeCleanup(scope, profile, commandName, postRunnable, modal, d -> true);
+  }
 
   public static void modalCodeCleanup(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable Runnable runnable) {
     GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-    globalContext.codeCleanup(scope, profile, null, runnable, true);
+    globalContext.codeCleanup(scope, profile, null, runnable, true, descriptor -> true);
   }
 
   public static void cleanupElements(@NotNull final Project project, @Nullable final Runnable runnable, @NotNull PsiElement... scope) {
+    cleanupElements(project, runnable, descriptor -> true, scope);
+  }
+
+  public static void cleanupElements(@NotNull final Project project, @Nullable final Runnable runnable, Predicate<? super ProblemDescriptor> shouldApplyFix, @NotNull PsiElement... scope) {
     final List<SmartPsiElementPointer<PsiElement>> elements = new ArrayList<>();
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
     for (PsiElement element : scope) {
       elements.add(manager.createSmartPsiElementPointer(element));
     }
 
-    cleanupElements(project, runnable, elements);
+    cleanupElements(project, runnable, elements, shouldApplyFix);
   }
 
   public static void cleanupElements(@NotNull final Project project,
                                      @Nullable final Runnable runnable,
                                      final List<? extends SmartPsiElementPointer<PsiElement>> elements) {
+    cleanupElements(project, runnable, elements, descriptor -> true);
+  }
+
+  private static void cleanupElements(@NotNull final Project project,
+                                      @Nullable final Runnable runnable,
+                                      final List<? extends SmartPsiElementPointer<PsiElement>> elements,
+                                      @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
     Runnable cleanupRunnable = () -> {
       final List<PsiElement> psiElements = new ArrayList<>();
       for (SmartPsiElementPointer<PsiElement> element : elements) {
@@ -389,7 +406,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
       final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
       AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(PsiElement.EMPTY_ARRAY)), project);
-      globalContext.codeCleanup(analysisScope, profile, null, runnable, true);
+      globalContext.codeCleanup(analysisScope, profile, null, runnable, true, shouldApplyFix);
     };
 
     Application application = ApplicationManager.getApplication();

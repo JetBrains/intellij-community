@@ -167,7 +167,6 @@ public class RemoteConnectionBuilder {
         String versionString = jdk.getVersionString();
         throw new ExecutionException(DebuggerBundle.message("error.invalid.jdk.home", versionString));
       }
-      //noinspection HardCodedStringLiteral
       File dllFile = new File(
         homeDirectory.getPath().replace('/', File.separatorChar) + File.separator + "bin" + File.separator + "jdwp.dll"
       );

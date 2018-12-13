@@ -5,6 +5,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -214,6 +215,9 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          if (psiResolved == null) {
                            psiResolved = tryFindKotlinParameter(node, decl);
                          }
+                         if (psiResolved instanceof LightElement) {
+                           psiResolved = psiResolved.getNavigationElement();
+                         }
                          RefElement refResolved = refFrom.getRefManager().getReference(psiResolved);
                          boolean writing = isAccessedForWriting(node);
                          boolean reading = isAccessedForReading(node);
@@ -306,7 +310,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                              boolean hasConstructorsMarked = false;
 
                              if (defaultConstructorOnly) {
-                               RefMethodImpl refDefaultConstructor = (RefMethodImpl)refClass.getDefaultConstructor();
+                               WritableRefElement refDefaultConstructor = (WritableRefElement)refClass.getDefaultConstructor();
                                if (refDefaultConstructor != null) {
                                  refDefaultConstructor.addInReference(refFrom);
                                  refFrom.addOutReference(refDefaultConstructor);
@@ -316,7 +320,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                              else {
                                for (RefMethod cons : refClass.getConstructors()) {
                                  if (cons instanceof RefImplicitConstructor) continue;
-                                 ((RefMethodImpl)cons).addInReference(refFrom);
+                                 ((WritableRefElement)cons).addInReference(refFrom);
                                  refFrom.addOutReference(cons);
                                  hasConstructorsMarked = true;
                                }
@@ -428,7 +432,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
           if (containingClass != null) {
             fqName = containingClass.getQualifiedName();
             if (fqName != null) {
-              final PsiClassType methodOwnerType = JavaPsiFacade.getInstance(psiResolved.getProject()).getElementFactory()
+              final PsiClassType methodOwnerType = JavaPsiFacade.getElementFactory(psiResolved.getProject())
                 .createTypeByFQClassName(fqName, GlobalSearchScope.allScope(psiResolved.getProject()));
               if (!usedType.equals(methodOwnerType)) {
                 refMethod.setCalledOnSubClass(true);
@@ -562,11 +566,18 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
     if (hasStatements) {
       final PsiMethod[] superMethods = javaMethod.findSuperMethods();
+      int defaultCount = 0;
       for (PsiMethod superMethod : superMethods) {
         if (VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(superMethod.getModifierList()),
                                    VisibilityUtil.getVisibilityModifier(javaMethod.getModifierList())) > 0) {
           return false;
         }
+        if (superMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+          defaultCount++;
+        }
+      }
+      if (defaultCount > 1) {
+        return false;
       }
     }
     return hasStatements;

@@ -20,7 +20,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 
-import javax.tools.*;
+import javax.tools.FileObject;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -142,6 +144,14 @@ class JavacFileManager extends JpsJavacFileManager {
     final Iterable<JavaFileObject> objects = super.list(location, packageName, kinds, recurse);
     //noinspection unchecked
     return kinds.contains(JavaFileObject.Kind.SOURCE)? (Iterable<JavaFileObject>)wrapJavaFileObjects(objects) : objects;
+  }
+
+  private static <T> List<T> toList(Iterable<T> iterable) {
+    final List<T> list = new ArrayList<T>();
+    for (T t : iterable) {
+      list.add(t);
+    }
+    return list;
   }
 
   private Iterable<? extends JavaFileObject> wrapJavaFileObjects(Iterable<? extends JavaFileObject> originalObjects) {

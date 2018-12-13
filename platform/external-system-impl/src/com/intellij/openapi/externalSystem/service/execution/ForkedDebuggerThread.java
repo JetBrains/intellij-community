@@ -5,6 +5,9 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.engine.managerThread.DebuggerCommand;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
@@ -143,12 +146,7 @@ class ForkedDebuggerThread extends Thread {
               @Override
               public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
                 myMainProcessHandler.removeProcessListener(this);
-                if (willBeDestroyed) {
-                  forkedProcessHandler.destroyProcess();
-                }
-                else {
-                  forkedProcessHandler.detachProcess();
-                }
+                terminateForkedProcess(forkedProcessHandler);
               }
             });
 
@@ -229,6 +227,14 @@ class ForkedDebuggerThread extends Thread {
     }
 
     @Override
+    public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
+      if (!willBeDestroyed) {
+        // always terminate forked process
+        terminateForkedProcess(event.getProcessHandler());
+      }
+    }
+
+    @Override
     public void processTerminated(@NotNull ProcessEvent event) {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
       ContentManager contentManager = toolWindowManager.getToolWindow(ToolWindowId.DEBUG).getContentManager();
@@ -306,6 +312,33 @@ class ForkedDebuggerThread extends Thread {
         }
       }
       return null;
+    }
+  }
+
+  private void terminateForkedProcess(@NotNull ProcessHandler processHandler) {
+    DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(processHandler);
+    if (debugProcess != null) {
+      debugProcess.getManagerThread().invokeCommand(new DebuggerCommand() {
+        @Override
+        public void action() {
+          VirtualMachineProxy virtualMachineProxy = debugProcess.getVirtualMachineProxy();
+          if (virtualMachineProxy instanceof VirtualMachineProxyImpl &&
+              ((VirtualMachineProxyImpl)virtualMachineProxy).canBeModified()) {
+            // use success exit code here to avoid the main process interruption
+            ((VirtualMachineProxyImpl)virtualMachineProxy).exit(0);
+          }
+          else {
+            debugProcess.stop(true);
+          }
+        }
+
+        @Override
+        public void commandCancelled() {
+          debugProcess.stop(true);
+        }
+      });
+    } else {
+      processHandler.destroyProcess();
     }
   }
 }

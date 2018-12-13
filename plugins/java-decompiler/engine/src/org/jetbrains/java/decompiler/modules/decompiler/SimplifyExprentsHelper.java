@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -64,18 +64,11 @@ public class SimplifyExprentsHelper {
         for (Statement st : stat.getStats()) {
           res |= simplifyStackVarsStatement(st, setReorderedIfs, ssa, cl);
 
-          // collapse composed if's
-          if (changed = IfHelper.mergeIfs(st, setReorderedIfs)) {
-            break;
-          }
+          changed = IfHelper.mergeIfs(st, setReorderedIfs) ||  // collapse composed if's
+                    buildIff(st, ssa) ||  // collapse iff ?: statement
+                    processClass14 && collapseInlinedClass14(st);  // collapse inlined .class property in version 1.4 and before
 
-          // collapse iff ?: statement
-          if (changed = buildIff(st, ssa)) {
-            break;
-          }
-
-          // collapse inlined .class property in version 1.4 and before
-          if (processClass14 && (changed = collapseInlinedClass14(st))) {
+          if (changed) {
             break;
           }
         }
@@ -178,7 +171,7 @@ public class SimplifyExprentsHelper {
       }
 
       // expr++ and expr--
-      if (isIPPorIMM(current, next)) {
+      if (isIPPorIMM(current, next) || isIPPorIMM2(current, next)) {
         list.remove(index + 1);
         res = true;
         continue;
@@ -458,6 +451,49 @@ public class SimplifyExprentsHelper {
     return false;
   }
 
+  private static boolean isIPPorIMM2(Exprent first, Exprent second) {
+    if (first.type != Exprent.EXPRENT_ASSIGNMENT || second.type != Exprent.EXPRENT_ASSIGNMENT) {
+      return false;
+    }
+
+    AssignmentExprent af = (AssignmentExprent)first;
+    AssignmentExprent as = (AssignmentExprent)second;
+
+    if (as.getRight().type != Exprent.EXPRENT_FUNCTION) {
+      return false;
+    }
+
+    FunctionExprent func = (FunctionExprent)as.getRight();
+
+    if (func.getFuncType() != FunctionExprent.FUNCTION_ADD && func.getFuncType() != FunctionExprent.FUNCTION_SUB) {
+      return false;
+    }
+
+    Exprent econd = func.getLstOperands().get(0);
+    Exprent econst = func.getLstOperands().get(1);
+
+    if (econst.type != Exprent.EXPRENT_CONST && econd.type == Exprent.EXPRENT_CONST && func.getFuncType() == FunctionExprent.FUNCTION_ADD) {
+      econd = econst;
+      econst = func.getLstOperands().get(0);
+    }
+
+    if (econst.type == Exprent.EXPRENT_CONST &&
+        ((ConstExprent)econst).hasValueOne() &&
+        af.getLeft().equals(econd) &&
+        af.getRight().equals(as.getLeft()) &&
+        (af.getLeft().getExprentUse() & Exprent.MULTIPLE_USES) != 0) {
+      int type = func.getFuncType() == FunctionExprent.FUNCTION_ADD ? FunctionExprent.FUNCTION_IPP : FunctionExprent.FUNCTION_IMM;
+
+      FunctionExprent ret = new FunctionExprent(type, af.getRight(), func.bytecode);
+      ret.setImplicitType(VarType.VARTYPE_INT);
+
+      af.setRight(ret);
+      return true;
+    }
+
+    return false;
+  }
+  
   private static boolean isMonitorExit(Exprent first) {
     if (first.type == Exprent.EXPRENT_MONITOR) {
       MonitorExprent expr = (MonitorExprent)first;

@@ -184,7 +184,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 ## Captioned Content: <figure>
 
 	figure.elem =
-		element figure { figure.inner & figure.attrs } & nonW3C
+		element figure { figure.inner & figure.attrs }
 	figure.attrs =
 		(	common.attrs
 		&	(	common.attrs.aria.implicit.figure
@@ -198,14 +198,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		)
 
 	common.elem.flow |= figure.elem
-
-	figure.elem.w3c =
-		element figure { figure.inner.w3c & figure.attrs } & W3Conly
-	figure.inner.w3c =
-		(	( common.inner.flow & figcaption.elem? )
-		)
-
-	common.elem.flow |= figure.elem.w3c
 
 ## Figure caption: <figcaption>
 

@@ -32,7 +32,8 @@ import java.util.Map;
 public interface PyClassStub extends NamedStub<PyClass> {
 
   /**
-  * @return a {@code Map} which contains imported class names as keys and their original names as values
+  * @return a {@code Map} which contains imported class names as keys and their original names as values.
+  * <i>Note: the returned {@code Map} could contain nulls as keys and as values.</i>
   */
   @NotNull
   Map<QualifiedName, QualifiedName> getSuperClasses();

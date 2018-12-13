@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/26/2016
  */
 public class RenameModuleTest extends ModuleTestCase {
 
@@ -46,6 +45,9 @@ public class RenameModuleTest extends ModuleTestCase {
   protected void tearDown() throws Exception {
     try {
       Messages.setTestInputDialog(TestInputDialog.DEFAULT);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

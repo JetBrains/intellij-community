@@ -36,7 +36,7 @@ public class EmptyColorScheme extends DefaultColorsScheme {
   private static final TextAttributes DEFAULT_ATTRS = new TextAttributes(Color.GRAY, null, null, EffectType.BOXED, Font.PLAIN);
 
   private EmptyColorScheme() {
-    myAttributesMap.put(HighlighterColors.TEXT, EMPTY_TEXT);
+    myAttributesMap.put(HighlighterColors.TEXT.getExternalName(), EMPTY_TEXT);
     initFonts();
   }
 
@@ -50,7 +50,7 @@ public class EmptyColorScheme extends DefaultColorsScheme {
   @Nullable
   @Override
   protected TextAttributes getKeyDefaults(@NotNull TextAttributesKey key) {
-    return myAttributesMap.get(HighlighterColors.TEXT);
+    return myAttributesMap.get(HighlighterColors.TEXT.getExternalName());
   }
 
   @NotNull

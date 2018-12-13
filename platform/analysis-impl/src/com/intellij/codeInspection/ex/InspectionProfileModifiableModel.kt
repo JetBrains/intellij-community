@@ -3,7 +3,6 @@ package com.intellij.codeInspection.ex
 
 import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
@@ -28,7 +27,7 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     modified = value
   }
 
-  override fun resetToBase(toolId: String?, scope: NamedScope?, project: Project?) {
+  override fun resetToBase(toolId: String, scope: NamedScope?, project: Project) {
     super.resetToBase(toolId, scope, project)
     setModified(true)
   }

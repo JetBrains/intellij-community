@@ -494,15 +494,21 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
 
   public void setFirstSize(final int size) {
+    int oldSize = myFirstSize;
     myFirstSize = Math.max(getMinSize(true), size);
-    doLayout();
-    repaint();
+    if (firstVisible() && oldSize != myFirstSize) {
+      doLayout();
+      repaint();
+    }
   }
 
   public void setLastSize(final int size) {
+    int oldSize = myLastSize;
     myLastSize = Math.max(getMinSize(false), size);
-    doLayout();
-    repaint();
+    if (lastVisible() && oldSize != myLastSize) {
+      doLayout();
+      repaint();
+    }
   }
 
   public int getFirstSize() {
@@ -523,15 +529,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   }
 
   private int getMinSize(JComponent component) {
-    if (isHonorMinimumSize()) {
-      if (component != null && myFirstComponent != null && myFirstComponent.isVisible() && myLastComponent != null && myLastComponent.isVisible()) {
-        if (getOrientation()) {
-          return component.getMinimumSize().height;
-        }
-        else {
-          return component.getMinimumSize().width;
-        }
-      }
+    if (isHonorMinimumSize() && component != null && component.isVisible()) {
+      return getOrientation() ? component.getMinimumSize().height : component.getMinimumSize().width;
     }
     return myMinSize;
   }

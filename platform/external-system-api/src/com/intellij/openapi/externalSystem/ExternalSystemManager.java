@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
  * That makes it relatively easy to add a new external system integration.
  *
  * @author Denis Zhdanov
- * @since 4/4/13 4:05 PM
  */
 public interface ExternalSystemManager<
   ProjectSettings extends ExternalProjectSettings,

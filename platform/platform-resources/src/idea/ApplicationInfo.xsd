@@ -43,6 +43,15 @@
     <xs:attribute type="xs:string" name="full"/>
     <xs:attribute type="xs:string" name="codename"/>
     <xs:attribute type="xs:boolean" name="eap"/>
+    <xs:attribute type="xs:string" name="suffix">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies type of this version which should be shown in UI after the version number separated by space. This value is used for
+          presentation purposes only, so it may contain an arbitrary string (e.g. "EAP", "Beta", "Preview", "RC").
+          If it's omitted and 'eap' attribute is 'true', "EAP" suffix will be used.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="namesType">
     <xs:attribute type="xs:string" name="product">
@@ -118,7 +127,9 @@
     <xs:attribute type="xs:string" name="number" use="required">
       <xs:annotation>
         <xs:documentation>
-          In sources this attribute should be set to __BUILD_NUMBER__ placeholder which is replaced by real build number (two or more numbers separated by dots) by the build scripts.
+          Specifies the full build number in format '&lt;product code&gt;-__BUILD__'. &lt;product code&gt; is a unique product code (e.g. IU
+          for IntelliJ IDEA Ultimate Edition, IC for IntelliJ IDEA Community Edition), and __BUILD__ is a placeholder which will be replaced
+          by the real build number (two or more numbers separated by dots) by the build scripts.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -297,7 +308,7 @@
     <xs:attribute type="xs:string" name="size32">
       <xs:annotation>
         <xs:documentation>
-          Path to a 32x32 png file with the product icon.
+          Path to a 32x32 png file with the product icon. <strong>Deprecated: use 'svg' attribute instead.</strong>
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

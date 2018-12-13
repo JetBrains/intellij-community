@@ -198,7 +198,7 @@ public class GuessManagerImpl extends GuessManager {
 
     for (PsiClass derivedClass : processor.getCollection()) {
       if (derivedClass instanceof PsiAnonymousClass) continue;
-      PsiType derivedType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(derivedClass);
+      PsiType derivedType = JavaPsiFacade.getElementFactory(manager.getProject()).createType(derivedClass);
       set.add(derivedType);
     }
   }
@@ -359,6 +359,10 @@ public class GuessManagerImpl extends GuessManager {
     if (result == null) {
       result = getTypesFromDfa(expr);
     }
+    result = ContainerUtil.filter(result, t -> {
+      PsiClass typeClass = PsiUtil.resolveClassInType(t);
+      return typeClass == null || PsiUtil.isAccessible(typeClass, expr, null);
+    });
     if (result.equals(Collections.singletonList(expr.getType()))) {
       return Collections.emptyList();
     }
@@ -583,7 +587,7 @@ public class GuessManagerImpl extends GuessManager {
           constraint = myInitial;
         }
         if (constraint != null) {
-          myConstraint = myConstraint == null ? constraint : myConstraint.union(constraint);
+          myConstraint = myConstraint == null ? constraint : myConstraint.unite(constraint);
           if (myConstraint == null) {
             myConstraint = TypeConstraint.empty();
             return;

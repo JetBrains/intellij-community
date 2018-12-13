@@ -47,6 +47,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     visitor.visitImportStatement(this);
   }
 
+  @Override
   public String toString() {
     return "Import statement";
   }
@@ -149,7 +150,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
   public GrModifierList getAnnotationList() {
     GrImportStatementStub stub = getStub();
     if (stub != null) {
-      return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.MODIFIERS));
+      return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.MODIFIER_LIST));
     }
     return findNotNullChildByClass(GrModifierList.class);
   }

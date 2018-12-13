@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 5/25/12 9:25 AM
  */
 public class ScrollRightAction extends InactiveEditorAction {
   

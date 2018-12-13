@@ -36,7 +36,6 @@ import java.util.Map;
 
 /**
  * @author anna
- * @since 10-Aug-2007
  */
 public class PluginDownloader {
   private static final Logger LOG = Logger.getInstance(PluginDownloader.class);
@@ -150,7 +149,7 @@ public class PluginDownloader {
         }
         String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
         String title = IdeBundle.message("title.failed.to.download");
-        app.invokeLater(() -> Messages.showErrorDialog(text, title));
+        app.invokeLater(() -> Messages.showErrorDialog(text, title), ModalityState.any());
       }
       return false;
     }

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -64,8 +65,8 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
   }
 
   /**
-   * Warning! This class have to manually save settings to xml using {@code readSettings()} and {@code writeSettings()} of its parent class
-   **/
+   * Warning! This class has to manually save settings to xml using its {@code readSettings()} and {@code writeSettings()} methods
+   */
   @NotNull
   @Override
   public JComponent createOptionsPanel() {
@@ -78,14 +79,8 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     final ListTable table2 = new ListTable(
       new ListWrappingTableModel(Arrays.asList(myMethodMatcher.getClassNames(), myMethodMatcher.getMethodNamePatterns()),
                                  InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
-                                 InspectionGadgetsBundle.message("method.name.regex"))) {
-      @Override
-      public void setEnabled(boolean enabled) {
-        // hack to display correctly on initial opening of
-        // inspection settings (otherwise it is always enabled)
-        super.setEnabled(enabled && !ignoreFromMethodCall);
-      }
-    };
+                                 InspectionGadgetsBundle.message("method.name.regex")));
+    table2.setEnabled(!ignoreFromMethodCall);
     final JPanel tablePanel2 = UiUtils.createAddRemoveTreeClassChooserPanel(table2, "Choose class");
     final JPanel wrapperPanel = new JPanel(new BorderLayout());
     wrapperPanel.setBorder(IdeBorderFactory.createTitledBorder("Ignore AutoCloseable instances returned from these methods", false));
@@ -94,7 +89,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     panel.add(wrapperPanel);
     final CheckBox checkBox =
       new CheckBox(InspectionGadgetsBundle.message("auto.closeable.resource.returned.option"), this, "ignoreFromMethodCall");
-    checkBox.addChangeListener(e -> table2.setEnabled(!ignoreFromMethodCall));
+    checkBox.addItemListener(e -> table2.setEnabled(e.getStateChange() == ItemEvent.DESELECTED));
     panel.add(checkBox);
     panel.add(new CheckBox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), this, "anyMethodMayClose"));
     return panel;

@@ -18,8 +18,8 @@ package org.jetbrains.jps.builders.impl.storage;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.builders.storage.StorageProvider;
 import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
@@ -65,7 +65,6 @@ public class BuildTargetStorages extends CompositeStorageOwner {
         lazyValue = newValue; // just initialized
       }
     }
-    //noinspection unchecked
     try {
       return (S)lazyValue.getValue();
     }

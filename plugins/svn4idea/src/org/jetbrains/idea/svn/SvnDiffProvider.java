@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +13,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -74,9 +59,9 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     VcsRevisionNumber result = null;
 
     if (info != null) {
-      Revision revision = Revision.UNDEFINED.equals(info.getCommittedRevision()) && info.getCopyFromRevision() != null
-                             ? info.getCopyFromRevision()
-                             : info.getRevision();
+      Revision revision = !info.getCommitInfo().getRevision().isValid() && info.getCopyFromRevision().isValid()
+                          ? info.getCopyFromRevision()
+                          : info.getRevision();
 
       result = new SvnRevisionNumber(revision);
     }
@@ -145,18 +130,16 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
       return null;
     }
 
-    if (svnInfo.getCommittedRevision().equals(Revision.UNDEFINED) &&
-        !svnInfo.getCopyFromRevision().equals(Revision.UNDEFINED) &&
-        svnInfo.getCopyFromURL() != null) {
-      File localPath = myVcs.getSvnFileUrlMapping().getLocalPath(svnInfo.getCopyFromURL());
+    if (!svnInfo.getCommitInfo().getRevision().isValid() && svnInfo.getCopyFromRevision().isValid() && svnInfo.getCopyFromUrl() != null) {
+      File localPath = myVcs.getSvnFileUrlMapping().getLocalPath(svnInfo.getCopyFromUrl());
 
       if (localPath != null) {
         return getCurrentRevisionDescription(localPath);
       }
     }
 
-    return new VcsRevisionDescriptionImpl(new SvnRevisionNumber(svnInfo.getCommittedRevision()), svnInfo.getCommittedDate(),
-                                          svnInfo.getAuthor(), getCommitMessage(path, svnInfo));
+    return new VcsRevisionDescriptionImpl(new SvnRevisionNumber(svnInfo.getCommitInfo().getRevision()), svnInfo.getCommitInfo().getDate(),
+                                          svnInfo.getCommitInfo().getAuthor(), getCommitMessage(path, svnInfo));
   }
 
   @Nullable
@@ -164,14 +147,13 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     String result;
 
     try {
-      PropertyValue property =
-        myVcs.getFactory(path).createPropertyClient()
-          .getProperty(Target.on(path), COMMIT_MESSAGE, true, info.getCommittedRevision());
+      PropertyValue property = myVcs.getFactory(path).createPropertyClient()
+        .getProperty(Target.on(path), COMMIT_MESSAGE, true, info.getCommitInfo().getRevision());
 
       result = PropertyValue.toString(property);
     }
     catch (VcsException e) {
-      LOG.info("Failed to get commit message for file " + path + ", " + info.getCommittedRevision() + ", " + info.getRevision(), e);
+      LOG.info("Failed to get commit message for file " + path + ", " + info.getCommitInfo().getRevision() + ", " + info.getRevision(), e);
       result = "";
     }
 
@@ -237,27 +219,24 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   public VcsRevisionNumber getLatestCommittedRevision(@NotNull VirtualFile vcsRoot) {
     Info info = myVcs.getInfo(virtualToIoFile(vcsRoot), Revision.HEAD);
 
-    return info != null ? new SvnRevisionNumber(info.getCommittedRevision()) : null;
+    return info != null ? new SvnRevisionNumber(info.getCommitInfo().getRevision()) : null;
   }
 
   @NotNull
   private ItemLatestState getLastRevision(@NotNull File file) {
     Status svnStatus = getFileStatus(file, true);
 
-    if (svnStatus == null || itemExists(svnStatus) && Revision.UNDEFINED.equals(svnStatus.getRemoteRevision())) {
+    if (svnStatus == null || itemExists(svnStatus)) {
       // IDEADEV-21785 (no idea why this can happen)
       final Info info = myVcs.getInfo(file, Revision.HEAD);
-      if (info == null || info.getURL() == null) {
+      if (info == null || info.getUrl() == null) {
         LOG.info("No SVN status returned for " + file.getPath());
         return defaultResult();
       }
-      return createResult(info.getCommittedRevision(), true, false);
+      return createResult(info.getCommitInfo().getRevision(), true, false);
     }
 
-    if (!itemExists(svnStatus)) {
-      return createResult(getLastExistingRevision(file, svnStatus), false, false);
-    }
-    return createResult(ObjectUtils.notNull(svnStatus.getRemoteRevision(), svnStatus.getRevision()), true, false);
+    return createResult(getLastExistingRevision(file, svnStatus), false, false);
   }
 
   @NotNull
@@ -270,8 +249,8 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
       // get really latest revision
       // TODO: Algorithm seems not to be correct in all cases - for instance, when some subtree was deleted and replaced by other
       // TODO: with same names. pegRevision should be used somehow but this complicates the algorithm
-      if (svnStatus.getRepositoryRootURL() != null) {
-        revision = new LatestExistentSearcher(myVcs, svnStatus.getURL(), svnStatus.getRepositoryRootURL()).getDeletionRevision();
+      if (svnStatus.getRepositoryRootUrl() != null) {
+        revision = new LatestExistentSearcher(myVcs, svnStatus.getUrl(), svnStatus.getRepositoryRootUrl()).getDeletionRevision();
       }
       else {
         LOG.info("Could not find repository url for file " + file);
@@ -282,7 +261,6 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   }
 
   private static boolean itemExists(@NotNull Status svnStatus) {
-    return !StatusType.STATUS_DELETED.equals(svnStatus.getRemoteContentsStatus()) &&
-           !StatusType.STATUS_DELETED.equals(svnStatus.getRemoteNodeStatus());
+    return !StatusType.STATUS_DELETED.equals(svnStatus.getRemoteItemStatus());
   }
 }

@@ -215,7 +215,6 @@ public class XsltStackFrame extends XStackFrame {
       }
 
       @Override
-      @SuppressWarnings({ "ConstantConditions" })
       public String getURI() {
         return null;
       }

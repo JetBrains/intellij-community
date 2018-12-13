@@ -31,7 +31,7 @@ public class GrVariableDeclarationStub extends StubBase<GrVariableDeclaration> {
   private volatile SoftReference<GrTypeElement> myTypeElement;
 
   public GrVariableDeclarationStub(StubElement parent, @Nullable String typeString) {
-    super(parent, GroovyElementTypes.VARIABLE_DEFINITION);
+    super(parent, GroovyElementTypes.VARIABLE_DECLARATION);
     myTypeString = typeString;
   }
 

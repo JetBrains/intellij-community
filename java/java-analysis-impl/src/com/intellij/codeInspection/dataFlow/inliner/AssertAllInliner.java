@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow.inliner;
 
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
+import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -31,7 +32,7 @@ public class AssertAllInliner implements CallInliner {
     for (int i = 0; i < args.length; i++) {
       PsiExpression arg = args[i];
       if (i == 0 && TypeUtils.isJavaLangString(arg.getType())) {
-        builder.pushExpression(arg).pop();
+        builder.pushExpression(arg, NullabilityProblemKind.noProblem).pop();
       }
       else {
         builder.evaluateFunction(arg);
@@ -54,7 +55,8 @@ public class AssertAllInliner implements CallInliner {
     builder.push(result)
            .ifConditionIs(true)
            .doThrow(throwable)
-           .end();
+           .end()
+           .pushUnknown(); // void method result
     return true;
   }
 }

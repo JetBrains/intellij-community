@@ -47,6 +47,8 @@ import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.fixes.CreateDefaultBranchFix;
+import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -205,7 +207,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddExceptionToCatchFix() {
-    return new AddExceptionToCatchFix();
+    return new AddExceptionToCatchFix(true);
   }
 
   @NotNull
@@ -933,4 +935,14 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createSameErasureButDifferentMethodsFix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
     return new SameErasureButDifferentMethodsFix(method, superMethod);
   }
+  
+  @Override
+  public IntentionAction createAddMissingEnumBranchesFix(@NotNull PsiSwitchBlock switchBlock, @NotNull Set<String> missingCases) {
+    return new CreateMissingSwitchBranchesFix(switchBlock, missingCases);
+  } 
+  
+  @Override
+  public IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock) {
+    return new CreateDefaultBranchFix(switchBlock);
+  } 
 }

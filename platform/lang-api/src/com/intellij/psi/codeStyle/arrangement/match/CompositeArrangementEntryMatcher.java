@@ -22,7 +22,6 @@ import java.util.*;
 
 /**
  * @author Denis Zhdanov
- * @since 7/17/12 11:26 AM
  */
 public class CompositeArrangementEntryMatcher implements ArrangementEntryMatcher {
 

@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
@@ -16,8 +17,10 @@ import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
@@ -102,7 +105,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       throw e
     }
     catch (e: Exception) {
-      LOG.error("Cannot init $componentName component state", e)
+      LOG.error(PluginManagerCore.createPluginException("Cannot init $componentName component state", e, component.javaClass))
       return
     }
   }
@@ -168,14 +171,12 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val names = ArrayUtilRt.toStringArray(components.keys)
     Arrays.sort(names)
-    val timeLogPrefix = "Saving"
-    val timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
+    var timeLog: StringBuilder? = null
 
     // well, strictly speaking each component saving takes some time, but +/- several seconds doesn't matter
     val nowInSeconds: Int = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
     for (name in names) {
-      val start = if (timeLog == null) 0 else System.currentTimeMillis()
-
+      val start = System.currentTimeMillis()
       try {
         val info = components.get(name)!!
         var currentModificationCount = -1L
@@ -207,17 +208,20 @@ abstract class ComponentStoreImpl : IComponentStore {
         errors.add(Exception("Cannot get $name component state", e))
       }
 
-      timeLog?.let {
-        val duration = System.currentTimeMillis() - start
-        if (duration > 10) {
-          it.append("\n").append(name).append(" took ").append(duration).append(" ms: ").append((duration / 60000)).append(" min ").append(
-            ((duration % 60000) / 1000)).append("sec")
+      val duration = System.currentTimeMillis() - start
+      if (duration > 10) {
+        if (timeLog == null) {
+          timeLog = StringBuilder("Saving " + toString())
         }
+        else {
+          timeLog.append(", ")
+        }
+        timeLog.append(name).append(" took ").append(duration).append(" ms")
       }
     }
 
-    if (timeLog != null && timeLog.length > timeLogPrefix.length) {
-      LOG.debug(timeLog.toString())
+    if (timeLog != null) {
+      LOG.info(timeLog.toString())
     }
     return errors
   }
@@ -231,15 +235,16 @@ abstract class ComponentStoreImpl : IComponentStore {
     val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(stateSpec.storages).path)).toAbsolutePath().toString()
     runUndoTransparentWriteAction {
       val errors: MutableList<Throwable> = SmartList<Throwable>()
+      val newDisposable = Disposer.newDisposable()
       try {
-        VfsRootAccess.allowRootAccess(absolutePath)
+        VfsRootAccess.allowRootAccess(newDisposable, absolutePath)
         val isSomethingChanged = externalizationSession.save(errors = errors)
         if (!isSomethingChanged) {
           LOG.info("saveApplicationComponent is called for ${stateSpec.name} but nothing to save")
         }
       }
       finally {
-        VfsRootAccess.disallowRootAccess(absolutePath)
+        Disposer.dispose(newDisposable)
       }
       CompoundRuntimeException.throwIfNotEmpty(errors)
     }
@@ -374,14 +379,10 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
 
-        try {
-          component.loadState(state)
-        }
-        finally {
-          val stateAfterLoad = stateGetter.close()
-          (stateAfterLoad ?: state).let {
-            FeatureUsageSettingsEvents.logConfigurationState(name, stateSpec, it, project)
-          }
+        component.loadState(state)
+        val stateAfterLoad = stateGetter.archiveState()
+        LOG.runAndLogException {
+          FeatureUsageSettingsEvents.logConfigurationState(name, stateSpec, stateAfterLoad ?: state, project)
         }
         return true
       }
@@ -538,6 +539,8 @@ abstract class ComponentStoreImpl : IComponentStore {
   fun removeComponent(name: String) {
     components.remove(name)
   }
+
+  override fun toString() = storageManager.componentManager.toString()
 }
 
 internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {

@@ -86,6 +86,6 @@ public class GroovyChangeUtilSupport implements TreeCopyHandler {
     while (node != null && node.getElementType() == GroovyElementTypes.REFERENCE_ELEMENT) {
       node = node.getTreeParent();
     }
-    return node != null && node.getElementType() == GroovyElementTypes.IMPORT_STATEMENT;
+    return node != null && node.getElementType() == GroovyElementTypes.IMPORT;
   }
 }

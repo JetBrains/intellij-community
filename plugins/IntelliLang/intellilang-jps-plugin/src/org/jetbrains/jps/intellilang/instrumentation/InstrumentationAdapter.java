@@ -8,7 +8,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.jps.intellilang.instrumentation.PatternInstrumenter.NEW_ASM;
 import static org.jetbrains.jps.intellilang.instrumentation.PatternInstrumenter.isStringType;
 
 class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
@@ -21,7 +20,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
   private final String myMethodName;
   private final boolean myDoAssert;
   private final boolean myIsStatic;
-  private final int myParamAnnotationOffset;
+  private int myParamAnnotationOffset;
 
   private final List<PatternValue> myParameterPatterns = new ArrayList<>();
   private PatternValue myMethodPattern;
@@ -48,15 +47,23 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
   }
 
   @Override
+  public void visitAnnotableParameterCount(int parameterCount, boolean visible) {
+    if (myParamAnnotationOffset != 0 && parameterCount == myArgTypes.length) {
+      myParamAnnotationOffset = 0;
+    }
+    super.visitAnnotableParameterCount(parameterCount, visible);
+  }
+
+  @Override
   public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
     AnnotationVisitor av = mv.visitParameterAnnotation(parameter, desc, visible);
 
-    if (NEW_ASM ? isStringType(myArgTypes[parameter - myParamAnnotationOffset]) : parameter >= myParamAnnotationOffset && isStringType(myArgTypes[parameter])) {
+    if (isStringType(myArgTypes[parameter + myParamAnnotationOffset])) {
       String annotationClassName = Type.getType(desc).getClassName();
       String pattern = myInstrumenter.getAnnotationPattern(annotationClassName);
       if (pattern != null) {
         String shortName = annotationClassName.substring(annotationClassName.lastIndexOf('.') + 1);
-        PatternValue patternValue = new PatternValue(parameter - myParamAnnotationOffset, shortName, pattern);
+        PatternValue patternValue = new PatternValue(parameter + myParamAnnotationOffset, shortName, pattern);
         myParameterPatterns.add(patternValue);
         if (pattern == PatternInstrumenter.NULL_PATTERN) {
           return new MyAnnotationVisitor(av, patternValue);

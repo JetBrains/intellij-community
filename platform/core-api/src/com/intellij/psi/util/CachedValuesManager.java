@@ -52,7 +52,7 @@ public abstract class CachedValuesManager {
    * the details.
    *
    * @param provider computes values.
-   * @param trackValue if value tracking required. T should be trackable in this case.
+   * @param trackValue if value tracking is required. T should be trackable in this case.
    * @return new CachedValue instance.
    */
   @NotNull
@@ -69,7 +69,7 @@ public abstract class CachedValuesManager {
     return createCachedValue(provider, true);
   }
 
-  public <T, D extends UserDataHolder, P> T getParameterizedCachedValue(@NotNull D dataHolder,
+  public <T, P> T getParameterizedCachedValue(@NotNull UserDataHolder dataHolder,
                               @NotNull Key<ParameterizedCachedValue<T,P>> key,
                               @NotNull ParameterizedCachedValueProvider<T, P> provider,
                               boolean trackValue,
@@ -85,6 +85,7 @@ public abstract class CachedValuesManager {
       }
     }
     else {
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (dataHolder) {
         value = dataHolder.getUserData(key);
         if (value == null) {
@@ -102,19 +103,19 @@ public abstract class CachedValuesManager {
    * @param dataHolder holder to store the cached value, e.g. a PsiElement.
    * @param key key to store the cached value.
    * @param provider provider creating the cached value.
-   * @param trackValue if value tracking required. T should be trackable in this case.
+   * @param trackValue if value tracking is required (T should be trackable in that case). See {@link #createCachedValue(CachedValueProvider, boolean)} for more details.
    * @return up-to-date value.
    */
-  public abstract <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder,
-                                                                 @NotNull Key<CachedValue<T>> key,
-                                                                 @NotNull CachedValueProvider<T> provider,
-                                                                 boolean trackValue);
+  public abstract <T> T getCachedValue(@NotNull UserDataHolder dataHolder,
+                                       @NotNull Key<CachedValue<T>> key,
+                                       @NotNull CachedValueProvider<T> provider,
+                                       boolean trackValue);
 
   /**
    * Create a cached value with the given provider and non-tracked return value, store it in the first argument's user data. If it's already stored, reuse it.
    * @return The cached value
    */
-  public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder, @NotNull CachedValueProvider<T> provider) {
+  public <T> T getCachedValue(@NotNull UserDataHolder dataHolder, @NotNull CachedValueProvider<T> provider) {
     return getCachedValue(dataHolder, this.getKeyForClass(provider.getClass()), provider, false);
   }
 

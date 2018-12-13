@@ -43,7 +43,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -78,7 +77,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @NotNull
-  private JPanel createMainPanel(@NotNull final HintHint hintHint, @NotNull JComponent pane, @NotNull JEditorPane editorPane) {
+  private static JPanel createMainPanel(@NotNull final HintHint hintHint, @NotNull JComponent pane, @NotNull JEditorPane editorPane) {
     JPanel grid = new JPanel(new GridBagLayout()) {
       @Override
       public AccessibleContext getAccessibleContext() {
@@ -133,8 +132,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       correctLocation(editor, editorPane, p, alignToRight, expanded, myCurrentWidth);
     }
 
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(editorPane);
-    scrollPane.setBorder(null);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(editorPane, true);
 
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -146,6 +144,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     scrollPane.getViewport().setBackground(hintHint.getTextBackground());
     scrollPane.setViewportBorder(null);
 
+    editorPane.setBorder(JBUI.Borders.emptyBottom(2));
     if (hintHint.isRequestFocus()) {
       editorPane.setFocusable(true);
     }

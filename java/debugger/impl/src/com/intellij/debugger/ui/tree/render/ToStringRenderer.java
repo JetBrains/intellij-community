@@ -69,7 +69,10 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
       return "";
     }
 
-    final Value value = valueDescriptor.getValue();
+    Value value = valueDescriptor.getValue();
+    if (value instanceof ObjectReference) {
+      DebuggerUtils.ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
+    }
     BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
       @Override
       public void evaluationResult(String message) {

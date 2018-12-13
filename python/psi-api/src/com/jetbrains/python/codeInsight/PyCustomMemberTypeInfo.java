@@ -37,7 +37,7 @@ public class PyCustomMemberTypeInfo<K> {
     this(Collections.singleton(Pair.create(key, value)));
   }
 
-  public PyCustomMemberTypeInfo(@NotNull final Iterable<Pair<Key<K>, K>> customInfo) {
+  public PyCustomMemberTypeInfo(@NotNull final Iterable<? extends Pair<Key<K>, K>> customInfo) {
     for (final Pair<Key<K>, K> pair : customInfo) {
       myCustomInfo.put(pair.first, pair.second);
     }

@@ -15,7 +15,6 @@ public final class BootstrapUtil {
     }
 
     ChannelFuture registrationFuture = bootstrap.group().register(channel);
-    //noinspection ThrowableResultOfMethodCallIgnored
     if (registrationFuture.cause() != null) {
       if (channel.isRegistered()) {
         channel.close();

@@ -7,7 +7,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ContextHelpLabel;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.TextComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -259,10 +258,10 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   private static void setCommentText(@NotNull JLabel component, @Nullable String commentText, boolean isCommentBelow) {
     if (commentText != null) {
       String css = "<head><style type=\"text/css\">\n" +
-                         "a, a:link {color:#" + ColorUtil.toHex(JBColor.link()) + ";}\n" +
-                         "a:visited {color:#" + ColorUtil.toHex(JBColor.linkVisited()) + ";}\n" +
-                         "a:hover {color:#" + ColorUtil.toHex(JBColor.linkHover()) + ";}\n" +
-                         "a:active {color:#" + ColorUtil.toHex(JBColor.linkPressed()) + ";}\n" +
+                         "a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}\n" +
+                         "a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkVisitedColor()) + ";}\n" +
+                         "a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}\n" +
+                         "a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}\n" +
                          //"body {background-color:#" + ColorUtil.toHex(JBColor.YELLOW) + ";}\n" + // Left for visual debugging
                          "</style>\n</head>";
       if (commentText.length() > 70 && isCommentBelow) {

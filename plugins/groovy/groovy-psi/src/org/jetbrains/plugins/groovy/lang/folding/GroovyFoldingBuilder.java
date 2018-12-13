@@ -122,7 +122,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     IElementType type = node.getElementType();
     JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
     if ((type == GroovyElementTypes.OPEN_BLOCK || type == GroovyElementTypes.CONSTRUCTOR_BODY) && node.getTreeParent().getElementType() ==
-                                                                                                                                    GroovyElementTypes.METHOD_DEFINITION) {
+                                                                                                                                    GroovyElementTypes.METHOD) {
       return settings.isCollapseMethods();
     }
 
@@ -309,6 +309,6 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   @Override
   protected boolean isCustomFoldingRoot(@NotNull ASTNode node) {
     IElementType nodeType = node.getElementType();
-    return nodeType == GroovyElementTypes.CLASS_DEFINITION || nodeType == GroovyElementTypes.OPEN_BLOCK;
+    return nodeType == GroovyElementTypes.CLASS_TYPE_DEFINITION || nodeType == GroovyElementTypes.OPEN_BLOCK;
   }
 }

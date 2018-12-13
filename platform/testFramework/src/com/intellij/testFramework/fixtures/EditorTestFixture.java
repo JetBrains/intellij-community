@@ -257,7 +257,7 @@ public class EditorTestFixture {
     final JList list = lookup.getList();
     List<String> strings = getLookupElementStrings();
     assertNotNull(strings);
-    final List<String> actual = strings.subList(0, Math.min(expected.length, strings.size()));
+    final List<String> actual = ContainerUtil.getFirstItems(strings, expected.length);
     if (!actual.equals(Arrays.asList(expected))) {
       UsefulTestCase.assertOrderedEquals(DumpLookupElementWeights.getLookupElementWeights(lookup, false), expected);
     }

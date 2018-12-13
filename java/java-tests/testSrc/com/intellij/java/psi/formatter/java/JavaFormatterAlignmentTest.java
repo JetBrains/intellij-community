@@ -27,7 +27,6 @@ import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT_WITH_CO
  * {@code Project Settings - Code Style - Alignment and Braces}).
  *
  * @author Denis Zhdanov
- * @since Apr 27, 2010 6:42:00 PM
  */
 public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 
@@ -854,6 +853,92 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "\n" +
       "    public void testCounterMounter()         { System.out.println(\"XXXX\"); }\n" +
       "\n" +
+      "}"
+    );
+  }
+
+  public void test_alignAssignments() {
+    getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTextTest(
+      "public class Test {\n" +
+      "  void foo(int a, int xyz) {\n" +
+      "    a = 9999;\n" +
+      "    xyz = 1;\n" +
+      "  }\n" +
+      "}",
+      "public class Test {\n" +
+      "    void foo(int a, int xyz) {\n" +
+      "        a   = 9999;\n" +
+      "        xyz = 1;\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void test_alignMultilineAssignments() {
+    getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    getSettings().ALIGN_MULTILINE_ASSIGNMENT = true;
+    doTextTest(
+      "public class Test {\n" +
+      "  void foo(int a, int xyz) {\n" +
+      "    a = 9999;\n" +
+      "    xyz = a = \n" +
+      "    a = 12;\n" +
+      "  }\n" +
+      "}",
+      "public class Test {\n" +
+      "    void foo(int a, int xyz) {\n" +
+      "        a   = 9999;\n" +
+      "        xyz = a =\n" +
+      "        a   = 12;\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+
+  public void test_alignMultilineAssignmentsMixedWithDeclaration() {
+    getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    getSettings().ALIGN_MULTILINE_ASSIGNMENT = true;
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doTextTest(
+      "public class Test {\n" +
+      "  void foo(int a, int xyz, int bc) {\n" +
+      "    bc = 9999;\n" +
+      "    a = 9999;\n" +
+      "    int basdf = 1234;\n" +
+      "    int as = 3;\n" +
+      "    xyz = a = \n" +
+      "    a = 12;\n" +
+      "  }\n" +
+      "}",
+      "public class Test {\n" +
+      "    void foo(int a, int xyz, int bc) {\n" +
+      "        bc = 9999;\n" +
+      "        a  = 9999;\n" +
+      "        int basdf = 1234;\n" +
+      "        int as    = 3;\n" +
+      "        xyz = a =\n" +
+      "        a   = 12;\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void test_alignAssignmentsFields() {
+    getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTextTest(
+      "public class Test {\n" +
+      "  void foo(A a, int xyz) {\n" +
+      "    a.bar = 9999;\n" +
+      "    xyz = 1;\n" +
+      "  }\n" +
+      "}",
+      "public class Test {\n" +
+      "    void foo(A a, int xyz) {\n" +
+      "        a.bar = 9999;\n" +
+      "        xyz   = 1;\n" +
+      "    }\n" +
       "}"
     );
   }

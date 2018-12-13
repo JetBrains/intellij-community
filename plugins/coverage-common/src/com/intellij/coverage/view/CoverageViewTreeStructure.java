@@ -45,7 +45,7 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
                               CoverageViewManager.StateBean stateBean) {
     if (element instanceof CoverageListRootNode && stateBean.myFlattenPackages) {
       final Collection<? extends AbstractTreeNode> children = ((CoverageListRootNode)element).getChildren();
-      return children.toArray(ArrayUtil.EMPTY_OBJECT_ARRAY);
+      return ArrayUtil.toObjectArray(children);
     }
     if (element instanceof CoverageListNode) {
       List<AbstractTreeNode> children = bundle.getCoverageEngine().createCoverageViewExtension(((CoverageListNode)element).getProject(),

@@ -15,15 +15,12 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.util.ArrayUtil;
-
 import javax.management.Attribute;
 import javax.management.AttributeList;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.math.BigInteger;
-import java.util.stream.LongStream;
 
 /**
  * @author peter
@@ -41,7 +38,6 @@ class CpuTimings {
     for (int i = 0;; i++) {
       long time = calcCpuTiming(CpuTimings::addBigIntegers);
       if (time < minTime) {
-        //noinspection StringConcatenationInsideStringBufferAppend
         //log.append("Iteration " + i + ", time " + time + "\n");
         minTime = time;
         minIteration = i;
@@ -133,7 +129,6 @@ class CpuTimings {
     }
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
     for (int i = 0; i < 20; i++) {
       // each line can be uncommented alone, to check the results of different benchmarks

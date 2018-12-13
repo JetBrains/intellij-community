@@ -25,6 +25,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public interface InspectionToolPresentation extends ProblemDescriptionsProcessor {
@@ -32,19 +33,18 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   InspectionToolWrapper getToolWrapper();
 
-  void createToolNode(@NotNull GlobalInspectionContextImpl globalInspectionContext,
-                      @NotNull InspectionNode node,
-                      @NotNull InspectionRVContentProvider provider,
-                      @NotNull InspectionTreeNode parentNode,
-                      boolean showStructure,
-                      boolean groupBySeverity);
+  default void patchToolNode(@NotNull InspectionTreeNode node,
+                             @NotNull InspectionRVContentProvider provider,
+                             boolean showStructure,
+                             boolean groupBySeverity) {
 
-  @Nullable
-  InspectionNode getToolNode();
+  }
 
   @NotNull
-  default RefElementNode createRefNode(@Nullable RefEntity entity) {
-    return new RefElementNode(entity, this);
+  default RefElementNode createRefNode(@Nullable RefEntity entity,
+                                       @NotNull InspectionTreeModel model,
+                                       @NotNull InspectionTreeNode parent) {
+    return new RefElementNode(entity, this, parent);
   }
 
   void updateContent();
@@ -80,7 +80,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   IntentionAction findQuickFixes(@NotNull CommonProblemDescriptor descriptor, final String hint);
   @NotNull
   HTMLComposerImpl getComposer();
-  void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity, Predicate<? super CommonProblemDescriptor> isDescriptorExcluded);
+
   @NotNull
   QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements);
   @NotNull
@@ -92,14 +92,13 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   GlobalInspectionContextImpl getContext();
 
-  void exportResults(@NotNull Element parentNode,
+  void exportResults(@NotNull Consumer<Element> resultConsumer,
+                     @NotNull RefEntity refEntity,
+                     @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded);
+
+  void exportResults(@NotNull Consumer<Element> resultConsumer,
                      @NotNull Predicate<? super RefEntity> isEntityExcluded,
                      @NotNull Predicate<? super CommonProblemDescriptor> isProblemExcluded);
-
-  /** Export aggregate results that can't be attached to any specific problem descriptor. */
-  default void exportAggregateResults(@NotNull Element bulkRoot,
-                                      @NotNull Predicate<? super RefEntity> isEntityExcluded,
-                                      @NotNull Predicate<? super CommonProblemDescriptor> isProblemExcluded) {}
 
   /** Override the preview panel for the entity. */
   @Nullable
@@ -127,8 +126,8 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
     return false;
   }
 
-  default int getProblemsCount(@NotNull InspectionTree tree) {
-    return tree.getSelectedDescriptors().length;
+  default boolean showProblemCount() {
+    return true;
   }
 
   @Nullable

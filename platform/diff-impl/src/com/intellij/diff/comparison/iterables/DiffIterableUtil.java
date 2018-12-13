@@ -155,7 +155,6 @@ public class DiffIterableUtil {
         if (equals) {
           Range range = lastUnchanged;
           lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
-          //noinspection ConstantConditions
           return Pair.create(range, true);
         }
         else {

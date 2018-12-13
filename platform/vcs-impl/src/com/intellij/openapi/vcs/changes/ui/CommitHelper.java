@@ -61,7 +61,7 @@ public class CommitHelper {
   @NotNull private final String myActionName;
   @NotNull private final String myCommitMessage;
 
-  @NotNull private final List<CheckinHandler> myHandlers;
+  @NotNull private final List<? extends CheckinHandler> myHandlers;
   private final boolean myAllOfDefaultChangeListChangesIncluded;
   private final boolean myForceSyncCommit;
   @NotNull private final NullableFunction<Object, Object> myAdditionalData;
@@ -77,7 +77,7 @@ public class CommitHelper {
                       @NotNull List<Change> includedChanges,
                       @NotNull String actionName,
                       @NotNull String commitMessage,
-                      @NotNull List<CheckinHandler> handlers,
+                      @NotNull List<? extends CheckinHandler> handlers,
                       boolean allOfDefaultChangeListChangesIncluded,
                       boolean synchronously,
                       @NotNull NullableFunction<Object, Object> additionalDataHolder,
@@ -91,7 +91,7 @@ public class CommitHelper {
                       @NotNull List<Change> includedChanges,
                       @NotNull String actionName,
                       @NotNull String commitMessage,
-                      @NotNull List<CheckinHandler> handlers,
+                      @NotNull List<? extends CheckinHandler> handlers,
                       boolean allOfDefaultChangeListChangesIncluded,
                       boolean synchronously,
                       @NotNull NullableFunction<Object, Object> additionalDataHolder,

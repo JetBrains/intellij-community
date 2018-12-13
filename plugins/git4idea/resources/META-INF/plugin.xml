@@ -31,6 +31,7 @@
 
     <action id="Git.Init" class="git4idea.actions.GitInit" text="Create Git Repository...">
       <add-to-group group-id="Vcs.Import"/>
+      <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
     </action>
 
     <action id="Git.Log" class="git4idea.log.GitShowExternalLogAction" text="Show Git Repository Log...">
@@ -47,12 +48,16 @@
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
             description="Create new tag pointing to this commit"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." icon="AllIcons.Actions.Rollback"/>
-    <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Revert"
+    <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Revert Commit"
             description="Produce a new commit, which reverts the changes made in the original commit"/>
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction" text="Undo Commit..."
             description="Undo last commit and put its changes into selected changelist"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Reword..."
             description="Change commit message" />
+    <action id="Git.Fixup.To.Commit" class="git4idea.rebase.GitCommitFixupBySubjectAction" text="Fixup..."
+            description="Create a fixup commit"/>
+    <action id="Git.Squash.Into.Commit" class="git4idea.rebase.GitCommitSquashBySubjectAction" text="Squash Into..."
+            description="Create a squash commit"/>
     <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction" text="Interactively Rebase from Here..."
             description="Show the dialog for interactive rebase which allows to squash, fixup, reorder, remove and reword commits" />
     <action id="Git.Commit.And.Push.Executor" class="git4idea.actions.GitCommitAndPushExecutorAction" text="Commit and &amp;Push...">
@@ -77,9 +82,9 @@
     </group>
 
     <group id="GitRepositoryActions">
-      <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="VcsLogIcons.Branch">
+      <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="AllIcons.Vcs.Branch">
         <keyboard-shortcut first-keystroke="control shift BACK_QUOTE" keymap="$default" />
-        <keyboard-shortcut first-keystroke="control B" keymap="Mac OS X 10.5+" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="control shift BACK_QUOTE" keymap="Mac OS X" remove="true" />
       </action>
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag..."/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="AllIcons.Actions.ShowAsTree"/>
@@ -121,27 +126,33 @@
     </group>
 
     <group id="Git.FileHistory.ContextMenu">
-      <reference id="Git.Revert.In.Log" />
       <reference id="Git.SelectInGitLog"/>
-      <add-to-group group-id="Vcs.FileHistory.ContextMenu"/>
+      <separator/>
+      <reference id="Git.Revert.In.Log" />
+      <separator/>
+      <add-to-group group-id="Vcs.FileHistory.ContextMenu" relative-to-action="VcsHistoryActionsGroup" anchor="before"/>
     </group>
 
     <group id="Git.Log.ContextMenu">
       <separator/>
       <reference id="Git.CheckoutRevision"/>
       <reference id="Git.BrowseRepoAtRevision"/>
-      <reference id="Git.CreateNewBranch" />
-      <reference id="Git.CreateNewTag" />
+      <separator/>
+      <reference id="Git.Reset.In.Log"/>
+      <reference id="Git.Revert.In.Log"/>
+      <reference id="Git.Uncommit"/>
+      <separator/>
+      <reference id="Git.Reword.Commit"/>
+      <reference id="Git.Fixup.To.Commit" />
+      <reference id="Git.Squash.Into.Commit" />
+      <reference id="Git.Interactive.Rebase"/>
       <separator/>
       <reference id="Git.BranchOperationGroup"/>
+      <reference id="Git.CreateNewBranch"/>
+      <reference id="Git.CreateNewTag"/>
       <separator/>
-      <reference id="Git.Reset.In.Log" />
-      <reference id="Git.Revert.In.Log" />
-      <reference id="Git.Uncommit" />
-      <separator />
-      <reference id="Git.Reword.Commit" />
-      <reference id="Git.Interactive.Rebase" />
-      <add-to-group group-id="Vcs.Log.ContextMenu" />
+
+      <add-to-group group-id="Vcs.Log.ContextMenu"/>
     </group>
 
     <group id="Git.Log.Toolbar">
@@ -149,7 +160,7 @@
               description="Dims those commits which have equivalent changes in the current branch"/>
       <add-to-group group-id="Vcs.Log.PresentationSettings" relative-to-action="Vcs.Log.HighlightersActionGroup" anchor="after"/>
     </group>
-    
+
 
   </actions>
 
@@ -162,6 +173,7 @@
     <vcsRepositoryCreator implementation="git4idea.repo.GitRepositoryCreator"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
+    <vcsCheckinHandlerFactory implementation="git4idea.rebase.GitRebaseCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="git4idea.checkin.GitSkipHooksCommitHandlerFactory" order="last"/>
     <unresolvedMergeCheckProvider implementation="git4idea.checkin.GitUnresolvedMergeCheckProvider"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>

@@ -198,7 +198,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
           myPanel = new JPanel();
         } else {
           CommittedChangeListPanel panel = new CommittedChangeListPanel(myProject);
-          panel.setChangeList(list, null);
+          panel.setChangeList(list);
           myPanel = panel;
         }
       }

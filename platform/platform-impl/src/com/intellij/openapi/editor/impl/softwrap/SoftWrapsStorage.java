@@ -34,7 +34,6 @@ import java.util.List;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since Jun 29, 2010 3:04:20 PM
  */
 public class SoftWrapsStorage implements Dumpable {
 

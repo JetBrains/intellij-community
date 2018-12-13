@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
@@ -291,7 +292,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @Override
   public void setupCatchBlock(@NotNull String exceptionName, @NotNull PsiType exceptionType, PsiElement context, @NotNull PsiCatchSection catchSection) {
     FileTemplate template = FileTemplateManager.getInstance(catchSection.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
-    if (template == null) throw new IncorrectOperationException("Missing template: " + JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+    FileTemplate declarationTemplate = FileTemplateManager.getInstance(catchSection.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_DECLARATION);
 
     Properties props = FileTemplateManager.getInstance(myProject).getDefaultProperties();
     props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, exceptionName);
@@ -304,6 +305,24 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     }
 
     try {
+      PsiTryStatement tryStmt = (PsiTryStatement)PsiElementFactory.SERVICE.getInstance(myProject)
+        .createStatementFromText("try {} catch (" + declarationTemplate.getText(props) + ") {\n}", null);
+      PsiParameter parameter = tryStmt.getCatchSections()[0].getParameter();
+
+      String parameterName = parameter == null ? null : parameter.getName();
+      if (parameterName != null) {
+        if (!exceptionName.equals(parameterName)) {
+          parameterName = JavaCodeStyleManager.getInstance(myProject).suggestUniqueVariableName(parameterName, context, false);
+          props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, parameterName);
+          parameter.setName(parameterName);
+        }
+
+        PsiParameter sectionParameter = catchSection.getParameter();
+        if (sectionParameter != null) {
+          sectionParameter.replace(parameter);
+        }
+      }
+
       PsiCodeBlock block =
         PsiElementFactory.SERVICE.getInstance(myProject).createCodeBlockFromText("{\n" + template.getText(props) + "\n}", null);
       Objects.requireNonNull(catchSection.getCatchBlock()).replace(block);

@@ -75,6 +75,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.application.Preloader</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>
@@ -108,6 +109,7 @@
 
     <component>
       <implementation-class>com.intellij.notification.impl.MacEventReader</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>
@@ -125,6 +127,7 @@
 
     <component>
       <implementation-class>com.intellij.internal.DebugAttachDetector</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>
@@ -142,6 +145,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.ide.customize.WelcomeWizardHelper</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>
@@ -160,6 +164,7 @@
 
     <component>
       <implementation-class>com.intellij.notification.impl.MacEventReader$ProjectTracker</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>

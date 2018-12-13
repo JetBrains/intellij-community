@@ -52,7 +52,7 @@ public class TransferableFileEditorStateSupport {
   };
 
   @NotNull private final DiffSettings mySettings;
-  @NotNull private final List<BinaryEditorHolder> myHolders;
+  @NotNull private final List<? extends BinaryEditorHolder> myHolders;
   @NotNull private final List<? extends FileEditor> myEditors;
 
   private final boolean mySupported;
@@ -61,7 +61,7 @@ public class TransferableFileEditorStateSupport {
   private boolean myDuringUpdate = true;
 
   public TransferableFileEditorStateSupport(@NotNull DiffSettings settings,
-                                            @NotNull List<BinaryEditorHolder> holders,
+                                            @NotNull List<? extends BinaryEditorHolder> holders,
                                             @NotNull Disposable disposable) {
     mySettings = settings;
     myHolders = holders;

@@ -4,21 +4,16 @@ package com.intellij.codeInspection.deprecation;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
-import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -29,12 +24,10 @@ import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 
-abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspectionTool {
+public abstract class DeprecationInspectionBase extends LocalInspectionTool {
   public boolean IGNORE_IN_SAME_OUTERMOST_CLASS;
 
   @Override
@@ -42,282 +35,118 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
     return true;
   }
 
-  protected static class DeprecationElementVisitor extends JavaElementVisitor {
-    private final ProblemsHolder myHolder;
-    private final boolean myIgnoreInsideDeprecated;
-    private final boolean myIgnoreAbstractDeprecatedOverrides;
-    private final boolean myIgnoreImportStatements;
-    private final boolean myIgnoreMethodsOfDeprecated;
-    private final boolean myIgnoreInSameOutermostClass;
-    private final boolean myForRemoval;
-    private final ProblemHighlightType myHighlightType;
-
-    DeprecationElementVisitor(@NotNull ProblemsHolder holder,
-                              boolean ignoreInsideDeprecated,
-                              boolean ignoreAbstractDeprecatedOverrides,
-                              boolean ignoreImportStatements,
-                              boolean ignoreMethodsOfDeprecated,
-                              boolean ignoreInSameOutermostClass,
-                              boolean forRemoval,
-                              @Nullable HighlightSeverity severity) {
-      myHolder = holder;
-      myIgnoreInsideDeprecated = ignoreInsideDeprecated;
-      myIgnoreAbstractDeprecatedOverrides = ignoreAbstractDeprecatedOverrides;
-      myIgnoreImportStatements = ignoreImportStatements;
-      myIgnoreMethodsOfDeprecated = ignoreMethodsOfDeprecated;
-      myIgnoreInSameOutermostClass = ignoreInSameOutermostClass;
-      myForRemoval = forRemoval;
-      myHighlightType = forRemoval && severity == HighlightSeverity.ERROR
-                        ? ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL
-                        : ProblemHighlightType.LIKE_DEPRECATED;
-    }
-
-    @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-      JavaResolveResult result = reference.advancedResolve(true);
-      PsiElement resolved = result.getElement();
-      checkDeprecated(resolved, reference.getReferenceNameElement(), null, myIgnoreInsideDeprecated, myIgnoreImportStatements,
-                      myIgnoreMethodsOfDeprecated, myIgnoreInSameOutermostClass, myHolder, myForRemoval, myHighlightType);
-    }
-
-    @Override
-    public void visitImportStaticStatement(PsiImportStaticStatement statement) {
-      PsiFile file = statement.getContainingFile();
-      if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9)) return;
-      final PsiJavaCodeReferenceElement importReference = statement.getImportReference();
-      if (importReference != null) {
-        PsiElement resolved = importReference.resolve();
-        checkDeprecated(resolved, importReference.getReferenceNameElement(), null, myIgnoreInsideDeprecated,
-                        false, true, myIgnoreInSameOutermostClass, myHolder, myForRemoval, myHighlightType);
-      }
-    }
-
-    @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      visitReferenceElement(expression);
-    }
-
-    @Override
-    public void visitNewExpression(PsiNewExpression expression) {
-      PsiType type = expression.getType();
-      PsiExpressionList list = expression.getArgumentList();
-      if (!(type instanceof PsiClassType)) return;
-      PsiClassType.ClassResolveResult typeResult = ((PsiClassType)type).resolveGenerics();
-      PsiClass aClass = typeResult.getElement();
-      if (aClass == null) return;
-      if (aClass instanceof PsiAnonymousClass) {
-        type = ((PsiAnonymousClass)aClass).getBaseClassType();
-        typeResult = ((PsiClassType)type).resolveGenerics();
-        aClass = typeResult.getElement();
-        if (aClass == null) return;
-      }
-      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
-      final PsiMethod[] constructors = aClass.getConstructors();
-      if (constructors.length > 0 && list != null) {
-        JavaResolveResult[] results = resolveHelper.multiResolveConstructor((PsiClassType)type, list, list);
-        MethodCandidateInfo result = null;
-        if (results.length == 1) result = (MethodCandidateInfo)results[0];
-
-        PsiMethod constructor = result == null ? null : result.getElement();
-        if (constructor != null && expression.getClassOrAnonymousClassReference() != null) {
-          if (expression.getClassReference() == null && constructor.getParameterList().isEmpty()) return;
-          checkDeprecated(constructor, expression.getClassOrAnonymousClassReference(), null, myIgnoreInsideDeprecated,
-                          myIgnoreImportStatements, true, myIgnoreInSameOutermostClass, myHolder, myForRemoval, myHighlightType);
-        }
-      }
-    }
-
-    @Override
-    public void visitMethod(PsiMethod method) {
-      MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
-      if (!method.isConstructor()) {
-        List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
-        checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, myIgnoreAbstractDeprecatedOverrides, myHolder, myForRemoval,
-                                       myHighlightType);
-      }
-      else {
-        checkImplicitCallToSuper(method);
-      }
-    }
-
-    private void checkImplicitCallToSuper(PsiMethod method) {
-      final PsiClass containingClass = method.getContainingClass();
-      assert containingClass != null;
-      final PsiClass superClass = containingClass.getSuperClass();
-      if (hasDefaultDeprecatedConstructor(superClass, myForRemoval)) {
-        if (superClass instanceof PsiAnonymousClass) {
-          final PsiExpressionList argumentList = ((PsiAnonymousClass)superClass).getArgumentList();
-          if (argumentList != null && !argumentList.isEmpty()) return;
-        }
-        final PsiCodeBlock body = method.getBody();
-        if (body != null) {
-          final PsiStatement[] statements = body.getStatements();
-          if (statements.length == 0 || !JavaHighlightUtil.isSuperOrThisCall(statements[0], true, true)) {
-            registerDefaultConstructorProblem(superClass, method.getNameIdentifier(), false);
-          }
-        }
-      }
-    }
-
-    private void registerDefaultConstructorProblem(PsiClass superClass, PsiElement nameIdentifier, boolean asDeprecated) {
-      String description =
-        JavaErrorMessages.message(myForRemoval ? "marked.for.removal.default.constructor" : "deprecated.default.constructor",
-                                  superClass.getQualifiedName());
-      ProblemHighlightType type = asDeprecated ? myHighlightType : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-      myHolder.registerProblem(nameIdentifier, getDescription(description, myForRemoval, myHighlightType), type);
-    }
-
-    @Override
-    public void visitClass(PsiClass aClass) {
-      if (aClass instanceof PsiTypeParameter) return;
-      final PsiMethod[] currentConstructors = aClass.getConstructors();
-      if (currentConstructors.length == 0) {
-        final PsiClass superClass = aClass.getSuperClass();
-        if (hasDefaultDeprecatedConstructor(superClass, myForRemoval)) {
-          final boolean isAnonymous = aClass instanceof PsiAnonymousClass;
-          if (isAnonymous) {
-            final PsiExpressionList argumentList = ((PsiAnonymousClass)aClass).getArgumentList();
-            if (argumentList != null && !argumentList.isEmpty()) return;
-          }
-          registerDefaultConstructorProblem(superClass,
-                                            isAnonymous ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass.getNameIdentifier(),
-                                            isAnonymous);
-        }
-      }
-    }
-
-    @Override
-    public void visitRequiresStatement(PsiRequiresStatement statement) {
-      PsiJavaModuleReferenceElement refElement = statement.getReferenceElement();
-      PsiJavaModule target = PsiJavaModuleReference.resolve(refElement);
-      if (target != null && isMarkedForRemoval(target, myForRemoval) && PsiImplUtil.isDeprecatedByAnnotation(target)) {
-        String key = myForRemoval ? "marked.for.removal.symbol" : "deprecated.symbol";
-        String description = JavaErrorMessages.message(key, HighlightMessageUtil.getSymbolName(target));
-        myHolder.registerProblem(refElement, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
-      }
-    }
-  }
-
-  private static boolean hasDefaultDeprecatedConstructor(PsiClass superClass, boolean forRemoval) {
-    return superClass != null && Arrays.stream(superClass.getConstructors())
-      .anyMatch(constructor -> constructor.getParameterList().isEmpty() &&
-                               constructor.isDeprecated() &&
-                               isMarkedForRemoval(constructor, forRemoval));
-  }
-
-  //@top
-  private static void checkMethodOverridesDeprecated(MethodSignatureBackedByPsiMethod methodSignature,
-                                                     List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
-                                                     boolean ignoreAbstractDeprecatedOverrides, ProblemsHolder holder,
-                                                     boolean forRemoval, @NotNull ProblemHighlightType highlightType) {
-    PsiMethod method = methodSignature.getMethod();
-    PsiElement methodName = method.getNameIdentifier();
-    if (methodName == null) return;
-    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
-      PsiMethod superMethod = superMethodSignature.getMethod();
-      PsiClass aClass = superMethod.getContainingClass();
-      if (aClass == null) continue;
-      // do not show deprecated warning for class implementing deprecated methods
-      if (ignoreAbstractDeprecatedOverrides && !aClass.isDeprecated() && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
-      if (superMethod.isDeprecated() && isMarkedForRemoval(superMethod, forRemoval)) {
-        String description = JavaErrorMessages.message(forRemoval ? "overrides.marked.for.removal.method" : "overrides.deprecated.method",
-                                                       HighlightMessageUtil.getSymbolName(aClass, PsiSubstitutor.EMPTY));
-        holder.registerProblem(methodName, getDescription(description, forRemoval, highlightType), highlightType);
-      }
-    }
-  }
-
-  static void checkDeprecated(PsiElement refElement,
-                              PsiElement elementToHighlight,
-                              @Nullable TextRange rangeInElement,
-                              boolean ignoreInsideDeprecated,
-                              boolean ignoreImportStatements,
-                              boolean ignoreMethodsOfDeprecated,
-                              boolean ignoreInSameOutermostClass,
-                              ProblemsHolder holder,
-                              boolean forRemoval,
-                              @NotNull ProblemHighlightType highlightType) {
-    if (!(refElement instanceof PsiDocCommentOwner) ||
-        !isMarkedForRemoval((PsiDocCommentOwner)refElement, forRemoval) ||
-        isInSameOutermostClass(refElement, elementToHighlight, ignoreInSameOutermostClass)) {
+  public static void checkDeprecated(@NotNull PsiElement element,
+                                     @NotNull PsiElement elementToHighlight,
+                                     @Nullable TextRange rangeInElement,
+                                     boolean ignoreInsideDeprecated,
+                                     boolean ignoreImportStatements,
+                                     boolean ignoreMethodsOfDeprecated,
+                                     boolean ignoreInSameOutermostClass,
+                                     @NotNull ProblemsHolder holder,
+                                     boolean forRemoval,
+                                     @NotNull ProblemHighlightType highlightType) {
+    if (!(element instanceof PsiModifierListOwner)) {
       return;
     }
 
-    if (!((PsiDocCommentOwner)refElement).isDeprecated()) {
+    PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
+    if (PsiImplUtil.isDeprecated(modifierListOwner)) {
+      if (forRemoval != isForRemovalAttributeSet(modifierListOwner)) {
+        return;
+      }
+    }
+    else {
       if (!ignoreMethodsOfDeprecated) {
-        checkDeprecated(((PsiDocCommentOwner)refElement).getContainingClass(), elementToHighlight, rangeInElement,
-                        ignoreInsideDeprecated, ignoreImportStatements, false, ignoreInSameOutermostClass,
-                        holder, forRemoval, highlightType);
+        PsiClass containingClass = element instanceof PsiMember ? ((PsiMember)element).getContainingClass() : null;
+        if (containingClass != null) {
+          checkDeprecated(containingClass, elementToHighlight, rangeInElement, ignoreInsideDeprecated, ignoreImportStatements,
+                          false, ignoreInSameOutermostClass, holder, forRemoval, highlightType);
+        }
       }
       return;
     }
 
-    if (ignoreInsideDeprecated) {
-      PsiElement parent = elementToHighlight;
-      while ((parent = PsiTreeUtil.getParentOfType(parent, PsiDocCommentOwner.class, true)) != null) {
-        if (((PsiDocCommentOwner)parent).isDeprecated()) return;
-      }
-    }
+    if (ignoreInSameOutermostClass && areElementsInSameOutermostClass(element, elementToHighlight)) return;
 
-    if (ignoreImportStatements && PsiTreeUtil.getParentOfType(elementToHighlight, PsiImportStatement.class) != null) {
-      return;
-    }
+    if (ignoreInsideDeprecated && isElementInsideDeprecated(elementToHighlight)) return;
+
+    if (ignoreImportStatements && isElementInsideImportStatement(elementToHighlight)) return;
 
     String description = JavaErrorMessages.message(forRemoval ? "marked.for.removal.symbol" : "deprecated.symbol",
-                                                   HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
+                                                   getPresentableName(element));
 
-    LocalQuickFix quickFix = null;
+    LocalQuickFix replacementQuickFix = getReplacementQuickFix(element, elementToHighlight);
+
+    holder.registerProblem(elementToHighlight, getDescription(description, forRemoval, highlightType), highlightType, rangeInElement,
+                           replacementQuickFix);
+  }
+
+  private static boolean isElementInsideImportStatement(@NotNull PsiElement elementToHighlight) {
+    return PsiTreeUtil.getParentOfType(elementToHighlight, PsiImportStatement.class) != null;
+  }
+
+  public static boolean isElementInsideDeprecated(@NotNull PsiElement element) {
+    PsiElement parent = element;
+    while ((parent = PsiTreeUtil.getParentOfType(parent, PsiModifierListOwner.class, true)) != null) {
+      if (PsiImplUtil.isDeprecated(parent)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static LocalQuickFix getReplacementQuickFix(@NotNull PsiElement refElement, @NotNull PsiElement elementToHighlight) {
     PsiMethodCallExpression methodCall = getMethodCall(elementToHighlight);
     if (refElement instanceof PsiMethod && methodCall != null) {
       PsiMethod replacement = findReplacementInJavaDoc((PsiMethod)refElement, methodCall);
       if (replacement != null) {
-        quickFix = new ReplaceMethodCallFix((PsiMethodCallExpression)elementToHighlight.getParent().getParent(), replacement);
+        return new ReplaceMethodCallFix((PsiMethodCallExpression)elementToHighlight.getParent().getParent(), replacement);
       }
     }
-
-    holder.registerProblem(elementToHighlight, getDescription(description, forRemoval, highlightType), highlightType, rangeInElement, quickFix);
+    return null;
   }
 
-  private static boolean isMarkedForRemoval(PsiModifierListOwner element, boolean forRemoval) {
-    return isMarkedForRemoval(element) == forRemoval;
-  }
-
-  private static boolean isInSameOutermostClass(PsiElement refElement, PsiElement elementToHighlight, boolean ignoreInSameOutermostClass) {
-    if (!ignoreInSameOutermostClass) {
-      return false;
+  public static String getPresentableName(@NotNull PsiElement psiElement) {
+    //Annotation attribute methods don't have parameters.
+    if (psiElement instanceof PsiMethod && PsiUtil.isAnnotationMethod(psiElement)) {
+      return ((PsiMethod)psiElement).getName();
     }
+    return HighlightMessageUtil.getSymbolName(psiElement);
+  }
+
+  protected static boolean isForRemovalAttributeSet(@NotNull PsiModifierListOwner element) {
+    PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, CommonClassNames.JAVA_LANG_DEPRECATED);
+    if (annotation != null) {
+      return isForRemovalAttributeSet(annotation);
+    }
+    return false;
+  }
+
+  /**
+   * Returns value of {@link Deprecated#forRemoval} attribute, which is available since Java 9.
+   *
+   * @param deprecatedAnnotation annotation instance to extract value of
+   * @return {@code true} if the {@code forRemoval} attribute is set to true,
+   * {@code false} if it isn't set or is set to {@code false}.
+   */
+  protected static boolean isForRemovalAttributeSet(@NotNull PsiAnnotation deprecatedAnnotation) {
+    return Boolean.TRUE == AnnotationUtil.getBooleanAttributeValue(deprecatedAnnotation, "forRemoval");
+  }
+
+  private static boolean areElementsInSameOutermostClass(PsiElement refElement, PsiElement elementToHighlight) {
     PsiClass outermostClass = CachedValuesManager.getCachedValue(
       refElement,
-      () -> new CachedValueProvider.Result<>(getOutermostClass(refElement), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
-    return outermostClass != null && outermostClass == getOutermostClass(elementToHighlight);
-  }
-
-  private static PsiClass getOutermostClass(PsiElement element) {
-    PsiElement maybeClass = PsiTreeUtil.findFirstParent(element, e -> e instanceof PsiClass && e.getParent() instanceof PsiFile);
-    return maybeClass instanceof PsiClass ? (PsiClass)maybeClass : null;
-  }
-
-  private static boolean isMarkedForRemoval(@Nullable PsiModifierListOwner element) {
-    PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, CommonClassNames.JAVA_LANG_DEPRECATED);
-    if (annotation == null) {
-      return false;
-    }
-    PsiAnnotationMemberValue value = annotation.findAttributeValue("forRemoval");
-    Object result = null;
-    if (value instanceof PsiLiteral) {
-      result = ((PsiLiteral)value).getValue();
-    }
-    else if (value instanceof PsiExpression) {
-      result = JavaConstantExpressionEvaluator.computeConstantExpression((PsiExpression)value, false);
-    }
-    return result instanceof Boolean && (Boolean)result;
+      () -> new CachedValueProvider.Result<>(PsiUtil.getTopLevelClass(refElement), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT)
+    );
+    return outermostClass != null && outermostClass == PsiUtil.getTopLevelClass(elementToHighlight);
   }
 
   static void addSameOutermostClassCheckBox(MultipleCheckboxOptionsPanel panel) {
     panel.addCheckbox("Ignore in the same outermost class", "IGNORE_IN_SAME_OUTERMOST_CLASS");
   }
 
-  private static String getDescription(String description, boolean forRemoval, ProblemHighlightType highlightType) {
+  protected static String getDescription(@NotNull String description, boolean forRemoval, ProblemHighlightType highlightType) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ProblemHighlightType defaultType = forRemoval ? ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL : ProblemHighlightType.LIKE_DEPRECATED;
       if (highlightType != defaultType) {
@@ -371,7 +200,9 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
     if (isInitialStatic && !isSuggestedStatic) {
       return false;
     }
-    if (!isInitialStatic && !isSuggestedStatic && !InheritanceUtil.isInheritorOrSelf(getQualifierClass(call), suggestedReplacement.getContainingClass(), true)) {
+    if (!isInitialStatic &&
+        !isSuggestedStatic &&
+        !InheritanceUtil.isInheritorOrSelf(getQualifierClass(call), suggestedReplacement.getContainingClass(), true)) {
       return false;
     }
 

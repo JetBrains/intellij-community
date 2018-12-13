@@ -54,7 +54,6 @@ public abstract class XmlExtension {
     return DefaultXmlExtension.DEFAULT_EXTENSION;
   }
 
-  @SuppressWarnings("ConstantConditions")
   public static XmlExtension getExtensionByElement(PsiElement element) {
     final PsiFile psiFile = element.getContainingFile();
     if (psiFile != null) {
@@ -159,7 +158,8 @@ public abstract class XmlExtension {
 
   @NotNull
   public AttributeValuePresentation getAttributeValuePresentation(@Nullable XmlAttributeDescriptor descriptor,
-                                                                  @NotNull String defaultAttributeQuote) {
+                                                                  @NotNull String defaultAttributeQuote,
+                                                                  @NotNull PsiElement context) {
     return new AttributeValuePresentation() {
       @NotNull
       @Override

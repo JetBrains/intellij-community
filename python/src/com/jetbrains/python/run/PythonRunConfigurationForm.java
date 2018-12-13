@@ -25,6 +25,7 @@ import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.PySymbolFieldWithBrowseButton;
 import com.jetbrains.PySymbolFieldWithBrowseButtonKt;
@@ -294,7 +295,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   }
 
   private class MyComboBox extends JBComboBoxLabel implements UserActivityProviderComponent {
-    private final List<ChangeListener> myListeners = Lists.newArrayList();
+    private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
     MyComboBox() {
       this.addMouseListener(new MouseAdapter() {

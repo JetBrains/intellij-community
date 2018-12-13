@@ -29,6 +29,7 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.gradle.util.GUtil
@@ -163,6 +164,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         externalTask.QName = task.name
         externalTask.description = task.description
         externalTask.group = task.group ?: "other"
+        externalTask.test = task instanceof Test
         externalTask.type = ProjectExtensionsDataBuilderImpl.getType(task)
         result.put(externalTask.name, externalTask)
       }

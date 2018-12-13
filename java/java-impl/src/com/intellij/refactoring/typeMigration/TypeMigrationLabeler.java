@@ -111,10 +111,10 @@ public class TypeMigrationLabeler {
       final PsiExpression element = p.getFirst().getElement();
       LOG.assertTrue(element != null);
       final PsiType type = element.getType();
-      report[j++] = "Cannot convert type of expression <b>" + StringUtil.escapeXml(element.getText()) + "</b>" +
+      report[j++] = "Cannot convert type of expression <b>" + StringUtil.escapeXmlEntities(element.getText()) + "</b>" +
                     (type != null
-                     ? " from <b>" + StringUtil.escapeXml(type.getCanonicalText()) + "</b>" +
-                       " to <b>" + StringUtil.escapeXml(p.getSecond().getCanonicalText()) + "</b>"
+                     ? " from <b>" + StringUtil.escapeXmlEntities(type.getCanonicalText()) + "</b>" +
+                       " to <b>" + StringUtil.escapeXmlEntities(p.getSecond().getCanonicalText()) + "</b>"
                      : "")
                     + "<br>";
     }
@@ -320,7 +320,7 @@ public class TypeMigrationLabeler {
       } else if (element instanceof PsiReferenceParameterList) {
         for (Map.Entry<TypeMigrationUsageInfo, PsiClassType> entry : myClassTypeArgumentsChange.entrySet()) {
           if (element.equals(entry.getKey().getElement())) { //todo check null
-            final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+            final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
             try {
               element.getParent().replace(factory.createReferenceElementByType(entry.getValue()));
             }

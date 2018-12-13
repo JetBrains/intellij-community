@@ -354,7 +354,7 @@ public class ControlFlowUtil {
   @NotNull
   public static Collection<PsiStatement> findExitPointsAndStatements(@NotNull ControlFlow flow, final int start, final int end,
                                                                      @NotNull IntArrayList exitPoints,
-                                                                     @NotNull Class... classesFilter) {
+                                                                     @NotNull Class<? extends PsiStatement>... classesFilter) {
     if (end == start) {
       exitPoints.add(end);
       return Collections.emptyList();
@@ -461,7 +461,9 @@ public class ControlFlowUtil {
     return offset;
   }
 
-  public static final Class[] DEFAULT_EXIT_STATEMENTS_CLASSES = {PsiReturnStatement.class, PsiBreakStatement.class, PsiContinueStatement.class};
+  @SuppressWarnings("unchecked")
+  public static final Class<? extends PsiStatement>[] DEFAULT_EXIT_STATEMENTS_CLASSES =
+    new Class[]{PsiReturnStatement.class, PsiBreakStatement.class, PsiContinueStatement.class};
 
   private static PsiStatement findStatement(@NotNull ControlFlow flow, int offset) {
     PsiElement element = flow.getElement(offset);
@@ -1155,7 +1157,7 @@ public class ControlFlowUtil {
             return getUnreachableStatementParent(parent);
           }
           if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == expression ||
-              parent instanceof PsiSwitchStatement && ((PsiSwitchStatement)parent).getExpression() == expression ||
+              parent instanceof PsiSwitchBlock && ((PsiSwitchBlock)parent).getExpression() == expression ||
               parent instanceof PsiWhileStatement && ((PsiWhileStatement)parent).getCondition() == expression ||
               parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == expression) {
             return parent;
@@ -1257,6 +1259,18 @@ public class ControlFlowUtil {
         // clear return statements after procedure as well
         for (int i = instruction.procBegin; i < instruction.procEnd + 3; i++) {
           maybeUnassigned[i] = false;
+        }
+      }
+
+      @Override
+      public void visitGoToInstruction(GoToInstruction instruction, int offset, int nextOffset) {
+        if (instruction.isReturn && variable instanceof PsiLocalVariable) {
+          if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
+          boolean unassigned = !isLeaf(nextOffset) && maybeUnassigned[nextOffset];
+          maybeUnassigned[offset] |= unassigned;
+        }
+        else {
+          super.visitGoToInstruction(instruction, offset, nextOffset);
         }
       }
 

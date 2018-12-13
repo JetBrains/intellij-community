@@ -94,7 +94,6 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
         if (assignmentExpression == null || !isAddAllReplaceable(expression, assignmentExpression)) return;
         final PsiMethod method = expression.resolveMethod();
         if (method != null) {
-          //noinspection DialogTitleCapitalization
           holder.registerProblem(nameElement, QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.description"),
                                  new ReplaceAddAllWithConstructorFix(assignmentExpression, expression, methodName));
         }

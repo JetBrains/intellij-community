@@ -1,95 +1,301 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.entity.StringEntity
-import org.apache.http.impl.client.HttpClients
-import org.apache.http.util.EntityUtils
-import java.net.URLEncoder
-import java.text.SimpleDateFormat
+import java.io.File
 import java.util.*
-import java.util.function.Consumer
+import java.util.stream.Stream
+import kotlin.streams.toList
 
-internal fun report(
-  devIcons: Int, icons: Int, skipped: Int,
-  addedByDev: Collection<String>, removedByDev: Collection<String>,
-  modifiedByDev: Collection<String>, addedByDesigners: Collection<String>,
-  removedByDesigners: Collection<String>, modifiedByDesigners: Collection<String>,
-  consistent: Collection<String>, errorHandler: Consumer<String>, doNotify: Boolean
-) {
+internal fun report(context: Context, skipped: Int): String {
+  val (devIcons, icons) = context.devIcons.size to context.icons.size
   log("Skipped $skipped dirs")
   fun Collection<String>.logIcons(description: String) = "$size $description${if (size < 100) ": ${joinToString()}" else ""}"
-  val report = """
-    |$devIcons icons are found in dev repo:
-    | ${addedByDev.logIcons("added")}
-    | ${removedByDev.logIcons("removed")}
-    | ${modifiedByDev.logIcons("modified")}
-    |$icons icons are found in icons repo:
-    | ${addedByDesigners.logIcons("added")}
-    | ${removedByDesigners.logIcons("removed")}
-    | ${modifiedByDesigners.logIcons("modified")}
-    |${consistent.size} consistent icons in both repos
-  """.trimMargin()
-  log(report)
-  if (doNotify) {
-    val success = addedByDev.isEmpty() && removedByDev.isEmpty() && modifiedByDev.isEmpty()
-    sendNotification(success)
-    if (!success) errorHandler.accept(report)
+  @Suppress("Duplicates")
+  var report = when {
+    context.iconsCommitHashesToSync.isNotEmpty() -> """
+      |${context.iconsRepoName} commits ${context.iconsCommitHashesToSync.joinToString()} are synced into ${context.devRepoName}:
+      | ${context.byDesigners.added.logIcons("added")}
+      | ${context.byDesigners.removed.logIcons("removed")}
+      | ${context.byDesigners.modified.logIcons("modified")}
+    """.trimMargin()
+    context.devIconsCommitHashesToSync.isNotEmpty() -> """
+      |${context.devRepoName} commits ${context.devIconsCommitHashesToSync.joinToString()} are synced into ${context.iconsRepoName}:
+      | ${context.byDev.added.logIcons("added")}
+      | ${context.byDev.removed.logIcons("removed")}
+      | ${context.byDev.modified.logIcons("modified")}
+    """.trimMargin()
+    else -> """
+      |$devIcons icons are found in ${context.devRepoName}:
+      | ${context.byDev.added.logIcons("added")}
+      | ${context.byDev.removed.logIcons("removed")}
+      | ${context.byDev.modified.logIcons("modified")}
+      |$icons icons are found in ${context.iconsRepoName}:
+      | ${context.byDesigners.added.logIcons("added")}
+      | ${context.byDesigners.removed.logIcons("removed")}
+      | ${context.byDesigners.modified.logIcons("modified")}
+      |${context.consistent.size} consistent icons in both repos
+    """.trimMargin()
+  }
+  if (context.createdReviews.isNotEmpty()) {
+    report += "\nCreated reviews: ${context.createdReviews.joinToString { it.url }}"
+  }
+  return report
+}
+
+internal fun findCommitsToSync(context: Context) {
+  // TODO: refactor it
+  fun guessGitObject(repo: File, file: File) = GitObject(file.toRelativeString(repo), "-1", repo)
+  if (context.doSyncDevRepo && context.devSyncRequired()) {
+    context.iconsCommitsToSync = findCommitsByRepo(context, UPSOURCE_DEV_PROJECT_ID, context.iconsRepoDir, context.byDesigners) {
+      context.devIcons[it] ?: {
+        val change = context.devRepoRoot.resolve(it)
+        guessGitObject(changesToReposMap(change), change)
+      }()
+    }
+  }
+  if (context.doSyncIconsRepo && context.iconsSyncRequired()) {
+    context.devCommitsToSync = findCommitsByRepo(context, UPSOURCE_ICONS_PROJECT_ID, context.devRepoRoot, context.byDev) {
+      context.icons[it] ?: guessGitObject(context.iconsRepo, context.iconsRepoDir.resolve(it))
+    }
   }
 }
 
-private fun sendNotification(isSuccess: Boolean) {
-  if (BUILD_SERVER == null) {
-    log("TeamCity url is unknown: unable to query last build status and send Slack channel notification")
+internal fun Map<File, Collection<CommitInfo>>.description() = entries.joinToString { entry ->
+  "${getOriginUrl(entry.key)}: ${entry.value.joinToString { it.hash }}"
+}
+
+private fun Map<File, Collection<CommitInfo>>.commitMessage() = "Synchronization of changed icons from ${description()}"
+
+private fun withTmpBranch(repos: Collection<File>, action: (String) -> Review?): Review? {
+  val branch = "icons-sync/${UUID.randomUUID()}"
+  return try {
+    action(branch)
   }
-  else {
-    callSafely {
-      if (isNotificationRequired(isSuccess)) {
-        notifySlackChannel(isSuccess)
+  catch (e: Throwable) {
+    repos.forEach {
+      deleteBranch(it, branch)
+    }
+    throw e
+  }
+}
+
+private fun createReviewForDev(context: Context, user: String, email: String): Review? {
+  if (context.iconsCommitsToSync.isEmpty()) return null
+  val repos = context.iconsChanges().map {
+    changesToReposMap(context.devRepoRoot.resolve(it))
+  }.distinct()
+  verifyDevIcons(context, repos)
+  if (repos.all { gitStage(it).isEmpty() }) {
+    log("Nothing to commit")
+    context.byDesigners.clear()
+    return null
+  }
+  return withTmpBranch(repos) { branch ->
+    val commitsForReview = commitAndPush(branch, user, email, context.iconsCommitsToSync.commitMessage(), repos)
+    val projectId = UPSOURCE_DEV_PROJECT_ID
+    if (projectId.isNullOrEmpty()) {
+      log("WARNING: unable to create Upsource review for ${context.devRepoName}, just plain old branch review")
+      PlainOldReview(branch, projectId)
+    }
+    else {
+      val review = createReview(projectId, branch, commitsForReview)
+      try {
+        addReviewer(projectId, review, triggeredBy() ?: DEFAULT_INVESTIGATOR)
+        postVerificationResultToReview(review)
+        review
+      }
+      catch (e: Exception) {
+        closeReview(projectId, review)
+        throw e
       }
     }
   }
 }
 
-internal val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
-private val BUILD_CONF = System.getProperty("teamcity.buildType.id")
-private val DATE_FORMAT = SimpleDateFormat("yyyyMMdd'T'HHmmsszzz")
-
-private fun isNotificationRequired(isSuccess: Boolean) =
-  HttpClients.createDefault().use {
-    val request = "$BUILD_SERVER/guestAuth/app/rest/builds?locator=buildType:$BUILD_CONF,count:1"
-    if (isSuccess) {
-      val get = HttpGet(request)
-      val previousBuild = EntityUtils.toString(it.execute(get).entity, Charsets.UTF_8)
-      // notify on fail -> success
-      previousBuild.contains("status=\"FAILURE\"")
-    }
-    else {
-      val dayAgo = DATE_FORMAT.format(Calendar.getInstance().let {
-        it.add(Calendar.HOUR, -12)
-        it.time
-      })
-      val get = HttpGet("$request,sinceDate:${URLEncoder.encode(dayAgo, "UTF-8")}")
-      val previousBuild = EntityUtils.toString(it.execute(get).entity, Charsets.UTF_8)
-      // remind of failure once per day
-      previousBuild.contains("count=\"0\"")
-    }
+private fun verifyDevIcons(context: Context, repos: Collection<File>) {
+  callSafely {
+    context.verifyDevIcons(repos)
   }
-
-private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
-private val BUILD_ID = System.getProperty("teamcity.build.id")
-private val INTELLIJ_ICONS_SYNC_RUN_CONF = System.getProperty("intellij.icons.sync.run.conf")
-
-private fun notifySlackChannel(isSuccess: Boolean) {
-  HttpClients.createDefault().use {
-    val text = "*${System.getProperty("teamcity.buildConfName")}* " +
-               (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n" +
-               (if (!isSuccess) "Use 'Icons processing/*$INTELLIJ_ICONS_SYNC_RUN_CONF*' IDEA Ultimate run configuration\n" else "") +
-               "<$BUILD_SERVER/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF|See build log>"
-    val post = HttpPost(CHANNEL_WEB_HOOK)
-    post.entity = StringEntity("""{ "text": "$text" }""", Charsets.UTF_8)
-    val response = EntityUtils.toString(it.execute(post).entity, Charsets.UTF_8)
-    if (response != "ok") throw IllegalStateException("$CHANNEL_WEB_HOOK responded with $response")
+  repos.forEach { repo ->
+    val status = gitStatus(repo)
+    if (status.isNotEmpty()) {
+      log("Staging ${status.joinToString("," + System.lineSeparator()) {
+        repo.resolve(it).toString()
+      }}")
+      status.forEach {
+        stageFiles(listOf(it), repo)
+      }
+      log("Staged: " + gitStage(repo))
+    }
   }
 }
+
+private fun postVerificationResultToReview(review: Review) {
+  val runConfigurations = System.getProperty("sync.dev.icons.checks")?.splitNotBlank(";") ?: return
+  postComment(UPSOURCE_DEV_PROJECT_ID, review,
+              "Following configurations were run: ${runConfigurations.joinToString()}, see build ${thisBuildReportableLink()}")
+}
+
+private fun createReviewForIcons(context: Context, user: String, email: String): Collection<Review> {
+  if (context.devCommitsToSync.isEmpty()) return emptyList()
+  if (gitStage(context.iconsRepo).isEmpty()) {
+    log("Nothing to commit")
+    context.byDev.clear()
+    return emptyList()
+  }
+  val repos = listOf(context.iconsRepo)
+  return context.devCommitsToSync.values.flatten()
+    .groupBy(CommitInfo::committerEmail)
+    .entries.parallelStream()
+    .map {
+      val (committer, commits) = it
+      withTmpBranch(repos) { branch ->
+        commits.forEach { commit ->
+          val change = context.byCommit[commit.hash] ?: error("Unable to find changes for commit ${commit.hash} by $committer")
+          log("[$committer] syncing ${commit.hash} in ${context.iconsRepoName}")
+          syncIconsRepo(context, change)
+        }
+        val commitsForReview = commitAndPush(branch, user, email, commits.groupBy(CommitInfo::repo).commitMessage(), repos)
+        val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, commitsForReview)
+        addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, committer)
+        review
+      }
+    }.filter(Objects::nonNull).map { it as Review }.toList()
+}
+
+internal fun createReviews(context: Context) = callSafely {
+  val (user, email) = System.getProperty("upsource.user.name") to System.getProperty("upsource.user.email")
+  context.createdReviews = Stream.of(
+    { createReviewForDev(context, user, email)?.let { listOf(it) } ?: emptyList() },
+    { createReviewForIcons(context, user, email) }
+  ).parallel().flatMap { it().stream() }
+    .filter(Objects::nonNull)
+    .map { it as Review }
+    .toList()
+}
+
+internal fun assignInvestigation(context: Context): Investigator? =
+  callSafely {
+    val (investigator, commits) = if (context.iconsSyncRequired()) {
+      context.devCommitsToSync.flatMap { it.value }.maxBy(CommitInfo::timestamp)?.let {
+        log("Assigning investigation to ${it.committerEmail} as author of latest change ${it.hash}")
+        it.committerEmail
+      } to context.devCommitsToSync
+    }
+    else triggeredBy() to context.iconsCommitsToSync
+    if (commits.isEmpty()) {
+      log("No commits, no investigation")
+      return@callSafely null
+    }
+    assignInvestigation(Investigator(investigator ?: DEFAULT_INVESTIGATOR, commits), context)
+  }
+
+private fun findCommitsByRepo(context: Context, projectId: String?, root: File, changes: Changes,
+                              resolveGitObject: (String) -> GitObject
+): Map<File, Collection<CommitInfo>> {
+  var alreadyInReview = emptyList<String>()
+  var commits = findCommits(context, root, changes)
+  if (commits.isEmpty()) return emptyMap()
+  val titles = if (!projectId.isNullOrEmpty()) getOpenIconsReviewTitles(projectId!!) else emptyList()
+  val before = commits.size
+  commits = commits.filterNot { entry ->
+    val (commit, change) = entry
+    val skip = titles.any {
+      it.contains(commit.hash)
+    }
+    if (skip) alreadyInReview += change
+    skip
+  }
+  log("$projectId: ${before - commits.size} commits already in review")
+  alreadyInReview
+    .map { resolveGitObject(it) }
+    .groupBy({ it.repo }, { it.path })
+    .forEach {
+      val (repo, skipped) = it
+      log("Already in review, skipping: $skipped")
+      unStageFiles(skipped, repo)
+    }
+  log("$projectId: ${commits.size} commits found")
+  return commits.map { it.key }.groupBy(CommitInfo::repo)
+}
+
+@Volatile
+private var changesToReposMap = emptyMap<File, File>()
+private val changesToReposMapGuard = Any()
+internal fun changesToReposMap(change: File): File {
+  if (!changesToReposMap.containsKey(change)) synchronized(changesToReposMapGuard) {
+    if (!changesToReposMap.containsKey(change)) {
+      changesToReposMap += change to findGitRepoRoot(change, silent = true)
+    }
+  }
+  return changesToReposMap[change]!!
+}
+
+private fun findCommits(context: Context, root: File, changes: Changes) = changes.all()
+  .mapNotNull { change ->
+    val absoluteFile = root.resolve(change)
+    val repo = changesToReposMap(absoluteFile)
+    val commit = latestChangeCommit(absoluteFile.toRelativeString(repo), repo)
+    if (commit != null) commit to change else null
+  }.onEach {
+    val commit = it.first.hash
+    val change = it.second
+    if (!context.byCommit.containsKey(commit)) context.byCommit[commit] = Changes(changes.includeRemoved)
+    val commitChange = context.byCommit[commit]!!
+    when {
+      changes.added.contains(change) -> commitChange.added += change
+      changes.modified.contains(change) -> commitChange.modified += change
+      changes.removed.contains(change) -> commitChange.removed += change
+    }
+  }.groupBy({ it.first }, { it.second })
+
+private fun commitAndPush(branch: String,
+                          user: String,
+                          email: String,
+                          message: String,
+                          repos: Collection<File>) = repos.parallelStream().map {
+  withUser(it, user, email) {
+    commitAndPush(it, branch, message)
+  }
+}.toList()
+
+internal fun sendNotification(investigator: Investigator?, context: Context) {
+  callSafely {
+    if (isNotificationRequired(context)) {
+      notifySlackChannel(investigator, context)
+    }
+  }
+}
+
+private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
+
+internal fun Context.report(slack: Boolean = false): String {
+  val iconsSync = if (iconsSyncRequired() && iconsReviews().isNotEmpty()) {
+    "To sync $iconsRepoName see ${iconsReviews().joinToString {
+      if (slack) slackLink(it.id, it.url) else it.url
+    }}" + if (slack) "\n" else ""
+  }
+  else ""
+  val devSync = if (devReviews().isNotEmpty()) {
+    "To sync $devRepoName see ${devReviews().joinToString {
+      if (slack) slackLink(it.id, it.url) else it.url
+    }}" + if (slack) "\n" else ""
+  }
+  else ""
+  return iconsSync + devSync
+}
+
+private fun notifySlackChannel(investigator: Investigator?, context: Context) {
+  val investigation = when {
+    investigator == null -> ""
+    investigator.isAssigned -> "Investigation is assigned to ${investigator.email}\n"
+    else -> "Unable to assign investigation to ${investigator.email}\n"
+  }
+  val reaction = if (context.isFail()) ":scream:" else ":white_check_mark:"
+  val build = "See " + slackLink("build log", thisBuildReportableLink())
+  val text = "*${context.devRepoName}* $reaction\n" + investigation + context.report(slack = true) + build
+  val response = post(CHANNEL_WEB_HOOK, """{ "text": "$text" }""")
+  if (response != "ok") error("$CHANNEL_WEB_HOOK responded with $response")
+}
+
+private fun slackLink(name: String, link: String) = if (link == name) link else "<$link|$name>"

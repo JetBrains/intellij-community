@@ -16,13 +16,14 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 public class GrInterfaceDefinitionImpl extends GrTypeDefinitionImpl implements GrInterfaceDefinition {
 
   public GrInterfaceDefinitionImpl(GrTypeDefinitionStub stub) {
-    super(stub, GroovyElementTypes.INTERFACE_DEFINITION);
+    super(stub, GroovyElementTypes.INTERFACE_TYPE_DEFINITION);
   }
 
   public GrInterfaceDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Interface definition";
   }

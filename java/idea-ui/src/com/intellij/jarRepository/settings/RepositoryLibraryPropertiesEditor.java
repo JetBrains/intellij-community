@@ -27,6 +27,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.SwingActionLink;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
@@ -48,7 +49,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class RepositoryLibraryPropertiesEditor {
   private static final Logger LOG = Logger.getInstance(RepositoryLibraryPropertiesEditor.class);
@@ -173,7 +173,7 @@ public class RepositoryLibraryPropertiesEditor {
     CollectionComboBoxModel<VersionItem> versionSelectorModel = new CollectionComboBoxModel<>();
     versionSelectorModel.add(VersionItem.LatestRelease.INSTANCE);
     versionSelectorModel.add(VersionItem.LatestVersion.INSTANCE);
-    versionSelectorModel.add(versions.stream().map(VersionItem.ExactVersion::new).collect(Collectors.toList()));
+    versionSelectorModel.add(ContainerUtil.map(versions, VersionItem.ExactVersion::new));
     versionSelector.setModel(versionSelectorModel);
     versionSelector.setSelectedItem(toVersionItem(model.getVersion()));
     setState(State.Loaded);

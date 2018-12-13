@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -76,7 +77,7 @@ public abstract class LongRangeSet {
    * @param other other set to merge with
    * @return a new set
    */
-  public LongRangeSet union(LongRangeSet other) {
+  public LongRangeSet unite(LongRangeSet other) {
     if(other.isEmpty() || other == this) return this;
     if(other.contains(this)) return other;
     // TODO: optimize
@@ -189,8 +190,13 @@ public abstract class LongRangeSet {
     if (token.equals(JavaTokenType.GTGTGT)) {
       return unsignedShiftRight(right, isLong);
     }
+    if (token.equals(JavaTokenType.ASTERISK)) {
+      return mul(right, isLong);
+    }
     return null;
   }
+
+  public abstract LongRangeSet castTo(PsiPrimitiveType type);
 
   /**
    * Returns a range which represents all the possible values after applying {@link Math#abs(int)} or {@link Math#abs(long)}
@@ -263,6 +269,8 @@ public abstract class LongRangeSet {
     }
     return all().subtract(result);
   }
+  
+  abstract public LongRangeSet mul(LongRangeSet multiplier, boolean isLong);
 
   /**
    * Returns a range which represents all the possible values after applying {@code x / y} operation for
@@ -282,7 +290,7 @@ public abstract class LongRangeSet {
     LongRangeSet result = empty();
     for (int i = 0; i < left.length; i += 2) {
       for (int j = 0; j < right.length; j += 2) {
-        result = result.union(divide(left[i], left[i + 1], right[j], right[j + 1], isLong));
+        result = result.unite(divide(left[i], left[i + 1], right[j], right[j + 1], isLong));
       }
     }
     return result;
@@ -306,8 +314,8 @@ public abstract class LongRangeSet {
     if (dividendMin == minValue && divisorMax == -1) {
       // MIN_VALUE/-1 = MIN_VALUE
       return point(minValue)
-        .union(divisorMin == -1 ? empty() : range(dividendMin / divisorMin, dividendMin / (divisorMax - 1)))
-        .union(dividendMax == minValue ? empty() : range(dividendMax / divisorMin, (dividendMin + 1) / divisorMax));
+        .unite(divisorMin == -1 ? empty() : range(dividendMin / divisorMin, dividendMin / (divisorMax - 1)))
+        .unite(dividendMax == minValue ? empty() : range(dividendMax / divisorMin, (dividendMin + 1) / divisorMax));
     }
     return range(dividendMax / divisorMin, dividendMin / divisorMax);
   }
@@ -333,7 +341,7 @@ public abstract class LongRangeSet {
     LongRangeSet negative = intersect(range(minValue(isLong), -1));
     LongRangeSet positive = intersect(range(0, maxValue(isLong)));
     return positive.shrPositive(min, max, isLong)
-                   .union(point(-1).minus(point(-1).minus(negative, isLong).shrPositive(min, max, isLong), isLong));
+                   .unite(point(-1).minus(point(-1).minus(negative, isLong).shrPositive(min, max, isLong), isLong));
   }
 
   /**
@@ -358,12 +366,12 @@ public abstract class LongRangeSet {
     LongRangeSet positive = intersect(range(0, maxValue(isLong)));
     LongRangeSet result = positive.shrPositive(min, max, isLong);
     if (min == 0) {
-      result = result.union(negative);
+      result = result.unite(negative);
       if (max == 0) return result;
       min++;
     }
     // for x < 0, y > 0, x >>> y = (MAX_VALUE - ((-1-x) >> 1)) >> (y-1)
-    return result.union(point(maxValue(isLong)).minus(point(-1).minus(negative, isLong).shrPositive(1, 1, isLong), isLong)
+    return result.unite(point(maxValue(isLong)).minus(point(-1).minus(negative, isLong).shrPositive(1, 1, isLong), isLong)
                                                .shrPositive(min - 1, max - 1, isLong));
   }
 
@@ -371,7 +379,7 @@ public abstract class LongRangeSet {
     if (isEmpty()) return empty();
     int maxShift = (isLong ? Long.SIZE : Integer.SIZE) - 1;
     if (max == maxShift) {
-      return min == max ? point(0) : point(0).union(div(range(1L << min, 1L << (max - 1)), isLong));
+      return min == max ? point(0) : point(0).unite(div(range(1L << min, 1L << (max - 1)), isLong));
     }
     return div(range(1L << min, 1L << max), isLong);
   }
@@ -404,6 +412,12 @@ public abstract class LongRangeSet {
     if (leftFrom == leftTo && rightFrom == rightTo) {
       return point(leftFrom & rightFrom);
     }
+    if (leftFrom == leftTo && Long.bitCount(leftFrom+1) == 1) {
+      return bitwiseMask(rightFrom, rightTo, leftFrom);
+    }
+    if (rightFrom == rightTo && Long.bitCount(rightFrom+1) == 1) {
+      return bitwiseMask(leftFrom, leftTo, rightFrom);
+    }
     ThreeState[] leftBits = bits(leftFrom, leftTo);
     ThreeState[] rightBits = bits(rightFrom, rightTo);
     ThreeState[] resultBits = new ThreeState[Long.SIZE];
@@ -419,6 +433,22 @@ public abstract class LongRangeSet {
       }
     }
     return fromBits(resultBits);
+  }
+
+  /**
+   * Returns the range after applying the mask to the input range which looks like 0..01..1 in binary
+   * @param from input range start
+   * @param to input range end
+   * @param mask mask
+   * @return range set after applying the mask
+   */
+  private static LongRangeSet bitwiseMask(long from, long to, long mask) {
+    if (to - from > mask) return range(0, mask);
+    long min = from & mask;
+    long max = to & mask;
+    assert min != max;
+    if (min < max) return range(min, max);
+    return new RangeSet(new long[] {0, max, min, mask});
   }
 
   /**
@@ -447,7 +477,7 @@ public abstract class LongRangeSet {
       j--;
     }
     if(i == j) {
-      return point(from).union(point(to));
+      return point(from).unite(point(to));
     }
     return from < to ? range(from, to) : range(to, from);
   }
@@ -683,7 +713,7 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    public LongRangeSet union(LongRangeSet other) {
+    public LongRangeSet unite(LongRangeSet other) {
       return other;
     }
 
@@ -712,6 +742,14 @@ public abstract class LongRangeSet {
       return other.isEmpty();
     }
 
+    @Override
+    public LongRangeSet castTo(PsiPrimitiveType type) {
+      if (TypeConversionUtil.isIntegralNumberType(type)) {
+        return this;
+      }
+      throw new IllegalArgumentException(type.toString());
+    }
+
     @NotNull
     @Override
     public LongRangeSet abs(boolean isLong) {
@@ -727,6 +765,11 @@ public abstract class LongRangeSet {
     @NotNull
     @Override
     public LongRangeSet plus(LongRangeSet other, boolean isLong) {
+      return this;
+    }
+
+    @Override
+    public LongRangeSet mul(LongRangeSet multiplier, boolean isLong) {
       return this;
     }
 
@@ -804,6 +847,28 @@ public abstract class LongRangeSet {
       return other.isEmpty() || equals(other);
     }
 
+    @Override
+    public LongRangeSet castTo(PsiPrimitiveType type) {
+      if (PsiType.LONG.equals(type)) return this;
+      long newValue;
+      if (PsiType.CHAR.equals(type)) {
+        newValue = (char)myValue;
+      }
+      else if (PsiType.INT.equals(type)) {
+        newValue = (int)myValue;
+      }
+      else if (PsiType.SHORT.equals(type)) {
+        newValue = (short)myValue;
+      }
+      else if (PsiType.BYTE.equals(type)) {
+        newValue = (byte)myValue;
+      }
+      else {
+        throw new IllegalArgumentException(type.toString());
+      }
+      return newValue == myValue ? this : point(newValue);
+    }
+
     @NotNull
     @Override
     public LongRangeSet abs(boolean isLong) {
@@ -825,6 +890,20 @@ public abstract class LongRangeSet {
         return point(isLong ? res : (int)res);
       }
       return other.plus(this, isLong);
+    }
+
+    @Override
+    public LongRangeSet mul(LongRangeSet multiplier, boolean isLong) {
+      if (multiplier.isEmpty()) return multiplier;
+      if (myValue == 0) return this;
+      if (myValue == 1) return multiplier;
+      if (myValue == -1) return multiplier.negate(isLong);
+      if (multiplier instanceof Point) {
+        long val = ((Point)multiplier).myValue;
+        long res = myValue * val;
+        return point(isLong ? res : (int)res);
+      }
+      return isLong ? Range.LONG_RANGE : Range.INT_RANGE;
     }
 
     @NotNull
@@ -849,10 +928,10 @@ public abstract class LongRangeSet {
       }
       long max = Math.max(0, Math.max(Math.abs(divisor.min()), Math.abs(divisor.max())) - 1);
       if (myValue < 0) {
-        return LongRangeSet.range(Math.max(myValue, -max), 0).union(addend);
+        return LongRangeSet.range(Math.max(myValue, -max), 0).unite(addend);
       } else {
         // 10 % [-4..7] is [0..6], but 10 % [-30..30] is [0..10]
-        return LongRangeSet.range(0, Math.min(myValue, max)).union(addend);
+        return LongRangeSet.range(0, Math.min(myValue, max)).unite(addend);
       }
     }
 
@@ -924,10 +1003,8 @@ public abstract class LongRangeSet {
         if (from <= myFrom) {
           return range(to + 1, myTo);
         }
-        if (to >= myTo) {
-          return range(myFrom, from - 1);
-        }
-        throw new InternalError("Impossible: " + this + ":" + other);
+        assert to >= myTo;
+        return range(myFrom, from - 1);
       }
       long[] ranges = ((RangeSet)other).myRanges;
       LongRangeSet result = this;
@@ -998,6 +1075,35 @@ public abstract class LongRangeSet {
       return other.isEmpty() || other.min() >= myFrom && other.max() <= myTo;
     }
 
+    @Override
+    public LongRangeSet castTo(PsiPrimitiveType type) {
+      if (PsiType.LONG.equals(type)) return this;
+      if (PsiType.BYTE.equals(type)) {
+        return mask(Byte.SIZE, type);
+      }
+      if (PsiType.SHORT.equals(type)) {
+        return mask(Short.SIZE, type);
+      }
+      if (PsiType.INT.equals(type)) {
+        return mask(Integer.SIZE, type);
+      }
+      if (PsiType.CHAR.equals(type)) {
+        if (myFrom <= Character.MIN_VALUE && myTo >= Character.MAX_VALUE) return CHAR_RANGE;
+        if (myFrom >= Character.MIN_VALUE && myTo <= Character.MAX_VALUE) return this;
+        return bitwiseAnd(point(0xFFFF));
+      }
+      throw new IllegalArgumentException(type.toString());
+    }
+
+    @NotNull
+    private LongRangeSet mask(int size, PsiPrimitiveType type) {
+      long addend = 1L << (size - 1);
+      if (myFrom <= -addend && myTo >= addend - 1) return Objects.requireNonNull(fromType(type));
+      if (myFrom >= -addend && myTo <= addend - 1) return this;
+      long mask = (1L << size) - 1;
+      return plus(myFrom, myTo, addend, addend, true).bitwiseAnd(point(mask)).plus(point(-addend), true);
+    }
+
     @NotNull
     @Override
     public LongRangeSet abs(boolean isLong) {
@@ -1047,9 +1153,16 @@ public abstract class LongRangeSet {
       long[] ranges = other.asRanges();
       LongRangeSet result = empty();
       for (int i = 0; i < ranges.length; i += 2) {
-        result = result.union(plus(myFrom, myTo, ranges[i], ranges[i + 1], isLong));
+        result = result.unite(plus(myFrom, myTo, ranges[i], ranges[i + 1], isLong));
       }
       return result;
+    }
+
+    @Override
+    public LongRangeSet mul(LongRangeSet multiplier, boolean isLong) {
+      if (multiplier.isEmpty()) return multiplier;
+      if (multiplier instanceof Point) return multiplier.mul(this, isLong);
+      return isLong ? LONG_RANGE : INT_RANGE;
     }
 
     @NotNull
@@ -1081,7 +1194,7 @@ public abstract class LongRangeSet {
     public LongRangeSet mod(LongRangeSet divisor) {
       if (divisor.isEmpty() || divisor.equals(point(0))) return empty();
       if (divisor instanceof Point && ((Point)divisor).myValue == Long.MIN_VALUE) {
-        return this.contains(Long.MIN_VALUE) ? this.subtract(divisor).union(point(0)) : this;
+        return this.contains(Long.MIN_VALUE) ? this.subtract(divisor).unite(point(0)) : this;
       }
       if (divisor.contains(Long.MIN_VALUE)) {
         return possibleMod();
@@ -1233,6 +1346,15 @@ public abstract class LongRangeSet {
       return false;
     }
 
+    @Override
+    public LongRangeSet castTo(PsiPrimitiveType type) {
+      LongRangeSet result = all();
+      for (int i = 0; i < myRanges.length; i += 2) {
+        result = result.subtract(range(myRanges[i], myRanges[i + 1]).castTo(type));
+      }
+      return all().subtract(result);
+    }
+
     @NotNull
     @Override
     public LongRangeSet abs(boolean isLong) {
@@ -1261,9 +1383,16 @@ public abstract class LongRangeSet {
       }
       LongRangeSet result = empty();
       for (int i = 0; i < myRanges.length; i += 2) {
-        result = result.union(range(myRanges[i], myRanges[i + 1]).plus(other, isLong));
+        result = result.unite(range(myRanges[i], myRanges[i + 1]).plus(other, isLong));
       }
       return result;
+    }
+
+    @Override
+    public LongRangeSet mul(LongRangeSet multiplier, boolean isLong) {
+      if (multiplier.isEmpty()) return multiplier;
+      if (multiplier instanceof Point) return multiplier.mul(this, isLong);
+      return isLong ? Range.LONG_RANGE : Range.INT_RANGE;
     }
 
     @NotNull
@@ -1272,7 +1401,7 @@ public abstract class LongRangeSet {
       if(divisor.isEmpty()) return empty();
       LongRangeSet result = empty();
       for (int i = 0; i < myRanges.length; i += 2) {
-        result = result.union(range(myRanges[i], myRanges[i + 1]).mod(divisor));
+        result = result.unite(range(myRanges[i], myRanges[i + 1]).mod(divisor));
       }
       return result;
     }

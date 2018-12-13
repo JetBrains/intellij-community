@@ -51,7 +51,6 @@ import static java.util.Collections.*;
  *
  * @author Kirill Likhodedov
  */
-@SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 public class GitImpl extends GitImplBase {
 
   private static final Logger LOG = Logger.getInstance(Git.class);
@@ -449,17 +448,20 @@ public class GitImpl extends GitImplBase {
       if (updateTracking) {
         h.addParameters("--set-upstream");
       }
-      if (force) {
-        h.addParameters("--force");
+      if (GitVersionSpecialty.SUPPORTS_FORCE_PUSH_WITH_LEASE.existsIn(repository) &&
+          !forceWithLease.isEmpty()) {
+        for (GitPushParams.ForceWithLease lease : forceWithLease) {
+          String parameter = lease.getParameter();
+          if (parameter != null) {
+            h.addParameters("--force-with-lease=" + parameter);
+          }
+          else {
+            h.addParameters("--force-with-lease");
+          }
+        }
       }
-      for (GitPushParams.ForceWithLease lease : forceWithLease) {
-        String parameter = lease.getParameter();
-        if (parameter != null) {
-          h.addParameters("--force-with-lease=" + parameter);
-        }
-        else {
-          h.addParameters("--force-with-lease");
-        }
+      else if (force) {
+        h.addParameters("--force");
       }
       if (tagMode != null) {
         h.addParameters(tagMode);

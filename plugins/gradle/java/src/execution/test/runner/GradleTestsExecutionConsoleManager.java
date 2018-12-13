@@ -53,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction;
 import org.jetbrains.plugins.gradle.execution.filters.ReRunTaskFilter;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -61,7 +60,6 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/18/14
  */
 public class GradleTestsExecutionConsoleManager
   implements ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, GradleTestsExecutionConsole, ProcessHandler> {
@@ -186,8 +184,8 @@ public class GradleTestsExecutionConsoleManager
         final DataNode<TaskData> taskDataNode = GradleProjectResolverUtil.findTask(
           externalProjectInfo.getExternalProjectStructure(), projectPath, taskToExecute);
         return taskDataNode != null &&
-               (("check".equals(taskDataNode.getData().getName()) && "verification".equals(taskDataNode.getData().getGroup())
-                 || GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(taskDataNode.getData().getType())));
+               (taskDataNode.getData().isTest() ||
+                "check".equals(taskDataNode.getData().getName()) && "verification".equals(taskDataNode.getData().getGroup()));
       }) != null;
     }
     return false;

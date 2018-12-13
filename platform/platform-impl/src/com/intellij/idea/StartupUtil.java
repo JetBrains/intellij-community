@@ -21,7 +21,6 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
@@ -40,13 +39,19 @@ import org.jetbrains.io.BuiltInServer;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 /**
  * @author yole
@@ -57,13 +62,6 @@ public class StartupUtil {
   private static SocketLock ourSocketLock;
 
   private StartupUtil() { }
-
-  public static boolean shouldShowSplash(final String[] args) {
-    if ("true".equals(System.getProperty(NO_SPLASH))) {
-      return false;
-    }
-    return !Arrays.asList(args).contains(NO_SPLASH);
-  }
 
   public static synchronized void addExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
     // method called by app after startup
@@ -204,20 +202,12 @@ public class StartupUtil {
   private static synchronized boolean checkSystemFolders() {
     String configPath = PathManager.getConfigPath();
     PathManager.ensureConfigFolderExists();
-    if (!new File(configPath).isDirectory()) {
-      String message = "Config path '" + configPath + "' is invalid.\n\n" +
-                       "If you have modified the '" + PathManager.PROPERTY_CONFIG_PATH + "' property, please make sure it is correct,\n" +
-                       "otherwise please re-install the IDE.";
-      Main.showMessage("Invalid Config Path", message, true);
+    if (!checkDirectory(configPath, "Config", PathManager.PROPERTY_CONFIG_PATH, true, false)) {
       return false;
     }
 
     String systemPath = PathManager.getSystemPath();
-    if (!new File(systemPath).isDirectory()) {
-      String message = "System path '" + systemPath + "' is invalid.\n\n" +
-                       "If you have modified the '" + PathManager.PROPERTY_SYSTEM_PATH + "' property, please make sure it is correct,\n" +
-                       "otherwise please re-install the IDE.";
-      Main.showMessage("Invalid System Path", message, true);
+    if (!checkDirectory(systemPath, "System", PathManager.PROPERTY_SYSTEM_PATH, true, false)) {
       return false;
     }
 
@@ -229,78 +219,62 @@ public class StartupUtil {
       return false;
     }
 
-    File logDir = new File(PathManager.getLogPath());
-    boolean logOk = false;
-    if (logDir.isDirectory() || logDir.mkdirs()) {
-      try {
-        File ideTempFile = new File(logDir, "idea_log_check.txt");
-        write(ideTempFile, "log check");
-        delete(ideTempFile);
-        logOk = true;
-      }
-      catch (IOException ignored) { }
-    }
-    if (!logOk) {
-      String message = "Log path '" + logDir.getPath() + "' is inaccessible.\n\n" +
-                       "If you have modified the '" + PathManager.PROPERTY_LOG_PATH + "' property please make sure it is correct,\n" +
+    return checkDirectory(PathManager.getLogPath(), "Log", PathManager.PROPERTY_LOG_PATH, false, false) &&
+           checkDirectory(PathManager.getTempPath(), "Temp", PathManager.PROPERTY_SYSTEM_PATH, false, SystemInfo.isXWindow);
+  }
+
+  private static boolean checkDirectory(String path, String kind, String property, boolean checkLock, boolean checkExec) {
+    File directory = new File(path);
+
+    if (!FileUtil.createDirectory(directory)) {
+      String message = kind + " directory '" + path + "' is invalid.\n\n" +
+                       "If you have modified the '" + property + "' property, please make sure it is correct,\n" +
                        "otherwise please re-install the IDE.";
-      Main.showMessage("Invalid Log Path", message, true);
+      Main.showMessage("Invalid IDE Configuration", message, true);
       return false;
     }
 
-    File ideTempDir = new File(PathManager.getTempPath());
-    String tempInaccessible;
+    String details = null;
+    File tempFile = new File(directory, "ij" + new Random().nextInt(Integer.MAX_VALUE) + ".tmp");
+    OpenOption[] options = {StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE};
 
-    if (!ideTempDir.isDirectory() && !ideTempDir.mkdirs()) {
-      tempInaccessible = "unable to create the directory";
+    if (checkLock) {
+      try (FileChannel channel = FileChannel.open(tempFile.toPath(), options); FileLock lock = channel.tryLock()) {
+        if (lock == null) {
+          details = "cannot exclusively lock temporary file";
+        }
+      }
+      catch (IOException e) {
+        details = "cannot create exclusive file lock (" + e.getClass().getSimpleName() + ": " + e.getMessage() + ')';
+      }
     }
-    else {
+    else if (checkExec) {
       try {
-        File ideTempFile = new File(ideTempDir, "idea_tmp_check.sh");
-        write(ideTempFile, "#!/bin/sh\nexit 0");
-
-        if (SystemInfo.isWindows || SystemInfo.isMac) {
-          tempInaccessible = null;
+        Files.write(tempFile.toPath(), "#!/bin/sh\nexit 0".getBytes(StandardCharsets.UTF_8), options);
+        if (!tempFile.setExecutable(true, true)) {
+          details = "cannot set executable permission";
         }
-        else if (!ideTempFile.setExecutable(true, true)) {
-          tempInaccessible = "cannot set executable permission";
+        else if (new ProcessBuilder(tempFile.getAbsolutePath()).start().waitFor() != 0) {
+          details = "cannot execute test script";
         }
-        else if (new ProcessBuilder(ideTempFile.getAbsolutePath()).start().waitFor() != 0) {
-          tempInaccessible = "cannot execute test script";
-        }
-        else {
-          tempInaccessible = null;
-        }
-
-        delete(ideTempFile);
       }
-      catch (Exception e) {
-        tempInaccessible = e.getClass().getSimpleName() + ": " + e.getMessage();
+      catch (IOException | InterruptedException e) {
+        details = e.getClass().getSimpleName() + ": " + e.getMessage();
       }
     }
 
-    if (tempInaccessible != null) {
-      String message = "Temp directory '" + ideTempDir + "' is inaccessible.\n\n" +
-                       "If you have modified the '" + PathManager.PROPERTY_SYSTEM_PATH + "' property please make sure it is correct,\n" +
-                       "otherwise please re-install the IDE.\n\nDetails: " + tempInaccessible;
-      Main.showMessage("Invalid System Path", message, true);
+    FileUtil.delete(tempFile);
+
+    if (details != null) {
+      String message = kind + " path '" + path + "' cannot be used by the IDE.\n\n" +
+                       "If you have modified the '" + property + "' property, please make sure it is correct,\n" +
+                       "otherwise please re-install the IDE.\n\n" +
+                       "Reason: " + details;
+      Main.showMessage("Invalid IDE Configuration", message, true);
       return false;
     }
 
     return true;
-  }
-
-  private static void write(File file, String content) throws IOException {
-    try (FileWriter writer = new FileWriter(file)) {
-      writer.write(content);
-    }
-  }
-
-  @SuppressWarnings("SSBasedInspection")
-  private static void delete(File ideTempFile) {
-    if (!FileUtilRt.delete(ideTempFile)) {
-      ideTempFile.deleteOnExit();
-    }
   }
 
   private enum ActivationResult { STARTED, ACTIVATED, FAILED }
@@ -377,6 +351,9 @@ public class StartupUtil {
     if (SystemInfo.isWindows && System.getProperty("winp.folder.preferred") == null) {
       System.setProperty("winp.folder.preferred", ideTempDir.getPath());
     }
+    if (System.getProperty("pty4j.tmpdir") == null) {
+      System.setProperty("pty4j.tmpdir", ideTempDir.getPath());
+    }
   }
 
   private static void startLogging(final Logger log) {
@@ -386,7 +363,7 @@ public class StartupUtil {
 
     ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
-    String buildDate = new SimpleDateFormat("dd MMM yyyy HH:ss", Locale.US).format(appInfo.getBuildDate().getTime());
+    String buildDate = new SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.getBuildDate().getTime());
     log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild().asString() + ", " + buildDate + ")");
     log.info("OS: " + SystemInfoRt.OS_NAME + " (" + SystemInfoRt.OS_VERSION + ", " + SystemInfo.OS_ARCH + ")");
     log.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");

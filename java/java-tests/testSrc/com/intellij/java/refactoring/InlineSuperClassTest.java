@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
- * @since 20-Aug-2008
  */
 public class InlineSuperClassTest extends MultiFileTestCase {
   @NotNull

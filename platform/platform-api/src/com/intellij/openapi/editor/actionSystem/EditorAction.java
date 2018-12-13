@@ -20,7 +20,7 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
-public abstract class EditorAction extends AnAction implements DumbAware {
+public abstract class EditorAction extends AnAction implements DumbAware, UpdateInBackground {
   private static final Logger LOG = Logger.getInstance(EditorAction.class);
 
   private EditorActionHandler myHandler;

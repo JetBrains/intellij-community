@@ -124,7 +124,7 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
   }
 
   public class AdvancedSettingsPanel {
-    @SuppressWarnings({"UnusedDeclaration", "FieldCanBeLocal"})
+    @SuppressWarnings({"UnusedDeclaration"})
     private JPanel myRoot;
 
     private JRadioButton myNoInstrumentation;
@@ -179,7 +179,6 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
     }
 
 
-    @SuppressWarnings({"SimplifiableIfStatement"})
     public boolean isModified() {
       if (getInstrumentation() != myConfiguration.getInstrumentation()) {
         return true;

@@ -24,7 +24,6 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
-import org.jetbrains.uast.java.kinds.JavaSpecialExpressionKinds
 
 class JavaUastLanguagePlugin : UastLanguagePlugin {
   override val priority: Int = 0
@@ -252,6 +251,7 @@ internal object JavaConverter {
         is PsiClassObjectAccessExpression -> expr<UClassLiteralExpression>(build(::JavaUClassLiteralExpression))
         is PsiArrayAccessExpression -> expr<UArrayAccessExpression>(build(::JavaUArrayAccessExpression))
         is PsiLambdaExpression -> expr<ULambdaExpression>(build(::JavaULambdaExpression))
+        is PsiSwitchExpression -> expr<USwitchExpression>(build(::JavaUSwitchExpression))
         else -> expr<UExpression>(build(::UnknownJavaExpression))
       }
     }
@@ -291,11 +291,11 @@ internal object JavaConverter {
         is PsiSynchronizedStatement -> expr<UBlockExpression>(build(::JavaUSynchronizedExpression))
         is PsiTryStatement -> expr<UTryExpression>(build(::JavaUTryExpression))
         is PsiEmptyStatement -> expr<UExpression> { UastEmptyExpression(el.parent?.toUElement()) }
-        is PsiSwitchLabelStatement -> expr<UExpression> {
+        is PsiSwitchLabelStatementBase -> expr<UExpression> {
           when {
-            givenParent is UExpressionList && givenParent.kind == JavaSpecialExpressionKinds.SWITCH -> findUSwitchEntry(givenParent, el)
-            givenParent == null -> PsiTreeUtil.getParentOfType(el, PsiSwitchStatement::class.java)?.let {
-              findUSwitchEntry(JavaUSwitchExpression(it, null).body, el)
+            givenParent is JavaUSwitchEntryList -> givenParent.findUSwitchEntryForLabel(el)
+            givenParent == null -> PsiTreeUtil.getParentOfType(el, PsiSwitchBlock::class.java)?.let {
+              JavaUSwitchExpression(it, null).body.findUSwitchEntryForLabel(el)
             }
             else -> null
           }

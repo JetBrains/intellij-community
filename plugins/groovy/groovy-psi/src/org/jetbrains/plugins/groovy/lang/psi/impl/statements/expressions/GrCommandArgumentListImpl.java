@@ -17,6 +17,7 @@ public class GrCommandArgumentListImpl extends GrArgumentListImpl implements GrC
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Command arguments";
   }

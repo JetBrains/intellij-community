@@ -31,7 +31,7 @@ public class CapturingAnsiEscapesAwareProcessHandler extends CapturingProcessHan
   }
 
   /** @deprecated Use {@link #CapturingAnsiEscapesAwareProcessHandler(Process, String)} instead (to be removed in IDEA 17) */
-  @SuppressWarnings({"deprecation", "unused"})
+  @SuppressWarnings({"unused"})
   @Deprecated
   public CapturingAnsiEscapesAwareProcessHandler(Process process) {
     super(process);

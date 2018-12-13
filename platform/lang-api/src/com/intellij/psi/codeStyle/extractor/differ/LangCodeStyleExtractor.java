@@ -26,7 +26,6 @@ import java.util.Collection;
 
 /**
  * @author Roman.Shein
- * @since 31.07.2015.
  */
 public interface LangCodeStyleExtractor {
   LanguageExtension<LangCodeStyleExtractor> EXTENSION =

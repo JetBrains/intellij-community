@@ -95,9 +95,7 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
     }
     tables.add(registrar.getLibraryTable());
     if (showCustomLibraryTables) {
-      for (LibraryTable table : registrar.getCustomLibraryTables()) {
-        tables.add(table);
-      }
+      tables.addAll(registrar.getCustomLibraryTables());
     }
     return tables;
   }

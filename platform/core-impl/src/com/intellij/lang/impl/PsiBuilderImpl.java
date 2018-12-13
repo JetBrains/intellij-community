@@ -18,8 +18,8 @@ import com.intellij.psi.impl.DiffLog;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
@@ -371,6 +371,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     @Override
     public void done(@NotNull IElementType type) {
+      if (type == TokenType.ERROR_ELEMENT) {
+        LOG.warn("Error elements with empty message are discouraged. Please use builder.error() instead", new RuntimeException());
+      }
       myType = type;
       myBuilder.processDone(this, null, null);
     }
@@ -383,6 +386,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     @Override
     public void doneBefore(@NotNull IElementType type, @NotNull Marker before) {
+      if (type == TokenType.ERROR_ELEMENT) {
+        LOG.warn("Error elements with empty message are discouraged. Please use builder.errorBefore() instead", new RuntimeException());
+      }
       myType = type;
       myBuilder.processDone(this, null, (StartMarker)before);
     }
@@ -871,7 +877,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return true;
   }
 
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   private void doValidityChecks(@NotNull StartMarker marker, @Nullable StartMarker before) {
     if (marker.isDone()) {
       LOG.error("Marker already done.");

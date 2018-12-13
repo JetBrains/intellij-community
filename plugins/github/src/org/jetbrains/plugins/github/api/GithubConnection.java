@@ -252,7 +252,6 @@ public class GithubConnection {
       case HttpStatus.SC_UNAUTHORIZED:
       case HttpStatus.SC_PAYMENT_REQUIRED:
       case HttpStatus.SC_FORBIDDEN:
-        //noinspection ThrowableResultOfMethodCallIgnored
         GithubStatusCodeException error = getStatusCodeException(response);
 
         Header headerOTP = response.getFirstHeader("X-GitHub-OTP");

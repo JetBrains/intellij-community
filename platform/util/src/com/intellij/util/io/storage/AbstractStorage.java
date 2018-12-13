@@ -64,11 +64,6 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     return deletedRecordsFile && deletedDataFile;
   }
 
-  public static void convertFromOldExtensions(String storageFilePath) {
-    FileUtil.delete(new File(storageFilePath + ".rindex"));
-    FileUtil.delete(new File(storageFilePath + ".data"));
-  }
-
   protected AbstractStorage(String storageFilePath) throws IOException {
     this(storageFilePath, PagePool.SHARED);
   }
@@ -91,8 +86,6 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   }
 
   private void tryInit(String storageFilePath, PagePool pool, int retryCount) throws IOException {
-    convertFromOldExtensions(storageFilePath);
-
     final File recordsFile = new File(storageFilePath + INDEX_EXTENSION);
     final File dataFile = new File(storageFilePath + DATA_EXTENSION);
 

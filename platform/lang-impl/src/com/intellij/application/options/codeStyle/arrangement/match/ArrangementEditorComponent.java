@@ -27,7 +27,6 @@ import java.awt.*;
 
 /**
  * @author Denis Zhdanov
- * @since 11/7/12 6:19 PM
  */
 public class ArrangementEditorComponent implements ArrangementRepresentationAware, ArrangementAnimationManager.Callback,
                                                    ArrangementEditorAware

@@ -76,7 +76,6 @@ public class DomSaxParserTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   private static void ensureParsed(PsiFile file) {
-    //noinspection ResultOfMethodCallIgnored
     file.getNode().getFirstChildNode();
   }
 

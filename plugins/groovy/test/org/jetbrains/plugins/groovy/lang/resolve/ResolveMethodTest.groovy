@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
@@ -8,7 +7,6 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
@@ -19,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.*
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
@@ -824,7 +823,7 @@ def test() {
 
     PsiParameter[] parameters = resolved.parameterList.parameters
     assertTrue parameters.length == 1
-    assertEquals "java.lang.Object", parameters[0].type.canonicalText
+    assertType("java.lang.String", parameters[0].type)
   }
 
   void testScriptMethodsInClass() {
@@ -1816,7 +1815,7 @@ def bar(Object o) {
   }
 
   void testBinaryWithQualifiedRefsInArgs() {
-    GrBinaryExpression expr = configureByText('_.groovy', '''\
+    GrOperatorReference ref = configureByText('_.groovy', '''\
 class Base {
     def or(String s) {}
     def or(Base b) {}
@@ -1831,10 +1830,10 @@ class GrTypeDefinition  {
 
     }
 }
-''', GrBinaryExpression)
+''', GrOperatorReference)
 
-    assert expr.multiResolve(false).length == 1
-    assert expr.multiResolve(true).length > 1
+    assert ref.multiResolve(false).length == 1
+    assert ref.multiResolve(true).length > 1
   }
 
   void testStaticMethodInInstanceContext() {
@@ -2050,7 +2049,7 @@ class B {
 ''', PsiMethod)
     PsiClass clazz = method.containingClass
     assertNotNull(clazz)
-    assertEquals('C', clazz.qualifiedName)
+    assertEquals('B', clazz.qualifiedName)
   }
 
   void testUseVSStaticImport() {
@@ -2278,5 +2277,24 @@ new A()
     def resolved = expression.resolveMethod()
     assert resolved instanceof GrMethod
     assert resolved.isVarArgs()
+  }
+
+  void 'test static method via class instance'() {
+    resolveByText '''\
+class A { public static foo() { 45 } }
+def a = A // class instance
+a.<caret>foo()
+''', GrMethod
+  }
+
+  void 'test vararg vs positional'() {
+    def method = resolveByText '''\
+static usage(String[] label) {
+  <caret>foo(label)
+}
+static <T> List<T> foo(T t) {}
+static <T> List<T> foo(T... values) {}
+''', GrMethod
+    assert method.parameterList.parameters.first().type instanceof PsiEllipsisType
   }
 }

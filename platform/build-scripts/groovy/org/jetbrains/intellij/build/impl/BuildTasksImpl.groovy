@@ -88,7 +88,7 @@ class BuildTasksImpl extends BuildTasks {
       buildContext.messages.debug("Building provided modules list for the following modules: $modules")
       FileUtil.delete(new File(targetFilePath))
       // Start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister.
-      runApplicationStarter("$buildContext.paths.temp/builtinModules", modules, ['listBundledPlugins', targetFilePath])
+      runApplicationStarter(buildContext, "$buildContext.paths.temp/builtinModules", modules, ['listBundledPlugins', targetFilePath])
       if (!new File(targetFilePath).exists()) {
         buildContext.messages.error("Failed to build provided modules list: $targetFilePath doesn't exist")
       }
@@ -96,24 +96,7 @@ class BuildTasksImpl extends BuildTasks {
     })
   }
 
-  /**
-   * Build index which is used to search options in the Settings dialog.
-   */
-  void buildSearchableOptionsIndex(File targetDirectory, List<String> modulesToIndex) {
-    buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
-      buildContext.messages.progress("Building searchable options for modules $modulesToIndex")
-      String targetFile = "${targetDirectory.absolutePath}/search/searchableOptions.xml"
-      FileUtil.delete(new File(targetFile))
-      // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
-      // It'll process all UI elements in Settings dialog and build index for them.
-      runApplicationStarter("$buildContext.paths.temp/searchableOptions", modulesToIndex, ['traverseUI', targetFile])
-      if (!new File(targetFile).exists()) {
-        buildContext.messages.error("Failed to build searchable options index: $targetFile doesn't exist")
-      }
-    })
-  }
-
-  private void runApplicationStarter(String tempDir, List<String> modules, List<String> arguments) {
+  static void runApplicationStarter(BuildContext buildContext, String tempDir, List<String> modules, List<String> arguments) {
     def javaRuntimeClasses = "${buildContext.getModuleOutputPath(buildContext.findModule("intellij.java.rt"))}"
     if (!new File(javaRuntimeClasses).exists()) {
       buildContext.messages.error("Cannot run application starter ${arguments}, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
@@ -195,7 +178,7 @@ idea.fatal.error.notification=disabled
     def artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
     def builtinPluginsRepoUrl = ""
     if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-      builtinPluginsRepoUrl = artifactsServer.urlToArtifact("${buildContext.productProperties.productCode}-plugins/plugins.xml")
+      builtinPluginsRepoUrl = artifactsServer.urlToArtifact("${buildContext.applicationInfo.productCode}-plugins/plugins.xml")
     }
     BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
                                 ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber,
@@ -275,13 +258,7 @@ idea.fatal.error.notification=disabled
 
   private DistributionJARsBuilder compileModulesForDistribution(File patchedApplicationInfo) {
     def productLayout = buildContext.productProperties.productLayout
-    def moduleNames = productLayout.getIncludedPluginModules(productLayout.allBundledPluginsModules) +
-                      DistributionJARsBuilder.getPlatformApiModules(productLayout) +
-                      DistributionJARsBuilder.getPlatformImplModules(productLayout) +
-                      DistributionJARsBuilder.getProductApiModules(productLayout) +
-                      DistributionJARsBuilder.getProductImplModules(productLayout) +
-                      productLayout.additionalPlatformJars.values() +
-                      DistributionJARsBuilder.toolModules + buildContext.productProperties.additionalModulesToCompile
+    def moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
     compileModules(moduleNames + (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) +
                    productLayout.mainModules, buildContext.productProperties.modulesToCompileTests)
 
@@ -296,14 +273,14 @@ idea.fatal.error.notification=disabled
     }
 
     if (buildContext.shouldBuildDistributions()) {
-      def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.productProperties.productCode}-builtinModules.json"
+      def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.applicationInfo.productCode}-builtinModules.json"
       buildProvidedModulesList(providedModulesFilePath, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
           pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
           for (PluginLayout plugin : new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()) {
             def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin.mainModule)
-            pluginsToPublish.put(plugin, spec ?: new PluginPublishingSpec())
+            pluginsToPublish.put(plugin, spec ?: new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: true))
           }
         }
         else {
@@ -312,7 +289,7 @@ idea.fatal.error.notification=disabled
       }
     }
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo, pluginsToPublish)
-    compileModules(distributionJARsBuilder.platformModules + (pluginsToPublish.collect { it.key.moduleJars.values()  }.flatten() as List<String>))
+    compileModules(distributionJARsBuilder.modulesForPluginsToPublish)
 
     //we need this to ensure that all libraries which may be used in the distribution are resolved, even if product modules don't depend on them (e.g. JUnit5)
     CompilationTasks.create(buildContext).resolveProjectDependencies()
@@ -345,6 +322,7 @@ idea.fatal.error.notification=disabled
       }
       else {
         buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
+        distributionJARsBuilder.buildSearchableOptions()
         distributionJARsBuilder.buildNonBundledPlugins()
       }
     }
@@ -356,8 +334,7 @@ idea.fatal.error.notification=disabled
       logFreeDiskSpace("before downloading JREs")
       String[] args = [
         'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
-        "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion",
-        "-Dintellij.build.bundled.jre.prefix=$buildContext.options.bundledJrePrefix"
+        "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
       ]
       if (buildContext.options.bundledJreBuild != null) {
         args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
@@ -380,6 +357,33 @@ idea.fatal.error.notification=disabled
       ]
 
       List<String> paths = runInParallel(tasks).findAll { it != null }
+
+      if (Boolean.getBoolean("intellij.build.toolbox.litegen")) {
+        if (buildContext.buildNumber == null) {
+          buildContext.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
+        }
+        else {
+          buildContext.executeStep("Building Toolbox Lite-Gen Links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
+            String toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
+            if (toolboxLiteGenVersion == null) {
+              buildContext.messages.error("Toolbox Lite-Gen version is not specified!")
+            }
+            else {
+              String[] liteGenArgs = [
+                'runToolboxLiteGen',
+                "-Pintellij.build.toolbox.litegen.version=${toolboxLiteGenVersion}",
+                //NOTE[jo]: right now we assume all installer files are created under the same path
+                "-Pintellij.build.artifacts=${buildContext.paths.artifacts}",
+                "-Pintellij.build.productCode=${buildContext.productProperties.productCode}",
+                "-Pintellij.build.isEAP=${buildContext.applicationInfo.isEAP}",
+                "-Pintellij.build.output=${buildContext.paths.buildOutputRoot}/toolbox-lite-gen",
+              ]
+
+              buildContext.gradle.run('Run Toolbox LiteGen', liteGenArgs)
+            }
+          }
+        }
+      }
 
       if (buildContext.productProperties.buildCrossPlatformDistribution) {
         if (paths.size() == 3) {
@@ -477,6 +481,14 @@ idea.fatal.error.notification=disabled
     }
     checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", optionalModules)
 
+    if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
+      buildContext.messages.warning("layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
+                                    "layout.compatiblePluginsToIgnore property will be ignored ($layout.compatiblePluginsToIgnore)")
+    }
+    if (layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
+      checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", optionalModules)
+    }
+
     if (!layout.pluginModulesToPublish.isEmpty() && layout.buildAllCompatiblePlugins && buildContext.shouldBuildDistributions()) {
       buildContext.messages.warning("layout.buildAllCompatiblePlugins option is enabled. Value of layout.pluginModulesToPublish property " +
                                     "will be ignored ($layout.pluginModulesToPublish)")
@@ -503,7 +515,6 @@ idea.fatal.error.notification=disabled
     checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
     checkModules(layout.moduleExcludes.keySet(), "productProperties.productLayout.moduleExcludes")
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
-    checkModules([layout.searchableOptionsModule], "productProperties.productLayout.searchableOptionsModule")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
     def allBundledPlugins = layout.allBundledPluginsModules
     nonTrivialPlugins.findAll { allBundledPlugins.contains(it.mainModule) }.each { plugin ->

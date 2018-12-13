@@ -33,7 +33,8 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   private int hoverTab = -1;
 
-  public static final JBValue OFFSET = new JBValue.Float(1);
+  private static final JBValue OFFSET = new JBValue.Float(1);
+  private static final JBValue FONT_SIZE_OFFSET = new JBValue.UIInteger("TabbedPane.fontSizeOffset", -1);
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -53,8 +54,8 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   private void modifyFontSize() {
     if (SystemInfo.isMac || SystemInfo.isLinux) {
-      Font font = tabPane.getFont();
-      tabPane.setFont(tabPane.getFont().deriveFont((float)font.getSize() - JBUI.scale(1.0f)));
+      Font font = UIManager.getFont("TabbedPane.font");
+      tabPane.setFont(tabPane.getFont().deriveFont((float)font.getSize() + FONT_SIZE_OFFSET.get()));
     }
   }
 

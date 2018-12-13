@@ -242,7 +242,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   @Nullable
   private static Url realTargetUrl(@NotNull SvnVcs vcs, @NotNull WorkingCopyInfo info, @NotNull Url targetBranchUrl) {
     Info svnInfo = vcs.getInfo(info.getLocalPath());
-    Url url = svnInfo != null ? svnInfo.getURL() : null;
+    Url url = svnInfo != null ? svnInfo.getUrl() : null;
 
     return url != null && isAncestor(targetBranchUrl, url) ? url : null;
   }

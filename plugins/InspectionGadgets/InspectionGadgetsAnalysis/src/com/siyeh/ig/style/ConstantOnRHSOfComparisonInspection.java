@@ -19,6 +19,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -98,6 +100,9 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
       final PsiExpression lhs = expression.getLOperand();
       final PsiExpression rhs = expression.getROperand();
       if (!isConstantExpression(rhs) || isConstantExpression(lhs)) {
+        return;
+      }
+      if (rhs instanceof PsiLiteralExpression && PsiLiteralUtil.isUnsafeLiteral((PsiLiteralExpression)rhs)) {
         return;
       }
       registerError(expression);

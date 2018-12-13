@@ -192,13 +192,11 @@ public class Substring implements CharSequence {
   }
 
   @NotNull
-  @SuppressWarnings({"MethodNamesDifferingOnlyByCase"})
   public Substring substring(int start) {
     return substring(start, length());
   }
 
   @NotNull
-  @SuppressWarnings({"MethodNamesDifferingOnlyByCase"})
   public Substring substring(int start, int end) {
     return createAnotherSubstring(myStartOffset + start, myStartOffset + end);
   }

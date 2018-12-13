@@ -27,14 +27,12 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
   @NotNull
   @Override
   public String getText() {
-    //noinspection DialogTitleCapitalization
     return getFamilyName();
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    //noinspection DialogTitleCapitalization
     return "Convert to ThreadLocal";
   }
 

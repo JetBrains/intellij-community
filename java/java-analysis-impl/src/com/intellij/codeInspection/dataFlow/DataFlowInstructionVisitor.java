@@ -25,7 +25,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInstructionVisitor");
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
-  private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
+  private final Set<TypeCastInstruction> myCCEInstructions = ContainerUtil.newHashSet();
   private final Map<PsiCallExpression, Boolean> myFailingCalls = new HashMap<>();
   private final Map<PsiExpression, ConstantResult> myConstantExpressions = new HashMap<>();
   private final Map<PsiElement, ThreeState> myOfNullableCalls = new HashMap<>();
@@ -148,7 +148,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return myMethodReferenceResults;
   }
 
-  Set<Instruction> getClassCastExceptionInstructions() {
+  Set<TypeCastInstruction> getClassCastExceptionInstructions() {
     return myCCEInstructions;
   }
 
@@ -261,7 +261,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
 
   @Override
   protected boolean checkNotNullable(DfaMemoryState state, DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
-    if (NullabilityProblemKind.nullableReturn.isMyProblem(problem) && !state.isNotNull(value)) {
+    if (problem != null && problem.getKind() == NullabilityProblemKind.nullableReturn && !state.isNotNull(value)) {
       myAlwaysReturnsNotNull = false;
     }
 

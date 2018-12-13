@@ -34,9 +34,13 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
+import java.util.stream.IntStream;
 
 public class HierarchyServiceImpl extends HierarchyService {
   private static final SingleClassHierarchy EMPTY_HIERARCHY = new SingleClassHierarchy(Symbol.ClassSymbol.EMPTY_ARRAY, new AnchorRepository());
+  private static final int KEY_COUNT = 20;
+  static final int[] SOURCE_KEYS = IntStream.rangeClosed(-KEY_COUNT, -1).toArray();
+  static final int[] BINARY_KEYS = IntStream.rangeClosed(1, KEY_COUNT).toArray();
   private final Project myProject;
   private final CachedValue<SingleClassHierarchy> myHierarchy;
 
@@ -69,10 +73,10 @@ public class HierarchyServiceImpl extends HierarchyService {
     StubEnter stubEnter = new StubEnter(symbols);
     IdSets idSets = IdSets.getIdSets(myProject);
 
-    loadUnits(idSets.libraryFiles, StubHierarchyIndex.BINARY_KEYS, stubEnter);
+    loadUnits(idSets.libraryFiles, BINARY_KEYS, stubEnter);
     stubEnter.connect1();
 
-    loadUnits(idSets.sourceFiles, StubHierarchyIndex.SOURCE_KEYS, stubEnter);
+    loadUnits(idSets.sourceFiles, SOURCE_KEYS, stubEnter);
     stubEnter.connect2();
 
     return symbols.createHierarchy();

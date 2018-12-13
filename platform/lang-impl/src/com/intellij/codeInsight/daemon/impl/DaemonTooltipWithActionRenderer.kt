@@ -186,7 +186,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
         graphics2D.fill(RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5, (bounds.height / 2).toDouble(), 0.0, 0.0))
 
-        val arc = BalloonImpl.ARC.toDouble()
+        val arc = BalloonImpl.ARC.get().toDouble()
         val double = RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5, (bounds.height - 1).toDouble(), arc, arc)
 
         graphics2D.fill(double)
@@ -270,15 +270,6 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
     val settingsButton = object : ActionButton(actionGroup, presentation, ActionPlaces.UNKNOWN, Dimension(18, 18)) {
       override fun paintComponent(g: Graphics?) {
-        val state = popState
-        if (state == ActionButtonComponent.POPPED && UIUtil.isUnderDarcula()) {
-          val look = buttonLook
-          look.paintBackground(g!!, this, getSettingsIconHoverBackgroundColor())
-          look.paintIcon(g, this, icon)
-          look.paintBorder(g, this)
-          return
-        }
-
         paintButtonLook(g)
       }
     }
@@ -358,7 +349,7 @@ fun createActionLabel(text: String, action: Runnable, background: Color): Hyperl
 }
 
 private fun getKeymapColor(): Color {
-  return JBColor.namedColor("tooltips.actions.keymap.text.color", JBColor(0x99a4ad, 0x919191))
+  return JBColor.namedColor("ToolTip.Actions.infoForeground", JBColor(0x99a4ad, 0x919191))
 }
 
 private fun getSettingsIconHoverBackgroundColor(): Color {

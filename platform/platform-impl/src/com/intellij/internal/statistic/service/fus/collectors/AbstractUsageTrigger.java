@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.service.fus.collectors;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NonNls;
@@ -53,7 +54,7 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
 
     migrateLegacyData(collectorInfo);
 
-    FUsageInfo usage = findUsageInfo(collectorInfo.usages, feature, context);
+    FUsageInfo usage = findUsageInfo(collectorInfo.usages.toArray(new FUsageInfo[0]), feature, context);
     if (usage == null) {
       collectorInfo.usages.add(FUsageInfo.create(feature, 1, context));
     }
@@ -72,7 +73,7 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
   }
 
   @Nullable
-  private static FUsageInfo findUsageInfo(@NotNull Set<FUsageInfo> usages, @NotNull String feature, @Nullable FUSUsageContext context) {
+  private static FUsageInfo findUsageInfo(@NotNull FUsageInfo[] usages, @NotNull String feature, @Nullable FUSUsageContext context) {
     for (FUsageInfo usage : usages) {
       if (usage.id.equals(feature) && equalContexts(context, usage.context)) return usage;
     }
@@ -90,7 +91,7 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
     if (info != null) {
       return info.getUsageCollectorInfo(usageCollectorId).usages.stream()
         .map(usage -> new UsageDescriptor(usage.id, usage.count, (usage.context != null && usage.context.size() > 0) ?
-                                                                 FUSUsageContext.create(usage.context) : null))
+                                                                 FUSUsageContext.create(usage.contextValues()) : null))
         .collect(Collectors.toSet());
     }
     return Collections.emptySet();
@@ -100,7 +101,7 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
   private SessionInfo getOrCreateSessionInfo() {
     SessionInfo info = geExistingSessionInfo();
     if (info != null) return info;
-    SessionInfo sessionInfo = SessionInfo.create(getFUSession().getId());
+    SessionInfo sessionInfo = SessionInfo.create(getFUSession());
     myState.sessions.add(sessionInfo);
     return sessionInfo;
   }
@@ -110,8 +111,8 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
   @Nullable
   private SessionInfo geExistingSessionInfo() {
     FUSession session = getFUSession();
-    for (SessionInfo info : myState.sessions) {
-      if (info.id == session.getId()) {
+    for (SessionInfo info : myState.sessions.toArray(new SessionInfo[0])) {
+      if (info.id == session.getId() && session.getBuildId().equals(info.build)) {
         return info;
       }
     }
@@ -131,6 +132,10 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
     @Attribute("id")
     public int id;
 
+    @Attribute("build")
+    public String build;
+
+
     @Property(surroundWithTag = false)
     @XCollection
     List<UsagesCollectorInfo> collectors = ContainerUtil.newSmartList();
@@ -148,15 +153,17 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
 
     @Nullable
     public UsagesCollectorInfo findUsageCollectorInfo(String id) {
-      for (UsagesCollectorInfo collector : collectors) {
+      for (UsagesCollectorInfo collector : collectors.toArray(new UsagesCollectorInfo[0])) {
         if (id.equals(collector.id)) return collector;
       }
       return null;
     }
 
-    public static SessionInfo create(int id) {
+    public static SessionInfo create(FUSession fuSession) {
       SessionInfo info = new SessionInfo();
-      info.id = id;
+      info.id = fuSession.getId();
+      info.build = fuSession.getBuildId();
+
       return info;
     }
   }
@@ -193,6 +200,10 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
       usage.count = value;
       usage.context = context != null ? context.getData() : ContainerUtil.newLinkedHashMap();
       return usage;
+    }
+
+    public  String[] contextValues() {
+      return ArrayUtil.toStringArray(context.values());
     }
   }
 }

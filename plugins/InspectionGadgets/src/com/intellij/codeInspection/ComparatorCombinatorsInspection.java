@@ -9,7 +9,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -42,7 +41,6 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
-      @SuppressWarnings("DialogTitleCapitalization")
       @Override
       public void visitLambdaExpression(PsiLambdaExpression lambda) {
         super.visitLambdaExpression(lambda);
@@ -547,7 +545,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           String code = generateChainCombinator(chain, parameters[0], parameters[1]);
           if (code == null) return;
           PsiElement result = new CommentTracker().replaceAndRestoreComments(lambda, code);
-          PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
+          RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
           LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
           CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
           return;

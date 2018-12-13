@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
- * @since 8/5/11
  */
 public final class ShowModulesAction extends ToggleAction implements DumbAware {
   private final Project myProject;

@@ -173,7 +173,6 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
   @Override
   public StatusBar getStatusBar() {
     Container pane = getContentPane();
-    //noinspection ConstantConditions
     return pane instanceof JComponent ? UIUtil.findComponentOfType((JComponent)pane, IdeStatusBarImpl.class) : null;
   }
 

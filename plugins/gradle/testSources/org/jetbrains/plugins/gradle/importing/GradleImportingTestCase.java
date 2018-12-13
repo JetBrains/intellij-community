@@ -85,7 +85,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
       ProjectJdkTable.getInstance().addJdk(jdk);
     });
-    myProjectSettings = new GradleProjectSettings();
+    myProjectSettings = new GradleProjectSettings().withQualifiedModuleNames();
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
     PathAssembler.LocalDistribution distribution = configureWrapper();
 
@@ -113,6 +113,9 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     try {
       Messages.setTestDialog(TestDialog.DEFAULT);
       deleteBuildSystemDirectory();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

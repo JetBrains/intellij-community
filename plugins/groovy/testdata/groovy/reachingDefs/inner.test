@@ -5,4 +5,5 @@ run((Runnable) {
 })
 -----
 input:
+existing
 output:

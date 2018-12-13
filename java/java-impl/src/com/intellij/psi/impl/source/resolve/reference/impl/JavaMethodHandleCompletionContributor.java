@@ -138,7 +138,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
   @NotNull
   private static LookupElement lookupSignature(@NotNull ReflectiveSignature signature, @NotNull PsiElement context) {
     final String expressionText = getMethodTypeExpressionText(signature);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     final PsiExpression expression = factory.createExpressionFromText(expressionText, context);
 
     final String shortTypes = signature.getText(true, type -> PsiNameHelper.getShortClassName(type) + ".class");
@@ -174,7 +174,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
     final PsiField field = ownerClass.getPsiClass().findFieldByName(fieldName, false);
     if (field != null) {
       final String typeText = getTypeText(field.getType());
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(ownerClass.getPsiClass().getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(ownerClass.getPsiClass().getProject());
       final PsiExpression expression = factory.createExpressionFromText(typeText + ".class", context);
 
       final String shortType = PsiNameHelper.getShortClassName(typeText);

@@ -168,7 +168,7 @@ def method(Box<A> box) {
     testHighlighting '''
 def <T> void foo(T t, Closure cl) {}
 
-foo(1) { println it }
+foo(1) { println <warning descr="Method call is ambiguous">it</warning> }
 '''
   }
 
@@ -181,7 +181,7 @@ def <T> void foo(T t, Closure<T> cl) {}
 @CompileStatic
 def m() {
   foo(1) { 
-    println it 
+    println <warning descr="Method call is ambiguous">it</warning> 
     1
   }
 }
@@ -527,24 +527,49 @@ new A(foo: {
 '''
   }
 
-//TODO: IDEA-194192
-  void '_test call without reference with generics'() {
+  void 'test IDEA-198057-1'() {
     testHighlighting '''
-import groovy.transform.CompileStatic
-
-class E {
-    def <K,V> Map<K, V> call(Map<K, V> m) {
-        m
+Optional<BigDecimal> foo(Optional<String> string) {
+    string.flatMap {
+        try {
+            return Optional.of(new BigDecimal(it))
+        } catch (Exception ignored) {
+            return Optional.<BigDecimal> empty()
+        }
     }
-    E bar() {null}
+}
+'''
+  }
+
+  void 'test IDEA-198057-2'() {
+    testHighlighting '''
+Optional<BigDecimal> foo(Optional<String> string) {
+  string.flatMap {
+     return Optional.<BigDecimal> empty()    
+  }
+}
+'''
+  }
+
+  void 'test IDEA-198057-3'() {
+    testHighlighting '''
+void foo() {
+    def o = Optional.<BigDecimal> empty()
+    Optional<BigDecimal>  d = o  
+}
+'''
+  }
+
+  void 'test call without reference with generics'() {
+    testHighlighting '''\
+class E {
+    def <K,V> Map<K, V> call(Map<K, V> m) { m }
 }
 
-static <K,V> Map<K, V> getMap() {
-  return new HashMap<K,V>()
-}
+static <K,V> Map<K, V> getMap() { null }
 
-@CompileStatic
-def com() {
+@groovy.transform.CompileStatic
+def usage() {
     Map<String, Integer> correct = new E()(getMap().withDefault({ 0 }))
 }
 '''

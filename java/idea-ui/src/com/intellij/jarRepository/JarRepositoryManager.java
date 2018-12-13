@@ -133,7 +133,14 @@ public class JarRepositoryManager {
                                                             boolean includeTransitiveDependencies,
                                                             String copyTo,
                                                             Collection<RemoteRepositoryDescription> repositories) {
-    RepositoryLibraryProperties props = new RepositoryLibraryProperties(coord, includeTransitiveDependencies);
+    String packaging = JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING;
+    for (ArtifactKind kind : kinds) {
+      if (kind.getClassifier().isEmpty()) {
+        packaging = kind.getExtension(); // correct packaging according to the requested artifact kind
+        break;
+      }
+    }
+    RepositoryLibraryProperties props = new RepositoryLibraryProperties(coord, packaging, includeTransitiveDependencies);
     final JpsMavenRepositoryLibraryDescriptor libDescriptor = props.getRepositoryLibraryDescriptor();
     final Collection<OrderRoot> roots = ContainerUtil.newArrayList();
     if (libDescriptor.getMavenId() != null) {
@@ -155,8 +162,19 @@ public class JarRepositoryManager {
                                                             boolean includeTransitiveDependencies,
                                                             String copyTo,
                                                             Collection<RemoteRepositoryDescription> repositories) {
-    return resolveAndDownload(project, coord, kindsOf(attachSources, attachJavaDoc),
-                              includeTransitiveDependencies, copyTo, repositories);
+    return resolveAndDownload(project, coord, attachSources, attachJavaDoc, JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING, includeTransitiveDependencies, copyTo, repositories);
+  }
+
+  @Nullable
+  public static NewLibraryConfiguration resolveAndDownload(@NotNull Project project,
+                                                            String coord,
+                                                            boolean attachSources,
+                                                            boolean attachJavaDoc,
+                                                            String packaging,
+                                                            boolean includeTransitiveDependencies,
+                                                            String copyTo,
+                                                            Collection<RemoteRepositoryDescription> repositories) {
+    return resolveAndDownload(project, coord, kindsOf(attachSources, attachJavaDoc, packaging), includeTransitiveDependencies, copyTo, repositories);
   }
 
   @NotNull
@@ -212,7 +230,7 @@ public class JarRepositoryManager {
                                                             @Nullable Collection<RemoteRepositoryDescription> repositories) {
     final JpsMavenRepositoryLibraryDescriptor libDescriptor = libraryProps.getRepositoryLibraryDescriptor();
     if (libDescriptor.getMavenId() != null) {
-      EnumSet<ArtifactKind> kinds = kindsOf(loadSources, loadJavadoc);
+      EnumSet<ArtifactKind> kinds = kindsOf(loadSources, loadJavadoc, libraryProps.getPackaging());
       return loadDependenciesModal(project, libDescriptor, kinds, repositories, copyTo);
     }
     return Collections.emptyList();
@@ -236,7 +254,7 @@ public class JarRepositoryManager {
                                                                boolean loadJavadoc,
                                                                @Nullable List<RemoteRepositoryDescription> repos,
                                                                @Nullable String copyTo) {
-    EnumSet<ArtifactKind> kinds = kindsOf(loadSources, loadJavadoc);
+    EnumSet<ArtifactKind> kinds = kindsOf(loadSources, loadJavadoc, libraryProps.getPackaging());
     return loadDependenciesAsync(
       project,
       libraryProps.getRepositoryLibraryDescriptor(),
@@ -255,6 +273,18 @@ public class JarRepositoryManager {
     );
   }
 
+  @Nullable
+  public static List<OrderRoot> loadDependenciesSync(@NotNull Project project,
+                                                               JpsMavenRepositoryLibraryDescriptor desc,
+                                                               final Set<ArtifactKind> artifactKinds,
+                                                               @Nullable List<RemoteRepositoryDescription> repos,
+                                                               @Nullable String copyTo) {
+    Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
+    return submitSyncJob(
+      project, "Resolving Maven dependencies...", newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo)
+    );
+  }
+
   @NotNull
   protected static Collection<RemoteRepositoryDescription> addDefaultsIfEmpty(@NotNull Project project,
                                                                               @Nullable Collection<RemoteRepositoryDescription> repositories) {
@@ -264,9 +294,19 @@ public class JarRepositoryManager {
     return repositories;
   }
 
-  protected static EnumSet<ArtifactKind> kindsOf(boolean loadSources, boolean loadJavadoc) {
+  protected static EnumSet<ArtifactKind> kindsOf(boolean loadSources, boolean loadJavadoc, String... artifactPackaging) {
     final EnumSet<ArtifactKind> kinds = ArtifactKind.kindsOf(loadSources, loadJavadoc);
-    kinds.add(ArtifactKind.ARTIFACT);
+    if (artifactPackaging.length == 0) {
+      kinds.add(ArtifactKind.ARTIFACT);
+    }
+    else {
+      for (String packaging : artifactPackaging) {
+        final ArtifactKind artifact = ArtifactKind.find(ArtifactKind.ARTIFACT.getClassifier(), packaging);
+        if (artifact != null) {
+          kinds.add(artifact);
+        }
+      }
+    }
     return kinds;
   }
 
@@ -311,15 +351,19 @@ public class JarRepositoryManager {
   }
 
   public static void searchArtifacts(final Project project, String coord, final Consumer<? super Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>> resultProcessor) {
+    searchArtifacts(project, coord, JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING, resultProcessor);
+  }
+  
+  public static void searchArtifacts(final Project project, String coord, String packaging, final Consumer<? super Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>> resultProcessor) {
     if (coord == null || coord.length() == 0) {
       return;
     }
     final RepositoryArtifactDescription template;
     if (coord.indexOf(':') == -1 && Character.isUpperCase(coord.charAt(0))) {
-      template = new RepositoryArtifactDescription(null, null, null, "jar", null, coord, null);
+      template = new RepositoryArtifactDescription(null, null, null, packaging, null, coord, null);
     }
     else {
-      template = new RepositoryArtifactDescription(new RepositoryLibraryProperties(coord, true), "jar", null);
+      template = new RepositoryArtifactDescription(new RepositoryLibraryProperties(coord, packaging, true), null);
     }
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
@@ -390,7 +434,18 @@ public class JarRepositoryManager {
   }
 
   @Nullable
-  private static <T> T submitModalJob(@Nullable final Project project, final String title, final Function<? super ProgressIndicator, ? extends T> job){
+  private static <T> T submitSyncJob(@Nullable final Project project, final String title, final Function<? super ProgressIndicator, ? extends T> job) {
+    try {
+      ourTasksInProgress.incrementAndGet();
+      ProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.defaultModalityState());
+      return ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
+    } finally {
+      ourTasksInProgress.decrementAndGet();
+    }
+  }
+
+  @Nullable
+  private static <T> T submitModalJob(@Nullable final Project project, final String title, final Function<? super ProgressIndicator, ? extends T> job) {
     final Ref<T> result = Ref.create(null);
     new Task.Modal(project, title, true) {
       @Override

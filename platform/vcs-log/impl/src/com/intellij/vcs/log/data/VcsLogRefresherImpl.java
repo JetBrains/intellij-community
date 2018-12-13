@@ -52,7 +52,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final VcsLogModifiableIndex myIndex;
   @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
-  @NotNull private final Consumer<Exception> myExceptionHandler;
+  @NotNull private final Consumer<? super Exception> myExceptionHandler;
   @NotNull private final VcsLogProgress myProgress;
 
   private final int myRecentCommitCount;
@@ -68,8 +68,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
                              @NotNull VcsLogModifiableIndex index,
                              @NotNull VcsLogProgress progress,
                              @NotNull TopCommitsCache topCommitsDetailsCache,
-                             @NotNull Consumer<DataPack> dataPackUpdateHandler,
-                             @NotNull Consumer<Exception> exceptionHandler,
+                             @NotNull Consumer<? super DataPack> dataPackUpdateHandler,
+                             @NotNull Consumer<? super Exception> exceptionHandler,
                              int recentCommitsCount) {
     myProject = project;
     myStorage = storage;
@@ -114,7 +114,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       Collection<List<GraphCommit<Integer>>> commits = data.getCommits();
       Map<VirtualFile, CompressedRefs> refs = data.getRefs();
       List<GraphCommit<Integer>> compoundList = multiRepoJoin(commits);
-      compoundList = compoundList.subList(0, Math.min(myRecentCommitCount, compoundList.size()));
+      compoundList = ContainerUtil.getFirstItems(compoundList, myRecentCommitCount);
       myDataPack = DataPack.build(compoundList, refs, myProviders, myStorage, false);
       mySingleTaskController.request(RefreshRequest.RELOAD_ALL); // build/rebuild the full log in background
       return myDataPack;
@@ -419,7 +419,6 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }
   }
 
-  @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   private static class LogInfo {
     private final VcsLogStorage myStorage;
     private final Map<VirtualFile, CompressedRefs> myRefs = ContainerUtil.newHashMap();

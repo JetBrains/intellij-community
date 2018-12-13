@@ -81,7 +81,7 @@ public class TransferToEDTQueue<T> {
   };
 
   public TransferToEDTQueue(@NotNull @NonNls String name, @NotNull Processor<? super T> processor, @NotNull Condition<?> shutUpCondition) {
-    this(name, (Processor)processor, shutUpCondition, DEFAULT_THRESHOLD);
+    this(name, processor, shutUpCondition, DEFAULT_THRESHOLD);
   }
 
   public TransferToEDTQueue(@NotNull @NonNls String name,

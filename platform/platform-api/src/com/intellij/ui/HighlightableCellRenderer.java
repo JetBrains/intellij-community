@@ -42,7 +42,7 @@ public class HighlightableCellRenderer extends HighlightableComponent implements
       myIsSelected = false;
       myHasFocus = false;
       setDoNotHighlight(selected && hasFocus);
-      setForeground(selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground());
+      setForeground(UIUtil.getTreeForeground(selected, hasFocus));
     } else {
       setOpaque(true);
       myIsSelected = selected;

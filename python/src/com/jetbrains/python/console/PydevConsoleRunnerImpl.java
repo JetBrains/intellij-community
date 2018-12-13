@@ -21,7 +21,6 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ConsoleTitleGen;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -63,6 +62,7 @@ import com.intellij.util.PathMappingSettings;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugProcess;
@@ -110,11 +110,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @SuppressWarnings("SpellCheckingInspection")
   public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
   public static final int PORTS_WAITING_TIMEOUT = 20000;
+  public static final String PYTON_INTERPRETER_NULL = "Python interpreter is not selected. Please setup Python interpreter first.";
   private final Project myProject;
   private final String myTitle;
   @Nullable private final String myWorkingDir;
-  private final Consumer<String> myRerunAction;
-  @NotNull private final Sdk mySdk;
+  private final Consumer<? super String> myRerunAction;
+  @Nullable private final Sdk mySdk;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
   protected PythonConsoleExecuteActionHandler myConsoleExecuteActionHandler;
@@ -130,13 +131,13 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private PythonConsoleView myConsoleView;
 
   public PydevConsoleRunnerImpl(@NotNull final Project project,
-                                @NotNull Sdk sdk,
+                                @Nullable Sdk sdk,
                                 @NotNull final PyConsoleType consoleType,
                                 @NotNull final String title,
                                 @Nullable final String workingDir,
                                 @NotNull Map<String, String> environmentVariables,
                                 @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                @NotNull Consumer<String> rerunAction, String... statementsToExecute) {
+                                @NotNull Consumer<? super String> rerunAction, String... statementsToExecute) {
     myProject = project;
     mySdk = sdk;
     myTitle = title;
@@ -149,12 +150,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   public PydevConsoleRunnerImpl(@NotNull final Project project,
-                                @NotNull Sdk sdk,
+                                @Nullable Sdk sdk,
                                 @NotNull final PyConsoleType consoleType,
                                 @Nullable final String workingDir,
                                 @NotNull Map<String, String> environmentVariables,
                                 @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                @NotNull Consumer<String> rerunAction, String... statementsToExecute) {
+                                @NotNull Consumer<? super String> rerunAction, String... statementsToExecute) {
     this(project, sdk, consoleType, consoleType.getTitle(), workingDir, environmentVariables, settingsProvider, rerunAction,
          statementsToExecute);
   }
@@ -163,51 +164,50 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     myConsoleTitle = consoleTitle;
   }
 
-  private List<AnAction> fillToolBarActions(final DefaultActionGroup toolbarActions) {
-    toolbarActions.add(createRerunAction());
-
+  private List<AnAction> fillRunActionsToolbar(final DefaultActionGroup toolbarActions) {
     List<AnAction> actions = ContainerUtil.newArrayList();
-
-    //stop
+    // Rerun
+    actions.add(createRerunAction());
+    // Stop
     actions.add(createStopAction());
-
-    // run action
+    // Execute
     actions.add(
       new ConsoleExecuteAction(myConsoleView, myConsoleExecuteActionHandler, myConsoleExecuteActionHandler.getEmptyExecuteAction(),
                                myConsoleExecuteActionHandler));
-
-    // Scroll to the end
-    actions.add(PyConsoleUtil.createScrollToEndAction(myConsoleView.getEditor()));
-
-    // Print
-    actions.add(PyConsoleUtil.createPrintAction(myConsoleView));
-
-    actions.add(new SoftWrapAction());
-
     toolbarActions.addAll(actions);
-
-    actions.add(0, createRerunAction());
-
-    actions.add(PyConsoleUtil.createInterruptAction(myConsoleView));
-    actions.add(PyConsoleUtil.createTabCompletionAction(myConsoleView));
-
-    actions.add(createSplitLineAction());
-
-    toolbarActions.add(new ShowVarsAction(myConsoleView, myPydevConsoleCommunication));
-    toolbarActions.add(ConsoleHistoryController.getController(myConsoleView).getBrowseHistory());
-
+    // Attach Debugger
     toolbarActions.add(new ConnectDebuggerAction());
-    toolbarActions.add(CommonActionsManager.getInstance().createHelpAction("interactive_console"));
-
+    // Settings
     DefaultActionGroup settings = new DefaultActionGroup("Settings", true);
     settings.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     settings.add(new PyVariableViewSettings.SimplifiedView(null));
     settings.add(new PyVariableViewSettings.VariablesPolicyGroup());
-
     toolbarActions.add(settings);
-
+    // New console
     toolbarActions.add(new NewConsoleAction());
 
+    // Actions without icons
+    actions.add(PyConsoleUtil.createInterruptAction(myConsoleView));
+    actions.add(PyConsoleUtil.createTabCompletionAction(myConsoleView));
+    actions.add(createSplitLineAction());
+
+    return actions;
+  }
+
+  private List<AnAction> fillOutputActionsToolbar(final DefaultActionGroup toolbarActions) {
+    List<AnAction> actions = ContainerUtil.newArrayList();
+    // Use soft wraps
+    actions.add(new SoftWrapAction());
+    // Scroll to the end
+    actions.add(PyConsoleUtil.createScrollToEndAction(myConsoleView.getEditor()));
+    // Print
+    actions.add(PyConsoleUtil.createPrintAction(myConsoleView));
+    // Show Variables
+    actions.add(new ShowVarsAction(myConsoleView, myPydevConsoleCommunication));
+
+    // Console History
+    actions.add(ConsoleHistoryController.getController(myConsoleView).getBrowseHistory());
+    toolbarActions.addAll(actions);
     return actions;
   }
 
@@ -226,8 +226,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @Override
   public void runSync(boolean requestEditorFocus) {
     try {
-      initAndRun();
-
+      if (mySdk == null) {
+        throw new ExecutionException(PYTON_INTERPRETER_NULL);
+      }
+      initAndRun(mySdk);
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Connecting to Console", false) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
@@ -256,7 +258,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         public void run(@NotNull final ProgressIndicator indicator) {
           indicator.setText("Connecting to console...");
           try {
-            initAndRun();
+            if (mySdk == null) {
+              throw new ExecutionException(PYTON_INTERPRETER_NULL);
+            }
+            initAndRun(mySdk);
             connect(myStatementsToExecute);
             if (requestEditorFocus) {
               myConsoleView.requestFocus();
@@ -362,21 +367,21 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return cmd;
   }
 
-  private PythonConsoleView createConsoleView() {
-    PythonConsoleView consoleView = new PythonConsoleView(myProject, myTitle, mySdk, false);
+  private PythonConsoleView createConsoleView(@NotNull Sdk sdk) {
+    PythonConsoleView consoleView = new PythonConsoleView(myProject, myTitle, sdk, false);
     myPydevConsoleCommunication.setConsoleFile(consoleView.getVirtualFile());
     consoleView.addMessageFilter(new PythonTracebackFilter(myProject));
     return consoleView;
   }
 
   @NotNull
-  private CommandLineProcess createProcess() throws ExecutionException {
-    if (PySdkUtil.isRemote(mySdk)) {
-      GeneralCommandLine generalCommandLine = createCommandLine(mySdk, myEnvironmentVariables, myWorkingDir, 0);
+  private CommandLineProcess createProcess(@NotNull Sdk sdk) throws ExecutionException {
+    if (PySdkUtil.isRemote(sdk)) {
+      GeneralCommandLine generalCommandLine = createCommandLine(sdk, myEnvironmentVariables, myWorkingDir, 0);
 
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-      PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
-      final PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, mySdk, myConsoleSettings);
+      PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
+      final PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, sdk, myConsoleSettings);
       if (manager != null && data != null && pathMapper != null) {
         RemoteConsoleProcessData remoteConsoleProcessData =
           PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(generalCommandLine,
@@ -392,7 +397,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     else {
       int port = findAvailablePort(myProject, myConsoleType);
 
-      GeneralCommandLine generalCommandLine = createCommandLine(mySdk, myEnvironmentVariables, myWorkingDir, port);
+      GeneralCommandLine generalCommandLine = createCommandLine(sdk, myEnvironmentVariables, myWorkingDir, port);
 
       Map<String, String> envs = generalCommandLine.getEnvironment();
       EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, generalCommandLine.getCharset());
@@ -418,7 +423,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   public static int getRemotePortFromProcess(@NotNull Process process) throws ExecutionException {
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") Scanner s = new Scanner(process.getInputStream());
+    Scanner s = new Scanner(process.getInputStream());
     return readInt(s, process);
   }
 
@@ -465,11 +470,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     throw new ExecutionException("Couldn't read integer value from stream");
   }
 
-  private PyConsoleProcessHandler createProcessHandler(final Process process, String commandLine) {
-    if (PySdkUtil.isRemote(mySdk)) {
+  private PyConsoleProcessHandler createProcessHandler(final Process process, String commandLine, @NotNull Sdk sdk) {
+    if (PySdkUtil.isRemote(sdk)) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
-        PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
+        PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
         assert data != null;
         myProcessHandler =
           manager.createConsoleProcessHandler(process, myConsoleView, myPydevConsoleCommunication,
@@ -489,18 +494,18 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
 
-  private void initAndRun() throws ExecutionException {
+  private void initAndRun(@NotNull Sdk sdk) throws ExecutionException {
     // Create Server process
-    CommandLineProcess commandLineProcess = createProcess();
+    CommandLineProcess commandLineProcess = createProcess(sdk);
     final Process process = commandLineProcess.getProcess();
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       // Init console view
-      myConsoleView = createConsoleView();
+      myConsoleView = createConsoleView(sdk);
       if (myConsoleView != null) {
         myConsoleView.setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));
       }
       myPydevConsoleCommunication.setConsoleView(myConsoleView);
-      myProcessHandler = createProcessHandler(process, commandLineProcess.getCommandLine());
+      myProcessHandler = createProcessHandler(process, commandLineProcess.getCommandLine(), sdk);
 
       myConsoleExecuteActionHandler = createExecuteActionHandler();
 
@@ -524,16 +529,30 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   protected void createContentDescriptorAndActions() {
-    // Runner creating
-    final DefaultActionGroup toolbarActions = new DefaultActionGroup();
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("PydevConsoleRunner", toolbarActions, false);
+    final DefaultActionGroup runToolbarActions = new DefaultActionGroup();
+    final ActionToolbar runActionsToolbar = ActionManager.getInstance().createActionToolbar("PydevConsoleRunner", runToolbarActions, false);
 
-    // Runner creating
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
-    panel.add(myConsoleView.getComponent(), BorderLayout.CENTER);
+    final DefaultActionGroup outputToolbarActions = new DefaultActionGroup();
+    final ActionToolbar outputActionsToolbar =
+      ActionManager.getInstance().createActionToolbar("PydevConsoleRunner", outputToolbarActions, false);
 
-    actionToolbar.setTargetComponent(panel);
+    final JPanel actionsPanel = new JPanel(new BorderLayout());
+    // Left toolbar panel
+    actionsPanel.add(runActionsToolbar.getComponent(), BorderLayout.WEST);
+    // Add line between toolbar panels
+    final JComponent outputActionsComponent = outputActionsToolbar.getComponent();
+    int emptyBorderSize = outputActionsComponent.getBorder().getBorderInsets(outputActionsComponent).left;
+    outputActionsComponent.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, JBColor.border()),
+                                                                        new JBEmptyBorder(emptyBorderSize)));
+    // Right toolbar panel
+    actionsPanel.add(outputActionsComponent, BorderLayout.CENTER);
+
+    final JPanel mainPanel = new JPanel(new BorderLayout());
+    mainPanel.add(actionsPanel, BorderLayout.WEST);
+    mainPanel.add(myConsoleView.getComponent(), BorderLayout.CENTER);
+
+    runActionsToolbar.setTargetComponent(mainPanel);
+    outputActionsToolbar.setTargetComponent(mainPanel);
 
     if (myConsoleTitle == null) {
       myConsoleTitle = new ConsoleTitleGen(myProject, myTitle) {
@@ -553,16 +572,19 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     final RunContentDescriptor contentDescriptor =
-      new RunContentDescriptor(myConsoleView, myProcessHandler, panel, myConsoleTitle, null);
+      new RunContentDescriptor(myConsoleView, myProcessHandler, mainPanel, myConsoleTitle, null);
     Disposer.register(myProject, contentDescriptor);
 
     contentDescriptor.setFocusComputable(() -> myConsoleView.getConsoleEditor().getContentComponent());
     contentDescriptor.setAutoFocusContent(true);
 
     // tool bar actions
-    final List<AnAction> actions = fillToolBarActions(toolbarActions);
+    final List<AnAction> actions = fillRunActionsToolbar(runToolbarActions);
+    final List<AnAction> outputActions = fillOutputActionsToolbar(outputToolbarActions);
+    actions.addAll(outputActions);
+
     registerActionShortcuts(actions, myConsoleView.getConsoleEditor().getComponent());
-    registerActionShortcuts(actions, panel);
+    registerActionShortcuts(actions, mainPanel);
     getConsoleView().addConsoleFolding(false, false);
 
     showContentDescriptor(contentDescriptor);
@@ -662,7 +684,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private void stopConsole() {
     if (myPydevConsoleCommunication != null) {
       try {
-        myPydevConsoleCommunication.interrupt();
         closeCommunication();
         // waiting for REPL communication before destroying process handler
         Thread.sleep(300);

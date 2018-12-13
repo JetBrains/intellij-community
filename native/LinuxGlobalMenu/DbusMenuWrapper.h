@@ -19,11 +19,6 @@
 #define ITEM_CHECK 2
 #define ITEM_RADIO 3
 
-#define JMOD_SHIFT  1
-#define JMOD_CTRL   (1 << 1)
-#define JMOD_ALT    (1 << 2)
-#define JMOD_META   (1 << 3)
-
 typedef void (*jeventcallback)(int/*uid*/, int/*ev-type*/);
 typedef void (*jlogger)(int/*level*/, const char*);
 typedef void (*jrunnable)(void);
@@ -37,24 +32,36 @@ extern "C"{
 
 // runs main loop of glib (which is needed to communicate with dbus)
 // must be called from java thread (to avoid detach, so jna-callbacks will be invoked from same thread)
-void runDbusServer(jlogger jlogger);
-void stopDbusServer();
+void startWatchDbus(jlogger jlogger, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished);
+void stopWatchDbus();
+
+void runMainLoop(jlogger jlogger, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished);
+
 void execOnMainLoop(jrunnable run);
 
 WndInfo* registerWindow(long windowXid, jeventcallback handler); // creates menu-server and binds to xid
-void releaseWindowOnMainLoop(WndInfo* wi);
+void releaseWindowOnMainLoop(WndInfo* wi, jrunnable onReleased);
 
+void bindNewWindow(WndInfo * wi, long windowXid);
+void unbindWindow(WndInfo * wi, long windowXid);
+
+void createMenuRootForWnd(WndInfo *wi);
 void clearRootMenu(WndInfo* wi);
 void clearMenu(DbusmenuMenuitem* menu);
 
 DbusmenuMenuitem* addRootMenu(WndInfo* wi, int uid, const char * label);
-DbusmenuMenuitem* addMenuItem(DbusmenuMenuitem * parent, int uid, const char * label, int type);
-DbusmenuMenuitem* addSeparator(DbusmenuMenuitem * parent, int uid);
+DbusmenuMenuitem* addMenuItem(DbusmenuMenuitem * parent, int uid, const char * label, int type, int position);
+DbusmenuMenuitem* addSeparator(DbusmenuMenuitem * parent, int uid, int position);
+
+void reorderMenuItem(DbusmenuMenuitem * parent, DbusmenuMenuitem* item, int position);
+void removeMenuItem(DbusmenuMenuitem * parent, DbusmenuMenuitem* item);
 
 void setItemLabel(DbusmenuMenuitem* item, const char * label);
 void setItemEnabled(DbusmenuMenuitem* item, bool isEnabled);
 void setItemIcon(DbusmenuMenuitem* item, const char * iconBytesPng, int iconBytesCount);
-void setItemShortcut(DbusmenuMenuitem *item, int jmodifiers, int jkeycode);
+void setItemShortcut(DbusmenuMenuitem *item, int jmodifiers, int x11keycode);
+
+void toggleItemStateChecked(DbusmenuMenuitem *item, bool isChecked);
 
 #ifdef __cplusplus
 }

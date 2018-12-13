@@ -178,7 +178,7 @@ class AssociationsEditor {
   }
 
   public void select(final PsiFile file) {
-    myBuilder.getReady(this).doWhenDone(() -> myBuilder.select(file, file.getVirtualFile(), true));
+    myBuilder.getReady(this).doWhenDone(() -> myBuilder.selectAsync(file, file.getVirtualFile(), true));
   }
 
   class AddAssociationActionWrapper extends AddAssociationAction {
@@ -398,7 +398,6 @@ class AssociationsEditor {
 
     @Override
     protected String getContainerText(PsiFile psiElement, String string) {
-      //noinspection ConstantConditions
       return "(" + psiElement.getVirtualFile().getParent().getPresentableUrl() + ")";
     }
 

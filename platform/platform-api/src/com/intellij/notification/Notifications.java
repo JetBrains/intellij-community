@@ -46,7 +46,6 @@ public interface Notifications {
      * @deprecated use {@link NotificationGroup}
      */
     @Deprecated
-    @SuppressWarnings("JavaDoc")
     public static void register(@NotNull final String group_id, @NotNull final NotificationDisplayType defaultDisplayType) {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
       //noinspection SSBasedInspection

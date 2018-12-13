@@ -56,7 +56,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   @NotNull
-  SliceNode copy() {
+  public SliceNode copy() {
     SliceUsage newUsage = getValue().copy();
     SliceNode newNode = new SliceNode(getProject(), newUsage, targetEqualUsages);
     newNode.dupNodeCalculated = dupNodeCalculated;
@@ -74,19 +74,11 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
       if (current == null) {
         ProgressIndicator indicator = new ProgressIndicatorBase();
-        indicator.start();
-
         Ref<List<SliceNode>> nodesRef = Ref.create();
-        try {
-          ProgressManager.getInstance().executeProcessUnderProgress(
-            () -> nodesRef.set(doGetChildren()), indicator);
-        }
-        finally {
-          indicator.stop();
-        }
-
+        ProgressManager.getInstance().runProcess(() -> nodesRef.set(doGetChildren()), indicator);
         nodes = nodesRef.get();
-      } else {
+      }
+      else {
         nodes = doGetChildren();
       }
 
@@ -94,7 +86,8 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
         myCachedChildren = nodes;
       }
       return nodes;
-    } catch (ProcessCanceledException pce) {
+    }
+    catch (ProcessCanceledException pce) {
       changed = true;
       throw pce;
     }

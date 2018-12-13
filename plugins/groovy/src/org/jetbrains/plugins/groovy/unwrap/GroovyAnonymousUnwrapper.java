@@ -72,7 +72,6 @@ public class GroovyAnonymousUnwrapper extends GroovyUnwrapper {
 
   private static PsiElement findTopmostParentOfType(PsiElement el, Class<? extends PsiElement> clazz) {
     while (true) {
-      @SuppressWarnings({"unchecked"})
       PsiElement temp = PsiTreeUtil.getParentOfType(el, clazz, true, PsiAnonymousClass.class);
       if (temp == null || temp instanceof PsiFile) return el;
       el = temp;

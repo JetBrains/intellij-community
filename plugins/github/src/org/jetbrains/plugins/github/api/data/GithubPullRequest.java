@@ -10,6 +10,7 @@ import org.jetbrains.plugins.github.api.data.util.GithubLink;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
@@ -23,7 +24,7 @@ public class GithubPullRequest {
   @Mandatory private String patchUrl;
 
   @Mandatory private Long number;
-  @Mandatory private String state;
+  @Mandatory private GithubIssueState state;
   @Mandatory private Boolean locked;
   private String activeLockReason;
   @Mandatory private String title;
@@ -36,9 +37,9 @@ public class GithubPullRequest {
   @Mandatory private Date createdAt;
   private String mergeCommitSha;
   @Mandatory private List<GithubUser> assignees;
-  //requestedReviewers
+  @Mandatory private List<GithubUser> requestedReviewers;
   //requestedTeams
-  //labels
+  @Mandatory private List<GithubIssueLabel> labels;
   //milestone
 
   private Tag head;
@@ -71,7 +72,7 @@ public class GithubPullRequest {
   }
 
   @NotNull
-  public String getState() {
+  public GithubIssueState getState() {
     return state;
   }
 
@@ -116,6 +117,16 @@ public class GithubPullRequest {
   }
 
   @NotNull
+  public List<GithubUser> getRequestedReviewers() {
+    return requestedReviewers;
+  }
+
+  @NotNull
+  public List<GithubIssueLabel> getLabels() {
+    return labels;
+  }
+
+  @NotNull
   public Links getLinks() {
     return _links;
   }
@@ -128,10 +139,6 @@ public class GithubPullRequest {
   @NotNull
   public Tag getBase() {
     return base;
-  }
-
-  public boolean isClosed() {
-    return "closed".equals(state);
   }
 
   @RestModel
@@ -166,6 +173,23 @@ public class GithubPullRequest {
     @Nullable
     public GithubUser getUser() {
       return user;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof Tag)) return false;
+      Tag tag = (Tag)o;
+      return Objects.equals(label, tag.label) &&
+             Objects.equals(ref, tag.ref) &&
+             Objects.equals(sha, tag.sha) &&
+             Objects.equals(repo, tag.repo) &&
+             Objects.equals(user, tag.user);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(label, ref, sha, repo, user);
     }
   }
 

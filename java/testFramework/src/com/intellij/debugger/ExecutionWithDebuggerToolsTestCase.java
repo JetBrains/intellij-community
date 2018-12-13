@@ -104,8 +104,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   protected void stepInto(SuspendContextImpl context) {
+    stepInto(context, false);
+  }
+
+  protected void stepInto(SuspendContextImpl context, boolean ignoreFilters) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    debugProcess.getManagerThread().schedule(debugProcess.createStepIntoCommand(context, false, null));
+    debugProcess.getManagerThread().schedule(debugProcess.createStepIntoCommand(context, ignoreFilters, null));
   }
 
   protected void stepOver(SuspendContextImpl context) {
@@ -131,6 +135,9 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       myPauseScriptListener = null;
       myRatherLaterRequests.clear();
       myScriptRunnables.clear();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -340,13 +347,13 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     });
   }
 
-  protected void addException(Throwable e) {
+  protected void addException(@NotNull Throwable e) {
     synchronized (myException) {
       myException.add(e);
     }
   }
 
-  protected void error(Throwable th) {
+  protected void error(@NotNull Throwable th) {
     fail(StringUtil.getThrowableText(th));
   }
 

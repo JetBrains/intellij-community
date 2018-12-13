@@ -54,6 +54,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isPlusPlusOrMinusMinus;
+
 /**
  * @author ilyas
  */
@@ -426,14 +428,6 @@ public abstract class GroovyRefactoringUtil {
     return result;
   }
 
-  public static boolean isPlusPlusOrMinusMinus(PsiElement element) {
-    if (element instanceof GrUnaryExpression) {
-      IElementType operandSign = ((GrUnaryExpression)element).getOperationTokenType();
-      return operandSign == GroovyTokenTypes.mDEC || operandSign == GroovyTokenTypes.mINC;
-    }
-    return false;
-  }
-
   public static boolean isCorrectReferenceName(String newName, Project project) {
     if (newName.startsWith("'''") || newName.startsWith("\"\"\"")) {
       if (newName.length() < 6 || !newName.endsWith("'''")) {
@@ -571,7 +565,7 @@ public abstract class GroovyRefactoringUtil {
     }
     GrStatement result = blockStatement.getBlock().addStatementBefore(toAdd, null);
     if (result instanceof GrReturnStatement) {
-      //noinspection ConstantConditions,unchecked
+      // noinspection unchecked
       statement = (Type)((GrReturnStatement)result).getReturnValue();
     }
     else {

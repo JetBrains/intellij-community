@@ -16,7 +16,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -46,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.*;
 
 public class PluginsAdvertiser implements StartupActivity {
@@ -194,15 +194,7 @@ public class PluginsAdvertiser implements StartupActivity {
   }
 
   static void enablePlugins(Project project, final Collection<IdeaPluginDescriptor> disabledPlugins) {
-    final PluginManagerConfigurable managerConfigurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
-    final PluginManagerMain createPanel = managerConfigurable.getOrCreatePanel();
-    ShowSettingsUtil.getInstance()
-      .editConfigurable(project, managerConfigurable, () -> {
-        final InstalledPluginsTableModel pluginsModel = (InstalledPluginsTableModel)createPanel.getPluginsModel();
-        final IdeaPluginDescriptor[] descriptors = disabledPlugins.toArray(new IdeaPluginDescriptor[0]);
-        pluginsModel.enableRows(descriptors, Boolean.TRUE);
-        createPanel.getPluginTable().select(descriptors);
-      });
+    PluginManagerConfigurableProxy.showPluginConfigurableAndEnable(project, disabledPlugins.toArray(new IdeaPluginDescriptor[0]));
   }
 
   @Nullable
@@ -343,6 +335,9 @@ public class PluginsAdvertiser implements StartupActivity {
           }
 
           ApplicationManager.getApplication().invokeLater(this::onSuccess, ModalityState.NON_MODAL);
+        }
+        catch (UnknownHostException e) {
+          LOG.warn("Host name could not be resolved: " + e.getMessage());
         }
         catch (Exception e) {
           LOG.info(e);

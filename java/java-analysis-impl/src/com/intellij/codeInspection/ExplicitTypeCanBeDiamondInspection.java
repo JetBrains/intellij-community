@@ -73,7 +73,7 @@ public class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalIns
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiNewExpression newExpression =
-        PsiTreeUtil.getParentOfType(PsiDiamondTypeUtil.replaceExplicitWithDiamond(element), PsiNewExpression.class);
+        PsiTreeUtil.getParentOfType(RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(element), PsiNewExpression.class);
       if (newExpression != null) {
         CodeStyleManager.getInstance(project).reformat(newExpression);
       }

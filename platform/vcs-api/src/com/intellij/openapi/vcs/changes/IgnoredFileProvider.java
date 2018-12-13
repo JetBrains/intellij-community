@@ -32,8 +32,8 @@ public interface IgnoredFileProvider {
   boolean isIgnoredFile(@NotNull Project project, @NotNull FilePath filePath);
 
   @NotNull
-  Set<String> getIgnoredFilesMasks(@NotNull Project project);
+  Set<IgnoredFileDescriptor> getIgnoredFiles(@NotNull Project project);
 
   @NotNull
-  String getMasksGroupDescription();
+  String getIgnoredGroupDescription();
 }

@@ -162,7 +162,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         if (value instanceof PsiClassObjectAccessExpression) {
           PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(((PsiClassObjectAccessExpression)value).getOperand().getType());
           if (psiClass != null && !hasStringConstructor(psiClass)) {
-            //noinspection DialogTitleCapitalization
             holder.registerProblem(value,
                                    "Custom exception class should have a constructor with a single message parameter of String type",
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
@@ -449,7 +448,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     final PsiMethod getter = PropertyUtilBase.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);
     final PsiIdentifier nameIdentifier = getter == null ? null : getter.getNameIdentifier();
     if (nameIdentifier != null && nameIdentifier.isPhysical()) {
-      if (PropertyUtil.isSimpleGetter(getter)) {
+      if (PropertyUtil.getFieldOfGetter(getter) == field) {
         AnnotateMethodFix getterAnnoFix = new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove));
         if (REPORT_NOT_ANNOTATED_GETTER) {
           if (!manager.hasNullability(getter) && !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
@@ -469,7 +468,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
     final PsiClass containingClass = field.getContainingClass();
     final PsiMethod setter = PropertyUtilBase.findPropertySetter(containingClass, propName, isStatic, false);
-    if (setter != null && setter.isPhysical() && PropertyUtil.isSimpleSetter(setter)) {
+    if (setter != null && setter.isPhysical() && PropertyUtil.getFieldOfSetter(setter) == field) {
       final PsiParameter[] parameters = setter.getParameterList().getParameters();
       assert parameters.length == 1 : setter.getText();
       final PsiParameter parameter = parameters[0];

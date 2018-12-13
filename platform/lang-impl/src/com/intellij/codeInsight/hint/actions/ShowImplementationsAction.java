@@ -196,7 +196,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   @NotNull
-  ImplementationSearcher createImplementationsSearcher() {
+  protected ImplementationSearcher createImplementationsSearcher() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new ImplementationSearcher() {
         @Override
@@ -348,7 +348,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   @NotNull
-  static PsiElement[] getSelfAndImplementations(Editor editor,
+  protected static PsiElement[] getSelfAndImplementations(Editor editor,
                                                 @NotNull PsiElement element,
                                                 @NotNull ImplementationSearcher handler,
                                                 final boolean includeSelfAlways) {

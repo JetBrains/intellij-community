@@ -91,7 +91,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     myUserData.putUserData(key, value);
   }
 
-  @SuppressWarnings("UnusedParameters")
   protected static void log(Exception e) {
 //    everything is gonna be alright
     e.printStackTrace();
@@ -184,7 +183,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     defaults.put("ComboBox.actionMap", metalDefaults.get("ComboBox.actionMap"));
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void patchStyledEditorKit(UIDefaults defaults) {
     URL url = getClass().getResource(getPrefix() + (JBUI.isUsrHiDPI() ? "@2x.css" : ".css"));
     StyleSheet styleSheet = UIUtil.loadStyleSheet(url);
@@ -274,7 +272,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }));
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   protected void loadDefaults(UIDefaults defaults) {
     Properties properties = new Properties();
     try {

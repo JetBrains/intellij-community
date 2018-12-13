@@ -60,7 +60,7 @@ public class RenameElementAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isEnabledOnDataContext(DataContext dataContext) {
+  protected boolean isEnabledOnDataContext(@NotNull DataContext dataContext) {
     return RenameHandlerRegistry.getInstance().hasAvailableHandler(dataContext);
   }
 

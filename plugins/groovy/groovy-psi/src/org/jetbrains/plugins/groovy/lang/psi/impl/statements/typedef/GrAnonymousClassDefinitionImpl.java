@@ -32,7 +32,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   public GrAnonymousClassDefinitionImpl(GrTypeDefinitionStub stub) {
-    this(stub, GroovyElementTypes.ANONYMOUS_CLASS_DEFINITION);
+    this(stub, GroovyElementTypes.ANONYMOUS_TYPE_DEFINITION);
   }
 
   public GrAnonymousClassDefinitionImpl(GrTypeDefinitionStub stub, final GrStubElementType nodeType) {
@@ -60,7 +60,6 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   @Override
   @Nullable
   public GrArgumentList getArgumentListGroovy() {
-    //noinspection ConstantConditions
     return findChildByClass(GrArgumentList.class); //not null because of definition
   }
 

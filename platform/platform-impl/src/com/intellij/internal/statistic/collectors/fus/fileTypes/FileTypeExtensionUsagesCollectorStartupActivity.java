@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -17,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
@@ -38,8 +38,7 @@ public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupA
     myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        FUSProjectUsageTrigger.getInstance(project).trigger(FileExtensionOpenUsageTriggerCollector.class, file.getExtension() != null ? file.getExtension() : file.getName());
-        FUSProjectUsageTrigger.getInstance(project).trigger(FileTypeOpenUsageTriggerCollector.class, file.getFileType().getName());
+        FileTypeOpenUsageTriggerCollector.trigger(project, file.getFileType());
       }
 
       @Override
@@ -67,12 +66,9 @@ public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupA
         if (editor == null || editor.getProject() != project) return;
         VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
         if (file != null) {
-          String extension = file.getExtension() != null ? file.getExtension() : file.getName();
-          String fileType = file.getFileType().getName();
-          if (EDIT_USAGE_ONE_MINUTE_THROTTLING_CACHE.asMap().putIfAbsent(Pair.create(file.getPath(), extension), Boolean.TRUE) == null)
-            FUSProjectUsageTrigger.getInstance(project).trigger(FileExtensionEditUsageTriggerCollector.class, extension);
-          if (EDIT_USAGE_ONE_MINUTE_THROTTLING_CACHE.asMap().putIfAbsent(Pair.create(file.getPath(), fileType), Boolean.TRUE) == null)
-            FUSProjectUsageTrigger.getInstance(project).trigger(FileTypeEditUsageTriggerCollector.class, fileType);
+          final FileType fileType = file.getFileType();
+          if (EDIT_USAGE_ONE_MINUTE_THROTTLING_CACHE.asMap().putIfAbsent(Pair.create(file.getPath(), fileType.getName()), Boolean.TRUE) == null)
+            FileTypeEditUsageTriggerCollector.trigger(project, fileType);
         }
       }
 

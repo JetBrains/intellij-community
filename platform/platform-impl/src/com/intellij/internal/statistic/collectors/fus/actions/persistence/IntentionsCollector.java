@@ -8,6 +8,9 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.internal.statistic.collectors.fus.actions.IntentionUsagesCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.internal.statistic.utils.PluginType;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +28,7 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 @State(name = "IntentionsCollector", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
-public class IntentionsCollector extends BaseUICollector implements PersistentStateComponent<IntentionsCollector.State> {
+public class IntentionsCollector implements PersistentStateComponent<IntentionsCollector.State> {
   private State myState = new State();
 
   @Nullable
@@ -48,7 +51,7 @@ public class IntentionsCollector extends BaseUICollector implements PersistentSt
     String id = getIntentionId(action);
 
     String key = language.getID() + " " + id;
-    FeatureUsageLogger.INSTANCE.log(IntentionUsagesCollector.GROUP_ID, key);
+    FeatureUsageLogger.INSTANCE.log(IntentionUsagesCollector.GROUP_ID, key, FUSUsageContext.OS_CONTEXT.getData());
 
     final Integer count = state.myIntentions.get(key);
     int value = count == null ? 1 : count + 1;
@@ -56,7 +59,7 @@ public class IntentionsCollector extends BaseUICollector implements PersistentSt
   }
 
   @NotNull
-  private String getIntentionId(@NotNull IntentionAction action) {
+  private static String getIntentionId(@NotNull IntentionAction action) {
     Object handler = action;
     if (action instanceof IntentionActionDelegate) {
       IntentionAction delegate = ((IntentionActionDelegate)action).getDelegate();
@@ -70,15 +73,20 @@ public class IntentionsCollector extends BaseUICollector implements PersistentSt
       }
     }
 
-    String fqn = handler.getClass().getName();
+    final Class<?> clazz = handler.getClass();
+    final PluginType type = StatisticsUtilKt.getPluginType(clazz);
+    if (!type.isSafeToReport()) {
+      return type.name();
+    }
+
+    String fqn = clazz.getName();
     for (String prefix : PREFIXES_TO_STRIP) {
       fqn = StringUtil.trimStart(fqn, prefix);
     }
 
-    if (isNotBundledPluginClass(handler.getClass())) {
+    if (!type.isPlatformOrJBBundled()) {
       fqn = "[!]" + fqn;
     }
-
     return fqn;
   }
 

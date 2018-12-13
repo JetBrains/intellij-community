@@ -33,3 +33,5 @@ include "meta.rnc" {
                  )
             )
 }
+include "its20-html5.rnc"
+common.attrs &= its-html-attributes

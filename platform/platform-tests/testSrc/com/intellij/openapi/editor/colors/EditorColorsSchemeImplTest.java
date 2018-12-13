@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import org.assertj.core.api.Assertions;
@@ -23,7 +24,13 @@ import java.util.Arrays;
 import java.util.Collections;
 
 public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
-  private EditorColorsSchemeImpl myScheme = new EditorColorsSchemeImpl(null);
+  private EditorColorsSchemeImpl myScheme;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myScheme = new EditorColorsSchemeImpl(null);
+  }
 
   @Override
   protected void tearDown() throws Exception {
@@ -257,8 +264,9 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   public void testSaveNoInheritanceAndDefaults() {
-    TextAttributes declarationAttrs = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME)
-      .getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER).clone();
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    TextAttributes declarationAttrs = defaultScheme.getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER).clone();
+    assertEquals(DefaultLanguageHighlighterColors.IDENTIFIER, DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey());
     Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, declarationAttrs);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey());
     Assertions.assertThat(result.second).isEqualTo(fallbackAttrs);
@@ -340,7 +348,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       keyC = TextAttributesKey.createTextAttributesKey(keyC.getExternalName(), keyB);
       fail("Must fail");
     }
-    catch (IllegalStateException e) {
+    catch (IllegalStateException | AssertionError e) {
       assertTrue(e.getMessage().contains("already registered"));
     }
     finally {
@@ -612,6 +620,28 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     // the explicitly defined colors from the base (default) scheme will be used which is not what we want here.
     //
     assertSame(AbstractColorsScheme.INHERITED_ATTRS_MARKER, editorColorsScheme.getDirectlyDefinedAttributes(staticFieldKey));
+  }
+
+  public void testInheritedElementWithoutFallback() throws Exception {
+    TextAttributesKey TEST_KEY = TextAttributesKey.createTextAttributesKey("TEST_ATTRIBUTE_KEY", DefaultLanguageHighlighterColors.KEYWORD);
+    try {
+      AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(
+        "<scheme name=\"Super Scheme\" parent_scheme=\"Darcula\" version=\"1\">\n" +
+        "  <attributes>\n" +
+        "    <option name=\"DEFAULT_KEYWORD\" baseAttributes=\"TEXT\" />\n" +
+        "    <option name=\"TEST_ATTRIBUTE_KEY\" baseAttributes=\"TEXT\" />\n" +
+        "  </attributes>" +
+        "</scheme>");
+      TextAttributes originalAttributes = editorColorsScheme.getAttributes(TEST_KEY);
+
+      Element dumpedDom = editorColorsScheme.writeScheme();
+      AbstractColorsScheme reloadedScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(JDOMUtil.writeElement(dumpedDom));
+
+      assertEquals(originalAttributes, reloadedScheme.getAttributes(TEST_KEY));
+    }
+    finally {
+      TextAttributesKey.removeTextAttributesKey("TEST_ATTRIBUTE_KEY");
+    }
   }
 
   public void testIdea188308() {

@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings({"UndesirableClassUsage", "UseJBColor", "UseDPIAwareInsets", "UseDPIAwareBorders"})
+@SuppressWarnings({"UseJBColor", "UseDPIAwareInsets", "UseDPIAwareBorders"})
 public class SwingUpdaterUI implements UpdaterUI {
   private static final EmptyBorder FRAME_BORDER = new EmptyBorder(8, 8, 8, 8);
   private static final EmptyBorder LABEL_BORDER = new EmptyBorder(0, 0, 5, 0);
@@ -246,7 +246,6 @@ public class SwingUpdaterUI implements UpdaterUI {
     SwingUtilities.invokeLater(runnable);
   }
 
-  @SuppressWarnings("SSBasedInspection")
   private static void invokeAndWait(Runnable runnable) {
     try {
       SwingUtilities.invokeAndWait(runnable);

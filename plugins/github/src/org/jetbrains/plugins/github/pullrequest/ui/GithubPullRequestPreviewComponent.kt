@@ -3,25 +3,36 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.ui.OnePixelSplitter
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsComponent
 
-class GithubPullRequestPreviewComponent(private val changes: GithubPullRequestChangesComponent,
-                                        private val details: GithubPullRequestDetailsComponent)
-  : OnePixelSplitter(true, "Github.PullRequest.Preview.Component", 0.6f), Disposable {
+internal class GithubPullRequestPreviewComponent(private val changes: GithubPullRequestChangesComponent,
+                                                 private val details: GithubPullRequestDetailsComponent)
+  : OnePixelSplitter("Github.PullRequest.Preview.Component", 0.5f), Disposable {
 
-  val toolbarComponent = changes.toolbarComponent
-  var detailsVisible: Boolean
-    get() = secondComponent != null
-    set(value) {
-      secondComponent = if (value) details else null
+  private var currentProvider: GithubPullRequestDataProvider? = null
+
+  private val requestChangesListener = object : GithubPullRequestDataProvider.RequestsChangedListener {
+    override fun detailsRequestChanged() {
+      details.loadAndUpdate(currentProvider!!.detailsRequest)
     }
 
-  init {
-    firstComponent = changes
+    override fun commitsRequestChanged() {
+      changes.loadAndUpdate(currentProvider!!.logCommitsRequest)
+    }
   }
 
-  fun setPreviewDataProvider(provider: GithubPullRequestsDataLoader.DataProvider?) {
-    changes.loadAndShow(provider?.changesRequest)
+  init {
+    firstComponent = details
+    secondComponent = changes
+  }
+
+  fun setPreviewDataProvider(provider: GithubPullRequestDataProvider?) {
+    currentProvider?.removeRequestsChangesListener(requestChangesListener)
+    currentProvider = provider
+    currentProvider?.addRequestsChangesListener(requestChangesListener)
+
+    changes.loadAndShow(provider?.logCommitsRequest)
     details.loadAndShow(provider?.detailsRequest)
   }
 

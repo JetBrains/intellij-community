@@ -42,7 +42,6 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * @author Jeka
- * @since Sep 17, 2001
  */
 public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeSignatureProcessor");
@@ -237,7 +236,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   @Nullable
   public static PsiCallExpression addDelegatingCallTemplate(PsiMethod delegate, String newName) throws IncorrectOperationException {
     Project project = delegate.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiCodeBlock body = delegate.getBody();
     assert body != null;
     final PsiCallExpression callExpression;

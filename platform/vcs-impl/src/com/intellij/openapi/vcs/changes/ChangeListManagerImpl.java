@@ -34,8 +34,8 @@ import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater;
 import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
-import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.impl.*;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
@@ -64,7 +64,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER;
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
 
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -413,6 +412,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void freeze(@NotNull String reason) {
+    assert !ApplicationManager.getApplication().isDispatchThread();
+
     myUpdater.setIgnoreBackgroundOperation(true);
     Semaphore sem = new Semaphore();
     sem.down();
@@ -1455,6 +1456,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myIgnoredIdeaLevel.removeImplicitlyIgnoredDirectory(path, myProject);
   }
 
+  /**
+   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
+   */
+  @Deprecated
   public IgnoredFilesComponent getIgnoredFilesComponent() {
     return myIgnoredIdeaLevel;
   }
@@ -1525,6 +1530,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return myIgnoredIdeaLevel.getFilesToIgnore();
   }
 
+  @NotNull
+  @Override
+  public Set<IgnoredFileDescriptor> getPotentiallyIgnoredFiles() {
+    return ContainerUtil.unmodifiableOrEmptySet(
+      IgnoredFileProvider.IGNORE_FILE.extensions()
+        .flatMap(provider -> provider.getIgnoredFiles(myProject).stream())
+        .collect(Collectors.toSet())
+    );
+  }
+
   @Override
   public boolean isIgnoredFile(@NotNull VirtualFile file) {
     FilePath filePath = VcsUtil.getFilePath(file);
@@ -1536,58 +1551,35 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     @Override
     public boolean isIgnoredFile(@NotNull Project project, @NotNull FilePath filePath) {
       IProjectStore store = ProjectKt.getStateStore(project);
-      return getInstanceImpl(project).myIgnoredIdeaLevel.isIgnoredFile(filePath)
-             || (!ProjectKt.isDirectoryBased(project) && FileUtilRt.extensionEquals(filePath.getPath(), WorkspaceFileType.DEFAULT_EXTENSION))
+      return (!ProjectKt.isDirectoryBased(project) && FileUtilRt.extensionEquals(filePath.getPath(), WorkspaceFileType.DEFAULT_EXTENSION))
              || StringsKt.equals(filePath.getPath(), store.getWorkspaceFilePath(), !SystemInfo.isFileSystemCaseSensitive)
              || isShelfDirOrInsideIt(filePath, project);
     }
 
     private static boolean isShelfDirOrInsideIt(@NotNull FilePath filePath, @NotNull Project project){
-      String defaultShelfPath = ShelveChangesManager.getDefaultShelfPath(project);
-      return FileUtil.isAncestor(defaultShelfPath, filePath.getPath(), false);
+      String shelfPath = ShelveChangesManager.getShelfPath(project);
+      return FileUtil.isAncestor(shelfPath, filePath.getPath(), false);
     }
 
     @NotNull
     @Override
-    public Set<String> getIgnoredFilesMasks(@NotNull Project project) {
-      Set<String> masks = ContainerUtil.newHashSet();
-      masks.addAll(getProjectExcludePathsRelativeTo(project));
-      @SystemIndependent String projectBasePath = project.getBasePath();
-      if (projectBasePath != null) {
-        String relativeShelfPath =
-          FileUtil.getRelativePath(projectBasePath, ShelveChangesManager.getDefaultShelfPath(project), File.separatorChar);
-        if (relativeShelfPath != null) {
-          masks.add(relativeShelfPath);
-        }
-      }
-      if (ProjectKt.isDirectoryBased(project)) {
-        masks.add(DIRECTORY_STORE_FOLDER + "/workspace.xml");
-      }
-      else {
-        masks.add("*." + WorkspaceFileType.DEFAULT_EXTENSION);
-      }
-      return ContainerUtil.unmodifiableOrEmptySet(masks);
-    }
+    public Set<IgnoredFileDescriptor> getIgnoredFiles(@NotNull Project project) {
+      Set<IgnoredFileBean> ignored = ContainerUtil.newLinkedHashSet();
 
-    @NotNull
-    private static Set<String> getProjectExcludePathsRelativeTo(@NotNull Project project) {
-      Set<String> paths = ContainerUtil.newHashSet();
-      @SystemIndependent String basePath = project.getBasePath();
-      assert basePath != null : "Doesn't support default projects";
+      String shelfPath = ShelveChangesManager.getShelfPath(project);
+      ignored.add(IgnoredBeanFactory.ignoreUnderDirectory(shelfPath, project));
 
-      for (Module module : ModuleManager.getInstance(project).getModules()) {
-        VirtualFile[] roots = ModuleRootManager.getInstance(module).getExcludeRoots();
-        paths.addAll(Arrays.stream(roots)
-                       .filter((root) -> FileUtil.isAncestor(basePath, root.getPath(), true))
-                       .map((root) -> FileUtil.getRelativePath(basePath, root.getPath(), File.separatorChar))
-                       .collect(Collectors.toSet()));
+      String workspaceFilePath = ProjectKt.getStateStore(project).getWorkspaceFilePath();
+      if (workspaceFilePath != null) {
+        ignored.add(IgnoredBeanFactory.ignoreFile(workspaceFilePath, project));
       }
-      return paths;
+
+      return ContainerUtil.unmodifiableOrEmptySet(ignored);
     }
 
     @NotNull
     @Override
-    public String getMasksGroupDescription() {
+    public String getIgnoredGroupDescription() {
       return "Default ignored files";
     }
   }
@@ -1638,6 +1630,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @TestOnly
+  public void forceStopInTestMode() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myUpdater.stop();
+  }
+
+  @TestOnly
   public void forceGoInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myUpdater.forceGo();
@@ -1675,7 +1673,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return myConflictTracker;
   }
 
-  private static class MyChangesDeltaForwarder implements PlusMinusModify<BaseRevision> {
+  private static class MyChangesDeltaForwarder implements ChangeListDeltaListener {
     private final RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
     private final Project myProject;
@@ -1689,21 +1687,21 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     @Override
-    public void modify(BaseRevision was, BaseRevision become) {
+    public void modified(@NotNull BaseRevision was, @NotNull BaseRevision become) {
       doModify(was, become);
     }
 
     @Override
-    public void plus(final BaseRevision baseRevision) {
+    public void added(@NotNull BaseRevision baseRevision) {
       doModify(baseRevision, baseRevision);
     }
 
     @Override
-    public void minus(final BaseRevision baseRevision) {
+    public void removed(@NotNull BaseRevision baseRevision) {
        myScheduler.submit(() -> {
          AbstractVcs vcs = getVcs(baseRevision);
          if (vcs != null) {
-           myRevisionsCache.minus(Pair.create(baseRevision.getPath(), vcs));
+           myRevisionsCache.changeRemoved(baseRevision.getPath(), vcs);
          }
          BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
        });
@@ -1713,7 +1711,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myScheduler.submit(() -> {
         final AbstractVcs vcs = getVcs(was);
         if (vcs != null) {
-          myRevisionsCache.plus(Pair.create(was.getPath(), vcs));
+          myRevisionsCache.changeUpdated(was.getPath(), vcs);
         }
         BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
       });

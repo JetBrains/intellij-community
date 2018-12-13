@@ -1,0 +1,69 @@
+[
+  {
+    "type": "option",
+    "key": {
+      "type": "union",
+      "values": [
+        "csharp_type_declaration_braces",
+        "resharper_csharp_type_declaration_braces"
+      ]
+    },
+    "value": {
+      "type": "union",
+      "type_alias": "braces_layout",
+      "values": [
+        {
+          "type": "constant",
+          "value": "end_of_line",
+          "documentation": "At end of line (K&R style)"
+        },
+        {
+          "type": "constant",
+          "value": "end_of_line_no_space",
+          "documentation": "At end of line (no space)"
+        },
+        {
+          "type": "constant",
+          "value": "next_line",
+          "documentation": "At next line (BSD style)"
+        },
+        {
+          "type": "constant",
+          "value": "next_line_shifted",
+          "documentation": "At next line indented (Whitesmiths style)"
+        },
+        {
+          "type": "constant",
+          "value": "next_line_shifted_2",
+          "documentation": "At next line indented 2 (GNU style)"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "union",
+      "values": [
+        "csharp_brace_style",
+        "resharper_csharp_brace_style"
+      ]
+    },
+    "value": {
+      "type": "braces_layout"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "union",
+      "values": [
+        "type_declaration_braces",
+        "resharper_type_declaration_braces"
+      ]
+    },
+    "value": {
+      "type": "braces_layout"
+    }
+  }
+]

@@ -26,12 +26,14 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -85,6 +87,11 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myToolWindow = toolWindow;
     JComponent component = toolWindow.getComponent();
 
+    //noinspection TestOnlyProblems
+    if (ProjectManagerImpl.isLight(project)) {
+      LOG.error("StructureViewWrapperImpl must be not created for light project.");
+    }
+
     myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component);
     myUpdateQueue.setRestartTimerOnAdd(true);
 
@@ -100,6 +107,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       boolean successful = loggedRun("check if update needed", this::checkUpdate);
       if (successful) myActivityCount = count; // to check on the next turn
     });
+
     LOG.debug("timer to check if update needed: add");
     timer.start();
     Disposer.register(this, new Disposable() {
@@ -251,6 +259,9 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
     Dimension referenceSize = null;
 
+    Container container = myToolWindow.getComponent();
+    boolean wasFocused = UIUtil.isFocusAncestor(container);
+
     if (myStructureView != null) {
       if (myStructureView instanceof StructureView.Scrollable) {
         referenceSize = ((StructureView.Scrollable)myStructureView).getCurrentSize();
@@ -352,6 +363,12 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       myPendingSelection = null;
       selection.run();
     }
+
+    if (wasFocused) {
+      FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
+      Component component = policy == null ? null : policy.getDefaultComponent(container);
+      if (component != null) IdeFocusManager.getInstance(myProject).requestFocusInProject(component, myProject);
+    }
   }
 
   private void updateHeaderActions(StructureView structureView) {
@@ -372,7 +389,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   private ContentPanel createContentPanel(JComponent component) {
     final ContentPanel panel = new ContentPanel();
-    panel.setBackground(UIUtil.getTreeTextBackground());
+    panel.setBackground(UIUtil.getTreeBackground());
     panel.add(component, BorderLayout.CENTER);
     return panel;
   }

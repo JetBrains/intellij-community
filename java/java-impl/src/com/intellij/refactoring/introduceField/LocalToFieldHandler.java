@@ -148,7 +148,7 @@ public abstract class LocalToFieldHandler {
     }
     pattern.append(";");
     final Project project = local.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     try {
       PsiField field = factory.createFieldFromText(pattern.toString(), null);
 
@@ -333,7 +333,7 @@ public abstract class LocalToFieldHandler {
         else {
           finalInitializerPlace = myInitializerPlace;
         }
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
 
         switch (finalInitializerPlace) {
           case IN_FIELD_DECLARATION:

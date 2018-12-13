@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@SuppressWarnings({"unused", "UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
+@SuppressWarnings({"unused", "CallToPrintStackTrace"})
 public class TestDiscoveryBasicListener implements TestListener {
   @Override
   public void addError(Test test, Throwable t) {}

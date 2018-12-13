@@ -53,6 +53,9 @@ public abstract class XDebuggerTestCase extends PlatformTestCase {
       getBreakpointTypes().unregisterExtension(MY_LINE_BREAKPOINT_TYPE);
       getBreakpointTypes().unregisterExtension(MY_SIMPLE_BREAKPOINT_TYPE);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

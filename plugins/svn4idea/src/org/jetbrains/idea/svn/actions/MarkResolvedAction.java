@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.conflict.ConflictClient;
 import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
@@ -112,9 +111,8 @@ public class MarkResolvedAction extends BasicAction {
         File path = VfsUtilCore.virtualToIoFile(file);
         StatusClient client = vcs.getFactory(path).createStatusClient();
 
-        client.doStatus(path, Revision.UNDEFINED, Depth.INFINITY, false, false, false, false, status -> {
-          if (status.getContentsStatus() == StatusType.STATUS_CONFLICTED ||
-              status.getPropertiesStatus() == StatusType.STATUS_CONFLICTED) {
+        client.doStatus(path, Depth.INFINITY, false, false, false, false, status -> {
+          if (status.is(StatusType.STATUS_CONFLICTED) || status.isProperty(StatusType.STATUS_CONFLICTED)) {
             result.add(status.getFile().getAbsolutePath());
           }
         });

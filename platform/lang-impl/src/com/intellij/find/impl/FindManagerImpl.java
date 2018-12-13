@@ -83,8 +83,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -451,6 +451,7 @@ public class FindManagerImpl extends FindManager {
         newStringToFind = StringUtil.replace(s, "\n", "\\n\\s*"); // add \\s* for convenience
       } else {
         newStringToFind = StringUtil.escapeToRegexp(s);
+        newStringToFind = newStringToFind.replaceAll("\\\\n\\s*", "\\\\n\\\\s*");
         model.setRegularExpressions(true);
       }
       model.setStringToFind(newStringToFind);
@@ -782,7 +783,6 @@ public class FindManagerImpl extends FindManager {
           ourReportedPatterns.put(stringToFind.hashCode(), Boolean.TRUE) == null) {
         String content = stringToFind + " produced stack overflow when matching content of the file";
         LOG.info(content);
-        //noinspection SSBasedInspection
         GROUP.createNotification("Regular expression failed to match",
                                      content + " " + file.getPath(),
                                      NotificationType.ERROR,

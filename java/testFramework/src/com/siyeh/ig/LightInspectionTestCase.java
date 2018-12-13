@@ -94,6 +94,13 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
     myFixture.checkResult(result);
   }
 
+  protected final void checkQuickFix(String intentionName) {
+    final IntentionAction intention = myFixture.getAvailableIntention(intentionName);
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile(getTestName(false) + ".after.java");
+  }
+
   protected final void doTest(@Language("JAVA") @NotNull String classText, String fileName) {
     final StringBuilder newText = new StringBuilder();
     int start = 0;

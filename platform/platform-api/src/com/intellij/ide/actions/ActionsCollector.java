@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -26,10 +27,10 @@ public abstract class ActionsCollector {
    * Only actions from platform and JB plugins are recorded.
    */
   public void record(@Nullable String actionId, @NotNull Class context) {
-    record(actionId, context, false, null);
+    record(actionId, context, null);
   }
 
-  public abstract void record(@Nullable String actionId, @NotNull Class context, boolean isContextMenu, @Nullable String place);
+  public abstract void record(@Nullable String actionId, @NotNull Class context, @Nullable AnActionEvent event);
 
   public abstract State getState();
 

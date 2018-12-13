@@ -214,6 +214,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     return false;
   }
 
+  @NotNull
   public static String suggestRunActionName(final LocatableConfiguration configuration) {
     if (configuration instanceof LocatableConfigurationBase && configuration.isGeneratedName()) {
       String actionName = ((LocatableConfigurationBase)configuration).getActionName();

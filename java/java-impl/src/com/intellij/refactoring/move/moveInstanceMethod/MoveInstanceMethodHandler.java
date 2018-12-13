@@ -178,7 +178,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
   public static String suggestParameterNameForThisClass(final PsiClass thisClass) {
     PsiManager manager = thisClass.getManager();
-    PsiType type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(thisClass);
+    PsiType type = JavaPsiFacade.getElementFactory(manager.getProject()).createType(thisClass);
     final SuggestedNameInfo suggestedNameInfo = JavaCodeStyleManager.getInstance(manager.getProject())
       .suggestVariableName(VariableKind.PARAMETER, null, null, type);
     return suggestedNameInfo.names.length > 0 ? suggestedNameInfo.names[0] : "";

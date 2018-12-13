@@ -74,6 +74,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_7, "1.8");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_8, "1.9");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_9, "10");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_10, "11");
 
     loadForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }
@@ -260,7 +261,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
             if (!methods.isEmpty()) {
               PsiElement element2Highlight = aClass.getNameIdentifier();
               if (element2Highlight == null) {
-                element2Highlight = aClass;
+                element2Highlight = aClass instanceof PsiAnonymousClass ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass;
               }
               myHolder.registerProblem(element2Highlight,
                                        methods.size() == 1 ? InspectionsBundle.message("inspection.1.8.problem.single.descriptor", methods.get(0).getName(), getJdkName(effectiveLanguageLevel))
@@ -410,7 +411,6 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
 
     private void registerError(PsiElement reference, LanguageLevel api) {
       if (reference != null && isInProject(reference)) {
-        //noinspection DialogTitleCapitalization
         myHolder.registerProblem(reference,
                                  InspectionsBundle.message("inspection.1.5.problem.descriptor", getShortName(api)),
                                  myOnTheFly ? new LocalQuickFix[] {(LocalQuickFix)QuickFixFactory.getInstance().createIncreaseLanguageLevelFix(LanguageLevel.values()[api.ordinal() + 1])} : null);

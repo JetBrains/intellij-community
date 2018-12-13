@@ -45,6 +45,7 @@ class WrapReturnValueUsageViewDescriptor implements UsageViewDescriptor {
         return RefactorJBundle.message("method.whose.return.are.to.wrapped");
     }
 
+    @NotNull
     @Override
     public String getCodeReferencesText(int usagesCount, int filesCount){
         return RefactorJBundle.message("references.to.be.modified.usage.view",

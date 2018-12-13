@@ -22,7 +22,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/10/14
  */
 public class WebResource implements Serializable {
   private static final long serialVersionUID = 1L;

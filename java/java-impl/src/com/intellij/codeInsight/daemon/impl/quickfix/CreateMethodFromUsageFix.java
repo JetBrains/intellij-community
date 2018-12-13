@@ -102,7 +102,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
   @Override
   protected PsiElement getElement() {
     final PsiMethodCallExpression call = getMethodCall();
-    if (call == null || !call.getManager().isInProject(call)) return null;
+    if (call == null || !canModify(call)) return null;
     return call;
   }
 
@@ -237,7 +237,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     CreateFromUsageUtils.setupMethodParameters(method, builder, context, substitutor, arguments);
     final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
     if (returnTypeElement != null) {
-      new GuessTypeParameters(project, JavaPsiFacade.getInstance(project).getElementFactory(), builder, substitutor)
+      new GuessTypeParameters(project, JavaPsiFacade.getElementFactory(project), builder, substitutor)
         .setupTypeElement(returnTypeElement, expectedTypes, context, targetClass);
     }
     PsiCodeBlock body = method.getBody();

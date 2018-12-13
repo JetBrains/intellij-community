@@ -12,6 +12,8 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.DumbService;
@@ -45,6 +47,24 @@ class ActionTracker {
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
+        if (!myIgnoreDocumentChanges) {
+          myActionsHappened = true;
+        }
+      }
+    }, parentDisposable);
+    myEditor.getCaretModel().addCaretListener(new CaretListener() {
+      @Override
+      public void caretAdded(@NotNull CaretEvent event) {
+        myActionsHappened = true;
+      }
+
+      @Override
+      public void caretRemoved(@NotNull CaretEvent event) {
+        myActionsHappened = true;
+      }
+
+      @Override
+      public void caretPositionChanged(@NotNull CaretEvent event) {
         if (!myIgnoreDocumentChanges) {
           myActionsHappened = true;
         }

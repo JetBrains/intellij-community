@@ -110,7 +110,7 @@ public class ExtensionsComplexTest {
   private static void initExtensions(@NonNls String data, AreaInstance instance) throws IOException, JDOMException {
     final Element element = JDOMUtil.load(data);
     for (final Element child : element.getChildren()) {
-      ((ExtensionsAreaImpl)Extensions.getArea(instance)).registerExtension(element.getNamespaceURI(), child);
+      ExtensionsImplTest.registerExtension(((ExtensionsAreaImpl)Extensions.getArea(instance)), element.getNamespaceURI(), child);
     }
   }
 

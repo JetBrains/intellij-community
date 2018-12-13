@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.psiView;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -15,7 +16,6 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
 
@@ -49,9 +49,7 @@ class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
 
   @NotNull
   public static List<PsiViewerSourceWrapper> getExtensionBasedWrappers() {
-    return PsiViewerExtension.EP_NAME.getExtensionList().stream()
-      .map(el -> new PsiViewerSourceWrapper(el))
-      .collect(Collectors.toList());
+    return ContainerUtil.map(PsiViewerExtension.EP_NAME.getExtensionList(), el -> new PsiViewerSourceWrapper(el));
   }
 
   @NotNull
@@ -80,7 +78,7 @@ class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
            fileType != StdFileTypes.IDEA_MODULE &&
            fileType != StdFileTypes.IDEA_PROJECT &&
            fileType != StdFileTypes.IDEA_WORKSPACE &&
-           fileType != FileTypes.ARCHIVE &&
+           fileType != ArchiveFileType.INSTANCE &&
            fileType != FileTypes.UNKNOWN &&
            fileType != FileTypes.PLAIN_TEXT &&
            !(fileType instanceof AbstractFileType) &&

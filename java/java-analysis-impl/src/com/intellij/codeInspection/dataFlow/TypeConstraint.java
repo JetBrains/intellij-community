@@ -52,7 +52,7 @@ public abstract class TypeConstraint {
   abstract boolean isSuperStateOf(@NotNull TypeConstraint other);
 
   @Nullable
-  public abstract TypeConstraint union(@NotNull TypeConstraint other);
+  public abstract TypeConstraint unite(@NotNull TypeConstraint other);
 
   @Nullable
   abstract TypeConstraint intersect(@NotNull TypeConstraint right);
@@ -114,10 +114,10 @@ public abstract class TypeConstraint {
 
     @Nullable
     @Override
-    public TypeConstraint union(@NotNull TypeConstraint other) {
+    public TypeConstraint unite(@NotNull TypeConstraint other) {
       if(isSuperStateOf(other)) return this;
       if(other.isSuperStateOf(this)) return other;
-      return new Constrained(Collections.singleton(myType), Collections.emptySet()).union(other);
+      return new Constrained(Collections.singleton(myType), Collections.emptySet()).unite(other);
     }
 
     @Override
@@ -323,14 +323,14 @@ public abstract class TypeConstraint {
 
     @Override
     @Nullable
-    public TypeConstraint union(@NotNull TypeConstraint other) {
+    public TypeConstraint unite(@NotNull TypeConstraint other) {
       if(isSuperStateOf(other)) return this;
       if(other.isSuperStateOf(this)) return other;
       if (other instanceof Constrained) {
-        return union((Constrained)other);
+        return unite((Constrained)other);
       }
       if (other instanceof Exact) {
-        return union(new Constrained(Collections.singleton(((Exact)other).myType), Collections.emptySet()));
+        return unite(new Constrained(Collections.singleton(((Exact)other).myType), Collections.emptySet()));
       }
       return EMPTY;
     }
@@ -353,7 +353,7 @@ public abstract class TypeConstraint {
       return result;
     }
 
-    private TypeConstraint union(@NotNull Constrained other) {
+    private TypeConstraint unite(@NotNull Constrained other) {
       Set<DfaPsiType> notTypes = ContainerUtil.newTroveSet(this.myNotInstanceofValues);
       notTypes.retainAll(other.myNotInstanceofValues);
       Set<DfaPsiType> instanceOfTypes;

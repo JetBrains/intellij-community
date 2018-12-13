@@ -113,7 +113,7 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
 
     final PsiManager manager = statement.getManager();
     LOG.assertTrue(manager != null);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     
     String oldText = blockCandidate.getText();
     // There is a possible case that target block to wrap ends with single-line comment. Example:

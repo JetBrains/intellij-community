@@ -23,7 +23,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
  * Is intended to hold specific java formatting tests for 'wrapping' settings.
  *
  * @author Denis Zhdanov
- * @since Apr 29, 2010 4:06:15 PM
  */
 public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   @SuppressWarnings("SpellCheckingInspection")

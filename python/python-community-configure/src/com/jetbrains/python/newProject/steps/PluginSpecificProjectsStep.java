@@ -30,7 +30,7 @@ import java.util.List;
 public class PluginSpecificProjectsStep extends DefaultActionGroup implements DumbAware {
 
   public PluginSpecificProjectsStep(@NotNull final AbstractNewProjectStep.AbstractCallback callback,
-                                    @NotNull final List<DirectoryProjectGenerator> projectGenerators) {
+                                    @NotNull final List<? extends DirectoryProjectGenerator> projectGenerators) {
     super("Plugin-specific", true);
     getTemplatePresentation().setIcon(AllIcons.Nodes.PluginLogo);
     for (DirectoryProjectGenerator generator : projectGenerators) {

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 
+@SuppressWarnings("SameParameterValue")
 public abstract class CodeStyleTestCase extends LightPlatformTestCase {
 
   protected static final String BASE_PATH = PathManagerEx.getTestDataPath("/../../../platform/platform-tests/testData/codeStyle/");
@@ -78,6 +80,7 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
   protected CodeStyleSettings importSettings() throws SchemeImportException {
     final CodeStyleScheme targetScheme = new CodeStyleSchemeImpl("Test", false, null);
     SchemeFactory<CodeStyleScheme> schemeFactory = new SchemeFactory<CodeStyleScheme>() {
+      @NotNull
       @Override
       public CodeStyleScheme createNewScheme(@Nullable String name) {
         return targetScheme;
@@ -88,6 +91,32 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
     VirtualFile vFile = VfsUtil.findFileByIoFile(ioFile, true);
     CodeStyleSchemeXmlImporter importer = new CodeStyleSchemeXmlImporter();
     return importer.importScheme(getProject(), vFile, targetScheme, schemeFactory).getCodeStyleSettings();
+  }
+
+  protected String loadExpected(@NotNull String ext) throws IOException {
+    return FileUtilRt
+      .loadFile(new File(getBasePath() + File.separator + getTestDir() + File.separator + getTestName(true) + "." + ext), true);
+  }
+
+  protected CodeStyleScheme createTestScheme() {
+    return new CodeStyleScheme() {
+      @NotNull
+      @Override
+      public String getName() {
+        return "Test";
+      }
+
+      @Override
+      public boolean isDefault() {
+        return false;
+      }
+
+      @NotNull
+      @Override
+      public CodeStyleSettings getCodeStyleSettings() {
+        return new CodeStyleSettings();
+      }
+    };
   }
 
   protected String getBasePath() {

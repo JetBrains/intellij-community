@@ -124,7 +124,6 @@ public class JavaLightStubBuilder extends LightStubBuilder {
     private boolean seenModifier;
 
     @Override
-    @SuppressWarnings("IfStatementWithIdenticalBranches")
     public boolean visit(IElementType type) {
       if (ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(type)) {
         return true;

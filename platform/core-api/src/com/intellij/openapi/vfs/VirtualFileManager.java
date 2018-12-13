@@ -191,4 +191,8 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @see #getModificationCount()
    */
   public abstract long getStructureModificationCount();
+
+  public VirtualFile findFileById(int id) {
+    return null;
+  }
 }

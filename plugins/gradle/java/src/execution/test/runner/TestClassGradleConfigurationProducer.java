@@ -13,6 +13,7 @@ import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
@@ -34,7 +35,6 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodL
 
 /**
  * @author Vladislav.Soroka
- * @since 2/14/14
  */
 public class TestClassGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
 
@@ -71,8 +71,9 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
 
     configuration.getSettings().setExternalProjectPath(projectPath);
     configuration.getSettings().setTaskNames(tasksToRun);
-    configuration.getSettings()
-      .setScriptParameters(String.format("--tests %s", getRuntimeQualifiedName(testClass)));
+
+    String filter = GradleExecutionSettingsUtil.createTestFilterFrom(testClass, /*hasSuffix=*/false);
+    configuration.getSettings().setScriptParameters(filter);
     configuration.setName(testClass.getName());
 
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
@@ -129,8 +130,10 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     int i = scriptParameters.indexOf("--tests ");
     if(i == -1) return false;
 
+    String testFilter = GradleExecutionSettingsUtil.createTestFilterFrom(testClass, /*hasSuffix=*/true);
+    String filter = testFilter.substring("--tests ".length());
     String str = scriptParameters.substring(i + "--tests ".length()).trim() + ' ';
-    return str.startsWith(getRuntimeQualifiedName(testClass) + ' ') && !str.contains("--tests");
+    return str.startsWith(filter) && !str.contains("--tests");
   }
 
   @Override
@@ -185,7 +188,8 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
 
     StringBuilder buf = new StringBuilder();
     for (PsiClass aClass : containingClasses) {
-      buf.append(String.format("--tests %s ", getRuntimeQualifiedName(aClass)));
+      String filter = GradleExecutionSettingsUtil.createTestFilterFrom(aClass, /*hasSuffix=*/true);
+      buf.append(filter);
     }
 
     configuration.getSettings().setScriptParameters(buf.toString());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,24 +144,27 @@ public class IncrementDecrementUsedAsExpressionInspection
       return;
     }
     final Project project = element.getProject();
-    final PsiElementFactory factory =
-      JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     final String newStatementText = element.getText() + ';';
     final String operandText = operand.getText();
-    if (parent instanceof PsiIfStatement ||
-        parent instanceof PsiLoopStatement) {
+    if (parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement || parent instanceof PsiSwitchLabeledRuleStatement) {
       // need to add braces because
       // in/decrement is inside braceless control statement body
       final StringBuilder text = new StringBuilder();
       text.append('{');
-      final String elementText =
-        PsiReplacementUtil.getElementText(statement, element, operandText);
+      final String elementText = PsiReplacementUtil.getElementText(statement, element, operandText);
       if (element instanceof PsiPostfixExpression) {
+        if (parent instanceof PsiSwitchLabeledRuleStatement) {
+          text.append("break ");
+        }
         text.append(elementText);
         text.append(newStatementText);
       }
       else {
         text.append(newStatementText);
+        if (parent instanceof PsiSwitchLabeledRuleStatement) {
+          text.append("break ");
+        }
         text.append(elementText);
       }
       text.append('}');
@@ -322,6 +326,17 @@ public class IncrementDecrementUsedAsExpressionInspection
     PsiReplacementUtil.replaceExpression((PsiExpression)element, operandText);
   }
 
+  public static boolean isSuitableForReplacement(@NotNull PsiUnaryExpression expression) {
+    if (ExpressionUtils.isVoidContext(expression)) {
+      return false;
+    }
+    final IElementType tokenType = expression.getOperationTokenType();
+    if (!tokenType.equals(JavaTokenType.PLUSPLUS) && !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+      return false;
+    }
+    return PsiTreeUtil.getParentOfType(expression, PsiStatement.class) != null;
+  }
+
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new IncrementDecrementUsedAsExpressionVisitor();
@@ -331,22 +346,12 @@ public class IncrementDecrementUsedAsExpressionInspection
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitUnaryExpression(
-      @NotNull PsiUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       super.visitUnaryExpression(expression);
-      final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiExpressionStatement ||
-          (parent instanceof PsiExpressionList &&
-           parent.getParent() instanceof
-             PsiExpressionListStatement)) {
-        return;
+
+      if (isSuitableForReplacement(expression)) {
+        registerError(expression, expression);
       }
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-          !tokenType.equals(JavaTokenType.MINUSMINUS)) {
-        return;
-      }
-      registerError(expression, expression);
     }
   }
 }

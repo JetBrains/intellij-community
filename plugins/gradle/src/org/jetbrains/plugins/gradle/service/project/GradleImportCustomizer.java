@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
  * Only a single extension is expected per platform.
  *
  * @author Vladislav.Soroka
- * @since 4/21/2015
  */
 
 public abstract class GradleImportCustomizer {

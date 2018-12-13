@@ -72,10 +72,11 @@ public class PyKnownDecoratorUtil {
     KOMBU_UTILS_CACHED_PROPERTY("kombu.utils.cached_property"),
 
     DATACLASSES_DATACLASS("dataclasses.dataclass"),
-    ATTR_S("attr.__init__.s"),
-    ATTR_ATTRS("attr.__init__.attrs"),
-    ATTR_ATTRIBUTES("attr.__init__.attributes"),
-    ATTR_DATACLASS("attr.__init__.dataclass"),
+    ATTR_S("attr.s"),
+    ATTR_ATTRS("attr.attrs"),
+    ATTR_ATTRIBUTES("attr.attributes"),
+    ATTR_DATACLASS("attr.dataclass"),
+
     PYTEST_FIXTURE("pytest.fixture");
 
     private final QualifiedName myQualifiedName;

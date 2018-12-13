@@ -22,15 +22,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.Component;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,14 +45,24 @@ import static com.intellij.util.ui.EmptyIcon.ICON_16;
  * @author Vladislav.Soroka
  */
 public class ExecutionNode extends CachingSimpleNode {
-  private static final Icon NODE_ICON_OK = AllIcons.Process.State.GreenOK;
-  private static final Icon NODE_ICON_ERROR = AllIcons.General.Error;
+  private static final Icon NODE_ICON_OK = AllIcons.RunConfigurations.TestPassed;
+  private static final Icon NODE_ICON_ERROR = AllIcons.RunConfigurations.TestError;
   private static final Icon NODE_ICON_WARNING = AllIcons.General.Warning;
   private static final Icon NODE_ICON_INFO = AllIcons.General.Information;
-  private static final Icon NODE_ICON_SKIPPED = AllIcons.Process.State.YellowStr;
+  private static final Icon NODE_ICON_SKIPPED = AllIcons.RunConfigurations.TestIgnored;
   private static final Icon NODE_ICON_STATISTICS = ICON_16;
   private static final Icon NODE_ICON_SIMPLE = ICON_16;
   private static final Icon NODE_ICON_DEFAULT = ICON_16;
+  private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.FS() {
+    @Override
+    protected Component getRendererOwner(Component component) {
+      if (component instanceof JTree && !component.isShowing()) {
+        CellRendererPane pane = UIUtil.getParentOfType(CellRendererPane.class, component);
+        if (pane != null) return pane.getParent();
+      }
+      return null;
+    }
+  };
 
   private final List<ExecutionNode> myChildrenList = ContainerUtil.newSmartList();
   private long startTime;
@@ -291,7 +304,7 @@ public class ExecutionNode extends CachingSimpleNode {
       return getIcon(((MessageEventResult)myResult).getKind());
     }
     else {
-      return isRunning() ? ExecutionNodeProgressAnimator.getCurrentFrame() :
+      return isRunning() ? NODE_ICON_RUNNING :
              isFailed(myResult) ? NODE_ICON_ERROR :
              isSkipped(myResult) ? NODE_ICON_SKIPPED :
              myErrors.get() > 0 ? NODE_ICON_ERROR :
@@ -302,7 +315,7 @@ public class ExecutionNode extends CachingSimpleNode {
 
   public static Icon getEventResultIcon(@Nullable EventResult result) {
     if (result == null) {
-      return ExecutionNodeProgressAnimator.getCurrentFrame();
+      return NODE_ICON_RUNNING;
     }
     if (isFailed(result)) {
       return NODE_ICON_ERROR;

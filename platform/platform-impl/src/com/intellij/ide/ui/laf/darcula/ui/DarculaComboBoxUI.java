@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
@@ -33,7 +34,10 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
  */
 public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorBorderCapable {
 
-  private static final Color NON_EDITABLE_BACKGROUND = JBColor.namedColor("ComboBox.darcula.nonEditableBackground", new JBColor(0xfcfcfc, 0x3c3f41));
+  @SuppressWarnings("UnregisteredNamedColor")
+  private static final Color NON_EDITABLE_BACKGROUND = JBColor.namedColor("ComboBox.nonEditableBackground",
+                                                         JBColor.namedColor("ComboBox.darcula.nonEditableBackground",
+                                                                            new JBColor(0xfcfcfc, 0x3c3f41)));
 
   public DarculaComboBoxUI() {}
 
@@ -547,6 +551,33 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   protected static class CustomComboPopup extends BasicComboPopup {
     public CustomComboPopup(JComboBox combo) {
       super(combo);
+    }
+
+    @Override
+    protected void configurePopup() {
+      super.configurePopup();
+
+      Border border = UIManager.getBorder("ComboPopup.border");
+      if (border != null) {
+        setBorder(border);
+      }
+    }
+
+    @Override
+    public void updateUI() {
+      setUI(new BasicPopupMenuUI() {
+        @Override
+        public void uninstallDefaults() {}
+
+        @Override
+        public void installDefaults() {
+          if (popupMenu.getLayout() == null || popupMenu.getLayout() instanceof UIResource)
+            popupMenu.setLayout(new DefaultMenuLayout(popupMenu, BoxLayout.Y_AXIS));
+
+          popupMenu.setOpaque(true);
+          LookAndFeel.installColorsAndFont(popupMenu, "PopupMenu.background", "PopupMenu.foreground", "PopupMenu.font");
+        }
+      });
     }
 
     @Override

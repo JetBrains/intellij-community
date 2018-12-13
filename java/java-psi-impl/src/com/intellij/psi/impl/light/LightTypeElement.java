@@ -34,6 +34,7 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
     myType = type;
   }
 
+  @Override
   public String toString() {
     return "PsiTypeElement:" + getText();
   }

@@ -5,6 +5,7 @@ import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestPanel;
 import com.intellij.diff.comparison.ComparisonManagerImpl;
+import com.intellij.diff.comparison.InnerFragmentsPolicy;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool;
@@ -389,13 +390,14 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   @NotNull
   private static DiffUserDataKeysEx.DiffComputer getDiffComputer(@NotNull Collection<? extends Range> ranges) {
     return (text1, text2, policy, innerChanges, indicator) -> {
+      InnerFragmentsPolicy fragmentsPolicy = innerChanges ? InnerFragmentsPolicy.WORDS : InnerFragmentsPolicy.NONE;
       LineOffsets offsets1 = LineOffsetsUtil.create(text1);
       LineOffsets offsets2 = LineOffsetsUtil.create(text2);
 
       List<LineFragment> result = new ArrayList<>();
       ComparisonManagerImpl comparisonManager = ComparisonManagerImpl.getInstanceImpl();
       for (Range range : ranges) {
-        result.addAll(comparisonManager.compareLinesInner(range, text1, text2, offsets1, offsets2, policy, innerChanges, indicator));
+        result.addAll(comparisonManager.compareLinesInner(range, text1, text2, offsets1, offsets2, policy, fragmentsPolicy, indicator));
       }
       return result;
     };

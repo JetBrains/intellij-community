@@ -64,7 +64,6 @@ final public class LogMessageParser extends AbstractMessageParser {
     initDateFormats();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void initDateFormats() {
     SimpleDateFormat delegate = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US);
     delegate.setTimeZone(TimeZone.getTimeZone("GMT"));

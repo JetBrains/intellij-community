@@ -83,7 +83,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
         Configurable[] mergedArray = new Configurable[generalConfigurables.length + 1];
         System.arraycopy(generalConfigurables, 0, mergedArray, 0, generalConfigurables.length);
         mergedArray[generalConfigurables.length] = firstConfigurable;
-        myRootConfigurable = new MergedCompositeConfigurable("", "", null, mergedArray);
+        myRootConfigurable = new MergedCompositeConfigurable(getId(), getDisplayName(), null, mergedArray);
         myChildren = firstConfigurable instanceof SearchableConfigurable.Parent ? ((Parent)firstConfigurable).getConfigurables() : EMPTY_CONFIGURABLES;
       }
     }
@@ -105,7 +105,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   @Nullable
-  private static MergedCompositeConfigurable computeGeneralConfigurables(@NotNull DebuggerConfigurableProvider[] providers) {
+  private MergedCompositeConfigurable computeGeneralConfigurables(@NotNull DebuggerConfigurableProvider[] providers) {
     List<Configurable> rootConfigurables = getConfigurables(DebuggerSettingsCategory.GENERAL, providers);
     if (rootConfigurables.isEmpty()) {
       return null;
@@ -117,7 +117,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       boolean c1e = StringUtil.isEmpty(o1.getDisplayName());
       return c1e == StringUtil.isEmpty(o2.getDisplayName()) ? 0 : (c1e ? -1 : 1);
     });
-    return new MergedCompositeConfigurable("", "", null, mergedRootConfigurables);
+    return new MergedCompositeConfigurable(getId(), getDisplayName(), null, mergedRootConfigurables);
   }
 
   @Override

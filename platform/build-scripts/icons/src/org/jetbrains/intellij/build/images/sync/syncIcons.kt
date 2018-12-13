@@ -3,43 +3,119 @@ package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
 
-internal fun syncAdded(added: Collection<String>,
-                       sourceRepoMap: Map<String, GitObject>,
-                       targetDir: File, targetRepo: (File) -> File) {
-  callSafely {
-    val unversioned = mutableMapOf<File, MutableList<String>>()
-    added.forEach {
-      val target = File(targetDir, it)
-      if (target.exists()) log("$it already exists in target repo!")
-      val source = sourceRepoMap[it]!!.getFile()
+internal fun syncIconsRepo(context: Context) {
+  if (context.doSyncIconsRepo) {
+    log("Syncing ${context.iconsRepoName}:")
+    syncIconsRepo(context, context.byDev)
+  }
+}
+
+internal fun syncDevRepo(context: Context) {
+  if (context.doSyncDevRepo) {
+    log("Syncing ${context.devRepoName}:")
+    syncAdded(context.byDesigners.added, context.icons, context.devRepoDir) { changesToReposMap(it) }
+    syncModified(context.devRepoRoot, context.byDesigners.modified, context.devIcons, context.icons)
+    if (context.doSyncRemovedIconsInDev) syncRemoved(context.byDesigners.removed, context.devIcons)
+  }
+}
+
+internal fun syncIconsRepo(context: Context, byDev: Changes) {
+  syncAdded(byDev.added, context.devIcons, context.iconsRepoDir) { context.iconsRepo }
+  syncModified(context.iconsRepoDir, byDev.modified, context.icons, context.devIcons)
+  syncRemoved(byDev.removed, context.icons)
+}
+
+private fun syncAdded(added: MutableCollection<String>,
+                      sourceRepoMap: Map<String, GitObject>,
+                      targetDir: File, targetRepo: (File) -> File) {
+  stageFiles(added) { file, skip, stage ->
+    val source = sourceRepoMap[file]!!.file
+    val target = targetDir.resolve(file)
+    if (target.exists()) {
+      if (source.readBytes().contentEquals(target.readBytes())) {
+        log("Skipping $file")
+        skip()
+      }
+      else {
+        source.copyTo(target, overwrite = true)
+      }
+    }
+    else {
       source.copyTo(target, overwrite = true)
       val repo = targetRepo(target)
-      if (!unversioned.containsKey(repo)) unversioned[repo] = mutableListOf()
-      unversioned[repo]!!.add(target.relativeTo(repo).path)
-    }
-    unversioned.forEach { repo, add ->
-      addChangesToGit(add, repo)
+      stage(repo, target.relativeTo(repo).path)
     }
   }
 }
 
-internal fun syncModified(modified: Collection<String>,
-                          targetRepoMap: Map<String, GitObject>,
-                          sourceRepoMap: Map<String, GitObject>) {
-  callSafely {
-    modified.forEach {
-      val target = targetRepoMap[it]!!.getFile()
-      val source = sourceRepoMap[it]!!.getFile()
-      source.copyTo(target, overwrite = true)
+private fun syncModified(targetRoot: File,
+                         modified: MutableCollection<String>,
+                         targetRepoMap: Map<String, GitObject>,
+                         sourceRepoMap: Map<String, GitObject>) {
+  stageFiles(modified) { file, skip, stage ->
+    val source = sourceRepoMap[file]!!
+    if (targetRepoMap.containsKey(file)) {
+      val target = targetRepoMap[file]!!
+      if (target.hash == source.hash) {
+        log("$file is not modified, skipping")
+        skip()
+      }
+      else {
+        source.file.copyTo(target.file, overwrite = true)
+        stage(target.repo, target.path)
+      }
+    } else{
+      log("$file should be modified but not exist, creating")
+      val targetFile = targetRoot.resolve(file)
+      val repo = changesToReposMap(targetFile)
+      source.file.copyTo(targetFile)
+      stage(repo, targetFile.toRelativeString(repo))
     }
   }
 }
 
-internal fun syncRemoved(removed: Collection<String>,
-                         targetRepoMap: Map<String, GitObject>) {
+private fun syncRemoved(removed: MutableCollection<String>,
+                        targetRepoMap: Map<String, GitObject>) {
+  stageFiles(removed) { file, skip, stage ->
+    if (!targetRepoMap.containsKey(file)) {
+      log("$file is already removed, skipping")
+      skip()
+    }
+    else {
+      val gitObject = targetRepoMap[file]!!
+      val target = gitObject.file
+      if (target.exists()) {
+        if (target.delete()) {
+          stage(gitObject.repo, gitObject.path)
+        }
+        else {
+          log("Failed to delete ${target.absolutePath}")
+        }
+      }
+      cleanDir(target.parentFile)
+    }
+  }
+}
+
+private fun cleanDir(dir: File?) {
+  if (dir?.list()?.isEmpty() == true && dir.delete()) {
+    cleanDir(dir.parentFile)
+  }
+}
+
+private fun stageFiles(files: MutableCollection<String>,
+                       action: (String, () -> Unit, (File, String) -> Unit) -> Unit) {
   callSafely {
-    removed.map { targetRepoMap[it]!!.getFile() }.forEach {
-      if (!it.delete()) log("Failed to delete ${it.absolutePath}")
+    val toStage = mutableMapOf<File, MutableList<String>>()
+    val iterator = files.iterator()
+    while (iterator.hasNext()) {
+      action(iterator.next(), { iterator.remove() }) { repo, path ->
+        if (!toStage.containsKey(repo)) toStage[repo] = mutableListOf()
+        toStage[repo]!! += path
+      }
+    }
+    toStage.forEach { repo, file ->
+      stageFiles(file, repo)
     }
   }
 }

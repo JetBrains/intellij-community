@@ -27,7 +27,6 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
    * @throws IOException if there is IO problem
    */
   GitSSHXmlRpcClient(final int port, final boolean batchMode) throws IOException {
-    //noinspection HardCodedStringLiteral
     myClient = batchMode ? null : new XmlRpcClientLite("127.0.0.1", port);
   }
 

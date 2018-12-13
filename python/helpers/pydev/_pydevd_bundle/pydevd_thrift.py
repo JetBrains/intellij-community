@@ -352,7 +352,8 @@ def var_to_struct(val, name, do_trim=True, evaluate_full_value=True):
 
 def var_to_str(val, do_trim=True, evaluate_full_value=True):
     struct = var_to_struct(val, '', do_trim, evaluate_full_value)
-    return struct.value
+    value = struct.value
+    return value if value is not None else ''
 
 
 # from pydevd_vars.py
@@ -467,7 +468,8 @@ def array_to_meta_thrift_struct(array, name, format):
     array_chunk.cols = cols
     array_chunk.format = format
     array_chunk.type = type
-    array_chunk.bounds = bounds
+    array_chunk.max = "%s" % bounds[1]
+    array_chunk.min = "%s" % bounds[0]
     return array, array_chunk, rows, cols, format
 
 
@@ -492,7 +494,8 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
     array_chunk.cols = num_cols
     array_chunk.format = ""
     array_chunk.type = ""
-    array_chunk.bounds = (0, 0)
+    array_chunk.max = "0"
+    array_chunk.min = "0"
 
     if (rows, cols) == (-1, -1):
         rows, cols = num_rows, num_cols

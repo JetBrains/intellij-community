@@ -2,11 +2,11 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -15,7 +15,6 @@ import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -23,22 +22,24 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @State(
   name = "TodoView",
@@ -97,7 +98,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     if (myContentManager != null) {
       // all panel were constructed
       Content content = myContentManager.getSelectedContent();
-      state.selectedIndex = myContentManager.getIndexOfContent(content);
+      state.selectedIndex = content == null ? -1 : myContentManager.getIndexOfContent(content);
     }
     return state;
   }
@@ -109,7 +110,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   public void initToolWindow(@NotNull ToolWindow toolWindow) {
     // Create panels
     ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
-    Content allTodosContent = contentFactory.createContent(null, IdeBundle.message("title.project"), false);
+    Content allTodosContent = contentFactory.createContent(null, IdeUICustomization.getInstance().getProjectDisplayName(), false);
     toolWindow.setHelpId("find.todoList");
     myAllTodos = new TodoPanel(myProject, state.all, false, allTodosContent) {
       @Override
@@ -189,49 +190,6 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     myPanels.add(changeListTodos);
     myPanels.add(currentFileTodos);
     myPanels.add(scopeBasedTodos);
-    TreeExpander proxyExpander = new TreeExpander() {
-      @Override
-      public boolean canExpand() {
-        TreeExpander expander = getExpander();
-        return expander != null && expander.canExpand();
-      }
-
-      @Override
-      public void expandAll() {
-        TreeExpander expander = getExpander();
-        if (expander != null) {
-          expander.expandAll();
-        }
-      }
-
-      @Nullable
-      private TreeExpander getExpander() {
-        Content selectedContent = myContentManager.getSelectedContent();
-        if (selectedContent != null && selectedContent.getComponent() instanceof TodoPanel) {
-          return ((TodoPanel)selectedContent.getComponent()).getTreeExpander();
-        }
-        return null;
-      }
-
-      @Override
-      public void collapseAll() {
-        TreeExpander expander = getExpander();
-        if (expander != null) {
-          expander.collapseAll();
-        }
-      }
-
-      @Override
-      public boolean canCollapse() {
-        TreeExpander expander = getExpander();
-        return expander != null && expander.canCollapse();
-      }
-    };
-    //CommonActionsManager.getInstance().createExpandAllAction(proxyExpander, toolWindow.getComponent());
-    //CommonActionsManager.getInstance().createCollapseAllAction(proxyExpander, toolWindow.getComponent());
-    //((ToolWindowEx)toolWindow)
-    //  .setTitleActions(CommonActionsManager.getInstance().createExpandAllAction(proxyExpander, toolWindow.getComponent()),
-    //                   CommonActionsManager.getInstance().createCollapseAllAction(proxyExpander, toolWindow.getComponent()));
   }
 
   @NotNull
@@ -299,40 +257,31 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   private final class MyFileTypeListener implements FileTypeListener {
     @Override
     public void fileTypesChanged(@NotNull FileTypeEvent e) {
-      // this invokeLater guaranties that this code will be invoked after
-      // PSI gets the same event.
-      DumbService.getInstance(myProject).smartInvokeLater(() -> ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        if (myAllTodos == null) {
-          return;
-        }
-
-        ApplicationManager.getApplication().runReadAction(() -> {
-          for (TodoPanel panel : myPanels) {
-            panel.rebuildCache();
-          }
-        }
-        );
-        ApplicationManager.getApplication().invokeLater(() -> {
-          for (TodoPanel panel : myPanels) {
-            panel.updateTree();
-          }
-        }, ModalityState.NON_MODAL);
-      }, IdeBundle.message("progress.looking.for.todos"), false, myProject));
+      refresh();
     }
   }
 
   public void refresh() {
-    ApplicationManager.getApplication().runReadAction(() -> {
-          for (TodoPanel panel : myPanels) {
-            panel.rebuildCache();
-          }
-        }
-    );
-    ApplicationManager.getApplication().invokeLater(() -> {
-      for (TodoPanel panel : myPanels) {
-        panel.updateTree();
+    Map<TodoPanel, Set<VirtualFile>> files = new HashMap<>();
+    ReadAction.nonBlocking(() -> {
+      if (myAllTodos == null) {
+        return;
       }
-    }, ModalityState.NON_MODAL);
+      for (TodoPanel panel : myPanels) {
+        panel.myTodoTreeBuilder.collectFiles(virtualFile -> {
+          files.computeIfAbsent(panel, p -> new HashSet<>()).add(virtualFile);
+          return true;
+        });
+      }
+    })
+      .finishOnUiThread(ModalityState.NON_MODAL, (__) -> {
+        for (TodoPanel panel : myPanels) {
+          panel.rebuildCache(ObjectUtils.notNull(files.get(panel), new HashSet<>()));
+          panel.updateTree();
+        }
+      })
+      .inSmartMode(myProject)
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   public void addCustomTodoView(final TodoTreeBuilderFactory factory, final String title, final TodoPanelSettings settings) {

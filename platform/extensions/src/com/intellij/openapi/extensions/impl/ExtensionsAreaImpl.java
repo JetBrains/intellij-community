@@ -144,10 +144,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     registerExtensionPoint(epName, className, pluginDescriptor, kind);
   }
 
-  public void registerExtension(@NotNull final String pluginName, @NotNull final Element extensionElement) {
-    registerExtension(new DefaultPluginDescriptor(PluginId.getId(pluginName)), extensionElement, null);
-  }
-
   @Override
   public void registerExtension(@NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement, String extensionNs) {
     String epName = extractEPName(extensionElement, extensionNs);
@@ -325,7 +321,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     myExtensionPoints.put(name, extensionPoint);
     notifyEPRegistered(extensionPoint);
     if (DEBUG_REGISTRATION) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       myEPTraces.put(name, new Throwable("Original registration for " + name));
     }
   }

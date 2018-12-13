@@ -18,6 +18,7 @@ package com.intellij.java.codeInsight.intention
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.psi.CommonClassNames
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
@@ -433,6 +434,22 @@ class Test {
     assert !myFixture.filterAvailableIntentions("Import class")
   }
 
+  void "test don't import class if already imported but not accessible"() {
+    myFixture.addClass '''
+package foo;
+class Foo {}
+'''
+    myFixture.configureByText 'a.java', '''
+import foo.Foo;
+class Test {
+    {
+      F<caret>oo 
+    }
+}
+'''
+    assert !myFixture.filterAvailableIntentions("Import class")
+  }
+
   void "test don't import class in qualified reference at reference name"() {
     myFixture.configureByText 'a.java', '''
 class Test {
@@ -688,5 +705,17 @@ class Bar {
 }  
 '''
     assert !myFixture.filterAvailableIntentions("Import class").empty
+  }
+
+  void "test prefer top-level List"() {
+    myFixture.addClass("package foo; public interface Restore { interface List {}}")
+    def juList = myFixture.findClass(CommonClassNames.JAVA_UTIL_LIST)
+
+    myFixture.configureByText 'a.java', 'class F implements Lis<caret>t {}'
+    importClass()
+    myFixture.checkResult '''\
+import java.util.List;
+
+class F implements List {}'''
   }
 }

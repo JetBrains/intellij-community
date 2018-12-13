@@ -30,6 +30,7 @@ import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -48,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collection;
 
 public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
@@ -63,7 +63,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull protected final VcsLog myLog;
   @NotNull protected final VisiblePackRefresher myRefresher;
 
-  @NotNull protected final Collection<VcsLogListener> myLogListeners = ContainerUtil.newArrayList();
+  @NotNull protected final Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull protected final VisiblePackChangeListener myVisiblePackChangeListener;
 
   @NotNull protected VisiblePack myVisiblePack;
@@ -128,6 +128,9 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   @NotNull
   public abstract VcsLogUiProperties getProperties();
+
+  @Nullable
+  public abstract History getNavigationHistory();
 
   @Nullable
   public abstract String getHelpId();
@@ -258,9 +261,8 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   protected void fireFilterChangeEvent(@NotNull VisiblePack visiblePack, boolean refresh) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Collection<VcsLogListener> logListeners = new ArrayList<>(myLogListeners);
 
-    for (VcsLogListener listener : logListeners) {
+    for (VcsLogListener listener : myLogListeners) {
       listener.onChange(visiblePack, refresh);
     }
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
@@ -60,7 +61,7 @@ public class ServiceManagerImpl implements Disposable {
           // Allow to re-define service implementations in plugins.
           ComponentAdapter oldAdapter = picoContainer.unregisterComponent(descriptor.getInterface());
           if (oldAdapter == null) {
-            throw new RuntimeException("Service: " + descriptor.getInterface() + " doesn't override anything");
+            throw new PluginException("Service: " + descriptor.getInterface() + " doesn't override anything", pluginDescriptor != null ? pluginDescriptor.getPluginId() : null);
           }
         }
 
@@ -231,7 +232,7 @@ public class ServiceManagerImpl implements Disposable {
           implClass = Class.forName(myDescriptor.getImplementation(), true, classLoader);
         }
         catch (ClassNotFoundException e) {
-          throw new RuntimeException(e);
+          throw new PluginException("Failed to load class", e, myPluginDescriptor != null ? myPluginDescriptor.getPluginId() : null);
         }
 
         myDelegate = new CachingConstructorInjectionComponentAdapter(getComponentKey(), implClass, null, true);

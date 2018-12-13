@@ -65,7 +65,7 @@ public class GitShelveUtils {
     final List<ShelvedChange> changes = shelvedChangeList.getChanges(project);
     // we pass null as target change list for Patch Applier to do NOTHING with change lists
     shelveManager.unshelveChangeList(shelvedChangeList, changes, shelvedChangeList.getBinaryFiles(), null, false, true,
-                                     true, leftConflictTitle, rightConflictTitle);
+                                     true, leftConflictTitle, rightConflictTitle, true);
     ApplicationManager.getApplication().invokeAndWait(() -> markUnshelvedFilesNonUndoable(project, changes));
   }
 
@@ -122,14 +122,13 @@ public class GitShelveUtils {
   @Nullable
   public static ShelvedChangeList shelveChanges(final Project project, final ShelveChangesManager shelveManager, Collection<Change> changes,
                                                 final String description,
-                                                final List<VcsException> exceptions, boolean rollback, boolean markToBeDeleted) {
+                                                final List<? super VcsException> exceptions, boolean rollback, boolean markToBeDeleted) {
     try {
       ShelvedChangeList shelve = shelveManager.shelveChanges(changes, description, rollback, markToBeDeleted);
       BackgroundTaskUtil.syncPublisher(project, ShelveChangesManager.SHELF_TOPIC).stateChanged(new ChangeEvent(GitShelveUtils.class));
       return shelve;
     }
     catch (IOException e) {
-      //noinspection ThrowableInstanceNeverThrown
       exceptions.add(new VcsException("Shelving changes failed: " + description, e));
       return null;
     }

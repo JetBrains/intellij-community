@@ -29,7 +29,7 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
     val root = GuiTestUtilKt.computeOnEdt { model.root } ?: throw IllegalStateException("root is null")
     if (jTree.isRootVisible) {
       val childValue = jTree.value(root) ?: ""
-      if (predicate(pathStrings[0], childValue)) {
+      if (predicate(childValue, pathStrings[0])) {
         if (pathStrings.size == 1) return TreePath(arrayOf(root))
         return traverseChildren(jTree, root, TreePath(root), predicate, pathStrings.drop(1)) ?: throw pathNotFound(pathStrings)
       }
@@ -75,7 +75,7 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
       if (child is LoadingNode)
         throw ExtendedJTreeDriver.LoadingNodeException(node = child, treePath = jTree.getPathToNode(node))
       val childValue = jTree.value(child) ?: continue
-      if (predicate(original, childValue)) {
+      if (predicate(childValue, original)) {
         if (currentOrder == order) {
           val newPath = TreePath(arrayOf<Any>(*pathTree.path, child))
           return if (pathStrings.size == 1) {

@@ -54,7 +54,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/29/13
  */
 class ImportMavenRepositoriesTask {
 

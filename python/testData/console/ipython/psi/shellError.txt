@@ -1,0 +1,11 @@
+PyFile:shellError.py
+  PyExpressionStatement
+    PyReferenceExpression: int
+      PsiElement(Py:IDENTIFIER)('int')
+    PsiErrorElement:End of statement expected
+      <empty list>
+  PsiElement(Py:PLING)('!')
+  PsiErrorElement:Identifier expected.
+    <empty list>
+  PsiErrorElement:Statement expected, found Py:PLING
+    <empty list>

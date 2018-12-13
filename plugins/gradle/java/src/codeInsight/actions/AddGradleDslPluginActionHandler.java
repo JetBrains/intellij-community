@@ -49,12 +49,11 @@ import java.util.List;
 
 /**
 * @author Vladislav.Soroka
-* @since 10/24/13
 */
 class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
-  private final List<Pair<String, String>> myPlugins;
+  private final List<? extends Pair<String, String>> myPlugins;
 
-  AddGradleDslPluginActionHandler(List<Pair<String, String>> plugins) {
+  AddGradleDslPluginActionHandler(List<? extends Pair<String, String>> plugins) {
     myPlugins = plugins;
   }
 

@@ -99,7 +99,6 @@ public class InstrumentationTracker {
     requestors.forEach(myDebugProcess.getRequestsManager()::deleteRequest);
 
     try {
-      //noinspection ConstantConditions
       ourNoticeRedefineClassMethod.invoke(type);
     }
     catch (IllegalAccessException | InvocationTargetException e) {

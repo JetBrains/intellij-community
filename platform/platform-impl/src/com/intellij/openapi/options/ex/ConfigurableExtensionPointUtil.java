@@ -204,7 +204,7 @@ public class ConfigurableExtensionPointUtil {
     Node<SortedConfigurableGroup> node = tree.remove(groupId);
     if (node.myChildren != null) {
       for (Iterator<Object> iterator = node.myChildren.iterator(); iterator.hasNext(); iterator.remove()) {
-        @SuppressWarnings("unchecked") // expected type
+        // expected type
         String childId = (String)iterator.next();
         node.myValue.myList.add(getGroup(tree, childId));
       }

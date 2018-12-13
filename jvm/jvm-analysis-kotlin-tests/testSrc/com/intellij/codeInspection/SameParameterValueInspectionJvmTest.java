@@ -30,7 +30,7 @@ public class SameParameterValueInspectionJvmTest extends InspectionTestCase {
   }
 
   public void testEntryPoint() {
-    doTest(getGlobalTestDir(), myGlobalTool);
+    doTest(getGlobalTestDir(), myGlobalTool, false, true);
   }
 
   public void testMethodWithSuper() {

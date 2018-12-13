@@ -26,7 +26,7 @@ import java.util.Collection;
 abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> extends ProjectViewNode<Type> implements PsiElementNavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.BasePsiNode");
 
-  BaseSmartPointerPsiNode(Project project, @NotNull Type value, ViewSettings viewSettings) {
+  BaseSmartPointerPsiNode(@NotNull Project project, @NotNull Type value, @NotNull ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 

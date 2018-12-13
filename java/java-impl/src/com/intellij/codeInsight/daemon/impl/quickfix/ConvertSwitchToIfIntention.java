@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.BreakConverter;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -24,12 +25,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ConvertSwitchToIfIntention implements IntentionAction {
-  private final PsiSwitchStatement mySwitchExpression;
+  private final PsiSwitchStatement mySwitchStatement;
 
   public ConvertSwitchToIfIntention(@NotNull PsiSwitchStatement switchStatement) {
-    mySwitchExpression = switchStatement;
+    mySwitchStatement = switchStatement;
   }
 
   @NotNull
@@ -46,7 +48,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return isAvailable(mySwitchExpression);
+    return isAvailable(mySwitchStatement);
   }
 
   public static boolean isAvailable(PsiSwitchStatement switchStatement) {
@@ -55,10 +57,10 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
   }
 
   private static boolean mayFallThroughNonTerminalDefaultCase(PsiCodeBlock body) {
-    List<PsiSwitchLabelStatement> labels = PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatement.class);
+    List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class);
     return StreamEx.of(labels).pairMap((prev, next) -> {
         if (prev.isDefaultCase()) {
-          Set<PsiSwitchLabelStatement> targets = getFallThroughTargets(body);
+          Set<PsiSwitchLabelStatementBase> targets = getFallThroughTargets(body);
           return targets.contains(prev) || targets.contains(next);
         }
         return false;
@@ -67,13 +69,13 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    doProcessIntention(mySwitchExpression);
+    doProcessIntention(mySwitchStatement);
   }
 
   @NotNull
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return mySwitchExpression;
+    return mySwitchStatement;
   }
 
   @Override
@@ -103,7 +105,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       return;
     }
     // Should execute getFallThroughTargets and statementMayCompleteNormally before converting breaks
-    Set<PsiSwitchLabelStatement> fallThroughTargets = getFallThroughTargets(body);
+    Set<PsiSwitchLabelStatementBase> fallThroughTargets = getFallThroughTargets(body);
     boolean mayCompleteNormally = ControlFlowUtils.statementMayCompleteNormally(switchStatement);
     BreakConverter converter = BreakConverter.from(switchStatement);
     if (converter == null) return;
@@ -150,9 +152,9 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       }
     }
     boolean unwrapDefault = false;
-    if (defaultBranch != null && defaultBranch.hasStatements()) {
+    if (defaultBranch != null) {
       unwrapDefault = defaultBranch.isAlwaysExecuted() || (switchStatement.getParent() instanceof PsiCodeBlock && !mayCompleteNormally);
-      if (!unwrapDefault) {
+      if (!unwrapDefault && defaultBranch.hasStatements()) {
         ifStatementBuilder.append("else ");
         dumpBody(defaultBranch, ifStatementBuilder, commentTracker);
       }
@@ -182,10 +184,11 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       dumpBody(defaultBranch, sb, commentTracker);
       PsiBlockStatement defaultBody = (PsiBlockStatement)factory.createStatementFromText(sb.toString(), switchStatement);
       if (!BlockUtils.containsConflictingDeclarations(Objects.requireNonNull(switchStatement.getBody()), parent)) {
+        commentTracker.grabComments(switchStatement);
         BlockUtils.inlineCodeBlock(switchStatement, defaultBody.getCodeBlock());
       }
       else {
-        switchStatement.replace(defaultBody);
+        commentTracker.replace(switchStatement, defaultBody);
       }
       commentTracker.insertCommentsBefore(addedIf);
       if (ifStatementText.equals(";")) {
@@ -204,21 +207,21 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
   @NotNull
   private static List<SwitchStatementBranch> extractBranches(CommentTracker commentTracker,
                                                              PsiCodeBlock body,
-                                                             Set<PsiSwitchLabelStatement> fallThroughTargets) {
+                                                             Set<PsiSwitchLabelStatementBase> fallThroughTargets) {
     final List<SwitchStatementBranch> openBranches = new ArrayList<>();
     final Set<PsiElement> declaredElements = new HashSet<>();
     final List<SwitchStatementBranch> allBranches = new ArrayList<>();
     SwitchStatementBranch currentBranch = null;
     final PsiElement[] children = body.getChildren();
-    boolean defaultAlwaysExecuted = true;
+    List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class);
+    boolean defaultAlwaysExecuted = !labels.isEmpty() &&
+                                    Objects.requireNonNull(ContainerUtil.getLastItem(labels)).isDefaultCase() &&
+                                    fallThroughTargets.containsAll(labels.subList(1, labels.size()));
     for (int i = 1; i < children.length - 1; i++) {
       final PsiElement statement = children[i];
       if (statement instanceof PsiSwitchLabelStatement) {
         final PsiSwitchLabelStatement label = (PsiSwitchLabelStatement)statement;
         if (currentBranch == null || !fallThroughTargets.contains(statement)) {
-          if (currentBranch != null) {
-            defaultAlwaysExecuted = false;
-          }
           openBranches.clear();
           currentBranch = new SwitchStatementBranch();
           currentBranch.addPendingDeclarations(declaredElements);
@@ -230,18 +233,23 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
           allBranches.add(currentBranch);
           openBranches.add(currentBranch);
         }
-        if (label.isDefaultCase()) {
-          currentBranch.setDefault();
-          currentBranch.setAlwaysExecuted(defaultAlwaysExecuted);
-          if (defaultAlwaysExecuted) {
-            openBranches.retainAll(Collections.singleton(currentBranch));
-          }
+        if (label.isDefaultCase() && defaultAlwaysExecuted) {
+          openBranches.retainAll(Collections.singleton(currentBranch));
         }
-        else {
-          final PsiExpression value = label.getCaseValue();
-          final String valueText = getCaseValueText(value, commentTracker);
-          currentBranch.addCaseValue(valueText);
+        currentBranch.addCaseValues(label, defaultAlwaysExecuted, commentTracker);
+      }
+      else if (statement instanceof PsiSwitchLabeledRuleStatement) {
+        openBranches.clear();
+        PsiSwitchLabeledRuleStatement rule = (PsiSwitchLabeledRuleStatement)statement;
+        currentBranch = new SwitchStatementBranch();
+
+        PsiStatement ruleBody = rule.getBody();
+        if (ruleBody != null) {
+          currentBranch.addStatement(ruleBody);
         }
+        currentBranch.addCaseValues(rule, defaultAlwaysExecuted, commentTracker);
+        openBranches.add(currentBranch);
+        allBranches.add(currentBranch);
       }
       else {
         if (statement instanceof PsiStatement) {
@@ -268,33 +276,11 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     return allBranches;
   }
 
-  private static Set<PsiSwitchLabelStatement> getFallThroughTargets(PsiCodeBlock body) {
+  private static Set<PsiSwitchLabelStatementBase> getFallThroughTargets(PsiCodeBlock body) {
     return StreamEx.of(body.getStatements())
-      .pairMap((s1, s2) -> s2 instanceof PsiSwitchLabelStatement && ControlFlowUtils.statementMayCompleteNormally(s1)
-                           ? (PsiSwitchLabelStatement)s2 : null)
-      .nonNull().toSet();
-  }
-
-  private static String getCaseValueText(PsiExpression value, CommentTracker commentTracker) {
-    value = PsiUtil.skipParenthesizedExprDown(value);
-    if (value == null) {
-      return "";
-    }
-    if (!(value instanceof PsiReferenceExpression)) {
-      return commentTracker.text(value);
-    }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)value;
-    final PsiElement target = referenceExpression.resolve();
-
-    if (!(target instanceof PsiEnumConstant)) {
-      return commentTracker.text(value);
-    }
-    final PsiEnumConstant enumConstant = (PsiEnumConstant)target;
-    final PsiClass aClass = enumConstant.getContainingClass();
-    if (aClass == null) {
-      return commentTracker.text(value);
-    }
-    return aClass.getQualifiedName() + '.' + commentTracker.text(referenceExpression);
+      .pairMap((s1, s2) -> s2 instanceof PsiSwitchLabelStatement && !(s1 instanceof PsiSwitchLabeledRuleStatement) && 
+                           ControlFlowUtils.statementMayCompleteNormally(s1) ? (PsiSwitchLabelStatement)s2 : null)
+      .nonNull().collect(Collectors.toSet());
   }
 
   private static void dumpBranch(SwitchStatementBranch branch,
@@ -334,6 +320,16 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
   private static void dumpBody(SwitchStatementBranch branch, @NonNls StringBuilder out, CommentTracker commentTracker) {
     final List<PsiElement> bodyStatements = branch.getBodyElements();
     out.append('{');
+    if (!bodyStatements.isEmpty()) {
+      PsiElement firstBodyElement = bodyStatements.get(0);
+      PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(firstBodyElement);
+      if (prev instanceof PsiSwitchLabelStatementBase) {
+        PsiExpressionList values = ((PsiSwitchLabelStatementBase)prev).getCaseValues();
+        if (values != null) {
+          out.append(CommentTracker.commentsBetween(values, firstBodyElement));
+        }
+      }
+    }
     for (PsiElement element : branch.getPendingDeclarations()) {
       if (ReferencesSearch.search(element, new LocalSearchScope(bodyStatements.toArray(PsiElement.EMPTY_ARRAY))).findFirst() != null) {
         if (element instanceof PsiVariable) {

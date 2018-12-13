@@ -135,7 +135,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
         boolean isNamed = first && value instanceof List;
         first = false;
         String typeName = isNamed ? CommonClassNames.JAVA_UTIL_MAP : String.valueOf(value);
-        method.addParameter(String.valueOf(paramName), convertToPsiType(typeName, place), false);
+        method.addParameter(String.valueOf(paramName), convertToPsiType(typeName, place));
 
         if (isNamed) {
           Map<String, NamedArgumentDescriptor> namedParams = ContainerUtil.newHashMap();

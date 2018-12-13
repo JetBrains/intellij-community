@@ -7,10 +7,10 @@ import java.util.function.Consumer;
 
 class BufferingTextSplitter {
   @NotNull private final StringBuilder myLineBuffer = new StringBuilder();
-  @NotNull private final Consumer<String> myLineConsumer;
+  @NotNull private final Consumer<? super String> myLineConsumer;
   private boolean myCrLast = false;
 
-  BufferingTextSplitter(@NotNull Consumer<String> lineConsumer) {myLineConsumer = lineConsumer;}
+  BufferingTextSplitter(@NotNull Consumer<? super String> lineConsumer) {myLineConsumer = lineConsumer;}
 
   /**
    * Walks the input array from 0 to {@param contentLength - 1} and sends complete lines (separated by \n,\r or \r\n) to the consumer

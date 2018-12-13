@@ -68,7 +68,7 @@ public class CommentFormatter {
       return;
     }
     try {
-      PsiComment newComment = JavaPsiFacade.getInstance(myProject).getElementFactory().createCommentFromText(
+      PsiComment newComment = JavaPsiFacade.getElementFactory(myProject).createCommentFromText(
         newCommentText, null);
       final ASTNode oldNode = oldComment.getNode();
       final ASTNode newNode = newComment.getNode();

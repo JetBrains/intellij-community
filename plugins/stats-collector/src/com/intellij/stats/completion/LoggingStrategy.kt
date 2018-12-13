@@ -15,6 +15,10 @@ object LogAllSessions : LoggingStrategy {
   override fun shouldBeLogged(lookup: LookupImpl, experimentHelper: WebServiceStatus): Boolean = true
 }
 
+object LogNothing : LoggingStrategy {
+  override fun shouldBeLogged(lookup: LookupImpl, experimentHelper: WebServiceStatus): Boolean = false
+}
+
 class LogEachN(private val n: Int) : LoggingStrategy {
   private var afterLastLogger = 0
   override fun shouldBeLogged(lookup: LookupImpl, experimentHelper: WebServiceStatus): Boolean {

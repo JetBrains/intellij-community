@@ -16,6 +16,7 @@
 package com.intellij.terminal;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -55,7 +56,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
-      int size = consoleFontSize(JBTerminalSystemSettingsProviderBase.this.myColorScheme);
+      int size = consoleFontSize(this.myColorScheme);
 
       if (myColorScheme.getConsoleFontSize() != size) {
         myColorScheme.setConsoleFontSize(size);
@@ -133,6 +134,11 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     for (TerminalSettingsListener l : myListeners) {
       l.fontChanged();
     }
+  }
+
+  @NotNull
+  public KeyStroke[] getShowTabsKeyStrokes() {
+    return getKeyStrokesByActionId(ShowContentAction.ACTION_ID);
   }
 
   protected static int consoleFontSize(MyColorSchemeDelegate colorScheme) {

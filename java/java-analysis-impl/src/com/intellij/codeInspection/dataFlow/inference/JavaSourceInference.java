@@ -144,9 +144,7 @@ public class JavaSourceInference {
    * @return true if method was inferred to be pure; false if method is not pure or cannot be analyzed
    */
   public static boolean inferPurity(@NotNull PsiMethodImpl method) {
-    if (!InferenceFromSourceUtil.shouldInferFromSource(method) ||
-        PsiType.VOID.equals(method.getReturnType()) ||
-        method.isConstructor()) {
+    if (!InferenceFromSourceUtil.shouldInferFromSource(method) || PsiType.VOID.equals(method.getReturnType())) {
       return false;
     }
 

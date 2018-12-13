@@ -309,7 +309,17 @@ public class SimpleDiffChange {
 
   @Nullable
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, "Accept", DiffUtil.getArrowIcon(side), () -> {
+    String text;
+    Icon icon = DiffUtil.getArrowIcon(side);
+
+    if (side == Side.LEFT && myViewer.isDiffForLocalChanges()) {
+      text = "Revert";
+    }
+    else {
+      text = "Accept";
+    }
+
+    return createIconRenderer(side, text, icon, () -> {
       myViewer.replaceChange(this, side);
     });
   }

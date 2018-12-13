@@ -17,22 +17,24 @@ package git4idea.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Information about one stash.
  */
 public class StashInfo {
+  @NotNull
   private final String myStash; // stash codename (stash@{1})
   private final String myBranch;
   private final String myMessage;
   private final String myText; // The formatted text representation
 
-  public StashInfo(final String stash, final String branch, final String message) {
+  public StashInfo(@NotNull String stash, final String branch, final String message) {
     myStash = stash;
     myBranch = branch;
     myMessage = message;
     myText =
-      GitBundle.message("unstash.stashes.item", StringUtil.escapeXml(stash), StringUtil.escapeXml(branch), StringUtil.escapeXml(message));
+      GitBundle.message("unstash.stashes.item", StringUtil.escapeXmlEntities(stash), StringUtil.escapeXmlEntities(branch), StringUtil.escapeXmlEntities(message));
   }
 
   @Override
@@ -40,6 +42,7 @@ public class StashInfo {
     return myText;
   }
 
+  @NotNull
   public String getStash() {
     return myStash;
   }

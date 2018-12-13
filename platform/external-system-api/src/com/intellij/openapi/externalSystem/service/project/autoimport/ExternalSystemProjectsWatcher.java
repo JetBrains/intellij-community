@@ -19,7 +19,6 @@ import com.intellij.openapi.module.Module;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/28/2017
  */
 public interface ExternalSystemProjectsWatcher {
   void markDirtyAllExternalProjects();

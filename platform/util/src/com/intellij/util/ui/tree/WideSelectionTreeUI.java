@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui.tree;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
@@ -30,11 +31,17 @@ import javax.swing.border.Border;
 import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicTreeUI;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.lang.reflect.Method;
+import java.util.Set;
+
+import static com.intellij.util.ReflectionUtil.getMethod;
+import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
 
 /**
 * @author Konstantin Bulenkov
@@ -48,14 +55,16 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private static final Border LIST_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListBackgroundPainter");
   private static final Border LIST_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListSelectionBackgroundPainter");
   private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListFocusedSelectionBackgroundPainter");
-  
+
+  private static final Logger LOG = Logger.getInstance(WideSelectionTreeUI.class);
+  private static final Set<String> LOGGED_RENDERERS = newConcurrentSet();
+
   @NotNull private final Condition<? super Integer> myWideSelectionCondition;
   private final boolean myWideSelection;
   private boolean myOldRepaintAllRowValue;
   private boolean myForceDontPaintLines = false;
   private final boolean mySkinny = false;
 
-  @SuppressWarnings("unchecked")
   public WideSelectionTreeUI() {
     this(true, Conditions.<Integer>alwaysTrue());
   }
@@ -399,6 +408,15 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     return new CellRendererPane() {
       @Override
       public void paintComponent(Graphics g, Component c, Container p, int x, int y, int w, int h, boolean shouldValidate) {
+        TreeCellRenderer renderer = currentCellRenderer;
+        if (c != null && renderer != null && LOG.isDebugEnabled()) {
+          Method method = getMethod(c.getClass(), "validate");
+          Class<?> type = method == null ? null : method.getDeclaringClass();
+          if (Component.class.equals(type) || Container.class.equals(type)) {
+            String name = renderer.getClass().getName();
+            if (LOGGED_RENDERERS.add(name)) LOG.debug("suspicious renderer: " + name);
+          }
+        }
         if (c instanceof JComponent && myWideSelection) {
           if (c.isOpaque()) {
             ((JComponent)c).setOpaque(false);

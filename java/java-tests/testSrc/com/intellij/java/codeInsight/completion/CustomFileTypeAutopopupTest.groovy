@@ -16,10 +16,12 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
+import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
+@CompileStatic
 class CustomFileTypeAutopopupTest extends CompletionAutoPopupTestCase {
   void "test no autopopup when typing just digit in a custom file type"() {
     myFixture.configureByText 'a.hs', 'a42 = 42\n<caret> }}'

@@ -7,7 +7,7 @@ import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
 
-abstract class GithubDataLoadingComponent<T> : Wrapper() {
+internal abstract class GithubDataLoadingComponent<T> : Wrapper() {
   private var updateFuture: CompletableFuture<Unit>? = null
 
   /**
@@ -20,13 +20,24 @@ abstract class GithubDataLoadingComponent<T> : Wrapper() {
   fun loadAndShow(dataRequest: CompletableFuture<T>?) {
     updateFuture?.cancel(true)
     reset()
+    setBusy(false)
 
     if (dataRequest == null) {
       updateFuture = null
-      setBusy(false)
       return
     }
 
+    doLoadAndShow(dataRequest)
+  }
+
+  @CalledInAwt
+  fun loadAndUpdate(dataRequest: CompletableFuture<T>) {
+    updateFuture?.cancel(true)
+
+    doLoadAndShow(dataRequest)
+  }
+
+  private fun doLoadAndShow(dataRequest: CompletableFuture<T>) {
     setBusy(true)
     updateFuture = dataRequest.handleOnEdt { result, error ->
       when {

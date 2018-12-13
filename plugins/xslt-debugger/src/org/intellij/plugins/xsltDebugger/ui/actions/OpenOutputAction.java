@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
-@SuppressWarnings({ "ComponentNotRegistered" })
 public class OpenOutputAction extends AnAction {
   private final AdditionalTabComponent myConsole;
 

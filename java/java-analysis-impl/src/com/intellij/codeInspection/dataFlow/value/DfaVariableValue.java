@@ -163,7 +163,6 @@ public final class DfaVariableValue extends DfaValue {
     return newQualifier == myQualifier ? this : myFactory.getVarFactory().createVariableValue(mySource, myVarType, newQualifier);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return (myQualifier == null ? "" : myQualifier + ".") + mySource;
   }

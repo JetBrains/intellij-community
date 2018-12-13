@@ -37,9 +37,6 @@ public class VcsSelectionUtil {
     Editor editor = context.getEditor();
     if (editor == null) return null;
     SelectionModel selectionModel = editor.getSelectionModel();
-    if (!selectionModel.hasSelection()) {
-      return null;
-    }
     return new VcsSelection(editor.getDocument(), selectionModel);
   }
 }

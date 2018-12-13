@@ -36,17 +36,17 @@ public class ActionsBundle {
   private static Reference<ResourceBundle> ourBundle;
   @NonNls private static final String IDEA_ACTIONS_BUNDLE = "messages.ActionsBundle";
 
-  @SuppressWarnings({"HardCodedStringLiteral", "UnresolvedPropertyKey"})
+  @SuppressWarnings({"UnresolvedPropertyKey"})
   public static String actionText(@NonNls String actionId) {
     return message("action." + actionId + ".text");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral", "UnresolvedPropertyKey"})
+  @SuppressWarnings({"UnresolvedPropertyKey"})
   public static String groupText(@NonNls String actionId) {
     return message("group." + actionId + ".text");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral", "UnresolvedPropertyKey"})
+  @SuppressWarnings({"UnresolvedPropertyKey"})
   public static String actionDescription(@NonNls String actionId) {
     return message("action." + actionId + ".description");
   }

@@ -99,7 +99,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   protected Alignment chooseAlignment(final ASTNode child, final Alignment attrAlignment, final Alignment textAlignment) {
     if (myNode.getElementType() == XmlElementType.XML_TEXT) return getAlignment();
     final IElementType elementType = child.getElementType();
-    if (elementType == XmlElementType.XML_ATTRIBUTE && myXmlFormattingPolicy.getShouldAlignAttributes()) return attrAlignment;
+    if (isAttributeElementType(elementType) && myXmlFormattingPolicy.getShouldAlignAttributes()) return attrAlignment;
     if (elementType == XmlElementType.XML_TEXT && myXmlFormattingPolicy.getShouldAlignText()) return textAlignment;
     return null;
   }
@@ -111,7 +111,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   protected Wrap chooseWrap(final ASTNode child, final Wrap tagBeginWrap, final Wrap attrWrap, final Wrap textWrap) {
     if (myNode.getElementType() == XmlElementType.XML_TEXT) return textWrap;
     final IElementType elementType = child.getElementType();
-    if (elementType == XmlElementType.XML_ATTRIBUTE) return attrWrap;
+    if (isAttributeElementType(elementType)) return attrWrap;
     if (elementType == XmlTokenType.XML_START_TAG_START) return tagBeginWrap;
     if (elementType == XmlTokenType.XML_END_TAG_START) {
       final PsiElement parent = SourceTreeToPsiMap.treeElementToPsi(child.getTreeParent());
@@ -339,6 +339,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return null;
 
   }
+
+  protected boolean isAttributeElementType(final IElementType elementType) {
+    return elementType == XmlElementType.XML_ATTRIBUTE;
+  }
+
   protected boolean isXmlTag(final ASTNode child) {
     return isXmlTag(child.getPsi());
   }

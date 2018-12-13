@@ -35,7 +35,9 @@ data class ProjectProperties(
   // Gradle/Maven based projects: used for multimodule projects
   val modules: Set<TargetPlatform> = emptySet(),
   // Idea, Gradle or Maven
-  val buildSystem: BuildSystem
+  val buildSystem: BuildSystem,
+  // project SDK
+  val projectSdk: String = "1.8"
 ) : Serializable
 
 enum class Projects(val title: String) {
@@ -127,7 +129,8 @@ val kotlinProjects = mapOf(
     group = NewProjectDialogModel.Groups.Gradle,
     frameworkName = NewProjectDialogModel.Constants.itemGradleKotlinJs,
     modules = setOf(TargetPlatform.JavaScript),
-    jars = kotlinJsGradleLibs,
+    // TODO: change back to kotlinJsGradleLibs after KT-21166 fixing
+    jars = kotlinJsGradleKLibs,
     buildSystem = BuildSystem.Gradle
   ),
   Projects.GradleKProjectJvm to ProjectProperties(

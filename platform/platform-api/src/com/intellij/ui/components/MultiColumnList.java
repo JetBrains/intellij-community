@@ -37,7 +37,6 @@ public class MultiColumnList extends JTable {
     setShowGrid(false);
     setCellSelectionEnabled(true);
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    //noinspection UndesirableClassUsage
     myList = new JList(model) {
       @Override
       public void setBorder(Border border) {

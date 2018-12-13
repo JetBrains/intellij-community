@@ -26,6 +26,6 @@ public class JavaAnnotationSupport implements PsiAnnotationSupport {
   @Override
   @NotNull
   public PsiLiteral createLiteralValue(@NotNull String value, @NotNull PsiElement context) {
-    return (PsiLiteral)JavaPsiFacade.getInstance(context.getProject()).getElementFactory().createExpressionFromText("\"" + StringUtil.escapeStringCharacters(value) + "\"", null);
+    return (PsiLiteral)JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText("\"" + StringUtil.escapeStringCharacters(value) + "\"", null);
   }
 }

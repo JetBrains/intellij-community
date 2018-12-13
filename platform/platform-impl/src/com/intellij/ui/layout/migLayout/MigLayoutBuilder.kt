@@ -59,8 +59,12 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
   // it doesn't lead to any issue.
   val columnConstraints = AC()
 
-  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, separated: Boolean): Row {
-    return rootRow.createChildRow(label = label, buttonGroup = buttonGroup, separated = separated)
+  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean): Row {
+    return rootRow.createChildRow(label = label, buttonGroup = buttonGroup, isSeparated = isSeparated)
+  }
+
+  override fun newTitledRow(title: String): Row {
+    return rootRow.createChildRow(isSeparated = true, title = title)
   }
 
   override fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
@@ -77,11 +81,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
 
     val row = rootRow.createChildRow(label = null, noGrid = true)
-    row.apply {
-      componentConstraints.put(component, cc)
-      arrayOf<CCFlags>()
-      component()
-    }
+    row.addComponent(component, lazyOf(cc))
   }
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
@@ -96,7 +96,8 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     }
 
     lc.isVisualPadding = spacing.isCompensateVisualPaddings
-    lc.hideMode = 3
+    // if 3, invisible component will be disregarded completely and it means that if it is last component, it's "wrap" constraint will be not taken in account
+    lc.hideMode = 2
 
     val rowConstraints = AC()
     (container as JComponent).putClientProperty("isVisualPaddingCompensatedOnComponentLevel", false)
@@ -139,13 +140,13 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
         }
 
         // we cannot use columnCount as an indicator of whether to use spanX/wrap or not because component can share cell with another component,
-        // in any case MigLayout is smart enough and unnecessary spanX/wrap doesn't harm
+        // in any case MigLayout is smart enough and unnecessary spanX doesn't harm
         if (component === lastComponent) {
           cc.spanX()
-          cc.wrap()
+          cc.isWrap = true
         }
 
-        if (component === row.components.first()) {
+        if (index == 0) {
           if (row.noGrid) {
             rowConstraints.noGrid(rowIndex)
           }
@@ -171,7 +172,10 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
 
     fun processRows(rows: List<MigLayoutRow>) {
       for (row in rows) {
-        configureComponents(row)
+        // configureComponents will increase rowIndex, but if row doesn't have components, it is synthetic row (e.g. titled row that contains only sub rows)
+        if (!row.components.isEmpty()) {
+          configureComponents(row)
+        }
         row.subRows?.let {
           processRows(it)
         }

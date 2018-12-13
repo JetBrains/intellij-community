@@ -16,28 +16,47 @@
 package com.intellij.task;
 
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/15/2016
  */
-public class ProjectTaskContext {
+public class ProjectTaskContext extends UserDataHolderBase {
   @Nullable
-  private Object mySessionId;
+  private final Object mySessionId;
   @Nullable
-  private RunConfiguration myRunConfiguration;
+  private final RunConfiguration myRunConfiguration;
+  private final boolean myAutoRun;
+  private final MultiMap<String, String> myGeneratedFiles;
+  private boolean myCollectGeneratedFiles;
 
   public ProjectTaskContext() {
+    this(null, null, false);
+  }
+
+  public ProjectTaskContext(boolean autoRun) {
+    this(null, null, autoRun);
   }
 
   public ProjectTaskContext(@Nullable Object sessionId) {
-    mySessionId = sessionId;
+    this(sessionId, null, false);
   }
 
   public ProjectTaskContext(@Nullable Object sessionId, @Nullable RunConfiguration runConfiguration) {
+    this(sessionId, runConfiguration, false);
+  }
+
+  public ProjectTaskContext(@Nullable Object sessionId, @Nullable RunConfiguration runConfiguration, boolean autoRun) {
     mySessionId = sessionId;
     myRunConfiguration = runConfiguration;
+    myAutoRun = autoRun;
+    myGeneratedFiles = MultiMap.createConcurrentSet();
   }
 
   @Nullable
@@ -48,5 +67,37 @@ public class ProjectTaskContext {
   @Nullable
   public RunConfiguration getRunConfiguration() {
     return myRunConfiguration;
+  }
+
+  /**
+   * @return true indicates that the task was started automatically, e.g. resources compilation on frame deactivation
+   */
+  public boolean isAutoRun() {
+    return myAutoRun;
+  }
+
+  public void collectGeneratedFiles() {
+    myCollectGeneratedFiles = true;
+  }
+
+  @NotNull
+  public Collection<String> getGeneratedFilesRoots() {
+    return myGeneratedFiles.keySet();
+  }
+
+  @NotNull
+  public Collection<String> getGeneratedFilesRelativePaths(@NotNull String root) {
+    return myGeneratedFiles.get(root);
+  }
+
+  public void fileGenerated(@NotNull String root, @NotNull String relativePath) {
+    if (myCollectGeneratedFiles) {
+      myGeneratedFiles.putValue(root, relativePath);
+    }
+  }
+
+  public <T> ProjectTaskContext withUserData(@NotNull Key<T> key, @Nullable T value) {
+    putUserData(key, value);
+    return this;
   }
 }

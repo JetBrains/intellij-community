@@ -56,6 +56,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-32078
+  public void testComparisonForManuallyOrdered() {
+    doTest();
+  }
+
   // PY-26354
   public void testComparisonForOrderedAttrs() {
     doTest();
@@ -69,6 +74,22 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
   // PY-26354
   public void testComparisonForOrderedAndUnorderedAttrs() {
     doTest();
+  }
+
+  // PY-32078
+  public void testComparisonForManuallyOrderedAttrs() {
+    doTestByText("from attr import s\n" +
+                 "\n" +
+                 "@s(cmp=False)\n" +
+                 "class Test:\n" +
+                 "    def __gt__(self, other):\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "print(Test() < Test())\n" +
+                 "print(Test() > Test())\n" +
+                 "\n" +
+                 "print(Test < Test)\n" +
+                 "print(Test > Test)");
   }
 
   // PY-27398
@@ -168,6 +189,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-26354
   public void testAttrsInitializersAndValidators() {
+    doTest();
+  }
+
+  // PY-29645
+  public void testLackingTypeAnnotation() {
     doTest();
   }
 

@@ -1,6 +1,9 @@
 public class Test {
-  public String <caret>test123(int i,
-                               int j) {
-    return null;
+  /**
+   * @param i 
+   * @param j
+   */
+  public void <caret>test123(int i,
+                             int j) {
   }
 }

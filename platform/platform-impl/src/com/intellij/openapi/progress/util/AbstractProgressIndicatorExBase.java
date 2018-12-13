@@ -19,17 +19,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.List;
 
 public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
   private final boolean myReusable;
-  private volatile List<ProgressIndicatorEx> myStateDelegates;
+  private volatile ProgressIndicatorEx[] myStateDelegates;
   private volatile WeakList<TaskInfo> myFinished;
   private volatile boolean myWasStarted;
   private TaskInfo myOwnerTask;
@@ -156,14 +155,15 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   public final void addStateDelegate(@NotNull ProgressIndicatorEx delegate) {
     delegate.initStateFrom(this);
     synchronized (this) {
-      List<ProgressIndicatorEx> stateDelegates = myStateDelegates;
+      ProgressIndicatorEx[] stateDelegates = myStateDelegates;
       if (stateDelegates == null) {
-        myStateDelegates = stateDelegates = ContainerUtil.createLockFreeCopyOnWriteList();
+        myStateDelegates = stateDelegates = new ProgressIndicatorEx[1];
+        stateDelegates[0] = delegate;
       }
       else {
-        LOG.assertTrue(!stateDelegates.contains(delegate), "Already registered: " + delegate);
+        LOG.assertTrue(!ArrayUtil.contains(delegate, stateDelegates), "Already registered: " + delegate);
+        myStateDelegates = ArrayUtil.append(stateDelegates, delegate, ProgressIndicatorEx.class);
       }
-      stateDelegates.add(delegate);
     }
   }
 
@@ -178,8 +178,8 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   }
 
   private void delegate(@NotNull IndicatorAction action) {
-    List<ProgressIndicatorEx> list = myStateDelegates;
-    if (list != null && !list.isEmpty()) {
+    ProgressIndicatorEx[] list = myStateDelegates;
+    if (list != null) {
       for (ProgressIndicatorEx each : list) {
         action.execute(each);
       }

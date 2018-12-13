@@ -4,7 +4,8 @@ import java.util.List;
 class Collectors {
   public static void foo(List<String> list) {}
   {
-    foo(Collectors.of());
+      //c1
+      foo(Collectors.of());
   }
 
   public static <E> List<E> of() {

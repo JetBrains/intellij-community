@@ -25,7 +25,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 9/28/12 12:16 PM
  */
 public class MoveArrangementMatchingRuleUpAction extends AbstractMoveArrangementRuleAction {
 

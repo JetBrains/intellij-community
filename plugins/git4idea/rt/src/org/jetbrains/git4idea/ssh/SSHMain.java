@@ -433,7 +433,7 @@ public class SSHMain implements GitExternalApp {
         }
       }
     };
-    @SuppressWarnings({"HardCodedStringLiteral"}) final Thread t = new Thread(action, "Forwarding " + name);
+    final Thread t = new Thread(action, "Forwarding " + name);
     t.setDaemon(true);
     t.start();
   }

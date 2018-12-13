@@ -1,4 +1,4 @@
-// "Extract common part with variables from if " "true"
+// "Extract common part with variables from 'if'" "true"
 
 import java.util.Collection;
 import java.util.List;

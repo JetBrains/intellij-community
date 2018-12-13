@@ -165,7 +165,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
     List<String> actions = AbbreviationManager.getInstance().findActions(pattern);
     for (String actionId : actions) {
       AnAction action = actionManager.getAction(actionId);
-      if (!isEnabled(action)) {
+      if (action == null || !isEnabled(action)) {
         continue;
       }
 
@@ -322,7 +322,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
     if (hit == null) {
       hit = value.getOption();
     }
-    hit = StringUtil.unescapeXml(hit);
+    hit = StringUtil.unescapeXmlEntities(hit);
     if (hit.length() > 60) {
       hit = hit.substring(0, 60) + "...";
     }

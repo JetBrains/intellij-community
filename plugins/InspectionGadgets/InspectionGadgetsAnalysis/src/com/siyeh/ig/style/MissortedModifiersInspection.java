@@ -223,7 +223,6 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
   private static class ModifierComparator implements Comparator<String> {
 
     /**
-     * @noinspection StaticCollection
      */
     @NonNls private static final Map<String, Integer> s_modifierOrder = new HashMap<>(12);
 

@@ -97,7 +97,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @NotNull
   private PsiFile getFile() {
-    //noinspection ConstantConditions
     return myFile;
   }
 

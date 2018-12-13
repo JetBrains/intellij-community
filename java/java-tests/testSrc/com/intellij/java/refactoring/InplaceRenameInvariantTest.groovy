@@ -22,10 +22,12 @@ import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler
 import com.intellij.testFramework.LightCodeInsightTestCase
+import groovy.transform.CompileStatic
 
 /**
  * User: anna
  */
+@CompileStatic
 class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
   void "test start caret position"() {
     def text = """\

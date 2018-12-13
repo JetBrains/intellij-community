@@ -112,7 +112,7 @@ public class ContextUtil {
 
         buf.append('}');
 
-        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(element.getProject());
         final PsiCodeBlock codeBlockFromText = elementFactory.createCodeBlockFromText(buf.toString(), element);
 
         final PsiStatement[] statements = codeBlockFromText.getStatements();

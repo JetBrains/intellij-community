@@ -28,7 +28,6 @@ class IdeaHelpContentViewUI extends BasicContentViewerUI{
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   protected void linkActivated(URL u){
     String url=u.toExternalForm();
     if(url.startsWith("http") || url.startsWith("ftp")){

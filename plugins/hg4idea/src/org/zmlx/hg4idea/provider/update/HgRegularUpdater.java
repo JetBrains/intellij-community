@@ -290,7 +290,6 @@ public class HgRegularUpdater implements HgUpdater {
   }
 
   private static void reportWarning(List<VcsException> exceptions, String warningMessage) {
-    @SuppressWarnings({"ThrowableInstanceNeverThrown"})
     VcsException warningException = new VcsException(warningMessage);
     warningException.setIsWarning(true);
     exceptions.add(warningException);

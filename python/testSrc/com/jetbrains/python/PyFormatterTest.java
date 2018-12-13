@@ -660,6 +660,19 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20909
+  public void testContinuationIndentForCollectionsAndComprehensions() {
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
+    doTest();
+  }
+
+  // PY-20909
+  public void testContinuationIndentForCollectionsAndComprehensionsHangingIndentOfClosingBrace() {
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
   // PY-18265
   public void testNoSpaceAroundPowerOperator() {
     getPythonCodeStyleSettings().SPACE_AROUND_POWER_OPERATOR = false;
@@ -915,6 +928,11 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testMultilineFStringExpressions() {
-    doTest();
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-31991
+  public void testSpacesAroundFStringFragmentExpressionStripped() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 }

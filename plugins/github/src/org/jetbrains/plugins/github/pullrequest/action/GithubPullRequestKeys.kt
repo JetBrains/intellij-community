@@ -6,10 +6,11 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.pullrequest.GithubPullRequestsComponentFactory
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 
 object GithubPullRequestKeys {
   @JvmStatic
@@ -22,13 +23,15 @@ object GithubPullRequestKeys {
   val SELECTED_PULL_REQUEST = DataKey.create<GithubSearchedIssue>("org.jetbrains.plugins.github.pullrequest.selected")
   @JvmStatic
   val SELECTED_PULL_REQUEST_DATA_PROVIDER =
-    DataKey.create<GithubPullRequestsDataLoader.DataProvider>("org.jetbrains.plugins.github.pullrequest.selected.dataprovider")
+    DataKey.create<GithubPullRequestDataProvider>("org.jetbrains.plugins.github.pullrequest.selected.dataprovider")
   @JvmStatic
   val REPOSITORY = DataKey.create<GitRepository>("org.jetbrains.plugins.github.pullrequest.repository")
   @JvmStatic
   val REMOTE = DataKey.create<GitRemote>("org.jetbrains.plugins.github.pullrequest.remote")
   @JvmStatic
   val REPO_DETAILS = DataKey.create<GithubRepoDetailed>("org.jetbrains.plugins.github.pullrequest.remote.repo.details")
+  @JvmStatic
+  val ACCOUNT_DETAILS = DataKey.create<GithubAuthenticatedUser>("org.jetbrains.plugins.github.pullrequest.remote.account.details")
   @JvmStatic
   val SERVER_PATH = DataKey.create<GithubServerPath>("org.jetbrains.plugins.github.pullrequest.server.path")
 }

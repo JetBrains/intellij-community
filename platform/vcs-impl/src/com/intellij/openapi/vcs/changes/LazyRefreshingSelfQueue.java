@@ -49,10 +49,10 @@ public class LazyRefreshingSelfQueue<T> {
   // checks if updateStep should be really performed
   private final Computable<Boolean> myShouldUpdateOldChecker;
   // performs some actions on item T, for instance - updates some data for T in cache
-  private final Consumer<T> myUpdater;
+  private final Consumer<? super T> myUpdater;
   private final Object myLock;
 
-  public LazyRefreshingSelfQueue(final Getter<Long> updateInterval, final Computable<Boolean> shouldUpdateOldChecker, final Consumer<T> updater) {
+  public LazyRefreshingSelfQueue(final Getter<Long> updateInterval, final Computable<Boolean> shouldUpdateOldChecker, final Consumer<? super T> updater) {
     myUpdateInterval = updateInterval;
     myShouldUpdateOldChecker = shouldUpdateOldChecker;
     myUpdater = updater;

@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij;
 
 import com.intellij.idea.Bombed;
+import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.RunFirst;
@@ -36,6 +36,7 @@ public class TestCaseLoader {
   private static final boolean INCLUDE_PERFORMANCE_TESTS = "true".equals(System.getProperty(INCLUDE_PERFORMANCE_TESTS_FLAG));
   private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = "true".equals(System.getProperty(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG));
   private static final boolean RUN_ONLY_AFFECTED_TESTS = "true".equals(System.getProperty(RUN_ONLY_AFFECTED_TEST_FLAG));
+  private static final boolean RUN_WITH_TEST_DISCOVERY = System.getProperty("test.discovery.listener") != null;
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
@@ -163,17 +164,19 @@ public class TestCaseLoader {
         return true;
       }
     }
-    catch (NoSuchMethodException ignored) {
-    }
+    catch (NoSuchMethodException ignored) { }
 
-    return TestFrameworkUtil.isJUnit4TestClass(testCaseClass);
+    return TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false);
   }
 
   private boolean shouldExcludeTestClass(String moduleName, Class testCaseClass) {
     if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass)) return true;
     String className = testCaseClass.getName();
+    return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass) || isExcludeFromTestDiscovery(testCaseClass);
+  }
 
-    return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass);
+  private static boolean isExcludeFromTestDiscovery(Class c) {
+    return RUN_WITH_TEST_DISCOVERY && getAnnotationInHierarchy(c, ExcludeFromTestDiscovery.class) != null;
   }
 
   public static boolean isBombed(final AnnotatedElement element) {
@@ -217,8 +220,7 @@ public class TestCaseLoader {
       try {
         return FileUtil.loadLines(filePath);
       }
-      catch (IOException ignored) {
-      }
+      catch (IOException ignored) { }
     }
 
     return Collections.emptyList();
@@ -316,8 +318,7 @@ public class TestCaseLoader {
     }
     long after = System.currentTimeMillis();
 
-    String message = "Number of test classes found: " + getClasses().size()
-                     + " time to load: " + (after - before) / 1000 + "s.";
+    String message = "Number of test classes found: " + getClasses().size() + " time to load: " + (after - before) / 1000 + "s.";
     System.out.println(message);
     TeamCityLogger.info(message);
   }

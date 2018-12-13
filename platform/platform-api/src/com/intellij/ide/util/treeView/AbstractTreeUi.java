@@ -196,6 +196,11 @@ public class AbstractTreeUi {
   private UiActivityMonitor myActivityMonitor;
   @NonNls private UiActivity myActivityId;
 
+  @Override
+  public String toString() {
+    return "AbstractTreeUi: builder = " + myBuilder;
+  }
+
   protected void init(@NotNull AbstractTreeBuilder builder,
                       @NotNull JTree tree,
                       @NotNull DefaultTreeModel treeModel,
@@ -833,7 +838,7 @@ public class AbstractTreeUi {
   private Promise<Boolean> update(@NotNull final NodeDescriptor nodeDescriptor, boolean now) {
     Promise<Boolean> promise;
     if (now || isPassthroughMode()) {
-      promise = Promise.resolve(update(nodeDescriptor));
+      promise = Promises.resolvedPromise(update(nodeDescriptor));
     }
     else {
       final AsyncPromise<Boolean> result = new AsyncPromise<>();
@@ -2955,7 +2960,7 @@ public class AbstractTreeUi {
 
     Promise<Boolean> update;
     if (parentPreloadedChildren != null && parentPreloadedChildren.getDescriptor(oldElement) == childDescriptor) {
-      update = Promise.resolve(parentPreloadedChildren.isUpdated(oldElement));
+      update = Promises.resolvedPromise(parentPreloadedChildren.isUpdated(oldElement));
     }
     else {
       update = update(childDescriptor, false);
@@ -2973,7 +2978,7 @@ public class AbstractTreeUi {
         final Integer index = newElement.get() == null ? null : elementToIndexMap.getValue(getElementFromDescriptor(childDesc.get()));
         Promise<Boolean> promise;
         if (index == null) {
-          promise = Promise.resolve(false);
+          promise = Promises.resolvedPromise(false);
         }
         else {
           final Object elementFromMap = elementToIndexMap.getKey(index);
@@ -3001,11 +3006,11 @@ public class AbstractTreeUi {
               // todo why we don't process promise here?
             }
             else {
-              promise = Promise.resolve(changes.get());
+              promise = Promises.resolvedPromise(changes.get());
             }
           }
           else {
-            promise = Promise.resolve(changes.get());
+            promise = Promises.resolvedPromise(changes.get());
           }
 
           promise
@@ -3554,7 +3559,7 @@ public class AbstractTreeUi {
         getBuilder().sortChildren(myNodeComparator, node, children);
       }
       catch (IllegalArgumentException exception) {
-        StringBuilder sb = new StringBuilder("cannot sort children");
+        StringBuilder sb = new StringBuilder("cannot sort children in ").append(toString());
         children.forEach(child -> sb.append('\n').append(child));
         throw new IllegalArgumentException(sb.toString(), exception);
       }

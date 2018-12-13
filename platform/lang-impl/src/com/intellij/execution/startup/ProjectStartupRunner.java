@@ -90,7 +90,7 @@ public class ProjectStartupRunner implements StartupActivity, DumbAware {
         }
         pause = MyExecutor.PAUSE;
       }
-    });
+    }, project.getDisposed());
   }
 
   private static void showNotification(Project project, String text, MessageType type) {

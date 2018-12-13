@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ApplicationRule;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
@@ -188,16 +189,14 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @NotNull
   protected Set<String> commit(@NotNull List<Change> changes, @NotNull String message) {
     Set<String> feedback = new HashSet<>();
-    //noinspection unchecked
-    throwIfNotEmpty((List)vcs.getCheckinEnvironment().commit(changes, message, nullConstant(), feedback));
+    throwIfNotEmpty(vcs.getCheckinEnvironment().commit(changes, message, nullConstant(), feedback));
     return feedback;
   }
 
   protected void rollback(@NotNull List<Change> changes) {
     List<VcsException> exceptions = new ArrayList<>();
     vcs.createRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
-    //noinspection unchecked
-    throwIfNotEmpty((List)exceptions);
+    throwIfNotEmpty(exceptions);
   }
 
   @Override
@@ -207,15 +206,28 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
 
   @After
   public void tearDown() throws Exception {
-    runInEdtAndWait(() -> {
-      tearDownProject();
+    runInEdtAndWait(
+      () -> new RunAll(
+        this::waitChangeListManager,
+        this::tearDownProject,
+        this::tearDownTempDirectoryFixture,
+        () -> resetCanonicalTempPathCache(ORIGINAL_TEMP_DIRECTORY)
+      ).run()
+    );
+  }
 
-      if (myTempDirFixture != null) {
-        myTempDirFixture.tearDown();
-        myTempDirFixture = null;
-      }
-      resetCanonicalTempPathCache(ORIGINAL_TEMP_DIRECTORY);
-    });
+  private void waitChangeListManager() {
+    if (changeListManager != null) {
+      changeListManager.forceStopInTestMode();
+      changeListManager.waitEverythingDoneInTestMode();
+    }
+  }
+
+  private void tearDownTempDirectoryFixture() throws Exception {
+    if (myTempDirFixture != null) {
+      myTempDirFixture.tearDown();
+      myTempDirFixture = null;
+    }
   }
 
   protected ProcessOutput runSvn(String... commandLine) throws IOException {

@@ -59,7 +59,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
   @NotNull private final Project myProject;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
-  @NotNull private final Function<CommitId, VcsShortCommitDetails> myDataGetter;
+  @NotNull private final Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
 
   @NotNull private final VcsLogUiProperties.PropertiesChangeListener myListener;
 
@@ -71,7 +71,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
   VcsLogChangesBrowser(@NotNull Project project,
                        @NotNull MainVcsLogUiProperties uiProperties,
-                       @NotNull Function<CommitId, VcsShortCommitDetails> getter,
+                       @NotNull Function<? super CommitId, ? extends VcsShortCommitDetails> getter,
                        @NotNull Disposable parent) {
     super(project, false, false);
     myProject = project;
@@ -376,13 +376,13 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     }
   }
 
-  private static class ChangesBrowserEmptyTextNode extends ChangesBrowserNode {
+  private static class ChangesBrowserEmptyTextNode extends ChangesBrowserNode<String> {
     protected ChangesBrowserEmptyTextNode(@NotNull String text) {
       super(text);
     }
   }
 
-  private class ChangesBrowserParentNode extends ChangesBrowserNode {
+  private class ChangesBrowserParentNode extends ChangesBrowserNode<String> {
     protected ChangesBrowserParentNode(@NotNull CommitId commitId) {
       super(getText(commitId));
     }

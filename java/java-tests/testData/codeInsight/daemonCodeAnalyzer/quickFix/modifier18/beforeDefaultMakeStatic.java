@@ -1,4 +1,4 @@
-// "Make 'foo' static" "true"
+// "Make 'I.foo' static" "true"
 interface I {
   default void foo() {
     System.out.println();

@@ -548,7 +548,6 @@ public class FileUtilRt {
   @NotNull
   public static char[] loadFileText(@NotNull File file, @Nullable @NonNls String encoding) throws IOException {
     InputStream stream = new FileInputStream(file);
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
     try {
       return loadText(reader, (int)file.length());
@@ -606,7 +605,6 @@ public class FileUtilRt {
   public static List<String> loadLines(@NotNull String path, @Nullable @NonNls String encoding) throws IOException {
     InputStream stream = new FileInputStream(path);
     try {
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
       InputStreamReader in = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
       BufferedReader reader = new BufferedReader(in);
       try {
@@ -798,13 +796,8 @@ public class FileUtilRt {
   }
 
   public static boolean createParentDirs(@NotNull File file) {
-    if (!file.exists()) {
-      final File parentFile = file.getParentFile();
-      if (parentFile != null) {
-        return createDirectory(parentFile);
-      }
-    }
-    return true;
+    File parentPath = file.getParentFile();
+    return parentPath == null || createDirectory(parentPath);
   }
 
   public static boolean createDirectory(@NotNull File path) {

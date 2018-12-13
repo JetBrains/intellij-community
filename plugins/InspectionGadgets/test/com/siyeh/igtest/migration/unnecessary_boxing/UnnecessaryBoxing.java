@@ -142,4 +142,10 @@ class WithLambdaUnfriendlyOverloads {
     System.out.println(x.getClass());
     System.out.println(y.getClass());
   }
+
+  int testSwitchExpression(int x) {
+    return switch(x) {
+      default -> <warning descr="Unnecessary boxing 'Integer.valueOf(x)'">Integer.valueOf(x)</warning>;
+    };
+  }
 }

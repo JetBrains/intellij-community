@@ -48,7 +48,6 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private RefMethodImpl myDefaultConstructor; //guarded by this
   private List<RefMethod> myOverridingMethods; //guarded by this
   private Set<RefElement> myInTypeReferences; //guarded by this
-  private Set<RefElement> myInstanceReferences;//guarded by this
   private List<RefJavaElement> myClassExporters;//guarded by this
   private final RefModule myRefModule;
 
@@ -97,7 +96,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       } else {
         final Module module = ModuleUtilCore.findModuleForPsiElement(containingFile);
         LOG.assertTrue(module != null);
-        final RefModuleImpl refModule = (RefModuleImpl)getRefManager().getRefModule(module);
+        final WritableRefEntity refModule = (WritableRefEntity)getRefManager().getRefModule(module);
         LOG.assertTrue(refModule != null);
         refModule.add(this);
       }
@@ -222,7 +221,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
-  public boolean isSelfInheritor(UClass uClass) {
+  public boolean isSelfInheritor(@NotNull UClass uClass) {
     return isSelfInheritor(uClass, new ArrayList<>());
   }
 
@@ -251,7 +250,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private void setDefaultConstructor(RefMethodImpl defaultConstructor) {
     if (defaultConstructor != null) {
       for (RefClass superClass : getBaseClasses()) {
-        RefMethodImpl superDefaultConstructor = (RefMethodImpl)superClass.getDefaultConstructor();
+        WritableRefElement superDefaultConstructor = (WritableRefElement)superClass.getDefaultConstructor();
 
         if (superDefaultConstructor != null) {
           superDefaultConstructor.addInReference(defaultConstructor);
@@ -284,11 +283,18 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   public void buildReferences() {
     UClass uClass = getUastElement();
     if (uClass != null) {
+      if (uClass instanceof UAnonymousClass) {
+        UObjectLiteralExpression objectAccess = UastUtils.getParentOfType(uClass, UObjectLiteralExpression.class);
+        if (objectAccess != null && objectAccess.getDeclaration().getSourcePsi() == uClass.getSourcePsi()) {
+          RefJavaUtil.getInstance().addReferencesTo(uClass, this, objectAccess.getValueArguments().toArray(UElementKt.EMPTY_ARRAY));
+        }
+      }
+
       for (UClassInitializer classInitializer : uClass.getInitializers()) {
         RefJavaUtil.getInstance().addReferencesTo(uClass, this, classInitializer.getUastBody());
       }
 
-      RefJavaUtil.getInstance().addReferencesTo(uClass, this, ((UAnnotated)uClass).getAnnotations().toArray(new UElement[0]));
+      RefJavaUtil.getInstance().addReferencesTo(uClass, this, ((UAnnotated)uClass).getAnnotations().toArray(UElementKt.EMPTY_ARRAY));
 
       for (PsiTypeParameter parameter : uClass.getJavaPsi().getTypeParameters()) {
         UElement uTypeParameter = UastContextKt.toUElement(parameter);
@@ -311,7 +317,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
         getRefManager().getReference(uMethod.getSourcePsi());
       }
 
-      RefJavaUtil.getInstance().addReferencesTo(uClass, this, uClass.getUastSuperTypes().toArray(new UElement[0]));
+      RefJavaUtil.getInstance().addReferencesTo(uClass, this, uClass.getUastSuperTypes().toArray(UElementKt.EMPTY_ARRAY));
 
       getRefManager().fireBuildReferences(this);
     }

@@ -1,21 +1,61 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+
+import java.util.Objects;
+
+import static com.intellij.psi.util.PsiTreeUtil.getParentOfType;
+import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
+import static com.intellij.util.ArrayUtil.getLastElement;
 
 public interface BaseTest {
 
   @NotNull
   CodeInsightTestFixture getFixture();
 
-  default GroovyFile configureByText(@NotNull String text) {
-    return (GroovyFile)getFixture().configureByText("_.groovy", text);
+  @NotNull
+  default GroovyFile getGroovyFile() {
+    return (GroovyFile)getFixture().getFile();
   }
 
-  default GrExpression configureByExpression(@NotNull String text) {
-    return (GrExpression)ArrayUtil.getLastElement(configureByText(text).getStatements());
+  @NotNull
+  default GroovyFile configureByText(@NotNull String text) {
+    getFixture().configureByText("_.groovy", text);
+    return getGroovyFile();
+  }
+
+  @NotNull
+  default <T extends PsiElement> T elementUnderCaret(@NotNull String text, @NotNull Class<T> clazz) {
+    configureByText(text);
+    return elementUnderCaret(clazz);
+  }
+
+  @NotNull
+  default <T extends PsiElement> T elementUnderCaret(@NotNull Class<T> clazz) {
+    T element = getParentOfType(getFixture().getFile().findElementAt(getFixture().getCaretOffset()), clazz);
+    return Objects.requireNonNull(element);
+  }
+
+  @NotNull
+  default <T extends GrExpression> T lastExpression(@NotNull String text, Class<T> clazz) {
+    return clazz.cast(lastExpression(text));
+  }
+
+  @NotNull
+  default GrExpression lastExpression(@NotNull String text) {
+    configureByText(text);
+    return lastExpression();
+  }
+
+  @NotNull
+  default GrExpression lastExpression() {
+    final GrStatement lastStatement = getLastElement(getGroovyFile().getStatements());
+    return assertInstanceOf(lastStatement, GrExpression.class);
   }
 }

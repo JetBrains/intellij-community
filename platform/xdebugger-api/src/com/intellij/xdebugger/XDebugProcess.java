@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger;
 
@@ -101,7 +99,6 @@ public abstract class XDebugProcess {
    */
   @Deprecated
   public void startForceStepInto(){
-    //noinspection deprecation
     startStepInto();
   }
 
@@ -170,7 +167,7 @@ public abstract class XDebugProcess {
   }
 
   @NotNull
-  public Promise stopAsync() {
+  public Promise<Object> stopAsync() {
     stop();
     return Promises.resolvedPromise();
   }

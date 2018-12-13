@@ -59,9 +59,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.Argument;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 
 import java.util.*;
 
@@ -457,12 +459,7 @@ public class ResolveUtil {
   }
 
   public static PsiElement[] mapToElements(GroovyResolveResult[] candidates) {
-    PsiElement[] elements = new PsiElement[candidates.length];
-    for (int i = 0; i < elements.length; i++) {
-      elements[i] = candidates[i].getElement();
-    }
-
-    return elements;
+    return PsiUtil.mapElements(candidates);
   }
 
   /**
@@ -487,7 +484,7 @@ public class ResolveUtil {
       if (currentResult instanceof GroovyMethodResult) {
         final GroovyMethodResult currentMethodResult = (GroovyMethodResult)currentResult;
         currentMethod = currentMethodResult.getElement();
-        currentSubstitutor = currentMethodResult.getPartialSubstitutor();
+        currentSubstitutor = currentMethodResult.getContextSubstitutor();
       }
       else if (currentResult.getElement() instanceof PsiMethod) {
         currentMethod = (PsiMethod)currentResult.getElement();
@@ -507,7 +504,7 @@ public class ResolveUtil {
         if (otherResult instanceof GroovyMethodResult) {
           final GroovyMethodResult otherMethodResult = (GroovyMethodResult)otherResult;
           otherMethod = otherMethodResult.getElement();
-          otherSubstitutor = otherMethodResult.getPartialSubstitutor();
+          otherSubstitutor = otherMethodResult.getContextSubstitutor();
         }
         else if (otherResult.getElement() instanceof PsiMethod) {
           otherMethod = (PsiMethod)otherResult.getElement();
@@ -625,35 +622,14 @@ public class ResolveUtil {
     return processor.getCandidates();
   }
 
-  public static boolean isDefinitelyKeyOfMap(GrReferenceExpression ref) {
-    final GrExpression qualifier = getSelfOrWithQualifier(ref);
-    if (qualifier == null) return false;
-    //key in 'java.util.Map.key' is not access to map, it is access to static property of field
-    if (qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass) return false;
-    if (ref.getDotTokenType() == GroovyTokenTypes.mSPREAD_DOT) return false;
-
-    final PsiType type = qualifier.getType();
-    if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) return false;
-
-    final String qname = TypesUtil.getQualifiedName(type);
-    return !GroovyCommonClassNames.GROOVY_UTIL_CONFIG_OBJECT.equals(qname);
-  }
-
   public static boolean isKeyOfMap(GrReferenceExpression ref) {
     if (!(ref.getParent() instanceof GrIndexProperty) && org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCall(ref)) return false;
-    if (ref.multiResolve(false).length > 0) return false;
-    return mayBeKeyOfMap(ref);
-  }
-
-  public static boolean mayBeKeyOfMap(GrReferenceExpression ref) {
-    final GrExpression qualifier = getSelfOrWithQualifier(ref);
-    if (qualifier == null) return false;
-    if (qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass) return false;
+    // TODO separate element for spread expression
     if (ref.getDotTokenType() == GroovyTokenTypes.mSPREAD_DOT) return false;
-    return InheritanceUtil.isInheritor(qualifier.getType(), CommonClassNames.JAVA_UTIL_MAP);
+    return ref.resolve() instanceof GroovyMapProperty;
   }
 
-
+  @Deprecated
   @Nullable
   public static GrExpression getSelfOrWithQualifier(GrReferenceExpression ref) {
     final GrExpression qualifier = ref.getQualifierExpression();
@@ -739,7 +715,7 @@ public class ResolveUtil {
 
     //search for getters
     for (PropertyKind kind : Arrays.asList(PropertyKind.GETTER, PropertyKind.BOOLEAN_GETTER)) {
-      PropertyProcessor propertyProcessor = new PropertyProcessor(thisType, methodName, kind, () -> PsiType.EMPTY_ARRAY, place);
+      AccessorProcessor propertyProcessor = new AccessorProcessor(methodName, kind, Collections.emptyList(), place);
       processAllDeclarations(thisType, propertyProcessor, state, place);
       final List<GroovyResolveResult> candidates = propertyProcessor.getResults(); //can be only one candidate
       final List<GroovyResolveResult> applicable = new ArrayList<>();
@@ -770,7 +746,7 @@ public class ResolveUtil {
     if (!(type instanceof GrClosureType)) return false;
     if (argTypes == null) return true;
 
-    final GrSignature signature = ((GrClosureType)type).getSignature();
+    final List<GrSignature> signature = ((GrClosureType)type).getSignatures();
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argTypes, place);
   }
 
@@ -793,7 +769,7 @@ public class ResolveUtil {
       return null;
     }
     if (type instanceof GrClosureType) {
-      final GrSignature signature = ((GrClosureType)type).getSignature();
+      final List<GrSignature> signature = ((GrClosureType)type).getSignatures();
       PsiType returnType = GrClosureSignatureUtil.getReturnType(signature, args, expression);
       return TypesUtil.substituteAndNormalizeType(returnType, candidate.getSubstitutor(), candidate.getSpreadState(), expression);
     }
@@ -915,12 +891,18 @@ public class ResolveUtil {
 
     for (GroovyResolveResult variant : variants) {
       if (variant instanceof GroovyMethodResult && ((GroovyMethodResult)variant).getCandidate() != null) {
-        MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
+        GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
         if (candidate != null) {
-          Pair<PsiParameter, PsiType> pair = candidate.completionMapArguments().get(new Argument(null, arg));
-          ContainerUtil.addIfNotNull(expectedParams, pair);
+          ArgumentMapping mapping = candidate.getArgumentMapping();
+          if (mapping != null) {
+            ExpressionArgument argument = new ExpressionArgument(arg);
+            PsiParameter targetParameter = mapping.targetParameter(argument);
+            PsiType expectedType = mapping.expectedType(argument);
+            ContainerUtil.addIfNotNull(expectedParams, Pair.create(targetParameter, expectedType));
+          }
         }
-      } else {
+      }
+      else {
         final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil.mapArgumentsToParameters(
           variant, place, true, true, namedArguments, expressionArguments, closureArguments
         );

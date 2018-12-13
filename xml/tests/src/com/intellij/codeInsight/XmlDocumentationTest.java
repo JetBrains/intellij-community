@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 /**
- * @by maxim
+ * @author maxim
  */
 @SuppressWarnings("ConstantConditions")
 public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCase {
@@ -132,7 +132,6 @@ public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
   public class DocumentationTestContext {
     final DocumentationProvider documentationProvider;
     final PsiElement originalElement;

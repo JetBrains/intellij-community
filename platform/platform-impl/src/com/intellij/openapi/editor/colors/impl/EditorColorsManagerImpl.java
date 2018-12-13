@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.UIManager.LookAndFeelInfo;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -144,17 +145,10 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     loadSchemesFromThemes();
     mySchemeManager.loadSchemes();
 
-    String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
-    EditorColorsScheme scheme = null;
-    if (wizardEditorScheme != null) {
-      scheme = getScheme(wizardEditorScheme);
-      LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
-    }
-
     initEditableDefaultSchemesCopies();
     initEditableBundledSchemesCopies();
     resolveLinksToBundledSchemes();
-    setGlobalSchemeInner(scheme == null ? getDefaultScheme() : scheme);
+    initScheme();
   }
 
   private void initDefaultSchemes() {
@@ -170,6 +164,33 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
         createEditableCopy(defaultScheme, defaultScheme.getEditableCopyName());
       }
     }
+  }
+
+  private void initScheme() {
+    String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
+    EditorColorsScheme scheme = null;
+
+    if (wizardEditorScheme != null) {
+      scheme = getScheme(wizardEditorScheme);
+      LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
+    }
+
+    if (scheme == null) {
+      LafManager lm = LafManager.getInstance();
+      UIManager.LookAndFeelInfo laf = lm.getCurrentLookAndFeel();
+
+      if (laf instanceof UIThemeBasedLookAndFeelInfo) {
+        String schemeName = ((UIThemeBasedLookAndFeelInfo)laf).getTheme().getEditorSchemeName();
+        if (schemeName != null) {
+          scheme = getScheme(schemeName);
+        }
+      }
+    }
+
+    if (scheme == null) {
+      scheme = UIUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme();
+    }
+    setGlobalSchemeInner(scheme);
   }
 
   private void loadBundledSchemes() {
@@ -354,6 +375,23 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @Override
   public EditorColorsScheme getGlobalScheme() {
     EditorColorsScheme scheme = mySchemeManager.getActiveScheme();
+    EditorColorsScheme editableCopy = getEditableCopy(scheme);
+    if (editableCopy != null) return editableCopy;
+    return scheme == null ? getDefaultScheme() : scheme;
+  }
+
+  @Nullable
+  private EditorColorsScheme getEditableCopy(EditorColorsScheme scheme) {
+    String editableCopyName = getEditableCopyName(scheme);
+    if (editableCopyName != null) {
+      EditorColorsScheme editableCopy = getScheme(editableCopyName);
+      if (editableCopy != null) return editableCopy;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getEditableCopyName(EditorColorsScheme scheme) {
     String editableCopyName = null;
     if (scheme instanceof DefaultColorsScheme && ((DefaultColorsScheme)scheme).hasEditableCopy()) {
       editableCopyName = ((DefaultColorsScheme)scheme).getEditableCopyName();
@@ -361,11 +399,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     else if (scheme instanceof BundledScheme) {
       editableCopyName = SchemeManager.EDITABLE_COPY_PREFIX + scheme.getName();
     }
-    if (editableCopyName != null) {
-      EditorColorsScheme editableCopy = getScheme(editableCopyName);
-      if (editableCopy != null) return editableCopy;
-    }
-    return scheme == null ? getDefaultScheme() : scheme;
+    return editableCopyName;
   }
 
   @Override
@@ -408,16 +442,24 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @NotNull
   @Override
   public EditorColorsScheme getSchemeForCurrentUITheme() {
-    String schemeName = UIUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
-    EditorColorsScheme scheme = myDefaultColorSchemeManager.getScheme(schemeName);
-    assert scheme != null :
-      "The default scheme '" + schemeName + "' not found, " +
-      "available schemes: " + Arrays.toString(myDefaultColorSchemeManager.listNames());
-    if (((DefaultColorsScheme)scheme).hasEditableCopy()) {
-      EditorColorsScheme editableCopy = getScheme(((DefaultColorsScheme)scheme).getEditableCopyName());
-      if (editableCopy != null) return editableCopy;
+    LookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentLookAndFeel();
+    EditorColorsScheme scheme;
+    if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
+      UITheme theme = ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).getTheme();
+      String schemeName= theme.getEditorSchemeName();
+      scheme = getScheme(schemeName);
+      assert scheme != null :
+        "Theme " + theme.getName() + " refers to unknown color scheme " + schemeName;
     }
-    return scheme;
+    else {
+      String schemeName = UIUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
+      scheme = myDefaultColorSchemeManager.getScheme(schemeName);
+      assert scheme != null :
+        "The default scheme '" + schemeName + "' not found, " +
+        "available schemes: " + Arrays.toString(myDefaultColorSchemeManager.listNames());
+    }
+    EditorColorsScheme editableCopy = getEditableCopy(scheme);
+    return editableCopy != null ? editableCopy : scheme;
   }
 
   @NotNull

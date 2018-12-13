@@ -20,7 +20,6 @@ import com.intellij.xml.util.XmlUtil;
 /**
  * @author Dmitry Avdeev
  */
-@SuppressWarnings("SpellCheckingInspection")
 public class InternalResourceProvider implements StandardResourceProvider {
 
   @Override

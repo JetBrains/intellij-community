@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 
 /**
@@ -51,7 +50,7 @@ public class RegExHelpPopup extends JPanel {
 
     myEditorPane = new JEditorPane();
     myEditorPane.setEditable(false);
-    myEditorPane.setEditorKit(new HTMLEditorKit());
+    myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
     myEditorPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     myEditorPane.setBackground(HintUtil.getInformationColor());
 

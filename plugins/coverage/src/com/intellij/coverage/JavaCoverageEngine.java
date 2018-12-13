@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -62,7 +61,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   private static final Logger LOG = Logger.getInstance(JavaCoverageEngine.class.getName());
 
   public static JavaCoverageEngine getInstance() {
-    return Extensions.findExtension(EP_NAME, JavaCoverageEngine.class);
+    return EP_NAME.findExtensionOrFail(JavaCoverageEngine.class);
   }
 
   @Override

@@ -34,7 +34,6 @@ import java.util.Map;
 
 /**
  * @author lex
- * @since Nov 26, 2003
  */
 public class JavaParametersUtil {
   private JavaParametersUtil() { }

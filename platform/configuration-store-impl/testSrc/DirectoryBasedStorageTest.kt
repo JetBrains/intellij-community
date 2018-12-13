@@ -4,12 +4,12 @@ package com.intellij.configurationStore
 import com.intellij.idea.Bombed
 import com.intellij.openapi.components.MainConfigurationStateSplitter
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.loadElement
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
@@ -24,7 +24,7 @@ private fun StateStorage.SaveSessionProducer.save() {
 
 private fun StateStorageBase<*>.setStateAndSave(componentName: String, state: String?) {
   val externalizationSession = createSaveSessionProducer()!!
-  externalizationSession.setState(null, componentName, if (state == null) Element("state") else loadElement(state))
+  externalizationSession.setState(null, componentName, if (state == null) Element("state") else JDOMUtil.load(state))
   externalizationSession.save()
 }
 

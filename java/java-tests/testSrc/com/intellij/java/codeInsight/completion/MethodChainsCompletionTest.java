@@ -40,7 +40,11 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   public void tearDown() throws Exception {
     try {
       CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = myDefaultAutoCompleteOnCodeCompletion;
-    } finally {
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
       super.tearDown();
     }
   }

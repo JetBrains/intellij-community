@@ -22,8 +22,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ApproximateResolver;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -122,28 +123,46 @@ public class FunExprOccurrence {
       return member instanceof PsiMethod && hasCompatibleParameter((PsiMethod)member, argIndex, samClasses);
     }
     if (member instanceof PsiClass) {
-      return ContainerUtil.exists(samClasses, c -> InheritanceUtil.isInheritorOrSelf((PsiClass)member, c, true));
+      return samClasses.contains(member);
     }
     return member instanceof PsiField &&
-           ContainerUtil.exists(samClasses, c -> canPassFunctionalExpression(c, ((PsiField)member).getType()));
+           ContainerUtil.exists(samClasses, c -> canPassFunctionalExpression(c, ((PsiField)member).getType(), member));
   }
 
   public static boolean hasCompatibleParameter(PsiMethod method, int argIndex, List<? extends PsiClass> samClasses) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     int paramIndex = method.isVarArgs() ? Math.min(argIndex, parameters.length - 1) : argIndex;
     return paramIndex < parameters.length &&
-           ContainerUtil.exists(samClasses, c -> canPassFunctionalExpression(c, parameters[paramIndex].getType()));
+           ContainerUtil.exists(samClasses, c -> canPassFunctionalExpression(c, parameters[paramIndex].getType(), method));
   }
 
-  private static boolean canPassFunctionalExpression(PsiClass sam, PsiType paramType) {
+  private static boolean canPassFunctionalExpression(PsiClass sam, PsiType paramType, PsiElement place) {
     if (paramType instanceof PsiEllipsisType) {
       paramType = ((PsiEllipsisType)paramType).getComponentType();
     }
-    PsiClass functionalCandidate = PsiUtil.resolveClassInClassTypeOnly(paramType);
-    if (functionalCandidate instanceof PsiTypeParameter) {
-      return InheritanceUtil.isInheritorOrSelf(sam, PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(paramType)), true);
+    String paramClassName = paramType instanceof PsiClassType ? ((PsiClassType)paramType).getClassName() : null;
+    if (paramClassName == null) return false;
+
+    if (paramClassName.equals(sam.getName()) && sam.equals(((PsiClassType)paramType).resolve())) {
+      return true;
     }
 
-    return InheritanceUtil.isInheritorOrSelf(functionalCandidate, sam, true);
+    return isTypeParameterVisible(paramClassName, place) &&
+           ((PsiClassType)paramType).resolve() instanceof PsiTypeParameter &&
+           hasSuperTypeAssignableFromSam(sam, paramType);
+  }
+
+  private static boolean isTypeParameterVisible(String name, PsiElement fromPlace) {
+    JBIterable<String> typeParameters = JBIterable.generate(fromPlace, PsiElement::getContext)
+      .takeWhile(c -> !(c instanceof PsiFile))
+      .filter(PsiTypeParameterListOwner.class)
+      .flatMap(o -> Arrays.asList(o.getTypeParameters()))
+      .map(PsiNamedElement::getName);
+    return typeParameters.contains(name);
+  }
+
+  private static boolean hasSuperTypeAssignableFromSam(PsiClass sam, PsiType type) {
+    return !InheritanceUtil.processSuperTypes(type, false, superType ->
+      !InheritanceUtil.isInheritorOrSelf(sam, PsiUtil.resolveClassInClassTypeOnly(superType), true));
   }
 }

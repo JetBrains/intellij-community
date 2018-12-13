@@ -121,7 +121,6 @@ public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunc
         }
     }
 
-    @SuppressWarnings({ "UnresolvedPropertyKey" })
     private static String noParamsMessage() {
         return CodeInsightBundle.message("parameter.info.no.parameters");
     }

@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since Apr 21, 2010 2:19:17 PM
  */
 public class JavaWrapManager {
 

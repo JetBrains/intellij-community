@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,9 +18,10 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.history.FileNamesData;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
-import com.intellij.vcs.log.ui.filter.VcsLogMultiplePatternsTextFilter;
 import com.intellij.vcs.log.util.TroveUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogMultiplePatternsTextFilter;
+import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import kotlin.jvm.functions.Function1;
@@ -51,13 +38,13 @@ import java.util.Set;
 public class IndexDataGetter {
   private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
   @NotNull private final Project myProject;
-  @NotNull private final Set<VirtualFile> myRoots;
+  @NotNull private final Set<? extends VirtualFile> myRoots;
   @NotNull private final VcsLogPersistentIndex.IndexStorage myIndexStorage;
   @NotNull private final VcsLogStorage myLogStorage;
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
 
   public IndexDataGetter(@NotNull Project project,
-                         @NotNull Set<VirtualFile> roots,
+                         @NotNull Set<? extends VirtualFile> roots,
                          @NotNull VcsLogPersistentIndex.IndexStorage indexStorage,
                          @NotNull VcsLogStorage logStorage,
                          @NotNull FatalErrorHandler fatalErrorsConsumer) {
@@ -147,15 +134,18 @@ public class IndexDataGetter {
 
   public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
     if (filters.isEmpty()) return false;
-    for (VcsLogDetailsFilter filter : filters) {
+
+    return ContainerUtil.all(filters, filter -> {
       if (filter instanceof VcsLogTextFilter ||
-          filter instanceof VcsLogUserFilter ||
-          filter instanceof VcsLogStructureFilter) {
-        continue;
+          filter instanceof VcsLogUserFilter) {
+        return true;
+      }
+      if (filter instanceof VcsLogStructureFilter) {
+        Collection<FilePath> files = ((VcsLogStructureFilter)filter).getFiles();
+        return ContainerUtil.find(files, file -> file.isDirectory() && myRoots.contains(file.getVirtualFile())) == null;
       }
       return false;
-    }
-    return true;
+    });
   }
 
   @NotNull
@@ -197,7 +187,11 @@ public class IndexDataGetter {
     return executeAndCatch(() -> {
       TIntHashSet result = new TIntHashSet();
       for (FilePath path : paths) {
-        TroveUtil.addAll(result, createFileNamesData(path).getCommits());
+        Set<Integer> commits = createFileNamesData(path).getCommits();
+        if (commits.isEmpty() && !path.isDirectory()) {
+          commits = createFileNamesData(VcsUtil.getFilePath(path.getPath(), true)).getCommits();
+        }
+        TroveUtil.addAll(result, commits);
       }
       return result;
     }, new TIntHashSet());
@@ -267,6 +261,7 @@ public class IndexDataGetter {
   // File history
   //
 
+  @SuppressWarnings("unused")
   @NotNull
   public Set<FilePath> getKnownNames(@NotNull FilePath path) {
     return executeAndCatch(() -> createFileNamesData(path).getFiles(), Collections.emptySet());

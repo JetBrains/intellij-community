@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
@@ -36,6 +35,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
@@ -43,15 +43,13 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.statistics.StatisticsManager
-import com.intellij.psi.statistics.impl.StatisticsManagerImpl
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
 import java.awt.event.KeyEvent
-
 /**
  * @author peter
  */
@@ -1161,7 +1159,7 @@ class Foo {
     myFixture.configureByText 'a.java', 'class Foo <caret>'
     type 'ext'
 
-    CompletionAutoPopupHandler.ourTestingAutopopup = false
+    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, false)
     edt {
       myFixture.completeBasic()
     }
@@ -1173,7 +1171,7 @@ class Foo {
     myFixture.configureByText 'a.java', 'class Foo {<caret>}'
     type 'pr'
 
-    CompletionAutoPopupHandler.ourTestingAutopopup = false
+    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, false)
     edt {
       myFixture.completeBasic()
     }
@@ -1218,7 +1216,7 @@ public class Test {
     assert myFixture.lookup.currentItem instanceof LiveTemplateLookupElement
   }
 
-  void testMoreRecentExactMatchesTemplateFirst() {
+  void testSelectRecentExactMatchesTemplateFirst() {
     TemplateManager manager = TemplateManager.getInstance(getProject())
     Template template = manager.createTemplate("itar", "myGroup", null)
     JavaCodeContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement)
@@ -1228,12 +1226,15 @@ public class Test {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
     myFixture.configureByText("a.java", """
 public class Test {
+    void itar() {}
     void foo() {
         ita<caret>
     }
 }""")
     type 'r'
-    myFixture.assertPreferredCompletionItems(0, 'itar', 'itar')
+    myFixture.assertPreferredCompletionItems(1, 'itar', 'itar', 'itar')
+    assert !(myFixture.lookup.items[0] instanceof LiveTemplateLookupElement)
+    assert myFixture.lookup.items[1] instanceof LiveTemplateLookupElement
   }
 
 
@@ -1521,18 +1522,6 @@ class Foo {
     assert !lookup
   }
 
-  void testReplaceTypedPrefixPart() {
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable())
-    myFixture.configureByText 'a.java', 'class Foo{ { <caret> }}'
-    for (i in 0..StatisticsManager.OBLIVION_THRESHOLD) {
-      type 'System.out.printl\n\n'
-    }
-    type 'System.out.pr'
-    assert lookup.currentItem.lookupString == 'println'
-    type '\n2'
-    assert myFixture.editor.document.text.contains('.println();2')
-  }
-
   void testQuickBackspaceEnter() {
     myFixture.configureByText 'a.java', '<caret>'
     type 'cl'
@@ -1780,21 +1769,6 @@ class Foo {{
     edt { ((EditorEx)myFixture.editor).setColumnMode(true) }
     type 'toStr'
     assert lookup
-  }
-
-  void "test show popup with single live template if show_live_tempate_in_completion option is enabled"() {
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, myFixture.getTestRootDisposable())
-    myFixture.configureByText "a.java", """
-class Foo {{
-ita<caret>
-"""
-    type 'r'
-    assert lookup == null
-
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
-    type '\br'
-    assert lookup
-    assert myFixture.lookupElementStrings == ['itar']
   }
 
   void "test expand class list when typing more or moving caret"() {

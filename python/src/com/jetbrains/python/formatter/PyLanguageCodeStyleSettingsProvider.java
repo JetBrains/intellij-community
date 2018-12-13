@@ -15,16 +15,17 @@
  */
 package com.jetbrains.python.formatter;
 
+import com.intellij.application.options.CodeStyleAbstractConfigurable;
+import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.*;
 
@@ -167,7 +168,28 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     commonSettings.KEEP_BLANK_LINES_IN_CODE = 1;
   }
 
-  @SuppressWarnings("FieldCanBeLocal")
+  @Nullable
+  @Override
+  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+    return new PyCodeStyleSettings(settings);
+  }
+
+  @NotNull
+  @Override
+  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings, @NotNull CodeStyleSettings modelSettings) {
+    return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, "Python") {
+      @Override
+      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+        return new PyCodeStyleMainPanel(getCurrentSettings(), settings);
+      }
+
+      @Override
+      public String getHelpTopic() {
+        return "reference.settingsdialog.codestyle.python";
+      }
+    };
+  }
+
   private static final String SPACING_SETTINGS_PREVIEW = "def settings_preview(argument, key=value):\n" +
                                                          "    dict = {1:'a', 2:'b', 3:'c'}\n" +
                                                          "    x = dict[1]\n" +
@@ -181,7 +203,6 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                          "def no_params():\n" +
                                                          "    return globals()";
 
-  @SuppressWarnings("FieldCanBeLocal")
   private static final String BLANK_LINES_SETTINGS_PREVIEW = "import os\n" +
                                                              "class C(object):\n" +
                                                              "    import sys\n" +
@@ -189,7 +210,6 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                              "    def foo(self):\n" +
                                                              "        import platform\n" +
                                                              "        print(platform.processor())";
-  @SuppressWarnings("FieldCanBeLocal")
   private static final String WRAP_SETTINGS_PREVIEW = "from module import foo, bar, baz, quux\n" +
                                                       "\n" +
                                                       "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n" +
@@ -218,7 +238,6 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                       "\n" +
                                                       "try: pass\n" +
                                                       "finally: pass\n";
-  @SuppressWarnings("FieldCanBeLocal")
   private static final String INDENT_SETTINGS_PREVIEW = "def foo():\n" +
                                                         "    print 'bar'\n\n" +
                                                         "def long_function_name(\n" +

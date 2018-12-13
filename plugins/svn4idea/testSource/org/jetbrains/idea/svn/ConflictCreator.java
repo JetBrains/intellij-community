@@ -70,7 +70,7 @@ public class ConflictCreator {
         for (String part : patch.getAfterName().split("/")) {
           final String path = subPath + part;
           Info info = myVcs.getInfo(new File(myTheirsDir.getPath(), path));
-          if (info == null || info.getURL() == null) {
+          if (info == null || info.getUrl() == null) {
             myClientRunner.add(myTheirsDir, path);
           }
           subPath = path + "/";

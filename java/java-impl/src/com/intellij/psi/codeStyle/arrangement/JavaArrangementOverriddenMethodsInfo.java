@@ -22,7 +22,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 9/26/12 5:47 PM
  */
 public class JavaArrangementOverriddenMethodsInfo {
 

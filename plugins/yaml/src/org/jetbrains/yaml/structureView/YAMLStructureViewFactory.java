@@ -22,7 +22,7 @@ import java.util.Collections;
  * @author oleg
  */
 public class YAMLStructureViewFactory implements PsiStructureViewFactory {
-  static final Icon ALIAS_ICON = AllIcons.Nodes.TreeRightArrow;
+  static final Icon ALIAS_ICON = AllIcons.Nodes.Alias;
 
   @Override
   @Nullable

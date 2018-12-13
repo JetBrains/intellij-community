@@ -119,7 +119,7 @@ class CustomMethodHandlers {
     catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
       return null;
     }
-    return factory.getConstFactory().createFromValue(result, returnType, null);
+    return factory.getConstFactory().createFromValue(result, returnType);
   }
 
   private static Method toJvmMethod(PsiMethod method) {
@@ -199,10 +199,10 @@ class CustomMethodHandlers {
 
   private static DfaValue ofNullable(DfaValue argument, DfaMemoryState state, DfaValueFactory factory) {
     if (state.isNull(argument)) {
-      return factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false);
+      return DfaOptionalSupport.getOptionalValue(factory, false);
     }
     if (state.isNotNull(argument)) {
-      return factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, true);
+      return DfaOptionalSupport.getOptionalValue(factory, true);
     }
     return null;
   }

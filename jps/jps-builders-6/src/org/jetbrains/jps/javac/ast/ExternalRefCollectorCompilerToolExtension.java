@@ -15,14 +15,7 @@
  */
 package org.jetbrains.jps.javac.ast;
 
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.javac.DiagnosticOutputConsumer;
-import org.jetbrains.jps.javac.ast.api.JavacFileData;
-
 public class ExternalRefCollectorCompilerToolExtension extends AbstractRefCollectorCompilerToolExtension {
-  public static final String ID = "external.ast.reference.collector";
-
   public static final String ENABLED_PARAM = "external.java.process.ref.collector.enabled";
   public static final String DIVIDE_IMPORTS_PARAM = "external.java.process.divide.imports";
 
@@ -34,16 +27,5 @@ public class ExternalRefCollectorCompilerToolExtension extends AbstractRefCollec
   @Override
   protected boolean divideImportsRefs() {
     return "true".equals(System.getProperty(DIVIDE_IMPORTS_PARAM));
-  }
-
-  @NotNull
-  @Override
-  protected Consumer<JavacFileData> getFileDataConsumer(@NotNull final DiagnosticOutputConsumer diagnosticConsumer) {
-    return new Consumer<JavacFileData>() {
-      @Override
-      public void consume(JavacFileData data) {
-        diagnosticConsumer.customOutputData(ID, "javac-refs", data.asBytes());
-      }
-    };
   }
 }

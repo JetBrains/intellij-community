@@ -23,7 +23,6 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/26/14
  */
 public class OpenGradleTestResultActionProvider implements ToggleModelActionProvider {
   public static final BooleanProperty OPEN_GRADLE_REPORT = new BooleanProperty("openGradleReport", false);

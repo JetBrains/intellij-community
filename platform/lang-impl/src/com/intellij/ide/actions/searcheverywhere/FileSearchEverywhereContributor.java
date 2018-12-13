@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,6 +30,7 @@ import java.util.stream.Stream;
 
 /**
  * @author Konstantin Bulenkov
+ * @author Mikhail Sokolov
  */
 public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<FileType> {
   private final GotoFileModel myModelForRenderer;
@@ -54,8 +56,9 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
     return 200;
   }
 
+  @NotNull
   @Override
-  protected FilteringGotoByModel<FileType> createModel(Project project) {
+  protected FilteringGotoByModel<FileType> createModel(@NotNull Project project) {
     return new GotoFileModel(project);
   }
 
@@ -80,7 +83,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
   public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
     if (selected instanceof PsiFile) {
       VirtualFile file = ((PsiFile)selected).getVirtualFile();
-      if (file != null) {
+      if (file != null && myProject != null) {
         Pair<Integer, Integer> pos = getLineAndColumn(searchText);
         OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file, pos.first, pos.second);
         descriptor.setUseCurrentWindow(openInCurrentWindow(modifiers));
@@ -98,6 +101,18 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
   public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
     if (CommonDataKeys.PSI_FILE.is(dataId) && element instanceof PsiFile) {
       return element;
+    }
+
+    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId) && element instanceof PsiFile) {
+      String path = ((PsiFile)element).getVirtualFile().getPath();
+      path = FileUtil.toSystemIndependentName(path);
+      if (myProject != null) {
+        String basePath = myProject.getBasePath();
+        if (basePath != null) {
+          path = FileUtil.getRelativePath(basePath, path, '/');
+        }
+      }
+      return path;
     }
 
     return super.getDataForItem(element, dataId);

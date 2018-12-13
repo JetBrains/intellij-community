@@ -25,7 +25,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/24/2015
  */
 public abstract class GradleSettingsControlProvider {
 
@@ -68,6 +67,8 @@ public abstract class GradleSettingsControlProvider {
           .dropStoreExternallyCheckBox()
           // hide java-specific option
           .dropResolveModulePerSourceSetCheckBox()
+          .dropDelegateBuildCombobox()
+          .dropTestRunnerCombobox()
           // hide this confusing option
           .dropCustomizableWrapperButton()
           // Hide bundled distribution option for a while

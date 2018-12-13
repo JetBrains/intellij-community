@@ -2,11 +2,7 @@
 package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.button
-import com.intellij.testGuiFramework.impl.jList
-import com.intellij.testGuiFramework.impl.testTreeItemExist
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.logUIStep
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.buttonCancel
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.itemLibrary
@@ -62,14 +58,9 @@ fun ProjectStructureDialogModel.checkInProjectStructure(actions: GuiTestCase.()-
 }
 
 fun ProjectStructureDialogModel.checkLibraryPresent(vararg library: String){
-  with(guiTestCase){
-    val dialog = connectDialog()
-    with(dialog){
-      val tabs = jList(menuLibraries)
-      logUIStep("Click '$menuLibraries'")
-      tabs.clickItem(menuLibraries)
-      testTreeItemExist(itemLibrary, *library)
-    }
+  checkLibrary {
+    guiTestCase.testTreeItemExist(itemLibrary, *library)
+    jTree(*library).clickPath()
   }
 }
 
@@ -96,4 +87,8 @@ fun ProjectStructureDialogModel.checkSDK(checks: JDialogFixture.()->Unit){
 
 fun ProjectStructureDialogModel.checkFacet(checks: JDialogFixture.()->Unit){
   checkPage(menuFacets, checks)
+}
+
+fun ProjectStructureDialogModel.checkLibrary(checks: JDialogFixture.()->Unit){
+  checkPage(menuLibraries, checks)
 }

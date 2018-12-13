@@ -35,7 +35,7 @@ public class IdeConsoleRootType extends ConsoleRootType {
   @Override
   public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) return null;
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence());
     if (fileType == UnknownFileType.INSTANCE || fileType == PlainTextFileType.INSTANCE) {
       return AllIcons.Debugger.Console;
     }

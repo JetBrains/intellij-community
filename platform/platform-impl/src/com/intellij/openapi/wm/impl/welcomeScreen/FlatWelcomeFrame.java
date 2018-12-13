@@ -8,6 +8,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.ide.plugins.InstalledPluginsManagerMain;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -57,6 +58,7 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.File;
@@ -281,9 +283,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         public void drop(DropTargetDropEvent e) {
           setDnd(false);
           e.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-          List<File> list = FileCopyPasteUtil.getFileList(e.getTransferable());
+          Transferable transferable = e.getTransferable();
+          List<File> list = FileCopyPasteUtil.getFileList(transferable);
           if (list != null && list.size() > 0) {
-            MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
+            InstalledPluginsManagerMain.PluginDropHandler pluginHandler = new InstalledPluginsManagerMain.PluginDropHandler();
+            if (!pluginHandler.canHandle(transferable, null) || !pluginHandler.handleDrop(transferable, null, null)) {
+              MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
+            }
             e.dropComplete(true);
             return;
           }
@@ -310,16 +316,16 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       super.paint(g);
       if (inDnd) {
         Rectangle bounds = getBounds();
-        Color background = JBColor.namedColor("DragAndDrop.backgroundColor", new Color(225, 235, 245));
+        Color background = JBColor.namedColor("DragAndDrop.areaBackground", new Color(225, 235, 245));
         g.setColor(new Color(background.getRed(), background.getGreen(), background.getBlue(), 206));
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-        Color backgroundBorder = JBColor.namedColor("DragAndDrop.backgroundBorderColor", new Color(137, 178, 222));
+        Color backgroundBorder = JBColor.namedColor("DragAndDrop.areaBorderColor", new Color(137, 178, 222));
         g.setColor(backgroundBorder);
         g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
         g.drawRect(bounds.x + 1 , bounds.y + 1, bounds.width - 2, bounds.height - 2);
 
-        Color foreground = JBColor.namedColor("DragAndDrop.foregroundColor", Gray._120);
+        Color foreground = JBColor.namedColor("DragAndDrop.areaForeground", Gray._120);
         g.setColor(foreground);
         Font labelFont = UIUtil.getLabelFont();
         Font font = labelFont.deriveFont(labelFont.getSize() + 5.0f);
@@ -475,7 +481,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             text = text.substring(0, text.length() - 3);
           }
           Icon icon = presentation.getIcon();
-          if (icon.getIconHeight() != JBUI.scale(16) || icon.getIconWidth() != JBUI.scale(16)) {
+          if (icon == null || icon.getIconHeight() != JBUI.scale(16) || icon.getIconWidth() != JBUI.scale(16)) {
             icon = JBUI.scale(EmptyIcon.create(16));
           }
           action = wrapGroups(action);

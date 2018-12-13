@@ -91,7 +91,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
     PsiClass containingClass = myMember.getContainingClass();
     if (containingClass == null) return;
     final PsiExpression qualifierExpression = myExpression.getQualifierExpression();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     if (qualifierExpression != null && !checkSideEffects(project, containingClass, qualifierExpression, factory, myExpression,editor)) return;
     WriteAction.run(() -> {
       try {

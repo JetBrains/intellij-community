@@ -32,4 +32,22 @@ public class EditorMultiCaretPerformanceTest extends AbstractEditorTest {
     }).attempts(1).assertTiming();
     checkResultByText(StringUtil.repeat(StringUtil.repeat("a", charactersToType) + "<caret>\n", caretCount));
   }
+
+  public void testTypingWithManyFoldRegions() {
+    int caretCount = 1000;
+    int charactersToType = 100;
+    String initialText = StringUtil.repeat(" <caret> \n", caretCount);
+    initText(initialText);
+    myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
+      for (int i = 0; i < caretCount; i++) {
+        addFoldRegion(myEditor.getDocument().getLineStartOffset(i), myEditor.getDocument().getLineEndOffset(i), "...");
+      }
+    });
+    PlatformTestUtil.startPerformanceTest("Typing with large number of carets with a lot of fold regions", 150_000, () -> {
+      for (int i = 0; i < charactersToType; i++) {
+        type('a');
+      }
+    }).attempts(1).assertTiming();
+    checkResultByText(StringUtil.repeat(' ' + StringUtil.repeat("a", charactersToType) + "<caret> \n", caretCount));
+  }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.concurrency.JobScheduler;
@@ -52,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.io.ByteArrayOutputStream;
 import java.util.*;
@@ -73,6 +60,9 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   public void tearDown() throws Exception {
     try {
       Disposer.dispose(myConsole);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -279,11 +269,12 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       point.unregisterExtension(extension);
     }
 
-    boolean oldUse = UISettings.getInstance().getOverrideConsoleCycleBufferSize();
-    int oldSize = UISettings.getInstance().getConsoleCycleBufferSizeKb();
+    UISettings uiSettings = UISettings.getInstance();
+    boolean oldUse = uiSettings.getOverrideConsoleCycleBufferSize();
+    int oldSize = uiSettings.getConsoleCycleBufferSizeKb();
 
-    UISettings.getInstance().setOverrideConsoleCycleBufferSize(true);
-    UISettings.getInstance().setConsoleCycleBufferSizeKb(capacityKB);
+    uiSettings.setOverrideConsoleCycleBufferSize(true);
+    uiSettings.setConsoleCycleBufferSizeKb(capacityKB);
     // create new to reflect changed buffer size
     ConsoleViewImpl console = createConsole(true);
     try {
@@ -291,8 +282,8 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     }
     finally {
       Disposer.dispose(console);
-      UISettings.getInstance().setOverrideConsoleCycleBufferSize(oldUse);
-      UISettings.getInstance().setConsoleCycleBufferSizeKb(oldSize);
+      uiSettings.setOverrideConsoleCycleBufferSize(oldUse);
+      uiSettings.setConsoleCycleBufferSizeKb(oldSize);
 
 
       for (ConsoleFolding extension : extensions) {
@@ -442,5 +433,41 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     myConsole.waitAllRequests();
     assertEquals(expectedText.toString(), myConsole.getText());
     assertEquals(expectedRegisteredTokens, registered);
+  }
+
+  public void testBackspaceDeletesPreviousOutput() {
+    assertPrintedText(new String[]{"Test", "\b"}, "Tes");
+    assertPrintedText(new String[]{"Test", "\b", "\b"}, "Te");
+    assertPrintedText(new String[]{"Hello", "\b\b\b\b", "allo"}, "Hallo");
+    assertPrintedText(new String[]{"A\b\b\bha\bop", "\bul\bpp", "\b\bsl\be"}, "house");
+    assertPrintedText(new String[]{"\b\bTest\b\b\b\b\b", "Done", "\b\b\b"}, "D");
+    assertPrintedText(new String[]{"\b\b\b\b\b\b\b"}, "");
+    assertPrintedText(new String[]{"The\b\b\b\b", "first lint", "\be\n",
+      "\b\b\bsecond lone", "\b\b\bine\n",
+      "\bthird\b\b\b\b\b\b\b\bthe third line"}, "first line\nsecond line\nthe third line");
+    assertPrintedText(new String[]{"\n\n\b\bStart\nEnq\bd"}, "\n\nStart\nEnd");
+    assertPrintedText(new String[]{"\nEnter your pass:", "\rsecreq\bt"}, "\nsecret");
+    assertPrintedText(new String[]{"test\b\b\b\b\b\bline1\n\blinee\b2\r\n\blin\b\b\b\bline?", "\b3\n", "Done\n"},
+                      "line1\nline2\nline3\nDone\n");
+  }
+
+  private void assertPrintedText(@NotNull String[] textToPrint, @NotNull String expectedText) {
+    myConsole.clear();
+    myConsole.waitAllRequests();
+    Assert.assertEquals("", myConsole.getText());
+    for (String text : textToPrint) {
+      myConsole.print(text, ConsoleViewContentType.NORMAL_OUTPUT);
+    }
+    myConsole.flushDeferredText();
+    Assert.assertEquals(expectedText, myConsole.getText());
+
+    myConsole.clear();
+    myConsole.waitAllRequests();
+    Assert.assertEquals("", myConsole.getText());
+    for (String text : textToPrint) {
+      myConsole.print(text, ConsoleViewContentType.NORMAL_OUTPUT);
+      myConsole.flushDeferredText();
+    }
+    Assert.assertEquals(expectedText, myConsole.getText());
   }
 }

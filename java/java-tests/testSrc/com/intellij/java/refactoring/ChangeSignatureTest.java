@@ -34,7 +34,7 @@ import java.util.HashSet;
 public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   private CommonCodeStyleSettings getJavaSettings() {
-    return getCurrentCodeStyleSettings(ourProject).getCommonSettings(JavaLanguage.INSTANCE);
+    return getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
   }
 
   public void testSimple() {
@@ -442,6 +442,10 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testPreserveOverride() {
+    doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+  }
+
+  public void testKeepTryWithResources() {
     doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
   }
 

@@ -355,13 +355,13 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       PsiClass[] supers = psiClass.getSupers();
       List<PsiClass> filtered = new ArrayList<>();
       for (PsiClass aSuper : supers) {
-        if (!aSuper.getManager().isInProject(aSuper)) continue;
+        if (!canModify(aSuper)) continue;
         if (!(aSuper instanceof PsiTypeParameter)) filtered.add(aSuper);
       }
       return filtered;
     }
     else {
-      if (psiClass == null || !psiClass.getManager().isInProject(psiClass)) {
+      if (psiClass == null || !canModify(psiClass)) {
         return Collections.emptyList();
       }
 
@@ -395,7 +395,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   }
 
   protected boolean canBeTargetClass(PsiClass psiClass) {
-    return psiClass.getManager().isInProject(psiClass);
+    return canModify(psiClass);
   }
 
   public static void startTemplate (@NotNull Editor editor, final Template template, @NotNull final Project project) {
@@ -426,7 +426,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   public static void setupGenericParameters(PsiClass targetClass, PsiJavaCodeReferenceElement ref) {
     int numParams = ref.getTypeParameters().length;
     if (numParams == 0) return;
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(ref.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
     final Set<String> typeParamNames = new HashSet<>();
     for (PsiType type : ref.getTypeParameters()) {
       final PsiClass psiClass = PsiUtil.resolveClassInType(type);

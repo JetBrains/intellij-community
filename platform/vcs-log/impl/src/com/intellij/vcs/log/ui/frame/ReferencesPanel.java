@@ -59,10 +59,10 @@ public class ReferencesPanel extends JPanel {
 
   public void setReferences(@NotNull List<VcsRef> references) {
     if (myReferences.equals(references)) return;
-    
+
     myReferences = references;
 
-    List<VcsRef> visibleReferences = (myRefsLimit > 0) ? myReferences.subList(0, Math.min(myReferences.size(), myRefsLimit)) : myReferences;
+    List<VcsRef> visibleReferences = (myRefsLimit > 0) ? ContainerUtil.getFirstItems(myReferences, myRefsLimit) : myReferences;
     myGroupedVisibleReferences = ContainerUtil.groupBy(visibleReferences, VcsRef::getType);
 
     update();

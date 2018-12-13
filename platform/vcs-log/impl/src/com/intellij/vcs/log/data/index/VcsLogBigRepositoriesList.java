@@ -54,6 +54,12 @@ public class VcsLogBigRepositoriesList implements PersistentStateComponent<VcsLo
     }
   }
 
+  public int getRepositoriesCount() {
+    synchronized (myLock) {
+      return myState.REPOSITORIES.size();
+    }
+  }
+
   @NotNull
   public static VcsLogBigRepositoriesList getInstance() {
     return ServiceManager.getService(VcsLogBigRepositoriesList.class);

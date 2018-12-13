@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
@@ -202,6 +202,14 @@ public class VfsUtil extends VfsUtilCore {
     return virtualFile;
   }
 
+  @Nullable
+  public static VirtualFile refreshAndFindChild(@NotNull VirtualFile directory, @NotNull String name) {
+    if (directory instanceof NewVirtualFile) {
+      return ((NewVirtualFile)directory).refreshAndFindChild(name);
+    }
+    return findFileByIoFile(new File(virtualToIoFile(directory), name), true);
+  }
+
   /**
    * @return correct URL, must be used only for external communication
    */
@@ -266,7 +274,7 @@ public class VfsUtil extends VfsUtilCore {
 
   public static String getUrlForLibraryRoot(@NotNull File libraryRoot) {
     String path = FileUtil.toSystemIndependentName(libraryRoot.getAbsolutePath());
-    if (FileTypeManager.getInstance().getFileTypeByFileName(libraryRoot.getName()) == FileTypes.ARCHIVE) {
+    if (FileTypeManager.getInstance().getFileTypeByFileName(libraryRoot.getName()) == ArchiveFileType.INSTANCE) {
       return VirtualFileManager.constructUrl(JarFileSystem.getInstance().getProtocol(), path + JarFileSystem.JAR_SEPARATOR);
     }
     else {

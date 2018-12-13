@@ -2,9 +2,9 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -72,7 +72,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyExpression qualifier = getQualifier();
 
     // Return special reference
-    final ConsoleCommunication communication = getContainingFile().getCopyableUserData(PydevConsoleRunner.CONSOLE_KEY);
+    final ConsoleCommunication communication = getContainingFile().getCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY);
     if (communication != null) {
       final String prefix = qualifier == null ? "" : qualifier.getText() + ".";
       return new PydevConsoleReference(this, communication, prefix, context.allowRemote());
@@ -385,7 +385,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
       }
       catch (AbstractMethodError e) {
-        LOG.info(new ExtensionException(provider.getClass()));
+        LOG.info(PluginManagerCore.createPluginException("Failed to get expression type via " + provider.getClass(), e, provider.getClass()));
       }
     }
     return null;

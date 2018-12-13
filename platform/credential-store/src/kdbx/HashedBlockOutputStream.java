@@ -43,8 +43,8 @@ import java.security.MessageDigest;
  *
  * @author Jo
  */
-public class HashedBlockOutputStream extends OutputStream {
-  private static final int BLOCK_SIZE = 8 * 1024;
+final class HashedBlockOutputStream extends OutputStream {
+  static final int BLOCK_SIZE = 8 * 1024;
   private static final int HASH_SIZE = 32;
   private static final byte[] ZERO_HASH = new byte[HASH_SIZE];
 
@@ -53,9 +53,9 @@ public class HashedBlockOutputStream extends OutputStream {
   private final ByteArrayOutputStream blockOutputStream = new ByteArrayOutputStream();
   private boolean isClosed = false;
 
-  private final MessageDigest md = KdbxHeaderKt.sha256MessageDigest();
+  private final MessageDigest md = KdbxKt.sha256MessageDigest();
 
-  public HashedBlockOutputStream(OutputStream outputStream) {
+  HashedBlockOutputStream(OutputStream outputStream) {
     this.outputStream = outputStream;
   }
 
@@ -87,7 +87,6 @@ public class HashedBlockOutputStream extends OutputStream {
     outputStream.write(ZERO_HASH);
     writeInt(0);
     isClosed = true;
-    outputStream.flush();
     outputStream.close();
   }
 
@@ -100,7 +99,7 @@ public class HashedBlockOutputStream extends OutputStream {
    * @param length number of bytes to write
    * @throws IOException
    */
-  protected void put(byte[] b, int offset, int length) throws IOException {
+  private void put(byte[] b, int offset, int length) throws IOException {
     if (isClosed) {
       throw new EOFException();
     }
@@ -118,7 +117,7 @@ public class HashedBlockOutputStream extends OutputStream {
   /**
    * Save the internal buffer to the underlying stream as a hash block
    */
-  protected void save() throws IOException {
+  private void save() throws IOException {
     // if there's nothing to save don't do anything
     if (blockOutputStream.size() == 0) {
       return;

@@ -20,11 +20,15 @@ import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Irina.Chernushina on 2/20/2017.
@@ -42,10 +46,10 @@ public class JsonJsonPropertyAdapter implements JsonPropertyAdapter {
     return myProperty.getName();
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public JsonValueAdapter getValue() {
-    return myProperty.getValue() == null ? null : createAdapterByType(myProperty.getValue());
+  public Collection<JsonValueAdapter> getValues() {
+    return myProperty.getValue() == null ? ContainerUtil.emptyList() : Collections.singletonList(createAdapterByType(myProperty.getValue()));
   }
 
   @Nullable

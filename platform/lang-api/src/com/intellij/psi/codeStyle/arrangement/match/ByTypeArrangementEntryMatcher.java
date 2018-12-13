@@ -33,7 +33,6 @@ import java.util.Set;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/17/12 11:19 AM
  */
 public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
 

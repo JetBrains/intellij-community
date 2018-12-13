@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -25,7 +26,7 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
   }
 
   @Override
-  public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
+  public void render(@NotNull final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     final Module module = (Module)userObject;
 
     renderer.append(module.isDisposed() ? "" : module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -62,10 +63,12 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
 
   @NotNull
   private static FilePath getModuleRootFilePath(Module module) {
-    VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
-    if (roots.length == 1) {
-      return VcsUtil.getFilePath(roots[0]);
-    }
-    return VcsUtil.getFilePath(ModuleUtilCore.getModuleDirPath(module));
+    return ReadAction.compute(() -> {
+      VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
+      if (roots.length == 1) {
+        return VcsUtil.getFilePath(roots[0]);
+      }
+      return VcsUtil.getFilePath(ModuleUtilCore.getModuleDirPath(module));
+    });
   }
 }

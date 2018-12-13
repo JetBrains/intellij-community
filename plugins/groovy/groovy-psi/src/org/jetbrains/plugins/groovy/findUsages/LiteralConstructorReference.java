@@ -66,7 +66,7 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
 
     final PsiType type = listOrMap.getType();
     final PsiType ownType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
-    if (ownType != null && TypesUtil.isAssignableWithoutConversions(conversionType.rawType(), ownType, listOrMap)) return null;
+    if (ownType != null && TypesUtil.isAssignableWithoutConversions(conversionType.rawType(), ownType)) return null;
 
     final PsiClass resolved = conversionType.resolve();
     if (resolved != null) {

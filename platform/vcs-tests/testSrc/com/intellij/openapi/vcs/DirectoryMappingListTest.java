@@ -30,7 +30,6 @@ public class DirectoryMappingListTest extends PlatformTestCase {
   private NewMappings myMappings;
   private VirtualFile myProjectRoot;
   private String myRootPath;
-  private AllVcsesI myVcses;
 
   @Override
   protected void setUpProject() throws Exception {
@@ -47,10 +46,10 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(myProject);
     startupManager.runStartupActivities();
     startupManager.startCacheUpdate();
-    myVcses = AllVcses.getInstance(myProject);
-    myVcses.registerManually(new MockAbstractVcs(myProject, "mock"));
-    myVcses.registerManually(new MockAbstractVcs(myProject, "CVS"));
-    myVcses.registerManually(new MockAbstractVcs(myProject, "mock2"));
+    AllVcsesI vcses = AllVcses.getInstance(myProject);
+    vcses.registerManually(new MockAbstractVcs(myProject, "mock"));
+    vcses.registerManually(new MockAbstractVcs(myProject, "CVS"));
+    vcses.registerManually(new MockAbstractVcs(myProject, "mock2"));
     myMappings = new NewMappings(myProject, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject),
                                  FileStatusManager.getInstance(myProject));
     startupManager.runPostStartupActivities();
@@ -60,7 +59,9 @@ public class DirectoryMappingListTest extends PlatformTestCase {
   protected void tearDown() throws Exception {
     try {
       myMappings.disposeMe();
-      ((AllVcses)myVcses).dispose();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -71,7 +72,7 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     ((MockAbstractVcs) vcsManager.findVcsByName("mock")).setAllowNestedRoots(true);
 
-    final String[] pathsStr = new String[] {myRootPath + "/a", myRootPath + "/a/b", myRootPath + "/def",
+    final String[] pathsStr = {myRootPath + "/a", myRootPath + "/a/b", myRootPath + "/def",
       myRootPath + "/a-b", myRootPath + "/a-b/d-e", myRootPath + "/a-b1/d-e"};
     final VirtualFile a = myProjectRoot.findChild("a");
     createChildDirectory(a, "b");
@@ -119,7 +120,7 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
     myMappings.setMapping(myRootPath + "/parent/path", "CVS");
 
-    final String[] children = new String[] {
+    final String[] children = {
       myRootPath + "/parent/path", myRootPath + "\\parent\\path", myRootPath + "\\parent\\path"
     };
     createFiles(children);
@@ -140,7 +141,7 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
     myMappings.setMapping(myRootPath + "/parent", "CVS");
 
-    final String[] children = new String[] {
+    final String[] children = {
       myRootPath + "/parent/child1", myRootPath + "/parent/middle/child2", myRootPath + "/parent/middle/child3"
     };
     createFiles(children);
@@ -157,7 +158,7 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     myMappings.setMapping(myRootPath + "/parent", "CVS");
     myMappings.setMapping(myRootPath + "/parent/child", "mock");
 
-    final String[] children = new String[] {
+    final String[] children = {
       myRootPath + "/parent/child1", myRootPath + "\\parent\\middle\\child2", myRootPath + "/parent/middle/child3",
       myRootPath + "/parent/child/inner"
     };

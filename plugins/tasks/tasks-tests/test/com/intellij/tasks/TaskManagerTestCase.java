@@ -49,6 +49,9 @@ public abstract class TaskManagerTestCase extends LightCodeInsightFixtureTestCas
       myTaskManager.setRepositories(Collections.emptyList());
       removeAllTasks();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myTaskManager = null;
       super.tearDown();

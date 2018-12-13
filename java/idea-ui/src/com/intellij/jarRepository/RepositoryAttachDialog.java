@@ -98,8 +98,8 @@ public class RepositoryAttachDialog extends DialogWrapper {
     myProject = project;
     myProgressIcon.suspend();
     myCaptionLabel.setText(
-      XmlStringUtil.wrapInHtml(StringUtil.escapeXml("keyword or class name to search by or exact Maven coordinates, " +
-                                                    "i.e. 'spring', 'Logger' or 'ant:ant-junit:1.6.5'")
+      XmlStringUtil.wrapInHtml(StringUtil.escapeXmlEntities("keyword or class name to search by or exact Maven coordinates, " +
+                                                            "i.e. 'spring', 'Logger' or 'ant:ant-junit:1.6.5'")
       ));
     myInfoLabel.setPreferredSize(
       new Dimension(myInfoLabel.getFontMetrics(myInfoLabel.getFont()).stringWidth("Showing: 1000"), myInfoLabel.getPreferredSize().height));

@@ -32,7 +32,7 @@ public class GitRebaseActionDialog extends DialogWrapper {
    * @param roots       the git repository roots for the project
    * @param defaultRoot the guessed default root
    */
-  public GitRebaseActionDialog(Project project, String title, List<VirtualFile> roots, VirtualFile defaultRoot) {
+  public GitRebaseActionDialog(Project project, String title, List<? extends VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRootComboBox, null);
     setTitle(title);

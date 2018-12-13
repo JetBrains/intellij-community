@@ -121,9 +121,11 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     try {
       myTestFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myTestFixture = null;
-
       super.tearDown();
     }
   }
@@ -187,7 +189,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     myTestFixture.testRename(name + "." + ext, name + "_after." + ext, newName);
   }
 
-  @SuppressWarnings({ "deprecation", "unchecked" })
+  @SuppressWarnings({ "deprecation"})
   protected void doTestQuickFix(String file, String ext) {
     final PsiReference psiReference = myTestFixture.getReferenceAtCaretPositionWithAssertion(file + "." + ext);
     assertNull("Reference", psiReference.resolve());

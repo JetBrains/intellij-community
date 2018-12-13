@@ -25,21 +25,21 @@ import annotatedPkg.ClassInAnnotatedPkg;
 
 public class UnstableElementsIgnoreImportsTest {
   public void test() {
-    String s = <warning descr="'AnnotatedClass' is marked unstable">AnnotatedClass</warning>.NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS;
-    <warning descr="'AnnotatedClass' is marked unstable">AnnotatedClass</warning>.staticNonAnnotatedMethodInAnnotatedClass();
-    <warning descr="'AnnotatedClass' is marked unstable">AnnotatedClass</warning> annotatedClassInstanceViaNonAnnotatedConstructor = new AnnotatedClass();
+    String s = <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS;
+    <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.staticNonAnnotatedMethodInAnnotatedClass();
+    <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> annotatedClassInstanceViaNonAnnotatedConstructor = new <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>();
     s = annotatedClassInstanceViaNonAnnotatedConstructor.nonAnnotatedFieldInAnnotatedClass;
     annotatedClassInstanceViaNonAnnotatedConstructor.nonAnnotatedMethodInAnnotatedClass();
     s = NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS;
     staticNonAnnotatedMethodInAnnotatedClass();
 
-    s = <warning descr="'AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is marked unstable">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
-    <warning descr="'AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'staticAnnotatedMethodInAnnotatedClass' is marked unstable">staticAnnotatedMethodInAnnotatedClass</warning>();
-    <warning descr="'AnnotatedClass' is marked unstable">AnnotatedClass</warning> annotatedClassInstanceViaAnnotatedConstructor = new <warning descr="'AnnotatedClass' is marked unstable">AnnotatedClass</warning>("");
+    s = <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is marked unstable">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
+    <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'staticAnnotatedMethodInAnnotatedClass()' is marked unstable">staticAnnotatedMethodInAnnotatedClass</warning>();
+    <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> annotatedClassInstanceViaAnnotatedConstructor = new <warning descr="'AnnotatedClass(java.lang.String)' is marked unstable"><warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning></warning>("");
     s = annotatedClassInstanceViaAnnotatedConstructor.<warning descr="'annotatedFieldInAnnotatedClass' is marked unstable">annotatedFieldInAnnotatedClass</warning>;
-    annotatedClassInstanceViaAnnotatedConstructor.<warning descr="'annotatedMethodInAnnotatedClass' is marked unstable">annotatedMethodInAnnotatedClass</warning>();
+    annotatedClassInstanceViaAnnotatedConstructor.<warning descr="'annotatedMethodInAnnotatedClass()' is marked unstable">annotatedMethodInAnnotatedClass</warning>();
     s = <warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is marked unstable">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
-    <warning descr="'staticAnnotatedMethodInAnnotatedClass' is marked unstable">staticAnnotatedMethodInAnnotatedClass</warning>();
+    <warning descr="'staticAnnotatedMethodInAnnotatedClass()' is marked unstable">staticAnnotatedMethodInAnnotatedClass</warning>();
 
     // ---------------------------------
 
@@ -52,18 +52,18 @@ public class UnstableElementsIgnoreImportsTest {
     staticNonAnnotatedMethodInNonAnnotatedClass();
 
     s = NonAnnotatedClass.<warning descr="'ANNOTATED_CONSTANT_IN_NON_ANNOTATED_CLASS' is marked unstable">ANNOTATED_CONSTANT_IN_NON_ANNOTATED_CLASS</warning>;
-    NonAnnotatedClass.<warning descr="'staticAnnotatedMethodInNonAnnotatedClass' is marked unstable">staticAnnotatedMethodInNonAnnotatedClass</warning>();
-    NonAnnotatedClass nonAnnotatedClassInstanceViaAnnotatedConstructor = new <warning descr="'NonAnnotatedClass' is marked unstable">NonAnnotatedClass</warning>("");
+    NonAnnotatedClass.<warning descr="'staticAnnotatedMethodInNonAnnotatedClass()' is marked unstable">staticAnnotatedMethodInNonAnnotatedClass</warning>();
+    NonAnnotatedClass nonAnnotatedClassInstanceViaAnnotatedConstructor = new <warning descr="'NonAnnotatedClass(java.lang.String)' is marked unstable">NonAnnotatedClass</warning>("");
     s = nonAnnotatedClassInstanceViaAnnotatedConstructor.<warning descr="'annotatedFieldInNonAnnotatedClass' is marked unstable">annotatedFieldInNonAnnotatedClass</warning>;
-    nonAnnotatedClassInstanceViaAnnotatedConstructor.<warning descr="'annotatedMethodInNonAnnotatedClass' is marked unstable">annotatedMethodInNonAnnotatedClass</warning>();
+    nonAnnotatedClassInstanceViaAnnotatedConstructor.<warning descr="'annotatedMethodInNonAnnotatedClass()' is marked unstable">annotatedMethodInNonAnnotatedClass</warning>();
     s = <warning descr="'ANNOTATED_CONSTANT_IN_NON_ANNOTATED_CLASS' is marked unstable">ANNOTATED_CONSTANT_IN_NON_ANNOTATED_CLASS</warning>;
-    <warning descr="'staticAnnotatedMethodInNonAnnotatedClass' is marked unstable">staticAnnotatedMethodInNonAnnotatedClass</warning>();
+    <warning descr="'staticAnnotatedMethodInNonAnnotatedClass()' is marked unstable">staticAnnotatedMethodInNonAnnotatedClass</warning>();
 
     // ---------------------------------
 
-    <warning descr="'AnnotatedEnum' is marked unstable">AnnotatedEnum</warning> nonAnnotatedValueInAnnotatedEnum = <warning descr="'AnnotatedEnum' is marked unstable">AnnotatedEnum</warning>.NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM;
+    <warning descr="'pkg.AnnotatedEnum' is marked unstable">AnnotatedEnum</warning> nonAnnotatedValueInAnnotatedEnum = <warning descr="'pkg.AnnotatedEnum' is marked unstable">AnnotatedEnum</warning>.NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM;
     nonAnnotatedValueInAnnotatedEnum = NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM;
-    <warning descr="'AnnotatedEnum' is marked unstable">AnnotatedEnum</warning> annotatedValueInAnnotatedEnum = <warning descr="'AnnotatedEnum' is marked unstable">AnnotatedEnum</warning>.<warning descr="'ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is marked unstable">ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
+    <warning descr="'pkg.AnnotatedEnum' is marked unstable">AnnotatedEnum</warning> annotatedValueInAnnotatedEnum = <warning descr="'pkg.AnnotatedEnum' is marked unstable">AnnotatedEnum</warning>.<warning descr="'ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is marked unstable">ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
     annotatedValueInAnnotatedEnum = <warning descr="'ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is marked unstable">ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
 
     NonAnnotatedEnum nonAnnotatedValueInNonAnnotatedEnum = NonAnnotatedEnum.NON_ANNOTATED_VALUE_IN_NON_ANNOTATED_ENUM;
@@ -73,9 +73,9 @@ public class UnstableElementsIgnoreImportsTest {
     
     // ---------------------------------
 
-     @<warning descr="'AnnotatedAnnotation' is marked unstable">AnnotatedAnnotation</warning> class C1 {}
-    @<warning descr="'AnnotatedAnnotation' is marked unstable">AnnotatedAnnotation</warning>(nonAnnotatedAttributeInAnnotatedAnnotation = "123") class C2 {}
-    @<warning descr="'AnnotatedAnnotation' is marked unstable">AnnotatedAnnotation</warning>(<warning descr="'annotatedAttributeInAnnotatedAnnotation' is marked unstable">annotatedAttributeInAnnotatedAnnotation</warning> = "123") class C3 {}
+     @<warning descr="'pkg.AnnotatedAnnotation' is marked unstable">AnnotatedAnnotation</warning> class C1 {}
+    @<warning descr="'pkg.AnnotatedAnnotation' is marked unstable">AnnotatedAnnotation</warning>(nonAnnotatedAttributeInAnnotatedAnnotation = "123") class C2 {}
+    @<warning descr="'pkg.AnnotatedAnnotation' is marked unstable">AnnotatedAnnotation</warning>(<warning descr="'annotatedAttributeInAnnotatedAnnotation' is marked unstable">annotatedAttributeInAnnotatedAnnotation</warning> = "123") class C3 {}
     @NonAnnotatedAnnotation class C4 {}
     @NonAnnotatedAnnotation(nonAnnotatedAttributeInNonAnnotatedAnnotation = "123") class C5 {}
     @NonAnnotatedAnnotation(<warning descr="'annotatedAttributeInNonAnnotatedAnnotation' is marked unstable">annotatedAttributeInNonAnnotatedAnnotation</warning> = "123") class C6 {}

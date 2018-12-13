@@ -108,24 +108,24 @@ public class ClassPath {
   public Resource getResource(String s) {
     final long started = startTiming();
     try {
+      String shortName = ClasspathCache.transformName(s);
+      
       int i;
       if (myCanUseCache) {
         boolean allUrlsWereProcessed = myAllUrlsWereProcessed;
         i = allUrlsWereProcessed ? 0 : myLastLoaderProcessed.get();
 
-        Resource prevResource = myCache.iterateLoaders(s, ourResourceIterator, s, this);
+        Resource prevResource = myCache.iterateLoaders(s, ourResourceIterator, s, this, shortName);
         if (prevResource != null || allUrlsWereProcessed) return prevResource;
       }
       else {
         i = 0;
       }
 
-      String shortName = ClasspathCache.transformName(s);
-
       Loader loader;
       while ((loader = getLoader(i++)) != null) {
         if (myCanUseCache) {
-          if (!myCache.loaderHasName(s, shortName, loader)) continue;
+          if (!loader.containsName(s, shortName)) continue;
         }
         Resource resource = loader.getResource(s);
         if (resource != null) {
@@ -145,13 +145,21 @@ public class ClassPath {
   }
 
   @Nullable
-  private synchronized Loader getLoader(int i) {
+  private Loader getLoader(int i) {
+    if (i < myLastLoaderProcessed.get()) { // volatile read
+      return myLoaders.get(i);
+    }
+
+    return getLoaderSlowPath(i);
+  }
+
+  @Nullable
+  private synchronized Loader getLoaderSlowPath(int i) {
     while (myLoaders.size() < i + 1) {
       URL url;
       synchronized (myUrls) {
         if (myUrls.empty()) {
           if (myCanUseCache) {
-            myCache.nameSymbolsLoaded();
             myAllUrlsWereProcessed = true;
           }
           return null;
@@ -218,7 +226,7 @@ public class ClassPath {
           List<URL> urls = new ArrayList<URL>(referencedJars.length);
           for (String referencedJar:referencedJars) {
             try {
-              urls.add(new URI(referencedJar).toURL());
+              urls.add(UrlClassLoader.internProtocol(new URI(referencedJar).toURL()));
             }
             catch (Exception e) {
               Logger.getInstance(ClassPath.class).warn("url: " + url + " / " + referencedJar, e);
@@ -252,14 +260,12 @@ public class ClassPath {
       }
       
       if (lastOne) {
-        myCache.nameSymbolsLoaded();
         myAllUrlsWereProcessed = true;
       }
-      myLastLoaderProcessed.incrementAndGet();
-      //assert myLastLoaderProcessed.get() == myLoaders.size();
     }
     myLoaders.add(loader);
     myLoadersMap.put(url, loader);
+    myLastLoaderProcessed.incrementAndGet(); // volatile write
   }
 
   Attributes getManifestData(URL url) {
@@ -286,12 +292,12 @@ public class ClassPath {
 
       if (myCanUseCache && myAllUrlsWereProcessed) {
         Collection<Loader> loadersSet = new LinkedHashSet<Loader>();
-        myCache.iterateLoaders(name, ourLoaderCollector, loadersSet, this);
+        myCache.iterateLoaders(name, ourLoaderCollector, loadersSet, this, myShortName);
 
         if (name.endsWith("/")) {
-          myCache.iterateLoaders(name.substring(0, name.length() - 1), ourLoaderCollector, loadersSet, this);
+          myCache.iterateLoaders(name.substring(0, name.length() - 1), ourLoaderCollector, loadersSet, this, myShortName);
         } else {
-          myCache.iterateLoaders(name + "/", ourLoaderCollector, loadersSet, this);
+          myCache.iterateLoaders(name + "/", ourLoaderCollector, loadersSet, this, myShortName);
         }
 
         loaders = new ArrayList<Loader>(loadersSet);
@@ -309,7 +315,7 @@ public class ClassPath {
         if (myLoaders != null) {
           while (myIndex < myLoaders.size()) {
             loader = myLoaders.get(myIndex++);
-            if (!myCache.loaderHasName(myName, myShortName, loader)) {
+            if (!loader.containsName(myName, myShortName)) {
               myRes = null;
               continue;
             }
@@ -319,7 +325,7 @@ public class ClassPath {
         }
         else {
           while ((loader = getLoader(myIndex++)) != null) {
-            if (myCanUseCache && !myCache.loaderHasName(myName, myShortName, loader)) continue;
+            if (myCanUseCache && !loader.containsName(myName, myShortName)) continue;
             myRes = loader.getResource(myName);
             if (myRes != null) return true;
           }
@@ -352,17 +358,17 @@ public class ClassPath {
 
   private static class ResourceStringLoaderIterator extends ClasspathCache.LoaderIterator<Resource, String, ClassPath> {
     @Override
-    Resource process(Loader loader, String s, ClassPath classPath) {
-      if (!classPath.myCache.loaderHasName(s, ClasspathCache.transformName(s), loader)) return null;
+    Resource process(Loader loader, String s, ClassPath classPath, String shortName) {
+      if (!loader.containsName(s, shortName)) return null;
       Resource resource = loader.getResource(s);
-      if (resource != null) printOrder(loader, s, resource);
+      if (resource != null && ourDumpOrder) printOrder(loader, s, resource);
       return resource;
     }
   }
 
   private static class LoaderCollector extends ClasspathCache.LoaderIterator<Object, Collection<Loader>, Object> {
     @Override
-    Object process(Loader loader, Collection<Loader> parameter, Object parameter2) {
+    Object process(Loader loader, Collection<Loader> parameter, Object parameter2, String shortName) {
       parameter.add(loader);
       return null;
     }
@@ -425,14 +431,24 @@ public class ClassPath {
   static final boolean ourLogTiming = Boolean.getBoolean("idea.print.classpath.timing");
   private static final AtomicLong ourTotalTime = new AtomicLong();
   private static final AtomicInteger ourTotalRequests = new AtomicInteger();
+  private static final ThreadLocal<Boolean> ourDoingTiming = new ThreadLocal<Boolean>();
 
   private static long startTiming() {
-    return ourLogTiming ? System.nanoTime() : 0;
-  }
+    if (!ourLogTiming) return 0;
+    if (ourDoingTiming.get() != null) {
+      return 0;
+    }
+    ourDoingTiming.set(Boolean.TRUE);
+    return System.nanoTime();
+  }                                            
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void logTiming(ClassPath path, long started, String msg) {
     if (!ourLogTiming) return;
+    if (started == 0) {
+      return;
+    }
+    ourDoingTiming.set(null);
 
     long time = System.nanoTime() - started;
     long totalTime = ourTotalTime.addAndGet(time);
@@ -441,7 +457,7 @@ public class ClassPath {
       System.out.println(time / 1000000 + " ms for " + msg);
     }
     if (totalRequests % 10000 == 0) {
-      System.out.println(path + ", requests:" + ourTotalRequests + ", time:" + (totalTime / 1000000) + "ms");
+      System.out.println(path.getClass().getClassLoader() + ", requests:" + ourTotalRequests + ", time:" + (totalTime / 1000000) + "ms");
     }
   }
   static {
@@ -449,7 +465,7 @@ public class ClassPath {
       Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook for tracing classloading information") {
         @Override
         public void run() {
-          System.out.println("Classloading requests:" + ourTotalRequests + ", time:" + (ourTotalTime.get() / 1000000) + "ms");
+          System.out.println("Classloading requests:" + ClassPath.class.getClassLoader() + "," + ourTotalRequests + ", time:" + (ourTotalTime.get() / 1000000) + "ms");
         }
       });
     }

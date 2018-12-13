@@ -20,7 +20,6 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/21/13
  */
 public abstract class GradleBaseInspection extends BaseInspection {
   @NotNull

@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.Disposable
@@ -10,7 +11,6 @@ import com.intellij.psi.codeStyle.CustomCodeStyleSettings
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.loadElement
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.ClassRule
@@ -43,7 +43,7 @@ class CodeStyleTest {
         <option name="KEEP_BLANK_LINES_IN_CODE" value="10" />
       </codeStyleSettings>
     </code_scheme>""".trimIndent()
-    settings.readExternal(loadElement(loaded))
+    settings.readExternal(JDOMUtil.load(loaded))
 
     val serialized = Element("code_scheme").setAttribute("name", "testSchemeName")
     settings.writeExternal(serialized)
@@ -75,7 +75,7 @@ class CodeStyleTest {
               extra = Element(tagName)
               parentElement.addContent(extra)
             }
-            
+
             val option = Element("option")
             option.setAttribute("name", "MAIN")
             option.setAttribute("value", "3")
@@ -103,7 +103,7 @@ class CodeStyleTest {
 
     try {
       val settings = CodeStyleSettings()
-      val text : (param: String) -> String = { param -> 
+      val text : (param: String) -> String = { param ->
         """
       <code_scheme name="testSchemeName" version="${CodeStyleSettings.CURR_VERSION}">
         <NewComponent>
@@ -126,7 +126,7 @@ class CodeStyleTest {
         </codeStyleSettings>
       </code_scheme>""".trimIndent()
       }
-      settings.readExternal(loadElement(text("2")))
+      settings.readExternal(JDOMUtil.load(text("2")))
 
       val serialized = Element("code_scheme").setAttribute("name", "testSchemeName")
       settings.writeExternal(serialized)
@@ -149,7 +149,7 @@ class CodeStyleTest {
       <option name="RIGHT_MARGIN" value="64" />
     </code_scheme>""".trimIndent();
 
-    settings.readExternal(loadElement(initial))
+    settings.readExternal(JDOMUtil.load(initial))
     settings.resetDeprecatedFields()
 
     val serialized = Element("code_scheme").setAttribute("name", "testSchemeName")

@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.jetbrains.jsonSchema.JsonPointerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
@@ -30,6 +29,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
 
 /**
  * @author Irina.Chernushina on 8/28/2015.
@@ -129,7 +130,6 @@ public class JsonSchemaObject {
                                                  @NotNull JsonSchemaType otherType) {
     if (otherType == JsonSchemaType._any) return selfType;
     if (selfType == JsonSchemaType._any) return otherType;
-    //noinspection EnumSwitchStatementWhichMissesCases
     switch (selfType) {
       case _string:
         return otherType == JsonSchemaType._string || otherType == JsonSchemaType._string_number ? JsonSchemaType._string : null;
@@ -784,14 +784,14 @@ public class JsonSchemaObject {
 
   @Nullable
   public JsonSchemaObject findRelativeDefinition(@NotNull String ref) {
-    if ("#".equals(ref) || StringUtil.isEmpty(ref)) {
+    if (isSelfReference(ref)) {
       return this;
     }
     if (!ref.startsWith("#/")) {
       return null;
     }
     ref = ref.substring(2);
-    final List<String> parts = StringUtil.split(ref, "/");
+    final List<String> parts = split(ref);
     JsonSchemaObject current = this;
     for (int i = 0; i < parts.size(); i++) {
       if (current == null) return null;
@@ -800,13 +800,13 @@ public class JsonSchemaObject {
         if (i == (parts.size() - 1)) return null;
         //noinspection AssignmentToForLoopParameter
         final String nextPart = parts.get(++i);
-        current = current.getDefinitionsMap() == null ? null : current.getDefinitionsMap().get(JsonPointerUtil.unescapeJsonPointerPart(nextPart));
+        current = current.getDefinitionsMap() == null ? null : current.getDefinitionsMap().get(unescapeJsonPointerPart(nextPart));
         continue;
       }
       if (PROPERTIES.equals(part)) {
         if (i == (parts.size() - 1)) return null;
         //noinspection AssignmentToForLoopParameter
-        current = current.getProperties().get(JsonPointerUtil.unescapeJsonPointerPart(parts.get(++i)));
+        current = current.getProperties().get(unescapeJsonPointerPart(parts.get(++i)));
         continue;
       }
       if (ITEMS.equals(part)) {
@@ -919,8 +919,23 @@ public class JsonSchemaObject {
 
   @Nullable
   public JsonSchemaType guessType() {
+    // if we have an explicit type, here we are
     JsonSchemaType type = getType();
     if (type != null) return type;
+
+    // process type variants before heuristic type detection
+    final Set<JsonSchemaType> typeVariants = getTypeVariants();
+    if (typeVariants != null) {
+      final int size = typeVariants.size();
+      if (size == 1) {
+        return typeVariants.iterator().next();
+      }
+      else if (size >= 2) {
+        return null;
+      }
+    }
+
+    // heuristic type detection based on the set of applied constraints
     boolean hasObjectChecks = hasObjectChecks();
     boolean hasNumericChecks = hasNumericChecks();
     boolean hasStringChecks = hasStringChecks();
@@ -1057,7 +1072,18 @@ public class JsonSchemaObject {
   private static JsonSchemaObject findRelativeDefinition(@NotNull final JsonSchemaObject schema,
                                                          @NotNull final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter) {
     final String path = splitter.getRelativePath();
-    if (StringUtil.isEmptyOrSpaces(path)) return schema;
+    if (StringUtil.isEmptyOrSpaces(path)) {
+      final String id = splitter.getSchemaId();
+      if (isSelfReference(id)) {
+        return schema;
+      }
+      if (id != null && id.startsWith("#")) {
+        final String resolvedId = JsonCachedValues.resolveId(schema.getJsonObject().getContainingFile(), id);
+        if (resolvedId == null || id.equals("#" + resolvedId)) return null;
+        return findRelativeDefinition(schema, new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter("#" + resolvedId));
+      }
+      return schema;
+    }
     final JsonSchemaObject definition = schema.findRelativeDefinition(path);
     if (definition == null) {
       LOG.debug(String.format("Definition not found by reference: '%s' in file %s", path, schema.getSchemaFile().getPath()));

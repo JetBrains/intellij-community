@@ -3,8 +3,8 @@ package com.intellij.ide.updates
 
 import com.intellij.openapi.updateSettings.impl.*
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
-import com.intellij.util.loadElement
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -250,21 +250,34 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
     assertThat(result.patches?.size).isNull()
   }
 
+  @Test fun `allow ignored builds in the middle of a chain`() {
+    val result = check("IU-183.3795.13", ChannelStatus.EAP, """
+      <channel id="IDEA_EAP" status="eap" licensing="eap">
+        <build number="183.4139.22" version="2018.3 EAP">
+          <patch from="183.3975.18" size="1"/>
+        </build>
+        <build number="183.3975.18" version="2018.3 EAP">
+          <patch from="183.3795.13" size="1"/>
+        </build>
+      </channel>""", listOf("183.3975.18"))
+    assertBuild("183.4139.22", result.newBuild)
+    assertThat(result.patches?.chain).isEqualTo(listOf("183.3795.13", "183.3975.18", "183.4139.22").map(BuildNumber::fromString))
+  }
+
   private fun check(currentBuild: String,
                     selectedChannel: ChannelStatus,
                     testData: String,
                     ignoredBuilds: List<String> = emptyList()): CheckForUpdateResult {
-    val updates = UpdatesInfo(loadElement("""
-      <products>
-        <product name="IntelliJ IDEA">
-          <code>IU</code>
-          ${testData}
-        </product>
-      </products>"""))
-    val settings = object : UserUpdateSettings {
-      override fun getSelectedChannelStatus() = selectedChannel
-      override fun getIgnoredBuildNumbers() = ignoredBuilds
-    }
+    val updates = UpdatesInfo(JDOMUtil.load("""
+          <products>
+            <product name="IntelliJ IDEA">
+              <code>IU</code>
+              ${testData}
+            </product>
+          </products>"""))
+    val settings = UpdateSettings()
+    settings.selectedChannelStatus = selectedChannel
+    settings.ignoredBuildNumbers += ignoredBuilds
     val result = UpdateStrategy(BuildNumber.fromString(currentBuild), updates, settings).checkForUpdates()
     assertEquals(UpdateStrategy.State.LOADED, result.state)
     return result

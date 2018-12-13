@@ -16,7 +16,7 @@
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.TimeoutUtil
+import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import java.io.File
 import java.util.concurrent.CountDownLatch
@@ -61,7 +61,7 @@ class CompressedAppendableFileTest : TestCase() {
     }
   }
 
-  fun testConcurrency() {
+  fun testConcurrencyStress() {
     val randomTemporaryPath = File(FileUtil.generateRandomTemporaryPath(), "Test.compressed")
     try {
       val appendableFile = CompressedAppendableFile(randomTemporaryPath)
@@ -95,20 +95,26 @@ class CompressedAppendableFileTest : TestCase() {
         startLatch.await()
         while (proceedLatch.count != 0L) {
           appendableFile.dropCaches()
-          TimeoutUtil.sleep(1)
+          UIUtil.pump()
         }
       }
-      Thread(flusher).start()
+      val thread = Thread(flusher)
+      thread.start()
+      try {
+        startLatch.countDown()
+        proceedLatch.await()
 
-      startLatch.countDown()
-      proceedLatch.await()
-
-      assertEquals(bytesWritten.get(), appendableFile.length())
-      appendableFile.dispose()
-      val appendableFile2 = CompressedAppendableFile(randomTemporaryPath)
-      assertEquals(bytesWritten.get(), appendableFile2.length())
-      appendableFile2.dispose()
-    } finally {
+        assertEquals(bytesWritten.get(), appendableFile.length())
+        appendableFile.dispose()
+        val appendableFile2 = CompressedAppendableFile(randomTemporaryPath)
+        assertEquals(bytesWritten.get(), appendableFile2.length())
+        appendableFile2.dispose()
+      }
+      finally {
+        thread.join()
+      }
+    }
+    finally {
       FileUtil.delete(randomTemporaryPath.parentFile)
     }
   }

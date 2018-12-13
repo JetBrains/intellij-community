@@ -46,6 +46,7 @@ class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
     return null;
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.in.code.to.elements.from.migration.map", myMigrationMap.getName(),

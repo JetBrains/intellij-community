@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -11,6 +14,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -19,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
@@ -30,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefin
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.InferenceContext;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PartialContext;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -43,11 +49,29 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.*;
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class TypeInferenceHelper {
+
+  private static boolean allowNestedContext = true;
+
+  @TestOnly
+  public static void disallowNestedContext(@NotNull Disposable parent) {
+    allowNestedContext = false;
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        allowNestedContext = true;
+      }
+    });
+  }
+
   private static final ThreadLocal<InferenceContext> ourInferenceContext = new ThreadLocal<>();
 
   private static <T> T doInference(@NotNull Map<String, PsiType> bindings, @NotNull Computable<? extends T> computation) {
+    if (!allowNestedContext && ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new IllegalStateException("Unexpected attempt to infer in nested context");
+    }
     InferenceContext old = ourInferenceContext.get();
-    ourInferenceContext.set(new InferenceContext.PartialContext(bindings, getCurrentContext()));
+    ourInferenceContext.set(new PartialContext(bindings));
     try {
       return computation.compute();
     }
@@ -163,8 +187,8 @@ public class TypeInferenceHelper {
         if (idx >= 0 && rValue != null) {
           PsiType rType = rValue.getType();
           if (rType instanceof GrTupleType) {
-            PsiType[] componentTypes = ((GrTupleType)rType).getComponentTypes();
-            if (idx < componentTypes.length) return componentTypes[idx];
+            List<PsiType> componentTypes = ((GrTupleType)rType).getComponentTypes();
+            if (idx < componentTypes.size()) return componentTypes.get(idx);
             return null;
           }
           return PsiUtil.extractIterableTypeParameter(rType, false);
@@ -225,7 +249,7 @@ public class TypeInferenceHelper {
       final String varName = instruction.getVariableName();
       if (varName == null) return;
 
-      updateVariableType(state, instruction, varName, (NullableComputable<DFAType>)() -> {
+      updateVariableType(state, instruction, varName, false, (NullableComputable<DFAType>)() -> {
         ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(myFlow);
         assert originalInstr != null && !originalInstr.isWrite();
 
@@ -242,12 +266,18 @@ public class TypeInferenceHelper {
     private void handleVariableWrite(TypeDfaState state, ReadWriteVariableInstruction instruction) {
       final PsiElement element = instruction.getElement();
       if (element != null && instruction.isWrite()) {
-        updateVariableType(state, instruction, instruction.getVariableName(),
-                           () -> DFAType.create(getInitializerType(element)));
+        updateVariableType(
+          state, instruction, instruction.getVariableName(), element instanceof GrParameter,
+          () -> DFAType.create(getInitializerType(element))
+        );
       }
     }
 
-    private void updateVariableType(@NotNull TypeDfaState state, @NotNull Instruction instruction, @NotNull String variableName, @NotNull Computable<? extends DFAType> computation) {
+    private void updateVariableType(@NotNull TypeDfaState state,
+                                    @NotNull Instruction instruction,
+                                    @NotNull String variableName,
+                                    boolean initialWrite,
+                                    @NotNull Computable<? extends DFAType> computation) {
       if (!myInteresting.contains(instruction)) {
         state.removeBinding(variableName);
         return;
@@ -255,7 +285,12 @@ public class TypeInferenceHelper {
 
       DFAType type = myCache.getCachedInferredType(variableName, instruction);
       if (type == null) {
-        type = doInference(state.getBindings(instruction), computation);
+        if (initialWrite) {
+          type = computation.compute();
+        }
+        else {
+          type = doInference(state.getBindings(instruction), computation);
+        }
       }
       state.putType(variableName, type);
     }
@@ -279,7 +314,6 @@ public class TypeInferenceHelper {
       this.flow = scope.getControlFlow();
       this.flowByElements = Arrays.stream(flow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
       List<TypeDfaState> noTypes = new ArrayList<>();
-      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < flow.length; i++) {
         noTypes.add(new TypeDfaState());
       }

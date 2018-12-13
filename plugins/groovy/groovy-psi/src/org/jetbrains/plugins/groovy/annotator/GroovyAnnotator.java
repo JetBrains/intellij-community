@@ -93,7 +93,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isFieldDecla
 /**
  * @author ven
  */
-@SuppressWarnings({"unchecked"})
 public class GroovyAnnotator extends GroovyElementVisitor {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.GroovyAnnotator");
   public static final Condition<PsiClass> IS_INTERFACE = aClass -> aClass.isInterface();
@@ -1034,7 +1033,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     holder.createErrorAnnotation(element, GroovyBundle.message("unexpected.attribute.type.0", element.getType()));
   }
 
-  @SuppressWarnings("Duplicates")
   static void checkMethodReturnType(PsiMethod method, PsiElement toHighlight, AnnotationHolder holder) {
     final HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
     final List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
@@ -1212,30 +1210,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitConstructorInvocation(@NotNull GrConstructorInvocation invocation) {
-    final GroovyResolveResult resolveResult = invocation.advancedResolve();
-    if (resolveResult.getElement() == null) {
-      final GroovyResolveResult[] results = invocation.multiResolve(false);
-      final GrArgumentList argList = invocation.getArgumentList();
-      if (results.length > 0) {
-        String message = GroovyBundle.message("ambiguous.constructor.call");
-        myHolder.createWarningAnnotation(argList, message);
-      }
-      else {
-        final PsiClass clazz = invocation.getDelegatedClass();
-        if (clazz != null) {
-          //default constructor invocation
-          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(invocation.getInvokedExpression(), true);
-          if (argumentTypes != null && argumentTypes.length > 0) {
-            String message = GroovyBundle.message("cannot.apply.default.constructor", clazz.getName());
-            myHolder.createWarningAnnotation(argList, message);
-          }
-        }
-      }
-    }
-  }
-
-  @Override
   public void visitBreakStatement(@NotNull GrBreakStatement breakStatement) {
     checkFlowInterruptStatement(breakStatement, myHolder);
   }
@@ -1343,7 +1317,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       parts = ((GrRegex)regex).getTextParts();
     }
     else {
-      //noinspection ConstantConditions
       parts = new String[]{regex.getFirstChild().getNextSibling().getText()};
     }
 

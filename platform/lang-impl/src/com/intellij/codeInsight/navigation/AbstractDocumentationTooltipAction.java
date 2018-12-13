@@ -31,7 +31,6 @@ import java.lang.ref.WeakReference;
  * Expands {@link AnAction} contract for documentation-related actions that may be called from the IDE tooltip.
  * 
  * @author Denis Zhdanov
- * @since 7/26/12 12:28 PM
  */
 public abstract class AbstractDocumentationTooltipAction extends AnAction {
 

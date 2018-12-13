@@ -19,7 +19,6 @@ import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.config.ExternalizablePropertyContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,13 +60,7 @@ public abstract class AntConfigurationBase extends AntConfiguration {
     return myProperties;
   }
 
-  public final void ensureInitialized() {
-    int attemptCount = 0; // need this in order to make sure we will not block swing thread forever
-    while (!isInitialized() && attemptCount < 6000) {
-      TimeoutUtil.sleep(10);
-      attemptCount++;
-    }
-  }
+  public abstract void ensureInitialized();
 
   public abstract void setContextFile(@NotNull XmlFile file, @Nullable XmlFile context);
 

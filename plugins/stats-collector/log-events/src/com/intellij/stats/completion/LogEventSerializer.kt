@@ -67,7 +67,8 @@ object LogEventSerializer {
         Action.COMPLETION_CANCELED to CompletionCancelledEvent::class.java,
         Action.EXPLICIT_SELECT to ExplicitSelectEvent::class.java,
         Action.TYPED_SELECT to TypedSelectEvent::class.java,
-        Action.CUSTOM to CustomMessageEvent::class.java
+        Action.CUSTOM to CustomMessageEvent::class.java,
+        Action.PERFORMANCE to PerformanceEvent::class.java
     )
 
 

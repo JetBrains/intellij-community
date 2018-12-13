@@ -19,3 +19,12 @@ operator fun <T> Consumer<in T>.plusAssign(elements: Array<out T>) {
 operator fun <T> Consumer<in T>.plusAssign(element: T) {
   accept(element)
 }
+
+fun <T> Array<T>.init(): List<T> {
+  require(isNotEmpty())
+  return dropLast(1)
+}
+
+fun <T : Any> recursionPreventingLazy(initializer: () -> T): Lazy<T?> = RecursionPreventingSafePublicationLazy(initializer)
+
+fun <T> recursionAwareLazy(initializer: () -> T): Lazy<T> = RecursionAwareSafePublicationLazy(initializer)

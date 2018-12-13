@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
  * outdated parameters and create stubs for the new ones.
  *
  * @author Denis Zhdanov
- * @since 9/20/12 10:15 AM
  */
 public class FixDocCommentAction extends EditorAction {
 

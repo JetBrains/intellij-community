@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/18/2016
  */
 public interface ModuleFilesBuildTask extends ModuleBuildTask {
   VirtualFile[] getFiles();

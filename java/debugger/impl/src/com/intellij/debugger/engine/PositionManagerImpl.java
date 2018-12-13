@@ -486,7 +486,6 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
     while (element != null) {
       if (element instanceof PsiClass && !(previous instanceof PsiExpressionList)) {
-        //noinspection unchecked
         return (PsiClass)element;
       }
       if (element instanceof PsiFile) {

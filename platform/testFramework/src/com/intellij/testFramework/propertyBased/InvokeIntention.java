@@ -35,10 +35,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -83,12 +80,16 @@ public class InvokeIntention extends ActionOnFile {
     return result;
   }
 
-  private void doInvokeIntention(int offset, Environment env) {
+  protected void doInvokeIntention(int offset, Environment env) {
     Project project = getProject();
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
     assert editor != null;
 
-    boolean containsErrorElements = MadTestingUtil.containsErrorElements(getFile().getViewProvider());
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    FileViewProvider viewProvider = getFile().getViewProvider();
+    boolean containsErrorElements = MadTestingUtil.containsErrorElements(viewProvider);
+
     List<HighlightInfo> errors = highlightErrors(project, editor);
     boolean hasErrors = !errors.isEmpty() || containsErrorElements;
 
@@ -97,7 +98,9 @@ public class InvokeIntention extends ActionOnFile {
     List<IntentionAction> intentions = getAvailableIntentions(editor, file);
     // Do not reuse originally passed offset here, sometimes it's adjusted by Editor
     PsiElement currentElement = file.findElementAt(editor.getCaretModel().getOffset());
-    intentions = wrapAndCheck(env, editor, currentElement, containsErrorElements, hasErrors, intentions);
+    if (!containsErrorElements) {
+      intentions = wrapAndCheck(env, editor, currentElement, hasErrors, intentions);
+    }
     IntentionAction intention = chooseIntention(env, intentions);
     if (intention == null) return;
 
@@ -146,7 +149,6 @@ public class InvokeIntention extends ActionOnFile {
           message += ".\nIf it's by design that " + intentionString + " doesn't change source files, " +
                      "it should return false from 'startInWriteAction'";
         }
-        message += "\n  Debug info: containsErrorElements="+containsErrorElements + "; errors=" + errors;
         throw new AssertionError(message);
       }
 
@@ -179,7 +181,6 @@ public class InvokeIntention extends ActionOnFile {
   private List<IntentionAction> wrapAndCheck(Environment env,
                                              Editor editor,
                                              PsiElement currentElement,
-                                             boolean containsErrorElements,
                                              boolean hasErrors,
                                              List<IntentionAction> intentions) {
     if (currentElement == null) return intentions;
@@ -212,14 +213,13 @@ public class InvokeIntention extends ActionOnFile {
     List<String> messages = new ArrayList<>();
 
     boolean newContainsErrorElements = MadTestingUtil.containsErrorElements(getFile().getViewProvider());
-    if (newContainsErrorElements != containsErrorElements) {
-      messages.add(newContainsErrorElements ? "File contains parse errors after wrapping" : "File parse errors were fixed after wrapping");
+    if (newContainsErrorElements) {
+      messages.add("File contains parse errors after wrapping");
     }
     else {
-      boolean newHasErrors = !highlightErrors(project, editor).isEmpty() || containsErrorElements;
+      boolean newHasErrors = !highlightErrors(project, editor).isEmpty();
       if (newHasErrors != hasErrors) {
-        messages
-          .add(newHasErrors ? "File contains errors after wrapping" : "File errors were fixed after wrapping");
+        messages.add(newHasErrors ? "File contains errors after wrapping" : "File errors were fixed after wrapping");
       }
     }
     intentions = getAvailableIntentions(editor, file);

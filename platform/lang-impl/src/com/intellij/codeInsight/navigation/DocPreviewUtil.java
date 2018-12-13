@@ -37,7 +37,6 @@ import java.util.regex.Pattern;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/10/12 8:06 AM
  */
 public class DocPreviewUtil {
 
@@ -219,7 +218,6 @@ public class DocPreviewUtil {
 
   private enum State {TEXT, INSIDE_OPEN_TAG, INSIDE_CLOSE_TAG}
   
-  @SuppressWarnings("AssignmentToForLoopParameter")
   private static int process(@NotNull String text, @NotNull Callback callback) {
     State state = State.TEXT;
     int dataStartOffset = 0;

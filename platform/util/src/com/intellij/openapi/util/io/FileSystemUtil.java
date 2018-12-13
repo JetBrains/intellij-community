@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -399,7 +400,7 @@ public class FileSystemUtil {
 
   // thanks to SVNKit for the idea of platform-specific offsets
   private static class JnaUnixMediatorImpl extends Mediator {
-    @SuppressWarnings({"OctalInteger", "SpellCheckingInspection"})
+    @SuppressWarnings({"OctalInteger"})
     private static class LibC {
       static final int S_MASK = 0177777;
       static final int S_IFMT = 0170000;
@@ -417,7 +418,6 @@ public class FileSystemUtil {
       static native int access(String path, int mode);
     }
 
-    @SuppressWarnings("SpellCheckingInspection")
     private static class UnixLibC {
       static native int lstat(String path, Pointer stat);
       static native int stat(String path, Pointer stat);
@@ -466,7 +466,7 @@ public class FileSystemUtil {
       else if ("sunos-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = SUN_OS_64;
       else throw new IllegalStateException("Unsupported OS/arch: " + SystemInfo.OS_NAME + "/" + SystemInfo.OS_ARCH);
 
-      Map<String, String> options = Collections.singletonMap(Library.OPTION_STRING_ENCODING, System.getProperty("sun.jnu.encoding"));
+      Map<String, String> options = Collections.singletonMap(Library.OPTION_STRING_ENCODING, CharsetToolkit.getPlatformCharset().name());
       NativeLibrary lib = NativeLibrary.getInstance("c", options);
       Native.register(LibC.class, lib);
       Native.register(SystemInfo.isLinux ? LinuxLibC.class : UnixLibC.class, lib);

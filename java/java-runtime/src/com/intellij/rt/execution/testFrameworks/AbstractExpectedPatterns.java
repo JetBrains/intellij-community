@@ -49,7 +49,7 @@ public class AbstractExpectedPatterns {
 
   protected static ComparisonFailureData createExceptionNotification(String message, Pattern pattern) {
     final Matcher matcher = pattern.matcher(message);
-    if (matcher.find()) {
+    if (matcher.find() && matcher.end() == message.length()) {
       return new ComparisonFailureData(matcher.group(1).replaceAll("\\\\n", "\n"), 
                                        matcher.group(2).replaceAll("\\\\n", "\n"));
     }

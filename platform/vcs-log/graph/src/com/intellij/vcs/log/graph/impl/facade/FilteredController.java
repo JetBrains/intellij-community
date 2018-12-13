@@ -20,6 +20,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.collapsing.CollapsedGraph;
 import com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator;
+import com.intellij.vcs.log.graph.utils.DfsWalk;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
@@ -44,13 +45,13 @@ public class FilteredController extends CascadeController {
 
     UnsignedBitSet initVisibility = new UnsignedBitSet();
     if (visibleHeadsIds != null) {
-      ReachableNodes getter = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(myPermanentGraphInfo.getLinearGraph()));
-      getter.walkDown(visibleHeadsIds, node -> {
+      new DfsWalk(visibleHeadsIds, myPermanentGraphInfo.getLinearGraph()).walk(true, node -> {
         if (matchedIds.contains(node)) initVisibility.set(node, true);
+        return true;
       });
     }
     else {
-      for (Integer matchedId: matchedIds) initVisibility.set(matchedId, true);
+      for (Integer matchedId : matchedIds) initVisibility.set(matchedId, true);
     }
 
     myCollapsedGraph = CollapsedGraph.newInstance(delegateLinearGraphController.getCompiledGraph(), initVisibility);

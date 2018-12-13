@@ -19,6 +19,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.codeInsight.typing.PyStubPackages;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -126,9 +127,9 @@ public class ResolveImportUtil {
       if (candidate instanceof PsiDirectory) {
         candidate = PyUtil.getPackageElement((PsiDirectory)candidate, importStatement);
       }
-      results.addAll(updateRatedResults(resolveChildren(candidate, name, file, false, true, false, false)));
+      results.addAll(resolveChildren(candidate, name, file, false, true, false, false));
     }
-    return results;
+    return updateRatedResults(PyStubPackages.removeRuntimeModulesForWhomStubModulesFound(results));
   }
 
   @NotNull
@@ -381,12 +382,27 @@ public class ResolveImportUtil {
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
     // VFS may be case insensitive on Windows, but resolve is always case sensitive (PEP 235, PY-18958), so we check name here
     if (subdir != null && subdir.getName().equals(referencedName) && (!checkForPackage || PyUtil.isPackage(subdir, containingFile))) {
-      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, subdir));
+      final PsiDirectory stubPackage = PyStubPackages.findStubPackage(dir, referencedName, checkForPackage, withoutStubs);
+
+      if (stubPackage == null || PyStubPackages.stubPackageIsPartial(stubPackage)) {
+        result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, PyStubPackages.transferStubPackageMarker(dir, subdir)));
+      }
+
+      if (stubPackage != null) {
+        result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, stubPackage));
+      }
+    }
+
+    if (subdir == null) {
+      final PsiDirectory stubPackage = PyStubPackages.findStubPackage(dir, referencedName, checkForPackage, withoutStubs);
+      if (stubPackage != null) {
+        result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, stubPackage));
+      }
     }
 
     final PsiFile module = findPyFileInDir(dir, referencedName, withoutStubs);
     if (module != null) {
-      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, module));
+      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, PyStubPackages.transferStubPackageMarker(dir, module)));
     }
 
     if (!isFileOnly) {

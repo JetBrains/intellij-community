@@ -78,7 +78,7 @@ public class AddConstructorFix implements LocalQuickFix, IntentionAction {
       if (!FileModificationService.getInstance().preparePsiElementForWrite(myBeanClass.getContainingFile())) return;
       PsiClass psiClass = myBeanClass.getElement();
       if (psiClass == null) return;
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myBeanClass.getProject()).getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myBeanClass.getProject());
 
       final PsiMethod constructor = elementFactory.createConstructor();
 

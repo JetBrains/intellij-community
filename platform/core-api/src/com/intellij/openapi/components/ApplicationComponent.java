@@ -2,7 +2,12 @@
 package com.intellij.openapi.components;
 
 /**
- * @deprecated Not used anymore.
+ * @deprecated This interface is not used anymore. Application component do no need to extend any special interface.
+ *
+ * Instead of {@link #initComponent()} please use {@link com.intellij.util.messages.MessageBus} and corresponding topics.
+ * Instead of {@link #disposeComponent()} please use {@link com.intellij.openapi.Disposable}.
+ *
+ * If for some reasons replacing {@link #disposeComponent()} / {@link #initComponent()} is not a option, {@link BaseComponent} can be extended.
  */
 @Deprecated
 public interface ApplicationComponent extends BaseComponent {

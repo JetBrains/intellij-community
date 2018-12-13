@@ -34,10 +34,9 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
-import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsLogFileFilter;
-import com.intellij.vcs.log.impl.VcsLogRootFilterImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogFileFilter;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -49,8 +48,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilter> {
   private static final int FILTER_LABEL_LENGTH = 30;
@@ -158,9 +157,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
                                                    @NotNull Comparator<F> comparator,
                                                    @NotNull NotNullFunction<F, String> getText) {
     List<F> filesToDisplay = ContainerUtil.sorted(files, comparator);
-    if (files.size() > 10) {
-      filesToDisplay = filesToDisplay.subList(0, 10);
-    }
+    filesToDisplay = ContainerUtil.getFirstItems(filesToDisplay, 10);
     String tooltip = StringUtil.join(filesToDisplay, getText, "\n");
     if (files.size() > 10) {
       tooltip += "\n...";
@@ -226,11 +223,11 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
                      ? ContainerUtil.union(new HashSet<>(rootFilter.getRoots()), Collections.singleton(root))
                      : ContainerUtil.subtract(rootFilter.getRoots(), Collections.singleton(root));
     }
-    myFilterModel.setFilter(new VcsLogFileFilter(null, new VcsLogRootFilterImpl(visibleRoots)));
+    myFilterModel.setFilter(new VcsLogFileFilter(null, VcsLogFilterObject.fromRoots(visibleRoots)));
   }
 
   private void setVisibleOnly(@NotNull VirtualFile root) {
-    myFilterModel.setFilter(new VcsLogFileFilter(null, new VcsLogRootFilterImpl(Collections.singleton(root))));
+    myFilterModel.setFilter(new VcsLogFileFilter(null, VcsLogFilterObject.fromRoot(root)));
   }
 
   @NotNull
@@ -365,7 +362,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Files or Folders to Filter by", files,
                                                             new ArrayList<>(dataPack.getLogProviders().keySet()));
       if (chooser.showAndGet()) {
-        VcsLogStructureFilterImpl structureFilter = new VcsLogStructureFilterImpl(new HashSet<VirtualFile>(chooser.getSelectedFiles()));
+        VcsLogStructureFilter structureFilter = VcsLogFilterObject.fromVirtualFiles(chooser.getSelectedFiles());
         myFilterModel.setFilter(new VcsLogFileFilter(structureFilter, null));
         myUiProperties.addRecentlyFilteredGroup(myName, VcsLogClassicFilterUi.FileFilterModel.getFilterValues(structureFilter));
       }

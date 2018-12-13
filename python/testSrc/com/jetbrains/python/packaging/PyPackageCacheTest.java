@@ -32,6 +32,9 @@ public class PyPackageCacheTest extends PyTestCase {
     try {
       PyPIPackageCache.reset();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

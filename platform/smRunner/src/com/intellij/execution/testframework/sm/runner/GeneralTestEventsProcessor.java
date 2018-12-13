@@ -27,13 +27,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Processes events of test runner in general text-based form.
  * <p/>
  * Test name should be unique for all suites - e.g. it can consist of a suite name and a name of a test method.
- *
- * @author: Roman Chernyatchik
+ * 
+ * <p/>
+ * Threading information:
+ * <ul>
+ *   <li>{@link #onUncapturedOutput(String, Key)} can be called from output reader created whether for normal or error output as well as command line can be printed from pooled thread which started the test process;</li>
+ *   <li>all other events should be processed in the same output reader thread</li>
+ *   <li>{@link #dispose()} is called from EDT</li>
+ * </ul>
+ * 
  */
 public abstract class GeneralTestEventsProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(GeneralTestEventsProcessor.class.getName());
@@ -41,7 +49,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   protected final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   protected SMTestLocator myLocator = null;
   private final String myTestFrameworkName;
-  protected List<SMTRunnerEventsListener> myListenerAdapters = new ArrayList<>();
+  protected List<SMTRunnerEventsListener> myListenerAdapters = new CopyOnWriteArrayList<>();
 
   protected boolean myTreeBuildBeforeStart = false;
 
@@ -261,7 +269,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   @Override
   public void dispose() {
-    
+    disconnectListeners();
   }
 
   protected void disconnectListeners() {

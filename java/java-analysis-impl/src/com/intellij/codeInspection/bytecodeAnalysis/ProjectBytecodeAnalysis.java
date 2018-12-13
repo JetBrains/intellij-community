@@ -612,7 +612,7 @@ public class ProjectBytecodeAnalysis {
     @Override
     public List<Equations> getEquations(MemberDescriptor method) {
       HMember key = method.hashed(null);
-      return myEquationCache.computeIfAbsent(key, m -> BytecodeAnalysisIndex.getEquations(ProjectScope.getLibrariesScope(myProject), m));
+      return myEquationCache.computeIfAbsent(key, m -> ClassDataIndexer.getEquations(ProjectScope.getLibrariesScope(myProject), m));
     }
   }
 }

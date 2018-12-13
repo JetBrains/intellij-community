@@ -13,10 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,15 +52,15 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
         showInspectionAdvertisement(project, "code cells in the editor", "https://www.jetbrains.com/pycharm/features/scientific_tools.html", "codecells");
       }
 
-      if (containsImport(pyFile, "django")) {
+      if (PyPsiUtils.containsImport(pyFile, "django")) {
         showInspectionAdvertisement(project, "the Django Framework", "https://www.jetbrains.com/pycharm/features/web_development.html#django","django");
       }
 
-      if (containsImport(pyFile, "flask")) {
+      if (PyPsiUtils.containsImport(pyFile, "flask")) {
         showInspectionAdvertisement(project, "the Flask Framework", null,"flask");
       }
 
-      if (containsImport(pyFile, "pyramid")) {
+      if (PyPsiUtils.containsImport(pyFile, "pyramid")) {
         showInspectionAdvertisement(project, "the Pyramid Framework", null,"pyramid");
       }
     }
@@ -97,22 +95,6 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
         notification.expire();
       }
     }).notify(project);
-  }
-
-  private static boolean containsImport(@NotNull PyFile file, String pkg) {
-    for (PyFromImportStatement importStatement : file.getFromImports()) {
-      final QualifiedName name = importStatement.getImportSourceQName();
-      if (name != null && name.toString().toLowerCase().contains(pkg)) {
-        return true;
-      }
-    }
-    for (PyImportElement importElement : file.getImportTargets()) {
-      final QualifiedName name = importElement.getImportedQName();
-      if (name != null && name.toString().toLowerCase().contains(pkg)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @NotNull

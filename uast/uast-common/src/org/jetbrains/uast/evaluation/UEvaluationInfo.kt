@@ -33,3 +33,5 @@ data class UEvaluationInfo(val value: UValue, val state: UEvaluationState) {
   val reachable: Boolean
     get() = value.reachable
 }
+
+infix fun UValue.to(state: UEvaluationState): UEvaluationInfo = UEvaluationInfo(this, state)

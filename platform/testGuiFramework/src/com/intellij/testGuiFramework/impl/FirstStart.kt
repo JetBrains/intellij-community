@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.button
@@ -67,7 +66,7 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
-  private fun takeScreenshot(e: Throwable) {
+  fun takeScreenshot(e: Throwable) {
     ScreenshotOnFailure.takeScreenshot("FirstStartFailed", e)
   }
 
@@ -91,7 +90,7 @@ abstract class FirstStart(val ideType: IdeType) {
 
 
   // In case we found WelcomeFrame we don't need to make completeInstallation.
-  private fun completeFirstStart() {
+  open fun completeFirstStart() {
     findWelcomeFrame()?.close() ?: let {
       completeInstallation()
       acceptAgreement()
@@ -108,9 +107,9 @@ abstract class FirstStart(val ideType: IdeType) {
     && frame.isEnabled
   }
 
-  private fun Frame.close() = myRobot.close(this)
+  fun Frame.close() = myRobot.close(this)
 
-  private fun findWelcomeFrame(seconds: Int = 5): Frame? {
+  fun findWelcomeFrame(seconds: Int = 5): Frame? {
     LOG.info("Waiting for a Welcome Frame")
     silentWaitUntil("Welcome Frame to show up", seconds) {
       Frame.getFrames().any { checkIsWelcomeFrame(it) }
@@ -123,7 +122,7 @@ abstract class FirstStart(val ideType: IdeType) {
     return GuiTestUtilKt.withPauseWhenNull(timeout = Timeouts.defaultTimeout) {
       try {
         myRobot.finder().find {
-          it is JDialog && (it.title.contains("License Agreement") || it.title.contains("Privacy Policy"))
+          it is JDialog && (it.title.contains("License Agreement") || it.title.contains("Privacy Policy") || it.title.contains("User Agreement"))
         } as JDialog
       }
       catch (cle: ComponentLookupException) {
@@ -132,33 +131,24 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
-  private fun acceptAgreement() {
+  open fun acceptAgreement() {
     if (!needToShowAgreement()) return
-    with(myRobot) {
-      try {
-        LOG.info("Waiting for License Agreement/Privacy Policy dialog")
-        findPrivacyPolicyDialogOrLicenseAgreement()
-        with(JDialogFixture(myRobot, findPrivacyPolicyDialogOrLicenseAgreement())) {
-          click()
-          while (!button("Accept").isEnabled) {
-            scrollDown()
-          }
-          LOG.info("Accept License Agreement/Privacy Policy dialog")
-          button("Accept").click()
-        }
+    try {
+      LOG.info("Waiting for License Agreement/Privacy Policy dialog")
+      findPrivacyPolicyDialogOrLicenseAgreement()
+      with(JDialogFixture(myRobot, findPrivacyPolicyDialogOrLicenseAgreement())) {
+        click()
+        checkboxContainingText("i confirm", true, Timeouts.noTimeout).select()
+        LOG.info("Accept License Agreement/Privacy Policy dialog")
+        button("Continue", Timeouts.seconds05).click()
       }
-      catch (e: WaitTimedOutError) {
-        LOG.warn("'License Agreement/Privacy Policy dialog hasn't been shown. Check registry...")
-      }
+    }
+    catch (e: WaitTimedOutError) {
+      LOG.warn("'License Agreement/Privacy Policy dialog hasn't been shown. Check registry...")
     }
   }
 
-  private fun scrollDown() {
-    val amount: Int = if (SystemInfo.isMac) -10 else 10
-    myRobot.rotateMouseWheel(amount)
-  }
-
-  private fun completeInstallation() {
+  open fun completeInstallation() {
     if (!needToShowCompleteInstallation()) return
     with(myRobot) {
       val title = "Complete Installation"
@@ -171,7 +161,7 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
-  private fun acceptDataSharing() {
+  open fun acceptDataSharing() {
     with(myRobot) {
       LOG.info("Accepting Data Sharing")
       val title = "Data Sharing"
@@ -187,7 +177,7 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
-  private fun customizeIde(ideName: String = ideType.name) {
+  open fun customizeIde(ideName: String = ideType.name) {
     if (!needToShowCustomizeWizard()) return
     with(myRobot) {
       val title = "Customize $ideName"
@@ -199,7 +189,7 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
-  private fun evaluateLicense(ideName: String, robot: Robot) {
+  open fun evaluateLicense(ideName: String, robot: Robot) {
     with(robot) {
       val licenseActivationFrameTitle = "$ideName License Activation"
       LOG.info("Waiting for '$licenseActivationFrameTitle' dialog")

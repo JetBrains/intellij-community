@@ -32,9 +32,5 @@ public interface PsiMethodStub extends PsiMemberStub<PsiMethod> {
   @Nullable String getDefaultValueText();
   @NotNull TypeInfo getReturnTypeText(boolean doResolve);
 
-  boolean hasDeprecatedAnnotation();
-
-  boolean hasDocComment();
-
   PsiParameterStub findParameter(int idx);
 }

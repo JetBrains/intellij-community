@@ -54,7 +54,6 @@ import java.util.List;
 
 /**
  * @author max
- * @since Apr 11, 2002
  */
 @SuppressWarnings("HardCodedStringLiteral")
 public abstract class InspectionTestCase extends PsiTestCase {
@@ -250,6 +249,9 @@ public abstract class InspectionTestCase extends PsiTestCase {
       point.unregisterExtension(myUnusedCodeExtension);
       myUnusedCodeExtension = null;
       ext_src = null;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

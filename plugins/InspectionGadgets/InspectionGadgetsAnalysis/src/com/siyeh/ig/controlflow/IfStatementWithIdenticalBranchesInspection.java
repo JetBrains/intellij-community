@@ -55,13 +55,13 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
           if (result != null) {
             ProblemHighlightType highlightType;
             if (result.myIsWarning) {
-              highlightType = ProblemHighlightType.WEAK_WARNING;
+              highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
             }
             else {
               if (!isOnTheFly) return;
               highlightType = ProblemHighlightType.INFORMATION;
             }
-            holder.registerProblem(result.myElementToHighlight, InspectionsBundle.message("inspection.common.if.parts.description"), highlightType, result.myFix);
+            holder.registerProblem(result.myElementToHighlight, result.myMessage, highlightType, result.myFix);
           }
         }
       }
@@ -455,7 +455,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
 
     @NotNull
     private String getMessage(boolean mayChangeSemantics) {
-      String mayChangeSemanticsText = mayChangeSemantics ? "(may change semantics)" : "";
+      String mayChangeSemanticsText = mayChangeSemantics ? " (may change semantics)" : "";
       return InspectionsBundle.message(myBundleKey, mayChangeSemanticsText);
     }
 
@@ -806,12 +806,14 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
                                                 boolean isOnTheFly) {
       ThenElse thenElse = from(ifStatement, thenBranch, elseBranch, isOnTheFly);
       if (thenElse == null) return null;
+      boolean isNotInCodeBlock = !(ifStatement.getParent() instanceof PsiCodeBlock);
       boolean mayChangeSemantics = thenElse.myMayChangeSemantics;
       CommonPartType type = thenElse.myCommonPartType;
       ExtractCommonIfPartsFix fix = new ExtractCommonIfPartsFix(type, mayChangeSemantics, isOnTheFly);
-      PsiElement elementToHighlight = mayChangeSemantics ? ifStatement : ifStatement.getFirstChild();
+      boolean isInfoLevel = mayChangeSemantics || isNotInCodeBlock;
+      PsiElement elementToHighlight = isInfoLevel ? ifStatement : ifStatement.getFirstChild();
       if (type == CommonPartType.VARIABLES_ONLY && !isOnTheFly) return null;
-      return new IfInspectionResult(elementToHighlight, type != CommonPartType.WITH_VARIABLES_EXTRACT && !mayChangeSemantics, fix,
+      return new IfInspectionResult(elementToHighlight, type != CommonPartType.WITH_VARIABLES_EXTRACT && !isInfoLevel, fix,
                                     type.getMessage(mayChangeSemantics));
     }
 
@@ -1041,7 +1043,9 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     // From else variable to then variable name
     final Map<PsiLocalVariable, String> mySubstitutionTable = new HashMap<>(0); // supposed to use rare
 
-    private LocalEquivalenceChecker(Set<PsiLocalVariable> variables) {myLocalVariables = variables;}
+    private LocalEquivalenceChecker(Set<PsiLocalVariable> variables) {
+      myLocalVariables = variables;
+    }
 
     public boolean topLevelVarsAreEqualNotConsideringInitializers(@NotNull PsiStatement first,
                                                                   @NotNull PsiStatement second) {

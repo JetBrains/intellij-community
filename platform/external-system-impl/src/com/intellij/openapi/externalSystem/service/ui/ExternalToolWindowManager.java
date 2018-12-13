@@ -26,7 +26,6 @@ import java.util.Set;
  * This class encapsulates that functionality.
  * 
  * @author Denis Zhdanov
- * @since 6/14/13 7:01 PM
  */
 public class ExternalToolWindowManager {
 

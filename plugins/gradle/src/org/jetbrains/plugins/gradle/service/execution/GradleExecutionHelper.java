@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildLayoutParameters;
@@ -22,6 +23,7 @@ import org.gradle.tooling.*;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.DistributionFactoryExt;
@@ -44,13 +46,11 @@ import java.util.regex.Pattern;
 
 /**
  * @author Denis Zhdanov
- * @since 3/14/13 5:11 PM
  */
 public class GradleExecutionHelper {
 
   private static final Logger LOG = Logger.getInstance(GradleExecutionHelper.class);
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public <T> ModelBuilder<T> getModelBuilder(@NotNull Class<T> modelType,
                                              @NotNull final ExternalSystemTaskId id,
@@ -64,7 +64,6 @@ public class GradleExecutionHelper {
     return result;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
                                         @NotNull ProjectConnection connection,
@@ -85,7 +84,6 @@ public class GradleExecutionHelper {
                                projectResolverContext.getCancellationTokenSource());
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
                              @NotNull GradleExecutionSettings settings,
@@ -94,7 +92,6 @@ public class GradleExecutionHelper {
     prepare(operation, id, settings, listener, connection, new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false));
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
                              @NotNull GradleExecutionSettings settings,
@@ -103,7 +100,7 @@ public class GradleExecutionHelper {
                              @NotNull final OutputStream standardOutput,
                              @NotNull final OutputStream standardError) {
     Set<String> jvmArgs = settings.getVmOptions();
-    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener);
+    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, null);
 
     String gradleVersion = buildEnvironment != null ? buildEnvironment.getGradle().getGradleVersion() : null;
     if (!jvmArgs.isEmpty()) {
@@ -136,7 +133,6 @@ public class GradleExecutionHelper {
       if (!settings.getArguments().contains("--quiet") && !settings.getArguments().contains("--debug")) {
         settings.withArgument("--info");
       }
-      settings.withArgument("--recompile-scripts");
     }
 
     if (!settings.getArguments().isEmpty()) {
@@ -281,7 +277,7 @@ public class GradleExecutionHelper {
           "}",
           "",
         };
-        final File tempFile = writeToFileGradleInitScript(StringUtil.join(lines, SystemProperties.getLineSeparator()));
+        final File tempFile = writeToFileGradleInitScript(StringUtil.join(lines, SystemProperties.getLineSeparator()), "wrapper_init");
         settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
         BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
         launcher.withCancellationToken(cancellationToken);
@@ -411,7 +407,7 @@ public class GradleExecutionHelper {
         script += buildSrcDefaultInitScript;
       }
 
-      return writeToFileGradleInitScript(script);
+      return writeToFileGradleInitScript(script, "ijinit");
     }
     catch (Exception e) {
       LOG.warn("Can't generate IJ gradle init script", e);
@@ -422,19 +418,33 @@ public class GradleExecutionHelper {
     }
   }
 
+  /**
+   * @deprecated use {@link GradleExecutionHelper#writeToFileGradleInitScript(String, String)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   public static File writeToFileGradleInitScript(@NotNull String content) throws IOException {
     return writeToFileGradleInitScript(content, "ijinit");
   }
 
   public static File writeToFileGradleInitScript(@NotNull String content, @NotNull String filePrefix) throws IOException {
-    File tempFile = new File(FileUtil.getTempDirectory(), filePrefix + '.' + GradleConstants.EXTENSION);
-    if (tempFile.exists() && StringUtil.equals(content, FileUtil.loadFile(tempFile))) {
-      return tempFile;
-    }
-    tempFile = FileUtil.findSequentNonexistentFile(tempFile.getParentFile(), filePrefix, GradleConstants.EXTENSION);
-    FileUtil.writeToFile(tempFile, content);
-    tempFile.deleteOnExit();
-    return tempFile;
+    byte[] contentBytes = content.getBytes(CharsetToolkit.UTF8_CHARSET);
+    int contentLength = contentBytes.length;
+    return FileUtil.findSequentFile(new File(FileUtil.getTempDirectory()), filePrefix, GradleConstants.EXTENSION, file -> {
+      try {
+        if (!file.exists()) {
+          FileUtil.writeToFile(file, contentBytes, false);
+          file.deleteOnExit();
+          return true;
+        }
+        if (contentLength != file.length()) return false;
+        return content.equals(FileUtil.loadFile(file, CharsetToolkit.UTF8_CHARSET));
+      }
+      catch (IOException ignore) {
+        // Skip file with access issues. Will attempt to check the next file
+      }
+      return false;
+    });
   }
 
   @Nullable
@@ -532,7 +542,8 @@ public class GradleExecutionHelper {
       buf.append('[');
       for (Iterator<String> iterator = testIncludePatterns.iterator(); iterator.hasNext(); ) {
         String pattern = iterator.next();
-        buf.append('\'').append(pattern).append('\'');
+        String groovyPattern = toGroovyString(pattern);
+        buf.append('\'').append(groovyPattern).append('\'');
         if (iterator.hasNext()) {
           buf.append(',');
         }
@@ -544,6 +555,26 @@ public class GradleExecutionHelper {
         ContainerUtil.addAll(args, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
       }
     }
+  }
+
+  @NotNull
+  public static String toGroovyString(@NotNull String string) {
+    StringBuilder stringBuilder = new StringBuilder();
+    for (char ch : string.toCharArray()) {
+      if (ch == '\\') {
+        stringBuilder.append("\\\\");
+      }
+      else if (ch == '\'') {
+        stringBuilder.append("\\'");
+      }
+      else if (ch == '"') {
+        stringBuilder.append("\\\"");
+      }
+      else {
+        stringBuilder.append(ch);
+      }
+    }
+    return stringBuilder.toString();
   }
 
   @Nullable
@@ -599,7 +630,6 @@ public class GradleExecutionHelper {
    * @deprecated {@link #getModelBuilder(Class, ExternalSystemTaskId, GradleExecutionSettings, ProjectConnection, ExternalSystemTaskNotificationListener)}
    */
   @Deprecated
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public <T> ModelBuilder<T> getModelBuilder(@NotNull Class<T> modelType,
                                              @NotNull final ExternalSystemTaskId id,
@@ -617,7 +647,6 @@ public class GradleExecutionHelper {
    * @deprecated {@link #getBuildLauncher(ExternalSystemTaskId, ProjectConnection, GradleExecutionSettings, ExternalSystemTaskNotificationListener)}
    */
   @Deprecated
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
                                         @NotNull ProjectConnection connection,
@@ -653,7 +682,6 @@ public class GradleExecutionHelper {
    * @deprecated to be removed in future version
    */
   @Deprecated
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
                              @Nullable GradleExecutionSettings settings,
@@ -669,7 +697,6 @@ public class GradleExecutionHelper {
    * @deprecated use {@link #prepare(LongRunningOperation, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener, ProjectConnection)}
    */
   @Deprecated
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
                              @Nullable GradleExecutionSettings settings,
@@ -686,7 +713,6 @@ public class GradleExecutionHelper {
    * @deprecated use {@link #prepare(LongRunningOperation, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener, ProjectConnection, OutputStream, OutputStream)}
    */
   @Deprecated
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
                              @NotNull GradleExecutionSettings settings,

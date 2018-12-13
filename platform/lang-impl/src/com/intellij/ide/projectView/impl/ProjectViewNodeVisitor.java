@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.tree.AbstractTreeNodeVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 import java.util.function.Predicate;
@@ -18,10 +19,18 @@ import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
 class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
   private final VirtualFile file;
 
-  ProjectViewNodeVisitor(@NotNull PsiElement element, VirtualFile file, Predicate<? super TreePath> predicate) {
+  ProjectViewNodeVisitor(@NotNull PsiElement element, @Nullable VirtualFile file, @Nullable Predicate<? super TreePath> predicate) {
     super(createPointer(element)::getElement, predicate);
     this.file = file;
     LOG.debug("create visitor for element: " + element);
+  }
+
+  /**
+   * @return a virtual file corresponding to searching element or {@code null} if it is not set
+   */
+  @Nullable
+  public final VirtualFile getFile() {
+    return file;
   }
 
   @Override

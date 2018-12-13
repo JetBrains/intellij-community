@@ -18,7 +18,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -33,7 +32,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   private final Editor myEditor;
   private final PsiFile myPsiFile;
   private final List<FileEditorPositionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<ModelListener> myModelListeners = new ArrayList<>(2);
+  private final List<ModelListener> myModelListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final CaretListener myEditorCaretListener;
   private Disposable myEditorCaretListenerDisposable;
 

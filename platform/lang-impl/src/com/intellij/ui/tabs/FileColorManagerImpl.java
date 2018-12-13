@@ -38,12 +38,12 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   private FileColorProjectLevelConfigurationManager myProjectLevelConfigurationManager;
 
   private static final Map<String, Color> ourDefaultColors = ContainerUtil.<String, Color>immutableMapBuilder()
-    .put("Blue", new JBColor(new Color(0xdcf0ff), new Color(0x3C476B)))
-    .put("Green", new JBColor(new Color(231, 250, 219), new Color(0x425444)))
-    .put("Orange", new JBColor(new Color(246, 224, 202), new Color(0x804A33)))
-    .put("Rose", new JBColor(new Color(242, 206, 202), new Color(0x6E414E)))
-    .put("Violet", new JBColor(new Color(222, 213, 241), new Color(0x504157)))
-    .put("Yellow", new JBColor(new Color(255, 255, 228), new Color(0x4F4838)))
+    .put("Blue", JBColor.namedColor("FileColor.Blue", new JBColor(0xeaf6ff, 0x4f556b)))
+    .put("Green", JBColor.namedColor("FileColor.Green", new JBColor(0xeffae7, 0x49544a)))
+    .put("Orange", JBColor.namedColor("FileColor.Orange", new JBColor(0xf6e9dc, 0x806052)))
+    .put("Rose", JBColor.namedColor("FileColor.Rose", new JBColor(0xf2dcda, 0x6e535b)))
+    .put("Violet", JBColor.namedColor("FileColor.Violet", new JBColor(0xe6e0f1, 0x534a57)))
+    .put("Yellow", JBColor.namedColor("FileColor.Yellow", new JBColor(0xffffe4, 0x4f4b41)))
     .build();
 
   public FileColorManagerImpl(@NotNull final Project project) {
@@ -104,24 +104,13 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   }
 
   @Override
-  @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
   public Color getColor(@NotNull final String name) {
     Color color = ourDefaultColors.get(name);
     if (color != null) {
       return color;
     }
-
-    if ("ffffe4".equals(name) || "494539".equals(name)) {
-      return new JBColor(0xffffe4, 0x494539);
-    }
-
-    if ("e7fadb".equals(name) || "2a3b2c".equals(name)) {
-      return new JBColor(0xe7fadb, 0x2a3b2c);
-    }
-
     return ColorUtil.fromHex(name, null);
-
   }
 
   @Override
@@ -130,13 +119,11 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     return getState(false);
   }
 
-  @SuppressWarnings({"AutoUnboxing"})
   void loadState(Element state, final boolean shared) {
     myModel.load(state, shared);
   }
 
   @Override
-  @SuppressWarnings({"MethodMayBeStatic"})
   public Collection<String> getColorNames() {
     List<String> sorted = ContainerUtil.newArrayList(ourDefaultColors.keySet());
     Collections.sort(sorted);
@@ -144,7 +131,6 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   }
 
   @Override
-  @SuppressWarnings({"AutoUnboxing"})
   public void loadState(@NotNull Element state) {
     initProjectLevelConfigurations();
     loadState(state, false);
@@ -247,9 +233,6 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   }
 
   static String getAlias(String text) {
-    if (UIUtil.isUnderDarcula()) {
-      if (text.equals("Yellow")) return "Brown";
-    }
-    return text;
+    return UIUtil.isUnderDarcula() && text.equals("Yellow") ? "Brown" : text;
   }
 }

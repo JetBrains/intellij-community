@@ -302,7 +302,6 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
   }
 
-  @SuppressWarnings("ForLoopThatDoesntUseLoopVariable")
   private static void indentPlainTextBlock(final Document document, final int startOffset, final int endOffset, final int indentLevel) {
     CharSequence chars = document.getCharsSequence();
     int spaceEnd = CharArrayUtil.shiftForward(chars, startOffset, " \t");

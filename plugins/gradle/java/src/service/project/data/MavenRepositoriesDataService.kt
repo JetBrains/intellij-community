@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
 import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 class MavenRepositoriesDataService: AbstractProjectDataService<MavenRepositoryData, Void>() {
   override fun getTargetDataKey(): Key<MavenRepositoryData> = MavenRepositoryData.KEY
@@ -19,15 +20,28 @@ class MavenRepositoriesDataService: AbstractProjectDataService<MavenRepositoryDa
                                project: Project,
                                modelsProvider: IdeModelsProvider) {
 
-    val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(project)
+    projectData?.apply {
+      val importRepositories =
+        GradleSettings
+          .getInstance(project)
+          .linkedProjectsSettings
+          .find { settings -> settings.externalProjectPath == linkedExternalProjectPath }
+          ?.isResolveExternalAnnotations ?: false
 
-    val repositories = linkedSetOf<RemoteRepositoryDescription>().apply {
-      addAll(repositoriesConfiguration.repositories)
+      if (!importRepositories) {
+        return
+      }
     }
 
-    imported.mapTo(repositories) { RemoteRepositoryDescription(it.data.name, it.data.name, it.data.url) }
+    val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(project)
 
-    repositoriesConfiguration.repositories = repositories.toList()
+    val urlToConfig = repositoriesConfiguration.repositories.groupBy { it.url }.toMutableMap()
+
+    imported.forEach {
+      urlToConfig.putIfAbsent(it.data.url, listOf(RemoteRepositoryDescription(it.data.name, it.data.name, it.data.url)))
+    }
+
+    repositoriesConfiguration.repositories = urlToConfig.values.flatten()
 
     super.onSuccessImport(imported, projectData, project, modelsProvider)
   }

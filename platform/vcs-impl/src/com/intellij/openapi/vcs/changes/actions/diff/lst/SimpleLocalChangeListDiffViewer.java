@@ -28,11 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.ex.LineStatusTracker;
-import com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction;
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange;
-import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker;
+import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -138,20 +134,20 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         return applyNotification(DiffNotifications.createError()); // DiffRequest is out of date
       }
 
-      if (data.diffData == null &&
-          data.affectedChangelist.size() == 1 &&
-          data.affectedChangelist.contains(myChangelistId)) {
-        // tracker is waiting for initialisation
-        // there are only one changelist, so it's safe to fallback to default logic
-        Runnable callback = super.performRediff(indicator);
-        return () -> {
-          callback.run();
-          getStatusPanel().setBusy(true);
-        };
-      }
-
       TrackerDiffData diffData = data.diffData;
+
       if (diffData == null || diffData.ranges == null) {
+        if (data.affectedChangelist.size() == 1 &&
+            data.affectedChangelist.contains(myChangelistId)) {
+          // tracker is waiting for initialisation
+          // there are only one changelist, so it's safe to fallback to default logic
+          Runnable callback = super.performRediff(indicator);
+          return () -> {
+            callback.run();
+            getStatusPanel().setBusy(true);
+          };
+        }
+
         scheduleRediff();
         throw new ProcessCanceledException();
       }

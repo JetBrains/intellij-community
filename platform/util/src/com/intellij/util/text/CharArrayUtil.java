@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -487,9 +488,7 @@ public class CharArrayUtil {
       }
     }
     if(whitespaceEnd > 0) result.add(new TextRange(0, whitespaceEnd + 1).shiftRight(shift));
-    if (lastTextFound < result.size()) {
-      result = result.subList(0, lastTextFound);
-    }
+    result = ContainerUtil.getFirstItems(result, lastTextFound);
     return result.toArray(TextRange.EMPTY_ARRAY);
   }
 
@@ -527,7 +526,6 @@ public class CharArrayUtil {
   @NotNull
   public static Reader readerFromCharSequence(@NotNull CharSequence text) {
     char[] chars = fromSequenceWithoutCopying(text);
-    //noinspection IOResourceOpenedButNotSafelyClosed
     return chars == null ? new CharSequenceReader(text.toString()) : new UnsyncCharArrayReader(chars, 0, text.length());
   }
 

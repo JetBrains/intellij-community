@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.navigation.History;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -79,6 +80,9 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
     }
     else if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return myUi.getHelpId();
+    }
+    else if (History.KEY.is(dataId)) {
+      return myUi.getNavigationHistory();
     }
     return null;
   }

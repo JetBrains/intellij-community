@@ -36,7 +36,7 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
 
   @Override
   public Icon getIcon(int flags) {
-    return AllIcons.General.InspectionsOff;
+    return AllIcons.Ide.HectorOff;
   }
 
   @Override

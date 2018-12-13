@@ -50,6 +50,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     visitor.visitParameter(this);
   }
 
+  @Override
   public String toString() {
     return "Parameter";
   }
@@ -187,7 +188,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   @Override
   @NotNull
   public GrModifierList getModifierList() {
-    return getRequiredStubOrPsiChild(GroovyElementTypes.MODIFIERS);
+    return getRequiredStubOrPsiChild(GroovyElementTypes.MODIFIER_LIST);
   }
 
   @Override

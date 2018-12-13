@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/29/2014
  */
 public class ImportSpecImpl implements ImportSpec {
   @NotNull private final Project myProject;

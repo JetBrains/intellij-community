@@ -34,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
+
 public abstract class SliceNullnessAnalyzerBase {
   @NotNull
   private final SliceLeafEquality myLeafEquality;
@@ -50,39 +52,38 @@ public abstract class SliceNullnessAnalyzerBase {
   private void groupByNullness(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = createNewTree(result, oldRoot, map);
 
-    SliceUsage rootUsage = oldRoot.myCachedChildren.get(0).getValue();
+    SliceUsage rootUsage = oldRoot.getCachedChildren().get(0).getValue();
     SliceManager.getInstance(root.getProject()).createToolWindow(true, root, true, SliceManager.getElementDescription(null, rootUsage.getElement(), " Grouped by Nullness") );
   }
 
   @NotNull
   public SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = oldRoot.copy();
-    assert oldRoot.myCachedChildren.size() == 1;
-    SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
+    assert oldRoot.getCachedChildren().size() == 1;
+    SliceNode oldRootStart = oldRoot.getCachedChildren().get(0);
     root.setChanged();
     root.targetEqualUsages.clear();
-    root.myCachedChildren = new ArrayList<>();
 
-    createValueRootNode(result, oldRoot, map, root, oldRootStart, "Null Values", NullAnalysisResult.NULLS);
-    createValueRootNode(result, oldRoot, map, root, oldRootStart, "NotNull Values", NullAnalysisResult.NOT_NULLS);
-    createValueRootNode(result, oldRoot, map, root, oldRootStart, "Other Values", NullAnalysisResult.UNKNOWNS);
-
+    List<SliceLeafValueClassNode> children = new ArrayList<>();
+    addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "Null Values", NullAnalysisResult.NULLS));
+    addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "NotNull Values", NullAnalysisResult.NOT_NULLS));
+    addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "Other Values", NullAnalysisResult.UNKNOWNS));
+    root.setChildren(children);
     return root;
   }
 
-  private void createValueRootNode(NullAnalysisResult result,
-                                   SliceRootNode oldRoot,
-                                   final Map<SliceNode, NullAnalysisResult> map,
-                                   SliceRootNode root,
-                                   SliceNode oldRootStart,
-                                   String nodeName,
-                                   final int group) {
+  private SliceLeafValueClassNode createValueRootNode(NullAnalysisResult result,
+                                                      SliceRootNode oldRoot,
+                                                      final Map<SliceNode, NullAnalysisResult> map,
+                                                      SliceRootNode root,
+                                                      SliceNode oldRootStart,
+                                                      String nodeName,
+                                                      final int group) {
     Collection<PsiElement> groupedByValue = result.groupedByValue[group];
     if (groupedByValue.isEmpty()) {
-      return;
+      return null;
     }
     SliceLeafValueClassNode valueRoot = new SliceLeafValueClassNode(root.getProject(), root, nodeName);
-    root.myCachedChildren.add(valueRoot);
 
     Set<PsiElement> uniqueValues = new THashSet<>(groupedByValue, myLeafEquality);
     for (final PsiElement expression : uniqueValues) {
@@ -110,6 +111,7 @@ public abstract class SliceNullnessAnalyzerBase {
                                    Collections.singletonList(newRoot))
       );
     }
+    return valueRoot;
   }
 
   public void startAnalyzeNullness(@NotNull AbstractTreeStructure treeStructure, @NotNull Runnable finish) {

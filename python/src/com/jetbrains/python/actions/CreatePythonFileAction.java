@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.pyi.PyiFileType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -27,7 +28,7 @@ public class CreatePythonFileAction extends CreateFileFromTemplateAction impleme
   }
 
   @Override
-  protected String getActionName(PsiDirectory directory, String newName, String templateName) {
+  protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
     return "Create Python script " + newName; 
   }
 }

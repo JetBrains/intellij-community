@@ -92,6 +92,7 @@ public class PsiParenthesizedExpressionImpl extends ExpressionPsiElement impleme
     }
   }
 
+  @Override
   public String toString() {
     return "PsiParenthesizedExpression:" + getText();
   }

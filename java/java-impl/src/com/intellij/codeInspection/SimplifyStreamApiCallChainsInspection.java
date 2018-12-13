@@ -759,7 +759,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       LOG.assertTrue(classReference != null);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(classReference);
       if (PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, newExpression, null)) {
-        PsiDiamondTypeUtil.replaceExplicitWithDiamond(classReference.getParameterList());
+        RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(classReference.getParameterList());
       }
       CodeStyleManager.getInstance(project).reformat(newExpression);
     }
@@ -1879,7 +1879,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       CommentTracker ct = new CommentTracker();
       ct.markUnchanged(call);
       PsiElement result = ct.replaceAndRestoreComments(context.myStringJoinCall, call);
-      return JavaCodeStyleManager.getInstance(call.getProject()).shortenClassReferences(result);
+      return JavaCodeStyleManager.getInstance(result.getProject()).shortenClassReferences(result);
     }
 
     static CallHandler<CallChainSimplification> handler() {

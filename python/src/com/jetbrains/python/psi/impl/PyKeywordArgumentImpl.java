@@ -54,7 +54,7 @@ public class PyKeywordArgumentImpl extends PyElementImpl implements PyKeywordArg
   public PsiReference getReference() {
     final ASTNode keywordNode = getKeywordNode();
     if (keywordNode != null) {
-      return new PyKeywordArgumentReference(this, keywordNode.getTextRange().shiftRight(-getTextRange().getStartOffset()));
+      return new PyKeywordArgumentReference(this, keywordNode.getPsi().getTextRangeInParent());
     }
     return null;
   }

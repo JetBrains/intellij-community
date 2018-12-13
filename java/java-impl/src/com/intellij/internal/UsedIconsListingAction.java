@@ -229,7 +229,7 @@ public class UsedIconsListingAction extends AnAction {
               annotation.getNode();
               annotation.setDeclaredAttributeValue(
                 "icon",
-                JavaPsiFacade.getInstance(annotation.getProject()).getElementFactory()
+                JavaPsiFacade.getElementFactory(annotation.getProject())
                              .createAnnotationFromText("@A(\"" + replacement + "\")", null).findDeclaredAttributeValue(null));
             });
           }

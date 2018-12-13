@@ -88,15 +88,17 @@ private fun disableUnneededConfigurationProducer() {
   val extensionPoint = RunConfigurationProducer.EP_NAME.getPoint(null)
 
   val newMode = isNewTestsModeEnabled()
-  extensionPoint.extensionList
-    .filter { it !is PythonDocTestConfigurationProducer }
-    .forEach {
-      if ((it is PyTestsConfigurationProducer && !newMode) ||
-          (it is PythonTestLegacyConfigurationProducer<*> && newMode)) {
-        extensionPoint.unregisterExtension(it)
-        Logger.getInstance("PyTestLegacyInterop").info("Disabling $it")
-      }
+  for (it in extensionPoint.extensionList) {
+    if (it is PythonDocTestConfigurationProducer) {
+      continue
     }
+
+    if ((it is PyTestsConfigurationProducer && !newMode) ||
+        (it is PythonTestLegacyConfigurationProducer<*> && newMode)) {
+      extensionPoint.unregisterExtension(it)
+      Logger.getInstance("PyTestLegacyInterop").info("Disabling $it")
+    }
+  }
 }
 
 private fun getVirtualFileByPath(path: String): VirtualFile? {
@@ -104,7 +106,7 @@ private fun getVirtualFileByPath(path: String): VirtualFile? {
 }
 
 private fun VirtualFile.asPyFile(project: Project): PyFile? {
-  assert(project.isInitialized, { "This function can't be used on uninitialized project" })
+  assert(project.isInitialized) { "This function can't be used on uninitialized project" }
   if (this.isDirectory) {
     return null
   }

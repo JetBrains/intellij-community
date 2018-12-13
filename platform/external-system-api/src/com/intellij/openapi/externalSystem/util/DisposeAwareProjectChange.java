@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/6/13
  */
 public abstract class DisposeAwareProjectChange implements Runnable {
   private final ComponentManager myComponentManager;

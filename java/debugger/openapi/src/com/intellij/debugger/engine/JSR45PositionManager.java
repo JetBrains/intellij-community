@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +24,6 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * @author Eugene Zhuravlev
@@ -176,7 +176,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   }
 
   protected List<String> getRelativeSourePathsByType(final ReferenceType type) throws AbsentInformationException {
-    return type.sourcePaths(myStratumId).stream().map(this::getRelativePath).collect(Collectors.toList());
+    return ContainerUtil.map(type.sourcePaths(myStratumId), this::getRelativePath);
   }
 
   protected List<Location> getLocationsOfLine(final ReferenceType type, final String fileName,

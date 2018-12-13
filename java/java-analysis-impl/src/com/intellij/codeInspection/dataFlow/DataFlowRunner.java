@@ -209,16 +209,7 @@ public class DataFlowRunner {
               continue;
             }
             if (processed.size() > MERGING_BACK_BRANCHES_THRESHOLD) {
-              DfaMemoryStateImpl curState = (DfaMemoryStateImpl)instructionState.getMemoryState();
-              Object key = curState.getMergeabilityKey();
-              myWasForciblyMerged = true;
-              DfaMemoryStateImpl mergedState =
-                StreamEx.of(processed).select(DfaMemoryStateImpl.class).filterBy(DfaMemoryStateImpl::getMergeabilityKey, key)
-                  .foldLeft(curState, (s1, s2) -> {
-                    s1.merge(s2);
-                    return s1;
-                  });
-              instructionState = new DfaInstructionState(instruction, mergedState);
+              instructionState = mergeBackBranches(instructionState, processed);
               if (containsState(processed, instructionState)) {
                 continue;
               }
@@ -280,6 +271,21 @@ public class DataFlowRunner {
       reportDfaProblem(psiBlock, flow, lastInstructionState, e);
       return RunnerResult.ABORTED;
     }
+  }
+
+  @NotNull
+  private DfaInstructionState mergeBackBranches(DfaInstructionState instructionState, Collection<DfaMemoryState> processed) {
+    DfaMemoryStateImpl curState = (DfaMemoryStateImpl)instructionState.getMemoryState();
+    Object key = curState.getMergeabilityKey();
+    DfaMemoryStateImpl mergedState =
+      StreamEx.of(processed).select(DfaMemoryStateImpl.class).filterBy(DfaMemoryStateImpl::getMergeabilityKey, key)
+        .foldLeft(curState, (s1, s2) -> {
+          s1.merge(s2);
+          return s1;
+        });
+    instructionState = new DfaInstructionState(instructionState.getInstruction(), mergedState);
+    myWasForciblyMerged = true;
+    return instructionState;
   }
 
   boolean wasForciblyMerged() {

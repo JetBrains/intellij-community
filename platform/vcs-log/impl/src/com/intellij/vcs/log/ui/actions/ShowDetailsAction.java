@@ -15,14 +15,13 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 
 public class ShowDetailsAction extends BooleanPropertyToggleAction {
 
   public ShowDetailsAction() {
-    super("Show Details", "Display details panel", AllIcons.Actions.PreviewDetailsVertically);
+    super("Show Details", "Display details panel", null);
   }
 
   @Override

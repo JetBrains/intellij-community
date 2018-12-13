@@ -2,6 +2,7 @@
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.dashboard.RunDashboardManager;
@@ -52,16 +53,17 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<RunDashb
     }
   }
 
-  private boolean canRun(RunDashboardRunConfigurationNode node) {
+  private boolean canRun(@NotNull RunDashboardRunConfigurationNode node) {
     final String executorId = getExecutor().getId();
     final RunnerAndConfigurationSettings configurationSettings = node.getConfigurationSettings();
     final ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, configurationSettings);
     final ExecutionTarget target = ExecutionTargetManager.getActiveTarget(node.getProject());
 
+    RunConfiguration configuration = configurationSettings.getConfiguration();
     return isValid(node) &&
            runner != null &&
-           runner.canRun(executorId, configurationSettings.getConfiguration()) &&
-           ExecutionTargetManager.canRun(configurationSettings, target) &&
+           runner.canRun(executorId, configuration) &&
+           ExecutionTargetManager.canRun(configuration, target) &&
            !isStarting(node.getProject(), configurationSettings, executorId, runner.getRunnerId());
   }
 

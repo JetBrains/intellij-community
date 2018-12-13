@@ -15,18 +15,18 @@ import java.util.List;
  * is unwrapped.
  */
 public class BreakConverter {
-  private final PsiSwitchStatement mySwitchStatement;
+  private final PsiSwitchBlock mySwitchBlock;
   private final String myReplacement;
 
-  public BreakConverter(PsiSwitchStatement switchStatement, String replacement) {
-    mySwitchStatement = switchStatement;
+  public BreakConverter(PsiSwitchBlock switchBlock, String replacement) {
+    mySwitchBlock = switchBlock;
     myReplacement = replacement;
   }
 
   public void process() {
     List<PsiBreakStatement> breaks = collectBreaks();
     for (PsiBreakStatement breakStatement : breaks) {
-      if (isRemovable(mySwitchStatement, breakStatement)) {
+      if (isRemovable(mySwitchBlock, breakStatement)) {
         DeleteUnnecessaryStatementFix.deleteUnnecessaryStatement(breakStatement);
       } else {
         assert myReplacement != null;
@@ -38,11 +38,11 @@ public class BreakConverter {
   @NotNull
   private List<PsiBreakStatement> collectBreaks() {
     List<PsiBreakStatement> breaks = new ArrayList<>();
-    mySwitchStatement.accept(new JavaRecursiveElementWalkingVisitor() {
+    mySwitchBlock.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitBreakStatement(PsiBreakStatement statement) {
         super.visitBreakStatement(statement);
-        if (statement.findExitedStatement() == mySwitchStatement) {
+        if (statement.findExitedElement() == mySwitchBlock) {
           breaks.add(statement);
         }
       }
@@ -92,8 +92,15 @@ public class BreakConverter {
     return null;
   }
 
-  private static boolean isRemovable(PsiSwitchStatement switchStatement, PsiStatement statement) {
+  private static boolean isRemovable(PsiSwitchBlock switchStatement, PsiStatement statement) {
+    if (switchStatement instanceof PsiSwitchExpression) {
+      // any breaks inside switch expressions are not convertible
+      return false;
+    }
     PsiElement parent = statement.getParent();
+    if (parent instanceof PsiSwitchLabeledRuleStatement) {
+      return true;
+    }
     if (parent instanceof PsiIfStatement || parent instanceof PsiLabeledStatement) {
       return isRemovable(switchStatement, (PsiStatement)parent);
     }
@@ -106,18 +113,18 @@ public class BreakConverter {
       }
     }
     if (nextStatement instanceof PsiSwitchLabelStatement) {
-      return (((PsiSwitchLabelStatement)nextStatement).getEnclosingSwitchStatement() == switchStatement &&
+      return (((PsiSwitchLabelStatement)nextStatement).getEnclosingSwitchBlock() == switchStatement &&
               !ControlFlowUtils.statementMayCompleteNormally(statement));
     }
     if (nextStatement instanceof PsiBreakStatement) {
-      return ((PsiBreakStatement)nextStatement).findExitedStatement() == switchStatement;
+      return ((PsiBreakStatement)nextStatement).findExitedElement() == switchStatement;
     }
     return false;
   }
 
   @Nullable
-  public static BreakConverter from(PsiSwitchStatement switchStatement) {
-    String replacement = getReplacement(switchStatement);
+  public static BreakConverter from(PsiSwitchBlock switchStatement) {
+    String replacement = switchStatement instanceof PsiSwitchStatement ? getReplacement((PsiStatement)switchStatement) : null;
     if (replacement == null) {
       class Visitor extends JavaRecursiveElementWalkingVisitor {
         boolean hasNonRemovableBreak;
@@ -125,7 +132,7 @@ public class BreakConverter {
         @Override
         public void visitBreakStatement(PsiBreakStatement statement) {
           super.visitBreakStatement(statement);
-          if (statement.findExitedStatement() == switchStatement && !isRemovable(switchStatement, statement)) {
+          if (statement.findExitedElement() == switchStatement && !isRemovable(switchStatement, statement)) {
             hasNonRemovableBreak = true;
             stopWalking();
           }

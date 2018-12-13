@@ -132,7 +132,6 @@ public class JavaCompletionUtil {
     return JavaProjectCodeInsightSettings.getSettings(member.getProject()).isExcluded(name);
   }
 
-  @SuppressWarnings({"unchecked"})
   @NotNull
   public static <T extends PsiType> T originalize(@NotNull T type) {
     if (!type.isValid()) {
@@ -208,7 +207,7 @@ public class JavaCompletionUtil {
       }
 
       @Override
-      public boolean shouldProcess(DeclarationKind kind) {
+      public boolean shouldProcess(@NotNull DeclarationKind kind) {
         return member instanceof PsiEnumConstant ? kind == DeclarationKind.ENUM_CONST :
                member instanceof PsiField ? kind == DeclarationKind.FIELD :
                kind == DeclarationKind.METHOD;
@@ -910,9 +909,10 @@ public class JavaCompletionUtil {
     };
   }
 
-  public static String escapeXmlIfNeeded(InsertionContext context, String generics) {
+  @NotNull
+  public static String escapeXmlIfNeeded(InsertionContext context, @NotNull String generics) {
     if (context.getFile().getViewProvider().getBaseLanguage() == StdLanguages.JSPX) {
-      return StringUtil.escapeXml(generics);
+      return StringUtil.escapeXmlEntities(generics);
     }
     return generics;
   }

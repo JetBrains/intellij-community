@@ -33,6 +33,9 @@ public class ExecutionManagerTest extends LightPlatformTestCase {
       RunManagerConfig config = RunManagerImpl.getInstanceImpl(getProject()).getConfig();
       config.setRestartRequiresConfirmation(myRestartRequiresConfirmation);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

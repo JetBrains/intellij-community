@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEnumerationHandler;
 import com.intellij.openapi.roots.OrderRootType;
@@ -32,10 +33,8 @@ import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
-import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
-import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
+import org.jetbrains.plugins.gradle.settings.*;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
@@ -111,7 +110,8 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
       return false;
     }
 
-    final ExternalProjectDataCache externalProjectDataCache = ExternalProjectDataCache.getInstance(rootModel.getModule().getProject());
+    Project project = rootModel.getModule().getProject();
+    final ExternalProjectDataCache externalProjectDataCache = ExternalProjectDataCache.getInstance(project);
     assert externalProjectDataCache != null;
     final ExternalProject externalRootProject =
       externalProjectDataCache.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath));
@@ -124,19 +124,19 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
       externalProjectDataCache.findExternalProject(externalRootProject, rootModel.getModule());
     if (externalSourceSets.isEmpty()) return false;
 
-    boolean isGradleAwareMake = GradleSystemRunningSettings.getInstance().isUseGradleAwareMake();
+    boolean isDelegatedBuildEnabled = GradleSettingsService.getInstance(project).isDelegatedBuildEnabled(rootModel.getModule());
     for (ExternalSourceSet sourceSet : externalSourceSets.values()) {
       if (includeTests) {
-        if (isGradleAwareMake) {
+        if (isDelegatedBuildEnabled) {
           addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.TEST), result, true);
         }
-        addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE), result, isGradleAwareMake);
+        addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE), result, isDelegatedBuildEnabled);
       }
       if (includeProduction) {
-        if (isGradleAwareMake) {
+        if (isDelegatedBuildEnabled) {
           addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.SOURCE), result, true);
         }
-        addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.RESOURCE), result, isGradleAwareMake);
+        addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.RESOURCE), result, isDelegatedBuildEnabled);
       }
     }
 

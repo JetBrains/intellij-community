@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.RemoteStateState;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
@@ -30,7 +29,6 @@ import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import com.jetbrains.sa.SaJdwp;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +96,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
       LocalAttachInfo attachInfo = getAttachInfo(project, info, dataHolder.getUserData(ADDRESS_MAP_KEY));
       assert attachInfo != null;
-      String res = "";
+      String res;
       String executable = info.getExecutableDisplayName();
       if ("java".equals(executable)) {
         if (!StringUtil.isEmpty(attachInfo.myClass)) {
@@ -131,7 +129,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       addressMap = new HashMap<>();
       contextHolder.putUserData(ADDRESS_MAP_KEY, addressMap);
       final Map<String, LocalAttachInfo> map = addressMap;
-      Set<String> attachedPids = getAttachedPids(project);
+      Set<String> attachedPids = JavaDebuggerAttachUtil.getAttachedPids(project);
       VirtualMachine.list().forEach(desc -> {
         String pid = desc.id();
         LocalAttachInfo address = getProcessAttachInfo(pid, attachedPids);
@@ -150,14 +148,6 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
   boolean isDebuggerAttach(LocalAttachInfo info) {
     return info instanceof DebuggerLocalAttachInfo;
-  }
-
-  private static Set<String> getAttachedPids(@NotNull Project project) {
-    return StreamEx.of(DebuggerManagerEx.getInstanceEx(project).getSessions())
-      .map(s -> s.getDebugEnvironment().getRemoteConnection())
-      .select(PidRemoteConnection.class)
-      .map(PidRemoteConnection::getPid)
-      .toSet();
   }
 
   @Nullable
@@ -225,7 +215,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
   @Nullable
   private static LocalAttachInfo getProcessAttachInfo(@NotNull String pid, @NotNull Project project) {
-    return getProcessAttachInfo(pid, getAttachedPids(project));
+    return getProcessAttachInfo(pid, JavaDebuggerAttachUtil.getAttachedPids(project));
   }
 
   @Nullable

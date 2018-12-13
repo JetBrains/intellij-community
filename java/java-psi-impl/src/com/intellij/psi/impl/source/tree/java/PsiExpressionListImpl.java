@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiExpressionListImpl extends CompositePsiElement implements PsiExpressionList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiExpressionListImpl");
+  private volatile PsiExpression[] myExpressions;
 
   public PsiExpressionListImpl() {
     super(JavaElementType.EXPRESSION_LIST);
@@ -34,11 +35,27 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   @Override
   @NotNull
   public PsiExpression[] getExpressions() {
-    return getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
+    PsiExpression[] expressions = myExpressions;
+    if (expressions == null) {
+      expressions = getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
+      if (expressions.length > 10) {
+        myExpressions = expressions;
+      }
+    }
+    return expressions;
+  }
+
+  @Override
+  public void clearCaches() {
+    super.clearCaches();
+    myExpressions = null;
   }
 
   @Override
   public int getExpressionCount() {
+    PsiExpression[] expressions = myExpressions;
+    if (expressions != null) return expressions.length;
+    
     return countChildren(ElementType.EXPRESSION_BIT_SET);
   }
 

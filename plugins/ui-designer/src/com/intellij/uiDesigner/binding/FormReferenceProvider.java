@@ -314,7 +314,6 @@ public class FormReferenceProvider extends PsiReferenceProvider {
       packageName = aPackage.getQualifiedName();
     }
 
-    //noinspection NonConstantStringShouldBeStringBuffer
     String bundleName = propertiesFile.getResourceBundle().getBaseName();
 
     if (packageName.length() > 0) {

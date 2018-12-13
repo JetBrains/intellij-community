@@ -56,7 +56,6 @@ public enum ThreeSide {
     if (myIndex == 0) return left;
     if (myIndex == 1) return base;
     if (myIndex == 2) return right;
-    //noinspection Contract
     throw new IllegalStateException();
   }
 

@@ -44,7 +44,7 @@ public class AsyncStacksUtils {
 
   @Nullable
   public static List<StackFrameItem> getAgentRelatedStack(JavaStackFrame frame, @NotNull SuspendContextImpl suspendContext) {
-    if (isAgentEnabled() && suspendContext.getDebugProcess().isEvaluationPossible()) {
+    if (isAgentEnabled() && suspendContext.getDebugProcess().isEvaluationPossible(suspendContext)) {
       Location location = frame.getDescriptor().getLocation();
       if (location != null) {
         Method method = DebuggerUtilsEx.getMethod(location);

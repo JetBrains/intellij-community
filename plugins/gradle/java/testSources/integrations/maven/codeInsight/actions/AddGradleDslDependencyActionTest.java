@@ -26,7 +26,6 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/30/13
  */
 public class AddGradleDslDependencyActionTest extends LightPlatformCodeInsightFixtureTestCase {
 

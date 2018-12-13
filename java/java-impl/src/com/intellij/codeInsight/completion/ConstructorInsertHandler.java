@@ -58,7 +58,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
 
   @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
-    @SuppressWarnings({"unchecked"}) final LookupElement delegate = item.getDelegate();
+    final LookupElement delegate = item.getDelegate();
 
     PsiClass psiClass = (PsiClass)item.getObject();
     SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.createPointer(psiClass);

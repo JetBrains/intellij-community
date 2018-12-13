@@ -43,7 +43,7 @@ public class GroovyClassDescriptor {
   private final PsiElement myPlace;
   private final PsiFile myFile;
 
-  @SuppressWarnings({"SetReplaceableByEnumSet"}) //order is important
+  //order is important
   final Set<Factor> affectingFactors = new LinkedHashSet<>();
 
   public GroovyClassDescriptor(@NotNull PsiType psiType, PsiElement place, final PsiFile placeFile) {

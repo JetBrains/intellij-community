@@ -645,7 +645,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
   }
 
   private static PsiElement createSemicolon(final PsiElement space) {
-    return JavaPsiFacade.getInstance(space.getProject()).getElementFactory().createStatementFromText(";", null).getFirstChild();
+    return JavaPsiFacade.getElementFactory(space.getProject()).createStatementFromText(";", null).getFirstChild();
   }
 
   private static class Collector extends JavaRecursiveElementWalkingVisitor {

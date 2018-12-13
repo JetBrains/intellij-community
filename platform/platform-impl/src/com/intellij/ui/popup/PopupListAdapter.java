@@ -34,7 +34,7 @@ import java.util.Set;
  */
 class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T> {
   private final JList myList;
-  private PopupChooserBuilder myBuilder;
+  private final PopupChooserBuilder myBuilder;
   private ListWithFilter myListWithFilter;
 
   PopupListAdapter(PopupChooserBuilder builder, JList list) {
@@ -135,7 +135,6 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   private class MyListWrapper extends JBScrollPane implements DataProvider {
-    @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
     private final JList myList;
 
     private MyListWrapper(final JList list) {

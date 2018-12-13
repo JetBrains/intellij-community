@@ -30,7 +30,6 @@ import java.util.concurrent.ConcurrentMap;
  * corresponding root external project path.
  * 
  * @author Denis Zhdanov
- * @since 6/8/13 3:43 PM
  */
 public class CachingExternalSystemAutoImportAware implements ExternalSystemAutoImportAware {
 

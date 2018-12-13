@@ -1,29 +1,31 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell.protocol;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * @author Eugene Zhuravlev
  */
-public class JShellMessageMarshallingTest extends TestCase {
-
+public class JShellMessageMarshallingTest {
+  private static final int PIPE_SIZE = 32 << 10;
   private static final Event[] EMPTY_EVENT_ARRAY = new Event[0];
 
+  @Test(timeout = 10000)
   public void testSendReceive() throws Exception {
-    final PipedInputStream clientIn = new PipedInputStream();
+    final PipedInputStream clientIn = new PipedInputStream(PIPE_SIZE);
     final PipedOutputStream serverOut = new PipedOutputStream(clientIn);
-
-    final PipedInputStream serverIn = new PipedInputStream();
+    final PipedInputStream serverIn = new PipedInputStream(PIPE_SIZE);
     final PipedOutputStream clientOut = new PipedOutputStream(serverIn);
-
-    final MessageWriter<Request> clientWriter = new MessageWriter<>(clientOut, Request.class);
+    final MessageWriter<Request> clientWriter = new MessageWriter<>(clientOut);
     final MessageReader<Request> serverReader = new MessageReader<>(serverIn, Request.class);
-    final MessageWriter<Response> serverWriter = new MessageWriter<>(serverOut, Response.class);
+    final MessageWriter<Response> serverWriter = new MessageWriter<>(serverOut);
     final MessageReader<Response> clientReader = new MessageReader<>(clientIn, Response.class);
 
     final Request request = new Request(UUID.randomUUID().toString(), Request.Command.EVAL,
@@ -39,7 +41,8 @@ public class JShellMessageMarshallingTest extends TestCase {
     final List<String> receivedClasspath = receivedRequest.getClassPath();
     assertEquals(requestClasspath, receivedClasspath);
 
-    final CodeSnippet snippet = new CodeSnippet("code-snippet-id", CodeSnippet.Kind.EXPRESSION, CodeSnippet.SubKind.OTHER_EXPRESSION_SUBKIND, "a+b", "expression:a+b");
+    final CodeSnippet snippet = new CodeSnippet("code-snippet-id", CodeSnippet.Kind.EXPRESSION, CodeSnippet.SubKind.OTHER_EXPRESSION_SUBKIND,
+                                                "a+b", "expression:a+b");
     final Event event1 = new Event(null, null, CodeSnippet.Status.UNKNOWN, CodeSnippet.Status.NONEXISTENT, null);
     event1.setExceptionText("some exception");
     event1.setDiagnostic("error diagnostic");

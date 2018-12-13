@@ -20,10 +20,10 @@ import com.google.protobuf.MessageLite;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.net.URI;
-import java.util.Collection;
 import java.util.Locale;
 
 /**
@@ -42,6 +42,10 @@ public class ExternalJavacMessageHandler {
     myDiagnosticSink = diagnosticSink;
     myOutputSink = outputSink;
     myEncodingName = encodingName;
+  }
+
+  public DiagnosticOutputConsumer getDiagnosticSink() {
+    return myDiagnosticSink;
   }
 
   public boolean handleMessage(MessageLite message) {
@@ -109,15 +113,6 @@ public class ExternalJavacMessageHandler {
           final JavacRemoteProto.Message.Response.OutputObject outputObject = response.getOutputObject();
           final File file = new File(outputObject.getFilePath());
           myDiagnosticSink.javaFileLoaded(file);
-          return false;
-        }
-
-        if (responseType == JavacRemoteProto.Message.Response.Type.CLASS_DATA) {
-          final JavacRemoteProto.Message.Response.ClassData data = response.getClassData();
-          final String className = data.getClassName();
-          final Collection<String> imports = data.getImportStatementList();
-          final Collection<String> staticImports = data.getStaticImportList();
-          myDiagnosticSink.registerImports(className, imports, staticImports);
           return false;
         }
 

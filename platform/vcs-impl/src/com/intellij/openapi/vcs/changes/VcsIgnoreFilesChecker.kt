@@ -1,27 +1,42 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.project.isDirectoryBased
+import com.intellij.project.stateStore
 import com.intellij.vcsUtil.VcsImplUtil
+import com.intellij.vcsUtil.VcsUtil
 
-private val LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker")
+private val LOG = Logger.getInstance(VcsIgnoreFilesChecker::class.java)
 
-class VcsIgnoreFilesChecker : StartupActivity, DumbAware {
+class VcsIgnoreFilesChecker(private val project: Project) : ProjectComponent {
 
-  override fun runActivity(project: Project) = generateVcsIgnoreFileIfNeeded(project)
-
-  private fun generateVcsIgnoreFileIfNeeded(project: Project) {
-    val basePath = project.basePath
-    val projectBaseDir = if (basePath != null) LocalFileSystem.getInstance().findFileByPath(basePath) else null
-    val vcs = ProjectLevelVcsManager.getInstance(project).findVersioningVcs(projectBaseDir)
-    if (vcs != null) {
-      LOG.debug("Generate VCS file for $vcs")
-      VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs)
+  override fun projectOpened() {
+    if (project.isDirectoryBased && !ApplicationManager.getApplication().isUnitTestMode) {
+      project.messageBus
+        .connect()
+        .subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
+          generateVcsIgnoreFileIfNeeded(project)
+        })
     }
   }
+
+  private fun generateVcsIgnoreFileIfNeeded(project: Project) =
+    ApplicationManager.getApplication().executeOnPooledThread {
+      if (project.isDisposed) return@executeOnPooledThread
+
+      val projectConfigDirPath = project.stateStore.projectConfigDir ?: return@executeOnPooledThread
+      val projectConfigDirVFile = LocalFileSystem.getInstance().findFileByPath(projectConfigDirPath) ?: return@executeOnPooledThread
+
+      val vcs = VcsUtil.getVcsFor(project, projectConfigDirVFile) ?: return@executeOnPooledThread
+
+      LOG.debug("Generate VCS ignore file for " + vcs.name)
+      VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectConfigDirVFile)
+    }
 }

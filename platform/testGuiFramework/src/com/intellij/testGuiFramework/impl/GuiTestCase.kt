@@ -12,6 +12,7 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestPaths.testScreenshotDirPath
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.toPrintable
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.tryWithPause
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
@@ -24,9 +25,11 @@ import org.fest.swing.fixture.JTableFixture
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
-import org.junit.ClassRule
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import java.awt.Component
 import java.io.File
@@ -35,6 +38,7 @@ import java.util.*
 import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.text.JTextComponent
 
 /**
  * The main base class that should be extended for writing GUI tests.
@@ -62,15 +66,15 @@ import javax.swing.JPanel
 @RunWith(GuiTestLocalRunner::class)
 open class GuiTestCase {
 
-  companion object {
-    @ClassRule
-    @JvmField
-    val projectsFolder: TemporaryFolder = TemporaryFolder()
-  }
+  @Rule
+  @JvmField
+  val screenshotsDuringTest = ScreenshotsDuringTest(500) // 0.5 sec
 
   @Rule
   @JvmField
-  val guiTestRule = GuiTestRule(projectsFolder.apply{ create() }.root.canonicalFile)
+  val guiTestRule = GuiTestRule()
+
+  val projectsFolder: TemporaryFolder = guiTestRule.projectsFolder
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   //  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
@@ -78,6 +82,18 @@ open class GuiTestCase {
   val slash: String = File.separator
 
   private val screenshotTaker: ScreenshotTaker = ScreenshotTaker()
+
+  @Rule
+  @JvmField
+  val testMethod = TestName()
+
+  @Rule
+  @JvmField
+  val logActionsDuringTest = LogActionsDuringTest()
+
+  val projectFolder: String by lazy {
+    projectsFolder.newFolder(testMethod.methodName).canonicalPath
+  }
 
   fun robot() = guiTestRule.robot()
 
@@ -123,9 +139,18 @@ open class GuiTestCase {
     if (!needToKeepDialog) dialog.waitTillGone()
   }
 
+  fun dialogWithTextComponent(timeout: Timeout, predicate: (JTextComponent) -> Boolean, func: JDialogFixture.() -> Unit) {
+    val dialog: JDialog = waitUntilFound(null, JDialog::class.java, timeout) {
+      JDialogFixture(robot(), it).containsChildComponent(predicate)
+    }
+    val dialogFixture = JDialogFixture(robot(), dialog)
+    func(dialogFixture)
+    dialogFixture.waitTillGone()
+  }
+
   fun settingsDialog(timeout: Timeout = Timeouts.defaultTimeout,
-                      needToKeepDialog: Boolean = false,
-                      func: JDialogFixture.() -> Unit) {
+                     needToKeepDialog: Boolean = false,
+                     func: JDialogFixture.() -> Unit) {
     if (isMac()) dialog(title = "Preferences", func = func)
     else dialog(title = "Settings", func = func)
   }
@@ -136,7 +161,7 @@ open class GuiTestCase {
     if (!needToKeepDialog) pluginDialog.waitTillGone()
   }
 
-  fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout) : PluginDialogFixture{
+  fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout): PluginDialogFixture {
     return PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
   }
 
@@ -144,7 +169,7 @@ open class GuiTestCase {
    * Waits for a native file chooser, types the path in a textfield and closes it by clicking OK button. Or runs AppleScript if the file chooser
    * is a Mac native.
    */
-  fun chooseFileInFileChooser(path: String, timeout: Timeout = Timeouts.defaultTimeout) {
+  fun chooseFileInFileChooser(path: String, timeout: Timeout = Timeouts.defaultTimeout, needToRefresh: Boolean = false) {
     val macNativeFileChooser = SystemInfo.isMac() && (System.getProperty("ide.mac.file.chooser.native", "true").toLowerCase() == "false")
     if (macNativeFileChooser) {
       MacFileChooserDialogFixture(robot()).selectByPath(path)
@@ -171,6 +196,13 @@ open class GuiTestCase {
         textfield("")
         invokeAction("\$SelectAll")
         typeText(path)
+        if (needToRefresh) {
+          tryWithPause(ComponentLookupException::class.java, "Path is located in the tree", Timeouts.seconds10) {
+            actionButton("Refresh").click()
+            textfield("").deleteText()
+            typeText(path)
+          }
+        }
         button("OK").clickWhenEnabled()
         waitTillGone()
       }
@@ -268,6 +300,10 @@ open class GuiTestCase {
     func(this.editor())
   }
 
+  fun CustomToolWindowFixture.ContentFixture.editorContainingText(text: String, func: EditorFixture.() -> Unit) {
+    func(findEditorContainingText(text))
+  }
+
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   /**
    * Type text by symbol with a constant delay. Generate system key events, so entered text will aply to a focused component.
@@ -325,7 +361,10 @@ open class GuiTestCase {
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one) and returns created JDialogFixture
    */
-  fun dialog(title: String? = null, ignoreCaseTitle: Boolean, predicate: FinderPredicate = Predicate.equality, timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
+  fun dialog(title: String? = null,
+             ignoreCaseTitle: Boolean,
+             predicate: FinderPredicate = Predicate.equality,
+             timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
     if (title == null) {
       val jDialog = waitUntilFound(null, JDialog::class.java, timeout) { true }
       return JDialogFixture(robot(), jDialog)
@@ -397,20 +436,36 @@ open class GuiTestCase {
     return fixture.rowCount()
   }
 
-  fun waitForPanelToDisappear(panelTitle: String, timeout: Timeout = Timeouts.minutes05) {
-    Pause.pause(object : Condition("Wait for $panelTitle panel appears") {
-      override fun test(): Boolean {
-        try {
-          robot().finder().find(guiTestRule.findIdeFrame().target()) {
-            it is JLabel && it.text == panelTitle
+  /**
+   * Wait for panel with specified title disappearing
+   * @param panelTitle title of investigated panel
+   * @param timeoutToAppear timeout to wait when the panel appears
+   * @param timeoutToDisappear timeout to wait when the panel disappears (after it has appeared)
+   * @throws ComponentLookupException if the panel hasn't appeared after [timeoutToAppear] finishing
+   * @throws WaitTimedOutError if the panel appears, but cannot disappear after [timeoutToDisappear] finishing
+   * */
+  fun waitForPanelToDisappear(
+    panelTitle: String,
+    timeoutToAppear: Timeout = Timeouts.minutes05,
+    timeoutToDisappear: Timeout = Timeouts.minutes05) {
+    try {
+      Pause.pause(object : Condition("Wait for $panelTitle panel appears") {
+        override fun test(): Boolean {
+          try {
+            robot().finder().find(guiTestRule.findIdeFrame().target()) {
+              it is JLabel && it.text == panelTitle
+            }
           }
+          catch (cle: ComponentLookupException) {
+            return false
+          }
+          return true
         }
-        catch (cle: ComponentLookupException) {
-          return false
-        }
-        return true
-      }
-    }, timeout)
+      }, timeoutToAppear)
+    }
+    catch (e: WaitTimedOutError) {
+      throw ComponentLookupException("Panel `$panelTitle` hasn't appear")
+    }
 
     Pause.pause(object : Condition("Wait for $panelTitle panel disappears") {
       override fun test(): Boolean {
@@ -424,8 +479,20 @@ open class GuiTestCase {
         }
         return false
       }
-    }, timeout)
+    }, timeoutToDisappear)
 
   }
+
+  @Before
+  open fun setUp() {
+    logStartTest(testMethod.methodName)
+  }
+
+  @After
+  open fun tearDown() {
+    logEndTest(testMethod.methodName)
+  }
+
+  open fun isIdeFrameRun(): Boolean = true
 
 }

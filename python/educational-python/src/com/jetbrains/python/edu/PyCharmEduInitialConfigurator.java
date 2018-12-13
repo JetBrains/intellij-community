@@ -7,7 +7,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistryImpl;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.GeneralSettings;
@@ -22,8 +21,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -126,14 +123,12 @@ public class PyCharmEduInitialConfigurator {
   }
 
   /**
-   * @noinspection UnusedParameters
    */
   public PyCharmEduInitialConfigurator(MessageBus bus,
                                        CodeInsightSettings codeInsightSettings,
                                        final PropertiesComponent propertiesComponent,
                                        FileTypeManager fileTypeManager,
                                        final ProjectManagerEx projectManager) {
-    final UISettings uiSettings = UISettings.getInstance();
 
     if (!propertiesComponent.getBoolean(CONFIGURED_V4)) {
       propertiesComponent.setValue(CONFIGURED_V4, true);
@@ -147,7 +142,7 @@ public class PyCharmEduInitialConfigurator {
     }
     if (!propertiesComponent.getBoolean(CONFIGURED_V1)) {
       patchMainMenu();
-      uiSettings.setShowNavigationBar(false);
+      UISettings.getInstance().setShowNavigationBar(false);
       propertiesComponent.setValue(CONFIGURED_V1, true);
       propertiesComponent.setValue("ShowDocumentationInToolWindow", true);
     }
@@ -156,11 +151,6 @@ public class PyCharmEduInitialConfigurator {
       propertiesComponent.setValue(CONFIGURED, "true");
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");
 
-      uiSettings.setHideToolStripes(false);
-      uiSettings.setShowMemoryIndicator(false);
-      uiSettings.setShowDirectoryForNonUniqueFilenames(true);
-      uiSettings.setShowMainToolbar(false);
-
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
 
       GeneralSettings.getInstance().setShowTipsOnStartup(false);
@@ -168,8 +158,6 @@ public class PyCharmEduInitialConfigurator {
       EditorSettingsExternalizable.getInstance().setVirtualSpace(false);
       EditorSettingsExternalizable.getInstance().getOptions().ARE_LINE_NUMBERS_SHOWN = true;
       CodeStyle.getDefaultSettings().getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-      uiSettings.setShowDirectoryForNonUniqueFilenames(true);
-      uiSettings.setShowMemoryIndicator(false);
       final String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
       ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class")));
       PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP = false;
@@ -336,8 +324,8 @@ public class PyCharmEduInitialConfigurator {
 
   private static void patchProjectAreaExtensions(@NotNull final Project project) {
     Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
-    unregisterAction(debugExecutor.getId(), ExecutorRegistryImpl.RUNNERS_GROUP);
-    unregisterAction(debugExecutor.getContextActionId(), ExecutorRegistryImpl.RUN_CONTEXT_GROUP);
+    ActionManager.getInstance().unregisterAction(debugExecutor.getId());
+    ActionManager.getInstance().unregisterAction(debugExecutor.getContextActionId());
 
     ExtensionsArea projectArea = Extensions.getArea(project);
 
@@ -352,18 +340,6 @@ public class PyCharmEduInitialConfigurator {
       if (pane.getId().equals(ScopeViewPane.ID)) {
         Disposer.dispose(pane);
         projectArea.getExtensionPoint(AbstractProjectViewPane.EP_NAME).unregisterExtension(pane);
-      }
-    }
-  }
-
-  private static void unregisterAction(String actionId, String groupId) {
-    ActionManager actionManager = ActionManager.getInstance();
-    AnAction action = actionManager.getAction(actionId);
-    if (action != null) {
-      AnAction actionGroup = actionManager.getAction(groupId);
-      if (actionGroup instanceof DefaultActionGroup) {
-        ((DefaultActionGroup)actionGroup).remove(action);
-        actionManager.unregisterAction(actionId);
       }
     }
   }

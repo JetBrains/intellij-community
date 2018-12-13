@@ -126,7 +126,6 @@ public abstract class ActionButtonLook {
 
   public void updateUI() {}
 
-  @SuppressWarnings("MethodMayBeStatic")
   @ActionButtonComponent.ButtonState
   protected int getState(ActionButtonComponent button) {
     // DO NOT inline this method! Because of compiler bug up-cast from ButtonType to ActionButtonComponent is important!

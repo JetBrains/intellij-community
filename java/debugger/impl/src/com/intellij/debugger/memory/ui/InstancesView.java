@@ -12,7 +12,10 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.memory.filtering.FilteringResult;
 import com.intellij.debugger.memory.filtering.FilteringTask;
 import com.intellij.debugger.memory.filtering.FilteringTaskCallback;
-import com.intellij.debugger.memory.utils.*;
+import com.intellij.debugger.memory.utils.AndroidUtil;
+import com.intellij.debugger.memory.utils.ErrorsValueGroup;
+import com.intellij.debugger.memory.utils.InstanceJavaValue;
+import com.intellij.debugger.memory.utils.InstanceValueDescriptor;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
@@ -25,6 +28,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -37,9 +41,9 @@ import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
 import com.intellij.xdebugger.memory.ui.InstancesTree;
 import com.intellij.xdebugger.memory.ui.InstancesViewBase;
 import com.intellij.xdebugger.memory.utils.InstancesProvider;
-import org.jetbrains.annotations.NotNull;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,7 +51,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 class InstancesView extends InstancesViewBase {
   private static final Logger LOG = Logger.getInstance(InstancesView.class);
@@ -181,7 +184,8 @@ class InstancesView extends InstancesViewBase {
         final int limit = myIsAndroidVM
           ? AndroidUtil.ANDROID_INSTANCES_LIMIT
           : DEFAULT_INSTANCES_LIMIT;
-        List<ObjectReference> instances = getInstancesProvider().getInstances(limit + 1).stream().map(referenceInfo -> ((JavaReferenceInfo) referenceInfo).getObjectReference()).collect(Collectors.toList());
+        List<ObjectReference> instances = ContainerUtil
+          .map(getInstancesProvider().getInstances(limit + 1), referenceInfo -> ((JavaReferenceInfo)referenceInfo).getObjectReference());
 
         final EvaluationContextImpl evaluationContext = myDebugProcess
           .getDebuggerContext().createEvaluationContext();

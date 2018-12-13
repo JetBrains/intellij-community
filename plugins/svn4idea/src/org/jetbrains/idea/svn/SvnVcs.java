@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -79,10 +78,10 @@ import java.util.function.Function;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 
-@SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private static final String DO_NOT_LISTEN_TO_WC_DB = "svn.do.not.listen.to.wc.db";
   private static final Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
@@ -552,25 +551,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public void collectInfo(@NotNull Collection<File> files, @Nullable InfoConsumer handler) {
-    File first = ContainerUtil.getFirstItem(files);
+    File first = getFirstItem(files);
 
     if (first != null) {
-      ClientFactory factory = getFactory(first);
-
       try {
-        if (factory instanceof CmdClientFactory) {
-          factory.createInfoClient().doInfo(files, handler);
-        }
-        else {
-          // TODO: Generally this should be moved in SvnKit info client implementation.
-          // TODO: Currently left here to have exception logic as in handleInfoException to be applied for each file separately.
-          for (File file : files) {
-            Info info = getInfo(file);
-            if (handler != null) {
-              handler.consume(info);
-            }
-          }
-        }
+        getFactory(first).createInfoClient().doInfo(files, handler);
       }
       catch (SvnBindException e) {
         handleInfoException(e);
@@ -615,7 +600,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     WorkingCopyFormat format = WorkingCopyFormat.UNKNOWN;
 
     if (useMapping) {
-      RootUrlInfo rootInfo = getSvnFileUrlMapping().getWcRootForFilePath(ioFile);
+      RootUrlInfo rootInfo = getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(ioFile));
       format = rootInfo != null ? rootInfo.getFormat() : WorkingCopyFormat.UNKNOWN;
     }
 
@@ -764,7 +749,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       StreamEx.of(filesMap.keySet())
               .mapToEntry(
                 file -> {
-                  RootUrlInfo wcRoot = getSvnFileUrlMapping().getWcRootForFilePath(virtualToIoFile(file));
+                  RootUrlInfo wcRoot = getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(file));
                   return wcRoot != null ? wcRoot.getVirtualFile() : SvnUtil.getWorkingCopyRoot(file);
                 },
                 identity())

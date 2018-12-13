@@ -144,7 +144,7 @@ public interface SelectionModel {
    *
    * @param listener the listener instance.
    */
-  void addSelectionListener(SelectionListener listener);
+  void addSelectionListener(@NotNull SelectionListener listener);
 
   /**
    * Adds a listener for receiving information about selection changes, which is removed when the given disposable is disposed.
@@ -161,7 +161,7 @@ public interface SelectionModel {
    *
    * @param listener the listener instance.
    */
-  void removeSelectionListener(SelectionListener listener);
+  void removeSelectionListener(@NotNull SelectionListener listener);
 
   /**
    * Selects the entire line of text at the caret position.

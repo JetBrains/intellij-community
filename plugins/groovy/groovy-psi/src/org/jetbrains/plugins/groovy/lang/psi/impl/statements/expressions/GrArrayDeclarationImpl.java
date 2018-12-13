@@ -23,6 +23,7 @@ public class GrArrayDeclarationImpl extends GroovyPsiElementImpl implements GrAr
     visitor.visitArrayDeclaration(this);
   }
 
+  @Override
   public String toString() {
     return "Array declaration";
   }

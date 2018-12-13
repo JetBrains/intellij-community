@@ -132,7 +132,7 @@ public class BindingFactory {
             theSubst = theSubst.put(aParm, apply(aType));
           }
 
-          return JavaPsiFacade.getInstance(theClass.getProject()).getElementFactory().createType(theClass, theSubst);
+          return JavaPsiFacade.getElementFactory(theClass.getProject()).createType(theClass, theSubst);
         }
         else {
           return type;
@@ -355,7 +355,7 @@ public class BindingFactory {
 
               if (kindX + kindY == 5) {
                 try {
-                  final PsiElementFactory f = JavaPsiFacade.getInstance(myProject).getElementFactory();
+                  final PsiElementFactory f = JavaPsiFacade.getElementFactory(myProject);
                   final PsiType cloneable = f.createTypeFromText("java.lang.Cloneable", null);
                   final PsiType object = f.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null);
                   final PsiType serializable = f.createTypeFromText("java.io.Serializable", null);
@@ -657,7 +657,7 @@ public class BindingFactory {
             theSubst = theSubst.put(parm, substitute(type));
           }
 
-          return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, theSubst);
+          return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, theSubst);
         }
       }
       return t;
@@ -1052,7 +1052,7 @@ public class BindingFactory {
               final PsiSubstitutor y2aSubst = TypeConversionUtil.getClassSubstitutor(yClass, descendant, ySubst);
               LOG.assertTrue(x2aSubst != null && y2aSubst != null);
 
-              final PsiElementFactory factory = JavaPsiFacade.getInstance(xClass.getProject()).getElementFactory();
+              final PsiElementFactory factory = JavaPsiFacade.getElementFactory(xClass.getProject());
 
               union(factory.createType(descendant, x2aSubst), factory.createType(descendant, y2aSubst), list);
             }
@@ -1078,7 +1078,7 @@ public class BindingFactory {
         if (x instanceof PsiArrayType || y instanceof PsiArrayType) {
           if (x instanceof PsiClassType || y instanceof PsiClassType) {
             try {
-              final PsiElementFactory f = JavaPsiFacade.getInstance(myProject).getElementFactory();
+              final PsiElementFactory f = JavaPsiFacade.getElementFactory(myProject);
               final PsiType keyType = x instanceof PsiClassType ? x : y;
 
               final PsiType object = f.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null);
@@ -1115,7 +1115,7 @@ public class BindingFactory {
             final Binding risen = rise(x, y, null);
 
             if (risen == null) {
-              final PsiElementFactory factory = JavaPsiFacade.getInstance(xClass.getProject()).getElementFactory();
+              final PsiElementFactory factory = JavaPsiFacade.getElementFactory(xClass.getProject());
 
               list.addFirst(Pair.create(Util.banalize(factory.createType(xClass, factory.createRawSubstitutor(xClass))),
                                         create()));
@@ -1135,7 +1135,7 @@ public class BindingFactory {
               final PsiSubstitutor x2aSubst = TypeConversionUtil.getSuperClassSubstitutor(ancestor, xClass, xSubst);
               final PsiSubstitutor y2aSubst = TypeConversionUtil.getSuperClassSubstitutor(ancestor, yClass, ySubst);
 
-              final PsiElementFactory factory = JavaPsiFacade.getInstance(xClass.getProject()).getElementFactory();
+              final PsiElementFactory factory = JavaPsiFacade.getElementFactory(xClass.getProject());
 
               intersect(factory.createType(ancestor, x2aSubst), factory.createType(ancestor, y2aSubst), list);
             }

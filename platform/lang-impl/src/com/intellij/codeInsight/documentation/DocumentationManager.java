@@ -5,7 +5,6 @@ package com.intellij.codeInsight.documentation;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -52,6 +51,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.content.Content;
@@ -78,8 +78,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
-
 public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
   public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   public static final String NEW_JAVADOC_LOCATION_AND_SIZE = "javadoc.popup.new";
@@ -95,7 +93,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private Editor myEditor;
   private final Alarm myUpdateDocAlarm;
   private WeakReference<JBPopup> myDocInfoHintRef;
-  private Component myPreviouslyFocused;
+  private WeakReference<Component> myFocusedBeforePopup;
   public static final Key<SmartPsiElementPointer> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
 
   private final ActionManager myActionManager;
@@ -149,11 +147,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Override
   public void restorePopupBehavior() {
-    if (myPreviouslyFocused != null) {
-      IdeFocusManager.getInstance(myProject).requestFocus(myPreviouslyFocused, true);
-    }
     super.restorePopupBehavior();
-    updateComponent(true);
+    Component previouslyFocused = SoftReference.dereference(myFocusedBeforePopup);
+    if (previouslyFocused != null && previouslyFocused.isShowing()) {
+      IdeFocusManager.getInstance(myProject).requestFocus(previouslyFocused, true);
+      updateComponent(true);
+    }
   }
 
   @Override
@@ -210,10 +209,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
         JBPopup hint = getDocInfoHint();
         if (hint != null) {
-          if (action instanceof ShowQuickDocInfoAction) {
-            ((AbstractPopup)hint).focusPreferredComponent();
-            return;
-          }
           if (action instanceof HintManagerImpl.ActionToIgnore) return;
           if (action instanceof ScrollingUtil.ScrollingAction) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
@@ -248,7 +243,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
     myCloseOnSneeze = false;
     hint.cancel();
-    Component toFocus = myPreviouslyFocused;
+    Component toFocus = SoftReference.dereference(myFocusedBeforePopup);
     hint.cancel();
     if (toFocus != null) {
       IdeFocusManager.getInstance(myProject).requestFocus(toFocus, true);
@@ -447,8 +442,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     storeOriginalElement(project, originalElement, element);
 
-    myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
-
     JBPopup prevHint = getDocInfoHint();
     if (PreviewManager.SERVICE.preview(myProject, DocumentationPreviewPanelProvider.ID, Couple.of(element, originalElement), requestFocus) != null) {
       return;
@@ -485,7 +478,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
     else if (prevHint != null && prevHint.isVisible() && prevHint instanceof AbstractPopup) {
       DocumentationComponent component = (DocumentationComponent)((AbstractPopup)prevHint).getComponent();
-      cancelAndFetchDocInfo(component, new MyCollector(myProject, element, originalElement, null));
+      ActionCallback result = cancelAndFetchDocInfo(component, new MyCollector(myProject, element, originalElement, null));
+      if (requestFocus) {
+        result.doWhenDone(() -> {
+          JBPopup hint = getDocInfoHint();
+          if (hint != null) ((AbstractPopup)hint).focusPreferredComponent();
+        });
+      }
     }
     else {
       showInPopup(element, requestFocus, updateProcessor, originalElement, closeCallback);
@@ -497,6 +496,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                            PopupUpdateProcessor updateProcessor,
                            PsiElement originalElement,
                            @Nullable Runnable closeCallback) {
+    Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
+    myFocusedBeforePopup = new WeakReference<>(focusedComponent);
+
     DocumentationComponent component = myTestDocumentationComponent == null ? new DocumentationComponent(this) :
                                        myTestDocumentationComponent;
     ActionListener actionListener = new ActionListener() {
@@ -536,11 +538,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         if (closeCallback != null) {
           closeCallback.run();
         }
-        findQuickSearchComponent(myPreviouslyFocused).ifPresent(QuickSearchComponent::unregisterHint);
+        findQuickSearchComponent().ifPresent(QuickSearchComponent::unregisterHint);
 
         Disposer.dispose(component);
         myEditor = null;
-        myPreviouslyFocused = null;
         return Boolean.TRUE;
       })
       .setKeyEventHandler(e -> {
@@ -576,7 +577,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     myDocInfoHintRef = new WeakReference<>(hint);
 
-    findQuickSearchComponent(myPreviouslyFocused).ifPresent(quickSearch -> quickSearch.registerHint(hint));
+    findQuickSearchComponent().ifPresent(quickSearch -> quickSearch.registerHint(hint));
   }
 
   static String getTitle(@NotNull PsiElement element, boolean isShort) {
@@ -678,7 +679,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
         DocumentationProvider documentationProvider = getProviderFromElement(file);
         PsiManager psiManager = PsiManager.getInstance(myProject);
-        PsiElement fromProvider = documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
+        PsiElement fromProvider = targetElement == null ? null :
+                                  documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
         return fromProvider != null ? fromProvider : CompletionUtil.getTargetElement(item);
       }
     }
@@ -713,9 +715,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return doFetchDocInfo(component, new MyCollector(myProject, element, null, null));
   }
 
-  private void cancelAndFetchDocInfo(@NotNull DocumentationComponent component, @NotNull DocumentationCollector provider) {
+  private ActionCallback cancelAndFetchDocInfo(@NotNull DocumentationComponent component, @NotNull DocumentationCollector provider) {
     myUpdateDocAlarm.cancelAllRequests();
-    doFetchDocInfo(component, provider);
+    return doFetchDocInfo(component, provider);
   }
 
   private ActionCallback doFetchDocInfo(@NotNull DocumentationComponent component,
@@ -986,14 +988,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     component.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
   }
 
-  public void requestFocus() {
-    findQuickSearchComponent(myPreviouslyFocused).ifPresent(
-      quickSearch ->
-        getGlobalInstance().doWhenFocusSettlesDown(
-          () -> getGlobalInstance().requestFocus(quickSearch.asComponent(), true))
-    );
-  }
-
   public Project getProject(@Nullable PsiElement element) {
     assertSameProject(element);
     return myProject;
@@ -1174,7 +1168,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
            "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) + (withUrl ? DocumentationMarkup.CONTENT_END : "");
   }
 
-  private static Optional<QuickSearchComponent> findQuickSearchComponent(Component c) {
+  private Optional<QuickSearchComponent> findQuickSearchComponent() {
+    Component c = SoftReference.dereference(myFocusedBeforePopup);
     while (c != null) {
       if (c instanceof QuickSearchComponent) {
         return Optional.of((QuickSearchComponent)c);

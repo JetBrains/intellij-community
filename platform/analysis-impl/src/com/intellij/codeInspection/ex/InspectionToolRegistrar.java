@@ -89,7 +89,6 @@ public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrap
   @NotNull
   public static InspectionToolWrapper wrapTool(@NotNull InspectionProfileEntry profileEntry) {
     if (profileEntry instanceof LocalInspectionTool) {
-      //noinspection TestOnlyProblems
       return new LocalInspectionToolWrapper((LocalInspectionTool)profileEntry);
     }
     if (profileEntry instanceof GlobalInspectionTool) {

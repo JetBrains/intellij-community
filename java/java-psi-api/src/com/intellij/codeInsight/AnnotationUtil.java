@@ -5,10 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.BitUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.Processors;
+import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -66,52 +63,93 @@ public class AnnotationUtil {
   @Nullable
   public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, @NotNull Collection<String> annotationNames, boolean skipExternal) {
     if (listOwner == null) return null;
-
-    PsiAnnotation annotation = findOwnAnnotation(listOwner, annotationNames);
-    if (annotation != null) {
-      return annotation;
-    }
-    return skipExternal ? null : findNonCodeAnnotation(listOwner, annotationNames);
+    List<PsiAnnotation> result = findAllAnnotations(listOwner, annotationNames, skipExternal);
+    return result.isEmpty() ? null : result.get(0);
   }
 
-  private static PsiAnnotation findOwnAnnotation(@NotNull final PsiModifierListOwner listOwner, @NotNull Collection<String> annotationNames) {
-    final PsiModifierList list = listOwner.getModifierList();
-    if (list == null) return null;
-    for (PsiAnnotation annotation : list.getAnnotations()) {
-      if (annotationNames.contains(annotation.getQualifiedName())) {
-        return annotation;
+  /**
+   * Returns all annotations associated with {@code listOwner} having fully qualified names from {@code annotationNames},
+   * including repeatable annotations and annotations from several external annotations roots.
+   *
+   * @param listOwner element to search annotations of
+   * @param annotationNames fully-qualified annotations names to search for
+   * @param skipExternal {@code true} if external and inferred annotations must also be searched,
+   * {@code false} only to search for own annotations declared in source code
+   * @return all annotations of {@code listOwner}, including repeatable annotation
+   * and annotations from several source roots, having FQ names from {@code annotationNames}.
+   */
+  @NotNull
+  public static List<PsiAnnotation> findAllAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotationNames,
+                                                       boolean skipExternal) {
+    List<PsiAnnotation> ownAnnotations = findOwnAnnotations(listOwner, annotationNames);
+    List<PsiAnnotation> nonCodeAnnotations = skipExternal ? null : findNonCodeAnnotations(listOwner, annotationNames);
+    List<PsiAnnotation> annotations = null;
+    if (ownAnnotations != null || nonCodeAnnotations != null) {
+      annotations = new SmartList<>();
+      if (ownAnnotations != null) {
+        annotations.addAll(ownAnnotations);
+      }
+      if (nonCodeAnnotations != null) {
+        annotations.addAll(nonCodeAnnotations);
       }
     }
-    return null;
+    return annotations == null ? Collections.emptyList() : annotations;
   }
 
-  private static PsiAnnotation findNonCodeAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotationNames) {
+  @Nullable
+  private static List<PsiAnnotation> findOwnAnnotations(@NotNull final PsiModifierListOwner listOwner, @NotNull Collection<String> annotationNames) {
+    final PsiModifierList list = listOwner.getModifierList();
+    if (list == null) {
+      return null;
+    }
+    List<PsiAnnotation> result = null;
+    for (PsiAnnotation annotation : list.getAnnotations()) {
+      if (annotationNames.contains(annotation.getQualifiedName())) {
+        if (result == null) {
+          result = new SmartList<>();
+        }
+        result.add(annotation);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  private static List<PsiAnnotation> findNonCodeAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotationNames) {
     if (listOwner instanceof PsiLocalVariable) {
       // Non-code annotations for local variables are not supported: don't bother to search them
       return null;
     }
-    Map<Collection<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
+    Map<Collection<String>, List<PsiAnnotation>> map = CachedValuesManager.getCachedValue(
       listOwner,
       () -> {
-        Map<Collection<String>, PsiAnnotation> value = ConcurrentFactoryMap.createMap(annotationNames1-> {
+        Map<Collection<String>, List<PsiAnnotation>> value = ConcurrentFactoryMap.createMap(
+          annotationNames1 -> {
             PsiUtilCore.ensureValid(listOwner);
             final Project project = listOwner.getProject();
-            final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
+            List<PsiAnnotation> annotations = null;
+            final ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(project);
             for (String annotationName : annotationNames1) {
-              final PsiAnnotation annotation = annotationsManager.findExternalAnnotation(listOwner, annotationName);
-              if (annotation != null) {
-                return annotation;
+              List<PsiAnnotation> externalAnnotations = externalAnnotationsManager.findExternalAnnotations(listOwner, annotationName);
+              if (!externalAnnotations.isEmpty()) {
+                if (annotations == null) {
+                  annotations = new SmartList<>();
+                }
+                annotations.addAll(externalAnnotations);
               }
             }
+
             final InferredAnnotationsManager inferredAnnotationsManager = InferredAnnotationsManager.getInstance(project);
             for (String annotationName : annotationNames1) {
               final PsiAnnotation annotation = inferredAnnotationsManager.findInferredAnnotation(listOwner, annotationName);
               if (annotation != null) {
-                return annotation;
+                if (annotations == null) {
+                  annotations = new SmartList<>();
+                }
+                annotations.add(annotation);
               }
             }
-            return null;
-
+            return annotations;
           }
         );
         return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
@@ -144,7 +182,6 @@ public class AnnotationUtil {
                             JavaPsiFacade.getInstance(element.getProject()).getResolveHelper());
       }
       else if (element instanceof PsiClass) {
-        //noinspection unchecked
         InheritanceUtil.processSupers((PsiClass)element, false, Processors.cancelableCollectProcessor(result));
       }
       else if (element instanceof PsiParameter) {
@@ -239,8 +276,6 @@ public class AnnotationUtil {
   }
 
   private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, @Flags int flags, @Nullable Set<? super PsiMember> processed) {
-    if (!listOwner.isValid()) return false;
-
     PsiModifierList modifierList = listOwner.getModifierList();
     if (modifierList == null) return false;
 

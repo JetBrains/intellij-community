@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,15 @@ public class PyCopyPasteTest extends PyTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = myOldEnabled;
-    super.tearDown();
+    try {
+      CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = myOldEnabled;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testIndent1() {

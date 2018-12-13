@@ -66,7 +66,6 @@ public class SingleClassesTest {
   @Test public void testAnonymousClass() { doTest("pkg/TestAnonymousClass"); }
   @Test public void testThrowException() { doTest("pkg/TestThrowException"); }
   @Test public void testInnerLocal() { doTest("pkg/TestInnerLocal"); }
-  @Test public void testInnerLocalPkg() { doTest("pkg/TestInnerLocalPkg"); }
   @Test public void testInnerSignature() { doTest("pkg/TestInnerSignature"); }
   @Test public void testAnonymousSignature() { doTest("pkg/TestAnonymousSignature"); }
   @Test public void testLocalsSignature() { doTest("pkg/TestLocalsSignature"); }
@@ -113,6 +112,7 @@ public class SingleClassesTest {
   @Test public void testPrivateEmptyConstructor() { doTest("pkg/TestPrivateEmptyConstructor"); }
   @Test public void testSynchronizedUnprotected() { doTest("pkg/TestSynchronizedUnprotected"); }
   @Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
+  @Test public void testFieldSingleAccess() { doTest("pkg/TestFieldSingleAccess"); }
 
   // TODO: fix all below
   //@Test public void testPackageInfo() { doTest("pkg/package-info"); }
@@ -125,6 +125,7 @@ public class SingleClassesTest {
   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
   @Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
   @Test public void testSuspendLambda() { doTest("pkg/TestSuspendLambdaKt"); }
+  @Test public void testNamedSuspendFun2Kt() { doTest("pkg/TestNamedSuspendFun2Kt"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

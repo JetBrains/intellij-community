@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
@@ -53,27 +54,27 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   private EditableSchemesCombo<T> mySchemesCombo;
   private AbstractSchemeActions<T> myActions;
   private JComponent myToolbar;
-  protected InfoComponent myInfoComponent;
+  InfoComponent myInfoComponent;
   
   // region Colors (probably should be standard for platform UI)
   
-  protected static final Color HINT_FOREGROUND = JBColor.GRAY;
+  private static final Color HINT_FOREGROUND = JBColor.GRAY;
   @SuppressWarnings("UseJBColor")
-  protected static final Color ERROR_MESSAGE_FOREGROUND = Color.RED;
+  private static final Color ERROR_MESSAGE_FOREGROUND = Color.RED;
 
   protected static final int DEFAULT_VGAP = 8;
   
   // endregion
 
-  public AbstractSchemesPanel() {
+  AbstractSchemesPanel() {
     this(DEFAULT_VGAP, null);
   }
 
-  public AbstractSchemesPanel(int vGap) {
+  AbstractSchemesPanel(int vGap) {
     this(vGap, null);
   }
 
-  public AbstractSchemesPanel(int vGap, @Nullable JComponent rightCustomComponent) {
+  AbstractSchemesPanel(int vGap, @Nullable JComponent rightCustomComponent) {
     setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     createUIComponents(vGap, rightCustomComponent);
   }
@@ -82,6 +83,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     final JPanel verticalContainer = rightCustomComponent != null ? createVerticalContainer() : this;
     JPanel controlsPanel = createControlsPanel();
     verticalContainer.add(controlsPanel);
+    IdeUICustomization.getInstance().customizeSchemePanel(this, verticalContainer);
     verticalContainer.add(Box.createRigidArea(new JBDimension(0, 12)));
     if (rightCustomComponent != null) {
       JPanel horizontalContainer = new JPanel();
@@ -98,12 +100,14 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
   }
 
+  @NotNull
   private static JPanel createVerticalContainer() {
     JPanel container = new JPanel();
     container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
     return container;
   }
 
+  @NotNull
   private JPanel createControlsPanel() {
     JPanel controlsPanel = new JPanel();
     controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
@@ -129,7 +133,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, height));
     return controlsPanel;
   }
-  
+
+  @NotNull
   private JComponent createToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ShowSchemesActionsListAction(myActions.getActions()));
@@ -150,6 +155,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
    * @return Scheme actions associated with the panel.
    * @see AbstractSchemeActions
    */
+  @NotNull
   protected abstract AbstractSchemeActions<T> createSchemeActions();
   
   public final T getSelectedScheme() {
@@ -168,7 +174,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     removeAll();
   }
 
-  public final void editCurrentSchemeName(@NotNull BiConsumer<? super T, ? super String> newSchemeNameConsumer) {
+  final void editCurrentSchemeName(@NotNull BiConsumer<? super T, ? super String> newSchemeNameConsumer) {
     T currentScheme = getSelectedScheme();
     if (currentScheme != null) {
       String currentName = currentScheme.getName();
@@ -193,20 +199,21 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo.cancelEdit();
   }
 
-  public final void showInfo(@Nullable String message, @NotNull MessageType messageType) {
+  public final void showInfo(@NotNull String message, @NotNull MessageType messageType) {
     myToolbar.setVisible(false);
     showMessage(message, messageType);
   }
 
   protected abstract void showMessage(@Nullable String message, @NotNull MessageType messageType);
 
-  public final void clearInfo() {
+  final void clearInfo() {
     myToolbar.setVisible(true);
     clearMessage();
   }
 
   protected abstract void clearMessage();
 
+  @NotNull
   public final AbstractSchemeActions<T> getActions() {
     return myActions;
   }
@@ -222,6 +229,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     return getSchemeTypeName() + ":";
   }
 
+  @NotNull
   protected String getSchemeTypeName() {
     return ApplicationBundle.message("editbox.scheme.type.name");
   }
@@ -266,7 +274,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   public abstract boolean useBoldForNonRemovableSchemes();
 
-  public void showStatus(final String message, MessageType messageType) {
+  public void showStatus(@NotNull String message, @NotNull MessageType messageType) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
                                     messageType.getPopupBackground(), null);
@@ -278,8 +286,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   }
 
   private static class ShowSchemesActionsListAction extends NonTrivialActionGroup {
-
-    ShowSchemesActionsListAction(Collection<? extends AnAction> actions) {
+    ShowSchemesActionsListAction(@NotNull Collection<? extends AnAction> actions) {
       setPopup(true);
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
       getTemplatePresentation().setText("Show Scheme Actions");

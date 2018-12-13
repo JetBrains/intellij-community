@@ -5,6 +5,10 @@ import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.collectors.fus.actions.MainMenuUsagesCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.internal.statistic.utils.PluginType;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.components.*;
@@ -34,7 +38,9 @@ import java.util.stream.Collectors;
     @Storage(value = "statistics.main_menu.xml", roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
-public class MainMenuCollector extends BaseUICollector implements PersistentStateComponent<MainMenuCollector.State> {
+public class MainMenuCollector implements PersistentStateComponent<MainMenuCollector.State> {
+  private static final String GENERATED_ON_RUNTIME_ITEM = "generated.on.runtime";
+
   private State myState = new State();
   @Nullable
   @Override
@@ -49,7 +55,8 @@ public class MainMenuCollector extends BaseUICollector implements PersistentStat
 
   public void record(@NotNull AnAction action) {
     try {
-      if (isNotBundledPluginClass(action.getClass())) {
+      final PluginType type = StatisticsUtilKt.getPluginType(action.getClass());
+      if (!type.isDevelopedByJetBrains()) {
         return;
       }
 
@@ -65,7 +72,7 @@ public class MainMenuCollector extends BaseUICollector implements PersistentStat
 
       if (!StringUtil.isEmpty(path)) {
         String key = ConvertUsagesUtil.escapeDescriptorName(path);
-        FeatureUsageLogger.INSTANCE.log(MainMenuUsagesCollector.GROUP_ID, key);
+        FeatureUsageLogger.INSTANCE.log(MainMenuUsagesCollector.GROUP_ID, key, FUSUsageContext.OS_CONTEXT.getData());
 
         final Integer count = myState.myValues.get(key);
         int value = count == null ? 1 : count + 1;
@@ -131,12 +138,19 @@ public class MainMenuCollector extends BaseUICollector implements PersistentStat
   private static final HashMap<String, String> ourBlackList = new HashMap<>();
   static {
     ourBlackList.put("com.intellij.ide.ReopenProjectAction", "Reopen Project");
+    ourBlackList.put("com.intellij.openapi.wm.impl.ProjectWindowAction", "Switch Project");
+    ourBlackList.put("com.intellij.tools.ToolAction", "External Tool");
+    ourBlackList.put("com.intellij.ide.actionMacro.ActionMacroManager$InvokeMacroAction", "Invoke Macro");
   }
 
   private static String getActionText(@NotNull AnAction action) {
     String text = ourBlackList.get(action.getClass().getName());
     if (text != null) {
       return text;
+    }
+    final String actionId = ActionManager.getInstance().getId(action);
+    if (StringUtil.isEmpty(actionId)) {
+      return GENERATED_ON_RUNTIME_ITEM;
     }
     return action.getTemplatePresentation().getText(); //avoid user data in Action Presentation
   }

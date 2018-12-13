@@ -4,6 +4,7 @@ package com.intellij.ui.tree;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -15,16 +16,31 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
   private final Supplier<? extends T> supplier;
   private final Predicate<? super TreePath> predicate;
 
-  public AbstractTreeNodeVisitor(@NotNull Supplier<? extends T> supplier, Predicate<? super TreePath> predicate) {
+  /**
+   * @param supplier  that provides an element to search in a tree
+   * @param predicate that controls visiting children of found node:
+   *                  {@code null} to interrupt visiting,
+   *                  {@code true} to continue visiting with children,
+   *                  {@code false} to continue visiting without children
+   */
+  public AbstractTreeNodeVisitor(@NotNull Supplier<? extends T> supplier, @Nullable Predicate<? super TreePath> predicate) {
     this.supplier = supplier;
     this.predicate = predicate;
+  }
+
+  /**
+   * @return an element to search in a tree or {@code null} if it is obsolete
+   */
+  @Nullable
+  public final T getElement() {
+    return supplier.get();
   }
 
   @NotNull
   @Override
   public Action visit(@NotNull TreePath path) {
     if (LOG.isTraceEnabled()) LOG.debug("process ", path);
-    T element = supplier.get();
+    T element = getElement();
     if (element == null) return Action.SKIP_SIBLINGS;
     Object component = path.getLastPathComponent();
     if (component instanceof AbstractTreeNode) {

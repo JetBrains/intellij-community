@@ -31,7 +31,6 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Prop
   }
 
   private PropertiesSeparatorManagerState myUserDefinedSeparators = new PropertiesSeparatorManagerState();
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final SoftFactoryMap<ResourceBundleImpl, String> myGuessedSeparators = new SoftFactoryMap<ResourceBundleImpl, String>() {
     @Override
     protected String create(ResourceBundleImpl resourceBundle) {

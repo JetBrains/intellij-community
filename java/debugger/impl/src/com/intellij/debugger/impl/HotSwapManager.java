@@ -16,10 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.JBIterable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HotSwapManager {
   private final Map<DebuggerSession, Long> myTimeStamps = new HashMap<>();
@@ -84,7 +81,6 @@ public class HotSwapManager {
       if (SystemInfo.isFileSystemCaseSensitive? StringUtil.endsWith(filePath, CLASS_EXTENSION) : StringUtil.endsWithIgnoreCase(filePath, CLASS_EXTENSION)) {
         if (file.lastModified() > timeStamp) {
           progress.setText(DebuggerBundle.message("progress.hotswap.scanning.path", filePath));
-          //noinspection HardCodedStringLiteral
           final String qualifiedName = filePath.substring(rootPath.length(), filePath.length() - CLASS_EXTENSION.length()).replace('/', '.');
           container.put(qualifiedName, new HotSwapFile(file));
         }
@@ -108,13 +104,13 @@ public class HotSwapManager {
     }
   }
 
-  public static Map<DebuggerSession, Map<String, HotSwapFile>> findModifiedClasses(List<? extends DebuggerSession> sessions, Map<String, List<String>> generatedPaths) {
+  public static Map<DebuggerSession, Map<String, HotSwapFile>> findModifiedClasses(List<? extends DebuggerSession> sessions, Map<String, Collection<String>> generatedPaths) {
     final Map<DebuggerSession, Map<String, HotSwapFile>> result = new HashMap<>();
     List<Pair<DebuggerSession, Long>> sessionWithStamps = new ArrayList<>();
     for (DebuggerSession session : sessions) {
       sessionWithStamps.add(new Pair<>(session, getInstance(session.getProject()).getTimeStamp(session)));
     }
-    for (Map.Entry<String, List<String>> entry : generatedPaths.entrySet()) {
+    for (Map.Entry<String, Collection<String>> entry : generatedPaths.entrySet()) {
       final File root = new File(entry.getKey());
       for (String relativePath : entry.getValue()) {
         if (SystemInfo.isFileSystemCaseSensitive? StringUtil.endsWith(relativePath, CLASS_EXTENSION) : StringUtil.endsWithIgnoreCase(relativePath, CLASS_EXTENSION)) {

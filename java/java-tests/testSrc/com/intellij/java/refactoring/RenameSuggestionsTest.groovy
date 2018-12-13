@@ -23,7 +23,9 @@ import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 import com.intellij.testFramework.LightCodeInsightTestCase
+import groovy.transform.CompileStatic
 
+@CompileStatic
 class RenameSuggestionsTest extends LightCodeInsightTestCase {
   void "test by parameter name"() {
     def text = """\

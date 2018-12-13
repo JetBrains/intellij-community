@@ -45,7 +45,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/30/2014
  */
 public class MavenSourceFoldersModuleExtension extends ModuleExtension {
 

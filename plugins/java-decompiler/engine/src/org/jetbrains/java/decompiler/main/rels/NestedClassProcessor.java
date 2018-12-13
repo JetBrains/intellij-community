@@ -740,7 +740,6 @@ public class NestedClassProcessor {
     Statement first = findFirstBlock(statement, setStats);
 
     List<Exprent> lst;
-    //noinspection Duplicates
     if (first == null) {
       lst = statement.getVarDefinitions();
     }
@@ -780,7 +779,6 @@ public class NestedClassProcessor {
 
         stack.clear();
 
-        //noinspection Duplicates
         switch (st.type) {
           case Statement.TYPE_SEQUENCE:
             stack.addAll(0, st.getStats());

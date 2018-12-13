@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.vfs;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -15,11 +13,9 @@ import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsVFSListener;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -29,11 +25,9 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.GitRepositoryFiles;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.util.*;
@@ -96,6 +90,7 @@ public class GitVFSListener extends VcsVFSListener {
 
   @Override
   protected void executeAdd(@NotNull final List<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copiedFiles) {
+    saveUnsavedVcsIgnoreFiles();
     // Filter added files before further processing
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
@@ -106,7 +101,6 @@ public class GitVFSListener extends VcsVFSListener {
     }
     final HashSet<VirtualFile> retainedFiles = new HashSet<>();
     final ProgressManager progressManager = ProgressManager.getInstance();
-    saveGitignoreFileIfNeeded(myProject);
     progressManager.run(new Task.Backgroundable(myProject, GitBundle.getString("vfs.listener.checking.ignored"), true) {
       @Override
       public void run(@NotNull ProgressIndicator pi) {
@@ -126,24 +120,6 @@ public class GitVFSListener extends VcsVFSListener {
         AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> originalExecuteAdd(addedFiles, copiedFiles));
       }
     });
-  }
-
-  private static void saveGitignoreFileIfNeeded(@NotNull Project project) {
-    @SystemIndependent String basePath = project.getBasePath();
-    if (basePath == null) return;
-    VirtualFile projectRootDir = LocalFileSystem.getInstance().findFileByPath(basePath);
-    if (projectRootDir == null) return;
-    VirtualFile gitDir = GitUtil.findGitDir(projectRootDir);
-    if (gitDir == null) return;
-
-    GitRepositoryFiles gitRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
-    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-    for (Document document : fileDocumentManager.getUnsavedDocuments()) {
-      VirtualFile documentVFile = fileDocumentManager.getFile(document);
-      if (documentVFile != null && gitRepositoryFiles.isGitIgnore(PathUtil.toSystemIndependentName(documentVFile.getPath()))) {
-        fileDocumentManager.saveDocument(document);
-      }
-    }
   }
 
   /**

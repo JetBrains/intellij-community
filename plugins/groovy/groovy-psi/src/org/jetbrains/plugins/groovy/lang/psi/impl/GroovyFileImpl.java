@@ -141,10 +141,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
   public GrImportStatement[] getImportStatements() {
     final StubElement<?> stub = getStub();
     if (stub != null) {
-      return stub.getChildrenByType(GroovyElementTypes.IMPORT_STATEMENT, GrImportStatement.ARRAY_FACTORY);
+      return stub.getChildrenByType(GroovyElementTypes.IMPORT, GrImportStatement.ARRAY_FACTORY);
     }
 
-    return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.IMPORT_STATEMENT, GrImportStatement.ARRAY_FACTORY);
+    return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.IMPORT, GrImportStatement.ARRAY_FACTORY);
   }
 
   @Override
@@ -310,7 +310,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
   }
 
   @Override
-  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected GroovyFileImpl clone() {
     GroovyFileImpl clone = (GroovyFileImpl)super.clone();
     clone.myContext = myContext;

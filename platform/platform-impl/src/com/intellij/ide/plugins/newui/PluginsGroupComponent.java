@@ -60,6 +60,10 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     myEventHandler.setSelection(component);
   }
 
+  public void setSelection(@NotNull List<CellPluginComponent> components) {
+    myEventHandler.setSelection(components);
+  }
+
   public void addGroup(@NotNull PluginsGroup group) {
     addGroup(group, -1);
   }
@@ -97,13 +101,18 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     }
   }
 
+  private static final Color SECTION_HEADER_FOREGROUND =
+    JBColor.namedColor("Plugins.SectionHeader.foreground", new JBColor(0x787878, 0x999999));
+  private static final Color SECTION_HEADER_BACKGROUND =
+    JBColor.namedColor("Plugins.SectionHeader.background", new JBColor(0xF7F7F7, 0x3C3F41));
+
   private void addGroup(@NotNull PluginsGroup group, @NotNull List<IdeaPluginDescriptor> descriptors, int groupIndex) {
     UIPluginGroup uiGroup = new UIPluginGroup();
     group.ui = uiGroup;
     myGroups.add(groupIndex == -1 ? myGroups.size() : groupIndex, uiGroup);
 
-    OpaquePanel panel = new OpaquePanel(new BorderLayout(), new JBColor(0xF7F7F7, 0x3C3F41));
-    panel.setBorder(JBUI.Borders.empty(4, 13));
+    OpaquePanel panel = new OpaquePanel(new BorderLayout(), SECTION_HEADER_BACKGROUND);
+    panel.setBorder(JBUI.Borders.empty(4, 10));
 
     JLabel title = new JLabel(group.title) {
       @Override
@@ -122,7 +131,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
       }
     };
     title.setToolTipText(group.title);
-    title.setForeground(new JBColor(0x787878, 0x999999));
+    title.setForeground(SECTION_HEADER_FOREGROUND);
     panel.add(title, BorderLayout.WEST);
     group.titleLabel = title;
 

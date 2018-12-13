@@ -23,10 +23,6 @@ public class IdePanePanel extends JBPanel {
 
   public IdePanePanel(LayoutManager layout) {
     super(layout);
-  }
-
-  @Override
-  public Color getBackground() {
-    return IdeBackgroundUtil.getIdeBackgroundColor();
+    setBackground(IdeBackgroundUtil.getIdeBackgroundColor());
   }
 }

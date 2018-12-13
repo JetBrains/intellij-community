@@ -89,4 +89,30 @@ public class JsonTypingHandlingTest extends JsonTestCase {
                 " \"q\": 8\n" +
                 "}");
   }
+
+  public void testAutoWhitespaceErasure() {
+    myFixture.configureByText("test.json", "{a<caret>}");
+    myFixture.type(":");
+    myFixture.type(" ");
+    myFixture.checkResult("{\n" +
+                          "  \"a\": <caret>\n" +
+                          "}");
+  }
+
+  public void testPairedSingleQuote() {
+    doTypingTest('\'', "{<caret>}", "{'<caret>'}", "json");
+  }
+  public void testPairedSingleQuote2() {
+    doTypingTest('\'', "{\n" +
+                       "  \"rules\": {\n" +
+                       "    \"at-rule-no-vendor-prefix\": null,\n" +
+                       "    <caret>\n" +
+                       "  }\n" +
+                       "}", "{\n" +
+                            "  \"rules\": {\n" +
+                            "    \"at-rule-no-vendor-prefix\": null,\n" +
+                            "    '<caret>'\n" +
+                            "  }\n" +
+                            "}", "json");
+  }
 }

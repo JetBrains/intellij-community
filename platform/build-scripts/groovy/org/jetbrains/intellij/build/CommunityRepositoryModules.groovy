@@ -12,6 +12,10 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
  */
 @CompileStatic
 class CommunityRepositoryModules {
+  /**
+   * @deprecated use {@link ProductModulesLayout#productApiModules} instead of {@link ProductModulesLayout#platformApiModules} to avoid
+   * using this property
+   */
   static List<String> PLATFORM_API_MODULES = [
     "intellij.platform.analysis",
     "intellij.platform.builtInServer",
@@ -41,6 +45,10 @@ class CommunityRepositoryModules {
     "intellij.xml.structureView",
   ]
 
+  /**
+   * @deprecated use {@link ProductModulesLayout#productImplementationModules} instead of {@link ProductModulesLayout#platformImplementationModules}
+   * to avoid using this property
+   */
   static List<String> PLATFORM_IMPLEMENTATION_MODULES = [
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
@@ -128,13 +136,11 @@ class CommunityRepositoryModules {
       withModule("intellij.xslt.debugger.engine.impl", "rt/xslt-debugger-engine-impl.jar")
       withModuleLibrary("Saxon-6.5.5", "intellij.xslt.debugger.engine.impl", "rt")
       withModuleLibrary("Saxon-9HE", "intellij.xslt.debugger.engine.impl", "rt")
-      withModuleLibrary("Xalan-2.7.1", "intellij.xslt.debugger.engine.impl", "rt")
+      withModuleLibrary("Xalan-2.7.2", "intellij.xslt.debugger.engine.impl", "rt")
       //todo[nik] unmark 'lib' directory as source root instead
       excludeFromModule("intellij.xslt.debugger.engine.impl", "rmi-stubs.jar")
       excludeFromModule("intellij.xslt.debugger.engine.impl", "saxon.jar")
       excludeFromModule("intellij.xslt.debugger.engine.impl", "saxon9he.jar")
-      excludeFromModule("intellij.xslt.debugger.engine.impl", "serializer.jar")
-      excludeFromModule("intellij.xslt.debugger.engine.impl", "xalan.jar")
     },
     plugin("intellij.maven") {
       withModule("intellij.maven.jps")
@@ -143,6 +149,7 @@ class CommunityRepositoryModules {
       withModule("intellij.maven.server.m3.common")
       withModule("intellij.maven.server.m30.impl")
       withModule("intellij.maven.server.m3.impl")
+      withModule("intellij.maven.errorProne.compiler")
       withModule("intellij.maven.artifactResolver.m2", "artifact-resolver-m2.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m2.jar")
       withModule("intellij.maven.artifactResolver.m3", "artifact-resolver-m3.jar")
@@ -240,7 +247,12 @@ class CommunityRepositoryModules {
     plugin("intellij.statsCollector") {
       withModule("intellij.statsCollector.features", "features.jar")
       withModule("intellij.statsCollector.logEvents")
+      withModule("intellij.statsCollector.completionRanker")
       withResource("features/resources", "lib")
+    },
+    plugin("intellij.griffon") {
+      withModule("intellij.griffon.jps", "griffon-jps-plugin.jar")
+      withModule("intellij.griffon.rt", "griffon-rt.jar")
     }
   ]
 

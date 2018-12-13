@@ -435,6 +435,10 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     }
 
     private int getBaseline() {
+      if (crumb == null) {
+        return -1;
+      }
+
       if (font == null) {
         update();
       }
@@ -450,7 +454,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
         }
       }
 
-      return 0;
+      return -1;
     }
 
     private void paint(Graphics2D g) {

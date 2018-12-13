@@ -166,3 +166,15 @@ class ImplicitConstructorReference {
 
   class <warning descr="Inner class 'B' may be 'static'">B</warning> {}
 }
+class Scratch
+{
+  public static void main(String[] args)
+  {
+    class Inner
+    {
+      class Nested // can't be static
+      {}
+    }
+
+  }
+}

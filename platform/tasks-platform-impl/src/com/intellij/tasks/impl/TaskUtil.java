@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
@@ -24,14 +25,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.ParseException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -56,30 +55,30 @@ public class TaskUtil {
     // empty
   }
 
-  public static String formatTask(@NotNull Task task, String format, boolean forCommit) {
+  public static String formatTask(@NotNull Task task, String format) {
 
-    if (forCommit && task instanceof LocalTask) {
-      format = formatFromExtensions((LocalTask)task, format);
+    Map map = formatFromExtensions(task instanceof LocalTask ? (LocalTask)task : new LocalTaskImpl(task));
+    format = updateToVelocity(format);
+    try {
+      return FileTemplateUtil.mergeTemplate(map, format, false);
     }
-
-    return format
-      .replace("{id}", task.getPresentableId())
-      .replace("{number}", task.getNumber())
-      .replace("{project}", StringUtil.notNullize(task.getProject()))
-      .replace("{summary}", task.getSummary());
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  private static String formatFromExtensions(@NotNull LocalTask task, String format) {
+  private static Map formatFromExtensions(@NotNull LocalTask task) {
+    HashMap map = new HashMap();
     for (CommitPlaceholderProvider extension : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       String[] placeholders = extension.getPlaceholders(task.getRepository());
       for (String placeholder : placeholders) {
         String value = extension.getPlaceholderValue(task, placeholder);
         if (value != null) {
-          format = format.replace("{" + placeholder + "}", value);
+          map.put(placeholder, value);
         }
       }
     }
-    return format;
+    return map;
   }
 
   public static String getChangeListComment(Task task) {
@@ -92,7 +91,7 @@ public class TaskUtil {
     if (repository == null || !repository.isShouldFormatCommitMessage()) {
       return null;
     }
-    return formatTask(task, repository.getCommitMessageFormat(), forCommit);
+    return formatTask(task, repository.getCommitMessageFormat());
   }
 
   public static String getTrimmedSummary(Task task) {
@@ -283,5 +282,9 @@ public class TaskUtil {
     }
 
     return NameUtil.buildMatcher(builder.toString(), NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  static String updateToVelocity(String format) {
+    return format.replaceAll("\\{", "\\$\\{").replaceAll("\\$\\$\\{", "\\$\\{");
   }
 }

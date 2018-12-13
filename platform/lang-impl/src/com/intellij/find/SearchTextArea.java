@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
@@ -27,7 +28,10 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,7 +112,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
         if (!StringUtil.isEmpty(str)) super.insertString(offs, str, a);
       }
     });
-    myTextArea.getDocument().putProperty(EditorCopyPasteHelper.TRIM_TEXT_ON_PASTE_KEY, Boolean.TRUE);
+    if (Registry.is("ide.find.field.trims.pasted.text", false)) {
+      myTextArea.getDocument().putProperty(EditorCopyPasteHelper.TRIM_TEXT_ON_PASTE_KEY, Boolean.TRUE);
+    }
     myTextArea.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -195,7 +201,16 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
   private void updateFont() {
     if (myTextArea != null) {
-      Utils.setSmallerFont(myTextArea);
+      if (Registry.is("ide.find.use.editor.font", false)) {
+        myTextArea.setFont(EditorUtil.getEditorFont());
+      }
+      else {
+        if (SystemInfo.isMac) {
+          myTextArea.setFont(JBUI.Fonts.smallFont());
+        } else {
+          myTextArea.setFont(UIManager.getFont("TextArea.font"));
+        }
+      }
     }
   }
 
@@ -415,7 +430,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     abstract Icon getShowHistoryIcon();
 
-    abstract Icon getClearIcon();
+    Icon getClearIcon() {
+      return AllIcons.Actions.Close;
+    }
 
     abstract void paint(Graphics2D g);
   }
@@ -457,12 +474,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     @Override
     Icon getShowHistoryIcon() {
-      return LafIconLookup.getIcon("searchFieldWithHistory");
-    }
-
-    @Override
-    Icon getClearIcon() {
-      return AllIcons.Actions.Clear;
+      return AllIcons.Actions.SearchWithHistory;
     }
 
     @Override
@@ -509,20 +521,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     @Override
     Icon getShowHistoryIcon() {
-      Icon searchIcon = UIManager.getIcon("TextField.darcula.searchWithHistory.icon");
-      if (searchIcon == null) {
-        searchIcon = LafIconLookup.getIcon("searchWithHistory");
-      }
-      return searchIcon;
-    }
-
-    @Override
-    Icon getClearIcon() {
-      Icon clearIcon = UIManager.getIcon("TextField.darcula.clear.icon");
-      if (clearIcon == null) {
-        clearIcon = LafIconLookup.getIcon("clear");
-      }
-      return clearIcon;
+      return AllIcons.Actions.SearchWithHistory;
     }
 
     @Override

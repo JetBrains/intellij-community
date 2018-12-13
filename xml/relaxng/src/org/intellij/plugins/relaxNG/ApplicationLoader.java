@@ -53,8 +53,7 @@ public class ApplicationLoader implements ApplicationInitializedListener {
   private static void installValidateXmlAction() {
     final ActionManager mgr = ActionManager.getInstance();
     final AnAction validateAction = mgr.getAction(VALIDATE_XML);
-    mgr.unregisterAction(VALIDATE_XML);
-    mgr.registerAction(VALIDATE_XML, new ValidateAction(validateAction));
+    mgr.replaceAction(VALIDATE_XML, new ValidateAction(validateAction));
   }
 
   private static void registerMetaData() {

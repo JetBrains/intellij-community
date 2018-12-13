@@ -229,7 +229,7 @@ public class RedundantCastUtil {
 
       try {
         Project project = methodExpr.getProject();
-        PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
         final PsiExpression expressionFromText = factory.createExpressionFromText(methodCall.getText(), methodCall);
         if (!(expressionFromText instanceof PsiMethodCallExpression)) return;
@@ -376,8 +376,10 @@ public class RedundantCastUtil {
                 LOG.assertTrue(targetType != null);
                 //target type is detected by method call
                 //check that both sides are fine with that
-                PsiType thenType = ((PsiConditionalExpression)newArg).getThenExpression().getType();
-                PsiType elseType = ((PsiConditionalExpression)newArg).getElseExpression().getType();
+                PsiExpression thenExpression = ((PsiConditionalExpression)newArg).getThenExpression();
+                PsiType thenType = thenExpression != null ? thenExpression.getType() : null;
+                PsiExpression elseExpression = ((PsiConditionalExpression)newArg).getElseExpression();
+                PsiType elseType = elseExpression != null ? elseExpression.getType() : null;
                 if (thenType != null && targetType.isAssignableFrom(thenType) &&
                     elseType != null && targetType.isAssignableFrom(elseType)) {
                   addToResults(cast);
@@ -523,6 +525,7 @@ public class RedundantCastUtil {
           }
 
           final PsiType functionalInterfaceType = PsiTypesUtil.getExpectedTypeByParent(typeCast);
+          //noinspection SuspiciousNameCombination
           if (topCastType != null && functionalInterfaceType != null && !TypeConversionUtil.isAssignable(topCastType, functionalInterfaceType, false)) return;
         }
         processAlreadyHasTypeCast(typeCast);
@@ -744,7 +747,7 @@ public class RedundantCastUtil {
     if (refExpression.getParent() instanceof PsiMethodCallExpression) return false;
     final PsiElement resolved = refExpression.resolve();
     try {
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(refExpression.getProject()).getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(refExpression.getProject());
       final PsiExpression copyExpression = elementFactory.createExpressionFromText(refExpression.getText(), refExpression);
       if (copyExpression instanceof PsiReferenceExpression) {
         final PsiReferenceExpression copy = (PsiReferenceExpression)copyExpression;

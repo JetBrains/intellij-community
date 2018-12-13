@@ -15,8 +15,8 @@ public final class DvcsImplIcons {
   }
 
   public static final Icon CherryPick = load("/icons/cherryPick.svg"); // 16x16
-  public static final Icon CurrentBranchFavoriteLabel = load("/icons/currentBranchFavoriteLabel.png"); // 16x16
-  public static final Icon CurrentBranchLabel = load("/icons/currentBranchLabel.png"); // 16x16
+  public static final Icon CurrentBranchFavoriteLabel = load("/icons/currentBranchFavoriteLabel.svg"); // 16x16
+  public static final Icon CurrentBranchLabel = load("/icons/currentBranchLabel.svg"); // 16x16
   public static final Icon Incoming = load("/icons/incoming.svg"); // 16x16
   public static final Icon IncomingOutgoing = load("/icons/incomingOutgoing.svg"); // 16x16
   public static final Icon Outgoing = load("/icons/outgoing.svg"); // 16x16

@@ -10,7 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrMethodReferenceExpressionImp
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getConstructorCandidates
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.unwrapClassType
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodReferenceProcessor
-import org.jetbrains.plugins.groovy.lang.resolve.processors.StaticMethodReferenceProcessor
 
 internal object GrMethodReferenceResolver : GroovyResolver<GrMethodReferenceExpressionImpl> {
 
@@ -18,19 +17,13 @@ internal object GrMethodReferenceResolver : GroovyResolver<GrMethodReferenceExpr
     val name = ref.referenceName ?: return emptyList()
     val type = ref.qualifier?.type ?: return emptyList()
 
-    val instanceContext = run {
+    val methods = run {
       val processor = MethodReferenceProcessor(name)
       type.processReceiverType(processor, ResolveState.initial(), ref)
       processor.results
     }
 
-    val unwrapped = unwrapClassType(type) ?: return instanceContext
-
-    val staticContext = run {
-      val processor = StaticMethodReferenceProcessor(name)
-      unwrapped.processReceiverType(processor, ResolveState.initial(), ref)
-      processor.results
-    }
+    val unwrapped = unwrapClassType(type) ?: return methods
 
     val constructors = if (name == CONSTRUCTOR_REFERENCE_NAME) {
       when (unwrapped) {
@@ -43,7 +36,7 @@ internal object GrMethodReferenceResolver : GroovyResolver<GrMethodReferenceExpr
       emptyList()
     }
 
-    return instanceContext + staticContext + constructors
+    return methods + constructors
   }
 
   private fun fakeArrayConstructors(type: PsiArrayType, manager: PsiManager): List<GroovyResolveResult> {

@@ -171,7 +171,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     model.clear();
     int selectedIndex = 0;
     int index = 0;
-    List<ThreadState> threadStates = UISettings.getInstance().getMergeEqualStackTraces() ? myMergedThreadDump : myThreadDump;
+    List<ThreadState> threadStates = UISettings.getInstance().getState().getMergeEqualStackTraces() ? myMergedThreadDump : myThreadDump;
     for (ThreadState state : threadStates) {
       if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
         //noinspection unchecked
@@ -380,12 +380,12 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return UISettings.getInstance().getMergeEqualStackTraces();
+      return UISettings.getInstance().getState().getMergeEqualStackTraces();
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      UISettings.getInstance().setMergeEqualStackTraces(state);
+      UISettings.getInstance().getState().setMergeEqualStackTraces(state);
       updateThreadList();
     }
   }

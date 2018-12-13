@@ -18,11 +18,11 @@ package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.JdomKt;
-import java.util.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 class PageSizes {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.PageSizes");
@@ -97,7 +97,6 @@ class PageSizes {
     myNamesToPageSizes = new HashMap();
 
     try {
-      //noinspection ConstantConditions
       for (Element element : JdomKt.loadElement(PageSizes.class.getResourceAsStream(PAGE_SIZES_RESOURCE)).getChildren(ELEMENT_SIZE)) {
         String name = element.getAttributeValue(ATTRIBUTE_NAME);
         final String widthStr = element.getAttributeValue(ATTRIBUTE_WIDTH);

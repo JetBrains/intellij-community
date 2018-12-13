@@ -22,7 +22,7 @@ import java.awt.*;
 
 /** @deprecated ancient HiDPI-unfriendly component, to be removed in IDEA 2018 */
 @Deprecated
-@SuppressWarnings({"UseDPIAwareInsets", "UseJBColor", "unused", "SpellCheckingInspection"})
+@SuppressWarnings({"UseDPIAwareInsets", "UseJBColor", "unused"})
 public class BlockBorder implements Border {
   private static final Insets DEFAULT_INSETS = new Insets(1, 1, 3, 3);
   private static final Color DEFAULT_SHADE1 = Gray._203;

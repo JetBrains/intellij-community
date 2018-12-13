@@ -76,6 +76,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private final String myNewVisibility;
   private final boolean myGenerateAccessors;
   private final List<PsiField> enumConstants;
+  @NotNull
   private final String newClassName;
   private final String delegateFieldName;
   private final boolean requiresBackpointer;
@@ -89,7 +90,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                List<? extends PsiMethod> methods,
                                List<? extends PsiClass> innerClasses,
                                String newPackageName,
-                               String newClassName) {
+                               @NotNull String newClassName) {
     this(sourceClass, fields, methods, innerClasses, newPackageName, null, newClassName, null, false, Collections.emptyList(), false);
   }
 
@@ -99,7 +100,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                List<? extends PsiClass> classes,
                                String packageName,
                                MoveDestination moveDestination,
-                               String newClassName,
+                               @NotNull String newClassName,
                                String newVisibility,
                                boolean generateAccessors,
                                List<? extends MemberInfo> enumConstants,
@@ -186,6 +187,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     return showConflicts(conflicts, refUsages.get());
   }
 
+  @NotNull
   private String getQualifiedName() {
     return extractInnerClass ? newClassName : StringUtil.getQualifiedName(newPackageName, newClassName);
   }
@@ -407,7 +409,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   private void buildDelegate() {
     final PsiManager manager = sourceClass.getManager();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
     @NonNls final StringBuilder fieldBuffer = new StringBuilder();
     final String delegateVisibility = calculateDelegateVisibility();

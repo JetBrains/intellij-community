@@ -24,10 +24,12 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -59,6 +61,8 @@ public class VcsGeneralConfigurationPanel {
   private JComboBox myOnPatchCreation;
   private JCheckBox myReloadContext;
   private JLabel myOnPatchCreationLabel;
+  private JPanel myEmptyChangeListPanel;
+  private JCheckBox myManageIgnoreFiles;
   private ButtonGroup myEmptyChangelistRemovingGroup;
 
   public VcsGeneralConfigurationPanel(final Project project) {
@@ -99,9 +103,11 @@ public class VcsGeneralConfigurationPanel {
   public void apply() {
 
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
+    VcsApplicationSettings applicationSettings = VcsApplicationSettings.getInstance();
 
     settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS = getSelected(myEmptyChangelistRemovingGroup);
     settings.RELOAD_CONTEXT = myReloadContext.isSelected();
+    applicationSettings.MANAGE_IGNORE_FILES = myManageIgnoreFiles.isSelected();
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       setting.setValue(myPromptOptions.get(setting).isSelected());
@@ -140,6 +146,25 @@ public class VcsGeneralConfigurationPanel {
       .getConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
+  private void createUIComponents() {
+    myPanel = new JPanel() {
+      @Override
+      public void doLayout() {
+        updateMinSize(myAddConfirmationPanel, myRemoveConfirmationPanel, myEmptyChangeListPanel, myPromptsPanel);
+        super.doLayout();
+      }
+
+      private void updateMinSize(JPanel... panels) {
+        for (JPanel panel : panels) {
+          Border border = panel.getBorder();
+          if (border instanceof IdeaTitledBorder) {
+            ((IdeaTitledBorder)border).acceptMinimumSize(panel);
+          }
+        }
+      }
+    };
+  }
+
 
   private static VcsShowConfirmationOption.Value getSelected(JRadioButton[] group) {
     if (group[0].isSelected()) return VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
@@ -164,10 +189,12 @@ public class VcsGeneralConfigurationPanel {
   public boolean isModified() {
 
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
+    VcsApplicationSettings applicationSettings = VcsApplicationSettings.getInstance();
     if (settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS != getSelected(myEmptyChangelistRemovingGroup)){
       return true;
     }
     if (settings.RELOAD_CONTEXT != myReloadContext.isSelected()) return true;
+    if (applicationSettings.MANAGE_IGNORE_FILES != myManageIgnoreFiles.isSelected()) return true;
 
     if (getReadOnlyStatusHandler().getState().SHOW_DIALOG != myShowReadOnlyStatusDialog.isSelected()) {
       return true;
@@ -186,7 +213,9 @@ public class VcsGeneralConfigurationPanel {
 
   public void reset() {
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
+    VcsApplicationSettings applicationSettings = VcsApplicationSettings.getInstance();
     myReloadContext.setSelected(settings.RELOAD_CONTEXT);
+    myManageIgnoreFiles.setSelected(applicationSettings.MANAGE_IGNORE_FILES);
     VcsShowConfirmationOption.Value value = settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
     UIUtil.setSelectedButton(myEmptyChangelistRemovingGroup, value == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION
                                                              ? 0
@@ -210,7 +239,6 @@ public class VcsGeneralConfigurationPanel {
   private static void selectInGroup(final JRadioButton[] group, final VcsShowConfirmationOption confirmation) {
     final VcsShowConfirmationOption.Value value = confirmation.getValue();
     final int index;
-    //noinspection EnumSwitchStatementWhichMissesCases
     switch(value) {
       case SHOW_CONFIRMATION: index = 0; break;
       case DO_ACTION_SILENTLY: index = 1; break;

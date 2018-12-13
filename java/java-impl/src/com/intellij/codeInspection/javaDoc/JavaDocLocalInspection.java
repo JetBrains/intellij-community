@@ -657,7 +657,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiDocComment docComment = PsiTreeUtil.getParentOfType(descriptor.getEndElement(), PsiDocComment.class);
       if (docComment != null) {
-        PsiDocTag tag = JavaPsiFacade.getInstance(project).getElementFactory().createDocTagFromText("@" + myTag + " " + myValue);
+        PsiDocTag tag = JavaPsiFacade.getElementFactory(project).createDocTagFromText("@" + myTag + " " + myValue);
 
         PsiElement addedTag;
         PsiElement anchor = getAnchor(descriptor);
@@ -692,7 +692,6 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      //noinspection DialogTitleCapitalization
       return InspectionsBundle.message("inspection.javadoc.problem.add.tag.family");
     }
   }
@@ -763,7 +762,6 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     @Override
     @NotNull
     public String getName() {
-      //noinspection DialogTitleCapitalization
       return InspectionsBundle.message("inspection.javadoc.problem.add.param.tag", myName);
     }
   }

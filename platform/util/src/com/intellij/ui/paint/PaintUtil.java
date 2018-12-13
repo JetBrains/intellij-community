@@ -312,7 +312,7 @@ public class PaintUtil {
    */
   @NotNull
   public static Point2D getFractOffsetInRootPane(@NotNull JComponent comp) {
-    if (!isFractionalScale(comp.getGraphicsConfiguration().getDefaultTransform()) || !comp.isShowing()) return new Point2D.Double();
+    if (!comp.isShowing() || !isFractionalScale(comp.getGraphicsConfiguration().getDefaultTransform())) return new Point2D.Double();
     int x = 0;
     int y = 0;
     while (!(comp instanceof JRootPane) && comp != null) {

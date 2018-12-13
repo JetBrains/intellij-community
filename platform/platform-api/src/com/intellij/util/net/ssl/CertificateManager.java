@@ -77,7 +77,21 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
    * @deprecated To be removed in IDEA 18. Use specific host name verifiers from httpclient-4.x instead.
    */
   @Deprecated
-  public static final HostnameVerifier HOSTNAME_VERIFIER = new BrowserCompatHostnameVerifier();
+  public static final HostnameVerifier HOSTNAME_VERIFIER = new HostnameVerifier() {
+    private volatile HostnameVerifier myHostnameVerifier; 
+    @Override
+    public boolean verify(String s, SSLSession session) {
+      HostnameVerifier hostnameVerifier = myHostnameVerifier;
+      if (hostnameVerifier == null) {
+        //noinspection SynchronizeOnThis
+        synchronized (this) {
+          hostnameVerifier = myHostnameVerifier;
+          if (hostnameVerifier == null) myHostnameVerifier = hostnameVerifier = new BrowserCompatHostnameVerifier();
+        }
+      }
+      return hostnameVerifier.verify(s, session);
+    }
+  };
 
   /**
    * Used to check whether dialog is visible to prevent possible deadlock, e.g. when some external resource is loaded by

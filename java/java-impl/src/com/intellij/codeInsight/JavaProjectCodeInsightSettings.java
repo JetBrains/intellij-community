@@ -30,7 +30,6 @@ import java.util.regex.Pattern;
  */
 @State(name = "JavaProjectCodeInsightSettings", storages = @Storage("codeInsightSettings.xml"))
 public class JavaProjectCodeInsightSettings implements PersistentStateComponent<JavaProjectCodeInsightSettings> {
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private static final ConcurrentMap<String, Pattern> ourPatterns = ConcurrentFactoryMap.createWeakMap(PatternUtil::fromMask);
 
   @XCollection(propertyElementName = "excluded-names", elementName = "name", valueAttributeName = "")

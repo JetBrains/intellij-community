@@ -3,13 +3,19 @@ package com.intellij.ide.projectWizard.kotlin.model
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
+import com.intellij.testGuiFramework.framework.GuiTestUtil.fileInsertFromBegin
 import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.fileSearchAndReplace
+import com.intellij.testGuiFramework.framework.GuiTestUtil.isFileContainsLine
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.*
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.GradleGroupModules.ExplicitModuleGroups
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.GradleGroupModules.QualifiedNames
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
 import java.io.File
 import java.nio.file.Path
@@ -24,10 +30,11 @@ import org.hamcrest.core.Is.`is` as Matcher_Is
  */
 fun KotlinGuiTestCase.createJavaProject(
   projectPath: String,
+  projectSdk: String,
   framework: LibrariesSet = emptySet()) {
   welcomePageDialogModel.createNewProject()
   newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
-  newProjectDialogModel.createJavaProject(projectPath, framework)
+  newProjectDialogModel.createJavaProject(projectPath, projectSdk, framework)
   waitAMoment()
 }
 
@@ -41,11 +48,12 @@ fun KotlinGuiTestCase.createJavaProject(
  */
 fun KotlinGuiTestCase.createGradleProject(
   projectPath: String,
-  gradleOptions: NewProjectDialogModel.GradleProjectOptions
+  gradleOptions: NewProjectDialogModel.GradleProjectOptions,
+  projectSdk: String
 ) {
   welcomePageDialogModel.createNewProject()
   newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
-  newProjectDialogModel.createGradleProject(projectPath, gradleOptions)
+  newProjectDialogModel.createGradleProject(projectPath, gradleOptions, projectSdk)
 }
 
 
@@ -60,6 +68,7 @@ fun KotlinGuiTestCase.createGradleProject(
 fun KotlinGuiTestCase.createMavenProject(
   projectPath: String,
   artifact: String,
+  projectSdk: String,
   archetype: String = "",
   kotlinVersion: String = ""
 ) {
@@ -69,10 +78,10 @@ fun KotlinGuiTestCase.createMavenProject(
   val mavenOptions = NewProjectDialogModel.MavenProjectOptions(
     artifact = artifact,
     useArchetype = archetype.isNotEmpty(),
-    archetypeGroup = "org.jetbrains.kotlin:, $archetype",
-    archetypeVersion = "$archetype, :$kotlinVersion"
+    archetypeGroup = "org.jetbrains.kotlin:$archetype",
+    archetypeVersion = "$archetype:$kotlinVersion"
   )
-  newProjectDialogModel.createMavenProject(projectPath, mavenOptions)
+  newProjectDialogModel.createMavenProject(projectPath, mavenOptions, projectSdk)
 }
 
 /**
@@ -97,7 +106,7 @@ fun KotlinGuiTestCase.createKotlinProject(
  * */
 fun KotlinGuiTestCase.configureKotlinJvm(libInPlugin: Boolean) {
   ideFrame {
-    waitAMoment(3000)
+    waitAMoment()
     logTestStep("Open 'Configure Kotlin in Project' dialog")
     invokeMainMenu("ConfigureKotlinInProject")
     dialog("Create Kotlin Java Runtime Library") {
@@ -150,7 +159,7 @@ fun KotlinGuiTestCase.configureKotlinFromGradleMaven(logText: String,
                                                      dialogTitle: String,
                                                      kotlinVersion: String,
                                                      module: String) {
-  var result: Boolean = false
+  var result = false
   val maxAttempts = 3
   ideFrame {
     var counter = 0
@@ -159,7 +168,15 @@ fun KotlinGuiTestCase.configureKotlinFromGradleMaven(logText: String,
         logTestStep("$logText. Attempt #${counter + 1}")
         waitAMoment()
         invokeMainMenu(menuTitle)
-        result = configureKotlinFromGradleMavenSelectValues(dialogTitle, kotlinVersion, module)
+        val dlg  = dialog("", true, timeout = Timeouts.seconds05, predicate = {_, _ -> true})
+        logUIStep("Found dialog: ${dlg.target().title}")
+        if(dlg.target().title != dialogTitle)
+          dlg.apply {
+            Pause.pause(1000)
+            button("Cancel").click()
+          }
+        else
+          result = configureKotlinFromGradleMavenSelectValues(dialogTitle, kotlinVersion, module)
         counter++
       }
       catch (e: ComponentLookupException) {}
@@ -525,7 +542,36 @@ fun KotlinGuiTestCase.editSettingsGradle(){
   //   if project is configured to old Kotlin version, it must be released and no changes are required in the settings.gradle file
   if (!KotlinTestProperties.isActualKotlinUsed()) return
   val fileName = Paths.get(projectFolder, "settings.gradle")
-  if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToBuildGradle(fileName, isKotlinDslUsed = false)
+  if (KotlinTestProperties.isArtifactOnlyInDevRep) {
+    if(isFileContainsLine(fileName, "repositories"))
+      addDevRepositoryToBuildGradle(fileName, isKotlinDslUsed = false)
+    else {
+      val pluginManagement = "pluginManagement"
+      val repositoriesLines = listOf(
+        "repositories {",
+          "mavenCentral()",
+          "maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }",
+        "}"
+      )
+
+      if(isFileContainsLine(fileName, pluginManagement)){
+        println("editSettingsGradle: file '$fileName' contains `$pluginManagement`")
+        fileSearchAndReplace(fileName){
+          if(it.contains(pluginManagement))
+            listOf(it, *repositoriesLines.toTypedArray()).joinToString(separator = "\n")
+          else it
+        }
+      }
+      else{
+        println("editSettingsGradle: file '$fileName' does NOT contain `$pluginManagement`")
+        fileInsertFromBegin(fileName, listOf(
+          "pluginManagement {",
+          *repositoriesLines.toTypedArray(),
+          "}"
+        ))
+      }
+    }
+  }
 }
 
 fun KotlinGuiTestCase.editBuildGradle(
@@ -629,24 +675,70 @@ fun KotlinGuiTestCase.saveAndCloseCurrentEditor() {
   }
 }
 
+fun KotlinGuiTestCase.createMavenAndConfigureKotlin(
+  kotlinVersion: String,
+  project: ProjectProperties,
+  expectedFacet: FacetStructure
+) {
+  if (!isIdeFrameRun()) return
+  val projectName = testMethod.methodName
+  createMavenProject(
+    projectPath = projectFolder,
+    artifact = projectName,
+    projectSdk = project.projectSdk)
+  waitAMoment()
+  when(project.modules.contains(TargetPlatform.JavaScript)){
+    false -> configureKotlinJvmFromMaven(kotlinVersion)
+    true -> configureKotlinJsFromMaven(kotlinVersion)
+  }
+
+  waitAMoment()
+  saveAndCloseCurrentEditor()
+  editPomXml(
+    kotlinVersion = kotlinVersion
+  )
+  waitAMoment()
+  mavenReimport()
+  Pause.pause(5000)
+  waitAMoment()
+  mavenReimport()
+
+  projectStructureDialogScenarios.openProjectStructureAndCheck {
+    projectStructureDialogModel.checkLibrariesFromMavenGradle(
+      buildSystem = BuildSystem.Maven,
+      kotlinVersion = kotlinVersion,
+      expectedJars = project.jars.getJars(kotlinVersion)
+    )
+    projectStructureDialogModel.checkFacetInOneModule(
+      expectedFacet = expectedFacet,
+      path = *arrayOf(projectName, "Kotlin")
+    )
+  }
+
+  waitAMoment()
+}
+
+
 fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   kotlinVersion: String,
   project: ProjectProperties,
   expectedFacet: FacetStructure,
   gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
   if (!isIdeFrameRun()) return
-  val extraTimeOut = 4000L
+  val projectName = testMethod.methodName
   createGradleProject(
     projectPath = projectFolder,
-    gradleOptions = gradleOptions)
-  waitAMoment(extraTimeOut)
+    gradleOptions = gradleOptions,
+    projectSdk = project.projectSdk
+  )
+  waitAMoment()
   when {
     project.modules.contains(TargetPlatform.JVM16) || project.modules.contains(TargetPlatform.JVM18) -> configureKotlinJvmFromGradle(kotlinVersion)
     project.modules.contains(TargetPlatform.JavaScript) -> configureKotlinJsFromGradle(kotlinVersion)
     else -> throw IllegalStateException("Cannot configure to Common or Native kind.")
   }
   waitAMoment()
-  waitForGradleReimport(gradleOptions.artifact, waitForProject = false)
+  waitForGradleReimport(projectName)
   saveAndCloseCurrentEditor()
   editSettingsGradle()
   editBuildGradle(
@@ -655,50 +747,95 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   )
   waitAMoment()
   gradleReimport()
-  waitForGradleReimport(gradleOptions.artifact, waitForProject = true)
+  assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
   waitAMoment()
 
-  projectStructureDialogScenarios.checkGradleExplicitModuleGroups(
+  projectStructureDialogScenarios.checkGradleFacets(
     project = project,
     kotlinVersion = kotlinVersion,
-    projectName = gradleOptions.artifact,
-    expectedFacet = expectedFacet
+    expectedFacet = expectedFacet,
+    gradleOptions = gradleOptions
   )
   waitAMoment()
 }
 
-fun ProjectStructureDialogScenarios.checkGradleExplicitModuleGroups(
+fun ProjectStructureDialogScenarios.checkGradleFacets(
   project: ProjectProperties,
   kotlinVersion: String,
-  projectName: String,
-  expectedFacet: FacetStructure
+  expectedFacet: FacetStructure,
+  gradleOptions: NewProjectDialogModel.GradleProjectOptions
 ) {
   openProjectStructureAndCheck {
     projectStructureDialogModel.checkLibrariesFromMavenGradle(
-      buildSystem = BuildSystem.Gradle,
+      buildSystem = project.buildSystem,
       kotlinVersion = kotlinVersion,
       expectedJars = project.jars.getJars(kotlinVersion)
     )
-    projectStructureDialogModel.checkFacetInOneModule(
-      expectedFacet,
-      path = *arrayOf(projectName, "${projectName}_main", "Kotlin")
-    )
-    projectStructureDialogModel.checkFacetInOneModule(
-      expectedFacet,
-      path = *arrayOf(projectName, "${projectName}_test", "Kotlin")
-    )
+    val expectedFacets = when (gradleOptions.groupModules) {
+      ExplicitModuleGroups -> {
+        val explicitProjectName = gradleOptions.artifact
+        mapOf(
+          listOf(explicitProjectName, "${explicitProjectName}_main", "Kotlin") to expectedFacet,
+          listOf(explicitProjectName, "${explicitProjectName}_test", "Kotlin") to expectedFacet
+        )
+      }
+      QualifiedNames -> {
+        val qualifiedProjectName = gradleOptions.artifact
+        mapOf(
+          listOf(qualifiedProjectName, "main", "Kotlin") to expectedFacet,
+          listOf(qualifiedProjectName, "test", "Kotlin") to expectedFacet
+        )
+      }
+    }
+    for ((path, facet) in expectedFacets) {
+      projectStructureDialogModel.checkFacetInOneModule(
+        facet,
+        path = *path.toTypedArray()
+      )
+    }
   }
 }
 
 fun KotlinGuiTestCase.createKotlinMPProject(
   projectPath: String,
-  templateName: String
+  templateName: String,
+  projectSdk: String
 ) {
   logTestStep("Create new $templateName project")
   welcomePageDialogModel.createNewProject()
   newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
   newProjectDialogModel.createKotlinMPProject(
     projectPath = projectPath,
-    templateName = templateName
+    templateName = templateName,
+    projectSdk = projectSdk
   )
+}
+
+fun KotlinGuiTestCase.testGradleProjectWithKotlin(
+  kotlinVersion: String,
+  project: ProjectProperties,
+  expectedFacet: FacetStructure,
+  gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
+  createGradleProject(
+    projectPath = projectFolder,
+    gradleOptions = gradleOptions,
+    projectSdk = project.projectSdk
+  )
+  val projectName = testMethod.methodName
+  waitAMoment()
+  waitForGradleReimport(projectName)
+  editSettingsGradle()
+  editBuildGradle(
+    kotlinVersion = kotlinVersion,
+    isKotlinDslUsed = gradleOptions.useKotlinDsl
+  )
+  waitAMoment()
+  gradleReimport()
+  assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
+  waitAMoment()
+
+  projectStructureDialogScenarios.checkGradleFacets(
+    project, kotlinVersion, expectedFacet, gradleOptions
+  )
+  waitAMoment()
 }

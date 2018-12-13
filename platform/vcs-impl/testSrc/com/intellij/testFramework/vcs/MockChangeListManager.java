@@ -299,6 +299,12 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @NotNull
   @Override
+  public Set<IgnoredFileDescriptor> getPotentiallyIgnoredFiles() {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
   public IgnoredFileBean[] getFilesToIgnore() {
     throw new UnsupportedOperationException();
   }

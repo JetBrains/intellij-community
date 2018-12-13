@@ -83,12 +83,14 @@ public class ChangeUtil {
     return element;
   }
 
+  @NotNull
   public static TreeElement copyElement(@NotNull TreeElement original, CharTable table) {
     CompositeElement treeParent = original.getTreeParent();
     return copyElement(original, treeParent == null ? null : treeParent.getPsi(), table);
   }
 
-  public static TreeElement copyElement(TreeElement original, final PsiElement context, CharTable table) {
+  @NotNull
+  public static TreeElement copyElement(@NotNull TreeElement original, final PsiElement context, CharTable table) {
     final TreeElement element = (TreeElement)original.clone();
     final PsiManager manager = original.getManager();
     DummyHolderFactory.createHolder(manager, element, context, table).getTreeElement();
@@ -106,7 +108,8 @@ public class ChangeUtil {
     if(indentation < 0) CodeEditUtil.setOldIndentation(original, -1);
   }
 
-  public static TreeElement copyToElement(PsiElement original) {
+  @NotNull
+  public static TreeElement copyToElement(@NotNull PsiElement original) {
     final DummyHolder holder = DummyHolderFactory.createHolder(original.getManager(), null, original.getLanguage());
     final FileElement holderElement = holder.getTreeElement();
     final TreeElement treeElement = generateTreeElement(original, holderElement.getCharTable(), original.getManager());
@@ -138,7 +141,7 @@ public class ChangeUtil {
     }
   }
 
-  public static void prepareAndRunChangeAction(final ChangeAction action, final TreeElement changedElement){
+  public static void prepareAndRunChangeAction(@NotNull ChangeAction action, @NotNull TreeElement changedElement){
     final FileElement changedFile = TreeUtil.getFileElement(changedElement);
     final PsiManager manager = changedFile.getManager();
     final PomModel model = PomManager.getModel(manager.getProject());
@@ -160,7 +163,8 @@ public class ChangeUtil {
     });
   }
 
+  @FunctionalInterface
   public interface ChangeAction{
-    void makeChange(TreeChangeEvent destinationTreeChange);
+    void makeChange(@NotNull TreeChangeEvent destinationTreeChange);
   }
 }

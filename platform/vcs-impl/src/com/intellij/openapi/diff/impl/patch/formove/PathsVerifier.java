@@ -33,7 +33,7 @@ public class PathsVerifier {
   // in
   private final Project myProject;
   private final VirtualFile myBaseDirectory;
-  private final List<FilePatch> myPatches;
+  private final List<? extends FilePatch> myPatches;
   // temp
   private final Map<VirtualFile, MovedFileData> myMovedFiles;
   private final List<FilePath> myBeforePaths;
@@ -51,7 +51,7 @@ public class PathsVerifier {
 
   public PathsVerifier(@NotNull Project project,
                        @NotNull VirtualFile baseDirectory,
-                       @NotNull List<FilePatch> patches) {
+                       @NotNull List<? extends FilePatch> patches) {
     myProject = project;
     myBaseDirectory = baseDirectory;
     myPatches = patches;

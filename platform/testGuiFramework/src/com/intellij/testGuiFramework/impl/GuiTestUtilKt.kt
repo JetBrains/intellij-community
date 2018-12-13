@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.toPrintable
+import com.intellij.testGuiFramework.impl.GuiRobotHolder.robot
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.ui.EngravedLabel
@@ -25,6 +26,7 @@ import org.fest.swing.timing.Wait
 import java.awt.Component
 import java.awt.Container
 import java.awt.Window
+import java.lang.IllegalStateException
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.JCheckBox
@@ -254,6 +256,24 @@ object GuiTestUtilKt {
     catch (ignore: WaitTimedOutError) {
     }
   }
+
+  fun repeatUntil(condition: () -> Boolean, action: () -> Unit, maxAttempts: Int = 3) {
+    var remainingAttempts = maxAttempts
+    while (!condition() && remainingAttempts-- > 0) {
+      try {
+        action()
+      } catch (e: Exception) {
+        // ignore
+      }
+    }
+    if (!condition()) {
+      throw IllegalStateException("the condition is not satisfied")
+    }
+  }
+
+  fun <T : Component> isComponentShowing(componentClass: Class<T>): Boolean = ignoreComponentLookupException {
+    robot.findComponent(null, componentClass) { it.isShowing }
+  } != null
 
   fun <ComponentType : Component> findAllWithBFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
     val result = LinkedList<ComponentType>()

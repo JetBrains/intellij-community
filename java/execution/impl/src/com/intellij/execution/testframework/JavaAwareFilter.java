@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
- * @since 20-Feb-2008
  */
 public class JavaAwareFilter {
   private JavaAwareFilter() { }

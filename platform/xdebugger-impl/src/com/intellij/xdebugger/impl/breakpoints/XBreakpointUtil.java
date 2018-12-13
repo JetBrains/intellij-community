@@ -57,7 +57,7 @@ public class XBreakpointUtil {
   }
 
   public static StreamEx<XBreakpointType> breakpointTypes() {
-    return StreamEx.of(XBreakpointType.EXTENSION_POINT_NAME.getExtensions());
+    return StreamEx.of(XBreakpointType.EXTENSION_POINT_NAME.getExtensionList());
   }
 
   @NotNull

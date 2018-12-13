@@ -43,7 +43,7 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements)
     throws IncorrectOperationException {
     PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, true);
@@ -85,7 +85,7 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
       String name = codeStyleManager.suggestUniqueVariableName(nameSuggestions[0], tryBlock, false);
       PsiCatchSection catchSection;
       try {
-        catchSection = factory.createCatchSection(exception, name, null);
+        catchSection = factory.createCatchSection(exception, name, tryBlock);
       }
       catch (IncorrectOperationException e) {
         Messages.showErrorDialog(project, CodeInsightBundle.message("surround.with.try.catch.incorrect.template.message"),

@@ -57,6 +57,33 @@ except:
                 return d.has_key(key)
 
 
+def install_breakpointhook():
+    def custom_sitecustomize_breakpointhook(*args, **kwargs):
+        import os
+        hookname = os.getenv('PYTHONBREAKPOINT')
+        if hookname is not None and len(hookname) > 0 and hasattr(sys, '__breakpointhook__'):
+            sys.__breakpointhook__(*args, **kwargs)
+        else:
+            sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+            import pydevd
+            kwargs.setdefault('stop_at_frame', sys._getframe().f_back)
+            pydevd.settrace(*args, **kwargs)
+
+    if sys.version_info >= (3, 7):
+        # There are some choices on how to provide the breakpoint hook. Namely, we can provide a 
+        # PYTHONBREAKPOINT which provides the import path for a method to be executed or we
+        # can override sys.breakpointhook.
+        # pydevd overrides sys.breakpointhook instead of providing an environment variable because
+        # it's possible that the debugger starts the user program but is not available in the 
+        # PYTHONPATH (and would thus fail to be imported if PYTHONBREAKPOINT was set to pydevd.settrace).
+        # Note that the implementation still takes PYTHONBREAKPOINT in account (so, if it was provided
+        # by someone else, it'd still work).
+        sys.breakpointhook = custom_sitecustomize_breakpointhook
+
+
+# Install the breakpoint hook at import time.
+install_breakpointhook()
+
 #-----------------------------------------------------------------------------------------------------------------------
 #now that we've finished the needed pydev sitecustomize, let's run the default one (if available)
 

@@ -36,7 +36,6 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
 
-@SuppressWarnings({"OverridableMethodCallInConstructor"})
 class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeListener<PsiMember, MemberInfo> {
   private final Map<MemberInfoBase<PsiMember>, PsiMember> myMember2CauseMap = new HashMap<>();
   private final PsiClass sourceClass;

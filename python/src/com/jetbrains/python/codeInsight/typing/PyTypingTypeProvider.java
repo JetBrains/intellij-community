@@ -94,6 +94,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String PY3_TEXT_FILE_TYPE = "typing.TextIO";
 
   private static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *([^#]+) *(#.*)?");
+  public static final String IGNORE = "ignore";
 
   public static final ImmutableMap<String, String> BUILTIN_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
     .put(LIST, "list")
@@ -525,7 +526,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         if (pyClass != null && scopeOwner instanceof PyFunction) {
           final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
 
-          boolean isInstanceAttribute = false;
+          boolean isInstanceAttribute;
           if (context.maySwitchToAST(target)) {
             isInstanceAttribute = StreamEx.of(PyUtil.multiResolveTopPriority(target.getQualifier(), resolveContext))
               .select(PyParameter.class)
@@ -709,6 +710,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     for (QualifiedName qName : allBaseClassesQNames) {
+      if (qName == null) continue;
       final List<PsiElement> classes = PyResolveUtil.resolveQualifiedNameInScope(qName, (PyFile)pyClass.getContainingFile(), context);
       // Better way to handle results of the multiresove
       final PyClass firstFound = ContainerUtil.findInstance(classes, PyClass.class);

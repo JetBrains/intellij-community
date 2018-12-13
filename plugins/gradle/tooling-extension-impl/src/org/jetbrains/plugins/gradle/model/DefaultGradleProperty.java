@@ -22,7 +22,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/16/2016
  */
 public class DefaultGradleProperty implements GradleProperty {
   private static final long serialVersionUID = 1L;

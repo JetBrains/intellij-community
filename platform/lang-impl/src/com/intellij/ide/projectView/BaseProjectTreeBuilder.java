@@ -121,9 +121,18 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     return result;
   }
 
+  /**
+   * @deprecated Use {@link #selectAsync}
+   */
+  @Deprecated
   @NotNull
   public ActionCallback select(Object element, VirtualFile file, final boolean requestFocus) {
     return Promises.toActionCallback(_select(element, file, requestFocus, Conditions.alwaysTrue()));
+  }
+
+  @NotNull
+  public Promise<Object> selectAsync(Object element, VirtualFile file, final boolean requestFocus) {
+    return _select(element, file, requestFocus, Conditions.alwaysTrue());
   }
 
   public ActionCallback selectInWidth(final Object element,

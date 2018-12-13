@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
  * Arranges content at the target file(s).
  * 
  * @author Denis Zhdanov
- * @since 8/30/12 10:01 AM
  */
 public class RearrangeCodeAction extends AnAction {
 

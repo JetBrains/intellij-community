@@ -117,7 +117,6 @@ public class GitRefNameValidatorTest {
     }
   }
 
-  @SuppressWarnings("UnusedParameters")
   public GitRefNameValidatorTest(String name, String refNameToTest, boolean valid) {
     myRefNameToTest = refNameToTest;
     myIsExpectedValid = valid;

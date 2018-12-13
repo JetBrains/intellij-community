@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/13/2016
  */
 public class ExecuteRunConfigurationTaskImpl extends AbstractProjectTask implements ExecuteRunConfigurationTask {
   @NotNull private final RunProfile myRunProfile;

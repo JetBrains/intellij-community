@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
- * @since May 13, 2002
  */
 public class SimplePasteAction extends EditorAction {
   public SimplePasteAction() {

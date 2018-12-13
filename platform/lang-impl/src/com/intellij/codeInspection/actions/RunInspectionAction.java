@@ -6,6 +6,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
+import com.intellij.analysis.dialog.ModelScopeItem;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
@@ -23,7 +24,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -41,7 +41,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -126,12 +125,11 @@ public class RunInspectionAction extends GotoActionBase {
     fileFilterPanel.init(options);
 
     final AnalysisScope initialAnalysisScope = analysisScope;
+    List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(project, analysisScope, module, psiElement);
     final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog("Run '" + toolWrapper.getDisplayName() + "'",
                                                                          AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle
-                                                                           .message("inspection.action.noun")), project, BaseAnalysisActionDialog.standardItems(
-      project, analysisScope, module, psiElement),
-                                                                         options, true, ModuleUtil
-                                                                           .isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE)) {
+                                                                           .message("inspection.action.noun")), project,
+                                                                         items, options, true) {
 
       private InspectionToolWrapper myUpdatedSettingsToolWrapper;
 

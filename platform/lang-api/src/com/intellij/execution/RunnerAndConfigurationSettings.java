@@ -132,7 +132,7 @@ public interface RunnerAndConfigurationSettings {
    * @see ExecutionTargetManager#canRun(RunnerAndConfigurationSettings, ExecutionTarget)
    */
   @Deprecated
-  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
+  @SuppressWarnings({"unused"})
   default boolean canRunOn(@NotNull ExecutionTarget target) { return true; }
 
   /**

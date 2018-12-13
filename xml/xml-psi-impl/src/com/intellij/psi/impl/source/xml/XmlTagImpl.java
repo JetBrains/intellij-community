@@ -66,16 +66,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("xmlTag");
   private static final Key<ParameterizedCachedValue<XmlTag[], XmlTagImpl>> SUBTAGS_KEY = Key.create("subtags");
   private static final ParameterizedCachedValueProvider<XmlTag[],XmlTagImpl> CACHED_VALUE_PROVIDER =
-    new ParameterizedCachedValueProvider<XmlTag[], XmlTagImpl>() {
-      @Override
-      public Result<XmlTag[]> compute(XmlTagImpl tag) {
-        final List<XmlTag> result = new ArrayList<>();
-
-        tag.fillSubTags(result);
-
-        XmlTag[] tags = result.toArray(EMPTY);
-        return Result.create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag);
-      }
+    tag -> {
+      List<XmlTag> result = new ArrayList<>();
+      tag.fillSubTags(result);
+      XmlTag[] tags = result.toArray(EMPTY);
+      return Result.create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag);
     };
   private static final Comparator<TextRange> RANGE_COMPARATOR = Comparator.comparingInt(TextRange::getStartOffset);
   private final int myHC = ourHC++;
@@ -381,7 +376,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         descriptor = descriptors.get(0);
       }
       else if (descriptors.size() > 1) {
-        descriptor = new MultiFileNsDescriptor(descriptors.stream().map(descriptor1 -> (XmlNSDescriptorImpl)descriptor1).collect(Collectors.toList()));
+        descriptor = new MultiFileNsDescriptor(ContainerUtil.map(descriptors, descriptor1 -> (XmlNSDescriptorImpl)descriptor1));
       }
       if (descriptor == null) {
         return new Result<>(null, this, file[0] == null ? this : file[0],
@@ -467,7 +462,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     if (file == null) {
       return namespace.equals(XmlUtil.getTargetSchemaNsFromTag(this)) ? this : null;
     }
-    return file.getDocument();
+    return AstLoadingFilter.forceAllowTreeLoading(file, () -> file.getDocument());
   }
 
   @Override
@@ -1044,6 +1039,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     }
   }
 
+  @Override
   public String toString() {
     return "XmlTag:" + getName();
   }
@@ -1071,8 +1067,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         }
       }
       while (first != last && (first = next) != null);
-    }
-    catch (IncorrectOperationException ignored) {
     }
     finally {
       clearCaches();
@@ -1162,7 +1156,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         // merging two XmlText-s should be done in one transaction to preserve smart pointers
         ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction() {
           @Override
-          public void makeChange(TreeChangeEvent destinationTreeChange) {
+          public void makeChange(@NotNull TreeChangeEvent destinationTreeChange) {
             PsiElement anchor = prevText.getPrevSibling();
             prevText.delete();
             nextText.delete();

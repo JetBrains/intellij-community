@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static com.jetbrains.python.codeInsight.typing.PyProtocolsKt.inspectProtocolSubclass;
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -198,8 +199,9 @@ public class PyTypeChecker {
     final PyType substitution = context.substitutions.get(expected);
     PyType bound = expected.getBound();
     // Promote int in Type[TypeVar('T', int)] to Type[int] before checking that bounds match
-    if (expected.isDefinition() && bound instanceof PyInstantiableType) {
-      bound = ((PyInstantiableType)bound).toClass();
+    if (expected.isDefinition()) {
+      final Function<PyType, PyType> toDefinition = t -> t instanceof PyInstantiableType ? ((PyInstantiableType)t).toClass() : t;
+      bound = PyUnionType.union(PyTypeUtil.toStream(bound).map(toDefinition).toList());
     }
 
     Optional<Boolean> match = match(bound, actual, context);

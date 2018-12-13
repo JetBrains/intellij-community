@@ -35,7 +35,7 @@ public class GrMethodImpl extends GrMethodBaseImpl implements GrMethod {
   }
 
   public GrMethodImpl(GrMethodStub stub) {
-    super(stub, GroovyElementTypes.METHOD_DEFINITION);
+    super(stub, GroovyElementTypes.METHOD);
   }
 
   @Override
@@ -48,6 +48,7 @@ public class GrMethodImpl extends GrMethodBaseImpl implements GrMethod {
     return super.addInternal(first, last, anchor, before);
   }
 
+  @Override
   public String toString() {
     return "Method";
   }

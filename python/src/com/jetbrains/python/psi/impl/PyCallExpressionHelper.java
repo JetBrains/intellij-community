@@ -114,7 +114,7 @@ public class PyCallExpressionHelper {
     final List<PyCallExpression.PyMarkedCallee> ratedMarkedCallees = new ArrayList<>();
 
     for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(call.getCallee(), resolveContext)) {
-      for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(resolveResult, resolveContext)) {
+      for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(call, resolveResult, resolveContext)) {
         final PyCallExpression.PyMarkedCallee markedCallee = markResolveResult(clarifiedResolveResult, context, implicitOffset);
         if (markedCallee == null) continue;
 
@@ -171,7 +171,8 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static List<ClarifiedResolveResult> clarifyResolveResult(@NotNull QualifiedRatedResolveResult resolveResult,
+  private static List<ClarifiedResolveResult> clarifyResolveResult(@NotNull PyCallExpression call,
+                                                                   @NotNull QualifiedRatedResolveResult resolveResult,
                                                                    @NotNull PyResolveContext resolveContext) {
     final PsiElement resolved = resolveResult.getElement();
 
@@ -224,8 +225,11 @@ public class PyCallExpressionHelper {
       }
     }
 
+    final boolean isConstructor = resolved instanceof PyFunction &&
+                                  isConstructorName(((PyFunction)resolved).getName()) &&
+                                  call.getReceiver((PyCallable)resolved) == null;
     return resolved != null
-           ? Collections.singletonList(new ClarifiedResolveResult(resolveResult, resolved, null, false))
+           ? Collections.singletonList(new ClarifiedResolveResult(resolveResult, resolved, null, isConstructor))
            : Collections.emptyList();
   }
 
@@ -527,7 +531,7 @@ public class PyCallExpressionHelper {
     }
     else if (target instanceof PyFunction) {
       final PyFunction f = (PyFunction)target;
-      if (PyNames.INIT.equals(f.getName())) {
+      if (isConstructorName(f.getName())) {
         init = f;
         cls = f.getContainingClass();
       }
@@ -553,7 +557,7 @@ public class PyCallExpressionHelper {
         return Ref.create(t);
       }
       if (cls != null) {
-        final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true, null);
+        final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true, context);
         if (newMethod != null && !PyBuiltinCache.getInstance(call).isBuiltin(newMethod)) {
           return Ref.create(PyUnionType.createWeakType(new PyClassTypeImpl(cls, false)));
         }
@@ -655,9 +659,15 @@ public class PyCallExpressionHelper {
           return getSuperClassUnionType(firstClass, context);
         }
         if (secondClass.isSubclass(firstClass, context)) {
-          final Iterator<PyClass> iterator = firstClass.getAncestorClasses(context).iterator();
-          if (iterator.hasNext()) {
-            return new PyClassTypeImpl(iterator.next(), false); // super(Foo, self) has type of Foo, modulo __get__()
+          final PyClass nextAfterFirstInMro = StreamEx
+            .of(secondClass.getAncestorClasses(context))
+            .dropWhile(it -> it != firstClass)
+            .skip(1)
+            .findFirst()
+            .orElse(null);
+
+          if (nextAfterFirstInMro != null) {
+            return new PyClassTypeImpl(nextAfterFirstInMro, false);
           }
         }
       }
@@ -754,7 +764,7 @@ public class PyCallExpressionHelper {
       return ContainerUtil.map(PyUtil.filterTopPriorityResults(callees),
                                callee -> Pair.create(callee.getElement(), callee.getCallableType()));
     }
-    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
+    else {
       final List<Pair<PyCallable, PyCallableType>> results = new ArrayList<>();
 
       for (PsiElement result : PyUtil.multiResolveTopPriority(callSite, resolveContext)) {
@@ -770,9 +780,6 @@ public class PyCallExpressionHelper {
       }
 
       return results;
-    }
-    else {
-      return Collections.emptyList();
     }
   }
 
@@ -1306,11 +1313,8 @@ public class PyCallExpressionHelper {
         implicitOffset = 0;
       }
     }
-    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
-      implicitOffset = 1;
-    }
     else {
-      implicitOffset = 0;
+      implicitOffset = 1;
     }
     return parameters.subList(Math.min(implicitOffset, parameters.size()), parameters.size());
   }

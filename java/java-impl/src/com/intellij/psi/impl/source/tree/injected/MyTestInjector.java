@@ -92,7 +92,7 @@ public class MyTestInjector {
       .addPlace(null, null, (PsiLanguageInjectionHost)operand, textRange)
       .doneInjecting();
     };
-    final JavaConcatenationInjectorManager injectorManager = JavaConcatenationInjectorManager.getInstance(project);
+    final ConcatenationInjectorManager injectorManager = ConcatenationInjectorManager.getInstance(project);
     injectorManager.registerConcatenationInjector(injector);
     Disposer.register(parent, () -> {
       boolean b = injectorManager.unregisterConcatenationInjector(injector);
@@ -136,7 +136,7 @@ public class MyTestInjector {
         injectionPlacesRegistrar.doneInjecting();
       }
     };
-    final JavaConcatenationInjectorManager injectorManager = JavaConcatenationInjectorManager.getInstance(project);
+    final ConcatenationInjectorManager injectorManager = ConcatenationInjectorManager.getInstance(project);
     injectorManager.registerConcatenationInjector(injector);
     Disposer.register(parent, () -> {
       boolean b = injectorManager.unregisterConcatenationInjector(injector);

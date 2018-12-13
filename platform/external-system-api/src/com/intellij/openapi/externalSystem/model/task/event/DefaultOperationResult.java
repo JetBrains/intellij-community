@@ -17,7 +17,6 @@ package com.intellij.openapi.externalSystem.model.task.event;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/2/2015
  */
 public class DefaultOperationResult implements OperationResult {
 

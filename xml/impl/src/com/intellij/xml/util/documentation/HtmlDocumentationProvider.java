@@ -17,23 +17,24 @@ package com.intellij.xml.util.documentation;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
+import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.documentation.DocumentationUtil;
+import com.intellij.lang.documentation.ExternalDocumentationProvider;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.util.ColorSampleLookupValue;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -41,11 +42,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+
+import static com.intellij.codeInsight.documentation.DocumentationManager.ORIGINAL_ELEMENT_KEY;
 
 /**
  * @author maxim
  */
-public class HtmlDocumentationProvider implements DocumentationProvider {
+public class HtmlDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider {
   private DocumentationProvider myStyleProvider = null;
   private final boolean myUseStyleProvider;
   private static DocumentationProvider ourScriptProvider;
@@ -73,7 +77,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
 
   @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    String result = getUrlForHtml(element, PsiTreeUtil.getParentOfType(originalElement, XmlTag.class, false));
+    String result = getUrlForHtml(element, originalElement, PsiTreeUtil.getParentOfType(originalElement, XmlTag.class, false));
     DocumentationProvider styleProvider = getStyleProvider();
     if (result == null && styleProvider != null) {
       return styleProvider.getUrlFor(element, originalElement);
@@ -82,20 +86,62 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return result != null ? Collections.singletonList(result) : null;
   }
 
-  public static String getUrlForHtml(PsiElement element, XmlTag context) {
-    final EntityDescriptor descriptor = findDocumentationDescriptor(element, context);
-
-    if (descriptor!=null) {
-      return descriptor.getHelpRef();
-    } else {
-      return null;
+  @Nullable
+  @Override
+  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
+    final XmlTag tag = element instanceof XmlElement ?
+                       ReadAction.compute(() -> PsiTreeUtil.getParentOfType(element, XmlTag.class, false)) :
+                       null;
+    final SmartPsiElementPointer pointer = element.getUserData(ORIGINAL_ELEMENT_KEY);
+    PsiElement originalElement = pointer != null ?
+                                 ReadAction.compute((ThrowableComputable<PsiElement, RuntimeException>)pointer::getElement) :
+                                 element;
+    final EntityDescriptor descriptor = ReadAction.compute(() -> findDocumentationDescriptor(originalElement, tag));
+    for (String url : docUrls) {
+      if (url.contains("#attr-")) return null;
     }
+
+    String mdn = MdnDocumentationUtil.fetchExternalDocumentation(docUrls, () -> null);
+    if (mdn != null) {
+      String name = descriptor != null ? descriptor.getName() : ReadAction.compute(() -> SymbolPresentationUtil.getSymbolPresentableText(element));
+      return generateJavaDoc(descriptor, name, originalElement, mdn);
+    }
+    return null;
+  }
+
+  @Override
+  public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
+    return false;
+  }
+
+  @Override
+  public boolean canPromptToConfigureDocumentation(PsiElement element) {
+    return false;
+  }
+
+  @Override
+  public void promptToConfigureDocumentation(PsiElement element) {}
+
+  public static String getUrlForHtml(PsiElement element, PsiElement originalElement, XmlTag context) {
+    final EntityDescriptor descriptor = findDocumentationDescriptor(element, context);
+    String mdnUrl = MdnDocumentationUtil.getMdnUrl(getCompatData(descriptor, originalElement));
+    if (mdnUrl != null) return mdnUrl;
+
+    if (descriptor instanceof HtmlAttributeDescriptor && context != null) {
+      return "https://developer.mozilla.org/docs/Web/HTML/Element/" + context.getName() + "#attr-" + descriptor.getName();
+    }
+
+    return descriptor != null ? descriptor.getHelpRef() : null;
   }
 
   private static EntityDescriptor findDocumentationDescriptor(PsiElement element, XmlTag context) {
     boolean isTag = true;
     PsiElement nameElement = null;
     String key = null;
+
+    if (element instanceof FakePsiElement) {
+      element = element.getNavigationElement();
+    }
 
     if (element instanceof XmlElementDecl) {
       nameElement = ((XmlElementDecl)element).getNameElement();
@@ -160,7 +206,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     final XmlTag tag = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class, false);
-    String result = generateDocForHtml(element, false, tag, originalElement);
+    String result = generateDocForHtml(element, tag, originalElement);
 
     DocumentationProvider styleProvider = getStyleProvider();
     if (result == null && styleProvider !=null) {
@@ -172,17 +218,19 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     }
 
     if (result == null && element instanceof XmlAttributeValue) {
-      result = generateDocForHtml(element.getParent(), false, tag, originalElement);
+      result = generateDocForHtml(element.getParent(), tag, originalElement);
     }
 
     return result;
   }
 
-  protected String generateDocForHtml(PsiElement element, boolean omitHtmlSpecifics, XmlTag context, PsiElement originalElement) {
+  protected String generateDocForHtml(PsiElement element, XmlTag context, PsiElement originalElement) {
     final EntityDescriptor descriptor = findDocumentationDescriptor(element,context);
 
-    if (descriptor!=null) {
-      return generateJavaDoc(descriptor, omitHtmlSpecifics, originalElement);
+    if (descriptor != null) {
+      String description = descriptor.getDescription();
+      if (!description.endsWith(".")) description += ".";
+      return generateJavaDoc(descriptor, descriptor.getName(), originalElement, description);
     }
     if (element instanceof XmlEntityDecl) {
       final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
@@ -192,67 +240,52 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  private static String generateJavaDoc(EntityDescriptor descriptor, boolean omitHtmlSpecifics, PsiElement element) {
+  private static String generateJavaDoc(EntityDescriptor descriptor,
+                                        String name,
+                                        PsiElement element,
+                                        String description) {
     StringBuilder buf = new StringBuilder();
-    final boolean isTag = descriptor instanceof HtmlTagDescriptor;
 
-    if (isTag) {
-      DocumentationUtil.formatEntityName(XmlBundle.message("xml.javadoc.tag.name.message"),descriptor.getName(),buf);
-    } else {
-      DocumentationUtil.formatEntityName(XmlBundle.message("xml.javadoc.attribute.name.message"),descriptor.getName(),buf);
+    buf.append(DocumentationMarkup.DEFINITION_START).append(name).append(DocumentationMarkup.DEFINITION_END);
+    buf.append(DocumentationMarkup.CONTENT_START);
+    buf.append(StringUtil.capitalize(description));
+    buf.append(DocumentationMarkup.CONTENT_END);
+
+    Map data = ReadAction.compute(() -> getCompatData(descriptor, element));
+    String compatibilityData = MdnDocumentationUtil.getFormattedCompatibilityData(data);
+
+    boolean deprecated = MdnDocumentationUtil.isDeprecated(data);
+    if (deprecated || !compatibilityData.isEmpty()) {
+      buf.append(DocumentationMarkup.SECTIONS_START);
     }
-
-    buf.append(XmlBundle.message("xml.javadoc.description.message")).append(NBSP).append(descriptor.getDescription()).append(BR);
-
-    if (isTag) {
-      final HtmlTagDescriptor tagDescriptor = (HtmlTagDescriptor)descriptor;
-
-      if (!omitHtmlSpecifics) {
-        boolean hasStartTag = tagDescriptor.isHasStartTag();
-        if (!hasStartTag) {
-          buf.append(XmlBundle.message("xml.javadoc.start.tag.could.be.omitted.message")).append(BR);
-        }
-        if (!tagDescriptor.isEmpty() && !tagDescriptor.isHasEndTag()) {
-          buf.append(XmlBundle.message("xml.javadoc.end.tag.could.be.omitted.message")).append(BR);
-        }
-      }
-
-      if (tagDescriptor.isEmpty()) {
-        buf.append(XmlBundle.message("xml.javadoc.is.empty.message")).append(BR);
-      }
-    } else {
-      final HtmlAttributeDescriptor attributeDescriptor = (HtmlAttributeDescriptor)descriptor;
-
-      buf.append(XmlBundle.message("xml.javadoc.attr.type.message", attributeDescriptor.getType())).append(BR);
-      if (!attributeDescriptor.isHasDefaultValue())
-        buf.append(XmlBundle.message("xml.javadoc.attr.default.required.message")).append(BR);
-    }
-
-    char dtdId = descriptor.getDtd();
-    boolean deprecated = dtdId == EntityDescriptor.LOOSE_DTD;
     if (deprecated) {
-      buf.append(XmlBundle.message("xml.javadoc.deprecated.message", true)).append(BR);
+      buf.append(DocumentationMarkup.SECTION_HEADER_START).append("Deprecated");
+      buf.append(DocumentationMarkup.SECTION_END);
     }
-
-    if (dtdId == EntityDescriptor.LOOSE_DTD) {
-      buf.append(XmlBundle.message("xml.javadoc.defined.in.loose.dtd.message"));
+    if (!compatibilityData.isEmpty()) {
+      buf.append(DocumentationMarkup.SECTION_HEADER_START).append("Supported by:");
+      buf.append(DocumentationMarkup.SECTION_SEPARATOR).append(compatibilityData);
+      buf.append(DocumentationMarkup.SECTION_END);
     }
-    else if (dtdId == EntityDescriptor.FRAME_DTD) {
-      buf.append(XmlBundle.message("xml.javadoc.defined.in.frameset.dtd.message"));
-    }
-    else {
-      buf.append(XmlBundle.message("xml.javadoc.defined.in.any.dtd.message"));
-    }
-
-    if (!isTag) {
-      ColorSampleLookupValue.addColorPreviewAndCodeToLookup(element,buf);
-    }
-
-    if (element != null) {
-      buf.append(XmlDocumentationProvider.generateHtmlAdditionalDocTemplate(element));
+    if (deprecated || !compatibilityData.isEmpty()) {
+      buf.append(DocumentationMarkup.SECTIONS_END);
     }
 
     return buf.toString();
+  }
+
+  @Nullable
+  private static Map getCompatData(EntityDescriptor descriptor, @Nullable PsiElement element) {
+    XmlAttribute attribute = ReadAction.compute(() -> PsiTreeUtil.getParentOfType(element, XmlAttribute.class, true));
+    if (attribute != null) {
+      return HtmlCompatibilityData.getAttributeData(attribute.getParent(), attribute.getName());
+    } else if (element != null && element.getParent() instanceof XmlTag) {
+      return HtmlCompatibilityData.getTagData((XmlTag)element.getParent());
+    }
+    if (descriptor instanceof HtmlTagDescriptor) {
+      return HtmlCompatibilityData.getTagData(descriptor.getName());
+    }
+    return null;
   }
 
   @Override

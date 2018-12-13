@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,10 @@ public class SplitConditionUtil {
     boolean isAndExpression = acceptAnd && expression.getOperationTokenType() == JavaTokenType.ANDAND;
     boolean isOrExpression = acceptOr && expression.getOperationTokenType() == JavaTokenType.OROR;
     if (!isAndExpression && !isOrExpression) return null;
+    if (ErrorUtil.containsError(expression)) {
+      // Incomplete expression like "something &&"
+      return null;
+    }
 
     while (expression.getParent() instanceof PsiPolyadicExpression) {
       expression = (PsiPolyadicExpression)expression.getParent();
@@ -69,7 +74,7 @@ public class SplitConditionUtil {
       offsetInParent = next.getStartOffsetInParent();
     }
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
     String rOperands = expression.getText().substring(offsetInParent);
     return factory.createExpressionFromText(rOperands, expression.getParent());
   }
@@ -83,7 +88,7 @@ public class SplitConditionUtil {
     if (prev.getPrevSibling() instanceof PsiWhiteSpace) prev = prev.getPrevSibling();
     ct.markRangeUnchanged(expression.getFirstChild(), prev.getPrevSibling());
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
     String rOperands = expression.getText().substring(0, prev.getStartOffsetInParent());
     return factory.createExpressionFromText(rOperands, expression.getParent());
   }

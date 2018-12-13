@@ -19,6 +19,8 @@ import com.intellij.designer.DesignerEditorPanelFacade;
 import com.intellij.designer.LightToolWindow;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -111,5 +113,14 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
   @Override
   public String getComponentName() {
     return "PaletteManager";
+  }
+
+  @Override
+  public AnAction createGearActions() {
+    DefaultActionGroup group = new DefaultActionGroup("In Editor Mode", true);
+    group.add(createToggleAction(ToolWindowAnchor.LEFT));
+    group.add(createToggleAction(ToolWindowAnchor.RIGHT));
+    group.add(createToggleAction(null));
+    return group;
   }
 }

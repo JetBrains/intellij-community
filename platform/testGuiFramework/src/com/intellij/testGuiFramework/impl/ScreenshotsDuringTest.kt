@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Rule that takes a screenshot every second.
  */
-class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int = 100) : TestWatcher() {
+class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int = 100, private val keepScreenshots: Boolean = false) : TestWatcher() {
   private val myScreenshotTaker = ScreenshotTaker()
   private val myExecutorService: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
   private var myFolder: File? = null
@@ -47,7 +47,7 @@ class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int 
     catch (e: InterruptedException) {
       // Do not report the timeout
     }
-    if(isTestSuccessful && myFolder != null) FileUtilRt.delete(myFolder!!)
+    if(keepScreenshots.not() && isTestSuccessful && myFolder != null) FileUtilRt.delete(myFolder!!)
   }
 
   override fun succeeded(description: Description?) {

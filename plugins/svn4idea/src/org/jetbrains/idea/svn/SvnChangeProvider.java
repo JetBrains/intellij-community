@@ -137,12 +137,12 @@ public class SvnChangeProvider implements ChangeProvider {
 
     for (SvnChangedFile deletedFile : context.getDeletedFiles()) {
       final Status deletedStatus = deletedFile.getStatus();
-      if (Comparing.equal(copyFromURL, deletedStatus.getURL())) {
+      if (Comparing.equal(copyFromURL, deletedStatus.getUrl())) {
         final String clName = SvnUtil.getChangelistName(copiedFile.getStatus());
         applyMovedChange(context, copiedFile.getFilePath(), dirtyScope, deletedToDelete, deletedFile, copiedStatus, clName);
         for (SvnChangedFile deletedChild : context.getDeletedFiles()) {
           final Status childStatus = deletedChild.getStatus();
-          final Url childUrl = childStatus.getURL();
+          final Url childUrl = childStatus.getUrl();
           if (childUrl == null) {
             continue;
           }
@@ -168,7 +168,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
     // handle the case when the deleted file wasn't included in the dirty scope - try searching for the local copy
     // by building a relative url
-    if (!foundRename && copiedStatus.getURL() != null) {
+    if (!foundRename && copiedStatus.getUrl() != null) {
       File wcPath = myVcs.getSvnFileUrlMapping().getLocalPath(copyFromURL);
 
       if (wcPath != null) {

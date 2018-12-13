@@ -507,7 +507,9 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
       parmType = substitutor.substitute(parmType);
 
-      if (!parmType.isAssignableFrom(argType)) {
+      if (!parmType.isAssignableFrom(argType) &&
+          !(parm.getType() instanceof PsiEllipsisType && argType instanceof PsiArrayType &&
+            parmType.isAssignableFrom(((PsiArrayType)argType).getComponentType()))) {
         return false;
       }
     }
@@ -691,7 +693,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           if (context.isSingleParameterInfo()) buffer.append("<b>");
           appendModifierList(buffer, param);
           String type = paramType.getPresentableText(true);
-          buffer.append(context.isSingleParameterInfo() ? StringUtil.escapeXml(type) : type);
+          buffer.append(context.isSingleParameterInfo() ? StringUtil.escapeXmlEntities(type) : type);
           String name = param.getName();
           if (name != null && !context.isSingleParameterInfo()) {
             buffer.append(" ");

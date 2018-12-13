@@ -240,13 +240,13 @@ public class ByWord {
     private final ChangeBuilder myBuilder;
 
     AdjustmentPunctuationMatcher(@NotNull CharSequence text1,
-                                        @NotNull CharSequence text2,
-                                        @NotNull List<InlineChunk> words1,
-                                        @NotNull List<InlineChunk> words2,
-                                        int startShift1,
-                                        int startShift2,
-                                        @NotNull FairDiffIterable changes,
-                                        @NotNull ProgressIndicator indicator) {
+                                 @NotNull CharSequence text2,
+                                 @NotNull List<InlineChunk> words1,
+                                 @NotNull List<InlineChunk> words2,
+                                 int startShift1,
+                                 int startShift2,
+                                 @NotNull FairDiffIterable changes,
+                                 @NotNull ProgressIndicator indicator) {
       myText1 = text1;
       myText2 = text2;
       myWords1 = words1;
@@ -483,9 +483,9 @@ public class ByWord {
     @NotNull private final List<Range> myChanges;
 
     DefaultCorrector(@NotNull DiffIterable iterable,
-                            @NotNull CharSequence text1,
-                            @NotNull CharSequence text2,
-                            @NotNull ProgressIndicator indicator) {
+                     @NotNull CharSequence text1,
+                     @NotNull CharSequence text2,
+                     @NotNull ProgressIndicator indicator) {
       myIterable = iterable;
       myText1 = text1;
       myText2 = text2;
@@ -525,10 +525,10 @@ public class ByWord {
     @NotNull private final List<MergeRange> myChanges;
 
     MergeDefaultCorrector(@NotNull List<MergeRange> iterable,
-                                 @NotNull CharSequence text1,
-                                 @NotNull CharSequence text2,
-                                 @NotNull CharSequence text3,
-                                 @NotNull ProgressIndicator indicator) {
+                          @NotNull CharSequence text1,
+                          @NotNull CharSequence text2,
+                          @NotNull CharSequence text3,
+                          @NotNull ProgressIndicator indicator) {
       myIterable = iterable;
       myText1 = text1;
       myText2 = text2;
@@ -570,9 +570,9 @@ public class ByWord {
     @NotNull private final List<Range> myChanges;
 
     IgnoreSpacesCorrector(@NotNull DiffIterable iterable,
-                                 @NotNull CharSequence text1,
-                                 @NotNull CharSequence text2,
-                                 @NotNull ProgressIndicator indicator) {
+                          @NotNull CharSequence text1,
+                          @NotNull CharSequence text2,
+                          @NotNull ProgressIndicator indicator) {
       myIterable = iterable;
       myText1 = text1;
       myText2 = text2;
@@ -608,10 +608,10 @@ public class ByWord {
     @NotNull private final List<MergeRange> myChanges;
 
     MergeIgnoreSpacesCorrector(@NotNull List<MergeRange> iterable,
-                                      @NotNull CharSequence text1,
-                                      @NotNull CharSequence text2,
-                                      @NotNull CharSequence text3,
-                                      @NotNull ProgressIndicator indicator) {
+                               @NotNull CharSequence text1,
+                               @NotNull CharSequence text2,
+                               @NotNull CharSequence text3,
+                               @NotNull ProgressIndicator indicator) {
       myIterable = iterable;
       myText1 = text1;
       myText2 = text2;
@@ -637,7 +637,7 @@ public class ByWord {
     }
   }
 
-  private static class TrimSpacesCorrector {
+  static class TrimSpacesCorrector {
     @NotNull private final DiffIterable myIterable;
     @NotNull private final CharSequence myText1;
     @NotNull private final CharSequence myText2;
@@ -646,9 +646,9 @@ public class ByWord {
     @NotNull private final List<Range> myChanges;
 
     TrimSpacesCorrector(@NotNull DiffIterable iterable,
-                               @NotNull CharSequence text1,
-                               @NotNull CharSequence text2,
-                               @NotNull ProgressIndicator indicator) {
+                        @NotNull CharSequence text1,
+                        @NotNull CharSequence text2,
+                        @NotNull ProgressIndicator indicator) {
       myIterable = iterable;
       myText1 = text1;
       myText2 = text2;
@@ -700,10 +700,10 @@ public class ByWord {
     @NotNull private final List<MergeRange> myChanges;
 
     MergeTrimSpacesCorrector(@NotNull List<MergeRange> iterable,
-                                    @NotNull CharSequence text1,
-                                    @NotNull CharSequence text2,
-                                    @NotNull CharSequence text3,
-                                    @NotNull ProgressIndicator indicator) {
+                             @NotNull CharSequence text1,
+                             @NotNull CharSequence text2,
+                             @NotNull CharSequence text3,
+                             @NotNull ProgressIndicator indicator) {
       myIterable = iterable;
       myText1 = text1;
       myText2 = text2;
@@ -803,33 +803,45 @@ public class ByWord {
   public static List<InlineChunk> getInlineChunks(@NotNull final CharSequence text) {
     final List<InlineChunk> chunks = new ArrayList<>();
 
-    final int len = text.length();
-
+    int len = text.length();
     int offset = 0;
+
+    int wordStart = -1;
+    int wordHash = 0;
+
     while (offset < len) {
-      char ch = text.charAt(offset);
+      int ch = Character.codePointAt(text, offset);
+      int charCount = Character.charCount(ch);
 
-      if (isAlpha(ch)) {
-        int startOffset = offset;
+      boolean isAlpha = isAlpha(ch);
+      boolean isWordPart = isAlpha && !isContinuousScript(ch);
 
-        int h = 0;
-        while (offset < len) {
-          char c = text.charAt(offset);
-          if (!isAlpha(c)) break;
-          h = 31 * h + c;
-          offset++;
+      if (isWordPart) {
+        if (wordStart == -1) {
+          wordStart = offset;
+          wordHash = 0;
         }
-
-        chunks.add(new WordChunk(text, startOffset, offset, h));
+        wordHash = wordHash * 31 + ch;
       }
       else {
-        while (offset < len) {
-          char c = text.charAt(offset);
-          if (isAlpha(c)) break;
-          if (c == '\n') chunks.add(new NewlineChunk(offset));
-          offset++;
+        if (wordStart != -1) {
+          chunks.add(new WordChunk(text, wordStart, offset, wordHash));
+          wordStart = -1;
+        }
+
+        if (isAlpha) { // continuous script
+          chunks.add(new WordChunk(text, offset, offset + charCount, ch));
+        }
+        else if (ch == '\n') {
+          chunks.add(new NewlineChunk(offset));
         }
       }
+
+      offset += charCount;
+    }
+
+    if (wordStart != -1) {
+      chunks.add(new WordChunk(text, wordStart, len, wordHash));
     }
 
     return chunks;

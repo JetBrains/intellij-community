@@ -3,6 +3,8 @@ package com.intellij.ide;
 
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
@@ -32,24 +34,39 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author nik
  */
-public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileChangeTracker implements ProjectComponent {
+public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileChangeTracker implements ProjectComponent, Disposable {
   private final Project myProject;
   private final FileDocumentManager myDocumentManager;
   private final EditorNotifications myEditorNotifications;
   private final SingleAlarm myCheckingQueue;
   private final Set<VirtualFile> myFilesToCheck = Collections.synchronizedSet(new HashSet<>());
   private final Set<VirtualFile> myEditedGeneratedFiles = Collections.synchronizedSet(new HashSet<>());
+  public static boolean IN_TRACKER_TEST;
 
   public GeneratedSourceFileChangeTrackerImpl(Project project, FileDocumentManager documentManager, EditorNotifications editorNotifications) {
     myProject = project;
     myDocumentManager = documentManager;
     myEditorNotifications = editorNotifications;
-    myCheckingQueue = new SingleAlarm(this::checkFiles, 500, Alarm.ThreadToUse.POOLED_THREAD, project);
+    myCheckingQueue = new SingleAlarm(this::checkFiles, 500, Alarm.ThreadToUse.POOLED_THREAD, this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @TestOnly
-  public void waitForAlarm() throws Exception {
-    myCheckingQueue.waitForAllExecuted(1, TimeUnit.SECONDS);
+  void waitForAlarm(long timeout, @NotNull TimeUnit timeUnit) throws Exception {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      throw new IllegalStateException("Must not wait for the alarm under write action");
+    }
+    myCheckingQueue.waitForAllExecuted(timeout, timeUnit);
+  }
+
+  @TestOnly
+  public void cancelAllAndWait(long timeout, @NotNull TimeUnit timeUnit) throws Exception {
+    myFilesToCheck.clear();
+    myCheckingQueue.cancelAllRequests();
+    waitForAlarm(timeout, timeUnit);
   }
 
   @Override
@@ -59,6 +76,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
 
   @Override
   public void projectOpened() {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !IN_TRACKER_TEST) return; // too many useless listeners which slow down tests and leak threads
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
@@ -103,6 +121,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
       files = myFilesToCheck.toArray(VirtualFile.EMPTY_ARRAY);
       myFilesToCheck.clear();
     }
+    if (files.length == 0) return;
     final List<VirtualFile> newEditedGeneratedFiles = new ArrayList<>();
     ReadAction.run(() -> {
       if (myProject.isDisposed()) return;

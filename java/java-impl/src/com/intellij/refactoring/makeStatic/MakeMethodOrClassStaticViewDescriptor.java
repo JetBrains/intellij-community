@@ -49,6 +49,7 @@ public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescripto
     return myProcessedElementsHeader;
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));

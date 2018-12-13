@@ -132,7 +132,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     StopWatch sw = StopWatch.start("sorting commits in " + root.getName());
     List<VcsCommitMetadata> sortedCommits = VcsLogSorter.sortByDateTopoOrder(allDetails);
-    sortedCommits = sortedCommits.subList(0, Math.min(sortedCommits.size(), requirements.getCommitCount()));
+    sortedCommits = ContainerUtil.getFirstItems(sortedCommits, requirements.getCommitCount());
     sw.report();
 
     if (LOG.isDebugEnabled()) {
@@ -521,7 +521,7 @@ public class GitLogProvider implements VcsLogProvider {
   }
 
   public static void appendTextFilterParameters(@Nullable String text, boolean regexp, boolean caseSensitive,
-                                                @NotNull List<String> filterParameters) {
+                                                @NotNull List<? super String> filterParameters) {
     if (text != null) {
       filterParameters.add(prepareParameter("grep", text));
     }

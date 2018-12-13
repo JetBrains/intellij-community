@@ -17,12 +17,16 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -39,8 +43,8 @@ class FileLoader extends Loader {
     myConfiguration = configuration;
   }
 
-  private void buildPackageCache(final File dir, ClasspathCache.LoaderData loaderData) {
-    loaderData.addResourceEntry(getRelativeResourcePath(dir));
+  private void buildPackageCache(final File dir, ClasspathCache.LoaderDataBuilder context) {
+    context.addResourcePackageFromName(getRelativeResourcePath(dir));
 
     final File[] files = dir.listFiles();
     if (files == null) {
@@ -48,18 +52,19 @@ class FileLoader extends Loader {
     }
 
     boolean containsClasses = false;
+    
     for (File file : files) {
       final boolean isClass = file.getPath().endsWith(UrlClassLoader.CLASS_EXTENSION);
       if (isClass) {
         if (!containsClasses) {
-          loaderData.addResourceEntry(getRelativeResourcePath(file));
+          context.addClassPackageFromName(getRelativeResourcePath(file));
           containsClasses = true;
         }
-        loaderData.addNameEntry(file.getName());
+        context.addPossiblyDuplicateNameEntry(file.getName());
       }
       else {
-        loaderData.addNameEntry(file.getName());
-        buildPackageCache(file, loaderData);
+        context.addPossiblyDuplicateNameEntry(file.getName());
+        buildPackageCache(file, context);
       }
     }
   }
@@ -97,64 +102,18 @@ class FileLoader extends Loader {
     try {
       if (myConfiguration.myLazyClassloadingCaches) {
         DirEntry lastEntry = root;
-        int prevIndex = 0;
+        int prevIndex = 0;   // 0 .. prevIndex is package
         int nextIndex = name.indexOf('/', prevIndex);
 
         while (true) {
-          int nameEnd = nextIndex == -1 ? name.length() : nextIndex;
+          int nameEnd = nextIndex == -1 ? name.length() : nextIndex; // prevIndex, nameEnd is package or class name
           int nameHash = StringUtil.stringHashCodeInsensitive(name, prevIndex, nameEnd);
-          int[] childrenNameHashes = lastEntry.childrenNameHashes; // volatile read
-          
-          if (childrenNameHashes == null) {
-            String[] list = (prevIndex != 0 ? new File(myRootDir, name.substring(0, prevIndex)) : myRootDir).list();
-            
-            if (list != null) {
-              childrenNameHashes = new int[list.length];
-              for (int i = 0; i < list.length; ++i) {
-                childrenNameHashes[i] = StringUtil.stringHashCodeInsensitive(list[i]);
-              }
-            }
-            else {
-              childrenNameHashes = DirEntry.empty;
-            }
-            lastEntry.childrenNameHashes = childrenNameHashes; // volatile write
-          }
-
-          boolean found = false;
-          for (int childNameHash : childrenNameHashes) {
-            if (childNameHash == nameHash) {
-              found = true;
-              break;
-            }
-          }
-
-          if (!found) {
-            return null;
-          }
+          if (!nameHashIsPresentInChildren(lastEntry, name, prevIndex, nameHash)) return null;
           if (nextIndex == -1 || nextIndex == name.length() - 1) {
             break;
           }
 
-          DirEntry nextEntry = null;
-          List<DirEntry> directories = lastEntry.childrenDirectories; // volatile read
-          
-          if (directories != null) {
-            for (DirEntry previouslyScannedDir : directories) {
-              if (previouslyScannedDir.nameHash == nameHash && previouslyScannedDir.name.regionMatches(0, name, prevIndex, nameEnd - prevIndex)) {
-                nextEntry = previouslyScannedDir;
-                break;
-              }
-            }
-          }
-
-          if (nextEntry == null) {
-            nextEntry = new DirEntry(nameHash, name.substring(prevIndex, nameEnd));
-            List<DirEntry> newChildrenDirectories = directories != null ? new SmartList<DirEntry>(directories) : new SmartList<DirEntry>();
-            newChildrenDirectories.add(nextEntry);
-            lastEntry.childrenDirectories = newChildrenDirectories; // volatile write with new copy of data
-          }
-
-          lastEntry = nextEntry;
+          lastEntry = findOrCreateNextDirEntry(lastEntry, name, prevIndex, nameEnd, nameHash);
           prevIndex = nextIndex + 1;
           nextIndex = name.indexOf('/', prevIndex);
         }
@@ -172,73 +131,120 @@ class FileLoader extends Loader {
     return null;
   }
 
+  @NotNull
+  private static DirEntry findOrCreateNextDirEntry(DirEntry lastEntry, String name,
+                                            int prevIndex,
+                                            int nameEnd,
+                                            int nameHash) {
+    DirEntry nextEntry = null;
+    List<DirEntry> directories = lastEntry.childrenDirectories; // volatile read
+
+    if (directories != null) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int index = 0, len = directories.size(); index < len; ++index) {
+        DirEntry previouslyScannedDir = directories.get(index);
+        if (previouslyScannedDir.nameHash == nameHash &&
+            previouslyScannedDir.name.regionMatches(0, name, prevIndex, nameEnd - prevIndex)) {
+          nextEntry = previouslyScannedDir;
+          break;
+        }
+      }
+    }
+
+    if (nextEntry == null) {
+      nextEntry = new DirEntry(nameHash, name.substring(prevIndex, nameEnd));
+      List<DirEntry> newChildrenDirectories = directories != null ? new ArrayList<DirEntry>(directories) : new SmartList<DirEntry>();
+      newChildrenDirectories.add(nextEntry);
+      lastEntry.childrenDirectories = newChildrenDirectories; // volatile write with new copy of data
+    }
+
+    lastEntry = nextEntry;
+    return lastEntry;
+  }
+
+  private boolean nameHashIsPresentInChildren(DirEntry lastEntry, String name, int prevIndex, int nameHash) {
+    int[] childrenNameHashes = lastEntry.childrenNameHashes; // volatile read
+
+    if (childrenNameHashes == null) {
+      String[] list = (prevIndex != 0 ? new File(myRootDir, name.substring(0, prevIndex)) : myRootDir).list();
+
+      if (list != null) {
+        childrenNameHashes = new int[list.length];
+        for (int i = 0; i < list.length; ++i) {
+          childrenNameHashes[i] = StringUtil.stringHashCodeInsensitive(list[i]);
+        }
+      }
+      else {
+        childrenNameHashes = DirEntry.empty;
+      }
+      lastEntry.childrenNameHashes = childrenNameHashes; // volatile write
+    }
+
+    return ArrayUtil.indexOf(childrenNameHashes, nameHash) >= 0;
+  }
+
   private static final AtomicInteger totalLoaders = new AtomicInteger();
   private static final AtomicLong totalScanning = new AtomicLong();
   private static final AtomicLong totalSaving = new AtomicLong();
   private static final AtomicLong totalReading = new AtomicLong();
 
   private static final Boolean doFsActivityLogging = false;
+  private static final int ourVersion = 1;
 
   private ClasspathCache.LoaderData tryReadFromIndex() {
     if (!myConfiguration.myCanHavePersistentIndex) return null;
     long started = System.nanoTime();
-    ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData();
+    
     File index = getIndexFileFile();
 
-    BufferedReader reader = null;
+    DataInputStream reader = null;
+    boolean isOk = false;
+    
     try {
-      reader = new BufferedReader(new FileReader(index));
-      readList(reader, loaderData.getResourcePaths());
-      readList(reader, loaderData.getNames());
-
-      return loaderData;
-    } catch (Exception ex) {
-      if (!(ex instanceof FileNotFoundException)) index.delete();
-    }
+      reader = new DataInputStream(new BufferedInputStream(new FileInputStream(index)));
+      if (DataInputOutputUtil.readINT(reader) == ourVersion) {
+        ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData(reader);
+        isOk = true;
+        return loaderData;
+      }
+    } catch (FileNotFoundException ex) {
+      isOk = true;
+    } catch (IOException ignore) {}
     finally {
       if (reader != null) {
         try {
           reader.close();
         } catch (IOException ignore) {}
       }
+      if (!isOk) index.delete();
       totalReading.addAndGet(System.nanoTime() - started);
     }
 
     return null;
   }
 
-  private static void readList(BufferedReader reader, List<? super String> paths) throws IOException {
-    String line = reader.readLine();
-    int numberOfElements = Integer.parseInt(line);
-    for(int i = 0; i < numberOfElements; ++i) paths.add(reader.readLine());
-  }
-
   private void trySaveToIndex(ClasspathCache.LoaderData data) {
     if (!myConfiguration.myCanHavePersistentIndex) return;
     long started = System.nanoTime();
     File index = getIndexFileFile();
-    BufferedWriter writer = null;
+    DataOutput writer = null;
+    boolean isOk = false;
 
     try {
-      writer = new BufferedWriter(new FileWriter(index));
-      writeList(writer, data.getResourcePaths());
-      writeList(writer, data.getNames());
-    } catch (IOException ex) {
-      index.delete();
-    }
+      writer = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(index)));
+      DataInputOutputUtil.writeINT(writer, ourVersion);
+      data.save(writer);
+      isOk = true;
+    } catch (IOException ignore) {}
     finally {
       if (writer != null) {
         try {
-          writer.close();
+          ((OutputStream)writer).close();
         } catch (IOException ignore) {}
       }
+      if (!isOk) index.delete();
       totalSaving.addAndGet(System.nanoTime() - started);
     }
-  }
-
-  private static void writeList(BufferedWriter writer, List<String> paths) throws IOException {
-    writer.append(Integer.toString(paths.size())).append('\n');
-    for(String s: paths) writer.append(s).append('\n');
   }
 
   @NotNull
@@ -248,14 +254,13 @@ class FileLoader extends Loader {
 
   @NotNull
   @Override
-  public ClasspathCache.LoaderData buildData() throws IOException {
-    ClasspathCache.LoaderData fromIndex = tryReadFromIndex();
-    final ClasspathCache.LoaderData loaderData = fromIndex != null ? fromIndex : new ClasspathCache.LoaderData();
+  public ClasspathCache.LoaderData buildData() {
+    ClasspathCache.LoaderData loaderData = tryReadFromIndex();
 
     final int nsMsFactor = 1000000;
     int currentLoaders = totalLoaders.incrementAndGet();
-    long currentScanning;
-    if (fromIndex == null) {
+    long currentScanningTime;
+    if (loaderData == null) {
       long started = System.nanoTime();
 /*    // todo code below uses java 7 api, uncomment once we are done with Java 6
       if (SystemInfo.isJavaVersionAtLeast("1.7") && !SystemProperties.getBooleanProperty("idea.no.nio.class.scanning", false) && false) {
@@ -302,23 +307,22 @@ class FileLoader extends Loader {
           }
         });
       } else {  */
-        buildPackageCache(myRootDir, loaderData);
+      ClasspathCache.LoaderDataBuilder loaderDataBuilder = new ClasspathCache.LoaderDataBuilder();
+      buildPackageCache(myRootDir, loaderDataBuilder);
+      loaderData = loaderDataBuilder.build();
       /* } */
       final long doneNanos = System.nanoTime() - started;
-      currentScanning = totalScanning.addAndGet(doneNanos);
+      currentScanningTime = totalScanning.addAndGet(doneNanos);
       if (doFsActivityLogging) {
         System.out.println("Scanned: " + myRootDirAbsolutePath + " for " + (doneNanos / nsMsFactor) + "ms");
       }
       trySaveToIndex(loaderData);
     } else {
-      currentScanning = totalScanning.get();
+      currentScanningTime = totalScanning.get();
     }
 
-    loaderData.addResourceEntry("foo.class");
-    loaderData.addResourceEntry("bar.properties");
-
     if (doFsActivityLogging) {
-      System.out.println("Scanning: " + (currentScanning / nsMsFactor) + "ms, saving: " + (totalSaving.get() / nsMsFactor) +
+      System.out.println("Scanning: " + (currentScanningTime / nsMsFactor) + "ms, saving: " + (totalSaving.get() / nsMsFactor) +
                          "ms, loading:" + (totalReading.get() / nsMsFactor) + "ms for " + currentLoaders + " loaders");
     }
 

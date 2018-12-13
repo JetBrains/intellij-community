@@ -101,9 +101,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
             Value key = myCaptureEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frameProxy));
             if (key instanceof ObjectReference) {
               List<StackFrameItem> frames = StackFrameItem.createFrames(suspendContext, true);
-              if (frames.size() > AsyncStacksUtils.getMaxStackLength()) {
-                frames = frames.subList(0, AsyncStacksUtils.getMaxStackLength());
-              }
+              frames = ContainerUtil.getFirstItems(frames, AsyncStacksUtils.getMaxStackLength());
               stacks.put(getKey((ObjectReference)key), frames);
             }
           }
@@ -299,7 +297,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   public static class CaptureAsyncStackTraceProvider implements AsyncStackTraceProvider {
     @Nullable
     @Override
-    public List<StackFrameItem> getAsyncStackTrace(JavaStackFrame stackFrame, SuspendContextImpl suspendContext) {
+    public List<StackFrameItem> getAsyncStackTrace(@NotNull JavaStackFrame stackFrame, @NotNull SuspendContextImpl suspendContext) {
       if (AsyncStacksToggleAction.isAsyncStacksEnabled((XDebugSessionImpl)suspendContext.getDebugProcess().getXdebugProcess().getSession())) {
         return getRelatedStack(stackFrame.getStackFrameProxy(), suspendContext);
       }

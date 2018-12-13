@@ -55,7 +55,12 @@ public class JDOMUtil {
         factory = XMLInputFactory.newFactory();
       }
 
-      factory.setProperty("http://java.sun.com/xml/stream/properties/report-cdata-event", true);
+      try {
+        factory.setProperty("http://java.sun.com/xml/stream/properties/report-cdata-event", true);
+      }
+      catch (Exception e) {
+        getLogger().error("cannot set \"report-cdata-event\" property for XMLInputFactory", e);
+      }
       factory.setProperty(XMLInputFactory.IS_COALESCING, true);
       factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
       factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
@@ -78,7 +83,6 @@ public class JDOMUtil {
     return Collections.emptyList();
   }
 
-  @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
   private static class LoggerHolder {
     private static final Logger ourLogger = Logger.getInstance("#com.intellij.openapi.util.JDOMUtil");
   }
@@ -101,7 +105,7 @@ public class JDOMUtil {
     if (e1 == null || e2 == null) return false;
 
     return Comparing.equal(e1.getName(), e2.getName())
-           && isAttributesEqual(e1.getAttributes(), e2.getAttributes(), ignoreEmptyAttrValues)
+           && isAttributesEqual(getAttributes(e1), getAttributes(e2), ignoreEmptyAttrValues)
            && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER), ignoreEmptyAttrValues);
   }
 
@@ -173,7 +177,6 @@ public class JDOMUtil {
     return c1 instanceof Element && c2 instanceof Element && areElementsEqual((Element)c1, (Element)c2, ignoreEmptyAttrValues);
   }
 
-  @SuppressWarnings("DuplicateDetector")
   private static boolean isAttributesEqual(@NotNull List<? extends Attribute> l1, @NotNull List<? extends Attribute> l2, boolean ignoreEmptyAttrValues) {
     if (ignoreEmptyAttrValues) {
       l1 = ContainerUtil.filter(l1, NOT_EMPTY_VALUE_CONDITION);
@@ -276,7 +279,6 @@ public class JDOMUtil {
     return loadDocumentUsingStaX(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Contract("null -> null; !null -> !null")
   public static Element load(Reader reader) throws JDOMException, IOException {
     return reader == null ? null : loadUsingStaX(reader);
@@ -585,25 +587,23 @@ public class JDOMUtil {
   private static ElementInfo getElementInfo(@NotNull Element element) {
     boolean hasNullAttributes = false;
     StringBuilder buf = new StringBuilder(element.getName());
-    List attributes = element.getAttributes();
-    if (attributes != null) {
-      int length = attributes.size();
-      if (length > 0) {
-        buf.append("[");
-        for (int idx = 0; idx < length; idx++) {
-          Attribute attr = (Attribute)attributes.get(idx);
-          if (idx != 0) {
-            buf.append(";");
-          }
-          buf.append(attr.getName());
-          buf.append("=");
-          buf.append(attr.getValue());
-          if (attr.getValue() == null) {
-            hasNullAttributes = true;
-          }
+    List<Attribute> attributes = getAttributes(element);
+    int length = attributes.size();
+    if (length > 0) {
+      buf.append("[");
+      for (int idx = 0; idx < length; idx++) {
+        Attribute attr = attributes.get(idx);
+        if (idx != 0) {
+          buf.append(";");
         }
-        buf.append("]");
+        buf.append(attr.getName());
+        buf.append("=");
+        buf.append(attr.getValue());
+        if (attr.getValue() == null) {
+          hasNullAttributes = true;
+        }
       }
+      buf.append("]");
     }
     return new ElementInfo(buf, hasNullAttributes);
   }
@@ -679,7 +679,13 @@ public class JDOMUtil {
   }
 
   public static boolean isEmpty(@Nullable Element element, int attributeCount) {
-    return element == null || element.getAttributes().size() == attributeCount && element.getContent().isEmpty();
+    return element == null || getAttributes(element).size() == attributeCount && element.getContent().isEmpty();
+  }
+
+  @NotNull
+  public static List<Attribute> getAttributes(@NotNull Element e) {
+    // avoid AttributeList creation if no attributes
+    return e.hasAttributes() ? e.getAttributes() : Collections.<Attribute>emptyList();
   }
 
   @Nullable
@@ -696,7 +702,7 @@ public class JDOMUtil {
       iterator.remove();
       to.addContent(configuration);
     }
-    for (Iterator<Attribute> iterator = from.getAttributes().iterator(); iterator.hasNext(); ) {
+    for (Iterator<Attribute> iterator = getAttributes(from).iterator(); iterator.hasNext(); ) {
       Attribute attribute = iterator.next();
       iterator.remove();
       to.setAttribute(attribute);
@@ -718,14 +724,14 @@ public class JDOMUtil {
       }
 
       // if no children (e.g. `<module fileurl="value" />`), it means that element should be added as list item
-      if (existingChild == null || existingChild.getChildren().isEmpty() || !isAttributesEqual(existingChild.getAttributes(), child.getAttributes(), false)) {
+      if (existingChild == null || existingChild.getChildren().isEmpty() || !isAttributesEqual(getAttributes(existingChild), getAttributes(child), false)) {
         to.addContent(child);
       }
       else {
         deepMerge(existingChild, child);
       }
     }
-    for (Iterator<Attribute> iterator = from.getAttributes().iterator(); iterator.hasNext(); ) {
+    for (Iterator<Attribute> iterator = getAttributes(from).iterator(); iterator.hasNext(); ) {
       Attribute attribute = iterator.next();
       iterator.remove();
       to.setAttribute(attribute);

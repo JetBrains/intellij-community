@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * @author yole
  */
-@SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "JUnitTestClassNamingConvention", "JUnitTestCaseWithNoTests"})
+@SuppressWarnings({"JUnitTestClassNamingConvention", "JUnitTestCaseWithNoTests"})
 public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
   private final VirtualFile mySourceRoot;
   private final boolean myUsePlatformSourceRoot;
@@ -59,6 +59,9 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   public void tearDown() throws Exception {
     try {
       deleteAll();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

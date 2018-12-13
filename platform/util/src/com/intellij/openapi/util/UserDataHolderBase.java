@@ -85,7 +85,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   public <T> T getCopyableUserData(@NotNull Key<T> key) {
-    //noinspection unchecked,ConstantConditions
+    // noinspection ConstantConditions
     KeyFMap map = getUserData(COPYABLE_USER_MAP_KEY);
     return map == null ? null : map.get(key);
   }

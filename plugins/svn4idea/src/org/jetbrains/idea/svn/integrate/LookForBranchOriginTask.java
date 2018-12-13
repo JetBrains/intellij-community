@@ -9,11 +9,11 @@ import org.jetbrains.idea.svn.api.Url;
 public class LookForBranchOriginTask extends BaseMergeTask {
 
   private final boolean myFromSource;
-  @NotNull private final Consumer<SvnBranchPointsCalculator.WrapperInvertor> myCallback;
+  @NotNull private final Consumer<? super SvnBranchPointsCalculator.WrapperInvertor> myCallback;
 
   public LookForBranchOriginTask(@NotNull QuickMerge mergeProcess,
                                  boolean fromSource,
-                                 @NotNull Consumer<SvnBranchPointsCalculator.WrapperInvertor> callback) {
+                                 @NotNull Consumer<? super SvnBranchPointsCalculator.WrapperInvertor> callback) {
     super(mergeProcess);
     myFromSource = fromSource;
     myCallback = callback;

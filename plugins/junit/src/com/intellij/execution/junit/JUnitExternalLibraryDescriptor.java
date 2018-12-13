@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 public class JUnitExternalLibraryDescriptor extends ExternalLibraryDescriptor {
   public static final ExternalLibraryDescriptor JUNIT3 = new JUnitExternalLibraryDescriptor("3", "3.8.2");
   public static final ExternalLibraryDescriptor JUNIT4 = new JUnitExternalLibraryDescriptor("4", "4.12");
-  public static final ExternalLibraryDescriptor JUNIT5 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.2",
+  public static final ExternalLibraryDescriptor JUNIT5 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3",
                                                                                             null);
   private final String myVersion;
 

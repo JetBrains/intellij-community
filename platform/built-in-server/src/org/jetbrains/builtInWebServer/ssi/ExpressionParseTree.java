@@ -81,7 +81,6 @@ final class ExpressionParseTree {
       OppNode top = oppStack.get(0);
       // If the top is a spacer then don't pop
       // anything
-      //noinspection ConstantConditions
       if (top == null) break;
       // If the top node has a lower precedence then
       // let it stay

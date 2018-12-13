@@ -341,10 +341,10 @@ public final class CmdlineRemoteProto {
       }
 
       public static Builder newBuilder() {
-        return DEFAULT_INSTANCE.toBuilder();
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
       }
       public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID prototype) {
-        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
       }
 
       /**
@@ -421,11 +421,11 @@ public final class CmdlineRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.UUID)
       }
-      private byte memoizedIsInitialized = -1;
+      private byte memoizedIsInitialized = 2;
       @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-      protected final Object dynamicMethod(
+      protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-          Object arg0, Object arg1) {
+          java.lang.Object arg0, java.lang.Object arg1) {
         switch (method) {
           case NEW_MUTABLE_INSTANCE: {
             return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID();
@@ -437,18 +437,11 @@ public final class CmdlineRemoteProto {
 
             boolean shouldMemoize = ((Boolean) arg0).booleanValue();
             if (!hasMostSigBits()) {
-              if (shouldMemoize) {
-                memoizedIsInitialized = 0;
-              }
               return null;
             }
             if (!hasLeastSigBits()) {
-              if (shouldMemoize) {
-                memoizedIsInitialized = 0;
-              }
               return null;
             }
-            if (shouldMemoize) memoizedIsInitialized = 1;
             return DEFAULT_INSTANCE;
 
           }
@@ -478,6 +471,9 @@ public final class CmdlineRemoteProto {
                 (com.google.protobuf.CodedInputStream) arg0;
             com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                 (com.google.protobuf.ExtensionRegistryLite) arg1;
+            if (extensionRegistry == null) {
+              throw new java.lang.NullPointerException();
+            }
             try {
               boolean done = false;
               while (!done) {
@@ -525,7 +521,14 @@ public final class CmdlineRemoteProto {
               }
             }
             return PARSER;
-          }
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return memoizedIsInitialized;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+          return null;
+        }
         }
         throw new UnsupportedOperationException();
       }
@@ -800,10 +803,10 @@ public final class CmdlineRemoteProto {
       }
 
       public static Builder newBuilder() {
-        return DEFAULT_INSTANCE.toBuilder();
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
       }
       public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair prototype) {
-        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
       }
 
       /**
@@ -914,11 +917,11 @@ public final class CmdlineRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.KeyValuePair)
       }
-      private byte memoizedIsInitialized = -1;
+      private byte memoizedIsInitialized = 2;
       @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-      protected final Object dynamicMethod(
+      protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-          Object arg0, Object arg1) {
+          java.lang.Object arg0, java.lang.Object arg1) {
         switch (method) {
           case NEW_MUTABLE_INSTANCE: {
             return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair();
@@ -930,18 +933,11 @@ public final class CmdlineRemoteProto {
 
             boolean shouldMemoize = ((Boolean) arg0).booleanValue();
             if (!hasKey()) {
-              if (shouldMemoize) {
-                memoizedIsInitialized = 0;
-              }
               return null;
             }
             if (!hasValue()) {
-              if (shouldMemoize) {
-                memoizedIsInitialized = 0;
-              }
               return null;
             }
-            if (shouldMemoize) memoizedIsInitialized = 1;
             return DEFAULT_INSTANCE;
 
           }
@@ -971,6 +967,9 @@ public final class CmdlineRemoteProto {
                 (com.google.protobuf.CodedInputStream) arg0;
             com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                 (com.google.protobuf.ExtensionRegistryLite) arg1;
+            if (extensionRegistry == null) {
+              throw new java.lang.NullPointerException();
+            }
             try {
               boolean done = false;
               while (!done) {
@@ -986,13 +985,13 @@ public final class CmdlineRemoteProto {
                     break;
                   }
                   case 10: {
-                    String s = input.readString();
+                    java.lang.String s = input.readString();
                     bitField0_ |= 0x00000001;
                     key_ = s;
                     break;
                   }
                   case 18: {
-                    String s = input.readString();
+                    java.lang.String s = input.readString();
                     bitField0_ |= 0x00000002;
                     value_ = s;
                     break;
@@ -1020,7 +1019,14 @@ public final class CmdlineRemoteProto {
               }
             }
             return PARSER;
-          }
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return memoizedIsInitialized;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+          return null;
+        }
         }
         throw new UnsupportedOperationException();
       }
@@ -1340,10 +1346,10 @@ public final class CmdlineRemoteProto {
       }
 
       public static Builder newBuilder() {
-        return DEFAULT_INSTANCE.toBuilder();
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
       }
       public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure prototype) {
-        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
       }
 
       /**
@@ -1484,9 +1490,9 @@ public final class CmdlineRemoteProto {
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.Failure)
       }
       @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-      protected final Object dynamicMethod(
+      protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-          Object arg0, Object arg1) {
+          java.lang.Object arg0, java.lang.Object arg1) {
         switch (method) {
           case NEW_MUTABLE_INSTANCE: {
             return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure();
@@ -1523,6 +1529,9 @@ public final class CmdlineRemoteProto {
                 (com.google.protobuf.CodedInputStream) arg0;
             com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                 (com.google.protobuf.ExtensionRegistryLite) arg1;
+            if (extensionRegistry == null) {
+              throw new java.lang.NullPointerException();
+            }
             try {
               boolean done = false;
               while (!done) {
@@ -1543,13 +1552,13 @@ public final class CmdlineRemoteProto {
                     break;
                   }
                   case 18: {
-                    String s = input.readString();
+                    java.lang.String s = input.readString();
                     bitField0_ |= 0x00000002;
                     description_ = s;
                     break;
                   }
                   case 26: {
-                    String s = input.readString();
+                    java.lang.String s = input.readString();
                     bitField0_ |= 0x00000004;
                     stacktrace_ = s;
                     break;
@@ -1577,7 +1586,13 @@ public final class CmdlineRemoteProto {
               }
             }
             return PARSER;
-          }
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return (byte) 1;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          return null;
+        }
         }
         throw new UnsupportedOperationException();
       }
@@ -1752,7 +1767,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated string changed_paths = 2;</code>
          */
-        java.util.List<String>
+        java.util.List<java.lang.String>
             getChangedPathsList();
         /**
          * <code>repeated string changed_paths = 2;</code>
@@ -1771,7 +1786,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated string deleted_paths = 3;</code>
          */
-        java.util.List<String>
+        java.util.List<java.lang.String>
             getDeletedPathsList();
         /**
          * <code>repeated string deleted_paths = 3;</code>
@@ -1830,11 +1845,11 @@ public final class CmdlineRemoteProto {
         }
 
         public static final int CHANGED_PATHS_FIELD_NUMBER = 2;
-        private com.google.protobuf.Internal.ProtobufList<String> changedPaths_;
+        private com.google.protobuf.Internal.ProtobufList<java.lang.String> changedPaths_;
         /**
          * <code>repeated string changed_paths = 2;</code>
          */
-        public java.util.List<String> getChangedPathsList() {
+        public java.util.List<java.lang.String> getChangedPathsList() {
           return changedPaths_;
         }
         /**
@@ -1913,11 +1928,11 @@ public final class CmdlineRemoteProto {
         }
 
         public static final int DELETED_PATHS_FIELD_NUMBER = 3;
-        private com.google.protobuf.Internal.ProtobufList<String> deletedPaths_;
+        private com.google.protobuf.Internal.ProtobufList<java.lang.String> deletedPaths_;
         /**
          * <code>repeated string deleted_paths = 3;</code>
          */
-        public java.util.List<String> getDeletedPathsList() {
+        public java.util.List<java.lang.String> getDeletedPathsList() {
           return deletedPaths_;
         }
         /**
@@ -2116,10 +2131,10 @@ public final class CmdlineRemoteProto {
         }
 
         public static Builder newBuilder() {
-          return DEFAULT_INSTANCE.toBuilder();
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
         }
         public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent prototype) {
-          return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
         }
 
         /**
@@ -2168,7 +2183,7 @@ public final class CmdlineRemoteProto {
           /**
            * <code>repeated string changed_paths = 2;</code>
            */
-          public java.util.List<String>
+          public java.util.List<java.lang.String>
               getChangedPathsList() {
             return java.util.Collections.unmodifiableList(
                 instance.getChangedPathsList());
@@ -2240,7 +2255,7 @@ public final class CmdlineRemoteProto {
           /**
            * <code>repeated string deleted_paths = 3;</code>
            */
-          public java.util.List<String>
+          public java.util.List<java.lang.String>
               getDeletedPathsList() {
             return java.util.Collections.unmodifiableList(
                 instance.getDeletedPathsList());
@@ -2311,11 +2326,11 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent)
         }
-        private byte memoizedIsInitialized = -1;
+        private byte memoizedIsInitialized = 2;
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-        protected final Object dynamicMethod(
+        protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-            Object arg0, Object arg1) {
+            java.lang.Object arg0, java.lang.Object arg1) {
           switch (method) {
             case NEW_MUTABLE_INSTANCE: {
               return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent();
@@ -2327,12 +2342,8 @@ public final class CmdlineRemoteProto {
 
               boolean shouldMemoize = ((Boolean) arg0).booleanValue();
               if (!hasOrdinal()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
-              if (shouldMemoize) memoizedIsInitialized = 1;
               return DEFAULT_INSTANCE;
 
             }
@@ -2363,6 +2374,9 @@ public final class CmdlineRemoteProto {
                   (com.google.protobuf.CodedInputStream) arg0;
               com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                   (com.google.protobuf.ExtensionRegistryLite) arg1;
+              if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
+              }
               try {
                 boolean done = false;
                 while (!done) {
@@ -2383,7 +2397,7 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 18: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       if (!changedPaths_.isModifiable()) {
                         changedPaths_ =
                             com.google.protobuf.GeneratedMessageLite.mutableCopy(changedPaths_);
@@ -2392,7 +2406,7 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 26: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       if (!deletedPaths_.isModifiable()) {
                         deletedPaths_ =
                             com.google.protobuf.GeneratedMessageLite.mutableCopy(deletedPaths_);
@@ -2423,7 +2437,14 @@ public final class CmdlineRemoteProto {
                 }
               }
               return PARSER;
-            }
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return memoizedIsInitialized;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+            return null;
+          }
           }
           throw new UnsupportedOperationException();
         }
@@ -2625,10 +2646,10 @@ public final class CmdlineRemoteProto {
         }
 
         public static Builder newBuilder() {
-          return DEFAULT_INSTANCE.toBuilder();
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
         }
         public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings prototype) {
-          return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
         }
 
         /**
@@ -2693,11 +2714,11 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings)
         }
-        private byte memoizedIsInitialized = -1;
+        private byte memoizedIsInitialized = 2;
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-        protected final Object dynamicMethod(
+        protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-            Object arg0, Object arg1) {
+            java.lang.Object arg0, java.lang.Object arg1) {
           switch (method) {
             case NEW_MUTABLE_INSTANCE: {
               return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings();
@@ -2709,12 +2730,8 @@ public final class CmdlineRemoteProto {
 
               boolean shouldMemoize = ((Boolean) arg0).booleanValue();
               if (!hasGlobalOptionsPath()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
-              if (shouldMemoize) memoizedIsInitialized = 1;
               return DEFAULT_INSTANCE;
 
             }
@@ -2741,6 +2758,9 @@ public final class CmdlineRemoteProto {
                   (com.google.protobuf.CodedInputStream) arg0;
               com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                   (com.google.protobuf.ExtensionRegistryLite) arg1;
+              if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
+              }
               try {
                 boolean done = false;
                 while (!done) {
@@ -2756,7 +2776,7 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 42: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000001;
                       globalOptionsPath_ = s;
                       break;
@@ -2784,7 +2804,14 @@ public final class CmdlineRemoteProto {
                 }
               }
               return PARSER;
-            }
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return memoizedIsInitialized;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+            return null;
+          }
           }
           throw new UnsupportedOperationException();
         }
@@ -2861,7 +2888,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated string file_path = 5;</code>
          */
-        java.util.List<String>
+        java.util.List<java.lang.String>
             getFilePathList();
         /**
          * <code>repeated string file_path = 5;</code>
@@ -3011,7 +3038,7 @@ public final class CmdlineRemoteProto {
           /**
            * <code>repeated string target_id = 3;</code>
            */
-          java.util.List<String>
+          java.util.List<java.lang.String>
               getTargetIdList();
           /**
            * <code>repeated string target_id = 3;</code>
@@ -3130,11 +3157,11 @@ public final class CmdlineRemoteProto {
           }
 
           public static final int TARGET_ID_FIELD_NUMBER = 3;
-          private com.google.protobuf.Internal.ProtobufList<String> targetId_;
+          private com.google.protobuf.Internal.ProtobufList<java.lang.String> targetId_;
           /**
            * <code>repeated string target_id = 3;</code>
            */
-          public java.util.List<String> getTargetIdList() {
+          public java.util.List<java.lang.String> getTargetIdList() {
             return targetId_;
           }
           /**
@@ -3364,10 +3391,10 @@ public final class CmdlineRemoteProto {
           }
 
           public static Builder newBuilder() {
-            return DEFAULT_INSTANCE.toBuilder();
+            return (Builder) DEFAULT_INSTANCE.createBuilder();
           }
           public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope prototype) {
-            return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+            return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
           }
 
           /**
@@ -3462,7 +3489,7 @@ public final class CmdlineRemoteProto {
             /**
              * <code>repeated string target_id = 3;</code>
              */
-            public java.util.List<String>
+            public java.util.List<java.lang.String>
                 getTargetIdList() {
               return java.util.Collections.unmodifiableList(
                   instance.getTargetIdList());
@@ -3562,11 +3589,11 @@ public final class CmdlineRemoteProto {
 
             // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope)
           }
-          private byte memoizedIsInitialized = -1;
+          private byte memoizedIsInitialized = 2;
           @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-          protected final Object dynamicMethod(
+          protected final java.lang.Object dynamicMethod(
               com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-              Object arg0, Object arg1) {
+              java.lang.Object arg0, java.lang.Object arg1) {
             switch (method) {
               case NEW_MUTABLE_INSTANCE: {
                 return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope();
@@ -3578,18 +3605,11 @@ public final class CmdlineRemoteProto {
 
                 boolean shouldMemoize = ((Boolean) arg0).booleanValue();
                 if (!hasTypeId()) {
-                  if (shouldMemoize) {
-                    memoizedIsInitialized = 0;
-                  }
                   return null;
                 }
                 if (!hasForceBuild()) {
-                  if (shouldMemoize) {
-                    memoizedIsInitialized = 0;
-                  }
                   return null;
                 }
-                if (shouldMemoize) memoizedIsInitialized = 1;
                 return DEFAULT_INSTANCE;
 
               }
@@ -3624,6 +3644,9 @@ public final class CmdlineRemoteProto {
                     (com.google.protobuf.CodedInputStream) arg0;
                 com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                     (com.google.protobuf.ExtensionRegistryLite) arg1;
+                if (extensionRegistry == null) {
+                  throw new java.lang.NullPointerException();
+                }
                 try {
                   boolean done = false;
                   while (!done) {
@@ -3639,7 +3662,7 @@ public final class CmdlineRemoteProto {
                         break;
                       }
                       case 10: {
-                        String s = input.readString();
+                        java.lang.String s = input.readString();
                         bitField0_ |= 0x00000001;
                         typeId_ = s;
                         break;
@@ -3650,7 +3673,7 @@ public final class CmdlineRemoteProto {
                         break;
                       }
                       case 26: {
-                        String s = input.readString();
+                        java.lang.String s = input.readString();
                         if (!targetId_.isModifiable()) {
                           targetId_ =
                               com.google.protobuf.GeneratedMessageLite.mutableCopy(targetId_);
@@ -3686,7 +3709,14 @@ public final class CmdlineRemoteProto {
                   }
                 }
                 return PARSER;
-              }
+            }
+            case GET_MEMOIZED_IS_INITIALIZED: {
+              return memoizedIsInitialized;
+            }
+            case SET_MEMOIZED_IS_INITIALIZED: {
+              memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+              return null;
+            }
             }
             throw new UnsupportedOperationException();
           }
@@ -3968,11 +3998,11 @@ public final class CmdlineRemoteProto {
         }
 
         public static final int FILE_PATH_FIELD_NUMBER = 5;
-        private com.google.protobuf.Internal.ProtobufList<String> filePath_;
+        private com.google.protobuf.Internal.ProtobufList<java.lang.String> filePath_;
         /**
          * <code>repeated string file_path = 5;</code>
          */
-        public java.util.List<String> getFilePathList() {
+        public java.util.List<java.lang.String> getFilePathList() {
           return filePath_;
         }
         /**
@@ -4307,10 +4337,10 @@ public final class CmdlineRemoteProto {
         }
 
         public static Builder newBuilder() {
-          return DEFAULT_INSTANCE.toBuilder();
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
         }
         public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage prototype) {
-          return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
         }
 
         /**
@@ -4547,7 +4577,7 @@ public final class CmdlineRemoteProto {
           /**
            * <code>repeated string file_path = 5;</code>
            */
-          public java.util.List<String>
+          public java.util.List<java.lang.String>
               getFilePathList() {
             return java.util.Collections.unmodifiableList(
                 instance.getFilePathList());
@@ -4715,11 +4745,11 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage)
         }
-        private byte memoizedIsInitialized = -1;
+        private byte memoizedIsInitialized = 2;
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-        protected final Object dynamicMethod(
+        protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-            Object arg0, Object arg1) {
+            java.lang.Object arg0, java.lang.Object arg1) {
           switch (method) {
             case NEW_MUTABLE_INSTANCE: {
               return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage();
@@ -4731,36 +4761,23 @@ public final class CmdlineRemoteProto {
 
               boolean shouldMemoize = ((Boolean) arg0).booleanValue();
               if (!hasBuildType()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
               if (hasGlobalSettings()) {
                 if (!getGlobalSettings().isInitialized()) {
-                  if (shouldMemoize) {
-                    memoizedIsInitialized = 0;
-                  }
                   return null;
                 }
               }
               for (int i = 0; i < getScopeCount(); i++) {
                 if (!getScope(i).isInitialized()) {
-                  if (shouldMemoize) {
-                    memoizedIsInitialized = 0;
-                  }
                   return null;
                 }
               }
               for (int i = 0; i < getBuilderParameterCount(); i++) {
                 if (!getBuilderParameter(i).isInitialized()) {
-                  if (shouldMemoize) {
-                    memoizedIsInitialized = 0;
-                  }
                   return null;
                 }
               }
-              if (shouldMemoize) memoizedIsInitialized = 1;
               return DEFAULT_INSTANCE;
 
             }
@@ -4796,6 +4813,9 @@ public final class CmdlineRemoteProto {
                   (com.google.protobuf.CodedInputStream) arg0;
               com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                   (com.google.protobuf.ExtensionRegistryLite) arg1;
+              if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
+              }
               try {
                 boolean done = false;
                 while (!done) {
@@ -4835,7 +4855,7 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 26: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000004;
                       projectId_ = s;
                       break;
@@ -4850,7 +4870,7 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 42: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       if (!filePath_.isModifiable()) {
                         filePath_ =
                             com.google.protobuf.GeneratedMessageLite.mutableCopy(filePath_);
@@ -4890,7 +4910,14 @@ public final class CmdlineRemoteProto {
                 }
               }
               return PARSER;
-            }
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return memoizedIsInitialized;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+            return null;
+          }
           }
           throw new UnsupportedOperationException();
         }
@@ -4958,7 +4985,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated string path = 4;</code>
          */
-        java.util.List<String>
+        java.util.List<java.lang.String>
             getPathList();
         /**
          * <code>repeated string path = 4;</code>
@@ -5120,11 +5147,11 @@ public final class CmdlineRemoteProto {
         }
 
         public static final int PATH_FIELD_NUMBER = 4;
-        private com.google.protobuf.Internal.ProtobufList<String> path_;
+        private com.google.protobuf.Internal.ProtobufList<java.lang.String> path_;
         /**
          * <code>repeated string path = 4;</code>
          */
-        public java.util.List<String> getPathList() {
+        public java.util.List<java.lang.String> getPathList() {
           return path_;
         }
         /**
@@ -5325,10 +5352,10 @@ public final class CmdlineRemoteProto {
         }
 
         public static Builder newBuilder() {
-          return DEFAULT_INSTANCE.toBuilder();
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
         }
         public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult prototype) {
-          return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
         }
 
         /**
@@ -5469,7 +5496,7 @@ public final class CmdlineRemoteProto {
           /**
            * <code>repeated string path = 4;</code>
            */
-          public java.util.List<String>
+          public java.util.List<java.lang.String>
               getPathList() {
             return java.util.Collections.unmodifiableList(
                 instance.getPathList());
@@ -5540,11 +5567,11 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult)
         }
-        private byte memoizedIsInitialized = -1;
+        private byte memoizedIsInitialized = 2;
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-        protected final Object dynamicMethod(
+        protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-            Object arg0, Object arg1) {
+            java.lang.Object arg0, java.lang.Object arg1) {
           switch (method) {
             case NEW_MUTABLE_INSTANCE: {
               return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult();
@@ -5556,24 +5583,14 @@ public final class CmdlineRemoteProto {
 
               boolean shouldMemoize = ((Boolean) arg0).booleanValue();
               if (!hasOwnerClassName()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
               if (!hasFieldName()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
               if (!hasIsSuccess()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
-              if (shouldMemoize) memoizedIsInitialized = 1;
               return DEFAULT_INSTANCE;
 
             }
@@ -5608,6 +5625,9 @@ public final class CmdlineRemoteProto {
                   (com.google.protobuf.CodedInputStream) arg0;
               com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                   (com.google.protobuf.ExtensionRegistryLite) arg1;
+              if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
+              }
               try {
                 boolean done = false;
                 while (!done) {
@@ -5623,13 +5643,13 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 10: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000001;
                       ownerClassName_ = s;
                       break;
                     }
                     case 18: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000002;
                       fieldName_ = s;
                       break;
@@ -5640,7 +5660,7 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 34: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       if (!path_.isModifiable()) {
                         path_ =
                             com.google.protobuf.GeneratedMessageLite.mutableCopy(path_);
@@ -5671,7 +5691,14 @@ public final class CmdlineRemoteProto {
                 }
               }
               return PARSER;
-            }
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return memoizedIsInitialized;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+            return null;
+          }
           }
           throw new UnsupportedOperationException();
         }
@@ -6003,10 +6030,10 @@ public final class CmdlineRemoteProto {
       }
 
       public static Builder newBuilder() {
-        return DEFAULT_INSTANCE.toBuilder();
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
       }
       public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage prototype) {
-        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
       }
 
       /**
@@ -6189,11 +6216,11 @@ public final class CmdlineRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage)
       }
-      private byte memoizedIsInitialized = -1;
+      private byte memoizedIsInitialized = 2;
       @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-      protected final Object dynamicMethod(
+      protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-          Object arg0, Object arg1) {
+          java.lang.Object arg0, java.lang.Object arg1) {
         switch (method) {
           case NEW_MUTABLE_INSTANCE: {
             return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage();
@@ -6205,36 +6232,23 @@ public final class CmdlineRemoteProto {
 
             boolean shouldMemoize = ((Boolean) arg0).booleanValue();
             if (!hasType()) {
-              if (shouldMemoize) {
-                memoizedIsInitialized = 0;
-              }
               return null;
             }
             if (hasParamsMessage()) {
               if (!getParamsMessage().isInitialized()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
             }
             if (hasFsEvent()) {
               if (!getFsEvent().isInitialized()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
             }
             if (hasConstantSearchResult()) {
               if (!getConstantSearchResult().isInitialized()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
             }
-            if (shouldMemoize) memoizedIsInitialized = 1;
             return DEFAULT_INSTANCE;
 
           }
@@ -6263,6 +6277,9 @@ public final class CmdlineRemoteProto {
                 (com.google.protobuf.CodedInputStream) arg0;
             com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                 (com.google.protobuf.ExtensionRegistryLite) arg1;
+            if (extensionRegistry == null) {
+              throw new java.lang.NullPointerException();
+            }
             try {
               boolean done = false;
               while (!done) {
@@ -6350,7 +6367,14 @@ public final class CmdlineRemoteProto {
               }
             }
             return PARSER;
-          }
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return memoizedIsInitialized;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+          return null;
+        }
         }
         throw new UnsupportedOperationException();
       }
@@ -6992,10 +7016,10 @@ public final class CmdlineRemoteProto {
           }
 
           public static Builder newBuilder() {
-            return DEFAULT_INSTANCE.toBuilder();
+            return (Builder) DEFAULT_INSTANCE.createBuilder();
           }
           public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile prototype) {
-            return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+            return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
           }
 
           /**
@@ -7106,11 +7130,11 @@ public final class CmdlineRemoteProto {
 
             // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.GeneratedFile)
           }
-          private byte memoizedIsInitialized = -1;
+          private byte memoizedIsInitialized = 2;
           @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-          protected final Object dynamicMethod(
+          protected final java.lang.Object dynamicMethod(
               com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-              Object arg0, Object arg1) {
+              java.lang.Object arg0, java.lang.Object arg1) {
             switch (method) {
               case NEW_MUTABLE_INSTANCE: {
                 return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile();
@@ -7122,18 +7146,11 @@ public final class CmdlineRemoteProto {
 
                 boolean shouldMemoize = ((Boolean) arg0).booleanValue();
                 if (!hasOutputRoot()) {
-                  if (shouldMemoize) {
-                    memoizedIsInitialized = 0;
-                  }
                   return null;
                 }
                 if (!hasRelativePath()) {
-                  if (shouldMemoize) {
-                    memoizedIsInitialized = 0;
-                  }
                   return null;
                 }
-                if (shouldMemoize) memoizedIsInitialized = 1;
                 return DEFAULT_INSTANCE;
 
               }
@@ -7163,6 +7180,9 @@ public final class CmdlineRemoteProto {
                     (com.google.protobuf.CodedInputStream) arg0;
                 com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                     (com.google.protobuf.ExtensionRegistryLite) arg1;
+                if (extensionRegistry == null) {
+                  throw new java.lang.NullPointerException();
+                }
                 try {
                   boolean done = false;
                   while (!done) {
@@ -7178,13 +7198,13 @@ public final class CmdlineRemoteProto {
                         break;
                       }
                       case 10: {
-                        String s = input.readString();
+                        java.lang.String s = input.readString();
                         bitField0_ |= 0x00000001;
                         outputRoot_ = s;
                         break;
                       }
                       case 18: {
-                        String s = input.readString();
+                        java.lang.String s = input.readString();
                         bitField0_ |= 0x00000002;
                         relativePath_ = s;
                         break;
@@ -7212,7 +7232,14 @@ public final class CmdlineRemoteProto {
                   }
                 }
                 return PARSER;
-              }
+            }
+            case GET_MEMOIZED_IS_INITIALIZED: {
+              return memoizedIsInitialized;
+            }
+            case SET_MEMOIZED_IS_INITIALIZED: {
+              memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+              return null;
+            }
             }
             throw new UnsupportedOperationException();
           }
@@ -7560,10 +7587,10 @@ public final class CmdlineRemoteProto {
           }
 
           public static Builder newBuilder() {
-            return DEFAULT_INSTANCE.toBuilder();
+            return (Builder) DEFAULT_INSTANCE.createBuilder();
           }
           public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage prototype) {
-            return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+            return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
           }
 
           /**
@@ -7720,11 +7747,11 @@ public final class CmdlineRemoteProto {
 
             // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage)
           }
-          private byte memoizedIsInitialized = -1;
+          private byte memoizedIsInitialized = 2;
           @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-          protected final Object dynamicMethod(
+          protected final java.lang.Object dynamicMethod(
               com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-              Object arg0, Object arg1) {
+              java.lang.Object arg0, java.lang.Object arg1) {
             switch (method) {
               case NEW_MUTABLE_INSTANCE: {
                 return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage();
@@ -7736,24 +7763,14 @@ public final class CmdlineRemoteProto {
 
                 boolean shouldMemoize = ((Boolean) arg0).booleanValue();
                 if (!hasBuilderId()) {
-                  if (shouldMemoize) {
-                    memoizedIsInitialized = 0;
-                  }
                   return null;
                 }
                 if (!hasMessageType()) {
-                  if (shouldMemoize) {
-                    memoizedIsInitialized = 0;
-                  }
                   return null;
                 }
                 if (!hasMessageText()) {
-                  if (shouldMemoize) {
-                    memoizedIsInitialized = 0;
-                  }
                   return null;
                 }
-                if (shouldMemoize) memoizedIsInitialized = 1;
                 return DEFAULT_INSTANCE;
 
               }
@@ -7786,6 +7803,9 @@ public final class CmdlineRemoteProto {
                     (com.google.protobuf.CodedInputStream) arg0;
                 com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                     (com.google.protobuf.ExtensionRegistryLite) arg1;
+                if (extensionRegistry == null) {
+                  throw new java.lang.NullPointerException();
+                }
                 try {
                   boolean done = false;
                   while (!done) {
@@ -7801,19 +7821,19 @@ public final class CmdlineRemoteProto {
                         break;
                       }
                       case 10: {
-                        String s = input.readString();
+                        java.lang.String s = input.readString();
                         bitField0_ |= 0x00000001;
                         builderId_ = s;
                         break;
                       }
                       case 18: {
-                        String s = input.readString();
+                        java.lang.String s = input.readString();
                         bitField0_ |= 0x00000002;
                         messageType_ = s;
                         break;
                       }
                       case 26: {
-                        String s = input.readString();
+                        java.lang.String s = input.readString();
                         bitField0_ |= 0x00000004;
                         messageText_ = s;
                         break;
@@ -7841,7 +7861,14 @@ public final class CmdlineRemoteProto {
                   }
                 }
                 return PARSER;
-              }
+            }
+            case GET_MEMOIZED_IS_INITIALIZED: {
+              return memoizedIsInitialized;
+            }
+            case SET_MEMOIZED_IS_INITIALIZED: {
+              memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+              return null;
+            }
             }
             throw new UnsupportedOperationException();
           }
@@ -8280,10 +8307,10 @@ public final class CmdlineRemoteProto {
         }
 
         public static Builder newBuilder() {
-          return DEFAULT_INSTANCE.toBuilder();
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
         }
         public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent prototype) {
-          return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
         }
 
         /**
@@ -8548,11 +8575,11 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent)
         }
-        private byte memoizedIsInitialized = -1;
+        private byte memoizedIsInitialized = 2;
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-        protected final Object dynamicMethod(
+        protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-            Object arg0, Object arg1) {
+            java.lang.Object arg0, java.lang.Object arg1) {
           switch (method) {
             case NEW_MUTABLE_INSTANCE: {
               return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent();
@@ -8564,28 +8591,18 @@ public final class CmdlineRemoteProto {
 
               boolean shouldMemoize = ((Boolean) arg0).booleanValue();
               if (!hasEventType()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
               for (int i = 0; i < getGeneratedFilesCount(); i++) {
                 if (!getGeneratedFiles(i).isInitialized()) {
-                  if (shouldMemoize) {
-                    memoizedIsInitialized = 0;
-                  }
                   return null;
                 }
               }
               if (hasCustomBuilderMessage()) {
                 if (!getCustomBuilderMessage().isInitialized()) {
-                  if (shouldMemoize) {
-                    memoizedIsInitialized = 0;
-                  }
                   return null;
                 }
               }
-              if (shouldMemoize) memoizedIsInitialized = 1;
               return DEFAULT_INSTANCE;
 
             }
@@ -8619,6 +8636,9 @@ public final class CmdlineRemoteProto {
                   (com.google.protobuf.CodedInputStream) arg0;
               com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                   (com.google.protobuf.ExtensionRegistryLite) arg1;
+              if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
+              }
               try {
                 boolean done = false;
                 while (!done) {
@@ -8645,7 +8665,7 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 18: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000002;
                       description_ = s;
                       break;
@@ -8706,7 +8726,14 @@ public final class CmdlineRemoteProto {
                 }
               }
               return PARSER;
-            }
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return memoizedIsInitialized;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+            return null;
+          }
           }
           throw new UnsupportedOperationException();
         }
@@ -9412,10 +9439,10 @@ public final class CmdlineRemoteProto {
         }
 
         public static Builder newBuilder() {
-          return DEFAULT_INSTANCE.toBuilder();
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
         }
         public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage prototype) {
-          return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
         }
 
         /**
@@ -9729,11 +9756,11 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage)
         }
-        private byte memoizedIsInitialized = -1;
+        private byte memoizedIsInitialized = 2;
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-        protected final Object dynamicMethod(
+        protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-            Object arg0, Object arg1) {
+            java.lang.Object arg0, java.lang.Object arg1) {
           switch (method) {
             case NEW_MUTABLE_INSTANCE: {
               return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage();
@@ -9745,12 +9772,8 @@ public final class CmdlineRemoteProto {
 
               boolean shouldMemoize = ((Boolean) arg0).booleanValue();
               if (!hasKind()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
-              if (shouldMemoize) memoizedIsInitialized = 1;
               return DEFAULT_INSTANCE;
 
             }
@@ -9800,6 +9823,9 @@ public final class CmdlineRemoteProto {
                   (com.google.protobuf.CodedInputStream) arg0;
               com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                   (com.google.protobuf.ExtensionRegistryLite) arg1;
+              if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
+              }
               try {
                 boolean done = false;
                 while (!done) {
@@ -9826,13 +9852,13 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 18: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000002;
                       text_ = s;
                       break;
                     }
                     case 26: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000004;
                       sourceFilePath_ = s;
                       break;
@@ -9890,7 +9916,14 @@ public final class CmdlineRemoteProto {
                 }
               }
               return PARSER;
-            }
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return memoizedIsInitialized;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+            return null;
+          }
           }
           throw new UnsupportedOperationException();
         }
@@ -10300,10 +10333,10 @@ public final class CmdlineRemoteProto {
         }
 
         public static Builder newBuilder() {
-          return DEFAULT_INSTANCE.toBuilder();
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
         }
         public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask prototype) {
-          return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
         }
 
         /**
@@ -10501,11 +10534,11 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask)
         }
-        private byte memoizedIsInitialized = -1;
+        private byte memoizedIsInitialized = 2;
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-        protected final Object dynamicMethod(
+        protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-            Object arg0, Object arg1) {
+            java.lang.Object arg0, java.lang.Object arg1) {
           switch (method) {
             case NEW_MUTABLE_INSTANCE: {
               return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask();
@@ -10517,24 +10550,14 @@ public final class CmdlineRemoteProto {
 
               boolean shouldMemoize = ((Boolean) arg0).booleanValue();
               if (!hasOwnerClassName()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
               if (!hasFieldName()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
               if (!hasAccessFlags()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
-              if (shouldMemoize) memoizedIsInitialized = 1;
               return DEFAULT_INSTANCE;
 
             }
@@ -10573,6 +10596,9 @@ public final class CmdlineRemoteProto {
                   (com.google.protobuf.CodedInputStream) arg0;
               com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                   (com.google.protobuf.ExtensionRegistryLite) arg1;
+              if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
+              }
               try {
                 boolean done = false;
                 while (!done) {
@@ -10588,13 +10614,13 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 10: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000001;
                       ownerClassName_ = s;
                       break;
                     }
                     case 18: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000002;
                       fieldName_ = s;
                       break;
@@ -10637,7 +10663,14 @@ public final class CmdlineRemoteProto {
                 }
               }
               return PARSER;
-            }
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return memoizedIsInitialized;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+            return null;
+          }
           }
           throw new UnsupportedOperationException();
         }
@@ -10969,10 +11002,10 @@ public final class CmdlineRemoteProto {
       }
 
       public static Builder newBuilder() {
-        return DEFAULT_INSTANCE.toBuilder();
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
       }
       public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage prototype) {
-        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
       }
 
       /**
@@ -11155,11 +11188,11 @@ public final class CmdlineRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage)
       }
-      private byte memoizedIsInitialized = -1;
+      private byte memoizedIsInitialized = 2;
       @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-      protected final Object dynamicMethod(
+      protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-          Object arg0, Object arg1) {
+          java.lang.Object arg0, java.lang.Object arg1) {
         switch (method) {
           case NEW_MUTABLE_INSTANCE: {
             return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage();
@@ -11171,36 +11204,23 @@ public final class CmdlineRemoteProto {
 
             boolean shouldMemoize = ((Boolean) arg0).booleanValue();
             if (!hasType()) {
-              if (shouldMemoize) {
-                memoizedIsInitialized = 0;
-              }
               return null;
             }
             if (hasBuildEvent()) {
               if (!getBuildEvent().isInitialized()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
             }
             if (hasCompileMessage()) {
               if (!getCompileMessage().isInitialized()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
             }
             if (hasConstantSearchTask()) {
               if (!getConstantSearchTask().isInitialized()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
             }
-            if (shouldMemoize) memoizedIsInitialized = 1;
             return DEFAULT_INSTANCE;
 
           }
@@ -11229,6 +11249,9 @@ public final class CmdlineRemoteProto {
                 (com.google.protobuf.CodedInputStream) arg0;
             com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                 (com.google.protobuf.ExtensionRegistryLite) arg1;
+            if (extensionRegistry == null) {
+              throw new java.lang.NullPointerException();
+            }
             try {
               boolean done = false;
               while (!done) {
@@ -11316,7 +11339,14 @@ public final class CmdlineRemoteProto {
               }
             }
             return PARSER;
-          }
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return memoizedIsInitialized;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+          return null;
+        }
         }
         throw new UnsupportedOperationException();
       }
@@ -11707,10 +11737,10 @@ public final class CmdlineRemoteProto {
     }
 
     public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
     }
     public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
     }
 
     /**
@@ -11938,11 +11968,11 @@ public final class CmdlineRemoteProto {
 
       // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message)
     }
-    private byte memoizedIsInitialized = -1;
+    private byte memoizedIsInitialized = 2;
     @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-    protected final Object dynamicMethod(
+    protected final java.lang.Object dynamicMethod(
         com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-        Object arg0, Object arg1) {
+        java.lang.Object arg0, java.lang.Object arg1) {
       switch (method) {
         case NEW_MUTABLE_INSTANCE: {
           return new org.jetbrains.jps.api.CmdlineRemoteProto.Message();
@@ -11954,40 +11984,24 @@ public final class CmdlineRemoteProto {
 
           boolean shouldMemoize = ((Boolean) arg0).booleanValue();
           if (!hasSessionId()) {
-            if (shouldMemoize) {
-              memoizedIsInitialized = 0;
-            }
             return null;
           }
           if (!hasType()) {
-            if (shouldMemoize) {
-              memoizedIsInitialized = 0;
-            }
             return null;
           }
           if (!getSessionId().isInitialized()) {
-            if (shouldMemoize) {
-              memoizedIsInitialized = 0;
-            }
             return null;
           }
           if (hasControllerMessage()) {
             if (!getControllerMessage().isInitialized()) {
-              if (shouldMemoize) {
-                memoizedIsInitialized = 0;
-              }
               return null;
             }
           }
           if (hasBuilderMessage()) {
             if (!getBuilderMessage().isInitialized()) {
-              if (shouldMemoize) {
-                memoizedIsInitialized = 0;
-              }
               return null;
             }
           }
-          if (shouldMemoize) memoizedIsInitialized = 1;
           return DEFAULT_INSTANCE;
 
         }
@@ -12017,6 +12031,9 @@ public final class CmdlineRemoteProto {
               (com.google.protobuf.CodedInputStream) arg0;
           com.google.protobuf.ExtensionRegistryLite extensionRegistry =
               (com.google.protobuf.ExtensionRegistryLite) arg1;
+          if (extensionRegistry == null) {
+            throw new java.lang.NullPointerException();
+          }
           try {
             boolean done = false;
             while (!done) {
@@ -12117,7 +12134,14 @@ public final class CmdlineRemoteProto {
             }
           }
           return PARSER;
-        }
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return memoizedIsInitialized;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+        return null;
+      }
       }
       throw new UnsupportedOperationException();
     }

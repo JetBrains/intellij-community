@@ -45,6 +45,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
           if (elements.stream().anyMatch(Objects::isNull)) LOG.error("provider creates null child: " + provider);
         }
         catch (IndexNotReadyException e) {
+          LOG.debug("TreeStructureProvider.modify requires indices", e);
           throw new ProcessCanceledException(e);
         }
         catch (ProcessCanceledException e) {

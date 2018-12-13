@@ -1,19 +1,19 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignatureVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-class GrMethodSignatureImpl implements GrClosureSignature {
+class GrMethodSignatureImpl implements GrSignature {
 
   private final PsiMethod myMethod;
   private final PsiSubstitutor mySubstitutor;
@@ -81,16 +81,5 @@ class GrMethodSignatureImpl implements GrClosureSignature {
   @Override
   public boolean isValid() {
     return myMethod.isValid() && getSubstitutor().isValid();
-  }
-
-  @Nullable
-  @Override
-  public GrSignature curry(@NotNull PsiType[] args, int position, @NotNull PsiElement context) {
-    return GrClosureSignatureUtil.curryImpl(this, args, position, context);
-  }
-
-  @Override
-  public void accept(@NotNull GrSignatureVisitor visitor) {
-    visitor.visitClosureSignature(this);
   }
 }

@@ -2,6 +2,7 @@
   <dirname property="build.dir" file="${ant.file}"/>
   <property name="project.home" value="${build.dir}/.."/>
   <property name="idea.lib" value="${project.home}/lib"/>
+  <property environment="env"/>
 
   <condition property="gant.target" value="default">
     <not>
@@ -10,13 +11,23 @@
   </condition>
 
   <target name="init">
-    <condition property="gradle.executable" value="${project.home}/build/dependencies/gradlew.bat"
-               else="${project.home}/build/dependencies/gradlew">
+    <property name="gradle.home" value="${project.home}/build/dependencies"/>
+    <condition property="gradle.daemon" value="--daemon" else="--no-daemon">
+      <and>
+        <isset property="intellij.build.use.gradle.daemon"/>
+        <equals arg1="${intellij.build.use.gradle.daemon}" arg2="true"/>
+      </and>
+    </condition>
+    <condition property="gradlew" value="gradlew.bat" else="gradlew">
       <os family="windows"/>
     </condition>
-    <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
-      <env key="JAVA_HOME" value="${java.home}"/>
-      <arg value="--no-daemon"/>
+    <condition property="java.path" value="${env.JDK_18_x64}" else="${java.home}">
+      <isset property="env.JDK_18_x64"/>
+    </condition>
+    <exec executable="${gradle.home}/${gradlew}" dir="${gradle.home}" failonerror="true">
+      <env key="JAVA_HOME" value="${java.path}"/>
+      <arg value="${gradle.daemon}"/>
+      <arg value="-Djava.io.tmpdir=${java.io.tmpdir}"/>
       <arg value="setupBuildScriptsDeps"/>
     </exec>
   </target>
@@ -33,7 +44,6 @@
         <include name="*.jar"/>
       </fileset>
       <fileset dir="${idea.lib}">
-        <include name="asm-all*.jar"/>
         <include name="snappy-in-java-*.jar"/>
       </fileset>
     </path>

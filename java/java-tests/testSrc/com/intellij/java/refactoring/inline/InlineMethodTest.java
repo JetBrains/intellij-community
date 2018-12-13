@@ -312,6 +312,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestInlineThisOnly();
   }
 
+  public void testIfElseIfWithSingleStatement() {
+    doTestInlineThisOnly();
+  }
+
   public void testUnresolvedArgPassedToSameNameParameter() {
     doTestInlineThisOnly();
   }
@@ -413,6 +417,14 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testTailCallInsideLambda() {
+    doTest();
+  }
+
+  public void testChainedBuilderCall() {
+    doTest();
+  }
+
+  public void testMissedQualifierWithSideEffectsOnInliningEmptyMethod() {
     doTest();
   }
 

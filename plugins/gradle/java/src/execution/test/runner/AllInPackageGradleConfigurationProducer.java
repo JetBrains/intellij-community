@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
@@ -33,7 +34,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/14/14
  */
 public class AllInPackageGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
 
@@ -62,12 +62,8 @@ public class AllInPackageGradleConfigurationProducer extends GradleTestRunConfig
 
     configuration.getSettings().setExternalProjectPath(projectPath);
     configuration.getSettings().setTaskNames(tasksToRun);
-    if (psiPackage.getQualifiedName().isEmpty()) {
-      configuration.getSettings().setScriptParameters("--tests *");
-    }
-    else {
-      configuration.getSettings().setScriptParameters(String.format("--tests %s.*", psiPackage.getQualifiedName()));
-    }
+    String filter = GradleExecutionSettingsUtil.createTestFilterFrom(psiPackage, /*hasSuffix=*/false);
+    configuration.getSettings().setScriptParameters(filter);
     configuration.setName(suggestName(psiPackage, module));
     return true;
   }
@@ -87,9 +83,8 @@ public class AllInPackageGradleConfigurationProducer extends GradleTestRunConfig
     if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(context.getModule()))) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
-    return psiPackage.getQualifiedName().isEmpty()
-           ? scriptParameters.contains("--tests * ")
-           : scriptParameters.contains(String.format("--tests %s.* ", psiPackage.getQualifiedName()));
+    final String filter = GradleExecutionSettingsUtil.createTestFilterFrom(psiPackage, /*hasSuffix=*/true);
+    return scriptParameters.contains(filter);
   }
 
   private static String suggestName(@NotNull PsiPackage aPackage, @NotNull Module module) {

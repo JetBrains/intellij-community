@@ -49,13 +49,13 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("deprecation")
 class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHostRegistrar {
@@ -73,14 +73,17 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
   private final PsiFile myHostPsiFile;
   private Thread currentThread;
 
-  InjectionRegistrarImpl(@NotNull Project project, @NotNull PsiFile hostPsiFile, @NotNull PsiElement contextElement) {
+  InjectionRegistrarImpl(@NotNull Project project,
+                         @NotNull PsiFile hostPsiFile,
+                         @NotNull PsiElement contextElement,
+                         @NotNull PsiDocumentManager docManager) {
     myProject = project;
     myContextElement = contextElement;
     myHostPsiFile = PsiUtilCore.getTemplateLanguageFile(hostPsiFile);
     FileViewProvider viewProvider = myHostPsiFile.getViewProvider();
     if (viewProvider instanceof InjectedFileViewProvider) throw new IllegalArgumentException(viewProvider +" must not be injected");
     myHostVirtualFile = viewProvider.getVirtualFile();
-    myDocumentManagerBase = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    myDocumentManagerBase = (PsiDocumentManagerBase)docManager;
     myHostDocument = (DocumentEx)viewProvider.getDocument();
   }
 
@@ -88,7 +91,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
   @Nullable("null means nobody cared to call .doneInjecting()")
   @Deprecated
   public List<Pair<Place, PsiFile>> getResult() {
-    return resultFiles == null ? null : resultFiles.stream().map(file -> Pair.create(InjectedLanguageUtil.getShreds(file), file)).collect(Collectors.toList());
+    return resultFiles == null ? null : ContainerUtil.map(resultFiles, file -> Pair.create(InjectedLanguageUtil.getShreds(file), file));
   }
 
   @Nullable
@@ -185,8 +188,14 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       assert after >= before : "Escaper " + textEscaper + "("+textEscaper.getClass()+") must not mangle char buffer";
       if (!decodeSuccessful) {
         // if there are invalid chars, adjust the range
-        int offsetInHost = textEscaper.getOffsetInHost(outChars.length() - before, info.registeredRangeInsideHost);
-        relevantRange = relevantRange.intersection(new ProperTextRange(0, Math.max(0,offsetInHost)));
+        int charsDecodedSuccessfully = outChars.length() - before;
+        int startOffsetInHost = textEscaper.getOffsetInHost(0, info.registeredRangeInsideHost);
+        assert relevantRange.containsOffset(startOffsetInHost) : textEscaper.getClass() +" is inconsistent: its.getOffsetInHost(0) = "+startOffsetInHost+" while its relevantRange="+relevantRange;
+        int endOffsetInHost = textEscaper.getOffsetInHost(charsDecodedSuccessfully, info.registeredRangeInsideHost);
+        assert relevantRange.containsOffset(endOffsetInHost) : textEscaper.getClass() +" is inconsistent: its.getOffsetInHost(" + charsDecodedSuccessfully +
+                                                                 ") = "+startOffsetInHost+" while its relevantRange="+relevantRange;
+        ProperTextRange successfulHostRange = new ProperTextRange(startOffsetInHost, endOffsetInHost);
+        relevantRange = relevantRange.intersection(successfulHostRange);
       }
     }
     outChars.append(info.suffix);

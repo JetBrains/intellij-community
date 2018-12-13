@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     new AttributesDescriptor("Keyword", PyHighlighter.PY_KEYWORD),
     new AttributesDescriptor("Line Comment", PyHighlighter.PY_LINE_COMMENT),
 
-    new AttributesDescriptor("String//Text (bytes)", PyHighlighter.PY_BYTE_STRING),
+    new AttributesDescriptor("String//Binary (bytes)", PyHighlighter.PY_BYTE_STRING),
     new AttributesDescriptor("String//Text (unicode)", PyHighlighter.PY_UNICODE_STRING),
     new AttributesDescriptor("String//Escape sequence//Valid", PyHighlighter.PY_VALID_STRING_ESCAPE),
     new AttributesDescriptor("String//Escape sequence//Invalid", PyHighlighter.PY_INVALID_STRING_ESCAPE),
@@ -114,9 +115,11 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
   @Override
   @NotNull
   public SyntaxHighlighter getHighlighter() {
-    final SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(PythonFileType.INSTANCE, null, null);
-    assert highlighter != null;
-    return highlighter;
+    final SyntaxHighlighterFactory factory = SyntaxHighlighterFactory.LANGUAGE_FACTORY.forLanguage(PythonLanguage.getInstance());
+    if (factory instanceof PySyntaxHighlighterFactory) {
+      return ((PySyntaxHighlighterFactory)factory).getSyntaxHighlighterForLanguageLevel(LanguageLevel.getLatest());
+    }
+    return factory.getSyntaxHighlighter(null, null);
   }
 
   @Override
@@ -136,7 +139,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
       "class <classDef>Foo</classDef>:\n" +
       "    tags: <annotation>List[<builtin>str</builtin>]</annotation>\n" +
       "    def <predefined>__init__</predefined>(<self>self</self>: <annotation>Foo</annotation>):\n" +
-      "        <localVar>byte_string</localVar>: <annotation><builtin>str</builtin></annotation> = 'newline:\\n also newline:\\x0a'\n" +
+      "        <localVar>byte_string</localVar>: <annotation><builtin>bytes</builtin></annotation> = b'newline:\\n also newline:\\x0a'\n" +
       "        <localVar>text_string</localVar> = u\"Cyrillic Я is \\u042f. Oops: \\u042g\"\n" +
       "        <self>self</self>.<mcall>makeSense</mcall>(<kwarg>whatever</kwarg>=1)\n" +
       "    \n" +

@@ -15,14 +15,17 @@
  */
 package com.intellij.openapi.compiler;
 
+import com.intellij.task.ProjectTaskListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
 /**
  * A listener for compiler events.
+ * Consider to use {@link ProjectTaskListener} to be able to support delegated build.
  *
  * @see CompilerTopics#COMPILATION_STATUS
+ * @see ProjectTaskListener#TOPIC
  */
 public interface CompilationStatusListener extends EventListener {
   /**

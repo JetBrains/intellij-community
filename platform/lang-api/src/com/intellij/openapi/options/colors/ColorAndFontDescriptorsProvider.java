@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * Defines interface for extending set of text/color descriptors operated by color schemes. 
  * 
  * @author Denis Zhdanov
- * @since 1/19/12 1:10 PM
  */
 public interface ColorAndFontDescriptorsProvider {
 

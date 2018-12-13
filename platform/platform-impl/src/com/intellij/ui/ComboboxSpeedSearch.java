@@ -8,7 +8,6 @@ import javax.swing.*;
 
 /**
  * @author Anna.Kozlova
- * @since 11-Jul-2006
  */
 public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
   public ComboboxSpeedSearch(@NotNull final JComboBox comboBox) {

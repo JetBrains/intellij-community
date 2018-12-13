@@ -27,6 +27,7 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
     super(node);
   }
 
+  @Override
   public String toString() {
     return "GrDocMethodReference";
   }

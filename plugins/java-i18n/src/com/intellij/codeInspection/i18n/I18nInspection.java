@@ -288,7 +288,6 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     return scrollPane;
   }
 
-  @SuppressWarnings("NonStaticInitializer")
   private DialogWrapper createIgnoreExceptionsConfigurationDialog(final Project project, final JTextField specifiedExceptions) {
     return new DialogWrapper(true) {
       private AddDeleteListPanel myPanel;
@@ -685,13 +684,17 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
       PsiElement parent = toplevel.getParent();
       if (parent instanceof PsiVariable && toplevel.equals(((PsiVariable)parent).getInitializer())) {
         var = (PsiVariable)parent;
-      } else if (parent instanceof PsiSwitchLabelStatement) {
-        final PsiSwitchStatement switchStatement = ((PsiSwitchLabelStatement)parent).getEnclosingSwitchStatement();
-        if (switchStatement != null) {
-          final PsiExpression switchStatementExpression = switchStatement.getExpression();
-          if (switchStatementExpression instanceof PsiReferenceExpression) {
-            final PsiElement resolved = ((PsiReferenceExpression)switchStatementExpression).resolve();
-            if (resolved instanceof PsiVariable) var = (PsiVariable)resolved;
+      }
+      else if (parent instanceof PsiExpressionList) {
+        parent = parent.getParent();
+        if (parent instanceof PsiSwitchLabelStatementBase) {
+          PsiSwitchStatement switchStatement = ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchStatement();
+          if (switchStatement != null) {
+            PsiExpression switchStatementExpression = switchStatement.getExpression();
+            if (switchStatementExpression instanceof PsiReferenceExpression) {
+              PsiElement resolved = ((PsiReferenceExpression)switchStatementExpression).resolve();
+              if (resolved instanceof PsiVariable) var = (PsiVariable)resolved;
+            }
           }
         }
       }
@@ -812,10 +815,10 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
   }
 
   private static boolean isReturnedFromNonNlsMethod(final PsiLiteralExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
-    PsiElement parent = expression.getParent();
     PsiMethod method;
-    if (parent instanceof PsiNameValuePair) {
-      method = AnnotationUtil.getAnnotationMethod((PsiNameValuePair)parent);
+    PsiNameValuePair nameValuePair = PsiTreeUtil.getParentOfType(expression, PsiNameValuePair.class);
+    if (nameValuePair != null) {
+      method = AnnotationUtil.getAnnotationMethod(nameValuePair);
     }
     else {
       final PsiElement returnStmt = PsiTreeUtil.getParentOfType(expression, PsiReturnStatement.class, PsiMethodCallExpression.class);

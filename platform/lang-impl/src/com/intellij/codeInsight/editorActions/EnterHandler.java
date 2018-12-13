@@ -357,7 +357,7 @@ public class EnterHandler extends BaseEnterHandler {
         Language language = myDataContext instanceof UserDataHolder ? CONTEXT_LANGUAGE.get((UserDataHolder)myDataContext):null;
         Commenter langCommenter = language != null ? LanguageCommenters.INSTANCE.forLanguage(language) : null;
         CodeDocumentationUtil.CommentContext commentContext
-          = CodeDocumentationUtil.tryParseCommentContext(langCommenter, chars, myOffset, lineStart);
+          = CodeDocumentationUtil.tryParseCommentContext(langCommenter, chars, lineStart);
 
         PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
         if (commentContext.docStart) {
@@ -396,37 +396,12 @@ public class EnterHandler extends BaseEnterHandler {
             commentContext.docStart = false;
           }
         }
-        else if (commentContext.cStyleStart) {
+        else if (commentContext.docAsterisk) {
           psiDocumentManager.commitDocument(myDocument);
           PsiElement element = myFile.findElementAt(commentContext.lineStart);
-          if (element instanceof PsiComment && commentContext.commenter.getBlockCommentTokenType() == ((PsiComment)element).getTokenType()) {
-            final PsiComment comment = (PsiComment)element;
-            int commentEnd = comment.getTextRange().getEndOffset();
-            if (myOffset >= commentEnd && myOffset < myFile.getTextRange().getEndOffset()) {
-              commentContext.docStart = false;
-            }
-            else {
-              if (isCommentComplete(comment, commentContext.commenter, myEditor)) {
-                if (myOffset >= commentEnd) {
-                  commentContext.docAsterisk = false;
-                  commentContext.docStart = false;
-                }
-                else {
-                  commentContext.docAsterisk = true;
-                  commentContext.docStart = false;
-                }
-              }
-              else {
-                final int currentEndOfLine = CharArrayUtil.shiftForwardUntil(chars, myOffset, "\n");
-                myDocument.insertString(currentEndOfLine, " " + commentContext.commenter.getBlockCommentSuffix());
-                int lstart = CharArrayUtil.shiftBackwardUntil(chars, myOffset, "\n");
-                myDocument.insertString(currentEndOfLine, chars.subSequence(lstart, myOffset));
-                psiDocumentManager.commitDocument(myDocument);
-              }
-            }
-          }
-          else {
-            commentContext.docStart = false;
+          PsiComment comment = PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
+          if (comment == null || !isDocComment(comment, commentContext.commenter)) {
+            commentContext.docAsterisk = false; // don't process block comments
           }
         }
 
@@ -445,9 +420,7 @@ public class EnterHandler extends BaseEnterHandler {
 
         boolean docIndentApplied = false;
         CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-        if (codeInsightSettings.SMART_INDENT_ON_ENTER || myForceIndent || commentContext.docStart || commentContext.docAsterisk
-            || commentContext.slashSlash)
-        {
+        if (codeInsightSettings.SMART_INDENT_ON_ENTER || myForceIndent || commentContext.docStart || commentContext.docAsterisk) {
           final int offset = adjustLineIndentNoCommit(getLanguage(myDataContext), myDocument, myEditor, myOffset);
           if (offset >= 0) {
             myOffset = offset;
@@ -467,7 +440,7 @@ public class EnterHandler extends BaseEnterHandler {
           }
         }
 
-        if ((commentContext.docAsterisk || commentContext.docStart || commentContext.slashSlash) && !docIndentApplied) {
+        if ((commentContext.docAsterisk || commentContext.docStart) && !docIndentApplied) {
           if (myInsertSpace) {
             if (myOffset == myDocument.getTextLength()) {
               myDocument.insertString(myOffset, " ");
@@ -481,8 +454,8 @@ public class EnterHandler extends BaseEnterHandler {
           }
         }
 
-        if ((commentContext.docAsterisk || commentContext.slashSlash) && !commentContext.docStart) {
-          myCaretAdvance += commentContext.slashSlash ? commentContext.commenter.getLineCommentPrefix().trim().length() : 1;
+        if (commentContext.docAsterisk && !commentContext.docStart) {
+          myCaretAdvance += 1;
         }
       }
       catch (IncorrectOperationException e) {
@@ -711,25 +684,6 @@ public class EnterHandler extends BaseEnterHandler {
         else {
           docAsterisk = false;
         }
-      }
-      else if (linePrefix != null && atLineStart instanceof PsiComment && ((PsiComment)atLineStart).getTokenType() == commenter.getBlockCommentTokenType()) {
-        // Check if C-Style comment already uses asterisks.
-        boolean usesAstersk = false;
-        int commentLine = myDocument.getLineNumber(textRange.getStartOffset());
-        if (commentLine < myDocument.getLineCount() - 1 && textRange.getEndOffset() >= myOffset) {
-          int nextLineOffset = myDocument.getLineStartOffset(commentLine + 1);
-          if (nextLineOffset < textRange.getEndOffset()) {
-            final CharSequence chars = myDocument.getCharsSequence();
-            nextLineOffset = CharArrayUtil.shiftForward(chars, nextLineOffset, " \t");
-            usesAstersk = CharArrayUtil.regionMatches(chars, nextLineOffset, linePrefix);
-          }
-        }
-        if (usesAstersk) {
-          removeTrailingSpaces(myDocument, myOffset);
-          myDocument.insertString(myOffset, linePrefix + " ");
-          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        }
-        docAsterisk = usesAstersk;
       }
       else {
         docAsterisk = false;

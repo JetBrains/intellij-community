@@ -147,7 +147,6 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     }
     catch (Throwable e) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       Throwable ex = ExceptionUtil.getRootCause(e);
       consoleView.print(ex.getClass().getSimpleName() + ": " + ex.getMessage(), ConsoleViewContentType.ERROR_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.ERROR_OUTPUT);

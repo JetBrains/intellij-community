@@ -24,6 +24,7 @@ public class GrArrayTypeElementImpl extends GroovyPsiElementImpl implements GrAr
     visitor.visitArrayTypeElement(this);
   }
 
+  @Override
   public String toString() {
     return "Array type";
   }

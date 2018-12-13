@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -809,7 +810,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   public void testRandomStressEdit_NoCommand() {
     final Random gen = new Random();
     int N_TRIES = Timings.adjustAccordingToMySpeed(7000, false);
-    System.out.println("N_TRIES = " + N_TRIES);
+    LOG.debug("N_TRIES = " + N_TRIES);
     DocumentEx document = null;
     final int N = 100;
     for (int tryn = 0; tryn < N_TRIES; tryn++) {
@@ -874,22 +875,22 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   private static void printFailingSteps(List<Pair<RangeMarker, TextRange>> adds,
                                         List<Pair<RangeMarker, TextRange>> dels,
                                         List<Trinity<Integer, Integer, Integer>> edits) {
-    String s = "adds: ";
+    StringBuilder s = new StringBuilder("adds: ");
     for (Pair<RangeMarker, TextRange> c : adds) {
       TextRange t = c.second;
-      s += t.getStartOffset() + "," + t.getEndOffset() + ", ";
+      s.append(t.getStartOffset()).append(",").append(t.getEndOffset()).append(", ");
     }
 
-    s += "\nedits: ";
+    s.append("\nedits: ");
     for (Trinity<Integer, Integer, Integer> edit : edits) {
-      s += edit.first + "," + edit.second + "," + edit.third + ",  ";
+      s.append(edit.first).append(",").append(edit.second).append(",").append(edit.third).append(",  ");
     }
-    s += "\ndels: ";
+    s.append("\ndels: ");
 
     for (Pair<RangeMarker, TextRange> c : dels) {
       int index = adds.indexOf(c);
       assertSame(c, adds.get(index));
-      s += index + ", ";
+      s.append(index).append(", ");
     }
     System.err.println(s);
   }
@@ -1111,6 +1112,39 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     marker.dispose();
   }
 
+  public void testLazyRangeMarkersWithInvalidOffsetWhenNoDocumentCreatedMustInvalidateThemSelvesOnFirstOpportunity() {
+    psiFile = createFile("x.txt", "");
+
+    LazyRangeMarkerFactoryImpl factory = (LazyRangeMarkerFactoryImpl)LazyRangeMarkerFactory.getInstance(getProject());
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+
+    assertEquals("", psiFile.getText());
+
+    RangeMarker marker = factory.createRangeMarker(virtualFile, 1 /* invalid offset */);
+
+    document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    document.replaceString(0, 0, "\n\t\n");  // used to throw AssertionError from RangeMarkerTree.updateMarkersOnChange
+    assertEquals("\n\t\n", document.getText());
+    assertFalse(marker.isValid());
+  }
+
+  public void testLazyRangeMarkersWithInvalidOffsetWhenCachedDocumentAlreadyExistsMustRejectInvalidOffsetsRightAway() {
+    psiFile = createFile("x.txt", "");
+
+    LazyRangeMarkerFactoryImpl factory = (LazyRangeMarkerFactoryImpl)LazyRangeMarkerFactory.getInstance(getProject());
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    document = FileDocumentManager.getInstance().getDocument(virtualFile);
+
+    assertEquals("", psiFile.getText());
+
+    try {
+      factory.createRangeMarker(virtualFile, 1 /* invalid offset */);
+      fail("Must fail fast");
+    }
+    catch (IllegalArgumentException ignored) {
+    }
+  }
+
   public void testNonGreedyMarkersGrowOnAppendingReplace() {
     Document doc = new DocumentImpl("foo");
     RangeMarker marker = doc.createRangeMarker(0, 3);
@@ -1128,7 +1162,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     AtomicReference<List<Integer>> minOffsets = new AtomicReference<>();
     AtomicInteger failPrinted = new AtomicInteger();
     String text = StringUtil.repeat("blah", 1000);
-    IntStream.range(0, 10_000).parallel().forEach(iter -> {
+    IntStream.range(0, 1_000).parallel().forEach(iter -> {
       DocumentEx doc = new DocumentImpl(text, true);
       List<Integer> offsets = new ArrayList<>();
 
@@ -1170,10 +1204,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
         throw e;
       }
     });
-    if (minOffsets.get() == null) {
-      System.out.println("Can't find anything, giving up");
-    }
-    else {
+    if (minOffsets.get() != null) {
       System.err.println("Moves and offsets ("+minOffsets.get().size()+"): " + minOffsets);
       fail();
     }
@@ -1374,7 +1405,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     String newText = "0123blah";
     WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Object, IOException>)()->{
-      vf.setBinaryContent(newText.getBytes("utf-8"));
+      vf.setBinaryContent(newText.getBytes(StandardCharsets.UTF_8));
       return null;
     });
 

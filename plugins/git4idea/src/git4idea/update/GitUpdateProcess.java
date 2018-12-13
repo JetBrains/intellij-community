@@ -132,7 +132,7 @@ public class GitUpdateProcess {
       return GitUpdateResult.NOT_READY;
     }
 
-    if (!fetchAndNotify(trackedBranches.keySet())) {
+    if (!fetchAndNotify(myRepositories)) {
       return GitUpdateResult.NOT_READY;
     }
 
@@ -314,7 +314,7 @@ public class GitUpdateProcess {
 
   // fetch all roots. If an error happens, return false and notify about errors.
   private boolean fetchAndNotify(@NotNull Collection<GitRepository> repositories) {
-    return fetchSupport(myProject).fetch(repositories).showNotificationIfFailed("Update failed");
+    return fetchSupport(myProject).fetchDefaultRemote(repositories).showNotificationIfFailed("Update failed");
   }
 
   /**

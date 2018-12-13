@@ -43,7 +43,6 @@ public abstract class RelatedItemLineMarkerProvider extends LineMarkerProviderDe
   public void collectNavigationMarkers(@NotNull List<PsiElement> elements,
                                        @NotNull Collection<? super RelatedItemLineMarkerInfo> result,
                                        boolean forNavigation) {
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = elements.size(); i < size; i++) {
       PsiElement element = elements.get(i);
       collectNavigationMarkers(element, result);

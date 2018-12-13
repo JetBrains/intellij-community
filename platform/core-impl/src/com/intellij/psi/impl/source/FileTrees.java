@@ -25,18 +25,17 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  * @author peter
@@ -49,16 +48,16 @@ final class FileTrees {
   private final Getter<FileElement> myTreeElementPointer; // SoftReference/WeakReference to ASTNode or a strong reference to a tree if the file is a DummyHolder
   
   /** Keeps references to all alive stubbed PSI (using {@link SpineRef}) to ensure PSI identity is preserved after AST/stubs are gc-ed and reloaded */
-  @Nullable private final List<Reference<StubBasedPsiElementBase>> myRefToPsi;
+  @Nullable private final Reference<StubBasedPsiElementBase>[] myRefToPsi;
 
   private FileTrees(@NotNull PsiFileImpl file,
                     @Nullable Reference<StubTree> stub,
                     @Nullable Getter<FileElement> ast,
-                    @Nullable List<Reference<StubBasedPsiElementBase>> refToPsi) {
-    this.myFile = file;
-    this.myStub = stub;
-    this.myTreeElementPointer = ast;
-    this.myRefToPsi = refToPsi;
+                    @Nullable Reference<StubBasedPsiElementBase>[] refToPsi) {
+    myFile = file;
+    myStub = stub;
+    myTreeElementPointer = ast;
+    myRefToPsi = refToPsi;
   }
 
   @Nullable
@@ -74,7 +73,7 @@ final class FileTrees {
   FileTrees switchToStrongRefs() {
     if (myRefToPsi == null) return this;
 
-    getAllCachedPsi(myRefToPsi).forEach(psi -> {
+    forEachCachedPsi(psi -> {
       ASTNode node = psi.getNode();
       LOG.assertTrue(node.getPsi() == psi);
       psi.setSubstrateRef(SubstrateRef.createAstStrongRef(node));
@@ -83,8 +82,19 @@ final class FileTrees {
     return new FileTrees(myFile, myStub, myTreeElementPointer, null);
   }
 
-  private static Stream<StubBasedPsiElementBase> getAllCachedPsi(@NotNull List<Reference<StubBasedPsiElementBase>> refToPsi) {
-    return refToPsi.stream().map(SoftReference::dereference).filter(Objects::nonNull);
+  private void forEachCachedPsi(Consumer<? super StubBasedPsiElementBase> consumer) {
+    ContainerUtil.process(myRefToPsi, ref -> {
+      StubBasedPsiElementBase psi = SoftReference.dereference(ref);
+      if (psi != null) {
+        consumer.accept(psi);
+      }
+      return true;
+    });
+  }
+  private boolean hasCachedPsi() {
+    Reference<StubBasedPsiElementBase>[] refToPsi = myRefToPsi;
+    return refToPsi != null &&
+           ContainerUtil.exists(refToPsi, ref -> SoftReference.dereference(ref) != null);
   }
 
   boolean useSpineRefs() {
@@ -92,18 +102,22 @@ final class FileTrees {
   }
 
   FileTrees switchToSpineRefs(@NotNull List<PsiElement> spine) {
-    List<Reference<StubBasedPsiElementBase>> refToPsi = myRefToPsi;
-    if (refToPsi == null) refToPsi = new ArrayList<>(Collections.nCopies(spine.size(), null));
+    Reference<StubBasedPsiElementBase>[] refToPsi = myRefToPsi;
+    if (refToPsi == null) {
+      //noinspection unchecked
+      refToPsi = new Reference[spine.size()];
+    }
 
     try {
-      for (int i = firstNonFilePsiIndex; i < refToPsi.size(); i++) {
+      for (int i = firstNonFilePsiIndex; i < refToPsi.length; i++) {
         StubBasedPsiElementBase psi = (StubBasedPsiElementBase)Objects.requireNonNull(spine.get(i));
         psi.setSubstrateRef(new SpineRef(myFile, i));
-        StubBasedPsiElementBase existing = SoftReference.dereference(refToPsi.get(i));
+        StubBasedPsiElementBase existing = SoftReference.dereference(refToPsi[i]);
         if (existing != null) {
           assert existing == psi : "Duplicate PSI found";
-        } else {
-          refToPsi.set(i, new WeakReference<>(psi));
+        }
+        else {
+          refToPsi[i] = new WeakReference<>(psi);
         }
       }
       return new FileTrees(myFile, myStub, myTreeElementPointer, refToPsi);
@@ -122,7 +136,7 @@ final class FileTrees {
     }
 
     if (myRefToPsi != null) {
-      DebugUtil.performPsiModification("clearStub", () -> getAllCachedPsi(myRefToPsi).forEach(psi -> {
+      DebugUtil.performPsiModification("clearStub", () -> forEachCachedPsi(psi -> {
         DebugUtil.onInvalidated(psi);
         psi.setSubstrateRef(SubstrateRef.createInvalidRef(psi));
       }));
@@ -153,7 +167,7 @@ final class FileTrees {
   private FileTrees reconcilePsi(@Nullable StubTree stubTree, @Nullable FileElement astRoot, boolean takePsiFromStubs) {
     assert stubTree != null || astRoot != null;
 
-    if ((stubTree == null || astRoot == null) && (myRefToPsi == null || !getAllCachedPsi(myRefToPsi).findFirst().isPresent())) {
+    if ((stubTree == null || astRoot == null) && !hasCachedPsi()) {
       // there's only one source of PSI, nothing to reconcile
       return new FileTrees(myFile, myStub, myTreeElementPointer, null);
     }
@@ -167,7 +181,7 @@ final class FileTrees {
     try {
       return DebugUtil.performPsiModification("reconcilePsi", () -> {
         if (myRefToPsi != null) {
-          assert myRefToPsi.size() == (stubList != null ? stubList.size() : nodeList.size()) : "Cached PSI count doesn't match actual one";
+          assert myRefToPsi.length == (stubList != null ? stubList.size() : nodeList.size()) : "Cached PSI count doesn't match actual one";
           bindSubstratesToCachedPsi(stubList, nodeList);
         }
 
@@ -200,8 +214,8 @@ final class FileTrees {
 
   private void bindSubstratesToCachedPsi(List<StubElement<?>> stubList, List<CompositeElement> nodeList) {
     assert myRefToPsi != null;
-    for (int i = firstNonFilePsiIndex; i < myRefToPsi.size(); i++) {
-      StubBasedPsiElementBase cachedPsi = SoftReference.dereference(myRefToPsi.get(i));
+    for (int i = firstNonFilePsiIndex; i < myRefToPsi.length; i++) {
+      StubBasedPsiElementBase cachedPsi = SoftReference.dereference(myRefToPsi[i]);
       if (cachedPsi != null) {
         if (stubList != null) {
           //noinspection unchecked

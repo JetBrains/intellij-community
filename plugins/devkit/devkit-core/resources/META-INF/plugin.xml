@@ -37,7 +37,7 @@
 
     <xmlStructureViewBuilderProvider implementation="org.jetbrains.idea.devkit.navigation.structure.PluginDescriptorXmlStructureViewBuilderProvider"/>
 
-    <dom.fileDescription implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription" rootTagName="idea-plugin" stubVersion="10"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
@@ -153,10 +153,6 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"/>
-    <localInspection language="JVM" shortName="StatefulEp2" displayName="Stateful Extension 2"
-                     groupKey="inspections.group.name"
-                     enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection2"/>
     <localInspection language="UAST" shortName="UElementAsPsi" displayName="UElement as PsiElement usage"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
@@ -184,10 +180,10 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PresentationAnnotationInspection"/>
-
-    <intentionAction>
-      <className>org.jetbrains.idea.devkit.codeStyle.bean.CodeStyleBeanIntention</className>
-    </intentionAction>
+    <localInspection language="UAST" shortName="UnregisteredNamedColor" displayName="Unregistered named color"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" isInternal="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UnregisteredNamedColorInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
@@ -317,7 +313,7 @@
     </group>
     <action id="TestData.Navigate"
             class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction"
-            text="Navigate to testdata" use-shortcut-of="GotoRelated">
+            text="Navigate to Test Data" use-shortcut-of="GotoRelated">
       <add-to-group anchor="last" group-id="TestTreePopupMenu"/>
     </action>
     <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">

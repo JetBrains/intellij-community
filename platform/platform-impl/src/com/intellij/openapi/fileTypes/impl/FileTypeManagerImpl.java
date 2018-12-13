@@ -250,7 +250,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     });
 
-    //noinspection SpellCheckingInspection
     myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
 
     // this should be done BEFORE reading state
@@ -938,9 +937,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public String getExtension(@NotNull String fileName) {
-    int index = fileName.lastIndexOf('.');
-    if (index < 0) return "";
-    return fileName.substring(index + 1);
+    return FileUtilRt.getExtension(fileName);
   }
 
   @Override

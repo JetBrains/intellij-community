@@ -2,7 +2,6 @@
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -30,8 +29,6 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * User : ktisha
@@ -134,7 +131,6 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
     private final Project myProject;
     private final FileType myFileType;
     protected EditorTextField myEditorTextField;
-    private final Set<DocumentListener> myListeners = new HashSet<>();
 
     MyCodeFragmentTableCellEditor(Project project) {
       myProject = project;
@@ -149,9 +145,6 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
       JPanel panel = new JPanel();
       myEditorTextField = createEditorField(myDocument);
       if (myEditorTextField != null) {
-        for (DocumentListener listener : myListeners) {
-          myEditorTextField.addDocumentListener(listener);
-        }
         myEditorTextField.setDocument(myDocument);
         myEditorTextField.setBorder(new LineBorder(table.getSelectionBackground()));
       }

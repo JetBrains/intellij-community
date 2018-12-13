@@ -28,6 +28,7 @@ public class GrAnnotationMethodImpl extends GrMethodBaseImpl implements GrAnnota
     visitor.visitAnnotationMethod(this);
   }
 
+  @Override
   public String toString() {
     return "Default annotation member";
   }

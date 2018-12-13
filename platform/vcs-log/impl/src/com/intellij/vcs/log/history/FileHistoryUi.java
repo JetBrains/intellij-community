@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -30,6 +31,7 @@ import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +43,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.ui.JBColor.namedColor;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
@@ -58,6 +61,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private final JComponent myMainComponent;
   @NotNull private final Set<String> myHighlighterIds;
   @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
+  @NotNull private final History myHistory;
 
   public FileHistoryUi(@NotNull VcsLogData logData,
                        @NotNull VcsLogColorManager manager,
@@ -113,6 +117,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     myPropertiesChangeListener = new MyPropertiesChangeListener();
     myUiProperties.addChangeListener(myPropertiesChangeListener);
+
+    myHistory = VcsLogUiUtil.installNavigationHistory(this);
   }
 
   @NotNull
@@ -279,6 +285,12 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return myUiProperties;
   }
 
+  @Nullable
+  @Override
+  public History getNavigationHistory() {
+    return myHistory;
+  }
+
   @Override
   public void dispose() {
     myUiProperties.removeChangeListener(myPropertiesChangeListener);
@@ -307,7 +319,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   private static class RevisionHistoryHighlighter implements VcsLogHighlighter {
-    @NotNull private final JBColor myBgColor = new JBColor(new Color(0xfffee4), new Color(0x49493f));
+    @NotNull private final JBColor myBgColor = namedColor("VersionControl.FileHistory.Commit.selectedBranchBackground",
+                                                          new JBColor(new Color(0xfffee4), new Color(0x49493f)));
     @NotNull private final VcsLogStorage myStorage;
     @NotNull private final Hash myRevision;
     @NotNull private final VirtualFile myRoot;

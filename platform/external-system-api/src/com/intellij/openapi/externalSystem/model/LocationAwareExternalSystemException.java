@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/26/14
  */
 public class LocationAwareExternalSystemException extends ExternalSystemException {
   private final String myFilePath;

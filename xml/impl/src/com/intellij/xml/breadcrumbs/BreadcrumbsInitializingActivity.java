@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -106,11 +107,20 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
   }
 
   private static boolean isSuitable(@NotNull TextEditor editor, @NotNull VirtualFile file) {
-    if (file instanceof HttpVirtualFile) {
+    if (file instanceof HttpVirtualFile || !editor.isValid()) {
       return false;
     }
 
-    return editor.isValid() && BreadcrumbsUtilEx.findProvider(editor.getEditor(), file) != null;
+    BreadcrumbsProvider provider = BreadcrumbsUtilEx.findProvider(editor.getEditor(), file);
+    if (provider != null) {
+      return true;
+    }
+    for (FileBreadcrumbsCollector collector : FileBreadcrumbsCollector.EP_NAME.getExtensions(editor.getEditor().getProject())) {
+      if (collector.handlesFile(file)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void add(@NotNull FileEditorManager manager, @NotNull FileEditor editor, @NotNull BreadcrumbsXmlWrapper wrapper) {

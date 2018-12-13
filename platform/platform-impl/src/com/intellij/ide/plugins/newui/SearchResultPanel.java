@@ -61,6 +61,10 @@ public abstract class SearchResultPanel {
     return myEmpty;
   }
 
+  public void setEmpty() {
+    myEmpty = true;
+  }
+
   @NotNull
   public String getQuery() {
     return StringUtil.defaultIfEmpty(myQuery, "");
@@ -70,6 +74,7 @@ public abstract class SearchResultPanel {
     setEmptyText();
 
     if (query.equals(myQuery)) {
+      myEmpty = query.isEmpty();
       return;
     }
 

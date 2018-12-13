@@ -1,11 +1,16 @@
+import java.util.concurrent.TimeUnit
+
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 task setupJdks(dependsOn: ['setupJdk18', 'setupJdk16'])
 cleanSetupJdks.dependsOn('cleanSetupJdk18', 'cleanSetupJdk16', 'cleanDownloadJdk18')
 
 def jdkRepo = 'https://cache-redirector.jetbrains.com'
 
-def checkoutDir = intellijProjectDir()
-def jdkDir = "$checkoutDir/build/jdk"
+def jdkDir = System.getProperty('jdk.dir')?.with {
+  def jdkDir = new File(it)
+  jdkDir.mkdirs()
+  jdkDir
+} ?: "${intellijProjectDir()}/build/jdk"
 
 project.ext.jdk18OutputDir = "${System.getProperty("intellij.jdk18.output.dir", "") ?: "$jdkDir/1.8"}"
 
@@ -24,6 +29,7 @@ task downloadJdk18 {
       src "$jdkRepo/intellij-jdk/${artifactName}"
       dest outputFile
       tempAndMove true
+      timeout TimeUnit.MINUTES.toMillis(30).toInteger()
     }
   }
 }

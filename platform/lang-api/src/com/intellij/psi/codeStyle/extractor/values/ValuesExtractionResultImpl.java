@@ -25,7 +25,6 @@ import java.util.Map;
 
 /**
  * @author Roman.Shein
- * @since 04.08.2015.
  */
 public class ValuesExtractionResultImpl implements ValuesExtractionResult {
   @NotNull

@@ -4,8 +4,10 @@ package com.intellij.internal.statistic.service.fus;
 import com.intellij.internal.statistic.connect.StatisticsConnectionService;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -20,6 +22,7 @@ import java.util.Set;
  */
 public class FUStatisticsSettingsService extends StatisticsConnectionService {
   private static final String APPROVED_GROUPS_SERVICE = "white-list-service";
+  private static final String DICTIONARY_SERVICE = "dictionary-service";
   public  static FUStatisticsSettingsService getInstance() {return  new FUStatisticsSettingsService();}
 
   private FUStatisticsSettingsService() {
@@ -29,7 +32,7 @@ public class FUStatisticsSettingsService extends StatisticsConnectionService {
   @NotNull
   @Override
   public String[] getAttributeNames() {
-    return ArrayUtil.mergeArrays(super.getAttributeNames(), APPROVED_GROUPS_SERVICE);
+    return ArrayUtil.mergeArrays(super.getAttributeNames(), APPROVED_GROUPS_SERVICE, DICTIONARY_SERVICE);
   }
 
   @NotNull
@@ -38,11 +41,26 @@ public class FUStatisticsSettingsService extends StatisticsConnectionService {
     if (approvedGroupsServiceUrl == null) {
       return Collections.emptySet();
     }
-    return FUStatisticsWhiteListGroupsService.getApprovedGroups(getProductRelatedUrl(approvedGroupsServiceUrl));
+    final BuildNumber build = ApplicationInfo.getInstance().getBuild();
+    return FUStatisticsWhiteListGroupsService.getApprovedGroups(getProductRelatedUrl(approvedGroupsServiceUrl), toReportedBuild(build));
+  }
+
+  @Nullable
+  public String getDictionaryServiceUrl() {
+    return getSettingValue(DICTIONARY_SERVICE);
   }
 
   @NotNull
   public String getProductRelatedUrl(@NotNull  String approvedGroupsServiceUrl) {
     return approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
+  }
+
+  @NotNull
+  private static BuildNumber toReportedBuild(@NotNull BuildNumber build) {
+    if (build.isSnapshot()) {
+      final String buildString = build.asStringWithoutProductCodeAndSnapshot();
+      return BuildNumber.fromString(buildString.endsWith(".") ? buildString + "0" : buildString);
+    }
+    return build;
   }
 }

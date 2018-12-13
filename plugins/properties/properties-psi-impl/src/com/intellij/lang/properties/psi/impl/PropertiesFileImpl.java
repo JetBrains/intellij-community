@@ -52,6 +52,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return PropertiesFileType.INSTANCE;
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "Properties file:" + getName();

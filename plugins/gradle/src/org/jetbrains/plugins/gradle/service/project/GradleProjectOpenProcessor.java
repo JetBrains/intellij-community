@@ -8,7 +8,6 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
@@ -109,7 +108,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
                                           @Nullable Project projectToClose,
                                           @NotNull Path path) {
     GradleProjectOpenProcessor gradleProjectOpenProcessor =
-      Extensions.findExtension(ProjectOpenProcessor.EXTENSION_POINT_NAME, GradleProjectOpenProcessor.class);
+      ProjectOpenProcessor.EXTENSION_POINT_NAME.findExtensionOrFail(GradleProjectOpenProcessor.class);
     VirtualFile virtualFile = VfsUtil.findFile(path, false);
     if (virtualFile != null && virtualFile.isDirectory()) {
       for (VirtualFile file : virtualFile.getChildren()) {

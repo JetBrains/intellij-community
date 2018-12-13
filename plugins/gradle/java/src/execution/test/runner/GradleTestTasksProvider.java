@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/28/2016
  */
 public interface GradleTestTasksProvider {
   ExtensionPointName<GradleTestTasksProvider> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.gradle.testTasksProvider");

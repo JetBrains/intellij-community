@@ -68,6 +68,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       removeFromLocalRepository("test");
       ExternalSystemTestCase.deleteBuildSystemDirectory();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myProjectsManager = null;
       myProjectsTree = null;

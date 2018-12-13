@@ -5,31 +5,43 @@ import java.io.File
 
 class MavenRepoFixture(private val myMavenRepo: File) {
 
-public fun addAnnotationsArtifact(group: String = "myGroup",
-                                   artifact: String = "myArtifact",
-                                   version: String)
-  : String = File(myMavenRepo, "$group/$artifact/$version/$artifact-$version-annotations.zip")
-  .apply {
-    parentFile.mkdirs()
-    writeText("Fake annotations artifact")
-  }.name
-
-public fun generateMavenMetadata(group: String, artifact: String) {
-  val metadata = File(myMavenRepo, "$group/$artifact/maven-metadata.xml")
+  public fun addLibraryArtifact(group: String = "myGroup",
+                                artifact: String = "myArtifact",
+                                version: String)
+    : String = File(myMavenRepo, "$group/$artifact/$version/$artifact-$version.jar")
     .apply {
       parentFile.mkdirs()
-    }
+      writeText("Fake library artifact")
+    }.name
 
-  val versionsList = metadata.parentFile
-    .listFiles()
-    .asSequence()
-    .filter { it.isDirectory }
-    .map { it.name }
-    .toList()
+  public fun addAnnotationsArtifact(group: String = "myGroup",
+                                    artifact: String = "myArtifact",
+                                    version: String)
+    : String = File(myMavenRepo, "$group/$artifact/$version/$artifact-$version-annotations.zip")
+    .apply {
+      parentFile.mkdirs()
+      writeText("Fake annotations artifact")
+    }.name
 
-  val releaseVersion = versionsList.last()
+  public fun generateMavenMetadata(group: String, artifact: String) {
+    val files = listOf(File(myMavenRepo, "$group/$artifact/maven-metadata.xml"),
+                       File(myMavenRepo, "$group/$artifact-annotations/maven-metadata.xml"))
+    for (metadata in files) {
+      metadata.parentFile.mkdirs()
+      val versionsList = metadata.parentFile
+        .listFiles()
+        .asSequence()
+        .filter { it.isDirectory }
+        .map { it.name }
+        .toList()
 
-  metadata.writeText("""
+      if (versionsList.isEmpty()) {
+        continue
+      }
+
+      val releaseVersion = versionsList.last()
+
+      metadata.writeText("""
     |<?xml version="1.0" encoding="UTF-8"?>
     |<metadata>
     |  <groupId>$group</groupId>
@@ -39,12 +51,13 @@ public fun generateMavenMetadata(group: String, artifact: String) {
     |    <latest>$releaseVersion</latest>
     |    <release>$releaseVersion</release>
     |    <versions>
-    |      ${versionsList.joinToString(separator = "\n") { "<version>$it</version>" } }
+    |      ${versionsList.joinToString(separator = "\n") { "<version>$it</version>" }}
     |    </versions>
     |    <lastUpdated>20180809190315</lastUpdated>
     |  </versioning>
     |</metadata>
 """.trimMargin())
 
-}
+    }
   }
+}

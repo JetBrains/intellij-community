@@ -281,8 +281,7 @@ public final class PServerPasswordScrambler {
 	 * Scramble text, turning it into a String of scrambled data
 	 * @return a String of scrambled data
 	 */
-	@SuppressWarnings({"HardCodedStringLiteral"})
-        public String scramble(String text) {
+	public String scramble(String text) {
 		final StringBuilder buffer = new StringBuilder("A");
 
 		if (text != null) {
@@ -295,8 +294,7 @@ public final class PServerPasswordScrambler {
 		return buffer.toString();
 	}
 
-	@SuppressWarnings({"HardCodedStringLiteral"})
-        public String unscramble(String scrambledText) {
+	public String unscramble(String scrambledText) {
 		if (scrambledText == null) {
 			return null;
 		}

@@ -207,7 +207,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private void processUsage(UsageInfo usage, PsiTypeParameter[] original, boolean[] toRemove) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myClass.getProject());
     PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)usage.getElement();
     assert referenceElement != null : usage;
     PsiSubstitutor usageSubstitutor = determineUsageSubstitutor(referenceElement);

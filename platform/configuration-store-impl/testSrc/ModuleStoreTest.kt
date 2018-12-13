@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.runWriteAction
@@ -116,20 +117,22 @@ class ModuleStoreTest {
       saveStore()
     }
 
-    fun Module.removeContentRoot() {
-      val modulePath = stateStore.storageManager.expandMacros(StoragePathMacros.MODULE_FILE)
+    fun removeContentRoot(module: Module) {
+      val modulePath = module.stateStore.storageManager.expandMacros(StoragePathMacros.MODULE_FILE)
       val moduleFile = Paths.get(modulePath)
       assertThat(moduleFile).isRegularFile
 
       val virtualFile = LocalFileSystem.getInstance().findFileByPath(modulePath)!!
-      val newData = moduleFile.readText().replace("<content url=\"file://\$MODULE_DIR$/$name\" />\n", "").toByteArray()
+      val oldText = moduleFile.readText()
+      val newText = oldText.replace("<content url=\"file://\$MODULE_DIR$/${module.name}\" />\n", "")
+      assertThat(oldText).isNotEqualTo(newText)
       runWriteAction {
-        virtualFile.setBinaryContent(newData)
+        virtualFile.setBinaryContent(newText.toByteArray())
       }
     }
 
-    fun Module.assertChangesApplied() {
-      assertThat(contentRootUrls).isEmpty()
+    fun assertChangesApplied(module: Module) {
+      assertThat(module.contentRootUrls).isEmpty()
     }
 
     val m1 = projectRule.createModule(root.resolve("m1.iml"))
@@ -145,13 +148,13 @@ class ModuleStoreTest {
     m1.addContentRoot()
     m2.addContentRoot()
 
-    m1.removeContentRoot()
-    m2.removeContentRoot()
+    removeContentRoot(m1)
+    removeContentRoot(m2)
 
     (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
 
-    m1.assertChangesApplied()
-    m2.assertChangesApplied()
+    assertChangesApplied(m1)
+    assertChangesApplied(m2)
 
     assertThat(nameToCount.size()).isEqualTo(3)
     assertThat(nameToCount.get("p")).isEqualTo(1)

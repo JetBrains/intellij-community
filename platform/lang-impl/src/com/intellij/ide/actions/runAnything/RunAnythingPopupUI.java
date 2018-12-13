@@ -46,10 +46,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Consumer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -70,7 +67,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.ALT_IS_PRESSED;
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.SHIFT_IS_PRESSED;
@@ -100,11 +96,13 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private Editor myEditor;
   @Nullable
   private VirtualFile myVirtualFile;
-  private DataContext myDataContext;
+  @NotNull private final DataContext myDataContext;
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
   private String myLastInputText = null;
   private RunAnythingSearchListModel.RunAnythingMainListModel myListModel;
+  private Project myProject;
+  private Module myModule;
 
   private void onMouseClicked(@NotNull MouseEvent event) {
     int clickCount = event.getClickCount();
@@ -174,7 +172,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
       @Override
       public void focusLost(FocusEvent e) {
         final ActionCallback result = new ActionCallback();
-        //noinspection SSBasedInspection
         UIUtil.invokeLaterIfNeeded(() -> {
           try {
             if (myCalcThread != null) {
@@ -258,16 +255,13 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   private Project getProject() {
-    final Project project = CommonDataKeys.PROJECT.getData(myActionEvent.getDataContext());
-    assert project != null;
-    return project;
+    return myProject;
   }
 
   @Nullable
   private Module getModule() {
-    Module module = myActionEvent.getData(LangDataKeys.MODULE);
-    if (module != null) {
-      return module;
+    if (myModule != null) {
+      return myModule;
     }
 
     Project project = getProject();
@@ -293,12 +287,18 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private VirtualFile getWorkDirectory(@Nullable Module module, boolean isAltPressed) {
     if (isAltPressed) {
       if (myVirtualFile != null) {
-        return myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
+        VirtualFile file = myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
+        if (file != null) {
+          return file;
+        }
       }
 
       VirtualFile[] selectedFiles = FileEditorManager.getInstance(getProject()).getSelectedFiles();
       if (selectedFiles.length > 0) {
-        return selectedFiles[0].getParent();
+        VirtualFile file = selectedFiles[0].getParent();
+        if (file != null) {
+          return file;
+        }
       }
     }
 
@@ -408,16 +408,15 @@ public class RunAnythingPopupUI extends BigPopupUI {
     return topPanel;
   }
 
-  public void createDataContext(AnActionEvent e) {
+  @NotNull
+  public DataContext createDataContext(@NotNull AnActionEvent e) {
     HashMap<String, Object> dataMap = ContainerUtil.newHashMap();
-    //todo
     dataMap.put(CommonDataKeys.PROJECT.getName(), e.getProject());
     dataMap.put(LangDataKeys.MODULE.getName(), getModule());
-    myDataContext = createDataContext(SimpleDataContext.getSimpleContext(dataMap, e.getDataContext()), ALT_IS_PRESSED.get());
+    return createDataContext(SimpleDataContext.getSimpleContext(dataMap, e.getDataContext()), ALT_IS_PRESSED.get());
   }
 
   public void initMySearchField() {
-    mySearchField.setFont(UIUtil.getLabelFont().deriveFont(18f));
     mySearchField.putClientProperty(MATCHED_PROVIDER_PROPERTY, UNKNOWN_CONFIGURATION_ICON);
 
     setHandleMatchedConfiguration();
@@ -603,7 +602,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
   }
 
-  @SuppressWarnings({"SSBasedInspection", "unchecked"})
+  @SuppressWarnings({"SSBasedInspection"})
   private class CalcThread implements Runnable {
     @NotNull private final Project myProject;
     @NotNull private final String myPattern;
@@ -634,7 +633,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
           myResultsList.getEmptyText().setText("Searching...");
 
           if (getSearchingModel(myResultsList) != null) {
-            //noinspection unchecked
             myAlarm.cancelAllRequests();
             myAlarm.addRequest(() -> {
               if (DumbService.getInstance(myProject).isDumb()) {
@@ -769,7 +767,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
               int shift = 0;
               int i = index + 1;
               for (Object o : result) {
-                //noinspection unchecked
                 myListModel.insertElementAt(o, i);
                 shift++;
                 i++;
@@ -827,6 +824,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
           myCalcThread = null;
           myEditor = null;
           myVirtualFile = null;
+          myProject = null;
+          myModule = null;
         }
       }
     });
@@ -842,6 +841,10 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myEditor = actionEvent.getData(CommonDataKeys.EDITOR);
     myVirtualFile = actionEvent.getData(CommonDataKeys.VIRTUAL_FILE);
 
+    myProject = ObjectUtils.notNull(CommonDataKeys.PROJECT.getData(myActionEvent.getDataContext()));
+    myDataContext = createDataContext(actionEvent);
+    myModule = myActionEvent.getData(LangDataKeys.MODULE);
+
     init();
 
     initSearchActions();
@@ -851,10 +854,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
     initSearchField();
 
     initMySearchField();
-
-    createDataContext(actionEvent);
-
-    //installActions();
   }
 
   @NotNull

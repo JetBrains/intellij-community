@@ -122,7 +122,7 @@ public class IpnbConnection {
       if (myXsrf == null) {
         initXSRF(myURI.toString() + USER_PATH + "/" + username + TREE_PATH);
       }
-      final Boolean started = startJupyterNotebookServer(username);
+      final boolean started = startJupyterNotebookServer(username);
       if (!started) {
         throw new IOException(CANNOT_START_JUPYTER);
       }
@@ -469,8 +469,7 @@ public class IpnbConnection {
 
   @NotNull
   private static String getResponse(HttpURLConnection connection) throws IOException {
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"));
-    try {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
       final StringBuilder builder = new StringBuilder();
       char[] buffer = new char[4096];
       int n;
@@ -480,7 +479,6 @@ public class IpnbConnection {
       return builder.toString();
     }
     finally {
-      reader.close();
       connection.disconnect();
     }
   }

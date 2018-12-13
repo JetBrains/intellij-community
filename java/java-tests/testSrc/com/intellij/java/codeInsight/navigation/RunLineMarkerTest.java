@@ -78,9 +78,30 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     assertEquals("Run 'MainTest'", event.getPresentation().getText());
   }
 
+  public void testAbstractTestClassMethods() {
+    myFixture.addClass("package junit.framework; public class TestCase {}");
+    myFixture.configureByText("MyTest.java", "public abstract class MyTest extends junit.framework.TestCase {\n" +
+                                               "    public void test<caret>Foo() {\n" +
+                                               "    }\n" +
+                                               "}");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+  }
+
   public void testMarkersBeforeRunning() {
     myFixture.addClass("package junit.framework; public class TestCase {}");
     myFixture.configureByText("MainTest.java", "public class MainTest extends junit.framework.TestCase {\n" +
+                                               "    public void test<caret>Foo() {\n" +
+                                               "    }\n" +
+                                               "}");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+  }
+
+  public void testTestAnnotationInSuperMethodOnly() {
+    myFixture.addClass("package org.junit; public @interface Test {}");
+    myFixture.addClass("class Foo { @Test public void testFoo() {}}");
+    myFixture.configureByText("MyTest.java", "public class MyTest extends Foo {\n" +
                                                "    public void test<caret>Foo() {\n" +
                                                "    }\n" +
                                                "}");
@@ -117,5 +138,19 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     List<GutterIconDescriptor> descriptors = configurable.getDescriptors();
     Set<String> strings = ContainerUtil.map2Set(descriptors, GutterIconDescriptor::getId);
     assertEquals(descriptors.size(), strings.size());
+  }
+
+  public void testTooltip() {
+    myFixture.configureByText("Main.java", "public class Main {\n" +
+                                           "    public static void m<caret>ain(String[] args) {\n" +
+                                           "    }\n" +
+                                           "}");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+    GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
+    String text = mark.getTooltipText();
+    assertEquals("Run 'Main.main()'\n" +
+                 "Debug 'Main.main()'\n" +
+                 "Run 'Main.main()' with Coverage", text);
   }
 }

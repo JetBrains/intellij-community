@@ -6,11 +6,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -26,21 +26,21 @@ import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.ProgressStripeProgressIndicator
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.Component
-import javax.swing.JComponent
 import javax.swing.JScrollBar
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.ListSelectionEvent
 
-class GithubPullRequestsListComponent internal constructor(project: Project,
-                                                           actionManager: ActionManager,
-                                                           autoPopupController: AutoPopupController,
-                                                           private val loader: GithubPullRequestsLoader,
-                                                           avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
+internal class GithubPullRequestsListComponent(project: Project,
+                                               copyPasteManager: CopyPasteManager,
+                                               actionManager: ActionManager,
+                                               autoPopupController: AutoPopupController,
+                                               private val loader: GithubPullRequestsLoader,
+                                               avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : BorderLayoutPanel(), Disposable, DataProvider {
 
   val selectionModel = GithubPullRequestsListSelectionModel()
   private val listModel = CollectionListModel<GithubSearchedIssue>()
-  private val list = GithubPullRequestsList(avatarIconsProviderFactory, listModel)
+  private val list = GithubPullRequestsList(copyPasteManager, avatarIconsProviderFactory, listModel)
   private val scrollPane = ScrollPaneFactory.createScrollPane(list,
                                                               ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply {
@@ -55,9 +55,8 @@ class GithubPullRequestsListComponent internal constructor(project: Project,
 
   private val searchModel = GithubPullRequestSearchModel()
   private val search = GithubPullRequestSearchComponent(project, autoPopupController, searchModel).apply {
-    border = IdeBorderFactory.createBorder(SideBorder.RIGHT)
+    border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
   }
-  private val tableToolbarWrapper: Wrapper
 
   init {
     searchModel.addListener(object : GithubPullRequestSearchModel.StateListener {
@@ -74,14 +73,6 @@ class GithubPullRequestsListComponent internal constructor(project: Project,
       }
     }
 
-    val toolbar = actionManager.createActionToolbar("GithubPullRequestListToolbar",
-                                                    actionManager.getAction("Github.PullRequest.ToolWindow.List.Toolbar") as ActionGroup,
-                                                    true)
-      .apply {
-        setReservePlaceAutoPopupIcon(false)
-        setTargetComponent(this@GithubPullRequestsListComponent)
-      }
-
     val popupHandler = object : PopupHandler() {
       override fun invokePopup(comp: Component, x: Int, y: Int) {
         if (ListUtil.isPointOnSelection(list, x, y)) {
@@ -95,16 +86,12 @@ class GithubPullRequestsListComponent internal constructor(project: Project,
     }
     list.addMouseListener(popupHandler)
 
-    tableToolbarWrapper = Wrapper(toolbar.component)
-
-    val headerPanel = JBUI.Panels.simplePanel(0, 0).addToCenter(search).addToRight(tableToolbarWrapper)
     val tableWithError = JBUI.Panels
       .simplePanel(progressStripe)
       .addToTop(errorPanel)
-      .withBorder(IdeBorderFactory.createBorder(SideBorder.TOP))
 
+    addToTop(search)
     addToCenter(tableWithError)
-    addToTop(headerPanel)
 
     resetSearch()
 
@@ -113,10 +100,6 @@ class GithubPullRequestsListComponent internal constructor(project: Project,
 
   override fun getData(dataId: String): Any? {
     return if (GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId)) selectionModel.current else null
-  }
-
-  fun setToolbarHeightReferent(referent: JComponent) {
-    tableToolbarWrapper.setVerticalSizeReferent(referent)
   }
 
   @CalledInAwt
@@ -190,15 +173,15 @@ class GithubPullRequestsListComponent internal constructor(project: Project,
 
   private fun loadingErrorOccurred(error: Throwable) {
     loadOnScrollThreshold = false
-    val prefix = if (list.isEmpty) "Cannot load pull requests." else "Cannot load full pull requests list."
+    val prefix = if (list.isEmpty) "Can't load pull requests." else "Can't load full pull requests list."
     list.emptyText.clear().appendText(prefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(getLoadingErrorText(error), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
       .appendSecondaryText("  ", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-      .appendSecondaryText("Retry", SimpleTextAttributes.LINK_ATTRIBUTES) { loadMore() }
+      .appendSecondaryText("Retry", SimpleTextAttributes.LINK_ATTRIBUTES) { refresh() }
     if (!list.isEmpty) {
       //language=HTML
       val errorText = "<html><body>$prefix<br/>${getLoadingErrorText(error, "<br/>")}<a href=''>Retry</a></body></html>"
-      errorPanel.setError(errorText, linkActivationListener = { loadMore() })
+      errorPanel.setError(errorText, linkActivationListener = { refresh() })
     }
   }
 

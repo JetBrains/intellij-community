@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiMethod
@@ -20,8 +6,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid
 
 @CompileStatic
 class ResolveIndexPropertyTest extends GroovyResolveTestCase {
@@ -61,17 +50,34 @@ class A {
     doTest 'def l = [0, 1, 2]; a[[l]]'
   }
 
+  void 'test putAt with three parameters'() {
+    fixture.addFileToProject 'classes.groovy', 'class A { def putAt(a, b, c) {} }'
+    doLTest 'a[1, 2] = 3'
+  }
+
   private doTest(String text, int methodIndex = -1) {
+    doTest(text, true, methodIndex)
+  }
+
+  private doLTest(String text, int methodIndex = -1) {
+    doTest(text, false, methodIndex)
+  }
+
+  private doTest(String text, boolean rValue, int methodIndex) {
     def file = (GroovyFile)fixture.configureByText('_.groovy', """\
 def a = new A()
 $text
 """)
-    def expression = file.statements.last() as GrIndexProperty
-    def resolved = (PsiMethod)expression.references[0].resolve()
+    def expression = file.statements.last()
+    def reference = rValue ? ((GrIndexProperty)expression).getRValueReference()
+                           : ((GrIndexProperty)((GrAssignmentExpression)expression).getLValue()).getLValueReference()
+    def results = valid(reference.resolve(false))
     if (methodIndex < 0) {
-      assert !resolved
+      assert results.isEmpty()
     }
     else {
+      assert results.size() == 1
+      def resolved = (PsiMethod)results[0].element
       assert resolved
       assert resolved.containingClass.qualifiedName == 'A'
       assert ((GrTypeDefinition)resolved.containingClass).codeMethods[methodIndex] == resolved: resolved.parameterList.parameters*.type

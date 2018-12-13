@@ -78,7 +78,6 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
       LOG.assertTrue(!isCleanupTool(), "Global cleanup tool MUST have shared local tool. The tool short name: " + getShortName());
       return null;
     }
-    //noinspection TestOnlyProblems
     return new LocalInspectionToolWrapper(sharedTool){
       @Nullable
       @Override

@@ -17,6 +17,7 @@ package com.intellij.diff.tools.util.text;
 
 import com.intellij.diff.comparison.ComparisonManagerImpl;
 import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.InnerFragmentsPolicy;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
@@ -41,7 +42,8 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
   private static final Logger LOG = Logger.getInstance(SimpleTextDiffProvider.class);
 
   private static final IgnorePolicy[] IGNORE_POLICIES = {DEFAULT, TRIM_WHITESPACES, IGNORE_WHITESPACES, IGNORE_WHITESPACES_CHUNKS};
-  private static final HighlightPolicy[] HIGHLIGHT_POLICIES = {BY_LINE, BY_WORD, BY_WORD_SPLIT, DO_NOT_HIGHLIGHT};
+  private static final HighlightPolicy[] HIGHLIGHT_POLICIES = {BY_LINE, BY_WORD, BY_WORD_SPLIT, BY_CHAR, DO_NOT_HIGHLIGHT};
+  private static final HighlightPolicy[] CUSTOM_COMPUTER_HIGHLIGHT_POLICIES = {BY_LINE, BY_WORD, BY_WORD_SPLIT, DO_NOT_HIGHLIGHT};
 
   @Nullable private final DiffComputer myDiffComputer;
 
@@ -55,7 +57,8 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
                                 @NotNull Runnable rediff,
                                 @NotNull Disposable disposable,
                                 @Nullable DiffComputer diffComputer) {
-    this(settings, rediff, disposable, diffComputer, IGNORE_POLICIES, HIGHLIGHT_POLICIES);
+    this(settings, rediff, disposable, diffComputer, IGNORE_POLICIES,
+         diffComputer != null ? CUSTOM_COMPUTER_HIGHLIGHT_POLICIES : HIGHLIGHT_POLICIES);
   }
 
   private SimpleTextDiffProvider(@NotNull TextDiffSettings settings,
@@ -76,9 +79,9 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
                                                @NotNull LineOffsets lineOffsets2,
                                                @Nullable List<Range> linesRanges,
                                                @NotNull IgnorePolicy ignorePolicy,
-                                               boolean innerFragments,
+                                               @NotNull HighlightPolicy highlightPolicy,
                                                @NotNull ProgressIndicator indicator) {
-    return compareRange(myDiffComputer, text1, text2, lineOffsets1, lineOffsets2, linesRanges, ignorePolicy, innerFragments, indicator);
+    return compareRange(myDiffComputer, text1, text2, lineOffsets1, lineOffsets2, linesRanges, ignorePolicy, highlightPolicy, indicator);
   }
 
   @NotNull
@@ -89,9 +92,10 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
                                                       @NotNull LineOffsets lineOffsets2,
                                                       @Nullable List<? extends Range> linesRanges,
                                                       @NotNull IgnorePolicy ignorePolicy,
-                                                      boolean innerFragments,
+                                                      @NotNull HighlightPolicy highlightPolicy,
                                                       @NotNull ProgressIndicator indicator) {
     ComparisonPolicy policy = ignorePolicy.getComparisonPolicy();
+    InnerFragmentsPolicy fragmentsPolicy = highlightPolicy.getFragmentsPolicy();
 
     if (diffComputer != null && linesRanges != null) {
       LOG.error(new Throwable("Unsupported operation: ranged diff with custom DiffComputer - " + diffComputer));
@@ -100,12 +104,12 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
     ComparisonManagerImpl comparisonManager = ComparisonManagerImpl.getInstanceImpl();
     if (linesRanges == null) {
       if (diffComputer != null) {
-        List<LineFragment> fragments = diffComputer.compute(text1, text2, policy, innerFragments, indicator);
+        List<LineFragment> fragments = diffComputer.compute(text1, text2, policy, fragmentsPolicy != InnerFragmentsPolicy.NONE, indicator);
         return Collections.singletonList(fragments);
       }
       else {
         List<LineFragment> fragments = comparisonManager.compareLinesInner(text1, text2, lineOffsets1, lineOffsets2,
-                                                                           policy, innerFragments, indicator);
+                                                                           policy, fragmentsPolicy, indicator);
         return Collections.singletonList(fragments);
       }
     }
@@ -113,7 +117,7 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
       List<List<LineFragment>> result = new ArrayList<>();
       for (Range range : linesRanges) {
         result.add(comparisonManager.compareLinesInner(range, text1, text2, lineOffsets1, lineOffsets2,
-                                                       policy, innerFragments, indicator));
+                                                       policy, fragmentsPolicy, indicator));
       }
       return result;
     }

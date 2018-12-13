@@ -227,13 +227,6 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     }
   }
 
-  @Override
-  public VirtualFile getVirtualFile() {
-    PsiDirectory directory = getValue();
-    if (directory == null) return null;
-    return directory.getVirtualFile();
-  }
-
   /**
    * @return a virtual file that identifies the given element
    */
@@ -347,7 +340,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       if (Comparing.equal(file, myProject.getBaseDir())) {
         return "";    // sorts before any other name
       }
-      return getTitle();
+      return toString();
     }
     return null;
   }

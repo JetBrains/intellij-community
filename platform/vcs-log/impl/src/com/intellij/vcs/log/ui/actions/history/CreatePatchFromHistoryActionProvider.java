@@ -50,6 +50,7 @@ public class CreatePatchFromHistoryActionProvider implements AnActionExtensionPr
       super(true);
     }
   }
+
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null;

@@ -126,13 +126,9 @@
     <qualifiedNameProvider implementation="com.intellij.ide.actions.PropertiesQualifiedNameProvider"/>
 
     <psi.treeChangePreprocessor implementation="com.intellij.lang.properties.psi.impl.PropertiesPsiTreeChangePreprocessor"/>
-  </extensions>
 
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.lang.properties.PropertiesFilesManager</implementation-class>
-    </component>
-  </project-components>
+    <postStartupActivity implementation="com.intellij.lang.properties.Native2AsciiListenerStartupActivity"/>
+  </extensions>
 
   <actions>
     <action id="DissociateResourceBundleAction" text="Dissociate Resource Bundle" class="com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction">

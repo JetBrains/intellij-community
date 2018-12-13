@@ -91,7 +91,6 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
       }
       if (ch == '"') {
         stringBuilder.append('\'');
-        continue;
       }
       else if (ch == '\'') {
         stringBuilder.append("\\\'");
@@ -120,7 +119,6 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
       }
       if (ch == '\'') {
         stringBuilder.append('"');
-        continue;
       }
       else if (ch == '"') {
         stringBuilder.append("\\\"");

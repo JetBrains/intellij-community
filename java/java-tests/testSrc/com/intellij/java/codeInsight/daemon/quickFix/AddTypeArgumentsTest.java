@@ -15,10 +15,10 @@
  */
 package com.intellij.java.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.pom.java.LanguageLevel;
 
-public class AddTypeArgumentsTest extends LightQuickFixTestCase {
+public class AddTypeArgumentsTest extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected String getBasePath() {
@@ -26,7 +26,7 @@ public class AddTypeArgumentsTest extends LightQuickFixTestCase {
   }
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
+  protected LanguageLevel getDefaultLanguageLevel() {
     return LanguageLevel.JDK_1_5;
   }
 }

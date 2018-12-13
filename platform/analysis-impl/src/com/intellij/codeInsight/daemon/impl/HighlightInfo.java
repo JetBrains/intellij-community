@@ -119,17 +119,28 @@ public class HighlightInfo implements Segment {
     return XmlStringUtil.wrapInHtml(decoded);
   }
 
-  private static String encodeTooltip(String toolTip, String description) {
-    if (toolTip == null || description == null) return toolTip;
-    String unescaped = StringUtil.unescapeXml(XmlStringUtil.stripHtml(toolTip));
+  /**
+   * Encodes \p tooltip so that substrings equal to a \p description
+   * are replaced with the special placeholder to reduce size of the
+   * tooltip. If encoding takes place, <html></html> tags are
+   * stripped of the tooltip.
+   *
+   * @param tooltip - html text
+   * @param description - plain text (not escaped)
+   *
+   * @return encoded tooltip (stripped html text with one or more placeholder characters)
+   *         or tooltip without changes.
+   */
+  private static String encodeTooltip(String tooltip, String description) {
+    if (tooltip == null || description == null || description.isEmpty()) return tooltip;
 
-    String encoded = description.isEmpty() ? unescaped : StringUtil.replace(unescaped, description, DESCRIPTION_PLACEHOLDER);
+    String encoded = StringUtil.replace(tooltip, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);
     //noinspection StringEquality
-    if (encoded == unescaped) {
-      return toolTip;
+    if (encoded == tooltip) {
+      return tooltip;
     }
     if (encoded.equals(DESCRIPTION_PLACEHOLDER)) encoded = DESCRIPTION_PLACEHOLDER;
-    return encoded;
+    return XmlStringUtil.stripHtml(encoded);
   }
 
   public String getDescription() {
@@ -682,7 +693,7 @@ public class HighlightInfo implements Segment {
   @NotNull
   public static ProblemHighlightType convertType(HighlightInfoType infoType) {
     if (infoType == HighlightInfoType.ERROR || infoType == HighlightInfoType.WRONG_REF) return ProblemHighlightType.ERROR;
-    if (infoType == HighlightInfoType.WARNING) return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+    if (infoType == HighlightInfoType.WARNING) return ProblemHighlightType.WARNING;
     if (infoType == HighlightInfoType.INFORMATION) return ProblemHighlightType.INFORMATION;
     return ProblemHighlightType.WEAK_WARNING;
   }
@@ -690,7 +701,7 @@ public class HighlightInfo implements Segment {
   @NotNull
   public static ProblemHighlightType convertSeverityToProblemHighlight(HighlightSeverity severity) {
     return severity == HighlightSeverity.ERROR ? ProblemHighlightType.ERROR :
-           severity == HighlightSeverity.WARNING ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
+           severity == HighlightSeverity.WARNING ? ProblemHighlightType.WARNING :
            severity == HighlightSeverity.INFO ? ProblemHighlightType.INFO :
            severity == HighlightSeverity.WEAK_WARNING ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.INFORMATION;
   }

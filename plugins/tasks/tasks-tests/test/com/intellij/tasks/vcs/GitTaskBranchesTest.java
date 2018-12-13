@@ -47,7 +47,11 @@ public class GitTaskBranchesTest extends TaskBranchesTest {
   protected void tearDown() throws Exception {
     try {
       GitVcsSettings.getInstance(myProject).getAppSettings().setPathToGit(null);
-    } finally {
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
       super.tearDown();
     }
   }

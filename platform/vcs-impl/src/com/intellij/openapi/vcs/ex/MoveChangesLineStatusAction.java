@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,12 +37,12 @@ import static java.util.Collections.singletonList;
 
 public class MoveChangesLineStatusAction extends LineStatusActionBase {
   @Override
-  protected boolean isEnabled(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Editor editor) {
+  protected boolean isEnabled(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor) {
     return tracker instanceof PartialLocalLineStatusTracker;
   }
 
   @Override
-  protected void doAction(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Editor editor) {
+  protected void doAction(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor) {
     moveToAnotherChangelist((PartialLocalLineStatusTracker)tracker, editor);
   }
 

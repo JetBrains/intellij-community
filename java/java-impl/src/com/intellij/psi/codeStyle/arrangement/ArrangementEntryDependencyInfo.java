@@ -22,7 +22,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 9/19/12 6:41 PM
  */
 public class ArrangementEntryDependencyInfo {
 

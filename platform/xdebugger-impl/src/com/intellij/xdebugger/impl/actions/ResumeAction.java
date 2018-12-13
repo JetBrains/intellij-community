@@ -23,8 +23,8 @@ public class ResumeAction extends XDebuggerActionBase implements DumbAware {
     if (project == null) return false;
 
     XDebugSessionImpl session = (XDebugSessionImpl)XDebuggerManager.getInstance(project).getCurrentSession();
-    if (session != null && !session.isReadOnly() && !session.isStopped()) {
-      return session.isPaused();
+    if (session != null && !session.isStopped()) {
+      return !session.isReadOnly() && session.isPaused();
     }
     // disable visual representation but leave the shortcut action enabled
     return e.getInputEvent() instanceof KeyEvent;

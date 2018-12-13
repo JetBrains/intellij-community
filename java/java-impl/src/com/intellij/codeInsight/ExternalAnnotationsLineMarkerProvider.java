@@ -38,7 +38,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -73,7 +76,7 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
   @Nullable
   static PsiModifierListOwner getAnnotationOwner(@Nullable PsiElement element) {
     if (element == null) return null;
-    
+
     PsiElement owner = element.getParent();
     if (!(owner instanceof PsiModifierListOwner) || !(owner instanceof PsiNameIdentifierOwner)) return null;
     if (owner instanceof PsiParameter || owner instanceof PsiLocalVariable) return null;
@@ -83,9 +86,6 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
     if (nameIdentifier == null || !nameIdentifier.getTextRange().equals(element.getTextRange())) return null;
     return (PsiModifierListOwner)owner;
   }
-
-  @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {}
 
   @NotNull
   @Override

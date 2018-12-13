@@ -1,27 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,12 +97,24 @@ public class ColorUtil {
   }
 
   @NotNull
-  public static Color dimmer(@NotNull Color color) {
-    float[] rgb = color.getRGBColorComponents(null);
+  public static Color dimmer(@NotNull final Color color) {
+    NotNullProducer<Color> func = new NotNullProducer<Color>() {
 
-    float alpha = 0.80f;
-    float rem = 1 - alpha;
-    return new Color(rgb[0] * alpha + rem, rgb[1] * alpha + rem, rgb[2] * alpha + rem);
+      @NotNull
+      @Override
+      public Color produce() {
+        float[] rgb = color.getRGBColorComponents(null);
+
+        float alpha = 0.80f;
+        float rem = 1 - alpha;
+        return new Color(rgb[0] * alpha + rem, rgb[1] * alpha + rem, rgb[2] * alpha + rem);
+      }
+    };
+    return wrap(color, func);
+  }
+
+  private static Color wrap(@NotNull Color color, NotNullProducer<Color> func) {
+    return color instanceof JBColor ? new JBColor(func) : func.produce();
   }
 
   private static int shift(int colorComponent, double d) {
@@ -127,8 +123,15 @@ public class ColorUtil {
   }
 
   @NotNull
-  public static Color shift(@NotNull Color c, double d) {
-    return new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
+  public static Color shift(@NotNull final Color c, final double d) {
+    NotNullProducer<Color> func = new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
+      }
+    };
+    return wrap(c, func);
   }
 
   @NotNull
@@ -158,9 +161,16 @@ public class ColorUtil {
   }
 
   @NotNull
-  public static Color toAlpha(@Nullable Color color, int a) {
-    Color c = color == null ? Color.black : color;
-    return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
+  public static Color toAlpha(@Nullable Color color, final int a) {
+    final Color c = color == null ? Color.black : color;
+    NotNullProducer<Color> func = new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
+      }
+    };
+    return wrap(c, func);
   }
 
   @NotNull
@@ -190,6 +200,7 @@ public class ColorUtil {
 
   /**
    * Return Color object from string. The following formats are allowed:
+   * {@code 0xA1B2C3},
    * {@code #abc123},
    * {@code ABC123},
    * {@code ab5},
@@ -200,19 +211,29 @@ public class ColorUtil {
    */
   @NotNull
   public static Color fromHex(@NotNull String str) {
-    str = StringUtil.trimStart(str, "#");
-    if (str.length() == 3) {
-      return new Color(
-        17 * Integer.valueOf(String.valueOf(str.charAt(0)), 16).intValue(),
-        17 * Integer.valueOf(String.valueOf(str.charAt(1)), 16).intValue(),
-        17 * Integer.valueOf(String.valueOf(str.charAt(2)), 16).intValue());
-    }
-    else if (str.length() == 6) {
-      return Color.decode("0x" + str);
-    }
-    else {
-      throw new IllegalArgumentException("Should be String of 3 or 6 chars length.");
-    }
+    int pos = str.startsWith("#") ? 1 : str.startsWith("0x") ? 2 : 0;
+    int len = str.length() - pos;
+    if (len == 3) return new Color(fromHex1(str, pos), fromHex1(str, pos + 1), fromHex1(str, pos + 2), 255);
+    if (len == 4) return new Color(fromHex1(str, pos), fromHex1(str, pos + 1), fromHex1(str, pos + 2), fromHex1(str, pos + 3));
+    if (len == 6) return new Color(fromHex2(str, pos), fromHex2(str, pos + 2), fromHex2(str, pos + 4), 255);
+    if (len == 8) return new Color(fromHex2(str, pos), fromHex2(str, pos + 2), fromHex2(str, pos + 4), fromHex2(str, pos + 6));
+    throw new IllegalArgumentException("unsupported length:" + str);
+  }
+
+  private static int fromHex(@NotNull String str, int pos) {
+    char ch = str.charAt(pos);
+    if (ch >= '0' && ch <= '9') return ch - '0';
+    if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
+    if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
+    throw new IllegalArgumentException("unsupported char at " + pos + ":" + str);
+  }
+
+  private static int fromHex1(@NotNull String str, int pos) {
+    return 17 * fromHex(str, pos);
+  }
+
+  private static int fromHex2(@NotNull String str, int pos) {
+    return 16 * fromHex(str, pos) + fromHex(str, pos + 1);
   }
 
   @Nullable
@@ -226,29 +247,32 @@ public class ColorUtil {
     }
   }
 
-  @Nullable
-  public static Color getColor(@NotNull Class<?> cls) {
-    final Colored colored = cls.getAnnotation(Colored.class);
-    if (colored != null) {
-      return fromHex(UIUtil.isUnderDarcula() ? colored.darkVariant() : colored.color(), null);
-    }
-    return null;
-  }
-
   /**
    * @param c color to check
    * @return dark or not
    */
   public static boolean isDark(@NotNull Color c) {
-    return c.getRed()*0.299 + c.getGreen()*0.587 + c.getBlue()*0.114 < 186;
+    return ((getLuminance(c) + 0.05) / 0.05) < 4.5;
+  }
+
+  public static double getLuminance(@NotNull Color color) {
+    return getLinearRGBComponentValue(color.getRed() / 255.0) * 0.2126 +
+           getLinearRGBComponentValue(color.getGreen() / 255.0) * 0.7152 +
+           getLinearRGBComponentValue(color.getBlue() / 255.0) * 0.0722;
+  }
+
+  public static double getLinearRGBComponentValue(double colorValue) {
+    if (colorValue <= 0.03928) {
+      return colorValue / 12.92;
+    }
+    return Math.pow(((colorValue + 0.055) / 1.055), 2.4);
   }
 
   @NotNull
-  public static Color mix(@NotNull Color c1, @NotNull Color c2, double balance) {
-    balance = Math.min(1, Math.max(0, balance));
-    return new Color((int)((1 - balance) * c1.getRed() + c2.getRed() * balance + .5),
-                     (int)((1 - balance) * c1.getGreen() + c2.getGreen() * balance + .5),
-                     (int)((1 - balance) * c1.getBlue() + c2.getBlue() * balance + .5),
-                     (int)((1 - balance) * c1.getAlpha() + c2.getAlpha() * balance + .5));
+  public static Color mix(@NotNull final Color c1, @NotNull final Color c2, double balance) {
+    if (balance <= 0) return c1;
+    if (balance >= 1) return c2;
+    NotNullProducer<Color> func = new MixedColorProducer(c1, c2, balance);
+    return c1 instanceof JBColor || c2 instanceof JBColor ? new JBColor(func) : func.produce();
   }
 }

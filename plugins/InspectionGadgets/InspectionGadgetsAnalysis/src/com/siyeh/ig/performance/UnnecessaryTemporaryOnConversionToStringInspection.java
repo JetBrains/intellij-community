@@ -123,7 +123,6 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
     extends BaseInspectionVisitor {
 
     /**
-     * @noinspection StaticCollection
      */
     private static final Set<String> s_basicTypes = new HashSet<>(8);
 

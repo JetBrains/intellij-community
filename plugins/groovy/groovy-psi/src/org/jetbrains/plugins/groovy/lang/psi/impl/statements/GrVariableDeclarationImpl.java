@@ -34,13 +34,16 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableDeclarationStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
 
 /**
  * @author: Dmitry.Krasilschikov
  */
 public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDeclarationStub>
-  implements GrVariableDeclaration, StubBasedPsiElement<GrVariableDeclarationStub> {
+  implements GrVariableDeclaration, StubBasedPsiElement<GrVariableDeclarationStub>, PsiListLikeElement {
 
   private static final Logger LOG = Logger.getInstance(GrVariableDeclarationImpl.class);
 
@@ -49,7 +52,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
   }
 
   public GrVariableDeclarationImpl(@NotNull GrVariableDeclarationStub stub) {
-    super(stub, GroovyElementTypes.VARIABLE_DEFINITION);
+    super(stub, GroovyElementTypes.VARIABLE_DECLARATION);
   }
 
   @Override
@@ -65,7 +68,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
   @Override
   @NotNull
   public GrModifierList getModifierList() {
-    return getRequiredStubOrPsiChild(GroovyElementTypes.MODIFIERS);
+    return getRequiredStubOrPsiChild(GroovyElementTypes.MODIFIER_LIST);
   }
 
   @Override
@@ -158,6 +161,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
     visitor.visitVariableDeclaration(this);
   }
 
+  @Override
   public String toString() {
     return "Variable definitions";
   }
@@ -252,5 +256,11 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       return getElement();
     }
+  }
+
+  @NotNull
+  @Override
+  public List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getVariables());
   }
 }

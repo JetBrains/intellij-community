@@ -1,20 +1,15 @@
 package org.editorconfig.configmanagement;
 
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.codeStyle.IndentStatusBarUIContributor;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
-import org.editorconfig.settings.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,11 +25,11 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
   public static final String tabWidthKey = "tab_width";
   public static final String indentStyleKey = "indent_style";
 
-  private static final Key<Boolean> PROJECT_ADVERTISEMENT_FLAG = Key.create("editor.config.ad.shown");
-
   @Nullable
   @Override
   public IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile psiFile) {
+    if (Utils.isFullSettingsSupport()) return null;
+
     final VirtualFile file = psiFile.getVirtualFile();
     if (file == null) return null;
 
@@ -42,7 +37,9 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     if (project.isDisposed() || !Utils.isEnabled(settings)) return null;
 
     // Get editorconfig settings
-    final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(project, file);
+    final List<EditorConfig.OutPair> outPairs =
+      SettingsProviderComponent.getInstance().getOutPairs(
+        project, file, EditorConfigNavigationActionsFactory.getInstance(psiFile.getVirtualFile()));
     // Apply editorconfig settings for the current editor
     return applyCodeStyleSettings(project, outPairs, file, settings);
   }
@@ -162,46 +159,11 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     return false;
   }
 
-  @Override
-  public boolean areActionsAvailable(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
-    return isEditorConfigOptions(indentOptions);
-  }
 
   @Nullable
   @Override
-  public AnAction[] getActions(@NotNull PsiFile file, @NotNull IndentOptions indentOptions) {
-    if (isEditorConfigOptions(indentOptions)) {
-      List<AnAction> actions = ContainerUtil.newArrayList();
-      actions.add(
-        DumbAwareAction.create(
-          EditorConfigBundle.message("action.show.settings"),
-
-          e -> ShowSettingsUtilImpl.showSettingsDialog(file.getProject(), "preferences.sourceCode", "EditorConfig")
-        )
-      );
-      return actions.toArray(AnAction.EMPTY_ARRAY);
-    }
-    return null;
+  public IndentStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
+    return new EditorConfigStatusUIContributor(indentOptions);
   }
 
-  @Nullable
-  @Override
-  protected String getHint(@NotNull IndentOptions indentOptions) {
-    return isEditorConfigOptions(indentOptions) ? ".editorconfig" : null;
-  }
-
-  private static boolean isEditorConfigOptions(@NotNull IndentOptions indentOptions) {
-    return indentOptions.getFileIndentOptionsProvider() instanceof EditorConfigIndentOptionsProvider;
-  }
-
-
-  @Nullable
-  @Override
-  public String getAdvertisementText(@NotNull PsiFile psiFile, @NotNull IndentOptions indentOptions) {
-    Project project = psiFile.getProject();
-    Boolean adFlag = project.getUserData(PROJECT_ADVERTISEMENT_FLAG);
-    if (adFlag != null && adFlag) return null;
-    project.putUserData(PROJECT_ADVERTISEMENT_FLAG, true);
-    return EditorConfigBundle.message("advertisement.text");
-  }
 }

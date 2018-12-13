@@ -19,11 +19,11 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -38,9 +38,12 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
   protected void tearDown() throws Exception {
     try {
       myItems = null;
-      LookupManager.getInstance(getProject()).hideActiveLookup();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
+
       super.tearDown();
     }
   }
@@ -83,7 +86,6 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
     }
   }
 
-  @SuppressWarnings("TestMethodWithIncorrectSignature")
   protected void testByCount(int finalCount, String... values) {
     if (myItems == null) {
       assertEquals(0, finalCount);

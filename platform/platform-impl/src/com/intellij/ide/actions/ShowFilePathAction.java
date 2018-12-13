@@ -329,7 +329,7 @@ public class ShowFilePathAction extends DumbAwareAction {
           @NotNull
           @Override
           protected BaseOutputReader.Options readerOptions() {
-            return BaseOutputReader.Options.BLOCKING;
+            return BaseOutputReader.Options.forMostlySilentProcess();
           }
         }.runProcess().checkSuccess(LOG);
       }

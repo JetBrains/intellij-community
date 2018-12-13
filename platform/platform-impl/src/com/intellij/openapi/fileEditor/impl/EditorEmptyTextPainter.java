@@ -119,7 +119,7 @@ public class EditorEmptyTextPainter {
   public static UIUtil.TextPainter createTextPainter() {
     return new UIUtil.TextPainter()
       .withLineSpacing(1.8f)
-      .withColor(new JBColor(Gray._80, Gray._160))
+      .withColor(JBColor.namedColor("Editor.foreground", new JBColor(Gray._80, Gray._160)))
       .withFont(JBUI.Fonts.label(16f));
   }
 }

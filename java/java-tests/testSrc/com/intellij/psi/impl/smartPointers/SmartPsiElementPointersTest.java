@@ -237,7 +237,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     final SmartPsiElementPointer<PsiIdentifier> pointer =
       createPointer(aClass.getNameIdentifier());
     final PsiComment javadoc =
-      JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createCommentFromText("/** javadoc */", aClass);
+      JavaPsiFacade.getElementFactory(aClass.getProject()).createCommentFromText("/** javadoc */", aClass);
     ApplicationManager.getApplication().runWriteAction(() -> {
       aClass.getParent().addBefore(javadoc, aClass);
     });
@@ -514,7 +514,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
         //System.out.println("file = " + file);
       }
       else {
-        System.out.println("already loaded file = " + file);
+        LOG.debug("already loaded file = " + file);
       }
     }
   }

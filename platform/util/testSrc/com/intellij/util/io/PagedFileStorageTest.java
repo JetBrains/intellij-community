@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,8 @@ public class PagedFileStorageTest extends TestCase {
       assert f.delete() : f.getPath();
     } finally {
       lock.unlock();
+      super.tearDown();
     }
-    super.tearDown();
   }
 
   public void testResizing() throws IOException {

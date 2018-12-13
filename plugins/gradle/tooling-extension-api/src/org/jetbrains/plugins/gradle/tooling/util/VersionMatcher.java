@@ -22,7 +22,6 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/13/2014
  */
 public class VersionMatcher {
 

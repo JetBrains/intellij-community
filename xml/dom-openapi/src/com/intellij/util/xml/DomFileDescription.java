@@ -43,6 +43,9 @@ import java.util.*;
  * @see com.intellij.util.xml.MergingFileDescription
  */
 public class DomFileDescription<T> {
+  /**
+   * @deprecated use "com.intellij.dom.fileMetaData" extension instead
+   */
   public static final ExtensionPointName<DomFileDescription> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileDescription");
 
   private final Map<Class<? extends ScopeProvider>, ScopeProvider> myScopeProviders = ConcurrentInstanceMap.create();
@@ -62,6 +65,7 @@ public class DomFileDescription<T> {
     myAllPossibleRootTagNamespaces = allPossibleRootTagNamespaces.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : allPossibleRootTagNamespaces;
   }
 
+  @NotNull
   public String[] getAllPossibleRootTagNamespaces() {
     return myAllPossibleRootTagNamespaces;
   }
@@ -104,7 +108,6 @@ public class DomFileDescription<T> {
   /**
    * Consider using {@link DomService#getXmlFileHeader(com.intellij.psi.xml.XmlFile)} when implementing this.
    */
-  @SuppressWarnings({"MethodMayBeStatic"})
   @NotNull
   public List<String> getAllowedNamespaces(@NotNull String namespaceKey, @NotNull XmlFile file) {
     final NotNullFunction<XmlTag, List<String>> function = myNamespacePolicies.get(namespaceKey);
@@ -131,7 +134,9 @@ public class DomFileDescription<T> {
    * described by this description or vice versa, so that the
    * {@link com.intellij.util.xml.DomService#getDomFileCandidates(Class, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)}
    * index is rebuilt correctly.
+   * @deprecated use "domVersion" attribute of "com.intellij.dom.fileMetaData" extension instead
    */
+  @Deprecated
   public int getVersion() {
     return myRootTagName.hashCode();
   }
@@ -266,14 +271,20 @@ public class DomFileDescription<T> {
 
   /**
    * @see Stubbed
-   * @return false
+   * @deprecated define "stubVersion" of "com.intellij.dom.fileMetaData" extension instead
    */
+  @Deprecated
   public boolean hasStubs() {
     return false;
   }
 
+  /**
+   * @see Stubbed
+   * @deprecated define "stubVersion" of "com.intellij.dom.fileMetaData" extension instead
+   */
+  @Deprecated
   public int getStubVersion() {
-    return 0;
+    throw new UnsupportedOperationException("define \"stubVersion\" of \"com.intellij.dom.fileMetaData\" extension instead");
   }
 
   @Override

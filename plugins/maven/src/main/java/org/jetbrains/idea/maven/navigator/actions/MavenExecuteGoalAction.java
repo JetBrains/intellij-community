@@ -31,6 +31,7 @@ import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -48,7 +49,7 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-
+    MavenActionsUsagesCollector.trigger(project, this, e);
     ExecuteMavenGoalHistoryService historyService = ExecuteMavenGoalHistoryService.getInstance(project);
 
     MavenExecuteGoalDialog dialog = new MavenExecuteGoalDialog(project, historyService.getHistory());

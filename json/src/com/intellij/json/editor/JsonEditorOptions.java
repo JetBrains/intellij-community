@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public class JsonEditorOptions implements PersistentStateComponent<JsonEditorOptions> {
   public boolean COMMA_ON_ENTER = true;
   public boolean COMMA_ON_MATCHING_BRACES = true;
+  public boolean COMMA_ON_PASTE = true;
   public boolean AUTO_QUOTE_PROP_NAME = true;
   public boolean AUTO_WHITESPACE_AFTER_COLON = true;
   public boolean ESCAPE_PASTED_TEXT = true;

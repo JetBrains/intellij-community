@@ -18,7 +18,6 @@ package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
-import com.intellij.codeInspection.XmlInspectionGroupNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
@@ -29,20 +28,12 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author spleaner
  */
 public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionTool {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return XmlInspectionGroupNames.HTML_INSPECTIONS;
-  }
 
   @Override
   public boolean isEnabledByDefault() {
@@ -61,11 +52,12 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new XmlElementVisitor() {
-      @Override public void visitXmlToken(final XmlToken token) {
+      @Override
+      public void visitXmlToken(final XmlToken token) {
         IElementType tokenType = token.getTokenType();
         if (tokenType == XmlTokenType.XML_NAME || tokenType == XmlTokenType.XML_TAG_NAME) {
           PsiElement element = token.getPrevSibling();
-          while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
+          while (element instanceof PsiWhiteSpace) element = element.getPrevSibling();
 
           if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_START_TAG_START) {
             PsiElement parent = element.getParent();
@@ -78,7 +70,8 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
         }
       }
 
-      @Override public void visitXmlAttribute(final XmlAttribute attribute) {
+      @Override
+      public void visitXmlAttribute(final XmlAttribute attribute) {
         checkAttribute(attribute, holder, isOnTheFly);
       }
     };

@@ -58,15 +58,7 @@ public class PasteReferenceProvider implements PasteProvider {
   public boolean isPasteEnabled(@NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     String fqn = getCopiedFqn(dataContext);
-    if (project == null || fqn == null) {
-      return false;
-    }
-    for(QualifiedNameProvider provider: QualifiedNameProvider.EP_NAME.getExtensionList()) {
-      if (provider.qualifiedNameToElement(fqn, project) != null) {
-        return true;
-      }
-    }
-    return false;
+    return project != null && fqn != null && QualifiedNameProviderUtil.qualifiedNameToElement(fqn, project) != null;
   }
 
   private static void insert(final String fqn, final PsiElement element, final Editor editor, final QualifiedNameProvider provider) {
