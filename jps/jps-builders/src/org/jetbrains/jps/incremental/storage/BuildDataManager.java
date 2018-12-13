@@ -389,16 +389,10 @@ public class BuildDataManager implements StorageOwner {
   public void saveVersion() {
     final Boolean differs = myVersionDiffers;
     if (differs == null || differs) {
-      try {
-        FileUtil.createIfDoesntExist(myVersionFile);
-        final DataOutputStream os = new DataOutputStream(new FileOutputStream(myVersionFile));
-        try {
-          os.writeInt(VERSION);
-          myVersionDiffers = Boolean.FALSE;
-        }
-        finally {
-          os.close();
-        }
+      FileUtil.createIfDoesntExist(myVersionFile);
+      try (DataOutputStream os = new DataOutputStream(new FileOutputStream(myVersionFile))) {
+        os.writeInt(VERSION);
+        myVersionDiffers = Boolean.FALSE;
       }
       catch (IOException ignored) {
       }

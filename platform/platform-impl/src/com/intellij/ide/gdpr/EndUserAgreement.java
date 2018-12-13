@@ -114,19 +114,14 @@ public final class EndUserAgreement {
 
   @NotNull
   private static Document loadContent(final String docName, InputStream stream) {
-    try {
-      if (stream != null) {
-        final Reader reader = new InputStreamReader(stream instanceof ByteArrayInputStream? stream : new BufferedInputStream(stream), StandardCharsets.UTF_8);
-        try {
-          return new Document(docName, new String(FileUtil.adaptiveLoadText(reader)));
-        }
-        finally {
-          reader.close();
-        }
+    if (stream != null) {
+      try (Reader reader = new InputStreamReader(stream instanceof ByteArrayInputStream ? stream : new BufferedInputStream(stream),
+                                                 StandardCharsets.UTF_8)) {
+        return new Document(docName, new String(FileUtil.adaptiveLoadText(reader)));
       }
-    }
-    catch (IOException e) {
-      LOG.info(e);
+      catch (IOException e) {
+        LOG.info(e);
+      }
     }
     return new Document(docName, "");
   }
@@ -195,22 +190,16 @@ public final class EndUserAgreement {
     @NotNull
     private static Version parseVersion(String text) {
       if (!StringUtil.isEmptyOrSpaces(text)) {
-        try {
-          final BufferedReader reader = new BufferedReader(new StringReader(text));
-          try {
-            final String line = reader.readLine();
-            if (line != null) {
-              final int startComment = line.indexOf(VERSION_COMMENT_START);
-              if (startComment >= 0 ) {
-                final int endComment = line.indexOf(VERSION_COMMENT_END);
-                if (endComment > startComment) {
-                  return Version.fromString(line.substring(startComment + VERSION_COMMENT_START.length(), endComment).trim());
-                }
+        try (BufferedReader reader = new BufferedReader(new StringReader(text))) {
+          final String line = reader.readLine();
+          if (line != null) {
+            final int startComment = line.indexOf(VERSION_COMMENT_START);
+            if (startComment >= 0) {
+              final int endComment = line.indexOf(VERSION_COMMENT_END);
+              if (endComment > startComment) {
+                return Version.fromString(line.substring(startComment + VERSION_COMMENT_START.length(), endComment).trim());
               }
             }
-          }
-          finally {
-            reader.close();
           }
         }
         catch (IOException e) {

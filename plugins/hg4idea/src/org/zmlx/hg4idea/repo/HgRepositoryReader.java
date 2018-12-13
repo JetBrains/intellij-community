@@ -117,12 +117,8 @@ public class HgRepositoryReader {
   @NotNull
   private static byte[] readHashBytesFromFile(@NotNull File file) throws IOException {
     byte[] bytes;
-    final InputStream stream = new FileInputStream(file);
-    try {
+    try (InputStream stream = new FileInputStream(file)) {
       bytes = FileUtil.loadBytes(stream, 20);
-    }
-    finally {
-      stream.close();
     }
     return bytes;
   }

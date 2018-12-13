@@ -78,27 +78,19 @@ class GitInteractiveRebaseFile {
   }
 
   public void cancel() throws IOException {
-    PrintWriter out = new PrintWriter(new FileWriter(myFile));
-    try {
+    try (PrintWriter out = new PrintWriter(new FileWriter(myFile))) {
       out.println("# rebase is cancelled");
-    }
-    finally {
-      out.close();
     }
   }
 
   public void save(@NotNull List<GitRebaseEntry> entries) throws IOException {
     String encoding = GitConfigUtil.getLogEncoding(myProject, myRoot);
-    PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(myFile), encoding));
-    try {
+    try (PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(myFile), encoding))) {
       for (GitRebaseEntry e : entries) {
         if (e.getAction() != GitRebaseEntry.Action.SKIP) {
           out.println(e.getAction().toString() + " " + e.getCommit() + " " + e.getSubject());
         }
       }
-    }
-    finally {
-      out.close();
     }
   }
 

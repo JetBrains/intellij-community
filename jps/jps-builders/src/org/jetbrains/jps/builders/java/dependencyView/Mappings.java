@@ -3114,14 +3114,8 @@ public class Mappings {
     for (int i = 0; i < data.length; i++) {
       final File file = new File(outputRoot, info[i]);
       FileUtil.createIfDoesntExist(file);
-      try {
-        final PrintStream stream = new PrintStream(file);
-        try {
-          data[i].toStream(myContext, stream);
-        }
-        finally {
-          stream.close();
-        }
+      try (PrintStream stream = new PrintStream(file)) {
+        data[i].toStream(myContext, stream);
       }
       catch (FileNotFoundException e) {
         e.printStackTrace();

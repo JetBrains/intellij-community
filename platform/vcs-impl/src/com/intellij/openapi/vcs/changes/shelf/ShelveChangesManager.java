@@ -978,14 +978,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                          final String path,
                                          final List<FilePatch> remainingPatches,
                                          CommitContext commitContext) {
-    try {
-      OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(path), CharsetToolkit.UTF8_CHARSET);
-      try {
-        UnifiedDiffWriter.write(project, remainingPatches, writer, "\n", commitContext);
-      }
-      finally {
-        writer.close();
-      }
+    try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(path), CharsetToolkit.UTF8_CHARSET)) {
+      UnifiedDiffWriter.write(project, remainingPatches, writer, "\n", commitContext);
     }
     catch (IOException e) {
       LOG.error(e);

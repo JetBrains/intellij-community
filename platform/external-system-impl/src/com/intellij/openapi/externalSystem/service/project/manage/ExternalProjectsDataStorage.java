@@ -342,22 +342,14 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
       });
     }
 
-    DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(projectConfigurationFile)));
-    try {
+    try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(projectConfigurationFile)))) {
       out.writeUTF(STORAGE_VERSION);
       out.writeInt(externalProjects.size());
-      ObjectOutputStream os = new ObjectOutputStream(out);
-      try {
+      try (ObjectOutputStream os = new ObjectOutputStream(out)) {
         for (InternalExternalProjectInfo externalProject : externalProjects) {
           os.writeObject(externalProject);
         }
       }
-      finally {
-        os.close();
-      }
-    }
-    finally {
-      out.close();
     }
   }
 
@@ -384,15 +376,12 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
       throw new IOException("External projects data storage was invalidated");
     }
 
-    DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(configurationFile)));
-
-    try {
+    try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(configurationFile)))) {
       final String storage_version = in.readUTF();
       if (!STORAGE_VERSION.equals(storage_version)) return projects;
       final int size = in.readInt();
 
-      ObjectInputStream os = new ObjectInputStream(in);
-      try {
+      try (ObjectInputStream os = new ObjectInputStream(in)) {
         for (int i = 0; i < size; i++) {
           InternalExternalProjectInfo projectDataDataNode = (InternalExternalProjectInfo)os.readObject();
           projects.add(projectDataDataNode);
@@ -401,12 +390,6 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
       catch (Exception e) {
         throw new IOException(e);
       }
-      finally {
-        os.close();
-      }
-    }
-    finally {
-      in.close();
     }
     return projects;
   }

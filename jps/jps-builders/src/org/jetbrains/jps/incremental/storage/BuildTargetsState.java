@@ -68,12 +68,8 @@ public class BuildTargetsState {
     try {
       File targetTypesFile = getTargetTypesFile();
       FileUtil.createParentDirs(targetTypesFile);
-      DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(targetTypesFile)));
-      try {
+      try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(targetTypesFile)))) {
         output.writeInt(myMaxTargetId.get());
-      }
-      finally {
-        output.close();
       }
     }
     catch (IOException e) {
