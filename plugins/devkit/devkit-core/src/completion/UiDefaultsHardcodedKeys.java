@@ -1283,6 +1283,8 @@ public final class UiDefaultsHardcodedKeys {
     "Component.inactiveErrorFocusColor",
     "Component.inactiveWarningFocusColor",
     "Component.warningFocusColor",
+    "Counter.background",
+    "Counter.foreground",
     "DragAndDrop.areaBackground",
     "DragAndDrop.areaBorderColor",
     "DragAndDrop.areaForeground",
