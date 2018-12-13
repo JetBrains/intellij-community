@@ -38,9 +38,9 @@ internal class PythonTrialTest : PythonUnitTestingLikeTest<PyTrialTestProcessRun
         Assert.assertEquals(
           "Exception broke test tree",
           "Test tree:\n" +
-          "[root]\n" +
-          ".test_exception\n" +
-          "..TestFailure\n" +
+          "[root](-)\n" +
+          ".test_exception(-)\n" +
+          "..TestFailure(-)\n" +
           "...testBadCode(-)\n", runner.formattedTestTree)
       }
     })

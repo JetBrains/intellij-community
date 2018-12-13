@@ -135,18 +135,18 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
                                         @NotNull final String all, int exitCode) {
           if (runner.getCurrentRerunStep() == 0) {
             assertEquals("test with docstring produced bad tree", "Test tree:\n" +
-                                                                  "[root]\n" +
-                                                                  ".test_test\n" +
-                                                                  "..SomeTestCase\n" +
+                                                                  "[root](-)\n" +
+                                                                  ".test_test(-)\n" +
+                                                                  "..SomeTestCase(-)\n" +
                                                                   "...testSomething (Only with docstring test is parsed with extra space)(+)\n" +
                                                                   "...testSomethingBad (Fail)(-)\n", runner.getFormattedTestTree());
           }
           else {
             assertEquals("test with docstring failed to rerun",
                          "Test tree:\n" +
-                         "[root]\n" +
-                         ".test_test\n" +
-                         "..SomeTestCase\n" +
+                         "[root](-)\n" +
+                         ".test_test(-)\n" +
+                         "..SomeTestCase(-)\n" +
                          "...testSomethingBad (Fail)(-)\n", runner.getFormattedTestTree());
           }
         }
@@ -287,9 +287,9 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
           // Make sure derived tests are launched, not abstract
           Assert.assertEquals("Wrong tests after rerun",
                               "Test tree:\n" +
-                              "[root]\n" +
-                              ".rerun_derived\n" +
-                              "..TestDerived\n" +
+                              "[root](-)\n" +
+                              ".rerun_derived(-)\n" +
+                              "..TestDerived(-)\n" +
                               "...test_a(-)\n", runner.getFormattedTestTree());
         }
       }
