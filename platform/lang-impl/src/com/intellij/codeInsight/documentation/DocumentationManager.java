@@ -467,9 +467,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           }
         }
         if (!sameElement || !component.isUpToDate()) {
-          content.setDisplayName(getTitle(element, true));
-          myUpdateDocAlarm.cancelAllRequests();
-          doFetchDocInfo(component, new MyCollector(myProject, element, originalElement, null))
+          cancelAndFetchDocInfo(component, new MyCollector(myProject, element, originalElement, null))
             .doWhenDone(() -> component.clearHistory());
         }
       }
@@ -725,6 +723,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   private ActionCallback cancelAndFetchDocInfo(@NotNull DocumentationComponent component, @NotNull DocumentationCollector provider) {
+    if (myToolWindow != null) {
+      Content content = myToolWindow.getContentManager().getSelectedContent();
+      if (content != null) content.setDisplayName(getTitle(provider.element, true));
+    }
     myUpdateDocAlarm.cancelAllRequests();
     return doFetchDocInfo(component, provider);
   }
