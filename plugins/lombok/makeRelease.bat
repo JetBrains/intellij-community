@@ -2,7 +2,7 @@
 
 SET pluginVersion=0.23
 
-for %%X in (2018.1 2018.2 2018.3 183.2153.8) do call :buildPlugin %%X
+for %%X in (2018.1 2018.2 2018.3) do call :buildPlugin %%X
 ECHO All Done
 
 echo.&pause&goto:eof
