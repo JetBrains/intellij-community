@@ -136,19 +136,18 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     return myProxyManager.getProxy();
   }
 
+  @NotNull
+  public final String getFormattedTestTree() {
+    return getFormattedTestTree(getTestProxy());
+  }
+
   /**
    * @return Test tree using poorman's graphics
    */
   @NotNull
-  public final String getFormattedTestTree() {
+  public static String getFormattedTestTree(@NotNull final SMTestProxy proxy) {
     final StringBuilder builder = new StringBuilder("Test tree:\n");
-
-    final SMRootTestProxy proxy = getTestProxy();
-    if (proxy.wasTerminated()) {
-      return "Test terminated";
-    }
     formatLevel(proxy, 0, builder);
-
     return builder.toString();
   }
 
