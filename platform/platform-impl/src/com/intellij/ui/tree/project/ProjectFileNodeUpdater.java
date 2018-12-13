@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.psi.*;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -147,8 +148,8 @@ public abstract class ProjectFileNodeUpdater {
    * Notifies that all collected files should be reported as soon as possible.
    * Usually, it is needed to find an added file in a tree right after adding.
    */
-  public void updateImmediately() {
-    invoker.runOrInvokeLater(() -> onInvokerThread(true));
+  public void updateImmediately(@NotNull Runnable onDone) {
+    invoker.runOrInvokeLater(() -> onInvokerThread(true)).onProcessed(o -> EdtExecutorService.getInstance().execute(onDone));
   }
 
   /**
