@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.highlighting.BraceHighlightingHandler;
+import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -46,10 +48,11 @@ public class MatchBraceAction extends EditorAction {
 
     /**
      * @return offset to move caret to, computed from the brace matcher. If it's not possible to compute - returns {@code -1}
+     * @implNote this code partially duplicates {@link BraceHighlightingHandler#updateBraces()} and probably can be extracted.
      */
-    private static int getOffsetFromBraceMatcher(@NotNull Editor editor, PsiFile file) {
+    private static int getOffsetFromBraceMatcher(@NotNull Editor editor, @NotNull PsiFile file) {
       final Caret caret = editor.getCaretModel().getCurrentCaret();
-      final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+      final EditorHighlighter highlighter = BraceHighlightingHandler.getLazyParsableHighlighterIfAny(file.getProject(), editor, file);
       final CharSequence text = editor.getDocument().getCharsSequence();
 
       int offset = caret.getOffset();
@@ -57,14 +60,20 @@ public class MatchBraceAction extends EditorAction {
       HighlighterIterator iterator = highlighter.createIterator(offset);
 
       if (iterator.atEnd()) {
+        // end of file, caret should be in the beginning of the brace
         offset--;
       }
-      else if (!BraceMatchingUtil.isLBraceToken(iterator, text, fileType)) {
+      else if (offset > 0 &&
+               !BraceMatchingUtil.isLBraceToken(iterator, text, fileType) &&
+               !BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
+        // we probably standing after a brace, let's look behind one char
         offset--;
 
-        if (offset >= 0) {
-          final HighlighterIterator i = highlighter.createIterator(offset);
-          if (!BraceMatchingUtil.isRBraceToken(i, text, getFileType(file, i.getStart()))) offset++;
+        HighlighterIterator i = highlighter.createIterator(offset);
+        if (!BraceMatchingUtil.isRBraceToken(i, text, getFileType(file, i.getStart())) &&
+            !BraceMatchingUtil.isLBraceToken(i, text, getFileType(file, i.getStart()))) {
+          // we still not at brace
+          offset++;
         }
       }
 
@@ -73,21 +82,32 @@ public class MatchBraceAction extends EditorAction {
       iterator = highlighter.createIterator(offset);
       fileType = getFileType(file, iterator.getStart());
 
-      while (!BraceMatchingUtil.isLBraceToken(iterator, text, fileType) &&
-             !BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
-        if (iterator.getStart() == 0) return -1;
-        iterator.retreat();
-        offset = iterator.getStart();
+      boolean isLeftBrace = BraceMatchingUtil.isLBraceToken(iterator, text, fileType);
+      if (isLeftBrace || BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
+        // we are at brace
+        if (BraceMatchingUtil.matchBrace(text, fileType, iterator, isLeftBrace)) {
+          return iterator.getStart();
+        }
+        return -1;
       }
 
-      if (BraceMatchingUtil.matchBrace(text, fileType, iterator, true)) {
-        return iterator.getEnd();
+      int unopenedBraces = 0;
+      while (true) {
+        if (BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
+          unopenedBraces++;
+        }
+        else if (BraceMatchingUtil.isLBraceToken(iterator, text, fileType)) {
+          unopenedBraces--;
+        }
+        if (unopenedBraces < 0) {
+          return iterator.getStart();
+        }
+
+        if (iterator.getStart() == 0) {
+          return -1;
+        }
+        iterator.retreat();
       }
-      iterator = highlighter.createIterator(offset);
-      if (BraceMatchingUtil.matchBrace(text, fileType, iterator, false)) {
-        return iterator.getStart();
-      }
-      return -1;
     }
   }
 

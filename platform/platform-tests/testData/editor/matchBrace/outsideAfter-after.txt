@@ -4,6 +4,6 @@ just a text
 
 text again
 
-<caret>{ somethingelse }
+{ somethingelse }
 
-last text
+last <caret>text

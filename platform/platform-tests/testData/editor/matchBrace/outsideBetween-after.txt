@@ -1,8 +1,8 @@
 just a text
 
-<caret>{ something }
+{ something }
 
-text again
+text <caret>again
 
 { somethingelse }
 

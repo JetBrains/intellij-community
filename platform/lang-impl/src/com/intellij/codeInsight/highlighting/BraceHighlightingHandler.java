@@ -191,7 +191,7 @@ public class BraceHighlightingHandler {
   }
 
   @NotNull
-  static EditorHighlighter getLazyParsableHighlighterIfAny(Project project, Editor editor, PsiFile psiFile) {
+  public static EditorHighlighter getLazyParsableHighlighterIfAny(Project project, Editor editor, PsiFile psiFile) {
     if (!PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument())) {
       return ((EditorEx)editor).getHighlighter();
     }
