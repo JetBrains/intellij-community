@@ -305,15 +305,20 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
                                       @NotNull ExtensionPoint.Kind kind) {
     if (hasExtensionPoint(extensionPointName)) {
       final String message =
-        "Duplicate registration for EP: " + extensionPointName + ": original plugin " + getExtensionPoint(extensionPointName).getDescriptor().getPluginId() +
-        ", new plugin " + descriptor.getPluginId();
+        "Duplicate registration for EP: " + extensionPointName + ": original plugin " +
+        extractPluginId(getExtensionPoint(extensionPointName).getDescriptor()) +
+        ", new plugin " + extractPluginId(descriptor);
       if (DEBUG_REGISTRATION) {
         LOG.error(message, myEPTraces.get(extensionPointName));
       }
-      throw new PicoPluginExtensionInitializationException(message, null, descriptor.getPluginId());
+      throw new PicoPluginExtensionInitializationException(message, null, extractPluginId(descriptor));
     }
 
     registerExtensionPoint(new ExtensionPointImpl(extensionPointName, extensionPointBeanClass, kind, this, myAreaInstance, descriptor));
+  }
+
+  private static PluginId extractPluginId(@NotNull PluginDescriptor descriptor) {
+    return descriptor instanceof UndefinedPluginDescriptor ? null : descriptor.getPluginId();
   }
 
   public void registerExtensionPoint(@NotNull ExtensionPointImpl extensionPoint) {
