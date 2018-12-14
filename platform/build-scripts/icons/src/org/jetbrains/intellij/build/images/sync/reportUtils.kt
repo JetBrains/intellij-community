@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
 import java.util.*
+import java.util.stream.Collectors
 import java.util.stream.Stream
 import kotlin.streams.toList
 
@@ -98,7 +99,8 @@ private fun createReviewForDev(context: Context, user: String, email: String): R
       PlainOldReview(branch, projectId)
     }
     else {
-      val review = createReview(projectId, branch, commitsForReview)
+      val head = repos.parallelStream().map(::head).collect(Collectors.toSet()).single()
+      val review = createReview(projectId, branch, head, commitsForReview)
       try {
         addReviewer(projectId, review, triggeredBy() ?: DEFAULT_INVESTIGATOR)
         postVerificationResultToReview(review)
@@ -144,6 +146,7 @@ private fun createReviewForIcons(context: Context, user: String, email: String):
     return emptyList()
   }
   val repos = listOf(context.iconsRepo)
+  val head = head(context.iconsRepo)
   return context.devCommitsToSync.values.flatten()
     .groupBy(CommitInfo::committerEmail)
     .entries.parallelStream()
@@ -156,7 +159,7 @@ private fun createReviewForIcons(context: Context, user: String, email: String):
           syncIconsRepo(context, change)
         }
         val commitsForReview = commitAndPush(branch, user, email, commits.groupBy(CommitInfo::repo).commitMessage(), repos)
-        val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, commitsForReview)
+        val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, head, commitsForReview)
         addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, committer)
         review
       }

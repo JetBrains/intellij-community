@@ -263,7 +263,7 @@ private fun isMergeOfMasterIntoMaster(repo: File, merge: CommitInfo) =
 private var heads = emptyMap<File, String>()
 private val headsGuard = Any()
 
-private fun head(repo: File): String {
+internal fun head(repo: File): String {
   if (!heads.containsKey(repo)) {
     synchronized(headsGuard) {
       if (!heads.containsKey(repo)) {

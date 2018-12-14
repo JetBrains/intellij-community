@@ -35,8 +35,7 @@ internal class UpsourceReview(id: String, projectId: String?, url: String) : Rev
 internal class PlainOldReview(branch: String, projectId: String?) : Review(branch, projectId, branch)
 private class Revision(val revisionId: String, val branchHeadLabel: String)
 
-@Suppress("ReplaceSingleLineLet")
-internal fun createReview(projectId: String, branch: String, commits: Collection<String>): Review {
+internal fun createReview(projectId: String, branch: String, head: String, commits: Collection<String>): Review {
   val max = 20
   val timeout = 30L
   var revisions = emptyList<Revision>()
@@ -57,6 +56,7 @@ internal fun createReview(projectId: String, branch: String, commits: Collection
       }
     }
   }
+  @Suppress("ReplaceSingleLineLet")
   val reviewId = upsourcePost("createReview", """{
       "projectId" : "$projectId",
       "revisions" : [
@@ -75,7 +75,7 @@ internal fun createReview(projectId: String, branch: String, commits: Collection
     }
   }""")
   val review = UpsourceReview(reviewId, projectId, "$UPSOURCE/$projectId/review/$reviewId")
-  postComment(projectId, review, "Please review changes and run cherry-pick into master (don't forget to delete tmp branch $branch)")
+  postComment(projectId, review, "Please review changes and cherry-pick into $head (don't forget to delete tmp branch $branch)")
   return review
 }
 
