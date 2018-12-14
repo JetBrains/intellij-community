@@ -28,10 +28,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PyDetectedSdk;
-import com.jetbrains.python.sdk.PyLazySdk;
-import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -238,20 +235,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
       refreshPackagesSynchronously();
       FileUtil.delete(buildDir);
     }
-  }
-
-  @NotNull
-  private String getWriteAccessAnchorPath() throws ExecutionException {
-    final VirtualFile sitePackagesDir = PythonSdkType.getSitePackagesDirectory(mySdk);
-    if (sitePackagesDir == null) {
-      // Perhaps a system interpreter on Linux that has only "dist-packages", use executable path as a fallback then
-      final String homePath = mySdk.getHomePath();
-      if (homePath == null) {
-        throw new ExecutionException("Cannot find Python interpreter for SDK " + mySdk.getName());
-      }
-      return homePath;
-    }
-    return sitePackagesDir.getPath();
   }
 
   @Override
@@ -519,7 +502,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         flavor.commandLinePatcher().patchCommandLine(commandLine);
       }
       final Process process;
-      final boolean useSudo = askForSudo && !Files.isWritable(Paths.get(getWriteAccessAnchorPath()));
+      final boolean useSudo = askForSudo && PySdkExtKt.adminPermissionsNeeded(mySdk);
       if (useSudo) {
         process = ExecUtil.sudo(commandLine, "Please enter your password to make changes in system packages: ");
       }
