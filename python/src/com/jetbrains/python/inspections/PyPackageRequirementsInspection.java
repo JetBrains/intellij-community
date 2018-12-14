@@ -347,6 +347,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
           new PyInterpreterInspection.ConfigureInterpreterFix().applyFix(project, descriptor);
           return true;
         case Messages.CANCEL:
+        case -1:
           return true;
       }
     }
