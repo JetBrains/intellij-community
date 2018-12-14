@@ -391,7 +391,9 @@ internal fun DataWriter?.writeTo(file: Path, lineSeparator: String = LineSeparat
     file.delete()
   }
   else {
-    file.safeOutputStream(null).use { write(it, lineSeparator) }
+    file.safeOutputStream(null).use {
+      write(it, lineSeparator)
+    }
   }
 }
 

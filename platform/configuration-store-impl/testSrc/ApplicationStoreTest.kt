@@ -5,12 +5,12 @@ import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.refreshVfs
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.ExceptionUtil
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.SmartList
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.systemIndependentPath
@@ -31,7 +31,6 @@ import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.properties.Delegates
 
 internal class ApplicationStoreTest {
@@ -45,14 +44,11 @@ internal class ApplicationStoreTest {
   @Rule
   val tempDirManager = TemporaryDirectory()
 
-  @JvmField
-  @Rule
-  val edtRule = EdtRule()
-
   private var testAppConfig: Path by Delegates.notNull()
   private var componentStore: MyComponentStore by Delegates.notNull()
 
-  @Before fun setUp() {
+  @Before
+  fun setUp() {
     testAppConfig = tempDirManager.newPath()
     componentStore = MyComponentStore(testAppConfig.systemIndependentPath)
   }
@@ -256,137 +252,6 @@ internal class ApplicationStoreTest {
     assertThat(component.options).isEqualTo(TestState("old"))
   }
 
-  @Test
-  @RunsInEdt
-  fun `modification tracker`() {
-    testAppConfig.refreshVfs()
-
-    @State(name = "modificationTrackerA", storages = [(Storage("a.xml"))])
-    open class A : PersistentStateComponent<TestState>, SimpleModificationTracker() {
-      var options = TestState()
-
-      val stateCalledCount = AtomicLong(0)
-      var lastGetStateStackTrace: String? = null
-
-      override fun getState(): TestState {
-        lastGetStateStackTrace = ExceptionUtil.currentStackTrace()
-        stateCalledCount.incrementAndGet()
-        return options
-      }
-
-      override fun loadState(state: TestState) {
-        this.options = state
-      }
-    }
-
-    val component = A()
-    componentStore.initComponent(component, false)
-
-    assertThat(component.modificationCount).isEqualTo(0)
-    assertThat(component.stateCalledCount.get()).isEqualTo(0)
-
-    // test that store correctly set last modification count to component modification count on init
-    component.lastGetStateStackTrace = null
-    saveStore()
-    @Suppress("USELESS_CAST")
-    assertThat(component.lastGetStateStackTrace as String?).isNull()
-    assertThat(component.stateCalledCount.get()).isEqualTo(0)
-
-    // change modification count - store will be forced to check changes using serialization and A.getState will be called
-    component.incModificationCount()
-    saveStore()
-    assertThat(component.stateCalledCount.get()).isEqualTo(1)
-
-    // test that store correctly save last modification time and doesn't call our state on next save
-    saveStore()
-    assertThat(component.stateCalledCount.get()).isEqualTo(1)
-
-    val componentFile = testAppConfig.resolve("a.xml")
-    assertThat(componentFile).doesNotExist()
-
-    // update data but "forget" to update modification count
-    component.options.foo = "new"
-
-    saveStore()
-    assertThat(componentFile).doesNotExist()
-
-    component.incModificationCount()
-    saveStore()
-    assertThat(component.stateCalledCount.get()).isEqualTo(2)
-
-    assertThat(componentFile).hasContent("""
-    <application>
-      <component name="modificationTrackerA" foo="new" />
-    </application>""".trimIndent())
-  }
-
-  @Test
-  @RunsInEdt
-  fun persistentStateComponentWithModificationTracker() {
-    testAppConfig.refreshVfs()
-
-    @State(name = "TestPersistentStateComponentWithModificationTracker", storages = [(Storage("b.xml"))])
-    open class A : PersistentStateComponentWithModificationTracker<TestState> {
-      var modificationCount = AtomicLong(0)
-
-      override fun getStateModificationCount() = modificationCount.get()
-
-      var options = TestState()
-
-      var stateCalledCount = AtomicLong(0)
-
-      override fun getState(): TestState {
-        stateCalledCount.incrementAndGet()
-        return options
-      }
-
-      override fun loadState(state: TestState) {
-        this.options = state
-      }
-
-      fun incModificationCount() {
-        modificationCount.incrementAndGet()
-      }
-    }
-
-    val component = A()
-    componentStore.initComponent(component, false)
-
-    assertThat(component.modificationCount.get()).isEqualTo(0)
-    assertThat(component.stateCalledCount.get()).isEqualTo(0)
-
-    // test that store correctly set last modification count to component modification count on init
-    saveStore()
-    assertThat(component.stateCalledCount.get()).isEqualTo(0)
-
-    // change modification count - store will be forced to check changes using serialization and A.getState will be called
-    component.incModificationCount()
-    saveStore()
-    assertThat(component.stateCalledCount.get()).isEqualTo(1)
-
-    // test that store correctly save last modification time and doesn't call our state on next save
-    saveStore()
-    assertThat(component.stateCalledCount.get()).isEqualTo(1)
-
-    val componentFile = testAppConfig.resolve("b.xml")
-    assertThat(componentFile).doesNotExist()
-
-    // update data but "forget" to update modification count
-    component.options.foo = "new"
-
-    saveStore()
-    assertThat(componentFile).doesNotExist()
-
-    component.incModificationCount()
-    saveStore()
-    assertThat(component.stateCalledCount.get()).isEqualTo(2)
-
-    assertThat(componentFile).hasContent("""
-    <application>
-      <component name="TestPersistentStateComponentWithModificationTracker" foo="new" />
-    </application>""".trimIndent())
-  }
-
   @Test fun `do not check if only format changed for non-roamable storage`() {
     @State(name = "A", storages = [(Storage(value = "b.xml", roamingType = RoamingType.DISABLED))])
     class AWorkspace : A()
@@ -464,7 +329,7 @@ internal class ApplicationStoreTest {
     }
   }
 
-  class MyComponentStore(testAppConfigPath: String) : ComponentStoreImpl() {
+  private class MyComponentStore(testAppConfigPath: String) : ComponentStoreImpl() {
     override val storageManager = ApplicationStorageManager(ApplicationManager.getApplication())
 
     init {
@@ -504,4 +369,4 @@ internal class ApplicationStoreTest {
   }
 }
 
-private data class TestState @JvmOverloads constructor(@Attribute var foo: String = "", @Attribute var bar: String = "")
+internal data class TestState @JvmOverloads constructor(@Attribute var foo: String = "", @Attribute var bar: String = "")
