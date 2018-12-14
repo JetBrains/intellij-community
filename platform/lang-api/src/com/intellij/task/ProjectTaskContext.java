@@ -19,6 +19,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,20 +77,43 @@ public class ProjectTaskContext extends UserDataHolderBase {
     return myAutoRun;
   }
 
-  public void collectGeneratedFiles() {
+  @ApiStatus.Experimental
+  public void enableCollectionOfGeneratedFiles() {
     myCollectGeneratedFiles = true;
   }
 
+  /**
+   * Returns roots of the files generated during the task session.
+   * Note, generated files collecting is disabled by default.
+   * It can be requested using the {@link #enableCollectionOfGeneratedFiles()} method by the task initiator, see {@link ProjectTaskManager#run(ProjectTaskContext, ProjectTask, ProjectTaskNotification)}.
+   * Or using the {@link ProjectTaskListener#started(ProjectTaskContext)} event.
+   */
   @NotNull
+  @ApiStatus.Experimental
   public Collection<String> getGeneratedFilesRoots() {
     return myGeneratedFiles.keySet();
   }
 
+  /**
+   * Returns files generated during the task session in the specified root.
+   * Note, generated files collecting is disabled by default.
+   * It can be requested using the {@link #enableCollectionOfGeneratedFiles()} method by the task initiator, see {@link ProjectTaskManager#run(ProjectTaskContext, ProjectTask, ProjectTaskNotification)}.
+   * Or using the {@link ProjectTaskListener#started(ProjectTaskContext)} event.
+   */
   @NotNull
+  @ApiStatus.Experimental
   public Collection<String> getGeneratedFilesRelativePaths(@NotNull String root) {
     return myGeneratedFiles.get(root);
   }
 
+  /**
+   * This method isn't suppose to be used directly.
+   * {@link ProjectTaskRunner}s can use it to report information about generated files during some task execution.
+   *
+   * @param root the root directory of the generated file
+   * @param relativePath the generated file relative path with regard to the root
+   */
+  @ApiStatus.Experimental
   public void fileGenerated(@NotNull String root, @NotNull String relativePath) {
     if (myCollectGeneratedFiles) {
       myGeneratedFiles.putValue(root, relativePath);

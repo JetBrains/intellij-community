@@ -324,7 +324,7 @@ public class HotSwapUIImpl extends HotSwapUI {
 
     @Override
     public void started(@NotNull ProjectTaskContext context) {
-      context.collectGeneratedFiles();
+      context.enableCollectionOfGeneratedFiles();
     }
 
     @Override
