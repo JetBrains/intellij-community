@@ -3,7 +3,6 @@ package com.jetbrains.python.testing
 
 import com.google.common.base.Preconditions
 import com.intellij.execution.RunManager
-import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationManager
@@ -24,7 +23,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.PythonConfigurationFactoryBase
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType
-import com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer
 import com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestRunConfiguration
 import com.jetbrains.python.testing.pytestLegacy.PyTestRunConfiguration
 import com.jetbrains.python.testing.unittestLegacy.PythonUnitTestRunConfiguration
@@ -44,15 +42,13 @@ import javax.swing.SwingUtilities
 /**
  * @return is new mode enabled or not
  */
-fun isNewTestsModeEnabled(): Boolean = Registry.`is`("python.tests.enableUniversalTests")
+fun isNewTestsModeEnabled(): Boolean = Registry.`is`("python.tests.enableUniversalTests", true)
 
 /**
  * Should be installed as application component
  */
 internal class PyTestLegacyInteropInitializer : ApplicationInitializedListener {
   override fun componentsInitialized() {
-    disableUnneededConfigurationProducer()
-
     // Delegate to project initialization
     ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
       override fun projectComponentsInitialized(project: Project) {
@@ -78,26 +74,6 @@ private fun projectInitialized(project: Project) {
   val configurations = factories.map { manager.getConfigurationTemplate(it) } + manager.allConfigurationsList
   configurations.filterIsInstance(PyAbstractTestConfiguration::class.java).forEach {
     it.legacyConfigurationAdapter.copyFromLegacyIfNeeded()
-  }
-}
-
-/**
- * It is impossible to have 2 producers for one type (class cast exception may take place), so we need to disable either old or new one
- */
-private fun disableUnneededConfigurationProducer() {
-  val extensionPoint = RunConfigurationProducer.EP_NAME.getPoint(null)
-
-  val newMode = isNewTestsModeEnabled()
-  for (it in extensionPoint.extensionList) {
-    if (it is PythonDocTestConfigurationProducer) {
-      continue
-    }
-
-    if ((it is PyTestsConfigurationProducer && !newMode) ||
-        (it is PythonTestLegacyConfigurationProducer<*> && newMode)) {
-      extensionPoint.unregisterExtension(it)
-      Logger.getInstance("PyTestLegacyInterop").info("Disabling $it")
-    }
   }
 }
 

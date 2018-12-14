@@ -13,6 +13,7 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
@@ -715,6 +716,12 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
         elementFolder = elementFolder.parent ?: return null
       }
       return elementFolder
+    }
+  }
+
+  init {
+    if (!isNewTestsModeEnabled()) {
+      throw ExtensionNotApplicableException.INSTANCE
     }
   }
 

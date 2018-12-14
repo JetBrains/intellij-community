@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.ArrayUtil;
@@ -248,18 +247,15 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       OpenTHashSet<T> duplicates = new OpenTHashSet<>(adapters.length);
 
       myLoadedAdapters = Collections.emptyList();
-      boolean errorHappened = false;
-      for (int i = 0; i < adapters.length; i++) {
+      int extensionIndex = 0;
+      for (ExtensionComponentAdapter adapter : adapters) {
         CHECK_CANCELED.run();
-        ExtensionComponentAdapter adapter = adapters[i];
         try {
           @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
           if (extension == null) {
-            errorHappened = true;
-            LOG.error("null extension in: " + adapter + ";\ngetExtensionClass(): " + getExtensionClass() + ";\n" );
+            LOG.error("null extension in: " + adapter + ";\ngetExtensionClass(): " + getExtensionClass() + ";\n");
           }
-          if (!duplicates.add(extension)) {
-            errorHappened = true;
+          else if (!duplicates.add(extension)) {
             T duplicate = duplicates.get(extension);
             LOG.error("Duplicate extension found: " + extension + "; " +
                       " Prev extension: " + duplicate + ";\n" +
@@ -267,27 +263,32 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
                       " getExtensionClass(): " + getExtensionClass() + ";\n" +
                       " result:" + Arrays.asList(result));
           }
-          if (!extensionClass.isInstance(extension)) {
-            errorHappened = true;
-            LOG.error("Extension " + (extension == null ? null : extension.getClass()) + " does not implement " + extensionClass + ". It came from " + adapter);
-            continue;
+          else if (!extensionClass.isInstance(extension)) {
+            LOG.error("Extension " + extension.getClass() + " does not implement " + extensionClass + ". It came from " + adapter);
           }
-          result[i] = extension;
-
-          registerExtension(extension, adapter, myLoadedAdapters.size(), !loaded.contains(adapter));
+          else {
+            result[extensionIndex++] = extension;
+            registerExtension(extension, adapter, myLoadedAdapters.size(), !loaded.contains(adapter));
+          }
+        }
+        catch (ExtensionNotApplicableException ignore) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(adapter + " not loaded because reported that not applicable");
+          }
         }
         catch (ProcessCanceledException e) {
           throw e;
         }
         catch (Exception e) {
-          errorHappened = true;
           LOG.error(e);
         }
         myExtensionAdapters.remove(adapter);
       }
       myExtensionAdapters = Collections.emptySet();
-      if (errorHappened) {
-        result = ContainerUtil.findAllAsArray(result, Condition.NOT_NULL);
+
+      if (extensionIndex != result.length) {
+        //noinspection unchecked
+        result = ArrayUtil.realloc(result, extensionIndex, size -> (T[])Array.newInstance(extensionClass, size));
       }
       return result;
     }

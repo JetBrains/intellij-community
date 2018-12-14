@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -34,7 +35,15 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.List;
 
+import static com.jetbrains.python.testing.PyTestLegacyInteropKt.isNewTestsModeEnabled;
+
 public final class PyTestConfigurationProducer extends PythonTestLegacyConfigurationProducer<PyTestRunConfiguration> {
+  public PyTestConfigurationProducer() {
+    if (isNewTestsModeEnabled()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+  }
+
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {

@@ -3,6 +3,7 @@ package com.jetbrains.python.testing.nosetestLegacy;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -15,7 +16,15 @@ import com.jetbrains.python.testing.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.jetbrains.python.testing.PyTestLegacyInteropKt.isNewTestsModeEnabled;
+
 public final class PythonNoseTestConfigurationProducer extends PythonTestLegacyConfigurationProducer {
+  public PythonNoseTestConfigurationProducer() {
+    if (isNewTestsModeEnabled()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+  }
+
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {
