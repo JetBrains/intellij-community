@@ -77,8 +77,7 @@ public class GradleClassFinder extends NonClasspathClassFinder {
     VirtualFile file = containingFile != null ? containingFile.getVirtualFile() : null;
     return file != null &&
            !ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file) &&
-           !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibraryClasses(file) &&
-           !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibrarySource(file) ? aClass : null;
+           !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibrary(file) ? aClass : null;
   }
 
   @NotNull

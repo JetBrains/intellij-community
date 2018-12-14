@@ -647,7 +647,7 @@ public class PsiVFSListener implements BulkFileListener {
     }
 
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(myProject);
-    return index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file);
+    return index.isInContent(file) || index.isInLibrary(file);
   }
 
   @Override

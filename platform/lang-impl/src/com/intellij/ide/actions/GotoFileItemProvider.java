@@ -118,7 +118,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       VirtualFile vFile = LocalFileSystem.getInstance().findFileByPathIfCached(path);
       if (vFile != null) {
         ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(myProject);
-        if (index.isInContent(vFile) || index.isInLibraryClasses(vFile) || index.isInLibrarySource(vFile)) {
+        if (index.isInContent(vFile) || index.isInLibrary(vFile)) {
           return vFile.isDirectory() ? PsiManager.getInstance(myProject).findDirectory(vFile) : PsiManager.getInstance(myProject).findFile(vFile);
         }
       }

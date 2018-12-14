@@ -111,7 +111,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
       }
     }
 
-    final boolean isInLibrary =  virtualFile == null || fileIndex.isInLibrarySource(virtualFile) || fileIndex.isInLibraryClasses(virtualFile);
+    final boolean isInLibrary =  virtualFile == null || fileIndex.isInLibrary(virtualFile);
     final Set<PsiFile> collectedDeps = new HashSet<>();
     final HashSet<PsiFile> processed = new HashSet<>();
     collectedDeps.add(file);
@@ -125,7 +125,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
             indicator.setText2(getRelativeToProjectPath(vFile));
           }
 
-          if (!isInLibrary && (fileIndex.isInLibraryClasses(vFile) || fileIndex.isInLibrarySource(vFile))) {
+          if (!isInLibrary && fileIndex.isInLibrary(vFile)) {
             processed.add(psiFile);
           }
         }
@@ -141,7 +141,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
                 if (dependencyFile.isPhysical()) {
                   final VirtualFile virtualFile = dependencyFile.getVirtualFile();
                   if (virtualFile != null
-                      && (fileIndex.isInContent(virtualFile) || fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile))
+                      && (fileIndex.isInContent(virtualFile) || fileIndex.isInLibrary(virtualFile))
                       && (myTargetScope == null || myTargetScope.contains(virtualFile))) {
                     final PsiElement navigationElement = dependencyFile.getNavigationElement();
                     found.add(navigationElement instanceof PsiFile ? (PsiFile)navigationElement : dependencyFile);

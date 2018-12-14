@@ -143,7 +143,7 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
     if (vFile == null) return null;
     Project project = what.getProject();
     final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
-    if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
+    if (fileIndex.isInLibrary(vFile)) {
       final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
       if (orderEntries.isEmpty()) {
         return null;

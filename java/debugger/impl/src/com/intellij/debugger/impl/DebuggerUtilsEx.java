@@ -1118,7 +1118,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
       else {
         ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-        return projectFileIndex.isInLibraryClasses(file) || projectFileIndex.isInLibrarySource(file);
+        return projectFileIndex.isInLibrary(file);
       }
     });
   }
