@@ -225,7 +225,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
 
     String generateBlockBranch(@NotNull PsiStatement statement, CommentTracker ct) {
       return StreamEx.of(ControlFlowUtils.unwrapBlock(statement))
-        .map(el -> ct.text(el))
+        .map(ct::text)
         .joining("\n");
     }
 

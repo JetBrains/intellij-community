@@ -510,7 +510,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       if (myResultStatements.length == 1) {
         return ct.text(myResultStatements[0]);
       }
-      return StreamEx.of(myResultStatements).map(stmt -> ct.text(stmt)).joining("\n", "{\n", "}");
+      return StreamEx.of(myResultStatements).map(ct::text).joining("\n", "{\n", "}");
     }
   }
 
