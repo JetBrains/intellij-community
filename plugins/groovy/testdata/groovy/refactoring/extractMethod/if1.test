@@ -20,7 +20,7 @@ protected static def getGeneratedFileNames() {
     }
 }
 
-private static String testMethod(int foo) {
+private static Serializable testMethod(Serializable foo) {
     if (f()) {
         foo = ""
     }

@@ -102,6 +102,11 @@ public class TypeInferenceHelper {
   }
 
   @Nullable
+  public static PsiType getInferredType(String referenceName, Instruction instruction, GrControlFlowOwner scope) {
+    return getInferenceCache(scope).getInferredType(referenceName, instruction, false);
+  }
+
+  @Nullable
   public static PsiType getVariableTypeInContext(@Nullable PsiElement context, @NotNull GrVariable variable) {
     if (context == null) return variable.getType();
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(context);

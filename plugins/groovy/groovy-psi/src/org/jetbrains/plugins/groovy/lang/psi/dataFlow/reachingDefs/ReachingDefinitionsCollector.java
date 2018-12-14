@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
 import com.intellij.psi.PsiElement;
@@ -35,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult;
@@ -79,17 +66,15 @@ public class ReachingDefinitionsCollector {
       }
     }
 
+    Set<Integer> outerBound = getFragmentOuterBound(fragmentInstructions, flow);
     for (final Integer ref : reachableFromFragmentReads) {
       ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction)flow[ref];
       String name = rwInstruction.getVariableName();
       final int[] defs = dfaResult.getDefinitions(ref);
       assert defs != null;
       if (anyDefInFragment(defs, fragmentInstructions)) {
-        for (int def : defs) {
-          if (fragmentInstructions.contains(def)) {
-            PsiType outputType = getType(flow[def].getElement());
-            addVariable(name, omap, manager, outputType);
-          }
+        for (int insnNum : outerBound) {
+          addVariable(name, omap, manager, getVariableTypeAt(flowOwner, flow[insnNum], name));
         }
 
         if (!allProperDefsInFragment(defs, ref, fragmentInstructions, postorder)) {
@@ -104,18 +89,32 @@ public class ReachingDefinitionsCollector {
     return new FragmentVariableInfos() {
       @Override
       public VariableInfo[] getInputVariableNames() {
-        return imap.values().toArray(new VariableInfo[0]);
+        return imap.values().toArray(VariableInfo.EMPTY_ARRAY);
       }
 
       @Override
       public VariableInfo[] getOutputVariableNames() {
-        return omap.values().toArray(new VariableInfo[0]);
+        return omap.values().toArray(VariableInfo.EMPTY_ARRAY);
       }
     };
   }
 
+  private static PsiType getVariableTypeAt(GrControlFlowOwner flowOwner, Instruction instruction, String name) {
+    PsiElement context = instruction.getElement();
+    PsiType outputType = TypeInferenceHelper.getInferredType(name, instruction, flowOwner);
+    if (outputType == null) {
+      GrVariable variable = resolveToLocalVariable(context, name);
+      if (variable != null) {
+        outputType = variable.getDeclaredType();
+      }
+    }
+    return outputType;
+  }
+
+
   @Nullable
-  private static GrVariable resolveToLocalVariable(@NotNull PsiElement element, @NotNull String name) {
+  private static GrVariable resolveToLocalVariable(@Nullable PsiElement element, @NotNull String name) {
+    if (element == null) return null;
     ElementResolveResult<GrVariable> result = GrReferenceResolveRunnerKt.resolveToLocalVariable(element, name);
     return result != null ? result.getElement() : null;
   }
@@ -291,6 +290,18 @@ public class ReachingDefinitionsCollector {
       }
     }
 
+    return result;
+  }
+
+  private static Set<Integer> getFragmentOuterBound(@NotNull LinkedHashSet<Integer> fragmentInstructions, @NotNull Instruction[] flow) {
+    final Set<Integer> result = new HashSet<>();
+    for (Integer num : fragmentInstructions) {
+      for (Instruction successor : flow[num].allSuccessors()) {
+        if (!fragmentInstructions.contains(successor.num())) {
+          result.add(num);
+        }
+      }
+    }
     return result;
   }
 
