@@ -34,7 +34,7 @@ public class ProjectTaskContext extends UserDataHolderBase {
   private final RunConfiguration myRunConfiguration;
   private final boolean myAutoRun;
   private final MultiMap<String, String> myGeneratedFiles;
-  private boolean myCollectGeneratedFiles;
+  private volatile boolean myCollectGeneratedFiles;
 
   public ProjectTaskContext() {
     this(null, null, false);
