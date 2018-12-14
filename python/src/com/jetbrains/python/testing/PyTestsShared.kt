@@ -655,7 +655,69 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> :
 /**
  * Only one producer is registered with EP, but it uses factory configured by user to produce different configs
  */
-object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<PyAbstractTestConfiguration>() {
+internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<PyAbstractTestConfiguration>() {
+  companion object {
+    /**
+     * Creates [ConfigurationTarget] to make  configuration work with provided element.
+     * Also reports working dir what should be set to configuration to work correctly
+     * @return [target, workingDirectory]
+     */
+    internal fun getTargetForConfig(configuration: PyAbstractTestConfiguration,
+                                    baseElement: PsiElement): Pair<ConfigurationTarget, String?>? {
+      var element = baseElement
+      // Go up until we reach top of the file
+      // asking configuration about each element if it is supported or not
+      // If element is supported -- set it as configuration target
+      do {
+        if (configuration.couldBeTestTarget(element)) {
+          when (element) {
+            is PyQualifiedNameOwner -> { // Function, class, method
+
+              val module = configuration.module ?: return null
+
+              val elementFile = element.containingFile as? PyFile ?: return null
+              val workingDirectory = getDirectoryForFileToBeImportedFrom(elementFile) ?: return null
+              val context = QNameResolveContext(ModuleBasedContextAnchor(module),
+                                                evalContext = TypeEvalContext.userInitiated(configuration.project,
+                                                                                            null),
+                                                folderToStart = workingDirectory.virtualFile)
+              val parts = element.tryResolveAndSplit(context) ?: return null
+              val qualifiedName = parts.getElementNamePrependingFile(workingDirectory)
+              return Pair(ConfigurationTarget(qualifiedName.toString(), PyRunTargetVariant.PYTHON),
+                          workingDirectory.virtualFile.path)
+            }
+            is PsiFileSystemItem -> {
+              val virtualFile = element.virtualFile
+              val path = virtualFile
+
+              val workingDirectory = when (element) {
+                                       is PyFile -> getDirectoryForFileToBeImportedFrom(element)
+                                       is PsiDirectory -> element
+                                       else -> return null
+                                     }?.virtualFile?.path ?: return null
+              return Pair(ConfigurationTarget(path.path, PyRunTargetVariant.PATH), workingDirectory)
+            }
+          }
+        }
+        element = element.parent ?: break
+      }
+      while (element !is PsiDirectory) // if parent is folder, then we are at file level
+      return null
+    }
+
+    /**
+     * Inspects file relative imports, finds farthest and returns folder with imported file
+     */
+    private fun getDirectoryForFileToBeImportedFrom(file: PyFile): PsiDirectory? {
+      val maxRelativeLevel = file.fromImports.map { it.relativeLevel }.max() ?: 0
+      var elementFolder = file.parent ?: return null
+      for (i in 1..maxRelativeLevel) {
+        elementFolder = elementFolder.parent ?: return null
+      }
+      return elementFolder
+    }
+  }
+
   override fun getConfigurationFactory() = PythonTestConfigurationType.getInstance().configurationFactories[0]
 
   override val configurationClass: Class<PyAbstractTestConfiguration> = PyAbstractTestConfiguration::class.java
@@ -726,75 +788,11 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     return true
   }
 
-
-  /**
-   * Inspects file relative imports, finds farthest and returns folder with imported file
-   */
-  private fun getDirectoryForFileToBeImportedFrom(file: PyFile): PsiDirectory? {
-    val maxRelativeLevel = file.fromImports.map { it.relativeLevel }.max() ?: 0
-    var elementFolder = file.parent ?: return null
-    for (i in 1..maxRelativeLevel) {
-      elementFolder = elementFolder.parent ?: return null
-    }
-    return elementFolder
-  }
-
-  /**
-   * Creates [ConfigurationTarget] to make  configuration work with provided element.
-   * Also reports working dir what should be set to configuration to work correctly
-   * @return [target, workingDirectory]
-   */
-  private fun getTargetForConfig(configuration: PyAbstractTestConfiguration,
-                                 baseElement: PsiElement): Pair<ConfigurationTarget, String?>? {
-
-
-    var element = baseElement
-    // Go up until we reach top of the file
-    // asking configuration about each element if it is supported or not
-    // If element is supported -- set it as configuration target
-    do {
-      if (configuration.couldBeTestTarget(element)) {
-        when (element) {
-          is PyQualifiedNameOwner -> { // Function, class, method
-
-            val module = configuration.module ?: return null
-
-            val elementFile = element.containingFile as? PyFile ?: return null
-            val workingDirectory = getDirectoryForFileToBeImportedFrom(elementFile) ?: return null
-            val context = QNameResolveContext(ModuleBasedContextAnchor(module),
-                                              evalContext = TypeEvalContext.userInitiated(configuration.project,
-                                                                                          null),
-                                              folderToStart = workingDirectory.virtualFile)
-            val parts = element.tryResolveAndSplit(context) ?: return null
-            val qualifiedName = parts.getElementNamePrependingFile(workingDirectory)
-            return Pair(ConfigurationTarget(qualifiedName.toString(), PyRunTargetVariant.PYTHON),
-                        workingDirectory.virtualFile.path)
-          }
-          is PsiFileSystemItem -> {
-            val virtualFile = element.virtualFile
-            val path = virtualFile
-
-            val workingDirectory = when (element) {
-                                     is PyFile -> getDirectoryForFileToBeImportedFrom(element)
-                                     is PsiDirectory -> element
-                                     else -> return null
-                                   }?.virtualFile?.path ?: return null
-            return Pair(ConfigurationTarget(path.path, PyRunTargetVariant.PATH), workingDirectory)
-          }
-        }
-      }
-      element = element.parent ?: break
-    }
-    while (element !is PsiDirectory) // if parent is folder, then we are at file level
-    return null
-  }
-
-
-  override fun isConfigurationFromContext(configuration: PyAbstractTestConfiguration,
-                                          context: ConfigurationContext?): Boolean {
-    if (context != null && PyTestConfigurationSelector.EP.extensions.find { it.isFromContext(configuration, context) } != null) {
+  override fun isConfigurationFromContext(configuration: PyAbstractTestConfiguration, context: ConfigurationContext?): Boolean {
+    if (context != null && PyTestConfigurationSelector.EP.extensionList.find { it.isFromContext(configuration, context) } != null) {
       return true
     }
+
     val location = context?.location
     if (location is PyTargetBasedPsiLocation) {
       // With derived classes several configurations for same element may exist
@@ -802,12 +800,10 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     }
 
     val psiElement = context?.psiLocation ?: return false
-
-    val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration,
-                                                                          psiElement) ?: return false
-
-    if (configuration.target != targetForConfig.first) return false
-
+    val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration, psiElement) ?: return false
+    if (configuration.target != targetForConfig.first) {
+      return false
+    }
 
     //Even of both configurations have same targets, it could be that both have same qname which is resolved
     // to different elements due to different working folders.
