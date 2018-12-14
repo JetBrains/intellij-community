@@ -153,9 +153,6 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
         if (attachedConsoleConsumer != null) {
           attachedConsoleConsumer.consume((ConsoleView)executionConsoleView);
         }
-        if (!processHandler.isStartNotified()) {
-          processHandler.startNotify();
-        }
       }
     }
     if (processHandler != null && !processHandler.isStartNotified()) {
