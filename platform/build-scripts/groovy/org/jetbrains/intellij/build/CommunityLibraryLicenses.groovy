@@ -451,7 +451,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "winp", version: "1.26", license: "MIT", url: "https://github.com/kohsuke/winp",
                        licenseUrl: "http://opensource.org/licenses/mit-license.php"),
     new LibraryLicense(name: "Xalan", libraryName: "Xalan-2.7.2", version: "2.7.2", license: "Apache 2.0",
-                       url: "http://xml.apache.org/xalan-j/", licenseUrl: "http://xml.apache.org/xalan-j/"),
+                       url: "http://xalan.apache.org/xalan-j/", licenseUrl: "http://xalan.apache.org/xalan-j/#license"),
     new LibraryLicense(name: "Xerces", version: "2.11", license: "Apache 2.0", url: "http://xerces.apache.org/xerces2-j/",
                        licenseUrl: "http://xerces.apache.org/xerces2-j/"),
     new LibraryLicense(name: "Xerial SQLite JDBC", libraryName: "sqlite", version: "3.20.1", license: "Apache 2.0",
