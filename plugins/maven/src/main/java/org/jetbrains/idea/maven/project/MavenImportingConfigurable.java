@@ -21,12 +21,15 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +73,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     JLabel vmOptionLabel = new JLabel("VM options for importer:");
     embedderVMOptionPanel.add(vmOptionLabel, BorderLayout.WEST);
     vmOptionLabel.setLabelFor(myEmbedderVMOptions);
+    vmOptionLabel.setBorder(JBUI.Borders.emptyRight(10));
 
     embedderVMOptionPanel.add(myEmbedderVMOptions);
 
@@ -78,9 +82,11 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
 
     JPanel embedderJdkPanel = new JPanel(new BorderLayout());
     JLabel embedderJdkLabel = new JLabel("JDK for importer:");
+    embedderJdkLabel.setBorder(JBUI.Borders.emptyRight(10));
     embedderJdkLabel.setLabelFor(myEmbedderJdk);
     embedderJdkPanel.add(embedderJdkLabel, BorderLayout.WEST);
     embedderJdkPanel.add(myEmbedderJdk);
+
 
     panel.add(Box.createVerticalStrut(3));
     panel.add(embedderJdkPanel);
@@ -125,7 +131,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
 
     MavenServerManager.getInstance().setMavenEmbedderVMOptions(myEmbedderVMOptions.getText());
     String jdk = myEmbedderJdk.getSelectedValue();
-    if(jdk != null) {
+    if (jdk != null) {
       MavenServerManager.getInstance().setEmbedderJdk(jdk);
     }
 
