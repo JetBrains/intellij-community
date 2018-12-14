@@ -20,11 +20,11 @@ public class OptionalUtil {
   public static final CallMatcher JDK_OPTIONAL_OF_NULLABLE = CallMatcher.staticCall(JAVA_UTIL_OPTIONAL, "ofNullable").parameterCount(1);
   public static final CallMatcher OPTIONAL_OF_NULLABLE = CallMatcher.anyOf(JDK_OPTIONAL_OF_NULLABLE, GUAVA_OPTIONAL_FROM_NULLABLE);
   
-  public static final CallMatcher JDK_OPTIONAL_GET = CallMatcher.staticCall(JAVA_UTIL_OPTIONAL, "get").parameterCount(0);
-  public static final CallMatcher JDK_OPTIONAL_INT_GET = CallMatcher.staticCall(OPTIONAL_INT, "getAsInt").parameterCount(0);
-  public static final CallMatcher JDK_OPTIONAL_LONG_GET = CallMatcher.staticCall(OPTIONAL_LONG, "getAsLong").parameterCount(0);
-  public static final CallMatcher JDK_OPTIONAL_DOUBLE_GET = CallMatcher.staticCall(OPTIONAL_DOUBLE, "getAsDouble").parameterCount(0);
-  public static final CallMatcher GUAVA_OPTIONAL_GET = CallMatcher.staticCall(GUAVA_OPTIONAL, "get").parameterCount(0);
+  public static final CallMatcher JDK_OPTIONAL_GET = CallMatcher.exactInstanceCall(JAVA_UTIL_OPTIONAL, "get").parameterCount(0);
+  public static final CallMatcher JDK_OPTIONAL_INT_GET = CallMatcher.exactInstanceCall(OPTIONAL_INT, "getAsInt").parameterCount(0);
+  public static final CallMatcher JDK_OPTIONAL_LONG_GET = CallMatcher.exactInstanceCall(OPTIONAL_LONG, "getAsLong").parameterCount(0);
+  public static final CallMatcher JDK_OPTIONAL_DOUBLE_GET = CallMatcher.exactInstanceCall(OPTIONAL_DOUBLE, "getAsDouble").parameterCount(0);
+  public static final CallMatcher GUAVA_OPTIONAL_GET = CallMatcher.instanceCall(GUAVA_OPTIONAL, "get").parameterCount(0);
   public static final CallMatcher OPTIONAL_GET = CallMatcher.anyOf(JDK_OPTIONAL_GET, JDK_OPTIONAL_INT_GET, JDK_OPTIONAL_LONG_GET,
                                                                    JDK_OPTIONAL_DOUBLE_GET, GUAVA_OPTIONAL_GET);
 
