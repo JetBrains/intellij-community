@@ -554,6 +554,16 @@ def foo(bar) {
 }''', 'java.lang.Runnable')
   }
 
+  void 'test enum constant'() {
+    doTest('''\
+import static MyEnum.*
+enum MyEnum {ONE}
+if (ONE instanceof String) {
+  <caret>ONE
+}
+''', 'MyEnum')
+  }
+
   void testInString() {
     doTest '''\
 def foo(ii) {
