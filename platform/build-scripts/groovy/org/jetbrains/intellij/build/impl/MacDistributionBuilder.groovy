@@ -87,6 +87,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
     customIdeaProperties.putAll(customizer.getCustomIdeaProperties(buildContext.applicationInfo))
     layoutMacApp(ideaProperties, customIdeaProperties, docTypes, macDistPath)
+    BuildTasksImpl.unpackPty4jNative(buildContext, macDistPath, "macosx")
 
     if (customizer.helpId != null) {
       def helpZip = customizer.getPathToHelpZip(buildContext)
