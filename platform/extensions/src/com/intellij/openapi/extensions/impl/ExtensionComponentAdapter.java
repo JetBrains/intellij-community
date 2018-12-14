@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.extensions.LoadingOrder;
-import com.intellij.openapi.extensions.PluginAware;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
@@ -60,39 +57,40 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   @Override
   public Object getComponentInstance(final PicoContainer container) throws PicoException, ProcessCanceledException {
     Object instance = myComponentInstance;
-    if (instance == null) {
-      try {
-        Class impl = loadImplementationClass();
-
-        ExtensionPointImpl.CHECK_CANCELED.run();
-
-        instance = new CachingConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true).getComponentInstance(container);
-
-        if (myExtensionElement != null) {
-          try {
-            XmlSerializer.deserializeInto(instance, myExtensionElement);
-          }
-          catch (Exception e) {
-            throw new PicoInitializationException(e);
-          }
-        }
-
-        myComponentInstance = instance;
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable t) {
-        PluginId pluginId = myPluginDescriptor != null ? myPluginDescriptor.getPluginId() : null;
-        throw new PicoPluginExtensionInitializationException(t.getMessage(), t, pluginId);
-      }
-
-      if (instance instanceof PluginAware) {
-        PluginAware pluginAware = (PluginAware)instance;
-        pluginAware.setPluginDescriptor(myPluginDescriptor);
-      }
+    if (instance != null) {
+      return instance;
     }
 
+    try {
+      Class impl = loadImplementationClass();
+
+      ExtensionPointImpl.CHECK_CANCELED.run();
+
+      instance = new CachingConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true).getComponentInstance(container);
+
+      if (myExtensionElement != null) {
+        try {
+          XmlSerializer.deserializeInto(instance, myExtensionElement);
+        }
+        catch (Exception e) {
+          throw new PicoInitializationException(e);
+        }
+      }
+
+      myComponentInstance = instance;
+    }
+    catch (ProcessCanceledException | ExtensionNotApplicableException e) {
+      throw e;
+    }
+    catch (Throwable t) {
+      PluginId pluginId = myPluginDescriptor != null ? myPluginDescriptor.getPluginId() : null;
+      throw new PicoPluginExtensionInitializationException(t.getMessage(), t, pluginId);
+    }
+
+    if (instance instanceof PluginAware) {
+      PluginAware pluginAware = (PluginAware)instance;
+      pluginAware.setPluginDescriptor(myPluginDescriptor);
+    }
     return instance;
   }
 

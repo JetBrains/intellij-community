@@ -8,7 +8,6 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.PsiImmediateClassType
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -233,10 +232,6 @@ class TypeInferenceTest extends TypeInferenceTestBase {
     assertTypeEquals("X | Y", "a.groovy")
   }
 
-  void testTypeArgsInAccessor() {
-    assertTypeEquals("Foo<java.lang.String>", "a.groovy")
-  }
-
   void testSingleParameterInStringInjection() {
     assertTypeEquals("java.io.StringWriter", "a.groovy")
   }
@@ -268,18 +263,7 @@ map['i'] += 2
   }
 
   void testIndexPropertyInLHS() {
-    assertTypeEquals("java.util.LinkedHashMap", 'a.groovy')
-  }
-
-  void testEmptyMapTypeArgs() {
-    myFixture.configureByText('a.groovy', '''
-class X<A, B> implements Map<A, B> {}
-
-X<String, Integer> x = [:]
-''')
-
-    def type = ((myFixture.file as GroovyFile).statements[0] as GrVariableDeclaration).variables[0].initializerGroovy.type
-    assertEquals("java.util.LinkedHashMap<java.lang.String,java.lang.Integer>", type.canonicalText)
+    assertTypeEquals("java.util.LinkedHashMap<java.lang.Object, java.lang.Object>", 'a.groovy')
   }
 
   void testRawCollectionsInCasts() {

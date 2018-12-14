@@ -45,7 +45,7 @@ public class CommitInfo {
   @XmlRootElement(name = "commit")
   public static class Builder {
 
-    @XmlAttribute(name = "revision")
+    @XmlAttribute(name = "revision", required = true)
     private long revisionNumber;
 
     @XmlElement(name = "author")

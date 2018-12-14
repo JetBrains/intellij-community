@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -144,7 +145,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
       PsiType[] parameters = type.getParameters();
       myTypeParameter =
         parameters.length == 1 ? "<" + GenericsUtil.getVariableTypeByExpressionType(parameters[0]).getCanonicalText() + ">" : "";
-      myMethodName = myTypeName.equals("com.google.common.base.Optional") ? "absent" : "empty";
+      myMethodName = myTypeName.equals(OptionalUtil.GUAVA_OPTIONAL) ? "absent" : "empty";
     }
 
     @Nls

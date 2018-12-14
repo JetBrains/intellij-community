@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 
-class IntegerAccessor extends CodeStylePropertyAccessor<Integer> {
+public class IntegerAccessor extends CodeStylePropertyAccessor<Integer> {
   IntegerAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
   }

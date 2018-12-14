@@ -2,8 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -27,7 +27,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.getLanguageLevel(holder.getFile()).isAtLeast(LanguageLevel.JDK_12_PREVIEW)) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchStatement(PsiSwitchStatement statement) {
@@ -127,7 +127,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                                                        List<SwitchExpressionBranch> newBranches,
                                                        CommentTracker mainCommentTracker,
                                                        boolean isExpr) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(statementToReplace.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(statementToReplace.getProject());
     mainCommentTracker.markUnchanged(expressionBeingSwitched);
     if (!(statementToReplace instanceof PsiSwitchStatement)) return null;
     PsiCodeBlock body = ((PsiSwitchStatement)statementToReplace).getBody();
@@ -278,7 +278,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       CommentTracker commentTracker = new CommentTracker();
       PsiSwitchBlock switchBlock = generateEnhancedSwitch(statement, myExpressionBeingSwitched, myNewBranches, commentTracker, true);
       if (switchBlock == null) return;
-      PsiElementFactory factory = JavaPsiFacade.getInstance(statement.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(statement.getProject());
       PsiStatement returnStatement = factory.createStatementFromText("return " + switchBlock.getText() + ";", switchBlock);
       commentTracker.replaceAndRestoreComments(statement, returnStatement);
       if (myReturnToDelete != null) {
@@ -510,7 +510,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       if (myResultStatements.length == 1) {
         return ct.text(myResultStatements[0]);
       }
-      return StreamEx.of(myResultStatements).map(stmt -> ct.text(stmt)).joining("\n", "{\n", "}");
+      return StreamEx.of(myResultStatements).map(ct::text).joining("\n", "{\n", "}");
     }
   }
 

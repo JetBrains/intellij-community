@@ -15,6 +15,7 @@ import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
@@ -22,6 +23,7 @@ import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -509,41 +511,16 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private final class MyRenderer extends CellRendererPanel implements TreeCellRenderer {
     final SimpleColoredComponent myTextLabel = new SimpleColoredComponent();
     final JLabel myNodeIcon = new JLabel();
-    Component myRightRenderer;
-    final CellRendererPanel myRightPanel = new CellRendererPanel() {
-      @Override
-      public Dimension getPreferredSize() {
-        if (myRightRenderer != null) {
-          return myRightRenderer.getPreferredSize();
-        }
-        return super.getPreferredSize();
-      }
-
-      @Override
-      protected void paintChildren(Graphics g) {
-        super.paintChildren(g);
-        if (myRightRenderer != null) {
-          int width = getWidth();
-          int height = getHeight();
-          Graphics2D g2 = (Graphics2D)g.create(0, 0, width, height);
-
-          myRightRenderer.setBounds(0, 0, width, height);
-          myRightRenderer.paint(g2);
-          g2.dispose();
-          myRightRenderer = null;
-        }
-      }
-    };
     final JLabel myProjectIcon = new JLabel();
+    Pair<Component, ConfigurableTreeRenderer.Layout> myRenderInfo;
 
     MyRenderer() {
       setLayout(new BorderLayout(ICON_GAP, 0));
       myNodeIcon.setName(NODE_ICON);
       myTextLabel.setOpaque(false);
-      myRightPanel.add(myProjectIcon);
       add(BorderLayout.CENTER, myTextLabel);
       add(BorderLayout.WEST, myNodeIcon);
-      add(BorderLayout.EAST, myRightPanel);
+      add(BorderLayout.EAST, myProjectIcon);
       setBorder(BorderFactory.createEmptyBorder(1, 10, 3, 10));
     }
 
@@ -604,7 +581,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         configurable = node.myConfigurable;
       }
       setProjectIcon(myProjectIcon, configurable, project, selected);
-      setRightRenderer(node != null && project == null, node, configurable, selected);
+      prepareRenderer(node != null, node, configurable, selected);
       // configure node icon
       Icon nodeIcon = null;
       if (value instanceof DefaultMutableTreeNode) {
@@ -657,16 +634,44 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       return this;
     }
 
-    private void setRightRenderer(boolean visible, MyNode node, @Nullable UnnamedConfigurable configurable, boolean selected) {
-      myRightRenderer = null;
+    private void prepareRenderer(boolean visible, MyNode node, @Nullable UnnamedConfigurable configurable, boolean selected) {
+      myRenderInfo = null;
       if (visible) {
         ConfigurableTreeRenderer renderer = node.getRenderer();
         if (renderer != null) {
           if (configurable instanceof ConfigurableWrapper) {
             configurable = ((ConfigurableWrapper)configurable).getRawConfigurable();
           }
-          myRightRenderer = renderer.getRightDecorator(myTree, configurable, selected);
+          myRenderInfo = renderer.getDecorator(myTree, configurable, selected);
         }
+      }
+    }
+
+    @Override
+    protected void paintChildren(Graphics g) {
+      super.paintChildren(g);
+
+      if (myRenderInfo != null) {
+        Rectangle bounds = new Rectangle(0, 0, getWidth(), getHeight());
+        JBInsets.removeFrom(bounds, getInsets());
+
+        Rectangle text = myTextLabel.getBounds();
+        int baseline = myTextLabel.getBaseline(text.width, text.height);
+
+        if (myProjectIcon.getIcon() == null) {
+          myProjectIcon.setIcon(AllIcons.General.ProjectConfigurable);
+        }
+        Dimension icon = myProjectIcon.getPreferredSize();
+        Rectangle right = new Rectangle(bounds.x + bounds.width - icon.width, bounds.y, icon.width, icon.height);
+
+        myRenderInfo.second.layoutBeforePaint(myRenderInfo.first, bounds, text, right, baseline);
+
+        Rectangle paintBounds = myRenderInfo.first.getBounds();
+        Graphics2D g2 = (Graphics2D)g.create(paintBounds.x, paintBounds.y, paintBounds.width, paintBounds.height);
+        myRenderInfo.first.paint(g2);
+        g2.dispose();
+
+        myRenderInfo = null;
       }
     }
   }

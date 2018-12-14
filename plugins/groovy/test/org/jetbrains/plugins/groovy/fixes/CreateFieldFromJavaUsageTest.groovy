@@ -11,12 +11,13 @@ class CreateFieldFromJavaUsageTest extends GrHighlightingTestBase {
   private static final String BEFORE = "Before.groovy"
   private static final String AFTER = "After.groovy"
   private static final String JAVA = "Area.java"
+
   final String getBasePath() {
     return TestUtils.testDataPath + 'fixes/createFieldFromJava/' + getTestName(true) + '/'
   }
 
   @Override
-  void setUp(){
+  void setUp() {
     super.setUp()
     fixture.configureByFiles(JAVA, BEFORE)
     fixture.enableInspections(customInspections)
@@ -25,7 +26,7 @@ class CreateFieldFromJavaUsageTest extends GrHighlightingTestBase {
   private void doTest() {
     fixture.with {
       def fixes = filterAvailableIntentions('Create field')
-      assert fixes.size() == 1
+      assert fixes.size() > 0
       launchAction fixes.first()
       PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
       checkResultByFile(BEFORE, AFTER, true)
@@ -93,7 +94,7 @@ class CreateFieldFromJavaUsageTest extends GrHighlightingTestBase {
   }
 
   void testSortByRelevance() {
-    fixture.addClass'''
+    fixture.addClass '''
 public class Foo { 
   public void put(Object key, Object value) {
   } 
@@ -102,5 +103,3 @@ public class Foo {
     doTest()
   }
 }
-
-

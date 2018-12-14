@@ -44,19 +44,17 @@ public class PropertiesSplitter extends BaseSplitter {
       return;
     }
     final IdentifierSplitter splitter = IdentifierSplitter.getInstance();
-    Matcher matcher = null;
     try {
-      matcher = WORD.matcher(newBombedCharSequence(range.substring(text), 500));
-    }
-    catch (ProcessCanceledException e) {
-      return;
-    }
-    while (matcher.find()) {
-      if (matcher.end() - matcher.start() < MIN_RANGE_LENGTH) {
-        continue;
+      Matcher matcher = WORD.matcher(newBombedCharSequence(range.substring(text), 500));
+      while (matcher.find()) {
+        if (matcher.end() - matcher.start() < MIN_RANGE_LENGTH) {
+          continue;
+        }
+        TextRange found = matcherRange(range, matcher);
+        splitter.split(text, found, consumer);
       }
-      TextRange found = matcherRange(range, matcher);
-      splitter.split(text, found, consumer);
+    }
+    catch (ProcessCanceledException ignored) {
     }
   }
 }

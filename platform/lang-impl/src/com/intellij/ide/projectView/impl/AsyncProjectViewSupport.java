@@ -165,8 +165,8 @@ class AsyncProjectViewSupport {
     SmartList<TreePath> pathsToSelect = new SmartList<>();
     TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file, pathsToSelect);
     if (visitor != null) {
-      expand(tree, promise -> {
-        myNodeUpdater.updateImmediately();
+      //noinspection CodeBlock2Expr
+      myNodeUpdater.updateImmediately(() -> expand(tree, promise -> {
         myAsyncTreeModel
           .accept(visitor)
           .onProcessed(path -> {
@@ -189,7 +189,7 @@ class AsyncProjectViewSupport {
                 });
             }
           });
-      });
+      }));
     }
   }
 

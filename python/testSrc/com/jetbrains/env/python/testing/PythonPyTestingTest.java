@@ -201,9 +201,9 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                         @NotNull final String all, int exitCode) {
           Assert.assertEquals("Parametrized test produced bad tree",
                               "Test tree:\n" +
-                              "[root]\n" +
-                              ".test_pytest_parametrized\n" +
-                              "..test_eval\n" +
+                              "[root](-)\n" +
+                              ".test_pytest_parametrized(-)\n" +
+                              "..test_eval(-)\n" +
                               "...(three plus file-8)(-)\n" +
                               ((runner.getCurrentRerunStep() == 0) ? "...((2)+(4)-6)(+)\n" : "") +
                               "...( six times nine_-42)(-)\n", runner.getFormattedTestTree());
@@ -234,14 +234,14 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                         @NotNull final String all, int exitCode) {
           Assert.assertEquals("Test name before message broke output",
                               "Test tree:\n" +
-                              "[root]\n" +
-                              ".test_test\n" +
-                              "..SampleTest1\n" +
+                              "[root](+)\n" +
+                              ".test_test(+)\n" +
+                              "..SampleTest1(+)\n" +
                               "...test_sample_1(+)\n" +
                               "...test_sample_2(+)\n" +
                               "...test_sample_3(+)\n" +
                               "...test_sample_4(+)\n" +
-                              "..SampleTest2\n" +
+                              "..SampleTest2(+)\n" +
                               "...test_sample_5(+)\n" +
                               "...test_sample_6(+)\n" +
                               "...test_sample_7(+)\n" +
@@ -278,7 +278,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                               PyBundle.message("runcfg.tests.empty_suite"),
                               runner.getTestProxy().getPresentation());
           Assert.assertEquals("Wrong empty suite tree", "Test tree:\n" +
-                                                        "[root](~)\n", runner.getFormattedTestTree());
+                                                        "[root](-)\n", runner.getFormattedTestTree());
 
           runner.getFormattedTestTree();
         }
@@ -333,8 +333,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                         @NotNull String stderr,
                                         @NotNull String all, int exitCode) {
           Assert.assertEquals("Marker support broken", "Test tree:\n" +
-                                                       "[root]\n" +
-                                                       ".test_with_markers\n" +
+                                                       "[root](+)\n" +
+                                                       ".test_with_markers(+)\n" +
                                                        "..test_fast(+)\n",
                               runner.getFormattedTestTree());
         }
@@ -748,9 +748,9 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         assertEquals("Wrong number of passed tests", 0, runner.getPassedTestsCount());
         assertEquals("Wrong number of failed tests", 1, runner.getFailedTestsCount());
         assertEquals("Wrong tests executed", "Test tree:\n" +
-                                             "[root]\n" +
-                                             ".test_subsystems\n" +
-                                             "..TestBar\n" +
+                                             "[root](-)\n" +
+                                             ".test_subsystems(-)\n" +
+                                             "..TestBar(-)\n" +
                                              "...test_something(-)\n", runner.getFormattedTestTree());
       }
     });

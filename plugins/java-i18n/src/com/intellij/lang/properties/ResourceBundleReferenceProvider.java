@@ -4,11 +4,9 @@ package com.intellij.lang.properties;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.ULiteralExpression;
-import org.jetbrains.uast.UastLiteralUtils;
+import org.jetbrains.uast.UExpression;
 
-public class ResourceBundleReferenceProvider extends UastReferenceProvider {
+public class ResourceBundleReferenceProvider extends UastInjectionHostReferenceProvider {
   @Override
   public boolean acceptsTarget(@NotNull PsiElement target) {
     return target instanceof PsiFile && PropertiesImplUtil.isPropertiesFile((PsiFile)target);
@@ -16,10 +14,9 @@ public class ResourceBundleReferenceProvider extends UastReferenceProvider {
 
   @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull UElement element, @NotNull ProcessingContext context) {
-    if (!(element instanceof ULiteralExpression)) return PsiReference.EMPTY_ARRAY;
-    PsiLanguageInjectionHost host = UastLiteralUtils.getPsiLanguageInjectionHost((ULiteralExpression)element);
-    if (host == null) return PsiReference.EMPTY_ARRAY;
+  public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression uExpression,
+                                                      @NotNull PsiLanguageInjectionHost host,
+                                                      @NotNull ProcessingContext context) {
     return new PsiReference[]{new ResourceBundleReference(host, false)};
   }
 }

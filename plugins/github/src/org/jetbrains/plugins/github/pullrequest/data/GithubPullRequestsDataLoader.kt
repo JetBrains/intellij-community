@@ -6,6 +6,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.util.EventDispatcher
 import git4idea.commands.Git
 import git4idea.repo.GitRemote

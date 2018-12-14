@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -216,17 +217,12 @@ public class AutoUnboxingInspection extends BaseInspection {
     private static String buildNewExpressionText(PsiExpression expression,
                                                  PsiPrimitiveType unboxedType,
                                                  CommentTracker commentTracker) {
-      final String unboxedTypeText = unboxedType.getCanonicalText();
-      final String expressionText = expression.getText();
-      final String boxMethodName = s_unboxingMethods.get(unboxedTypeText);
-      if (expression instanceof PsiTypeCastExpression) {
-        commentTracker.markUnchanged(expression);
-        return '(' + expressionText + ")." + boxMethodName + "()";
-      }
       final String constantText = computeConstantBooleanText(expression);
       if (constantText != null) {
         return constantText;
       }
+      final String expressionText = expression.getText();
+      final String boxMethodName = s_unboxingMethods.get(unboxedType.getCanonicalText());
       if (expression instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
         if (isValueOfCall(methodCallExpression)) {
@@ -241,7 +237,9 @@ public class AutoUnboxingInspection extends BaseInspection {
       if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
         return "((" + unboxedType.getBoxedTypeName() + ')' + expressionText + ")." + boxMethodName + "()";
       }
-      return expressionText + '.' + boxMethodName + "()";
+      return PsiPrecedenceUtil.getPrecedence(expression) > PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE
+             ? '(' + expressionText + ")." + boxMethodName + "()"
+             : expressionText + '.' + boxMethodName + "()";
     }
 
     private static boolean isValueOfCall(PsiMethodCallExpression methodCallExpression) {

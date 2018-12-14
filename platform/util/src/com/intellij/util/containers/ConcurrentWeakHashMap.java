@@ -72,11 +72,13 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
     return new WeakKey<K, V>(key, hashingStrategy.computeHashCode(key), hashingStrategy, value, myReferenceQueue);
   }
 
+  @Deprecated
   public ConcurrentWeakHashMap(int initialCapacity) {
     super(initialCapacity);
     DeprecatedMethodException.report("Use com.intellij.util.containers.ConcurrentFactoryMap.createConcurrentWeakMap instead");
   }
 
+  @Deprecated
   public ConcurrentWeakHashMap() {
     DeprecatedMethodException.report("Use com.intellij.util.containers.ConcurrentFactoryMap.createConcurrentWeakMap instead");
   }

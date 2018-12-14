@@ -246,6 +246,51 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertEquals(broHash, parentHistory[0])
   }
 
+  fun `test force push with lease succeeds for new branch`() {
+    val version = vcs.version
+    assumeTrue("Skipping this version of Git since it doesn't support --force-with-lease and calls --force: $version",
+               GitVersionSpecialty.SUPPORTS_FORCE_PUSH_WITH_LEASE.existsIn(version))
+
+    val broHash = pushCommitFromBro()
+
+    cd(repository)
+    val myHash = makeCommit("anyfile.txt")
+
+    val result = push("master", "origin/feature", true)
+    assertResult(NEW_BRANCH, -1, "master", "origin/feature", result)
+
+    cd(parentRepo.path)
+    val parentHistory = StringUtil.splitByLines(git("log master --pretty=%H"))
+    assertEquals(broHash, parentHistory[0])
+
+    val branchHistory = StringUtil.splitByLines(git("log feature --pretty=%H"))
+    assertEquals(myHash, branchHistory[0])
+  }
+
+  fun `test force push with lease is rejected for existing branch`() {
+    val version = vcs.version
+    assumeTrue("Skipping this version of Git since it doesn't support --force-with-lease and calls --force: $version",
+               GitVersionSpecialty.SUPPORTS_FORCE_PUSH_WITH_LEASE.existsIn(version))
+
+    val broHash = pushCommitFromBro()
+
+    cd(broRepo.path)
+    git("push origin master:feature")
+
+    cd(repository)
+    val myHash = makeCommit("anyfile.txt")
+
+    val result = push("master", "origin/feature", true)
+    assertResult(REJECTED_OTHER, -1, "master", "origin/feature", result)
+
+    cd(parentRepo.path)
+    val parentHistory = StringUtil.splitByLines(git("log master --pretty=%H"))
+    assertEquals(broHash, parentHistory[0])
+
+    val branchHistory = StringUtil.splitByLines(git("log feature --pretty=%H"))
+    assertEquals(broHash, branchHistory[0])
+  }
+
   fun `test dont propose to update if force push is rejected`() {
     var dialogShown = false
     dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java, {

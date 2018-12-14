@@ -185,9 +185,11 @@ public class ReferenceExpressionCompletionContributor {
         final PsiExpressionList values = ((PsiSwitchLabelStatementBase)statement).getCaseValues();
         if (values != null) {
           for (PsiExpression value : values.getExpressions()) {
-            final PsiElement target = ((PsiReferenceExpression)value).resolve();
-            if (target instanceof PsiField) {
-              used.add(CompletionUtil.getOriginalOrSelf((PsiField)target));
+            if (value instanceof PsiReferenceExpression) {
+              final PsiElement target = ((PsiReferenceExpression)value).resolve();
+              if (target instanceof PsiField) {
+                used.add(CompletionUtil.getOriginalOrSelf((PsiField)target));
+              }
             }
           }
         }

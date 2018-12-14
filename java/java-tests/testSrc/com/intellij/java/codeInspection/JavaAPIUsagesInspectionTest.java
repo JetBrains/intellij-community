@@ -44,7 +44,7 @@ public class JavaAPIUsagesInspectionTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testConstructor() {
-    IdeaTestUtil.setModuleLanguageLevel(myFixture.getModule(), LanguageLevel.JDK_1_4);
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.getModule(), LanguageLevel.JDK_1_4, getTestRootDisposable());
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
@@ -61,7 +61,7 @@ public class JavaAPIUsagesInspectionTest extends LightCodeInsightFixtureTestCase
   }
   
   private void doTest() {
-    IdeaTestUtil.setModuleLanguageLevel(myFixture.getModule(), LanguageLevel.JDK_1_6);
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.getModule(), LanguageLevel.JDK_1_6, getTestRootDisposable());
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 

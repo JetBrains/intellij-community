@@ -37,8 +37,7 @@ public class JavaProjectRootsUtil {
     if (file == null) return false;
     if (file.getFileSystem() instanceof NonPhysicalFileSystem) return false;
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
-    return !projectFileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) && !projectFileIndex.isInLibrarySource(file)
-           && !projectFileIndex.isInLibraryClasses(file);
+    return !projectFileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) && !projectFileIndex.isInLibrary(file);
   }
 
   /**

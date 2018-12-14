@@ -125,4 +125,10 @@ class BuildOptions {
    * Specifies JRE build to be bundled with distributions. If {@code null} then jdkBuild from gradle.properties will be used.
    */
   String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
+
+  /**
+   * Directory path to unpack Jetbrains JDK builds into
+   */
+  static final String JDKS_TARGET_DIR_OPTION = "intellij.build.jdks.target.dir"
+  String jdksTargetDir = System.getProperty(JDKS_TARGET_DIR_OPTION)
 }

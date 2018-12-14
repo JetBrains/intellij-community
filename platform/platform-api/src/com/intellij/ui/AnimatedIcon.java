@@ -12,10 +12,12 @@ import javax.swing.Icon;
 import javax.swing.Timer;
 import java.awt.Component;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.util.List;
 
 import static com.intellij.openapi.util.IconLoader.getDisabledIcon;
 import static com.intellij.util.ObjectUtils.notNull;
+import static java.awt.AlphaComposite.SrcAtop;
 import static java.util.Arrays.asList;
 
 /**
@@ -140,32 +142,52 @@ public class AnimatedIcon implements Icon {
     }
 
     public Blinking(int delay, @NotNull Icon icon) {
-      super(
-        new Frame() {
-          @NotNull
-          @Override
-          public Icon getIcon() {
-            return icon;
-          }
+      super(delay, icon, notNull(getDisabledIcon(icon), icon));
+    }
+  }
 
-          @Override
-          public int getDelay() {
-            return delay;
-          }
-        },
-        new Frame() {
-          @NotNull
-          @Override
-          public Icon getIcon() {
-            return notNull(getDisabledIcon(icon), icon);
-          }
+  @ApiStatus.Experimental
+  public static class Fading extends AnimatedIcon {
+    public Fading(@NotNull Icon icon) {
+      this(1000, icon);
+    }
 
-          @Override
-          public int getDelay() {
-            return delay;
+    public Fading(int period, @NotNull Icon icon) {
+      super(50, new Icon() {
+        private final long time = System.currentTimeMillis();
+
+        @Override
+        public int getIconWidth() {
+          return icon.getIconWidth();
+        }
+
+        @Override
+        public int getIconHeight() {
+          return icon.getIconHeight();
+        }
+
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+          assert period > 0 : "unexpected";
+          long time = (System.currentTimeMillis() - this.time) % period;
+          float alpha = (float)((Math.cos(2 * Math.PI * time / period) + 1) / 2);
+          if (alpha > 0) {
+            if (alpha < 1 && g instanceof Graphics2D) {
+              Graphics2D g2d = (Graphics2D)g.create();
+              try {
+                g2d.setComposite(SrcAtop.derive(alpha));
+                icon.paintIcon(c, g2d, x, y);
+              }
+              finally {
+                g2d.dispose();
+              }
+            }
+            else {
+              icon.paintIcon(c, g, x, y);
+            }
           }
         }
-      );
+      });
     }
   }
 

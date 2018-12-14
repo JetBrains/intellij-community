@@ -107,8 +107,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
         else {
           try {
             final Status status = statusClient.doStatus(file, false);
-            if (status != null && !StatusType.STATUS_NONE.equals(status.getContentsStatus()) &&
-                !StatusType.STATUS_UNVERSIONED.equals(status.getContentsStatus())) {
+            if (status != null && !status.is(StatusType.STATUS_NONE, StatusType.STATUS_UNVERSIONED)) {
               result.add(file);
             }
           }

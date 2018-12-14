@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
@@ -8,16 +6,14 @@ import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.junit.InheritorChooser;
-import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -26,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil;
 
 import java.util.List;
 
@@ -35,9 +32,10 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodL
  * @author Vladislav.Soroka
  */
 public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
-
-  public TestMethodGradleConfigurationProducer() {
-    super(GradleExternalTaskConfigurationType.getInstance());
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return GradleExternalTaskConfigurationType.getInstance().getFactory();
   }
 
   @Override
@@ -172,41 +170,12 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
 
   @Nullable
   private static String createTestFilter(@Nullable Location location, @NotNull PsiClass aClass, @NotNull PsiMethod psiMethod) {
-    return createTestFilter(location,
-                            TestClassGradleConfigurationProducer.getRuntimeQualifiedName(aClass),
-                            psiMethod.getName(),
-                            isParameterized(aClass));
+    String filter = GradleExecutionSettingsUtil.createTestFilterFrom(location, aClass, psiMethod, true);
+    return filter.isEmpty() ? null : filter;
   }
 
-  @Nullable
+  @NotNull
   public static String createTestFilter(@Nullable String aClass, @Nullable String method) {
-    return createTestFilter(null, aClass, method, false);
-  }
-
-  @Nullable
-  private static String createTestFilter(@Nullable Location location,
-                                         @Nullable String aClass,
-                                         @Nullable String method,
-                                         boolean isParameterized) {
-    if (aClass == null) return null;
-    String testFilterPattern = aClass + (method == null ? "" : '.' + method);
-    if (method != null) {
-      if (location instanceof PsiMemberParameterizedLocation) {
-        String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
-        if (StringUtil.isNotEmpty(paramSetName)) {
-          paramSetName = StringUtil.trimStart(StringUtil.trimEnd(paramSetName, ']'), "[");
-          testFilterPattern += "[*" + paramSetName + "*]";
-        }
-      }
-      else if (isParameterized) {
-        testFilterPattern += "[*]";
-      }
-    }
-    return String.format("--tests \"%s\" ", testFilterPattern.replace('\"', '*'));
-  }
-
-  private static boolean isParameterized(PsiClass clazz) {
-    PsiAnnotation annotation = JUnitUtil.getRunWithAnnotation(clazz);
-    return annotation != null && JUnitUtil.isParameterized(annotation);
+    return GradleExecutionSettingsUtil.createTestFilterFromMethod(aClass, method, /*hasSuffix=*/true);
   }
 }

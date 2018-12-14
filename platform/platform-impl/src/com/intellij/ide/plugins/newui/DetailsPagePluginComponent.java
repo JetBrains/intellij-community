@@ -260,8 +260,8 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     boolean jb = PluginManagerConfigurableNew.isJBPlugin(myPlugin);
     boolean errors = myPluginsModel.hasErrors(myPlugin);
 
-    myIconLabel.setIcon(PluginLogoInfo.getIcon(true, jb, errors, false));
-    myIconLabel.setDisabledIcon(PluginLogoInfo.getIcon(true, jb, errors, true));
+    myIconLabel.setIcon(PluginLogo.getIcon(myPlugin, true, jb, errors, false));
+    myIconLabel.setDisabledIcon(PluginLogo.getIcon(myPlugin, true, jb, errors, true));
   }
 
   private void createTagPanel() {

@@ -84,6 +84,7 @@ class Outer {
 
   def getThis() {}
   def getSuper() {}
+  def getDef() {}
 
   class Inner {
     def foo() {
@@ -98,3 +99,4 @@ class Outer {
 def outer = new Outer()
 outer.this
 outer.super
+outer.def

@@ -52,8 +52,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = PsiImplUtil.getTextSkipWhiteSpaceAndComments(getNode());
     }
     return whiteSpaceAndComments;
-  }  
-  
+  }
+
   @Override
   public PsiReference getReference() {
     return this;
@@ -225,7 +225,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   @NotNull
   @Override
   public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
-    return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, GrCodeReferenceResolver.INSTANCE);
+    return TypeInferenceHelper.getTopContext().resolve(this, incomplete, GrCodeReferenceResolver.INSTANCE);
   }
 
   @NotNull

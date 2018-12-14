@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="delight-rhino-sandbox" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.javadelight:delight-rhino-sandbox:0.0.9" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.9/delight-rhino-sandbox-0.0.9.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

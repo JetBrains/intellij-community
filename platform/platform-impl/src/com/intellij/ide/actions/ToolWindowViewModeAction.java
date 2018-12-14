@@ -67,6 +67,15 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction {
           window.setType(ToolWindowType.WINDOWED, null);
       }
     }
+
+    @Override
+    public String toString() {
+      switch (this) {
+        case DockPinned: return "Dock Pinned";
+        case DockUnpinned: return "Dock Unpinned";
+        default: return name();
+      }
+    }
   }
 
   @NotNull protected final ViewMode myMode;

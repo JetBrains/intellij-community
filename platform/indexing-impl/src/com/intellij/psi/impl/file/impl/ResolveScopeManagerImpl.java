@@ -70,7 +70,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, includeTests);
     }
 
-    if (!projectFileIndex.isInLibrarySource(vFile) && !projectFileIndex.isInLibraryClasses(vFile)) {
+    if (!projectFileIndex.isInLibrary(vFile)) {
       GlobalSearchScope allScope = GlobalSearchScope.allScope(myProject);
       if (!allScope.contains(vFile)) {
         return GlobalSearchScope.fileScope(myProject, vFile).uniteWith(allScope);

@@ -163,7 +163,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   private static void generateOrderEntryInfo(StringBuilder buffer, VirtualFile file, Project project) {
     if (file != null) {
       ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-      if (index.isInLibrarySource(file) || index.isInLibraryClasses(file)) {
+      if (index.isInLibrary(file)) {
         index.getOrderEntriesForFile(file).stream()
           .filter(LibraryOrSdkOrderEntry.class::isInstance).findFirst()
           .ifPresent(entry -> buffer.append('[').append(StringUtil.escapeXmlEntities(entry.getPresentableName())).append("] "));

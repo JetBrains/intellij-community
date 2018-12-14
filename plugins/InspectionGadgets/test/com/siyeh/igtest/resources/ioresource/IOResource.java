@@ -202,7 +202,7 @@ public class IOResource {
       }
   }
 
-  Reader escaped6(InputStream stream, String cs) {
+  Reader escaped6(InputStream stream, String cs) throws UnsupportedEncodingException {
     return cs == null ? new InputStreamReader(stream) : new InputStreamReader(stream, cs);
   }
 
@@ -211,6 +211,13 @@ public class IOResource {
       public void close() throws IOException {
 
       }
+    };
+  }
+}
+class Foo {
+  InputStream test(int i) throws FileNotFoundException {
+    return switch (i) {
+      default -> new FileInputStream("/etc/passwd");
     };
   }
 }

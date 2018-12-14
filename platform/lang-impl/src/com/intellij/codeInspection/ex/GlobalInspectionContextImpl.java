@@ -588,6 +588,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         BatchModeDescriptorsUtil.addProblemDescriptors(holder.getResults(), false, this, null, CONVERT, toolPresentation);
         return true;
       });
+      incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, url);
     }
     catch (ProcessCanceledException e) {
       final Throwable cause = e.getCause();
@@ -604,7 +605,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       LOG.error("In file: " + file.getName(), e);
     }
     finally {
-      incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, url);
       InjectedLanguageManager.getInstance(getProject()).dropFileCaches(file);
     }
   }

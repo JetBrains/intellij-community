@@ -195,6 +195,10 @@ public abstract class InspectionTreeNode implements TreeNode {
     return getPresentableText();
   }
 
+  void uiRequested() {
+
+  }
+
   static class Children {
     private static final InspectionTreeNode[] EMPTY_ARRAY = new InspectionTreeNode[0];
 

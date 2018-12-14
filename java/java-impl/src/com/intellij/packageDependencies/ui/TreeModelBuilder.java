@@ -300,7 +300,7 @@ public class TreeModelBuilder {
       aPackage = myJavaPsiFacade.findPackage(packageName);
     }
     if (aPackage != null) {
-        if (myFileIndex.isInLibrarySource(vFile) || myFileIndex.isInLibraryClasses(vFile)) {
+        if (myFileIndex.isInLibrary(vFile)) {
           return getLibraryDirNode(aPackage, getLibraryForFile(vFile));
         }
         else {

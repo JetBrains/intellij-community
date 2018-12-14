@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
+import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
@@ -166,9 +167,8 @@ public class ExternalJavacProcess {
       }
 
       @Override
-      public void registerImports(String className, Collection<String> imports, Collection<String> staticImports) {
-        final JavacRemoteProto.Message.Response response = JavacProtoUtil.createClassDataResponse(className, imports, staticImports);
-        context.channel().writeAndFlush(JavacProtoUtil.toMessage(sessionId, response));
+      public void registerJavacFileData(JavacFileData data) {
+        customOutputData(JavacFileData.CUSTOM_DATA_PLUGIN_ID, JavacFileData.CUSTOM_DATA_KIND, data.asBytes());
       }
 
       @Override

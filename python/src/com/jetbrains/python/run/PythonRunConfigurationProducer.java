@@ -4,7 +4,8 @@ package com.jetbrains.python.run;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.actions.LazyRunConfigurationProducer;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Ref;
@@ -23,10 +24,11 @@ import java.io.File;
 /**
  * @author yole
  */
-public class PythonRunConfigurationProducer extends RunConfigurationProducer<PythonRunConfiguration> {
-
-  public PythonRunConfigurationProducer() {
-    super(PythonConfigurationType.getInstance().getFactory());
+public final class PythonRunConfigurationProducer extends LazyRunConfigurationProducer<PythonRunConfiguration> {
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return PythonConfigurationType.getInstance().getFactory();
   }
 
   @Override

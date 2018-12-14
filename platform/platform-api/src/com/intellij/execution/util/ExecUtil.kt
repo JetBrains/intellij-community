@@ -233,7 +233,7 @@ object ExecUtil {
 
   @JvmStatic
   fun setupNoTtyExecution(commandLine: GeneralCommandLine) {
-    if (SystemInfo.isUnix && hasSetsid.value) {
+    if (SystemInfo.isLinux && hasSetsid.value) {
       val executablePath = commandLine.exePath
       commandLine.exePath = "setsid"
       commandLine.parametersList.prependAll("-w", executablePath)

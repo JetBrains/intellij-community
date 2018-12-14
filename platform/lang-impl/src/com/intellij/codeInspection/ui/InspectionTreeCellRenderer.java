@@ -20,6 +20,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.LoadingNode;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,6 +54,13 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
                                     boolean leaf,
                                     int row,
                                     boolean hasFocus) {
+    if (value instanceof InspectionRootNode) {
+      return;
+    }
+    if (value instanceof LoadingNode) {
+      append(((LoadingNode)value).getText());
+      return;
+    }
     InspectionTreeNode node = (InspectionTreeNode)value;
 
     append(node.getPresentableText(),

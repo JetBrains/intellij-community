@@ -28,6 +28,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.ignoreComponentLookupException
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
+import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.screenRecorderJarDirPath
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.testsToRecord
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.videoDuration
@@ -67,7 +68,7 @@ class GuiTestRule : TestRule {
 
   var CREATE_NEW_PROJECT_ACTION_NAME: String = "Create New Project"
 
-  val projectsFolder: TemporaryFolder = TemporaryFolder(File(FileUtil.getTempDirectory()))
+  val projectsFolder: File = File(GuiTestOptions.projectsDir, UUID.randomUUID().toString())
 
   val LOG: Logger = Logger.getInstance(GuiTestRule::class.java.name)
 
@@ -77,7 +78,7 @@ class GuiTestRule : TestRule {
   private var myTestShortName: String = "undefined"
   private var currentTestDateStart: Date = Date()
 
-  private val myRuleChain = RuleChain.outerRule(projectsFolder)
+  private val myRuleChain = RuleChain.emptyRuleChain()
     .around(myRobotTestRule)
     .around(myFatalErrorsFlusher)
     .around(IdeHandling())
@@ -460,7 +461,7 @@ class GuiTestRule : TestRule {
   }
 
   private fun getTestProjectDirPath(projectDirName: String): File {
-    return File(projectsFolder.root, projectDirName)
+    return File(projectsFolder, projectDirName)
   }
 
   fun cleanUpProjectForImport(projectPath: File) {

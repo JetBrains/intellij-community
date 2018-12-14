@@ -3,7 +3,7 @@ class C {
     void foo(int n) {
         switch (n) {
             case 1:
-            default:
+            case 4:
                 bar("A");
                 break;
             case 2:

@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.idea.Bombed
 import com.intellij.openapi.components.MainConfigurationStateSplitter
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.util.JDOMUtil
@@ -14,7 +13,6 @@ import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.util.*
 
 private fun StateStorage.SaveSessionProducer.save() {
   runInEdtAndWait {
@@ -36,19 +34,21 @@ internal class TestStateSplitter : MainConfigurationStateSplitter() {
   override fun getSubStateFileName(element: Element) = element.getAttributeValue("name")
 }
 
-@Bombed(user = "vladimir.krivosheev", year = 2018, month = Calendar.DECEMBER, day = 10)
 internal class DirectoryBasedStorageTest {
   companion object {
+    @ClassRule
     @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    val projectRule = ProjectRule()
   }
 
   val tempDirManager = TemporaryDirectory()
 
-  private val ruleChain = RuleChain(tempDirManager)
-  @Rule fun getChain() = ruleChain
+  @Rule
+  @JvmField
+  val ruleChain = RuleChain(tempDirManager)
 
-  @Test fun save() {
+  @Test
+  fun save() {
     val dir = tempDirManager.newPath(refreshVfs = true)
     val storage = DirectoryBasedStorage(dir, TestStateSplitter())
 

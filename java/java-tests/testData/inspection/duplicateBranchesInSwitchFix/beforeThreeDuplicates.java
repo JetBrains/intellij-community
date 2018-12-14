@@ -11,7 +11,7 @@ class C {
             case 3:
                 bar("A");
                 break;
-            default:
+            case 4:
                 bar("A");<caret>
                 break;
         }

@@ -207,8 +207,12 @@ open class GradleBuildScriptBuilder {
   }
 
   private fun StringBuilder.appendBlock(blockName: String, indent: String = "", appendBlock: StringBuilder.() -> Unit) = apply {
-    append(indent).append(blockName).appendln("{")
-    appendBlock()
-    append(indent).appendln("}")
+    val builder = StringBuilder()
+    builder.appendBlock()
+    if (builder.isNotEmpty()) {
+      append(indent).append(blockName).appendln(" {")
+      append(builder)
+      append(indent).appendln("}")
+    }
   }
 }

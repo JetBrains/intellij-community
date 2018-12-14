@@ -291,7 +291,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
   private boolean for17move(final SvnVcs vcs, final File src, final File dst, boolean undo, Status srcStatus) throws VcsException {
-    if (srcStatus != null && srcStatus.getCopyFromURL() == null) {
+    if (srcStatus != null && srcStatus.getCopyFromUrl() == null) {
       undo = false;
     }
     if (undo) {
@@ -557,8 +557,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     final File targetFile = new File(ioDir, name);
     Status status = getFileStatus(vcs, targetFile);
 
-    if (status == null || status.getContentsStatus() == StatusType.STATUS_NONE ||
-        status.getContentsStatus() == StatusType.STATUS_UNVERSIONED) {
+    if (status == null || status.is(StatusType.STATUS_NONE, StatusType.STATUS_UNVERSIONED)) {
       myAddedFiles.putValue(vcs.getProject(), new AddedFileInfo(dir, name, null, recursive));
       return false;
     }
@@ -566,7 +565,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
       return false;
     }
     else if (status.is(StatusType.STATUS_DELETED)) {
-      NodeKind kind = status.getKind();
+      NodeKind kind = status.getNodeKind();
       // kind differs.
       if (directory && !kind.isDirectory() || !directory && !kind.isFile()) {
         return false;
@@ -942,7 +941,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
       }.compute();
 
       final FilePath filePath = VcsUtil.getFilePath(file);
-      if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+      if (status.is(StatusType.STATUS_ADDED)) {
         deleteAnyway.add(filePath);
       } else {
         deletedFiles.add(Pair.create(filePath, vcs.getWorkingCopyFormat(file)));

@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class EnterInCommentUtil {
   @Nullable
@@ -32,9 +33,12 @@ public class EnterInCommentUtil {
   public static int getTodoTextOffset(@NotNull CharSequence text, int startOffset, int endOffset) {
     CharSequence input = text.subSequence(startOffset, endOffset);
     for (TodoPattern pattern : TodoConfiguration.getInstance().getTodoPatterns()) {
-      Matcher matcher = pattern.getPattern().matcher(input);
-      if (matcher.find()) {
-        return startOffset + matcher.start();
+      Pattern p = pattern.getPattern();
+      if (p != null) {
+        Matcher matcher = p.matcher(input);
+        if (matcher.find()) {
+          return startOffset + matcher.start();
+        }
       }
     }
     return -1;

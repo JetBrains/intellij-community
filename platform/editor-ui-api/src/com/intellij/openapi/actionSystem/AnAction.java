@@ -253,9 +253,14 @@ public abstract class AnAction implements PossiblyDumbAware {
   public final Presentation getTemplatePresentation() {
     Presentation presentation = myTemplatePresentation;
     if (presentation == null){
-      myTemplatePresentation = presentation = new Presentation();
+      myTemplatePresentation = presentation = createTemplatePresentation();
     }
     return presentation;
+  }
+
+  @NotNull
+  Presentation createTemplatePresentation() {
+    return new Presentation();
   }
 
   /**

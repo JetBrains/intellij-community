@@ -46,4 +46,15 @@ class GradleBuildScriptBuilderEx : GradleBuildScriptBuilder() {
     addBuildScriptDependency("classpath \"org.jetbrains.kotlin:kotlin-gradle-plugin:${'$'}kotlin_version\"")
     applyPlugin("'kotlin'")
   }
+
+  fun withGroovyPlugin(version: String) = apply {
+    applyPlugin("'groovy'")
+    addRepository("mavenCentral()")
+    addDependency("compile 'org.codehaus.groovy:groovy-all:$version'")
+  }
+
+  fun withJUnit(version: String) = apply {
+    addRepository("mavenCentral()")
+    addDependency("testCompile 'junit:junit:$version'")
+  }
 }

@@ -270,7 +270,7 @@ class FindInProjectTask {
             }
 
             if (skipIndexed && isCoveredByIndex(virtualFile) &&
-                (fileIndex.isInContent(virtualFile) || fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile))) {
+                (fileIndex.isInContent(virtualFile) || fileIndex.isInLibrary(virtualFile))) {
               return;
             }
 

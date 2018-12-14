@@ -1216,7 +1216,7 @@ public class Test {
     assert myFixture.lookup.currentItem instanceof LiveTemplateLookupElement
   }
 
-  void testSelectRecentExactMatchesTemplateFirst() {
+  void testMoreRecentExactMatchesTemplateFirst() {
     TemplateManager manager = TemplateManager.getInstance(getProject())
     Template template = manager.createTemplate("itar", "myGroup", null)
     JavaCodeContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement)
@@ -1226,15 +1226,12 @@ public class Test {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
     myFixture.configureByText("a.java", """
 public class Test {
-    void itar() {}
     void foo() {
         ita<caret>
     }
 }""")
     type 'r'
-    myFixture.assertPreferredCompletionItems(1, 'itar', 'itar', 'itar')
-    assert !(myFixture.lookup.items[0] instanceof LiveTemplateLookupElement)
-    assert myFixture.lookup.items[1] instanceof LiveTemplateLookupElement
+    myFixture.assertPreferredCompletionItems(0, 'itar', 'itar')
   }
 
 
@@ -1769,6 +1766,21 @@ class Foo {{
     edt { ((EditorEx)myFixture.editor).setColumnMode(true) }
     type 'toStr'
     assert lookup
+  }
+
+  void "test show popup with single live template if show_live_tempate_in_completion option is enabled"() {
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, myFixture.getTestRootDisposable())
+    myFixture.configureByText "a.java", """
+class Foo {{
+ita<caret>
+"""
+    type 'r'
+    assert lookup == null
+
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
+    type '\br'
+    assert lookup
+    assert myFixture.lookupElementStrings == ['itar']
   }
 
   void "test expand class list when typing more or moving caret"() {

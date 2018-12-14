@@ -112,7 +112,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   @Override
   public boolean contains(@NotNull VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
-    if (!index.isInLibrarySource(file) && !index.isInLibraryClasses(file)) {
+    if (!index.isInLibrary(file)) {
       return false;
     }
 

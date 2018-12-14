@@ -172,7 +172,7 @@ public class AutoPopupController implements Disposable {
 
       Runnable request = () -> {
         if (!myProject.isDisposed() && !DumbService.isDumb(myProject) && !editor.isDisposed() &&
-            (ApplicationManager.getApplication().isUnitTestMode() || editor.getComponent().isShowing())) {
+            (ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getComponent().isShowing())) {
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
             PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());

@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.InferenceContext
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyReferenceBase
 import org.jetbrains.plugins.groovy.lang.resolve.doResolveStatic
@@ -19,7 +19,7 @@ class GrStaticExpressionReference(element: GrReferenceExpression) : GroovyRefere
   override fun resolve(incomplete: Boolean): Collection<GroovyResolveResult> {
     require(!incomplete)
     // results of this reference doesn't depend on types and inference, and can be cached once and for all
-    return InferenceContext.TOP_CONTEXT.resolve(this, false, Resolver)
+    return TypeInferenceHelper.getTopContext().resolve(this, false, Resolver)
   }
 
   private object Resolver : DependentResolver<GrStaticExpressionReference>() {

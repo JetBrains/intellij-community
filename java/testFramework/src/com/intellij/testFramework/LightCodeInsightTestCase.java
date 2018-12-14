@@ -5,6 +5,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,10 @@ public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightT
   }
 
   protected void setLanguageLevel(LanguageLevel level) {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
+    LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(getProject());
+    LanguageLevel prev = extension.getLanguageLevel();
+    extension.setLanguageLevel(level);
+    Disposer.register(getTestRootDisposable(), () -> extension.setLanguageLevel(prev));
   }
 
   @Override

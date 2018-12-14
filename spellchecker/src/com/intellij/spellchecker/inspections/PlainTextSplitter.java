@@ -57,49 +57,49 @@ public class PlainTextSplitter extends BaseSplitter {
     int from = range.getStartOffset();
     int till;
 
-    Matcher matcher;
     try {
+      Matcher matcher;
       final String substring = range.substring(text).replace('\b', '\n').replace('\f', '\n');
       if (Verifier.checkCharacterData(SPLIT_PATTERN.matcher(newBombedCharSequence(substring, DELAY)).replaceAll("")) != null) {
         return;
       }
       matcher = SPLIT_PATTERN.matcher(newBombedCharSequence(range.substring(text), DELAY));
-    }
-    catch (ProcessCanceledException e) {
-      return;
-    }
-    while (true) {
-      checkCancelled();
-      List<TextRange> toCheck;
-      TextRange wRange;
-      String word;
-      if(matcher.find()) {
-        TextRange found = matcherRange(range, matcher);
-        till = found.getStartOffset();
-        if (badSize(from, till)) {
-          continue;
+
+      while (true) {
+        checkCancelled();
+        List<TextRange> toCheck;
+        TextRange wRange;
+        String word;
+        if (matcher.find()) {
+          TextRange found = matcherRange(range, matcher);
+          till = found.getStartOffset();
+          if (badSize(from, till)) {
+            continue;
+          }
+          wRange = new TextRange(from, till);
+          word = wRange.substring(text);
+          from = found.getEndOffset();
         }
-        wRange = new TextRange(from, till);
-        word = wRange.substring(text);
-        from = found.getEndOffset();
-      } else { // end hit or zero matches
-        wRange = new TextRange(from, range.getEndOffset());
-        word = wRange.substring(text);
+        else { // end hit or zero matches
+          wRange = new TextRange(from, range.getEndOffset());
+          word = wRange.substring(text);
+        }
+        if (word.contains("@")) {
+          toCheck = excludeByPattern(text, wRange, MAIL, 0);
+        }
+        else if (word.contains("://")) {
+          toCheck = excludeByPattern(text, wRange, URL_PATTERN, 0);
+        }
+        else {
+          toCheck = Collections.singletonList(wRange);
+        }
+        for (TextRange r : toCheck) {
+          ws.split(text, r, consumer);
+        }
+        if (matcher.hitEnd()) break;
       }
-      if (word.contains("@")) {
-        toCheck = excludeByPattern(text, wRange, MAIL, 0);
-      }
-      else
-      if (word.contains("://")) {
-        toCheck = excludeByPattern(text, wRange, URL_PATTERN, 0);
-      }
-      else {
-        toCheck = Collections.singletonList(wRange);
-      }
-      for (TextRange r : toCheck) {
-        ws.split(text, r, consumer);
-      }
-      if(matcher.hitEnd()) break;
+    }
+    catch (ProcessCanceledException ignored) {
     }
   }
 }

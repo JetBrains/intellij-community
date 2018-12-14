@@ -16,6 +16,8 @@ import org.jetbrains.uast.*
 
 fun literalExpression(): ULiteralExpressionPattern = ULiteralExpressionPattern()
 
+@Deprecated("Interpolated strings (in Kotlin) are not single string literals, use `injectionHostUExpression()` to be language-abstract",
+            ReplaceWith("injectionHostUExpression()", "com.intellij.patterns.uast.injectionHostUExpression"))
 fun stringLiteralExpression(): ULiteralExpressionPattern = literalExpression().filter(ULiteralExpression::isStringLiteral)
 
 @JvmOverloads
@@ -157,10 +159,8 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
     this.with(object : PatternCondition<T>("annotationParam") {
 
       override fun accepts(uElement: T, context: ProcessingContext?): Boolean {
-        val namedExpression = uElement.getParentOfType<UNamedExpression>(true) ?: return false
-        if (!parameterNames.accepts(namedExpression.name ?: "value")) return false
-        val annotation = namedExpression.getParentOfType<UAnnotation>(true) ?: return false
-        return (annotationPattern.accepts(annotation, context))
+        val (annotation, paramName) = getContainingUAnnotationEntry(uElement) ?: return false
+        return parameterNames.accepts(paramName ?: "value") && annotationPattern.accepts(annotation, context)
       }
     })
 

@@ -343,13 +343,11 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     File rootFile = root.getIOFile();
 
     myVcs.getFactory(rootFile).createStatusClient()
-      .doStatus(rootFile, Revision.UNDEFINED, Depth.INFINITY, true, false, false, false, status -> {
+      .doStatus(rootFile, Depth.INFINITY, true, false, false, false, status -> {
         File file = status.getFile();
-        boolean changedOnServer = isNotNone(status.getRemoteContentsStatus()) ||
-                                  isNotNone(status.getRemoteNodeStatus()) ||
-                                  isNotNone(status.getRemotePropertiesStatus());
+        boolean changedOnServer = isNotNone(status.getRemoteItemStatus()) || isNotNone(status.getRemotePropertyStatus());
 
-        if (file != null && changedOnServer) {
+        if (changedOnServer) {
           result.add(VcsUtil.getFilePath(file));
         }
       });

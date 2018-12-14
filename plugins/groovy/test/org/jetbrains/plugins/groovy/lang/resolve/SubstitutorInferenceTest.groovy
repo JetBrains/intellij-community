@@ -1,16 +1,21 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.psi.PsiTypeParameterListOwner
 import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
 import org.jetbrains.plugins.groovy.util.TypingTest
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
+
+import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType
 
 @CompileStatic
 class SubstitutorInferenceTest extends GroovyLatestTest implements TypingTest {
@@ -26,6 +31,11 @@ class PG {}
 
 class IdCallable {
   def <T> T call(T arg) { arg }
+}
+
+class GenericPropertyContainer {
+  def <T> I<T> getGenericProperty() {}
+  def <T> void setGenericProperty(I<T> c) {}
 }
 '''
   }
@@ -131,6 +141,15 @@ F<Integer, String> w = new Wrapper<>({} <caret>as F)
   }
 
   @Test
+  void 'explicit closure safe cast as argument of generic method'() {
+    typingTest('''\
+interface Producer<T> {}
+static <T> T ppp(Producer<T> p) {}
+<caret>ppp({} as Producer<String>)
+''', GrMethodCall, 'java.lang.String')
+  }
+
+  @Test
   void 'implicit call in variable initializer'() {
     typingTest('String s = <caret>new IdCallable()()', GrMethodCall, 'java.lang.String')
   }
@@ -206,5 +225,32 @@ F<Integer, String> w = new Wrapper<>({} <caret>as F)
   void 'list literal with diamond'() {
     typingTest 'List<List<String>> l = [new <caret>ArrayList<>()]', GrNewExpression, 'java.util.ArrayList<java.lang.Object>'
     typingTest 'List<List<String>> l = <caret>[new ArrayList<>()]', GrListOrMap, 'java.util.List<java.util.ArrayList<java.lang.Object>>'
+  }
+
+  @Test
+  void 'empty map literal in variable initializer'() {
+    typingTest('Map<String, Integer> m = <caret>[:]', GrListOrMap, 'java.util.LinkedHashMap<java.lang.String, java.lang.Integer>')
+  }
+
+  @Test
+  void 'generic getter from left type'() {
+    def ref = elementUnderCaret('I<PG> lp = new GenericPropertyContainer().<caret>genericProperty', GrReferenceExpression)
+    assertSubstitutor(ref.advancedResolve(), 'PG')
+  }
+
+  @Test
+  void 'generic setter from argument'() {
+    def ref = elementUnderCaret('new GenericPropertyContainer().<caret>genericProperty = new C<String>()', GrReferenceExpression)
+    assertSubstitutor(ref.advancedResolve(), 'java.lang.String')
+  }
+
+  private static void assertSubstitutor(GroovyResolveResult result, String... expectedTypes) {
+    def element = (PsiTypeParameterListOwner)result.element
+    def typeParameters = element.typeParameters
+    assert typeParameters.length == expectedTypes.length
+    def substitutor = result.substitutor
+    for (i in 0..<expectedTypes.length) {
+      assertType(expectedTypes[i], substitutor.substitute(typeParameters[i]))
+    }
   }
 }

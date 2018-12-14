@@ -37,7 +37,7 @@
 
     <xmlStructureViewBuilderProvider implementation="org.jetbrains.idea.devkit.navigation.structure.PluginDescriptorXmlStructureViewBuilderProvider"/>
 
-    <dom.fileDescription implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription" rootTagName="idea-plugin" stubVersion="10"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"

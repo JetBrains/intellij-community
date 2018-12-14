@@ -44,24 +44,45 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
 
   private final ConfigurationFactory myConfigurationFactory;
 
+  /**
+   * @deprecated Use {@link LazyRunConfigurationProducer}.
+   */
+  @Deprecated
   protected RunConfigurationProducer(@NotNull ConfigurationFactory configurationFactory) {
     myConfigurationFactory = configurationFactory;
   }
 
+  /**
+   * @deprecated Use {@link LazyRunConfigurationProducer}.
+   */
+  @Deprecated
   protected RunConfigurationProducer(@NotNull Class<? extends ConfigurationType> type) {
     this(ConfigurationTypeUtil.findConfigurationType(type));
   }
 
+  /**
+   * Do NOT use directly.
+   */
+  public RunConfigurationProducer(@SuppressWarnings("unused") boolean internalUsageOnly) {
+    myConfigurationFactory = null;
+  }
+
+  /**
+   * @deprecated Use {@link LazyRunConfigurationProducer}.
+   */
+  @Deprecated
   protected RunConfigurationProducer(@NotNull ConfigurationType configurationType) {
     myConfigurationFactory = configurationType.getConfigurationFactories()[0];
   }
 
+  @NotNull
   public ConfigurationFactory getConfigurationFactory() {
     return myConfigurationFactory;
   }
 
-  public ConfigurationType getConfigurationType() {
-    return myConfigurationFactory.getType();
+  @NotNull
+  public final ConfigurationType getConfigurationType() {
+    return getConfigurationFactory().getType();
   }
 
   /**
@@ -82,7 +103,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
      }
     }
     catch (ClassCastException e) {
-      LOG.error(myConfigurationFactory + " produced wrong type", e);
+      LOG.error(getConfigurationFactory() + " produced wrong type", e);
       return null;
     }
     return new ConfigurationFromContextImpl(this, settings, ref.get());
@@ -211,11 +232,11 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    */
   @NotNull
   protected List<RunnerAndConfigurationSettings> getConfigurationSettingsList(@NotNull RunManager runManager) {
-    return runManager.getConfigurationSettingsList(myConfigurationFactory.getType());
+    return runManager.getConfigurationSettingsList(getConfigurationFactory().getType());
   }
 
   protected RunnerAndConfigurationSettings cloneTemplateConfiguration(@NotNull final ConfigurationContext context) {
-    return cloneTemplateConfigurationStatic(context, myConfigurationFactory);
+    return cloneTemplateConfigurationStatic(context, getConfigurationFactory());
   }
 
   @NotNull
@@ -229,7 +250,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   }
 
   @NotNull
-  public static <T extends RunConfigurationProducer> T getInstance(Class<? extends T> aClass) {
+  public static <T extends RunConfigurationProducer> T getInstance(@NotNull Class<? extends T> aClass) {
     for (RunConfigurationProducer producer : EP_NAME.getExtensionList()) {
       if (aClass.isInstance(producer)) {
         //noinspection unchecked
@@ -243,7 +264,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   @Nullable
   public RunConfiguration createLightConfiguration(@NotNull final ConfigurationContext context) {
     @SuppressWarnings("unchecked")
-    T configuration = (T)myConfigurationFactory.createTemplateConfiguration(context.getProject());
+    T configuration = (T)getConfigurationFactory().createTemplateConfiguration(context.getProject());
     final Ref<PsiElement> ref = new Ref<>(context.getPsiLocation());
     try {
       if (!setupConfigurationFromContext(configuration, context, ref)) {
@@ -251,7 +272,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
       }
     }
     catch (ClassCastException e) {
-      LOG.error(myConfigurationFactory + " produced wrong type", e);
+      LOG.error(getConfigurationFactory() + " produced wrong type", e);
       return null;
     }
     return configuration;

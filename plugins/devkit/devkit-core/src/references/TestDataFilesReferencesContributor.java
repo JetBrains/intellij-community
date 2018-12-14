@@ -26,7 +26,7 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
     UastReferenceRegistrar
       .registerUastReferenceProvider(
         registrar,
-        UastPatterns.stringLiteralExpression().inCall(UastPatterns.callExpression()),
+        UastPatterns.injectionHostUExpression().inCall(UastPatterns.callExpression()),
         new UastInjectionHostReferenceProvider() {
 
           @NotNull

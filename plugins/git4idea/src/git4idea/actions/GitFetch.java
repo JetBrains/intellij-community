@@ -34,7 +34,7 @@ public class GitFetch extends DumbAwareAction {
     GitVcs.runInBackground(new Task.Backgroundable(project, "Fetching...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        fetchSupport(project).fetch(getRepositories(project)).showNotification();
+        fetchSupport(project).fetchAllRemotes(getRepositories(project)).showNotification();
       }
     });
   }

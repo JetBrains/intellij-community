@@ -157,15 +157,9 @@ public class CompilerReferenceIndex<Input> {
   public void saveVersion(@NotNull File buildDir, int version) {
     File versionFile = new File(getIndexDir(buildDir), VERSION_FILE);
 
-    try {
-      FileUtil.createIfDoesntExist(versionFile);
-      final DataOutputStream os = new DataOutputStream(new FileOutputStream(versionFile));
-      try {
-        os.writeInt(version);
-      }
-      finally {
-        os.close();
-      }
+    FileUtil.createIfDoesntExist(versionFile);
+    try (DataOutputStream os = new DataOutputStream(new FileOutputStream(versionFile))) {
+      os.writeInt(version);
     }
     catch (IOException ex) {
       LOG.error(ex);

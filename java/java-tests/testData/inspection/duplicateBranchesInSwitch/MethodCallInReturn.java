@@ -4,7 +4,7 @@ enum T {
   int foo(T t) {
     switch (t) {
       case A:
-        <weak_warning descr="Duplicate branch in 'switch' statement">return t.ordinal(); // comment 1</weak_warning>
+        return t.ordinal(); // comment 1
 
       case B:
         <weak_warning descr="Duplicate branch in 'switch' statement">return t.ordinal();</weak_warning>

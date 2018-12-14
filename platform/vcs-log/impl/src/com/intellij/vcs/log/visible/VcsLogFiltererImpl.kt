@@ -4,6 +4,7 @@ package com.intellij.vcs.log.visible
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
@@ -87,13 +88,13 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       kotlin.Pair(emptyList(), visibleRoots.toList())
     }
 
-    val filteredWidthIndex: Set<Int>? = if (rootsForIndex.isNotEmpty()) dataGetter?.filter(detailsFilters) else null
+    val filteredWithIndex: Set<Int>? = if (rootsForIndex.isNotEmpty()) dataGetter?.filter(detailsFilters) else null
 
     val headsForVcs = if (rootsForVcs.containsAll(visibleRoots)) matchingHeads
     else getMatchingHeads(dataPack.refsModel, rootsForVcs, filters)
     val filteredWithVcs = filterWithVcs(dataPack.permanentGraph, filters, detailsFilters, headsForVcs, commitCount)
 
-    val filteredCommits: Set<Int>? = union(filteredWidthIndex, filteredWithVcs.matchingCommits)
+    val filteredCommits: Set<Int>? = union(filteredWithIndex, filteredWithVcs.matchingCommits)
     return FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount)
   }
 
@@ -171,14 +172,19 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         if (commitId != null) hashFilterResult.add(storage.getCommitIndex(commitId.hash, commitId.root))
       }
     }
+    if (!Registry.`is`("vcs.log.filter.messages.by.hash")) {
+      if (hashFilterResult.isEmpty()) return null
+
+      val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, hashFilterResult)
+      val visiblePack = VisiblePack(dataPack, visibleGraph, false, VcsLogFilterObject.collection(fromHashes(hashes)))
+      return Pair.create(visiblePack, CommitCountStage.ALL)
+    }
+
     val textFilter = VcsLogFilterObject.fromPatternsList(ContainerUtil.newArrayList(hashes), false)
     val textFilterResult = filterByDetails(dataPack, VcsLogFilterObject.collection(textFilter),
                                            commitCount, dataPack.logProviders.keys, null)
     if (hashFilterResult.isEmpty() && textFilterResult.matchingCommits.matchesNothing()) return null
-    val filterResult = if (textFilterResult.matchingCommits == null)
-      hashFilterResult
-    else
-      ContainerUtil.union(hashFilterResult, textFilterResult.matchingCommits)
+    val filterResult = union(textFilterResult.matchingCommits, hashFilterResult)
 
     val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, filterResult)
     val visiblePack = VisiblePack(dataPack, visibleGraph, textFilterResult.canRequestMore,

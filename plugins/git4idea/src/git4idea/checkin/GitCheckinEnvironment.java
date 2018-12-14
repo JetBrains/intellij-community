@@ -960,12 +960,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     //noinspection SSBasedInspection
     file.deleteOnExit();
     @NonNls String encoding = GitConfigUtil.getCommitEncoding(project, root);
-    Writer out = new OutputStreamWriter(new FileOutputStream(file), encoding);
-    try {
+    try (Writer out = new OutputStreamWriter(new FileOutputStream(file), encoding)) {
       out.write(message);
-    }
-    finally {
-      out.close();
     }
     return file;
   }

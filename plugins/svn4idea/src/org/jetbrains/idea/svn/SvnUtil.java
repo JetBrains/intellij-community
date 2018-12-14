@@ -700,8 +700,8 @@ public class SvnUtil {
   @Nullable
   public static String getChangelistName(@NotNull final Status status) {
     // no explicit check on working copy format supports change lists as they are supported from svn 1.5
-    // and anyway status.getChangelistName() should just return null if change lists are not supported.
-    return status.getKind().isFile() ? status.getChangelistName() : null;
+    // and anyway status.getChangeListName() should just return null if change lists are not supported.
+    return status.getNodeKind().isFile() ? status.getChangeListName() : null;
   }
 
   public static boolean isUnversionedOrNotFound(@NotNull SvnBindException e) {

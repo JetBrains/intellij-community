@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -119,9 +120,9 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
                                                               inLambdaName + ")->" + ct.text(notNullBranch), ternary);
       PsiParameter lambdaParameter = trueLambda.getParameterList().getParameters()[0];
       PsiExpression trueBody = Objects.requireNonNull((PsiExpression)trueLambda.getBody());
-      String replacement = OptionalUtil.generateOptionalUnwrap(CommonClassNames.JAVA_UTIL_OPTIONAL + ".ofNullable(" + name + ")",
-                                                               lambdaParameter, trueBody, ct.markUnchanged(nullBranch), ternary.getType(),
-                                                               !ExpressionUtils.isSafelyRecomputableExpression(nullBranch));
+      String replacement = OptionalRefactoringUtil.generateOptionalUnwrap(CommonClassNames.JAVA_UTIL_OPTIONAL + ".ofNullable(" + name + ")",
+                                                                          lambdaParameter, trueBody, ct.markUnchanged(nullBranch), ternary.getType(),
+                                                                          !ExpressionUtils.isSafelyRecomputableExpression(nullBranch));
       PsiElement result = ct.replaceAndRestoreComments(ternary, replacement);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);

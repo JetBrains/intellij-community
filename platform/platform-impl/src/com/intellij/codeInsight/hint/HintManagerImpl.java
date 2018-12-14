@@ -845,7 +845,7 @@ public class HintManagerImpl extends HintManager {
     return hintInfo;
   }
 
-  private void updateLastEditor(final Editor editor) {
+  protected void updateLastEditor(final Editor editor) {
     if (myLastEditor != editor) {
       if (myLastEditor != null) {
         myLastEditor.removeEditorMouseListener(myEditorMouseListener);

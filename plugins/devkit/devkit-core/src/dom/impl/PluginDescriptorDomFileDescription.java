@@ -36,13 +36,4 @@ public class PluginDescriptorDomFileDescription extends DomFileDescription<IdeaP
     return AllIcons.Nodes.Plugin;
   }
 
-  @Override
-  public boolean hasStubs() {
-    return true;
-  }
-
-  @Override
-  public int getStubVersion() {
-    return 10;
-  }
 }

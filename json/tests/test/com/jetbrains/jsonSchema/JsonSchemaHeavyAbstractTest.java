@@ -60,6 +60,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
     callback.registerSchemes();
     JsonSchemaMappingsProjectConfiguration.getInstance(getProject()).setState(mySchemas);
     JsonSchemaService.Impl.get(getProject()).reset();
+    getPsiManager().dropPsiCaches();
     doHighlighting();
     if (myDoCompletion) complete();
     callback.doCheck();

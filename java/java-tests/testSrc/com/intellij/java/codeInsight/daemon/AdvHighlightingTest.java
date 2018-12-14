@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,7 +44,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected Sdk getTestProjectJdk() {
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_4);
+    setLanguageLevel(LanguageLevel.JDK_1_4);
     return IdeaTestUtil.getMockJdk14();
   }
 
@@ -258,7 +257,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testNotAKeywords() throws Exception {
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_4);
+    setLanguageLevel(LanguageLevel.JDK_1_4);
     doTest(BASE_PATH + "/notAKeywords/Test.java", BASE_PATH + "/notAKeywords", false, false);
   }
 

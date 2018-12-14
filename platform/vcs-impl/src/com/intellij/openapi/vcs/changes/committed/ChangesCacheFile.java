@@ -300,8 +300,7 @@ public class ChangesCacheFile {
 
   private void loadHeader() throws IOException {
     if (!myHeaderLoaded) {
-      RandomAccessFile stream = new RandomAccessFile(myPath, "r");
-      try {
+      try (RandomAccessFile stream = new RandomAccessFile(myPath, "r")) {
         int version = stream.readInt();
         if (version != VERSION) {
           throw new VersionMismatchException();
@@ -317,9 +316,6 @@ public class ChangesCacheFile {
         myHaveCompleteHistory = (stream.readShort() != 0);
         myIncomingCount = stream.readInt();
         assert stream.getFilePointer() == HEADER_SIZE;
-      }
-      finally {
-        stream.close();
       }
       myHeaderLoaded = true;
     }
@@ -679,10 +675,9 @@ public class ChangesCacheFile {
       partialFile.delete();
     }
     else if (accounted > 0) {
-      RandomAccessFile file = new RandomAccessFile(partialFile, "rw");
-      try {
+      try (RandomAccessFile file = new RandomAccessFile(partialFile, "rw")) {
         file.writeInt(accounted);
-        for(Change c: data.accountedChanges) {
+        for (Change c : data.accountedChanges) {
           boolean isAfterRevision = true;
           ContentRevision revision = c.getAfterRevision();
           if (revision == null) {
@@ -694,9 +689,6 @@ public class ChangesCacheFile {
           file.writeUTF(revision.getFile().getIOFile().toString());
         }
       }
-      finally {
-        file.close();
-      }
     }
   }
 
@@ -705,8 +697,7 @@ public class ChangesCacheFile {
     try {
       File partialFile = getPartialPath(data.indexEntry.offset);
       if (partialFile.exists()) {
-        RandomAccessFile file = new RandomAccessFile(partialFile, "r");
-        try {
+        try (RandomAccessFile file = new RandomAccessFile(partialFile, "r")) {
           int count = file.readInt();
           if (count > 0) {
             final Collection<Change> changes = data.changeList.getChanges();
@@ -720,14 +711,15 @@ public class ChangesCacheFile {
                 afterPaths.put(FilePathsHelper.convertPath(change.getAfterRevision().getFile()), change);
               }
             }
-            for(int i=0; i<count; i++) {
+            for (int i = 0; i < count; i++) {
               boolean isAfterRevision = (file.readByte() != 0);
               String path = file.readUTF();
               final String converted = FilePathsHelper.convertPath(path);
               final Change change;
               if (isAfterRevision) {
                 change = afterPaths.get(converted);
-              } else {
+              }
+              else {
                 change = beforePaths.get(converted);
               }
               if (change != null) {
@@ -735,9 +727,6 @@ public class ChangesCacheFile {
               }
             }
           }
-        }
-        finally {
-          file.close();
         }
       }
     }

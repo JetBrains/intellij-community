@@ -255,7 +255,7 @@ public final class PyToxTest extends PyEnvTestCase {
           Assert.assertThat("Pytest should provide version because of --version", runner.getAllConsoleText(),
                             Matchers.containsString("This is pytest version"));
           Assert.assertEquals("Only 2.7 should be launched", "Test tree:\n" +
-                                                             "[root]\n" +
+                                                             "[root](+)\n" +
                                                              ".py27(+)\n", runner.getFormattedTestTree());
           runner.getFormattedTestTree();
         }

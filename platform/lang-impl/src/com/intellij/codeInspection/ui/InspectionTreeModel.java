@@ -51,7 +51,20 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
 
   @Override
   public List<? extends InspectionTreeNode> getChildren(Object parent) {
-    return ((InspectionTreeNode)parent).getChildren();
+    List<? extends InspectionTreeNode> children = ((InspectionTreeNode)parent).getChildren();
+    children.forEach(InspectionTreeNode::uiRequested);
+    return children;
+  }
+
+  @Override
+  public boolean isLeaf(Object object) {
+    if (object == myRoot) return false;
+    return super.isLeaf(object);
+  }
+
+  @Override
+  public int getChildCount(Object object) {
+    return ((InspectionTreeNode)object).getChildren().size();
   }
 
   @Override

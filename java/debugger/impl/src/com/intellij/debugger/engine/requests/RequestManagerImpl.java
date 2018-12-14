@@ -76,43 +76,31 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   private static void addClassFilter(EventRequest request, String pattern){
-    if(request instanceof AccessWatchpointRequest){
-      ((AccessWatchpointRequest) request).addClassFilter(pattern);
+    if (request instanceof ExceptionRequest) {
+      ((ExceptionRequest)request).addClassFilter(pattern);
     }
-    else if(request instanceof ExceptionRequest){
-      ((ExceptionRequest) request).addClassFilter(pattern);
-    }
-    else if(request instanceof MethodEntryRequest) {
+    else if (request instanceof MethodEntryRequest) {
       ((MethodEntryRequest)request).addClassFilter(pattern);
     }
-    else if(request instanceof MethodExitRequest) {
+    else if (request instanceof MethodExitRequest) {
       ((MethodExitRequest)request).addClassFilter(pattern);
     }
-    else if(request instanceof ModificationWatchpointRequest) {
-      ((ModificationWatchpointRequest)request).addClassFilter(pattern);
-    }
-    else if(request instanceof WatchpointRequest) {
+    else if (request instanceof WatchpointRequest) {
       ((WatchpointRequest)request).addClassFilter(pattern);
     }
   }
 
   private static void addClassExclusionFilter(EventRequest request, String pattern){
-    if(request instanceof AccessWatchpointRequest){
-      ((AccessWatchpointRequest) request).addClassExclusionFilter(pattern);
+    if (request instanceof ExceptionRequest) {
+      ((ExceptionRequest)request).addClassExclusionFilter(pattern);
     }
-    else if(request instanceof ExceptionRequest){
-      ((ExceptionRequest) request).addClassExclusionFilter(pattern);
-    }
-    else if(request instanceof MethodEntryRequest) {
+    else if (request instanceof MethodEntryRequest) {
       ((MethodEntryRequest)request).addClassExclusionFilter(pattern);
     }
-    else if(request instanceof MethodExitRequest) {
+    else if (request instanceof MethodExitRequest) {
       ((MethodExitRequest)request).addClassExclusionFilter(pattern);
     }
-    else if(request instanceof ModificationWatchpointRequest) {
-      ((ModificationWatchpointRequest)request).addClassExclusionFilter(pattern);
-    }
-    else if(request instanceof WatchpointRequest) {
+    else if (request instanceof WatchpointRequest) {
       ((WatchpointRequest)request).addClassExclusionFilter(pattern);
     }
   }

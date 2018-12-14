@@ -31,7 +31,7 @@ public class CustomScopeItem implements ModelScopeItem {
     AnalysisUIOptions options = AnalysisUIOptions.getInstance(project);
     VirtualFile file = PsiUtilCore.getVirtualFile(context);
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    mySearchInLib = file != null && (fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file));
+    mySearchInLib = file != null && fileIndex.isInLibrary(file);
 
     myPreselect = StringUtil.isEmptyOrSpaces(options.CUSTOM_SCOPE_NAME)
                        ? FindSettings.getInstance().getDefaultScopeName()

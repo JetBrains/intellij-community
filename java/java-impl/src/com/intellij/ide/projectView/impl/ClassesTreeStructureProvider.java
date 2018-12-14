@@ -105,7 +105,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
 
   private boolean fileInRoots(VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-    return file != null && (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibraryClasses(file) || index.isInLibrarySource(file));
+    return file != null && (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibrary(file));
   }
 
   @Override

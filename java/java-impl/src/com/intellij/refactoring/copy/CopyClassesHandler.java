@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -167,6 +168,11 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       LOG.assertTrue(defaultTargetDirectory != null, psiFile);
     }
     Project project = defaultTargetDirectory.getProject();
+    if (DumbService.isDumb(elements[0].getProject())) {
+      DumbService.getInstance(project).showDumbModeNotification("Copy classes is not available during indexing");
+      return;
+    }
+
     VirtualFile sourceRootForFile = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(defaultTargetDirectory.getVirtualFile());
     if (sourceRootForFile == null) {
       final List<PsiElement> files = new ArrayList<>();

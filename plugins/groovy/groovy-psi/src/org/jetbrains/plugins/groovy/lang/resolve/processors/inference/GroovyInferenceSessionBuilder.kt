@@ -71,6 +71,7 @@ fun buildTopLevelSession(place: PsiElement): GroovyInferenceSession {
 private fun findExpression(place: PsiElement): GrExpression? {
   val parent = place.parent
   return when {
+    parent is GrAssignmentExpression && parent.lValue === place -> parent
     parent is GrMethodCall -> parent
     parent is GrNewExpression -> parent
     parent is GrClassTypeElement -> parent.parent as? GrSafeCastExpression

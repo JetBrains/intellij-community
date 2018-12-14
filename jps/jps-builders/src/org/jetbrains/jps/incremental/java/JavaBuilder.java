@@ -25,6 +25,7 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
+import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
@@ -41,6 +42,8 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.*;
+import org.jetbrains.jps.javac.ast.api.JavacFileData;
+import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -55,8 +58,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -94,6 +96,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
   );
 
+
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<>();
   private static final Set<JpsModuleType<?>> ourCompilableModuleTypes = new HashSet<>();
   @Nullable private static final File ourDefaultRtJar;
@@ -114,12 +117,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     ourDefaultRtJar = rtJar;
   }
 
-
   public static void registerClassPostProcessor(ClassPostProcessor processor) {
     ourClassProcessors.add(processor);
   }
 
   private final Executor myTaskRunner;
+  private final Collection<JavacFileReferencesRegistrar> myRefRegistrars = new ArrayList<>();
 
   public JavaBuilder(Executor tasksExecutor) {
     super(BuilderCategory.TRANSLATOR);
@@ -142,6 +145,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
     JavaCompilingTool compilingTool = JavaBuilderUtil.findCompilingTool(compilerId);
     COMPILING_TOOL.set(context, compilingTool);
     COMPILER_USAGE_STATISTICS.set(context, new ConcurrentHashMap<>());
+    JavaBackwardReferenceIndexWriter.initialize(context);
+    for (JavacFileReferencesRegistrar registrar : JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar.class)) {
+      if (registrar.isEnabled()) {
+        registrar.initialize();
+        myRefRegistrars.add(registrar);
+      }
+    }
   }
 
   @Override
@@ -292,7 +302,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             srcPath.add(rd.root);
           }
         }
-        final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
+        final DiagnosticSink diagnosticSink = new DiagnosticSink(context, Collections.unmodifiableCollection(myRefRegistrars));
 
         final String chunkName = chunk.getName();
         context.processMessage(new ProgressMessage("Parsing java... [" + chunk.getPresentableShortName() + "]"));
@@ -1070,9 +1080,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     private volatile int myErrorCount;
     private volatile int myWarningCount;
     private final Set<File> myFilesWithErrors = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    @NotNull
+    private final Collection<JavacFileReferencesRegistrar> myRegistrars;
 
-    private DiagnosticSink(CompileContext context) {
+    private DiagnosticSink(CompileContext context, @NotNull Collection<JavacFileReferencesRegistrar> refRegistrars) {
       myContext = context;
+      myRegistrars = refRegistrars;
     }
 
     @Override
@@ -1080,23 +1093,23 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     @Override
-    public void registerImports(final String className, final Collection<String> imports, final Collection<String> staticImports) {
-      //submitAsyncTask(myContext, new Runnable() {
-      //  public void run() {
-      //    final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(myContext);
-      //    if (callback != null) {
-      //      callback.registerImports(className, imports, staticImports);
-      //    }
-      //  }
-      //});
+    public void registerJavacFileData(JavacFileData data) {
+      for (JavacFileReferencesRegistrar registrar : myRegistrars) {
+        registrar.registerFile(myContext, data.getFilePath(), registrar.onlyImports() ? data.getImportRefs() : data.getRefs(), data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
+      }
     }
 
     @Override
     public void customOutputData(String pluginId, String dataName, byte[] data) {
-      for (CustomOutputDataListener listener : JpsServiceManager.getInstance().getExtensions(CustomOutputDataListener.class)) {
-        if (pluginId.equals(listener.getId())) {
-          listener.processData(dataName, data);
-          return;
+      if (JavacFileData.CUSTOM_DATA_PLUGIN_ID.equals(pluginId) && JavacFileData.CUSTOM_DATA_KIND.equals(dataName)) {
+        registerJavacFileData(JavacFileData.fromBytes(data));
+      }
+      else {
+        for (CustomOutputDataListener listener : JpsServiceManager.getInstance().getExtensions(CustomOutputDataListener.class)) {
+          if (pluginId.equals(listener.getId())) {
+            listener.processData(myContext, dataName, data);
+            return;
+          }
         }
       }
     }

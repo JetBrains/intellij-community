@@ -186,7 +186,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   protected void onDoubleClick() {
-    showDiff();
+    if (canShowDiff()) showDiff();
   }
 
   protected void onIncludedChanged() {

@@ -92,7 +92,7 @@ public class GrThrowsClauseImpl extends GrReferenceListImpl implements GrThrowsC
       }
 
       if (element instanceof PsiJavaCodeReferenceElement) {
-        element = GroovyPsiElementFactory.getInstance(getProject()).createCodeReferenceElementFromText(element.getText());
+        element = GroovyPsiElementFactory.getInstance(getProject()).createCodeReference(element.getText());
       }
     }
     return super.add(element);

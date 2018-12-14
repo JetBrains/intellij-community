@@ -132,7 +132,7 @@ class CmdInfoClient : BaseSvnClient(), InfoClient {
   }
 }
 
-private class RevisionNumberAdapter : XmlAdapter<String, Long>() {
+private class InfoRevisionNumberAdapter : XmlAdapter<String, Long>() {
   override fun marshal(v: Long) = throw UnsupportedOperationException()
 
   override fun unmarshal(v: String) = when (v) {
@@ -156,7 +156,7 @@ private class Entry {
   @XmlAttribute(name = "kind", required = true)
   var nodeKind = NodeKind.UNKNOWN
 
-  @XmlJavaTypeAdapter(RevisionNumberAdapter::class)
+  @XmlJavaTypeAdapter(InfoRevisionNumberAdapter::class)
   @XmlAttribute(name = "revision", required = true)
   var revisionNumber: Long? = null
 

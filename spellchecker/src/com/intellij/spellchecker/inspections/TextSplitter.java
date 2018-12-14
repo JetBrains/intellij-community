@@ -46,17 +46,15 @@ public class TextSplitter extends BaseSplitter {
 
   protected void doSplit(@NotNull String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
     final WordSplitter ws = WordSplitter.getInstance();
-    Matcher matcher = null;
     try {
-      matcher = EXTENDED_WORD_AND_SPECIAL.matcher(newBombedCharSequence(text, 500));
+      Matcher matcher = EXTENDED_WORD_AND_SPECIAL.matcher(newBombedCharSequence(text, 500));
+
+      matcher.region(range.getStartOffset(), range.getEndOffset());
+      while (matcher.find()) {
+        TextRange found = new TextRange(matcher.start(), matcher.end());
+        ws.split(text, found, consumer);
+      }
     }
-    catch (ProcessCanceledException e) {
-      return;
-    }
-    matcher.region(range.getStartOffset(), range.getEndOffset());
-    while (matcher.find()) {
-      TextRange found = new TextRange(matcher.start(), matcher.end());
-      ws.split(text, found, consumer);
-    }
+    catch (ProcessCanceledException ignored) { }
   }
 }

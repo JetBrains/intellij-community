@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativePath;
 import static org.jetbrains.idea.svn.history.SvnLazyPropertyContentRevision.getPropertyList;
@@ -149,7 +150,7 @@ class SvnChangeProviderContext implements StatusReceiver {
 
   public void addCopiedFile(@NotNull FilePath filePath, @NotNull Status status, @NotNull Url copyFromURL) {
     myCopiedFiles.add(new SvnChangedFile(filePath, status, copyFromURL));
-    ContainerUtil.putIfNotNull(filePath, status.getCopyFromURL(), myCopyFromURLs);
+    ContainerUtil.putIfNotNull(filePath, status.getCopyFromUrl(), myCopyFromURLs);
   }
 
   void processStatusFirstPass(@NotNull FilePath filePath, @NotNull Status status) throws SvnBindException {
@@ -159,12 +160,11 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (status.getLocalLock() != null) {
       myChangelistBuilder.processLogicallyLockedFolder(filePath.getVirtualFile(), status.getLocalLock().toLogicalLock(true));
     }
-    if (filePath.isDirectory() && status.isLocked()) {
+    if (filePath.isDirectory() && status.isWorkingCopyLocked()) {
       myChangelistBuilder.processLockedFolder(filePath.getVirtualFile());
     }
-    if ((status.is(StatusType.STATUS_ADDED) || StatusType.STATUS_MODIFIED.equals(status.getNodeStatus())) &&
-        status.getCopyFromURL() != null) {
-      addCopiedFile(filePath, status, status.getCopyFromURL());
+    if (status.is(StatusType.STATUS_ADDED, StatusType.STATUS_MODIFIED) && status.getCopyFromUrl() != null) {
+      addCopiedFile(filePath, status, status.getCopyFromUrl());
     }
     else if (status.is(StatusType.STATUS_DELETED)) {
       myDeletedFiles.add(new SvnChangedFile(filePath, status));
@@ -186,10 +186,9 @@ class SvnChangeProviderContext implements StatusReceiver {
       loadEntriesFile(filePath);
     }
 
-    FileStatus fStatus = SvnStatusConvertor.convertStatus(status);
+    FileStatus fStatus = Status.convertStatus(status);
 
-    final StatusType statusType = status.getContentsStatus();
-    if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.UNKNOWN)) {
+    if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_NONE)) {
       final VirtualFile file = filePath.getVirtualFile();
       if (file != null) {
         myChangelistBuilder.processUnversionedFile(file);
@@ -222,7 +221,7 @@ class SvnChangeProviderContext implements StatusReceiver {
         myChangelistBuilder.processIgnoredFile(filePath.getVirtualFile());
       }
     }
-    else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && statusType != StatusType.STATUS_NONE) {
+    else if (fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) {
       VirtualFile file = filePath.getVirtualFile();
       if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
         processChangeInList(SvnContentRevision.createBaseRevision(myVcs, filePath, status), CurrentContentRevision.create(filePath),
@@ -242,11 +241,11 @@ class SvnChangeProviderContext implements StatusReceiver {
     final Info svnInfo = myVcs.getInfo(file);
 
     if (svnInfo != null) {
-      final Status svnStatus = new Status();
+      Status.Builder svnStatus = new Status.Builder(virtualToIoFile(file));
       svnStatus.setRevision(svnInfo.getRevision());
-      svnStatus.setKind(NodeKind.from(filePath.isDirectory()));
+      svnStatus.setNodeKind(NodeKind.from(filePath.isDirectory()));
       processChangeInList(SvnContentRevision.createBaseRevision(myVcs, filePath, svnInfo.getRevision()),
-                          CurrentContentRevision.create(filePath), FileStatus.MODIFIED, svnStatus);
+                          CurrentContentRevision.create(filePath), FileStatus.MODIFIED, svnStatus.build());
     }
   }
 
@@ -263,7 +262,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (status.isSwitched() || (convertedStatus == FileStatus.SWITCHED)) {
       final VirtualFile virtualFile = filePath.getVirtualFile();
       if (virtualFile == null) return;
-      Url switchUrl = status.getURL();
+      Url switchUrl = status.getUrl();
       final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsRootFor(virtualFile);
       if (vcsRoot != null) {  // it will be null if we walked into an excluded directory
         String baseUrl = myBranchConfigurationManager.get(vcsRoot).getBaseName(switchUrl);
@@ -324,7 +323,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     ConflictedSvnChange change =
       new ConflictedSvnChange(before, after, fStatus, getState(svnStatus), after == null ? before.getFile() : after.getFile());
 
-    change.setIsPhantom(StatusType.STATUS_DELETED.equals(svnStatus.getNodeStatus()) && !svnStatus.getRevision().isValid());
+    change.setIsPhantom(svnStatus.is(StatusType.STATUS_DELETED) && !svnStatus.getRevision().isValid());
     change.setBeforeDescription(svnStatus.getTreeConflict());
     patchWithPropertyChange(change, svnStatus, null);
 
@@ -352,8 +351,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     ContentRevision beforeRevision =
       !svnStatus.isProperty(StatusType.STATUS_ADDED) || deletedStatus != null ? createPropertyRevision(change, beforeFile, true) : null;
     ContentRevision afterRevision = !svnStatus.isProperty(StatusType.STATUS_DELETED) ? createPropertyRevision(change, ioFile, false) : null;
-    FileStatus status =
-      deletedStatus != null ? FileStatus.MODIFIED : SvnStatusConvertor.convertPropertyStatus(svnStatus.getPropertiesStatus());
+    FileStatus status = deletedStatus != null ? FileStatus.MODIFIED : Status.convertPropertyStatus(svnStatus.getPropertyStatus());
 
     return new Change(beforeRevision, afterRevision, status);
   }

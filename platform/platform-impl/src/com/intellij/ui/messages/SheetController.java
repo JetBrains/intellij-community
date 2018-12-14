@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
+import com.intellij.BundleBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -158,18 +159,27 @@ public class SheetController implements Disposable {
     myShadowImage = renderer.createShadow(mySheetStencil);
   }
 
-  private void handleMnemonics(int i, String buttonTitle) {
-    buttons[i].setName(buttonTitle);
-    buttons[i].setText(buttonTitle);
-    setMnemonicsFromChar('&', buttons[i]);
-    setMnemonicsFromChar('_', buttons[i]);
+  private void handleMnemonics(int i, String title) {
+    buttons[i].setName(title);
+
+    if (!setButtonTextAndMnemonic(i, title, '_') &&
+        !setButtonTextAndMnemonic(i, title, '&') &&
+        !setButtonTextAndMnemonic(i, title, BundleBase.MNEMONIC)) {
+      buttons[i].setText(title);
+    }
   }
 
-  private static void setMnemonicsFromChar(char mnemonicChar, JButton button) {
-    String buttonTitle = button.getText();
-    if (buttonTitle.indexOf(mnemonicChar) != -1) {
-      button.setMnemonic(buttonTitle.charAt(buttonTitle.indexOf(mnemonicChar) + 1));
-      button.setText(buttonTitle.replace(Character.toString(mnemonicChar), ""));
+  private boolean setButtonTextAndMnemonic(int i, String title, char mnemonics) {
+    int mIdx;
+    if ((mIdx = title.indexOf(mnemonics)) >= 0) {
+      String text = title.substring(0, mIdx) + title.substring(mIdx + 1);
+
+      buttons[i].setText(text);
+      buttons[i].setMnemonic(text.charAt(mIdx));
+      return true;
+    }
+    else {
+      return false;
     }
   }
 

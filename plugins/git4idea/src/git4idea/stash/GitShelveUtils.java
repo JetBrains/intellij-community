@@ -65,7 +65,7 @@ public class GitShelveUtils {
     final List<ShelvedChange> changes = shelvedChangeList.getChanges(project);
     // we pass null as target change list for Patch Applier to do NOTHING with change lists
     shelveManager.unshelveChangeList(shelvedChangeList, changes, shelvedChangeList.getBinaryFiles(), null, false, true,
-                                     true, leftConflictTitle, rightConflictTitle);
+                                     true, leftConflictTitle, rightConflictTitle, true);
     ApplicationManager.getApplication().invokeAndWait(() -> markUnshelvedFilesNonUndoable(project, changes));
   }
 

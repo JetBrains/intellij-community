@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
@@ -266,7 +266,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
               int dotIndex = qName.lastIndexOf(".");
               if (dotIndex < 0) return;
               String packageName = qName.substring(0, dotIndex);
-              refElement.setQualifier(factory.createReferenceElementFromText(packageName));
+              refElement.setQualifier(factory.createCodeReference(packageName));
             }
           }
         }

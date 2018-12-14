@@ -116,8 +116,7 @@ class SliceUtil {
       PsiVariable variable = (PsiVariable)expression;
       Collection<PsiExpression> values = DfaUtil.getCachedVariableValues(variable, original);
       if (values == null) {
-        SliceUsage stopUsage = createTooComplexDFAUsage(expression, parent);
-        return processor.process(stopUsage);
+        return createAndProcessTooComplexDFAUsage(expression, parent, processor);
       }
       PsiExpression initializer = variable.getInitializer();
       if (values.isEmpty() && initializer != null) {
@@ -200,10 +199,8 @@ class SliceUtil {
       }
 
       // check for constructor put arguments
-      if (expression instanceof PsiNewExpression &&
-          !processContainerPutArguments((PsiNewExpression)expression, parent, parentSubstitutor, indexNesting, syntheticField, processor)) {
-        return false;
-      }
+      return !(expression instanceof PsiNewExpression) ||
+             processContainerPutArguments((PsiNewExpression)expression, parent, parentSubstitutor, indexNesting, syntheticField, processor);
     }
     return true;
   }
@@ -238,15 +235,15 @@ class SliceUtil {
     final PsiElement realExpression = expression.getParent() instanceof DummyHolder ? expression.getParent().getContext() : expression;
     assert realExpression != null;
     if (!(realExpression instanceof PsiCompiledElement)) {
-      SliceUsage usage = createSliceUsage(realExpression, parent, substitutor, indexNesting, syntheticField);
-      if (!processor.process(usage)) return false;
+      return createAndProcessSliceUsage(realExpression, parent, substitutor, indexNesting, syntheticField, processor);
     }
     return true;
   }
 
-  public static Collection<SliceUsage> collectMethodReturnValues(@NotNull SliceUsage parent,
-                                                                 @NotNull PsiSubstitutor parentSubstitutor,
-                                                                 PsiMethod methodCalled) {
+  @NotNull
+  static Collection<SliceUsage> collectMethodReturnValues(@NotNull SliceUsage parent,
+                                                          @NotNull PsiSubstitutor parentSubstitutor,
+                                                          PsiMethod methodCalled) {
     CommonProcessors.CollectProcessor<SliceUsage> processor = new CommonProcessors.CollectProcessor<>();
     processMethodReturnValue(processor, parent, parentSubstitutor, null, methodCalled, null, PsiSubstitutor.EMPTY);
     return processor.getResults();
@@ -328,7 +325,7 @@ class SliceUtil {
           PsiExpression returnValue = statement.getReturnValue();
           if (returnValue == null) return;
           PsiType right = superSubstitutor.substitute(superSubstitutor.substitute(returnValue.getType()));
-          if (right == null || (parentType != null && !TypeConversionUtil.isAssignable(parentType, right))) return;
+          if (right == null || parentType != null && !TypeConversionUtil.isAssignable(parentType, right)) return;
           if (!handToProcessor(returnValue, processor, parent, substitutor, indexNesting, "")) {
             stopWalking();
             result[0] = false;
@@ -406,18 +403,18 @@ class SliceUtil {
     });
   }
 
-  @NotNull
-  static SliceUsage createSliceUsage(@NotNull PsiElement element,
+  static boolean createAndProcessSliceUsage(@NotNull PsiElement element,
                                      @NotNull SliceUsage parent,
                                      @NotNull PsiSubstitutor substitutor,
                                      int indexNesting,
-                                     @NotNull String syntheticField) {
-    return new JavaSliceUsage(simplify(element), parent, substitutor, indexNesting, syntheticField);
+                                     @NotNull String syntheticField, @NotNull Processor<? super SliceUsage> processor) {
+    PsiElement simplified = simplify(element);
+    return simplified == null || processor.process(new JavaSliceUsage(simplified, parent, substitutor, indexNesting, syntheticField));
   }
 
-  @NotNull
-  private static SliceUsage createTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
-    return new SliceTooComplexDFAUsage(simplify(element), parent);
+  private static boolean createAndProcessTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull Processor<? super SliceUsage> processor) {
+    PsiElement simplified = simplify(element);
+    return simplified == null || processor.process(new SliceTooComplexDFAUsage(simplified, parent));
   }
 
   private static boolean processParameterUsages(@NotNull final PsiParameter parameter,
@@ -430,10 +427,9 @@ class SliceUtil {
     if (declarationScope instanceof PsiForeachStatement) {
       PsiForeachStatement statement = (PsiForeachStatement)declarationScope;
       PsiExpression iterated = statement.getIteratedValue();
-      if (statement.getIterationParameter() == parameter && iterated != null) {
-        if (!handToProcessor(iterated, processor, parent, parentSubstitutor, indexNesting + 1, syntheticField)) return false;
-      }
-      return true;
+      return statement.getIterationParameter() != parameter ||
+             iterated == null ||
+             handToProcessor(iterated, processor, parent, parentSubstitutor, indexNesting + 1, syntheticField);
     }
     if (!(declarationScope instanceof PsiMethod)) return true;
 
@@ -590,9 +586,7 @@ class SliceUtil {
     PsiFile file = foreignElement.getContainingFile();
     if (file != null && file.getLanguage() != JavaLanguage.INSTANCE) {
       // show foreign language usage as leaf to warn about possible (but unknown to us) flow.
-      if (!handToProcessor(foreignElement, processor, parent, parentSubstitutor, indexNesting, syntheticField)) {
-        return false;
-      }
+      return handToProcessor(foreignElement, processor, parent, parentSubstitutor, indexNesting, syntheticField);
     }
     return true;
   }
@@ -608,7 +602,7 @@ class SliceUtil {
         PsiElement element = reference.getElement();
         if (element instanceof PsiExpression && !element.getManager().areElementsEquivalent(element, parent.getElement())) {
           PsiExpression expression = (PsiExpression)element;
-          if (!addContainerItemModification(expression, processor, parent, parentSubstitutor, indexNesting, syntheticField)) return false;
+          return addContainerItemModification(expression, processor, parent, parentSubstitutor, indexNesting, syntheticField);
         }
         return true;
       });
@@ -633,7 +627,7 @@ class SliceUtil {
     }
     PsiElement grand = parentElement == null ? null : parentElement.getParent();
     if (grand instanceof PsiCallExpression) {
-      if (!processContainerPutArguments((PsiCallExpression)grand, parent, parentSubstitutor, indexNesting, syntheticField, processor)) return false;
+      return processContainerPutArguments((PsiCallExpression)grand, parent, parentSubstitutor, indexNesting, syntheticField, processor);
     }
     return true;
   }

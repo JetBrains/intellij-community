@@ -41,11 +41,17 @@ Var productLauncher
 Var baseRegKey
 Var downloadJreX86
 Var productDir
-Var control_fields
-Var max_fields
 Var silentMode
 Var pathEnvVar
 Var requiredDiskSpace
+
+; position of controls for Uninstall Old Installations dialog
+Var control_fields
+Var max_fields
+Var bottom_position
+Var max_length
+Var line_width
+Var extra_space
 
 ; position of controls for Installation Options dialog
 var launcherShortcut
@@ -76,6 +82,7 @@ ${StrRep}
 
 ReserveFile "desktop.ini"
 ReserveFile "DeleteSettings.ini"
+ReserveFile "UninstallOldVersions.ini"
 !insertmacro MUI_RESERVEFILE_LANGDLL
 
 !define MUI_ICON "${IMAGES_LOCATION}\${PRODUCT_ICON_FILE}"
@@ -764,14 +771,69 @@ finish:
 FunctionEnd
 
 
+Function getUninstallOldVersionVars
+  !insertmacro INSTALLOPTIONS_READ $max_fields "UninstallOldVersions.ini" "Settings" "NumFields"
+  !insertmacro INSTALLOPTIONS_READ $control_fields "UninstallOldVersions.ini" "Settings" "ControlFields"
+  !insertmacro INSTALLOPTIONS_READ $bottom_position "UninstallOldVersions.ini" "Settings" "BottomPosition"
+  !insertmacro INSTALLOPTIONS_READ $max_length "UninstallOldVersions.ini" "Settings" "MaxLength"
+  !insertmacro INSTALLOPTIONS_READ $line_width "UninstallOldVersions.ini" "Settings" "LineWidth"
+  !insertmacro INSTALLOPTIONS_READ $extra_space "UninstallOldVersions.ini" "Settings" "ExtraSpace"
+FunctionEnd
+
+
+Function getPosition
+; return:
+;    0 if it is first checkbox which do not require special position
+;    Bottom position of previous checkbox which equals for Top position of current one.
+  IntOp $R8 $8 - 1
+  !insertmacro INSTALLOPTIONS_READ $R7 "UninstallOldVersions.ini" "Field $R8" "Bottom"
+  !insertmacro INSTALLOPTIONS_READ $7  "UninstallOldVersions.ini" "Field $8"  "Top"
+  StrCmp $R8 $control_fields noCheckboxesFound 0
+    Push $R7
+    Goto done
+noCheckboxesFound:
+    Push $7
+done:
+FunctionEnd
+
+
+Function getAdditionalSpaceForCheckbox
+; $3 - a path to an old installation
+; return
+;   - 0 for 1-line checkbox
+;   - a value for additional space for multi-line checkbox
+  StrLen $9 $3
+  ${If} $9 >= $max_length
+    ; installation path is long
+    Push $extra_space
+    Goto done
+  ${Else}
+    Push 0
+  ${EndIf}
+done:
+FunctionEnd
+
+
+Function haveSpaceForTheCheckbox
+  ; check if dialog has space for current checkbox
+  !insertmacro INSTALLOPTIONS_READ $7 "UninstallOldVersions.ini" "Field $8" "Bottom"
+  IntOp $7 $bottom_position - $7
+  ${If} $7 >= 0
+    Push 0
+    Goto done
+  ${Else}
+    IntOp $8 $8 - 1
+    Push 1
+  ${EndIf}
+done:
+FunctionEnd
+
+
 Function uninstallOldVersionDialog
-  StrCpy $control_fields 2
-  StrCpy $max_fields 13
   StrCpy $0 "HKLM"
   StrCpy $4 0
-  ReserveFile "UninstallOldVersions.ini"
-  !insertmacro INSTALLOPTIONS_EXTRACT "UninstallOldVersions.ini"
   StrCpy $8 $control_fields
+  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 2" "State" "0"
 
 get_installation_info:
   StrCpy $1 "Software\${MANUFACTURER}\${MUI_PRODUCT}"
@@ -785,11 +847,22 @@ uninstall_dialog:
   Call checkProductVersion
   ${If} $6 != "duplicated"
     IntOp $8 $8 + 1
+    Call getPosition
+    Pop $7
+    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Top" "$7"
+    IntOp $R7 $7 + $line_width
+    Call getAdditionalSpaceForCheckbox
+    Pop $R9
+    IntOp $R7 $R7 + $R9
+    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Bottom" "$R7"
+    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "State" "0"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Text" "$3"
-    StrCmp $8 $max_fields complete
+    Call haveSpaceForTheCheckbox
+    Pop $9
+    StrCmp $9 0 0 complete
   ${EndIf}
 get_next_key:
-  IntOp $4 $4 + 1 ;to check next record from registry
+  IntOp $4 $4 + 1 ;next record from registry
   goto get_installation_info
 
 next_registry_root:
@@ -811,17 +884,19 @@ complete:
     !insertmacro MUI_HEADER_TEXT "$(uninstall_previous_installations_title)" "$(uninstall_previous_installations)"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 1" "Text" "$(uninstall_previous_installations_prompt)"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 3" "Flags" "FOCUS"
-    !insertmacro INSTALLOPTIONS_DISPLAY "UninstallOldVersions.ini"
-
-    ;uninstall chosen installation(s)
+    !insertmacro INSTALLOPTIONS_DISPLAY_RETURN "UninstallOldVersions.ini"
+    Pop $9
+    ${If} $9 == "success"
 loop:
-    !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field $8" "State"
-    !insertmacro INSTALLOPTIONS_READ $3 "UninstallOldVersions.ini" "Field $8" "Text"
-    ${If} $0 == "1"
-      Call uninstallOldVersion
+      ;uninstall chosen installation(s)
+      !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field $8" "State"
+      !insertmacro INSTALLOPTIONS_READ $3 "UninstallOldVersions.ini" "Field $8" "Text"
+      ${If} $0 == "1"
+        Call uninstallOldVersion
       ${EndIf}
       IntOp $8 $8 - 1
       StrCmp $8 $control_fields finish loop
+    ${EndIf}
   ${EndIf}
 finish:
 FunctionEnd
@@ -1290,8 +1365,10 @@ SectionEnd
 Function .onInit
   SetRegView 32
   Call createLog
+  !insertmacro INSTALLOPTIONS_EXTRACT "UninstallOldVersions.ini"
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
   Call getInstallationOptionsPositions
+  Call getUninstallOldVersionVars
   IfSilent silent_mode uac_elevate
 
 silent_mode:

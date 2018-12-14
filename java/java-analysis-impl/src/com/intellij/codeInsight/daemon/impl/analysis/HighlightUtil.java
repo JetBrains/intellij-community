@@ -805,13 +805,13 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkContinueOutsideLoop(@NotNull PsiContinueStatement statement) {
+  static HighlightInfo checkContinueOutsideLoop(@NotNull PsiContinueStatement statement, LanguageLevel languageLevel) {
     if (PsiImplUtil.findEnclosingLoop(statement) == null) {
       String message = JavaErrorMessages.message("continue.outside.loop");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
     }
-
-    return null;
+    
+    return checkContinueOutsideOfSwitchExpression(statement,statement.findContinuedStatement(), languageLevel);
   }
 
   @Nullable
@@ -827,12 +827,19 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
     }
 
-    if (level.isAtLeast(LanguageLevel.JDK_12_PREVIEW)) {
+    return checkContinueOutsideOfSwitchExpression(statement, continuedStatement, level);
+  }
+
+  private static HighlightInfo checkContinueOutsideOfSwitchExpression(@NotNull PsiContinueStatement statement,
+                                                                      PsiStatement continuedStatement,
+                                                                      @NotNull LanguageLevel level) {
+    if (Feature.ENHANCED_SWITCH.isSufficient(level)) {
       PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(statement);
       if (enclosing instanceof PsiSwitchExpression && PsiTreeUtil.isAncestor(continuedStatement, enclosing, true)) {
         String message = JavaErrorMessages.message("continue.outside.switch.expr");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
       }
+      return null;
     }
 
     return null;
@@ -3096,6 +3103,14 @@ public class HighlightUtil extends HighlightUtilBase {
     Feature(LanguageLevel level, @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key) {
       this.level = level;
       this.key = key;
+    }
+
+    /**
+     * @param element a valid PsiElement to check (it's better to supply PsiFile if already known; any element is accepted for convenience)
+     * @return true if this feature is available in the PsiFile the supplied element belongs to
+     */
+    public boolean isAvailable(PsiElement element) {
+      return isSufficient(PsiUtil.getLanguageLevel(element));
     }
 
     private boolean isSufficient(LanguageLevel useSiteLevel) {

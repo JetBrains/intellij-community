@@ -214,4 +214,8 @@ public class MemberChangeTest extends IncrementalTestCase {
   public void testReplaceMethodWithBridge() {
     doTest();
   }
+
+  public void testPushFieldDown() {
+    doTest();
+  }
 }

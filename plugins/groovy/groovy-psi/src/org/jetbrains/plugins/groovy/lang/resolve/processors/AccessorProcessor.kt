@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.util.checkKind
 import org.jetbrains.plugins.groovy.lang.psi.util.getAccessorName
 import org.jetbrains.plugins.groovy.lang.resolve.AccessorResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.GenericAccessorResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
@@ -46,12 +47,12 @@ class AccessorProcessor(
     if (elementName != accessorName) return true
     if (!element.checkKind(propertyKind)) return true
 
-    myResults += AccessorResolveResult(
-      element = element,
-      place = place,
-      state = state,
-      arguments = arguments
-    )
+    myResults += if (element.hasTypeParameters()) {
+      GenericAccessorResolveResult(element, place, state, arguments)
+    }
+    else {
+      AccessorResolveResult(element, place, state, arguments)
+    }
 
     return true
   }

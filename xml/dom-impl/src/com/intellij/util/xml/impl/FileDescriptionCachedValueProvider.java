@@ -110,7 +110,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     final EvaluatedXmlNameImpl rootTagName1 = EvaluatedXmlNameImpl.createEvaluatedXmlName(xmlName, xmlName.getNamespaceKey(), false);
 
     FileStub stub = null;
-    if (description.hasStubs() && file instanceof VirtualFileWithId && !isFileParsed()) {
+    DomFileMetaData meta = DomApplicationComponent.getInstance().findMeta(description);
+    if (meta != null && meta.hasStubs() && file instanceof VirtualFileWithId && !isFileParsed()) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
       if (!XmlUtil.isStubBuilding()) {
         ObjectStubTree stubTree = StubTreeLoader.getInstance().readFromVFile(myXmlFile.getProject(), file);

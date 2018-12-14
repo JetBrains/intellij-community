@@ -29,8 +29,7 @@ import javax.swing.event.HyperlinkListener;
 public class ProgramRunnerUtil {
   private static final Logger LOG = Logger.getInstance(ProgramRunnerUtil.class);
 
-  private ProgramRunnerUtil() {
-  }
+  private ProgramRunnerUtil() { }
 
   @Nullable
   public static ProgramRunner getRunner(@NotNull String executorId, @Nullable RunnerAndConfigurationSettings configuration) {
@@ -46,7 +45,10 @@ public class ProgramRunnerUtil {
     return StringUtil.escapeXmlEntities("Cannot run '" + profile.getName() + "' on '" + target.getDisplayName() + "'");
   }
 
-  public static void executeConfigurationAsync(@NotNull final ExecutionEnvironment environment, boolean showSettings, boolean assignNewId, ProgramRunner.Callback callback) {
+  public static void executeConfigurationAsync(@NotNull ExecutionEnvironment environment,
+                                               boolean showSettings,
+                                               boolean assignNewId,
+                                               ProgramRunner.Callback callback) {
     if (ExecutorRegistry.getInstance().isStarting(environment)) {
       return;
     }
@@ -67,15 +69,13 @@ public class ProgramRunnerUtil {
         }
 
         while (!RunManagerImpl.canRunConfiguration(environment)) {
-          if (Messages.YES == Messages
-            .showYesNoDialog(project, "Configuration is still incorrect. Do you want to edit it again?", "Change Configuration Settings",
-                             "Edit", "Continue Anyway", Messages.getErrorIcon())) {
-            if (!RunDialog.editConfiguration(environment, "Edit configuration")) {
-              return;
-            }
-          }
-          else {
+          String message = "Configuration is still incorrect. Do you want to edit it again?";
+          String title = "Change Configuration Settings";
+          if (Messages.showYesNoDialog(project, message, title, "Edit", "Continue Anyway", Messages.getErrorIcon()) != Messages.YES) {
             break;
+          }
+          if (!RunDialog.editConfiguration(environment, "Edit configuration")) {
+            return;
           }
         }
       }
@@ -85,10 +85,10 @@ public class ProgramRunnerUtil {
       if (assignNewId) {
         environment.assignNewExecutionId();
       }
-
       if (callback != null) {
         environment.getRunner().execute(environment, callback);
-      } else {
+      }
+      else {
         environment.getRunner().execute(environment);
       }
     }
@@ -101,18 +101,8 @@ public class ProgramRunnerUtil {
                                           @NotNull ExecutionEnvironment environment,
                                           Throwable e,
                                           RunProfile configuration) {
-    String name = configuration != null ? configuration.getName() : null;
-    if (name == null) {
-      name = environment.getRunProfile().getName();
-    }
-    if (name == null && environment.getContentToReuse() != null) {
-      name = environment.getContentToReuse().getDisplayName();
-    }
-    if (name == null) {
-      name = "<Unknown>";
-    }
+    String name = configuration != null ? configuration.getName() : environment.getRunProfile().getName();
     String windowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment);
-
     if (configuration instanceof ConfigurationWithCommandLineShortener && ExecutionUtil.isProcessNotCreated(e)) {
       handelProcessNotStartedError((ConfigurationWithCommandLineShortener)configuration, (ProcessNotCreatedException)e, name, windowId);
     }
@@ -137,6 +127,7 @@ public class ProgramRunnerUtil {
         (configuration.getShortenCommandLine() == null || configuration.getShortenCommandLine() == ShortenCommandLine.NONE)) {
       ConfigurationFactory factory = runnerAndConfigurationSettings.getFactory();
       RunnerAndConfigurationSettings configurationTemplate = runManager.getConfigurationTemplate(factory);
+
       description = "Command line is too long. Shorten command line for <a href=\"current\">" + name + "</a>";
       if (((ConfigurationWithCommandLineShortener)configurationTemplate.getConfiguration()).getShortenCommandLine() == null) {
         description += " or also for " + factory.getName() + " <a href=\"default\">default</a> configuration";
@@ -146,11 +137,11 @@ public class ProgramRunnerUtil {
       listener = event -> {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           boolean isDefaultConfigurationChosen = "default".equals(event.getDescription());
-          SingleConfigurableEditor dialog = RunDialog.editShortenClasspathSetting(isDefaultConfigurationChosen ? configurationTemplate : runnerAndConfigurationSettings,
-                                                                                  "Edit" + (isDefaultConfigurationChosen ? " Default" : "") + " Configuration");
+          SingleConfigurableEditor dialog = RunDialog.editShortenClasspathSetting(
+            isDefaultConfigurationChosen ? configurationTemplate : runnerAndConfigurationSettings,
+            "Edit" + (isDefaultConfigurationChosen ? " Default" : "") + " Configuration");
           if (dialog.showAndGet() && isDefaultConfigurationChosen) {
-            configuration
-              .setShortenCommandLine(((ConfigurationWithCommandLineShortener)configurationTemplate.getConfiguration()).getShortenCommandLine());
+            configuration.setShortenCommandLine(((ConfigurationWithCommandLineShortener)configurationTemplate.getConfiguration()).getShortenCommandLine());
           }
         }
       };
@@ -158,11 +149,11 @@ public class ProgramRunnerUtil {
     ExecutionUtil.handleExecutionError(project, windowId, name, e, description, listener);
   }
 
-  /**
-   * @deprecated Use {@link #executeConfiguration(RunnerAndConfigurationSettings, Executor)}
-   */
+  /** @deprecated Use {@link #executeConfiguration(RunnerAndConfigurationSettings, Executor)} */
   @Deprecated
-  public static void executeConfiguration(@SuppressWarnings("unused") @NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
+  public static void executeConfiguration(@SuppressWarnings("unused") @NotNull Project project,
+                                          @NotNull RunnerAndConfigurationSettings configuration,
+                                          @NotNull Executor executor) {
     executeConfiguration(configuration, executor);
   }
 
@@ -176,15 +167,10 @@ public class ProgramRunnerUtil {
       return;
     }
 
-    executeConfiguration(builder
-                           .contentToReuse(null)
-                           .dataContext(null)
-                           .activeTarget()
-                           .build(), true, true);
+    executeConfiguration(builder.contentToReuse(null).dataContext(null).activeTarget().build(), true, true);
   }
 
-  public static Icon getConfigurationIcon(final RunnerAndConfigurationSettings settings,
-                                          final boolean invalid) {
+  public static Icon getConfigurationIcon(RunnerAndConfigurationSettings settings, boolean invalid) {
     Icon icon = getRawIcon(settings);
 
     final Icon configurationIcon = settings.isTemporary() ?  getTemporaryIcon(icon): icon;

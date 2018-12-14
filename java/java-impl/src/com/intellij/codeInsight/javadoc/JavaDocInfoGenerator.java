@@ -1213,7 +1213,8 @@ public class JavaDocInfoGenerator {
     if (aClass != null) {
       String qName = aClass.getQualifiedName();
       if (qName != null) {
-        return StringUtil.repeat("../", StringUtil.countChars(qName, '.') + 1);
+        String path = StringUtil.repeat("../", StringUtil.countChars(qName, '.'));
+        return path.isEmpty() ? "" : path.substring(0, path.length() - 1);
       }
     }
 

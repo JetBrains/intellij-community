@@ -2,12 +2,12 @@ class C {
   void foo(int n, boolean b) {
     switch (n) {
       case 1:
-        <weak_warning descr="Duplicate branch in 'switch' statement">if(b) {
+        if(b) {
           bar("A");
         } else {
           bar("z");
         }
-        bar("o");</weak_warning>
+        bar("o");
         break;
       case 2:
         if(b) {

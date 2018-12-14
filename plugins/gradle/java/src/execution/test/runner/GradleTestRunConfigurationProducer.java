@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.actions.ConfigurationContext;
@@ -29,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -43,11 +40,18 @@ import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
  * @author Vladislav.Soroka
  */
 public abstract class GradleTestRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
-
   private static final List<String> TEST_SOURCE_SET_TASKS = ContainerUtil.list("cleanTest", "test");
 
+  /**
+   * @deprecated Override {@link #getConfigurationFactory()}.
+   */
+  @Deprecated
   protected GradleTestRunConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
+  }
+
+  protected GradleTestRunConfigurationProducer() {
+    super(true);
   }
 
   @Override

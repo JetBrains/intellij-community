@@ -176,16 +176,18 @@ internal fun createReviews(context: Context) = callSafely {
 
 internal fun assignInvestigation(context: Context): Investigator? =
   callSafely {
-    val commits = if (context.iconsSyncRequired()) context.devCommitsToSync else context.iconsCommitsToSync
+    val (investigator, commits) = if (context.iconsSyncRequired()) {
+      context.devCommitsToSync.flatMap { it.value }.maxBy(CommitInfo::timestamp)?.let {
+        log("Assigning investigation to ${it.committerEmail} as author of latest change ${it.hash}")
+        it.committerEmail
+      } to context.devCommitsToSync
+    }
+    else triggeredBy() to context.iconsCommitsToSync
     if (commits.isEmpty()) {
       log("No commits, no investigation")
       return@callSafely null
     }
-    val investigator = commits.flatMap { it.value }.maxBy(CommitInfo::timestamp)?.let {
-      log("Assigning investigation to ${it.committerEmail} as author of latest change ${it.hash}")
-      Investigator(it.committerEmail, commits)
-    } ?: Investigator()
-    assignInvestigation(investigator, context)
+    assignInvestigation(Investigator(investigator ?: DEFAULT_INVESTIGATOR, commits), context)
   }
 
 private fun findCommitsByRepo(context: Context, projectId: String?, root: File, changes: Changes,

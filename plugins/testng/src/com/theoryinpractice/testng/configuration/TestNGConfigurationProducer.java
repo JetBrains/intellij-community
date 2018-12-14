@@ -2,18 +2,20 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class TestNGConfigurationProducer extends AbstractJavaTestConfigurationProducer<TestNGConfiguration> implements Cloneable {
-  public TestNGConfigurationProducer(ConfigurationType configurationType) {
-    super(configurationType);
-  }
-
   @SuppressWarnings("unused") //used in kotlin
   public TestNGConfigurationProducer() {
-    super((ConfigurationFactory)TestNGConfigurationType.getInstance());
+    super();
+  }
+
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return TestNGConfigurationType.getInstance();
   }
 
   public static String getInvocationNumber(String str) {

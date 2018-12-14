@@ -15,7 +15,6 @@
  */
 package com.intellij.jarRepository;
 
-import com.google.common.base.Predicate;
 import com.intellij.ProjectTopics;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -46,6 +45,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author gregsh
@@ -69,21 +69,21 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
     return false;
   }
 
-  public static Set<Library> collectLibraries(final @NotNull Project project, final @NotNull Predicate<? super Library> predicate) {
+  public static Set<Library> collectLibraries(@NotNull final Project project, @NotNull final Predicate<? super Library> predicate) {
     final Set<Library> result = new LinkedHashSet<>();
     ApplicationManager.getApplication().runReadAction(() -> {
       if (project.isDisposed()) return;
       
       for (final Module module : ModuleManager.getInstance(project).getModules()) {
         OrderEnumerator.orderEntries(module).withoutSdk().forEachLibrary(library -> {
-          if (predicate.apply(library)) {
+          if (predicate.test(library)) {
             result.add(library);
           }
           return true;
         });
       }
       for (Library library : ProjectLibraryTable.getInstance(project).getLibraries()) {
-        if (predicate.apply(library)) {
+        if (predicate.test(library)) {
           result.add(library);
         }
       }
@@ -145,27 +145,25 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
 
   @Override
   public void runActivity(@NotNull final Project project) {
-    final Runnable syncTask = () -> {
-      final Collection<Library> toSync = collectLibraries(project, library -> {
-        if (library instanceof LibraryEx) {
-          final LibraryEx libraryEx = (LibraryEx)library;
-          return libraryEx.getProperties() instanceof RepositoryLibraryProperties &&
-                 isLibraryNeedToBeReloaded(libraryEx, (RepositoryLibraryProperties)libraryEx.getProperties());
-        }
-        return false;
-      });
-
-      ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
-        for (Library library : toSync) {
-          if (LibraryTableImplUtil.isValidLibrary(library)) {
-            RepositoryUtils.reloadDependencies(project, (LibraryEx)library);
-          }
-        }
-      }, project.getDisposed());
-    };
-
-
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      final Runnable syncTask = () -> {
+        final Collection<Library> toSync = collectLibraries(project, library -> {
+          if (library instanceof LibraryEx) {
+            final LibraryEx libraryEx = (LibraryEx)library;
+            return libraryEx.getProperties() instanceof RepositoryLibraryProperties &&
+                   isLibraryNeedToBeReloaded(libraryEx, (RepositoryLibraryProperties)libraryEx.getProperties());
+          }
+          return false;
+        });
+
+        ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+          for (Library library : toSync) {
+            if (LibraryTableImplUtil.isValidLibrary(library)) {
+              RepositoryUtils.reloadDependencies(project, (LibraryEx)library);
+            }
+          }
+        }, project.getDisposed());
+      };
       project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
         @Override

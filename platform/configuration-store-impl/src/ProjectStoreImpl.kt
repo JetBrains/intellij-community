@@ -33,7 +33,10 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.containers.computeIfAny
 import com.intellij.util.containers.isNullOrEmpty
-import com.intellij.util.io.*
+import com.intellij.util.io.delete
+import com.intellij.util.io.exists
+import com.intellij.util.io.isDirectory
+import com.intellij.util.io.write
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.text.nullize
 import java.nio.file.Path
@@ -42,7 +45,7 @@ import java.nio.file.Paths
 internal const val PROJECT_FILE = "\$PROJECT_FILE$"
 internal const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
 
-val IProjectStore.nameFile: Path
+internal val IProjectStore.nameFile: Path
   get() = Paths.get(directoryStorePath, ProjectImpl.NAME_FILE)
 
 internal val PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, false)
@@ -269,11 +272,9 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
     val baseDir = projectBasePath
     val nameFile = nameFile
     if (nameFile.exists()) {
-      LOG.runAndLogException {
-        nameFile.inputStream().reader().useLines { line -> line.firstOrNull { !it.isEmpty() }?.trim() }?.let {
-          lastSavedProjectName = it
-          return it
-        }
+      LOG.runAndLogException { readProjectNameFile(nameFile) }?.let {
+        lastSavedProjectName = it
+        return it
       }
     }
 

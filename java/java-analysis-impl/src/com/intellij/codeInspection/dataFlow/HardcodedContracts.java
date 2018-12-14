@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -197,7 +198,7 @@ public class HardcodedContracts {
       return handleTestFrameworks(paramCount, className, methodName, call);
     }
     else if (TypeUtils.isOptional(owner)) {
-      if (DfaOptionalSupport.isOptionalGetMethodName(methodName) && paramCount == 0 || "orElseThrow".equals(methodName)) {
+      if (OptionalUtil.OPTIONAL_GET.methodMatches(method) || "orElseThrow".equals(methodName)) {
         return Arrays.asList(optionalAbsentContract(fail()), trivialContract(returnNotNull()));
       }
       else if ("isPresent".equals(methodName) && paramCount == 0) {

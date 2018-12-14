@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 
 open class BaseGroovyResolveResult<out T : PsiElement>(
   element: T,
-  private val place: PsiElement,
+  protected val place: PsiElement,
   private val resolveContext: PsiElement? = null,
   private val substitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
   private val spreadState: SpreadState? = null

@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind.*
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter
 import org.jetbrains.plugins.groovy.lang.psi.impl.explicitTypeArguments
 import org.jetbrains.plugins.groovy.lang.psi.util.contexts
 import org.jetbrains.plugins.groovy.lang.psi.util.skipSameTypeParents
@@ -220,7 +221,8 @@ private fun GrCodeReferenceElement.processQualifier(qualifier: GrCodeReferenceEl
 }
 
 private fun GrCodeReferenceElement.canResolveToInnerClassOfCurrentClass(): Boolean {
-  val parent = getActualParent()
+  val (_, outerMostReference) = skipSameTypeParents()
+  val parent = outerMostReference.getActualParent()
   return parent !is GrExtendsClause &&
          parent !is GrImplementsClause &&
          (parent !is GrAnnotation || parent.classReference != this) // annotation's can't be inner classes of current class
@@ -237,6 +239,9 @@ private fun GrCodeReferenceElement.getActualParent(): PsiElement? = containingFi
 private fun PsiElement.getCurrentClass(): GrTypeDefinition? {
   for (context in contexts()) {
     if (context !is GrTypeDefinition) {
+      continue
+    }
+    else if (context is GrTypeParameter) {
       continue
     }
     else if (context is GrAnonymousClassDefinition && this === context.baseClassReferenceGroovy) {

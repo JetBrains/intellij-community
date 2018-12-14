@@ -17,8 +17,8 @@ internal class GithubPullRequestPreviewComponent(private val changes: GithubPull
       details.loadAndUpdate(currentProvider!!.detailsRequest)
     }
 
-    override fun changesRequestChanged() {
-      changes.loadAndUpdate(currentProvider!!.changesRequest)
+    override fun commitsRequestChanged() {
+      changes.loadAndUpdate(currentProvider!!.logCommitsRequest)
     }
   }
 
@@ -32,7 +32,7 @@ internal class GithubPullRequestPreviewComponent(private val changes: GithubPull
     currentProvider = provider
     currentProvider?.addRequestsChangesListener(requestChangesListener)
 
-    changes.loadAndShow(provider?.changesRequest)
+    changes.loadAndShow(provider?.logCommitsRequest)
     details.loadAndShow(provider?.detailsRequest)
   }
 

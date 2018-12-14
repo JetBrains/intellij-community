@@ -819,6 +819,15 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-32530
+  public void testAnnotationAndIgnoreComment() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("def foo(a: str):  # type: ignore\n" +
+                         "    pass")
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

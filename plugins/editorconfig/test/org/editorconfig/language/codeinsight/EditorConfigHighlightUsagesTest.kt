@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType.ELEMENT_UNDER_CARE
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory.doWithHighlightingEnabled
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.PlatformTestUtil.registerExtension
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 
@@ -25,7 +26,7 @@ class EditorConfigHighlightUsagesTest : LightPlatformCodeInsightFixtureTestCase(
     val name = getTestName(true)
     myFixture.configureByFile("${name}/.editorconfig")
     doWithHighlightingEnabled {
-      myFixture.checkHighlighting()
+      ExpectedHighlightingData.expectedDuplicatedHighlighting {myFixture.checkHighlighting ()}
     }
   }
 

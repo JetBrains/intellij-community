@@ -22,20 +22,19 @@ import com.intellij.lexer.XmlHighlightingLexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.psi.xml.XmlTokenType.*;
 
 public class XmlFileHighlighter extends SyntaxHighlighterBase {
+  static final ExtensionPointName<EmbeddedTokenHighlighter> EMBEDDED_HIGHLIGHTERS = ExtensionPointName.create("com.intellij.embeddedTokenHighlighter");
   private static final MultiMap<IElementType, TextAttributesKey> ourMap = MultiMap.create();
 
   static {
@@ -75,6 +74,15 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     ourMap.putValue(XML_ENTITY_REF_TOKEN, XmlHighlighterColors.XML_ENTITY_REFERENCE);
 
     ourMap.putValue(XML_BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
+
+    for (EmbeddedTokenHighlighter highlighter : EMBEDDED_HIGHLIGHTERS.getExtensionList()) {
+      MultiMap<IElementType, TextAttributesKey> attributes = highlighter.getEmbeddedTokenAttributes();
+      for (Map.Entry<IElementType, Collection<TextAttributesKey>> entry : attributes.entrySet()) {
+        if (!ourMap.containsKey(entry.getKey())) {
+          ourMap.putValues(entry.getKey(), entry.getValue());
+        }
+      }
+    }
   }
 
   private final boolean myIsDtd;
@@ -114,8 +122,12 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     }
   }
 
+  /**
+   * @deprecated use {@link EmbeddedTokenHighlighter} extension
+   */
+  @Deprecated
   public static synchronized void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
-                                                           Map<IElementType, TextAttributesKey> _keys2) {
+                                                     Map<IElementType, TextAttributesKey> _keys2) {
     HashSet<IElementType> existingKeys = new HashSet<>(ourMap.keySet());
     addMissing(_keys1, existingKeys, ourMap);
     addMissing(_keys2, existingKeys, ourMap);

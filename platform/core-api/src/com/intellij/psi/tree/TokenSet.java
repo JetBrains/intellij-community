@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * A set of element types.
@@ -164,14 +165,7 @@ public class TokenSet {
     IElementType.Predicate disjunction =
       orConditions.isEmpty() ? null :
       orConditions.size() == 1 ? orConditions.get(0) :
-      t -> {
-        for (int i = 0; i < orConditions.size(); i++) {
-          if (orConditions.get(i).matches(t)) {
-            return true;
-          }
-        }
-        return false;
-      };
+      new OrPredicate(orConditions);
     TokenSet newSet = new TokenSet(shift, max, disjunction);
     for (TokenSet set : sets) {
       final int shiftDiff = set.myShift - newSet.myShift;
@@ -225,5 +219,27 @@ public class TokenSet {
       newSet.myWords[i] = (0 <= ai && ai < a.myWords.length ? a.myWords[ai] : 0L) & ~(0 <= bi && bi < b.myWords.length ? b.myWords[bi] : 0L);
     }
     return newSet;
+  }
+
+  private static class OrPredicate implements IElementType.Predicate {
+    private final IElementType.Predicate[] myComponents;
+
+    OrPredicate(List<IElementType.Predicate> components) {
+      myComponents = components
+        .stream()
+        .flatMap(p -> p instanceof OrPredicate ? Arrays.stream(((OrPredicate)p).myComponents) : Stream.of(p))
+        .distinct()
+        .toArray(IElementType.Predicate[]::new);
+    }
+
+    @Override
+    public boolean matches(@NotNull IElementType t) {
+      for (IElementType.Predicate component : myComponents) {
+        if (component.matches(t)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 }

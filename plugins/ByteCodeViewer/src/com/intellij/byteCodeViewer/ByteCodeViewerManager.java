@@ -181,12 +181,8 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
   private static String processClassFile(byte[] bytes) {
     final ClassReader classReader = new ClassReader(bytes);
     final StringWriter writer = new StringWriter();
-    final PrintWriter printWriter = new PrintWriter(writer);
-    try {
+    try (PrintWriter printWriter = new PrintWriter(writer)) {
       classReader.accept(new TraceClassVisitor(null, new Textifier(), printWriter), 0);
-    }
-    finally {
-      printWriter.close();
     }
     return writer.toString();
   }

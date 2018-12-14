@@ -6,7 +6,7 @@ cleanSetupJdks.dependsOn('cleanSetupJdk18', 'cleanSetupJdk16', 'cleanDownloadJdk
 
 def jdkRepo = 'https://cache-redirector.jetbrains.com'
 
-def jdkDir = System.getProperty('jdk.dir')?.with {
+def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
   def jdkDir = new File(it)
   jdkDir.mkdirs()
   jdkDir

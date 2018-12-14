@@ -5,7 +5,6 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
-import com.intellij.codeInspection.dataFlow.DfaOptionalSupport;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
@@ -18,7 +17,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,23 +31,19 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
         PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
         if (nameElement == null) return;
-        String methodName = nameElement.getText();
+        if (!OptionalUtil.OPTIONAL_GET.test(call)) return;
         PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
         if (qualifier == null) return;
         PsiClass optionalClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
         if (optionalClass == null) return;
-        if (DfaOptionalSupport.isOptionalGetMethodName(methodName) &&
-            call.getArgumentList().isEmpty() &&
-            TypeUtils.isOptional(optionalClass)) {
-          CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(qualifier);
-          if (result != null &&
-              result.expressionWasAnalyzed(qualifier) &&
-              result.getExpressionFact(qualifier, DfaFactType.OPTIONAL_PRESENCE) == null &&
-              !isPresentCallWithSameQualifierExists(qualifier)) {
-            holder.registerProblem(nameElement,
-                                   InspectionsBundle.message("inspection.optional.get.without.is.present.message", optionalClass.getName()),
-                                   tryCreateFix(call));
-          }
+        CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(qualifier);
+        if (result != null &&
+            result.expressionWasAnalyzed(qualifier) &&
+            result.getExpressionFact(qualifier, DfaFactType.OPTIONAL_PRESENCE) == null &&
+            !isPresentCallWithSameQualifierExists(qualifier)) {
+          holder.registerProblem(nameElement,
+                                 InspectionsBundle.message("inspection.optional.get.without.is.present.message", optionalClass.getName()),
+                                 tryCreateFix(call));
         }
       }
 

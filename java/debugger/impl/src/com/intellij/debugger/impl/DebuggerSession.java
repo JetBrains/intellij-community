@@ -4,7 +4,6 @@ package com.intellij.debugger.impl;
 import com.intellij.debugger.*;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationListener;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -71,7 +70,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public enum Event
   {ATTACHED, DETACHED, RESUME, STEP, PAUSE, REFRESH, CONTEXT, START_WAIT_ATTACH, DISPOSE, REFRESH_WITH_STACK, THREADS_REFRESH}
 
-  private volatile boolean myIsEvaluating;
   private volatile int myIgnoreFiltersFrameCountThreshold = 0;
 
   private DebuggerSessionState myState;
@@ -167,8 +165,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
           LOG.debug("DebuggerSession state = " + state + ", event = " + event);
         }
 
-        myIsEvaluating = false;
-
         myState = new DebuggerSessionState(state, description);
         fireStateChanged(context, event);
       };
@@ -213,7 +209,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
     myContextManager = new MyDebuggerStateManager();
     myState = new DebuggerSessionState(State.STOPPED, null);
     myDebugProcess.addDebugProcessListener(new MyDebugProcessListener(debugProcess));
-    myDebugProcess.addEvaluationListener(new MyEvaluationListener());
     ValueLookupManager.getInstance(getProject()).startListening();
     myDebugEnvironment = environment;
     mySearchScope = environment.getSearchScope();
@@ -420,10 +415,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   public boolean isConnecting() {
     return getState() == State.WAITING_ATTACH;
-  }
-
-  public boolean isEvaluating() {
-    return myIsEvaluating;
   }
 
   public boolean isRunning() {
@@ -760,27 +751,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
       return DebuggerBundle.message("status.paused.in.another.thread");
     }
     return null;
-  }
-
-  private class MyEvaluationListener implements EvaluationListener {
-    @Override
-    public void evaluationStarted(SuspendContextImpl context) {
-      myIsEvaluating = true;
-    }
-
-    @Override
-    public void evaluationFinished(final SuspendContextImpl context) {
-      myIsEvaluating = false;
-      // seems to be not required after move to xdebugger
-      //DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-      //  @Override
-      //  public void run() {
-      //    if (context != getSuspendContext()) {
-      //      getContextManager().setState(DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, context), STATE_PAUSED, REFRESH, null);
-      //    }
-      //  }
-      //});
-    }
   }
 
   public static boolean enableBreakpointsDuringEvaluation() {

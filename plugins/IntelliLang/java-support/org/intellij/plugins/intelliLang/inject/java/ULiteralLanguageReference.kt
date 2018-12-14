@@ -23,18 +23,19 @@ import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.PsiReferenceBase
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage
-import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.evaluateString
 
 /**
  * Provides completion for available Language-IDs in
  * <pre>@Language("[ctrl-space]")</pre>
  */
-class ULiteralLanguageReference(val uLiteralExpression: ULiteralExpression,
+class ULiteralLanguageReference(private val uExpression: UExpression,
                                 val host: PsiLanguageInjectionHost) : PsiReferenceBase<PsiLanguageInjectionHost>(host) {
 
-  override fun getValue(): String = uLiteralExpression.value as? String ?: ""
+  override fun getValue(): String = uExpression.evaluateString() ?: ""
 
-  override fun resolve(): PsiElement? = if (InjectedLanguage.findLanguageById(value) != null) uLiteralExpression.sourcePsi else null
+  override fun resolve(): PsiElement? = if (InjectedLanguage.findLanguageById(value) != null) uExpression.sourcePsi else null
 
   override fun isSoft(): Boolean = false
 

@@ -45,8 +45,12 @@ import java.util.stream.Stream;
  * @author anna
  */
 public class RefJavaManagerImpl extends RefJavaManager {
-  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION = Conditions
-    .and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class, PsiJavaModule.class), Conditions.notInstanceOf(PsiTypeParameter.class));
+  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION =
+    Conditions.or(Conditions.instanceOf(PsiFile.class, PsiJavaModule.class),
+                  Conditions.and(Conditions.notInstanceOf(PsiTypeParameter.class), psi -> {
+                    UDeclaration decl = UastContextKt.toUElement(psi, UDeclaration.class);
+                    return decl != null && (decl instanceof UField || !(decl instanceof UVariable)) && (!(decl instanceof UClassInitializer));
+                  }));
 
   private static final Logger LOG = Logger.getInstance(RefJavaManagerImpl.class);
   public static final String JAVAX_SERVLET_SERVLET = "javax.servlet.Servlet";
@@ -54,7 +58,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
   private final PsiMethod myAppPremainPattern;
   private final PsiMethod myAppAgentmainPattern;
   private final PsiClass myApplet;
-  private final PsiClass myServlet;
   private volatile RefPackage myCachedDefaultPackage;  // cached value. benign race
   private Map<String, RefPackage> myPackages; // guarded by this
   private final RefManagerImpl myRefManager;
@@ -71,7 +74,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
     myAppAgentmainPattern = factory.createMethodFromText("void agentmain(String[] args, java.lang.instrument.Instrumentation i);", null);
 
     myApplet = JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
-    myServlet = JavaPsiFacade.getInstance(project).findClass(JAVAX_SERVLET_SERVLET, GlobalSearchScope.allScope(project));
   }
 
   @Override
@@ -196,11 +198,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
   @Override
   public String getAppletQName() {
     return myApplet.getQualifiedName();
-  }
-
-  @Override
-  public PsiClass getServlet() {
-    return myServlet;
   }
 
   @Override

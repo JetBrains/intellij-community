@@ -914,7 +914,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private static int getInvokePolicy(SuspendContext suspendContext) {
-    if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD || isResumeOnlyCurrentThread()) {
+    if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ||
+        isResumeOnlyCurrentThread() ||
+        ThreadBlockedMonitor.getSingleThreadedEvaluationThreshold() > 0) {
       return ObjectReference.INVOKE_SINGLE_THREADED;
     }
     return 0;
@@ -1048,6 +1050,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       Ref<E> result = Ref.create();
       getManagerThread().startLongProcessAndFork(() -> {
         ThreadReferenceProxyImpl thread = context.getThread();
+        ThreadBlockedMonitor.InvocationWatcher invocationWatcher = null;
         try {
           try {
             if (LOG.isDebugEnabled()) {
@@ -1109,9 +1112,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               });
             }
 
-            result.set(invokeMethod(getInvokePolicy(context), myMethod, myArgs));
+            int invokePolicy = getInvokePolicy(context);
+            invocationWatcher = myThreadBlockedMonitor.startInvokeWatching(invokePolicy, thread, context);
+
+            result.set(invokeMethod(invokePolicy, myMethod, myArgs));
           }
           finally {
+            if (invocationWatcher != null) {
+              invocationWatcher.invocationFinished();
+            }
             if (Patches.JDK_BUG_WITH_TRACE_SEND && (ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
               myMethod.virtualMachine().setDebugTraceMode(ourTraceMask);
             }
@@ -2244,6 +2253,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public boolean isEvaluationPossible() {
     return getSuspendManager().getPausedContext() != null;
+  }
+
+  public boolean isEvaluationPossible(SuspendContextImpl suspendContext) {
+    return mySuspendManager.hasPausedContext(suspendContext);
   }
 
   public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread) {

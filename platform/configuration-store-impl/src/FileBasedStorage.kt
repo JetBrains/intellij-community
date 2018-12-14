@@ -49,7 +49,8 @@ open class FileBasedStorage(file: Path,
     private set
 
   init {
-    if (ApplicationManager.getApplication().isUnitTestMode && file.toString().startsWith('$')) {
+    val app = ApplicationManager.getApplication()
+    if (app != null && app.isUnitTestMode && file.toString().startsWith('$')) {
       throw AssertionError("It seems like some macros were not expanded for path: $file")
     }
   }

@@ -2798,6 +2798,19 @@ public class StringUtil extends StringUtilRt {
     return c >= '0' && c <= '9';
   }
 
+  @Contract("null -> false")
+  public static boolean isNotNegativeNumber(@Nullable CharSequence s) {
+    if (s == null) {
+      return false;
+    }
+    for (int i = 0; i < s.length(); i++) {
+      if (!isDecimalDigit(s.charAt(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Contract(pure = true)
   public static int compare(@Nullable String s1, @Nullable String s2, boolean ignoreCase) {
     //noinspection StringEquality

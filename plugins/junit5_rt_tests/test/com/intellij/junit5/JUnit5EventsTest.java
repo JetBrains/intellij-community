@@ -79,7 +79,7 @@ class JUnit5EventsTest {
     c.addChild(testDescriptor);
     TestIdentifier identifier = TestIdentifier.from(testDescriptor);
     final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor));
-    myExecutionListener.setTestPlan(testPlan);
+    myExecutionListener.testPlanExecutionStarted(testPlan);
     myExecutionListener.executionStarted(identifier);
     MultipleFailuresError multipleFailuresError = new MultipleFailuresError("2 errors", Arrays.asList
       (new AssertionFailedError("message1", "expected1", "actual1"),
@@ -111,7 +111,8 @@ class JUnit5EventsTest {
     classTestDescriptor.addChild(testDescriptor);
     TestIdentifier identifier = TestIdentifier.from(testDescriptor);
     final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor));
-    myExecutionListener.sendTree(testPlan, "");
+    myExecutionListener.setSendTree();
+    myExecutionListener.testPlanExecutionStarted(testPlan);
     myExecutionListener.executionStarted(identifier);
     myExecutionListener.executionFinished(identifier, TestExecutionResult.failed(new IllegalStateException()));
 

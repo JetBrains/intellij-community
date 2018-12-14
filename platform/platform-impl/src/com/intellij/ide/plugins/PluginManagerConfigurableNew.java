@@ -1491,7 +1491,7 @@ public class PluginManagerConfigurableNew
                                "&productCode=" + URLUtil.encodeURIComponent(instance.getBuild().getProductCode()));
   }
 
-  private static boolean forceHttps() {
+  public static boolean forceHttps() {
     return IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
   }
 
