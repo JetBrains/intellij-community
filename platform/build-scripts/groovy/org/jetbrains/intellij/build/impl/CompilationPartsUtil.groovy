@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.util.concurrency.CountingThreadFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.Decompressor
@@ -589,8 +590,7 @@ class CompilationPartsUtil {
     private final ConcurrentLinkedDeque<Throwable> errors = new ConcurrentLinkedDeque<Throwable>()
 
     NamedThreadPoolExecutor(String threadNamePrefix, int maximumPoolSize) {
-      super(1, maximumPoolSize, 1, TimeUnit.MINUTES, new LinkedBlockingDeque(2048))
-      setThreadFactory(new ThreadFactory() {
+      super(1, maximumPoolSize, 1, TimeUnit.MINUTES, new LinkedBlockingDeque(2048), new CountingThreadFactory() {
         @NotNull
         @Override
         Thread newThread(@NotNull Runnable r) {
