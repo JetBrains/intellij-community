@@ -49,7 +49,7 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
 
       return Pair.create(myCountLabel, (renderer, bounds, text, right, textBaseline) -> {
         Dimension size = renderer.getPreferredSize();
-        int x = right.x + (right.width - size.width) / 2;
+        int x = right.x - JBUI.scale(2) + (right.width - size.width) / 2;
         int y = bounds.y + textBaseline - renderer.getBaseline(size.width, size.height);
         renderer.setBounds(x, y, size.width, size.height);
       });
@@ -122,7 +122,7 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
 
     private int getTextOffset() {
       String text = getText();
-      return text.equals("1") || text.equals("4") ? 1 : 0;
+      return text.equals("1") || text.equals("3") || text.equals("4") ? 1 : 0;
     }
 
     private static int getOvalHeight() {
