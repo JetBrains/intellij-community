@@ -33,6 +33,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.intellij.util.ui.JBUI.CurrentTheme.Validator.*;
 
@@ -40,8 +41,16 @@ public class ComponentValidator {
   private static final String PROPERTY_NAME = "JComponent.componentValidator";
   private static final JBValue MAX_WIDTH = new JBValue.UIInteger("ValidationTooltip.maxWidth", 384);
 
+  /**
+   * Convenient error/warning outline provider for {@link ComponentWithBrowseButton}
+   * ComponentWithBrowseButton isn't a {@link ErrorBorderCapable} component so it needs a special provider.
+   * Suitable for {@link ComponentWithBrowseButton} and it's descendants.
+   */
+  public static final Function<JComponent, JComponent> CWBB_PROVIDER = c -> ((ComponentWithBrowseButton)c).getChildComponent();
+
   private final Disposable parentDisposable;
   private Consumer<ComponentValidator> validator;
+  private Function<JComponent, JComponent> outlineProvider = Function.identity();
   private HyperlinkListener hyperlinkListener;
 
   private ValidationInfo validationInfo;
@@ -68,60 +77,64 @@ public class ComponentValidator {
     return this;
   }
 
+  public ComponentValidator withOutlineProvider(@NotNull Function<JComponent, JComponent> outlineProvider) {
+    this.outlineProvider = outlineProvider;
+    return this;
+  }
+
   public ComponentValidator andStartOnFocusLost() {
     disableValidation = true;
     return this;
   }
 
   public ComponentValidator installOn(@NotNull JComponent component) {
-    Component fc = getFocusable(component).orElse(null);
-    if (fc == null) {
-      return null;
-    }
-    else {
-      component.putClientProperty(PROPERTY_NAME, this);
+    Component fc = getFocusable(component).orElse(outlineProvider.apply(component));
+    component.putClientProperty(PROPERTY_NAME, this);
 
-      FocusListener focusListener = new ValidationFocusListener();
-      MouseListener mouseListener = new ValidationMouseListener();
+    FocusListener focusListener = new ValidationFocusListener();
+    MouseListener mouseListener = new ValidationMouseListener();
 
-      ComponentListener componentListener = new ComponentAdapter() {
-        @Override public void componentMoved(ComponentEvent e) {
-          if (popup != null && popup.isVisible() && popupLocation != null) {
-            popup.setLocation(popupLocation.getScreenPoint());
-          }
+    ComponentListener componentListener = new ComponentAdapter() {
+      @Override public void componentMoved(ComponentEvent e) {
+        if (popup != null && popup.isVisible() && popupLocation != null) {
+          popup.setLocation(popupLocation.getScreenPoint());
         }
-      };
-
-      PropertyChangeListener ancestorListener = e -> {
-        Window w = (Window)UIUtil.findParentByCondition((Component)e.getSource(), v -> v instanceof Window);
-        if (w != null) {
-          if (e.getNewValue() != null) {
-            w.addComponentListener(componentListener);
-          } else {
-            w.removeComponentListener(componentListener);
-          }
-        }
-      };
-
-      Window w = (Window)UIUtil.findParentByCondition(component, v -> v instanceof Window);
-      if (w != null) {
-        w.addComponentListener(componentListener);
-      } else {
-        component.addPropertyChangeListener("ancestor", ancestorListener);
       }
+    };
 
-      fc.addFocusListener(focusListener);
-      fc.addMouseListener(mouseListener);
-      Disposer.register(parentDisposable, () -> {
-        fc.removeFocusListener(focusListener);
-        fc.removeMouseListener(mouseListener);
-
-        if (w != null) {
+    PropertyChangeListener ancestorListener = e -> {
+      Window w = (Window)UIUtil.findParentByCondition((Component)e.getSource(), v -> v instanceof Window);
+      if (w != null) {
+        if (e.getNewValue() != null) {
+          w.addComponentListener(componentListener);
+        } else {
           w.removeComponentListener(componentListener);
         }
-      });
-      return this;
+      }
+    };
+
+    Window w = (Window)UIUtil.findParentByCondition(component, v -> v instanceof Window);
+    if (w != null) {
+      w.addComponentListener(componentListener);
+    } else {
+      component.addPropertyChangeListener("ancestor", ancestorListener);
     }
+
+    fc.addFocusListener(focusListener);
+    fc.addMouseListener(mouseListener);
+    Disposer.register(parentDisposable, () -> {
+      fc.removeFocusListener(focusListener);
+      fc.removeMouseListener(mouseListener);
+
+      if (w != null) {
+        w.removeComponentListener(componentListener);
+      }
+
+      validator = null;
+      hyperlinkListener = null;
+      outlineProvider = null;
+    });
+    return this;
   }
 
   public void revalidate() {
@@ -136,7 +149,8 @@ public class ComponentValidator {
 
   private void reset() {
     if (validationInfo != null && validationInfo.component != null) {
-      validationInfo.component.putClientProperty("JComponent.outline", null);
+      outlineProvider.apply(validationInfo.component).putClientProperty("JComponent.outline", null);
+
       validationInfo.component.revalidate();
       validationInfo.component.repaint();
     }
@@ -160,7 +174,8 @@ public class ComponentValidator {
 
       if (newInfo) {
         if (validationInfo.component != null) {
-          validationInfo.component.putClientProperty("JComponent.outline", validationInfo.warning ? "warning" : "error");
+          outlineProvider.apply(validationInfo.component).putClientProperty("JComponent.outline", validationInfo.warning ? "warning" : "error");
+
           validationInfo.component.revalidate();
           validationInfo.component.repaint();
         }
