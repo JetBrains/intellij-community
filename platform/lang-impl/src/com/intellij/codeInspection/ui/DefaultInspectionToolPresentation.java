@@ -352,49 +352,51 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   private void exportResult(@NotNull RefEntity refEntity, @NotNull CommonProblemDescriptor descriptor, @NotNull Element element) {
-    final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
-
-    @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
-    problemClassElement.addContent(myToolWrapper.getDisplayName());
-
-    final HighlightSeverity severity = InspectionToolPresentation.getSeverity(refEntity, psiElement, this);
-
-    if (severity != null) {
-      SeverityRegistrar severityRegistrar = myContext.getCurrentProfile().getProfileManager().getSeverityRegistrar();
-      HighlightInfoType type = descriptor instanceof ProblemDescriptor
-                               ? ProblemDescriptorUtil.highlightTypeFromDescriptor((ProblemDescriptor)descriptor, severity, severityRegistrar)
-                               : ProblemDescriptorUtil.getHighlightInfoType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING, severity, severityRegistrar);
-      problemClassElement.setAttribute("severity", type.getSeverity(psiElement).getName());
-      problemClassElement.setAttribute("attribute_key", type.getAttributesKey().getExternalName());
-    }
-
-    element.addContent(problemClassElement);
-    if (myToolWrapper instanceof GlobalInspectionToolWrapper) {
-      final GlobalInspectionTool globalInspectionTool = ((GlobalInspectionToolWrapper)myToolWrapper).getTool();
-      final QuickFix[] fixes = descriptor.getFixes();
-      if (fixes != null) {
-        @NonNls Element hintsElement = new Element("hints");
-        for (QuickFix fix : fixes) {
-          final String hint = globalInspectionTool.getHint(fix);
-          if (hint != null) {
-            @NonNls Element hintElement = new Element("hint");
-            hintElement.setAttribute("value", hint);
-            hintsElement.addContent(hintElement);
-          }
-        }
-        element.addContent(hintsElement);
-      }
-    }
-    @NonNls final String template = descriptor.getDescriptionTemplate();
-    @NonNls String problemText = StringUtil.replace(StringUtil.replace(template, "#ref", psiElement != null ? ProblemDescriptorUtil
-      .extractHighlightedText(descriptor, psiElement) : ""), " #loc ", " ");
     try {
+      final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
+
+      @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+      problemClassElement.addContent(myToolWrapper.getDisplayName());
+
+      final HighlightSeverity severity = InspectionToolPresentation.getSeverity(refEntity, psiElement, this);
+
+      if (severity != null) {
+        SeverityRegistrar severityRegistrar = myContext.getCurrentProfile().getProfileManager().getSeverityRegistrar();
+        HighlightInfoType type = descriptor instanceof ProblemDescriptor
+                                 ? ProblemDescriptorUtil
+                                   .highlightTypeFromDescriptor((ProblemDescriptor)descriptor, severity, severityRegistrar)
+                                 : ProblemDescriptorUtil
+                                   .getHighlightInfoType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING, severity, severityRegistrar);
+        problemClassElement.setAttribute("severity", type.getSeverity(psiElement).getName());
+        problemClassElement.setAttribute("attribute_key", type.getAttributesKey().getExternalName());
+      }
+
+      element.addContent(problemClassElement);
+      if (myToolWrapper instanceof GlobalInspectionToolWrapper) {
+        final GlobalInspectionTool globalInspectionTool = ((GlobalInspectionToolWrapper)myToolWrapper).getTool();
+        final QuickFix[] fixes = descriptor.getFixes();
+        if (fixes != null) {
+          @NonNls Element hintsElement = new Element("hints");
+          for (QuickFix fix : fixes) {
+            final String hint = globalInspectionTool.getHint(fix);
+            if (hint != null) {
+              @NonNls Element hintElement = new Element("hint");
+              hintElement.setAttribute("value", hint);
+              hintsElement.addContent(hintElement);
+            }
+          }
+          element.addContent(hintsElement);
+        }
+      }
+      @NonNls final String template = descriptor.getDescriptionTemplate();
+      @NonNls String problemText = StringUtil.replace(StringUtil.replace(template, "#ref", psiElement != null ? ProblemDescriptorUtil
+        .extractHighlightedText(descriptor, psiElement) : ""), " #loc ", " ");
       Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
       descriptionElement.addContent(problemText);
       element.addContent(descriptionElement);
     }
-    catch (IllegalDataException e) {
-      LOG.info("Cannot save results for " + refEntity.getName() + ", inspection which caused problem: " + myToolWrapper.getShortName());
+    catch (RuntimeException e) {
+      LOG.info("Cannot save results for " + refEntity.getName() + ", inspection which caused problem: " + myToolWrapper.getShortName() + ", problem descriptor " + descriptor);
     }
   }
 
