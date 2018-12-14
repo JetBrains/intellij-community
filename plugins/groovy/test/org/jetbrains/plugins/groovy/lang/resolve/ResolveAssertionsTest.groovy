@@ -52,4 +52,17 @@ c.<caret>foo += new Plus()
 '''
     assert results.size() == 2
   }
+
+  @Test
+  void 'no error when computing applicability of a method with ambiguous generic method call argument'() {
+    RecursionManager.assertOnRecursionPrevention(fixture.testRootDisposable)
+    def results = multiResolveByText '''\
+def foo(Integer i){}
+def foo(String s){}
+def <T> T bar(Integer i){}
+def <T> T bar(String s){}
+<caret>foo(bar())
+'''
+    assert results.size() == 2
+  }
 }

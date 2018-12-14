@@ -22,13 +22,14 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 
 fun getTopLevelType(expression: GrExpression): PsiType? {
   if (expression is GrMethodCall) {
-    val resolved = expression.advancedResolve()
-    (resolved as? GroovyMethodResult)?.candidate?.let {
+    val resolved = expression.advancedResolve() as? GroovyMethodResult
+    resolved?.candidate?.let {
       val session = GroovyInferenceSessionBuilder(expression, it, resolved.contextSubstitutor)
         .resolveMode(false)
         .build()
       return session.inferSubst().substitute(PsiUtil.getSmartReturnType(it.method))
     }
+    return null
   }
 
   if (expression is GrClosableBlock) {
