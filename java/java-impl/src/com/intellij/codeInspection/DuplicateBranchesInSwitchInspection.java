@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -46,14 +47,14 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     public void visitSwitchStatement(PsiSwitchStatement switchStatement) {
       super.visitSwitchStatement(switchStatement);
 
-      for (List<Branch> branches : collectSameLengthBranches(switchStatement)) {
+      for (List<Branch> branches : collectProbablySimilarBranches(switchStatement)) {
         registerProblems(branches);
       }
     }
 
     void registerProblems(List<Branch> branches) {
       int size = branches.size();
-      if (size > 1) {
+      if (size > 1 && size <= 20) {
         boolean[] isDuplicate = new boolean[size];
 
         int defaultIndex = ContainerUtil.indexOf(branches, Branch::isDefault);
@@ -107,7 +108,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
   }
 
   @NotNull
-  static Collection<List<Branch>> collectSameLengthBranches(@NotNull PsiSwitchStatement switchStatement) {
+  static Collection<List<Branch>> collectProbablySimilarBranches(@NotNull PsiSwitchStatement switchStatement) {
     PsiCodeBlock body = switchStatement.getBody();
     if (body == null) return Collections.emptyList();
 
@@ -115,11 +116,11 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     Comments comments = new Comments();
 
     Branch previousBranch = null;
-    TIntObjectHashMap<List<Branch>> branchesByLength = new TIntObjectHashMap<>();
+    TIntObjectHashMap<List<Branch>> branchesByHash = new TIntObjectHashMap<>();
     for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiSwitchLabelStatement) {
         PsiSwitchLabelStatement switchLabel = (PsiSwitchLabelStatement)child;
-        previousBranch = addBranchToMap(branchesByLength, statementList, hasImplicitBreak(switchLabel), comments, previousBranch);
+        previousBranch = addBranchToMap(branchesByHash, statementList, hasImplicitBreak(switchLabel), comments, previousBranch);
 
         statementList = null;
         comments.addFrom(switchLabel);
@@ -137,15 +138,15 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       }
     }
 
-    addBranchToMap(branchesByLength, statementList, true, comments, previousBranch);
+    addBranchToMap(branchesByHash, statementList, true, comments, previousBranch);
 
     Collection<List<Branch>> result = new ArrayList<>();
-    branchesByLength.forEachValue(result::add); // mini-hack: ArrayList.add() always returns true
+    branchesByHash.forEachValue(result::add); // mini-hack: ArrayList.add() always returns true
     return result;
   }
 
   @Nullable
-  private static Branch addBranchToMap(@NotNull TIntObjectHashMap<List<Branch>> branchesByLength,
+  private static Branch addBranchToMap(@NotNull TIntObjectHashMap<List<Branch>> branchesByHash,
                                        @Nullable List<PsiStatement> statementList,
                                        boolean hasImplicitBreak,
                                        @NotNull Comments comments,
@@ -155,10 +156,9 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     }
     Branch branch = new Branch(statementList, hasImplicitBreak, comments.fetchTexts());
     if (previousBranch == null || !previousBranch.canFallThrough()) {
-      List<Branch> branches = branchesByLength.get(branch.length());
-      if (branches == null) {
-        branchesByLength.put(branch.length(), branches = new ArrayList<>());
-      }
+      int hash = branch.hash();
+      List<Branch> branches = branchesByHash.get(hash);
+      if (branches == null) branchesByHash.put(hash, branches = new ArrayList<>());
       branches.add(branch);
     }
     return branch;
@@ -166,7 +166,8 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
 
   static boolean areDuplicates(Branch branch, Branch otherBranch) {
     if (branch.isSimpleExit() != otherBranch.isSimpleExit() ||
-        branch.canFallThrough() || otherBranch.canFallThrough()) {
+        branch.canFallThrough() || otherBranch.canFallThrough() ||
+        branch.length() != otherBranch.length()) {
       return false;
     }
 
@@ -284,7 +285,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       if (switchStatement == null) return false;
 
       List<Branch> candidateBranches = null;
-      for (List<Branch> branches : collectSameLengthBranches(switchStatement)) {
+      for (List<Branch> branches : collectProbablySimilarBranches(switchStatement)) {
         myBranchToDelete = ContainerUtil.find(branches, branch -> branch.myStatements[0] == startElement);
         if (myBranchToDelete != null) {
           candidateBranches = branches;
@@ -430,6 +431,18 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
 
     int length() {
       return myStatements.length;
+    }
+
+    int hash() {
+      int hash = myStatements.length;
+      // Don't want to hash the whole PSI tree in-depth because it's rather slow and is rarely needed.
+      for (PsiStatement statement : myStatements) {
+        if (statement instanceof TreeElement) { // all known PSI statements are tree elements
+          short index = ((TreeElement)statement).getElementType().getIndex();
+          hash = hash * 31 + index;
+        }
+      }
+      return hash;
     }
 
     boolean isDefault() {
