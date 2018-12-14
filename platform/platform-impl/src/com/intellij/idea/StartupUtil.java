@@ -354,6 +354,9 @@ public class StartupUtil {
     if (System.getProperty("pty4j.tmpdir") == null) {
       System.setProperty("pty4j.tmpdir", ideTempDir.getPath());
     }
+    if (System.getProperty("pty4j.preferred.native.folder") == null) {
+      System.setProperty("pty4j.preferred.native.folder", new File(PathManager.getLibPath(), "pty4j-native").getAbsolutePath());
+    }
   }
 
   private static void startLogging(final Logger log) {

@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import groovy.io.FileType
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -400,6 +401,27 @@ idea.fatal.error.notification=disabled
     logFreeDiskSpace("after building distributions")
   }
 
+  static def unpackPty4jNative(BuildContext buildContext, String distDir, String pty4jOsSubpackageName) {
+    def pty4jNativeDir = "$distDir/lib/pty4j-native"
+    def nativePkg = "resources/com/pty4j/native"
+    def includedNativePkg = StringUtil.trimEnd(nativePkg + "/" + StringUtil.notNullize(pty4jOsSubpackageName), '/')
+    buildContext.project.libraryCollection.findLibrary("pty4j").getFiles(JpsOrderRootType.COMPILED).each {
+      buildContext.ant.unzip(src: it, dest: pty4jNativeDir) {
+        buildContext.ant.patternset() {
+          include(name: "$includedNativePkg/**")
+        }
+        buildContext.ant.mapper(type: "glob", from: "$nativePkg/*", to: "*")
+      }
+    }
+    def files = []
+    new File(pty4jNativeDir).eachFileRecurse(FileType.FILES) { file ->
+      files << file
+    }
+    if (files.empty) {
+      buildContext.messages.error("Cannot layout pty4j native: no files extracted")
+    }
+  }
+
   private void logFreeDiskSpace(String phase) {
     CompilationContextImpl.logFreeDiskSpace(buildContext.messages, buildContext.paths.buildOutputRoot, phase)
   }
@@ -660,6 +682,7 @@ idea.fatal.error.notification=disabled
     CompilationTasks.create(buildContext).buildProjectArtifacts(jarsBuilder.includedProjectArtifacts)
     jarsBuilder.buildJARs()
     layoutShared()
+    unpackPty4jNative(buildContext, targetDirectory, null)
 
 /*
     //todo[nik] uncomment this to update os-specific files (e.g. in 'bin' directory) as well
