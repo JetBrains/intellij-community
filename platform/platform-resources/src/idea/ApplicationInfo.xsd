@@ -186,9 +186,11 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <!--deprecated-->
     <xs:attribute type="xs:int" name="progressX">
       <xs:annotation>
         <xs:documentation>
+          Deprecated attribute.
           The X coordinate of the top left corner of the progress bar on the splash screen. The progress bar will end at the right side of
           the splash screen.
         </xs:documentation>
