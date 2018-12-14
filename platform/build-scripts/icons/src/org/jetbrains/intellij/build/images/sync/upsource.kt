@@ -41,7 +41,13 @@ internal fun createReview(projectId: String, branch: String, commits: Collection
   val timeout = 30L
   var revisions = emptyList<Revision>()
   loop@ for (i in 1..max) {
-    revisions = getBranchRevisions(projectId, branch, commits)
+    revisions = try {
+      getBranchRevisions(projectId, branch, commits)
+    }
+    catch (e: Exception) {
+      log(e.message ?: e::class.java.canonicalName)
+      emptyList()
+    }
     when {
       revisions.isNotEmpty() -> break@loop
       i == max -> error("$commits are not found")
