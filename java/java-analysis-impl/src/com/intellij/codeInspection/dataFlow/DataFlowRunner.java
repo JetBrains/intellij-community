@@ -596,7 +596,7 @@ public class DataFlowRunner {
   }
   
   private static class TimeStats {
-    private static final long DFA_EXECUTION_TIME_TO_REPORT_NANOS = TimeUnit.SECONDS.toNanos(1);
+    private static final long DFA_EXECUTION_TIME_TO_REPORT_NANOS = TimeUnit.SECONDS.toNanos(30);
     private final @Nullable ThreadMXBean myMxBean;
     private final long myStart;
     private long myMergeStart, myFlowTime, myMergeTime, myProcessTime;
