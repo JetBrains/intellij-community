@@ -83,7 +83,13 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private boolean myRestoreFullScreen;
   private final LafManagerListener myLafListener;
 
-  public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager, Application application) {
+  public static IdeFrameImpl create(ActionManagerEx actionManager, DataManager dataManager, Application application) {
+    return Registry.is("ide.win.frame.decoration") ?
+      new IdeFrameImplUndecorated(actionManager, dataManager, application) :
+      new IdeFrameImpl(actionManager, dataManager, application);
+  }
+
+  protected IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager, Application application) {
     super(ApplicationNamesInfo.getInstance().getFullProductName());
 
     myRootPane = createRootPane(actionManager, dataManager);
