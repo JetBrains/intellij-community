@@ -16,11 +16,11 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiReferenceContributor;
-import com.intellij.psi.PsiReferenceRegistrar;
-import com.intellij.psi.ReferenceProviderType;
+import com.intellij.patterns.PsiElementPattern;
+import com.intellij.psi.*;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CommentsReferenceContributor extends PsiReferenceContributor {
   /**
@@ -34,6 +34,15 @@ public class CommentsReferenceContributor extends PsiReferenceContributor {
   
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiComment.class), COMMENTS_REFERENCE_PROVIDER_TYPE.getProvider());
+
+    PsiReferenceProvider provider = COMMENTS_REFERENCE_PROVIDER_TYPE.getProvider();
+    registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiComment.class), provider);
+
+    registrar.registerReferenceProvider(new PsiElementPattern.Capture<PsiElement>(PsiElement.class) {
+      @Override
+      public boolean accepts(@Nullable Object o, ProcessingContext context) {
+        return o instanceof PsiLiteralValue && ((PsiLiteralValue)o).getValue() instanceof String;
+      }
+    }, provider);
   }
 }
