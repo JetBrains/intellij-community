@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class CommentsReferenceContributor extends PsiReferenceContributor {
   /**
    * Use this provider type if your element is not PsiComment but you want to fill it 
-   * with the same references as PsiCommit (e.g. it's used for PsiDocToken).
+   * with the same references as PsiComment (e.g. it's used for PsiDocToken).
    * 
    * Also you can register your own reference provider as 'comment reference provider' and it will be
    * applied to all PsiComment and other elements that uses this provider type for retrieving references.
