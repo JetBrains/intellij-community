@@ -884,17 +884,19 @@ complete:
     !insertmacro MUI_HEADER_TEXT "$(uninstall_previous_installations_title)" "$(uninstall_previous_installations)"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 1" "Text" "$(uninstall_previous_installations_prompt)"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 3" "Flags" "FOCUS"
-    !insertmacro INSTALLOPTIONS_DISPLAY "UninstallOldVersions.ini"
-
+    !insertmacro INSTALLOPTIONS_DISPLAY_RETURN "UninstallOldVersions.ini"
+    Pop $9
+    ${If} $9 == "success"
 loop:
-    ;uninstall chosen installation(s)
-    !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field $8" "State"
-    !insertmacro INSTALLOPTIONS_READ $3 "UninstallOldVersions.ini" "Field $8" "Text"
-    ${If} $0 == "1"
-      Call uninstallOldVersion
+      ;uninstall chosen installation(s)
+      !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field $8" "State"
+      !insertmacro INSTALLOPTIONS_READ $3 "UninstallOldVersions.ini" "Field $8" "Text"
+      ${If} $0 == "1"
+        Call uninstallOldVersion
       ${EndIf}
       IntOp $8 $8 - 1
       StrCmp $8 $control_fields finish loop
+    ${EndIf}
   ${EndIf}
 finish:
 FunctionEnd
