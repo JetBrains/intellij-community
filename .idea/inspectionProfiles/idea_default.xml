@@ -850,6 +850,12 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="c" maxCount="32000" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="anonymous scheduled thread pools are discouraged" text="Executors.newSingleThreadScheduledExecutor()" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.ConcurrencyUtil.newSingleScheduledThreadExecutor()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="anonymous thread pools are discouraged" text="Executors.newSingleThreadExecutor()" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.ConcurrencyUtil.newSingleThreadExecutor()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />
