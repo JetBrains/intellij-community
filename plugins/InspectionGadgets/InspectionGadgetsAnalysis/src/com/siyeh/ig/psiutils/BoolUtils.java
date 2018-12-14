@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.util.OptionalUtil.*;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 
 public class BoolUtils {
@@ -84,11 +85,6 @@ public class BoolUtils {
 
   private static final CallMatcher STREAM_ANY_MATCH = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "anyMatch");
   private static final CallMatcher STREAM_NONE_MATCH = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "noneMatch");
-
-
-  private static final String OPTIONAL_INT = "java.util.OptionalInt";
-  private static final String OPTIONAL_LONG = "java.util.OptionalLong";
-  private static final String OPTIONAL_DOUBLE = "java.util.OptionalDouble";
 
   private static final CallMatcher OPTIONAL_IS_PRESENT =
     CallMatcher.anyOf(

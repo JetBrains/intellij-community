@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -137,7 +138,7 @@ public class DfaPsiUtil {
       PsiElement gParent = parent.getParent();
       if (gParent instanceof PsiLambdaExpression) {
         return getFunctionalParameterNullability((PsiLambdaExpression)gParent, ((PsiParameterList)parent).getParameterIndex(parameter));
-      } else if (gParent instanceof PsiMethod && DfaOptionalSupport.OPTIONAL_OF_NULLABLE.methodMatches((PsiMethod)gParent)) {
+      } else if (gParent instanceof PsiMethod && OptionalUtil.OPTIONAL_OF_NULLABLE.methodMatches((PsiMethod)gParent)) {
         return Nullability.NULLABLE;
       }
     }

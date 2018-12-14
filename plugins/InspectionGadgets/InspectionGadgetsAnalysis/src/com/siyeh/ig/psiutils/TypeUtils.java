@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -103,10 +104,10 @@ public class TypeUtils {
     }
     final String qualifiedName = aClass.getQualifiedName();
     return CommonClassNames.JAVA_UTIL_OPTIONAL.equals(qualifiedName)
-           || "java.util.OptionalDouble".equals(qualifiedName)
-           || "java.util.OptionalInt".equals(qualifiedName)
-           || "java.util.OptionalLong".equals(qualifiedName)
-           || "com.google.common.base.Optional".equals(qualifiedName);
+           || OptionalUtil.OPTIONAL_DOUBLE.equals(qualifiedName)
+           || OptionalUtil.OPTIONAL_INT.equals(qualifiedName)
+           || OptionalUtil.OPTIONAL_LONG.equals(qualifiedName)
+           || OptionalUtil.GUAVA_OPTIONAL.equals(qualifiedName);
   }
 
   public static boolean isExpressionTypeAssignableWith(@NotNull PsiExpression expression, @NotNull Iterable<String> rhsTypeTexts) {

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -71,7 +72,7 @@ class CustomMethodHandlers {
               (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, false))
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("long"),
               (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, true))
-    .register(DfaOptionalSupport.OPTIONAL_OF_NULLABLE,
+    .register(OptionalUtil.OPTIONAL_OF_NULLABLE,
               (args, memState, factory) -> ofNullable(args.myArguments[0], memState, factory));
 
   public static CustomMethodHandler find(PsiMethod method) {

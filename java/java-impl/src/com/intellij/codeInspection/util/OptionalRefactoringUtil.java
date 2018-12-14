@@ -9,76 +9,16 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.*;
-import org.jetbrains.annotations.Contract;
+import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.JavaPsiMathUtil;
+import com.siyeh.ig.psiutils.StreamApiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class OptionalUtil {
-  public static final String OPTIONAL_INT = "java.util.OptionalInt";
-  public static final String OPTIONAL_LONG = "java.util.OptionalLong";
-  public static final String OPTIONAL_DOUBLE = "java.util.OptionalDouble";
-
-  private static final CallMatcher OPTIONAL_OF =
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "of", "ofNullable").parameterCount(1);
-
-  @NotNull
-  @Contract(pure = true)
-  public static String getOptionalClass(String type) {
-    switch (type) {
-      case "int":
-        return OPTIONAL_INT;
-      case "long":
-        return OPTIONAL_LONG;
-      case "double":
-        return OPTIONAL_DOUBLE;
-      default:
-        return CommonClassNames.JAVA_UTIL_OPTIONAL;
-    }
-  }
-
-  public static boolean isOptionalClassName(String className) {
-    return CommonClassNames.JAVA_UTIL_OPTIONAL.equals(className) ||
-         OPTIONAL_INT.equals(className) || OPTIONAL_LONG.equals(className) || OPTIONAL_DOUBLE.equals(className);
-  }
-
-  /**
-   * Unwraps an {@link java.util.Optional}, {@link java.util.OptionalInt}, {@link java.util.OptionalLong} or {@link java.util.OptionalDouble}
-   * returning its element type
-   *
-   * @param type a type representing optional (e.g. {@code Optional<String>} or {@code OptionalInt})
-   * @return an element type (e.g. {@code String} or {@code int}). Returns {@code null} if the supplied type is not an optional type
-   * or its a raw {@code java.util.Optional}.
-   */
-  @Contract("null -> null")
-  public static PsiType getOptionalElementType(PsiType type) {
-    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
-    if(aClass == null) return null;
-    String className = aClass.getQualifiedName();
-    if(className == null) return null;
-    switch (className) {
-      case "java.util.OptionalInt":
-        return PsiType.INT;
-      case "java.util.OptionalLong":
-        return PsiType.LONG;
-      case "java.util.OptionalDouble":
-        return PsiType.DOUBLE;
-      case CommonClassNames.JAVA_UTIL_OPTIONAL:
-        PsiType[] parameters = ((PsiClassType)type).getParameters();
-        if (parameters.length != 1) return null;
-        PsiType streamType = parameters[0];
-        if (streamType instanceof PsiCapturedWildcardType) {
-          streamType = ((PsiCapturedWildcardType)streamType).getUpperBound();
-        }
-        return streamType;
-      default:
-        return null;
-    }
-  }
-
+public class OptionalRefactoringUtil {
   /**
    * Generates an expression text which will unwrap an {@link java.util.Optional}.
    *
@@ -135,7 +75,7 @@ public class OptionalUtil {
       }
       String suffix = null;
       boolean java9 = PsiUtil.isLanguageLevel9OrHigher(trueExpression);
-      if (isOptionalEmptyCall(falseExpression)) {
+      if (OptionalUtil.isOptionalEmptyCall(falseExpression)) {
         suffix = "";
       }
       else if (java9 && InheritanceUtil.isInheritor(falseExpression.getType(), CommonClassNames.JAVA_UTIL_OPTIONAL) &&
@@ -145,7 +85,7 @@ public class OptionalUtil {
       if (suffix != null) {
         PsiMethodCallExpression mappedOptional = ObjectUtils.tryCast(stripped, PsiMethodCallExpression.class);
         // simplify "qualifier.map(x -> Optional.of(x)).orElse(Optional.empty())" to "qualifier"
-        if (OPTIONAL_OF.test(mappedOptional)) {
+        if (OptionalUtil.JDK_OPTIONAL_WRAP_METHOD.test(mappedOptional)) {
           PsiExpression arg = mappedOptional.getArgumentList().getExpressions()[0];
           if (ExpressionUtils.isReferenceTo(arg, var)) {
             return qualifier + suffix;
@@ -212,12 +152,6 @@ public class OptionalUtil {
       }
       return qualifier + ".orElse(" + falseText + ")";
     }
-  }
-
-  @Contract("null -> false")
-  public static boolean isOptionalEmptyCall(PsiExpression expression) {
-    return expression instanceof PsiMethodCallExpression &&
-           MethodCallUtils.isCallToStaticMethod((PsiMethodCallExpression)expression, CommonClassNames.JAVA_UTIL_OPTIONAL, "empty", 0);
   }
 
   @NotNull

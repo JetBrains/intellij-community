@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
 
-import static com.intellij.codeInspection.dataFlow.DfaOptionalSupport.GUAVA_OPTIONAL;
+import static com.intellij.codeInspection.util.OptionalUtil.*;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
@@ -44,9 +44,6 @@ import static com.siyeh.ig.callMatcher.CallMatcher.*;
  * {@code Optional.of(xyz).map(lambda).filter(lambda).flatMap(lambda).orElseGet(lambda)}
  */
 public class OptionalChainInliner implements CallInliner {
-  private static final String OPTIONAL_INT = "java.util.OptionalInt";
-  private static final String OPTIONAL_LONG = "java.util.OptionalLong";
-  private static final String OPTIONAL_DOUBLE = "java.util.OptionalDouble";
 
   private static final CallMatcher OPTIONAL_OR_ELSE = anyOf(
     instanceCall(JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1),
