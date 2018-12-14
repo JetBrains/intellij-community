@@ -144,7 +144,7 @@ public class SwitchUtils {
    * If switch body has no labels yet and language level permits, rule-based format is assumed.
    */
   public static boolean isRuleFormatSwitch(@NotNull PsiSwitchBlock block) {
-    if (HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(block)) {
+    if (!HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(block)) {
       return false;
     }
     PsiSwitchLabelStatementBase label = PsiTreeUtil.getChildOfType(block.getBody(), PsiSwitchLabelStatementBase.class);
