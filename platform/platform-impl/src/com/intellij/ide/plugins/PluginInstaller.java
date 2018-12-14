@@ -132,7 +132,7 @@ public class PluginInstaller {
     installedDependant.add(pluginNode);
 
     // check for dependent plugins at first.
-    if (pluginNode.getDepends() != null && pluginNode.getDepends().size() > 0) {
+    if (pluginNode.getDepends() != null && !pluginNode.getDepends().isEmpty()) {
       // prepare plugins list for install
       final PluginId[] optionalDependentPluginIds = pluginNode.getOptionalDependentPluginIds();
       final List<PluginNode> depends = new ArrayList<>();
@@ -141,7 +141,7 @@ public class PluginInstaller {
         PluginId depPluginId = pluginNode.getDepends().get(i);
         if (PluginManager.isPluginInstalled(depPluginId) || PluginManagerCore.isModuleDependency(depPluginId) ||
             InstalledPluginsState.getInstance().wasInstalled(depPluginId) ||
-            (pluginIds != null && pluginIds.contains(depPluginId))) {
+            pluginIds != null && pluginIds.contains(depPluginId)) {
           // ignore installed or installing plugins
           continue;
         }
@@ -150,7 +150,8 @@ public class PluginInstaller {
         PluginNode depPlugin;
         if (depPluginDescriptor instanceof PluginNode) {
           depPlugin = (PluginNode) depPluginDescriptor;
-        } else {
+        }
+        else {
           depPlugin = new PluginNode(depPluginId, depPluginId.getIdString(), "-1");
         }
 
@@ -164,7 +165,7 @@ public class PluginInstaller {
         }
       }
 
-      if (depends.size() > 0) { // has something to install prior installing the plugin
+      if (!depends.isEmpty()) { // has something to install prior installing the plugin
         final boolean[] proceed = new boolean[1];
         try {
           ApplicationManager.getApplication().invokeAndWait(() -> {
@@ -182,7 +183,7 @@ public class PluginInstaller {
         }
       }
 
-      if (optionalDeps.size() > 0) {
+      if (!optionalDeps.isEmpty()) {
         final boolean[] proceed = new boolean[1];
         try {
           ApplicationManager.getApplication().invokeAndWait(() -> {
