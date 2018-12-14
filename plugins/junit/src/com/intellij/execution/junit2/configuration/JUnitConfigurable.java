@@ -775,7 +775,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
             @Override
             public boolean isAccepted(PsiClass aClass) {
-              return JUnitUtil.isJUnit5TestClass(aClass,true);
+              return JUnitUtil.isTestClass(aClass,true, true);
             }
           };
         }
