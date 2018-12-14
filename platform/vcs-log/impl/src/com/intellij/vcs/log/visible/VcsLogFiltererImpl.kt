@@ -192,7 +192,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return Pair.create(visiblePack, textFilterResult.commitCount)
   }
 
-  fun getMatchingHeads(refs: VcsLogRefs,
+  fun getMatchingHeads(refs: RefsModel,
                        roots: Collection<VirtualFile>,
                        filters: VcsLogFilterCollection): Set<Int>? {
     val branchFilter = filters.get(VcsLogFilterCollection.BRANCH_FILTER)
@@ -231,8 +231,8 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return filter.heads.filter { roots.contains(it.root) }.toCommitIndexes()
   }
 
-  private fun getMatchingHeads(refs: VcsLogRefs, roots: Collection<VirtualFile>): Set<Int> {
-    return refs.branches.filter { roots.contains(it.root) }.toReferencedCommitIndexes()
+  private fun getMatchingHeads(refsModel: RefsModel, roots: Collection<VirtualFile>): Set<Int> {
+    return refsModel.allRefsByRoot.filterKeys { roots.contains(it) }.values.flatMapTo(mutableSetOf()) { refs -> refs.commits }
   }
 
   private fun filterDetailsInMemory(permanentGraph: PermanentGraph<Int>,
