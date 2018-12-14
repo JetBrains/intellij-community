@@ -1321,6 +1321,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testOneVariableExpression() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testInterfaceMethodVisibility() throws Exception {
     final String doesNotExist = "foo.bar.baz.DoesNotExist";
     final NullableNotNullManager nullManager = NullableNotNullManager.getInstance(getProject());
