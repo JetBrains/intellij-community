@@ -7,7 +7,7 @@ public class Main {
                 break
             }
 
-            "bar" -> {
+            "bar", "beer" -> {
                 "BAR"
             }
 
@@ -29,7 +29,7 @@ public class Main {
                 break
             }
 
-            "baz" -> {
+            "baz", "zub" -> {
                 System.out.println("here")
                 break
             }

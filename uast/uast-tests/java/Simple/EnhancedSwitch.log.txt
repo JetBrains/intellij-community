@@ -23,6 +23,7 @@ UFile (package = )
                                         UBreakExpression (label = null)
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "bar")
+                                    ULiteralExpression (value = "beer")
                                     UExpressionList (switch_entry)
                                         ULiteralExpression (value = "BAR")
                                 USwitchClauseExpressionWithBody
@@ -48,6 +49,7 @@ UFile (package = )
                                         UBreakExpression (label = null)
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "baz")
+                                    ULiteralExpression (value = "zub")
                                     UExpressionList (switch_entry)
                                         UQualifiedReferenceExpression
                                             UQualifiedReferenceExpression

@@ -9,7 +9,7 @@ public class Main {
           System.out.println("here");
           break "FOO";
         }
-        case "bar" -> "BAR";
+        case "bar", "beer" -> "BAR";
         case "baz" -> "bAz";
         default -> "default";
       };
@@ -20,7 +20,7 @@ public class Main {
           break "FOO";
         case "bar":
           break "BAR";
-        case "baz":
+        case "baz", "zub":
           System.out.println("here");
           break "bAz";
         default:

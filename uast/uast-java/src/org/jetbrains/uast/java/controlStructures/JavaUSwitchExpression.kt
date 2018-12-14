@@ -121,13 +121,12 @@ class JavaUSwitchEntry(
   override val psi: PsiSwitchLabelStatementBase = labels.first()
 
   override val caseValues: List<UExpression> by lz {
-    labels.mapNotNull {
+    labels.flatMap {
       if (it.isDefaultCase) {
-        JavaUDefaultCaseExpression(it, this)
+        listOf(JavaUDefaultCaseExpression(it, this))
       }
       else {
-        val value = it.caseValue
-        value?.let { JavaConverter.convertExpression(it, this) }
+        it.caseValues?.expressions.orEmpty().map { JavaConverter.convertOrEmpty(it, this) }
       }
     }
   }
