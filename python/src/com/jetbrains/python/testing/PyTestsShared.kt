@@ -66,7 +66,7 @@ import java.util.regex.Matcher
 /**
  * New configuration factories
  */
-val factories: Array<PythonConfigurationFactoryBase> = arrayOf(
+internal val pythonFactories: Array<PythonConfigurationFactoryBase> = arrayOf(
   PyUnitTestFactory,
   PyTestFactory,
   PyNoseTestFactory,
@@ -435,11 +435,9 @@ abstract class PyAbstractTestConfiguration(project: Project,
     ThreeState.NO
   }
 
-
   @Suppress("LeakingThis") // Legacy adapter is used to support legacy configs. Leak is ok here since everything takes place in one thread
   @DelegationProperty
   val legacyConfigurationAdapter: PyTestLegacyConfigurationAdapter<PyAbstractTestConfiguration> = PyTestLegacyConfigurationAdapter(this)
-
 
   /**
    * For real launch use [getWorkingDirectorySafe] instead
@@ -460,7 +458,6 @@ abstract class PyAbstractTestConfiguration(project: Project,
     return target.getElementDirectory(this)?.path ?: super.getWorkingDirectorySafe()
   }
 
-
   override fun getRefactoringElementListener(element: PsiElement?): RefactoringElementListener? {
     if (element == null) return null
     var renamer = CompositeRefactoringElementListener(PyWorkingDirectoryRenamer(getWorkingDirectoryAsVirtual(), this))
@@ -469,7 +466,6 @@ abstract class PyAbstractTestConfiguration(project: Project,
     }
     return renamer
   }
-
 
   override fun checkConfiguration() {
     super.checkConfiguration()
@@ -484,7 +480,6 @@ abstract class PyAbstractTestConfiguration(project: Project,
    * Check if framework is available on SDK
    */
   abstract fun isFrameworkInstalled(): Boolean
-
 
   override fun isIdTestBased(): Boolean = true
 

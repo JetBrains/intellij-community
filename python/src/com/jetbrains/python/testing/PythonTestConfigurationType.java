@@ -34,7 +34,7 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
   private final NotNullLazyValue<ConfigurationFactory[]> myFactories = NotNullLazyValue.createValue(() -> {
     // use new or legacy factories depending to new config
     if (PyTestLegacyInteropKt.isNewTestsModeEnabled()) {
-      for (PythonConfigurationFactoryBase factory : PyTestsSharedKt.getFactories()) {
+      for (PythonConfigurationFactoryBase factory : PyTestsSharedKt.getPythonFactories()) {
         addFactory(factory);
       }
     }
