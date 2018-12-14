@@ -3,14 +3,13 @@ package com.jetbrains.python.testing
 
 import com.google.common.base.Preconditions
 import com.intellij.execution.RunManager
+import com.intellij.execution.RunManagerListener
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectLifecycleListener
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -44,36 +43,26 @@ import javax.swing.SwingUtilities
  */
 fun isNewTestsModeEnabled(): Boolean = Registry.`is`("python.tests.enableUniversalTests", true)
 
-/**
- * Should be installed as application component
- */
-internal class PyTestLegacyInteropInitializer : ApplicationInitializedListener {
+private class PyTestLegacyInteropInitializer : ApplicationInitializedListener {
   override fun componentsInitialized() {
-    // Delegate to project initialization
-    ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
-      override fun projectComponentsInitialized(project: Project) {
-        if (project.isDefault) return
-        if (project.isInitialized) {
-          projectInitialized(project)
+    ApplicationManager.getApplication().messageBus.connect().subscribe(RunManagerListener.TOPIC, object : RunManagerListener {
+      override fun stateLoaded(runManager: RunManager, isFirstLoadState: Boolean) {
+        if (!isFirstLoadState) {
           return
         }
-        StartupManager.getInstance(project).runWhenProjectIsInitialized { projectInitialized(project) }
+
+        fun migrate(configuration: RunConfiguration) {
+          (configuration as? PyAbstractTestConfiguration ?: return).legacyConfigurationAdapter.copyFromLegacyIfNeeded()
+        }
+
+        for (factory in pythonFactories) {
+          migrate(runManager.getConfigurationTemplate(factory).configuration)
+        }
+        for (it in runManager.allSettings) {
+          migrate(it.configuration)
+        }
       }
     })
-  }
-}
-
-
-/**
- * To be called when project initialized to copy old configs to new one
- */
-private fun projectInitialized(project: Project) {
-  assert(project.isInitialized) { "Project is not initialized yet" }
-
-  val manager = RunManager.getInstance(project)
-  val configurations = factories.map { manager.getConfigurationTemplate(it) } + manager.allConfigurationsList
-  configurations.filterIsInstance(PyAbstractTestConfiguration::class.java).forEach {
-    it.legacyConfigurationAdapter.copyFromLegacyIfNeeded()
   }
 }
 
