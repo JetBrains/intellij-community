@@ -376,24 +376,22 @@ public class InjectedLanguageUtil {
       }
     }
 
-    if (probeUp) {
-      // cache only if we walked all parents
-      for (PsiElement e = element; e != current && e != null && e != hostPsiFile; e = e.getParent()) {
-        ProgressManager.checkCanceled();
-        if (result == null) {
-          e.putUserData(INJECTED_PSI, null);
-        }
-        else {
-          PsiParameterizedCachedValue<InjectionResult, PsiElement> cachedValue =
-            (PsiParameterizedCachedValue<InjectionResult, PsiElement>)
-            CachedValuesManager.getManager(project).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
+    // cache
+    PsiParameterizedCachedValue<InjectionResult, PsiElement> cachedValue;
+    if (result == null) {
+      cachedValue = null;
+    }
+    else {
+      cachedValue = (PsiParameterizedCachedValue<InjectionResult, PsiElement>)
+        CachedValuesManager.getManager(project).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
 
-          CachedValueProvider.Result<InjectionResult> cachedResult = CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, result);
-          cachedValue.setValue(cachedResult);
-
-          e.putUserData(INJECTED_PSI, cachedValue);
-        }
-      }
+      CachedValueProvider.Result<InjectionResult> cachedResult = CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, result);
+      cachedValue.setValue(cachedResult);
+    }
+    for (PsiElement e = element; e != current && e != null && e != hostPsiFile; e = e.getParent()) {
+      ProgressManager.checkCanceled();
+      e.putUserData(INJECTED_PSI, cachedValue);
+      if (!probeUp) break;
     }
   }
 
