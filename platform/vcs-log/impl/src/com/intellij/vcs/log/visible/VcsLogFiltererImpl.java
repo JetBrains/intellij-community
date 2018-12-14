@@ -201,7 +201,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   }
 
   @Nullable
-  public Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs,
+  public Set<Integer> getMatchingHeads(@NotNull RefsModel refs,
                                        @NotNull Collection<VirtualFile> roots,
                                        @NotNull VcsLogFilterCollection filters) {
     VcsLogBranchFilter branchFilter = filters.get(VcsLogFilterCollection.BRANCH_FILTER);
@@ -251,11 +251,11 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   }
 
   @NotNull
-  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull Collection<VirtualFile> roots) {
+  private Set<Integer> getMatchingHeads(@NotNull RefsModel refs, @NotNull Collection<VirtualFile> roots) {
     Set<Integer> result = new HashSet<>();
-    for (VcsRef branch : refs.getBranches()) {
-      if (roots.contains(branch.getRoot())) {
-        result.add(myStorage.getCommitIndex(branch.getCommitHash(), branch.getRoot()));
+    for (Map.Entry<VirtualFile, CompressedRefs> refsForRoot : refs.getAllRefsByRoot().entrySet()) {
+      if (roots.contains(refsForRoot.getKey())) {
+        result.addAll(refsForRoot.getValue().getCommits());
       }
     }
     return result;
