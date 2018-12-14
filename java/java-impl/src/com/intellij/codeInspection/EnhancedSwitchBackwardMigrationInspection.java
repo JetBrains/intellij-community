@@ -34,6 +34,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchExpression(PsiSwitchExpression expression) {
+        if (!SwitchUtils.isRuleFormatSwitch(expression)) return;
         if (findReplacer(expression) == null) return;
         String message = InspectionsBundle.message("inspection.switch.expression.backward.expression.migration.inspection.name");
         holder.registerProblem(expression.getFirstChild(), message, new ReplaceWithOldStyleSwitchFix());
@@ -41,8 +42,8 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
 
       @Override
       public void visitSwitchStatement(PsiSwitchStatement statement) {
-        if (findReplacer(statement) == null) return;
         if (!SwitchUtils.isRuleFormatSwitch(statement)) return;
+        if (findReplacer(statement) == null) return;
         String message = InspectionsBundle.message("inspection.switch.expression.backward.statement.migration.inspection.name");
         holder.registerProblem(statement.getFirstChild(), message, new ReplaceWithOldStyleSwitchFix());
       }
