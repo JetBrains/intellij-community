@@ -15,17 +15,16 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -95,7 +94,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
 
   @Override
   public boolean shouldInspect(PsiFile file) {
-    return !onlyReportSwitchExpressions || PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_12_PREVIEW);
+    return !onlyReportSwitchExpressions || HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(file);
   }
 
   @Override

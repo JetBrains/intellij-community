@@ -2,11 +2,10 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
@@ -31,7 +30,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.getLanguageLevel(holder.getFile()).isAtLeast(LanguageLevel.JDK_12_PREVIEW)) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchExpression(PsiSwitchExpression expression) {
@@ -129,7 +128,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
 
     @Override
     public void replace(PsiSwitchBlock block) {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(block.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(block.getProject());
       PsiTypesUtil.replaceWithExplicitType(myVariable.getTypeElement());
       CommentTracker ct = new CommentTracker();
       PsiSwitchStatement switchStatement = new VarSavingSwitchGenerator(block, myVariable).generate(ct);

@@ -833,7 +833,7 @@ public class HighlightUtil extends HighlightUtilBase {
   private static HighlightInfo checkContinueOutsideOfSwitchExpression(@NotNull PsiContinueStatement statement,
                                                                       PsiStatement continuedStatement,
                                                                       @NotNull LanguageLevel level) {
-    if (level.isAtLeast(LanguageLevel.JDK_12_PREVIEW)) {
+    if (Feature.ENHANCED_SWITCH.isSufficient(level)) {
       PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(statement);
       if (enclosing instanceof PsiSwitchExpression && PsiTreeUtil.isAncestor(continuedStatement, enclosing, true)) {
         String message = JavaErrorMessages.message("continue.outside.switch.expr");
@@ -3106,11 +3106,11 @@ public class HighlightUtil extends HighlightUtilBase {
     }
 
     /**
-     * @param file PsiFile to check
-     * @return true if this feature is available in given PsiFile
+     * @param element a valid PsiElement to check (it's better to supply PsiFile if already known; any element is accepted for convenience)
+     * @return true if this feature is available in the PsiFile the supplied element belongs to
      */
-    public boolean isAvailable(PsiFile file) {
-      return isSufficient(PsiUtil.getLanguageLevel(file));
+    public boolean isAvailable(PsiElement element) {
+      return isSufficient(PsiUtil.getLanguageLevel(element));
     }
 
     private boolean isSufficient(LanguageLevel useSiteLevel) {

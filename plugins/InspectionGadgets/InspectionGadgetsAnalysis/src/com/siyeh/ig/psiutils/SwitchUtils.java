@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -143,7 +144,7 @@ public class SwitchUtils {
    * If switch body has no labels yet and language level permits, rule-based format is assumed.
    */
   public static boolean isRuleFormatSwitch(@NotNull PsiSwitchBlock block) {
-    if (PsiUtil.getLanguageLevel(block).isLessThan(LanguageLevel.JDK_12_PREVIEW)) {
+    if (HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(block)) {
       return false;
     }
     PsiSwitchLabelStatementBase label = PsiTreeUtil.getChildOfType(block.getBody(), PsiSwitchLabelStatementBase.class);
