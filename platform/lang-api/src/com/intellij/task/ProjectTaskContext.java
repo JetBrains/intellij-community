@@ -107,7 +107,7 @@ public class ProjectTaskContext extends UserDataHolderBase {
   }
 
   /**
-   * This method isn't suppose to be used directly.
+   * This method isn't supposed to be used directly.
    * {@link ProjectTaskRunner}s can use it to report information about generated files during some task execution.
    *
    * @param root the root directory of the generated file
