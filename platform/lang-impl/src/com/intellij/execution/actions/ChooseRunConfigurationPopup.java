@@ -734,6 +734,22 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       registerActions(this);
     }
 
+    @Override
+    public boolean shouldBeShowing(Object value) {
+      if (super.shouldBeShowing(value)) {
+        return true;
+      }
+      if (value instanceof FolderWrapper && mySpeedSearch.isHoldingFilter()) {
+        FolderWrapper folderWrapper = (FolderWrapper)value;
+        for (RunnerAndConfigurationSettings configuration : folderWrapper.myConfigurations) {
+          if (mySpeedSearch.shouldBeShowing(configuration.getName() + configuration.getConfiguration().getPresentableType()) ) {
+            return true;
+          }
+        };
+      }
+      return false;
+    }
+
     protected RunListPopup(WizardPopup aParent, ListPopupStep aStep, Object parentValue) {
       super(aParent, aStep, parentValue);
       registerActions(this);
