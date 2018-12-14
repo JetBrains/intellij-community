@@ -12,7 +12,7 @@ import javax.swing.*;
 /**
  * @author Alexander Lobas
  */
-class PluginLogoIcon {
+class PluginLogoIcon implements PluginLogoIconProvider {
   private final Icon myPluginLogo_40;
   private final Icon myPluginLogoJB_40;
   private final Icon myPluginLogoError_40;
@@ -96,7 +96,8 @@ class PluginLogoIcon {
   }
 
   @NotNull
-  Icon getIcon(boolean big, boolean jb, boolean error, boolean disabled) {
+  @Override
+  public Icon getIcon(boolean big, boolean jb, boolean error, boolean disabled) {
     if (jb && !error) {
       if (big) {
         return disabled ? myPluginLogoDisabledJB_80 : myPluginLogoJB_80;

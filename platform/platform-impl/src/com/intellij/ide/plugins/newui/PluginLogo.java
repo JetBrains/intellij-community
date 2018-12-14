@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginManagerConfigurableNew;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,8 +41,8 @@ import java.util.zip.ZipFile;
  */
 public class PluginLogo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.newui.PluginLogo");
-  private static final Map<String, Pair<PluginLogoIcon, PluginLogoIcon>> ICONS = new HashMap<>();
-  private static PluginLogoIcon Default;
+  private static final Map<String, Pair<PluginLogoIconProvider, PluginLogoIconProvider>> ICONS = new HashMap<>();
+  private static PluginLogoIconProvider Default;
 
   static {
     LafManager.getInstance().addLafManagerListener(_0 -> Default = null);
@@ -49,82 +50,91 @@ public class PluginLogo {
 
   @NotNull
   public static Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, boolean big, boolean jb, boolean error, boolean disabled) {
-    if (true) {
-      return PluginLogoInfo.getIcon(big, jb, error, disabled);
-    }
     return getIcon(descriptor).getIcon(big, jb, error, disabled);
   }
 
   @NotNull
-  private static PluginLogoIcon getIcon(@NotNull IdeaPluginDescriptor descriptor) {
-    Pair<PluginLogoIcon, PluginLogoIcon> icons = getOrLoadIcon(descriptor);
+  private static PluginLogoIconProvider getIcon(@NotNull IdeaPluginDescriptor descriptor) {
+    Pair<PluginLogoIconProvider, PluginLogoIconProvider> icons = getOrLoadIcon(descriptor);
     if (icons != null) {
       return JBColor.isBright() ? icons.first : icons.second;
     }
+    return getDefault();
+  }
 
+  @NotNull
+  private static PluginLogoIconProvider getDefault() {
     if (Default == null) {
       Default = new PluginLogoIcon(AllIcons.Plugins.PluginLogo_40, AllIcons.Plugins.PluginLogoDisabled_40,
                                    AllIcons.Plugins.PluginLogo_80, AllIcons.Plugins.PluginLogoDisabled_80);
     }
-
     return Default;
   }
 
   @Nullable
-  private static Pair<PluginLogoIcon, PluginLogoIcon> getOrLoadIcon(@NotNull IdeaPluginDescriptor descriptor) {
+  private static Pair<PluginLogoIconProvider, PluginLogoIconProvider> getOrLoadIcon(@NotNull IdeaPluginDescriptor descriptor) {
     String idPlugin = descriptor.getPluginId().getIdString();
-    Pair<PluginLogoIcon, PluginLogoIcon> icons = ICONS.get(idPlugin);
+    Pair<PluginLogoIconProvider, PluginLogoIconProvider> icons = ICONS.get(idPlugin);
 
     if (icons != null) {
       return icons.first == null && icons.second == null ? null : icons;
     }
 
-    File path = descriptor.getPath();
-    if (path != null) {
-      if (path.isDirectory()) {
-        PluginLogoIcon light = tryLoadIcon(new File(path, PluginManagerCore.META_INF + "pluginIcon.svg"));
-        PluginLogoIcon dark = tryLoadIcon(new File(path, PluginManagerCore.META_INF + "pluginIcon_dark.svg"));
-        return putIcon(idPlugin, light, dark);
-      }
-      if (FileUtil.isJarOrZip(path)) {
-        try (ZipFile zipFile = new ZipFile(path)) {
-          PluginLogoIcon light = tryLoadIcon(zipFile, "pluginIcon.svg");
-          PluginLogoIcon dark = tryLoadIcon(zipFile, "pluginIcon_dark.svg");
-          return putIcon(idPlugin, light, dark);
+    LazyPluginLogoIcon lazyIcon = new LazyPluginLogoIcon(getDefault());
+    Pair<PluginLogoIconProvider, PluginLogoIconProvider> lazyIcons = Pair.create(lazyIcon, lazyIcon);
+    ICONS.put(idPlugin, lazyIcons);
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      File path = descriptor.getPath();
+      if (path != null) {
+        if (path.isDirectory()) {
+          PluginLogoIconProvider light = tryLoadIcon(new File(path, PluginManagerCore.META_INF + "pluginIcon.svg"));
+          PluginLogoIconProvider dark = tryLoadIcon(new File(path, PluginManagerCore.META_INF + "pluginIcon_dark.svg"));
+          putIcon(idPlugin, lazyIcon, light, dark);
+          return;
         }
-        catch (Exception e) {
-          LOG.error(e);
+        if (FileUtil.isJarOrZip(path)) {
+          try (ZipFile zipFile = new ZipFile(path)) {
+            PluginLogoIconProvider light = tryLoadIcon(zipFile, "pluginIcon.svg");
+            PluginLogoIconProvider dark = tryLoadIcon(zipFile, "pluginIcon_dark.svg");
+            putIcon(idPlugin, lazyIcon, light, dark);
+            return;
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
         }
       }
-    }
 
-    String idFileName = FileUtil.sanitizeFileName(idPlugin);
-    File cache = new File(PathManager.getPluginTempPath(), "imageCache");
-    File lightFile = new File(cache, idFileName + ".svg");
-    File darkFile = new File(cache, idFileName + "_dark.svg");
+      String idFileName = FileUtil.sanitizeFileName(idPlugin);
+      File cache = new File(PathManager.getPluginTempPath(), "imageCache");
+      File lightFile = new File(cache, idFileName + ".svg");
+      File darkFile = new File(cache, idFileName + "_dark.svg");
 
-    if (cache.exists()) {
-      PluginLogoIcon light = tryLoadIcon(lightFile);
-      PluginLogoIcon dark = tryLoadIcon(darkFile);
-      if (light != null || dark != null) {
-        return putIcon(idPlugin, light, dark);
+      if (cache.exists()) {
+        PluginLogoIconProvider light = tryLoadIcon(lightFile);
+        PluginLogoIconProvider dark = tryLoadIcon(darkFile);
+        if (light != null || dark != null) {
+          putIcon(idPlugin, lazyIcon, light, dark);
+          return;
+        }
       }
-    }
 
-    try {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
         FileUtil.createParentDirs(cache);
         downloadFile(idPlugin, lightFile, "");
         downloadFile(idPlugin, darkFile, "&theme=DARCULA");
-      }).get();
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
 
-    PluginLogoIcon light = tryLoadIcon(lightFile);
-    PluginLogoIcon dark = tryLoadIcon(darkFile);
-    return putIcon(idPlugin, light, dark);
+      PluginLogoIconProvider light = tryLoadIcon(lightFile);
+      PluginLogoIconProvider dark = tryLoadIcon(darkFile);
+      putIcon(idPlugin, lazyIcon, light, dark);
+    });
+
+    return lazyIcons;
   }
 
   private static void downloadFile(@NotNull String idPlugin, @NotNull File file, @NotNull String theme) {
@@ -140,40 +150,36 @@ public class PluginLogo {
     }
   }
 
-  @Nullable
-  private static Pair<PluginLogoIcon, PluginLogoIcon> putIcon(@NotNull String idPlugin,
-                                                              @Nullable PluginLogoIcon light,
-                                                              @Nullable PluginLogoIcon dark) {
-    Pair<PluginLogoIcon, PluginLogoIcon> icons;
-    if (light == null && dark == null) {
-      ICONS.put(idPlugin, Pair.empty());
-      return null;
-    }
-    if (dark == null) {
-      dark = light;
-    }
-    else if (light == null) {
-      light = dark;
-    }
+  private static void putIcon(@NotNull String idPlugin,
+                              @NotNull LazyPluginLogoIcon lazyIcon,
+                              @Nullable PluginLogoIconProvider light,
+                              @Nullable PluginLogoIconProvider dark) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (light == null && dark == null) {
+        ICONS.put(idPlugin, Pair.empty());
+        return;
+      }
 
-    ICONS.put(idPlugin, icons = Pair.create(light, dark));
-    return icons;
+      Pair<PluginLogoIconProvider, PluginLogoIconProvider> icons = Pair.create(light == null ? dark : light, dark == null ? light : dark);
+      ICONS.put(idPlugin, icons);
+      lazyIcon.setLogoIcon(JBColor.isBright() ? icons.first : icons.second);
+    }, ModalityState.any());
   }
 
   @Nullable
-  private static PluginLogoIcon tryLoadIcon(@NotNull File iconFile) {
+  private static PluginLogoIconProvider tryLoadIcon(@NotNull File iconFile) {
     //noinspection IOResourceOpenedButNotSafelyClosed
     return iconFile.exists() ? loadFileIcon(() -> new FileInputStream(iconFile)) : null;
   }
 
   @Nullable
-  private static PluginLogoIcon tryLoadIcon(@NotNull ZipFile zipFile, @NotNull String name) {
+  private static PluginLogoIconProvider tryLoadIcon(@NotNull ZipFile zipFile, @NotNull String name) {
     ZipEntry iconEntry = zipFile.getEntry(PluginManagerCore.META_INF + name);
     return iconEntry == null ? null : loadFileIcon(() -> zipFile.getInputStream(iconEntry));
   }
 
   @Nullable
-  private static PluginLogoIcon loadFileIcon(@NotNull ThrowableComputable<InputStream, IOException> provider) {
+  private static PluginLogoIconProvider loadFileIcon(@NotNull ThrowableComputable<InputStream, IOException> provider) {
     try {
       Icon logo40 = new JBImageIcon(SVGLoader.load(null, provider.compute(), 40, 40));
       Icon logo80 = new JBImageIcon(SVGLoader.load(null, provider.compute(), 80, 80));
