@@ -64,7 +64,8 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
   static List<String> findTestDataFiles(@NotNull DataContext context) {
     final PsiMethod method = findTargetMethod(context);
     if (method == null) {
-      return null;
+      PsiClass parametrizedTestClass = findParametrizedClass(context);
+      return parametrizedTestClass == null ? null : TestDataGuessByTestDiscoveryUtil.collectTestDataByExistingFiles(parametrizedTestClass);
     }
     final String name = method.getName();
 
@@ -76,26 +77,12 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
 
     final Location<?> location = Location.DATA_KEY.getData(context);
     if (location instanceof PsiMemberParameterizedLocation) {
-      PsiClass containingClass = ((PsiMemberParameterizedLocation)location).getContainingClass();
-      if (containingClass == null) {
-        containingClass = UastContextKt.getUastParentOfType(location.getPsiElement(), UClass.class, false);
-      }
-      if (containingClass != null) {
-        final UAnnotation annotation =
-          UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(containingClass, Collections.singleton(JUnitUtil.RUN_WITH)), UAnnotation.class);
-        if (annotation != null) {
-          UExpression value = annotation.findAttributeValue("value");
-          if (value instanceof UClassLiteralExpression) {
-            UClassLiteralExpression classLiteralExpression = (UClassLiteralExpression)value;
-            PsiType type = classLiteralExpression.getType();
-            if (type != null && type.equalsToText(Parameterized.class.getName())) {
-              final String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(containingClass);
-              final String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
-              final String baseFileName = StringUtil.trimEnd(StringUtil.trimStart(paramSetName, "["), "]");
-              return TestDataGuessByExistingFilesUtil.suggestTestDataFiles(baseFileName, testDataPath, containingClass);
-            }
-          }
-        }
+      PsiClass parametrizedTestClass = findParametrizedClass(context);
+      if (parametrizedTestClass != null) {
+        String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(parametrizedTestClass);
+        String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
+        String baseFileName = StringUtil.trimEnd(StringUtil.trimStart(paramSetName, "["), "]");
+        return TestDataGuessByExistingFilesUtil.suggestTestDataFiles(baseFileName, testDataPath, parametrizedTestClass);
       }
     }
 
@@ -104,7 +91,21 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(findTargetMethod(e.getDataContext()) != null);
+    e.getPresentation().setEnabled(findTargetMethod(e.getDataContext()) != null || findParametrizedClass(e.getDataContext()) != null);
+  }
+
+  @Nullable
+  static PsiClass findParametrizedClass(@NotNull DataContext context) {
+    PsiElement element = context.getData(CommonDataKeys.PSI_ELEMENT);
+    UClass uClass = UastContextKt.getUastParentOfType(element, UClass.class);
+    if (uClass == null) return null;
+    final UAnnotation annotation = UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(uClass.getJavaPsi(), Collections.singleton(JUnitUtil.RUN_WITH)), UAnnotation.class);
+    if (annotation == null) return null;
+    UExpression value = annotation.findAttributeValue("value");
+    if (!(value instanceof UClassLiteralExpression)) return null;
+    UClassLiteralExpression classLiteralExpression = (UClassLiteralExpression)value;
+    PsiType type = classLiteralExpression.getType();
+    return type != null && type.equalsToText(Parameterized.class.getName()) ? uClass.getJavaPsi() : null;
   }
 
   @Nullable

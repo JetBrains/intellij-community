@@ -43,6 +43,12 @@ public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
 
   @NotNull
   @Override
+  public List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassName, byte frameworkId) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
   public List<String> getFilesWithoutTests(@NotNull Project project, @NotNull Collection<String> paths) {
     return Collections.emptyList(); // todo[batkovich]: implement, please
   }
