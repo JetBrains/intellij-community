@@ -3105,6 +3105,14 @@ public class HighlightUtil extends HighlightUtilBase {
       this.key = key;
     }
 
+    /**
+     * @param file PsiFile to check
+     * @return true if this feature is available in given PsiFile
+     */
+    public boolean isAvailable(PsiFile file) {
+      return isSufficient(PsiUtil.getLanguageLevel(file));
+    }
+
     private boolean isSufficient(LanguageLevel useSiteLevel) {
       return level.isPreview() ? useSiteLevel == level : useSiteLevel.isAtLeast(level);
     }
