@@ -745,7 +745,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
           if (mySpeedSearch.shouldBeShowing(configuration.getName() + configuration.getConfiguration().getPresentableType()) ) {
             return true;
           }
-        };
+        }
       }
       return false;
     }
