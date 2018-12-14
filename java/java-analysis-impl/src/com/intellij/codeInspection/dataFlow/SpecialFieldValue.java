@@ -2,8 +2,8 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.psi.PsiType;
+import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,13 +14,19 @@ import java.util.Objects;
  */
 public final class SpecialFieldValue {
   private final @NotNull SpecialField myField;
-  private final @Nullable Object myValue;
-  private final @NotNull PsiType myType;
-  
-  public SpecialFieldValue(@NotNull SpecialField field, @Nullable Object value, @NotNull PsiType type) {
+  private final @Nullable DfaValue myValue;
+
+  public SpecialFieldValue(@NotNull SpecialField field, @NotNull DfaValue value) {
+    if (value instanceof DfaFactMapValue) {
+      myValue = ((DfaFactMapValue)value).withFact(DfaFactType.SPECIAL_FIELD_VALUE, null);
+    }
+    else if (value instanceof DfaConstValue) {
+      myValue = value;
+    }
+    else {
+      throw new IllegalArgumentException("Unexpected value: " + value);
+    }
     myField = field;
-    myValue = value;
-    myType = type;
   }
 
   @NotNull
@@ -29,13 +35,8 @@ public final class SpecialFieldValue {
   }
 
   @Nullable
-  public Object getValue() {
+  public DfaValue getValue() {
     return myValue;
-  }
-
-  @NotNull
-  public PsiType getType() {
-    return myType;
   }
 
   @Override
@@ -43,7 +44,7 @@ public final class SpecialFieldValue {
     if (this == o) return true;
     if (!(o instanceof SpecialFieldValue)) return false;
     SpecialFieldValue value = (SpecialFieldValue)o;
-    return myField == value.myField && myType.equals(value.myType) && Objects.equals(myValue, value.myValue);
+    return myField == value.myField && myValue == value.myValue;
   }
 
   @Override
@@ -54,9 +55,5 @@ public final class SpecialFieldValue {
   @Override
   public String toString() {
     return myField + " = " + myValue;
-  }
-
-  public DfaConstValue toConstant(DfaValueFactory factory) {
-    return factory.getConstFactory().createFromValue(myValue, myType);
   }
 }

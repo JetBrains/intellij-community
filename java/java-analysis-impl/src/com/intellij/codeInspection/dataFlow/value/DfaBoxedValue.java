@@ -67,12 +67,11 @@ public class DfaBoxedValue extends DfaValue {
       if (valueToWrap instanceof DfaVariableValue && ((DfaVariableValue)valueToWrap).getSource() == SpecialField.UNBOX) {
         return ((DfaVariableValue)valueToWrap).getQualifier();
       }
-      if (valueToWrap instanceof DfaConstValue) {
-        DfaConstValue constValue = (DfaConstValue)valueToWrap;
+      if (valueToWrap instanceof DfaConstValue || valueToWrap instanceof DfaFactMapValue) {
         DfaFactMap facts = DfaFactMap.EMPTY
           .with(DfaFactType.TYPE_CONSTRAINT, type == null ? null : TypeConstraint.exact(myFactory.createDfaType(type)))
           .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
-          .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.UNBOX.withValue(constValue.getValue(), constValue.getType()));
+          .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.UNBOX.withValue(valueToWrap));
         return myFactory.getFactFactory().createValue(facts);
       }
       if (valueToWrap instanceof DfaVariableValue) {

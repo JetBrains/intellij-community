@@ -190,7 +190,7 @@ public enum SpecialField implements DfaVariableSource {
     if(qualifier instanceof DfaFactMapValue) {
       SpecialFieldValue sfValue = ((DfaFactMapValue)qualifier).get(DfaFactType.SPECIAL_FIELD_VALUE);
       if (sfValue != null && sfValue.getField() == this) {
-        return sfValue.toConstant(factory);
+        return sfValue.getValue();
       }
     }
     if(qualifier instanceof DfaConstValue) {
@@ -245,8 +245,8 @@ public enum SpecialField implements DfaVariableSource {
                            ContractValue.argument(0).specialField(this), returnFalse())};
   }
 
-  public SpecialFieldValue withValue(Object value, @NotNull PsiType type) {
-    return new SpecialFieldValue(this, value, type);
+  public SpecialFieldValue withValue(DfaValue value) {
+    return new SpecialFieldValue(this, value);
   }
 
   /**

@@ -1299,7 +1299,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       .with(DfaFactType.TYPE_CONSTRAINT, type == null ? null : TypeConstraint.exact(myFactory.createDfaType(type)))
       .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
       .with(DfaFactType.LOCALITY, true)
-      .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.ARRAY_LENGTH.withValue(expression.getInitializers().length, PsiType.INT));
+      .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.ARRAY_LENGTH.withValue(myFactory.getInt(expression.getInitializers().length)));
     DfaValue arrayValue = myFactory.getFactFactory().createValue(arrayFacts);
     if (arrayWriteTarget != null) {
       addInstruction(new PushInstruction(arrayWriteTarget, null, true));
@@ -1873,7 +1873,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         .with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.exact(myFactory.createDfaType(type)))
         .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
         .with(DfaFactType.LOCALITY, true)
-        .with(DfaFactType.SPECIAL_FIELD_VALUE, sizeField.withValue(0, PsiType.INT));
+        .with(DfaFactType.SPECIAL_FIELD_VALUE, sizeField.withValue(myFactory.getInt(0)));
       return myFactory.getFactFactory().createValue(facts);
     }
     return null;

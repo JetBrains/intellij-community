@@ -96,7 +96,8 @@ public class CollectionFactoryInliner implements CallInliner {
       builder.pop();
     }
     DfaValueFactory factory = builder.getFactory();
-    SpecialFieldValue sizeConstraint = factoryInfo.mySize == -1 ? null : factoryInfo.mySizeField.withValue(factoryInfo.mySize, PsiType.INT);
+    SpecialFieldValue sizeConstraint =
+      factoryInfo.mySize == -1 ? null : factoryInfo.mySizeField.withValue(factory.getInt(factoryInfo.mySize));
     DfaFactMap facts = DfaFactMap.EMPTY
       .with(DfaFactType.TYPE_CONSTRAINT, factory.createDfaType(callType).asConstraint())
       .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)

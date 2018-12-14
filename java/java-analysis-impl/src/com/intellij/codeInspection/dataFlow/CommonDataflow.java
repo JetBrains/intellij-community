@@ -82,7 +82,7 @@ public class CommonDataflow {
           if (field != null) {
             DfaConstValue constValue = memState.getConstantValue(field.createValue(value.getFactory(), value));
             if (constValue != null) {
-              newMap = newMap.with(DfaFactType.SPECIAL_FIELD_VALUE, field.withValue(constValue.getValue(), constValue.getType()));
+              newMap = newMap.with(DfaFactType.SPECIAL_FIELD_VALUE, field.withValue(constValue));
             }
           }
         }
