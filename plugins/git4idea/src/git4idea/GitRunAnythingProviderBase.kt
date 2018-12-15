@@ -4,6 +4,8 @@ package git4idea
 import com.intellij.ide.actions.runAnything.RunAnythingUtil
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProviderBase
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import git4idea.branch.GitBranchUtil
 import git4idea.commands.Git
@@ -24,6 +26,14 @@ abstract class GitRunAnythingProviderBase : RunAnythingProviderBase<String>()  {
     val params = split.subList(2, split.size)
     val all = split[0] == "gitall"
 
+    object: Task.Backgroundable(project, value, true) {
+      override fun run(indicator: ProgressIndicator) {
+        doExecute(all, project, command, params)
+      }
+    }.queue()
+  }
+
+  private fun doExecute(all: Boolean, project: Project, command: GitCommand, params: List<String>) {
     if (all) {
       GitRepositoryManager.getInstance(project).repositories.forEach {
         runCommand(project, it, command, params)
