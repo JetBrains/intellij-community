@@ -15,40 +15,35 @@ import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN
 import com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE
 import com.intellij.ui.components.JBList
-import com.intellij.util.IconUtil
-import com.intellij.util.ImageLoader
 import com.intellij.util.progress.ProgressVisibilityManager
-import com.intellij.util.ui.GridBag
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StatusText
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
-import icons.GithubIcons
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.api.data.GithubUserDetailed
+import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
+import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.concurrent.CompletableFuture
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-private const val ACCOUNT_PICTURE_SIZE: Int = 40
 private const val LINK_TAG = "EDIT_LINK"
 
 internal class GithubAccountsPanel(private val project: Project,
                                    private val executorFactory: GithubApiRequestExecutor.Factory,
                                    private val avatarLoader: CachingGithubUserAvatarLoader,
                                    private val imageResizer: GithubImageResizer) : BorderLayoutPanel(), Disposable {
+
+  private val accountIconSize = JBValue.UIInteger("Github.Profile.Avatar.Size", 40)
 
   private val accountListModel = CollectionListModel<GithubAccountDecorator>().apply {
     // disable link handler when there are no errors
@@ -59,7 +54,10 @@ internal class GithubAccountsPanel(private val project: Project,
     })
   }
   private val accountList = JBList<GithubAccountDecorator>(accountListModel).apply {
-    cellRenderer = GithubAccountDecoratorRenderer()
+    val decoratorRenderer = GithubAccountDecoratorRenderer()
+    cellRenderer = decoratorRenderer
+    UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(decoratorRenderer))
+
     selectionMode = ListSelectionModel.SINGLE_SELECTION
     emptyText.apply {
       appendText("No GitHub accounts added.")
@@ -223,28 +221,20 @@ internal class GithubAccountsPanel(private val project: Project,
       })
       return
     }
-    val pictureSize = JBUI.scale(ACCOUNT_PICTURE_SIZE)
-    // compute when parent frame is known, otherwise it will always be the default monitor scale
-    val scaleContext = JBUI.ScaleContext.create(accountList)
+    val executor = executorFactory.create(token)
     progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
-      lateinit var data: Pair<GithubUserDetailed, Image?>
+      lateinit var loadedDetails: GithubAuthenticatedUser
 
       override fun run(indicator: ProgressIndicator) {
-        val executor = executorFactory.create(token)
-        val details = executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server))
-        val image = avatarLoader.requestAvatar(executor, details)
-          .thenCompose<Image?> {
-            if (it != null) imageResizer.requestImageResize(it, pictureSize, scaleContext)
-            else CompletableFuture.completedFuture(null)
-          }
-          .join()
-        data = details to image
+        loadedDetails = executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server))
       }
 
       override fun onSuccess() {
         accountListModel.contentsChanged(accountData.apply {
-          fullName = data.first.name
-          profilePicture = data.second
+          details = loadedDetails
+          iconProvider = CachingGithubAvatarIconsProvider(avatarLoader, imageResizer, executor, accountIconSize, accountList).apply {
+            Disposer.register(this@GithubAccountsPanel, this)
+          }
           loadingError = null
           showLoginLink = false
         })
@@ -335,22 +325,20 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
 
     accountName.apply {
       text = value.account.name
-      setBold(if (value.fullName == null) value.projectDefault else false)
-      foreground = if (value.fullName == null) primaryTextColor else secondaryTextColor
+      setBold(if (value.details?.name == null) value.projectDefault else false)
+      foreground = if (value.details?.name == null) primaryTextColor else secondaryTextColor
     }
     serverName.apply {
       text = value.account.server.toString()
       foreground = secondaryTextColor
     }
     profilePicture.apply {
-      icon = value.profilePicture?.let {
-        IconUtil.createImageIcon(ImageLoader.scaleImage(it, JBUI.scale(ACCOUNT_PICTURE_SIZE)))
-      } ?: GithubIcons.DefaultAvatar_40
+      icon = value.getIcon()
     }
     fullName.apply {
-      text = value.fullName
+      text = value.details?.name
       setBold(value.projectDefault)
-      isVisible = value.fullName != null
+      isVisible = value.details?.name != null
       foreground = primaryTextColor
     }
     loadingError.apply {
@@ -359,7 +347,8 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
         append(it, SimpleTextAttributes.ERROR_ATTRIBUTES)
         append(" ")
         if (value.showLoginLink) append("Log In",
-                                        if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE, JBUI.CurrentTheme.Link.linkColor())
+                                        if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE,
+                                                                                           JBUI.CurrentTheme.Link.linkColor())
                                         else SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
                                         LINK_TAG)
       }
@@ -378,10 +367,10 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
  * Account + auxillary info + info loading error
  */
 private class GithubAccountDecorator(val account: GithubAccount, var projectDefault: Boolean) {
-  var fullName: String? = null
-  var profilePicture: Image? = null
-  var loadingError: String? = null
+  var details: GithubAuthenticatedUser? = null
+  var iconProvider: CachingGithubAvatarIconsProvider? = null
 
+  var loadingError: String? = null
   var showLoginLink = false
   var errorLinkPointedAt = false
 
@@ -399,4 +388,6 @@ private class GithubAccountDecorator(val account: GithubAccount, var projectDefa
   override fun hashCode(): Int {
     return account.hashCode()
   }
+
+  fun getIcon() = details?.let { iconProvider?.getIcon(it) }
 }

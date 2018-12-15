@@ -24,13 +24,17 @@ public abstract class FileBreadcrumbsCollector {
   /**
    * Adds event listeners required to redraw the breadcrumbs when the contents of the file changes.
    * @param file the file to watch
+   * @param editor
    * @param disposable the disposable used to detach listeners when the file is closed.
    * @param changesHandler the callback to be called when any changes are detected.
    */
-  public abstract void watchForChanges(@NotNull VirtualFile file, @NotNull Disposable disposable, @NotNull Runnable changesHandler);
+  public abstract void watchForChanges(@NotNull VirtualFile file,
+                                       @NotNull Editor editor,
+                                       @NotNull Disposable disposable,
+                                       @NotNull Runnable changesHandler);
 
   public abstract void updateCrumbs(@NotNull VirtualFile virtualFile,
                                     @NotNull Editor editor,
                                     ProgressIndicator progressIndicator,
-                                    @NotNull Consumer<Iterable<Crumb>> consumer);
+                                    @NotNull Consumer<Iterable<? extends Crumb>> consumer);
 }

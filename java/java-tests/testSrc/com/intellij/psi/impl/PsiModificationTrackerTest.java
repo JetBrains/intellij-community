@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Dmitry Avdeev
@@ -204,7 +205,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "class Foo {}"));
-    DocumentCommitThread.getInstance().waitForAllCommits();
+    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
 
     assertFalse(count1 == tracker.getJavaStructureModificationCount());
     assertTrue(PsiDocumentManager.getInstance(getProject()).isCommitted(document));
@@ -229,7 +230,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     assertFalse(count1 == count0);
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(0, document.getTextLength()));
-    DocumentCommitThread.getInstance().waitForAllCommits();
+    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
 
     // gc softly-referenced file and AST
     GCUtil.tryGcSoftlyReachableObjects();

@@ -47,8 +47,4 @@ public abstract class XmlLikeFileType extends LanguageFileType {
     Charset charset = CharsetToolkit.forName(name);
     return charset == null ? CharsetToolkit.UTF8_CHARSET : charset;
   }
-
-  public boolean isCaseSensitive() {
-    return false;
-  }
 }

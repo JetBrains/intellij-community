@@ -63,6 +63,7 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
 
   private static boolean isQualifiedStaticMethodWithUnnecessaryQualifier(GrReferenceExpression ref) {
     if (ref.getQualifier() == null) return false;
+    if (ref.hasAt()) return false;
 
     final PsiElement resolved = ref.resolve();
     if (!(resolved instanceof PsiMember)) return false;

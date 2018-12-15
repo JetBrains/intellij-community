@@ -67,6 +67,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -89,6 +90,9 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   protected void tearDown() throws Exception {
     try {
       LaterInvocator.leaveAllModals();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -623,7 +627,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
   private static void waitForCommits() {
     try {
-      DocumentCommitThread.getInstance().waitForAllCommits();
+      DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
     }
     catch (ExecutionException | InterruptedException | TimeoutException e) {
       throw new RuntimeException(e);
@@ -739,7 +743,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     document.setText("class A{}");
     PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> assertEquals(document.getText(), copy.getText()));
-    DocumentCommitThread.getInstance().waitForAllCommits();
+    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
     assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(document));
   }
 
@@ -770,7 +774,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(pdm.hasUncommitedDocuments());
     assertEquals("a", document.getText());
 
-    DocumentCommitThread.getInstance().waitForAllCommits();
+    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
     assertEquals("ab", document.getText());
   }
 
@@ -794,7 +798,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       }
     });
 
-    DocumentCommitThread.getInstance().waitForAllCommits();
+    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
 
     assertTrue(pdm.isCommitted(document));
     assertFalse(file.isValid());
@@ -946,5 +950,23 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     assertTrue(getPsiDocumentManager().isCommitted(document));
     assertTrue(calledPerformWhenAllCommitted[0]);
+  }
+
+  public void testCommitWithoutReparseLeavesPsiConsistentWithText() {
+    PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("a.txt", PlainTextFileType.INSTANCE, "", 0, true);
+    Document document = file.getViewProvider().getDocument();
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      document.setText("a");
+      getPsiDocumentManager().doCommitWithoutReparse(document);
+    });
+
+    assertFalse(getPsiDocumentManager().hasUncommitedDocuments());
+    assertEquals("a", file.getText());
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      document.setText("b");
+      getPsiDocumentManager().commitAllDocuments();
+    });
+    assertEquals("b", file.getText());
   }
 }

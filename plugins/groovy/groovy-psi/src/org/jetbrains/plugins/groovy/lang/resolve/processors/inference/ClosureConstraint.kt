@@ -2,10 +2,8 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil.getNonWildcardParameterization
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.findCall
@@ -14,10 +12,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.sam.findSingleAbstractMethod
 import org.jetbrains.plugins.groovy.lang.sam.isSamConversionAllowed
 
-class ClosureConstraint(private val closure: GrClosableBlock, private val leftType: PsiType) : ConstraintFormula {
+class ClosureConstraint(private val closure: GrClosableBlock, private val leftType: PsiType) : GrConstraintFormula() {
 
-  override fun reduce(session: InferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
-    if ((session as GroovyInferenceSession).skipClosureBlock || session.closureSkipList.contains(findCall(closure))) {
+  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
+    if (session.skipClosureBlock || session.closureSkipList.contains(findCall(closure))) {
       //TODO:add explicit typed closure constraints
     }
     else {
@@ -57,6 +55,4 @@ class ClosureConstraint(private val closure: GrClosableBlock, private val leftTy
     }
     return null
   }
-
-  override fun apply(substitutor: PsiSubstitutor, cache: Boolean) {}
 }

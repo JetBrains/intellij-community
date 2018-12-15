@@ -212,6 +212,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  SUPPORTS_FORCE_PUSH_WITH_LEASE {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 9, 4, 0));
+    }
+  },
+
   INCOMING_OUTGOING_BRANCH_INFO {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {

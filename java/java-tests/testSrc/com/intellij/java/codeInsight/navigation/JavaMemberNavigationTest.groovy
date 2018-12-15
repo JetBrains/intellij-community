@@ -5,10 +5,12 @@ package com.intellij.java.codeInsight.navigation
 
 import com.intellij.codeInsight.navigation.MethodUpDownUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
+@CompileStatic
 class JavaMemberNavigationTest extends LightCodeInsightFixtureTestCase {
   
   void "test include anonymous and local classes"() {

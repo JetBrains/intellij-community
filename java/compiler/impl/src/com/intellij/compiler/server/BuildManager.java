@@ -645,6 +645,9 @@ public class BuildManager implements Disposable {
   }
 
   private void cancelPreloadedBuilds(final String projectPath) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Cancel preloaded build for " + projectPath + "\n" + getThreadTrace(Thread.currentThread(), 50));
+    }
     runCommand(() -> {
       Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> pair = takePreloadedProcess(projectPath);
       if (pair != null) {

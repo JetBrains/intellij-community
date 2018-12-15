@@ -17,7 +17,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.ArrayList;
@@ -29,8 +28,6 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBackedByPsiMethod, SuperMethodsSearch.SearchParameters> {
-
-  private static final DGMMemberContributor myContributor = NonCodeMembersContributor.EP_NAME.findExtension(DGMMemberContributor.class);
 
   @Override
   public boolean execute(@NotNull SuperMethodsSearch.SearchParameters queryParameters, @NotNull Processor<? super MethodSignatureBackedByPsiMethod> consumer) {
@@ -50,9 +47,9 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
     final Project project = method.getProject();
 
     final String name = method.getName();
-    final MethodResolverProcessor processor = new MethodResolverProcessor(name, ((GrMethod)method), false, null, null, PsiType.EMPTY_ARRAY);
-    myContributor.processDynamicElements(JavaPsiFacade.getElementFactory(project).createType(psiClass), psiClass, processor, method,
-                                      ResolveState.initial());
+    final MethodResolverProcessor processor = new MethodResolverProcessor(name, method, false, null, null, PsiType.EMPTY_ARRAY);
+    DGMMemberContributor.processDgmMethods(JavaPsiFacade.getElementFactory(project).createType(psiClass),
+                                           processor, method, ResolveState.initial());
 
     final GroovyResolveResult[] candidates = processor.getCandidates();
 

@@ -2,6 +2,9 @@
 package com.intellij.execution.configurations
 
 object ConfigurationTypeUtil {
+  /**
+   * For Java only. For Kotlin please use [runConfigurationType].
+   */
   @JvmStatic
   fun <T : ConfigurationType> findConfigurationType(configurationTypeClass: Class<T>): T {
     val types = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList

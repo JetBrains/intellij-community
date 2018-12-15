@@ -3,6 +3,7 @@ package org.jetbrains.yaml.lexer;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.LexerTestCase;
 
 public class YAMLLexerTest extends LexerTestCase {
@@ -13,7 +14,7 @@ public class YAMLLexerTest extends LexerTestCase {
 
   @Override
   protected String getDirPath() {
-    return (PathManager.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/lexer/data/")
+    return (PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/lexer/data/")
       .substring(PathManager.getHomePath().length());
   }
 
@@ -268,6 +269,8 @@ public class YAMLLexerTest extends LexerTestCase {
   public void testColonStartedTokens() {
     doTest();
   }
+
+  public void testAliasInKey() { doTest(); }
 
   private void doTest() {
     doFileTest("yml");

@@ -44,6 +44,7 @@ fun Path.outputStream(): OutputStream {
   return Files.newOutputStream(this)
 }
 
+@Throws(IOException::class)
 fun Path.inputStream(): InputStream = Files.newInputStream(this)
 
 fun Path.inputStreamIfExists(): InputStream? {

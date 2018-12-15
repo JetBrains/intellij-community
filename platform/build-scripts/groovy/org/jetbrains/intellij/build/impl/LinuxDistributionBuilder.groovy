@@ -40,6 +40,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
     }
+    BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
 
     buildContext.ant.copy(file: ideaProperties.path, todir: "$unixDistPath/bin")
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
@@ -242,6 +243,9 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           include(name: "bin/*.sh")
           include(name: "bin/*.py")
           include(name: "bin/fsnotifier*")
+          customizer.extraExecutables.each { include(name: it) }
+        }
+        fileset(dir: buildContext.paths.distAll){
           customizer.extraExecutables.each { include(name: it) }
         }
         fileset(dir: jreDirectoryPath) {

@@ -19,7 +19,6 @@ import com.intellij.rt.execution.junit.RepeatCount;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -58,9 +57,11 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
                                    String packageName,
                                    String workingDir,
                                    String classpath,
-                                   String repeatCount, int result) throws Exception {
+                                   String repeatCount, 
+                                   int result, 
+                                   String filters) throws Exception {
     if (myForkMode.equals("none")) {
-      final List childArgs = createPerModuleArgs(packageName, workingDir, classNames, myRootDescription);
+      final List childArgs = createPerModuleArgs(packageName, workingDir, classNames, myRootDescription, filters);
       return startChildFork(childArgs, new File(workingDir), classpath, repeatCount);
     }
     else {
@@ -95,7 +96,11 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
     return result;
   }
 
-  protected abstract List createPerModuleArgs(String packageName, String workingDir, List classNames, Object rootDescriptor) throws IOException;
+  protected abstract List createPerModuleArgs(String packageName,
+                                              String workingDir,
+                                              List classNames,
+                                              Object rootDescriptor,
+                                              String filters) throws IOException;
 
   protected abstract Object createRootDescription(String[] args, String configName) throws Exception;
 

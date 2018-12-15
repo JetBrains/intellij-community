@@ -119,7 +119,7 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @NotNull
-  private static List<AttachItem> getTopLevelItems(@NotNull ProgressIndicator indicator, @NotNull Project project) {
+  protected List<AttachItem> getTopLevelItems(@NotNull ProgressIndicator indicator, @NotNull Project project) {
     List<AttachToProcessItem> localAttachToProcessItems = collectAttachProcessItems(
       project, LocalAttachHost.INSTANCE, indicator
     );
@@ -145,8 +145,8 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @NotNull
-  public static List<AttachItem> collectAttachHostsItems(@NotNull final Project project,
-                                                         @NotNull ProgressIndicator indicator) {
+  public List<AttachItem> collectAttachHostsItems(@NotNull final Project project,
+                                                  @NotNull ProgressIndicator indicator) {
 
     List<AttachItem> currentItems = ContainerUtil.newArrayList();
 
@@ -412,18 +412,18 @@ public class AttachToProcessAction extends AnAction {
     }
 
     @Nullable
-    Icon getIcon(@NotNull Project project) {
+    protected Icon getIcon(@NotNull Project project) {
       return myGroup.getItemIcon(project, myInfo, myDataHolder);
     }
 
-    abstract boolean hasSubStep();
+    protected abstract boolean hasSubStep();
 
-    abstract String getText(@NotNull Project project);
+    protected abstract String getText(@NotNull Project project);
 
     @Nullable
-    abstract String getTooltipText(@NotNull Project project);
+    protected abstract String getTooltipText(@NotNull Project project);
 
-    abstract List<AttachToProcessItem> getSubItems();
+    protected abstract List<AttachToProcessItem> getSubItems();
 
     @Override
     public int compareTo(AttachItem<T> compareItem) {
@@ -547,7 +547,8 @@ public class AttachToProcessAction extends AnAction {
     @NotNull
     public String getText(@NotNull Project project) {
       String shortenedText = StringUtil.shortenTextWithEllipsis(myGroup.getItemDisplayText(project, myInfo, myDataHolder), 200, 0);
-      return myInfo.getPid() + " " + shortenedText;
+      int pid = myInfo.getPid();
+      return (pid == -1 ? "" : pid + " ") + shortenedText;
     }
 
     @NotNull
@@ -609,8 +610,8 @@ public class AttachToProcessAction extends AnAction {
     }
   }
 
-  private static class AttachListStep extends MyBasePopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
-    AttachListStep(@NotNull List<AttachItem> items, @Nullable String title, @NotNull Project project) {
+  public static class AttachListStep extends MyBasePopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
+    public AttachListStep(@NotNull List<AttachItem> items, @Nullable String title, @NotNull Project project) {
       super(project, title, items);
     }
 

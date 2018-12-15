@@ -59,7 +59,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private final Function<String, String> myMapping;
   private final boolean myAnonymousInner;
   private final boolean myLocalClassInner;
-  private boolean myAsm6Mode;
   private String myInternalName;
   private PsiClassStub<?> myResult;
   private PsiModifierListStub myModList;
@@ -79,8 +78,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     myMapping = createMapping(classSource);
     myAnonymousInner = anonymousInner;
     myLocalClassInner = localClassInner;
-    //noinspection ConstantConditions
-    myAsm6Mode = ASM_API <= Opcodes.ASM6 || classSource == null && innersStrategy.getClass().getName().startsWith("org.jetbrains.kotlin.");
   }
 
   public PsiClassStub<?> getResult() {
@@ -102,7 +99,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isEnum = isSet(flags, Opcodes.ACC_ENUM);
     boolean isAnnotationType = isSet(flags, Opcodes.ACC_ANNOTATION);
     short stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false,
-                                                 isAnnotationType, false, false, myAnonymousInner, myLocalClassInner);
+                                                 isAnnotationType, false, false, myAnonymousInner, myLocalClassInner, false);
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
     myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
@@ -277,7 +274,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       if (innerClass != null) {
         StubBuildingVisitor<T> visitor =
           new StubBuildingVisitor<>(innerClass, myInnersStrategy, myResult, access, innerName, isAnonymousInner, isLocalClassInner);
-        visitor.myAsm6Mode = myAsm6Mode;
         myInnersStrategy.accept(innerClass, visitor);
       }
     }
@@ -391,8 +387,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     newReferenceList(JavaStubElementTypes.THROWS_LIST, stub, ArrayUtil.toStringArray(info.throwTypes));
 
-    boolean noSynthetics = myAsm6Mode && isConstructor && hasSignature && Type.getArgumentTypes(desc).length == info.argTypes.size();
-    int paramIgnoreCount = noSynthetics ? 0 : isEnumConstructor ? 2 : isInnerClassConstructor ? 1 : 0;
+    int paramIgnoreCount = isEnumConstructor ? 2 : isInnerClassConstructor ? 1 : 0;
     int localVarIgnoreCount = isEnumConstructor ? 3 : isInnerClassConstructor ? 2 : !isStatic ? 1 : 0;
     return new MethodAnnotationCollectingVisitor(stub, modList, paramStubs, paramIgnoreCount, localVarIgnoreCount, myMapping);
   }
@@ -572,6 +567,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   private static class MethodAnnotationCollectingVisitor extends MethodVisitor {
     private final PsiMethodStub myOwner;
+    @NotNull
     private final PsiModifierListStub myModList;
     private final PsiParameterStubImpl[] myParamStubs;
     private final int myParamCount;
@@ -584,7 +580,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private List<Set<String>> myFilters;
 
     private MethodAnnotationCollectingVisitor(PsiMethodStub owner,
-                                              PsiModifierListStub modList,
+                                              @NotNull PsiModifierListStub modList,
                                               PsiParameterStubImpl[] paramStubs,
                                               int paramIgnoreCount,
                                               int localVarIgnoreCount,
@@ -648,9 +644,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     @Override
     public void visitParameter(String name, int access) {
-      if (!isSet(access, Opcodes.ACC_SYNTHETIC) && myParamNameIndex < myParamCount) {
-        setParameterName(name, myParamNameIndex);
-        myParamNameIndex++;
+      int paramIndex = myParamNameIndex++ - myParamIgnoreCount;
+      if (!isSet(access, Opcodes.ACC_SYNTHETIC) && paramIndex >= 0 && paramIndex < myParamCount) {
+        setParameterName(name, paramIndex);
       }
     }
 
@@ -668,8 +664,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     private void setParameterName(String name, int paramIndex) {
       if (ClsParsingUtil.isJavaIdentifier(name, LanguageLevel.HIGHEST)) {
-        PsiParameterStubImpl stub = myParamStubs[paramIndex];
-        if (stub != null) stub.setName(name);
+        myParamStubs[paramIndex].setName(name);
       }
     }
 

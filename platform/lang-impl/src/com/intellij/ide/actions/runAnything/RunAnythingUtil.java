@@ -75,7 +75,7 @@ public class RunAnythingUtil {
     if (hit == null) {
       hit = value.getOption();
     }
-    hit = StringUtil.unescapeXml(hit);
+    hit = StringUtil.unescapeXmlEntities(hit);
     if (hit.length() > 60) {
       hit = hit.substring(0, 60) + "...";
     }

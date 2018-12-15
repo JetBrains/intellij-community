@@ -59,10 +59,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.Argument;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 
 import java.util.*;
 
@@ -458,12 +459,7 @@ public class ResolveUtil {
   }
 
   public static PsiElement[] mapToElements(GroovyResolveResult[] candidates) {
-    PsiElement[] elements = new PsiElement[candidates.length];
-    for (int i = 0; i < elements.length; i++) {
-      elements[i] = candidates[i].getElement();
-    }
-
-    return elements;
+    return PsiUtil.mapElements(candidates);
   }
 
   /**
@@ -488,7 +484,7 @@ public class ResolveUtil {
       if (currentResult instanceof GroovyMethodResult) {
         final GroovyMethodResult currentMethodResult = (GroovyMethodResult)currentResult;
         currentMethod = currentMethodResult.getElement();
-        currentSubstitutor = currentMethodResult.getPartialSubstitutor();
+        currentSubstitutor = currentMethodResult.getContextSubstitutor();
       }
       else if (currentResult.getElement() instanceof PsiMethod) {
         currentMethod = (PsiMethod)currentResult.getElement();
@@ -508,7 +504,7 @@ public class ResolveUtil {
         if (otherResult instanceof GroovyMethodResult) {
           final GroovyMethodResult otherMethodResult = (GroovyMethodResult)otherResult;
           otherMethod = otherMethodResult.getElement();
-          otherSubstitutor = otherMethodResult.getPartialSubstitutor();
+          otherSubstitutor = otherMethodResult.getContextSubstitutor();
         }
         else if (otherResult.getElement() instanceof PsiMethod) {
           otherMethod = (PsiMethod)otherResult.getElement();
@@ -719,7 +715,7 @@ public class ResolveUtil {
 
     //search for getters
     for (PropertyKind kind : Arrays.asList(PropertyKind.GETTER, PropertyKind.BOOLEAN_GETTER)) {
-      AccessorProcessor propertyProcessor = new AccessorProcessor(methodName, kind, () -> PsiType.EMPTY_ARRAY, place);
+      AccessorProcessor propertyProcessor = new AccessorProcessor(methodName, kind, Collections.emptyList(), place);
       processAllDeclarations(thisType, propertyProcessor, state, place);
       final List<GroovyResolveResult> candidates = propertyProcessor.getResults(); //can be only one candidate
       final List<GroovyResolveResult> applicable = new ArrayList<>();
@@ -895,12 +891,18 @@ public class ResolveUtil {
 
     for (GroovyResolveResult variant : variants) {
       if (variant instanceof GroovyMethodResult && ((GroovyMethodResult)variant).getCandidate() != null) {
-        MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
+        GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
         if (candidate != null) {
-          Pair<PsiParameter, PsiType> pair = candidate.completionMapArguments().get(new Argument(null, arg));
-          ContainerUtil.addIfNotNull(expectedParams, pair);
+          ArgumentMapping mapping = candidate.getArgumentMapping();
+          if (mapping != null) {
+            ExpressionArgument argument = new ExpressionArgument(arg);
+            PsiParameter targetParameter = mapping.targetParameter(argument);
+            PsiType expectedType = mapping.expectedType(argument);
+            ContainerUtil.addIfNotNull(expectedParams, Pair.create(targetParameter, expectedType));
+          }
         }
-      } else {
+      }
+      else {
         final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil.mapArgumentsToParameters(
           variant, place, true, true, namedArguments, expressionArguments, closureArguments
         );

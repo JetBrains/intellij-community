@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -199,7 +200,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   protected void beforeMethodReferenceResultPush(@NotNull DfaValue value,
                                                  @NotNull PsiMethodReferenceExpression methodRef,
                                                  @NotNull DfaMemoryState state) {
-    if (DfaOptionalSupport.OPTIONAL_OF_NULLABLE.methodReferenceMatches(methodRef)) {
+    if (OptionalUtil.OPTIONAL_OF_NULLABLE.methodReferenceMatches(methodRef)) {
       processOfNullableResult(value, state, methodRef.getReferenceNameElement());
     }
     PsiMethod method = tryCast(methodRef.resolve(), PsiMethod.class);
@@ -261,7 +262,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
 
   @Override
   protected boolean checkNotNullable(DfaMemoryState state, DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
-    if (NullabilityProblemKind.nullableReturn.isMyProblem(problem) && !state.isNotNull(value)) {
+    if (problem != null && problem.getKind() == NullabilityProblemKind.nullableReturn && !state.isNotNull(value)) {
       myAlwaysReturnsNotNull = false;
     }
 
@@ -312,7 +313,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
-      if (DfaOptionalSupport.OPTIONAL_OF_NULLABLE.test(call)) {
+      if (OptionalUtil.OPTIONAL_OF_NULLABLE.test(call)) {
         processOfNullableResult(myValue, myMemState, call.getArgumentList().getExpressions()[0]);
       }
     }

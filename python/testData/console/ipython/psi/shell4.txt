@@ -1,0 +1,5 @@
+PyFile:shell4.py
+  PyEmptyExpression
+    PsiElement(Py:PLING)('!')
+    PsiElement(Py:PLING)('!')
+    PsiElement(Py:IDENTIFIER)('dir')

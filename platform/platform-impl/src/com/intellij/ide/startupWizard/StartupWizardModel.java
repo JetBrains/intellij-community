@@ -18,6 +18,7 @@ package com.intellij.ide.startupWizard;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -61,7 +62,7 @@ public class StartupWizardModel extends WizardModel {
 
     myAllPlugins = PluginManager.loadDescriptors(null, ContainerUtil.newArrayList());
     for (IdeaPluginDescriptor pluginDescriptor : myAllPlugins) {
-      if (pluginDescriptor.getPluginId().getIdString().equals("com.intellij")) {
+      if (pluginDescriptor.getPluginId().getIdString().equals(PluginManagerCore.CORE_PLUGIN_ID)) {
         // skip 'IDEA CORE' plugin
         continue;
       }
@@ -104,7 +105,7 @@ public class StartupWizardModel extends WizardModel {
   static List<PluginId> getNonOptionalDependencies(final IdeaPluginDescriptor descriptor) {
     List<PluginId> result = new ArrayList<>();
     for (PluginId pluginId : descriptor.getDependentPluginIds()) {
-      if (pluginId.getIdString().equals("com.intellij")) continue;
+      if (pluginId.getIdString().equals(PluginManagerCore.CORE_PLUGIN_ID)) continue;
       if (!ArrayUtil.contains(pluginId, descriptor.getOptionalDependentPluginIds())) {
         result.add(pluginId);
       }

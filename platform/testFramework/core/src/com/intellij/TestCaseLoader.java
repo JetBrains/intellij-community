@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij;
 
 import com.intellij.idea.Bombed;
@@ -32,12 +31,17 @@ public class TestCaseLoader {
   public static final String INCLUDE_PERFORMANCE_TESTS_FLAG = "idea.include.performance.tests";
   public static final String INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG = "idea.include.unconventionally.named.tests";
   public static final String RUN_ONLY_AFFECTED_TEST_FLAG = "idea.run.only.affected.tests";
+  public static final String TEST_RUNNERS_COUNT_FLAG = "idea.test.runners.count";
+  public static final String TEST_RUNNER_INDEX_FLAG = "idea.test.runner.index";
 
   private static final boolean PERFORMANCE_TESTS_ONLY = "true".equals(System.getProperty(PERFORMANCE_TESTS_ONLY_FLAG));
   private static final boolean INCLUDE_PERFORMANCE_TESTS = "true".equals(System.getProperty(INCLUDE_PERFORMANCE_TESTS_FLAG));
   private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = "true".equals(System.getProperty(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG));
   private static final boolean RUN_ONLY_AFFECTED_TESTS = "true".equals(System.getProperty(RUN_ONLY_AFFECTED_TEST_FLAG));
   private static final boolean RUN_WITH_TEST_DISCOVERY = System.getProperty("test.discovery.listener") != null;
+
+  private static final int TEST_RUNNERS_COUNT = Integer.valueOf(System.getProperty(TEST_RUNNERS_COUNT_FLAG, "1"));
+  private static final int TEST_RUNNER_INDEX = Integer.valueOf(System.getProperty(TEST_RUNNER_INDEX_FLAG, "0"));
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
@@ -136,7 +140,12 @@ public class TestCaseLoader {
     if (shouldAddTestCase(testCaseClass, moduleName, true) &&
         testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
-      myClassList.add(testCaseClass);
+
+      int index = Math.abs(testCaseClass.getName().hashCode());
+
+      if (index % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX) {
+        myClassList.add(testCaseClass);
+      }
     }
   }
 
@@ -165,16 +174,14 @@ public class TestCaseLoader {
         return true;
       }
     }
-    catch (NoSuchMethodException ignored) {
-    }
+    catch (NoSuchMethodException ignored) { }
 
-    return TestFrameworkUtil.isJUnit4TestClass(testCaseClass);
+    return TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false);
   }
 
   private boolean shouldExcludeTestClass(String moduleName, Class testCaseClass) {
     if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass)) return true;
     String className = testCaseClass.getName();
-
     return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass) || isExcludeFromTestDiscovery(testCaseClass);
   }
 
@@ -223,8 +230,7 @@ public class TestCaseLoader {
       try {
         return FileUtil.loadLines(filePath);
       }
-      catch (IOException ignored) {
-      }
+      catch (IOException ignored) { }
     }
 
     return Collections.emptyList();
@@ -322,8 +328,7 @@ public class TestCaseLoader {
     }
     long after = System.currentTimeMillis();
 
-    String message = "Number of test classes found: " + getClasses().size()
-                     + " time to load: " + (after - before) / 1000 + "s.";
+    String message = "Number of test classes found: " + getClasses().size() + " time to load: " + (after - before) / 1000 + "s.";
     System.out.println(message);
     TeamCityLogger.info(message);
   }

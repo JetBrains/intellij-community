@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.documentation.DocumentationMarkup;
@@ -76,21 +77,20 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, rootSchema);
     if (walker == null) return null;
 
-    final PsiElement checkable = walker.goUpToCheckable(element);
+    final PsiElement checkable = walker.findElementToCheck(element);
     if (checkable == null) return null;
-    final List<JsonSchemaVariantsTreeBuilder.Step> position = walker.findPosition(checkable, true);
+    final JsonPointerPosition position = walker.findPosition(checkable, true);
     if (position == null) return null;
     if (forcedPropName != null) {
       if (isWhitespaceOrComment(element)) {
-        position.add(JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(forcedPropName));
+        position.addFollowingStep(forcedPropName);
       }
       else {
         if (position.isEmpty()) {
           return null;
         }
-        final JsonSchemaVariantsTreeBuilder.Step lastStep = position.get(position.size() - 1);
-        if (lastStep.getName() == null) return null;
-        position.set(position.size() - 1, JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(forcedPropName));
+        if (position.isArray(position.size() - 1)) return null;
+        position.replaceStep(position.size() - 1, forcedPropName);
       }
     }
     final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve();
@@ -107,22 +107,25 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       else if (schema.getTypeVariants() != null) {
         possibleTypes.addAll(schema.getTypeVariants());
       }
+      else {
+        final JsonSchemaType guessedType = schema.guessType();
+        if (guessedType != null) {
+          possibleTypes.add(guessedType);
+        }
+      }
     }
 
-    return htmlDescription == null
-           ? null
-           : appendNameTypeAndApi(position, getThirdPartyApiInfo(element, rootSchema), possibleTypes, htmlDescription);
+    return appendNameTypeAndApi(position, getThirdPartyApiInfo(element, rootSchema), possibleTypes, htmlDescription, preferShort);
   }
 
-  @NotNull
-  private static String appendNameTypeAndApi(@NotNull List<JsonSchemaVariantsTreeBuilder.Step> position,
+  @Nullable
+  private static String appendNameTypeAndApi(@NotNull JsonPointerPosition position,
                                              @NotNull String apiInfo,
                                              @NotNull List<JsonSchemaType> possibleTypes,
-                                             @NotNull String htmlDescription) {
+                                             @Nullable String htmlDescription, boolean preferShort) {
     if (position.size() == 0) return htmlDescription;
 
-    JsonSchemaVariantsTreeBuilder.Step lastStep = position.get(position.size() - 1);
-    String name = lastStep.getName();
+    String name = position.getLastName();
     if (name == null) return htmlDescription;
 
     String type = "";
@@ -131,8 +134,13 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       type = ": " + schemaType;
     }
 
-    htmlDescription = DocumentationMarkup.DEFINITION_START + name  + type + apiInfo + DocumentationMarkup.DEFINITION_END +
-                      DocumentationMarkup.CONTENT_START + htmlDescription + DocumentationMarkup.CONTENT_END;
+    if (preferShort) {
+      htmlDescription = "<b>" + name + "</b>" + type + apiInfo + (htmlDescription == null ? "" : ("<br/>" + htmlDescription));
+    }
+    else {
+      htmlDescription = DocumentationMarkup.DEFINITION_START + name + type + apiInfo + DocumentationMarkup.DEFINITION_END +
+                        (htmlDescription == null ? "" : (DocumentationMarkup.CONTENT_START + htmlDescription + DocumentationMarkup.CONTENT_END));
+    }
     return htmlDescription;
   }
 
@@ -171,8 +179,8 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   }
 
   @NotNull
-  private static String plainTextPostProcess(String text) {
-    return StringUtil.escapeXml(text).replace("\\n", "<br/>");
+  private static String plainTextPostProcess(@NotNull String text) {
+    return StringUtil.escapeXmlEntities(text).replace("\\n", "<br/>");
   }
 
   @Nullable

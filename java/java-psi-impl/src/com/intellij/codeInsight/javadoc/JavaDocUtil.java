@@ -48,7 +48,7 @@ public class JavaDocUtil {
 
   /**
    * Extracts a reference to a source element from the beginning of the text.
-   * 
+   *
    * @return length of the extracted reference
    */
   public static int extractReference(String text) {
@@ -159,7 +159,7 @@ public class JavaDocUtil {
       String name = memberRefText.substring(0, parenthIndex).trim();
       int rparenIndex = memberRefText.lastIndexOf(')');
       if (rparenIndex == -1) return null;
-      
+
       String parmsText = memberRefText.substring(parenthIndex + 1, rparenIndex).trim();
       StringTokenizer tokenizer = new StringTokenizer(parmsText.replaceAll("[*]", ""), ",");
       PsiType[] types = PsiType.createArray(tokenizer.countTokens());
@@ -183,33 +183,54 @@ public class JavaDocUtil {
         }
       }
       PsiMethod[] methods = aClass.findMethodsByName(name, true);
-      MethodsLoop:
+
+      PsiMethod found = null;
       for (PsiMethod method : methods) {
-        PsiParameter[] parms = method.getParameterList().getParameters();
-        if (parms.length != types.length) continue;
+        TypeCompatibility compatibility = getTypeCompatibility(method, types);
+        if (compatibility == TypeCompatibility.NONE) continue;
 
-        for (int k = 0; k < parms.length; k++) {
-          PsiParameter parm = parms[k];
-          final PsiType parmType = parm.getType();
-          if (
-            types[k] != null &&
-            !TypeConversionUtil.erasure(parmType).getCanonicalText().equals(types[k].getCanonicalText()) &&
-            !parmType.getCanonicalText().equals(types[k].getCanonicalText()) &&
-            !TypeConversionUtil.isAssignable(parmType, types[k])
-            ) {
-            continue MethodsLoop;
-          }
-        }
+        found = method;
 
-        int hashIndex = memberRefText.indexOf('#',rparenIndex);
-        if (hashIndex != -1) {
-          int parameterNumber = Integer.parseInt(memberRefText.substring(hashIndex + 1));
-          if (parameterNumber < parms.length) return method.getParameterList().getParameters()[parameterNumber];
-        }
-        return method;
+        if (compatibility == TypeCompatibility.EXACT) break;
       }
-      return null;
+
+      if (found == null) return null;
+
+      int hashIndex = memberRefText.indexOf('#', rparenIndex);
+      if (hashIndex != -1) {
+        PsiParameter[] params = found.getParameterList().getParameters();
+        int parameterNumber = Integer.parseInt(memberRefText.substring(hashIndex + 1));
+        if (parameterNumber < params.length) return params[parameterNumber];
+      }
+      return found;
     }
+  }
+
+  private static TypeCompatibility getTypeCompatibility(@NotNull PsiMethod method, @NotNull PsiType[] types) {
+
+    PsiParameter[] params = method.getParameterList().getParameters();
+    if (params.length != types.length) return TypeCompatibility.NONE;
+
+    TypeCompatibility compatibility = TypeCompatibility.EXACT;
+
+    for (int i = 0; i < params.length; i++) {
+      final PsiType paramType = params[i].getType();
+      final PsiType expectedType = types[i];
+
+      if (expectedType == null) continue;
+
+      boolean hasExactTypes = paramType.getCanonicalText().equals(expectedType.getCanonicalText()) ||
+                              TypeConversionUtil.erasure(paramType).getCanonicalText().equals(expectedType.getCanonicalText());
+      if ( compatibility == TypeCompatibility.EXACT && hasExactTypes) continue;
+
+      if (!hasExactTypes && !TypeConversionUtil.isAssignable(paramType, expectedType)) {
+        return TypeCompatibility.NONE;
+      }
+
+      compatibility = TypeCompatibility.ASSIGNABLE;
+    }
+
+    return compatibility;
   }
 
   @Nullable
@@ -419,5 +440,11 @@ public class JavaDocUtil {
 
   public static boolean isInsidePackageInfo(@Nullable PsiDocComment containingComment) {
     return containingComment != null && containingComment.getOwner() == null && containingComment.getParent() instanceof PsiJavaFile;
+  }
+
+  private enum TypeCompatibility {
+    NONE,
+    ASSIGNABLE,
+    EXACT
   }
 }

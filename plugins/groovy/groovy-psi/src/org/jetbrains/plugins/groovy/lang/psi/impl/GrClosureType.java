@@ -161,7 +161,7 @@ public class GrClosureType extends GrLiteralClassType {
   }
 
   @Nullable
-  public PsiType curry(@NotNull PsiType[] args, int position, @NotNull GroovyPsiElement context) {
+  public PsiType curry(@NotNull PsiType[] args, int position, @NotNull PsiElement context) {
     final List<GrSignature> curried = CurryKt.curry(mySignatures, args, position, context);
     if (curried.isEmpty()) {
       return null;

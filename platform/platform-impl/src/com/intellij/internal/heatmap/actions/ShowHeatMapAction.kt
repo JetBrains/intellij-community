@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -20,7 +19,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -33,7 +31,6 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.io.IOException
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -491,26 +488,8 @@ class ShowHeatMapAction : AnAction(), DumbAware {
   }
 
   private fun getProductCode(): String {
-    var code = ApplicationInfo.getInstance().build.productCode
-    if (StringUtil.isNotEmpty(code)) return code
-    code = getProductCodeFromBuildFile()
+    val code = ApplicationInfo.getInstance().build.productCode
     return if (StringUtil.isNotEmpty(code)) code else getProductCodeFromPlatformPrefix()
-  }
-
-  private fun getProductCodeFromBuildFile(): String {
-    try {
-      val home = PathManager.getHomePath()
-      val buildTxtFile = FileUtil.findFirstThatExist(
-        "$home/build.txt",
-        "$home/Resources/build.txt",
-        PathManager.getCommunityHomePath() + "/build.txt")
-      if (buildTxtFile != null) {
-        return FileUtil.loadFile(buildTxtFile).trim { it <= ' ' }.substringBefore('-', "")
-      }
-    }
-    catch (ignored: IOException) {
-    }
-    return ""
   }
 
   private fun getProductCodeFromPlatformPrefix(): String {

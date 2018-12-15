@@ -210,6 +210,10 @@ object GithubApiRequests {
       fun get(url: String) = Get.json<GithubPullRequestDetailed>(url).withOperationName("get pull request")
 
       @JvmStatic
+      fun getHtml(serverPath: GithubServerPath, username: String, repoName: String, number: Long) =
+        getHtml(getUrl(serverPath, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$number"))
+
+      @JvmStatic
       fun getHtml(url: String) = Get.json<GithubPullRequestDetailedWithHtml>(url, GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
         .withOperationName("get pull request")
 
@@ -220,6 +224,27 @@ object GithubApiRequests {
         Post.json<GithubPullRequestDetailed>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix),
                                              GithubPullRequestRequest(title, description, head, base))
           .withOperationName("create pull request in $username/$repoName")
+
+      @JvmStatic
+      fun update(serverPath: GithubServerPath, username: String, repoName: String, number: Long,
+                 title: String? = null,
+                 body: String? = null,
+                 state: GithubIssueState? = null,
+                 base: String? = null,
+                 maintainerCanModify: Boolean? = null) =
+        Patch.json<GithubPullRequestDetailed>(getUrl(serverPath, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$number"),
+                                              GithubPullUpdateRequest(title, body, state, base, maintainerCanModify))
+          .withOperationName("update pull request $number")
+
+      @JvmStatic
+      fun update(url: String,
+                 title: String? = null,
+                 body: String? = null,
+                 state: GithubIssueState? = null,
+                 base: String? = null,
+                 maintainerCanModify: Boolean? = null) =
+        Patch.json<GithubPullRequestDetailed>(url, GithubPullUpdateRequest(title, body, state, base, maintainerCanModify))
+          .withOperationName("update pull request")
 
       @JvmStatic
       fun merge(pullRequest: GithubPullRequest, commitSubject: String, commitBody: String, headSha: String) =

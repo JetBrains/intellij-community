@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.updateSettings.impl.LabelTextReplacingUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.ui.EnumComboBoxModel;
@@ -75,6 +76,7 @@ public class MavenImportingSettingsForm {
     });
 
     LabelTextReplacingUtil.replaceText(myPanel);
+    myDownloadAnnotationsCheckBox.setVisible(Registry.is("external.system.import.resolve.annotations"));
   }
 
   private void createUIComponents() {

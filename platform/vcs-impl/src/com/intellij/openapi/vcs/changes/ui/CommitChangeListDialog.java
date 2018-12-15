@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -59,7 +60,7 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
-import static com.intellij.openapi.util.text.StringUtil.escapeXml;
+import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
 import static com.intellij.util.ArrayUtil.isEmpty;
@@ -328,7 +329,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
 
       MultipleLocalChangeListsBrowser browser = new MultipleLocalChangeListsBrowser(project, true, true,
-                                                                                    myShowVcsCommit, myEnablePartialCommit);
+                                                                                    myShowVcsCommit, myEnablePartialCommit) {
+        @Override
+        protected List<? extends AnAction> createAdditionalRollbackActions() {
+          return StreamEx.of(myAffectedVcses)
+            .map(AbstractVcs::getRollbackEnvironment)
+            .nonNull()
+            .flatCollection(RollbackEnvironment::createCustomRollbackActions)
+            .toList();
+        }
+      };
       myBrowser = browser;
 
       CurrentBranchComponent branchComponent = new CurrentBranchComponent(project, myBrowser);
@@ -472,6 +482,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull
   private List<CommitExecutorAction> createExecutorActions(@NotNull List<CommitExecutor> executors) {
+    if(executors.isEmpty()) return emptyList();
     List<CommitExecutorAction> result = newArrayList();
 
     if (myShowVcsCommit && UISettings.getShadowInstance().getAllowMergeButtons()) {
@@ -534,7 +545,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         String[] messages = updateException.getMessages();
         if (!isEmpty(messages)) {
           String message = "Warning: not all local changes may be shown due to an error: " + messages[0];
-          String htmlMessage = buildHtml(getCssFontDeclaration(getLabelFont()), getHtmlBody(escapeXml(message)));
+          String htmlMessage = buildHtml(getCssFontDeclaration(getLabelFont()), getHtmlBody(escapeXmlEntities(message)));
 
           myWarningLabel.setText(htmlMessage);
           myWarningLabel.setVisible(true);

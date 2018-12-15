@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import com.intellij.util.SystemProperties
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
 import java.util.function.Consumer
@@ -78,7 +77,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
 
   BaseIdeaProperties() {
     productLayout.mainJarName = "idea.jar"
-    productLayout.searchableOptionsModule = "intellij.java.resources.en"
+    productLayout.moduleExcludes.put("intellij.java.resources.en", "search/searchableOptions.xml")
 
     productLayout.additionalPlatformJars.put("external-system-rt.jar", "intellij.platform.externalSystem.rt")
     productLayout.additionalPlatformJars.put("external-system-impl.jar", "intellij.platform.externalSystem.impl")
@@ -132,10 +131,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
 
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
-
-    productLayout.buildAllCompatiblePlugins = true
-    productLayout.prepareCustomPluginRepositoryForPublishedPlugins =
-      SystemProperties.getBooleanProperty('intellij.build.prepare.plugin.repository', false)
   }
 
   @Override

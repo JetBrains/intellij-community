@@ -10,8 +10,12 @@ import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType;
 
 public interface TypingTest extends BaseTest {
 
-  default void typingTest(@Language("Groovy") String text, @Nullable String expectedType) {
-    typingTest(configureByExpression(text), expectedType);
+  default void expressionTypeTest(@Language("Groovy") @NotNull String text, @Nullable String expectedType) {
+    typingTest(lastExpression(text), expectedType);
+  }
+
+  default void typingTest(@NotNull String text, @NotNull Class<? extends GrExpression> clazz, @Nullable String expectedType) {
+    typingTest(elementUnderCaret(text, clazz), expectedType);
   }
 
   default void typingTest(@NotNull GrExpression expression, @Nullable String expectedType) {

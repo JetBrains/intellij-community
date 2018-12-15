@@ -69,7 +69,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @NonNls private static final String ELEMENT_LAF = "laf";
   @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
   @NonNls private static final String ATTRIBUTE_THEME_NAME = "themeId";
-  @NonNls private static final String GNOME_THEME_PROPERTY_NAME = "gnome.Net/ThemeName";
 
   private static final String DARCULA_EDITOR_THEME_KEY = "Darcula.SavedEditorTheme";
   private static final String DEFAULT_EDITOR_THEME_KEY = "Default.SavedEditorTheme";
@@ -83,10 +82,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @NonNls private static final String[] ourFileChooserTextKeys = {"FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText",
     "FileChooser.listViewActionLabelText", "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"};
-
-  private static final String[] ourAlloyComponentsToPatchSelection = {"Tree", "MenuItem", "Menu", "List",
-    "ComboBox", "Table", "TextArea", "EditorPane", "TextPane", "FormattedTextField", "PasswordField",
-    "TextField", "RadioButtonMenuItem", "CheckBoxMenuItem"};
 
   private final EventDispatcher<LafManagerListener> myEventDispatcher = EventDispatcher.create(LafManagerListener.class);
   private final UIManager.LookAndFeelInfo[] myLaFs;
@@ -214,12 +209,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public void loadState(@NotNull final Element element) {
     String className = null;
-    String themeId = null;
     UIManager.LookAndFeelInfo laf = null;
     Element lafElement = element.getChild(ELEMENT_LAF);
     if (lafElement != null) {
       className = lafElement.getAttributeValue(ATTRIBUTE_CLASS_NAME);
-      themeId = lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME);
+      String themeId = lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME);
       if (themeId != null) {
         for (UIManager.LookAndFeelInfo f : myLaFs) {
           if (f instanceof UIThemeBasedLookAndFeelInfo) {
@@ -241,11 +235,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     // If LAF is undefined (wrong class name or something else) we have set default LAF anyway.
     if (laf == null) {
       laf = getDefaultLaf();
-    }
-
-    if (myCurrentLaf != null && !laf.getClassName().equals(myCurrentLaf.getClassName())) {
-      setCurrentLookAndFeel(laf);
-      updateUI();
     }
 
     myCurrentLaf = laf;
@@ -326,6 +315,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    */
   @Override
   public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
+    UIManager.LookAndFeelInfo oldLaf = myCurrentLaf;
+
+    if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
+      ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).dispose();
+    }
+
     if (findLaf(lookAndFeelInfo.getClassName()) == null) {
       LOG.error("unknown LookAndFeel : " + lookAndFeelInfo);
       return;
@@ -404,12 +399,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       installMacOSXFonts(UIManager.getLookAndFeelDefaults());
     }
 
-    if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
-      ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).dispose();
-    }
-
-
-    final UIManager.LookAndFeelInfo oldLaf = myCurrentLaf;
     myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
 
     if (!myFirstSetup) {
@@ -454,10 +443,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   public static void updateForDarcula(boolean isDarcula) {
     JBColor.setDark(isDarcula);
     IconLoader.setUseDarkIcons(isDarcula);
-  }
-
-  public void setLookAndFeelAfterRestart(UIManager.LookAndFeelInfo lookAndFeelInfo) {
-    myCurrentLaf = lookAndFeelInfo;
   }
 
   @Nullable
@@ -512,16 +497,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     fixOptionButton(uiDefaults);
 
     for (Frame frame : Frame.getFrames()) {
-      // OSX/Aqua fix: Some image caching components like ToolWindowHeader use
-      // com.apple.laf.AquaNativeResources$CColorPaintUIResource
-      // a Java wrapper for ObjC MagicBackgroundColor class (Java RGB values ignored).
-      // MagicBackgroundColor always reports current Frame background.
-      // So we need to set frames background to exact and correct value.
-      if (SystemInfo.isMac) {
-        //noinspection UseJBColor
-        frame.setBackground(new Color(UIUtil.getPanelBackground().getRGB()));
-      }
-
       updateUI(frame);
     }
 
@@ -545,7 +520,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   public static void installMacOSXFonts(UIDefaults defaults) {
     final String face = "HelveticaNeue-Regular";
     final FontUIResource uiFont = getFont(face, 13, Font.PLAIN);
-    LafManagerImpl.initFontDefaults(defaults, uiFont);
+    initFontDefaults(defaults, uiFont);
     for (Object key : new HashSet<>(defaults.keySet())) {
       Object value = defaults.get(key);
       if (value instanceof FontUIResource) {
@@ -629,7 +604,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static void fixSeparatorColor(UIDefaults uiDefaults) {
     if (UIUtil.isUnderAquaLookAndFeel()) {
       uiDefaults.put("Separator.background", UIUtil.AQUA_SEPARATOR_BACKGROUND_COLOR);
-      uiDefaults.put("Separator.foreground", UIUtil.AQUA_SEPARATOR_FOREGROUND_COLOR);
+      uiDefaults.put("Separator.separatorColor", UIUtil.AQUA_SEPARATOR_FOREGROUND_COLOR);
     }
   }
 
@@ -673,13 +648,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       if ("light".equals(property)) {
         popupWeight = OurPopupFactory.WEIGHT_LIGHT;
       }
-      else if ("medium".equals(property)) {
-        popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
-      }
       else if ("heavy".equals(property)) {
         popupWeight = OurPopupFactory.WEIGHT_HEAVY;
       }
-      else {
+      else if (!"medium".equals(property)) {
         LOG.error("Illegal value of property \"idea.popup.weight\": " + property);
       }
     }

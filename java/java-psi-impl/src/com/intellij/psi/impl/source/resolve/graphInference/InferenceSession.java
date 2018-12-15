@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -388,7 +387,7 @@ public class InferenceSession {
         if (o instanceof PsiExpressionList) {
           final PsiExpressionList element = (PsiExpressionList)o;
           for (PsiExpression expression : element.getExpressions()) {
-            if (expression == myContext) {
+            if (PsiUtil.skipParenthesizedExprDown(expression) == myContext) {
               return true;
             }
           }
@@ -413,10 +412,13 @@ public class InferenceSession {
         final PsiSubstitutor nestedSubstitutor = myInferenceSessionContainer.findNestedSubstitutor(arg, myInferenceSubstitution);
         final PsiType parameterType = nestedSubstitutor.substitute(getParameterType(parameters, i, siteSubstitutor, varargs));
         if (!isPertinentToApplicability(arg, parentMethod)) {
-          if (arg instanceof PsiLambdaExpression && ignoreConstraintTree(ignoredConstraints, arg, parameterType)) {
+          ExpressionCompatibilityConstraint compatibilityConstraint = new ExpressionCompatibilityConstraint(arg, parameterType);
+          if (arg instanceof PsiLambdaExpression && ignoreConstraintTree(arg) || dependsOnIgnoredConstraint(ignoredConstraints, compatibilityConstraint)) {
+            ignoredConstraints.add(compatibilityConstraint);
             continue;
           }
-          additionalConstraints.add(new ExpressionCompatibilityConstraint(arg, parameterType));
+
+          additionalConstraints.add(compatibilityConstraint);
         }
         additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(arg, parameterType));
         if (arg instanceof PsiCall) {
@@ -438,7 +440,24 @@ public class InferenceSession {
     }
   }
 
-  private static boolean ignoreConstraintTree(Set<? super ConstraintFormula> ignoredConstraints, PsiExpression arg, PsiType parameterType) {
+  private boolean dependsOnIgnoredConstraint(Set<ConstraintFormula> ignoredConstraints, ExpressionCompatibilityConstraint compatibilityConstraint) {
+    if (!ignoredConstraints.isEmpty()) {
+      Set<InferenceVariable> inputVariables = compatibilityConstraint.getInputVariables(this);
+
+      if (inputVariables != null) {
+        for (ConstraintFormula ignoredConstraint : ignoredConstraints) {
+          if (ignoredConstraint instanceof InputOutputConstraintFormula) {
+            Set<InferenceVariable> inputsOfIgnored = ((InputOutputConstraintFormula)ignoredConstraint).getInputVariables(this);
+            Set<InferenceVariable> outputVariables = ((InputOutputConstraintFormula)ignoredConstraint).getOutputVariables(inputsOfIgnored, this);
+            if (outputVariables != null && ContainerUtil.intersects(outputVariables, inputVariables)) return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+  
+  private static boolean ignoreConstraintTree(PsiExpression arg) {
     for (Object expr : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
       if (PsiTreeUtil.getParentOfType((PsiElement)expr, PsiLambdaExpression.class) == arg) {
         return true;
@@ -447,7 +466,6 @@ public class InferenceSession {
 
     for (Object expr : LambdaUtil.ourParameterGuard.currentStack()) {
       if (expr instanceof PsiParameter && ((PsiParameter)expr).getDeclarationScope() == arg) {
-        ignoredConstraints.add(new ExpressionCompatibilityConstraint(arg, parameterType));
         return true;
       }
     }
@@ -509,6 +527,11 @@ public class InferenceSession {
     else if (returnExpression instanceof PsiConditionalExpression) {
       processReturnExpression(additionalConstraints, ignoredConstraints, ((PsiConditionalExpression)returnExpression).getThenExpression(), functionalType, addConstraint, initialSubstitutor);
       processReturnExpression(additionalConstraints, ignoredConstraints, ((PsiConditionalExpression)returnExpression).getElseExpression(), functionalType, addConstraint, initialSubstitutor);
+    }
+    else if (returnExpression instanceof PsiSwitchExpression) {
+      for (PsiExpression resultExpression : PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)returnExpression)) {
+        processReturnExpression(additionalConstraints, ignoredConstraints, resultExpression, functionalType, addConstraint, initialSubstitutor);
+      }
     }
     else if (returnExpression instanceof PsiLambdaExpression) {
       collectLambdaReturnExpression(additionalConstraints, ignoredConstraints, (PsiLambdaExpression)returnExpression, functionalType, myErased, initialSubstitutor);
@@ -778,9 +801,13 @@ public class InferenceSession {
     }
     return false;
   }
-  
+
   public static PsiType getTargetType(final PsiElement context) {
-    return getTargetTypeFromParent(context, new Ref<>(), true);
+    PsiType targetType = getTargetTypeFromParent(context, new Ref<>(), true);
+    if (targetType instanceof PsiClassType) {
+      return ((PsiClassType)targetType).setLanguageLevel(PsiUtil.getLanguageLevel(context));
+    }
+    return targetType;
   }
 
   /**
@@ -829,6 +856,10 @@ public class InferenceSession {
     else if (parent instanceof PsiReturnStatement) {
       return getTargetTypeFromParentLambda(PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, true, PsiMethod.class),
                                            errorMessage, inferParent);
+    }
+    PsiSwitchExpression switchExpression = PsiTreeUtil.getParentOfType(parent, PsiSwitchExpression.class);
+    if (switchExpression  != null && PsiUtil.getSwitchResultExpressions(switchExpression).contains(context)) {
+      return getTargetType(switchExpression);
     }
     return null;
   }
@@ -1283,7 +1314,8 @@ public class InferenceSession {
     variables = new ArrayList<>(variables);
     ((ArrayList<InferenceVariable>)variables).sort((v1, v2) -> Comparing.compare(v1.getName(), v2.getName()));
     final String variablesEnumeration = StringUtil.join(variables, variable -> variable.getParameter().getName(), ", ");
-    registerIncompatibleErrorMessage("no instance(s) of type variable(s) " + variablesEnumeration + " exist so that " + incompatibleTypesMessage);
+    registerIncompatibleErrorMessage("no instance(s) of type variable(s) " + variablesEnumeration + 
+                                     (variablesEnumeration.isEmpty() ? "" : " ") + "exist so that " + incompatibleTypesMessage);
   }
   
   public void registerIncompatibleErrorMessage(@NotNull String incompatibleBoundsMessage) {
@@ -1614,8 +1646,7 @@ public class InferenceSession {
 
       //no additional constraints for array creation
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
-      if (PsiEquivalenceUtil.areElementsEquivalent(containingClass, factory
-                                                                                 .getArrayClass(PsiUtil.getLanguageLevel(reference)))) {
+      if (PsiUtil.isArrayClass(containingClass)) {
         return null;
       }
 
@@ -1689,6 +1720,9 @@ public class InferenceSession {
     for (int i = 0; i < paramsLength; i++) {
       PsiType sType = getParameterType(parameters1, i, siteSubstitutor1, false);
       PsiType tType = session.substituteWithInferenceVariables(getParameterType(parameters2, i, siteSubstitutor1, varargs));
+      if (PsiUtil.isRawSubstitutor(m2, siteSubstitutor1)) {
+        tType = TypeConversionUtil.erasure(tType);
+      }
       if (sType instanceof PsiClassType &&
           tType instanceof PsiClassType &&
           LambdaUtil.isFunctionalType(sType) && LambdaUtil.isFunctionalType(tType) && !relates(sType, tType)) {
@@ -1870,6 +1904,11 @@ public class InferenceSession {
       return argConstraints(thenExpression, session, sInterfaceMethod, sSubstitutor, tInterfaceMethod, tSubstitutor) &&
              argConstraints(elseExpression, session, sInterfaceMethod, sSubstitutor, tInterfaceMethod, tSubstitutor);
     }
+
+    if (arg instanceof PsiSwitchExpression) {
+      return PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)arg).stream()
+        .allMatch(resultExpression -> argConstraints(resultExpression, session, sInterfaceMethod, sSubstitutor, tInterfaceMethod, tSubstitutor));
+    }
     return false;
   }
 
@@ -1922,9 +1961,9 @@ public class InferenceSession {
     return myContext;
   }
 
-  public void propagateVariables(Collection<InferenceVariable> variables, PsiSubstitutor restoreNamesSubstitution) {
-    myInferenceVariables.addAll(variables);
-    myRestoreNameSubstitution = myRestoreNameSubstitution.putAll(restoreNamesSubstitution);
+  public final void propagateVariables(@NotNull InferenceSession from) {
+    myInferenceVariables.addAll(from.getInferenceVariables());
+    myRestoreNameSubstitution = myRestoreNameSubstitution.putAll(from.getRestoreNameSubstitution());
   }
 
   public PsiType substituteWithInferenceVariables(@Nullable PsiType type) {

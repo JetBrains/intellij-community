@@ -59,6 +59,12 @@ public abstract class AbstractCommand<T> {
   public static final int SHOW_CYTHON_WARNING = 150;
   public static final int LOAD_FULL_VALUE = 151;
 
+  /**
+   * The code of the message that means that IDE received
+   * {@link #PROCESS_CREATED} message from the Python debugger script.
+   */
+  public static final int PROCESS_CREATED_MSG_RECEIVED = 159;
+
   public static final int ERROR = 901;
 
   public static final int VERSION = 501;

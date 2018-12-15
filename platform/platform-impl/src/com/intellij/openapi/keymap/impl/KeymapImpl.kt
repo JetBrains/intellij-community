@@ -27,20 +27,20 @@ import org.jdom.Element
 import java.util.*
 import javax.swing.KeyStroke
 
-private val KEY_MAP = "keymap"
-private val KEYBOARD_SHORTCUT = "keyboard-shortcut"
-private val KEYBOARD_GESTURE_SHORTCUT = "keyboard-gesture-shortcut"
-private val KEYBOARD_GESTURE_KEY = "keystroke"
-private val KEYBOARD_GESTURE_MODIFIER = "modifier"
-private val KEYSTROKE_ATTRIBUTE = "keystroke"
-private val FIRST_KEYSTROKE_ATTRIBUTE = "first-keystroke"
-private val SECOND_KEYSTROKE_ATTRIBUTE = "second-keystroke"
-private val ACTION = "action"
-private val VERSION_ATTRIBUTE = "version"
-private val PARENT_ATTRIBUTE = "parent"
-private val NAME_ATTRIBUTE = "name"
-private val ID_ATTRIBUTE = "id"
-private val MOUSE_SHORTCUT = "mouse-shortcut"
+private const val KEY_MAP = "keymap"
+private const val KEYBOARD_SHORTCUT = "keyboard-shortcut"
+private const val KEYBOARD_GESTURE_SHORTCUT = "keyboard-gesture-shortcut"
+private const val KEYBOARD_GESTURE_KEY = "keystroke"
+private const val KEYBOARD_GESTURE_MODIFIER = "modifier"
+private const val KEYSTROKE_ATTRIBUTE = "keystroke"
+private const val FIRST_KEYSTROKE_ATTRIBUTE = "first-keystroke"
+private const val SECOND_KEYSTROKE_ATTRIBUTE = "second-keystroke"
+private const val ACTION = "action"
+private const val VERSION_ATTRIBUTE = "version"
+private const val PARENT_ATTRIBUTE = "parent"
+private const val NAME_ATTRIBUTE = "name"
+private const val ID_ATTRIBUTE = "id"
+private const val MOUSE_SHORTCUT = "mouse-shortcut"
 
 private val LOG = logger<KeymapImpl>()
 

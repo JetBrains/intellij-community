@@ -24,6 +24,7 @@ import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
+import sun.awt.AWTAccessor;
 
 import javax.swing.event.MouseInputListener;
 import java.awt.*;
@@ -37,7 +38,8 @@ import static java.awt.Cursor.*;
  */
 abstract class WindowMouseListener extends MouseAdapter implements MouseInputListener {
   protected final Component myContent;
-  @JdkConstants.CursorType int myType;
+  @JdkConstants.CursorType int myCursorType;
+  protected static boolean ourIsResizing;
   private Point myLocation;
   private Rectangle myViewBounds;
   private boolean wasDragged;
@@ -113,16 +115,20 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
       Component content = getContent(event);
       Component view = getView(content);
       if (view != null) {
-        myType = isDisabled(view) ? CUSTOM_CURSOR : getCursorType(view, event.getLocationOnScreen());
+        setCursorType(isDisabled(view) ? CUSTOM_CURSOR : getCursorType(view, event.getLocationOnScreen()));
         //noinspection MagicConstant
-        setCursor(content, getPredefinedCursor(myType == CUSTOM_CURSOR ? DEFAULT_CURSOR : myType));
-        if (start && myType != CUSTOM_CURSOR) {
+        setCursor(content, getPredefinedCursor(myCursorType == CUSTOM_CURSOR ? DEFAULT_CURSOR : myCursorType));
+        if (start && myCursorType != CUSTOM_CURSOR) {
           myLocation = event.getLocationOnScreen();
           myViewBounds = view.getBounds();
           event.consume();
         }
       }
     }
+  }
+
+  protected void setCursorType(int cursorType) {
+    myCursorType = cursorType;
   }
 
   /**
@@ -138,7 +144,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
         Rectangle bounds = new Rectangle(myViewBounds);
         int dx = event.getXOnScreen() - myLocation.x;
         int dy = event.getYOnScreen() - myLocation.y;
-        if (myType == DEFAULT_CURSOR && view instanceof Frame) {
+        if (myCursorType == DEFAULT_CURSOR && view instanceof Frame) {
           int state = ((Frame)view).getExtendedState();
           if (isStateSet(Frame.MAXIMIZED_HORIZ, state)) dx = 0;
           if (isStateSet(Frame.MAXIMIZED_VERT, state)) dy = 0;
@@ -329,8 +335,8 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
 
     @Nullable
     public static ComponentPeer getPeer(@Nullable Component comp) {
-      //noinspection deprecation
-      return comp == null ? null : comp.getPeer();
+      if (comp == null) return null;
+      return AWTAccessor.getComponentAccessor().getPeer(comp);
     }
   }
 }

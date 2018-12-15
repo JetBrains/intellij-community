@@ -4,6 +4,7 @@ package com.intellij.find;
 
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.find.editorHeaderActions.*;
+import com.intellij.find.impl.HelpID;
 import com.intellij.find.impl.RegExHelpPopup;
 import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
@@ -161,7 +162,7 @@ public class EditorSearchSession implements SearchSession,
           }
           if (myIsGlobal != myFindModel.isGlobal() || myIsReplace != myFindModel.isReplaceState()) {
             if (myFindModel.getStringToFind().isEmpty() && myFindModel.isGlobal()) {
-              myFindModel.setStringToFind(StringUtil.notNullize(myEditor.getSelectionModel().getSelectedText(), ""));
+              myFindModel.setStringToFind(StringUtil.notNullize(myEditor.getSelectionModel().getSelectedText()));
             }
             if (!myFindModel.isGlobal() && myFindModel.getStringToFind().equals(myEditor.getSelectionModel().getSelectedText())) {
               myFindModel.setStringToFind("");
@@ -256,6 +257,9 @@ public class EditorSearchSession implements SearchSession,
     }
     if (CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.is(dataId)) {
       return myEditor;
+    }
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return myFindModel.isReplaceState() ? HelpID.REPLACE_IN_EDITOR : HelpID.FIND_IN_EDITOR;
     }
     return null;
   }

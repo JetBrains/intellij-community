@@ -163,7 +163,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     myRefreshRequestsQueue.activate();
 
     DocumentListener myDocumentListener = new DocumentListener() {
-      private final Map<Document, String> myChangedDocuments = new THashMap<>();
+      private final Map<Document, Pair<String, VirtualFile>> myChangedDocuments = new THashMap<>();
 
       @Override
       public void documentChanged(@NotNull DocumentEvent event) {
@@ -174,12 +174,12 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
         if (externalProjectPath == null) return;
 
         synchronized (myChangedDocuments) {
-          myChangedDocuments.put(doc, externalProjectPath);
+          myChangedDocuments.put(doc, Pair.create(externalProjectPath, file));
         }
         myChangedDocumentsQueue.queue(new Update(ExternalSystemProjectsWatcherImpl.this) {
           @Override
           public void run() {
-            final Map<Document, String> copy;
+            final Map<Document, Pair<String, VirtualFile>> copy;
 
             synchronized (myChangedDocuments) {
               copy = new THashMap<>(myChangedDocuments);
@@ -187,20 +187,19 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
             }
 
             ExternalSystemUtil.invokeLater(myProject, () -> WriteAction.run(
-              () -> copy.forEach((document, projectPath) -> {
+              () -> copy.forEach((document, pair) -> {
+                if (!pair.second.isValid()) return;
+
                 PsiDocumentManager.getInstance(myProject).commitDocument(document);
                 FileDocumentManagerImpl fileDocumentManager = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
                 fileDocumentManager.saveDocumentAsIs(document);
-                Long beforeImport = file.getUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT);
-                Long current = file.getUserData(CRC_WITHOUT_SPACES_CURRENT);
+                Long beforeImport = pair.second.getUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT);
+                Long current = pair.second.getUserData(CRC_WITHOUT_SPACES_CURRENT);
                 if (current != null && current.equals(beforeImport)) {
-                  VirtualFile virtualFile = fileDocumentManager.getFile(document);
-                  if (virtualFile != null) {
-                    Long newCrc = calculateCrc(virtualFile);
-                    virtualFile.putUserData(CRC_WITHOUT_SPACES_CURRENT, newCrc);
-                    if (!current.equals(newCrc)) {
-                      scheduleUpdate(externalProjectPath, false);
-                    }
+                  Long newCrc = calculateCrc(pair.second);
+                  pair.second.putUserData(CRC_WITHOUT_SPACES_CURRENT, newCrc);
+                  if (!current.equals(newCrc)) {
+                    scheduleUpdate(pair.first, false);
                   }
                 }
               })
@@ -560,15 +559,19 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     protected boolean isRelevant(String path) {
       if (!myKnownFiles.get(path).isEmpty()) return true;
 
-      String canonicalPath = FileUtil.toCanonicalPath(path);
       for (VirtualFilePointer pointer : myFilesPointers.keySet()) {
         String filePath = VfsUtilCore.urlToPath(pointer.getUrl());
-        if (StringUtil.isNotEmpty(filePath) && FileUtil.namesEqual(canonicalPath, FileUtil.toCanonicalPath(filePath))) {
+        if (StringUtil.isNotEmpty(filePath) && FileUtil.namesEqual(path, filePath)) {
           for (String projectPath : myFilesPointers.get(pointer)) {
             myKnownFiles.putValue(path, projectPath);
             myKnownAffectedFiles.putValue(projectPath, path);
           }
           return true;
+        }
+        else if (LOG.isDebugEnabled()) {
+          if (StringUtil.isNotEmpty(filePath) && FileUtil.namesEqual(FileUtil.toCanonicalPath(path), FileUtil.toCanonicalPath(filePath))) {
+            LOG.debug("Changes were ignored: " + path + ". Related FW: " + filePath);
+          }
         }
       }
       String affectedProjectPath = getRelatedExternalProjectPath(path);

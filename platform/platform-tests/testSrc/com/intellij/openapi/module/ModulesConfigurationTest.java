@@ -99,6 +99,9 @@ public class ModulesConfigurationTest extends PlatformTestCase {
     try {
       ApplicationManagerEx.getApplicationEx().setSaveAllowed(isSaveAllowed);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

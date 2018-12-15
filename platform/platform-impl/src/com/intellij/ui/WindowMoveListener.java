@@ -82,14 +82,14 @@ public class WindowMoveListener extends WindowMouseListener {
 
     @Override
     public void mousePressed(MouseEvent event) {
-      if (hitTest(event)) {
+      if (!ourIsResizing && hitTest(event)) {
         super.mousePressed(event);
       }
     }
 
     @Override
     public void mouseReleased(MouseEvent event) {
-      if (hitTest(event)) {
+      if (!ourIsResizing && hitTest(event)) {
         super.mouseReleased(event);
       }
     }
@@ -98,9 +98,9 @@ public class WindowMoveListener extends WindowMouseListener {
     public void mouseDragged(MouseEvent event) {
       // Should not do hit test when drag has already been detected on the window,
       // otherwise we can miss a drag event when it's slightly out of the window bounds.
-      //if (hitTest(event)) {
+      if (!ourIsResizing/* && hitTest(event)*/) {
         super.mouseDragged(event);
-      //}
+      }
     }
 
     @Override

@@ -3,7 +3,7 @@ package org.jetbrains.yaml.editing;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.ObjectUtils;
@@ -13,7 +13,7 @@ import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 public class YAMLTypingTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/editing/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/editing/data/";
   }
 
   public void testEmptyValue() {

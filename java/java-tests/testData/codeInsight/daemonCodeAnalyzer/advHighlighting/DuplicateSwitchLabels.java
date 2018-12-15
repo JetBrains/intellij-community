@@ -1,6 +1,6 @@
 import java.io.*;
 
-class DuplicateSwitchLabels  {
+class DuplicateSwitchLabels {
   final int FI = 4;
 
   void f(final int i) {

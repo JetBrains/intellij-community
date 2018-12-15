@@ -12,6 +12,7 @@
 
     <action id="Subversion.ImportToSVNRepository" class="org.jetbrains.idea.svn.actions.ImportToRepositoryAction">
       <add-to-group group-id="Vcs.Import"/>
+      <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
     </action>
     <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction">
       <add-to-group group-id="Vcs.Browse"/>
@@ -27,16 +28,13 @@
 
 
     <action id="IntegrateChangeSetAction" class="org.jetbrains.idea.svn.actions.IntegrateChangeSetAction" popup="true"
-            icon="SvnIcons.IntegrateToBranch">
+            icon="AllIcons.Vcs.Merge">
       <add-to-group group-id="Vcs.RepositoryChangesBrowserToolbar" anchor="last"/>
     </action>
 
     <action id="Subversion.TogglePropertiesDiff" class="com.intellij.openapi.actionSystem.EmptyAction" popup="true"
             icon="AllIcons.Actions.Preview"/>
 
-    <action id="PropertiesDiff" class="org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction" popup="true" icon="SvnIcons.PropertiesDiff">
-      <add-to-group group-id="Vcs.RepositoryChangesBrowserToolbar" anchor="last"/>
-    </action>
     <action id="EditCommitMessage" class="org.jetbrains.idea.svn.history.SvnEditCommitMessageAction" popup="true"
             icon="AllIcons.Actions.Edit"
             text="Edit Revision Comment" description="Edit revision comment. Previous message is rewritten.">
@@ -104,7 +102,7 @@
     </action>
 
     <action id="Svn.Show.Working.Copies" class="org.jetbrains.idea.svn.actions.ShowSvnMapAction" text="Show Working Copies"
-            description="Shows working copies information: working copy formats and URLs" icon="SvnIcons.ShowWorkingCopies">
+            description="Shows working copies information: working copy formats and URLs">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
   </actions>

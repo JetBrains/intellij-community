@@ -42,6 +42,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
@@ -110,10 +111,11 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     try {
       Ref<List<CommonProblemDescriptor[]>> descriptors = Ref.create();
       Set<VirtualFile> readOnlyFiles = new THashSet<>();
+      TreePath[] paths = tree.getSelectionPaths();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.setText("Checking problem descriptors...");
-        descriptors.set(tree.getSelectedDescriptorPacks(true, readOnlyFiles, false));
+        descriptors.set(tree.getSelectedDescriptorPacks(true, readOnlyFiles, false, paths));
       }), InspectionsBundle.message("preparing.for.apply.fix"), true, e.getProject())) {
         return;
       }

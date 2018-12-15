@@ -34,6 +34,10 @@ public class UnusedDeclarationInSubScopeTest extends AbstractUnusedDeclarationTe
     doTest();
   }
 
+  public void testMethodUsedOutOfScopeButParameterIsUnused() {
+    doTest();
+  }
+
   @Override
   protected void doTest() {
     doTest("deadCode/" + getTestName(true), myToolWrapper);

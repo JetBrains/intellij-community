@@ -27,6 +27,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -54,7 +55,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
    * @return created elements. Never null.
    */
   @NotNull
-  protected abstract PsiElement[] create(String newName, PsiDirectory directory) throws Exception;
+  protected abstract PsiElement[] create(@NotNull String newName, PsiDirectory directory) throws Exception;
 
   protected abstract String getErrorTitle();
 
@@ -64,7 +65,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
 
   @Override
   public final void actionPerformed(@NotNull final AnActionEvent e) {
-    final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
+    final IdeView view = getIdeView(e);
     if (view == null) {
       return;
     }
@@ -78,6 +79,11 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     for (PsiElement createdElement : createdElements) {
       view.selectElement(createdElement);
     }
+  }
+
+  @Nullable
+  protected IdeView getIdeView(@NotNull AnActionEvent e) {
+    return e.getData(LangDataKeys.IDE_VIEW);
   }
 
   public static String filterMessage(String message) {
@@ -106,7 +112,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     }
 
     @Override
-    public PsiElement[] create(String newName) throws Exception {
+    public PsiElement[] create(@NotNull String newName) throws Exception {
       return CreateElementActionBase.this.create(newName, myDirectory);
     }
 

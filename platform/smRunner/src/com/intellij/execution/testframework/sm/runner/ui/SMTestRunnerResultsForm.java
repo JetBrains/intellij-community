@@ -30,7 +30,6 @@ import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
-import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.IndexComparator;
@@ -96,8 +95,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private static final Logger LOG = Logger.getInstance(SMTestRunnerResultsForm.class);
 
   private SMTRunnerTestTreeView myTreeView;
-
-  private TestsProgressAnimator myAnimator;
 
   /**
    * Fake parent suite for all tests and suites
@@ -177,8 +174,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     Disposer.register(this, myTreeBuilder);
     Disposer.register(this, asyncTreeModel);
 
-    myAnimator = new TestsProgressAnimator(myTreeBuilder);
-
     TrackRunningTestUtil.installStopListeners(myTreeView, myProperties, new Pass<AbstractTestProxy>() {
       @Override
       public void pass(AbstractTestProxy testProxy) {
@@ -238,7 +233,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myLastSelected = null;
     myMentionedCategories.clear();
 
-    myAnimator.setCurrentTestCase(myTestsRootNode);
     if (myEndTime != 0) { // no need to reset when running for the first time
       resetTreeAndConsoleOnSubsequentTestingStarted();
       myEndTime = 0;
@@ -290,8 +284,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     updateStatusLabel(true);
     updateIconProgress(true);
-
-    myAnimator.stopMovie();
 
     myRequests.clear();
     myUpdateTreeRequests.cancelAllRequests();
@@ -393,6 +385,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (test.isConfig()) {
       myStartedTestCount++;
       myFinishedTestCount++;
+    }
+    else if (test.isSuite()) {
+      myStartedTestCount++;
+      updateTotalCount();
     }
     updateIconProgress(false);
 
@@ -612,8 +608,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myUpdateTreeRequests.addRequest(update, 50);
     }
 
-    myAnimator.setCurrentTestCase(newTestOrSuite);
-
     if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myProperties)) {
       if (myLastSelected == null || myLastSelected == newTestOrSuite) {
         myLastSelected = null;
@@ -723,14 +717,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       .add(myCurrentCustomProgressCategory != null ? myCurrentCustomProgressCategory : TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
 
     myStartedTestCount++;
+    updateTotalCount();
 
+    updateStatusLabel(false);
+  }
+
+  private void updateTotalCount() {
     // fix total count if it is corrupted
     // but if test count wasn't set at all let's process such case separately
     if (myStartedTestCount > myTotalTestCount && myTotalTestCount != 0) {
       myTotalTestCount = myStartedTestCount;
     }
-
-    updateStatusLabel(false);
   }
 
   private void updateProgressOnTestDone() {

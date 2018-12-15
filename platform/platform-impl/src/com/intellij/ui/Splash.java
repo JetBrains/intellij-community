@@ -33,7 +33,6 @@ public class Splash extends JDialog implements StartupProgress {
   private final ApplicationInfoEx myInfo;
   private int myProgressHeight;
   private Color myProgressColor = null;
-  private int myProgressX;
   private int myProgressY;
   private float myProgress;
   private boolean mySplashIsVisible;
@@ -49,7 +48,6 @@ public class Splash extends JDialog implements StartupProgress {
       final ApplicationInfoImpl appInfo = (ApplicationInfoImpl)info;
       myProgressHeight = appInfo.getProgressHeight();
       myProgressColor = appInfo.getProgressColor();
-      myProgressX = appInfo.getProgressX();
       myProgressY = appInfo.getProgressY();
       myProgressTail = appInfo.getProgressTailIcon();
     }
@@ -106,7 +104,7 @@ public class Splash extends JDialog implements StartupProgress {
   @Override
   public void showProgress(String message, float progress) {
     if (getProgressColor() == null) return;
-    if (progress - myProgress > 0.01) {
+    if (progress - myProgress > 0.01 || progress > 0.99) {
       myProgress = progress;
       myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
     }
@@ -129,13 +127,13 @@ public class Splash extends JDialog implements StartupProgress {
       mySplashIsVisible = true;
     }
 
-    int totalWidth = myImage.getIconWidth() - getProgressX() + 3;
+    int totalWidth = myImage.getIconWidth() + 3;
     final int progressWidth = (int)(totalWidth * myProgress);
     final int width = progressWidth - myProgressLastPosition;
     g.setColor(color);
-    g.fillRect(getProgressX(), getProgressY(), width, getProgressHeight());
+    g.fillRect(0, getProgressY(), width, getProgressHeight());
     if (myProgressTail != null) {
-      myProgressTail.paintIcon(this, g, (int)(getProgressX() + width - (myProgressTail.getIconWidth() / uiScale(1f) / 2f * uiScale(1f))),
+      myProgressTail.paintIcon(this, g, (int)(width - (myProgressTail.getIconWidth() / uiScale(1f) / 2f * uiScale(1f))),
                                (int)(getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight()) / uiScale(1f) / 2f * uiScale(1f))); //I'll buy you a beer if you understand this line without playing with it
     }
     myProgressLastPosition = progressWidth;
@@ -147,10 +145,6 @@ public class Splash extends JDialog implements StartupProgress {
 
   private int getProgressHeight() {
     return (int)uiScale((float)myProgressHeight);
-  }
-
-  private int getProgressX() {
-    return (int)uiScale((float)myProgressX);
   }
 
   private int getProgressY() {
@@ -177,7 +171,7 @@ public class Splash extends JDialog implements StartupProgress {
         if (!(info instanceof ApplicationInfoImpl)) {
           return false;
         }
-        int offsetX = Math.max(uiScale(15), uiScale(((ApplicationInfoImpl)info).getProgressX()));
+        int offsetX = uiScale(15);
         int offsetY = ((ApplicationInfoImpl)info).getLicenseOffsetY();
         g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetY));
         if (licenseRestrictionsMessages.size() > 0) {

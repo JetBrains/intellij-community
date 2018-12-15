@@ -1,19 +1,25 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
-import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
 import java.io.InputStream
 
 class CompoundStreamProvider : StreamProvider {
-  val providers: ConcurrentList<StreamProvider> = ContainerUtil.createConcurrentList<StreamProvider>()
+  val providers = ContainerUtil.createConcurrentList<StreamProvider>()
 
   override val enabled: Boolean
     get() = providers.any { it.enabled }
 
-  override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = providers.any { it.isApplicable(fileSpec, roamingType) }
+  override val isExclusive: Boolean
+    get() = providers.any { it.isExclusive }
 
-  override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean = providers.any { it.read(fileSpec, roamingType, consumer) }
+  val isExclusivelyEnabled: Boolean
+    get() = enabled && isExclusive
+
+  override fun isApplicable(fileSpec: String, roamingType: RoamingType) = providers.any { it.isApplicable(fileSpec, roamingType) }
+
+  override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit) = providers.any { it.read(fileSpec, roamingType, consumer) }
 
   override fun processChildren(path: String,
                                roamingType: RoamingType,
@@ -30,5 +36,5 @@ class CompoundStreamProvider : StreamProvider {
     }
   }
 
-  override fun delete(fileSpec: String, roamingType: RoamingType): Boolean = providers.any { it.delete(fileSpec, roamingType) }
+  override fun delete(fileSpec: String, roamingType: RoamingType) = providers.any { it.delete(fileSpec, roamingType) }
 }

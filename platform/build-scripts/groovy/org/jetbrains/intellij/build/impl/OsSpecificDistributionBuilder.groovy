@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.OsFamily
@@ -22,6 +23,7 @@ import org.jetbrains.intellij.build.OsFamily
 /**
  * @author nik
  */
+@CompileStatic
 abstract class OsSpecificDistributionBuilder {
   protected final BuildContext buildContext
 

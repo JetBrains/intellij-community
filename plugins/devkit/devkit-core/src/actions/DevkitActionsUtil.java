@@ -138,7 +138,7 @@ public final class DevkitActionsUtil {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     VirtualFile vFile = dir.getVirtualFile();
-    if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
+    if (fileIndex.isInLibrary(vFile)) {
       List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
       if (orderEntries.isEmpty()) {
         return null;

@@ -44,8 +44,7 @@ public class MetaRegistry extends MetaDataRegistrar {
   }
 
   public static PsiMetaData getMeta(final PsiElement element) {
-    final PsiMetaData base = getMetaBase(element);
-    return base != null ? base : null;
+    return getMetaBase(element);
   }
 
   private static final UserDataCache<CachedValue<PsiMetaData>, PsiElement, Object> ourCachedMetaCache =

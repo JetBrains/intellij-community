@@ -502,6 +502,17 @@ class Intf {
     assert gotoSymbol('start') == [m1] // works as usual for non-qualified patterns
   }
 
+  void "test colon in search end"() {
+    def foo = myFixture.addClass('class Foo { }')
+    assert gotoClass('Foo:') == [foo]
+  }
+
+  void "test multi-word class name with only first letter of second word"() {
+    myFixture.addClass('class Foo { }')
+    def fooBar = myFixture.addClass('class FooBar { }')
+    assert gotoClass('Foo B') == [fooBar]
+  }
+
   private List<Object> gotoClass(String text, boolean checkboxState = false) {
     return getPopupElements(new GotoClassModel2(project), text, checkboxState)
   }

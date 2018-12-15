@@ -58,8 +58,28 @@ class EnhancedSwitchStatements {
     }
 
     switch (E.valueOf("E1")) {
-      case <error descr="Constant expression required">null</error> -> noop();
+      case E1 -> noop();
     }
+
+    switch (E.valueOf("E1")) {
+      case <error descr="Constant expression required">null</error> -> noop();
+      case <error descr="An enum switch case label must be the unqualified name of an enumeration constant">E.E1</error> -> noop();
+      case E2 -> noop();
+      case <error descr="Incompatible types. Found: 'int', required: 'EnhancedSwitchStatements.E'">1</error> -> noop();
+    }
+
+    switch (new Random().nextInt()) {
+      case <error descr="Duplicate label '1'">1</error>, <error descr="Duplicate label '1'">1</error> -> noop();
+    }
+
+    switch (new Random().nextInt()) {
+      case 1, <error descr="Duplicate label '2'">2</error>:
+        noop(); break;
+      case 3, <error descr="Duplicate label '2'">2</error>:
+        noop(); break;
+    }
+
+    switch (<error descr="Incompatible types. Found: 'java.lang.Object', required: 'char, byte, short, int, Character, Byte, Short, Integer, String, or an enum'">new Object()</error>) { }
   }
 
   private static void noop() { }

@@ -26,6 +26,7 @@ public class IntroduceParameterObjectUsageViewDescriptor extends UsageViewDescri
     return RefactoringBundle.message("refactoring.introduce.parameter.object.method.whose.parameters.are.to.wrapped");
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("refactoring.introduce.parameter.object.references.to.be.modified") +

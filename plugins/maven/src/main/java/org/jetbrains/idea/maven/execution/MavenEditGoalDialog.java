@@ -101,7 +101,7 @@ public class MavenEditGoalDialog extends DialogWrapper {
                                                           goalsComboBox != null ? goalsComboBox : goalsEditor);
 
     workDirectoryField.addBrowseFolderListener(
-      RunnerBundle.message("maven.select.maven.project.file"), "", myProject,
+      RunnerBundle.message("maven.select.working.directory"), "", myProject,
       new MavenPomFileChooserDescriptor(myProject));
   }
 

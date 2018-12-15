@@ -8,7 +8,7 @@ class KtLightClassCompatibilityTest : LightCodeInsightFixtureTestCase() {
   fun testEnumConstructor() {
     myFixture.addFileToProject("pkg/MyEnum.kt", """
       package pkg
-      enum class MyEnum(s1: String, @java.lang.Deprecated s2: String) {
+      enum class MyEnum(str1: String, @java.lang.Deprecated str2: String) {
         VAL("+", "-")
       }""".trimMargin())
     checkConstructor("pkg.MyEnum")
@@ -18,7 +18,7 @@ class KtLightClassCompatibilityTest : LightCodeInsightFixtureTestCase() {
     myFixture.addFileToProject("pkg/MyOuter.kt", """
       package pkg
       class MyOuter() {
-        inner class MyInner(s1: String, @java.lang.Deprecated s2: String)
+        inner class MyInner(str1: String, @java.lang.Deprecated str2: String)
       }""".trimMargin())
     checkConstructor("pkg.MyOuter.MyInner")
   }
@@ -27,7 +27,7 @@ class KtLightClassCompatibilityTest : LightCodeInsightFixtureTestCase() {
     myFixture.addFileToProject("pkg/MyOuter.kt", """
       package pkg
       class MyOuter() {
-        class MyNested(s1: String, @java.lang.Deprecated s2: String)
+        class MyNested(str1: String, @java.lang.Deprecated str2: String)
       }""".trimMargin())
     checkConstructor("pkg.MyOuter.MyNested")
   }
@@ -38,6 +38,8 @@ class KtLightClassCompatibilityTest : LightCodeInsightFixtureTestCase() {
     assertEquals(1, constructors.size)
     val parameters = constructors[0].parameters
     assertEquals(2, parameters.size)
+    assertEquals("str1", parameters[0].name)
+    assertEquals("str2", parameters[1].name)
     assertFalse(parameters[0].hasAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED))
     assertTrue(parameters[1].hasAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED))
   }

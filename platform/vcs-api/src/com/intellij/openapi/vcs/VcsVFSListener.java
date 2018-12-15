@@ -7,6 +7,8 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -148,6 +150,18 @@ public abstract class VcsVFSListener implements Disposable {
                                                                            myAddOption);
       if (filesToProcess != null) {
         performAdding(new ArrayList<>(filesToProcess), copyFromMap);
+      }
+    }
+  }
+
+  protected void saveUnsavedVcsIgnoreFiles() {
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    Set<String> ignoreFileNames = VcsUtil.getVcsIgnoreFileNames(myProject);
+
+    for (Document document : fileDocumentManager.getUnsavedDocuments()) {
+      VirtualFile file = fileDocumentManager.getFile(document);
+      if (file != null && ignoreFileNames.contains(file.getName())) {
+        fileDocumentManager.saveDocument(document);
       }
     }
   }

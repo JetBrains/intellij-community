@@ -4,7 +4,6 @@ package com.intellij.execution.testframework;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -34,12 +33,15 @@ import org.jetbrains.annotations.Contract;
 import java.util.*;
 
 public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestConfigurationBase> extends JavaRunConfigurationProducerBase<T> {
-  protected AbstractJavaTestConfigurationProducer(ConfigurationFactory configurationFactory) {
-    super(configurationFactory);
-  }
-
+  /**
+   * @deprecated Override {@link #getConfigurationFactory()}.
+   */
+  @Deprecated
   protected AbstractJavaTestConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
+  }
+
+  protected AbstractJavaTestConfigurationProducer() {
   }
 
   @Contract("null->false")
@@ -88,12 +90,18 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     }
     final PsiElement element = location.getPsiElement();
     RunnerAndConfigurationSettings template = context.getRunManager().getConfigurationTemplate(getConfigurationFactory());
-    final Module predefinedModule = ((T)template.getConfiguration()).getConfigurationModule().getModule();
-    final String vmParameters =
-      predefinedConfiguration instanceof CommonJavaRunConfigurationParameters
-      ? ((CommonJavaRunConfigurationParameters)predefinedConfiguration).getVMParameters()
-      : null;
-    if (vmParameters != null && !Comparing.strEqual(vmParameters, configuration.getVMParameters())) return false;
+    T templateConfiguration = (T)template.getConfiguration();
+    final Module predefinedModule = templateConfiguration.getConfigurationModule().getModule();
+    final String vmParameters;
+    if (predefinedConfiguration != null) {
+      vmParameters = predefinedConfiguration instanceof CommonJavaRunConfigurationParameters
+                     ? ((CommonJavaRunConfigurationParameters)predefinedConfiguration).getVMParameters()
+                     : null;
+    }
+    else {
+      vmParameters = templateConfiguration.getVMParameters();
+    }
+    if (!Comparing.strEqual(vmParameters, configuration.getVMParameters())) return false;
     if (differentParamSet(configuration, contextLocation)) return false;
 
     if (!isApplicableTestType(configuration.getTestType(), context)) return false;
@@ -114,8 +122,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
   protected boolean differentParamSet(T configuration, Location contextLocation) {
     String paramSetName = contextLocation instanceof PsiMemberParameterizedLocation
                           ? configuration.prepareParameterizedParameter(((PsiMemberParameterizedLocation)contextLocation).getParamSetName()) : null;
-    if (paramSetName != null && !Comparing.strEqual(paramSetName, configuration.getProgramParameters())) return true;
-    return false;
+    return !Comparing.strEqual(paramSetName, configuration.getProgramParameters());
   }
 
 

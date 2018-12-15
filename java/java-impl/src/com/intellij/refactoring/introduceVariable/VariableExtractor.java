@@ -120,6 +120,18 @@ class VariableExtractor {
     if (myAnchor instanceof PsiExpression) {
       myAnchor = RefactoringUtil.getParentStatement(RefactoringUtil.ensureCodeBlock(((PsiExpression)myAnchor)), false);
     }
+    else if (myAnchor instanceof PsiSwitchLabeledRuleStatement) {
+      PsiStatement body = ((PsiSwitchLabeledRuleStatement)myAnchor).getBody();
+      if (body instanceof PsiExpressionStatement) {
+        myAnchor = RefactoringUtil.getParentStatement(RefactoringUtil.ensureCodeBlock(((PsiExpressionStatement)body).getExpression()), false);
+      }
+      else if (body instanceof PsiThrowStatement) {
+        PsiExpression exception = ((PsiThrowStatement)body).getException();
+        if (exception != null) {
+          myAnchor = RefactoringUtil.getParentStatement(RefactoringUtil.ensureCodeBlock(exception), false);
+        }
+      }
+    }
   }
 
   private void highlight(PsiVariable var) {
@@ -244,12 +256,10 @@ class VariableExtractor {
         }
       }
     }
-    if (firstOccurrence != null && ControlFlowUtils.canExtractStatement(firstOccurrence)) {
-      PsiExpression ancestorCandidate = anchor instanceof PsiIfStatement ? ((PsiIfStatement)anchor).getCondition() :
-                                        anchor instanceof PsiReturnStatement ? ((PsiReturnStatement)anchor).getReturnValue():
-                                        anchor instanceof PsiExpression ? (PsiExpression)anchor :
-                                        null;
-      if (PsiTreeUtil.isAncestor(ancestorCandidate, firstOccurrence, false) &&
+    if (firstOccurrence != null && ControlFlowUtils.canExtractStatement(firstOccurrence) && 
+        !PsiUtil.isAccessedForWriting(firstOccurrence)) {
+      PsiExpression ancestorCandidate = ExpressionUtils.getTopLevelExpression(firstOccurrence);
+      if (PsiTreeUtil.isAncestor(anchor, ancestorCandidate, false) &&
           ReorderingUtils.canExtract(ancestorCandidate, firstOccurrence) == ThreeState.NO) {
         return firstOccurrence;
       }

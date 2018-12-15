@@ -510,7 +510,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     }
   }
 
-  private static String escapeDocumentationTextText(final String result) {
-    return StringUtil.escapeXml(result).replaceAll("&apos;","'").replaceAll("\n","<br>\n");
+  private static String escapeDocumentationTextText(@NotNull String result) {
+    return StringUtil.escapeXmlEntities(result).replaceAll("&apos;", "'").replaceAll("\n", "<br>\n");
   }
 }

@@ -62,7 +62,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
         if (psiFile != null) {
           VirtualFile vFile = psiFile.getVirtualFile();
           if (vFile != null) {
-            isInLibraries = fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile);
+            isInLibraries = fileIndex.isInLibrary(vFile);
             if (isInLibraries){
               showLibraryLocation(fileIndex, vFile);
             }

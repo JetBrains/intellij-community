@@ -63,9 +63,15 @@ public class MultiMap<K, V> implements Serializable {
     return Collections.emptyList();
   }
 
-  public <Kk extends K, Vv extends V> void putAllValues(@NotNull MultiMap<Kk, Vv> from) {
-    for (Map.Entry<Kk, Collection<Vv>> entry : from.entrySet()) {
+  public void putAllValues(@NotNull MultiMap<? extends K, ? extends V> from) {
+    for (Map.Entry<? extends K, ? extends Collection<? extends V>> entry : from.entrySet()) {
       putValues(entry.getKey(), entry.getValue());
+    }
+  }
+
+  public void putAllValues(@NotNull Map<? extends K, ? extends V> from) {
+    for (Map.Entry<? extends K, ? extends V> entry : from.entrySet()) {
+      putValue(entry.getKey(), entry.getValue());
     }
   }
 

@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.ExternalJavaDocAction;
 import com.intellij.ide.util.PropertiesComponent;
@@ -57,6 +56,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLayeredPane;
@@ -85,14 +85,18 @@ import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.ImageView;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderContext;
 import java.awt.image.renderable.RenderableImage;
 import java.awt.image.renderable.RenderableImageProducer;
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -132,6 +136,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private boolean myIgnoreFontSizeSliderChange;
   private String myExternalUrl;
   private DocumentationProvider myProvider;
+  private Reference<Component> myReferenceComponent;
 
   private final MyDictionary<String, Image> myImageProvider = new MyDictionary<String, Image>() {
     @Override
@@ -146,6 +151,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final MyScrollPane myScrollPane;
   private final JEditorPane myEditorPane;
   private String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
+  private String myDecoratedText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
   private final JComponent myControlPanel;
   private boolean myControlPanelVisible;
   private int myHighlightedLink = -1;
@@ -251,6 +257,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     DataProvider helpDataProvider = dataId -> PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
     myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
     myText = "";
+    myDecoratedText = "";
     myEditorPane.setEditable(false);
     myEditorPane.setCaret(new DefaultCaret() {
       @Override
@@ -323,7 +330,39 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                 };
               }
             }
-            return super.create(elem);
+            View view = super.create(elem);
+            if (view instanceof ImageView) {
+              // we have to work with raw image, apply scaling manually
+              return new ImageView(elem) {
+                @Override
+                public float getMaximumSpan(int axis) {
+                  return super.getMaximumSpan(axis) / JBUI.sysScale(myEditorPane);
+                }
+
+                @Override
+                public float getMinimumSpan(int axis) {
+                  return super.getMinimumSpan(axis) / JBUI.sysScale(myEditorPane);
+                }
+
+                @Override
+                public float getPreferredSpan(int axis) {
+                  return super.getPreferredSpan(axis) / JBUI.sysScale(myEditorPane);
+                }
+
+                @Override
+                public void paint(Graphics g, Shape a) {
+                  Rectangle bounds = a.getBounds();
+                  int width = (int)super.getPreferredSpan(View.X_AXIS);
+                  int height = (int)super.getPreferredSpan(View.Y_AXIS);
+                  @SuppressWarnings("UndesirableClassUsage")
+                  BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                  Graphics2D graphics = image.createGraphics();
+                  super.paint(graphics, new Rectangle(image.getWidth(), image.getHeight()));
+                  UIUtil.drawImage(g, ImageUtil.ensureHiDPI(image, JBUI.ScaleContext.create(myEditorPane)), bounds.x, bounds.y, null);
+                }
+              };
+            }
+            return view;
           }
         };
       }
@@ -592,8 +631,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private static Color getLinkColor() {
-    Color color = UIManager.getColor("Link.activeForeground");
-    return color != null ? color : IdeTooltipManager.getInstance().getLinkForeground(false);
+    return JBUI.CurrentTheme.Link.linkColor();
   }
 
   @Override
@@ -628,6 +666,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
         setQuickDocFontSize(FontSize.values()[myFontSizeSlider.getValue()]);
         applyFontProps();
+        // resize popup according to new font size, if user didn't set popup size manually
+        if (myHint != null && myHint.getDimensionServiceKey() == null) showHint();
       }
     });
 
@@ -769,7 +809,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     highlightLink(-1);
 
-    setTextFast(myEditorPane, decorate(text));
+    myDecoratedText = decorate(text);
+    setTextFast(myEditorPane, myDecoratedText);
     applyFontProps();
 
     showHint();
@@ -802,14 +843,23 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     setHintSize();
 
-    Component focusOwner = IdeFocusManager.getInstance(myManager.myProject).getFocusOwner();
-    DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
+    DataContext dataContext = getDataContext();
     PopupPositionManager.positionPopupInBestPosition(myHint, myManager.getEditor(), dataContext,
                                                      PopupPositionManager.Position.RIGHT, PopupPositionManager.Position.LEFT);
+
+    Window window = myHint.getPopupWindow();
+    if (window != null) window.setFocusableWindowState(true);
 
     if (myHint.getDimensionServiceKey() == null) {
       registerSizeTracker();
     }
+  }
+
+  private DataContext getDataContext() {
+    Component referenceComponent = SoftReference.dereference(myReferenceComponent);
+    if (referenceComponent == null) referenceComponent = IdeFocusManager.getInstance(myManager.myProject).getFocusOwner();
+    if (myReferenceComponent == null) myReferenceComponent = new WeakReference<>(referenceComponent);
+    return DataManager.getInstance().getDataContext(referenceComponent);
   }
 
   private void setHintSize() {
@@ -822,7 +872,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       width = width < 0 ? preferredSize.width : width;
       width = Math.min(maxWidth, Math.max(JBUI.scale(300), width));
       myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
-      myEditorPane.setText(myEditorPane.getText());
+      myEditorPane.setText(myDecoratedText);
       preferredSize = myEditorPane.getPreferredSize();
 
       int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
@@ -860,7 +910,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     AbstractPopup hint = myHint;
     if (hint == null || mySizeTrackerRegistered) return;
     mySizeTrackerRegistered = true;
-    hint.addResizeListener(() -> hint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE), this);
+    hint.addResizeListener(() -> {
+      hint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
+      hint.storeDimensionSize();
+    }, this);
   }
 
   private int definitionPreferredWidth() {
@@ -1117,7 +1170,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       private Image getImage() {
         if (!myImageLoaded) {
           Image image = ImageLoader.loadFromUrl(imageUrl);
-          myImage = image != null ? ImageUtil.toBufferedImage(image) : null;
+          myImage = ImageUtil.toBufferedImage(image != null ?
+                                              image :
+                                              ((ImageIcon)UIManager.getLookAndFeelDefaults().get("html.missingImage")).getImage());
           myImageLoaded = true;
         }
         return myImage;

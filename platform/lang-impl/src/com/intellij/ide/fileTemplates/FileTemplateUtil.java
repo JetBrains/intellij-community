@@ -316,6 +316,7 @@ public class FileTemplateUtil {
       propsMap.put(dummyRef, "");
     }
 
+    handler.prepareProperties(propsMap, fileName, template);
     handler.prepareProperties(propsMap);
 
     Map<String, Object> props_ = propsMap;

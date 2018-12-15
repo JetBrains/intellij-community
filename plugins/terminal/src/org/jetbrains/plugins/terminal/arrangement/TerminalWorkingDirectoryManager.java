@@ -71,7 +71,7 @@ public class TerminalWorkingDirectoryManager {
     KeyAdapter listener = new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && TerminalArrangementManager.isAvailable()) {
           alarm.cancelAllRequests();
           alarm.addRequest(() -> updateWorkingDirectory(content, dataRef.get()), MERGE_WAIT_MILLIS);
         }

@@ -92,8 +92,31 @@ public class CFGBuilder {
    * @param expression expression to evaluate
    * @return this builder
    */
-  public CFGBuilder pushExpression(PsiExpression expression) {
+  public CFGBuilder pushExpression(@NotNull PsiExpression expression) {
     expression.accept(myAnalyzer);
+    return this;
+  }
+
+  /**
+   * Generate instructions to evaluate given expression and push its result on stack 
+   * checking for custom nullability problem which cannot be found automatically from context.
+   * <p>
+   * Stack before: ...
+   * <p>
+   * Stack after: ... expression_result
+   *
+   * @param expression expression to evaluate
+   * @param kind kind of nullability problem. Use {@link NullabilityProblemKind#noProblem} to suppress automatically found problem.
+   *             Passing {@code null} means no custom problem to register (just like {@link #pushExpression(PsiExpression)}).
+   * @return this builder
+   */
+  public CFGBuilder pushExpression(@NotNull PsiExpression expression, @Nullable NullabilityProblemKind<? super PsiExpression> kind) {
+    if (kind == null) { 
+      return pushExpression(expression);
+    }
+    myAnalyzer.addCustomNullabilityProblem(expression, kind);
+    expression.accept(myAnalyzer);
+    myAnalyzer.removeCustomNullabilityProblem(expression);
     return this;
   }
 
@@ -416,18 +439,6 @@ public class CFGBuilder {
   }
 
   /**
-   * Generate instructions to check that stack top value is not null issuing a warning like "argument is nullable" if
-   * this is not satisfied. Stack is unchanged.
-   *
-   * @param expression an anchor expression to bind a warning to
-   * @param kind a type of nullability problem to report if value is nullable
-   * @return this builder
-   */
-  public <T extends PsiElement> CFGBuilder checkNotNull(T expression, NullabilityProblemKind<T> kind) {
-    return add(new CheckNotNullInstruction(kind.problem(expression)));
-  }
-
-  /**
    * Generate instructions to assign top stack value to the second stack value
    * (usually pushed via {@link #pushForWrite(DfaVariableValue)}).
    * <p>
@@ -493,9 +504,7 @@ public class CFGBuilder {
   public CFGBuilder doTry(@NotNull PsiElement anchor) {
     ControlFlow.DeferredOffset offset = new ControlFlow.DeferredOffset();
     myAnalyzer.pushTrap(new Trap.TryCatchAll(anchor, offset));
-    myBranches.add(() -> {
-      offset.setOffset(myAnalyzer.getInstructionCount());
-    });
+    myBranches.add(() -> offset.setOffset(myAnalyzer.getInstructionCount()));
     return this;
   }
 
@@ -578,16 +587,13 @@ public class CFGBuilder {
         DfaVariableValue qualifierBinding = createTempVariable(qualifier.getType());
         pushForWrite(qualifierBinding)
           .pushExpression(qualifier)
-          .checkNotNull(qualifier, NullabilityProblemKind.fieldAccessNPE)
           .assign()
           .pop();
         myMethodRefQualifiers.put(methodRef, qualifierBinding);
       }
       return this;
     }
-    return pushExpression(functionalExpression)
-      .checkNotNull(functionalExpression, NullabilityProblemKind.passingNullableToNotNullParameter)
-      .pop();
+    return pushExpression(functionalExpression, NullabilityProblemKind.passingToNotNullParameter).pop();
   }
 
   /**
@@ -649,7 +655,7 @@ public class CFGBuilder {
           myAnalyzer.generateBoxingUnboxingInstructionFor(methodRef, resolveResult.getSubstitutor().substitute(method.getReturnType()),
                                                           LambdaUtil.getFunctionalInterfaceReturnType(methodRef));
           if (resultNullability == Nullability.NOT_NULL) {
-            checkNotNull(methodRef, NullabilityProblemKind.nullableFunctionReturn);
+            myAnalyzer.addNullCheck(NullabilityProblemKind.nullableFunctionReturn.problem(methodRef, null));
           }
           return this;
         }
@@ -724,11 +730,12 @@ public class CFGBuilder {
     PsiElement body = lambda.getBody();
     PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
     if (expression != null) {
+      NullabilityProblemKind<PsiExpression> kind = 
+        resultNullability == Nullability.NOT_NULL ? NullabilityProblemKind.nullableFunctionReturn : NullabilityProblemKind.noProblem;
+      myAnalyzer.addCustomNullabilityProblem(expression, kind);
       pushExpression(expression);
+      myAnalyzer.removeCustomNullabilityProblem(expression);
       boxUnbox(expression, LambdaUtil.getFunctionalInterfaceReturnType(lambda));
-      if(resultNullability == Nullability.NOT_NULL) {
-        checkNotNull(expression, NullabilityProblemKind.nullableFunctionReturn);
-      }
     } else if(body instanceof PsiCodeBlock) {
       DfaVariableValue variable = createTempVariable(LambdaUtil.getFunctionalInterfaceReturnType(lambda));
       myAnalyzer.inlineBlock((PsiCodeBlock)body, resultNullability, variable);

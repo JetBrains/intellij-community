@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.psi.util.PsiUtilCore.findFileSystemItem;
+
 /**
  * @author Konstantin Bulenkov
  * @author Anna Kozlova
@@ -85,6 +87,11 @@ public class NavBarModel {
     PsiElement psiElement = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (psiElement == null) {
       psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+      if (psiElement == null) {
+        psiElement = findFileSystemItem(
+          CommonDataKeys.PROJECT.getData(dataContext),
+          CommonDataKeys.VIRTUAL_FILE.getData(dataContext));
+      }
     }
 
     psiElement = normalize(psiElement);

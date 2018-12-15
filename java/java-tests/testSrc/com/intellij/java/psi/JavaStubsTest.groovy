@@ -31,9 +31,11 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 
 import java.util.concurrent.Callable
 
+@CompileStatic
 class JavaStubsTest extends LightCodeInsightFixtureTestCase {
 
   void "test resolve from annotation method default"() {

@@ -24,4 +24,9 @@ public class EndOfInitializerInstruction extends Instruction {
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
     return visitor.visitEndOfInitializer(this, runner, stateBefore);
   }
+
+  @Override
+  public String toString() {
+    return "EOI" + (myStatic ? " (static)" : "");
+  }
 }

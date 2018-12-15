@@ -179,6 +179,15 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return myColorsMap.keySet();
   }
 
+  /**
+   * Returns the attributes defined in this scheme (not inherited from a parent).
+   */
+  @SuppressWarnings("unused")  // for Rider
+  @NotNull
+  public Map<String, TextAttributes> getDirectlyDefinedAttributes() {
+    return new HashMap<>(myAttributesMap);
+  }
+
   @Override
   public void setEditorFontName(String fontName) {
     ModifiableFontPreferences currPreferences = ensureEditableFontPreferences();
@@ -624,10 +633,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       TextAttributes parentAttributes = myParentScheme instanceof AbstractColorsScheme ?
                                         ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
       boolean parentOverwritingInheritance = parentAttributes != null && parentAttributes != INHERITED_ATTRS_MARKER;
-      if (baseKey != null && parentOverwritingInheritance) {
+      if (parentOverwritingInheritance) {
         attrElements.addContent(new Element(OPTION_ELEMENT)
                                   .setAttribute(NAME_ATTR, key.getExternalName())
-                                  .setAttribute(BASE_ATTRIBUTES_ATTR, baseKey.getExternalName()));
+                                  .setAttribute(BASE_ATTRIBUTES_ATTR, baseKey != null ? baseKey.getExternalName() : ""));
       }
       return;
     }

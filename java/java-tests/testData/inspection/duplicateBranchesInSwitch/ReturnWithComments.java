@@ -7,7 +7,7 @@ enum C {
     switch (c) {
       case ORIGINAL_CODE_WITH_COMMENT:
         /* comment 1 */
-        <weak_warning descr="Duplicate branch in 'switch' statement">return "A";</weak_warning>
+        return "A";
       case THE_SAME_CODE_WITH_DIFFERENT_COMMENT:
         /* comment 2 */
         return "A";

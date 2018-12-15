@@ -74,8 +74,8 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
@@ -826,8 +826,16 @@ public abstract class InplaceRefactoring {
   protected void showBalloon() {
     final JComponent component = getComponent();
     if (component == null) return;
+    Dimension size = component.getPreferredSize();
+    if (size.height == 0 && size.width == 0) return;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null).setSmallVariant(true);
+
+    Color borderColor = UIManager.getColor("InplaceRefactoringPopup.borderColor");
+    if (borderColor != null) {
+      balloonBuilder.setBorderColor(borderColor);
+    }
+
     myBalloon = balloonBuilder.createBalloon();
     Disposer.register(myProject, myBalloon);
     Disposer.register(myBalloon, new Disposable() {

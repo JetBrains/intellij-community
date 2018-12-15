@@ -4,7 +4,6 @@ package com.intellij.debugger.impl;
 import com.intellij.debugger.*;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationListener;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -37,6 +36,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.reference.SoftReference;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
@@ -55,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -69,7 +70,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public enum Event
   {ATTACHED, DETACHED, RESUME, STEP, PAUSE, REFRESH, CONTEXT, START_WAIT_ATTACH, DISPOSE, REFRESH_WITH_STACK, THREADS_REFRESH}
 
-  private volatile boolean myIsEvaluating;
   private volatile int myIgnoreFiltersFrameCountThreshold = 0;
 
   private DebuggerSessionState myState;
@@ -165,8 +165,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
           LOG.debug("DebuggerSession state = " + state + ", event = " + event);
         }
 
-        myIsEvaluating = false;
-
         myState = new DebuggerSessionState(state, description);
         fireStateChanged(context, event);
       };
@@ -211,7 +209,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
     myContextManager = new MyDebuggerStateManager();
     myState = new DebuggerSessionState(State.STOPPED, null);
     myDebugProcess.addDebugProcessListener(new MyDebugProcessListener(debugProcess));
-    myDebugProcess.addEvaluationListener(new MyEvaluationListener());
     ValueLookupManager.getInstance(getProject()).startListening();
     myDebugEnvironment = environment;
     mySearchScope = environment.getSearchScope();
@@ -420,10 +417,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
     return getState() == State.WAITING_ATTACH;
   }
 
-  public boolean isEvaluating() {
-    return myIsEvaluating;
-  }
-
   public boolean isRunning() {
     return getState() == State.RUNNING && !getProcess().getProcessHandler().isProcessTerminated();
   }
@@ -474,15 +467,9 @@ public class DebuggerSession implements AbstractDebuggerSession {
             XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
               DebuggerBundle.message("status.breakpoint.reached.in.thread", thread.name()),
               DebuggerBundle.message("status.breakpoint.reached.in.thread.switch"),
-              NotificationType.INFORMATION, new NotificationListener() {
-                @Override
-                public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                  if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                    notification.expire();
-                    switchContext(suspendContext);
-                  }
-                }
-              }).notify(getProject());
+              NotificationType.INFORMATION,
+              new BreakpointReachedNotificationListener(suspendContext)
+            ).notify(getProject());
           }
         }
         if (((SuspendManagerImpl)myDebugProcess.getSuspendManager()).getPausedContexts().size() > 1) {
@@ -728,13 +715,32 @@ public class DebuggerSession implements AbstractDebuggerSession {
     }
   }
 
-  public void switchContext(SuspendContextImpl suspendContext) {
-    getProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+  private static class BreakpointReachedNotificationListener extends NotificationListener.Adapter {
+    private final WeakReference<SuspendContextImpl> myContextRef;
+
+    BreakpointReachedNotificationListener(SuspendContextImpl suspendContext) {
+      myContextRef = new WeakReference<>(suspendContext);
+    }
+
+    @Override
+    protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+      notification.hideBalloon();
+      SuspendContextImpl suspendContext = SoftReference.dereference(myContextRef);
+      if (suspendContext != null) {
+        switchContext(suspendContext);
+      }
+    }
+  }
+
+  public static void switchContext(@NotNull SuspendContextImpl suspendContext) {
+    DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
+    debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-        DebuggerContextImpl debuggerContext = DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, suspendContext);
-        DebuggerInvocationUtil.invokeLater(getProject(),
-                                           () -> getContextManager().setState(debuggerContext, State.PAUSED, Event.PAUSE, null));
+        DebuggerSession session = debugProcess.getSession();
+        DebuggerContextImpl debuggerContext = DebuggerContextUtil.createDebuggerContext(session, suspendContext);
+        DebuggerInvocationUtil.invokeLater(debugProcess.getProject(),
+                                           () -> session.getContextManager().setState(debuggerContext, State.PAUSED, Event.PAUSE, null));
       }
     });
   }
@@ -745,27 +751,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
       return DebuggerBundle.message("status.paused.in.another.thread");
     }
     return null;
-  }
-
-  private class MyEvaluationListener implements EvaluationListener {
-    @Override
-    public void evaluationStarted(SuspendContextImpl context) {
-      myIsEvaluating = true;
-    }
-
-    @Override
-    public void evaluationFinished(final SuspendContextImpl context) {
-      myIsEvaluating = false;
-      // seems to be not required after move to xdebugger
-      //DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-      //  @Override
-      //  public void run() {
-      //    if (context != getSuspendContext()) {
-      //      getContextManager().setState(DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, context), STATE_PAUSED, REFRESH, null);
-      //    }
-      //  }
-      //});
-    }
   }
 
   public static boolean enableBreakpointsDuringEvaluation() {

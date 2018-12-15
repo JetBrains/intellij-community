@@ -4,7 +4,7 @@ package org.jetbrains.yaml.search;
 import com.intellij.ide.actions.searcheverywhere.ContributorSearchResult;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.util.io.FileUtil;
@@ -21,7 +21,7 @@ import java.util.List;
 public class YAMLSearchEverywhereTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/search/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/search/data/";
   }
 
   public void testSearch() throws IOException {

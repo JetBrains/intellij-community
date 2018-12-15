@@ -24,10 +24,10 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UExpression;
 
 import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
-import static com.intellij.patterns.uast.UastPatterns.stringLiteralExpression;
+import static com.intellij.patterns.uast.UastPatterns.injectionHostUExpression;
 import static com.intellij.psi.UastReferenceRegistrar.registerUastReferenceProvider;
 
 /**
@@ -38,21 +38,22 @@ public final class LanguageReferenceProvider extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     final Configuration configuration = Configuration.getInstance();
-    registerUastReferenceProvider(registrar, stringLiteralExpression().annotationParam(StandardPatterns.string().with(
+    registerUastReferenceProvider(registrar, injectionHostUExpression().annotationParam(StandardPatterns.string().with(
       new PatternCondition<String>(
         "isLanguageAnnotation") {
         @Override
         public boolean accepts(@NotNull final String s, final ProcessingContext context) {
           return Comparing.equal(configuration.getAdvancedConfiguration().getLanguageAnnotationClass(), s);
         }
-      }), "value"), new UastLiteralReferenceProvider() {
+      }), "value"), new UastInjectionHostReferenceProvider() {
+
 
       @NotNull
       @Override
-      public PsiReference[] getReferencesByULiteral(@NotNull ULiteralExpression uLiteral,
-                                                    @NotNull PsiLanguageInjectionHost host,
-                                                    @NotNull ProcessingContext context) {
-        return new PsiReference[]{new ULiteralLanguageReference(uLiteral, host)};
+      public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression uExpression,
+                                                          @NotNull PsiLanguageInjectionHost host,
+                                                          @NotNull ProcessingContext context) {
+        return new PsiReference[]{new ULiteralLanguageReference(uExpression, host)};
       }
     }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
     registrar.registerReferenceProvider(literalExpression().with(new PatternCondition<PsiLiteralExpression>("isStringLiteral") {

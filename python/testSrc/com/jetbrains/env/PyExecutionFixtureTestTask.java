@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
@@ -22,6 +23,7 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureBuilderImpl;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.extensions.ModuleExtKt;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
@@ -188,6 +190,10 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   public void tearDown() throws Exception {
     if (myFixture != null) {
       EdtTestUtil.runInEdtAndWait(() -> {
+        UIUtil.dispatchAllInvocationEvents();
+        while (RefreshQueueImpl.isRefreshInProgress()) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
         for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance())) {
           WriteAction.run(() -> ProjectJdkTable.getInstance().removeJdk(sdk));
         }
@@ -196,7 +202,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
       // thread leaks, and blocked main thread is considered as leaked
       final Project project = myFixture.getProject();
       myFixture.tearDown();
-      if (project != null && ! project.isDisposed()) {
+      if (project != null && !project.isDisposed()) {
         Disposer.dispose(project);
       }
       myFixture = null;

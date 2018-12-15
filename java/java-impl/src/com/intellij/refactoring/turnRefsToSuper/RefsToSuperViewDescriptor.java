@@ -46,6 +46,7 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
     return null;
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     StringBuilder buffer = new StringBuilder();

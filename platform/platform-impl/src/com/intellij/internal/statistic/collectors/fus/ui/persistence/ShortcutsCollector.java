@@ -1,9 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.ui.persistence;
 
-import com.intellij.internal.statistic.collectors.fus.ui.ShortcutUsagesCollector;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.components.*;
@@ -13,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -61,26 +61,19 @@ public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCol
     myState = state;
   }
 
-  public static void record(AnActionEvent event) {
-    _record(event, false);
-  }
+  @Nullable
+  public static String getInputEventText(@Nullable AnActionEvent event) {
+   if (event != null) {
+     final InputEvent inputEvent = event.getInputEvent();
+     if (inputEvent instanceof KeyEvent) {
+       if (ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace())) // touchbar uses KeyEvent to perform an action
+         return "Touchbar";
 
-  public static void recordDoubleShortcut(AnActionEvent event) {
-    _record(event, true);
-  }
-
-  private static void _record(AnActionEvent event, boolean isDoubleShortcut) {
-    InputEvent e = event.getInputEvent();
-    if (e instanceof KeyEvent) {
-      KeyboardShortcut shortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent((KeyEvent)e), null);
-      //String key = KeymapUtil.getShortcutText(shortcut);
-      //Stat server doesn't support UFT-8
-      String key = getShortcutText(shortcut);
-      if (isDoubleShortcut) {
-        key = key + "+" + key;
+       final KeyStroke keystroke = KeyStroke.getKeyStrokeForEvent((KeyEvent)inputEvent);
+       return keystroke != null ? getShortcutText(new KeyboardShortcut(keystroke, null)) : "Unknown";
       }
-      incValue(key);
     }
+    return null;
   }
 
   private static String getShortcutText(KeyboardShortcut shortcut) {
@@ -307,5 +300,7 @@ public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCol
     ourKeyCodes.put(VK_FIND, "Find");
     ourKeyCodes.put(VK_PROPS, "Props");
     ourKeyCodes.put(VK_STOP, "Stop");
+
+    ourKeyCodes.put(VK_UNDEFINED, "Undefined");
   }
 }

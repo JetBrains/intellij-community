@@ -72,7 +72,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final JPanel myPanel = new JPanel();
   private final SimpleTreeBuilder myBuilder;
   private final Map<Object, ExecutionNode> nodesMap = ContainerUtil.newConcurrentMap();
-  private final ExecutionNodeProgressAnimator myProgressAnimator;
 
   private final Project myProject;
   private final SimpleTreeStructure myTreeStructure;
@@ -212,7 +211,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
           int lastSize = getLastSize();
           if (firstSize == 0 && lastSize == 0) {
             int width = Math.round(getWidth() / 2f);
-            setFirstSize(width);
+            if (width > 0) {
+              setFirstSize(width);
+            }
           }
         }
       }
@@ -222,8 +223,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myDetailsHandler = new DetailsHandler(myProject, tree, myThreeComponentsSplitter);
     myThreeComponentsSplitter.setLastComponent(myDetailsHandler.getComponent());
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
-
-    myProgressAnimator = new ExecutionNodeProgressAnimator(this);
   }
 
   private ExecutionNode getRootElement() {
@@ -352,7 +351,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         String buildTitle = ((StartBuildEvent)event).getBuildTitle();
         currentNode.setTitle(buildTitle);
         currentNode.setAutoExpandNode(true);
-        myProgressAnimator.startMovie();
+        scheduleUpdate(currentNode);
       }
       else if (event instanceof MessageEvent) {
         MessageEvent messageEvent = (MessageEvent)event;
@@ -395,9 +394,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     }
     else {
       scheduleUpdate(currentNode);
-      if (event instanceof StartEvent) {
-        myProgressAnimator.addNode(currentNode);
-      }
     }
 
     if (event instanceof FinishBuildEvent) {
@@ -426,7 +422,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
           scheduleUpdate(resultNode);
         }
       }
-      myProgressAnimator.stopMovie();
       myBuilder.updateFromRoot();
     }
   }

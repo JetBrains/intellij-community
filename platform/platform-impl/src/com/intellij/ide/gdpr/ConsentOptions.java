@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,19 +71,14 @@ public final class ConsentOptions {
 
       @NotNull
       private String loadText(InputStream stream) {
-        try {
-          if (stream != null) {
-            final Reader reader = new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(stream)), StandardCharsets.UTF_8);
-            try {
-              return new String(FileUtil.adaptiveLoadText(reader));
-            }
-            finally {
-              reader.close();
-            }
+        if (stream != null) {
+          try (Reader reader = new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(stream)),
+                                                     StandardCharsets.UTF_8)) {
+            return new String(FileUtil.adaptiveLoadText(reader));
           }
-        }
-        catch (IOException e) {
-          LOG.info(e);
+          catch (IOException e) {
+            LOG.info(e);
+          }
         }
         return "";
       }
@@ -176,9 +172,7 @@ public final class ConsentOptions {
 
   public void setConsents(Collection<Consent> confirmedByUser) {
     saveConfirmedConsents(
-      confirmedByUser.stream().map(
-        c -> new ConfirmedConsent(c.getId(), c.getVersion(), c.isAccepted(), 0L)
-      ).collect(Collectors.toList())
+      ContainerUtil.map(confirmedByUser, c -> new ConfirmedConsent(c.getId(), c.getVersion(), c.isAccepted(), 0L))
     );
   }
 

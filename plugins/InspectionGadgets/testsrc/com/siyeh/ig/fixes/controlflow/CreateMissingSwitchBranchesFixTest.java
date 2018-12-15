@@ -3,7 +3,7 @@ package com.siyeh.ig.fixes.controlflow;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.siyeh.ig.LightInspectionTestCase;
 import com.siyeh.ig.controlflow.EnumSwitchStatementWhichMissesCasesInspection;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +23,6 @@ public class CreateMissingSwitchBranchesFixTest extends LightQuickFixParameteriz
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH;
+    return PathManagerEx.getCommunityHomePath() + LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH;
   }
 }

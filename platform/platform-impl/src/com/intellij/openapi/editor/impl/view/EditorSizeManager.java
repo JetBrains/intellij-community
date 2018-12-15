@@ -327,10 +327,10 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
         !myView.getTextLayoutCache().hasCachedLayoutFor(visualLine) && !myEditor.getInlayModel().hasInlineElements()) {
       // fast path - speeds up editor opening
       quickEvaluationListener.run();
-      return myView.getLogicalPositionCache().offsetToLogicalColumn(visualLine,
-                                                                    myDocument.getLineEndOffset(visualLine) -
-                                                                    myDocument.getLineStartOffset(visualLine)) *
-             myView.getMaxCharWidth();
+      return (int)(myView.getLogicalPositionCache().offsetToLogicalColumn(visualLine,
+                                                                          myDocument.getLineEndOffset(visualLine) -
+                                                                          myDocument.getLineStartOffset(visualLine)) *
+                   myView.getMaxCharWidth());
     }
     float x = 0;
     int maxOffset = iterator.getVisualLineStartOffset();

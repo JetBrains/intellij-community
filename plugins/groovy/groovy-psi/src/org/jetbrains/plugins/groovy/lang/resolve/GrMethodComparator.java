@@ -5,10 +5,15 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
+import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument;
+
+import java.util.List;
 
 /**
  * @author Max Medvedev
@@ -20,10 +25,12 @@ public abstract class GrMethodComparator {
   public interface Context {
 
     @Nullable
-    PsiType[] getArgumentTypes();
+    default List<Argument> getArguments() {
+      PsiType[] types = getArgumentTypes();
+      return types == null ? null : ContainerUtil.map(types, JustTypeArgument::new);
+    }
 
-    @Nullable
-    PsiType[] getTypeArguments();
+    PsiType[] getArgumentTypes();
 
     @NotNull
     PsiElement getPlace();

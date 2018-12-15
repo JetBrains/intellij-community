@@ -13,10 +13,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestModeFlagListener;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Allows to customize the test execution environment for the entire test execution without modifying the source code
+ * of tests. To specify a test execution policy, set the system property "idea.test.execution.policy" to the FQ name
+ * of a class implementing this interface.
+ *
  * @author yole
  */
 public abstract class IdeaTestExecutionPolicy implements TestModeFlagListener {
@@ -24,9 +29,26 @@ public abstract class IdeaTestExecutionPolicy implements TestModeFlagListener {
     TestModeFlags.addListener(this);
   }
 
-  public abstract void setUp(Project project, Disposable testRootDisposable, String testDataPath);
-  public abstract TempDirTestFixture createTempDirTestFixture();
-  public abstract boolean runInDispatchThread();
+  /**
+   * Performs the setup required in this test execution mode.
+   */
+  public void setUp(Project project, Disposable testRootDisposable, String testDataPath) {
+  }
+
+  /**
+   * Creates the fixture for working with temporary files.
+   */
+  public TempDirTestFixture createTempDirTestFixture() {
+    return new LightTempDirTestFixtureImpl(true);
+  }
+
+  /**
+   * If true, the test method is invoked in the EDT. Otherwise, it runs on the test runner thread.
+   */
+  public boolean runInDispatchThread() {
+    return true;
+  }
+
   public void testFileConfigured(@NotNull PsiFile file) {
   }
 

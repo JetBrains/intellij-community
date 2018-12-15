@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.EffectDescriptor;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -22,11 +23,13 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TFloatArrayList;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +40,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.EffectSlot.FRAME_SLOT;
 
 /**
  * Renders editor contents.
@@ -267,7 +272,7 @@ public class EditorPainter implements TextDrawingCallback {
     return marginWidths;
   }
 
-  private void paintFoldingBackground(Graphics2D g, TextAttributes attributes, float x, int y, float width, FoldRegion foldRegion) {
+  private void paintFoldingBackground(Graphics2D g, TextAttributes attributes, float x, int y, float width, @NotNull FoldRegion foldRegion) {
     TextAttributes innerAttributes = getInnerHighlighterAttributes(foldRegion);
     if (innerAttributes != null) {
       foldRegion.putUserData(INNER_HIGHLIGHTING, innerAttributes);
@@ -374,7 +379,7 @@ public class EditorPainter implements TextDrawingCallback {
       if (customRenderer != null) {
         int highlighterStart = highlighter.getStartOffset();
         int highlighterEnd = highlighter.getEndOffset();
-        if (highlighterStart < endOffset && highlighterEnd > startOffset &&
+        if (highlighterStart <= endOffset && highlighterEnd >= startOffset &&
             clipDetector.rangeCanBeVisible(highlighterStart, highlighterEnd)) {
           customRenderer.paint(myEditor, highlighter, g);
         }
@@ -474,8 +479,8 @@ public class EditorPainter implements TextDrawingCallback {
           if (foldRegion != null && Registry.is("editor.highlight.foldings")) {
             attributes = getFoldingInnerAttributes(attributes, foldRegion);
           }
-          if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), foldRegion != null)) {
-            paintTextEffect(g, xStart, xEnd, y, attributes.getEffectColor(), attributes.getEffectType(), foldRegion != null);
+          if (attributes != null) {
+            attributes.forEachEffect((type, color) -> paintTextEffect(g, xStart, xEnd, y, color, type, foldRegion != null));
           }
           if (attributes != null && attributes.getForegroundColor() != null) {
             g.setColor(attributes.getForegroundColor());
@@ -560,9 +565,7 @@ public class EditorPainter implements TextDrawingCallback {
 
   private float paintLineLayoutWithEffect(Graphics2D g, LineLayout layout, float x, float y, 
                                   @Nullable Color effectColor, @Nullable EffectType effectType) {
-    if (hasTextEffect(effectColor, effectType, false)) {
-      paintTextEffect(g, x, x + layout.getWidth(), (int)y, effectColor, effectType, false);
-    }
+    paintTextEffect(g, x, x + layout.getWidth(), (int)y, effectColor, effectType, false);
     for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(x)) {
       fragment.draw(g, fragment.getStartX(), y);
       x = fragment.getEndX();
@@ -570,16 +573,10 @@ public class EditorPainter implements TextDrawingCallback {
     return x;
   }
 
-  private static boolean hasTextEffect(@Nullable Color effectColor, @Nullable EffectType effectType, boolean allowBorder) {
-    return effectColor != null && (effectType == EffectType.LINE_UNDERSCORE ||
-                                   effectType == EffectType.BOLD_LINE_UNDERSCORE ||
-                                   effectType == EffectType.BOLD_DOTTED_LINE ||
-                                   effectType == EffectType.WAVE_UNDERSCORE ||
-                                   effectType == EffectType.STRIKEOUT ||
-                                   allowBorder && (effectType == EffectType.BOXED || effectType == EffectType.ROUNDED_BOX));
-  }
-
-  private void paintTextEffect(Graphics2D g, float xFrom, float xTo, int y, Color effectColor, EffectType effectType, boolean allowBorder) {
+  private void paintTextEffect(@NotNull Graphics2D g, float xFrom, float xTo, int y, @Nullable Color effectColor, @Nullable EffectType effectType, boolean allowBorder) {
+    if (effectColor == null) {
+      return;
+    }
     g.setColor(effectColor);
     int xStart = (int)xFrom;
     int xEnd = (int)xTo;
@@ -715,9 +712,9 @@ public class EditorPainter implements TextDrawingCallback {
     int y = (int)lineEnd.getY() + yShift;
     TextAttributes attributes = highlighter.getTextAttributes();
     paintBackground(g, attributes, x, y, myView.getPlainSpaceWidth());
-    if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), false)) {
-      paintTextEffect(g, x, x + myView.getPlainSpaceWidth() - 1, y + myView.getAscent(), 
-                      attributes.getEffectColor(), attributes.getEffectType(), false);
+    if (attributes != null) {
+      attributes.forEachEffect(
+        (type, color) -> paintTextEffect(g, x, x + myView.getPlainSpaceWidth() - 1, y + myView.getAscent(), color, type, false));
     }
   }
 
@@ -730,8 +727,9 @@ public class EditorPainter implements TextDrawingCallback {
     HighlighterIterator it = highlighter.createIterator(clipStartOffset);
     while (!it.atEnd() && it.getStart() < clipEndOffset) {
       TextAttributes attributes = it.getTextAttributes();
-      if (isBorder(attributes)) {
-        paintBorderEffect(g, clipDetector, yShift, it.getStart(), it.getEnd(), attributes);
+      EffectDescriptor borderDescriptor = getBorderDescriptor(attributes);
+      if (borderDescriptor != null) {
+        paintBorderEffect(g, clipDetector, yShift, it.getStart(), it.getEnd(), borderDescriptor);
       }
       it.advance();
     }
@@ -745,22 +743,27 @@ public class EditorPainter implements TextDrawingCallback {
                                  int clipEndOffset) {
     markupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, rangeHighlighter -> {
       TextAttributes attributes = rangeHighlighter.getTextAttributes();
-      if (isBorder(attributes)) {
+      EffectDescriptor borderDescriptor = getBorderDescriptor(attributes);
+      if (borderDescriptor != null) {
         paintBorderEffect(g, clipDetector, yShift,
-                          rangeHighlighter.getAffectedAreaStartOffset(), rangeHighlighter.getAffectedAreaEndOffset(), attributes);
+                          rangeHighlighter.getAffectedAreaStartOffset(), rangeHighlighter.getAffectedAreaEndOffset(), borderDescriptor);
       }
       return true;
     });
   }
 
-  private static boolean isBorder(TextAttributes attributes) {
-    return attributes != null &&
-           (attributes.getEffectType() == EffectType.BOXED || attributes.getEffectType() == EffectType.ROUNDED_BOX) &&
-           attributes.getEffectColor() != null;
+  /**
+   * @return {@link EffectDescriptor descriptor} of border effect if attributes contains a border effect with not null color. Null otherwise
+   */
+  @Contract("null -> null")
+  @Nullable
+  private static EffectDescriptor getBorderDescriptor(@Nullable TextAttributes attributes) {
+    return attributes == null || !attributes.hasEffects() ? null :
+           TextAttributesEffectsBuilder.create(attributes).getEffectDescriptor(FRAME_SLOT);
   }
 
   private void paintBorderEffect(Graphics2D g, ClipDetector clipDetector, int yShift,
-                                 int startOffset, int endOffset, TextAttributes attributes) {
+                                 int startOffset, int endOffset, EffectDescriptor borderDescriptor) {
     startOffset = DocumentUtil.alignToCodePointBoundary(myDocument, startOffset);
     endOffset = DocumentUtil.alignToCodePointBoundary(myDocument, endOffset);
     if (!clipDetector.rangeCanBeVisible(startOffset, endOffset)) return;
@@ -773,9 +776,9 @@ public class EditorPainter implements TextDrawingCallback {
       endLine--;
       endOffset = myDocument.getLineEndOffset(endLine);
     }
-  
-    boolean rounded = attributes.getEffectType() == EffectType.ROUNDED_BOX;
-    g.setColor(attributes.getEffectColor());
+
+    boolean rounded = borderDescriptor.effectType == EffectType.ROUNDED_BOX;
+    g.setColor(borderDescriptor.effectColor);
     VisualPosition startPosition = myView.offsetToVisualPosition(startOffset, true, false);
     VisualPosition endPosition = myView.offsetToVisualPosition(endOffset, false, true);
     if (startPosition.line == endPosition.line) {
@@ -1211,8 +1214,11 @@ public class EditorPainter implements TextDrawingCallback {
 
   private TextAttributes getFoldRegionAttributes(FoldRegion foldRegion) {
     TextAttributes selectionAttributes = isSelected(foldRegion) ? myEditor.getSelectionModel().getTextAttributes() : null;
-    TextAttributes foldAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
     TextAttributes defaultAttributes = getDefaultAttributes();
+    if (myEditor.isInFocusMode(foldRegion)) {
+      return ObjectUtils.notNull(myEditor.getUserData(FocusModeModel.FOCUS_MODE_ATTRIBUTES), getDefaultAttributes());
+    }
+    TextAttributes foldAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
     return mergeAttributes(mergeAttributes(selectionAttributes, foldAttributes), defaultAttributes);
   }
 
@@ -1240,11 +1246,13 @@ public class EditorPainter implements TextDrawingCallback {
   private static TextAttributes mergeAttributes(TextAttributes primary, TextAttributes secondary) {
     if (primary == null) return secondary;
     if (secondary == null) return primary;
-    return new TextAttributes(primary.getForegroundColor() == null ? secondary.getForegroundColor() : primary.getForegroundColor(),
-                              primary.getBackgroundColor() == null ? secondary.getBackgroundColor() : primary.getBackgroundColor(),
-                              primary.getEffectColor() == null ? secondary.getEffectColor() : primary.getEffectColor(),
-                              primary.getEffectType() == null ? secondary.getEffectType() : primary.getEffectType(),
-                              primary.getFontType() == Font.PLAIN ? secondary.getFontType() : primary.getFontType());
+    TextAttributes result =
+      new TextAttributes(primary.getForegroundColor() == null ? secondary.getForegroundColor() : primary.getForegroundColor(),
+                         primary.getBackgroundColor() == null ? secondary.getBackgroundColor() : primary.getBackgroundColor(),
+                         null, null,
+                         primary.getFontType() == Font.PLAIN ? secondary.getFontType() : primary.getFontType());
+
+    return TextAttributesEffectsBuilder.create(secondary).coverWith(primary).applyTo(result);
   }
 
   @Override

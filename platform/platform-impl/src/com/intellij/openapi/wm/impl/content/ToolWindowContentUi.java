@@ -607,7 +607,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   @Override
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) return myWindow;
+    if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
+      return myWindow;
+    }
 
     if (CloseAction.CloseTarget.KEY.is(dataId)) {
       return computeCloseTarget();
@@ -663,7 +665,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     final Content selectedContent = myManager.getSelectedContent();
 
     final SelectContentStep step = new SelectContentStep(contents);
-    step.setDefaultOptionIndex(myManager.getIndexOfContent(selectedContent));
+    if (selectedContent != null) {
+      step.setDefaultOptionIndex(myManager.getIndexOfContent(selectedContent));
+    }
 
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
     getCurrentLayout().showContentPopup(popup);

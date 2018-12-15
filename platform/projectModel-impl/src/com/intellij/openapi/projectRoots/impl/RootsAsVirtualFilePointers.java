@@ -29,13 +29,13 @@ public class RootsAsVirtualFilePointers implements RootProvider {
   private final Map<OrderRootType, VirtualFilePointerContainer> myRoots = new THashMap<>();
 
   private final boolean myNoCopyJars;
+  private final VirtualFilePointerListener myListener;
+  @NotNull private final Disposable myParent;
 
   RootsAsVirtualFilePointers(boolean noCopyJars, VirtualFilePointerListener listener, @NotNull Disposable parent) {
     myNoCopyJars = noCopyJars;
-
-    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
-      myRoots.put(rootType, VirtualFilePointerManager.getInstance().createContainer(parent, listener));
-    }
+    myListener = listener;
+    myParent = parent;
   }
 
   @Override
@@ -53,15 +53,18 @@ public class RootsAsVirtualFilePointers implements RootProvider {
   }
 
   public void addRoot(@NotNull VirtualFile virtualFile, @NotNull OrderRootType type) {
-    myRoots.get(type).add(virtualFile);
+    getOrCreateContainer(type).add(virtualFile);
   }
 
   public void addRoot(@NotNull String url, @NotNull OrderRootType type) {
-    myRoots.get(type).add(url);
+    getOrCreateContainer(type).add(url);
   }
 
   public void removeAllRoots(@NotNull OrderRootType type) {
-    myRoots.get(type).clear();
+    VirtualFilePointerContainer container = myRoots.get(type);
+    if (container != null) {
+      container.clear();
+    }
   }
 
   public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType type) {
@@ -70,7 +73,7 @@ public class RootsAsVirtualFilePointers implements RootProvider {
 
   public void removeRoot(@NotNull String url, @NotNull OrderRootType type) {
     VirtualFilePointerContainer container = myRoots.get(type);
-    VirtualFilePointer pointer = container.findByUrl(url);
+    VirtualFilePointer pointer = container == null ? null : container.findByUrl(url);
     if (pointer != null) {
       container.remove(pointer);
     }
@@ -94,17 +97,10 @@ public class RootsAsVirtualFilePointers implements RootProvider {
         }
       }
     }));
-
-    for (OrderRootType type : OrderRootType.getAllTypes()) {
-      if (myRoots.get(type) == null) {
-        LOG.error(type + " wasn't serialized");
-      }
-    }
   }
 
   public void writeExternal(@NotNull Element element) {
-    List<PersistentOrderRootType> allTypes = OrderRootType.getSortedRootTypes();
-    for (PersistentOrderRootType type : allTypes) {
+    for (PersistentOrderRootType type : OrderRootType.getSortedRootTypes()) {
       write(element, type);
     }
   }
@@ -151,12 +147,10 @@ public class RootsAsVirtualFilePointers implements RootProvider {
       LOG.error(composites);
     }
     Element composite = composites.get(0);
-
-    VirtualFilePointerContainer container = myRoots.get(type);
-    if (container == null) {
-      LOG.error("unknown root type: " + type);
+    if (!composite.getChildren("root").isEmpty()) {
+      VirtualFilePointerContainer container = getOrCreateContainer(type);
+      container.readExternal(composite, "root", false);
     }
-    container.readExternal(composite, "root", false);
   }
 
   /**
@@ -179,7 +173,10 @@ public class RootsAsVirtualFilePointers implements RootProvider {
     Element composite = new Element("root");
     composite.setAttribute("type", "composite");
     e.addContent(composite);
-    myRoots.get(type).writeExternal(composite, "root", false);
+    VirtualFilePointerContainer container = myRoots.get(type);
+    if (container != null) {
+      container.writeExternal(composite, "root", false);
+    }
     for (Element root : composite.getChildren()) {
       root.setAttribute("type", "simple");
     }
@@ -198,5 +195,15 @@ public class RootsAsVirtualFilePointers implements RootProvider {
   @Override
   public void removeRootSetChangedListener(@NotNull RootSetChangedListener listener) {
     throw new RuntimeException();
+  }
+
+  @NotNull
+  private VirtualFilePointerContainer getOrCreateContainer(@NotNull OrderRootType rootType) {
+    VirtualFilePointerContainer roots = myRoots.get(rootType);
+    if (roots == null) {
+      roots = VirtualFilePointerManager.getInstance().createContainer(myParent, myListener);
+      myRoots.put(rootType, roots);
+    }
+    return roots;
   }
 }

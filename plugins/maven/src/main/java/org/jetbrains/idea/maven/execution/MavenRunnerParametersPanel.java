@@ -53,7 +53,7 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
   public MavenRunnerParametersPanel(@NotNull final Project project) {
 
     workingDirComponent.getComponent().addBrowseFolderListener(
-      RunnerBundle.message("maven.select.maven.project.file"), "", project,
+      RunnerBundle.message("maven.select.working.directory"), "", project,
       new MavenPomFileChooserDescriptor(project));
 
     if (!project.isDefault()) {

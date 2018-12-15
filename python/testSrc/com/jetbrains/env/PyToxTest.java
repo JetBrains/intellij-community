@@ -208,26 +208,56 @@ public final class PyToxTest extends PyEnvTestCase {
         @NotNull
         @Override
         protected PyAbstractTestProcessRunner<PyToxConfiguration> createProcessRunner() {
-          return new PyAbstractTestProcessRunner<PyToxConfiguration>(PyToxConfigurationFactory.INSTANCE, PyToxConfiguration.class, 0) {
-            @Override
-            protected void configurationCreatedAndWillLaunch(@NotNull final PyToxConfiguration configuration) throws IOException {
-              super.configurationCreatedAndWillLaunch(configuration);
-              PyToxTestTools.setArguments(configuration, "-v");
-              PyToxTestTools.setRunOnlyEnvs(configuration, envsToRun);
-            }
-          };
+          return new RunnerWithArguments(envsToRun, "-v");
         }
 
         @Override
         protected void checkTestResults(@NotNull final PyAbstractTestProcessRunner<PyToxConfiguration> runner,
                                         @NotNull final String stdout,
                                         @NotNull final String stderr,
-                                        @NotNull final String all, int exitCode) {
+                                        @NotNull final String all,
+                                        final int exitCode) {
           final Set<String> environments = runner.getTestProxy().getChildren().stream().map(t -> t.getName()).collect(Collectors.toSet());
           assertThat(environments)
             .describedAs("Wrong environments launched")
             .containsExactly(envsToRun);
           assertThat(all).contains("-v");
+        }
+
+        @NotNull
+        @Override
+        public Set<String> getTags() {
+          return Sets.newHashSet("tox");
+        }
+      });
+  }
+
+  /**
+   * Provide certain env and check it is launched
+   */
+  @Test
+  public void testDoubleDash() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyAbstractTestProcessRunner<PyToxConfiguration>>("/toxtest/toxDoubleDash/",
+                                                                                        SdkCreationType.EMPTY_SDK) {
+        @NotNull
+        @Override
+        protected PyAbstractTestProcessRunner<PyToxConfiguration> createProcessRunner() {
+          return new RunnerWithArguments(new String[]{"py27"}, "--", "--version");
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyAbstractTestProcessRunner<PyToxConfiguration> runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all,
+                                        final int exitCode) {
+          Assert.assertThat("Pytest should provide version because of --version", runner.getAllConsoleText(),
+                            Matchers.containsString("This is pytest version"));
+          Assert.assertEquals("Only 2.7 should be launched", "Test tree:\n" +
+                                                             "[root](+)\n" +
+                                                             ".py27(+)\n", runner.getFormattedTestTree());
+          runner.getFormattedTestTree();
         }
 
         @NotNull
@@ -277,11 +307,11 @@ public final class PyToxTest extends PyEnvTestCase {
 
       final Set<String> expectedInterpreters =
         myInterpreters.entrySet().stream()
-                      .filter(intAndExp -> intAndExp.getValue() != null)
-                      .filter(o -> o.getValue().myUntilStep >
-                                   runner.getCurrentRerunStep()) // Remove interp. which shouldn't be launched on this step
-                      .map(intAndExp -> intAndExp.getKey())
-                      .collect(Collectors.toSet());
+          .filter(intAndExp -> intAndExp.getValue() != null)
+          .filter(o -> o.getValue().myUntilStep >
+                       runner.getCurrentRerunStep()) // Remove interp. which shouldn't be launched on this step
+          .map(intAndExp -> intAndExp.getKey())
+          .collect(Collectors.toSet());
 
       // Interpreters are used in tox.ini, so there should be such text
       for (final String interpreterName : expectedInterpreters) {
@@ -459,6 +489,24 @@ public final class PyToxTest extends PyEnvTestCase {
      */
     private InterpreterExpectations(@NotNull final String expectedOutput, final boolean expectedSuccess) {
       this(expectedOutput, expectedSuccess, Integer.MAX_VALUE);
+    }
+  }
+
+  private static class RunnerWithArguments extends PyAbstractTestProcessRunner<PyToxConfiguration> {
+    private final String[] myEnvsToRun;
+    private final String[] myArgs;
+
+    RunnerWithArguments(@NotNull final String[] envsToRun, @NotNull final String... args) {
+      super(PyToxConfigurationFactory.INSTANCE, PyToxConfiguration.class, 0);
+      myEnvsToRun = envsToRun;
+      myArgs = args;
+    }
+
+    @Override
+    protected void configurationCreatedAndWillLaunch(@NotNull final PyToxConfiguration configuration) throws IOException {
+      super.configurationCreatedAndWillLaunch(configuration);
+      PyToxTestTools.setArguments(configuration, myArgs);
+      PyToxTestTools.setRunOnlyEnvs(configuration, myEnvsToRun);
     }
   }
 }

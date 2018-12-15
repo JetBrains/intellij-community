@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Interner
@@ -95,6 +96,13 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
     catch (e: IOException) {
       LOG.warn(e)
       rebuild()
+      emptySet()
+    }
+    catch (pce: ProcessCanceledException) {
+      throw pce
+    }
+    catch (t: Throwable) {
+      LOG.error(t)
       emptySet()
     }
   }

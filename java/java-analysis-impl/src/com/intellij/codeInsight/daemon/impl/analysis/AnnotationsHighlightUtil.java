@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -466,7 +467,7 @@ public class AnnotationsHighlightUtil {
       if (aClass == resolvedClass) {
         return true;
       }
-      if (!checked.add(resolvedClass) || !manager.isInProject(resolvedClass)) return false;
+      if (!checked.add(resolvedClass) || !BaseIntentionAction.canModify(resolvedClass)) return false;
       final PsiMethod[] methods = resolvedClass.getMethods();
       for (PsiMethod method : methods) {
         if (cyclicDependencies(aClass, method.getReturnType(), checked,manager)) return true;
@@ -619,6 +620,12 @@ public class AnnotationsHighlightUtil {
       Set<PsiAnnotation.TargetType> containerTargets = AnnotationTargetUtil.getAnnotationTargets(container);
       if (containerTargets != null && !repeatableTargets.containsAll(containerTargets)) {
         return JavaErrorMessages.message("annotation.container.wide.target", container.getQualifiedName());
+      }
+    }
+
+    for (PsiMethod method : container.getMethods()) {
+      if (method instanceof PsiAnnotationMethod && !"value".equals(method.getName()) && ((PsiAnnotationMethod)method).getDefaultValue() == null) {
+        return JavaErrorMessages.message("annotation.container.abstract", container.getQualifiedName(), method.getName());
       }
     }
 

@@ -48,25 +48,25 @@ public class ResolvePerformanceTest extends ResolveTestCase {
         visitElement(expression);
       }
     });
-    System.out.println();
-    System.out.println("Found " + references.size() + " references");
+    LOG.debug("");
+    LOG.debug("Found " + references.size() + " references");
     long time = System.currentTimeMillis();
 
     // Not cached pass
     resolveAllReferences(references);
-    System.out.println("Not cached resolve: " + (System.currentTimeMillis() - time)/(double)1000 + "s");
+    LOG.debug("Not cached resolve: " + (System.currentTimeMillis() - time)/(double)1000 + "s");
 
     ApplicationManager.getApplication().runWriteAction(() -> ResolveCache.getInstance(myProject).clearCache(true));
 
     time = System.currentTimeMillis();
     // Cached pass
     resolveAllReferences(references);
-    System.out.println("Not cached resolve with cached repository: " + (System.currentTimeMillis() - time)/(double)1000 + "s");
+    LOG.debug("Not cached resolve with cached repository: " + (System.currentTimeMillis() - time)/(double)1000 + "s");
 
     time = System.currentTimeMillis();
     // Cached pass
     resolveAllReferences(references);
-    System.out.println("Cached resolve: " + (System.currentTimeMillis() - time)/(double)1000 + "s");
+    LOG.debug("Cached resolve: " + (System.currentTimeMillis() - time)/(double)1000 + "s");
  }
 
   public void testPerformance2() throws Exception{
@@ -92,8 +92,8 @@ public class ResolvePerformanceTest extends ResolveTestCase {
       }
     });
 
-    System.out.println();
-    System.out.println("Found " + references.size() + " references");
+    LOG.debug("");
+    LOG.debug("Found " + references.size() + " references");
 
     resolveAllReferences(references);
   }

@@ -1497,22 +1497,26 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       PsiStatement[] statements = codeBlock.getStatements();
       if (statements.length == 1) {
         final PsiElement codeBlockParent = codeBlock.getParent();
+        PsiStatement statement = statements[0];
         if (codeBlockParent instanceof PsiLambdaExpression) {
-          if (statements[0] instanceof PsiReturnStatement) {
-            final PsiExpression returnValue = ((PsiReturnStatement)statements[0]).getReturnValue();
+          if (statement instanceof PsiReturnStatement) {
+            final PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
             if (returnValue != null) {
               codeBlock.replace(returnValue);
             }
-          } else if (statements[0] instanceof PsiExpressionStatement){
-            codeBlock.replace(((PsiExpressionStatement)statements[0]).getExpression());
+          } else if (statement instanceof PsiExpressionStatement){
+            codeBlock.replace(((PsiExpressionStatement)statement).getExpression());
+          }
+        }
+        else if (codeBlockParent instanceof PsiBlockStatement) {
+          if (!(ifStatementWithAppendableElseBranch(statement) &&
+                codeBlockParent.getParent() instanceof PsiIfStatement &&
+                ((PsiIfStatement)codeBlockParent.getParent()).getElseBranch() != null)) {
+            codeBlockParent.replace(statement);
           }
         }
         else {
-          if (codeBlockParent instanceof PsiBlockStatement) {
-            codeBlockParent.replace(statements[0]);
-          } else {
-            codeBlock.replace(statements[0]);
-          }
+          codeBlock.replace(statement);
         }
       }
     }
@@ -1530,6 +1534,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         psiField.getInitializer().delete();
       }
     }
+  }
+
+  private static boolean ifStatementWithAppendableElseBranch(PsiStatement statement) {
+    if (statement instanceof PsiIfStatement) {
+      PsiStatement elseBranch = ((PsiIfStatement)statement).getElseBranch();
+      return elseBranch == null || elseBranch instanceof PsiIfStatement;
+    }
+    return false;
   }
 
   @Nullable

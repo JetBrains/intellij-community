@@ -142,7 +142,7 @@ public final class GutterTooltipHelper {
     if (action == null) return; // action is not exist
     String text = getPreferredShortcutText(action.getShortcutSet().getShortcuts());
     if (StringUtil.isEmpty(text)) return; // action have no shortcuts
-    sb.append("</p><p style='margin-top:8px'><font size='2' color='#");
+    sb.append("</p><p style='margin-top:8px;'><font size='2' color='#");
     sb.append(toHex(CONTEXT_HELP_FOREGROUND));
     sb.append("'>Press ").append(text).append(" to navigate</font>");
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.Disposable;
@@ -157,7 +157,7 @@ public class VcsLogUtil {
 
   @NotNull
   public static <T> List<T> collectFirstPack(@NotNull List<T> list, int max) {
-    return list.subList(0, Math.min(list.size(), max));
+    return ContainerUtil.getFirstItems(list, max);
   }
 
   @Nullable
@@ -220,13 +220,19 @@ public class VcsLogUtil {
   /**
    * Registers disposable on both provided parent and project. When project is disposed, disposable is still accessed through parent,
    * while when parent is disposed, disposable gets removed from memory. So this method is suitable for parents that depend on project,
-   * but could be created and disposed several times through one project life,
+   * but could be created and disposed several times through one project life.
    *
    * @param parent     parent to register disposable on.
    * @param project    project to register disposable on.
    * @param disposable disposable to register.
    */
   public static void registerWithParentAndProject(@NotNull Disposable parent, @NotNull Project project, @NotNull Disposable disposable) {
+    /*
+     Wrapping in another Disposable is required in order to register on several parents.
+     Otherwise the second `register` call will remove disposable from the first parent.
+     See com.intellij.openapi.util.objectTree.ObjectTree.register.
+    */
+    //noinspection SSBasedInspection
     Disposer.register(parent, () -> Disposer.dispose(disposable));
     Disposer.register(project, disposable);
   }

@@ -395,7 +395,6 @@ final class BuildSession implements Runnable, CanceledStatus {
       Collection<BuildRootDescriptor> descriptor = pd.getBuildRootIndex().findAllParentDescriptors(file, null, null);
       if (!descriptor.isEmpty()) {
         if (!cacheCleared) {
-          pd.getFSCache().clear();
           cacheCleared = true;
         }
         if (LOG.isDebugEnabled()) {
@@ -427,7 +426,6 @@ final class BuildSession implements Runnable, CanceledStatus {
             final long stamp = timestamps.getStamp(file, descriptor.getTarget());
             if (stamp != fileStamp) {
               if (!cacheCleared) {
-                pd.getFSCache().clear();
                 cacheCleared = true;
               }
               pd.fsState.markDirty(null, file, descriptor, timestamps, saveEventStamp);
@@ -509,6 +507,13 @@ final class BuildSession implements Runnable, CanceledStatus {
   }
 
   private static void saveOnDisk(BufferExposingByteArrayOutputStream bytes, final File file) throws IOException {
+    try (FileOutputStream fos = writeOrCreate(file)) {
+      fos.write(bytes.getInternalBuffer(), 0, bytes.size());
+    }
+  }
+
+  @NotNull
+  private static FileOutputStream writeOrCreate(@NotNull File file) throws FileNotFoundException {
     FileOutputStream fos = null;
     try {
       //noinspection IOResourceOpenedButNotSafelyClosed
@@ -521,12 +526,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     if (fos == null) {
       fos = new FileOutputStream(file);
     }
-    try {
-      fos.write(bytes.getInternalBuffer(), 0, bytes.size());
-    }
-    finally {
-      fos.close();
-    }
+    return fos;
   }
 
   @Nullable

@@ -5,27 +5,48 @@
 
 package com.intellij.patterns.uast
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.patterns.*
 import com.intellij.patterns.StandardPatterns.string
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.uast.*
 
 fun literalExpression(): ULiteralExpressionPattern = ULiteralExpressionPattern()
 
+@Deprecated("Interpolated strings (in Kotlin) are not single string literals, use `injectionHostUExpression()` to be language-abstract",
+            ReplaceWith("injectionHostUExpression()", "com.intellij.patterns.uast.injectionHostUExpression"))
 fun stringLiteralExpression(): ULiteralExpressionPattern = literalExpression().filter(ULiteralExpression::isStringLiteral)
+
+@JvmOverloads
+fun injectionHostUExpression(strict: Boolean = true): UExpressionPattern<UExpression, *> =
+  uExpression().filterWithContext { _, processingContext ->
+    val requestedPsi = processingContext?.get(REQUESTED_PSI_ELEMENT)
+    if (requestedPsi == null) {
+      if (strict && ApplicationManager.getApplication().isUnitTestMode) {
+        throw AssertionError("no ProcessingContext with `REQUESTED_PSI_ELEMENT` passed for `injectionHostUExpression`," +
+                             " please consider creating one using `UastPatterns.withRequestedPsi`, providing a source psi for which " +
+                             " this pattern was originally created, or make this `injectionHostUExpression` non-strict.")
+      }
+      else return@filterWithContext !strict
+    }
+    return@filterWithContext requestedPsi is PsiLanguageInjectionHost
+  }
+
 
 fun callExpression(): UCallExpressionPattern = UCallExpressionPattern()
 
-fun uExpression(): UExpressionPattern<UExpression, *> = expressionCapture(UExpression::class.java)
+fun uExpression(): UExpressionPattern.Capture<UExpression> = expressionCapture(UExpression::class.java)
 
 fun <T : UElement> capture(clazz: Class<T>): UElementPattern.Capture<T> = UElementPattern.Capture(clazz)
 
 fun <T : UExpression> expressionCapture(clazz: Class<T>): UExpressionPattern.Capture<T> = UExpressionPattern.Capture(clazz)
+
+fun ProcessingContext.withRequestedPsi(psiElement: PsiElement) = this.apply { put(REQUESTED_PSI_ELEMENT, psiElement) }
+
+fun withRequestedPsi(psiElement: PsiElement) = ProcessingContext().withRequestedPsi(psiElement)
 
 open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz: Class<T>) : ObjectPattern<T, Self>(clazz) {
   fun withSourcePsiCondition(pattern: PatternCondition<PsiElement>): Self =
@@ -75,12 +96,17 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
   class Capture<T : UElement>(clazz: Class<T>) : UElementPattern<T, Capture<T>>(clazz)
 }
 
+private val constructorOrMethodCall = setOf(UastCallKind.CONSTRUCTOR_CALL, UastCallKind.METHOD_CALL)
+
 private fun isCallExpressionParameter(argumentExpression: UElement,
                                       parameterIndex: Int,
                                       callPattern: ElementPattern<UCallExpression>): Boolean {
-  val call = argumentExpression.uastParent.getUCallExpression() as? UCallExpressionEx ?: return false
+  val call = argumentExpression.uastParent.getUCallExpression(searchLimit = 2) as? UCallExpressionEx ?: return false
+  if (call.kind !in constructorOrMethodCall) return false
   return call.getArgumentForParameter(parameterIndex) == argumentExpression && callPattern.accepts(call)
 }
+
+private val GUARD = RecursionManager.createGuard("isPropertyAssignCall")
 
 private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPattern<out PsiMethod>): Boolean {
   val uBinaryExpression = (argument.uastParent as? UBinaryExpression) ?: return false
@@ -93,7 +119,9 @@ private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPatte
     is UReferenceExpression -> leftOperand
     else -> return false
   }
-  val references = uastReference.sourcePsi?.references ?: return false // via `sourcePsi` because of KT-27385
+  val references = GUARD.doPreventingRecursion(argument, false) {
+    uastReference.sourcePsi?.references // via `sourcePsi` because of KT-27385
+  } ?: return false
   return references.any { methodPattern.accepts(it.resolve()) }
 }
 
@@ -131,10 +159,8 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
     this.with(object : PatternCondition<T>("annotationParam") {
 
       override fun accepts(uElement: T, context: ProcessingContext?): Boolean {
-        val namedExpression = uElement.getParentOfType<UNamedExpression>(true) ?: return false
-        if (!parameterNames.accepts(namedExpression.name ?: "value")) return false
-        val annotation = namedExpression.getParentOfType<UAnnotation>(true) ?: return false
-        return (annotationPattern.accepts(annotation, context))
+        val (annotation, paramName) = getContainingUAnnotationEntry(uElement) ?: return false
+        return parameterNames.accepts(paramName ?: "value") && annotationPattern.accepts(annotation, context)
       }
     })
 

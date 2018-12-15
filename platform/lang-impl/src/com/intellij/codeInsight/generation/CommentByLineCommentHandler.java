@@ -97,13 +97,15 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       if (regionStartOffset >= startOffset) break;
       startOffset = regionStartOffset;
     }
-    while (true) {
-      int lastLineEnd = DocumentUtil.getLineEndOffset(endOffset, document);
-      FoldRegion collapsedAt = editor.getFoldingModel().getCollapsedRegionAtOffset(lastLineEnd);
-      if (collapsedAt == null) break;
-      int regionEndOffset = collapsedAt.getEndOffset();
-      if (regionEndOffset <= endOffset) break;
-      endOffset = regionEndOffset;
+    if (!hasSelection || !DocumentUtil.isAtLineStart(endOffset, document)) {
+      while (true) {
+        int lastLineEnd = DocumentUtil.getLineEndOffset(endOffset, document);
+        FoldRegion collapsedAt = editor.getFoldingModel().getCollapsedRegionAtOffset(lastLineEnd);
+        if (collapsedAt == null) break;
+        int regionEndOffset = collapsedAt.getEndOffset();
+        if (regionEndOffset <= endOffset) break;
+        endOffset = regionEndOffset;
+      }
     }
 
     int startLine = document.getLineNumber(startOffset);
@@ -651,7 +653,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       if (endOffset == offset && block.startLine != block.endLine) return true;
       final int textLength = document.getTextLength();
       final CharSequence chars = document.getCharsSequence();
-      offset = CharArrayUtil.shiftForward(chars, offset, " \t");
       if (endOffset == textLength) {
         final int shifted = CharArrayUtil.shiftBackward(chars, textLength - 1, " \t") + 1;
         if (shifted < textLength) endOffset = shifted;

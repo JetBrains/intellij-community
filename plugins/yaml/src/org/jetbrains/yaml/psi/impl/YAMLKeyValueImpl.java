@@ -42,14 +42,21 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   @Override
   @Nullable
   public PsiElement getKey() {
-    final PsiElement result = findChildByType(YAMLTokenTypes.SCALAR_KEY);
-    if (result != null) {
-      return result;
+    PsiElement colon = findChildByType(YAMLTokenTypes.COLON);
+    if (colon == null) {
+      return null;
     }
-    if (isExplicit()) {
-      return findKey();
+    ASTNode node = colon.getNode();
+    do {
+      node = node.getTreePrev();
+    } while(YAMLElementTypes.BLANK_ELEMENTS.contains(PsiUtilCore.getElementType(node)));
+
+    if (node == null || PsiUtilCore.getElementType(node) == YAMLTokenTypes.QUESTION) {
+      return null;
     }
-    return null;
+    else {
+      return node.getPsi();
+    }
   }
 
   @Nullable
@@ -87,6 +94,9 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   @Nullable
   public YAMLValue getValue() {
     for (PsiElement child = getLastChild(); child != null; child = child.getPrevSibling()) {
+      if (PsiUtilCore.getElementType(child) == YAMLTokenTypes.COLON) {
+        return null;
+      }
       if (child instanceof YAMLValue) {
         return ((YAMLValue)child);
       }
@@ -214,25 +224,6 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     }
     else {
       super.accept(visitor);
-    }
-  }
-
-  @Nullable
-  private PsiElement findKey() {
-    PsiElement colon = findChildByType(YAMLTokenTypes.COLON);
-    if (colon == null) {
-      return null;
-    }
-    ASTNode node = colon.getNode();
-    do {
-      node = node.getTreePrev();
-    } while(YAMLElementTypes.BLANK_ELEMENTS.contains(PsiUtilCore.getElementType(node)));
-
-    if (node == null || PsiUtilCore.getElementType(node) == YAMLTokenTypes.QUESTION) {
-      return null;
-    }
-    else {
-      return node.getPsi();
     }
   }
 }

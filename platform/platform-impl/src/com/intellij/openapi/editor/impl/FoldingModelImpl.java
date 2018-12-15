@@ -70,6 +70,11 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
       }
 
       @Override
+      protected boolean hasBlockInlays() {
+        return myEditor.getInlayModel().hasBlockElements();
+      }
+
+      @Override
       protected int getBlockInlaysHeight(int startOffset, int endOffset) {
         return EditorUtil.getTotalInlaysHeight(myEditor.getInlayModel().getBlockElementsInRange(startOffset, endOffset));
       }
@@ -344,12 +349,12 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
 
     List<Caret> carets = myEditor.getCaretModel().getAllCarets();
-    for (Caret caret : carets) {
-      LogicalPosition caretPosition = caret.getLogicalPosition();
-      int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
+    if (myDoNotCollapseCaret) {
+      for (Caret caret : carets) {
+        LogicalPosition caretPosition = caret.getLogicalPosition();
+        int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
 
-      if (FoldRegionsTree.containsStrict(region, caretOffset)) {
-        if (myDoNotCollapseCaret) return;
+        if (FoldRegionsTree.containsStrict(region, caretOffset)) return;
       }
     }
     for (Caret caret : carets) {
@@ -561,7 +566,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public void onUpdated(@NotNull Inlay inlay) {
-    myFoldTree.clearCachedInlayValues();
+    if (inlay.getVerticalAlignment() != Inlay.VerticalAlignment.INLINE) myFoldTree.clearCachedInlayValues();
   }
 
   @Nullable

@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
@@ -71,7 +70,9 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     myCenterPanel = createCenterPanel(update);
     header.add(myCenterPanel);
 
-    createTagPanel();
+    if (!update) {
+      createTagPanel();
+    }
     createMetricsPanel();
     createErrorPanel();
     createProgressPanel(!update);
@@ -172,7 +173,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       versionComponent.setFont(UIUtil.getLabelFont());
       versionComponent.setBorder(null);
       versionComponent.setOpaque(false);
-      versionComponent.setForeground(new JBColor(Gray._130, Gray._120));
+      versionComponent.setForeground(CellPluginComponent.GRAY_COLOR);
       versionComponent.addFocusListener(new FocusAdapter() {
         @Override
         public void focusLost(FocusEvent e) {
@@ -259,8 +260,8 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     boolean jb = PluginManagerConfigurableNew.isJBPlugin(myPlugin);
     boolean errors = myPluginsModel.hasErrors(myPlugin);
 
-    myIconLabel.setIcon(PluginLogoInfo.getIcon(true, jb, errors, false));
-    myIconLabel.setDisabledIcon(PluginLogoInfo.getIcon(true, jb, errors, true));
+    myIconLabel.setIcon(PluginLogo.getIcon(myPlugin, true, jb, errors, false));
+    myIconLabel.setDisabledIcon(PluginLogo.getIcon(myPlugin, true, jb, errors, true));
   }
 
   private void createTagPanel() {
@@ -285,8 +286,6 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       return;
     }
 
-    Color grayedFg = new JBColor(Gray._130, Gray._120);
-
     String downloads = PluginManagerConfigurableNew.getDownloads(myPlugin);
     String date = PluginManagerConfigurableNew.getLastUpdatedDate(myPlugin);
     String rating = PluginManagerConfigurableNew.getRating(myPlugin);
@@ -297,10 +296,10 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       myCenterPanel.add(metrics);
 
       if (date != null) {
-        createRatingLabel(metrics, date, AllIcons.Plugins.Updated, grayedFg);
+        createRatingLabel(metrics, date, AllIcons.Plugins.Updated, CellPluginComponent.GRAY_COLOR);
       }
       if (downloads != null) {
-        createRatingLabel(metrics, downloads, AllIcons.Plugins.Downloads, grayedFg);
+        createRatingLabel(metrics, downloads, AllIcons.Plugins.Downloads, CellPluginComponent.GRAY_COLOR);
       }
 
       if (rating != null) {

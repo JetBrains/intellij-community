@@ -434,7 +434,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   private boolean loadProjectUnderProgress(@NotNull Project project, @NotNull Runnable performLoading) {
     ProgressIndicator indicator = myProgressManager.getProgressIndicator();
-    if (indicator != null) {
+    if (!ApplicationManager.getApplication().isDispatchThread() && indicator != null) {
       indicator.setText("Preparing workspace...");
       try {
         performLoading.run();
@@ -789,12 +789,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     // (and, so, should be called after project initialization)
     if (project instanceof ComponentManagerImpl) {
       for (ProjectComponent component : ((ComponentManagerImpl)project).getComponentInstancesOfType(ProjectComponent.class)) {
-        try {
-          component.projectOpened();
-        }
-        catch (Throwable e) {
-          LOG.error(component.toString(), e);
-        }
+        StartupManagerImpl.runActivity(() -> component.projectOpened());
       }
     }
   }

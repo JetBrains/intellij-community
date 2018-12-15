@@ -3,6 +3,7 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
@@ -268,6 +269,11 @@ class CaretModelWindow implements CaretModel {
   @Override
   public void runForEachCaret(@NotNull final CaretAction action, boolean reverseOrder) {
     myDelegate.runForEachCaret(caret -> action.perform(createInjectedCaret(caret)), reverseOrder);
+  }
+
+  @Override
+  public void addCaretActionListener(@NotNull CaretActionListener listener, @NotNull Disposable disposable) {
+    myDelegate.addCaretActionListener(listener, disposable);
   }
 
   @Override

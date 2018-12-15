@@ -11,19 +11,29 @@ import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.util.checkKind
 import org.jetbrains.plugins.groovy.lang.psi.util.getAccessorName
+import org.jetbrains.plugins.groovy.lang.resolve.AccessorResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.GenericAccessorResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
-import org.jetbrains.plugins.groovy.lang.resolve.PropertyResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
 import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 
 class AccessorProcessor(
   propertyName: String,
   private val propertyKind: PropertyKind,
-  argumentTypes: () -> Array<PsiType?>?,
+  private val arguments: Arguments?,
   private val place: PsiElement
 ) : ProcessorWithCommonHints(), GrResolverProcessor<GroovyResolveResult> {
 
+  @Deprecated("don't use this constructor")
+  constructor(
+    propertyName: String,
+    propertyKind: PropertyKind,
+    arguments: () -> Array<PsiType?>?,
+    place: PsiElement
+  ) : this(propertyName, propertyKind, arguments()?.map { JustTypeArgument(it) }, place)
+
   private val accessorName = propertyKind.getAccessorName(propertyName)
-  private val argumentTypes by lazy(LazyThreadSafetyMode.NONE, argumentTypes)
 
   init {
     nameHint(accessorName)
@@ -37,12 +47,12 @@ class AccessorProcessor(
     if (elementName != accessorName) return true
     if (!element.checkKind(propertyKind)) return true
 
-    myResults += PropertyResolveResult(
-      element = element,
-      place = place,
-      state = state,
-      argumentTypes = argumentTypes
-    )
+    myResults += if (element.hasTypeParameters()) {
+      GenericAccessorResolveResult(element, place, state, arguments)
+    }
+    else {
+      AccessorResolveResult(element, place, state, arguments)
+    }
 
     return true
   }

@@ -53,8 +53,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -103,6 +103,8 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
                                .filter(c -> ProjectSystemId.IDE.equals(c.getSystemId()) ||
                                             myExternalSystemId.equals(c.getSystemId()))
                                .collect(Collectors.toList());
+
+    setName(myExternalSystemId.getReadableName() + " tool window");
   }
 
   @Nullable
@@ -257,7 +259,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   @Override
   public void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent) {
     if (actionId != null) {
-      ExternalSystemActionUtil.executeAction(actionId, inputEvent);
+      ExternalSystemActionUtil.executeAction(actionId, getName(), inputEvent);
     }
     for (Listener listener : listeners) {
       listener.onDoubleClickOrEnter(node, inputEvent);
@@ -272,7 +274,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   private ActionGroup createAdditionalGearActionsGroup() {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
-    String[] ids = new String[]{"ExternalSystem.GroupTasks", "ExternalSystem.ShowInheritedTasks", "ExternalSystem.ShowIgnored"};
+    String[] ids = new String[]{"ExternalSystem.GroupModules", "ExternalSystem.GroupTasks", "ExternalSystem.ShowInheritedTasks", "ExternalSystem.ShowIgnored"};
     for (String id : ids) {
       final AnAction gearAction = actionManager.getAction(id);
       if (gearAction instanceof ExternalSystemViewGearAction) {
@@ -303,8 +305,8 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     ActionToolbar actionToolbar = actionManager.createActionToolbar(myExternalSystemId.getReadableName() + " View Toolbar",
                                                                     (DefaultActionGroup)actionManager
                                                                       .getAction("ExternalSystemView.ActionsToolbar"), true);
-
-    actionToolbar.setTargetComponent(myTree);
+    // make the view data context available for the toolbar actions
+    actionToolbar.setTargetComponent(this);
     setToolbar(actionToolbar.getComponent());
     setContent(ScrollPaneFactory.createScrollPane(myTree));
 
@@ -315,7 +317,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
         if (id != null) {
           final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(id);
           if (actionGroup != null) {
-            actionManager.createActionPopupMenu("", actionGroup).getComponent().show(comp, x, y);
+            actionManager.createActionPopupMenu(ExternalProjectsViewImpl.this.getName(), actionGroup).getComponent().show(comp, x, y);
           }
         }
       }
@@ -454,6 +456,11 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   @Override
+  public boolean getGroupModules() {
+    return myState.groupModules;
+  }
+
+  @Override
   public boolean useTasksNode() {
     return true;
   }
@@ -461,7 +468,15 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   public void setGroupTasks(boolean value) {
     if (myState.groupTasks != value) {
       myState.groupTasks = value;
-      scheduleTasksRebuild();
+      scheduleNodesRebuild(TasksNode.class);
+    }
+  }
+
+  public void setGroupModules(boolean value) {
+    if (myState.groupModules != value) {
+      myState.groupModules = value;
+      scheduleNodesRebuild(ModuleNode.class);
+      scheduleNodesRebuild(ProjectNode.class);
     }
   }
 
@@ -487,14 +502,13 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
                              .orElse(null);
   }
 
-  private void scheduleTasksRebuild() {
+  private <T extends ExternalSystemNode> void scheduleNodesRebuild(@NotNull Class<T> nodeClass) {
     scheduleStructureRequest(() -> {
       assert myStructure != null;
-      final List<TasksNode> tasksNodes = myStructure.getNodes(TasksNode.class);
-      for (TasksNode tasksNode : tasksNodes) {
+      for (T tasksNode : myStructure.getNodes(nodeClass)) {
         tasksNode.cleanUpCache();
-        updateUpTo(tasksNode);
       }
+      myStructure.updateNodes(nodeClass);
     });
   }
 

@@ -161,6 +161,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
           indicator.setIndeterminate(true);
           codeSmells.set(CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(myProject, files, indicator));
         } catch (ProcessCanceledException e) {
+          LOG.info("Code analysis canceled", e);
           exception.set(e);
         }
         catch (Exception e) {

@@ -693,7 +693,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final CharSequence text = myEditor.getDocument().getCharsSequence();
     for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {
       int start = pair.first;
-      if (caretOffset >= start && start >= 0) {
+      if (caretOffset >= start && start >= 0 && caretOffset <= text.length()) {
         final String newPrefix = text.subSequence(start, caretOffset).toString();
         if (pair.second.accepts(newPrefix)) {
           scheduleRestart();
@@ -787,7 +787,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(EditorHintListener.TOPIC, listener);
     assert text != null;
-    HintManager.getInstance().showErrorHint(editor, StringUtil.escapeXml(text), HintManager.UNDER);
+    HintManager.getInstance().showErrorHint(editor, StringUtil.escapeXmlEntities(text), HintManager.UNDER);
     connection.disconnect();
     return result[0];
   }

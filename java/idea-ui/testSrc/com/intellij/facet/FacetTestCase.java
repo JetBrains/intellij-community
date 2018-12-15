@@ -21,6 +21,9 @@ public abstract class FacetTestCase extends PsiTestCase {
     try {
       removeAllFacets();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

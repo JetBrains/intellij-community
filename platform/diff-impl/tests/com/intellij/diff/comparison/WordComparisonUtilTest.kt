@@ -541,4 +541,39 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       testDefault()
     }
   }
+
+  fun testHighSurrogates() {
+    words {
+      ("$chSmile$chGun$chMan$chFace" - "$chGun$chMan$chFace$chSmile")
+      ("--      " - "      --").default()
+      testDefault()
+    }
+
+    words {
+      (chSmile - chGun)
+      ("--" - "--").default()
+      testDefault()
+    }
+
+    words {
+      (chFace - chGun)
+      ("--" - "--").default()
+      testDefault()
+    }
+
+    words {
+      ("$chSmile " - " $chGun")
+      ("---" - "---").default()
+      ("-- " - " --").trim()
+      testAll()
+    }
+
+    words {
+      ("$chSmile$chFace $chMan" - " $chGun$chFace$chMan ")
+      ("--  -  " - "---    -").default()
+      ("--  -  " - " --     ").trim()
+      ("--     " - " --     ").ignore()
+      testAll()
+    }
+  }
 }

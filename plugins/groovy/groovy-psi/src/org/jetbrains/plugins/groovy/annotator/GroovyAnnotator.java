@@ -904,12 +904,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
-    PsiElement resolved = refElement.resolve();
-    if (resolved instanceof PsiClass &&
-        (((PsiClass)resolved).isAnnotationType() ||
-                                         GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved) != null &&
-                                         refElement.getParent() instanceof GrAnnotation)) {
-      myHolder.createInfoAnnotation(refElement, null).setTextAttributes(GroovySyntaxHighlighter.ANNOTATION);
+    if (refElement.getParent() instanceof GrAnnotation) {
+      PsiElement resolved = refElement.resolve();
+      if (resolved instanceof PsiClass && !((PsiClass)resolved).isAnnotationType() &&
+          GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved) != null) {
+        myHolder.createInfoAnnotation(refElement, null).setTextAttributes(GroovySyntaxHighlighter.ANNOTATION);
+      }
     }
   }
 
@@ -1207,30 +1207,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitArgumentList(@NotNull GrArgumentList list) {
     checkNamedArgs(list.getNamedArguments(), true);
-  }
-
-  @Override
-  public void visitConstructorInvocation(@NotNull GrConstructorInvocation invocation) {
-    final GroovyResolveResult resolveResult = invocation.advancedResolve();
-    if (resolveResult.getElement() == null) {
-      final GroovyResolveResult[] results = invocation.multiResolve(false);
-      final GrArgumentList argList = invocation.getArgumentList();
-      if (results.length > 0) {
-        String message = GroovyBundle.message("ambiguous.constructor.call");
-        myHolder.createWarningAnnotation(argList, message);
-      }
-      else {
-        final PsiClass clazz = invocation.getDelegatedClass();
-        if (clazz != null) {
-          //default constructor invocation
-          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(invocation.getInvokedExpression(), true);
-          if (argumentTypes != null && argumentTypes.length > 0) {
-            String message = GroovyBundle.message("cannot.apply.default.constructor", clazz.getName());
-            myHolder.createWarningAnnotation(argList, message);
-          }
-        }
-      }
-    }
   }
 
   @Override
@@ -1655,12 +1631,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
           return;
         }
 
-        if (PsiTreeUtil.isAncestor(resolved, ref, true)) {
-          if (PsiUtil.hasEnclosingInstanceInScope((PsiClass)resolved, ref, true)) {
-            holder.createInfoAnnotation(nameElement, null).setTextAttributes(GroovySyntaxHighlighter.KEYWORD);
-          }
-        }
-        else {
+        if (!PsiTreeUtil.isAncestor(resolved, ref, true)) {
           String qname = ((PsiClass)resolved).getQualifiedName();
           assert qname != null;
           holder.createErrorAnnotation(ref, GroovyBundle.message("is.not.enclosing.class", qname));

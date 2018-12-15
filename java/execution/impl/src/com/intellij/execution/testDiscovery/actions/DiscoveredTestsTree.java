@@ -106,11 +106,10 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
 
   @Override
   public void dispose() {
-
   }
 
   public void addTest(@NotNull PsiClass testClass,
-                      @NotNull PsiMethod testMethod,
+                      @Nullable PsiMethod testMethod,
                       @Nullable String parameter) {
     myModel.addTest(testClass, testMethod, parameter);
   }

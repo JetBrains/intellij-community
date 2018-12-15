@@ -13,12 +13,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author traff
@@ -92,14 +96,28 @@ public class TerminalSettingsPanel {
       }
     });
 
+    List<Component> customComponents = ContainerUtil.newArrayList();
     for (LocalTerminalCustomizer c : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
       UnnamedConfigurable configurable = c.getConfigurable(projectOptionsProvider.getProject());
       if (configurable != null) {
         myConfigurables.add(configurable);
         JComponent component = configurable.createComponent();
         if (component != null) {
-          myConfigurablesPanel.add(component, BorderLayout.CENTER);
+          customComponents.add(component);
         }
+      }
+    }
+    if (!customComponents.isEmpty()) {
+      myConfigurablesPanel.setLayout(new GridLayoutManager(customComponents.size(), 1));
+      int i = 0;
+      for (Component component : customComponents) {
+        myConfigurablesPanel.add(component, new GridConstraints(
+          i++, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, 0, 0,
+          new Dimension(-1, -1),
+          new Dimension(-1, -1),
+          new Dimension(-1, -1),
+          0, false
+        ));
       }
     }
 
@@ -119,8 +137,7 @@ public class TerminalSettingsPanel {
            || (myShellIntegration.isSelected() != myOptionsProvider.shellIntegration())
            || (myHighlightHyperlinks.isSelected() != myOptionsProvider.highlightHyperlinks()) ||
            myConfigurables.stream().anyMatch(c -> c.isModified())
-           || !Comparing.equal(myEnvVarField.getEnvs(), myOptionsProvider.getUserSpecifiedEnvs())
-           || (myEnvVarField.isPassParentEnvs() != myOptionsProvider.passParentEnvs());
+           || !Comparing.equal(myEnvVarField.getData(), myOptionsProvider.getEnvData());
   }
 
   public void apply() {
@@ -143,8 +160,7 @@ public class TerminalSettingsPanel {
         //pass
       }
     });
-    myOptionsProvider.setUserSpecifiedEnvs(myEnvVarField.getEnvs());
-    myOptionsProvider.setPassParentEnvs(myEnvVarField.isPassParentEnvs());
+    myOptionsProvider.setEnvData(myEnvVarField.getData());
   }
 
   public void reset() {
@@ -160,8 +176,7 @@ public class TerminalSettingsPanel {
     myShellIntegration.setSelected(myOptionsProvider.shellIntegration());
     myHighlightHyperlinks.setSelected(myOptionsProvider.highlightHyperlinks());
     myConfigurables.forEach(c -> c.reset());
-    myEnvVarField.setEnvs(myOptionsProvider.getUserSpecifiedEnvs());
-    myEnvVarField.setPassParentEnvs(myOptionsProvider.passParentEnvs());
+    myEnvVarField.setData(myOptionsProvider.getEnvData());
   }
 
   public Color getDefaultValueColor() {

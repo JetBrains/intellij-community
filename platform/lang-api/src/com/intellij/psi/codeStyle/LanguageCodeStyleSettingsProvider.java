@@ -1,8 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.application.options.CodeStyleBean;
 import com.intellij.application.options.IndentOptionsEditor;
+import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -317,12 +318,6 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return DocCommentSettings.DEFAULTS;
   }
 
-  @Nullable
-  @ApiStatus.Experimental
-  public CodeStyleBean createBean() {
-    return null;
-  }
-
   /**
    * Create a code style configurable for the given base settings and model settings.
    *
@@ -361,5 +356,11 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
       }
     }
     return settingsPagesProviders;
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull CodeStyleSettings settings) {
+    return new LanguageCodeStylePropertyMapper(settings, getLanguage());
   }
 }

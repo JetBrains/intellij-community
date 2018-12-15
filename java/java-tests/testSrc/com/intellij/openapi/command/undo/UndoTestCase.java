@@ -56,6 +56,9 @@ public abstract class UndoTestCase extends CodeInsightTestCase {
       myManager = null;
       myOldEditorProvider = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

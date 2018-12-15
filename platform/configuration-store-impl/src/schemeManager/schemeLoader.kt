@@ -46,12 +46,6 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
     return schemeToInfo.get(existingScheme) ?: schemeManager.schemeToInfo.get(existingScheme)
   }
 
-  private fun isFromFileWithOldExtension(existingScheme: T): Boolean {
-    val info = getInfoForExistingScheme(existingScheme)
-    // scheme from file with old extension, so, we must ignore it
-    return info != null && schemeManager.schemeExtension != info.fileExtension
-  }
-
   private fun isFromFileWithNewExtension(existingScheme: T, fileNameWithoutExtension: String): Boolean {
     return getInfoForExistingScheme(existingScheme)?.fileNameWithoutExtension == fileNameWithoutExtension
   }
@@ -63,6 +57,8 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
     LOG.assertTrue(isApplied.compareAndSet(false, true))
     schemeManager.filesToDelete.addAll(filesToDelete)
     schemeManager.filesToDelete.addAll(preScheduledFilesToDelete)
+
+
 
     schemeManager.schemeToInfo.putAll(schemeToInfo)
 
@@ -105,26 +101,35 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
       // not added to filesToDelete because it is only shadowed
       return true
     }
-    else if (processor.isExternalizable(existingScheme) && isFromFileWithOldExtension(existingScheme)) {
-      schemes.removeAt(existingSchemeIndex)
-      if (existingSchemeIndex < newSchemesOffset) {
-        newSchemesOffset--
+
+    if (processor.isExternalizable(existingScheme)) {
+      val existingInfo = getInfoForExistingScheme(existingScheme)
+      // is from file with old extension
+      if (existingInfo != null && schemeManager.schemeExtension != existingInfo.fileExtension) {
+        schemeToInfo.remove(existingScheme)
+        filesToDelete.add(existingInfo.fileName)
+
+        schemes.removeAt(existingSchemeIndex)
+        if (existingSchemeIndex < newSchemesOffset) {
+          newSchemesOffset--
+        }
+
+        // when existing loaded scheme removed, we need to remove it from schemeManager.schemeToInfo,
+        // but SchemeManager will correctly remove info on save, no need to complicate
+        return true
       }
+    }
+
+    if (schemeManager.schemeExtension != extension && isFromFileWithNewExtension(existingScheme, fileNameWithoutExtension)) {
+      // 1.oldExt is loading after 1.newExt - we should delete 1.oldExt
       filesToDelete.add(fileName)
     }
     else {
-      if (schemeManager.schemeExtension != extension && isFromFileWithNewExtension(existingScheme, fileNameWithoutExtension)) {
-        // 1.oldExt is loading after 1.newExt - we should delete 1.oldExt
-        filesToDelete.add(fileName)
-      }
-      else {
-        // We don't load scheme with duplicated name - if we generate unique name for it, it will be saved then with new name.
-        // It is not what all can expect. Such situation in most cases indicates error on previous level, so, we just warn about it.
-        LOG.warn("Scheme file \"$fileName\" is not loaded because defines duplicated name \"$schemeKey\"")
-      }
-      return false
+      // We don't load scheme with duplicated name - if we generate unique name for it, it will be saved then with new name.
+      // It is not what all can expect. Such situation in most cases indicates error on previous level, so, we just warn about it.
+      LOG.warn("Scheme file \"$fileName\" is not loaded because defines duplicated name \"$schemeKey\"")
     }
-    return true
+    return false
   }
 
   fun loadScheme(fileName: String, input: InputStream): MUTABLE_SCHEME? {
@@ -276,6 +281,10 @@ internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtens
   }
 
   fun isDigestEquals(newDigest: ByteArray) = Arrays.equals(digest, newDigest)
+
+  fun scheduleDelete(filesToDelete: MutableSet<String>) {
+    filesToDelete.add(fileName)
+  }
 
   override fun toString() = fileName
 }

@@ -18,6 +18,7 @@ import java.util.List;
  * WARNING! This is an experimental API, it can change at any time.
  *
  * @since 2016.3
+ * @see Editor#getInlayModel()
  */
 @ApiStatus.Experimental
 public interface InlayModel {

@@ -4,11 +4,12 @@ package com.intellij.configurationStore
 import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.externalDependencies.ProjectExternalDependency
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
@@ -95,7 +96,8 @@ internal class DefaultProjectStoreTest {
   @Test fun `new project from default - directory-based storage`() {
     val defaultProject = ProjectManager.getInstance().defaultProject
     val defaultTestComponent = TestComponent()
-    defaultTestComponent.loadState(loadElement("""<component><main name="$TEST_COMPONENT_NAME"/><sub name="foo" /><sub name="bar" /></component>"""))
+    defaultTestComponent.loadState(
+      JDOMUtil.load("""<component><main name="$TEST_COMPONENT_NAME"/><sub name="foo" /><sub name="bar" /></component>"""))
     val stateStore = defaultProject.stateStore as ComponentStoreImpl
     stateStore.initComponent(defaultTestComponent, true)
     try {
@@ -117,7 +119,7 @@ internal class DefaultProjectStoreTest {
   }
 
   @Test fun `new project from default - remove workspace component configuration`() {
-    val testData = Paths.get(PathManager.getCommunityHomePath(), "platform/configuration-store-impl/testData")
+    val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
     val element = loadElement(testData.resolve("testData1.xml"))
 
     val tempDir = fsRule.fs.getPath("")
@@ -129,7 +131,7 @@ internal class DefaultProjectStoreTest {
   }
 
   @Test fun `new IPR project from default - remove workspace component configuration`() {
-    val testData = Paths.get(PathManager.getCommunityHomePath(), "platform/configuration-store-impl/testData")
+    val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
     val element = loadElement(testData.resolve("testData1.xml"))
 
     val tempDir = fsRule.fs.getPath("")

@@ -93,6 +93,10 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
+  public void testSuppressByNoinspectionTag() {
+    doTest();
+  }
+
   public void testReachableFromXml() {
     doTest();
   }
@@ -121,6 +125,19 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
     }
     finally {
       EntryPointsManagerBase.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.remove(testAnnotation);
+    }
+  }
+
+  public void testAccessibleFromEntryPoint() {
+    EntryPointsManagerBase.ClassPattern pattern = new EntryPointsManagerBase.ClassPattern();
+    pattern.pattern = "Foo";
+    pattern.method = "entry";
+    EntryPointsManagerBase.getInstance(getProject()).getPatterns().add(pattern);
+    try {
+      doTest();
+    }
+    finally {
+      EntryPointsManagerBase.getInstance(getProject()).getPatterns().clear();
     }
   }
 

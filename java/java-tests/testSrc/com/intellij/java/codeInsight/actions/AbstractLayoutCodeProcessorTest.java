@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,9 +102,16 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    VfsTestUtil.deleteFile(myWorkingDirectory.getVirtualFile());
-    myWorkingDirectory = null;
-    super.tearDown();
+    try {
+      VfsTestUtil.deleteFile(myWorkingDirectory.getVirtualFile());
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      myWorkingDirectory = null;
+      super.tearDown();
+    }
   }
 
   @NotNull

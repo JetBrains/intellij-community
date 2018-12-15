@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
@@ -116,7 +115,8 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
     return null;
   }
 
-  private String convertFieldName(String propertyName, final DomChildrenDescription description) {
+  @NotNull
+  private String convertFieldName(@NotNull String propertyName, final DomChildrenDescription description) {
     propertyName = StringUtil.trimStart(propertyName, "my");
 
     String convertedName = description.getDomNameStrategy(getDomElement()).convertName(propertyName);

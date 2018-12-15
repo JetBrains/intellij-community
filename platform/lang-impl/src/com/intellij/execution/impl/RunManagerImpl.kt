@@ -26,8 +26,11 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.project.isDirectoryBased
-import com.intellij.util.*
+import com.intellij.util.IconUtil
+import com.intellij.util.SmartList
+import com.intellij.util.ThreeState
 import com.intellij.util.containers.*
+import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -38,6 +41,25 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.swing.Icon
+import kotlin.collections.Collection
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.MutableList
+import kotlin.collections.MutableMap
+import kotlin.collections.any
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.count
+import kotlin.collections.emptyList
+import kotlin.collections.firstOrNull
+import kotlin.collections.forEach
+import kotlin.collections.get
+import kotlin.collections.getOrPut
+import kotlin.collections.iterator
+import kotlin.collections.listOf
+import kotlin.collections.mapNotNull
+import kotlin.collections.toList
+import kotlin.collections.toMutableList
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
@@ -521,7 +543,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   internal fun writeBeforeRunTasks(configuration: RunConfiguration): Element? {
     val tasks = configuration.beforeRunTasks
     val methodElement = Element(METHOD)
-    methodElement.attribute("v", "2")
+    methodElement.setAttribute("v", "2")
     for (task in tasks) {
       val child = Element(OPTION)
       child.setAttribute(NAME_ATTR, task.providerId.toString())

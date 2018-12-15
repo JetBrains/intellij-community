@@ -122,6 +122,21 @@ public class LambdaUtil {
         return isValidLambdaContext(parentContext);
       }
     }
+    if (context instanceof PsiBreakStatement) {
+      PsiElement element = ((PsiBreakStatement)context).findExitedElement();
+      if (element instanceof PsiSwitchExpression) {
+        return isValidLambdaContext(element.getParent());
+      }
+    }
+    if (context instanceof PsiExpressionStatement) {
+      PsiElement parent = context.getParent();
+      if (parent instanceof PsiSwitchLabeledRuleStatement) {
+        PsiSwitchBlock switchBlock = ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock();
+        if (switchBlock != null) {
+          return isValidLambdaContext(switchBlock.getParent());
+        }
+      }
+    }
     return false;
   }
 
@@ -408,6 +423,10 @@ public class LambdaUtil {
     }
     else if (parent instanceof PsiLambdaExpression) {
       return getFunctionalInterfaceTypeByContainingLambda((PsiLambdaExpression)parent);
+    }
+    PsiSwitchExpression switchExpression = PsiTreeUtil.getParentOfType(element, PsiSwitchExpression.class);
+    if (switchExpression != null && PsiUtil.getSwitchResultExpressions(switchExpression).contains(element)) {
+      return getFunctionalInterfaceType(switchExpression, tryToSubstitute);
     }
     return null;
   }
@@ -722,6 +741,7 @@ public class LambdaUtil {
                                                     PsiExpressionList.class,
                                                     PsiLambdaExpression.class,
                                                     PsiConditionalExpression.class,
+                                                    PsiSwitchExpression.class,
                                                     PsiCodeBlock.class,
                                                     PsiCall.class);
     while (true) {
@@ -750,7 +770,7 @@ public class LambdaUtil {
         }
       }
 
-      if (parent instanceof PsiConditionalExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
+      if ((parent instanceof PsiConditionalExpression || parent instanceof PsiSwitchExpression) && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
         break;
       }
 

@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -241,8 +242,8 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     String lambdaText = generateOptionalLambda(factory, ct, optionalRef, trueValue);
     PsiLambdaExpression lambda = (PsiLambdaExpression)factory.createExpressionFromText(lambdaText, trueValue);
     PsiExpression body = Objects.requireNonNull((PsiExpression)lambda.getBody());
-    return OptionalUtil.generateOptionalUnwrap(optionalRef.getText(), lambda.getParameterList().getParameters()[0],
-                                               body, ct.markUnchanged(falseValue), targetType, true);
+    return OptionalRefactoringUtil.generateOptionalUnwrap(optionalRef.getText(), lambda.getParameterList().getParameters()[0],
+                                                          body, ct.markUnchanged(falseValue), targetType, true);
   }
 
   static boolean isSimpleOrUnchecked(PsiExpression expression) {

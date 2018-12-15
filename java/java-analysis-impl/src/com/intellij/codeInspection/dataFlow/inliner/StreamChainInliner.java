@@ -731,7 +731,6 @@ public class StreamChainInliner implements CallInliner {
       if (qualifierValue != null) {
         builder.pushExpression(qualifierExpression)
                .chain(firstStep::before)
-               .checkNotNull(qualifierExpression, NullabilityProblemKind.passingNullableToNotNullParameter)
                .pop()
                .push(SpecialField.ARRAY_LENGTH.createValue(builder.getFactory(), qualifierValue))
                .push(builder.getFactory().getInt(0))
@@ -747,7 +746,6 @@ public class StreamChainInliner implements CallInliner {
       if (qualifierValue != null) {
         builder.pushExpression(qualifierExpression)
                .chain(firstStep::before)
-               .checkNotNull(sourceCall, NullabilityProblemKind.callNPE)
                .pop()
                .push(SpecialField.COLLECTION_SIZE.createValue(builder.getFactory(), qualifierValue))
                .push(builder.getFactory().getInt(0))
@@ -759,7 +757,6 @@ public class StreamChainInliner implements CallInliner {
     }
     builder
       .pushExpression(originalQualifier)
-      .checkNotNull(firstStep.myCall, NullabilityProblemKind.callNPE)
       .pop()
       .chain(firstStep::before)
       .pushUnknown()

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class XmlAttributeLiteralEscaper extends LiteralTextEscaper<XmlAttributeValueImpl> {
   private final XmlAttribute myXmlAttribute;
 
-  public XmlAttributeLiteralEscaper(XmlAttributeValueImpl host) {
+  public XmlAttributeLiteralEscaper(@NotNull XmlAttributeValueImpl host) {
     super(host);
     PsiElement parent = host.getParent();
     myXmlAttribute = parent instanceof XmlAttribute ? (XmlAttribute)parent :
@@ -53,9 +53,9 @@ public class XmlAttributeLiteralEscaper extends LiteralTextEscaper<XmlAttributeV
   @Override
   public int getOffsetInHost(final int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
     TextRange valueTextRange = myXmlAttribute.getValueTextRange();
-    int displayStart = myXmlAttribute.physicalToDisplay(rangeInsideHost.getStartOffset());
+    int displayStart = myXmlAttribute.physicalToDisplay(rangeInsideHost.getStartOffset()-valueTextRange.getStartOffset());
 
-    int dp = myXmlAttribute.displayToPhysical(offsetInDecoded + displayStart - valueTextRange.getStartOffset());
+    int dp = myXmlAttribute.displayToPhysical(offsetInDecoded + displayStart);
     if (dp == -1) return -1;
     return dp + valueTextRange.getStartOffset();
   }

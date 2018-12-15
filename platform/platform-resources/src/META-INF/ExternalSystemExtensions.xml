@@ -30,6 +30,9 @@
     <projectService serviceInterface="com.intellij.openapi.project.ExternalStorageConfigurationManager"
                     serviceImplementation="com.intellij.openapi.project.ExternalStorageConfigurationManagerImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage"/>
+    <cachesInvalidator implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataInvalidator"/>
+    <registryKey key="external.system.invalidate.storage" defaultValue="true"
+                 description="Invalidate caches invalidates the cache data imported from external systems"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService"/>
@@ -49,6 +52,10 @@
         implementation="com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationHandler"/>
     <externalSystemConfigurationHandler
         implementation="com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationHandler"/>
+    <externalSystemConfigurationHandler
+        implementation="com.intellij.openapi.externalSystem.service.project.settings.EncodingConfigurationHandler"/>
+    <externalSystemConfigurationHandler
+        implementation="com.intellij.openapi.externalSystem.service.project.settings.PackagePrefixConfigurationHandler"/>
     <externalSystemConfigurationHandler implementation="com.intellij.profile.codeInspection.InspectionsProfileConfigurationHandler"/>
     <externalSystemConfigurationHandler
         implementation="com.intellij.openapi.externalSystem.service.project.settings.DetectionExcludesConfigImporter"/>

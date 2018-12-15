@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.RValue;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrGetAtReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrIndexPropertyReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrPutAtReference;
@@ -24,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.references.GrPutAtReference;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_Q;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil.isClassLiteral;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil.isSimpleArrayAccess;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isLValue;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.getRValue;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRValue;
 import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.referenceArray;
 
@@ -37,9 +38,11 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     () -> isRValue(this) && isIndexAccess() ? new GrGetAtReference(this) : null
   );
 
-  private final NullableLazyValue<GrIndexPropertyReference> myLValueReference = AtomicNullableLazyValue.createValue(
-    () -> isLValue(this) && isIndexAccess() ? new GrPutAtReference(this) : null
-  );
+  private final NullableLazyValue<GrIndexPropertyReference> myLValueReference = AtomicNullableLazyValue.createValue(() -> {
+    if (!isIndexAccess()) return null;
+    RValue rValue = getRValue(this);
+    return rValue == null?null : new GrPutAtReference(this, rValue.getArgument());
+  });
 
   private final NotNullLazyValue<GroovyReference[]> myReferences = AtomicNotNullLazyValue.createValue(
     () -> referenceArray(getRValueReference(), getLValueReference())

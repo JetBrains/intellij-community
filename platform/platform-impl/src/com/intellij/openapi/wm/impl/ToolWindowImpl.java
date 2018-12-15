@@ -5,6 +5,7 @@ import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.notification.EventLog;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -44,7 +45,7 @@ import java.util.ArrayList;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ToolWindowImpl implements ToolWindowEx {
+public final class ToolWindowImpl implements ToolWindowEx, Disposable {
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private final ToolWindowManagerImpl myToolWindowManager;
   private final String myId;
@@ -81,6 +82,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
     myContentUI = new ToolWindowContentUi(this);
     myContentManager = contentFactory.createContentManager(myContentUI, canCloseContent, toolWindowManager.getProject());
+    Disposer.register(this, myContentManager);
 
     if (component != null) {
       final Content content = contentFactory.createContent(component, "", false);
@@ -502,6 +504,11 @@ public final class ToolWindowImpl implements ToolWindowEx {
   @Override
   public boolean isDisposed() {
     return myContentManager.isDisposed();
+  }
+
+  @Override
+  public void dispose() {
+    myToolWindowManager.doUnregisterToolWindow(myId);
   }
 
   boolean isPlaceholderMode() {

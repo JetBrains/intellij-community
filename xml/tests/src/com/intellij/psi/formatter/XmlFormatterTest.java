@@ -16,16 +16,12 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
-import com.intellij.util.SystemProperties;
 
 public class XmlFormatterTest extends XmlFormatterTestBase {
   private static final String BASE_PATH = "psi/formatter/xml";
@@ -220,20 +216,6 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     return runtime.freeMemory() + (maxMemory - runtime.totalMemory());
   }
 
-  public void excluded_testStressTest() throws Exception {
-    if (!"lesya".equals(SystemProperties.getUserName())) return;
-    String name = "stress.xml";
-    final PsiFile file = createFile(name, loadFile(name, null));
-    long memoryBefore = currentFreeMemory();
-    long timeBefore = System.currentTimeMillis();
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> performFormatting(file)), "", "");
-    long memoryAfter = currentFreeMemory();
-    long timeAfter = System.currentTimeMillis();
-
-    System.out.println("\nMEMORY: " + (memoryAfter - memoryBefore));
-    System.out.println("\nTIME: " + (timeAfter - timeBefore));
-  }
-
   private void doWrapAlways(String resultNumber, boolean align, int rightMargin) throws Exception {
     CodeStyleSettings settings = getSettings();
     XmlCodeStyleSettings xmlSettings = getSettings().getCustomSettings(XmlCodeStyleSettings.class);
@@ -362,5 +344,17 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     htmlSettings.HTML_TEXT_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     xmlSettings.XML_TEXT_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     doTextTest("<tag>aaa\nbbb\nccc\nddd\n</tag>", "<tag>aaa bbb ccc ddd\n</tag>");
+  }
+
+  public void testXmlCommentLineBreak() throws Exception {
+    XmlCodeStyleSettings xmlSettings = getSettings().getCustomSettings(XmlCodeStyleSettings.class);
+    boolean oldValue = xmlSettings.XML_KEEP_LINE_BREAKS;
+    xmlSettings.XML_KEEP_LINE_BREAKS = false;
+    try {
+      doTest();
+    }
+    finally {
+      xmlSettings.XML_KEEP_LINE_BREAKS = oldValue;
+    }
   }
 }

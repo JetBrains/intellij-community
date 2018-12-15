@@ -6,8 +6,11 @@ cleanSetupJdks.dependsOn('cleanSetupJdk18', 'cleanSetupJdk16', 'cleanDownloadJdk
 
 def jdkRepo = 'https://cache-redirector.jetbrains.com'
 
-def checkoutDir = intellijProjectDir()
-def jdkDir = "$checkoutDir/build/jdk"
+def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
+  def jdkDir = new File(it)
+  jdkDir.mkdirs()
+  jdkDir
+} ?: "${intellijProjectDir()}/build/jdk"
 
 project.ext.jdk18OutputDir = "${System.getProperty("intellij.jdk18.output.dir", "") ?: "$jdkDir/1.8"}"
 

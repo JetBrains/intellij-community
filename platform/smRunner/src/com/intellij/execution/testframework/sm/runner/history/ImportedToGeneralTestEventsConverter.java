@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -76,19 +75,12 @@ public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEve
   }
 
   public static void parseTestResults(Supplier<? extends Reader> readerSupplier, GeneralTestEventsProcessor processor) throws IOException {
-    parseTestResults(readerSupplier.get(), ImportTestOutputExtension.findHandler(readerSupplier, processor));
-  }
-
-  public static void parseTestResults(Reader reader, final DefaultHandler contentHandler) throws IOException {
-    try {
+    try (Reader reader = readerSupplier.get()) {
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-      parser.parse(new InputSource(reader), contentHandler);
+      parser.parse(new InputSource(reader), ImportTestOutputExtension.findHandler(readerSupplier, processor));
     }
     catch (ParserConfigurationException | SAXException e) {
       throw new IOException(e);
-    }
-    finally {
-      reader.close();
     }
   }
 }

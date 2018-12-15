@@ -18,7 +18,6 @@ package com.intellij.execution.process;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +34,6 @@ public class AnsiEscapeDecoder {
   private static final char ESC_CHAR = '\u001B'; // Escape sequence start character
   private static final String CSI = ESC_CHAR + "["; // "Control Sequence Initiator"
   private static final String M_CSI = "m" + CSI;
-  private static final char BACKSPACE = '\b';
 
   private final ColoredOutputTypeRegistry myColoredOutputTypeRegistry = ColoredOutputTypeRegistry.getInstance();
   private String myUnhandledStdout;
@@ -53,8 +51,8 @@ public class AnsiEscapeDecoder {
    */
   public void escapeText(@NotNull String text, @NotNull Key outputType, @NotNull ColoredTextAcceptor textAcceptor) {
     text = prependUnhandledText(text, outputType);
-    text = normalizeAsciiControlCharacters(text);
-    int pos = 0, findEscSeqFromIndex = 0;
+    int pos = 0;
+    int findEscSeqFromIndex = 0;
     List<Pair<String, Key>> chunks = null;
     int unhandledSuffixLength = 0;
     while (true) {
@@ -131,48 +129,6 @@ public class AnsiEscapeDecoder {
     return prevUnhandledText != null ? prevUnhandledText + text : text;
   }
 
-  @NotNull
-  private static String normalizeAsciiControlCharacters(@NotNull String text) {
-    int ind = text.indexOf(BACKSPACE);
-    if (ind == -1) {
-      return text;
-    }
-    StringBuilder result = new StringBuilder();
-    int i = 0;
-    int guardIndex = 0;
-    boolean removalFromPrevTextAttempted = false;
-    while (i < text.length()) {
-      LineSeparator lineSeparator = StringUtil.getLineSeparatorAt(text, i);
-      if (lineSeparator != null) {
-        i += lineSeparator.getSeparatorString().length();
-        result.append(lineSeparator.getSeparatorString());
-        guardIndex = result.length();
-      }
-      else {
-        if (text.charAt(i) == BACKSPACE) {
-          if (result.length() > guardIndex) {
-            result.setLength(result.length() - 1);
-          }
-          else if (guardIndex == 0) {
-            removalFromPrevTextAttempted = true;
-          }
-        }
-        else {
-          result.append(text.charAt(i));
-        }
-        i++;
-      }
-    }
-    if (removalFromPrevTextAttempted) {
-      // This workaround allows to pretty print progress splitting it into several lines:
-      //  25% 1/4 build modules
-      //  40% 2/4 build modules
-      // instead of one single line "25% 1/4 build modules 40% 2/4 build modules"
-      result.insert(0, LineSeparator.LF.getSeparatorString());
-    }
-    return result.toString();
-  }
-
   /**
    * Returns the index of the first occurrence of CSI within the passed string that is greater than or equal to {@code fromIndex},
    * or negative number if CSI is not found: -1 - (length of text suffix to keep in case of an incomplete CSI).
@@ -182,7 +138,7 @@ public class AnsiEscapeDecoder {
     if (ind == -1) {
       return -1;
     }
-    else if (ind == text.length() - 1) {
+    if (ind == text.length() - 1) {
       return encodeUnhandledSuffixLength(text, ind);
     }
     return text.charAt(ind + 1) == CSI.charAt(1) ? ind : -1;
@@ -233,8 +189,8 @@ public class AnsiEscapeDecoder {
 
   /**
    * @implSpec {@code The ESC [ is followed by any number (including none) of "parameter bytes" in the
-   * range 0x30–0x3F (ASCII 0–9:;<=>?), then by any number of "intermediate bytes" in the range 0x20–0x2F (ASCII space and
-   * !"#$%&'()*+,-./), then finally by a single "final byte" in the range 0x40–0x7E (ASCII @A–Z[\]^_`a–z{|}~).}
+   * range 0x30-0x3F (ASCII 0-9:;<=>?), then by any number of "intermediate bytes" in the range 0x20-0x2F (ASCII space and
+   * !"#$%&'()*+,-./), then finally by a single "final byte" in the range 0x40-0x7E (ASCII @A-Z[\]^_`a-z{|}~).}
    * @implNote Also, there are different sequences, <a href="http://en.wikipedia.org/wiki/ANSI_escape_code#Escape_sequences">aside CSI</a>
    */
   private static int findEscSeqEndIndex(@NotNull String text, int escSeqBeginInd) {

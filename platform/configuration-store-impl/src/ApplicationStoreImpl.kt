@@ -40,7 +40,7 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
   override fun toString() = "app"
 }
 
-class ApplicationStorageManager(application: Application, pathMacroManager: PathMacroManager? = null)
+class ApplicationStorageManager(application: Application?, pathMacroManager: PathMacroManager? = null)
   : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? =

@@ -5,6 +5,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ import java.util.regex.Pattern;
  * A TestCase for single PsiFile being opened in Editor conversion. See configureXXX and checkResultXXX method docs.
  */
 public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightTestCase {
-  private static final Pattern JDK_SELECT_PATTERN = Pattern.compile("Java([\\d.]+)(\\.java)?$");
+  private static final Pattern JDK_SELECT_PATTERN = Pattern.compile("Java([\\d.]+)(Preview)?(\\.java)?$");
 
   public static JavaPsiFacadeEx getJavaFacade() {
     return JavaPsiFacadeEx.getInstanceEx(ourProject);
@@ -42,6 +43,10 @@ public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightT
     if (matcher.find()) {
       LanguageLevel level = LanguageLevel.parse(matcher.group(1));
       if (level != null) {
+        String group = matcher.group(2);
+        if (group != null) {
+          level = LanguageLevel.valueOf(level + "_PREVIEW");
+        }
         return level;
       }
     }
@@ -57,7 +62,10 @@ public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightT
   }
 
   protected void setLanguageLevel(LanguageLevel level) {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
+    LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(getProject());
+    LanguageLevel prev = extension.getLanguageLevel();
+    extension.setLanguageLevel(level);
+    Disposer.register(getTestRootDisposable(), () -> extension.setLanguageLevel(prev));
   }
 
   @Override

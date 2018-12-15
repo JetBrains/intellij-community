@@ -72,7 +72,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         self._input_error_printed = False
 
     def save_main(self):
-        m = save_main_module('<input>')
+        m = save_main_module('<input>', 'pydevconsole')
         self.namespace = m.__dict__
         try:
             self.namespace['__builtins__'] = __builtins__
@@ -282,6 +282,9 @@ def start_server(port):
     # `InterpreterInterface` implements all methods required for `server_handler`
     interpreter = InterpreterInterface(threading.currentThread())
 
+    # Tell UMD the proper default namespace
+    _set_globals_function(interpreter.get_namespace)
+
     server_socket = start_rpc_server_and_make_client('', port, server_service, client_service, create_server_handler_factory(interpreter))
 
     # 2. Print server port for the IDE
@@ -311,7 +314,7 @@ def start_client(host, port):
 
     # we do not need to start the server in a new thread because it does not need to accept a client connection, it already has it
 
-    # # Tell UMD the proper default namespace
+    # Tell UMD the proper default namespace
     _set_globals_function(interpreter.get_namespace)
 
     server_service = PythonConsoleBackendService

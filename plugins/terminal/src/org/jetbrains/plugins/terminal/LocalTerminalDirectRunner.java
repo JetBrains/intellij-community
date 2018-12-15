@@ -17,7 +17,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
-import com.intellij.execution.configurations.EncodingEnvironmentUtil;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -126,17 +126,22 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
                                                                    : ContainerUtil.canonicalStrategy());
 
-    if (TerminalOptionsProvider.Companion.getInstance().passParentEnvs()) {
+    EnvironmentVariablesData envData = TerminalOptionsProvider.getInstance().getEnvData();
+    if (envData.isPassParentEnvs()) {
       envs.putAll(System.getenv());
     }
 
-    envs.put("TERM", "xterm-256color");
+    if (!SystemInfo.isWindows) {
+      envs.put("TERM", "xterm-256color");
+    }
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
 
-    EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
+    if (SystemInfo.isMac) {
+      EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
+    }
 
     PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
-    for (Map.Entry<String, String> env : TerminalOptionsProvider.Companion.getInstance().getUserSpecifiedEnvs().entrySet()) {
+    for (Map.Entry<String, String> env : envData.getEnvs().entrySet()) {
       envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
     }
     return envs;
@@ -151,19 +156,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
     Map<String, String> envs = getTerminalEnvironment();
 
-    if (SystemInfo.isMac) {
-      EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
-    }
-
     String[] command = getCommand(envs);
 
     for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
       try {
         command = customizer.customizeCommandAndEnvironment(myProject, command, envs);
-
-        if (directory == null) {
-          directory = customizer.getDefaultFolder(myProject);
-        }
       }
       catch (Exception e) {
         LOG.error("Exception during customization of the terminal session", e);
@@ -174,7 +171,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     try {
-      TerminalUsageTriggerCollector.Companion.trigger(myProject, "local.exec", FUSUsageContext.create(FUSUsageContext.getOSNameContextData(), SystemInfo.getOsNameAndVersion(), getShellName(command[0])));
+      TerminalUsageTriggerCollector.trigger(myProject, "local.exec", FUSUsageContext.create(
+        FUSUsageContext.getOSNameContextData(),
+        SystemInfo.getOsNameAndVersion(),
+        TerminalUsageTriggerCollector.getShellNameForStat(command[0]))
+      );
       String workingDir = getWorkingDirectory(directory);
       long startNano = System.nanoTime();
       PtyProcess process = PtyProcess.exec(command, envs, workingDir);
@@ -192,7 +193,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Nullable
   private String getWorkingDirectory(@Nullable String directory) {
     if (directory != null) return directory;
-    return TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory();
+    return TerminalProjectOptionsProvider.getInstance(myProject).getStartingDirectory();
   }
 
   @Override
@@ -228,11 +229,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
     String shellPath = getShellPath();
 
-    return getCommand(shellPath, envs, TerminalOptionsProvider.Companion.getInstance().shellIntegration());
+    return getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration());
   }
 
   private static String getShellPath() {
-    return TerminalOptionsProvider.Companion.getInstance().getShellPath();
+    return TerminalOptionsProvider.getInstance().getShellPath();
   }
 
   @NotNull

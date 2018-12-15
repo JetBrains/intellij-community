@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -953,7 +954,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
 
   @Override
   public String getExternalDocumentationUrl(PsiElement element, PsiElement originalElement) {
-    PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem) element : element.getContainingFile();
+    PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
     if (PyNames.INIT_DOT_PY.equals(file.getName())) {
       file = file.getParent();
       assert file != null;
@@ -989,11 +990,11 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
 
   @Nullable
   @Override
-  public Function<Document, String> quickDocExtractor(PsiNamedElement namedElement) {
+  public Function<Document, String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
     return document -> {
       final String moduleName = getModuleNameForDocumentationUrl(namedElement, namedElement);
 
-      final String elementId = namedElement != null ? moduleName + "." + namedElement.getName() : "module-" + moduleName;
+      final String elementId = (isBuiltins(moduleName) ? "" : moduleName + ".") + namedElement.getName();
       document.select("a.headerlink").remove();
       final Elements parents = document.getElementsByAttributeValue("id", elementId).parents();
       if (parents.isEmpty()) {
@@ -1012,7 +1013,8 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
 
     final String webpageName = webPageName(moduleName, sdk);
 
-    final boolean isBuiltin = "__builtin__".equals(webpageName) || "builtins".equals(webpageName);
+    final boolean isBuiltin = isBuiltins(webpageName);
+
     final String className = element instanceof PyFunction && ((PyFunction)element).getContainingClass() != null ?
                              ((PyFunction)element).getContainingClass().getName() : "";
     final String name = element instanceof PsiNamedElement && !(element instanceof PyFile) ? ((PsiNamedElement)element).getName() : null;
@@ -1032,6 +1034,10 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
       urlBuilder.append(qName);
     }
     return urlBuilder.toString();
+  }
+
+  private static boolean isBuiltins(String webpageName) {
+    return "__builtin__".equals(webpageName) || "builtins".equals(webpageName);
   }
 
   public String webPageName(QualifiedName moduleName, Sdk sdk) {
@@ -1058,10 +1064,10 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     return qname;
   }
 
-  public String getModuleNameForDocumentationUrl(PsiElement element, PsiElement originalElement) {
+  private static String getModuleNameForDocumentationUrl(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
     QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
 
-    return qName != null? getModuleName(qName.toString()) : "";
+    return qName != null ? getModuleName(qName.toString()) : "";
   }
 
   private static final class MyBuilder extends ImmutableMap.Builder<String, String> {
@@ -1071,8 +1077,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
 
     @Override
     public MyBuilder put(String key, String value) {
-      return (MyBuilder) super.put(key, value);
+      return (MyBuilder)super.put(key, value);
     }
   }
-
 }

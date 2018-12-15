@@ -31,12 +31,14 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.diagnostic.Logger
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.jps.gant.Log4jFileLoggerFactory
 
 /**
  * @author nik
  */
+@CompileStatic
 class JpsCompilationData {
   final File dataStorageRoot
   final Set<String> compiledModules = new HashSet<>()

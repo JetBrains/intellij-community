@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
+import com.intellij.codeInsight.hint.ImplementationViewElement;
+import com.intellij.codeInsight.hint.PsiImplementationViewElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.codeInsight.navigation.ImplementationSearcher;
@@ -52,6 +40,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usages.UsageView;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,7 +166,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
 
 
-    showImplementations(impls, project, text, editor, file, element, isInvokedFromEditor, invokedByShortcut);
+    showImplementations(ContainerUtil.map(impls, PsiImplementationViewElement::new), project, text, editor, file, element, isInvokedFromEditor, invokedByShortcut);
   }
 
   protected static PsiElement getElement(@NotNull Project project, PsiFile file, Editor editor, PsiElement element) {
@@ -230,10 +219,10 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
 
-    showImplementations(impls, project, text, editor, file, element, false, false);
+    showImplementations(ContainerUtil.map(impls, PsiImplementationViewElement::new), project, text, editor, file, element, false, false);
   }
 
-  protected void showImplementations(@NotNull PsiElement[] impls,
+  protected void showImplementations(@NotNull List<ImplementationViewElement> impls,
                                      @NotNull final Project project,
                                      final String text,
                                      final Editor editor,
@@ -241,7 +230,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
                                      final PsiElement element,
                                      boolean invokedFromEditor,
                                      boolean invokedByShortcut) {
-    if (impls.length == 0) return;
+    if (impls.size() == 0) return;
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKDEFINITION_FEATURE);
     if (LookupManager.getInstance(project).getActiveLookup() != null) {
@@ -249,11 +238,11 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
 
     int index = 0;
-    if (invokedFromEditor && file != null && impls.length > 1) {
+    if (invokedFromEditor && file != null && impls.size() > 1) {
       final VirtualFile virtualFile = file.getVirtualFile();
-      final PsiFile containingFile = impls[0].getContainingFile();
+      final PsiFile containingFile = impls.get(0).getContainingFile();
       if (virtualFile != null && containingFile != null && virtualFile.equals(containingFile.getVirtualFile())) {
-        final PsiFile secondContainingFile = impls[1].getContainingFile();
+        final PsiFile secondContainingFile = impls.get(1).getContainingFile();
         if (secondContainingFile != containingFile) {
           index = 1;
         }
@@ -416,12 +405,14 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     @Override
     public void replaceModel(@NotNull List<? extends PsiElement> data) {
-      final PsiElement[] elements = myComponent.getElements();
+      final ImplementationViewElement[] elements = myComponent.getElements();
       final int includeSelfIdx = myElement instanceof PomTargetPsiElement ? 0 : 1;
       final int startIdx = elements.length - includeSelfIdx;
-      final PsiElement[] result = new PsiElement[data.size() + includeSelfIdx];
-      System.arraycopy(elements, 0, result, 0, elements.length);
-      System.arraycopy(PsiUtilCore.toPsiElementArray(data), startIdx, result, elements.length, data.size() - startIdx);
+      List<ImplementationViewElement> result = new ArrayList<>();
+      Collections.addAll(result, elements);
+      for (PsiElement element : data.subList(startIdx, data.size())) {
+        result.add(new PsiImplementationViewElement(element));
+      };
       myComponent.update(result, myComponent.getIndex());
     }
   }
@@ -494,7 +485,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     @Override
     public void onSuccess() {
       if (!cancelTask()) {
-        myComponent.update(myElements, myComponent.getIndex());
+        myComponent.update(ContainerUtil.map(myElements, PsiImplementationViewElement::new), myComponent.getIndex());
       }
       super.onSuccess();
     }

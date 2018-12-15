@@ -221,7 +221,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
-  public boolean isSelfInheritor(UClass uClass) {
+  public boolean isSelfInheritor(@NotNull UClass uClass) {
     return isSelfInheritor(uClass, new ArrayList<>());
   }
 

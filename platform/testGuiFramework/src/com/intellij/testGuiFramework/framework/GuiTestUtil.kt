@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
@@ -33,6 +33,7 @@ import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
+import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher
 import com.intellij.testGuiFramework.util.*
 import com.intellij.ui.KeyStrokeAdapter
@@ -78,7 +79,7 @@ import javax.swing.*
 import javax.swing.text.JTextComponent
 
 object GuiTestUtil {
-  val GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite"
+  const val GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite"
 
   private val LOG = Logger.getInstance("#com.intellij.tests.gui.framework.GuiTestUtil")
 
@@ -86,9 +87,9 @@ object GuiTestUtil {
    * Environment variable pointing to the JDK to be used for tests
    */
 
-  val JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS"
-  val TEST_DATA_DIR = "GUI_TEST_DATA_DIR"
-  val FIRST_START = "GUI_FIRST_START"
+  const val JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS"
+  const val TEST_DATA_DIR = "GUI_TEST_DATA_DIR"
+  const val FIRST_START = "GUI_FIRST_START"
   private val SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().systemEventQueue
 
   val gradleHomePath: File?
@@ -103,7 +104,7 @@ object GuiTestUtil {
       val testDataDirEnvVar = getSystemPropertyOrEnvironmentVariable(TEST_DATA_DIR)
       if (testDataDirEnvVar != null) return File(testDataDirEnvVar)
 
-      var testDataPath = PathManager.getCommunityHomePath() + "/platform/testGuiFramework/testData"
+      var testDataPath = PathManagerEx.getCommunityHomePath() + "/platform/testGuiFramework/testData"
       assertNotNull(testDataPath)
       assertThat(testDataPath).isNotEmpty
       testDataPath = toCanonicalPath(toSystemDependentName(testDataPath))
@@ -178,8 +179,8 @@ object GuiTestUtil {
     return null
   }
 
-  fun setUpDefaultProjectCreationLocationPath(projectsFolder: File) {
-    RecentProjectsManager.getInstance().lastProjectCreationLocation = PathUtil.toSystemIndependentName(projectsFolder.path)
+  fun setUpDefaultProjectCreationLocationPath() {
+    RecentProjectsManager.getInstance().lastProjectCreationLocation = PathUtil.toSystemIndependentName(GuiTestOptions.projectsDir.path)
   }
 
   // Called by GuiTestPaths via reflection.

@@ -31,6 +31,7 @@ import javax.swing.*;
  * own toolbar button, which starts the selected run configuration using this executor, and its own context menu item for starting
  * a configuration using this executor.
  *
+ * @see ExecutorRegistry
  * @author spleaner
  */
 public abstract class Executor {
@@ -89,7 +90,8 @@ public abstract class Executor {
   @NonNls
   public abstract String getHelpId();
 
-  public String getStartActionText(String configurationName) {
+  @NotNull
+  public String getStartActionText(@NotNull String configurationName) {
     return getStartActionText() + (StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeed(configurationName) + "'");
   }
 

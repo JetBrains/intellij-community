@@ -32,7 +32,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class CellPluginComponent extends JPanel {
-  public static final Color GRAY_COLOR = JBColor.namedColor("Label.grayForeground", new JBColor(Gray._120, Gray._135));
+  public static final Color GRAY_COLOR = JBColor.namedColor("Label.infoForeground", new JBColor(Gray._120, Gray._135));
   private static final Color HOVER_COLOR = JBColor.namedColor("Plugins.selectionBackground", new JBColor(0xF5F9FF, 0x36393B));
 
   public final IdeaPluginDescriptor myPlugin;
@@ -74,7 +74,7 @@ public abstract class CellPluginComponent extends JPanel {
   }
 
   protected void updateIcon(boolean errors, boolean disabled) {
-    myIconLabel.setIcon(PluginLogoInfo.getIcon(false, PluginManagerConfigurableNew.isJBPlugin(myPlugin), errors, disabled));
+    myIconLabel.setIcon(PluginLogo.getIcon(myPlugin, false, PluginManagerConfigurableNew.isJBPlugin(myPlugin), errors, disabled));
   }
 
   protected void addDescriptionComponent(@NotNull JPanel parent, @Nullable String description, @NotNull LineFunction function) {

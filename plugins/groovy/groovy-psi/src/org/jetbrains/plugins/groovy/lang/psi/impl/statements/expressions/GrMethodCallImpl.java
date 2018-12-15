@@ -18,9 +18,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GrImplicitCallReference;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.LOG;
 
 /**
  * @author Maxim.Medvedev
@@ -46,9 +47,7 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
   public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
     final GrExpression invoked = getInvokedExpression();
     if (!(invoked instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
-    if (((GrReferenceExpression)invoked).hasMemberPointer()) return ((GrReferenceExpression)invoked).multiResolve(true);
-
-    return GrReferenceResolveRunnerKt.getCallVariants(((GrReferenceExpression)invoked), upToArgument);
+    return ((GrReferenceExpression)invoked).multiResolve(true);
   }
 
   @Override
@@ -75,7 +74,14 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     if (implicitCallReference != null) {
       return implicitCallReference.multiResolve(incompleteCode);
     }
-    return ((GrReferenceExpression)getInvokedExpression()).multiResolve(incompleteCode);
+    final GrExpression invokedExpression = getInvokedExpression();
+    if (invokedExpression instanceof GrReferenceExpression) {
+      return ((GrReferenceExpression)invokedExpression).multiResolve(incompleteCode);
+    }
+    else {
+      LOG.error("Invoked expression is not a reference expression and there is no implicit call reference: '" + getText() + "'");
+      return GroovyResolveResult.EMPTY_ARRAY;
+    }
   }
 
   @Override

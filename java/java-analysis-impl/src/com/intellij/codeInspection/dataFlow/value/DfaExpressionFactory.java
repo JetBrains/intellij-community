@@ -72,6 +72,7 @@ public class DfaExpressionFactory {
   }
 
   @Nullable
+  @Contract("null -> null")
   public DfaValue getExpressionDfaValue(@Nullable PsiExpression expression) {
     if (expression == null) return null;
 
@@ -298,7 +299,12 @@ public class DfaExpressionFactory {
     }
     PsiType type = expression.getType();
     if (type instanceof PsiPrimitiveType) return DfaUnknownValue.getInstance();
-    return DfaUtil.boxUnbox(myFactory.createTypeValue(type, NullabilityUtil.getExpressionNullability(expression)), targetType);
+    DfaValue typeValue = myFactory.createTypeValue(type, NullabilityUtil.getExpressionNullability(expression));
+    if (expression instanceof PsiArrayInitializerExpression) {
+      int length = ((PsiArrayInitializerExpression)expression).getInitializers().length;
+      return myFactory.withFact(typeValue, DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.ARRAY_LENGTH.withValue(myFactory.getInt(length)));
+    }
+    return DfaUtil.boxUnbox(typeValue, targetType);
   }
 
   @NotNull

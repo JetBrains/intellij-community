@@ -43,6 +43,6 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
     if (SystemInfo.isLinux) {
       return OsVersionUsageCollector.getLinuxOSVersion()
     }
-    return SystemInfo.OS_VERSION
+    return OsVersionUsageCollector.parseVersion(SystemInfo.OS_VERSION)
   }
 }

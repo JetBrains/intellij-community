@@ -260,9 +260,16 @@ public class Tool implements SchemeElement {
   }
 
   public void execute(AnActionEvent event, DataContext dataContext, long executionId, @Nullable final ProcessListener processListener) {
+    executeIfPossible(event, dataContext, executionId, processListener);
+  }
+
+  public boolean executeIfPossible(AnActionEvent event,
+                                   DataContext dataContext,
+                                   long executionId,
+                                   @Nullable final ProcessListener processListener) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
-      return;
+      return false;
     }
 
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -286,7 +293,7 @@ public class Tool implements SchemeElement {
       else {
         GeneralCommandLine commandLine = createCommandLine(dataContext);
         if (commandLine == null) {
-          return;
+          return false;
         }
         OSProcessHandler handler = new OSProcessHandler(commandLine);
         handler.addProcessListener(new ToolProcessAdapter(project, synchronizeAfterExecution(), getName()));
@@ -298,7 +305,9 @@ public class Tool implements SchemeElement {
     }
     catch (ExecutionException ex) {
       ExecutionErrorDialog.show(ex, ToolsBundle.message("tools.process.start.error"), project);
+      return false;
     }
+    return true;
   }
 
   @Nullable

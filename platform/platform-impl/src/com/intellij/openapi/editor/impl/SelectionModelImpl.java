@@ -183,12 +183,12 @@ public class SelectionModelImpl implements SelectionModel {
   }
 
   @Override
-  public void addSelectionListener(SelectionListener listener) {
+  public void addSelectionListener(@NotNull SelectionListener listener) {
     mySelectionListeners.add(listener);
   }
 
   @Override
-  public void removeSelectionListener(SelectionListener listener) {
+  public void removeSelectionListener(@NotNull SelectionListener listener) {
     boolean success = mySelectionListeners.remove(listener);
     LOG.assertTrue(success);
   }

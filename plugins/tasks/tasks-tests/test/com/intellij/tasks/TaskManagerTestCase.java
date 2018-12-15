@@ -17,7 +17,7 @@ package com.intellij.tasks;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.SimpleDateFormat;
@@ -28,7 +28,7 @@ import java.util.TimeZone;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class TaskManagerTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class TaskManagerTestCase extends LightPlatformTestCase {
   protected static final SimpleDateFormat SHORT_TIMESTAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
   static {
     SHORT_TIMESTAMP_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -48,6 +48,9 @@ public abstract class TaskManagerTestCase extends LightCodeInsightFixtureTestCas
     try {
       myTaskManager.setRepositories(Collections.emptyList());
       removeAllTasks();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       myTaskManager = null;

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
+import com.intellij.util.text.nullize
 
 class ExternalSystemActionsCollector : ProjectUsageTriggerCollector() {
   override fun getGroupId(): String {
@@ -19,20 +20,41 @@ class ExternalSystemActionsCollector : ProjectUsageTriggerCollector() {
     @JvmStatic
     fun trigger(project: Project?,
                 systemId: ProjectSystemId?,
-                action: AnAction,
-                event: AnActionEvent?) {
+                featureId: String,
+                place: String?,
+                isFromContextMenu: Boolean,
+                vararg additionalContextData: String) {
       if (project == null) return
 
       // preserve context data ordering
       val context = FUSUsageContext.create(
-        "from.${event?.place ?: "undefined.place"}",
-        "fromContextMenu.${event?.isFromContextMenu?.toString() ?: "false"}",
-        systemId?.let { escapeSystemId(it) } ?: "undefined.system"
+        place.nullize(true) ?: "undefined place",
+        "fromContextMenu.$isFromContextMenu",
+        systemId?.let { escapeSystemId(it) } ?: "undefined.system",
+        *additionalContextData
       )
 
-      FUSProjectUsageTrigger.getInstance(project).trigger(
-        ExternalSystemActionsCollector::class.java,
-        UsageDescriptorKeyValidator.ensureProperKey(action.javaClass.simpleName), context)
+      FUSProjectUsageTrigger.getInstance(project).trigger(ExternalSystemActionsCollector::class.java,
+                                                          UsageDescriptorKeyValidator.ensureProperKey(featureId), context)
+    }
+
+
+    @JvmStatic
+    fun trigger(project: Project?,
+                systemId: ProjectSystemId?,
+                action: AnAction,
+                event: AnActionEvent,
+                vararg additionalContextData: String) {
+      trigger(project, systemId, action.javaClass.simpleName, event, *additionalContextData)
+    }
+
+    @JvmStatic
+    fun trigger(project: Project?,
+                systemId: ProjectSystemId?,
+                featureId: String,
+                event: AnActionEvent,
+                vararg additionalContextData: String) {
+      trigger(project, systemId, featureId, event.place, event.isFromContextMenu, *additionalContextData)
     }
   }
 }

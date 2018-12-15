@@ -541,15 +541,23 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
     Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
                                           "\n" +
+                                          "##teamcity[testSuiteStarted name='TestA' locationHint='java:suite://TestA']\n" +
+                                          "\n" +
                                           "##teamcity[testStarted name='TestA.test1' locationHint='java:test://TestA/test1']\n" +
                                           "\n" +
                                           "##teamcity[testFailed name='TestA.test1' error='true' message='' details='java.lang.Exception|n']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='TestA.test1']\n" +
                                           "\n" +
+                                          "##teamcity[testSuiteFinished name='TestA']\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteStarted name='TestB' locationHint='java:suite://TestB']\n" +
+                                          "\n" +
                                           "##teamcity[testStarted name='TestB.test2' locationHint='java:test://TestB/test2']\n" +
                                           "\n" +
-                                          "##teamcity[testFinished name='TestB.test2']\n", StringUtil.convertLineSeparators(buf.toString()));
+                                          "##teamcity[testFinished name='TestB.test2']\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteFinished name='TestB']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
   @Test
@@ -595,6 +603,43 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "##teamcity[testFinished name='Class Configuration']\n" +
                                           "\n" +
                                           "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+  
+  @Test
+  public void testTearDownClassFailureSingleClass() throws Exception {
+    final Description testA = Description.createSuiteDescription("TestA");
+    final Description testName = Description.createTestDescription("TestA", "testName");
+    testA.addChild(testName);
+
+    final StringBuffer buf = new StringBuffer();
+    final JUnit4TestListener sender = createListener(buf);
+    sender.sendTree(testA);
+
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "##teamcity[suiteTreeNode name='TestA.testName' locationHint='java:test://TestA/testName']\n" +
+                                          "##teamcity[treeEnded]\n", StringUtil.convertLineSeparators(buf.toString()));
+
+    buf.setLength(0);
+
+    sender.testRunStarted(testA);
+    final Exception exception = new Exception();
+    exception.setStackTrace(new StackTraceElement[0]);
+    sender.testStarted(testName);
+    sender.testFinished(testName);
+    sender.testFailure(new Failure(testA, exception));
+    sender.testRunFinished(new Result());
+
+    Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'TestA' location = 'java:suite://TestA']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='TestA.testName' locationHint='java:test://TestA/testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='TestA.testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='Class Configuration' locationHint='java:suite://TestA' ]\n" +
+                                          "\n" +
+                                          "##teamcity[testFailed name='Class Configuration' error='true' message='' details='java.lang.Exception|n']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='Class Configuration']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
   @Test
@@ -959,8 +1004,12 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
            "##teamcity[rootName name = 'TestA' location = 'java:suite://TestA']\n" +
            "\n" +
+           "##teamcity[testSuiteStarted name='TestSuite$1' locationHint='java:suite://junit.framework.TestSuite$1']\n" +
+           "\n" +
            "##teamcity[testStarted name='TestSuite$1.warning' locationHint='java:test://junit.framework.TestSuite$1/warning']\n" +
            "\n" +
-           "##teamcity[testFinished name='TestSuite$1.warning']\n");
+           "##teamcity[testFinished name='TestSuite$1.warning']\n" +
+           "\n" +
+           "##teamcity[testSuiteFinished name='TestSuite$1']\n");
   }
 }

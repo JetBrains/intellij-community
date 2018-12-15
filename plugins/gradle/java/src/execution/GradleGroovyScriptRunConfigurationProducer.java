@@ -3,7 +3,8 @@ package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.actions.LazyRunConfigurationProducer;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -22,9 +24,11 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.*;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleGroovyScriptRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
-  protected GradleGroovyScriptRunConfigurationProducer() {
-    super(GradleExternalTaskConfigurationType.getInstance());
+final class GradleGroovyScriptRunConfigurationProducer extends LazyRunConfigurationProducer<ExternalSystemRunConfiguration> {
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return GradleExternalTaskConfigurationType.getInstance().getFactory();
   }
 
   @Override

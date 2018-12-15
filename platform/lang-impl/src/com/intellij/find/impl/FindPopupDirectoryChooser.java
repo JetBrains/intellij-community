@@ -7,11 +7,11 @@ import com.intellij.find.FindModel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
@@ -151,7 +151,7 @@ public class FindPopupDirectoryChooser extends JPanel {
     return null;
   }
 
-  private class MyRecursiveDirectoryAction extends ToggleAction {
+  private class MyRecursiveDirectoryAction extends DumbAwareToggleAction {
     MyRecursiveDirectoryAction() {
       super(FindBundle.message("find.scope.directory.recursive.checkbox"), "Recursively", AllIcons.Actions.ShowAsTree);
     }

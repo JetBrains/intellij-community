@@ -37,6 +37,8 @@ import java.io.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
@@ -47,6 +49,7 @@ public class DependentGroovycRunner {
   public static final String[] RESOURCES_TO_MASK = {"META-INF/services/org.codehaus.groovy.transform.ASTTransformation", "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule"};
   private static final String STUB_DIR = "stubDir";
 
+  @SuppressWarnings("unused")
   public static boolean runGroovyc(boolean forStubs, String argsPath,
                                    @Nullable String configScript,
                                    @Nullable String targetBytecode, @Nullable Queue mailbox) {
@@ -379,7 +382,11 @@ public class DependentGroovycRunner {
     return unit;
   }
 
-  private static CompilationUnit createStubGenerator(final CompilerConfiguration config, final GroovyClassLoader classLoader, final GroovyClassLoader transformLoader, final Queue mailbox, final GroovyCompilerWrapper wrapper) {
+  private static CompilationUnit createStubGenerator(final CompilerConfiguration config,
+                                                     final GroovyClassLoader classLoader,
+                                                     final GroovyClassLoader transformLoader,
+                                                     final Queue<Object> mailbox,
+                                                     final GroovyCompilerWrapper wrapper) {
     final JavaAwareCompilationUnit unit = new JavaAwareCompilationUnit(config, classLoader) {
       private boolean annoRemovedAdded;
 
@@ -465,7 +472,7 @@ public class DependentGroovycRunner {
               System.out.flush();
               System.err.flush();
 
-              pauseAndWaitForJavac(mailbox);
+              pauseAndWaitForJavac((LinkedBlockingQueue<Object>)mailbox);
               wrapper.onContinuation();
             }
           }
@@ -476,20 +483,16 @@ public class DependentGroovycRunner {
     return unit;
   }
 
-  @SuppressWarnings("unchecked")
-  private static void pauseAndWaitForJavac(Queue mailbox) {
-    mailbox.offer(GroovyRtConstants.STUBS_GENERATED);
+  private static void pauseAndWaitForJavac(LinkedBlockingQueue<Object> mailbox) {
+    LinkedBlockingQueue<String> fromJps = new LinkedBlockingQueue<String>();
+    mailbox.offer(fromJps); // signal that stubs are generated
     while (true) {
       try {
-        //noinspection BusyWait
-        Thread.sleep(10);
-        Object response = mailbox.poll();
-        if (GroovyRtConstants.STUBS_GENERATED.equals(response)) {
-          mailbox.offer(response); // another thread hasn't received it => resend
-        } else if (GroovyRtConstants.BUILD_ABORTED.equals(response)) {
+        Object response = fromJps.poll(1, TimeUnit.MINUTES);
+        if (GroovyRtConstants.BUILD_ABORTED.equals(response)) {
           throw new RuntimeException(GroovyRtConstants.BUILD_ABORTED);
         } else if (GroovyRtConstants.JAVAC_COMPLETED.equals(response)) {
-          break; // stop waiting and continue compiling
+          return; // stop waiting and continue compiling
         } else if (response != null) {
           throw new RuntimeException("Unknown response: " + response);
         }

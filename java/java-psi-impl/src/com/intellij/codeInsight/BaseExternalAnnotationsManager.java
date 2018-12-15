@@ -378,12 +378,17 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     throw new UnsupportedOperationException();
   }
 
-  void cacheExternalAnnotations(@SuppressWarnings("UnusedParameters") @NotNull String packageName,
-                                @NotNull PsiFile fromFile,
-                                @NotNull List<PsiFile> annotationFiles) {
+  protected void registerExternalAnnotations(@NotNull PsiFile fromFile, @NotNull PsiFile annotationsFile) {
     VirtualFile virtualFile = fromFile.getVirtualFile();
     if (virtualFile != null) {
-      myExternalAnnotationsCache.put(virtualFile, annotationFiles);
+      myExternalAnnotationsCache.compute(virtualFile, (k, v) -> {
+        if (v == null || v == NULL_LIST) {
+          return new SmartList<>(annotationsFile);
+        }
+
+        v.add(annotationsFile);
+        return v;
+      });
     }
   }
 

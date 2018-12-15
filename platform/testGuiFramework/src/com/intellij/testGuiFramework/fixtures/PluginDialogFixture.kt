@@ -138,8 +138,8 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(
       waitFor {
         val pluginPathTextField: JTextField =
           waitUntilFound(target(), JTextField::class.java, Timeouts.defaultTimeout) { it.isEnabled && it.isShowing }
-        JTextComponentFixture(robot(), pluginPathTextField).deleteText().enterText(pluginPath)
         clickRefresh()
+        JTextComponentFixture(robot(), pluginPathTextField).deleteText().enterText(pluginPath)
         pluginPathTextField.text == pluginPath
       }
     }

@@ -1953,7 +1953,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     XmlTag tag = PsiTreeUtil.getParentOfType(at.getElement(), XmlTag.class);
     XmlElementDescriptorImpl descriptor = (XmlElementDescriptorImpl)tag.getDescriptor();
     XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);
-    System.out.println(Arrays.asList(descriptors));
+    LOG.debug(String.valueOf(Arrays.asList(descriptors)));
 
     doDoTest(true, false);
 
@@ -1972,7 +1972,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       XmlTag tag = PsiTreeUtil.getParentOfType(at.getElement(), XmlTag.class);
       XmlElementDescriptor descriptor = tag.getDescriptor();
       XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);
-      System.out.println(Arrays.asList(descriptors));
+      LOG.debug(String.valueOf(Arrays.asList(descriptors)));
     }
     finally {
       DumbServiceImpl.getInstance(myProject).setDumb(false);
@@ -2208,6 +2208,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   protected void tearDown() throws Exception {
     try {
       XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS = old;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

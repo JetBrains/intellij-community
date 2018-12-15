@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
@@ -159,8 +160,9 @@ public class ActionUtil {
     boolean allowed = (!dumbMode || action.isDumbAware()) &&
                       (!Registry.is("actionSystem.honor.modal.context") || !isInModalContext || action.isEnabledInModalContext());
 
-    String description = presentation.getText() + " action update (" + action.getClass() + ")";
-    if (insidePerformDumbAwareUpdate++ == 0) {
+    String presentationText = presentation.getText();
+    boolean edt = ApplicationManager.getApplication().isDispatchThread();
+    if (edt && insidePerformDumbAwareUpdate++ == 0) {
       ActionPauses.STAT.started();
     }
     try {
@@ -180,8 +182,8 @@ public class ActionUtil {
       throw e1;
     }
     finally {
-      if (--insidePerformDumbAwareUpdate == 0) {
-        ActionPauses.STAT.finished(description);
+      if (edt && --insidePerformDumbAwareUpdate == 0) {
+        ActionPauses.STAT.finished(presentationText + " action update (" + action.getClass() + ")");
       }
       if (!allowed) {
         if (wasEnabledBefore == null) {

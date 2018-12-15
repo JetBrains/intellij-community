@@ -1,76 +1,36 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.ResolveState
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLevelSession
+import org.jetbrains.plugins.groovy.util.recursionAwareLazy
+import org.jetbrains.plugins.groovy.util.recursionPreventingLazy
 import kotlin.reflect.jvm.isAccessible
 
 class MethodResolveResult(
   method: PsiMethod,
-  ref: GrReferenceExpression,
-  state: ResolveState
-) : BaseGroovyResolveResult<PsiMethod>(method, ref, state), GroovyMethodResult {
+  place: PsiElement,
+  state: ResolveState,
+  arguments: Arguments?
+) : BaseMethodResolveResult(method, place, state, arguments) {
 
-  private val siteSubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    super.getSubstitutor().putAll(method.typeParameters, ref.typeArguments)
+  override fun getPartialSubstitutor(): PsiSubstitutor = myPartialSubstitutor
+
+  private val myPartialSubstitutor by recursionAwareLazy {
+    GroovyInferenceSessionBuilder(place, myCandidate, contextSubstitutor).build().inferSubst()
   }
 
-  private val methodCandidate by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    val argumentConstraints = buildArguments(ref)
-    if (method is GrGdkMethod) {
-      val arguments = mutableListOf<Argument>().apply {
-        add(0, buildQualifier(ref, state))
-        addAll(argumentConstraints)
-      }
-      MethodCandidate(method.staticMethod, siteSubstitutor, arguments, ref)
-    }
-    else {
-      MethodCandidate(method, siteSubstitutor, argumentConstraints, ref)
-    }
+  override fun getSubstitutor(): PsiSubstitutor = fullSubstitutor ?: error("Recursion prevented")
+
+  private val fullSubstitutor by recursionPreventingLazy {
+    buildTopLevelSession(place).inferSubst(this)
   }
-
-  private val applicabilitySubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    if (ref.typeArguments.isNotEmpty()) {
-      siteSubstitutor
-    }
-    else {
-      GroovyInferenceSessionBuilder(ref, methodCandidate).build().inferSubst()
-    }
-  }
-
-  private val fullSubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    if (ref.typeArguments.isNotEmpty()) {
-      siteSubstitutor
-    }
-    else {
-      GroovyInferenceSessionBuilder(ref, methodCandidate)
-        .addReturnConstraint()
-        .resolveMode(false)
-        .startFromTop(true)
-        .build().inferSubst(ref)
-    }
-  }
-
-  override fun getCandidate(): MethodCandidate? = methodCandidate
-
-  override fun getPartialSubstitutor(): PsiSubstitutor = applicabilitySubstitutor
-
-  override fun getSubstitutor(): PsiSubstitutor = fullSubstitutor
-
-  private val applicability by lazy {
-    methodCandidate.isApplicable(applicabilitySubstitutor)
-  }
-
-  override fun isApplicable(): Boolean = applicability
-
-  val applicabilityDelegate: Lazy<*>
-    @TestOnly get() = ::applicability.apply { isAccessible = true }.getDelegate() as Lazy<*>
 
   val fullSubstitutorDelegate: Lazy<*>
     @TestOnly get() = ::fullSubstitutor.apply { isAccessible = true }.getDelegate() as Lazy<*>

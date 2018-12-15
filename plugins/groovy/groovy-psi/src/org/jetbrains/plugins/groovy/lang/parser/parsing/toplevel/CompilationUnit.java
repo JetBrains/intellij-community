@@ -2,14 +2,14 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel;
 
 import com.intellij.lang.PsiBuilder;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 
 @Deprecated
 public class CompilationUnit {
 
   @Deprecated
   public static void parseFile(PsiBuilder builder, GroovyParser parser) {
-    parser.parseLight(GroovyElementTypes.GROOVY_FILE, builder);
+    parser.parseLight(GroovyParserDefinition.GROOVY_FILE, builder);
   }
 }

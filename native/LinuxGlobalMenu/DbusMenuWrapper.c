@@ -30,6 +30,7 @@ typedef struct _WndInfo {
   DbusmenuServer *server;
   DbusmenuMenuitem *menuroot;
   jeventcallback jhandler;
+  jrunnable onReleaseCallback;
   GList* linkedXids;
 } WndInfo;
 
@@ -211,6 +212,10 @@ static void _releaseWindow(WndInfo *wi) {
     wi->linkedXids = NULL;
   }
 
+  if (wi->onReleaseCallback != NULL) {
+    (*wi->onReleaseCallback)();
+    wi->onReleaseCallback = NULL;
+  }
   free(wi);
 }
 
@@ -340,8 +345,10 @@ static gboolean _execReleaseWindow(gpointer user_data) {
   return FALSE;
 }
 
-void releaseWindowOnMainLoop(WndInfo *wi) {
+void releaseWindowOnMainLoop(WndInfo *wi, jrunnable onReleased) {
   // _info("scheduled releaseWindowOnMainLoop");
+  if (wi != NULL)
+    wi->onReleaseCallback = onReleased;
   g_idle_add(_execReleaseWindow, wi);
 }
 
@@ -439,10 +446,10 @@ DbusmenuMenuitem *addRootMenu(WndInfo *wi, int uid, const char * label) {
   if (wi == NULL || wi->menuroot == NULL)
     return NULL;
   // _logmsg(LOG_LEVEL_INFO, "add root %d", uid);
-  return addMenuItem(wi->menuroot, uid, label, true);
+  return addMenuItem(wi->menuroot, uid, label, true, -1);
 }
 
-DbusmenuMenuitem *addMenuItem(DbusmenuMenuitem *parent, int uid, const char * label, int type) {
+DbusmenuMenuitem *addMenuItem(DbusmenuMenuitem *parent, int uid, const char * label, int type, int position) {
   // _logmsg(LOG_LEVEL_INFO, "add menu item %s (%d) [p %s]", label, uid, _getItemLabel(parent));
 
   DbusmenuMenuitem *item = dbusmenu_menuitem_new();
@@ -469,22 +476,31 @@ DbusmenuMenuitem *addMenuItem(DbusmenuMenuitem *parent, int uid, const char * la
     if (data == NULL)
       _logmsg(LOG_LEVEL_ERROR, "parent of item %d hasn't jhandler", uid);
     g_object_set_data(G_OBJECT(item), MENUITEM_JHANDLER_PROPERTY, data);
-    dbusmenu_menuitem_child_append(parent, item);
+    if (position < 0)
+      dbusmenu_menuitem_child_append(parent, item);
+    else
+      dbusmenu_menuitem_child_add_position(parent, item, position);
   }
 
   return item;
 }
 
-DbusmenuMenuitem* addSeparator(DbusmenuMenuitem * parent, int uid) {
+DbusmenuMenuitem* addSeparator(DbusmenuMenuitem * parent, int uid, int position) {
   DbusmenuMenuitem* item = dbusmenu_menuitem_new();
   dbusmenu_menuitem_property_set(item, DBUSMENU_MENUITEM_PROP_TYPE, "separator");
   dbusmenu_menuitem_property_set_int(item, MENUITEM_UID_PROPERTY, uid);
   dbusmenu_menuitem_property_set_bool(item, DBUSMENU_MENUITEM_PROP_VISIBLE, TRUE);
-  if (parent != NULL)
-    dbusmenu_menuitem_child_append(parent, item);
+  if (parent != NULL) {
+    if (position < 0)
+      dbusmenu_menuitem_child_append(parent, item);
+    else
+      dbusmenu_menuitem_child_add_position(parent, item, position);
+  }
 
   return item;
 }
+
+void reorderMenuItem(DbusmenuMenuitem * parent, DbusmenuMenuitem* item, int position) { dbusmenu_menuitem_child_reorder(parent, item, position); }
 
 void removeMenuItem(DbusmenuMenuitem * parent, DbusmenuMenuitem* item) { dbusmenu_menuitem_child_delete(parent, item); }
 
@@ -507,25 +523,30 @@ void setItemIcon(DbusmenuMenuitem *item, const char *iconBytesPng, int iconBytes
 //    _logmsg(LOG_LEVEL_ERROR, "\tcan't set %d icon bytes for item %s", iconBytesCount, _getItemLabel(item));
 }
 
-void setItemShortcut(DbusmenuMenuitem *item, int jmodifiers, int jkeycode) {
-  GVariantBuilder builder;
-  g_variant_builder_init(&builder, G_VARIANT_TYPE_ARRAY);
-  if ((jmodifiers & JMOD_SHIFT) != 0)
-    g_variant_builder_add(&builder, "s",  DBUSMENU_MENUITEM_SHORTCUT_SHIFT);
-  if ((jmodifiers & JMOD_CTRL) != 0)
-    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_CONTROL);
-  if ((jmodifiers & JMOD_ALT) != 0)
-    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_ALT);
-  if ((jmodifiers & JMOD_META) != 0)
-    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_SUPER);
+// java modifiers
+static const int SHIFT_MASK          = 1 << 0;
+static const int CTRL_MASK           = 1 << 1;
+static const int META_MASK           = 1 << 2;
+static const int ALT_MASK            = 1 << 3;
 
-  char* xname = XKeysymToString(jkeycode);
+void setItemShortcut(DbusmenuMenuitem *item, int jmodifiers, int x11keycode) {
+  char* xname = XKeysymToString(x11keycode);
   if (xname == NULL) {
-    _logmsg(LOG_LEVEL_ERROR, "XKeysymToString returns null for jkeycode=%d", jkeycode);
+    // _logmsg(LOG_LEVEL_ERROR, "XKeysymToString returns null for x11keycode=%d", x11keycode);
     return;
   }
+  // _logmsg(LOG_LEVEL_INFO, "XKeysymToString returns %s for x11keycode=%d", xname, x11keycode);
 
-  // _logmsg(LOG_LEVEL_INFO, "XKeysymToString returns %s for jkeycode=%d", xname, jkeycode);
+  GVariantBuilder builder;
+  g_variant_builder_init(&builder, G_VARIANT_TYPE_ARRAY);
+  if ((jmodifiers & SHIFT_MASK) != 0)
+    g_variant_builder_add(&builder, "s",  DBUSMENU_MENUITEM_SHORTCUT_SHIFT);
+  if ((jmodifiers & CTRL_MASK) != 0)
+    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_CONTROL);
+  if ((jmodifiers & ALT_MASK) != 0)
+    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_ALT);
+  if ((jmodifiers & META_MASK) != 0)
+    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_SUPER);
 
   g_variant_builder_add(&builder, "s", xname);
 

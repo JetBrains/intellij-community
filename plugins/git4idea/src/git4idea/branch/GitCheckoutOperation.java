@@ -81,7 +81,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   protected void execute() {
     saveAllDocuments();
     boolean fatalErrorHappened = false;
-    branchWillChange();
+    notifyBranchWillChange();
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, getOperationName())) {
       while (hasMoreRepositories() && !fatalErrorHappened) {
         final GitRepository repository = next();
@@ -141,7 +141,8 @@ class GitCheckoutOperation extends GitBranchOperation {
                                                            "<br><a href='rollback'>Rollback</a>",
                                                            new RollbackOperationNotificationListener());
         }
-        updateRecentBranch(myStartPointReference);
+        notifyBranchHasChanged(myStartPointReference);
+        updateRecentBranch();
       }
       else {
         LOG.assertTrue(!myRefShouldBeValid);

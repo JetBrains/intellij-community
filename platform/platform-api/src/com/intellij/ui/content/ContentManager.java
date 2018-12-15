@@ -37,7 +37,7 @@ public interface ContentManager extends Disposable, BusyObject {
 
   boolean removeContent(@NotNull Content content, final boolean dispose);
   @NotNull
-  ActionCallback removeContent(@NotNull Content content, final boolean dispose, boolean trackFocus, boolean forcedFocus);
+  ActionCallback removeContent(@NotNull Content content, final boolean dispose, boolean requestFocus, boolean forcedFocus);
 
   void setSelectedContent(@NotNull Content content);
   @NotNull
@@ -83,9 +83,9 @@ public interface ContentManager extends Disposable, BusyObject {
   @Nullable
   Content getContent(int index);
 
-  Content getContent(JComponent component);
+  Content getContent(@NotNull JComponent component);
 
-  int getIndexOfContent(Content content);
+  int getIndexOfContent(@NotNull Content content);
 
   @NotNull
   String getCloseActionName();
@@ -115,6 +115,7 @@ public interface ContentManager extends Disposable, BusyObject {
   @NotNull
   String getNextContentActionName();
 
+  @NotNull
   List<AnAction> getAdditionalPopupActions(@NotNull  Content content);
 
   void removeFromSelection(@NotNull Content content);

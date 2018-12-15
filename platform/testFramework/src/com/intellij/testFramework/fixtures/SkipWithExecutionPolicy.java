@@ -6,6 +6,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a test as not applicable to a given test execution policy. If the value of this annotation
+ * matches the {@link IdeaTestExecutionPolicy#getName()} of the current test execution policy, the test will be skipped.
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SkipWithExecutionPolicy {

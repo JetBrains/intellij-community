@@ -17,7 +17,7 @@ class StringEquality {
     switch(s) {
       case "bar":
       case "baz":
-      <warning descr="Switch label 'case \"foo\":' is unreachable">case "foo":</warning>
+      case <warning descr="Switch label '\"foo\"' is unreachable">"foo"</warning>:
     }
   }
 
@@ -99,5 +99,9 @@ class StringEquality {
   
   void testIncorrect(String s) {
     if(<error descr="Operator '==' cannot be applied to 'java.lang.String', 'int'">s == s.length()</error>) {}
+  }
+  
+  void testTrim() {
+    System.out.println(" EQ ".trim() == "EQ");
   }
 }

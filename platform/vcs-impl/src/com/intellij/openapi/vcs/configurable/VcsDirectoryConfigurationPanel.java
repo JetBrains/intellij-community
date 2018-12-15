@@ -278,7 +278,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   public VcsDirectoryConfigurationPanel(final Project project) {
     myProject = project;
     myVcsConfiguration = getInstance(myProject);
-    myProjectMessage = XmlStringUtil.wrapInHtml(StringUtil.escapeXml(VcsDirectoryMapping.PROJECT_CONSTANT) + " - " +
+    myProjectMessage = XmlStringUtil.wrapInHtml(StringUtil.escapeXmlEntities(VcsDirectoryMapping.PROJECT_CONSTANT) + " - " +
                                                 DefaultVcsRootPolicy.getInstance(myProject).getProjectConfigurationMessage(myProject)
                                                   .replace('\n', ' '));
     myIsDisabled = myProject.isDefault();

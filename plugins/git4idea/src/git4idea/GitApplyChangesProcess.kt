@@ -68,16 +68,14 @@ class GitApplyChangesProcess(private val project: Project,
     val successfulCommits = mutableListOf<VcsFullCommitDetails>()
     val skippedCommits = mutableListOf<VcsFullCommitDetails>()
 
-    DvcsUtil.workingTreeChangeStarted(project, operationName).use {
-      for ((repository, value) in commitsInRoots) {
-        val result = executeForRepo(repository, value, successfulCommits, skippedCommits)
-        repository.update()
-        if (!result) {
-          return
-        }
+    for ((repository, value) in commitsInRoots) {
+      val result = executeForRepo(repository, value, successfulCommits, skippedCommits)
+      repository.update()
+      if (!result) {
+        return
       }
-      notifyResult(successfulCommits, skippedCommits)
     }
+    notifyResult(successfulCommits, skippedCommits)
   }
 
   // return true to continue with other roots, false to break execution
@@ -351,7 +349,7 @@ class GitApplyChangesProcess(private val project: Project,
   }
 
   private fun commitDetails(commit: VcsFullCommitDetails): String {
-    return commit.id.toShortString() + " " + StringUtil.escapeXml(commit.subject)
+    return commit.id.toShortString() + " " + StringUtil.escapeXmlEntities(commit.subject)
   }
 
   private fun toString(commitsInRoots: Map<GitRepository, List<VcsFullCommitDetails>>): String {

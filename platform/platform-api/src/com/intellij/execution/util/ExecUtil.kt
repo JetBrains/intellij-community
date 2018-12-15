@@ -24,6 +24,7 @@ object ExecUtil {
   private val hasGnomeTerminal = PathExecLazyValue("gnome-terminal")
   private val hasKdeTerminal = PathExecLazyValue("konsole")
   private val hasXTerm = PathExecLazyValue("xterm")
+  private val hasSetsid = PathExecLazyValue("setsid")
 
   private const val nicePath = "/usr/bin/nice"
   private val hasNice by lazy { File(nicePath).exists() }
@@ -229,6 +230,15 @@ object ExecUtil {
   }
 
   private fun canRunLowPriority() = Registry.`is`("ide.allow.low.priority.process") && (SystemInfo.isWindows || hasNice)
+
+  @JvmStatic
+  fun setupNoTtyExecution(commandLine: GeneralCommandLine) {
+    if (SystemInfo.isLinux && hasSetsid.value) {
+      val executablePath = commandLine.exePath
+      commandLine.exePath = "setsid"
+      commandLine.parametersList.prependAll("-w", executablePath)
+    }
+  }
 
   //<editor-fold desc="Deprecated stuff.">
 

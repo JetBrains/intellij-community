@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -10,8 +9,10 @@ import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.actions.bigPopup.ShowFilterAction;
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -64,6 +65,7 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -73,21 +75,18 @@ import java.util.stream.IntStream;
  */
 public class SearchEverywhereUI extends BigPopupUI implements DataProvider, QuickSearchComponent {
   private static final Logger LOG = Logger.getInstance(SearchEverywhereUI.class);
+
+  public static final String SEARCH_EVERYWHERE_SEARCH_FILED_KEY = "search-everywhere-textfield"; //only for testing purposes
+
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
   public static final int THROTTLING_TIMEOUT = 200;
-
-  private static final String CONTRIBUTOR_ITEM_SELECTED = "ContributorItemChosen";
-  private static final String MORE_ITEM_SELECTED = "MoreItemChosen";
-  private static final String COMMAND_USED = "CommandUsed";
-  private static final String COMMAND_COMPLETED = "CommandCompleted";
-  public static final String TAB_SWITCHED = "TabSwitched";
 
   private final List<? extends SearchEverywhereContributor> myServiceContributors;
   private final List<? extends SearchEverywhereContributor> myShownContributors;
   private final Map<String, SearchEverywhereContributorFilter<?>> myContributorFilters;
 
-  private SearchListModel myListModel; //todo using in different threads? #UX-1
+  private SearchListModel myListModel;
 
   private SETab mySelectedTab;
   private final JCheckBox myNonProjectCB;
@@ -114,7 +113,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       myBufferedListener = null;
     } else {
       myBufferedListener = new ThrottlingListenerWrapper(THROTTLING_TIMEOUT, mySearchListener, Runnable::run);
-      mySearcher = new MultithreadSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run), equalityProviders);
+      mySearcher = new MultiThreadSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run), equalityProviders);
     }
 
     myServiceContributors = serviceContributors;
@@ -199,7 +198,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
                      .orElse(IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName()));
     if (checkBoxText.indexOf(UIUtil.MNEMONIC) != -1) {
       DialogUtil.setTextWithMnemonic(myNonProjectCB, checkBoxText);
-    } else {
+    }
+    else {
       myNonProjectCB.setText(checkBoxText);
       myNonProjectCB.setDisplayedMnemonicIndex(-1);
       myNonProjectCB.setMnemonic(0);
@@ -208,8 +208,50 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       doSetUseNonProjectItems(false, true);
     }
 
+    if (mySearchField instanceof ExtendableTextField) {
+      ExtendableTextField textField = (ExtendableTextField)mySearchField;
+
+      Boolean commandsSupported = mySelectedTab.getContributor()
+        .map(contributor -> !contributor.getSupportedCommands().isEmpty())
+        .orElse(true);
+      if (commandsSupported) {
+        textField.addExtension(hintExtension);
+      }
+      else {
+        textField.removeExtension(hintExtension);
+      }
+
+      textField.removeExtension(myAdvertisement);
+      if (!commandsSupported) {
+        tab.getContributor().map(c -> c.getAdvertisement()).
+          ifPresent(s -> textField.addExtension(myAdvertisement.withText(s)));
+      }
+    }
+
     repaint();
     rebuildList();
+  }
+
+  private final MyAdvertisement myAdvertisement = new MyAdvertisement();
+
+  private final class MyAdvertisement implements ExtendableTextComponent.Extension {
+    private final TextIcon icon;
+    String message = "";
+
+    {
+      icon = new TextIcon(message, JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground(), null, 0);
+      icon.setFont(RelativeFont.SMALL.derive(getFont()));
+    }
+
+    MyAdvertisement withText(@NotNull String text) {
+      icon.setText(text);
+      return this;
+    }
+
+    @Override
+    public Icon getIcon(boolean hovered) {
+      return icon;
+    }
   }
 
   public String getSelectedContributorID() {
@@ -231,6 +273,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
       return getSearchPattern();
     }
+    if (PlatformDataKeys.PROJECT.is(dataId))
+      return myProject;
 
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       List<PsiElement> elements = indicesStream.mapToObj(i -> {
@@ -326,31 +370,11 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   @NotNull
   @Override
   protected ExtendableTextField createSearchField() {
-    return new SearchField() {
+    SearchField res = new SearchField() {
       @NotNull
       @Override
-      protected ExtendableTextComponent.Extension getRightExtension() {
-        return new ExtendableTextField.Extension() {
-          private final TextIcon icon;
-
-          {
-            String message = IdeBundle.message("searcheverywhere.textfield.hint", SearchTopHitProvider.getTopHitAccelerator());
-            Color color = JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground();
-            icon = new TextIcon(message, color, null, 0);
-            icon.setFont(RelativeFont.SMALL.derive(getFont()));
-          }
-
-          @Override
-          public Icon getIcon(boolean hovered) {
-            return icon;
-          }
-        };
-      }
-
-      @NotNull
-      @Override
-      protected ExtendableTextComponent.Extension getLeftExtension() {
-        return new ExtendableTextField.Extension() {
+      protected Extension getLeftExtension() {
+        return new Extension() {
           @Override
           public Icon getIcon(boolean hovered) {
             return AllIcons.Actions.Find;
@@ -368,6 +392,14 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         };
       }
     };
+    res.putClientProperty(SEARCH_EVERYWHERE_SEARCH_FILED_KEY, true);
+    return res;
+  }
+
+  @Override
+  protected void installScrollingActions() {
+    ScrollingUtil.installMoveUpAction(myResultsList, getSearchField());
+    ScrollingUtil.installMoveDownAction(myResultsList, getSearchField());
   }
 
   @Override
@@ -404,7 +436,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         @Override
         public void mousePressed(MouseEvent e) {
           switchToTab(SETab.this);
-          featureUsed(TAB_SWITCHED, getID());
+          featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, FUSUsageContext.create(getID(), "mouseClick"));
         }
       });
     }
@@ -496,9 +528,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
                                      .collect(Collectors.toSet()));
           }
           else {
-            List<SESearcher.ElementInfo> lst = commands.stream()
-              .map(command -> new SESearcher.ElementInfo(command, 0, stubCommandContributor))
-              .collect(Collectors.toList());
+            List<SESearcher.ElementInfo> lst =
+              ContainerUtil.map(commands, command -> new SESearcher.ElementInfo(command, 0, stubCommandContributor));
             myListModel.addElements(lst, stubCommandContributor);
             ScrollingUtil.ensureSelectionExists(myResultsList);
           }
@@ -542,24 +573,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     mySearchField.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_TAB) {
-          // if user typed command then TAB key completes it
-          // in other case TAB key switches tabs
-          if (completeCommand()) {
-            featureUsed(COMMAND_COMPLETED, "Tab");
-          }
-          else {
-            if (e.getModifiers() == 0) {
-              switchToNextTab();
-              featureUsed(TAB_SWITCHED, "Tab");
-            } else if (e.getModifiers() == InputEvent.SHIFT_MASK) {
-              switchToPrevTab();
-              featureUsed(TAB_SWITCHED, "Shift+Tab");
-            }
-          }
-          e.consume();
-        }
-
         if (e.isShiftDown()) {
           if (e.getKeyCode() == KeyEvent.VK_DOWN) {
             myResultsList.dispatchEvent(e);
@@ -570,22 +583,23 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
             e.consume();
           }
         }
-
-        int[] indices = myResultsList.getSelectedIndices();
-        if (e.getKeyCode() == KeyEvent.VK_ENTER && indices.length != 0) {
-          elementsSelected(indices, e.getModifiers());
-        }
       }
     });
 
-    registerAction(IdeActions.ACTION_NEXT_TAB, e -> {
+    Consumer<AnActionEvent> nextTabAction = e -> {
       switchToNextTab();
-      getEventShortcut(e).ifPresent(shortcutString -> featureUsed(TAB_SWITCHED, shortcutString));
-    });
-    registerAction(IdeActions.ACTION_PREVIOUS_TAB, e -> {
+      triggerTabSwitched(e);
+    };
+    Consumer<AnActionEvent> prevTabAction = e -> {
       switchToPrevTab();
-      getEventShortcut(e).ifPresent(shortcutString -> featureUsed(TAB_SWITCHED, shortcutString));
-    });
+      triggerTabSwitched(e);
+    };
+
+    registerAction(SearchEverywhereActions.AUTOCOMPLETE_COMMAND, CompleteCommandAction::new);
+    registerAction(SearchEverywhereActions.SWITCH_TO_NEXT_TAB, nextTabAction);
+    registerAction(SearchEverywhereActions.SWITCH_TO_PREV_TAB, prevTabAction);
+    registerAction(IdeActions.ACTION_NEXT_TAB, nextTabAction);
+    registerAction(IdeActions.ACTION_PREVIOUS_TAB, prevTabAction);
     registerAction(IdeActions.ACTION_SWITCHER, e -> {
       if (e.getInputEvent().isShiftDown()) {
         switchToPrevTab();
@@ -593,8 +607,19 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       else {
         switchToNextTab();
       }
-      getEventShortcut(e).ifPresent(shortcutString -> featureUsed(TAB_SWITCHED, shortcutString));
+      triggerTabSwitched(e);
     });
+    registerAction(SearchEverywhereActions.NAVIGATE_TO_NEXT_GROUP, e -> {
+      fetchGroups(true);
+      FUSUsageContext context = getEventShortcut(e).map(shortcut -> FUSUsageContext.create(shortcut)).orElse(null);
+      featureTriggered(SearchEverywhereUsageTriggerCollector.GROUP_NAVIGATE, context);
+    });
+    registerAction(SearchEverywhereActions.NAVIGATE_TO_PREV_GROUP, e -> {
+      fetchGroups(false);
+      FUSUsageContext context = getEventShortcut(e).map(shortcut -> FUSUsageContext.create(shortcut)).orElse(null);
+      featureTriggered(SearchEverywhereUsageTriggerCollector.GROUP_NAVIGATE, context);
+    });
+    registerSelectItemAction();
 
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
     DumbAwareAction.create(__ -> closePopup())
@@ -639,7 +664,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     mySearchField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        if (!isHintComponent(e.getOppositeComponent())) {
+        Component oppositeComponent = e.getOppositeComponent();
+        if (!isHintComponent(oppositeComponent) && !UIUtil.haveCommonOwner(SearchEverywhereUI.this, oppositeComponent)) {
           closePopup();
         }
       }
@@ -654,35 +680,77 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     }
   }
 
-  private void registerAction(String actionID, Consumer<AnActionEvent> action) {
+  private void registerAction(String actionID, Supplier<AnAction> actionSupplier) {
     Optional.ofNullable(ActionManager.getInstance().getAction(actionID))
       .map(a -> a.getShortcutSet())
-      .ifPresent(shortcuts -> DumbAwareAction.create(action).registerCustomShortcutSet(shortcuts, this));
+      .ifPresent(shortcuts -> actionSupplier.get().registerCustomShortcutSet(shortcuts, this, this));
+  }
+
+  private void registerAction(String actionID, Consumer<AnActionEvent> action) {
+    registerAction(actionID, () -> DumbAwareAction.create(action));
+  }
+
+  // when user adds shortcut for "select item" we should add shortcuts
+  // with all possible modifiers (Ctrl, Shift, Alt, etc.)
+  private void registerSelectItemAction() {
+    int[] allowedModifiers = new int[]{
+      0,
+      InputEvent.SHIFT_MASK,
+      InputEvent.CTRL_MASK,
+      InputEvent.META_MASK,
+      InputEvent.ALT_MASK
+    };
+
+    ShortcutSet selectShortcuts = ActionManager.getInstance().getAction(SearchEverywhereActions.SELECT_ITEM).getShortcutSet();
+    Collection<KeyboardShortcut> keyboardShortcuts = Arrays.stream(selectShortcuts.getShortcuts())
+      .filter(shortcut -> shortcut instanceof KeyboardShortcut)
+      .map(shortcut -> (KeyboardShortcut)shortcut)
+      .collect(Collectors.toList());
+
+    for (int modifiers : allowedModifiers) {
+      Collection<Shortcut> newShortcuts = new ArrayList<>();
+      for (KeyboardShortcut shortcut : keyboardShortcuts) {
+        boolean hasSecondStroke = shortcut.getSecondKeyStroke() != null;
+        KeyStroke originalStroke = hasSecondStroke ? shortcut.getSecondKeyStroke() : shortcut.getFirstKeyStroke();
+
+        if ((originalStroke.getModifiers() & modifiers) != 0) continue;
+
+        KeyStroke newStroke = KeyStroke.getKeyStroke(originalStroke.getKeyCode(), originalStroke.getModifiers() | modifiers);
+        newShortcuts.add(hasSecondStroke
+                         ? new KeyboardShortcut(shortcut.getFirstKeyStroke(), newStroke)
+                         : new KeyboardShortcut(newStroke, null));
+      }
+      if (newShortcuts.isEmpty()) continue;
+
+      ShortcutSet newShortcutSet = new CustomShortcutSet(newShortcuts.toArray(Shortcut.EMPTY_ARRAY));
+      DumbAwareAction.create(event -> {
+        int[] indices = myResultsList.getSelectedIndices();
+        elementsSelected(indices, modifiers);
+      }).registerCustomShortcutSet(newShortcutSet, this, this);
+    }
   }
 
   private static Optional<String> getEventShortcut(AnActionEvent event) {
-    if (event.getInputEvent() instanceof KeyEvent) {
-      return Optional.of((KeyEvent)event.getInputEvent())
-        .map(e -> KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers())));
-    }
-    return Optional.empty();
+    return Optional.ofNullable(KeymapUtil.getEventCallerKeystrokeText(event));
   }
 
-  private boolean completeCommand() {
-    String pattern = getSearchPattern();
-    String commandPrefix = SearchTopHitProvider.getTopHitAccelerator();
-    if (pattern.startsWith(commandPrefix) && !pattern.contains(" ")) {
-      String typedCommand = pattern.substring(commandPrefix.length());
-      SearchEverywhereCommandInfo command = getSelectedCommand(typedCommand).orElseGet(() -> {
-        List<SearchEverywhereCommandInfo> completions = getCommandsForCompletion(getContributorsForCurrentTab(), typedCommand);
-        return completions.isEmpty() ? null : completions.get(0);
-      });
-      if (command != null) {
-        mySearchField.setText(command.getCommandWithPrefix() + " ");
-        return true;
-      }
+  private void triggerTabSwitched(AnActionEvent e) {
+    String selectedContributorID = getSelectedContributorID();
+    FUSUsageContext context = getEventShortcut(e)
+      .map(shortcut -> FUSUsageContext.create(selectedContributorID, shortcut))
+      .orElseGet(() -> FUSUsageContext.create(selectedContributorID));
+    featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);
+  }
+
+  private void fetchGroups(boolean down) {
+    int index = myResultsList.getSelectedIndex();
+    do {
+      index += down ? 1 : -1;
+    } while (index >= 0 && index < myListModel.getSize() && !myListModel.isGroupFirstItem(index) && !myListModel.isMoreElement(index));
+    if (index >= 0 && index < myListModel.getSize()) {
+      myResultsList.setSelectedIndex(index);
+      ScrollingUtil.ensureIndexIsVisible(myResultsList, index, 0);
     }
-    return false;
   }
 
   private Optional<SearchEverywhereCommandInfo> getSelectedCommand(String typedCommand) {
@@ -748,7 +816,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
     String searchText = getSearchPattern();
     if (searchText.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && searchText.contains(" ")) {
-      featureUsed(COMMAND_USED);
+      featureTriggered(SearchEverywhereUsageTriggerCollector.COMMAND_USED, null);
     }
 
     boolean closePopup = false;
@@ -757,7 +825,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
       Object value = myListModel.getElementAt(i);
       if (isAllTab) {
-        featureUsed(CONTRIBUTOR_ITEM_SELECTED, contributor.getSearchProviderId());
+        featureTriggered(SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ITEM_SELECTED, FUSUsageContext.create(contributor.getSearchProviderId()));
       }
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
     }
@@ -770,7 +838,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   }
 
   private void showMoreElements(SearchEverywhereContributor contributor) {
-    featureUsed(MORE_ITEM_SELECTED);
+    featureTriggered(SearchEverywhereUsageTriggerCollector.MORE_ITEM_SELECTED, null);
     Map<SearchEverywhereContributor<?>, Collection<SESearcher.ElementInfo>> found = myListModel.getFoundElementsMap();
     int limit = myListModel.getItemsForContributor(contributor)
                 + (mySelectedTab.getContributor().isPresent() ? SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT : MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT);
@@ -828,7 +896,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       }
 
       if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {
-        component = groupTitleRenderer.withDisplayedData(contributor.getGroupName(), component);
+        component = groupTitleRenderer.withDisplayedData(contributor.getFullGroupName(), component);
       }
 
       return wrap(component, 1, 0);
@@ -959,7 +1027,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         return;
       }
 
-      while (listElements.get(index).getContributor() == contributor) {
+      while (index < listElements.size() && listElements.get(index).getContributor() == contributor) {
         if (item.equals(listElements.get(index).getElement())) {
           listElements.remove(index);
           fireIntervalRemoved(this, index, index);
@@ -1248,6 +1316,47 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     }
   }
 
+  private class CompleteCommandAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      if (completeCommand()) {
+        FUSUsageContext context = getEventShortcut(e).map(shortcut -> FUSUsageContext.create(shortcut)).orElse(null);
+        featureTriggered(SearchEverywhereUsageTriggerCollector.COMMAND_COMPLETED, context);
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(getCompleteCommand().isPresent());
+    }
+
+    private boolean completeCommand() {
+      Optional<SearchEverywhereCommandInfo> suggestedCommand = getCompleteCommand();
+      if (suggestedCommand.isPresent()){
+        mySearchField.setText(suggestedCommand.get().getCommandWithPrefix() + " ");
+        return true;
+      }
+
+      return false;
+    }
+
+    private Optional<SearchEverywhereCommandInfo> getCompleteCommand() {
+      String pattern = getSearchPattern();
+      String commandPrefix = SearchTopHitProvider.getTopHitAccelerator();
+      if (pattern.startsWith(commandPrefix) && !pattern.contains(" ")) {
+        String typedCommand = pattern.substring(commandPrefix.length());
+        SearchEverywhereCommandInfo command = getSelectedCommand(typedCommand).orElseGet(() -> {
+          List<SearchEverywhereCommandInfo> completions = getCommandsForCompletion(getContributorsForCurrentTab(), typedCommand);
+          return completions.isEmpty() ? null : completions.get(0);
+        });
+
+        return Optional.ofNullable(command);
+      }
+
+      return Optional.empty();
+    }
+  }
+
   private static JLabel groupInfoLabel(String text) {
     JLabel label = new JLabel(text);
     label.setForeground(JBUI.CurrentTheme.BigPopup.listTitleLabelForeground());
@@ -1258,13 +1367,12 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
   private String getNotFoundText() {
     return mySelectedTab.getContributor()
-                        .map(c -> IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", c.getGroupName()))
+                        .map(c -> IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", c.getFullGroupName()))
                         .orElse(IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere"));
   }
 
-  private static void featureUsed(String... identifiers) {
-    String feature = String.join(".", identifiers);
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + feature);
+  private void featureTriggered(@NotNull String featureID, @Nullable FUSUsageContext context) {
+    SearchEverywhereUsageTriggerCollector.trigger(myProject, featureID, context);
   }
 
   private final SESearcher.Listener mySearchListener = new SESearcher.Listener() {
@@ -1340,7 +1448,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     @Override
     public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
       mySearchField.setText(((SearchEverywhereCommandInfo)selected).getCommandWithPrefix() + " ");
-      featureUsed(COMMAND_COMPLETED);
+      featureTriggered(SearchEverywhereUsageTriggerCollector.COMMAND_COMPLETED, null);
       return false;
     }
 
@@ -1354,6 +1462,22 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     @Override
     public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
       return null;
+    }
+  };
+
+  private final ExtendableTextField.Extension hintExtension = new ExtendableTextField.Extension() {
+    private final TextIcon icon;
+
+    {
+      String message = IdeBundle.message("searcheverywhere.textfield.hint", SearchTopHitProvider.getTopHitAccelerator());
+      Color color = JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground();
+      icon = new TextIcon(message, color, null, 0);
+      icon.setFont(RelativeFont.SMALL.derive(getFont()));
+    }
+
+    @Override
+    public Icon getIcon(boolean hovered) {
+      return icon;
     }
   };
 }

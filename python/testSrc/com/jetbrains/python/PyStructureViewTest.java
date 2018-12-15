@@ -135,8 +135,10 @@ public class PyStructureViewTest extends PyTestCase {
   private void doTest(final String expected, final boolean inherited) {
     myFixture.testStructureView(component -> {
       component.setActionActive("SHOW_INHERITED", !inherited);
-      PlatformTestUtil.waitWhileBusy(component.getTree());
-      assertTreeEqual(component.getTree(), expected);
+      final JTree tree = component.getTree();
+      PlatformTestUtil.waitWhileBusy(tree);
+      assertFalse(tree.isRootVisible());
+      assertTreeEqual(tree, expected);
     });
   }
 }

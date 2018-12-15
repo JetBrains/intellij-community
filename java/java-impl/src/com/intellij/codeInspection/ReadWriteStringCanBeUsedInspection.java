@@ -43,7 +43,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
             ProblemHighlightType highlight;
             String message = "Can be replaced with 'Files.writeString()'";
             if (level.isAtLeast(LanguageLevel.JDK_12) || isNonUtf8Charset(bytesExpression.getArgumentList().getExpressions()[0])) {
-              highlight = ProblemHighlightType.WARNING;
+              highlight = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
             } else {
               highlight = ProblemHighlightType.INFORMATION;
             }

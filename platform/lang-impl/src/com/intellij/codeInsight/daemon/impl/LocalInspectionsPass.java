@@ -506,7 +506,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (!inspectionProfile.isToolEnabled(key, getFile())) return;
 
     HighlightInfoType type = new InspectionHighlightInfoType(level, element);
-    final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
+    final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXmlEntities(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
     @NonNls String link = "";
     if (showToolDescription(toolWrapper)) {
       link = " <a "

@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.lookup.*;
@@ -37,6 +38,7 @@ import com.intellij.psi.filters.classes.AssignableFromContextFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.getters.JavaMembersGetter;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
@@ -78,17 +80,21 @@ public class JavaCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> ANNOTATION_ATTRIBUTE_NAME =
     or(psiElement(PsiIdentifier.class).withParent(NAME_VALUE_PAIR),
        psiElement().afterLeaf("(").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)));
-  private static final ElementPattern SWITCH_LABEL =
-    psiElement().withSuperParent(2, psiElement(PsiSwitchLabelStatement.class).withSuperParent(2,
-      psiElement(PsiSwitchStatement.class).with(new PatternCondition<PsiSwitchStatement>("enumExpressionType") {
+
+  public static final ElementPattern<PsiElement> IN_SWITCH_LABEL =
+    psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2, PsiSwitchBlock.class)));
+  private static final ElementPattern IN_ENUM_SWITCH_LABEL =
+    psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2,
+      psiElement(PsiSwitchBlock.class).with(new PatternCondition<PsiSwitchBlock>("enumExpressionType") {
         @Override
-        public boolean accepts(@NotNull PsiSwitchStatement psiSwitchStatement, ProcessingContext context) {
-          PsiExpression expression = psiSwitchStatement.getExpression();
+        public boolean accepts(@NotNull PsiSwitchBlock psiSwitchBlock, ProcessingContext context) {
+          PsiExpression expression = psiSwitchBlock.getExpression();
           if (expression == null) return false;
           PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
           return aClass != null && aClass.isEnum();
         }
-      })));
+      }))));
+
   private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL =
     psiElement().afterLeaf(psiElement().withElementType(
       elementType().oneOf(JavaTokenType.DOUBLE_LITERAL, JavaTokenType.LONG_LITERAL, JavaTokenType.FLOAT_LITERAL, JavaTokenType.INTEGER_LITERAL)));
@@ -132,7 +138,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (CATCH_OR_FINALLY.accepts(position) ||
         JavaKeywordCompletion.START_SWITCH.accepts(position) ||
         JavaKeywordCompletion.isInstanceofPlace(position) ||
-        JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)) {
+        JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position) ||
+        LabelReferenceCompletion.isBreakValueOrLabelPosition(position) == Boolean.FALSE) {
       return null;
     }
 
@@ -153,7 +160,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return new ExcludeFilter(var);
     }
 
-    if (SWITCH_LABEL.accepts(position)) {
+    if (IN_ENUM_SWITCH_LABEL.accepts(position)) {
       return new ClassFilter(PsiField.class) {
         @Override
         public boolean isAcceptable(Object element, PsiElement context) {
@@ -420,7 +427,13 @@ public class JavaCompletionContributor extends CompletionContributor {
     MultiMap<CompletionResultSet, LookupElement> items = MultiMap.create();
     final PsiElement position = parameters.getPosition();
     final boolean first = parameters.getInvocationCount() <= 1;
-    final boolean isSwitchLabel = SWITCH_LABEL.accepts(position);
+    final TailType switchLabelTail;
+    if (IN_ENUM_SWITCH_LABEL.accepts(position)) {
+      PsiSwitchBlock block = Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class));
+      switchLabelTail = TailTypes.forSwitchLabel(block);
+    } else {
+      switchLabelTail = null;
+    }
     final boolean isAfterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(position);
     final PsiType[] expectedTypes = ExpectedTypesGetter.getExpectedTypes(parameters.getPosition(), true);
@@ -447,8 +460,8 @@ public class JavaCompletionContributor extends CompletionContributor {
               continue;
             }
 
-            if (isSwitchLabel) {
-              items.putValue(result1, new IndentingDecorator(TailTypeDecorator.withTail(element, TailType.createSimpleTailType(':'))));
+            if (switchLabelTail != null) {
+              items.putValue(result1, new IndentingDecorator(TailTypeDecorator.withTail(element, switchLabelTail)));
             }
             else {
               final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
@@ -474,8 +487,16 @@ public class JavaCompletionContributor extends CompletionContributor {
             }
           }
         }
+
+        // break <label>
+        if (LabelReferenceCompletion.isBreakValueOrLabelPosition(position) == Boolean.FALSE) {
+          items.putValues(result1, LabelReferenceCompletion.processLabelVariants(PsiImplUtil.findAllEnclosingLabels(position)));
+        }
+
         return;
       }
+
+      // continue <label>
       if (reference instanceof PsiLabelReference) {
         items.putValues(result1, LabelReferenceCompletion.processLabelReference((PsiLabelReference)reference));
         return;
@@ -531,8 +552,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return false;
     }
 
-    PsiElement grand = parent.getParent();
-    if (grand instanceof PsiSwitchLabelStatement) {
+    if (IN_SWITCH_LABEL.accepts(position)) {
       return false;
     }
 
@@ -540,6 +560,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return isSecondCompletion;
     }
 
+    PsiElement grand = parent.getParent();
     if (grand instanceof PsiAnonymousClass) {
       grand = grand.getParent();
     }

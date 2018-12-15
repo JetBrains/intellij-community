@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -47,9 +48,6 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   @NotNull
   public abstract GrCodeReferenceElement createCodeReferenceElementFromClass(@NotNull PsiClass aClass);
-
-  @NotNull
-  public abstract GrCodeReferenceElement createCodeReferenceElementFromText(@NotNull String text);
 
   @NotNull
   public abstract GrReferenceExpression createThisExpression(@Nullable PsiClass psiClass);
@@ -135,12 +133,12 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   public abstract GrReferenceExpression createReferenceElementForClass(@NotNull PsiClass clazz);
 
   @NotNull
-  public GrCodeReferenceElement createReferenceElementFromText(@NotNull String refName) {
-    return createReferenceElementFromText(refName, null);
+  public GrCodeReferenceElement createCodeReference(@NotNull String text) {
+    return createCodeReference(text, null);
   }
 
   @NotNull
-  public abstract GrCodeReferenceElement createReferenceElementFromText(@NotNull String refName, @Nullable PsiElement context);
+  public abstract GrCodeReferenceElement createCodeReference(@NotNull String text, @Nullable PsiElement context);
 
   @NotNull
   public GrExpression createExpressionFromText(@NotNull CharSequence exprText) {
@@ -243,6 +241,9 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   @NotNull
   @Override
   public abstract GrAnnotation createAnnotationFromText(@NotNull @NonNls String annotationText, @Nullable PsiElement context) throws IncorrectOperationException;
+
+  @NotNull
+  public abstract GrAnnotationNameValuePair createAnnotationAttribute(@NotNull String text, @Nullable PsiElement context);
 
   @NotNull
   public abstract GrMethod createMethodFromSignature(@NotNull String name, @NotNull GrSignature signature);

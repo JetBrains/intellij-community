@@ -1892,7 +1892,7 @@ public class PyUtil {
     }
 
     final PyElementGenerator generator = PyElementGenerator.getInstance(function.getProject());
-    final PyDecoratorList newDecorators = generator.createDecoratorList(decoTexts.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+    final PyDecoratorList newDecorators = generator.createDecoratorList(ArrayUtil.toStringArray(decoTexts));
 
     if (currentDecorators != null) {
       currentDecorators.replace(newDecorators);

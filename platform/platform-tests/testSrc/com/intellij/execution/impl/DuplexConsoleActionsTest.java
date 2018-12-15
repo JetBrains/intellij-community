@@ -48,6 +48,9 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
     try {
       Disposer.dispose(myDisposable);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myDisposable = null;
       super.tearDown();

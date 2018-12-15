@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class GrThrowsClauseImpl extends GrReferenceListImpl implements GrThrowsClause {
   public GrThrowsClauseImpl(GrReferenceListStub stub) {
-    super(stub, GroovyElementTypes.THROW_CLAUSE);
+    super(stub, GroovyElementTypes.THROWS_CLAUSE);
   }
 
   @Override
@@ -92,7 +92,7 @@ public class GrThrowsClauseImpl extends GrReferenceListImpl implements GrThrowsC
       }
 
       if (element instanceof PsiJavaCodeReferenceElement) {
-        element = GroovyPsiElementFactory.getInstance(getProject()).createCodeReferenceElementFromText(element.getText());
+        element = GroovyPsiElementFactory.getInstance(getProject()).createCodeReference(element.getText());
       }
     }
     return super.add(element);

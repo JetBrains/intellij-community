@@ -33,6 +33,9 @@ public class LanguageLevelComboTest extends LightPlatformTestCase {
     try {
       ProjectManagerEx.getInstanceEx().closeAndDispose(myProject);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

@@ -31,6 +31,7 @@
 
     <action id="Git.Init" class="git4idea.actions.GitInit" text="Create Git Repository...">
       <add-to-group group-id="Vcs.Import"/>
+      <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
     </action>
 
     <action id="Git.Log" class="git4idea.log.GitShowExternalLogAction" text="Show Git Repository Log...">
@@ -53,6 +54,10 @@
             description="Undo last commit and put its changes into selected changelist"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Reword..."
             description="Change commit message" />
+    <action id="Git.Fixup.To.Commit" class="git4idea.rebase.GitCommitFixupBySubjectAction" text="Fixup..."
+            description="Create a fixup commit"/>
+    <action id="Git.Squash.Into.Commit" class="git4idea.rebase.GitCommitSquashBySubjectAction" text="Squash Into..."
+            description="Create a squash commit"/>
     <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction" text="Interactively Rebase from Here..."
             description="Show the dialog for interactive rebase which allows to squash, fixup, reorder, remove and reword commits" />
     <action id="Git.Commit.And.Push.Executor" class="git4idea.actions.GitCommitAndPushExecutorAction" text="Commit and &amp;Push...">
@@ -79,7 +84,7 @@
     <group id="GitRepositoryActions">
       <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="AllIcons.Vcs.Branch">
         <keyboard-shortcut first-keystroke="control shift BACK_QUOTE" keymap="$default" />
-        <keyboard-shortcut first-keystroke="control B" keymap="Mac OS X 10.5+" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="control shift BACK_QUOTE" keymap="Mac OS X" remove="true" />
       </action>
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag..."/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="AllIcons.Actions.ShowAsTree"/>
@@ -138,6 +143,8 @@
       <reference id="Git.Uncommit"/>
       <separator/>
       <reference id="Git.Reword.Commit"/>
+      <reference id="Git.Fixup.To.Commit" />
+      <reference id="Git.Squash.Into.Commit" />
       <reference id="Git.Interactive.Rebase"/>
       <separator/>
       <reference id="Git.BranchOperationGroup"/>
@@ -163,9 +170,11 @@
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
     <vcs.checkoutProcessor implementation="git4idea.checkout.GitCheckoutProcessor"/>
     <vcsRootChecker implementation="git4idea.roots.GitRootChecker"/>
+    <vcsIgnoreChecker implementation="git4idea.ignore.GitIgnoreChecker"/>
     <vcsRepositoryCreator implementation="git4idea.repo.GitRepositoryCreator"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
+    <vcsCheckinHandlerFactory implementation="git4idea.rebase.GitRebaseCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="git4idea.checkin.GitSkipHooksCommitHandlerFactory" order="last"/>
     <unresolvedMergeCheckProvider implementation="git4idea.checkin.GitUnresolvedMergeCheckProvider"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>
@@ -249,6 +258,7 @@
     <logHighlighterFactory implementation="git4idea.branch.DeepComparator$Factory"/>
 
     <ignoredFileContentProvider implementation="git4idea.ignore.GitIgnoredFileContentProvider"/>
+    <openapi.vcs.changes.vcsPreservingExecutor implementation="git4idea.util.GitPreservingExecutor"/>
   </extensions>
 
   <extensionPoints>

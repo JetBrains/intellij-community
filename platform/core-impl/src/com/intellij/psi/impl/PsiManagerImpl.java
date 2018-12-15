@@ -8,13 +8,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
@@ -29,6 +33,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class PsiManagerImpl extends PsiManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
@@ -81,7 +86,6 @@ public class PsiManagerImpl extends PsiManagerEx {
   public void dropResolveCaches() {
     myFileManager.processQueue();
     beforeChange(true);
-    beforeChange(false);
   }
 
   @Override
@@ -492,5 +496,25 @@ public class PsiManagerImpl extends PsiManagerEx {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myFileManager.cleanupForNextTest();
     dropPsiCaches();
+  }
+
+  public void dropResolveCacheRegularly(@NotNull ProgressIndicator indicator) {
+    indicator = ProgressWrapper.unwrap(indicator);
+    if (indicator instanceof ProgressIndicatorEx) {
+      ((ProgressIndicatorEx)indicator).addStateDelegate(new AbstractProgressIndicatorExBase() {
+        private final AtomicLong lastClearedTimeStamp = new AtomicLong();
+
+        @Override
+        public void setFraction(double fraction) {
+          long current = System.currentTimeMillis();
+          long last = lastClearedTimeStamp.get();
+          if (current - last >= 500 && lastClearedTimeStamp.compareAndSet(last, current)) {
+            // fraction is changed when each file is processed =>
+            // resolve caches used when searching in that file are likely to be not needed anymore
+            dropResolveCaches();
+          }
+        }
+      });
+    }
   }
 }

@@ -18,6 +18,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.debugger.DefaultMethodInvoker;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 
 import java.util.ArrayList;
@@ -65,10 +66,7 @@ public class MethodEvaluator implements Evaluator {
     }
     DebugProcessImpl debugProcess = context.getDebugProcess();
 
-    final boolean requiresSuperObject =
-      myObjectEvaluator instanceof SuperEvaluator ||
-      (myObjectEvaluator instanceof DisableGC && ((DisableGC)myObjectEvaluator).getDelegate() instanceof SuperEvaluator);
-
+    final boolean requiresSuperObject = DisableGC.unwrap(myObjectEvaluator) instanceof SuperEvaluator;
     final Object object = myObjectEvaluator.evaluate(context);
     if (LOG.isDebugEnabled()) {
       LOG.debug("MethodEvaluator: object = " + object);
@@ -138,22 +136,10 @@ public class MethodEvaluator implements Evaluator {
             }
           }
         }
-      }
-      else if (myMustBeVararg && jdiMethod != null && !jdiMethod.isVarArgs() && jdiMethod.isBridge()) {
-        // see IDEA-129869, avoid bridge methods for varargs
-        int retTypePos = signature.lastIndexOf(")");
-        if (retTypePos >= 0) {
-          String signatureNoRetType = signature.substring(0, retTypePos + 1);
-          for (Method method : _refType.visibleMethods()) {
-            if (method.name().equals(myMethodName) &&
-                method.signature().startsWith(signatureNoRetType) &&
-                !method.isBridge() &&
-                !method.isAbstract()) {
-              jdiMethod = method;
-              break;
-            }
-          }
-        }
+      } else if (myMustBeVararg && jdiMethod != null && !jdiMethod.isVarArgs()) {
+        // this is a workaround for jdk bugs when bridge or proxy methods do not have ACC_VARARGS flags
+        // see IDEA-129869 and IDEA-202380
+        wrapVarargParams(jdiMethod, args);
       }
       if (jdiMethod == null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.method", methodName));
@@ -201,5 +187,21 @@ public class MethodEvaluator implements Evaluator {
   @Override
   public String toString() {
     return "call " + myMethodName;
+  }
+
+  private static void wrapVarargParams(Method method, List<Value> args) throws ClassNotLoadedException, InvalidTypeException {
+    int argCount = args.size();
+    List<Type> paramTypes = method.argumentTypes();
+    Type varargType = ContainerUtil.getLastItem(paramTypes);
+    if (varargType instanceof ArrayType) {
+      int paramCount = paramTypes.size();
+      int arraySize = argCount - paramCount + 1;
+      ArrayReference argArray = ((ArrayType)varargType).newInstance(arraySize);
+      argArray.setValues(0, args, paramCount - 1, arraySize);
+      if (paramCount <= argCount) {
+        args.subList(paramCount - 1, argCount).clear();
+      }
+      args.add(argArray);
+    }
   }
 }

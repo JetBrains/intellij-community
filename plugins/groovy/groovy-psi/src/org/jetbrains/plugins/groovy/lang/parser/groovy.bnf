@@ -738,10 +738,8 @@ finally_clause ::= 'finally' (mb_nl lazy_block)
   pin = 1
 }
 
-while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl branch)
-{
-  pin('.*') = 1
-}
+while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl while_body) { pin('.*') = 1 }
+private while_body ::= followed_by_semi | branch
 
 do_while_statement ::= 'do' mb_nl branch mb_nl 'while' '(' expression ')' { pin = 1 }
 
@@ -769,7 +767,7 @@ private fvd_tail ::= variable_declaration_tail <<wrapLeft>>
 expression_list ::= expression (',' expression)*
 
 // FIXME get rid of this weird logic
-private for_body ::= &<<extendedStatement>> | &';' | block_or_statement { name = 'loop body' }
+private for_body ::= &<<extendedStatement>> | followed_by_semi | block_or_statement { name = 'loop body' }
 
 synchronized_statement ::= 'synchronized' '(' expression ')' mb_nl lazy_block
 {
@@ -864,6 +862,7 @@ private string_literal_as_reference ::= '('                                     
 }
 private application_argument_start ::= IDENTIFIER
                                      | simple_literal_tokens
+                                     | GSTRING_BEGIN
                                      | primitive_type
                                      | '~' | '!'
                                      | 'this' | 'super'
@@ -1062,7 +1061,7 @@ land_expression ::= expression '&&' mb_nl expression
 lor_expression ::= expression '||' mb_nl expression
 
 private conditionals ::= ternary_expression | elvis_expression
-ternary_expression ::= expression (ternary_tail_pin | ternary_tail)
+ternary_expression ::= expression mb_nl (ternary_tail_pin | ternary_tail)
 private ternary_tail_pin ::= '?' mb_nl !'[' expression mb_nl ':' mb_nl conditionals { pin = 3 consumeTokenMethod = 'consumeTokenFast' }
 private ternary_tail ::= '?' mb_nl expression mb_nl ':' mb_nl conditionals { pin = 5 consumeTokenMethod = 'consumeTokenFast' }
 elvis_expression ::= expression mb_nl ('?:' mb_nl) expression
@@ -1235,6 +1234,8 @@ private fast_question ::= '?'
 private fast_colon ::= ':'
 private fast_comma ::= ','
 private fast_l_angle ::= '<'
+
+private followed_by_semi ::= &';' { consumeTokenMethod = 'fast' }
 
 private string_literal_tokens ::= STRING_SQ | STRING_TSQ | STRING_DQ | STRING_TDQ { consumeTokenMethod = 'consumeTokenFast' }
 // endregion

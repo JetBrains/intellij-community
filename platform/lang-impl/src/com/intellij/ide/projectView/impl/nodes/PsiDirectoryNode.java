@@ -340,7 +340,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       if (Comparing.equal(file, myProject.getBaseDir())) {
         return "";    // sorts before any other name
       }
-      return getTitle();
+      return toString();
     }
     return null;
   }

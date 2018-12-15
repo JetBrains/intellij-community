@@ -4,15 +4,15 @@ package com.intellij.internal.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.panel.ComponentPanel;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.components.labels.DropDownLink;
@@ -29,10 +29,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -76,13 +79,19 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private static final HashSet<String> ALLOWED_VALUES = new HashSet<>(Arrays.asList("one", "two", "three", "four", "five", "six",
               "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "abracadabra"));
 
+    private static final String STRING_VALUES[] = { "One", "Two", "Three", "Four", "Five", "Six" };
+
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
 
-    private JTabbedPane pane;
+    private JTabbedPane   pane;
+    private final Project project;
 
     private ComponentPanelTest(Project project) {
       super(project);
+
+      this.project = project;
+
       init();
       setTitle("Component Panel Test Action");
     }
@@ -94,12 +103,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane.addTab("Component", createComponentPanel());
       pane.addTab("Component Grid", createComponentGridPanel());
       pane.addTab("Progress Grid", createProgressGridPanel());
-
-      for (int i = 1; i <= 5; i++) {
-        String title = "Blank " + i;
-        JLabel label = new JLabel(title);
-        pane.addTab(title, JBUI.Panels.simplePanel(label));
-      }
+      pane.addTab("Validators", createValidatorsPanel());
 
       pane.addChangeListener(e -> {
         if (pane.getSelectedIndex() == 2) {
@@ -139,21 +143,27 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1.0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL, JBUI.insets(5, 0), 0, 0);
 
       JTextField text1 = new JTextField();
-      new ComponentValidator(getDisposable()).withValidator(v -> {
-        String tt = text1.getText();
-        if (StringUtil.isNotEmpty(tt)) {
-          try {
-            Integer.parseInt(tt);
+      new ComponentValidator(getDisposable()).
+        withHyperlinkListener(e -> {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            System.out.println("Text1 link clicked. Desc = " + e.getDescription());
+          }
+        }).withValidator(v -> {
+          String tt = text1.getText();
+          if (StringUtil.isNotEmpty(tt)) {
+            try {
+              Integer.parseInt(tt);
+              v.updateInfo(null);
+            }
+            catch (NumberFormatException nex) {
+              v.updateInfo(new ValidationInfo("Warning, expecting a number.<br/>Visit the <a href=\"#link.one\">information link</a>" +
+                                              "<br/>Or <a href=\"#link.two\">another link</a>", text1).asWarning());
+            }
+          }
+          else {
             v.updateInfo(null);
           }
-          catch (NumberFormatException nex) {
-            v.updateInfo(new ValidationInfo("Enter a number", text1).asWarning());
-          }
-        }
-        else {
-          v.updateInfo(null);
-        }
-      }).installOn(text1);
+        }).installOn(text1);
 
       Dimension d = text1.getPreferredSize();
       text1.setPreferredSize(new Dimension(JBUI.scale(100), d.height));
@@ -164,12 +174,17 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         moveCommentRight().createPanel(), gc);
 
       JTextField text2 = new JTextField();
-      new ComponentValidator(getDisposable()).withValidator(v -> {
-        String tt = text2.getText();
-        v.updateInfo(
-          StringUtil.isEmpty(tt) || tt.length() < 5 ? new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols.",
-                                                                         text2) : null);
-      }).andStartOnFocusLost().installOn(text2);
+      new ComponentValidator(getDisposable()).
+        withHyperlinkListener(e -> {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            System.out.println("Text2 link clicked. Desc = " + e.getDescription());
+          }
+        }).withValidator(v -> {
+          String tt = text2.getText();
+          v.updateInfo(
+            StringUtil.isEmpty(tt) || tt.length() < 5 ? new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols.<br/>Please <a href=\"#check.rules\">check rules.</a>",
+                                                                           text2) : null);
+        }).andStartOnFocusLost().installOn(text2);
 
       gc.gridy++;
       topPanel.add(UI.PanelFactory.panel(text2).withLabel("&Path:").createPanel(), gc);
@@ -189,7 +204,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       text2.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           ComponentValidator.getInstance(text2).ifPresent(v -> v.revalidate());
         }
       });
@@ -211,9 +226,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       topPanel.add(UI.PanelFactory.panel(new JButton("Abracadabra")).
         withComment("Abradabra comment").resizeX(false).createPanel(), gc);
 
-      String[] items = new String[]{ "One", "Two", "Three", "Four", "Five", "Six" };
       gc.gridy++;
-      topPanel.add(UI.PanelFactory.panel(new JComboBox<>(items)).
+      topPanel.add(UI.PanelFactory.panel(new JComboBox<>(STRING_VALUES)).
         withComment("Combobox comment").createPanel(), gc);
 
       String[] columns = { "First column", "Second column" };
@@ -348,6 +362,67 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       panel.add(new Box.Filler(JBUI.size(100,20), JBUI.size(200,30), JBUI.size(Integer.MAX_VALUE, Integer.MAX_VALUE)));
 
       return panel;
+    }
+
+    private JComponent createValidatorsPanel() {
+      // JTextField component with browse button
+      TextFieldWithBrowseButton tfbb = new TextFieldWithBrowseButton(e -> System.out.println("JTextField browse button pressed"));
+      new ComponentValidator(getDisposable()).withValidator(v ->
+          v.updateInfo(tfbb.getText().length() != 5 ? new ValidationInfo("Enter 5 symbols",  tfbb) : null)).
+        withOutlineProvider(ComponentValidator.CWBB_PROVIDER).
+        andStartOnFocusLost().
+        installOn(tfbb);
+
+      tfbb.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(@NotNull DocumentEvent e) {
+          ComponentValidator.getInstance(tfbb).ifPresent(ComponentValidator::revalidate);
+        }
+      });
+
+      // EditorTextField component with browse button
+      EditorTextField editor = new EditorTextField();
+      ComponentWithBrowseButton<EditorTextField> etfbb = new ComponentWithBrowseButton<>(editor, e -> System.out.println("JTextField browse button pressed"));
+      new ComponentValidator(getDisposable()).withValidator(v -> {
+        try {
+          new URL(etfbb.getChildComponent().getDocument().getText());
+          v.updateInfo(null);
+        } catch (MalformedURLException mex) {
+          v.updateInfo(new ValidationInfo("Enter a valid URL", etfbb));
+        }
+      }).withOutlineProvider(ComponentValidator.CWBB_PROVIDER).andStartOnFocusLost().installOn(etfbb);
+
+      etfbb.getChildComponent().getDocument().addDocumentListener(new DocumentListener() {
+        @Override
+        public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent event) {
+          ComponentValidator.getInstance(etfbb).ifPresent(ComponentValidator::revalidate);
+        }
+      });
+
+      // EditorComboBoxEditor
+      ComboBox<String> comboBox = new ComboBox<>(STRING_VALUES);
+      EditorComboBoxEditor cbEditor = new EditorComboBoxEditor(project, FileTypes.PLAIN_TEXT);
+      comboBox.setEditor(cbEditor);
+      comboBox.addActionListener(l -> ComponentValidator.getInstance(comboBox).ifPresent(ComponentValidator::revalidate));
+
+      new ComponentValidator(getDisposable())
+        .withValidator(v -> {
+          ValidationInfo vi = comboBox.getSelectedIndex() % 2 == 0 ? new ValidationInfo("Can't select odd items", comboBox) : null;
+          v.updateInfo(vi);
+        }).installOn(comboBox);
+
+      // Panels factory
+      return UI.PanelFactory.grid().
+        add(UI.PanelFactory.panel(tfbb).
+          withLabel("&TextField:").withComment("Text field with browse button")).
+
+        add(UI.PanelFactory.panel(etfbb).
+          withLabel("&EditorTextField:").withComment("EditorTextField with browse button")).
+
+        add(UI.PanelFactory.panel(comboBox).
+          withLabel("&ComboBoxEditorTextField:").withComment("EditorComboBox editor")).
+
+        createPanel();
     }
 
     private class ProgressTimerRequest implements Runnable {

@@ -43,12 +43,16 @@ import java.util.*;
 public class ExternalSystemActionUtil {
 
   public static void executeAction(final String actionId, final InputEvent e) {
+    executeAction(actionId, "", e);
+  }
+
+  public static void executeAction(final String actionId, @NotNull final String place, final InputEvent e) {
     final ActionManager actionManager = ActionManager.getInstance();
     final AnAction action = actionManager.getAction(actionId);
     if (action != null) {
       final Presentation presentation = new Presentation();
       final AnActionEvent event =
-        new AnActionEvent(e, DataManager.getInstance().getDataContext(e.getComponent()), "", presentation, actionManager, 0);
+        new AnActionEvent(e, DataManager.getInstance().getDataContext(e.getComponent()), place, presentation, actionManager, 0);
       action.update(event);
       if (presentation.isEnabled()) {
         action.actionPerformed(event);

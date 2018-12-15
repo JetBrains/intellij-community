@@ -1157,7 +1157,7 @@ public class ControlFlowUtil {
             return getUnreachableStatementParent(parent);
           }
           if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == expression ||
-              parent instanceof PsiSwitchStatement && ((PsiSwitchStatement)parent).getExpression() == expression ||
+              parent instanceof PsiSwitchBlock && ((PsiSwitchBlock)parent).getExpression() == expression ||
               parent instanceof PsiWhileStatement && ((PsiWhileStatement)parent).getCondition() == expression ||
               parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == expression) {
             return parent;
@@ -1259,6 +1259,18 @@ public class ControlFlowUtil {
         // clear return statements after procedure as well
         for (int i = instruction.procBegin; i < instruction.procEnd + 3; i++) {
           maybeUnassigned[i] = false;
+        }
+      }
+
+      @Override
+      public void visitGoToInstruction(GoToInstruction instruction, int offset, int nextOffset) {
+        if (instruction.isReturn && variable instanceof PsiLocalVariable) {
+          if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
+          boolean unassigned = !isLeaf(nextOffset) && maybeUnassigned[nextOffset];
+          maybeUnassigned[offset] |= unassigned;
+        }
+        else {
+          super.visitGoToInstruction(instruction, offset, nextOffset);
         }
       }
 

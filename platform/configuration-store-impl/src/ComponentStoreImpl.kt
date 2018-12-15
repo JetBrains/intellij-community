@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
@@ -16,8 +17,10 @@ import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
@@ -102,7 +105,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       throw e
     }
     catch (e: Exception) {
-      LOG.error("Cannot init $componentName component state", e)
+      LOG.error(PluginManagerCore.createPluginException("Cannot init $componentName component state", e, component.javaClass))
       return
     }
   }
@@ -232,15 +235,16 @@ abstract class ComponentStoreImpl : IComponentStore {
     val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(stateSpec.storages).path)).toAbsolutePath().toString()
     runUndoTransparentWriteAction {
       val errors: MutableList<Throwable> = SmartList<Throwable>()
+      val newDisposable = Disposer.newDisposable()
       try {
-        VfsRootAccess.allowRootAccess(absolutePath)
+        VfsRootAccess.allowRootAccess(newDisposable, absolutePath)
         val isSomethingChanged = externalizationSession.save(errors = errors)
         if (!isSomethingChanged) {
           LOG.info("saveApplicationComponent is called for ${stateSpec.name} but nothing to save")
         }
       }
       finally {
-        VfsRootAccess.disallowRootAccess(absolutePath)
+        Disposer.dispose(newDisposable)
       }
       CompoundRuntimeException.throwIfNotEmpty(errors)
     }
@@ -375,14 +379,10 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
 
-        try {
-          component.loadState(state)
-        }
-        finally {
-          val stateAfterLoad = stateGetter.close()
-          (stateAfterLoad ?: state).let {
-            FeatureUsageSettingsEvents.logConfigurationState(name, stateSpec, it, project)
-          }
+        component.loadState(state)
+        val stateAfterLoad = stateGetter.archiveState()
+        LOG.runAndLogException {
+          FeatureUsageSettingsEvents.logConfigurationState(name, stateSpec, stateAfterLoad ?: state, project)
         }
         return true
       }

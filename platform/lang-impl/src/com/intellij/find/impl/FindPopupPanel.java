@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -53,6 +54,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
@@ -173,10 +175,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       myDialog.doCancelAction();
     }
     if (myDialog == null || Disposer.isDisposed(myDialog.getDisposable())) {
-      myDialog = new DialogWrapper(myHelper.getProject(), true, DialogWrapper.IdeModalityType.MODELESS) {
+      myDialog = new DialogWrapper(myHelper.getProject(), null, true, DialogWrapper.IdeModalityType.MODELESS, false) {
         {
           init();
-          getContentPane().add(new JLabel(), BorderLayout.SOUTH);//remove hardcoded southSection
           getRootPane().setDefaultButton(null);
         }
 
@@ -213,7 +214,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           return SERVICE_KEY;
         }
       };
-      myDialog.setUndecorated(true);
+      myDialog.setUndecorated(!Registry.is("ide.find.as.popup.decorated"));
 
       Disposer.register(myDialog.getDisposable(), myDisposable);
 
@@ -606,6 +607,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }, FindBundle.message("find.replace.command"), null);
     });
     myOKButton.addActionListener(myOkActionListener);
+    TouchbarDataKeys.putDialogButtonDescriptor(myOKButton, 0, true);
     boolean enterAsOK = Registry.is("ide.find.enter.as.ok", false);
 
     new DumbAwareAction() {
@@ -1260,7 +1262,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
             int occurrences = resultsCount.get();
             int filesWithOccurrences = resultsFilesCount.get();
             myCodePreviewComponent.setVisible(occurrences > 0);
-            myReplaceAllButton.setEnabled(occurrences > 1);
+            myReplaceAllButton.setEnabled(occurrences > 0);
             myReplaceSelectedButton.setEnabled(occurrences > 0);
 
             StringBuilder stringBuilder = new StringBuilder();
@@ -1567,7 +1569,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
   }
 
-  private class MySelectScopeToggleAction extends ToggleAction {
+  private class MySelectScopeToggleAction extends DumbAwareToggleAction {
     private final FindPopupScopeUI.ScopeType myScope;
 
     MySelectScopeToggleAction(FindPopupScopeUI.ScopeType scope) {

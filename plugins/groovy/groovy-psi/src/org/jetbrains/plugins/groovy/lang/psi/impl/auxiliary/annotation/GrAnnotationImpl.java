@@ -65,7 +65,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   @Override
   @NotNull
   public GrAnnotationArgumentList getParameterList() {
-    return getRequiredStubOrPsiChild(GroovyElementTypes.ANNOTATION_ARGUMENTS);
+    return getRequiredStubOrPsiChild(GroovyElementTypes.ANNOTATION_ARGUMENT_LIST);
   }
 
   @Override

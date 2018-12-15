@@ -2,12 +2,12 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -74,7 +74,7 @@ public class JavaSdkImpl extends JavaSdk {
       }
 
       private void updateCache(VirtualFileEvent event) {
-        if (FileTypes.ARCHIVE.equals(fileTypeManager.getFileTypeByFileName(event.getFileName()))) {
+        if (ArchiveFileType.INSTANCE.equals(fileTypeManager.getFileTypeByFileName(event.getFileName()))) {
           String filePath = event.getFile().getPath();
           if (myCachedSdkHomeToVersionString.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false))) {
             myCachedVersionStringToJdkVersion.clear();
@@ -329,9 +329,10 @@ public class JavaSdkImpl extends JavaSdk {
     ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);
     SdkModificator sdkModificator = jdk.getSdkModificator();
 
-    String path = home.replace(File.separatorChar, '/');
-    sdkModificator.setHomePath(path);
-    sdkModificator.setVersionString(jdkName); // must be set after home path, otherwise setting home path clears the version string
+    sdkModificator.setHomePath(FileUtil.toSystemIndependentName(home));
+    if (JdkVersionDetector.isVersionString(jdkName)) {
+      sdkModificator.setVersionString(jdkName);  // must be set after home path, otherwise setting home path clears the version string
+    }
 
     File jdkHomeFile = new File(home);
     addClasses(jdkHomeFile, sdkModificator, isJre);
@@ -358,8 +359,7 @@ public class JavaSdkImpl extends JavaSdk {
       @Override public void setVersionString(String versionString) { throw new UnsupportedOperationException(); }
       @Override public SdkAdditionalData getSdkAdditionalData() { throw new UnsupportedOperationException(); }
       @Override public void setSdkAdditionalData(SdkAdditionalData data) { throw new UnsupportedOperationException(); }
-      @NotNull
-      @Override public VirtualFile[] getRoots(@NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
+      @Override public @NotNull VirtualFile[] getRoots(@NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
       @Override public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
       @Override public void removeRoots(@NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
       @Override public void removeAllRoots() { throw new UnsupportedOperationException(); }
@@ -410,13 +410,12 @@ public class JavaSdkImpl extends JavaSdk {
   @NotNull
   private static List<String> findClasses(@NotNull File file, boolean isJre) {
     List<String> result = ContainerUtil.newArrayList();
-    VirtualFileManager fileManager = VirtualFileManager.getInstance();
 
     if (JdkUtil.isExplodedModularRuntime(file.getPath())) {
-      VirtualFile exploded = fileManager.findFileByUrl(StandardFileSystems.FILE_PROTOCOL_PREFIX + getPath(new File(file, "modules")));
+      File[] exploded = new File(file, "modules").listFiles();
       if (exploded != null) {
-        for (VirtualFile virtualFile : exploded.getChildren()) {
-          result.add(virtualFile.getUrl());
+        for (File root : exploded) {
+          result.add(VfsUtil.getUrlForLibraryRoot(root));
         }
       }
     }
@@ -429,7 +428,7 @@ public class JavaSdkImpl extends JavaSdk {
         }
       }
       else {
-        VirtualFile jrt = fileManager.findFileByUrl(jrtBaseUrl);
+        VirtualFile jrt = VirtualFileManager.getInstance().findFileByUrl(jrtBaseUrl);
         if (jrt != null) {
           for (VirtualFile virtualFile : jrt.getChildren()) {
             result.add(virtualFile.getUrl());
@@ -439,8 +438,7 @@ public class JavaSdkImpl extends JavaSdk {
     }
     else {
       for (File root : JavaSdkUtil.getJdkClassesRoots(file, isJre)) {
-        String url = VfsUtil.getUrlForLibraryRoot(root);
-        result.add(url);
+        result.add(VfsUtil.getUrlForLibraryRoot(root));
       }
     }
 
@@ -491,14 +489,7 @@ public class JavaSdkImpl extends JavaSdk {
 
     VirtualFile apiDocs = findDocs(jdkHome, "docs/api");
     if (apiDocs != null) {
-      if (apiDocs.findChild("java.base") != null) {
-        Stream.of(apiDocs.getChildren())
-          .filter(f -> f.isDirectory() && f.findChild("module-summary.html") != null)
-          .forEach(root -> sdkModificator.addRoot(root, docRootType));
-      }
-      else {
-        sdkModificator.addRoot(apiDocs, docRootType);
-      }
+      sdkModificator.addRoot(apiDocs, docRootType);
     }
     else if (SystemInfo.isMac) {
       VirtualFile commonDocs = findDocs(jdkHome, "docs");

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -20,12 +6,10 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
-import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.StubBasedPsiElement;
@@ -126,19 +110,6 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     CompositeElement treeElement = calcTreeElement();
     return SharedImplUtil.doReplace(this, treeElement, newElement);
-  }
-
-  @Override
-  public void navigate(boolean requestFocus) {
-    final Navigatable navigatable = PsiNavigationSupport.getInstance().getDescriptor(this);
-    if (navigatable != null) {
-      navigatable.navigate(requestFocus);
-    }
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return canNavigate();
   }
 
   @Override

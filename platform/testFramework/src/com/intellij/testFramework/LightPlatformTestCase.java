@@ -231,19 +231,30 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ourPathToKeep = projectFile.getPath();
     ourPsiManager = null;
 
-    ourProjectDescriptor.setUpProject(ourProject, new LightProjectDescriptor.SetupHandler() {
-      @Override
-      public void moduleCreated(@NotNull Module module) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourModule = module;
-      }
+    try {
+      ourProjectDescriptor.setUpProject(ourProject, new LightProjectDescriptor.SetupHandler() {
+        @Override
+        public void moduleCreated(@NotNull Module module) {
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          ourModule = module;
+        }
 
-      @Override
-      public void sourceRootCreated(@NotNull VirtualFile sourceRoot) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourSourceRoot = sourceRoot;
+        @Override
+        public void sourceRootCreated(@NotNull VirtualFile sourceRoot) {
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          ourSourceRoot = sourceRoot;
+        }
+      });
+    }
+    catch (Throwable e) {
+      try {
+        closeAndDeleteProject();
       }
-    });
+      catch (Throwable suppressed) {
+        e.addSuppressed(suppressed);
+      }
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -434,6 +445,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest()).
       append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
       append(() -> ((StructureViewFactoryImpl)StructureViewFactory.getInstance(project)).cleanupForNextTest()).
+      append(() -> PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
       append(() -> ourTestCase = null).

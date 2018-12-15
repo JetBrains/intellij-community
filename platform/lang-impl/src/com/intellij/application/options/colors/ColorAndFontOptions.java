@@ -32,7 +32,6 @@ import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.ui.ColorUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
@@ -313,8 +312,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
       }
 
-      final boolean isEditorThemeDark = ColorUtil.isDark(activeOriginalScheme.getDefaultBackground());
-      changeLafIfNecessary(isEditorThemeDark);
+      changeLafIfNecessary(activeOriginalScheme);
 
       reset();
     }
@@ -417,6 +415,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
             return ((DisplayPrioritySortable)page).getPriority();
           }
           return DisplayPriority.LANGUAGE_SETTINGS;
+        }
+
+        @NotNull
+        @Override
+        public Class<?> getOriginalClass() {
+          return page.getClass();
         }
       });
     }
@@ -1307,6 +1311,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     public Set<String> processListOptions() {
       return createPanel().processListOptions();
+    }
+
+    @NotNull
+    @Override
+    public Class<?> getOriginalClass() {
+      return myFactory.getOriginalClass();
     }
 
     @NotNull

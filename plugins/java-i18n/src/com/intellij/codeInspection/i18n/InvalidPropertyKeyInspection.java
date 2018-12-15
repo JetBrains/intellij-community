@@ -267,7 +267,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
 
       final List<PropertiesFile> result = new ArrayList<>(propertiesFiles.size());
       for (final PropertiesFile file : propertiesFiles) {
-        if (!fileIndex.isInLibraryClasses(file.getVirtualFile()) && !fileIndex.isInLibrarySource(file.getVirtualFile())) {
+        if (!fileIndex.isInLibrary(file.getVirtualFile())) {
           result.add(file);
         }
       }

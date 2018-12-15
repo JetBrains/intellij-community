@@ -857,6 +857,92 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void test_alignAssignments() {
+    getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTextTest(
+      "public class Test {\n" +
+      "  void foo(int a, int xyz) {\n" +
+      "    a = 9999;\n" +
+      "    xyz = 1;\n" +
+      "  }\n" +
+      "}",
+      "public class Test {\n" +
+      "    void foo(int a, int xyz) {\n" +
+      "        a   = 9999;\n" +
+      "        xyz = 1;\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void test_alignMultilineAssignments() {
+    getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    getSettings().ALIGN_MULTILINE_ASSIGNMENT = true;
+    doTextTest(
+      "public class Test {\n" +
+      "  void foo(int a, int xyz) {\n" +
+      "    a = 9999;\n" +
+      "    xyz = a = \n" +
+      "    a = 12;\n" +
+      "  }\n" +
+      "}",
+      "public class Test {\n" +
+      "    void foo(int a, int xyz) {\n" +
+      "        a   = 9999;\n" +
+      "        xyz = a =\n" +
+      "        a   = 12;\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+
+  public void test_alignMultilineAssignmentsMixedWithDeclaration() {
+    getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    getSettings().ALIGN_MULTILINE_ASSIGNMENT = true;
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doTextTest(
+      "public class Test {\n" +
+      "  void foo(int a, int xyz, int bc) {\n" +
+      "    bc = 9999;\n" +
+      "    a = 9999;\n" +
+      "    int basdf = 1234;\n" +
+      "    int as = 3;\n" +
+      "    xyz = a = \n" +
+      "    a = 12;\n" +
+      "  }\n" +
+      "}",
+      "public class Test {\n" +
+      "    void foo(int a, int xyz, int bc) {\n" +
+      "        bc = 9999;\n" +
+      "        a  = 9999;\n" +
+      "        int basdf = 1234;\n" +
+      "        int as    = 3;\n" +
+      "        xyz = a =\n" +
+      "        a   = 12;\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void test_alignAssignmentsFields() {
+    getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTextTest(
+      "public class Test {\n" +
+      "  void foo(A a, int xyz) {\n" +
+      "    a.bar = 9999;\n" +
+      "    xyz = 1;\n" +
+      "  }\n" +
+      "}",
+      "public class Test {\n" +
+      "    void foo(A a, int xyz) {\n" +
+      "        a.bar = 9999;\n" +
+      "        xyz   = 1;\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
   public void _testIdea199677() {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
     getSettings().CALL_PARAMETERS_WRAP = 2;

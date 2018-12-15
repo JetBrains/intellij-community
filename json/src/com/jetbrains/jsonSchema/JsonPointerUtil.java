@@ -27,6 +27,7 @@ public class JsonPointerUtil {
     return "#".equals(ref) || "#/".equals(ref) || StringUtil.isEmpty(ref);
   }
 
+  @NotNull
   public static List<String> split(@NotNull String pointer) {
     return StringUtil.split(pointer, "/", true, false);
   }
@@ -34,5 +35,11 @@ public class JsonPointerUtil {
   @NotNull
   public static String normalizeSlashes(@NotNull String ref) {
     return StringUtil.trimStart(ref.replace('\\', '/'), "/");
+  }
+
+  @NotNull
+  public static String normalizeId(@NotNull String id) {
+    id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
+    return id.startsWith("#") ? id.substring(1) : id;
   }
 }

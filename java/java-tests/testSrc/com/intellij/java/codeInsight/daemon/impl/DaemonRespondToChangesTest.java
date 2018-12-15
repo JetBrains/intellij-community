@@ -98,6 +98,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ref.GCUtil;
@@ -117,6 +118,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -149,6 +151,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         doPostponedFormatting(project);
         ProjectManagerEx.getInstanceEx().forceCloseProject(project, false);
       }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       myDaemonCodeAnalyzer = null;
@@ -266,7 +271,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    if (isStressTest() && !getTestName(false).equals("TypingCurliesClearsEndOfFileErrorsInPhp_ItIsPerformanceTestBecauseItRunsTooLong")) {
+    if (isStressTest()) {
       // all possible inspections
       List<InspectionToolWrapper> all = InspectionToolRegistrar.getInstance().createTools();
       List<LocalInspectionTool> locals = new ArrayList<>();
@@ -1220,6 +1225,24 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       backspace();
     }).usesAllCPUCores().assertTiming();
   }
+                                                                                 
+  public void testExpressionListsWithManyStringLiteralsHighlightingPerformance() {
+    String listBody = StringUtil.join(Collections.nCopies(2000, "\"foo\""), ",\n");
+    String text = "class S { " +
+                  "String[] s = {" + listBody + "};\n" +
+                  "void foo(String... s) { foo(" + listBody + "); }\n" +
+                  "}";
+    configureByText(StdFileTypes.JAVA, text);
+
+    PlatformTestUtil.startPerformanceTest("highlighting many string literals", 10_000, () -> {
+      assertEmpty(highlightErrors());
+
+      type("k");
+      assertNotEmpty(highlightErrors());
+
+      backspace();
+    }).usesAllCPUCores().assertTiming();
+  }
 
   public void testPerformanceOfHighlightingLongCallChainWithHierarchyAndGenerics() {
     String text = "class Foo { native Foo foo(); }\n" +
@@ -1670,18 +1693,21 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testTypingLatencyPerformance() throws Throwable {
+    boolean debug = false;
+
     @NonNls String filePath = "/psi/resolve/ThinletBig.java";
 
     configureByFile(filePath);
 
     type(' ');
     CompletionContributor.forLanguage(getFile().getLanguage());
-    //long s = System.currentTimeMillis();
+    long s = System.currentTimeMillis();
     highlightErrors();
-    //long e = System.currentTimeMillis();
-    //System.out.println("Hi elapsed: "+(e-s));
+    if (debug) {
+      System.out.println("Hi elapsed: "+(System.currentTimeMillis() - s));
+    }
 
-    //List<String> dumps = new ArrayList<>();
+    List<String> dumps = new ArrayList<>();
 
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, false));
@@ -1698,17 +1724,17 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           return;
         }
         // uncomment to debug what's causing pauses
-        /*
         AtomicBoolean finished = new AtomicBoolean();
-        AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-          if (!finished.get()) {
-            dumps.add(ThreadDumper.dumpThreadsToString());
-          }
-        }, 10, TimeUnit.MILLISECONDS);
-        */
+        if (debug) {
+          AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+            if (!finished.get()) {
+              dumps.add(ThreadDumper.dumpThreadsToString());
+            }
+          }, 10, TimeUnit.MILLISECONDS);
+        }
         type(' ');
         long end = System.currentTimeMillis();
-        //finished.set(true);
+        finished.set(true);
         long interruptTime = end - now;
         interruptTimes[finalI] = interruptTime;
         assertTrue(codeAnalyzer.getUpdateProgress().isCanceled());
@@ -1734,11 +1760,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     System.out.println("Interrupt times: " + Arrays.toString(interruptTimes));
 
-    /*
-    for (String dump : dumps) {
-      System.out.println("\n\n-----------------------------\n\n" + dump);
+    if (debug) {
+      for (String dump : dumps) {
+        System.out.println("\n\n-----------------------------\n\n" + dump);
+      }
     }
-    */
 
     long mean = ArrayUtil.averageAmongMedians(interruptTimes, 3);
     long avg = Arrays.stream(interruptTimes).sum() / interruptTimes.length;
@@ -2271,10 +2297,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     UIUtil.dispatchAllInvocationEvents();
     IntentionHintComponent lastHintAfterDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
     // it must be either hidden or not have that error anymore
-    if (lastHintAfterDeletion != null) {
-      assertFalse(lastHintBeforeDeletion.getCachedIntentions().toString(), lastHintBeforeDeletion.getCachedIntentions().getErrorFixes().stream().anyMatch(e -> e.getText().equals("Initialize variable 'var'")));
-    } else {
+    if (lastHintAfterDeletion == null) {
       assertEmpty(visibleHints);
+    }
+    else {
+      assertFalse(lastHintAfterDeletion.getCachedIntentions().toString(), lastHintBeforeDeletion.getCachedIntentions().getErrorFixes().stream().anyMatch(e -> e.getText().equals("Initialize variable 'var'")));
     }
   }
 

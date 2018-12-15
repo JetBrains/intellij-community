@@ -1,5 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.actions.ConfigurationContext;
@@ -16,13 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Objects;
 
-
 public class UniqueIdConfigurationProducer extends JUnitConfigurationProducer {
-
-  protected UniqueIdConfigurationProducer() {
-    super(JUnitConfigurationType.getInstance());
-  }
-
   @Override
   protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
                                                   ConfigurationContext context,
@@ -50,10 +43,10 @@ public class UniqueIdConfigurationProducer extends JUnitConfigurationProducer {
     RunConfiguration runConfiguration = dataContext.getData(RunConfiguration.DATA_KEY);
     if (!(runConfiguration instanceof JUnitConfiguration)) return null;
     Module module = ((JUnitConfiguration)runConfiguration).getConfigurationModule().getModule();
-    
+
     GlobalSearchScope searchScope =
       module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(context.getProject());
-    return 
+    return
       Arrays.stream(testProxies).map(testProxy -> TestUniqueId.getEffectiveNodeId(testProxy, context.getProject(), searchScope))
         .filter(Objects::nonNull)
         .toArray(String[]::new);

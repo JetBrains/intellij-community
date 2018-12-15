@@ -43,8 +43,10 @@ public class ExternalSystemRunConfigurationMenu extends DefaultActionGroup imple
     ProjectSystemId projectSystemId = ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.getDataContext());
     Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
     for (int i = executors.length; --i >= 0; ) {
-      final ProgramRunner runner = ProgramRunner.getRunner(executors[i].getId(), settings.getConfiguration());
-      AnAction action = new ExecuteExternalSystemRunConfigurationAction(executors[i], runner != null, project, projectSystemId, settings);
+      Executor executor = executors[i];
+      if(!executor.isApplicable(project)) continue;
+      final ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), settings.getConfiguration());
+      AnAction action = new ExecuteExternalSystemRunConfigurationAction(executor, runner != null, project, projectSystemId, settings);
       addAction(action, Constraints.FIRST);
     }
 

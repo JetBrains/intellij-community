@@ -5,9 +5,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.AS_TYPE
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createJavaLangClassType
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReferenceBase
-import org.jetbrains.plugins.groovy.lang.resolve.wrapClassType
+import org.jetbrains.plugins.groovy.lang.resolve.api.LazyTypeArgument
 
 class GrSafeCastReference(element: GrSafeCastExpression) : GroovyMethodCallReferenceBase<GrSafeCastExpression>(element) {
 
@@ -17,5 +18,5 @@ class GrSafeCastReference(element: GrSafeCastExpression) : GroovyMethodCallRefer
 
   override val methodName: String get() = AS_TYPE
 
-  override val arguments: Arguments? get() = listOf(wrapClassType(element.castTypeElement?.type, element))
+  override val arguments: Arguments? get() = listOf(LazyTypeArgument { createJavaLangClassType(element.castTypeElement?.type, element) })
 }

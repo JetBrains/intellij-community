@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FileModificationService;
@@ -33,7 +32,6 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -117,7 +115,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       }
     }
 
-    if (shouldCreateInnerClass(psiClass) && !file.getManager().isInProject(file)) {
+    if (shouldCreateInnerClass(psiClass) && !canModify(file)) {
       return false;
     }
 

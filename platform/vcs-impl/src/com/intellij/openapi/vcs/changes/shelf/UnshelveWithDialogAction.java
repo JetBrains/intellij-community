@@ -45,8 +45,8 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameForUnshelve;
+import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager.getBinaryShelveChanges;
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager.getShelveChanges;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
@@ -112,14 +112,15 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
   private static class MyUnshelveDialog extends ApplyPatchDifferentiatedDialog {
 
     MyUnshelveDialog(@NotNull Project project,
-                            @NotNull VirtualFile patchFile,
-                            @NotNull ShelvedChangeList changeList,
-                            @NotNull List<ShelvedBinaryFilePatch> binaryShelvedPatches,
-                            @Nullable Change[] preselectedChanges) {
+                     @NotNull VirtualFile patchFile,
+                     @NotNull ShelvedChangeList changeList,
+                     @NotNull List<ShelvedBinaryFilePatch> binaryShelvedPatches,
+                     @Nullable Change[] preselectedChanges) {
       super(project, new UnshelvePatchDefaultExecutor(project, changeList), Collections.emptyList(), ApplyPatchMode.UNSHELVE, patchFile,
             null, getPredefinedChangeList(changeList, ChangeListManager.getInstance(project)), binaryShelvedPatches,
             hasNotAllSelectedChanges(project, changeList, preselectedChanges) ? newArrayList(preselectedChanges) : null,
             getChangeListNameForUnshelve(changeList), true);
+      setOKButtonText(VcsBundle.getString("unshelve.changes.action"));
     }
 
     @Nullable

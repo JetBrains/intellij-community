@@ -43,8 +43,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.*;
@@ -250,10 +250,10 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     @NotNull ArrangementSettings settings)
   {
     JavaArrangementParseInfo existingEntriesInfo = new JavaArrangementParseInfo();
-    root.accept(new JavaArrangementVisitor(existingEntriesInfo, document, ranges, settings));
+    root.accept(new JavaArrangementVisitor(existingEntriesInfo, document, ranges, settings, false));
 
     JavaArrangementParseInfo newEntryInfo = new JavaArrangementParseInfo();
-    element.accept(new JavaArrangementVisitor(newEntryInfo, document, Collections.singleton(element.getTextRange()), settings));
+    element.accept(new JavaArrangementVisitor(newEntryInfo, document, Collections.singleton(element.getTextRange()), settings, false));
     if (newEntryInfo.getEntries().size() != 1) {
       return null;
     }
@@ -269,7 +269,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   {
     // Following entries are subject to arrangement: class, interface, field, method.
     JavaArrangementParseInfo parseInfo = new JavaArrangementParseInfo();
-    root.accept(new JavaArrangementVisitor(parseInfo, document, ranges, settings));
+    root.accept(new JavaArrangementVisitor(parseInfo, document, ranges, settings, true));
     for (ArrangementGroupingRule rule : settings.getGroupings()) {
       if (GETTERS_AND_SETTERS.equals(rule.getGroupingType())) {
         setupGettersAndSetters(parseInfo);

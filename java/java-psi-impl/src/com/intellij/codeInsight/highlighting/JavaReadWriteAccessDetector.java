@@ -26,7 +26,9 @@ import org.jetbrains.annotations.NotNull;
 public class JavaReadWriteAccessDetector extends ReadWriteAccessDetector {
   @Override
   public boolean isReadWriteAccessible(@NotNull final PsiElement element) {
-    return element instanceof PsiVariable && !(element instanceof ImplicitVariable) || element instanceof PsiClass || element instanceof PsiAnnotationMethod && !(element instanceof PsiCompiledElement);
+    return element instanceof PsiVariable && !(element instanceof ImplicitVariable)
+           || element instanceof PsiClass
+           || element instanceof PsiAnnotationMethod && !(element instanceof PsiCompiledElement);
   }
 
   @Override

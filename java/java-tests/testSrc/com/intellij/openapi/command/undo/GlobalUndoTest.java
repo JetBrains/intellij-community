@@ -67,6 +67,9 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
       myContainingFile = null;
       myClass = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

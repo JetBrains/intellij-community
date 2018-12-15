@@ -97,13 +97,17 @@ public class MemoryDumpHelper {
     ourDumpHeap.invoke(ourMXBean, dumpPath, true);
   }
 
-  public static synchronized void captureMemoryDumpZipped(@NotNull String zipPath) throws Exception {
+  public static void captureMemoryDumpZipped(@NotNull String zipPath) throws Exception {
+    captureMemoryDumpZipped(new File(zipPath));
+  }
+
+  public static synchronized void captureMemoryDumpZipped(@NotNull File zipFile) throws Exception {
     File tempFile = FileUtil.createTempFile("heapDump.", ".hprof");
     FileUtil.delete(tempFile);
 
     captureMemoryDump(tempFile.getPath());
 
-    ZipUtil.compressFile(tempFile, new File(zipPath));
+    ZipUtil.compressFile(tempFile, zipFile);
     FileUtil.delete(tempFile);
   }
 }

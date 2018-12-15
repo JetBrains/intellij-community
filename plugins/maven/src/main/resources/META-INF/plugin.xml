@@ -96,11 +96,11 @@
     <projectTemplateFileProcessor implementation="org.jetbrains.idea.maven.utils.MavenTemplateFileProcessor"/>
 
     <xml.elementDescriptorProvider implementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorProvider"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProfilesModelDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomOldProfilesModelDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomSettingsModelDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomPluginModelDescription"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription" rootTagName="project"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomProfilesModelDescription" rootTagName="profilesXml"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomOldProfilesModelDescription" rootTagName="profiles"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomSettingsModelDescription" rootTagName="settings"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomPluginModelDescription" rootTagName="plugin"/>
 
     <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenModelDocumentationProvider"
                                 order="first"/>
@@ -602,9 +602,8 @@
       <reference id="EditSource"/>
     </group>
 
-    <group id="Maven.BuildMenu" popup="true">
-      <reference id="Maven.RunBuild"/>
-      <reference ref="RunContextGroup"/>
+    <group id="Maven.BuildMenu" popup="true"  class="org.jetbrains.idea.maven.navigator.actions.MavenBuildMenu">
+      <action id="Maven.CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
       <separator/>
       <reference ref="Maven.TasksGroup"/>
     </group>

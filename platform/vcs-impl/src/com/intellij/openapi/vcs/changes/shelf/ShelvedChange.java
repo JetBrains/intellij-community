@@ -172,10 +172,10 @@ public class ShelvedChange {
 
     final ShelvedChange that = (ShelvedChange)o;
 
-    if (myAfterPath != null ? !myAfterPath.equals(that.myAfterPath) : that.myAfterPath != null) return false;
-    if (myBeforePath != null ? !myBeforePath.equals(that.myBeforePath) : that.myBeforePath != null) return false;
-    if (myFileStatus != null ? !myFileStatus.equals(that.myFileStatus) : that.myFileStatus != null) return false;
-    if (myPatchPath != null ? !myPatchPath.equals(that.myPatchPath) : that.myPatchPath != null) return false;
+    if (!Objects.equals(myAfterPath, that.myAfterPath)) return false;
+    if (!Objects.equals(myBeforePath, that.myBeforePath)) return false;
+    if (!Objects.equals(myFileStatus, that.myFileStatus)) return false;
+    if (!Objects.equals(myPatchPath, that.myPatchPath)) return false;
 
     return true;
   }

@@ -41,11 +41,17 @@ Var productLauncher
 Var baseRegKey
 Var downloadJreX86
 Var productDir
-Var control_fields
-Var max_fields
 Var silentMode
 Var pathEnvVar
 Var requiredDiskSpace
+
+; position of controls for Uninstall Old Installations dialog
+Var control_fields
+Var max_fields
+Var bottom_position
+Var max_length
+Var line_width
+Var extra_space
 
 ; position of controls for Installation Options dialog
 var launcherShortcut
@@ -76,6 +82,7 @@ ${StrRep}
 
 ReserveFile "desktop.ini"
 ReserveFile "DeleteSettings.ini"
+ReserveFile "UninstallOldVersions.ini"
 !insertmacro MUI_RESERVEFILE_LANGDLL
 
 !define MUI_ICON "${IMAGES_LOCATION}\${PRODUCT_ICON_FILE}"
@@ -392,6 +399,16 @@ Function ConfirmDesktopShortcut
   ${If} $R1 != ""
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Type" "checkbox"
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Text" $R1
+  ${Else}
+    Push $R0
+    Push $R1
+    !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $secondLauncherShortcut" "Right"
+    IntOp $R1 $R0 - 10
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Right" $R1
+    IntOp $R1 $R0 - 5
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Left" $R1
+    Pop $R1
+    Pop $R0
   ${EndIf}
 
   ; if jre x86 for the build is available then add checkbox to Installation Options dialog
@@ -563,7 +580,7 @@ update_install_dir:
     ${LogText} ""
     ${LogText} "  NOTE: Specified install dir: $INSTDIR is required administrative rights."
     ${LogText} "  It is corresponding with the admin mode in silent config file."
-    ${LogText} "  But installation has been run with user mode. So install dir has been changed to: "
+    ${LogText} "  But installation has been run with user mode. So install folder has been changed to the default: "
     StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
     ${LogText} "  $INSTDIR "
     ${LogText} ""
@@ -684,9 +701,9 @@ check_version:
   StrCmp $3 "" done
   IntCmpU $3 ${VER_BUILD} ask_Install_Over done ask_Install_Over
 ask_Install_Over:
-  ${LogText} ""
   ${LogText} "  NOTE: ${PRODUCT_WITH_VER} is already installed:"
   ${LogText} "  $9"
+  ${LogText} ""
   IfSilent continue 0
   MessageBox MB_YESNO|MB_ICONQUESTION "$(current_version_already_installed)" IDYES continue IDNO exit_installer
 exit_installer:
@@ -715,23 +732,21 @@ Function uninstallOldVersion
   !insertmacro INSTALLOPTIONS_READ $9 "UninstallOldVersions.ini" "Field 2" "State"
   ${LogText} ""
   ${LogText} "Uninstall old installation: $3"
+
+  ;do copy for unistall.exe
+  CopyFiles "$3\bin\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+
   ${If} $9 == "1"
-    ExecWait '"$3\bin\Uninstall.exe" /S'
+    ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /S _?=$3\bin'
   ${else}
-    ExecWait '"$3\bin\Uninstall.exe" _?=$3\bin'
+    ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$3\bin'
   ${EndIf}
   IfFileExists $3\bin\${PRODUCT_EXE_FILE} 0 uninstall
   goto complete
 uninstall:
   ;previous installation has been removed
   ;customer has decided to keep properties?
-  IfFileExists $3\bin\idea.properties saveProperties fullRemove
-saveProperties:
-  Delete "$3\bin\Uninstall.exe"
-  Goto complete
-fullRemove:
-  StrCpy $0 $3
-  Call deleteDirIfEmpty
+  Delete "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
 complete:
 FunctionEnd
 
@@ -756,14 +771,69 @@ finish:
 FunctionEnd
 
 
+Function getUninstallOldVersionVars
+  !insertmacro INSTALLOPTIONS_READ $max_fields "UninstallOldVersions.ini" "Settings" "NumFields"
+  !insertmacro INSTALLOPTIONS_READ $control_fields "UninstallOldVersions.ini" "Settings" "ControlFields"
+  !insertmacro INSTALLOPTIONS_READ $bottom_position "UninstallOldVersions.ini" "Settings" "BottomPosition"
+  !insertmacro INSTALLOPTIONS_READ $max_length "UninstallOldVersions.ini" "Settings" "MaxLength"
+  !insertmacro INSTALLOPTIONS_READ $line_width "UninstallOldVersions.ini" "Settings" "LineWidth"
+  !insertmacro INSTALLOPTIONS_READ $extra_space "UninstallOldVersions.ini" "Settings" "ExtraSpace"
+FunctionEnd
+
+
+Function getPosition
+; return:
+;    0 if it is first checkbox which do not require special position
+;    Bottom position of previous checkbox which equals for Top position of current one.
+  IntOp $R8 $8 - 1
+  !insertmacro INSTALLOPTIONS_READ $R7 "UninstallOldVersions.ini" "Field $R8" "Bottom"
+  !insertmacro INSTALLOPTIONS_READ $7  "UninstallOldVersions.ini" "Field $8"  "Top"
+  StrCmp $R8 $control_fields noCheckboxesFound 0
+    Push $R7
+    Goto done
+noCheckboxesFound:
+    Push $7
+done:
+FunctionEnd
+
+
+Function getAdditionalSpaceForCheckbox
+; $3 - a path to an old installation
+; return
+;   - 0 for 1-line checkbox
+;   - a value for additional space for multi-line checkbox
+  StrLen $9 $3
+  ${If} $9 >= $max_length
+    ; installation path is long
+    Push $extra_space
+    Goto done
+  ${Else}
+    Push 0
+  ${EndIf}
+done:
+FunctionEnd
+
+
+Function haveSpaceForTheCheckbox
+  ; check if dialog has space for current checkbox
+  !insertmacro INSTALLOPTIONS_READ $7 "UninstallOldVersions.ini" "Field $8" "Bottom"
+  IntOp $7 $bottom_position - $7
+  ${If} $7 >= 0
+    Push 0
+    Goto done
+  ${Else}
+    IntOp $8 $8 - 1
+    Push 1
+  ${EndIf}
+done:
+FunctionEnd
+
+
 Function uninstallOldVersionDialog
-  StrCpy $control_fields 2
-  StrCpy $max_fields 13
   StrCpy $0 "HKLM"
   StrCpy $4 0
-  ReserveFile "UninstallOldVersions.ini"
-  !insertmacro INSTALLOPTIONS_EXTRACT "UninstallOldVersions.ini"
   StrCpy $8 $control_fields
+  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 2" "State" "0"
 
 get_installation_info:
   StrCpy $1 "Software\${MANUFACTURER}\${MUI_PRODUCT}"
@@ -777,11 +847,22 @@ uninstall_dialog:
   Call checkProductVersion
   ${If} $6 != "duplicated"
     IntOp $8 $8 + 1
+    Call getPosition
+    Pop $7
+    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Top" "$7"
+    IntOp $R7 $7 + $line_width
+    Call getAdditionalSpaceForCheckbox
+    Pop $R9
+    IntOp $R7 $R7 + $R9
+    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Bottom" "$R7"
+    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "State" "0"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Text" "$3"
-    StrCmp $8 $max_fields complete
+    Call haveSpaceForTheCheckbox
+    Pop $9
+    StrCmp $9 0 0 complete
   ${EndIf}
 get_next_key:
-  IntOp $4 $4 + 1 ;to check next record from registry
+  IntOp $4 $4 + 1 ;next record from registry
   goto get_installation_info
 
 next_registry_root:
@@ -803,18 +884,19 @@ complete:
     !insertmacro MUI_HEADER_TEXT "$(uninstall_previous_installations_title)" "$(uninstall_previous_installations)"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 1" "Text" "$(uninstall_previous_installations_prompt)"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 3" "Flags" "FOCUS"
-    !insertmacro INSTALLOPTIONS_DISPLAY "UninstallOldVersions.ini"
-    ;uninstall chosen installation(s)
-
-    ;no disabled controls. StrCmp $2 "OK" loop finish
+    !insertmacro INSTALLOPTIONS_DISPLAY_RETURN "UninstallOldVersions.ini"
+    Pop $9
+    ${If} $9 == "success"
 loop:
-    !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field $8" "State"
-    !insertmacro INSTALLOPTIONS_READ $3 "UninstallOldVersions.ini" "Field $8" "Text"
-    ${If} $0 == "1"
-      Call uninstallOldVersion
+      ;uninstall chosen installation(s)
+      !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field $8" "State"
+      !insertmacro INSTALLOPTIONS_READ $3 "UninstallOldVersions.ini" "Field $8" "Text"
+      ${If} $0 == "1"
+        Call uninstallOldVersion
       ${EndIf}
       IntOp $8 $8 - 1
       StrCmp $8 $control_fields finish loop
+    ${EndIf}
   ${EndIf}
 finish:
 FunctionEnd
@@ -1283,8 +1365,10 @@ SectionEnd
 Function .onInit
   SetRegView 32
   Call createLog
+  !insertmacro INSTALLOPTIONS_EXTRACT "UninstallOldVersions.ini"
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
   Call getInstallationOptionsPositions
+  Call getUninstallOldVersionVars
   IfSilent silent_mode uac_elevate
 
 silent_mode:
@@ -1300,10 +1384,9 @@ custom_silent_config:
 validate_install_dir:
   Call searchCurrentVersion
   Call silentInstallDirValidate
-  Call OnDirectoryPageLeave
 set_reg_key:
   StrCpy $baseRegKey "HKCU"
-  StrCmp $silentMode "admin" uac_elevate done
+  StrCmp $silentMode "admin" uac_elevate installdir_is_empty
 uac_elevate:
   !insertmacro UAC_RunElevated
   StrCmp 1223 $0 uac_elevation_aborted ; UAC dialog aborted by user? - continue install under user
@@ -1313,10 +1396,11 @@ uac_elevate:
 uac_err:
   Abort
 uac_elevation_aborted:
-  IfSilent done set_install_dir
-set_install_dir:
+  ${LogText} ""
+  ${LogText} "  NOTE: UAC elevation has been aborted. Installation dir will be changed."
+  ${LogText} ""
   StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
-  goto done
+  goto installdir_is_empty
 uac_success:
   StrCmp 1 $3 uac_admin ;Admin?
   StrCmp 3 $1 0 uac_elevation_aborted ;Try again?
@@ -1332,6 +1416,10 @@ set_install_dir_admin_mode:
 uac_all_users:
   SetShellVarContext all
   StrCpy $baseRegKey "HKLM"
+installdir_is_empty:
+  IfSilent 0 done
+; Check in silent mode if install folder is not empty.
+  Call OnDirectoryPageLeave
 done:
   ${LogText} "Installation dir: $INSTDIR"
 ;  !insertmacro MUI_LANGDLL_DISPLAY
@@ -1342,8 +1430,7 @@ Function checkAvailableRequiredDiskSpace
   SectionGetSize ${CopyIdeaFiles} $requiredDiskSpace
   ${LogText} "Space required: $requiredDiskSpace KB"
   Push $INSTDIR
-  Call GetParent
-  Pop $9
+  StrCpy $9 $INSTDIR 3
   Call FreeDiskSpace
   ${LogText} "Space available: $1 KB"
 
@@ -1371,29 +1458,6 @@ Function FreeDiskSpace
   ${Else}
     ${LogText} "An error occurred during calculation disk space $0"
   ${EndIf}
-FunctionEnd
-
-
-Function GetParent
-  Exch $R0
-  Push $R1
-  Push $R2
-  Push $R3
-  StrCpy $R1 0
-  StrLen $R2 $R0
-loop:
-  IntOp $R1 $R1 + 1
-  IntCmp $R1 $R2 get 0 get
-  StrCpy $R3 $R0 1 -$R1
-  StrCmp $R3 "\" get
-  Goto loop
-
-get:
-  StrCpy $R0 $R0 -$R1
-  Pop $R3
-  Pop $R2
-  Pop $R1
-  Exch $R0
 FunctionEnd
 
 ;------------------------------------------------------------------------------
@@ -1447,28 +1511,35 @@ Function un.onInit
   IfFileExists "$INSTDIR\IdeaWin32.dll" 0 end_of_uninstall
   IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
   IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE_64}" 0 end_of_uninstall
-  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" get_reg_key 0
-  goto end_of_uninstall
+  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" 0 end_of_uninstall
 
 get_reg_key:
   SetRegView 32
   Call un.getRegKey
-  StrCmp $baseRegKey "HKLM" required_admin_perm UAC_Done
+  StrCmp $baseRegKey "HKLM" uninstall_location UAC_Done
+
+uninstall_location:
+  ;check if the uninstallation is running from the product location
+  IfFileExists $LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe UAC_Elevate required_admin_perm
 
 required_admin_perm:
   ;the user has admin rights?
   UserInfo::GetAccountType
   Pop $R2
-  StrCmp $R2 "Admin" UAC_Admin uninstall_location
-
-uninstall_location:
-  ;check if the uninstallation is running from the product location
-  IfFileExists $LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe UAC_Elevate copy_uninstall
+  StrCmp $R2 "Admin" UAC_Admin copy_uninstall
 
 copy_uninstall:
   ;do copy for unistall.exe
   CopyFiles "$OUTDIR\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+  IfSilent uninstall_silent_mode uninstall_gui_mode
+
+uninstall_silent_mode:
+  ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /S _?=$INSTDIR'
+  Goto delete_uninstaller_itself
+uninstall_gui_mode:
   ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$INSTDIR'
+
+delete_uninstaller_itself:
   Delete "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
   IfFileExists "$INSTDIR\bin\*.*" 0 delete_install_dir
   StrCpy $0 "$INSTDIR\bin"
@@ -1773,6 +1844,8 @@ skip_delete_settings:
     Call un.deleteDirIfEmpty
 no_jre32:
   !include "unidea_win.nsh"
+  StrCpy $0 "$INSTDIR\bin"
+  Call un.deleteDirIfEmpty
   StrCpy $0 "$INSTDIR"
   Call un.deleteDirIfEmpty
 

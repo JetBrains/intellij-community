@@ -1237,8 +1237,7 @@ public class TemplateState implements Disposable {
     final PsiFile file = getPsiFile();
     if (file != null) {
       CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-      DumbService dumbService = DumbService.getInstance(myProject);
-      for (TemplateOptionalProcessor processor : dumbService.filterByDumbAwareness(TemplateOptionalProcessor.EP_NAME.getExtensionList())) {
+      for (TemplateOptionalProcessor processor : DumbService.getDumbAwareExtensions(myProject, TemplateOptionalProcessor.EP_NAME)) {
         try {
           processor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
         }

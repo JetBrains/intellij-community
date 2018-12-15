@@ -445,6 +445,10 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
   }
 
+  public void testKeepTryWithResources() {
+    doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+  }
+
   public void testVisibilityOfOverriddenMethod() {
     doTest(PsiModifier.PACKAGE_LOCAL, "foo", "void", new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
   }

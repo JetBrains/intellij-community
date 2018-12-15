@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -45,10 +46,9 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
     if (project != null) {
       if (!file.exists()) {
         val confirmation = IdeBundle.message("edit.custom.settings.confirm", FileUtil.getLocationRelativeToUserHome(file.path))
-        val title = e.presentation.text!!
-        val ok = IdeBundle.message("button.create")
-        val cancel = IdeBundle.message("button.cancel")
-        val result = Messages.showOkCancelDialog(project, confirmation, title, ok, cancel, Messages.getQuestionIcon())
+        val result = showOkCancelDialog(title = e.presentation.text!!, message = confirmation,
+                                        okText = IdeBundle.message("button.create"), cancelText = IdeBundle.message("button.cancel"),
+                                        icon = Messages.getQuestionIcon(), project = project)
         if (result == Messages.CANCEL) return
 
         try {

@@ -67,7 +67,6 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   @SuppressWarnings("unused") private JPanel myCommenterPanel;
   private JPanel myOverridePanel;
   private JBCheckBox myReplaceInstanceOfCb;
-  private JBCheckBox myReplaceCastCb;
   private JBCheckBox myReplaceNullCheckCb;
   private JTextField myTestClassPrefix;
   private JTextField myTestClassSuffix;
@@ -132,7 +131,6 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     myRepeatSynchronizedCheckBox.setSelected(javaSettings.REPEAT_SYNCHRONIZED);
     myJavaVisibilityPanel.setVisibility(javaSettings.VISIBILITY);
 
-    myReplaceCastCb.setSelected(javaSettings.REPLACE_CAST);
     myReplaceInstanceOfCb.setSelected(javaSettings.REPLACE_INSTANCEOF);
     myReplaceNullCheckCb.setSelected(javaSettings.REPLACE_NULL_CHECK);
 
@@ -174,7 +172,6 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
 
     javaSettings.VISIBILITY = myJavaVisibilityPanel.getVisibility();
 
-    javaSettings.REPLACE_CAST = myReplaceCastCb.isSelected();
     javaSettings.REPLACE_INSTANCEOF = myReplaceInstanceOfCb.isSelected();
     javaSettings.REPLACE_NULL_CHECK = myReplaceNullCheckCb.isSelected();
 
@@ -226,7 +223,6 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     isModified |= isModified(myInsertOverrideAnnotationCheckBox, javaSettings.INSERT_OVERRIDE_ANNOTATION);
     isModified |= isModified(myRepeatSynchronizedCheckBox, javaSettings.REPEAT_SYNCHRONIZED);
 
-    isModified |= isModified(myReplaceCastCb, javaSettings.REPLACE_CAST);
     isModified |= isModified(myReplaceInstanceOfCb, javaSettings.REPLACE_INSTANCEOF);
     isModified |= isModified(myReplaceNullCheckCb, javaSettings.REPLACE_NULL_CHECK);
 

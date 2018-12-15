@@ -58,12 +58,6 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
            o == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
   }
 
-  @Nullable
-  @Override
-  protected <P> T getValueWithLock(P param) {
-    return super.getValueWithLock(param);
-  }
-
   @Override
   protected boolean isUpToDate(@NotNull Data data) {
     return !myManager.isDisposed() && super.isUpToDate(data);

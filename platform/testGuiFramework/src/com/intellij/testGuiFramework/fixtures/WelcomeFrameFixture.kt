@@ -4,13 +4,13 @@ package com.intellij.testGuiFramework.fixtures
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.actionLink
 import com.intellij.testGuiFramework.impl.popupMenu
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.ContainerFixture
-import org.fest.swing.timing.Condition
-import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
 import java.awt.Frame
 
@@ -33,7 +33,7 @@ class WelcomeFrameFixture private constructor(robot: Robot,
     return this
   }
 
-  private fun findActionLinkByActionId(actionId: String): ActionLinkFixture {
+  fun findActionLinkByActionId(actionId: String): ActionLinkFixture {
     return ActionLinkFixture.findByActionId(actionId, robot(), target())
   }
 
@@ -41,7 +41,7 @@ class WelcomeFrameFixture private constructor(robot: Robot,
     return MessagesFixture.findByTitle(robot(), target(), title)
   }
 
-  fun openPluginsDialog()/*: JDialogFixture*/{
+  fun openPluginsDialog()/*: JDialogFixture*/ {
     actionLink("Configure").click()
     popupMenu("Plugins").clickSearchedItem()
     // TODO: make return JDialogFixture object of Plugins dialog
@@ -50,23 +50,14 @@ class WelcomeFrameFixture private constructor(robot: Robot,
 
   companion object {
     fun find(robot: Robot, timeout: Timeout = Timeouts.minutes05): WelcomeFrameFixture {
-      Pause.pause(object : Condition("Welcome Frame to show up") {
-        override fun test(): Boolean {
-          for (frame in Frame.getFrames()) {
-            if (frame is FlatWelcomeFrame && frame.isShowing()) {
-              return true
-            }
-          }
-          return false
+      try {
+        val welcomeFrame = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) {
+          Frame.getFrames().firstOrNull { it is FlatWelcomeFrame && it.isShowing() }
         }
-      }, timeout)
-
-      for (frame in Frame.getFrames()) {
-        if (frame is FlatWelcomeFrame && frame.isShowing()) {
-          return WelcomeFrameFixture(robot, frame)
-        }
+        return WelcomeFrameFixture(robot, welcomeFrame as FlatWelcomeFrame)
+      } catch (timeoutError: WaitTimedOutError) {
+        throw ComponentLookupException("Unable to find 'Welcome' window with timeout $timeout")
       }
-      throw ComponentLookupException("Unable to find 'Welcome' window")
     }
 
     fun findSimple(): WelcomeFrameFixture = find(GuiRobotHolder.robot)

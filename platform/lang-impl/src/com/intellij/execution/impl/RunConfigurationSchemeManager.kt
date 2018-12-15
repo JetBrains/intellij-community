@@ -10,9 +10,9 @@ import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.attribute
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.function.Function
@@ -65,12 +65,15 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
       settings.readExternal(element, isShared)
     }
     catch (e: InvalidDataException) {
-      RunManagerImpl.LOG.error(e)
+      LOG.error(e)
     }
 
     var elementAfterStateLoaded: Element? = element
     try {
       elementAfterStateLoaded = writeScheme(settings)
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
     }
     catch (e: Throwable) {
       LOG.error("Cannot compute digest for RC using state after load", e)
@@ -120,7 +123,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     val result = super.writeScheme(scheme) ?: return null
     if (isShared && isWrapSchemeIntoComponentElement) {
       return Element("component")
-        .attribute("name", "ProjectRunConfigurationManager")
+        .setAttribute("name", "ProjectRunConfigurationManager")
         .addContent(result)
     }
     else if (scheme.isTemplate) {

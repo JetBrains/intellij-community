@@ -6,8 +6,8 @@ import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.json.psi.JsonValue;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -18,7 +18,7 @@ import org.junit.Assert;
 public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletionTest {
   @Override
   public String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data/completion";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data/completion";
   }
 
   @Override
@@ -83,5 +83,18 @@ public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyComple
   @Override
   public void testWhitespaceAfterColon() throws Exception {
     // do nothing
+  }
+
+  @Override
+  public void testDontInsertExtraValue() throws Exception {
+    // do nothing, json-specific test
+  }
+
+  public void testInsertArrayItemNested() throws Exception {
+    baseInsertTest("insertArrayItemNested", "test");
+  }
+
+  public void testInsertColonAfterPropName() throws Exception {
+    baseInsertTest("insertColonAfterPropName", "test");
   }
 }

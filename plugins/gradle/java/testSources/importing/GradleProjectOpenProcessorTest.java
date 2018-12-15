@@ -76,13 +76,16 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
     try {
       WriteAction.runAndWait(() -> {
         Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
-              .filter(sdk -> !GRADLE_JDK_NAME.equals(sdk.getName()))
-              .forEach(ProjectJdkTable.getInstance()::removeJdk);
+          .filter(sdk -> !GRADLE_JDK_NAME.equals(sdk.getName()))
+          .forEach(ProjectJdkTable.getInstance()::removeJdk);
         for (Sdk sdk : removedSdks) {
           SdkConfigurationUtil.addSdk(sdk);
         }
         removedSdks.clear();
       });
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

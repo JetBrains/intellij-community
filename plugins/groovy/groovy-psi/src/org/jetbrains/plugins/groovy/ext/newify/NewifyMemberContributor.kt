@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.getClassArray
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 
 internal const val newifyAnnotationFqn = "groovy.lang.Newify"
 internal const val newifyOriginInfo = "by @Newify"
@@ -21,7 +22,7 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
                                       processor: PsiScopeProcessor,
                                       place: PsiElement,
                                       state: ResolveState) {
-
+    if (!processor.shouldProcessMethods()) return
     if (place !is GrReferenceExpression) return
     val newifyAnnotations = place.listNewifyAnnotations()
     if (newifyAnnotations.isEmpty()) return
@@ -51,7 +52,7 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     return@flatMap seq ?: emptySequence()
   }.toList()
 
-  fun buildConstructors(clazz: PsiClass, newName: String?): List<NewifiedConstructor> {
+  private fun buildConstructors(clazz: PsiClass, newName: String?): List<NewifiedConstructor> {
     newName ?: return emptyList()
     val constructors = clazz.constructors
     if (constructors.isNotEmpty()) {

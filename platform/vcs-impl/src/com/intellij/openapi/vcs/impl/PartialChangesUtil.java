@@ -170,12 +170,14 @@ public class PartialChangesUtil {
   private static void restoreChangeList(@NotNull ChangeListManagerEx clm,
                                         @NotNull LocalChangeList targetChangeList,
                                         @NotNull LocalChangeList oldDefaultList) {
-    if (Comparing.equal(clm.getDefaultChangeList().getId(), targetChangeList.getId())) {
+    LocalChangeList defaultChangeList = clm.getDefaultChangeList();
+    if (Comparing.equal(defaultChangeList.getId(), targetChangeList.getId())) {
       clm.setDefaultChangeList(oldDefaultList, true);
       LOG.debug(String.format("Active changelist restored: %s -> %s", targetChangeList.getName(), oldDefaultList.getName()));
     }
     else {
-      LOG.warn(new Throwable("Active changelist was changed during the operation"));
+      LOG.warn(new Throwable(String.format("Active changelist was changed during the operation. Expected: %s -> %s, actual default: %s",
+                                           targetChangeList.getName(), oldDefaultList.getName(), defaultChangeList.getName())));
     }
   }
 }

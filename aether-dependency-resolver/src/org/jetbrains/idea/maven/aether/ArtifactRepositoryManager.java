@@ -221,7 +221,9 @@ public class ArtifactRepositoryManager {
                 requests.add(new ArtifactRequest(newArtifact, Collections.unmodifiableList(myRemoteRepositories), null));
               }
             }
-            requests.add(new ArtifactRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null));
+            else {
+              requests.add(new ArtifactRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null));
+            }
           }
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,13 +39,19 @@ public class AntImportTest extends BaseSMTRunnerTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myEventsProcessor.onFinishTesting();
-    Disposer.dispose(myEventsProcessor);
-    Disposer.dispose(myRootNode);
-    myRootNode = null;
-    myEventsProcessor = null;
-
-    super.tearDown();
+    try {
+      myEventsProcessor.onFinishTesting();
+      Disposer.dispose(myEventsProcessor);
+      Disposer.dispose(myRootNode);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      myRootNode = null;
+      myEventsProcessor = null;
+      super.tearDown();
+    }
   }
 
   public void testAntFormatTest() throws Exception {

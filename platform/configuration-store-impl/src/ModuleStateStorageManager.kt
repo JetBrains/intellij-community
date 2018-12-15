@@ -9,9 +9,9 @@ import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.isExternalStorageEnabled
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.LineSeparator
-import com.intellij.util.loadElement
 import org.jdom.Element
 import java.io.FileNotFoundException
 import java.nio.ByteBuffer
@@ -100,7 +100,7 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
         runAndHandleExceptions {
           val charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(virtualFile.contentsToByteArray()))
           lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-          return loadElement(charBuffer)
+          return JDOMUtil.load(charBuffer)
         }
       }
       return null

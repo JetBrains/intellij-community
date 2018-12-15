@@ -7,6 +7,7 @@ import com.intellij.find.*;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.FindResultImpl;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
+import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -44,7 +45,10 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.psi.search.scope.packageSet.ParsingException;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.MapDataContext;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
@@ -53,7 +57,6 @@ import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.Usage;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
@@ -70,6 +73,7 @@ import java.util.concurrent.CountDownLatch;
 /**
  * @author MYakovlev
  */
+@ExcludeFromTestDiscovery
 public class FindManagerTest extends DaemonAnalyzerTestCase {
   private FindManager myFindManager;
   private VirtualFile[] mySourceDirs;
@@ -554,17 +558,14 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertSize(2, findInProject(findModel));
   }
 
-  public void testLocalScopeSearchPerformance() throws Exception {
-    final int fileCount = 3000;
-    final int lineCount = 5000;
+  public void testLocalScopeSearchDoesNotLoadUnrelatedFiles() throws Exception {
+    int lineCount = 500;
     TempDirTestFixture fixture = new LightTempDirTestFixtureImpl();
     fixture.setUp();
 
     try {
       String sampleText = StringUtil.repeat("zoo TargetWord foo bar goo\n", lineCount);
-      for (int i = 0; i < fileCount; i++) {
-        fixture.createFile("a" + i + ".txt", sampleText);
-      }
+      VirtualFile unrelated = fixture.createFile("another.txt", sampleText);
       PsiTestUtil.addSourceContentToRoots(myModule, fixture.getFile(""));
 
       VirtualFile file = fixture.createFile("target.txt", sampleText);
@@ -578,14 +579,15 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       findModel.setMultipleFiles(true);
       findModel.setCustomScope(true);
 
-      ThrowableRunnable test = () -> assertSize(lineCount, findInProject(findModel));
+      assertNull(FileDocumentManager.getInstance().getCachedDocument(unrelated));
 
       findModel.setCustomScope(GlobalSearchScope.fileScope(psiFile));
-      int timeout = 600;
-      PlatformTestUtil.startPerformanceTest("find usages in global", timeout, test).attempts(2).assertTiming();
+      assertSize(lineCount, findInProject(findModel));
+      assertNull(FileDocumentManager.getInstance().getCachedDocument(unrelated));
 
       findModel.setCustomScope(new LocalSearchScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("find usages in local", timeout, test).attempts(2).assertTiming();
+      assertSize(lineCount, findInProject(findModel));
+      assertNull(FileDocumentManager.getInstance().getCachedDocument(unrelated));
     }
     finally {
       fixture.tearDown();

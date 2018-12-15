@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -139,7 +140,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     if (modifierList == null || modifierList.hasAnnotation(myAnnotation)) return;
     PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(myAnnotation, myModifierListOwner.getResolveScope());
     final ExternalAnnotationsManager.AnnotationPlace annotationAnnotationPlace;
-    if (aClass != null && aClass.getManager().isInProject(aClass) && AnnotationsHighlightUtil.getRetentionPolicy(aClass) == RetentionPolicy.RUNTIME) {
+    if (aClass != null && BaseIntentionAction.canModify(myModifierListOwner) && AnnotationsHighlightUtil.getRetentionPolicy(aClass) == RetentionPolicy.RUNTIME) {
       annotationAnnotationPlace = ExternalAnnotationsManager.AnnotationPlace.IN_CODE;
     }
     else {

@@ -16,4 +16,7 @@ public class AutoUnboxingExplicitFixTest extends IGQuickFixesTestCase {
   }
 
   public void testCommentsInTypeCast() { doTest(); }
+  public void testSwitchExpressionPrecedence() { doTest(); }
+  public void testMethodCallPrecedence() { doTest(); }
+
 }

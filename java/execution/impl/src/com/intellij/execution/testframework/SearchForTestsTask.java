@@ -90,14 +90,15 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
     try {
       mySocket = myServerSocket.accept();
       final ExecutionException[] ex = new ExecutionException[1];
-      Runnable runnable = () -> {
-        try {
-          search();
-        }
-        catch (ExecutionException e) {
-          ex[0] = e;
-        }
-      };
+      Runnable runnable = () ->
+        DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
+          try {
+            search();
+          }
+          catch (ExecutionException e) {
+            ex[0] = e;
+          }
+        });
       //noinspection StatementWithEmptyBody
       while (!runSmartModeReadActionWithWritePriority(runnable, new SensitiveProgressWrapper(indicator)));
       if (ex[0] != null) {

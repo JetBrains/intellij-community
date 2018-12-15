@@ -1,11 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.util.scenarios
 
+import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.testGuiFramework.framework.Timeouts
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.GuiTestThread
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt
-import com.intellij.testGuiFramework.impl.button
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.RestartIdeAndResumeContainer
@@ -71,7 +69,11 @@ fun PluginsDialogScenarios.installPluginFromDisk(pluginFileName: String) {
       }
       ok()
     }
-    dialog("IDE and Plugin Updates", timeout = Timeouts.seconds05) { button("Postpone").click() }
+    if (isMac) {
+      dialogWithTextComponent(Timeouts.seconds05, { it.text.contains("IDE and Plugin Updates") }) { button("Postpone").click() }
+    } else {
+      dialog("IDE and Plugin Updates", timeout = Timeouts.seconds05) { button("Postpone").click() }
+    }
   }
 }
 

@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
 import com.jediterm.terminal.SubstringFinder;
@@ -52,7 +53,6 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable {
   private final Project myProject;
@@ -148,7 +148,19 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
     actions.add(new TerminalAction("New Session", mySettingsProvider.getNewSessionKeyStrokes(), input -> {
       myListener.onNewSession();
       return true;
-    }).withMnemonicKey(KeyEvent.VK_T));
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
+    actions.add(new TerminalAction("Select Previous Tab", mySettingsProvider.getPreviousTabKeyStrokes(), input -> {
+      myListener.onPreviousTabSelected();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
+    actions.add(new TerminalAction("Select Next Tab", mySettingsProvider.getNextTabKeyStrokes(), input -> {
+      myListener.onNextTabSelected();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
+    actions.add(new TerminalAction("Show Tabs", mySettingsProvider.getShowTabsKeyStrokes(), input -> {
+      myListener.showTabs();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
     if (!mySettingsProvider.overrideIdeShortcuts()) {
       actions
         .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, input -> {
@@ -161,11 +173,16 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
           }
         }).withHidden(true));
     }
+    actions.add(new TerminalAction("Close Session", mySettingsProvider.getCloseSessionKeyStrokes(), input -> {
+      myListener.onSessionClosed();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
     return actions;
   }
 
   @Override
   public void dispose() {
+    close();
   }
 
   @Override
@@ -224,9 +241,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
       public LinkResult apply(String line) {
         Filter.Result r = filter.applyFilter(line, line.length());
         if (r != null) {
-          return new LinkResult(r.getResultItems().stream().map(
-            (item -> new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(), new LinkInfo(
-              () -> item.getHyperlinkInfo().navigate(project))))).collect(Collectors.toList()));
+          return new LinkResult(ContainerUtil.map(r.getResultItems(),
+                                                  (item -> new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
+                                                                              new LinkInfo(
+                                                                                () -> item.getHyperlinkInfo().navigate(project))))));
         }
         else {
           return null;

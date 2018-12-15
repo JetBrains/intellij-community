@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -64,7 +65,7 @@ public interface Content extends UserDataHolder, ComponentContainer {
   /**
    * @param disposer a Disposable object which dispose() method will be invoked upon this content release.
    */
-  void setDisposer(Disposable disposer);
+  void setDisposer(@NotNull Disposable disposer);
 
   void setShouldDisposeContent(boolean value);
   boolean shouldDisposeContent();

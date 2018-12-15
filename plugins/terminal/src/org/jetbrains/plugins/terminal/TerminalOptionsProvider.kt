@@ -1,21 +1,21 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.xmlb.annotations.Property
 import java.io.File
-import java.util.HashMap
 
 /**
  * @author traff
  */
-
 @State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml"))])
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
-  private val myState = State()
+  private var myState = State()
 
   var shellPath: String? by ValueWithDefault(State::myShellPath, myState) { defaultShellPath }
 
@@ -24,16 +24,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   override fun loadState(state: State) {
-    myState.myCloseSessionOnLogout = state.myCloseSessionOnLogout
-    myState.myReportMouse = state.myReportMouse
-    myState.mySoundBell = state.mySoundBell
-    myState.myTabName = state.myTabName
-    myState.myCopyOnSelection = state.myCopyOnSelection
-    myState.myPasteOnMiddleMouseButton = state.myPasteOnMiddleMouseButton
-    myState.myOverrideIdeShortcuts = state.myOverrideIdeShortcuts
-    myState.myShellIntegration = state.myShellIntegration
-    myState.myShellPath = state.myShellPath
-    myState.myHighlightHyperlinks = state.myHighlightHyperlinks
+    myState = state
   }
 
   fun closeSessionOnLogout(): Boolean {
@@ -81,8 +72,8 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
-    var myUserSpecifiedEnvs: Map<String, String> = hashMapOf("PROJECT_DIR" to "\$PROJECT_DIR$")
-    var myPassParentEnvs = true
+    @get:Property(surroundWithTag = false, flat = true)
+    var envDataOptions = EnvironmentVariablesDataOptions()
   }
 
   fun setCloseSessionOnLogout(closeSessionOnLogout: Boolean) {
@@ -121,20 +112,12 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState.myHighlightHyperlinks = highlight
   }
 
-  fun getUserSpecifiedEnvs(): Map<String, String> {
-    return myState.myUserSpecifiedEnvs
+  fun getEnvData(): EnvironmentVariablesData {
+    return myState.envDataOptions.get()
   }
 
-  fun setUserSpecifiedEnvs(userSpecifiedEnvs: Map<String, String>) {
-    myState.myUserSpecifiedEnvs = userSpecifiedEnvs
-  }
-
-  fun setPassParentEnvs(passParentEnvs: Boolean) {
-    myState.myPassParentEnvs = passParentEnvs
-  }
-
-  fun passParentEnvs(): Boolean {
-    return myState.myPassParentEnvs
+  fun setEnvData(envData: EnvironmentVariablesData) {
+    myState.envDataOptions.set(envData)
   }
 
   val defaultShellPath: String
@@ -160,11 +143,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
 
   companion object {
     val instance: TerminalOptionsProvider
+      @JvmStatic
       get() = ServiceManager.getService(TerminalOptionsProvider::class.java)
   }
 }
-
-
-
-
-

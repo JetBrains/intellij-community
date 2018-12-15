@@ -282,6 +282,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "}";
     assertEquals("match literal by value", 1, findMatchesCount(s3, "32"));
     assertEquals("match char with substitution", 3, findMatchesCount(s3, "\\''_x\\'"));
+    assertEquals("string literal should not match char", 0, findMatchesCount(s3, "\"a\""));
   }
 
   public void testCovariantArraySearch() {
@@ -1444,6 +1445,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "class 'c {\n" +
                  "}";
     assertEquals("complete comment match", 1, findMatchesCount(s16, s17));
+    assertEquals("complete comment match case insensitive", 1, findMatchesCount(s16, s17.toLowerCase()));
 
     String s18 = "public class A {\n" +
                  "   private void f(int i) {\n" +
@@ -1456,6 +1458,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "   }\n" +
                  "}";
     assertEquals("statement match with comment", 1, findMatchesCount(s18,s19));
+
+    String s20 = "class X {" +
+                 "  /* H̸̡̪̯ͨ͊̽̅̾̎Ȩ̬̩̾͛ͪ̈́̀́͘ ̶̧̨̱̹̭̯ͧ̾ͬC̷̙̲̝͖ͭ̏ͥͮ͟Oͮ͏̮̪̝͍M̲̖͊̒ͪͩͬ̚̚͜Ȇ̴̟̟͙̞ͩ͌͝S̨̥̫͎̭ͯ̿̔̀ͅ */" +
+                 "}";
+    assertEquals("match comments ignoring accents and differences in whitespace", 1, findMatchesCount(s20, "/*he\ncomes*/"));
   }
 
   public void testOther() {
@@ -2627,6 +2634,17 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "try (InputStream in = new FileInputStream(\"tmp\")) {\n" +
                  "  }",
                  matches3.get(0).getMatchImage());
+
+    String source2 = "class X {{" +
+                     "  try {} catch (Thowable e) {} finally {}" +
+                     "  try {} finally {}" +
+                     "}}";
+    String pattern10 = "try { '_st1*; } catch ('_E '_e{0,0}) { '_St2*; } finally { '_St3*; }";
+    final List<MatchResult> matches4 = findMatches(source2, pattern10, StdFileTypes.JAVA);
+    assertEquals(1, matches4.size());
+    assertEquals("Should find try without catch blocks",
+                 "try {} finally {}",
+                 matches4.get(0).getMatchImage());
   }
 
   public void testFindAsserts() {

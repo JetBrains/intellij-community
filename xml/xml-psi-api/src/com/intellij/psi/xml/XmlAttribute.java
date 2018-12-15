@@ -30,15 +30,23 @@ public interface XmlAttribute extends XmlElement, PsiNamedElement {
   XmlAttribute[] EMPTY_ARRAY = new XmlAttribute[0];
 
   @Override
-  @NonNls @NotNull String getName();
+  @NonNls
+  @NotNull
+  String getName();
 
-  @NonNls @NotNull String getLocalName();
+  @NonNls
+  @NotNull
+  String getLocalName();
 
   XmlElement getNameElement();
 
-  @NonNls @NotNull String getNamespace();
+  @NonNls
+  @NotNull
+  String getNamespace();
 
-  @NonNls @NotNull String getNamespacePrefix();
+  @NonNls
+  @NotNull
+  String getNamespacePrefix();
 
   @Override
   XmlTag getParent();
@@ -56,19 +64,20 @@ public interface XmlAttribute extends XmlElement, PsiNamedElement {
   String getDisplayValue();
 
   /**
-   * @param offset in string returned by {@link #getText()} (with quotes stripped)
+   * @param offset in string returned by {@link #getValue()} (with quotes stripped)
    * @return offset in the string returned from {@link #getDisplayValue()} or -1 if the offset is out of valid range
    */
   int physicalToDisplay(int offset);
+
   /**
    * @param offset in the string returned from {@link #getDisplayValue()}
-   * @return offset in string returned by {@link #getText()} (with quotes stripped) or -1 if the offset is out of valid range
+   * @return offset in string returned by {@link #getValue()} (with quotes stripped) or -1 if the offset is out of valid range
    */
   int displayToPhysical(int offset);
 
   /**
    * @return TextRange of the XML attribute value.
-   * If quotes are present, it returns {@code new TextRange(1, getTextLength()-1)}, otherwise it is {@code new TextRange(0, getTextLength())}
+   * If quotes are present, it returns {@code new TextRange(1, getValue().getTextLength()-1)}, otherwise it is {@code new TextRange(0, getValue().getTextLength())}
    */
   @NotNull
   TextRange getValueTextRange();
@@ -78,11 +87,12 @@ public interface XmlAttribute extends XmlElement, PsiNamedElement {
    */
   boolean isNamespaceDeclaration();
 
-  @Nullable XmlAttributeDescriptor getDescriptor();
+  @Nullable
+  XmlAttributeDescriptor getDescriptor();
 
   // In this case function is also used to get references from attribute value
   @Nullable
   XmlAttributeValue getValueElement();
 
-  void setValue(String value) throws IncorrectOperationException;
+  void setValue(@NotNull String value) throws IncorrectOperationException;
 }

@@ -46,10 +46,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Consumer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -104,6 +101,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private boolean myIsItemSelected;
   private String myLastInputText = null;
   private RunAnythingSearchListModel.RunAnythingMainListModel myListModel;
+  private Project myProject;
+  private Module myModule;
 
   private void onMouseClicked(@NotNull MouseEvent event) {
     int clickCount = event.getClickCount();
@@ -256,16 +255,13 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   private Project getProject() {
-    final Project project = CommonDataKeys.PROJECT.getData(myActionEvent.getDataContext());
-    assert project != null;
-    return project;
+    return myProject;
   }
 
   @Nullable
   private Module getModule() {
-    Module module = myActionEvent.getData(LangDataKeys.MODULE);
-    if (module != null) {
-      return module;
+    if (myModule != null) {
+      return myModule;
     }
 
     Project project = getProject();
@@ -828,6 +824,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
           myCalcThread = null;
           myEditor = null;
           myVirtualFile = null;
+          myProject = null;
+          myModule = null;
         }
       }
     });
@@ -843,7 +841,9 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myEditor = actionEvent.getData(CommonDataKeys.EDITOR);
     myVirtualFile = actionEvent.getData(CommonDataKeys.VIRTUAL_FILE);
 
+    myProject = ObjectUtils.notNull(CommonDataKeys.PROJECT.getData(myActionEvent.getDataContext()));
     myDataContext = createDataContext(actionEvent);
+    myModule = myActionEvent.getData(LangDataKeys.MODULE);
 
     init();
 

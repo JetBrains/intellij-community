@@ -101,7 +101,7 @@ public class ProblemDescriptorUtil {
   public static String unescapeTags(String message) {
     message = StringUtil.replace(message, "<code>", "'");
     message = StringUtil.replace(message, "</code>", "'");
-    message = message.contains(XML_CODE_MARKER.first) ? unescapeXmlCode(message) : StringUtil.unescapeXml(message);
+    message = message.contains(XML_CODE_MARKER.first) ? unescapeXmlCode(message) : StringUtil.unescapeXmlEntities(message);
     return message;
   }
 
@@ -120,7 +120,7 @@ public class ProblemDescriptorUtil {
       if (string.contains(XML_CODE_MARKER.second)) {
         builder.append(string.replace(XML_CODE_MARKER.second, ""));
       } else {
-        builder.append(StringUtil.unescapeXml(string));
+        builder.append(StringUtil.unescapeXmlEntities(string));
       }
     }
     return builder.toString();

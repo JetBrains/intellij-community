@@ -45,10 +45,10 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private RefParameter[] myParameters; //guarded by this
   private String myReturnValueTemplate; //guarded by this
 
-  RefMethodImpl(@NotNull RefElement ownerClass, UMethod method, PsiElement psi, RefManager manager) {
+  RefMethodImpl(@NotNull RefElement owner, UMethod method, PsiElement psi, RefManager manager) {
     super(method, psi, manager);
 
-    ((WritableRefEntity)ownerClass).add(this);
+    ((WritableRefEntity)owner).add(this);
   }
 
   // To be used only from RefImplicitConstructor.
@@ -222,7 +222,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   private void initializeSuperMethods(PsiMethod method) {
-    if (getRefManager().isOfflineView() || !getRefManager().isDeclarationsFound()) return;
+    if (getRefManager().isOfflineView()) return;
     for (PsiMethod psiSuperMethod : method.findSuperMethods()) {
       if (getRefManager().belongsToScope(psiSuperMethod)) {
         RefMethodImpl refSuperMethod = (RefMethodImpl)getRefManager().getReference(psiSuperMethod);

@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -352,6 +353,9 @@ public class DefaultActionGroup extends ActionGroup {
       }
       replace(stub, action);
       return action;
+    }
+    catch (ProcessCanceledException ex) {
+      throw ex;
     }
     catch (Throwable e1) {
       LOG.error(e1);

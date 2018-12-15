@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public final class MainMenuUsagesCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
-  public static final String GROUP_ID = "statistics.actions.main.menu";
+  public static final String GROUP_ID = "statistics.actions.main.menu.v2";
 
   @Override
   @NotNull

@@ -43,6 +43,15 @@
     <xs:attribute type="xs:string" name="full"/>
     <xs:attribute type="xs:string" name="codename"/>
     <xs:attribute type="xs:boolean" name="eap"/>
+    <xs:attribute type="xs:string" name="suffix">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies type of this version which should be shown in UI after the version number separated by space. This value is used for
+          presentation purposes only, so it may contain an arbitrary string (e.g. "EAP", "Beta", "Preview", "RC").
+          If it's omitted and 'eap' attribute is 'true', "EAP" suffix will be used.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="namesType">
     <xs:attribute type="xs:string" name="product">
@@ -177,9 +186,11 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <!--deprecated-->
     <xs:attribute type="xs:int" name="progressX">
       <xs:annotation>
         <xs:documentation>
+          Deprecated attribute.
           The X coordinate of the top left corner of the progress bar on the splash screen. The progress bar will end at the right side of
           the splash screen.
         </xs:documentation>

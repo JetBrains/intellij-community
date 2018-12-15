@@ -2,7 +2,7 @@
 package org.jetbrains.yaml.paste;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -19,7 +19,7 @@ import java.awt.datatransfer.StringSelection;
 public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/paste/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/paste/data/";
   }
 
   public void testPasteKeysInStart1() {
@@ -46,6 +46,22 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("next.subKey");
   }
 
+  public void testPasteKeysAtEOF1() {
+    doTest("next.subKey");
+  }
+
+  public void testPasteKeysAtEOF2() {
+    doTest("next.subKey");
+  }
+
+  public void testPasteKeysAtEOF3() {
+    doTest("next.subKey");
+  }
+
+  public void testPasteKeysAtEOF4() {
+    doTest("next.subKey");
+  }
+
   public void testDoNotPasteKeysInPlainScalar() {
     doTest("next.subKey");
   }
@@ -56,6 +72,19 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testDoNotPasteKeysWithBadPattern() {
     doTest("some strange text");
+  }
+
+  public void testDoNotPasteKeysWithBadPattern2() {
+    doTest("some. strange. text");
+  }
+
+  // Ambiguity in dot splitting
+  public void testDoNotPasteKeysWithBadPattern3() {
+    doTest("some.strange..text");
+  }
+
+  public void testDoNotPasteArrayAsKeys() {
+    doTest("[x.y]");
   }
 
   // It is disputable behaviour
@@ -83,6 +112,16 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
   // It is disputable behaviour
   public void testPasteKeysInEmptyKeyValue2() {
     doTest("next.subKey");
+  }
+
+  // It is disputable behaviour
+  public void testPasteKeysWithStrangeSymbols1() {
+    doTest("workspace{w1}/next.^sub[Key]*(%magic%)");
+  }
+
+  // It is disputable behaviour
+  public void testPasteKeysWithLeadingDot() {
+    doTest(".leading.subKey");
   }
 
   private void doTest(@NotNull String pasteText) {

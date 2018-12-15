@@ -250,6 +250,9 @@ public abstract class InspectionTestCase extends PsiTestCase {
       myUnusedCodeExtension = null;
       ext_src = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

@@ -16,7 +16,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
@@ -45,6 +48,10 @@ public abstract class GrMapType extends GrLiteralClassType {
                       GlobalSearchScope scope,
                       @NotNull LanguageLevel languageLevel) {
     super(languageLevel, scope, facade);
+  }
+
+  protected GrMapType(@NotNull PsiElement context) {
+    super(LanguageLevel.JDK_1_5, context);
   }
 
   @NotNull
@@ -105,7 +112,7 @@ public abstract class GrMapType extends GrLiteralClassType {
       components.add(getInternalCanonicalText(entry.first) + ":" + getInternalCanonicalText(entry.second));
     }
     boolean tooMany = components.size() > 2;
-    final List<String> theFirst = components.subList(0, Math.min(2, components.size()));
+    final List<String> theFirst = ContainerUtil.getFirstItems(components, 2);
     return "[" + StringUtil.join(theFirst, ", ") + (tooMany ? ",..." : "") + "]";
   }
 
@@ -120,7 +127,7 @@ public abstract class GrMapType extends GrLiteralClassType {
   }
 
   public static GrMapType merge(GrMapType l, GrMapType r) {
-    final GlobalSearchScope scope = l.getScope().intersectWith(r.getResolveScope());
+    final GlobalSearchScope scope = l.getResolveScope().intersectWith(r.getResolveScope());
 
     final LinkedHashMap<String, PsiType> strings = ContainerUtil.newLinkedHashMap();
     strings.putAll(l.getStringEntries());
@@ -137,13 +144,6 @@ public abstract class GrMapType extends GrLiteralClassType {
                                  GlobalSearchScope scope,
                                  @NotNull LinkedHashMap<String, PsiType> stringEntries,
                                  @NotNull List<Couple<PsiType>> otherEntries) {
-    return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
-  }
-
-  public static GrMapType create(GlobalSearchScope scope) {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(scope.getProject());
-    List<Couple<PsiType>> otherEntries = Collections.emptyList();
-    LinkedHashMap<String, PsiType> stringEntries = ContainerUtil.newLinkedHashMap();
     return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
   }
 

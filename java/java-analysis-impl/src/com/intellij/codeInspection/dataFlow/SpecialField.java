@@ -4,7 +4,9 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -24,12 +26,15 @@ import static com.intellij.psi.CommonClassNames.*;
  * @author Tagir Valeev
  */
 public enum SpecialField implements DfaVariableSource {
-  ARRAY_LENGTH(null, "length", true, LongRangeSet.indexRange()) {
+  ARRAY_LENGTH(null, "length", true) {
+    @Override
+    boolean isMyQualifierType(PsiType type) {
+      return type instanceof PsiArrayType;
+    }
+
     @Override
     boolean isMyAccessor(PsiMember accessor) {
-      return accessor instanceof PsiField && "length".equals(accessor.getName()) &&
-             JavaPsiFacade.getElementFactory(accessor.getProject()).getArrayClass(PsiUtil.getLanguageLevel(accessor)) ==
-             accessor.getContainingClass();
+      return accessor instanceof PsiField && "length".equals(accessor.getName()) && PsiUtil.isArrayClass(accessor.getContainingClass());
     }
 
     @Override
@@ -53,24 +58,20 @@ public enum SpecialField implements DfaVariableSource {
       return null;
     }
   },
-  STRING_LENGTH(JAVA_LANG_STRING, "length", true, LongRangeSet.indexRange()) {
+  STRING_LENGTH(JAVA_LANG_STRING, "length", true) {
     @Override
     DfaValue fromInitializer(DfaValueFactory factory, PsiExpression initializer) {
-      Object value = ExpressionUtils.computeConstantExpression(initializer);
-      if(value instanceof String) {
-        return factory.getInt(((String)value).length());
-      }
-      return null;
+      return fromConstant(factory, ExpressionUtils.computeConstantExpression(initializer));
     }
 
     @Override
-    public DfaValue fromConstant(DfaValueFactory factory, @NotNull Object obj) {
+    public DfaValue fromConstant(DfaValueFactory factory, @Nullable Object obj) {
       return obj instanceof String ? factory.getInt(((String)obj).length()) : null;
     }
   },
-  COLLECTION_SIZE(JAVA_UTIL_COLLECTION, "size", false, LongRangeSet.indexRange()),
-  MAP_SIZE(JAVA_UTIL_MAP, "size", false, LongRangeSet.indexRange()),
-  UNBOX(null, "unbox", true, null) {
+  COLLECTION_SIZE(JAVA_UTIL_COLLECTION, "size", false),
+  MAP_SIZE(JAVA_UTIL_MAP, "size", false),
+  UNBOX(null, "value", true) {
     private final CallMatcher UNBOXING_CALL = CallMatcher.anyOf(
       CallMatcher.exactInstanceCall(JAVA_LANG_INTEGER, "intValue").parameterCount(0),
       CallMatcher.exactInstanceCall(JAVA_LANG_LONG, "longValue").parameterCount(0),
@@ -87,6 +88,17 @@ public enum SpecialField implements DfaVariableSource {
       return PsiPrimitiveType.getUnboxedType(variableValue.getType());
     }
 
+    @NotNull
+    @Override
+    public DfaValue getDefaultValue(DfaValueFactory factory) {
+      return DfaUnknownValue.getInstance();
+    }
+
+    @Override
+    boolean isMyQualifierType(PsiType type) {
+      return TypeConversionUtil.isPrimitiveWrapper(type);
+    }
+
     @Override
     boolean isMyAccessor(PsiMember accessor) {
       return accessor instanceof PsiMethod && UNBOXING_CALL.methodMatches((PsiMethod)accessor);
@@ -96,13 +108,11 @@ public enum SpecialField implements DfaVariableSource {
   private final String myClassName;
   private final String myMethodName;
   private final boolean myFinal;
-  private final LongRangeSet myRange;
 
-  SpecialField(String className, String methodName, boolean isFinal, LongRangeSet range) {
+  SpecialField(String className, String methodName, boolean isFinal) {
     myClassName = className;
     myMethodName = methodName;
     myFinal = isFinal;
-    myRange = range;
   }
 
   @Override
@@ -110,13 +120,12 @@ public enum SpecialField implements DfaVariableSource {
     return myFinal;
   }
 
-  @Nullable
-  public LongRangeSet getRange() {
-    return myRange;
-  }
-
   public String getMethodName() {
     return myMethodName;
+  }
+  
+  boolean isMyQualifierType(PsiType type) {
+    return InheritanceUtil.isInheritor(type, myClassName);
   }
 
   /**
@@ -178,6 +187,12 @@ public enum SpecialField implements DfaVariableSource {
       }
       return factory.getVarFactory().createVariableValue(this, targetType == null ? getType(variableValue) : targetType, variableValue);
     }
+    if(qualifier instanceof DfaFactMapValue) {
+      SpecialFieldValue sfValue = ((DfaFactMapValue)qualifier).get(DfaFactType.SPECIAL_FIELD_VALUE);
+      if (sfValue != null && sfValue.getField() == this) {
+        return sfValue.getValue();
+      }
+    }
     if(qualifier instanceof DfaConstValue) {
       Object obj = ((DfaConstValue)qualifier).getValue();
       if(obj != null) {
@@ -187,7 +202,18 @@ public enum SpecialField implements DfaVariableSource {
         }
       }
     }
-    return factory.getFactValue(DfaFactType.RANGE, myRange);
+    return getDefaultValue(factory);
+  }
+
+  /**
+   * Creates a DfaValue which describes any possible value this special field may have
+   * 
+   * @param factory {@link DfaValueFactory} to use
+   * @return a default value, could be unknown
+   */
+  @NotNull
+  public DfaValue getDefaultValue(DfaValueFactory factory) {
+    return factory.getFactValue(DfaFactType.RANGE, LongRangeSet.indexRange());
   }
 
   PsiPrimitiveType getType(DfaVariableValue variableValue) {
@@ -198,7 +224,7 @@ public enum SpecialField implements DfaVariableSource {
     return null;
   }
 
-  DfaValue fromConstant(DfaValueFactory factory, @NotNull Object obj) {
+  DfaValue fromConstant(DfaValueFactory factory, @Nullable Object obj) {
     return null;
   }
 
@@ -219,6 +245,27 @@ public enum SpecialField implements DfaVariableSource {
                            ContractValue.argument(0).specialField(this), returnFalse())};
   }
 
+  public SpecialFieldValue withValue(DfaValue value) {
+    return new SpecialFieldValue(this, value);
+  }
+
+  /**
+   * Returns a special field which corresponds to given qualifier type
+   * (currently it's assumed that only one special field may exist for given qualifier type)
+   * 
+   * @param type a qualifier type
+   * @return a special field; null if no special field is available for given type
+   */
+  @Nullable
+  public static SpecialField fromQualifierType(PsiType type) {
+    for (SpecialField value : SpecialField.values()) {
+      if (value.isMyQualifierType(type)) {
+        return value;
+      }
+    }
+    return null;
+  }
+  
   @Override
   public String toString() {
     return myMethodName;

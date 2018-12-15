@@ -13,10 +13,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +39,8 @@ public class ListPluginComponent extends CellPluginComponent {
   private RestartButton myRestartButton;
   private final BaselinePanel myBaselinePanel = new BaselinePanel();
   private ProgressIndicatorEx myIndicator;
+
+  private IdeaPluginDescriptor myUpdateDescriptor;
 
   public ListPluginComponent(@NotNull MyPluginModel pluginModel, @NotNull IdeaPluginDescriptor plugin, boolean pluginForUpdate) {
     super(plugin);
@@ -76,9 +75,7 @@ public class ListPluginComponent extends CellPluginComponent {
     addNameComponent(myBaselinePanel);
     myName.setVerticalAlignment(SwingConstants.TOP);
 
-    if (pluginForUpdate) {
-      createVersion();
-    }
+    createVersion(pluginForUpdate);
     updateErrors();
 
     if (!pluginForUpdate) {
@@ -159,7 +156,7 @@ public class ListPluginComponent extends CellPluginComponent {
   @NotNull
   private static AbstractLayoutManager createCheckboxIconLayout() {
     return new AbstractLayoutManager() {
-      JBValue offset = new JBValue.Float(12);
+      final JBValue offset = new JBValue.Float(12);
 
       @Override
       public Dimension preferredLayoutSize(Container parent) {
@@ -194,10 +191,24 @@ public class ListPluginComponent extends CellPluginComponent {
     };
   }
 
-  private void createVersion() {
+  private void createVersion(boolean pluginForUpdate) {
     String version = StringUtil.defaultIfEmpty(myPlugin.getVersion(), null);
-    if (version != null) {
-      myVersion = new JLabel("Version " + version);
+
+    if (version != null && (pluginForUpdate || !myPlugin.isBundled() || myPlugin.allowBundledUpdate())) {
+      String oldVersion = null;
+
+      if (pluginForUpdate) {
+        IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(myPlugin.getPluginId());
+        oldVersion = installedPlugin == null ? null : StringUtil.defaultIfEmpty(installedPlugin.getVersion(), null);
+      }
+      if (oldVersion == null) {
+        version = "v" + version;
+      }
+      else {
+        version = "Version " + oldVersion + " " + UIUtil.rightArrow() + " " + version;
+      }
+
+      myVersion = new JLabel(version);
       myVersion.setOpaque(false);
       myBaselinePanel.addVersionComponent(PluginManagerConfigurableNew.installTiny(myVersion));
     }
@@ -210,6 +221,42 @@ public class ListPluginComponent extends CellPluginComponent {
         myBaselinePanel.addVersionComponent(PluginManagerConfigurableNew.installTiny(myLastUpdated));
       }
     }
+  }
+
+  public void setUpdateDescriptor(@Nullable IdeaPluginDescriptor descriptor) {
+    if (myUpdateDescriptor == null && descriptor == null) {
+      return;
+    }
+
+    myUpdateDescriptor = descriptor;
+
+    if (descriptor == null) {
+      if (myVersion != null) {
+        myVersion.setText("v" + myPlugin.getVersion());
+      }
+      if (myUpdateButton != null) {
+        myUpdateButton.setVisible(false);
+      }
+    }
+    else {
+      if (myVersion == null) {
+        myVersion = new JLabel();
+        myVersion.setOpaque(false);
+        myBaselinePanel.addVersionComponent(PluginManagerConfigurableNew.installTiny(myVersion));
+      }
+      myVersion.setText("Version " + myPlugin.getVersion() + " " + UIUtil.rightArrow() + " " + descriptor.getVersion());
+
+      if (myUpdateButton == null) {
+        myUpdateButton = new UpdateButton();
+        myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myUpdateDescriptor, false));
+        myBaselinePanel.addButtonComponent(myUpdateButton);
+      }
+      else {
+        myUpdateButton.setVisible(true);
+      }
+    }
+
+    myBaselinePanel.doLayout();
   }
 
   public void updateErrors() {

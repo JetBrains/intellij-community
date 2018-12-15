@@ -50,6 +50,8 @@ public interface ExternalProjectsView {
 
   boolean getGroupTasks();
 
+  boolean getGroupModules();
+
   boolean useTasksNode();
 
   ProjectSystemId getSystemId();

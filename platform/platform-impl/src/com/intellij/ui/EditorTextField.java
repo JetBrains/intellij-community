@@ -436,11 +436,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     editor.setOneLineMode(isOneLineMode);
 
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    final EditorColorsScheme defaultScheme =
-      UIUtil.isUnderDarcula() ? colorsManager.getGlobalScheme() : colorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME);
-    EditorColorsScheme customGlobalScheme = isOneLineMode? defaultScheme : null;
-
-    editor.setColorsScheme(editor.createBoundColorSchemeDelegate(customGlobalScheme));
+    EditorColorsScheme customGlobalScheme = colorsManager.getSchemeForCurrentUITheme();
+    editor.setColorsScheme(editor.createBoundColorSchemeDelegate(isOneLineMode ? customGlobalScheme : null));
 
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     editor.getSettings().setCaretRowShown(false);

@@ -531,7 +531,7 @@ public class FileUtil extends FileUtilRt {
 
   /**
    * Copies content of {@code fromDir} to {@code toDir}.
-   * It's equivalent to "cp -r fromDir/* toDir" unix command.
+   * It's equivalent to "cp --dereference -r fromDir/* toDir" unix command.
    *
    * @param fromDir source directory
    * @param toDir   destination directory

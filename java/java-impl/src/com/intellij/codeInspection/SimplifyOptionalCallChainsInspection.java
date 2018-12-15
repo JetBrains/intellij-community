@@ -4,7 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
-import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -151,7 +151,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       if (qualifier == null) return;
       String opt = qualifier.getText();
       PsiParameter parameter = parameters[0];
-      String proposed = OptionalUtil.generateOptionalUnwrap(opt, parameter, trueArg, falseArg, call.getType(), useOrElseGet);
+      String proposed = OptionalRefactoringUtil.generateOptionalUnwrap(opt, parameter, trueArg, falseArg, call.getType(), useOrElseGet);
       String canonicalOrElse;
       if (useOrElseGet && !ExpressionUtils.isSafelyRecomputableExpression(falseArg)) {
         canonicalOrElse = ".orElseGet(() -> " + falseArg.getText() + ")";
@@ -167,7 +167,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
         } else if(opt.length() > 10) {
           // should be a parseable expression
           opt = "(($))";
-          String template = OptionalUtil.generateOptionalUnwrap(opt, parameter, trueArg, falseArg, call.getType(), useOrElseGet);
+          String template = OptionalRefactoringUtil.generateOptionalUnwrap(opt, parameter, trueArg, falseArg, call.getType(), useOrElseGet);
           displayCode =
             PsiExpressionTrimRenderer.render(JavaPsiFacade.getElementFactory(parameter.getProject()).createExpressionFromText(template, call));
           displayCode = displayCode.replaceFirst(Pattern.quote(opt), "..");
@@ -206,7 +206,12 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       return (PsiLambdaExpression)expression;
     }
     if (expression instanceof PsiMethodReferenceExpression) {
-      return LambdaRefactoringUtil.createLambda((PsiMethodReferenceExpression)expression, true);
+      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
+      PsiLambdaExpression lambda = LambdaRefactoringUtil.createLambda(methodRef, true);
+      if (lambda != null) {
+        LambdaRefactoringUtil.specifyLambdaParameterTypes(methodRef.getFunctionalInterfaceType(), lambda);
+        return lambda;
+      }
     }
     return null;
   }

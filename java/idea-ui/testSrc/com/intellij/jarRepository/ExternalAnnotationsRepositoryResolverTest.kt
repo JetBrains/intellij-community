@@ -91,6 +91,69 @@ class ExternalAnnotationsRepositoryResolverTest: UsefulTestCase() {
     assertTrue(library.getFiles(AnnotationOrderRootType.getInstance()).isNotEmpty())
   }
 
+  @Test fun testThirdPartyAnnotationsResolution() {
+    val resolver = ExternalAnnotationsRepositoryResolver()
+    val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
+    val library = WriteAction.compute<Library, RuntimeException> { libraryTable.createLibrary("NewLibrary") }
+
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(myTestRepo)
+
+    MavenRepoFixture(myMavenRepo).apply {
+      addLibraryArtifact(version = "1.0")
+      addAnnotationsArtifact(artifact = "myArtifact-annotations", version = "1.0")
+      generateMavenMetadata("myGroup", "myArtifact")
+      generateMavenMetadata("myGroup", "myArtifact-annotations")
+    }
+
+    resolver.resolve(myProject, library, "myGroup:myArtifact:1.0")
+    assertTrue(library.getFiles(AnnotationOrderRootType.getInstance()).isNotEmpty())
+  }
+
+  @Test fun testThirdPartyAnnotationsResolutionAsync() {
+    val resolver = ExternalAnnotationsRepositoryResolver()
+    val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
+    val library = WriteAction.compute<Library, RuntimeException> { libraryTable.createLibrary("NewLibrary") }
+
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(myTestRepo)
+
+    MavenRepoFixture(myMavenRepo).apply {
+      addLibraryArtifact(version = "1.0")
+      addAnnotationsArtifact(artifact = "myArtifact-annotations", version = "1.0")
+      generateMavenMetadata("myGroup", "myArtifact")
+      generateMavenMetadata("myGroup", "myArtifact-annotations")
+    }
+
+    val promise = resolver.resolveAsync(myProject, library, "myGroup:myArtifact:1.0")
+    val result = getResult(promise)
+    assertNotNull(result)
+    result!!
+    assertTrue(result.getFiles(AnnotationOrderRootType.getInstance()).isNotEmpty())
+  }
+
+
+  @Test fun `test select annotations artifact when newer library artifacts are available`() {
+    val resolver = ExternalAnnotationsRepositoryResolver()
+    val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
+    val library = WriteAction.compute<Library, RuntimeException> { libraryTable.createLibrary("NewLibrary") }
+
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(myTestRepo)
+
+    MavenRepoFixture(myMavenRepo).apply {
+      addLibraryArtifact(version = "1.0")
+      addAnnotationsArtifact(version = "1.0")
+      addAnnotationsArtifact(version = "1.0-an1")
+      addAnnotationsArtifact(artifact = "myArtifact-annotations", version = "1.0")
+      addAnnotationsArtifact(artifact = "myArtifact-annotations", version = "1.0-an1")
+      addLibraryArtifact(version = "1.1")
+      generateMavenMetadata("myGroup", "myArtifact")
+      generateMavenMetadata("myGroup", "myArtifact-annotations")
+    }
+
+    resolver.resolve(myProject, library, "myGroup:myArtifact:1.1")
+    assertTrue("Annotations root is not attached to library", library.getFiles(AnnotationOrderRootType.getInstance()).isNotEmpty())
+  }
+
+
   @Test fun `test annotations resolution overrides existing roots`() {
     val resolver = ExternalAnnotationsRepositoryResolver()
     val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable

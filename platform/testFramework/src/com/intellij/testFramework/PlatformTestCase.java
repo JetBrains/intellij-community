@@ -3,6 +3,9 @@ package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.ide.GeneratedSourceFileChangeTracker;
+import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -161,6 +164,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (ourPlatformPrefixInitialized) {
       return;
     }
+    if (System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) != null) {
+      ourPlatformPrefixInitialized = true;
+      return;
+    }
     for (String candidate : PREFIX_CANDIDATES) {
       String markerPath = candidate != null ? "META-INF/" + candidate + "Plugin.xml" : "idea/ApplicationInfo.xml";
       URL resource = PlatformTestCase.class.getClassLoader().getResource(markerPath);
@@ -280,15 +287,16 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   public static String publishHeapDump(@NotNull String fileNamePrefix) {
     String fileName = fileNamePrefix + ".hprof.zip";
-    String dumpPath = FileUtil.getTempDirectory() + "/" + fileName;
-    System.out.println("##teamcity[publishArtifacts '" + fileName + "']");
+    File dumpFile = new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), fileName);
     try {
-      FileUtil.delete(new File(dumpPath));
-      MemoryDumpHelper.captureMemoryDumpZipped(dumpPath);
+      FileUtil.delete(dumpFile);
+      MemoryDumpHelper.captureMemoryDumpZipped(dumpFile);
     }
     catch (Exception ex) {
       ex.printStackTrace();
     }
+    String dumpPath = dumpFile.getAbsolutePath();
+    System.out.println("##teamcity[publishArtifacts '" + dumpPath + "']");
     return dumpPath;
   }
 
@@ -496,6 +504,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     Project project = myProject;
     if (project != null && !project.isDisposed()) {
       AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
+      waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
     }
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
@@ -520,7 +529,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         getTempDir().deleteAll();
         LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
         LaterInvocator.dispatchPendingFlushes();
-        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).waitForVfsEventsExecuted(1, TimeUnit.MINUTES);
       })
       .append(() -> {
         if (!myAssertionsInTestDetected) {
@@ -938,5 +946,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     File moduleDir = new File(PathUtil.getParentPath(module.getModuleFilePath()));
     FileUtil.ensureExists(moduleDir);
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir);
+  }
+
+  public static void waitForProjectLeakingThreads(@NotNull Project project, long timeout, @NotNull TimeUnit timeUnit) throws Exception {
+    DaemonCodeAnalyzerImpl.waitForAllEditorsFinallyLoaded(project, timeout, timeUnit);
+    GeneratedSourceFileChangeTrackerImpl tracker = (GeneratedSourceFileChangeTrackerImpl)project.getComponent(GeneratedSourceFileChangeTracker.class);
+    if (tracker != null) {
+      tracker.cancelAllAndWait(timeout, timeUnit);
+    }
   }
 }

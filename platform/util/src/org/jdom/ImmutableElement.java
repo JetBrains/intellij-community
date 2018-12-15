@@ -3,8 +3,6 @@ package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -14,17 +12,17 @@ import org.jdom.filter.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.util.*;
 
 class ImmutableElement extends Element {
-  private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(new String[0], null, Namespace.NO_NAMESPACE);
+  private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(ArrayUtil.EMPTY_STRING_ARRAY, null,
+                                                                                       Namespace.NO_NAMESPACE);
   private final Content[] myContent;
   private static final Content[] EMPTY_CONTENT = new Content[0];
   private final List<Attribute> myAttributes;
 
   ImmutableElement(@NotNull Element origin, @NotNull final JDOMInterner interner) {
-    Disposer.clearOwnFields(this, Conditions.<Field>alwaysTrue());
+    content = null;
     name = interner.internString(origin.getName());
 
     List<Attribute> originAttributes = origin.getAttributes();

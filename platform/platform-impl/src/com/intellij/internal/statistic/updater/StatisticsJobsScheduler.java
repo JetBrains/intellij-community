@@ -6,6 +6,7 @@ import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUStatisticRecorder;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -84,7 +85,8 @@ public class StatisticsJobsScheduler implements BaseComponent {
     JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
       final StatisticsService statisticsService = StatisticsUploadAssistant.getApprovedGroupsStatisticsService();
       if (StatisticsUploadAssistant.isSendAllowed() && StatisticsUploadAssistant.isTimeToSend()) {
-        runStatisticsServiceWithDelay(statisticsService, SEND_STATISTICS_DELAY_IN_MIN);
+        JobScheduler.getScheduler().schedule(() -> FUStatisticRecorder.collect(), SEND_STATISTICS_DELAY_IN_MIN, TimeUnit.MINUTES);
+        runStatisticsServiceWithDelay(statisticsService, 2 * SEND_STATISTICS_DELAY_IN_MIN);
       }
     }, SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, StatisticsUploadAssistant.getSendPeriodInMillis(), TimeUnit.MILLISECONDS);
 

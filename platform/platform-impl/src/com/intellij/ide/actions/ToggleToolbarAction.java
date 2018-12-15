@@ -43,10 +43,9 @@ import java.util.List;
 public class ToggleToolbarAction extends ToggleAction implements DumbAware {
 
   @NotNull
-  public static ActionGroup createToggleToolbarGroup(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+  public static DefaultActionGroup createToggleToolbarGroup(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     return new DefaultActionGroup(new OptionsGroup(toolWindow),
-                                  createToolWindowAction(toolWindow, PropertiesComponent.getInstance(project)),
-                                  Separator.getInstance());
+                                  createToolWindowAction(toolWindow, PropertiesComponent.getInstance(project)));
   }
 
   @NotNull

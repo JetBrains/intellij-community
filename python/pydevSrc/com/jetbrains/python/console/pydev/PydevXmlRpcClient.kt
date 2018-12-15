@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console.pydev
 
 import com.intellij.openapi.diagnostic.Logger
@@ -130,7 +131,7 @@ constructor(private val process: Process, hostname: String?, port: Int) : IPydev
      * ItelliJ Logging
      */
     private val LOG = Logger.getInstance(PydevXmlRpcClient::class.java.name)
-    private val MIN_TIME_SLICE: Long = 1000
-    private val TIME_LIMIT: Long = 40000
+    private const val MIN_TIME_SLICE: Long = 1000
+    private const val TIME_LIMIT: Long = 40000
   }
 }

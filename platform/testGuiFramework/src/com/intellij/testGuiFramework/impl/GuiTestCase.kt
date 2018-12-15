@@ -25,17 +25,21 @@ import org.fest.swing.fixture.JTableFixture
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
-import org.junit.ClassRule
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import java.awt.Component
 import java.io.File
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.text.JTextComponent
 
 /**
  * The main base class that should be extended for writing GUI tests.
@@ -63,15 +67,15 @@ import javax.swing.JPanel
 @RunWith(GuiTestLocalRunner::class)
 open class GuiTestCase {
 
-  companion object {
-    @ClassRule
-    @JvmField
-    val projectsFolder: TemporaryFolder = TemporaryFolder()
-  }
+  @Rule
+  @JvmField
+  val screenshotsDuringTest = ScreenshotsDuringTest(500) // 0.5 sec
 
   @Rule
   @JvmField
-  val guiTestRule = GuiTestRule(projectsFolder.apply{ create() }.root.canonicalFile)
+  val guiTestRule = GuiTestRule()
+
+  val projectsFolder: File = guiTestRule.projectsFolder
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   //  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
@@ -79,6 +83,22 @@ open class GuiTestCase {
   val slash: String = File.separator
 
   private val screenshotTaker: ScreenshotTaker = ScreenshotTaker()
+
+  @Rule
+  @JvmField
+  val testMethod = TestName()
+
+  @Rule
+  @JvmField
+  val logActionsDuringTest = LogActionsDuringTest()
+
+  val projectFolder: String by lazy {
+    val dir = File(projectsFolder, testMethod.methodName)
+    if (!dir.mkdirs()) {
+      throw IOException("project dir creation failed")
+    }
+    dir.canonicalPath
+  }
 
   fun robot() = guiTestRule.robot()
 
@@ -124,9 +144,18 @@ open class GuiTestCase {
     if (!needToKeepDialog) dialog.waitTillGone()
   }
 
+  fun dialogWithTextComponent(timeout: Timeout, predicate: (JTextComponent) -> Boolean, func: JDialogFixture.() -> Unit) {
+    val dialog: JDialog = waitUntilFound(null, JDialog::class.java, timeout) {
+      JDialogFixture(robot(), it).containsChildComponent(predicate)
+    }
+    val dialogFixture = JDialogFixture(robot(), dialog)
+    func(dialogFixture)
+    dialogFixture.waitTillGone()
+  }
+
   fun settingsDialog(timeout: Timeout = Timeouts.defaultTimeout,
-                      needToKeepDialog: Boolean = false,
-                      func: JDialogFixture.() -> Unit) {
+                     needToKeepDialog: Boolean = false,
+                     func: JDialogFixture.() -> Unit) {
     if (isMac()) dialog(title = "Preferences", func = func)
     else dialog(title = "Settings", func = func)
   }
@@ -137,7 +166,7 @@ open class GuiTestCase {
     if (!needToKeepDialog) pluginDialog.waitTillGone()
   }
 
-  fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout) : PluginDialogFixture{
+  fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout): PluginDialogFixture {
     return PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
   }
 
@@ -337,7 +366,10 @@ open class GuiTestCase {
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one) and returns created JDialogFixture
    */
-  fun dialog(title: String? = null, ignoreCaseTitle: Boolean, predicate: FinderPredicate = Predicate.equality, timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
+  fun dialog(title: String? = null,
+             ignoreCaseTitle: Boolean,
+             predicate: FinderPredicate = Predicate.equality,
+             timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
     if (title == null) {
       val jDialog = waitUntilFound(null, JDialog::class.java, timeout) { true }
       return JDialogFixture(robot(), jDialog)
@@ -455,5 +487,17 @@ open class GuiTestCase {
     }, timeoutToDisappear)
 
   }
+
+  @Before
+  open fun setUp() {
+    logStartTest(testMethod.methodName)
+  }
+
+  @After
+  open fun tearDown() {
+    logEndTest(testMethod.methodName)
+  }
+
+  open fun isIdeFrameRun(): Boolean = true
 
 }

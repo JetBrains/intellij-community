@@ -1,0 +1,12 @@
+deprecated: GreenOK.png; to be removed in IDEA 2020
+deprecated: GreyProgr.png; to be removed in IDEA 2020
+deprecated: GreyProgr_1.png; to be removed in IDEA 2020
+deprecated: GreyProgr_2.png; to be removed in IDEA 2020
+deprecated: GreyProgr_3.png; to be removed in IDEA 2020
+deprecated: GreyProgr_4.png; to be removed in IDEA 2020
+deprecated: GreyProgr_5.png; to be removed in IDEA 2020
+deprecated: GreyProgr_6.png; to be removed in IDEA 2020
+deprecated: GreyProgr_7.png; to be removed in IDEA 2020
+deprecated: GreyProgr_8.png; to be removed in IDEA 2020
+deprecated: RedExcl.png; to be removed in IDEA 2020
+deprecated: YellowStr.png; to be removed in IDEA 2020

@@ -28,6 +28,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.lang.reflect.Field;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ui.JBUI.emptyInsets;
 
@@ -40,6 +41,7 @@ public class JBScrollPane extends JScrollPane {
    * @see UIUtil#putClientProperty
    * @see UIUtil#isUnderDarcula
    */
+  @Deprecated
   public static final Key<Boolean> BRIGHTNESS_FROM_VIEW = Key.create("JB_SCROLL_PANE_BRIGHTNESS_FROM_VIEW");
 
   @Deprecated
@@ -291,8 +293,8 @@ public class JBScrollPane extends JScrollPane {
 
     Corner(String pos) {
       myPos = pos;
-      ScrollColorProducer.setBackground(this);
-      ScrollColorProducer.setForeground(this);
+      ScrollBarPainter.setBackground(this);
+      ScrollBarPainter.setForeground(this);
     }
 
     @Override
@@ -800,4 +802,10 @@ public class JBScrollPane extends JScrollPane {
   private static final int SCROLL_MODIFIERS = // event modifiers allowed during scrolling
     ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & // for horizontal scrolling
     ~InputEvent.BUTTON1_MASK & ~InputEvent.BUTTON1_DOWN_MASK; // for selection
+
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static RegionPainter<Float> getThumbPainter(@NotNull Supplier<? extends Component> supplier) {
+    return new ScrollBarPainter.Thumb(supplier, SystemInfo.isMac);
+  }
 }

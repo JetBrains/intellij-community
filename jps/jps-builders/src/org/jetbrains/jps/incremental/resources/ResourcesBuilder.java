@@ -9,10 +9,7 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.ResourcesTarget;
-import org.jetbrains.jps.incremental.TargetBuilder;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -20,10 +17,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
@@ -118,20 +111,9 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
     targetPath.append('/').append(relativePath);
 
     context.processMessage(new ProgressMessage("Copying resources... [" + rd.getTarget().getModule().getName() + "]"));
-
-    final File targetFile = new File(targetPath.toString());
     try {
-      final Path from = file.toPath();
-      final Path to = targetFile.toPath();
-      try {
-        Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
-      }
-      catch (NoSuchFileException e) {
-        final File parent = targetFile.getParentFile();
-        if (parent != null && parent.mkdirs()) {
-          Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING); // repeat on successful target dir creation
-        }
-      }
+      final File targetFile = new File(targetPath.toString());
+      FSOperations.copy(file, targetFile);
       outputConsumer.registerOutputFile(targetFile, Collections.singletonList(file.getPath()));
     }
     catch (Exception e) {

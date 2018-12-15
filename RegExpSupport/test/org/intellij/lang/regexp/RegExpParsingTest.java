@@ -2,7 +2,7 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.mock.MockSmartPointerManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -32,7 +32,7 @@ public class RegExpParsingTest extends ParsingTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/RegExpSupport/testData";
+    return PathManagerEx.getCommunityHomePath() + "/RegExpSupport/testData";
   }
 
   public void testSimple1() throws IOException { doCodeTest("|"); }

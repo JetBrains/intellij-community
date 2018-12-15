@@ -41,9 +41,7 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
 
   public void setToolWindow(@NotNull ToolWindow terminalToolWindow) {
     myTerminalToolWindow = terminalToolWindow;
-    if (isAvailable()) {
-      myWorkingDirectoryManager.init(terminalToolWindow);
-    }
+    myWorkingDirectoryManager.init(terminalToolWindow);
   }
 
   @Nullable
@@ -87,7 +85,8 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
       tabState.myCommandHistoryFileName = historyFilePath != null ? PathUtil.getFileName(historyFilePath) : null;
       arrangementState.myTabStates.add(tabState);
     }
-    arrangementState.mySelectedTabIndex = contentManager.getIndexOfContent(contentManager.getSelectedContent());
+    Content selectedContent = contentManager.getSelectedContent();
+    arrangementState.mySelectedTabIndex = selectedContent == null ? -1 : contentManager.getIndexOfContent(selectedContent);
     deleteUnusedCommandHistoryFiles(getCommandHistoryFileNames(arrangementState));
     return arrangementState;
   }
@@ -151,7 +150,7 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
     return ServiceManager.getService(project, TerminalArrangementManager.class);
   }
 
-  private static boolean isAvailable() {
+  static boolean isAvailable() {
     return Registry.is("terminal.persistent.tabs");
   }
 }

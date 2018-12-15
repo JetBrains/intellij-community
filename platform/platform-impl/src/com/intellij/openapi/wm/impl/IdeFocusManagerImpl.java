@@ -83,7 +83,8 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   @NotNull
   @Override
   public ActionCallback requestDefaultFocus(boolean forced) {
-    return myToolWindowManager.requestDefaultFocus(forced);
+    //todo need to implement
+    return ActionCallback.DONE;
   }
 
   @Override

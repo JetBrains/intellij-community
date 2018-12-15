@@ -5,7 +5,9 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.registry.Registry;
@@ -57,6 +59,8 @@ public class PyCharmInitialConfigurator {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V7", true);
     }
 
+    disableRunAnything();
+
     if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
       bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
         @Override
@@ -69,5 +73,11 @@ public class PyCharmInitialConfigurator {
     }
 
     Registry.get("ide.ssh.one.time.password").setValue(true);
+  }
+
+  private static void disableRunAnything() {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ActionManager.getInstance().unregisterAction("RunAnything");
+    }, ModalityState.any());
   }
 }

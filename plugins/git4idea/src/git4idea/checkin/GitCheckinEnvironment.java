@@ -28,8 +28,8 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.ex.PartialCommitHelper;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.PartialCommitHelper;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
@@ -87,7 +87,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.openapi.util.text.StringUtil.escapeXml;
+import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -373,7 +373,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           }
 
           if (tracker.hasPartialChangesToCommit()) {
-            helpers.add(tracker.handlePartialCommit(Side.LEFT, Collections.singletonList(changelistId)));
+            helpers.add(tracker.handlePartialCommit(Side.LEFT, Collections.singletonList(changelistId), true));
             partialChanges.add(change);
           }
         }
@@ -960,12 +960,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     //noinspection SSBasedInspection
     file.deleteOnExit();
     @NonNls String encoding = GitConfigUtil.getCommitEncoding(project, root);
-    Writer out = new OutputStreamWriter(new FileOutputStream(file), encoding);
-    try {
+    try (Writer out = new OutputStreamWriter(new FileOutputStream(file), encoding)) {
       out.write(message);
-    }
-    finally {
-      out.close();
     }
     return file;
   }
@@ -1202,7 +1198,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @NotNull
     private String getToolTip(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       VcsUser user = getFirstItem(mapNotNull(panel.getRoots(), it -> GitUserRegistry.getInstance(project).getUser(it)));
-      String signature = user != null ? escapeXml(VcsUserUtil.toExactString(user)) : "";
+      String signature = user != null ? escapeXmlEntities(VcsUserUtil.toExactString(user)) : "";
       return "<html>Adds the following line at the end of the commit message:<br/>" +
              "Signed-off by: " + signature + "</html>";
     }
@@ -1370,7 +1366,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     public boolean isDefaultAuthor(@NotNull VcsUser author) {
-      Collection<VirtualFile> affectedGitRoots = filter(myCheckinProjectPanel.getRoots(), virtualFile -> findGitDir(virtualFile) != null);
+      GitRepositoryManager manager = getRepositoryManager(myProject);
+      Collection<VirtualFile> affectedGitRoots = filter(myCheckinProjectPanel.getRoots(),
+                                                        root -> manager.getRepositoryForRoot(root) != null);
       GitUserRegistry gitUserRegistry = GitUserRegistry.getInstance(myProject);
       return of(affectedGitRoots).map(vf -> gitUserRegistry.getUser(vf)).allMatch(user -> user != null && isSamePerson(author, user));
     }

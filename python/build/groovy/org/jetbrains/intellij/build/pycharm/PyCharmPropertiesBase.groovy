@@ -35,7 +35,10 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     tasks.zipSourcesOfModules(["intellij.python.community", "intellij.python.psi"], "$targetDirectory/lib/src/pycharm-openapi-src.zip")
 
     context.ant.copy(todir: "$targetDirectory/helpers") {
-      fileset(dir: "$context.paths.communityHome/python/helpers")
+      fileset(dir: "$context.paths.communityHome/python/helpers") {
+        exclude(name: "**/setup.py")
+        exclude(name: "pydev/test**/**")
+      }
     }
     context.ant.copy(todir: "$targetDirectory/help", failonerror: false) {
       fileset(dir: "$context.paths.projectHome/python/help") {
@@ -64,26 +67,27 @@ class PyPrebuiltIndicesGenerator implements ResourcesGenerator {
     CompilationTasks.create(context).compileModules(["intellij.python.tools"])
     List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("intellij.python.tools"), false)
 
-    def zipPath = "$context.paths.temp/zips"
+    String zipPath = "$context.paths.temp/zips"
+    String outputPath = "$context.paths.temp/index"
 
-    context.ant.copy(todir: "$zipPath", failonerror: !context.options.isInDevelopmentMode) {
-      fileset(dir: "$context.paths.projectHome/python-distributions", erroronmissingdir: !context.options.isInDevelopmentMode) {
-        include(name: "*.zip")
+    context.messages.block("Generate universal stubs") {
+      context.ant.copy(todir: zipPath, failonerror: !context.options.isInDevelopmentMode) {
+        fileset(dir: "$context.paths.projectHome/python-distributions", erroronmissingdir: !context.options.isInDevelopmentMode) {
+          include(name: "*.zip")
+        }
+        fileset(dir: "$context.paths.projectHome/skeletons", erroronmissingdir: !context.options.isInDevelopmentMode) {
+          include(name: "*.zip")
+        }
       }
-      fileset(dir: "$context.paths.projectHome/skeletons", erroronmissingdir: !context.options.isInDevelopmentMode) {
-        include(name: "*.zip")
-      }
-    }
 
-    def outputPath = "$context.paths.temp/index"
-
-    context.ant.java(classname: "com.jetbrains.python.tools.PyPrebuiltIndicesGeneratorKt", fork: true) {
-      jvmarg(line: "-ea -Xmx1000m")
-      arg(value: zipPath)
-      arg(value: outputPath)
-      classpath {
-        buildClasspath.each {
-          pathelement(location: it)
+      context.ant.java(classname: "com.jetbrains.python.tools.PyPrebuiltIndicesGeneratorKt", fork: true) {
+        jvmarg(line: "-ea -Xmx1000m")
+        arg(value: zipPath)
+        arg(value: outputPath)
+        classpath {
+          buildClasspath.each {
+            pathelement(location: it)
+          }
         }
       }
     }

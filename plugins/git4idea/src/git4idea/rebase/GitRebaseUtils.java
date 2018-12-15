@@ -223,24 +223,18 @@ public class GitRebaseUtils {
     File commitFile = new File(rebaseDir, String.format("%04d", next));
     String hash = null;
     String subject = null;
-    try {
-      BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(commitFile), CharsetToolkit.UTF8_CHARSET));
-      try {
-        String line;
-        while ((line = in.readLine()) != null) {
-          if (line.startsWith("From ")) {
-            hash = line.substring(5, 5 + 40);
-          }
-          if (line.startsWith("Subject: ")) {
-            subject = line.substring("Subject: ".length());
-          }
-          if (hash != null && subject != null) {
-            break;
-          }
+    try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(commitFile), CharsetToolkit.UTF8_CHARSET))) {
+      String line;
+      while ((line = in.readLine()) != null) {
+        if (line.startsWith("From ")) {
+          hash = line.substring(5, 5 + 40);
         }
-      }
-      finally {
-        in.close();
+        if (line.startsWith("Subject: ")) {
+          subject = line.substring("Subject: ".length());
+        }
+        if (hash != null && subject != null) {
+          break;
+        }
       }
     }
     catch (Exception e) {

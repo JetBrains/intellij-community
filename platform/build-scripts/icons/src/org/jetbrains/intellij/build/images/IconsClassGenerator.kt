@@ -24,6 +24,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
   private val processedIcons = AtomicInteger()
   private val processedPhantom = AtomicInteger()
   private val modifiedClasses = ContainerUtil.createConcurrentList<ModifiedClass>()
+  private val obsoleteClasses = ContainerUtil.createConcurrentList<Path>()
 
   fun processModule(module: JpsModule) {
     val customLoad: Boolean
@@ -38,6 +39,15 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       val dir = util.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + "/com/intellij/icons"
       outFile = Paths.get(dir, "AllIcons.java")
     }
+    else if ("intellij.android.artwork" == module.name) {
+      // backward compatibility - AndroidIcons class should be not modified
+      packageName = "icons"
+      customLoad = true
+      className = "AndroidArtworkIcons"
+
+      val dir = module.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath
+      outFile = Paths.get(dir, "icons", "AndroidArtworkIcons.java")
+    }
     else {
       customLoad = true
       packageName = "icons"
@@ -47,7 +57,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       val firstRootDir = firstRoot.file.toPath().resolve("icons")
       var oldClassName: String?
       // this is added to remove unneeded empty directories created by previous version of this script
-      if (firstRootDir.toFile().isDirectory()) {
+      if (Files.isDirectory(firstRootDir)) {
         try {
           Files.delete(firstRootDir)
           println("deleting empty directory $firstRootDir")
@@ -81,7 +91,12 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       outFile = targetRoot.resolve("$className.java")
     }
 
-    val oldText = if (outFile.toFile().exists()) Files.readAllBytes(outFile).toString(StandardCharsets.UTF_8) else null
+    val oldText = try {
+      Files.readAllBytes(outFile).toString(StandardCharsets.UTF_8)
+    }
+    catch (ignored: NoSuchFileException) {
+      null
+    }
     val newText = generate(module, className, packageName, customLoad, getCopyrightComment(oldText))
 
     val oldLines = oldText?.lines() ?: emptyList()
@@ -115,11 +130,17 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
         }
       }
     }
+    else {
+      if (Files.exists(outFile)) {
+        obsoleteClasses.add(outFile)
+      }
+    }
   }
 
   fun printStats() {
     println()
     println("Generated classes: ${processedClasses.get()}. Processed icons: ${processedIcons.get()}. Phantom icons: ${processedPhantom.get()}")
+    println("\nObsolete classes:\n${obsoleteClasses.joinToString("\n") }}")
   }
 
   fun getModifiedClasses(): List<ModifiedClass> = modifiedClasses

@@ -46,6 +46,9 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
     try {
       restoreProjectViewDefaultSettings();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

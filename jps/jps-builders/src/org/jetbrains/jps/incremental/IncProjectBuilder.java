@@ -165,7 +165,6 @@ public class IncProjectBuilder {
   public void build(CompileScope scope, boolean forceCleanCaches) throws RebuildRequestedException {
 
     final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(() -> {
-      myProjectDescriptor.getFSCache().clear();
       JavacMain.clearCompilerZipFileCache();
       myProjectDescriptor.dataManager.flush(false);
       myProjectDescriptor.timestamps.getStorage().force();
@@ -441,10 +440,6 @@ public class IncProjectBuilder {
 
   private CompileContextImpl createContext(CompileScope scope) throws ProjectBuildException {
     final CompileContextImpl context = new CompileContextImpl(scope, myProjectDescriptor, myMessageDispatcher, myBuilderParams, myCancelStatus);
-
-    // in project rebuild mode performance gain is hard to observe, so it is better to save memory
-    // in make mode it is critical to traverse file system as fast as possible, so we choose speed over memory savings
-    myProjectDescriptor.setFSCache(context.isProjectRebuild() ? FSCache.NO_CACHE : new FSCache());
 
     final Callbacks.ConstantAffectionResolver javaResolver = myJavaConstantResolver;
     if (javaResolver == null) {

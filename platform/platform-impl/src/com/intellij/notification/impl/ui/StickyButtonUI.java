@@ -4,76 +4,78 @@ package com.intellij.notification.impl.ui;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicToggleButtonUI;
 import java.awt.*;
+import java.awt.geom.Path2D;
+import java.awt.geom.RoundRectangle2D;
 
 /**
  * @author spleaner
  */
 public class StickyButtonUI<B extends AbstractButton> extends BasicToggleButtonUI {
-  public static final float FONT_SIZE = 11.0f;
+  private static final JBValue FONT_SIZE = new JBValue.Float(11.0f);
+  private static final JBValue BW = new JBValue.Float(1);
 
   @Override
   protected void installDefaults(final AbstractButton b) {
     super.installDefaults(b);
-    b.setFont(UIManager.getFont("Button.font").deriveFont(Font.BOLD, FONT_SIZE));
+    b.setFont(UIManager.getFont("Button.font").deriveFont(Font.BOLD, FONT_SIZE.get()));
   }
 
   @Override
   public void paint(final Graphics g, final JComponent c) {
-    //noinspection unchecked
-    B button = (B) c;
+    Graphics2D g2 = (Graphics2D) g.create();
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    final int width = button.getWidth();
-    final int height = button.getHeight();
+      //noinspection unchecked
+      B button = (B) c;
 
-    final Graphics2D g2 = (Graphics2D) g.create();
+      int width = button.getWidth();
+      int height = button.getHeight();
+      int arcSize = getArcSize();
 
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-    final int arcSize = getArcSize();
-
-    final Insets margins = getOffsets();
-    final int x = margins.left;
-    final int y = margins.top;
-    final int w = width - 1 - margins.right - x;
-    final int h = height - 1 - margins.bottom - y;
-    if (c.isOpaque()) {
-      g2.setColor(c.getBackground());
-      g2.fillRoundRect(x, y, w, h, arcSize, arcSize);
-    }
-
-    final ButtonModel model = button.getModel();
-    if (model.isSelected()) {
-      g2.setColor(getSelectionColor(button));
-      g2.fillRoundRect(x, y, w, h, arcSize, arcSize);
-    } else if (model.isRollover()) {
-      g2.setColor(getRolloverColor(button));
-      g2.fillRoundRect(x, y, w, h, arcSize, arcSize);
-    } else {
-      final Color bg = getBackgroundColor(button);
-      if (bg != null) {
-        g2.setColor(bg);
-        g2.fillRoundRect(x, y, w, h, arcSize, arcSize);
+      if (c.isOpaque()) {
+        g2.setColor(c.getBackground());
+        g2.fill(new Rectangle(c.getSize()));
       }
+
+      Shape outerShape = new RoundRectangle2D.Float(0, 0, width, height, arcSize, arcSize);
+
+      ButtonModel model = button.getModel();
+      if (model.isSelected()) {
+        g2.setColor(getSelectionColor(button));
+      } else if (model.isRollover()) {
+        g2.setColor(getRolloverColor(button));
+      } else {
+        Color bg = getBackgroundColor(button);
+        if (bg != null) {
+          g2.setColor(bg);
+        }
+      }
+      g2.fill(outerShape);
+
+      Color borderColor = button.hasFocus() ? getFocusColor(button) : getUnfocusedBorderColor(button);
+      if (borderColor != null) {
+        g2.setColor(borderColor);
+
+        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        border.append(outerShape, false);
+        border.append(new RoundRectangle2D.Float(BW.get(), BW.get(), width - BW.get() * 2, height - BW.get() * 2,
+                                                 arcSize - BW.get(), arcSize - BW.get()), false);
+
+        g2.fill(border);
+      }
+    } finally {
+      g2.dispose();
     }
 
-    Color border = button.hasFocus() ? getFocusColor(button) : getUnfocusedBorderColor(button);
-    if (border != null) {
-      g2.setColor(border);
-      g2.drawRoundRect(x, y, w, h, arcSize, arcSize);
-    }
-
-    g2.dispose();
     super.paint(g, c);
-  }
-
-  protected Insets getOffsets() {
-    return JBUI.insets(0);
   }
 
   @Nullable
@@ -96,6 +98,6 @@ public class StickyButtonUI<B extends AbstractButton> extends BasicToggleButtonU
   }
 
   protected int getArcSize() {
-    return 10;
+    return JBUI.scale(10);
   }
 }

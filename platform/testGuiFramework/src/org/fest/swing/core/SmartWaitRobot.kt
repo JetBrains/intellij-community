@@ -15,6 +15,7 @@
  */
 package org.fest.swing.core
 
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ui.EdtInvocationManager
 import org.fest.swing.awt.AWT
 import org.fest.swing.edt.GuiActionRunner
@@ -25,7 +26,6 @@ import org.fest.swing.timing.Pause.pause
 import org.fest.swing.util.Modifiers
 import java.awt.*
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.swing.JPopupMenu
 import javax.swing.KeyStroke
@@ -294,7 +294,7 @@ class SmartWaitRobot : Robot {
   private fun waitFor(condition: () -> Boolean) {
     val timeout = 5000 //5 sec
     val cdl = CountDownLatch(1)
-    val executor = Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(Runnable {
+    val executor = ConcurrencyUtil.newSingleScheduledThreadExecutor("SmartWaitRobot").scheduleWithFixedDelay(Runnable {
       if (condition()) {
         cdl.countDown()
       }

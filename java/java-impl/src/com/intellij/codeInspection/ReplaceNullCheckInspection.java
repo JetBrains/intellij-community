@@ -62,8 +62,8 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         PsiStatement nextToDelete = context.myNextToDelete;
         int maybeImplicitElseLength = nextToDelete != null ? nextToDelete.getTextLength() : 0;
         boolean isInfoLevel = noWarningReplacementBigger && ifStatement.getTextLength() + maybeImplicitElseLength - context.getLenAfterReplace() < MINIMAL_WARN_DELTA_SIZE;
-        if (!isOnTheFly && isInfoLevel) return;
         ProblemHighlightType highlight = getHighlight(context, isInfoLevel);
+        if (!isOnTheFly && highlight == ProblemHighlightType.INFORMATION) return;
         holder.registerProblem(ifStatement.getFirstChild(), InspectionsBundle.message("inspection.require.non.null.message", method), highlight,
                                new ReplaceWithRequireNonNullFix(method, false));
       }
@@ -90,6 +90,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
           && context.myNullExpr.getTextLength() + method.length() + name.length() < context.myTernary.getTextLength() + MINIMAL_WARN_DELTA_SIZE;
         boolean isInfoLevel = noWarningReplacementBigger && replacementShorter;
         ProblemHighlightType highlightType = isInfoLevel ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+        if (!isOnTheFly && highlightType == ProblemHighlightType.INFORMATION) return;
         holder.registerProblem(ternary, InspectionsBundle.message("inspection.require.non.null.message", method),
                                highlightType, new ReplaceWithRequireNonNullFix(method, true));
       }

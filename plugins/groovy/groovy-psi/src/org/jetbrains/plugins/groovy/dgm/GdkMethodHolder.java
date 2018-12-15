@@ -104,7 +104,7 @@ public class GdkMethodHolder {
 
       final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
       final VirtualFile vfile = categoryClass.getContainingFile().getVirtualFile();
-      if (vfile != null && (rootManager.getFileIndex().isInLibraryClasses(vfile) || rootManager.getFileIndex().isInLibrarySource(vfile))) {
+      if (vfile != null && rootManager.getFileIndex().isInLibrary(vfile)) {
         return CachedValueProvider.Result.create(result, rootManager);
       }
 

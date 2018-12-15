@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -100,9 +101,7 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
       @Override
       public void run() {
         List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
-        List<String> ids = switchedPlugins.stream()
-                                          .map(PluginId::getIdString)
-                                          .collect(Collectors.toList());
+        List<String> ids = ContainerUtil.map(switchedPlugins, PluginId::getIdString);
         boolean notificationValid = enabled
                                     ? ids.stream().noneMatch(disabledPlugins::contains)
                                     : disabledPlugins.containsAll(ids);

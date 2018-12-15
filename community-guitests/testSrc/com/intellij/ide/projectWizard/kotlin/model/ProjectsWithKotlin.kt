@@ -30,10 +30,11 @@ import org.hamcrest.core.Is.`is` as Matcher_Is
  */
 fun KotlinGuiTestCase.createJavaProject(
   projectPath: String,
+  projectSdk: String,
   framework: LibrariesSet = emptySet()) {
   welcomePageDialogModel.createNewProject()
   newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
-  newProjectDialogModel.createJavaProject(projectPath, framework)
+  newProjectDialogModel.createJavaProject(projectPath, projectSdk, framework)
   waitAMoment()
 }
 
@@ -47,11 +48,12 @@ fun KotlinGuiTestCase.createJavaProject(
  */
 fun KotlinGuiTestCase.createGradleProject(
   projectPath: String,
-  gradleOptions: NewProjectDialogModel.GradleProjectOptions
+  gradleOptions: NewProjectDialogModel.GradleProjectOptions,
+  projectSdk: String
 ) {
   welcomePageDialogModel.createNewProject()
   newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
-  newProjectDialogModel.createGradleProject(projectPath, gradleOptions)
+  newProjectDialogModel.createGradleProject(projectPath, gradleOptions, projectSdk)
 }
 
 
@@ -66,6 +68,7 @@ fun KotlinGuiTestCase.createGradleProject(
 fun KotlinGuiTestCase.createMavenProject(
   projectPath: String,
   artifact: String,
+  projectSdk: String,
   archetype: String = "",
   kotlinVersion: String = ""
 ) {
@@ -78,7 +81,7 @@ fun KotlinGuiTestCase.createMavenProject(
     archetypeGroup = "org.jetbrains.kotlin:$archetype",
     archetypeVersion = "$archetype:$kotlinVersion"
   )
-  newProjectDialogModel.createMavenProject(projectPath, mavenOptions)
+  newProjectDialogModel.createMavenProject(projectPath, mavenOptions, projectSdk)
 }
 
 /**
@@ -672,6 +675,50 @@ fun KotlinGuiTestCase.saveAndCloseCurrentEditor() {
   }
 }
 
+fun KotlinGuiTestCase.createMavenAndConfigureKotlin(
+  kotlinVersion: String,
+  project: ProjectProperties,
+  expectedFacet: FacetStructure
+) {
+  if (!isIdeFrameRun()) return
+  val projectName = testMethod.methodName
+  createMavenProject(
+    projectPath = projectFolder,
+    artifact = projectName,
+    projectSdk = project.projectSdk)
+  waitAMoment()
+  when(project.modules.contains(TargetPlatform.JavaScript)){
+    false -> configureKotlinJvmFromMaven(kotlinVersion)
+    true -> configureKotlinJsFromMaven(kotlinVersion)
+  }
+
+  waitAMoment()
+  saveAndCloseCurrentEditor()
+  editPomXml(
+    kotlinVersion = kotlinVersion
+  )
+  waitAMoment()
+  mavenReimport()
+  Pause.pause(5000)
+  waitAMoment()
+  mavenReimport()
+
+  projectStructureDialogScenarios.openProjectStructureAndCheck {
+    projectStructureDialogModel.checkLibrariesFromMavenGradle(
+      buildSystem = BuildSystem.Maven,
+      kotlinVersion = kotlinVersion,
+      expectedJars = project.jars.getJars(kotlinVersion)
+    )
+    projectStructureDialogModel.checkFacetInOneModule(
+      expectedFacet = expectedFacet,
+      path = *arrayOf(projectName, "Kotlin")
+    )
+  }
+
+  waitAMoment()
+}
+
+
 fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   kotlinVersion: String,
   project: ProjectProperties,
@@ -681,7 +728,9 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   val projectName = testMethod.methodName
   createGradleProject(
     projectPath = projectFolder,
-    gradleOptions = gradleOptions)
+    gradleOptions = gradleOptions,
+    projectSdk = project.projectSdk
+  )
   waitAMoment()
   when {
     project.modules.contains(TargetPlatform.JVM16) || project.modules.contains(TargetPlatform.JVM18) -> configureKotlinJvmFromGradle(kotlinVersion)
@@ -731,7 +780,7 @@ fun ProjectStructureDialogScenarios.checkGradleFacets(
         )
       }
       QualifiedNames -> {
-        val qualifiedProjectName = "${gradleOptions.group}.${gradleOptions.artifact}"
+        val qualifiedProjectName = gradleOptions.artifact
         mapOf(
           listOf(qualifiedProjectName, "main", "Kotlin") to expectedFacet,
           listOf(qualifiedProjectName, "test", "Kotlin") to expectedFacet
@@ -749,14 +798,16 @@ fun ProjectStructureDialogScenarios.checkGradleFacets(
 
 fun KotlinGuiTestCase.createKotlinMPProject(
   projectPath: String,
-  templateName: String
+  templateName: String,
+  projectSdk: String
 ) {
   logTestStep("Create new $templateName project")
   welcomePageDialogModel.createNewProject()
   newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
   newProjectDialogModel.createKotlinMPProject(
     projectPath = projectPath,
-    templateName = templateName
+    templateName = templateName,
+    projectSdk = projectSdk
   )
 }
 
@@ -767,7 +818,8 @@ fun KotlinGuiTestCase.testGradleProjectWithKotlin(
   gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
   createGradleProject(
     projectPath = projectFolder,
-    gradleOptions = gradleOptions
+    gradleOptions = gradleOptions,
+    projectSdk = project.projectSdk
   )
   val projectName = testMethod.methodName
   waitAMoment()
@@ -777,6 +829,7 @@ fun KotlinGuiTestCase.testGradleProjectWithKotlin(
     kotlinVersion = kotlinVersion,
     isKotlinDslUsed = gradleOptions.useKotlinDsl
   )
+  waitAMoment()
   gradleReimport()
   assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
   waitAMoment()

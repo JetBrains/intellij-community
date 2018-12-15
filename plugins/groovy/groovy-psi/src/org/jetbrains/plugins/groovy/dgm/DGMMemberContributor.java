@@ -35,6 +35,13 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
                                      @NotNull PsiScopeProcessor processor,
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
+    processDgmMethods(qualifierType, processor, place, state);
+  }
+
+  public static void processDgmMethods(@NotNull PsiType qualifierType,
+                                        @NotNull PsiScopeProcessor processor,
+                                        @NotNull PsiElement place,
+                                        @NotNull ResolveState state) {
     if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return;
 
     final Project project = place.getProject();
@@ -83,15 +90,17 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
   private static Couple<List<String>> collectExtensions(@NotNull Project project, @NotNull GlobalSearchScope resolveScope) {
     List<String> instanceClasses = ContainerUtil.newArrayList(DEFAULT_INSTANCE_EXTENSIONS);
     List<String> staticClasses = ContainerUtil.newArrayList(DEFAULT_STATIC_EXTENSIONS);
-    doCollectExtensions(project, resolveScope, instanceClasses, staticClasses);
+    doCollectExtensions(project, resolveScope, instanceClasses, staticClasses, "META-INF.groovy");
+    doCollectExtensions(project, resolveScope, instanceClasses, staticClasses, "META-INF.services");
     return Couple.of(instanceClasses, staticClasses);
   }
 
   private static void doCollectExtensions(@NotNull Project project,
                                           @NotNull GlobalSearchScope resolveScope,
-                                          List<String> instanceClasses,
-                                          List<String> staticClasses) {
-    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage("META-INF.services");
+                                          @NotNull List<String> instanceClasses,
+                                          @NotNull List<String> staticClasses,
+                                          @NotNull String packageName) {
+    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
     if (aPackage == null) return;
 
     for (PsiDirectory directory : aPackage.getDirectories(resolveScope)) {
@@ -107,7 +116,7 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
     }
   }
 
-  private static void collectClasses(IProperty pr, List<String> classes) {
+  private static void collectClasses(@NotNull IProperty pr, @NotNull List<String> classes) {
     String value = pr.getUnescapedValue();
     if (value == null) return;
     value = value.trim();

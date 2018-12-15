@@ -255,6 +255,10 @@ public abstract class TaskRepository {
     }
   }
 
+  /**
+   * This is invoked right after setting state.
+   */
+  public void initializeRepository() {}
 
   // for serialization
   public TaskRepository() {

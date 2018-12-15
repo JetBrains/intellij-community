@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
@@ -26,12 +25,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
-
-import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 /**
  * @author Anton Katilin
@@ -163,15 +158,15 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public boolean removeContent(@NotNull Content content, final boolean dispose) {
-    return removeContent(content, true, dispose).isDone();
+    return removeContent(content, dispose, UIUtil.isFocusAncestor(content.getComponent()), false).isDone();
   }
 
   @NotNull
   @Override
-  public ActionCallback removeContent(@NotNull Content content, boolean dispose, final boolean trackFocus, final boolean forcedFocus) {
+  public ActionCallback removeContent(@NotNull Content content, boolean dispose, final boolean requestFocus, final boolean forcedFocus) {
     final ActionCallback result = new ActionCallback();
-    removeContent(content, true, dispose).doWhenDone(() -> {
-      if (trackFocus) {
+    doRemoveContent(content, dispose).doWhenDone(() -> {
+      if (requestFocus) {
         Content current = getSelectedContent();
         if (current != null) {
           setSelectedContent(current, true, true, !forcedFocus).notify(result);
@@ -189,7 +184,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @NotNull
-  private ActionCallback removeContent(@NotNull Content content, boolean trackSelection, boolean dispose) {
+  private ActionCallback doRemoveContent(@NotNull Content content, boolean dispose) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int indexToBeRemoved = getIndexOfContent(content);
     if (indexToBeRemoved == -1) return ActionCallback.REJECTED;
@@ -198,7 +193,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       Content selection = mySelection.isEmpty() ? null : mySelection.get(mySelection.size() - 1);
       int selectedIndex = selection != null ? myContents.indexOf(selection) : -1;
 
-      if (!fireContentRemoveQuery(content, indexToBeRemoved, ContentManagerEvent.ContentOperation.undefined)) {
+      if (!fireContentRemoveQuery(content, indexToBeRemoved)) {
         return ActionCallback.REJECTED;
       }
       if (!content.isValid()) {
@@ -237,9 +232,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       }
 
       int newSize = myContents.size();
-      if (newSize > 0 && trackSelection) {
+      if (newSize > 0) {
         if (indexToSelect > -1) {
-          final Content toSelect = mySelectionHistory.size() > 0 ? mySelectionHistory.get(0) : myContents.get(indexToSelect);
+          final Content toSelect = !mySelectionHistory.isEmpty() ? mySelectionHistory.get(0) : myContents.get(indexToSelect);
           if (!isSelected(toSelect)) {
             if (myUI.isSingleSelection()) {
               ActionCallback result = new ActionCallback();
@@ -302,7 +297,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public Content getContent(JComponent component) {
+  public Content getContent(@NotNull JComponent component) {
     Content[] contents = getContents();
     for (Content content : contents) {
       if (Comparing.equal(component, content.getComponent())) {
@@ -313,7 +308,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public int getIndexOfContent(Content content) {
+  public int getIndexOfContent(@NotNull Content content) {
     return myContents.indexOf(content);
   }
 
@@ -341,9 +336,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myUI.getNextContentActionName();
   }
 
+  @NotNull
   @Override
   public List<AnAction> getAdditionalPopupActions(@NotNull final Content content) {
-    return null;
+    return Collections.emptyList();
   }
 
   @Override
@@ -506,7 +502,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     int contentCount = getContentCount();
     LOG.assertTrue(contentCount > 1);
     Content selectedContent = getSelectedContent();
-    int index = getIndexOfContent(selectedContent);
+    int index = selectedContent == null ? -1 : getIndexOfContent(selectedContent);
     index = (index - 1 + contentCount) % contentCount;
     final Content content = getContent(index);
     if (content == null) {
@@ -520,7 +516,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     int contentCount = getContentCount();
     LOG.assertTrue(contentCount > 1);
     Content selectedContent = getSelectedContent();
-    int index = getIndexOfContent(selectedContent);
+    int index = selectedContent == null ? -1 : getIndexOfContent(selectedContent);
     index = (index + 1) % contentCount;
     final Content content = getContent(index);
     if (content == null) {
@@ -555,8 +551,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myDispatcher.getMulticaster().selectionChanged(e);
   }
 
-  private boolean fireContentRemoveQuery(@NotNull Content content, int oldIndex, ContentManagerEvent.ContentOperation operation) {
-    ContentManagerEvent event = new ContentManagerEvent(this, content, oldIndex, operation);
+  private boolean fireContentRemoveQuery(@NotNull Content content, int oldIndex) {
+    ContentManagerEvent event = new ContentManagerEvent(this, content, oldIndex, ContentManagerEvent.ContentOperation.undefined);
     for (ContentManagerListener listener : myDispatcher.getListeners()) {
       listener.contentRemoveQuery(event);
       if (event.isConsumed()) {
@@ -580,28 +576,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return IdeFocusManager.getInstance(myProject);
   }
 
-  private static ActionCallback doRequestFocus(final Content toSelect) {
-    JComponent toFocus = computeWillFocusComponent(toSelect);
-
-    if (toFocus != null) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(toFocus, true);
-      });
-    }
-
-    return ActionCallback.DONE;
-  }
-
-  private static JComponent computeWillFocusComponent(Content toSelect) {
-    JComponent toFocus = toSelect.getPreferredFocusableComponent();
-    if (toFocus != null) {
-      toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(toFocus);
-    }
-
-    if (toFocus == null) toFocus = toSelect.getPreferredFocusableComponent();
-    return toFocus;
-  }
-
   @Override
   public void addDataProvider(@NotNull final DataProvider provider) {
     dataProviders.add(provider);
@@ -622,11 +596,13 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public void beforeTreeDispose() {
+    if (myDisposed) return;
     myUI.beforeDispose();
   }
 
   @Override
   public void dispose() {
+    if (myDisposed) return;
     myDisposed = true;
 
     myContents.clear();

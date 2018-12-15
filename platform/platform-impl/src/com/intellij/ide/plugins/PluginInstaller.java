@@ -7,6 +7,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +18,6 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -132,7 +132,7 @@ public class PluginInstaller {
     installedDependant.add(pluginNode);
 
     // check for dependent plugins at first.
-    if (pluginNode.getDepends() != null && pluginNode.getDepends().size() > 0) {
+    if (pluginNode.getDepends() != null && !pluginNode.getDepends().isEmpty()) {
       // prepare plugins list for install
       final PluginId[] optionalDependentPluginIds = pluginNode.getOptionalDependentPluginIds();
       final List<PluginNode> depends = new ArrayList<>();
@@ -141,7 +141,7 @@ public class PluginInstaller {
         PluginId depPluginId = pluginNode.getDepends().get(i);
         if (PluginManager.isPluginInstalled(depPluginId) || PluginManagerCore.isModuleDependency(depPluginId) ||
             InstalledPluginsState.getInstance().wasInstalled(depPluginId) ||
-            (pluginIds != null && pluginIds.contains(depPluginId))) {
+            pluginIds != null && pluginIds.contains(depPluginId)) {
           // ignore installed or installing plugins
           continue;
         }
@@ -150,7 +150,8 @@ public class PluginInstaller {
         PluginNode depPlugin;
         if (depPluginDescriptor instanceof PluginNode) {
           depPlugin = (PluginNode) depPluginDescriptor;
-        } else {
+        }
+        else {
           depPlugin = new PluginNode(depPluginId, depPluginId.getIdString(), "-1");
         }
 
@@ -164,15 +165,15 @@ public class PluginInstaller {
         }
       }
 
-      if (depends.size() > 0) { // has something to install prior installing the plugin
+      if (!depends.isEmpty()) { // has something to install prior installing the plugin
         final boolean[] proceed = new boolean[1];
         try {
-          GuiUtils.runOrInvokeAndWait(() -> {
+          ApplicationManager.getApplication().invokeAndWait(() -> {
             String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
             String deps = StringUtil.join(depends, node -> node.getName(), ", ");
             String message = IdeBundle.message("plugin.manager.dependencies.detected.message", depends.size(), deps);
             proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == Messages.YES;
-          });
+          }, ModalityState.any());
         }
         catch (Exception e) {
           return false;
@@ -182,15 +183,15 @@ public class PluginInstaller {
         }
       }
 
-      if (optionalDeps.size() > 0) {
+      if (!optionalDeps.isEmpty()) {
         final boolean[] proceed = new boolean[1];
         try {
-          GuiUtils.runOrInvokeAndWait(() -> {
+          ApplicationManager.getApplication().invokeAndWait(() -> {
             String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
             String deps = StringUtil.join(optionalDeps, node -> node.getName(), ", ");
             String message = IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(), deps);
             proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == Messages.YES;
-          });
+          }, ModalityState.any());
         }
         catch (Exception e) {
           return false;

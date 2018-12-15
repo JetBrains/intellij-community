@@ -37,8 +37,12 @@ fun isPunctuation(b: Int): Boolean {
 }
 
 fun isAlpha(c: Int): Boolean {
-  if (c < 128 && isWhiteSpace(c.toChar())) return false
+  if (isWhiteSpaceCodePoint(c)) return false
   return !isPunctuation(c)
+}
+
+fun isWhiteSpaceCodePoint(c: Int): Boolean {
+  return c < 128 && isWhiteSpace(c.toChar())
 }
 
 fun isContinuousScript(c: Int): Boolean {

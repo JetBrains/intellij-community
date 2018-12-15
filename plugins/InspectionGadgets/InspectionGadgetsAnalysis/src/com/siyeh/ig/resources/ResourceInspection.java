@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2016 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -322,10 +322,7 @@ public abstract class ResourceInspection extends BaseInspection {
         }
       }
     }
-    PsiElement parent = ParenthesesUtils.getParentSkipParentheses(resourceCreationExpression);
-    if (parent instanceof PsiConditionalExpression) {
-      parent = ParenthesesUtils.getParentSkipParentheses(parent);
-    }
+    final PsiElement parent = getPassthroughParent(resourceCreationExpression);
     if (parent instanceof PsiReturnStatement) {
       return true;
     }
@@ -362,6 +359,38 @@ public abstract class ResourceInspection extends BaseInspection {
     final EscapeVisitor visitor = new EscapeVisitor(boundVariable);
     codeBlock.accept(visitor);
     return visitor.isEscaped();
+  }
+
+  private static PsiElement getPassthroughParent(PsiExpression expression) {
+    while (true) {
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression) {
+        expression = (PsiExpression)parent;
+        continue;
+      }
+      else if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != expression) {
+        expression = (PsiExpression)parent;
+        continue;
+      }
+      else if (parent instanceof PsiExpressionStatement) {
+        final PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof PsiSwitchLabeledRuleStatement) {
+          final PsiSwitchBlock block = ((PsiSwitchLabeledRuleStatement)grandParent).getEnclosingSwitchBlock();
+          if (block instanceof PsiSwitchExpression) {
+            expression = (PsiExpression)block;
+            continue;
+          }
+        }
+      }
+      else if (parent instanceof PsiBreakStatement) {
+        final PsiElement exitedElement = ((PsiBreakStatement)parent).findExitedElement();
+        if (exitedElement instanceof PsiSwitchExpression) {
+          expression = (PsiExpression)exitedElement;
+          continue;
+        }
+      }
+      return parent;
+    }
   }
 
   private class CloseVisitor extends JavaRecursiveElementWalkingVisitor {

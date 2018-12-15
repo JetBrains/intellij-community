@@ -30,18 +30,18 @@ import java.lang.ref.SoftReference;
  */
 class ConcurrentIntKeySoftValueHashMap<V> extends ConcurrentIntKeyRefValueHashMap<V> {
   private static class MyRef<V> extends SoftReference<V> implements IntReference<V> {
-    private final int hash;
+    private final int valueHash;
     private final int key;
 
     private MyRef(int key, @NotNull V referent, @NotNull ReferenceQueue<V> queue) {
       super(referent, queue);
       this.key = key;
-      hash = referent.hashCode();
+      valueHash = referent.hashCode();
     }
 
     @Override
     public int hashCode() {
-      return hash;
+      return valueHash;
     }
 
     @Override
@@ -51,7 +51,7 @@ class ConcurrentIntKeySoftValueHashMap<V> extends ConcurrentIntKeyRefValueHashMa
         return false;
       }
       MyRef other = (MyRef)obj;
-      return other.hash == hash && key == other.getKey() && Comparing.equal(v, other.get());
+      return other.valueHash == valueHash && key == other.getKey() && Comparing.equal(v, other.get());
     }
 
     @Override

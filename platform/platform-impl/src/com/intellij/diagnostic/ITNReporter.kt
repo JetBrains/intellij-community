@@ -46,7 +46,7 @@ open class ITNReporter : ErrorReportSubmitter() {
                       consumer: Consumer<SubmittedReportInfo>): Boolean {
     val event = events[0]
 
-    val pluginInfo = IdeErrorsDialog.getPluginInfo(event)
+    val plugin = IdeErrorsDialog.getPlugin(event)
 
     val lastActionId = IdeaLogger.ourLastActionId
 
@@ -57,7 +57,7 @@ open class ITNReporter : ErrorReportSubmitter() {
       previousReportId = previousException.second
     }
 
-    val errorBean = ErrorBean(event, additionalInfo, pluginInfo?.first, pluginInfo?.second, lastActionId, previousReportId)
+    val errorBean = ErrorBean(event, additionalInfo, plugin?.pluginId?.idString, plugin?.name, plugin?.version, lastActionId, previousReportId)
 
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
 

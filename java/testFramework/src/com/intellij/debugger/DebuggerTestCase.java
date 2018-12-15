@@ -75,6 +75,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       myTearDownRunnables.forEach(Runnable::run);
       myTearDownRunnables.clear();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

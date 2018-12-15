@@ -7,15 +7,18 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.UastLiteralReferenceProvider;
+import com.intellij.psi.UastInjectionHostReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UIfExpression;
 
 /**
  * @author cdr
  */
-class UastPropertiesReferenceProvider extends UastLiteralReferenceProvider {
+class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider {
 
   private final boolean myDefaultSoft;
 
@@ -28,17 +31,18 @@ class UastPropertiesReferenceProvider extends UastLiteralReferenceProvider {
     return target instanceof IProperty;
   }
 
+
   @NotNull
   @Override
-  public PsiReference[] getReferencesByULiteral(@NotNull ULiteralExpression element,
-                                                @NotNull PsiLanguageInjectionHost host,
-                                                @NotNull ProcessingContext context) {
+  public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression element,
+                                                      @NotNull PsiLanguageInjectionHost host,
+                                                      @NotNull ProcessingContext context) {
     Object value = null;
     String bundleName = null;
     boolean soft = myDefaultSoft;
 
     if (canBePropertyKeyRef(element)) {
-      value = element.getValue();
+      value = element.evaluate();
 
       final Ref<UExpression> resourceBundleValue = Ref.create();
       if (JavaI18nUtil.mustBePropertyKey(element, resourceBundleValue)) {

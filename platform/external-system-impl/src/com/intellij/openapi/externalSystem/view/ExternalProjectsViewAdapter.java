@@ -87,6 +87,11 @@ public class ExternalProjectsViewAdapter implements ExternalProjectsView {
   }
 
   @Override
+  public boolean getGroupModules() {
+    return delegate.getGroupModules();
+  }
+
+  @Override
   public boolean useTasksNode() {
     return delegate.useTasksNode();
   }

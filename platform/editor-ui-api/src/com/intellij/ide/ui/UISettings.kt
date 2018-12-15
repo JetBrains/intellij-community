@@ -30,7 +30,7 @@ import javax.swing.SwingConstants
 private val LOG = logger<UISettings>()
 
 @State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], reportStatistic = true)
-class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponent<UISettingsState> {
+class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRoamableUiSettings = NotRoamableUiSettings()) : PersistentStateComponent<UISettingsState> {
   private var state = UISettingsState()
 
   private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
@@ -245,8 +245,11 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
       state.editorTabPlacement = value
     }
 
-  val editorTabLimit: Int
+  var editorTabLimit: Int
     get() = state.editorTabLimit
+    set(value) {
+      state.editorTabLimit = value
+    }
 
   val recentFilesLimit: Int
     get() = state.recentFilesLimit
@@ -374,7 +377,7 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
     val shadowInstance: UISettings
       get() {
         val app = ApplicationManager.getApplication()
-        return (if (app == null) null else instanceOrNull) ?: UISettings(NotRoamableUiSettings()).withDefFont()
+        return (if (app == null) null else instanceOrNull) ?: UISettings().withDefFont()
       }
 
     @JvmField

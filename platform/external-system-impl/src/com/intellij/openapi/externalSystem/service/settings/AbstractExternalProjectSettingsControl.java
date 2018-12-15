@@ -38,10 +38,9 @@ import java.awt.*;
  * @author Denis Zhdanov
  */
 public abstract class AbstractExternalProjectSettingsControl<S extends ExternalProjectSettings>
+  extends AbstractSettingsControl
   implements ExternalSystemSettingsControl<S>
 {
-
-  @Nullable private Project myProject;
 
   @NotNull private final S myInitialSettings;
 
@@ -66,7 +65,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   protected AbstractExternalProjectSettingsControl(@Nullable Project project,
                                                    @NotNull S initialSettings,
                                                    @Nullable ExternalSystemSettingsControlCustomizer controlCustomizer) {
-    myProject = project;
+    super(project);
     myInitialSettings = initialSettings;
     myCustomizer = controlCustomizer == null ? new ExternalSystemSettingsControlCustomizer() : controlCustomizer;
   }
@@ -137,6 +136,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   }
 
   public void reset(boolean isDefaultModuleCreation, @Nullable WizardContext wizardContext) {
+    super.reset(wizardContext);
     if (!myCustomizer.isUseAutoImportBoxHidden() && myUseAutoImportBox != null) {
       myUseAutoImportBox.setSelected(getInitialSettings().isUseAutoImport());
     }
@@ -217,11 +217,12 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
    * see {@linkplain AbstractImportFromExternalSystemControl#setCurrentProject(Project)}
    */
   public void setCurrentProject(@Nullable Project project) {
-    myProject = project;
+    setProject(project);
   }
 
   @Nullable
+  @Override
   public Project getProject() {
-    return myProject;
+    return super.getProject();
   }
 }

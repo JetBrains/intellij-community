@@ -161,7 +161,7 @@ class BundledJreManager {
   }
 
   def jreSuffix() {
-    buildContext.options.bundledJreVersion > 8 ? "-bundled-jre${buildContext.options.bundledJreVersion}" : ""
+    ""
   }
 
   def is32bitArchSupported() {

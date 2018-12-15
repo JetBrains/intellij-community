@@ -239,6 +239,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestAtCaret();
   }
 
+  public void testDocRoot() throws Exception {
+    doTestClass();
+  }
+
   private void doTestClass() throws Exception {
     PsiClass psiClass = getTestClass();
     verifyJavaDoc(psiClass);

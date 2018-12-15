@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="22" height="22" viewBox="0 0 22 22">
+  <defs>
+    <rect id="checkboxindeterminateselected-b" width="10" height="2" x="6" y="10" rx="1"/>
+    <filter id="checkboxindeterminateselected-a" width="123%" height="230%" x="-11.5%" y="-32.5%" filterUnits="objectBoundingBox">
+      <feOffset dy=".8" in="SourceAlpha" result="shadowOffsetOuter1"/>
+      <feGaussianBlur in="shadowOffsetOuter1" result="shadowBlurOuter1" stdDeviation=".25"/>
+      <feColorMatrix in="shadowBlurOuter1" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.26 0"/>
+    </filter>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <rect width="13.5" height="13.5" x="4.25" y="4.25" fill="#99999E" stroke="#909097" stroke-width=".5" rx="3"/>
+    <use fill="#000" filter="url(#checkboxindeterminateselected-a)" xlink:href="#checkboxindeterminateselected-b"/>
+    <use fill="#FFF" xlink:href="#checkboxindeterminateselected-b"/>
+  </g>
+</svg>

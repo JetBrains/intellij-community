@@ -205,7 +205,6 @@ public class BytecodeAnalysisIntegrationTest extends LightCodeInsightFixtureTest
     assertEmpty(diffs);
   }
 
-  @SuppressWarnings("unused")
   public void _testExportInferredAnnotations() {
     PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
     assertNotNull(rootPackage);
@@ -270,7 +269,7 @@ public class BytecodeAnalysisIntegrationTest extends LightCodeInsightFixtureTest
         if (annotations.isEmpty()) return;
         String xmlContent = EntryStream.of(annotations)
           .mapValues(map -> EntryStream.of(map).mapKeyValue(ExternalAnnotationsManagerImpl::createAnnotationTag).joining())
-          .mapKeyValue((externalName, content) -> "<item name=\'" + StringUtil.escapeXml(externalName) + "\'>\n" + content.trim() + "\n</item>\n")
+          .mapKeyValue((externalName, content) -> "<item name=\'" + StringUtil.escapeXmlEntities(externalName) + "\'>\n" + content.trim() + "\n</item>\n")
           .joining("", "<root>\n", "</root>");
         WriteCommandAction.runWriteCommandAction(getProject(), () -> {
           XmlFile xml = ExternalAnnotationsManagerImpl.createAnnotationsXml(root, packageName, getPsiManager());

@@ -95,7 +95,7 @@ def glut_close():
 def glut_int_handler(signum, frame):
     # Catch sigint and print the defautl message
     signal.signal(signal.SIGINT, signal.default_int_handler)
-    print '\nKeyboardInterrupt'
+    print('\nKeyboardInterrupt')
     # Need to reprint the prompt at this stage
 
 

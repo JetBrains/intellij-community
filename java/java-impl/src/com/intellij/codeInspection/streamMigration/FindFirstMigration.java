@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -85,7 +85,7 @@ class FindFirstMigration extends BaseStreamApiMigration {
                                                PsiExpression trueExpression, PsiExpression falseExpression,
                                                PsiType targetType) {
     String qualifier = tb.generate(ct) + ".findFirst()";
-    return OptionalUtil.generateOptionalUnwrap(
+    return OptionalRefactoringUtil.generateOptionalUnwrap(
       qualifier, tb.getVariable(), ct.markUnchanged(trueExpression), ct.markUnchanged(falseExpression), targetType, false);
   }
 }

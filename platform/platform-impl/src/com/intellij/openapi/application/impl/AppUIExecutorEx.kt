@@ -75,12 +75,10 @@ fun AppUIExecutor.coroutineDispatchingContext(): CoroutineContext =
 
 
 @Throws(CancellationException::class)
-suspend fun <T> CoroutineScope.runUnlessDisposed(disposable: Disposable, block: suspend () -> T): T {
+suspend fun <T> runUnlessDisposed(disposable: Disposable, block: suspend () -> T): T {
   if (Disposer.isDisposed(disposable)) throw AsyncExecutionSupport.DisposedException(disposable)
-  val context = this.coroutineContext
-  val childJob = Job(context[Job])
-  return disposable.cancelJobOnDisposal(childJob).use {
-    withContext(context + childJob) {
+  return coroutineScope {
+    disposable.cancelJobOnDisposal(coroutineContext[Job]!!).use {
       block()
     }
   }

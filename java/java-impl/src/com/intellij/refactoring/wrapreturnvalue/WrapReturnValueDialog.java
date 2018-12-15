@@ -123,6 +123,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
     }
   }
 
+  @NotNull
   private String getInnerClassName() {
     return myInnerClassNameTextField.getText().trim();
   }

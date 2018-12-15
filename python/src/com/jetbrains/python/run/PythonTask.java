@@ -40,6 +40,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.buildout.BuildoutFacet;
@@ -54,7 +55,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * TODO: Use {@link com.jetbrains.python.run.PythonRunner} instead of this class? At already supports rerun and other things
@@ -211,7 +211,7 @@ public class PythonTask {
       else {
         scriptParams.addParameter(myRunnerScript);
       }
-      scriptParams.addParameters(myParameters.stream().filter( o -> o != null).collect(Collectors.toList()));
+      scriptParams.addParameters(ContainerUtil.filter(myParameters, o -> o != null));
     }
 
     PythonEnvUtil.setPythonUnbuffered(env);

@@ -15,59 +15,39 @@
  */
 package com.intellij.unscramble;
 
+import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.util.registry.RegistryValueListener;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
 public final class UnscrambleAction extends AnAction implements DumbAware {
-  private static final UnscrambleListener LISTENER = new UnscrambleListener();
-  private static MessageBusConnection ourConnection;
 
   static {
-    final String key = "analyze.exceptions.on.the.fly";
-    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    if (Registry.is(key)) {
-      ourConnection = app.getMessageBus().connect();
-      ourConnection.subscribe(ApplicationActivationListener.TOPIC, LISTENER);
-    }
-
-    Registry.get(key).addListener(new RegistryValueListener.Adapter() {
-      @Override
-      public void afterValueChanged(@NotNull RegistryValue value) {
-        if (value.asBoolean()) {
-          ourConnection = app.getMessageBus().connect();
-          ourConnection.subscribe(ApplicationActivationListener.TOPIC, LISTENER);
-        } else {
-          ourConnection.disconnect();
-        }
-      }
-    }, app);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC,
+                                                                            new UnscrambleListener());
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    new UnscrambleDialog(project).show();
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    String message = e.getData(IdeErrorsDialog.CURRENT_TRACE_KEY);
+    if (message != null) {
+      AnalyzeStacktraceUtil.addConsole(project, null, "<Stacktrace>", message);
+    } else {
+      new UnscrambleDialog(project).show();
+    }
   }
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    final Presentation presentation = event.getPresentation();
-    final Project project = event.getProject();
-    presentation.setEnabled(project != null);
+    event.getPresentation().setEnabled(event.getProject() != null);
   }
 }

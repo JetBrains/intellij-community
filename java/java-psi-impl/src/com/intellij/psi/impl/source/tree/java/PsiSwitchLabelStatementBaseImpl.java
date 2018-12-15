@@ -3,12 +3,13 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElement implements PsiSwitchLabelStatementBase {
   protected PsiSwitchLabelStatementBaseImpl(IElementType type) {
@@ -21,17 +22,18 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
   }
 
   @Override
-  public PsiExpression getCaseValue() {
-    return (PsiExpression)findPsiChildByType(ElementType.EXPRESSION_BIT_SET);
+  public PsiExpressionList getCaseValues() {
+    return (PsiExpressionList)findPsiChildByType(JavaElementType.EXPRESSION_LIST);
   }
 
+  @Nullable
   @Override
-  public PsiSwitchStatement getEnclosingSwitchStatement() {
-    PsiElement block = getParent();
-    if (block != null) {
-      PsiElement statement = block.getParent();
-      if (statement instanceof PsiSwitchStatement) {
-        return (PsiSwitchStatement)statement;
+  public PsiSwitchBlock getEnclosingSwitchBlock() {
+    PsiElement codeBlock = getParent();
+    if (codeBlock != null) {
+      PsiElement switchBlock = codeBlock.getParent();
+      if (switchBlock instanceof PsiSwitchBlock) {
+        return (PsiSwitchBlock)switchBlock;
       }
     }
     return null;
@@ -43,7 +45,7 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     if (lastParent != null) {
-      PsiSwitchStatement switchStatement = getEnclosingSwitchStatement();
+      PsiSwitchBlock switchStatement = getEnclosingSwitchBlock();
       if (switchStatement != null) {
         PsiExpression expression = switchStatement.getExpression();
         if (expression != null) {

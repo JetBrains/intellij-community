@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -10,6 +8,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
@@ -26,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil;
 
 import java.util.Iterator;
 import java.util.List;
@@ -36,9 +36,10 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodL
  * @author Vladislav.Soroka
  */
 public class TestClassGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
-
-  public TestClassGradleConfigurationProducer() {
-    super(GradleExternalTaskConfigurationType.getInstance());
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return GradleExternalTaskConfigurationType.getInstance().getFactory();
   }
 
   @Override
@@ -70,8 +71,9 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
 
     configuration.getSettings().setExternalProjectPath(projectPath);
     configuration.getSettings().setTaskNames(tasksToRun);
-    configuration.getSettings()
-      .setScriptParameters(String.format("--tests %s", getRuntimeQualifiedName(testClass)));
+
+    String filter = GradleExecutionSettingsUtil.createTestFilterFrom(testClass, /*hasSuffix=*/false);
+    configuration.getSettings().setScriptParameters(filter);
     configuration.setName(testClass.getName());
 
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
@@ -128,8 +130,10 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     int i = scriptParameters.indexOf("--tests ");
     if(i == -1) return false;
 
+    String testFilter = GradleExecutionSettingsUtil.createTestFilterFrom(testClass, /*hasSuffix=*/true);
+    String filter = testFilter.substring("--tests ".length());
     String str = scriptParameters.substring(i + "--tests ".length()).trim() + ' ';
-    return str.startsWith(getRuntimeQualifiedName(testClass) + ' ') && !str.contains("--tests");
+    return str.startsWith(filter) && !str.contains("--tests");
   }
 
   @Override
@@ -184,7 +188,8 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
 
     StringBuilder buf = new StringBuilder();
     for (PsiClass aClass : containingClasses) {
-      buf.append(String.format("--tests %s ", getRuntimeQualifiedName(aClass)));
+      String filter = GradleExecutionSettingsUtil.createTestFilterFrom(aClass, /*hasSuffix=*/true);
+      buf.append(filter);
     }
 
     configuration.getSettings().setScriptParameters(buf.toString());

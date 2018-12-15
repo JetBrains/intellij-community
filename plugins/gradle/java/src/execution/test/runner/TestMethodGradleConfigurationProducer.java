@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
@@ -8,6 +6,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
@@ -23,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil;
 
 import java.util.List;
 
@@ -32,9 +32,10 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodL
  * @author Vladislav.Soroka
  */
 public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
-
-  public TestMethodGradleConfigurationProducer() {
-    super(GradleExternalTaskConfigurationType.getInstance());
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return GradleExternalTaskConfigurationType.getInstance().getFactory();
   }
 
   @Override
@@ -94,7 +95,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(module))) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
-    final String testFilter = createTestFilter(containingClass, psiMethod);
+    final String testFilter = createTestFilter(contextLocation, containingClass, psiMethod);
     return testFilter != null && scriptParameters.contains(testFilter);
   }
 
@@ -156,7 +157,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
 
     StringBuilder buf = new StringBuilder();
     for (PsiClass aClass : containingClasses) {
-      final String filter = createTestFilter(aClass, psiMethod);
+      final String filter = createTestFilter(context.getLocation(), aClass, psiMethod);
       if(filter != null) {
         buf.append(filter);
       }
@@ -168,14 +169,13 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
   }
 
   @Nullable
-  private static String createTestFilter(@NotNull PsiClass aClass, @NotNull PsiMethod psiMethod) {
-    return createTestFilter(TestClassGradleConfigurationProducer.getRuntimeQualifiedName(aClass), psiMethod.getName());
+  private static String createTestFilter(@Nullable Location location, @NotNull PsiClass aClass, @NotNull PsiMethod psiMethod) {
+    String filter = GradleExecutionSettingsUtil.createTestFilterFrom(location, aClass, psiMethod, true);
+    return filter.isEmpty() ? null : filter;
   }
 
-  @Nullable
+  @NotNull
   public static String createTestFilter(@Nullable String aClass, @Nullable String method) {
-    if (aClass == null) return null;
-    String testFilterPattern = aClass + (method == null ? "" : '.' + method);
-    return String.format("--tests \"%s\" ", testFilterPattern.replace('\"', '*'));
+    return GradleExecutionSettingsUtil.createTestFilterFromMethod(aClass, method, /*hasSuffix=*/true);
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -82,6 +83,11 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       return true;
     }
 
+    if (myExpression instanceof PsiSwitchExpression) {
+      PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)myExpression).forEach(expression -> constraints.add(new ExpressionCompatibilityConstraint(expression,myT)));
+      return true;
+    }
+
     if (myExpression instanceof PsiCall) {
       final InferenceSession callSession = reduceExpressionCompatibilityConstraint(session, myExpression, myT, true);
       if (callSession == null) {
@@ -89,7 +95,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       }
       if (callSession != session) {
         session.getInferenceSessionContainer().registerNestedSession(callSession);
-        session.propagateVariables(callSession.getInferenceVariables(), callSession.getRestoreNameSubstitution());
+        session.propagateVariables(callSession);
         for (Pair<InferenceVariable[], PsiClassType> pair : callSession.myIncorporationPhase.getCaptures()) {
           session.myIncorporationPhase.addCapture(pair.first, pair.second);
         }
@@ -149,7 +155,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       if (typeParams != null) {
         PsiSubstitutor siteSubstitutor = InferenceSession.chooseSiteSubstitutor(candidateProperties, resolveResult, method);
         final InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, expression.getManager(), expression);
-        callSession.propagateVariables(session.getInferenceVariables(), session.getRestoreNameSubstitution());
+        callSession.propagateVariables(session);
         if (method != null) {
           final PsiExpression[] args = argumentList.getExpressions();
           final PsiParameter[] parameters = method.getParameterList().getParameters();

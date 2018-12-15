@@ -203,6 +203,14 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   public void testWhileCondition2() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "Node"));
   }
+  
+  public void testField() {
+    doTest(new MockIntroduceVariableHandler("temp", false, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+  
+  public void testFieldAll() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
 
   public void testCaseLabel() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
@@ -228,6 +236,26 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testReturnOrChain() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+  
+  public void testReturnTernary() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+  
+  public void testAssignTernary() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
+  public void testEnsureCodeBlockAroundBreakStatementJava12Preview() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
+  public void testEnsureCodeBlockForThrowsJava12Preview() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
+  public void testDeclareTernary() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
 

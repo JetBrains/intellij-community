@@ -312,6 +312,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestInlineThisOnly();
   }
 
+  public void testIfElseIfWithSingleStatement() {
+    doTestInlineThisOnly();
+  }
+
   public void testUnresolvedArgPassedToSameNameParameter() {
     doTestInlineThisOnly();
   }

@@ -15,13 +15,11 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -88,28 +86,24 @@ public class CollectionFactoryInliner implements CallInliner {
 
   @Override
   public boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
+    PsiType callType = call.getType();
+    if (callType == null) return false;
     FactoryInfo factoryInfo = getFactoryInfo(call);
     if (factoryInfo == null) return false;
     PsiExpression[] args = call.getArgumentList().getExpressions();
     for (PsiExpression arg : args) {
-      builder.pushExpression(arg);
-      if (factoryInfo.myNotNull) {
-        builder.checkNotNull(arg, NullabilityProblemKind.passingNullableToNotNullParameter);
-      }
+      builder.pushExpression(arg, factoryInfo.myNotNull ? NullabilityProblemKind.passingToNotNullParameter : null);
       builder.pop();
     }
     DfaValueFactory factory = builder.getFactory();
-    DfaValue result =
-      factory.withFact(factory.createTypeValue(call.getType(), Nullability.NOT_NULL), DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
-    if (factoryInfo.mySize == -1) {
-      builder.push(result, call);
-    } else {
-      DfaVariableValue variableValue = builder.createTempVariable(call.getType());
-      // tmpVar = <Value of collection type>; leave tmpVar on stack: it's result of method call
-      builder.pushForWrite(variableValue).push(result, call).assign();
-      // tmpVar.size = <size>
-      builder.assignAndPop(factoryInfo.mySizeField.createValue(factory, variableValue), factory.getInt(factoryInfo.mySize));
-    }
+    SpecialFieldValue sizeConstraint =
+      factoryInfo.mySize == -1 ? null : factoryInfo.mySizeField.withValue(factory.getInt(factoryInfo.mySize));
+    DfaFactMap facts = DfaFactMap.EMPTY
+      .with(DfaFactType.TYPE_CONSTRAINT, factory.createDfaType(callType).asConstraint())
+      .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
+      .with(DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE)
+      .with(DfaFactType.SPECIAL_FIELD_VALUE, sizeConstraint);
+    builder.push(factory.getFactFactory().createValue(facts), call);
     return true;
   }
 }

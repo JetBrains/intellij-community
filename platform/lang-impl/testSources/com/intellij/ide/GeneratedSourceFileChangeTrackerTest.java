@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author nik
  */
@@ -37,43 +39,47 @@ public class GeneratedSourceFileChangeTrackerTest extends CodeInsightFixtureTest
 
   @Override
   protected void setUp() throws Exception {
+    GeneratedSourceFileChangeTrackerImpl.IN_TRACKER_TEST = true;
     super.setUp();
     Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).registerExtension(myGeneratedSourcesFilter);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).unregisterExtension(myGeneratedSourcesFilter);
-    super.tearDown();
+    try {
+      Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).unregisterExtension(myGeneratedSourcesFilter);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      GeneratedSourceFileChangeTrackerImpl.IN_TRACKER_TEST = false;
+      super.tearDown();
+    }
   }
 
-  public void testChangeOrdinary() {
+  public void testChangeOrdinary() throws Exception {
     PsiFile file = myFixture.configureByText("Ordinary.txt", "");
     myFixture.type('a');
     assertFalse(isEditedGeneratedFile(file));
   }
 
-  public void testChangeGenerated() {
+  public void testChangeGenerated() throws Exception {
     PsiFile file = myFixture.configureByText("Gen.txt", "");
     myFixture.type('a');
     assertTrue(isEditedGeneratedFile(file));
   }
 
-  public void testChangeGeneratedExternally() {
+  public void testChangeGeneratedExternally() throws Exception {
     PsiFile file = myFixture.configureByText("Gen.txt", "");
     myFixture.saveText(file.getVirtualFile(), "abc");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertFalse(isEditedGeneratedFile(file));
   }
 
-  private boolean isEditedGeneratedFile(PsiFile file) {
+  private boolean isEditedGeneratedFile(PsiFile file) throws Exception {
     GeneratedSourceFileChangeTrackerImpl tracker = (GeneratedSourceFileChangeTrackerImpl)getTracker();
-    try {
-      tracker.waitForAlarm();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    tracker.waitForAlarm(10, TimeUnit.SECONDS);
     return tracker.isEditedGeneratedFile(file.getVirtualFile());
   }
 

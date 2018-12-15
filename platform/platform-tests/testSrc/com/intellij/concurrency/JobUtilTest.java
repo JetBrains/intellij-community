@@ -490,10 +490,9 @@ public class JobUtilTest extends PlatformTestCase {
     ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
       indicator.cancel();
     }, 10, TimeUnit.MILLISECONDS);
-    job.waitForCompletion(10000);
+    job.waitForCompletion(10_000);
     assertTrue(job.isDone());
-    assertTrue(counter.get() < N);
-
+    assertTrue(counter.toString(), counter.get() < N);
     future.get();
   }
 

@@ -27,13 +27,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author peter
@@ -199,9 +199,11 @@ class MarkerCache {
     UpdatedRanges ranges = new UpdatedRanges(0, frozen, infos, new ManualRangeMarker[]{marker});
     // NB: convert events from completion to whole doc change event to more precise translation
     List<DocumentEvent> newEvents =
-    events.stream().map(event -> isWholeDocumentReplace(frozen, (DocumentEventImpl)event)
-                                 ? new DocumentEventImpl(event.getDocument(), event.getOffset(), event.getOldFragment(), event.getNewFragment(), event.getOldTimeStamp(), true, ((DocumentEventImpl)event).getInitialStartOffset(), ((DocumentEventImpl)event).getInitialOldLength()) : event)
-      .collect(Collectors.toList());
+      ContainerUtil.map(events, event -> isWholeDocumentReplace(frozen, (DocumentEventImpl)event)
+                                         ? new DocumentEventImpl(event.getDocument(), event.getOffset(), event.getOldFragment(),
+                                                                 event.getNewFragment(), event.getOldTimeStamp(), true,
+                                                                 ((DocumentEventImpl)event).getInitialStartOffset(),
+                                                                 ((DocumentEventImpl)event).getInitialOldLength()) : event);
     UpdatedRanges updated = applyEvents(newEvents, ranges);
     return updated.myMarkers[0];
   }

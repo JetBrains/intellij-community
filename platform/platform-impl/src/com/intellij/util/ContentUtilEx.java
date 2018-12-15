@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -231,5 +217,25 @@ public class ContentUtilEx extends ContentsUtil {
       index++;
     }
     return -1;
+  }
+
+  public static boolean renameTabbedContent(@NotNull ContentManager manager,
+                                            @NotNull JComponent contentComponent,
+                                            @NotNull String newName) {
+    for (Content content : manager.getContents()) {
+      if (content instanceof TabbedContentImpl) {
+        if (((TabbedContentImpl)content).rename(contentComponent, newName)) {
+          return true;
+        }
+      }
+      else if (Comparing.equal(content.getComponent(), contentComponent)) {
+        String groupPrefix = content.getUserData(Content.TAB_GROUP_NAME_KEY);
+        if (groupPrefix != null) {
+          content.setDisplayName(getFullName(groupPrefix, newName));
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

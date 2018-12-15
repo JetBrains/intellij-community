@@ -95,11 +95,18 @@ public abstract class ActionManager {
   public abstract void registerAction(@NotNull String actionId, @NotNull AnAction action, @Nullable PluginId pluginId);
 
   /**
-   * Unregisters the action with the specified actionId.
+   * Unregisters the action with the specified actionId. <strong>If you're going to register another action with the same ID, use {@link #replaceAction(String, AnAction)}
+   * instead</strong>, otherwise references in action groups may not be replaced.
    *
    * @param actionId Id of the action to be unregistered
    */
   public abstract void unregisterAction(@NotNull String actionId);
+
+  /**
+   * Replaces an existing action with ID {@code actionId} by {@code newAction}. Using this method for changing behavior of a platform action
+   * is not recommended, extract an extension point in the action implementation instead.
+   */
+  public abstract void replaceAction(@NotNull String actionId, @NotNull AnAction newAction);
 
   /**
    * Returns the list of all registered action IDs with the specified prefix.

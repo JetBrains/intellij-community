@@ -145,13 +145,15 @@ private fun addAditionalVariables(additionalVariables: Collection<Variable>,
                                   functions: MutableList<Variable>? = null) {
   val oldSize = result.size
   ol@ for (variable in additionalVariables) {
+    if (!memberFilter.isMemberVisible(variable)) continue
+
     for (i in 0..(oldSize - 1)) {
       val vmVariable = result[i]
       if (memberFilter.rawNameToSource(vmVariable) == memberFilter.rawNameToSource(variable)) {
         // we prefer additionalVariable here because it is more smart variable (e.g. NavigatableVariable)
         val vmValue = vmVariable.value
         // to avoid evaluation, use vm value directly
-        if (vmValue != null && variable.value == null) {
+        if (vmValue != null) {
           variable.value = vmValue
         }
 

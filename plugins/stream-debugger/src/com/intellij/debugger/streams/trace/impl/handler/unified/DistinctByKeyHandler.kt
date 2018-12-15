@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.trace.impl.handler.unified
 
 import com.intellij.debugger.streams.trace.dsl.*
@@ -19,8 +19,8 @@ open class DistinctByKeyHandler(callNumber: Int,
                                 dsl: Dsl,
                                 private val functionApplyName: String = "apply") : HandlerBase.Intermediate(dsl) {
   private companion object {
-    val KEY_EXTRACTOR_VARIABLE_PREFIX = "keyExtractor"
-    val TRANSITIONS_ARRAY_NAME = "transitionsArray"
+    const val KEY_EXTRACTOR_VARIABLE_PREFIX = "keyExtractor"
+    const val TRANSITIONS_ARRAY_NAME = "transitionsArray"
   }
 
   private val myPeekHandler = PeekTraceHandler(callNumber, "distinct", myCall.typeBefore, myCall.typeAfter, dsl)

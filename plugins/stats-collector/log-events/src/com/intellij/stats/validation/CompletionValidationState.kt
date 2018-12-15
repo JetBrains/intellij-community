@@ -73,14 +73,14 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
     override fun visit(event: DownPressedEvent) {
         val beforeDownPressedPosition = currentPosition
         updateState(event)
-        if (completionList.isNotEmpty()) {
-            val isCorrectPosition = (beforeDownPressedPosition + 1) % completionList.size == currentPosition
-            updateValid(isCorrectPosition,
-                        "position after up pressed event incorrect, before event $beforeDownPressedPosition, " +
-                        "now $currentPosition, " +
-                        "elements in list ${completionList.size}"
-            )
-        }
+        if (completionList.isEmpty()) return
+        val isCorrectPosition = (beforeDownPressedPosition + 1) % completionList.size == currentPosition
+        updateValid(isCorrectPosition,
+                    "position after up pressed event incorrect, before event $beforeDownPressedPosition, " +
+                    "now $currentPosition, " +
+                    "elements in list ${completionList.size}"
+        )
+
     }
 
     private fun updateValid(value: Boolean, error: String) {
@@ -95,6 +95,7 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
         val beforeUpPressedPosition = currentPosition
         updateState(event)
 
+        if (completionList.isEmpty()) return
         val isCorrectPosition = (completionList.size + beforeUpPressedPosition - 1) % completionList.size == currentPosition
         updateValid(isCorrectPosition,
                 "position after up pressed event incorrect, before event $beforeUpPressedPosition, " +

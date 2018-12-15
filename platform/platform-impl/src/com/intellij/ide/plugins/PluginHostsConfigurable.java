@@ -9,6 +9,10 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.ui.ComponentValidator;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -29,6 +33,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -121,6 +127,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
       }
     }});
 
+    myTable.getColumnModel().setColumnMargin(0);
     myTable.setShowColumns(false);
     myTable.setShowGrid(false);
 
@@ -129,15 +136,17 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     myTable.setDefaultRenderer(Object.class, new ColoredTableCellRenderer() {
+      final SimpleTextAttributes ERROR_ATTRIBUTES =
+        new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, DialogWrapper.ERROR_FOREGROUND_COLOR);
+
       @Override
       protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
         if (row >= 0 && row < myModel.getRowCount()) {
           UrlInfo info = myModel.getRowValue(row);
+          setBorder(null);
+          setForeground(selected ? table.getSelectionForeground() : table.getForeground());
           setBackground(selected ? table.getSelectionBackground() : table.getBackground());
-          append(info.name, info.errorTooltip != null && !info.progress
-                            ? SimpleTextAttributes.ERROR_ATTRIBUTES
-                            : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          setToolTipText(info.errorTooltip);
+          append(info.name, info.errorTooltip != null && !info.progress ? ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }
 
@@ -151,7 +160,94 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
     editor.setClickCountToStart(1);
     myTable.setDefaultEditor(Object.class, editor);
 
+    createValidatorHandler();
+
     return ToolbarDecorator.createDecorator(myTable).disableUpDownActions().createPanel();
+  }
+
+  private void createValidatorHandler() {
+    MouseAdapter listener = new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        showErrorPopup(e);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent event) {
+        if (!myTable.contains(event.getX(), event.getY()) || myTable.rowAtPoint(event.getPoint()) == myTable.getEditingRow()) {
+          hideErrorPopup();
+        }
+      }
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        showErrorPopup(e);
+      }
+    };
+    myTable.addMouseListener(listener);
+    myTable.addMouseMotionListener(listener);
+  }
+
+  private JBPopup myErrorPopup;
+  private JLabel myErrorLabel;
+
+  private void showErrorPopup(@NotNull MouseEvent event) {
+    int row = myTable.rowAtPoint(event.getPoint());
+    if (row == -1 || row == myTable.getEditingRow()) {
+      hideErrorPopup();
+      return;
+    }
+
+    UrlInfo item = myModel.getItem(row);
+    if (item.progress || item.errorTooltip == null) {
+      hideErrorPopup();
+      return;
+    }
+
+    if (myErrorPopup != null && myErrorPopup.isVisible() && myErrorPopup.getContent().getParent() != null) {
+      myErrorLabel.setText(item.errorTooltip);
+      showErrorPopup(row, true);
+      return;
+    }
+
+    hideErrorPopup();
+
+    myErrorLabel = new JLabel(item.errorTooltip);
+    myErrorLabel.setOpaque(true);
+    myErrorLabel.setBackground(JBUI.CurrentTheme.Validator.errorBackgroundColor());
+    myErrorLabel.setBorder(ComponentValidator.getBorder());
+
+    myErrorPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myErrorLabel, null)
+      .setBorderColor(JBUI.CurrentTheme.Validator.errorBorderColor()).setShowShadow(false).createPopup();
+
+    showErrorPopup(row, false);
+  }
+
+  private void showErrorPopup(int row, boolean update) {
+    Rectangle cellRect = myTable.getCellRect(row, 0, false);
+    Point location = new Point(cellRect.x + JBUI.scale(40), cellRect.y - myErrorLabel.getPreferredSize().height - JBUI.scale(4));
+    SwingUtilities.convertPointToScreen(location, myTable);
+
+    if (update) {
+      myErrorPopup.pack(true, true);
+      myErrorPopup.setLocation(location);
+    }
+    else {
+      myErrorPopup.showInScreenCoordinates(myTable, location);
+    }
+  }
+
+  @Override
+  public void disposeUIResources() {
+    hideErrorPopup();
+  }
+
+  private void hideErrorPopup() {
+    if (myErrorPopup != null) {
+      myErrorPopup.cancel();
+      myErrorPopup = null;
+      myErrorLabel = null;
+    }
   }
 
   private void validateRepositories(@NotNull List<UrlInfo> urls) {
@@ -175,8 +271,8 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
               results.set(i, "No plugins found. Please check log file for possible errors.");
             }
           }
-          catch (Exception e) {
-            results.set(i, "Connection failed: " + e.getMessage());
+          catch (Exception ignore) {
+            results.set(i, "Connection failed.");
           }
         }
       }

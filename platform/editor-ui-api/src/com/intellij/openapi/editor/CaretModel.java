@@ -282,6 +282,14 @@ public interface CaretModel {
   void runForEachCaret(@NotNull CaretAction action, boolean reverseOrder);
 
   /**
+   * Adds a listener which will be notified before and after all-caret operations are performed by {@link #runForEachCaret(CaretAction)} and
+   * {@link #runForEachCaret(CaretAction, boolean)}.
+   *
+   * @since 2019.1
+   */
+  void addCaretActionListener(@NotNull CaretActionListener listener, @NotNull Disposable disposable);
+
+  /**
    * Executes the given task, performing caret merging afterwards. Caret merging will not happen until the operation is finished.
    */
   void runBatchCaretOperation(@NotNull Runnable runnable);

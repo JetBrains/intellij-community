@@ -16,16 +16,31 @@
 
 package com.intellij.debugger.ui;
 
+import com.intellij.compiler.impl.CompileContextImpl;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.DummyCompileContext;
+import com.intellij.task.ProjectTaskContext;
+import com.intellij.task.ProjectTaskResult;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows plugins to cancel hotswap after a particular compilation session.
  * @see HotSwapUI#addListener(HotSwapVetoableListener)
  */
 public interface HotSwapVetoableListener {
+
+  /**
+   * Returns {@code false} if Hot Swap shouldn't be invoked after the given compilation session.
+   * @deprecated use {@link #shouldHotSwap(ProjectTaskContext, ProjectTaskResult)}
+   */
+  @Deprecated
+  default boolean shouldHotSwap(CompileContext finishedCompilationContext) { return true; }
+
   /**
    * Returns {@code false} if Hot Swap shouldn't be invoked after the given compilation session.
    */
-  boolean shouldHotSwap(CompileContext finishedCompilationContext);
-
+  default boolean shouldHotSwap(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult finishedTasksResult) {
+    CompileContext compileContext = context.getUserData(CompileContextImpl.CONTEXT_KEY);
+    return shouldHotSwap(compileContext != null ? compileContext : DummyCompileContext.getInstance());
+  }
 }

@@ -2,10 +2,11 @@ PsiJavaFile:SwitchRules9.java
   PsiSwitchLabeledRule
     PsiKeyword:case('case')
     PsiWhiteSpace(' ')
-    PsiReferenceExpression:b
-      PsiReferenceParameterList
-        <empty list>
-      PsiIdentifier:b('b')
+    PsiExpressionList
+      PsiReferenceExpression:b
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:b('b')
     PsiWhiteSpace(' ')
     PsiJavaToken:ARROW('->')
     PsiWhiteSpace(' ')

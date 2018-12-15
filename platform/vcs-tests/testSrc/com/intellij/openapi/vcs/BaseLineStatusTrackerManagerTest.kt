@@ -12,14 +12,12 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.parseInput
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
-import com.intellij.openapi.vcs.ex.LineStatusTracker
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.ExclusionState
-import com.intellij.openapi.vcs.ex.Range
+import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.ui.UIUtil
 import org.mockito.Mockito
 
 abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
@@ -37,6 +35,8 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
 
   override fun tearDown() {
     RunAll()
+      .append(ThrowableRunnable { clm.waitUntilRefreshed() })
+      .append(ThrowableRunnable { UIUtil.dispatchAllInvocationEvents() })
       .append(ThrowableRunnable { lstm.resetExcludedFromCommitMarkers() })
       .append(ThrowableRunnable { lstm.releaseAllTrackers() })
       .append(ThrowableRunnable { super.tearDown() })
@@ -88,12 +88,12 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
   private fun createMockFileEditor(document: Document): FileEditor {
     val editor = Mockito.mock(FileEditor::class.java, Mockito.withSettings().extraInterfaces(DocumentReferenceProvider::class.java))
     val references = listOf(DocumentReferenceManager.getInstance().create(document))
-    Mockito.`when`((editor as DocumentReferenceProvider).documentReferences).thenReturn(references);
+    Mockito.`when`((editor as DocumentReferenceProvider).documentReferences).thenReturn(references)
     return editor
   }
 
   protected fun PartialLocalLineStatusTracker.assertAffectedChangeLists(vararg expectedNames: String) {
-    assertSameElements(this.affectedChangeListsIds.asListIdsToNames(), *expectedNames)
+    assertSameElements(this.getAffectedChangeListsIds().asListIdsToNames(), *expectedNames)
   }
 
   protected fun LineStatusTracker<*>.assertTextContentIs(expected: String) {
@@ -105,8 +105,23 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
   }
 
   protected fun Range.assertChangeList(listName: String) {
-    val localRange = this as PartialLocalLineStatusTracker.LocalRange
+    val localRange = this as LocalRange
     assertEquals(listName, localRange.changelistId.asListIdToName())
+  }
+
+  protected fun VirtualFile.assertNullTracker() {
+    val tracker = this.tracker
+    if (tracker != null) {
+      var message = "$tracker" +
+                    ": operational - ${tracker.isOperational()}" +
+                    ", valid - ${tracker.isValid()}, " +
+                    ", file - ${tracker.virtualFile}"
+      if (tracker is PartialLocalLineStatusTracker) {
+        message += ", hasPartialChanges - ${tracker.hasPartialChangesToCommit()}" +
+          ", lists - ${tracker.getAffectedChangeListsIds().asListIdsToNames()}"
+      }
+      assertNull(message, tracker)
+    }
   }
 
   protected fun PartialLocalLineStatusTracker.assertExcludedState(expected: ExclusionState, listName: String) {

@@ -54,6 +54,9 @@ public class CreateClassFixTest extends UsefulTestCase {
       myFixture.tearDown();
       myFixture = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

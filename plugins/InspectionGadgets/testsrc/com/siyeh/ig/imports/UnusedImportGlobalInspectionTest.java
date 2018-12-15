@@ -5,7 +5,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -17,7 +17,7 @@ import java.util.Collections;
 public class UnusedImportGlobalInspectionTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/plugins/InspectionGadgets/test/com/siyeh/igtest/imports/globalInspection";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/InspectionGadgets/test/com/siyeh/igtest/imports/globalInspection";
   }
 
   public void testInnerClassImport() {

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.testFramework.ExpectedHighlightingData;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +56,7 @@ public class PyRedundantParenthesesInspectionTest extends PyInspectionTestCase {
   }
 
   public void testTryExcept() {
-    doTest();
+    ExpectedHighlightingData.expectedDuplicatedHighlighting(this::doTest);
   }
 
   public void testTryExceptNegate() {

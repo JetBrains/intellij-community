@@ -3,24 +3,24 @@ package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.io.MappingFailedException;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author kir
@@ -40,28 +40,33 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     if (ourLoggerBroken) return false;
 
     try {
+      final Application app = ApplicationManager.getApplication();
+      if (app.isDisposed() || app.isDisposeInProgress()) {
+        return false;
+      }
+
       UpdateChecker.checkForUpdate(event);
 
       boolean notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE));
 
-      ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(event.getThrowable());
+      Throwable t = event.getThrowable();
+      PluginId pluginId = IdeErrorsDialog.findPluginId(t);
+
+      ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(t, pluginId);
       boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
 
       boolean isOOM = getOOMErrorKind(event.getThrowable()) != null;
       boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
-      String key = "ide.error";
-      if(isOOM){
-        key+=".oom";
+      String pluginIdString = pluginId == null ? null : pluginId.getIdString();
+      String pluginIdToReport;
+      if (pluginIdString != null && !pluginIdString.equals(PluginManagerCore.CORE_PLUGIN_ID) &&
+          StatisticsUtilKt.isSafeToReport(pluginIdString)) {
+        pluginIdToReport = pluginIdString;
       }
-      if(isMappingFailed){
-        key+=".mappingFailed";
+      else {
+        pluginIdToReport = null;
       }
-
-      FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, key);
-      Map<String, Object> values = new HashMap<>();
-      values.put("oom",isOOM);
-      values.put("mappingFailed",isMappingFailed);
-      FeatureUsageLogger.INSTANCE.log("lifecycle",  "ide.error", values);
+      AppLifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed, pluginIdToReport);
 
       return notificationEnabled ||
              showPluginError ||
@@ -106,7 +111,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   }
 
   @Nullable
-  private static MemoryKind getOOMErrorKind(Throwable t) {
+  static MemoryKind getOOMErrorKind(Throwable t) {
     String message = t.getMessage();
 
     if (t instanceof OutOfMemoryError) {

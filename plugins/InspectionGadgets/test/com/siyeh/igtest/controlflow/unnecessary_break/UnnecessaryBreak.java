@@ -25,3 +25,16 @@ public class UnnecessaryBreak {
     }
   }
 }
+class Switch {
+    enum E { A, B, C}
+    void x(E e) {
+        switch (e) {
+            case A, B, C -> {
+                <warning descr="'break' statement is unnecessary">break</warning>;
+            }
+            default -> {
+                <warning descr="'break' statement is unnecessary">break</warning>;
+            }
+        }
+    }
+}

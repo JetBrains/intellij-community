@@ -13,6 +13,8 @@ import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -195,32 +197,37 @@ public class ServiceManagerImpl implements Disposable {
           return instance;
         }
 
-        ComponentAdapter delegate = getDelegate();
-
+        String implementation = myDescriptor.getImplementation();
         if (LOG.isDebugEnabled() &&
             ApplicationManager.getApplication().isWriteAccessAllowed() &&
             !ApplicationManager.getApplication().isUnitTestMode() &&
-            PersistentStateComponent.class.isAssignableFrom(delegate.getComponentImplementation())) {
-          LOG.warn(new Throwable("Getting service from write-action leads to possible deadlock. Service implementation " + myDescriptor.getImplementation()));
+            PersistentStateComponent.class.isAssignableFrom(getDelegate().getComponentImplementation())) {
+          LOG.warn(new Throwable("Getting service from write-action leads to possible deadlock. Service implementation " +
+                                 implementation));
         }
 
-        // prevent storages from flushing and blocking FS
-        AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + myDescriptor.getImplementation() + "'");
-        try {
-          instance = delegate.getComponentInstance(container);
-          if (instance instanceof Disposable) {
-            Disposer.register(myComponentManager, (Disposable)instance);
+        // heavy to prevent storages from flushing and blocking FS
+        try (AccessToken ignore = HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + implementation + "'")) {
+          Runnable runnable = () -> myInitializedComponentInstance = createAndInitialize(container);
+          if (ProgressIndicatorProvider.getGlobalProgressIndicator() != null) {
+            ProgressManager.getInstance().executeNonCancelableSection(runnable);
+          } else {
+            runnable.run();
           }
-
-          myComponentManager.initializeComponent(instance, true);
-
-          myInitializedComponentInstance = instance;
-          return instance;
-        }
-        finally {
-          token.finish();
+          return myInitializedComponentInstance;
         }
       }
+    }
+
+    @NotNull
+    private Object createAndInitialize(@NotNull PicoContainer container) {
+      Object instance = getDelegate().getComponentInstance(container);
+      if (instance instanceof Disposable) {
+        Disposer.register(myComponentManager, (Disposable)instance);
+      }
+
+      myComponentManager.initializeComponent(instance, true);
+      return instance;
     }
 
     @NotNull

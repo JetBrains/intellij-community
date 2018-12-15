@@ -169,6 +169,13 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     return new MyProjectNode(project, settings);
   }
 
+  @Nullable
+  private static AbstractTreeNode createRootNode(@NotNull Project project, @NotNull RootType rootId, @NotNull ViewSettings settings) {
+    if (rootId.isHidden()) return null;
+    MyRootNode node = new MyRootNode(project, rootId, settings);
+    return node.isEmpty() ? null : node;
+  }
+
   public static class MyStructureProvider implements TreeStructureProvider, DumbAware {
     @NotNull
     @Override
@@ -176,13 +183,13 @@ public class ScratchProjectViewPane extends ProjectViewPane {
                                                @NotNull Collection<AbstractTreeNode> children,
                                                ViewSettings settings) {
       Project project = parent instanceof ProjectViewProjectNode? parent.getProject() : null;
-      if (project != null && isScratchesMergedIntoProjectTab()) {
-        ArrayList<AbstractTreeNode> list = new ArrayList<>(children.size() + 1);
-        list.addAll(children);
-        list.add(createRootNode(project, settings));
-        return list;
-      }
-      return children;
+      if (project == null || !isScratchesMergedIntoProjectTab()) return children;
+      if (children.isEmpty() && JBIterable.from(RootType.getAllRootIds()).filterMap(
+        o -> createRootNode(project, o, settings)).isEmpty()) return children;
+      ArrayList<AbstractTreeNode> list = new ArrayList<>(children.size() + 1);
+      list.addAll(children);
+      list.add(createRootNode(project, settings));
+      return list;
     }
 
     @Nullable
@@ -233,10 +240,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     public Collection<? extends AbstractTreeNode> getChildren() {
       List<AbstractTreeNode> list = ContainerUtil.newArrayList();
       for (RootType rootId : RootType.getAllRootIds()) {
-        if (rootId.isHidden()) continue;
-        MyRootNode e = new MyRootNode(getProject(), rootId, getSettings());
-        if (e.isEmpty()) continue;
-        list.add(e);
+        ContainerUtil.addIfNotNull(list, createRootNode(getProject(), rootId, getSettings()));
       }
       return list;
     }
@@ -281,8 +285,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @NotNull
     @Override
     public Collection<VirtualFile> getRoots() {
-      VirtualFile root = getVirtualFile();
-      return root == null ? EMPTY_ROOTS : Collections.singleton(root);
+      return getDefaultRootsFor(getVirtualFile());
     }
 
     @NotNull

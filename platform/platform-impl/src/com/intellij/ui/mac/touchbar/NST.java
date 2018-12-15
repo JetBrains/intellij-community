@@ -260,8 +260,8 @@ public class NST {
 
     // according to https://developer.apple.com/macos/human-interface-guidelines/touch-bar/touch-bar-icons-and-images/
     // icons generally should not exceed 44px in height (36px for circular icons)
-    // Ideal icon size	    36px × 36px (18pt × 18pt @2x)
-    // Maximum icon size    44px × 44px (22pt × 22pt @2x)
+    // Ideal icon size	    36px X 36px (18pt X 18pt @2x)
+    // Maximum icon size    44px X 44px (22pt X 22pt @2x)
 
     final Application app = ApplicationManager.getApplication();
     final float fMulX = app != null && UISettings.getInstance().getPresentationMode() ? 40.f/icon.getIconHeight() : (icon.getIconHeight() < 24 ? 40.f/16 : 44.f/icon.getIconHeight());

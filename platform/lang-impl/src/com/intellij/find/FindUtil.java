@@ -889,7 +889,7 @@ public class FindUtil {
                                               @NotNull Function<? super T, ? extends Usage> usageConverter,
                                               @NotNull String title,
                                               @Nullable Consumer<? super UsageViewPresentation> presentationSetup,
-                                              @NotNull final Project project) {
+                                              @NotNull Project project) {
     if (targets.length == 0) return null;
     final UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setCodeUsagesString(title);
@@ -902,11 +902,12 @@ public class FindUtil {
 
     UsageView view = UsageViewManager.getInstance(project).showUsages(usageTargets, Usage.EMPTY_ARRAY, presentation);
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Usage View ...") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Usage View...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        for (final T pointer : targets) {
-          if (((UsageViewImpl)view).isDisposed()) break;
+        UsageViewImpl impl = (UsageViewImpl)view;
+        for (T pointer : targets) {
+          if (impl.isDisposed()) break;
           ApplicationManager.getApplication().runReadAction(() -> {
             Usage usage = usageConverter.fun(pointer);
             if (usage != null) {
@@ -914,7 +915,9 @@ public class FindUtil {
             }
           });
         }
-        UIUtil.invokeLaterIfNeeded(((UsageViewImpl)view)::expandAll);
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (!impl.isDisposed()) impl.expandRoot();
+        });
       }
     });
     return view;

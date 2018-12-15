@@ -7,6 +7,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
@@ -48,6 +50,23 @@ public abstract class DumbService {
 
   public static boolean isDumb(@NotNull Project project) {
     return getInstance(project).isDumb();
+  }
+
+  @NotNull
+  public static <T> List<T> getDumbAwareExtensions(@NotNull Project project, @NotNull ExtensionPointName<T> extensionPoint) {
+    List<T> list = extensionPoint.getExtensionList();
+    if (list.isEmpty()) {
+      return list;
+    }
+
+    DumbService dumbService = getInstance(project);
+    return dumbService.filterByDumbAwareness(list);
+  }
+
+  @NotNull
+  public static <T> List<T> getDumbAwareExtensions(@NotNull Project project, @NotNull ProjectExtensionPointName<T> extensionPoint) {
+    DumbService dumbService = getInstance(project);
+    return dumbService.filterByDumbAwareness(extensionPoint.getExtensions(project));
   }
 
   /**
@@ -132,8 +151,8 @@ public abstract class DumbService {
    * try again until the runnable is able to complete successfully.
    * It makes sense to use this method when you have a long-running activity consisting of many small read actions, and you don't want to
    * use a single long read action in order to keep the IDE responsive.
-   * 
-   * @see #runReadActionInSmartMode(Runnable) 
+   *
+   * @see #runReadActionInSmartMode(Runnable)
    */
   public void repeatUntilPassesInSmartMode(@NotNull final Runnable r) {
     while (true) {
@@ -168,7 +187,7 @@ public abstract class DumbService {
 
   /**
    * @return all the elements of the given array if there's no dumb mode currently, or the dumb-aware ones if {@link #isDumb()} is true.
-   * @see #isDumbAware(Object) 
+   * @see #isDumbAware(Object)
    */
   @NotNull
   public <T> List<T> filterByDumbAwareness(@NotNull T[] array) {
@@ -176,7 +195,7 @@ public abstract class DumbService {
   }
 
   /**
-   * @return all the elements of the given collection if there's no dumb mode currently, or the dumb-aware ones if {@link #isDumb()} is true. 
+   * @return all the elements of the given collection if there's no dumb mode currently, or the dumb-aware ones if {@link #isDumb()} is true.
    * @see #isDumbAware(Object)
    */
   @NotNull
@@ -253,8 +272,8 @@ public abstract class DumbService {
   }
 
   /**
-   * Enables or disables alternative resolve strategies for the current thread.<p/> 
-   * 
+   * Enables or disables alternative resolve strategies for the current thread.<p/>
+   *
    * Normally reference resolution uses index, and hence is not available in dumb mode. In some cases, alternative ways
    * of performing resolve are available, although much slower. It's impractical to always use these ways because it'll
    * lead to overloaded CPU (especially given there's also indexing in progress). But for some explicit user actions
@@ -263,7 +282,7 @@ public abstract class DumbService {
    * NOTE: even with alternative resolution enabled, methods like resolve(), findClass() etc may still throw
    * {@link IndexNotReadyException}. So alternative resolve is not a panacea, it might help provide navigation in some cases
    * but not in all.<p/>
-   * 
+   *
    * A typical usage would involve try-finally, where the alternative resolution is first enabled, then an action is performed,
    * and then alternative resolution is turned off in the finally block.
    */
@@ -271,7 +290,7 @@ public abstract class DumbService {
 
   /**
    * Invokes the given runnable with alternative resolve set to true.
-   * @see #setAlternativeResolveEnabled(boolean) 
+   * @see #setAlternativeResolveEnabled(boolean)
    */
   public void withAlternativeResolveEnabled(@NotNull Runnable runnable) {
     setAlternativeResolveEnabled(true);
@@ -313,8 +332,8 @@ public abstract class DumbService {
 
   /**
    * @return whether alternative resolution is enabled for the current thread.
-   * 
-   * @see #setAlternativeResolveEnabled(boolean) 
+   *
+   * @see #setAlternativeResolveEnabled(boolean)
    */
   public abstract boolean isAlternativeResolveEnabled();
 
@@ -330,7 +349,7 @@ public abstract class DumbService {
 
   /**
    * Runs a heavy activity and suspends indexing (if any) for this time. The user still has the possibility to manually pause and resume the indexing. In that case, indexing won't be resumed automatically after the activity finishes.
-   * @param activityName the text (a noun phrase) to display as a reason for the indexing being paused 
+   * @param activityName the text (a noun phrase) to display as a reason for the indexing being paused
    */
   public abstract void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity);
 

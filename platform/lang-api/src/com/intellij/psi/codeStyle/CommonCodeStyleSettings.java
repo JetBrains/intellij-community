@@ -446,6 +446,7 @@ public class CommonCodeStyleSettings {
    */
   public boolean ALIGN_GROUP_FIELD_DECLARATIONS = false;
   public boolean ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = false;
+  public boolean ALIGN_CONSECUTIVE_ASSIGNMENTS = false;
   public boolean ALIGN_SUBSEQUENT_SIMPLE_METHODS = false;
 
 //----------------- SPACES --------------------
