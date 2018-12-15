@@ -35,8 +35,14 @@ public class ReplacementView extends JPanel {
     if (replacement == null) {
       textToShow = MALFORMED_REPLACEMENT_STRING;
     }
-    JLabel jLabel = new JLabel(textToShow);
+    JLabel jLabel = new JLabel(multiline(textToShow));
     jLabel.setForeground(replacement != null ? new JBColor(Gray._240, Gray._200) : JBColor.RED);
     add(jLabel);
+  }
+
+  static String multiline(String str) {
+    return "<html>" + str.replace("&", "&amp;").replace("<", "&lt;")
+      .replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br>\n")
+      .replace("\t", "    ").replace(" ", "&nbsp;");
   }
 }
