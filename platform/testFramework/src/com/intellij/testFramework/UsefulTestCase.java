@@ -12,6 +12,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -77,6 +78,7 @@ public abstract class UsefulTestCase extends TestCase {
   static {
     IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
     Logger.setFactory(TestLoggerFactory.class);
+    ExtensionsAreaImpl.DEBUG_REGISTRATION = true;
   }
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 

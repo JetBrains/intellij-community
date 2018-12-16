@@ -35,7 +35,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     ourDefaultEPs.put(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME, EPAvailabilityListenerExtension.class.getName());
   }
 
-  private static final boolean DEBUG_REGISTRATION = Boolean.FALSE.booleanValue(); // not compile-time constant to avoid yellow code
+  public static boolean DEBUG_REGISTRATION; // not compile-time constant to avoid yellow code
 
   private final AreaPicoContainer myPicoContainer;
   private final Throwable myCreationTrace;
