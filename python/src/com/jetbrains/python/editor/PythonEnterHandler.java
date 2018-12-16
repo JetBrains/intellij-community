@@ -165,15 +165,14 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
         }
         else {
           final StringBuilder replacementString = new StringBuilder();
+          int insertionOffset = offset;
           if (isEscapedQuote) {
-            replacementString.append(quote);
+            // Preserve the escaped quote, split after it
             caretOffset.set(caretOffset.get() + 1);
+            insertionOffset++;
           }
-          replacementString.append(quote).append(" \\").append(pref);
-          if (!isEscapedQuote) {
-            replacementString.append(quote);
-          }
-          doc.insertString(offset, replacementString);
+          replacementString.append(quote).append(" \\").append(pref).append(quote);
+          doc.insertString(insertionOffset, replacementString);
           caretOffset.set(caretOffset.get() + 3);
           return Result.Continue;
         }
