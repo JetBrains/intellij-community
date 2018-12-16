@@ -35,13 +35,8 @@ import org.apache.xerces.jaxp.SAXParserFactoryImpl;
 import org.apache.xerces.util.SecurityManager;
 import org.apache.xerces.util.XMLGrammarPoolImpl;
 import org.apache.xerces.xni.grammars.XMLGrammarPool;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.*;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
@@ -57,16 +52,24 @@ import java.util.Map;
 public class ValidateXmlActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.actions.validate.ValidateXmlAction");
 
-  private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = "http://apache.org/xml/features/validation/schema-full-checking";
-  private static final String GRAMMAR_FEATURE_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
+  private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_FULL_CHECKING;
+  private static final String HONOUR_ALL_SCHEMALOCATIONS_FEATURE_ID = Constants.XERCES_FEATURE_PREFIX + Constants.HONOUR_ALL_SCHEMALOCATIONS_FEATURE;
+  private static final String WARN_ON_UNDECLARED_ELEMDEF_FEATURE_ID = Constants.XERCES_FEATURE_PREFIX + Constants.WARN_ON_UNDECLARED_ELEMDEF_FEATURE;
+  private static final String WARN_ON_DUPLICATE_ATTDEF_FEATURE_ID = Constants.XERCES_FEATURE_PREFIX + Constants.WARN_ON_DUPLICATE_ATTDEF_FEATURE;
+  private static final String WARN_ON_DUPLICATE_ENTITYDEF_FEATURE_ID = Constants.XERCES_FEATURE_PREFIX + Constants.WARN_ON_DUPLICATE_ENTITYDEF_FEATURE;
+  private static final String UNPARSED_ENTITY_CHECKING_FEATURE_ID = Constants.XERCES_FEATURE_PREFIX + Constants.UNPARSED_ENTITY_CHECKING_FEATURE;
+
+  private static final String GRAMMAR_POOL_PROPERTY_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
   private static final String ENTITY_MANAGER_PROPERTY_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.ENTITY_MANAGER_PROPERTY;
+  private static final String ENTITY_RESOLVER_PROPERTY_NAME = Constants.XERCES_PROPERTY_PREFIX + Constants.ENTITY_RESOLVER_PROPERTY;
+
+  public static final String JDK_XML_MAX_OCCUR_LIMIT = "jdk.xml.maxOccurLimit";
 
   private static final Key<XMLGrammarPool> GRAMMAR_POOL_KEY = Key.create("GrammarPoolKey");
   private static final Key<Long> GRAMMAR_POOL_TIME_STAMP_KEY = Key.create("GrammarPoolTimeStampKey");
   private static final Key<VirtualFile[]> DEPENDENT_FILES_KEY = Key.create("GrammarPoolFilesKey");
   private static final Key<String[]> KNOWN_NAMESPACES_KEY = Key.create("KnownNamespacesKey");
   private static final Key<Map<String, XMLEntityManager.Entity>> ENTITIES_KEY = Key.create("EntityManagerKey");
-  public static final String JDK_XML_MAX_OCCUR_LIMIT = "jdk.xml.maxOccurLimit";
 
   private Project myProject;
   private XmlFile myFile;
@@ -74,11 +77,9 @@ public class ValidateXmlActionHandler {
   private SAXParser myParser;
   private XmlResourceResolver myXmlResourceResolver;
   private final boolean myForceChecking;
-  @NonNls
-  private static final String ENTITY_RESOLVER_PROPERTY_NAME = "http://apache.org/xml/properties/internal/entity-resolver";
 
-  public ValidateXmlActionHandler(boolean _forceChecking) {
-    myForceChecking = _forceChecking;
+  public ValidateXmlActionHandler(boolean forceChecking) {
+    myForceChecking = forceChecking;
   }
 
   public void setErrorReporter(ErrorReporter errorReporter) {
@@ -153,7 +154,10 @@ public class ValidateXmlActionHandler {
 
   public void doParse() {
     try {
-      myParser.parse(new InputSource(new StringReader(myFile.getText())), new DefaultHandler() {
+      configureEntityManager(myFile, myParser);
+
+      XMLReader reader = myParser.getXMLReader();
+      reader.setErrorHandler(new ErrorHandler() {
         @Override
         public void warning(SAXParseException e) throws SAXException {
           if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, ProblemType.WARNING);
@@ -168,24 +172,12 @@ public class ValidateXmlActionHandler {
         public void fatalError(SAXParseException e) throws SAXException {
           if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, ProblemType.FATAL);
         }
-
-        @Override
-        public InputSource resolveEntity(String publicId, String systemId) {
-          final PsiFile psiFile = myXmlResourceResolver.resolve(null, systemId);
-          if (psiFile == null) return null;
-          return new InputSource(new StringReader(psiFile.getText()));
-        }
-
-        @Override
-        public void startDocument() throws SAXException {
-          super.startDocument();
-          myParser.setProperty(
-            ENTITY_RESOLVER_PROPERTY_NAME,
-            myXmlResourceResolver
-          );
-          configureEntityManager(myFile, myParser);
-        }
       });
+
+      InputSource source = new InputSource(new StringReader(myFile.getText()));
+      source.setSystemId(myFile.getVirtualFile().getUrl().replace("file:", "file:/"));
+
+      reader.parse(source);
 
       final String[] resourcePaths = myXmlResourceResolver.getResourcePaths();
       if (resourcePaths.length > 0) { // if caches are used
@@ -204,9 +196,6 @@ public class ValidateXmlActionHandler {
     }
     catch (Exception exception) {
       filterAppException(exception);
-    }
-    catch (StackOverflowError error) {
-      // http://issues.apache.org/jira/browse/XERCESJ-589
     }
   }
 
@@ -254,23 +243,24 @@ public class ValidateXmlActionHandler {
       if (schemaChecking) { // when dtd checking schema refs could not be validated @see http://marc.theaimsgroup.com/?l=xerces-j-user&m=112504202423704&w=2
         XMLGrammarPool grammarPool = getGrammarPool(myFile, myForceChecking);
         configureEntityManager(myFile, parser);
-        parser.getXMLReader().setProperty(GRAMMAR_FEATURE_ID, grammarPool);
+        parser.getXMLReader().setProperty(GRAMMAR_POOL_PROPERTY_ID, grammarPool);
       }
+
       try {
         if (schemaChecking) {
           parser.setProperty(JAXPConstants.JAXP_SCHEMA_LANGUAGE,JAXPConstants.W3C_XML_SCHEMA);
           parser.getXMLReader().setFeature(SCHEMA_FULL_CHECKING_FEATURE_ID, true);
-          
-          if (Boolean.TRUE.equals(Boolean.getBoolean(XmlResourceResolver.HONOUR_ALL_SCHEMA_LOCATIONS_PROPERTY_KEY))) {
-            parser.getXMLReader().setFeature("http://apache.org/xml/features/honour-all-schemaLocations", true);
+
+          if (Boolean.getBoolean(XmlResourceResolver.HONOUR_ALL_SCHEMA_LOCATIONS_PROPERTY_KEY)) {
+            parser.getXMLReader().setFeature(HONOUR_ALL_SCHEMALOCATIONS_FEATURE_ID, true);
           }
 
-          parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/warn-on-undeclared-elemdef",Boolean.TRUE);
-          parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/warn-on-duplicate-attdef",Boolean.TRUE);
+          parser.getXMLReader().setFeature(WARN_ON_UNDECLARED_ELEMDEF_FEATURE_ID, true);
+          parser.getXMLReader().setFeature(WARN_ON_DUPLICATE_ATTDEF_FEATURE_ID, true);
         }
 
-        parser.getXMLReader().setFeature("http://apache.org/xml/features/warn-on-duplicate-entitydef",Boolean.TRUE);
-        parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/unparsed-entity-checking",Boolean.FALSE);
+        parser.getXMLReader().setFeature(WARN_ON_DUPLICATE_ENTITYDEF_FEATURE_ID, true);
+        parser.getXMLReader().setFeature(UNPARSED_ENTITY_CHECKING_FEATURE_ID, false);
       } catch(SAXNotRecognizedException ex) {
         // it is possible to continue work with configured parser
         LOG.info("Xml parser installation seems screwed", ex);

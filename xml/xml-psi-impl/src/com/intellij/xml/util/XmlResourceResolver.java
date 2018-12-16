@@ -40,6 +40,7 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -225,17 +226,12 @@ public class XmlResourceResolver implements XMLEntityResolver {
                   xmlResourceIdentifier.getLiteralSystemId():
                   xmlResourceIdentifier.getNamespace();
 
-    if (publicId != null) {
-      try {
-        String userDir = new File(System.getProperty("user.dir")).toURI().getPath();
-        String publicIdPath = new URI(publicId).getPath();
-        if (publicIdPath.startsWith(userDir)) {
-          publicId = publicIdPath.substring(publicIdPath.indexOf(userDir) + userDir.length());
-        }
-      }
-      catch (Exception e) {
-      }
+    if (publicId != null && publicId.startsWith("file:")) {
+      Path basePath = new File(URI.create(xmlResourceIdentifier.getBaseSystemId())).getParentFile().toPath();
+      Path publicIdPath = new File(URI.create(publicId)).toPath();
+      publicId = basePath.relativize(publicIdPath).toString().replace(File.separatorChar, '/');
     }
+
     PsiFile psiFile = resolve(xmlResourceIdentifier.getBaseSystemId(), publicId);
     if (psiFile == null && xmlResourceIdentifier.getBaseSystemId() != null) {
         psiFile = ExternalResourceManager.getInstance().getResourceLocation(xmlResourceIdentifier.getBaseSystemId(), myFile, null);
