@@ -78,7 +78,6 @@ public abstract class UsefulTestCase extends TestCase {
   static {
     IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
     Logger.setFactory(TestLoggerFactory.class);
-    ExtensionsAreaImpl.DEBUG_REGISTRATION = true;
   }
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
