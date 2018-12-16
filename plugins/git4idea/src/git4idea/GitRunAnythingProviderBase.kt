@@ -3,10 +3,18 @@ package git4idea
 
 import com.intellij.ide.actions.runAnything.RunAnythingUtil
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProviderBase
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import git4idea.branch.GitBranchUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -14,7 +22,7 @@ import git4idea.commands.GitLineHandler
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
-abstract class GitRunAnythingProviderBase : RunAnythingProviderBase<String>()  {
+abstract class GitRunAnythingProviderBase : RunAnythingProviderBase<String>() {
 
   abstract override fun getHelpCommand(): String
 
@@ -46,7 +54,7 @@ abstract class GitRunAnythingProviderBase : RunAnythingProviderBase<String>()  {
   }
 
   private fun runCommand(project: Project, repository: GitRepository, command: GitCommand, params: List<String>) {
-    Git.getInstance().runCommand {
+    val result = Git.getInstance().runCommand {
       val handler = GitLineHandler(project, repository.root, command)
       handler.addParameters(params)
       handler.setSilent(false)
@@ -55,6 +63,25 @@ abstract class GitRunAnythingProviderBase : RunAnythingProviderBase<String>()  {
       handler
     }
     repository.update()
+
+    val notification: Notification
+    if (result.success()) {
+      notification = Notification(VcsNotifier.STANDARD_NOTIFICATION.displayId, "", "git ${command.name()} succeeded",
+                                  NotificationType.INFORMATION)
+    }
+    else {
+      notification = Notification(VcsNotifier.STANDARD_NOTIFICATION.displayId, "", "git ${command.name()} failed", NotificationType.ERROR)
+    }
+
+    val action = NotificationAction.createSimple("View Output") {
+      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate {
+        val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
+        val console = contentManager.findContent(VcsBundle.message("vcs.console.toolwindow.display.name"))!!
+        contentManager.setSelectedContent(console, true, true)
+      }
+    }
+    notification.addAction(action)
+    VcsNotifier.getInstance(project).notify(notification)
   }
 
   private fun getGitCommandInstance(commandName: String): GitCommand {
