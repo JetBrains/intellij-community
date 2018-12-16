@@ -126,6 +126,12 @@ public class PyEditingTest extends PyTestCase {
                                         "    f'{42}bar'");
   }
 
+  // PY-32918
+  public void testEnterInFStringRightBeforeClosingQuote() {
+    doTestEnter("(f'foo{42}bar<caret>')", "(f'foo{42}bar'\n" +
+                                          " f'')");
+  }
+
   public void testOvertypeFromInside() {
     assertEquals("''", doTestTyping("''", 1, '\''));
   }
