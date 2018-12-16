@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
  * @author AKireyev
  */
 public class ExtensionsImplTest {
-  public static final String EXTENSION_POINT_NAME_1 = "ext.point.one";
+  static final String EXTENSION_POINT_NAME_1 = "ext.point.one";
 
   @Test
   public void testCreateAndAccess() {
@@ -30,7 +30,7 @@ public class ExtensionsImplTest {
     assertNotNull("EP by name available", extensionsArea.getExtensionPoint(EXTENSION_POINT_NAME_1));
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test(expected = Throwable.class)
   public void testInvalidActions() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null);
     extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Integer.class.getName());
