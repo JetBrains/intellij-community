@@ -2,13 +2,9 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,8 +27,6 @@ import java.util.concurrent.Executor;
  * @author gregsh
  */
 public class ProgressIndicatorUtils {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorUtils");
-
   @NotNull
   public static ProgressIndicator forceWriteActionPriority(@NotNull ProgressIndicator progress, @NotNull Disposable parentDisposable) {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
@@ -64,7 +58,7 @@ public class ProgressIndicatorUtils {
    * Same as {@link #runInReadActionWithWriteActionPriority(Runnable)}, optionally allowing to pass a {@link ProgressIndicator}
    * instance, which can be used to cancel action externally.
    */
-  public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, 
+  public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action,
                                                                @Nullable ProgressIndicator progressIndicator) {
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     runWithWriteActionPriority(() -> result.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)),
@@ -73,15 +67,15 @@ public class ProgressIndicatorUtils {
   }
 
   /**
-   * This method attempts to run provided action synchronously in a read action, so that, if possible, it wouldn't impact any pending, 
-   * executing or future write actions (for this to work effectively the action should invoke {@link ProgressManager#checkCanceled()} or 
-   * {@link ProgressIndicator#checkCanceled()} often enough). 
+   * This method attempts to run provided action synchronously in a read action, so that, if possible, it wouldn't impact any pending,
+   * executing or future write actions (for this to work effectively the action should invoke {@link ProgressManager#checkCanceled()} or
+   * {@link ProgressIndicator#checkCanceled()} often enough).
    * It returns {@code true} if action was executed successfully. It returns {@code false} if the action was not
    * executed successfully, i.e. if:
    * <ul>
    * <li>write action was in progress when the method was called</li>
    * <li>write action was pending when the method was called</li>
-   * <li>action started to execute, but was aborted using {@link ProcessCanceledException} when some other thread initiated 
+   * <li>action started to execute, but was aborted using {@link ProcessCanceledException} when some other thread initiated
    * write action</li>
    * </ul>
    * If caller needs to retry the invocation of this method in a loop, it should consider pausing between attempts, to avoid potential
@@ -101,7 +95,7 @@ public class ProgressIndicatorUtils {
       return false;
     }
 
-    ApplicationAdapter listener = new ApplicationAdapter() {
+    ApplicationListener listener = new ApplicationListener() {
       @Override
       public void beforeWriteActionStart(@NotNull Object action) {
         cancelProcess(progressIndicator);
@@ -156,7 +150,7 @@ public class ProgressIndicatorUtils {
         future.complete(null);
         return;
       }
-      final ApplicationAdapter listener = new ApplicationAdapter() {
+      final ApplicationListener listener = new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
           if (!progressIndicator.isCanceled()) {

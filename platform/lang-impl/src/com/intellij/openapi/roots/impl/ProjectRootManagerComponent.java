@@ -3,7 +3,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
@@ -306,7 +306,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     assertListenersAreDisposed();
   }
 
-  private class AppListener extends ApplicationAdapter {
+  private class AppListener implements ApplicationListener {
     @Override
     public void beforeWriteActionStart(@NotNull Object action) {
       myInsideRefresh++;

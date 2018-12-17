@@ -708,7 +708,7 @@ class LineStatusTrackerManager(
     }
   }
 
-  private inner class MyApplicationListener : ApplicationAdapter() {
+  private inner class MyApplicationListener : ApplicationListener {
     override fun afterWriteActionFinished(action: Any) {
       documentsInDefaultChangeList.clear()
 

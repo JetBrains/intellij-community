@@ -437,7 +437,7 @@ public class DaemonListeners implements Disposable {
     return status == FileStatus.MODIFIED || status == FileStatus.ADDED ? Result.CHANGED : Result.UNCHANGED;
   }
 
-  private class MyApplicationListener extends ApplicationAdapter {
+  private class MyApplicationListener implements ApplicationListener {
     private boolean myDaemonWasRunning;
 
     @Override

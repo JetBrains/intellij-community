@@ -3,7 +3,7 @@ package com.intellij.psi.refResolve;
 
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
@@ -204,7 +204,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         }
       }
     });
-    myApplication.addApplicationListener(new ApplicationAdapter() {
+    myApplication.addApplicationListener(new ApplicationListener() {
       @Override
       public void beforeWriteActionStart(@NotNull Object action) {
         disable();
