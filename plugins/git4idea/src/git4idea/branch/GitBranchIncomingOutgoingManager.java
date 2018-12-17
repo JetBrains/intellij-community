@@ -20,6 +20,7 @@ import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
 import git4idea.repo.*;
@@ -79,6 +80,10 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   public boolean hasAuthenticationProblems() {
     return !myErrorMap.isEmpty();
+  }
+
+  public boolean supportsIncomingOutgoing() {
+    return GitVersionSpecialty.INCOMING_OUTGOING_BRANCH_INFO.existsIn(myProject);
   }
 
   public void startScheduling() {
@@ -200,6 +205,9 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
                                      @NotNull List<String> branchRefNames,
                                      @NotNull GitAuthenticationMode authenticationMode) {
     Map<String, Hash> result = newHashMap();
+
+    if (!supportsIncomingOutgoing()) return result;
+
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
       List<String> params = newArrayList("--heads", remote.getName());
       params.addAll(refs);
@@ -254,6 +262,8 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   private boolean hasCommitsForBranch(@NotNull GitRepository repository, @NotNull GitLocalBranch localBranch, boolean incoming) {
+    if (!supportsIncomingOutgoing()) return false;
+
     //run git rev-list --count localName@{push}..localName for outgoing or
     //git rev-list --count localName..localName@{u} for incoming
 
