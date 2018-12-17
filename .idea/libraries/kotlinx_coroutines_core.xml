@@ -1,12 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-core" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core:0.26.1" />
+    <properties maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core:0.30.2">
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+      </exclude>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/0.26.1/kotlinx-coroutines-core-0.26.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/0.30.2/kotlinx-coroutines-core-0.30.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-common/0.30.2/kotlinx-coroutines-core-common-0.30.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/0.26.1/kotlinx-coroutines-core-0.26.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/0.30.2/kotlinx-coroutines-core-0.30.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-common/0.30.2/kotlinx-coroutines-core-common-0.30.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
