@@ -5,12 +5,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.AsyncExecutionSupport.Companion.cancelJobOnDisposal
 import com.intellij.openapi.util.Disposer
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.Callable
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
 
 /**
  * @author eldar

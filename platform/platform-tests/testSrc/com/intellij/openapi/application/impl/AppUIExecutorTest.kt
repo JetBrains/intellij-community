@@ -12,11 +12,11 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.Channel
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import java.util.concurrent.LinkedBlockingQueue
 import javax.swing.SwingUtilities
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.CoroutineContext
 
 /**
  * @author eldar
@@ -39,6 +39,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       override fun run() {
         if (isCompleted) {
           try {
+            @Suppress("EXPERIMENTAL_API_USAGE")
             getCompleted()
           }
           catch (ignored: CancellationException) {

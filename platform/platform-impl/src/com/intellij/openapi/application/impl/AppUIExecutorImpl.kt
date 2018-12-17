@@ -13,9 +13,9 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
-import kotlinx.coroutines.experimental.CoroutineDispatcher
-import kotlinx.coroutines.experimental.Runnable
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Runnable
+import kotlin.coroutines.CoroutineContext
 
 /**
  * @author peter
@@ -26,6 +26,7 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
                                                      override val dispatcher: CoroutineDispatcher) : AsyncExecutionSupport<AppUIExecutorEx>(),
                                                                                                      AppUIExecutorEx {
   constructor(modality: ModalityState) : this(modality, emptySet<Disposable>(), /* fallback */ object : CoroutineDispatcher() {
+    // TODO[eldar] please don't @Suppress("EXPERIMENTAL_OVERRIDE") until we understand the implications and resolve the cause
     override fun isDispatchNeeded(context: CoroutineContext): Boolean =
       !ApplicationManager.getApplication().isDispatchThread || ModalityState.current().dominates(modality)
 

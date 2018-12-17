@@ -2,9 +2,9 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlinx.coroutines.*
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
 
 /**
  * @author eldar

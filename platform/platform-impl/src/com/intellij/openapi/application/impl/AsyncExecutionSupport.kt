@@ -7,15 +7,15 @@ import com.intellij.openapi.application.impl.AsyncExecution.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.IncorrectOperationException
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import java.lang.ref.PhantomReference
 import java.lang.ref.ReferenceQueue
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.experimental.AbstractCoroutineContextElement
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Execution context constraints backed by Kotlin Coroutines.
@@ -93,9 +93,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
   }
 
   /** A CoroutineDispatcher which dispatches after ensuring its delegate is dispatched. */
-  internal abstract class DelegateDispatcher(val delegate: CoroutineDispatcher) : CoroutineDispatcher() {
-    override fun isDispatchNeeded(context: CoroutineContext) = true  // because of the need to check the delegate
-  }
+  internal abstract class DelegateDispatcher(val delegate: CoroutineDispatcher) : CoroutineDispatcher()
 
   /** A DelegateDispatcher backed by a ContextConstraint. */
   internal abstract class ChainedDispatcher(delegate: CoroutineDispatcher) : DelegateDispatcher(delegate) {
@@ -337,7 +335,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       invokeOnCompletion { cause ->
         job.cancel(cause)
       }.also { handle ->
-        job.disposeOnCompletion(handle)
+        job.invokeOnCompletion { handle.dispose() }
       }
     }
 
