@@ -450,6 +450,7 @@
     </extensionPoint>
 
     <extensionPoint name="macro" interface="com.intellij.ide.macro.Macro"/>
+    <extensionPoint name="macroFilter" interface="com.intellij.ide.macro.MacroFilter"/>
     <extensionPoint name="printOption" interface="com.intellij.codeEditor.printing.PrintOption"/>
 
     <extensionPoint name="indexPatternBuilder" interface="com.intellij.psi.impl.search.IndexPatternBuilder"/>
