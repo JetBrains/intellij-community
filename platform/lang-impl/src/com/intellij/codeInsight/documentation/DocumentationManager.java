@@ -965,7 +965,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
           ExternalDocumentationHandler externalHandler = (ExternalDocumentationHandler)p;
           if (externalHandler.canFetchDocumentationLink(url)) {
-            cancelAndFetchDocInfo(component, new DocumentationCollector(psiElement, url, null, p) {
+            String ref = externalHandler.extractRefFromLink(url);
+            cancelAndFetchDocInfo(component, new DocumentationCollector(psiElement, url, ref, p) {
               @Override
               public String getDocumentation() {
                 return externalHandler.fetchExternalDocumentation(url, psiElement);

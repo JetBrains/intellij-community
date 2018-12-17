@@ -795,6 +795,18 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                                @Nullable String ref) {
     myIsEmpty = false;
     if (myManager == null) return;
+
+    String refToUse;
+    Rectangle viewRectToUse;
+    if (DocumentationManagerProtocol.KEEP_SCROLLING_POSITION_REF.equals(ref)) {
+      refToUse = null;
+      viewRectToUse = myScrollPane.getViewport().getViewRect();
+    }
+    else {
+      refToUse = ref;
+      viewRectToUse = viewRect;
+    }
+
     updateControlState();
 
     setElement(element);
@@ -811,9 +823,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
-      myEditorPane.scrollRectToVisible(viewRect); // if ref is defined but is not found in document, this provides a default location
-      if (ref != null) {
-        myEditorPane.scrollToReference(ref);
+      myEditorPane.scrollRectToVisible(viewRectToUse); // if ref is defined but is not found in document, this provides a default location
+      if (refToUse != null) {
+        myEditorPane.scrollToReference(refToUse);
       }
       else if (ScreenReader.isActive()) {
         myEditorPane.setCaretPosition(0);
