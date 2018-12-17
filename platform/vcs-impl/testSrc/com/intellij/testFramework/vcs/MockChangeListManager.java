@@ -315,6 +315,16 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
+  public boolean isPotentiallyIgnoredFile(@NotNull VirtualFile file) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isVcsIgnoredFile(@NotNull VirtualFile file) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public String getSwitchedBranch(@NotNull VirtualFile file) {
     throw new UnsupportedOperationException();
   }

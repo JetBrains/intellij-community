@@ -291,7 +291,17 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
 
   private boolean gitignoreChanged(@NotNull String path) {
     // TODO watch file stored in core.excludesfile
-    return path.endsWith(".gitignore") || myRepositoryFiles.isExclude(path);
+    boolean gitIgnoreChanged = path.endsWith(GitRepositoryFiles.GITIGNORE);
+    boolean excludeChanged = myRepositoryFiles.isExclude(path);
+
+    if(gitIgnoreChanged || excludeChanged){
+      rescanIgnoredFiles(path);
+    }
+    return gitIgnoreChanged || excludeChanged;
+  }
+
+  private void rescanIgnoredFiles(@NotNull String gitIgnorePath) { //TODO move to ignore manager
+    myRepository.getIgnoredFilesHolder().startRescan(gitIgnorePath);
   }
 
   @Nullable

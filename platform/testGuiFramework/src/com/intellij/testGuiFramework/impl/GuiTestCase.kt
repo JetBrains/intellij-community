@@ -95,7 +95,7 @@ open class GuiTestCase {
   val projectFolder: String by lazy {
     val dir = File(projectsFolder, testMethod.methodName)
     if (!dir.mkdirs()) {
-      throw IOException("project dir creation failed")
+      throw IOException("project dir '${dir.absolutePath}' creation failed")
     }
     dir.canonicalPath
   }

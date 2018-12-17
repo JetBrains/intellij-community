@@ -22,10 +22,11 @@ import java.awt.event.MouseEvent;
 import java.util.EventObject;
 
 public class EditorMouseEvent extends EventObject {
+  @NotNull
   private final MouseEvent myMouseEvent;
   private final EditorMouseEventArea myEditorArea;
 
-  public EditorMouseEvent(@NotNull Editor editor, MouseEvent mouseEvent, EditorMouseEventArea area) {
+  public EditorMouseEvent(@NotNull Editor editor, @NotNull MouseEvent mouseEvent, EditorMouseEventArea area) {
     super(editor);
 
     myMouseEvent = mouseEvent;
@@ -37,6 +38,7 @@ public class EditorMouseEvent extends EventObject {
     return (Editor) getSource();
   }
 
+  @NotNull
   public MouseEvent getMouseEvent() {
     return myMouseEvent;
   }

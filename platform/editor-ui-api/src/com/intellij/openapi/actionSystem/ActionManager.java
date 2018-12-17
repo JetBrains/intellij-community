@@ -39,7 +39,7 @@ public abstract class ActionManager {
    * @return An instance of {@code ActionPopupMenu}
    */
   @NotNull
-  public abstract ActionPopupMenu createActionPopupMenu(@NonNls String place, @NotNull ActionGroup group);
+  public abstract ActionPopupMenu createActionPopupMenu(@NonNls @NotNull String place, @NotNull ActionGroup group);
 
   /**
    * Factory method that creates an {@code ActionToolbar} from the
@@ -114,6 +114,7 @@ public abstract class ActionManager {
    * @return all action {@code id}s which have the specified prefix.
    * @since 5.1
    */
+  @NotNull
   public abstract String[] getActionIds(@NotNull String idPrefix);
 
   /**
@@ -136,19 +137,20 @@ public abstract class ActionManager {
    * @since 5.1
    */
   @NotNull
-  public abstract JComponent createButtonToolbar(final String actionPlace, @NotNull ActionGroup messageActionGroup);
+  public abstract JComponent createButtonToolbar(@NotNull String actionPlace, @NotNull ActionGroup messageActionGroup);
 
   @Nullable
-  public abstract AnAction getActionOrStub(@NonNls String id);
+  public abstract AnAction getActionOrStub(@NotNull @NonNls String id);
 
-  public abstract void addTimerListener(int delay, TimerListener listener);
+  public abstract void addTimerListener(int delay, @NotNull TimerListener listener);
 
-  public abstract void removeTimerListener(TimerListener listener);
+  public abstract void removeTimerListener(@NotNull TimerListener listener);
 
-  public abstract void addTransparentTimerListener(int delay, TimerListener listener);
+  public abstract void addTransparentTimerListener(int delay, @NotNull TimerListener listener);
 
-  public abstract void removeTransparentTimerListener(TimerListener listener);
+  public abstract void removeTransparentTimerListener(@NotNull TimerListener listener);
 
+  @NotNull
   public abstract ActionCallback tryToExecute(@NotNull AnAction action, @NotNull InputEvent inputEvent, @Nullable Component contextComponent,
                                               @Nullable String place, boolean now);
 

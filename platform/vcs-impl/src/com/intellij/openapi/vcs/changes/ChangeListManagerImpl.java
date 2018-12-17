@@ -507,10 +507,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                                      Set<? super VirtualFile> refreshFiles) {
     while (iterator.hasNext()) {
       VirtualFile file = iterator.next().getVirtualFile();
-      if (file != null && isIgnoredFile(file)) {
-        iterator.remove();
-        fileHolder.addFile(file);
-        refreshFiles.add(file);
+      if (file != null && isPotentiallyIgnoredFile(file)) {
+        AbstractVcs vcs = VcsUtil.getVcsFor(myProject, file);
+        if (vcs != null) {
+          iterator.remove();
+          fileHolder.addFile(vcs, file);
+          refreshFiles.add(file);
+        }
       }
     }
   }
@@ -566,7 +569,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         takeChanges = myUpdateException == null;
       }
       if (takeChanges) {
-        // update IDEA-level ignored files
+        // update vcs ignored files
         updateIgnoredFiles(dataHolder.getComposite());
       }
 
@@ -647,7 +650,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     // do actual requests about file statuses
     Getter<Boolean> disposedGetter = () -> myProject.isDisposed() || myUpdater.isStopped();
     final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(updater,
-                                                                            dataHolder.getComposite(), disposedGetter, this);
+                                                                            dataHolder.getComposite(), disposedGetter);
 
     for (final VcsDirtyScope scope : scopes) {
       indicator.checkCanceled();
@@ -1505,7 +1508,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     scheduleUnversionedUpdate();
   }
 
-  private void updateIgnoredFiles(final FileHolderComposite composite) {
+  private void updateIgnoredFiles(FileHolderComposite composite) {
     final VirtualFileHolder vfHolder = composite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
     final List<VirtualFile> unversionedFiles = vfHolder.getFiles();
     exchangeWithIgnored(composite, vfHolder, unversionedFiles);
@@ -1517,9 +1520,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private void exchangeWithIgnored(FileHolderComposite composite, VirtualFileHolder vfHolder, List<? extends VirtualFile> unversionedFiles) {
     for (VirtualFile file : unversionedFiles) {
-      if (isIgnoredFile(file)) {
-        vfHolder.removeFile(file);
-        composite.getIgnoredFileHolder().addFile(file);
+      if (isPotentiallyIgnoredFile(file)) {
+        AbstractVcs vcs = VcsUtil.getVcsFor(myProject, file);
+        if (vcs != null) {
+          vfHolder.removeFile(file);
+          composite.getIgnoredFileHolder().addFile(vcs, file);
+        }
       }
     }
   }
@@ -1542,8 +1548,20 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public boolean isIgnoredFile(@NotNull VirtualFile file) {
+    return isPotentiallyIgnoredFile(file);
+  }
+
+  @Override
+  public boolean isPotentiallyIgnoredFile(@NotNull VirtualFile file) {
     FilePath filePath = VcsUtil.getFilePath(file);
     return ContainerUtil.exists(IgnoredFileProvider.IGNORE_FILE.getExtensions(), it -> it.isIgnoredFile(myProject, filePath));
+  }
+
+  @Override
+  public boolean isVcsIgnoredFile(@NotNull VirtualFile file) {
+    synchronized (myDataLock) {
+      return myComposite.getIgnoredFileHolder().containsFile(file);
+    }
   }
 
   public static class DefaultIgnoredFileProvider implements IgnoredFileProvider {

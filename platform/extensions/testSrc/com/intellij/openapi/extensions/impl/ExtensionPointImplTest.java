@@ -251,7 +251,7 @@ public class ExtensionPointImplTest {
   }
 
   private static ExtensionsAreaImpl buildExtensionArea() {
-    return new ExtensionsAreaImpl(new DefaultPicoContainer());
+    return new ExtensionsAreaImpl(null, null, new DefaultPicoContainer());
   }
 
   private static MyShootingComponentAdapter stringAdapter() {

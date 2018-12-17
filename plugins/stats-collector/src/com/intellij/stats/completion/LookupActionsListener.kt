@@ -16,7 +16,7 @@ class LookupActionsListener : AnActionListener {
 
   var listener: CompletionPopupListener = CompletionPopupListener.Adapter()
 
-  override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent?) {
+  override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
     LOG.runAndLogException {
       when (action) {
         down -> listener.downPressed()
@@ -26,7 +26,7 @@ class LookupActionsListener : AnActionListener {
     }
   }
 
-  override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent?) {
+  override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
     LOG.runAndLogException {
       when (action) {
         down -> listener.beforeDownPressed()

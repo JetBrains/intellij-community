@@ -200,6 +200,7 @@ public class DataManagerImpl extends DataManager {
     return result;
   }
 
+  @NotNull
   public DataContext getDataContextTest(Component component) {
     DataContext dataContext = getDataContext(component);
     if (myWindowManager == null) {

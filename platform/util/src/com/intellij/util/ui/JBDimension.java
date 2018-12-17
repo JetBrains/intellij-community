@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.util.ui.JBUI.Scaler;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.plaf.UIResource;
 import java.awt.*;
@@ -27,7 +28,7 @@ import static java.lang.Math.ceil;
  * @author tav
  */
 public class JBDimension extends Dimension {
-  protected Size2D size2D;
+  Size2D size2D;
   private final MyScaler scaler = new MyScaler();
 
   private static class Size2D {
@@ -75,6 +76,7 @@ public class JBDimension extends Dimension {
     return Math.max(-1, JBUI.scale((float)size));
   }
 
+  @NotNull
   public static JBDimension create(Dimension from, boolean preScaled) {
     if (from instanceof JBDimension) {
       return ((JBDimension)from);
@@ -82,10 +84,12 @@ public class JBDimension extends Dimension {
     return new JBDimension(from.width, from.height, preScaled);
   }
 
+  @NotNull
   public static JBDimension create(Dimension from) {
     return create(from, false);
   }
 
+  @NotNull
   public JBDimensionUIResource asUIResource() {
     return new JBDimensionUIResource(this);
   }
@@ -99,6 +103,7 @@ public class JBDimension extends Dimension {
     }
   }
 
+  @NotNull
   public JBDimension withWidth(int width) {
     JBDimension size = new JBDimension(0, 0);
     size.size2D.set(scale(width), size2D.height);
@@ -107,6 +112,7 @@ public class JBDimension extends Dimension {
     return size;
   }
 
+  @NotNull
   public JBDimension withHeight(int height) {
     JBDimension size = new JBDimension(0, 0);
     size.size2D.set(size2D.width, scale(height));
@@ -142,6 +148,7 @@ public class JBDimension extends Dimension {
   /**
    * @return this JBDimension with updated size
    */
+  @NotNull
   public JBDimension size() {
     update();
     return this;
@@ -150,6 +157,7 @@ public class JBDimension extends Dimension {
   /**
    * @return new JBDimension with updated size
    */
+  @NotNull
   public JBDimension newSize() {
     update();
     return new JBDimension(size2D.width, size2D.height, true);
@@ -203,7 +211,7 @@ class MyScaler extends Scaler {
     return JBUI.scale(1f);
   }
 
-  public boolean needUpdate() {
+  boolean needUpdate() {
     return initialScale != JBUI.scale(1f);
   }
 

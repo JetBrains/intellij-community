@@ -48,8 +48,6 @@ import static java.util.Collections.*;
 /**
  * Easy-to-use wrapper of common native Git commands.
  * Most of them return result as {@link GitCommandResult}.
- *
- * @author Kirill Likhodedov
  */
 public class GitImpl extends GitImplBase {
 
@@ -72,6 +70,44 @@ public class GitImpl extends GitImplBase {
     h.setSilent(false);
     h.setStdoutSuppressed(false);
     return runCommand(h);
+  }
+
+  @NotNull
+  @Override
+  public Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable VirtualFile path)
+    throws VcsException {
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.STATUS);
+    h.setSilent(true);
+    h.addParameters("--ignored", "--porcelain", "-z");
+    if (path != null) {
+      h.addParameters(path.getPath());
+    }
+    h.endOptions();
+
+    final String output = runCommand(h).getOutputOrThrow();
+    return parseFiles(root, output, "!! ");
+  }
+
+  @NotNull
+  private static Set<VirtualFile> parseFiles(@NotNull VirtualFile root, @Nullable String output, @NotNull String fileStatusPrefix) {
+    if (StringUtil.isEmptyOrSpaces(output)) return emptySet();
+
+    final Set<VirtualFile> files = new HashSet<>();
+    for (String relPath : output.split("\u0000")) {
+      if (!fileStatusPrefix.isEmpty() && !relPath.startsWith(fileStatusPrefix)) continue;
+
+      VirtualFile f = root.findFileByRelativePath(relPath.substring(fileStatusPrefix.length()));
+      if (f == null) {
+        // files was created on disk, but VirtualFile hasn't yet been created,
+        // when the GitChangeProvider has already been requested about changes.
+        LOG.info(String.format("VirtualFile for path [%s] is null", relPath));
+      }
+      else {
+        files.add(f);
+      }
+    }
+
+    return files;
   }
 
   /**
@@ -108,7 +144,6 @@ public class GitImpl extends GitImplBase {
                                                        @NotNull VirtualFile root,
                                                        @Nullable List<String> relativePaths)
     throws VcsException {
-    final Set<VirtualFile> untrackedFiles = new HashSet<>();
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LS_FILES);
     h.setSilent(true);
     h.addParameters("--exclude-standard", "--others", "-z");
@@ -118,23 +153,7 @@ public class GitImpl extends GitImplBase {
     }
 
     final String output = runCommand(h).getOutputOrThrow();
-    if (StringUtil.isEmptyOrSpaces(output)) {
-      return untrackedFiles;
-    }
-
-    for (String relPath : output.split("\u0000")) {
-      VirtualFile f = root.findFileByRelativePath(relPath);
-      if (f == null) {
-        // files was created on disk, but VirtualFile hasn't yet been created,
-        // when the GitChangeProvider has already been requested about changes.
-        LOG.info(String.format("VirtualFile for path [%s] is null", relPath));
-      }
-      else {
-        untrackedFiles.add(f);
-      }
-    }
-
-    return untrackedFiles;
+    return parseFiles(root, output, "");
   }
 
   @Override

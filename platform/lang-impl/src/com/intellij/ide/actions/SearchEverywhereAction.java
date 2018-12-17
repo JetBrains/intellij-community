@@ -2093,7 +2093,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
             ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
               @Override
-              public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+              public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
                 if (action instanceof TextComponentEditorAction) {
                   return;
                 }
