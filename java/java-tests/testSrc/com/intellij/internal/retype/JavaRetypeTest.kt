@@ -10,7 +10,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import org.junit.Assert
-import org.junit.Ignore
 import java.io.File
 
 /**
@@ -59,8 +58,7 @@ class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
     doTestWithoutLookup()
   }
 
-  @Ignore("Ignored until functionality will be finished")
-  fun testInterfereFile() {
+  fun ignoreTestInterfereFile() {
     val filePath = "/retype/${getTestName(false)}.java"
     val file = myFixture.configureByFile(filePath)
     val retypeSession = RetypeSession(project, myFixture.editor as EditorImpl, 100, null, 0, interfereFilesChangePeriod = 10)
