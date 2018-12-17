@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.FixedFuture;
@@ -1172,7 +1173,7 @@ public class FileUtil extends FileUtilRt {
   public static String sanitizeFileName(@NotNull String name, boolean strict) {
     return sanitizeFileName(name, strict, "_");
   }
-  
+
   @NotNull
   public static String sanitizeFileName(@NotNull String name, boolean strict, String replacement) {
     StringBuilder result = null;
@@ -1631,8 +1632,9 @@ public class FileUtil extends FileUtilRt {
     if (file.isDirectory()) {
       return false;
     }
-    final String name = file.getName();
-    return StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip");
+    // do not use getName to avoid extra String creation (File.getName() calls substring)
+    final String path = file.getPath();
+    return StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip");
   }
 
   public static boolean visitFiles(@NotNull File root, @NotNull Processor<? super File> processor) {
