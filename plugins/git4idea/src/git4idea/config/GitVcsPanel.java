@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
@@ -194,14 +195,21 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myWarnAboutDetachedHead.setSelected(projectSettings.warnAboutDetachedHead());
     myUpdateMethodComboBox.setSelectedItem(projectSettings.getUpdateType());
     myProtectedBranchesField.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getForcePushProhibitedPatterns()));
-    boolean branchInfoSupported = isBranchInfoSupported();
-    myUpdateBranchInfoCheckBox.setSelected(branchInfoSupported && projectSettings.shouldUpdateBranchInfo());
-    myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
-    mySupportedBranchUpLabel.setVisible(!branchInfoSupported);
+    myUpdateBranchInfoCheckBox.setSelected(projectSettings.shouldUpdateBranchInfo());
+    myUpdateBranchInfoCheckBox.setEnabled(isBranchInfoSupported());
+    updateSupportedBranchInfo();
     myBranchUpdateTimeField.setValue(projectSettings.getBranchInfoUpdateTime());
     myPreviewPushOnCommitAndPush.setSelected(projectSettings.shouldPreviewPushOnCommitAndPush());
     myPreviewPushProtectedOnly.setSelected(projectSettings.isPreviewPushProtectedOnly());
     updateEnabled();
+  }
+
+  private void updateSupportedBranchInfo() {
+    boolean branchInfoSupported = isBranchInfoSupported();
+    mySupportedBranchUpLabel.setVisible(!branchInfoSupported);
+    mySupportedBranchUpLabel.setForeground(!branchInfoSupported && myUpdateBranchInfoCheckBox.isSelected()
+                                           ? DialogWrapper.ERROR_FOREGROUND_COLOR
+                                           : UIUtil.getContextHelpForeground());
   }
 
   private boolean isBranchInfoSupported() {
@@ -289,12 +297,8 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   }
 
   private void applyBranchUpdateInfo(@NotNull GitVcsSettings projectSettings) {
-    boolean branchInfoSupported = isBranchInfoSupported();
-    myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
-    mySupportedBranchUpLabel.setVisible(!branchInfoSupported);
-    if (!branchInfoSupported) {
-      myUpdateBranchInfoCheckBox.setSelected(false);
-    }
+    myUpdateBranchInfoCheckBox.setEnabled(isBranchInfoSupported());
+    updateSupportedBranchInfo();
     if (isUpdateBranchSettingsModified(projectSettings)) {
       projectSettings.setBranchInfoUpdateTime((Integer)myBranchUpdateTimeField.getValue());
       projectSettings.setUpdateBranchInfo(myUpdateBranchInfoCheckBox.isSelected());
