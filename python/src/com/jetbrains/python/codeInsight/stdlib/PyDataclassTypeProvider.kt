@@ -15,7 +15,6 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.types.*
 import one.util.streamex.StreamEx
-import java.util.*
 
 class PyDataclassTypeProvider : PyTypeProviderBase() {
 
@@ -112,8 +111,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context)
     val ellipsis = PyElementGenerator.getInstance(cls.project).createEllipsis()
 
-    val collected = LinkedList<PyCallableParameter>()
-    val seen = mutableSetOf<String?>()
+    val collected = linkedMapOf<String, PyCallableParameter>()
     var seenInit = false
 
     for (currentType in StreamEx.of(clsType).append(cls.getAncestorTypes(context))) {
@@ -132,16 +130,27 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
         current
           .classAttributes
           .asReversed()
-          .filterNot { it.name in seen || PyTypingTypeProvider.isClassVar(it, context) }
+          .asSequence()
+          .filterNot { PyTypingTypeProvider.isClassVar(it, context) }
           .mapNotNull { fieldToParameter(cls, it, parameters.type, ellipsis, context) }
-          .forEach {
-            seen += it.name
-            collected.addFirst(it)
+          .forEach { parameter ->
+            parameter.name?.let {
+              // note: attributes are visited from inheritors to ancestors, in reversed order for every of them
+
+              if (parameters.type == PyDataclassParameters.Type.STD) {
+                // std: attribute that overrides ancestor's attribute does not change the order but updates type
+                collected[it] = collected.remove(it) ?: parameter
+              }
+              else if (!collected.containsKey(it)) {
+                // attrs: attribute that overrides ancestor's attribute changes the order
+                collected[it] = parameter
+              }
+            }
           }
       }
     }
 
-    return if (seenInit) PyCallableTypeImpl(collected, clsType.toInstance()) else null
+    return if (seenInit) PyCallableTypeImpl(collected.values.reversed(), clsType.toInstance()) else null
   }
 
   private fun fieldToParameter(cls: PyClass,

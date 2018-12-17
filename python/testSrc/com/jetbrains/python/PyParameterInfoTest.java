@@ -766,7 +766,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> {
-        final Map<String, PsiElement> marks = loadMultiFileTest(4);
+        final Map<String, PsiElement> marks = loadMultiFileTest(5);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
@@ -775,6 +775,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check(Arrays.asList("self: object", "cls: object"),
                                                               Arrays.asList(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY),
                                                               Arrays.asList(new String[]{"self: object"}, new String[]{"cls: object"}));
+
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x: int=15, y: int=0, z: int=10", new String[]{"x: int=15, "});
       }
     );
   }
@@ -842,12 +844,12 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-31762
   public void testInitializingAttrsHierarchy() {
-    // same as for std dataclasses
+    // same as for std dataclasses except overridding
 
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> {
-        final Map<String, PsiElement> marks = loadTest(4);
+        final Map<String, PsiElement> marks = loadTest(5);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
@@ -856,6 +858,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check(Arrays.asList("self: object", "cls: object"),
                                                               Arrays.asList(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY),
                                                               Arrays.asList(new String[]{"self: object"}, new String[]{"cls: object"}));
+
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("y: int=0, z: int=10, x: int=15", new String[]{"y: int=0, "});
       }
     );
   }
@@ -900,12 +904,13 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> {
-        final Map<String, PsiElement> marks = loadMultiFileTest(4);
+        final Map<String, PsiElement> marks = loadMultiFileTest(5);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("obj: B1, *, a: int=..., b: str=...", ArrayUtil.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("obj: B2, *, a: int=..., b: str=...", ArrayUtil.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg3>").getTextOffset()).check("obj: B3, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check("obj, **changes", new String[]{"**changes"});
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("obj: B5, *, x: int=15, y: int=0, z: int=10", ArrayUtil.EMPTY_STRING_ARRAY);
       }
     );
   }
@@ -946,17 +951,19 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-31762
   public void testAttrsHierarchyReplace() {
-    // same as for std dataclasses
+    // same as for std dataclasses except overridding
 
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> {
-        final Map<String, PsiElement> marks = loadTest(4);
+        final Map<String, PsiElement> marks = loadTest(5);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("inst: B1, *, a: int=..., b: str=...", ArrayUtil.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("inst: B2, *, a: int=..., b: str=...", ArrayUtil.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg3>").getTextOffset()).check("inst: B3, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check("inst: _T, **changes", new String[]{"**changes"});
+
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("inst: B5, *, y: int=0, z: int=10, x: int=15", ArrayUtil.EMPTY_STRING_ARRAY);
       }
     );
   }
