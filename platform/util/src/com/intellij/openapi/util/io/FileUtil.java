@@ -1629,9 +1629,14 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean isJarOrZip(@NotNull File file) {
-    if (file.isDirectory()) {
+    return isJarOrZip(file, true);
+  }
+
+  public static boolean isJarOrZip(@NotNull File file, boolean isCheckIsDirectory) {
+    if (isCheckIsDirectory && file.isDirectory()) {
       return false;
     }
+
     // do not use getName to avoid extra String creation (File.getName() calls substring)
     final String path = file.getPath();
     return StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip");

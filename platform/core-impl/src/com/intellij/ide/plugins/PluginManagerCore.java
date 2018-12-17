@@ -772,13 +772,7 @@ public class PluginManagerCore {
 
         PluginXmlPathResolver pathResolver = new PluginXmlPathResolver(files);
         for (File f : files) {
-          if (FileUtil.isJarOrZip(f)) {
-            descriptor = loadDescriptorFromJar(f, pathName, pathResolver, context, file, bundled, essential);
-            if (descriptor != null) {
-              break;
-            }
-          }
-          else if (f.isDirectory()) {
+          if (f.isDirectory()) {
             IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromDir(f, pathName, file, bundled, essential);
             if (descriptor1 != null) {
               if (descriptor != null) {
@@ -786,6 +780,12 @@ public class PluginManagerCore {
                 return null;
               }
               descriptor = descriptor1;
+            }
+          }
+          else if (FileUtil.isJarOrZip(f, false)) {
+            descriptor = loadDescriptorFromJar(f, pathName, pathResolver, context, file, bundled, essential);
+            if (descriptor != null) {
+              break;
             }
           }
         }
