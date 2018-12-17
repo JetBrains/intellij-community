@@ -38,6 +38,9 @@
     <component>
       <implementation-class>com.intellij.lang.java.JavaModuleRenameListener</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationSearcher</implementation-class>
+    </component>
   </project-components>
 
   <extensionPoints>
@@ -94,6 +97,8 @@
     <extensionPoint qualifiedName="com.intellij.debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
     <extensionPoint qualifiedName="com.intellij.externalAnnotationsArtifactsResolver"
                     interface="com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver"/>
+    <extensionPoint qualifiedName="com.intellij.java.externalAnnotation.locationProvider"
+                    interface="com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
