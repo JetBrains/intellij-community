@@ -1527,6 +1527,7 @@ public class AllIcons {
     public static final Icon Java9Service = IconLoader.getIcon("/gutter/java9Service.svg"); // 12x12
     public static final Icon OverridenMethod = IconLoader.getIcon("/gutter/overridenMethod.svg"); // 12x12
     public static final Icon OverridingMethod = IconLoader.getIcon("/gutter/overridingMethod.svg"); // 12x12
+    public static final Icon Plugin = IconLoader.getIcon("/gutter/plugin.svg"); // 12x12
     public static final Icon RecursiveMethod = IconLoader.getIcon("/gutter/recursiveMethod.svg"); // 12x12
     public static final Icon SiblingInheritedMethod = IconLoader.getIcon("/gutter/siblingInheritedMethod.svg"); // 12x12
     public static final Icon Unique = IconLoader.getIcon("/gutter/unique.svg"); // 8x8

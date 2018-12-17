@@ -15,5 +15,10 @@ public final class DevkitIcons {
   }
 
   public static final Icon Add_sdk = load("/icons/add_sdk.svg"); // 16x16
+
+  public final static class Gutter {
+    public static final Icon DescriptionFile = load("/icons/gutter/descriptionFile.svg"); // 12x12
+
+  }
   public static final Icon Sdk_closed = load("/icons/sdk_closed.svg"); // 16x16
 }
