@@ -707,15 +707,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           Icon icon = getCloseButton();
           int iconWidth = icon.getIconWidth();
           int iconHeight = icon.getIconHeight();
-          Rectangle r =
-            new Rectangle(lpBounds.x + lpBounds.width - iconWidth + (int)(iconWidth * 0.3), lpBounds.y - (int)(iconHeight * 0.3), iconWidth,
-                          iconHeight);
+          Insets borderInsets = getShadowBorderInsets();
 
-          Insets border = getShadowBorderInsets();
-          r.x -= border.left;
-          r.y -= border.top;
-
-          myCloseButton.setBounds(r);
+          myCloseButton.setBounds(lpBounds.x + lpBounds.width - iconWidth - borderInsets.right - JBUI.scale(8),
+                                  lpBounds.y + borderInsets.top + JBUI.scale(6), iconWidth, iconHeight);
         }
       };
     }
