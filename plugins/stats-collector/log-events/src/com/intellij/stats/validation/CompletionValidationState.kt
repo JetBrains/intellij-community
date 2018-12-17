@@ -17,15 +17,17 @@
 package com.intellij.stats.validation
 
 import com.intellij.stats.completion.LogEventVisitor
+import com.intellij.stats.completion.LookupEntryDiff
 import com.intellij.stats.completion.events.*
 import org.jetbrains.annotations.TestOnly
 
 class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor() {
-    val allCompletionItemIds: MutableList<Int> = event.newCompletionListItems.map { it.id }.toMutableList()
+    private var currentPosition = event.currentPosition
+    private var completionList = event.completionListIds
+    private var currentId = getSafeCurrentId(completionList, currentPosition)
 
-    var currentPosition: Int = event.currentPosition
-    var completionList: List<Int> = event.completionListIds
-    var currentId: Int = getSafeCurrentId(completionList, currentPosition)
+    private var idToFactorNames = event.newCompletionListItems
+      .associate { it.id to (it.relevance?.keys?.toMutableSet() ?: mutableSetOf()) }.toMutableMap()
 
     private var isValid = true
     private var isFinished = false
@@ -35,10 +37,19 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
 
     private fun updateState(nextEvent: LookupStateLogData) {
         currentPosition = nextEvent.currentPosition
-        allCompletionItemIds.addAll(nextEvent.newCompletionListItems.map { it.id })
+
+        nextEvent.newCompletionListItems.forEach {
+            updateValid(it.id !in idToFactorNames, "item with ${it.id} marked as a new item twice")
+            val factorNames = it.relevance?.keys ?: emptySet()
+            idToFactorNames[it.id] = factorNames.toMutableSet()
+        }
+
         if (nextEvent.completionListIds.isNotEmpty()) {
             completionList = nextEvent.completionListIds
         }
+
+        updateFactors(nextEvent.itemsDiff)
+
         currentId = getSafeCurrentId(completionList, currentPosition)
     }
 
@@ -50,20 +61,54 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
             completionList[position]
         }
         else {
-            if (errorMessage.isEmpty()) {
-                errorMessage = "completion list size: ${completionList.size}, requested position: $position"
-            }
-            isValid = false
+            invalidate("completion list size: ${completionList.size}, requested position: $position")
             -2
         }
+    }
+
+    private fun updateFactors(diffs: List<LookupEntryDiff>) {
+        for (diff in diffs) {
+            val id = diff.id
+            val knownFactors = idToFactorNames[id]
+            if (knownFactors == null) {
+                invalidate("unknown element id in the diff list: $id")
+                return
+            }
+
+            checkDiffValid(diff)
+
+            diff.added.keys.forEach { name ->
+                updateValid(name !in knownFactors, "factor '$name' has been added earlier")
+                knownFactors.add(name)
+            }
+
+            diff.changed.keys.forEach { name -> updateValid(name in knownFactors, "changed factor '$name' not found among factors") }
+
+            diff.removed.forEach { name ->
+                updateValid(name in knownFactors, "removed factor '$name' not found among factors")
+                knownFactors.remove(name)
+            }
+        }
+    }
+
+    private fun checkDiffValid(diff: LookupEntryDiff) {
+        fun checkIntersection(first: Set<String>, second: Iterable<String>, keysDescription: String) {
+            val intersection = first.intersect(second)
+            if (intersection.isNotEmpty()) {
+                invalidate("$keysDescription factors changed simultaneously: ")
+            }
+        }
+
+        checkIntersection(diff.added.keys, diff.changed.keys, "added and changed")
+        checkIntersection(diff.added.keys, diff.removed, "added and removed")
+        checkIntersection(diff.changed.keys, diff.removed, "changed and removed")
     }
 
     fun accept(nextEvent: LogEvent) {
         events.add(nextEvent)
 
         if (isFinished) {
-            errorMessage = "activity after completion finish session"
-            isValid = false
+            invalidate("activity after completion finish session")
         }
         else if (isValid) {
             nextEvent.accept(this)
@@ -82,6 +127,8 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
         )
 
     }
+
+    private fun invalidate(error: String) = updateValid(false, error)
 
     private fun updateValid(value: Boolean, error: String) {
         val wasValidBefore = isValid
@@ -106,13 +153,13 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
 
     override fun visit(event: TypeEvent) {
         updateState(event)
-        updateValid(allCompletionItemIds.containsAll(completionList),
-                "TypeEvent: all elements in completion are registered")
+        updateValid(idToFactorNames.keys.containsAll(completionList),
+                "TypeEvent: some elements in completion list are not registered")
     }
 
     override fun visit(event: BackspaceEvent) {
         updateState(event)
-        updateValid(allCompletionItemIds.containsAll(completionList),
+        updateValid(idToFactorNames.keys.containsAll(completionList),
                 "Backspace: some elements in completion list are not registered")
     }
 
@@ -120,7 +167,7 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
         val selectedIdBefore = currentId
         updateState(event)
 
-        updateValid(selectedIdBefore == currentId && allCompletionItemIds.find { it == currentId } != null,
+        updateValid(selectedIdBefore == currentId && currentId in idToFactorNames,
                 "Selected element was not registered")
 
         isFinished = true
