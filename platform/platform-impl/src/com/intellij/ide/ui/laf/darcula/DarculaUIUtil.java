@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
+import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
@@ -27,6 +28,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
+import java.util.Locale;
 
 import static com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI.isSearchFieldWithHistoryPopup;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
@@ -502,5 +504,14 @@ public class DarculaUIUtil {
       }
     }
     return fg;
+  }
+
+  public static boolean isMultiLineHTML(@Nullable String text) {
+    if (text != null) {
+      text = text.toLowerCase(Locale.getDefault());
+      return BasicHTML.isHTMLString(text) &&
+             (text.contains("<br>") || text.contains("<br/>"));
+    }
+    return false;
   }
 }

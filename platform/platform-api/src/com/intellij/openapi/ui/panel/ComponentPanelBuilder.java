@@ -378,7 +378,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
           comment.setBorder(getCommentBorder());
           componentPanel.add(comment);
         }
-
+        componentPanel.add(new Box.Filler(JBUI.size(0, 0), JBUI.size(0, 0), JBUI.size(Integer.MAX_VALUE, Integer.MAX_VALUE)));
         panel.add(componentPanel, gc);
       } else {
         panel.add(myComponent, gc);

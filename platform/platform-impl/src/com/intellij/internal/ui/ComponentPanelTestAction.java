@@ -79,7 +79,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private static final HashSet<String> ALLOWED_VALUES = new HashSet<>(Arrays.asList("one", "two", "three", "four", "five", "six",
               "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "abracadabra"));
 
-    private static final String STRING_VALUES[] = { "One", "Two", "Three", "Four", "Five", "Six" };
+    private static final String[] STRING_VALUES = { "One", "Two", "Three", "Four", "Five", "Six" };
 
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
@@ -104,6 +104,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane.addTab("Component Grid", createComponentGridPanel());
       pane.addTab("Progress Grid", createProgressGridPanel());
       pane.addTab("Validators", createValidatorsPanel());
+      pane.addTab("Multilines", createMultilinePanel());
 
       pane.addChangeListener(e -> {
         if (pane.getSelectedIndex() == 2) {
@@ -345,10 +346,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JPanel p2 = UI.PanelFactory.grid().
         add(UI.PanelFactory.panel(new JCheckBox("Checkbox 1")).withComment("Comment 1").moveCommentRight()).
         add(UI.PanelFactory.panel(new JCheckBox("Checkbox 2")).withComment("Comment 2")).
-        add(UI.PanelFactory.panel(new JCheckBox("Checkbox 3")).withTooltip("Checkbox tooltip")).
+        add(UI.PanelFactory.panel(new JCheckBox("<html>Multiline<br/>Checkbox 3</html>")).withTooltip("Checkbox tooltip")).
 
         add(UI.PanelFactory.panel(rb1).withComment("Comment 1").moveCommentRight()).
-        add(UI.PanelFactory.panel(rb2).withComment("Comment 2")).
+        add(UI.PanelFactory.panel(rb2).withComment("Comment 2").withTooltip("Checkbox tooltip")).
         add(UI.PanelFactory.panel(rb3).withTooltip("RadioButton tooltip")).
 
         createPanel();
@@ -423,6 +424,64 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withLabel("&ComboBoxEditorTextField:").withComment("EditorComboBox editor")).
 
         createPanel();
+    }
+
+    private JComponent createMultilinePanel() {
+      JPanel panel = new JPanel(new GridBagLayout());
+      GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.LINE_START,
+                                                     GridBagConstraints.HORIZONTAL, JBUI.insets(10, 0, 0, 4), 0, 0);
+
+      panel.add(new JLabel("Label one:"), gc);
+
+      gc.gridx++;
+      panel.add(new JCheckBox("<html>Multiline<br/>html<br/>checkbox</html>"), gc);
+
+      gc.gridx++;
+      panel.add(new JCheckBox("<html>Single line html checkbox</html>"), gc);
+
+      gc.gridx++;
+      panel.add(new JCheckBox("Single line checkbox"), gc);
+
+      gc.gridx++;
+      panel.add(new JButton("Button 1"), gc);
+
+      gc.gridy++;
+      gc.gridx = 0;
+      panel.add(new JLabel("Label two:"), gc);
+
+      ButtonGroup bg = new ButtonGroup();
+      JRadioButton rb = new JRadioButton("<html>Multiline<br/>html<br/>radiobutton</html>");
+      bg.add(rb);
+      rb.setSelected(true);
+
+      gc.gridx++;
+      panel.add(rb, gc);
+
+      rb = new JRadioButton("<html>Single line html radiobutton</html>");
+      bg.add(rb);
+
+      gc.gridx++;
+      panel.add(rb, gc);
+
+      rb = new JRadioButton("Single line radiobutton");
+      bg.add(rb);
+
+      gc.gridx++;
+      panel.add(rb, gc);
+
+      gc.gridx++;
+      panel.add(new JButton("Button 2"), gc);
+
+      gc.gridy++;
+      gc.gridx = 0;
+      gc.anchor = GridBagConstraints.PAGE_END;
+      gc.fill = GridBagConstraints.BOTH;
+      gc.weightx = 1.0;
+      gc.weighty = 1.0;
+      gc.gridwidth = 5;
+      panel.add(new JPanel(), gc);
+
+      return JBUI.Panels.simplePanel().addToTop(panel);
     }
 
     private class ProgressTimerRequest implements Runnable {
