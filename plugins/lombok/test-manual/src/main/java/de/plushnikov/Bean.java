@@ -33,7 +33,7 @@ public class Bean {
   @Getter
   private Boolean hasBCat;
 
-  protected void cahlcMe(int aaa) {
+  protected void calcMe(int aaa) {
 
   }
 

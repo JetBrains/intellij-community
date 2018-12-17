@@ -68,8 +68,8 @@ patchPluginXml {
 }
 
 publishPlugin {
-  username publishUsername
-  password publishPassword
+  username System.getenv('IJ_REPO_USERNAME')
+  password System.getenv('IJ_REPO_PASSWORD')
 }
 
 jacocoTestReport {
