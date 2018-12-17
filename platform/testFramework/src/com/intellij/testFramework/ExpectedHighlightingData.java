@@ -29,7 +29,6 @@ import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -592,21 +591,6 @@ public class ExpectedHighlightingData {
 
   /** This is temporary wrapper to provide a time to fix failing tests */
   public static void expectedDuplicatedHighlighting(@NotNull Runnable check) {
-    try {
-      isDuplicatedCheckDisabled = true;
-      failedDuplicationChecks = 0;
-      check.run();
-    }
-    finally {
-      isDuplicatedCheckDisabled = false;
-    }
-    if (failedDuplicationChecks == 0) {
-      throw new IllegalStateException(EXPECTED_DUPLICATION_MESSAGE);
-    }
-  }
-
-  /** This is temporary wrapper to provide a time to fix failing tests */
-  public static void expectedDuplicatedHighlightingThrowable(@NotNull ThrowableRunnable check) throws Throwable {
     try {
       isDuplicatedCheckDisabled = true;
       failedDuplicationChecks = 0;
