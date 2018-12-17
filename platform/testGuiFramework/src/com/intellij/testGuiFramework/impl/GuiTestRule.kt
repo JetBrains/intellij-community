@@ -49,7 +49,10 @@ import org.jdom.xpath.XPath
 import org.junit.Assert
 import org.junit.Assume
 import org.junit.AssumptionViolatedException
-import org.junit.rules.*
+import org.junit.rules.ExternalResource
+import org.junit.rules.RuleChain
+import org.junit.rules.TestRule
+import org.junit.rules.Timeout
 import org.junit.runner.Description
 import org.junit.runners.model.MultipleFailureException
 import org.junit.runners.model.Statement
@@ -203,28 +206,15 @@ class GuiTestRule : TestRule {
     }
 
     private fun returnToTheFirstStepOfWelcomeFrame() {
-      val welcomeFrameFixture = WelcomeFrameFixture.find(robot(), Timeouts.seconds10)
-
-      fun isFirstStep(): Boolean {
-        return try {
-          val actionLink = with(welcomeFrameFixture) {
-            robot().finder().find(this@with.target() as Container) { it is ActionLink && it.text.contains("New Project") }
-          }
-          actionLink.isShowing ?: false
-        }
-        catch (componentLookupException: ComponentLookupException) {
-          false
-        }
-      }
       for (i in 0..3) {
-        if (!isFirstStep()) GuiTestUtil.invokeActionViaShortcut(Key.ESCAPE.name)
+        if (!isWelcomeFrameFirstStep()) GuiTestUtil.invokeActionViaShortcut(Key.ESCAPE.name)
       }
     }
 
     //find first page with such actions like "Create New Project" without timeout
     private fun isWelcomeFrameFirstStep(timeout: org.fest.swing.timing.Timeout = Timeouts.seconds01): Boolean {
       val createNewProjectAction = GuiTestUtilKt.ignoreComponentLookupException {
-        WelcomeFrameFixture.find(robot(), timeout).apply { findActionLinkByActionId("WelcomeScreen.CreateNewProject") }
+        WelcomeFrameFixture.find(robot(), timeout).apply { robot().finder().find(this@apply.target() as Container) { it is ActionLink && it.text.contains("New Project") } }
       }
       return createNewProjectAction?.target()?.isShowing ?: false
     }
@@ -298,11 +288,11 @@ class GuiTestRule : TestRule {
       var attemptsToReturnToWelcomeFrame = 0
       try {
         //if IDE started with a previous project we need to close it firstly; let's give few attempts for it
-        while (!isWelcomeFrameFirstStep(Timeouts.seconds10) && attemptsToReturnToWelcomeFrame++ <= 3 ) {
-          anyIdeFrame()?.apply { invokeMainMenu("CloseProject") }
+        while (!isWelcomeFrameFirstStep(Timeouts.seconds01) && attemptsToReturnToWelcomeFrame++ <= 3 ) {
+          anyIdeFrame(Timeouts.seconds01)?.apply { invokeMainMenu("CloseProject") }
           ignoreComponentLookupException { returnToTheFirstStepOfWelcomeFrame() }
         }
-        WelcomeFrameFixture.find(robot(), Timeouts.seconds30)
+        WelcomeFrameFixture.find(robot(), Timeouts.seconds05)
       }
       catch (e: WaitTimedOutError) {
         throw AssumptionViolatedException("didn't find welcome frame", e)
