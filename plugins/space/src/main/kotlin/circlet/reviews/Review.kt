@@ -12,10 +12,11 @@ data class Review(
     val createdBy: TD_MemberProfile
 )
 
-fun CodeReviewWithCount.toReview(): Review =
-    Review(
-        id = review.id,
-        title = review.title,
-        createdAt = review.createdAt.toLocalDateTime(),
-        createdBy = review.createdBy.resolve()
+fun CodeReviewWithCount.toReview(): Review {
+    return Review(
+        id = review.resolve().number,
+        title = review.resolve().title,
+        createdAt = review.resolve().createdAt.toLocalDateTime(),
+        createdBy = review.resolve().createdBy.resolve()
     )
+}
