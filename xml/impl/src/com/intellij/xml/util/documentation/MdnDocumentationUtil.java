@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.templates.github.DownloadUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -21,7 +22,8 @@ public class MdnDocumentationUtil {
   private static final List<String> VISIBLE_BROWSERS = Arrays.asList("chrome", "chrome_android", "edge", "firefox", "ie", "opera", "safari",
                                                                      "safari_ios");
 
-  public static String getFormattedCompatibilityData(@Nullable Map data) {
+  @NotNull
+  private static String getFormattedCompatibilityData(@Nullable Map data) {
     Object compat = data != null ? data.get("__compat") : null;
     if (compat != null) {
       Map support = (Map)((Map)compat).get("support");
@@ -58,7 +60,7 @@ public class MdnDocumentationUtil {
     return "";
   }
 
-  protected static boolean anyVersion(String browser, String version) {
+  private static boolean anyVersion(String browser, String version) {
     if (browser.startsWith("edge") && "12".equals(version)) return true;
     if (browser.equals("firefox_android") && "4".equals(version)) return true;
     if (browser.equals("chrome_android") && "18".equals(version)) return true;
@@ -91,7 +93,7 @@ public class MdnDocumentationUtil {
     return null;
   }
 
-  public static boolean isDeprecated(Map data) {
+  public static boolean isDeprecated(@Nullable Map data) {
     Object compat = data != null ? data.get("__compat") : null;
     if (compat != null) {
       Object status = ((Map)compat).get("status");
@@ -151,7 +153,7 @@ public class MdnDocumentationUtil {
     return s.replaceAll("href=\"/", "href=\"https://developer.mozilla.org/");
   }
 
-  public static String makeUniqueFileName(String filePath) {
+  private static String makeUniqueFileName(String filePath) {
     String path = filePath;
     for (String prefix : HTTP_PREFIXES) {
       if (filePath.contains(prefix)) {
@@ -160,5 +162,36 @@ public class MdnDocumentationUtil {
       }
     }
     return path.replace('/', '_').replace('\\', '_');
+  }
+
+  @NotNull
+  public static String buildDoc(@NotNull String name, @NotNull String description, @Nullable Map mdnCompatData) {
+    StringBuilder buf = new StringBuilder();
+
+    buf.append(DocumentationMarkup.DEFINITION_START).append(name).append(DocumentationMarkup.DEFINITION_END);
+    buf.append(DocumentationMarkup.CONTENT_START);
+    buf.append(StringUtil.capitalize(description));
+    buf.append(DocumentationMarkup.CONTENT_END);
+
+    String compatibilityData = getFormattedCompatibilityData(mdnCompatData);
+
+    boolean deprecated = isDeprecated(mdnCompatData);
+    if (deprecated || !compatibilityData.isEmpty()) {
+      buf.append(DocumentationMarkup.SECTIONS_START);
+    }
+    if (deprecated) {
+      buf.append(DocumentationMarkup.SECTION_HEADER_START).append("Deprecated");
+      buf.append(DocumentationMarkup.SECTION_END);
+    }
+    if (!compatibilityData.isEmpty()) {
+      buf.append(DocumentationMarkup.SECTION_HEADER_START).append("Supported by:");
+      buf.append(DocumentationMarkup.SECTION_SEPARATOR).append(compatibilityData);
+      buf.append(DocumentationMarkup.SECTION_END);
+    }
+    if (deprecated || !compatibilityData.isEmpty()) {
+      buf.append(DocumentationMarkup.SECTIONS_END);
+    }
+
+    return buf.toString();
   }
 }

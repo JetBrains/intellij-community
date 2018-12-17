@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util.documentation;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
-import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ReadAction;
@@ -101,10 +86,11 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
       if (url.contains("#attr-")) return null;
     }
 
-    String mdn = MdnDocumentationUtil.fetchExternalDocumentation(docUrls, () -> null);
-    if (mdn != null) {
+    String mdnDoc = MdnDocumentationUtil.fetchExternalDocumentation(docUrls, () -> null);
+    if (mdnDoc != null) {
       String name = descriptor != null ? descriptor.getName() : ReadAction.compute(() -> SymbolPresentationUtil.getSymbolPresentableText(element));
-      return generateJavaDoc(descriptor, name, originalElement, mdn);
+      Map mdnCompatData = ReadAction.compute(() -> getCompatData(descriptor, originalElement));
+      return MdnDocumentationUtil.buildDoc(name, mdnDoc, mdnCompatData);
     }
     return null;
   }
@@ -230,7 +216,9 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     if (descriptor != null) {
       String description = descriptor.getDescription();
       if (!description.endsWith(".")) description += ".";
-      return generateJavaDoc(descriptor, descriptor.getName(), originalElement, description);
+
+      Map mdnData = ReadAction.compute(() -> getCompatData(descriptor, originalElement));
+      return MdnDocumentationUtil.buildDoc(descriptor.getName(), description, mdnData);
     }
     if (element instanceof XmlEntityDecl) {
       final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
@@ -238,40 +226,6 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
       return new XmlDocumentationProvider().findDocRightAfterElement(element, entityDecl.getName());
     }
     return null;
-  }
-
-  private static String generateJavaDoc(EntityDescriptor descriptor,
-                                        String name,
-                                        PsiElement element,
-                                        String description) {
-    StringBuilder buf = new StringBuilder();
-
-    buf.append(DocumentationMarkup.DEFINITION_START).append(name).append(DocumentationMarkup.DEFINITION_END);
-    buf.append(DocumentationMarkup.CONTENT_START);
-    buf.append(StringUtil.capitalize(description));
-    buf.append(DocumentationMarkup.CONTENT_END);
-
-    Map data = ReadAction.compute(() -> getCompatData(descriptor, element));
-    String compatibilityData = MdnDocumentationUtil.getFormattedCompatibilityData(data);
-
-    boolean deprecated = MdnDocumentationUtil.isDeprecated(data);
-    if (deprecated || !compatibilityData.isEmpty()) {
-      buf.append(DocumentationMarkup.SECTIONS_START);
-    }
-    if (deprecated) {
-      buf.append(DocumentationMarkup.SECTION_HEADER_START).append("Deprecated");
-      buf.append(DocumentationMarkup.SECTION_END);
-    }
-    if (!compatibilityData.isEmpty()) {
-      buf.append(DocumentationMarkup.SECTION_HEADER_START).append("Supported by:");
-      buf.append(DocumentationMarkup.SECTION_SEPARATOR).append(compatibilityData);
-      buf.append(DocumentationMarkup.SECTION_END);
-    }
-    if (deprecated || !compatibilityData.isEmpty()) {
-      buf.append(DocumentationMarkup.SECTIONS_END);
-    }
-
-    return buf.toString();
   }
 
   @Nullable
@@ -371,7 +325,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
   public static void registerScriptDocumentationProvider(final DocumentationProvider provider) {
     ourScriptProvider = provider;
   }
-  
+
   @Nullable
   private DocumentationProvider getStyleProvider() {
     if (!myUseStyleProvider) return null;
