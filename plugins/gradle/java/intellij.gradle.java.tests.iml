@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.maven.server" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
   </component>
 </module>
