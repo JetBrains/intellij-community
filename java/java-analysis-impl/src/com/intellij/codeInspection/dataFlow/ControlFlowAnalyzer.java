@@ -523,25 +523,23 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (iteratedValue != null) {
       iteratedValue.accept(this);
-      addInstruction(new PopInstruction());
-      DfaValue qualifier = myFactory.createValue(iteratedValue);
 
-      if (qualifier instanceof DfaVariableValue) {
-        PsiType type = iteratedValue.getType();
-        SpecialField length = null;
-        if (type instanceof PsiArrayType) {
-          length = SpecialField.ARRAY_LENGTH;
-        }
-        else if (InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION)) {
-          length = SpecialField.COLLECTION_SIZE;
-        }
-        if (length != null) {
-          addInstruction(new PushInstruction(length.createValue(myFactory, qualifier), null));
-          addInstruction(new PushInstruction(myFactory.getInt(0), null));
-          addInstruction(new BinopInstruction(JavaTokenType.EQEQ, iteratedValue, PsiType.BOOLEAN));
-          addInstruction(new ConditionalGotoInstruction(loopEndOffset, false, null));
-          hasSizeCheck = true;
-        }
+      PsiType type = iteratedValue.getType();
+      SpecialField length = null;
+      if (type instanceof PsiArrayType) {
+        length = SpecialField.ARRAY_LENGTH;
+      }
+      else if (InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION)) {
+        length = SpecialField.COLLECTION_SIZE;
+      }
+      if (length != null) {
+        addInstruction(new GetFieldInstruction(length, PsiType.INT));
+        addInstruction(new PushInstruction(myFactory.getInt(0), null));
+        addInstruction(new BinopInstruction(JavaTokenType.EQEQ, iteratedValue, PsiType.BOOLEAN));
+        addInstruction(new ConditionalGotoInstruction(loopEndOffset, false, null));
+        hasSizeCheck = true;
+      } else {
+        addInstruction(new PopInstruction());
       }
     }
 
@@ -1495,7 +1493,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(actualType)) {
       PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(actualType); // expectedType is not always precise unboxed type
-      addInstruction(new UnboxingInstruction(unboxedType));
+      addInstruction(new GetFieldInstruction(SpecialField.UNBOX, unboxedType));
     }
     else if (TypeConversionUtil.isPrimitiveAndNotNull(actualType) && TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType)) {
       addConditionalRuntimeThrow();

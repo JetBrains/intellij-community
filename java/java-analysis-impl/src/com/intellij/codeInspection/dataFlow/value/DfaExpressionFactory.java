@@ -139,43 +139,21 @@ public class DfaExpressionFactory {
   }
 
   private DfaValue createReferenceValue(@NotNull PsiReferenceExpression refExpr) {
-    DfaValue specialValue = createFromSpecialField(refExpr);
-    if (specialValue != null) {
-      return specialValue;
+    PsiElement target = refExpr.resolve();
+    if (target instanceof PsiVariable) {
+      PsiVariable variable = (PsiVariable)target;
+      if (variable.hasModifierProperty(PsiModifier.FINAL) && !PsiUtil.isAccessedForWriting(refExpr)) {
+        DfaValue constValue = myFactory.getConstFactory().create(variable);
+        if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, variable)) return constValue;
+      }
     }
-    DfaVariableSource var = getAccessedVariableOrGetter(refExpr.resolve());
+    DfaVariableSource var = getAccessedVariableOrGetter(target);
     if (var == null) {
       return null;
     }
 
-    PsiModifierListOwner psiElement = var.getPsiElement();
-    boolean isVolatile = psiElement != null && psiElement.hasModifierProperty(PsiModifier.VOLATILE);
-    if (isVolatile) {
-      PsiType type = refExpr.getType();
-      return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, psiElement));
-    }
-    if (psiElement instanceof PsiVariable && ((PsiVariable)psiElement).getType().equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
-      return myFactory.getConstFactory().getNull();
-    }
-    if (psiElement instanceof PsiVariable && psiElement.hasModifierProperty(PsiModifier.FINAL) && !PsiUtil.isAccessedForWriting(refExpr)) {
-      DfaValue constValue = myFactory.getConstFactory().create((PsiVariable)psiElement);
-      if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, psiElement)) return constValue;
-    }
-    if (psiElement instanceof PsiLocalVariable || psiElement instanceof PsiParameter ||
-        (psiElement instanceof PsiField &&
-         psiElement.hasModifierProperty(PsiModifier.STATIC) &&
-         !psiElement.hasModifierProperty(PsiModifier.FINAL)) ||
-        isStaticFinalConstantWithoutInitializationHacks(psiElement) ||
-        (psiElement instanceof PsiMethod && psiElement.hasModifierProperty(PsiModifier.STATIC))) {
-      return myFactory.getVarFactory().createVariableValue(var, refExpr.getType());
-    }
     DfaVariableValue qualifier = getQualifierOrThisVariable(refExpr);
-    PsiType type = refExpr.getType();
-    if (qualifier != null) {
-      return myFactory.getVarFactory().createVariableValue(var, type, qualifier);
-    }
-
-    return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, psiElement));
+    return var.createValue(myFactory, qualifier, refExpr.getType());
   }
 
   /**
@@ -236,25 +214,13 @@ public class DfaExpressionFactory {
     return PsiTreeUtil.getTopmostParentOfType(refExpr, PsiClass.class) == PsiTreeUtil.getTopmostParentOfType(var, PsiClass.class);
   }
 
-  private static boolean isStaticFinalConstantWithoutInitializationHacks(PsiModifierListOwner var) {
-    return (var instanceof PsiField && var.hasModifierProperty(PsiModifier.FINAL) && var.hasModifierProperty(PsiModifier.STATIC)) &&
-           !DfaUtil.hasInitializationHacks((PsiField)var);
-  }
-
-  @Nullable
-  private DfaValue createFromSpecialField(PsiReferenceExpression refExpr) {
-    PsiElement target = refExpr.resolve();
-    if (!(target instanceof PsiModifierListOwner)) return null;
-    SpecialField sf = SpecialField.findSpecialField(target);
-    if (sf == null) return null;
-    DfaVariableValue qualifier = getQualifierOrThisVariable(refExpr);
-    if (qualifier == null) return null;
-    return sf.createValue(myFactory, qualifier);
-  }
-
   @Contract("null -> null")
   @Nullable
   public static DfaVariableSource getAccessedVariableOrGetter(final PsiElement target) {
+    SpecialField sf = SpecialField.findSpecialField(target);
+    if (sf != null) {
+      return sf;
+    }
     if (target instanceof PsiVariable) {
       return new PlainSource((PsiVariable)target);
     }
@@ -351,7 +317,7 @@ public class DfaExpressionFactory {
     }
     ArrayElementSource indexVariable = getArrayIndexVariable(index);
     if (indexVariable == null) return null;
-    return myFactory.getVarFactory().createVariableValue(indexVariable, componentType, arrayDfaVar);
+    return indexVariable.createValue(myFactory, arrayDfaVar, componentType);
   }
 
   @Nullable
@@ -387,6 +353,23 @@ public class DfaExpressionFactory {
              myVariable.hasModifierProperty(PsiModifier.FINAL);
     }
 
+    @NotNull
+    @Override
+    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, @Nullable PsiType type) {
+      if (myVariable.getType().equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
+        return factory.getConstFactory().getNull();
+      }
+      if (myVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
+        return factory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, myVariable));
+      }
+      if (myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter ||
+          (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC) &&
+           (!myVariable.hasModifierProperty(PsiModifier.FINAL) || !DfaUtil.hasInitializationHacks((PsiField)myVariable)))) {
+        return factory.getVarFactory().createVariableValue(this, type);
+      }
+      return DfaVariableSource.super.createValue(factory, qualifier, type);
+    }
+
     @Override
     public boolean equals(Object obj) {
       return obj == this || obj instanceof PlainSource && ((PlainSource)obj).myVariable == myVariable;
@@ -420,6 +403,15 @@ public class DfaExpressionFactory {
     @Override
     public boolean isCall() {
       return true;
+    }
+
+    @NotNull
+    @Override
+    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, @Nullable PsiType type) {
+      if (myGetter.hasModifierProperty(PsiModifier.STATIC)) {
+        return factory.getVarFactory().createVariableValue(this, type);
+      }
+      return DfaVariableSource.super.createValue(factory, qualifier, type);
     }
 
     @Override

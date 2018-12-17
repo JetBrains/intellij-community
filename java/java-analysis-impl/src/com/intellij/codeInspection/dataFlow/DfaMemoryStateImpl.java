@@ -598,7 +598,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaVariableValue) {
       PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(value.getType());
       if (unboxedType != null) {
-        value = myFactory.getBoxedFactory().createUnboxed(value, unboxedType);
+        value = SpecialField.UNBOX.createValue(myFactory, value, unboxedType);
       }
       EqClass ec = getEqClass(value);
       return ec == null ? null : ec.findConstant();
@@ -948,9 +948,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    DfaBoxedValue.Factory boxedFactory = myFactory.getBoxedFactory();
-    DfaValue unboxedLeft = boxedFactory.createUnboxed(dfaLeft, null);
-    DfaValue unboxedRight = boxedFactory.createUnboxed(dfaRight, null);
+    DfaValue unboxedLeft = SpecialField.UNBOX.createValue(myFactory, dfaLeft);
+    DfaValue unboxedRight = SpecialField.UNBOX.createValue(myFactory, dfaRight);
     DfaConstValue leftConst = getConstantValue(unboxedLeft);
     DfaConstValue rightConst = getConstantValue(unboxedRight);
     if (leftConst != null && rightConst != null) {

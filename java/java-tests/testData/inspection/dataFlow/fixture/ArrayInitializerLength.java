@@ -28,6 +28,10 @@ class ArrayInitializerLength {
     for (int i : <warning descr="Array 'arr' is always empty">arr</warning>) {
       System.out.println("never");
     }
+    int length = 0;
+    for (int i : <warning descr="Array 'new int[length]' is always empty">new int[length]</warning>) {
+      System.out.println(i);
+    }
   }
 
   void testConditional() {

@@ -18,10 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.inliner.CallInliner;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -118,6 +115,21 @@ public class CFGBuilder {
     expression.accept(myAnalyzer);
     myAnalyzer.removeCustomNullabilityProblem(expression);
     return this;
+  }
+
+  /**
+   * Generate instructions to load a qualified field described by given source which qualifier is on the stack
+   * <p>
+   * Stack before: ... qualifier
+   * <p>
+   * Stack after: ... loaded_field
+   *
+   * @param source a {@link DfaVariableSource} which describes a field to load
+   * @param type a loaded field type
+   * @return this builder
+   */
+  public CFGBuilder getField(@NotNull DfaVariableSource source, @Nullable PsiType type) {
+    return add(new GetFieldInstruction(source, type));
   }
 
   /**

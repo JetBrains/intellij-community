@@ -5,7 +5,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -14,7 +13,7 @@ import java.util.Objects;
  */
 public final class SpecialFieldValue {
   private final @NotNull SpecialField myField;
-  private final @Nullable DfaValue myValue;
+  private final @NotNull DfaValue myValue;
 
   public SpecialFieldValue(@NotNull SpecialField field, @NotNull DfaValue value) {
     if (value instanceof DfaFactMapValue) {
@@ -34,7 +33,7 @@ public final class SpecialFieldValue {
     return myField;
   }
 
-  @Nullable
+  @NotNull
   public DfaValue getValue() {
     return myValue;
   }

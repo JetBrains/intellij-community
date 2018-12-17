@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -84,14 +83,5 @@ public class DfaBoxedValue extends DfaValue {
       }
       return null;
     }
-
-    @NotNull
-    public DfaValue createUnboxed(DfaValue value, PsiPrimitiveType targetType) {
-      if (value instanceof DfaBoxedValue) {
-        return ((DfaBoxedValue)value).getWrappedValue();
-      }
-      return SpecialField.UNBOX.createValue(myFactory, value, targetType);
-    }
-
   }
 }

@@ -74,9 +74,9 @@ public final class DfaVariableValue extends DfaValue {
     }
 
     @NotNull
-    public DfaVariableValue createVariableValue(@NotNull DfaVariableSource source,
-                                                @Nullable PsiType varType,
-                                                @Nullable DfaVariableValue qualifier) {
+    DfaVariableValue createVariableValue(@NotNull DfaVariableSource source,
+                                         @Nullable PsiType varType,
+                                         @Nullable DfaVariableValue qualifier) {
       Pair<String, DfaVariableValue> key = Pair.create(source.toString(), qualifier);
       for (DfaVariableValue aVar : myExistingVars.get(key)) {
         if (aVar.hardEquals(source, varType, qualifier)) return aVar;

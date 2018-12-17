@@ -512,13 +512,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (instruction.getContext() instanceof PsiMethodReferenceExpression && qualifierValue instanceof DfaVariableValue) {
       PsiMethod method = instruction.getTargetMethod();
-      SpecialField field = SpecialField.findSpecialField(method);
-      if (field != null) {
-        return field.createValue(factory, qualifierValue);
-      }
       DfaVariableSource source = DfaExpressionFactory.getAccessedVariableOrGetter(method);
       if (source != null) {
-        return factory.getVarFactory().createVariableValue(source, instruction.getResultType(), (DfaVariableValue)qualifierValue);
+        return source.createValue(factory, qualifierValue, instruction.getResultType());
       }
     }
 

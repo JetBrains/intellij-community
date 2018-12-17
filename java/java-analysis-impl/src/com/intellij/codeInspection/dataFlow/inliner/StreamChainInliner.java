@@ -725,42 +725,31 @@ public class StreamChainInliner implements CallInliner {
         .chain(firstStep::iteration);
       return;
     }
+    PsiExpression qualifierExpression = null;
+    SpecialField sizeField = null;
     if (array) {
-      PsiExpression qualifierExpression = sourceCall.getArgumentList().getExpressions()[0];
-      DfaValue qualifierValue = builder.getFactory().createValue(qualifierExpression);
-      if (qualifierValue != null) {
-        builder.pushExpression(qualifierExpression)
-               .chain(firstStep::before)
-               .pop()
-               .push(SpecialField.ARRAY_LENGTH.createValue(builder.getFactory(), qualifierValue))
-               .push(builder.getFactory().getInt(0))
-               .ifCondition(JavaTokenType.GT)
-               .chain(b -> makeMainLoop(b, firstStep, inType))
-               .end();
-        return;
-      }
+      qualifierExpression = sourceCall.getArgumentList().getExpressions()[0];
+      sizeField = SpecialField.ARRAY_LENGTH;
     }
-    if (COLLECTION_STREAM.test(sourceCall)) {
-      PsiExpression qualifierExpression = sourceCall.getMethodExpression().getQualifierExpression();
-      DfaValue qualifierValue = builder.getFactory().createValue(qualifierExpression);
-      if (qualifierValue != null) {
-        builder.pushExpression(qualifierExpression)
-               .chain(firstStep::before)
-               .pop()
-               .push(SpecialField.COLLECTION_SIZE.createValue(builder.getFactory(), qualifierValue))
-               .push(builder.getFactory().getInt(0))
-               .ifCondition(JavaTokenType.GT)
-               .chain(b -> makeMainLoop(b, firstStep, inType))
-               .end();
-        return;
-      }
+    else if (COLLECTION_STREAM.test(sourceCall)) {
+      qualifierExpression = sourceCall.getMethodExpression().getQualifierExpression();
+      sizeField = SpecialField.COLLECTION_SIZE;
+    }
+    if (qualifierExpression != null) {
+      builder.pushExpression(qualifierExpression)
+        .chain(firstStep::before)
+        .getField(sizeField, PsiType.INT)
+        .push(builder.getFactory().getInt(0))
+        .ifCondition(JavaTokenType.GT);
+    } else {
+      builder
+        .pushExpression(originalQualifier)
+        .pop()
+        .chain(firstStep::before)
+        .pushUnknown()
+        .ifConditionIs(true);
     }
     builder
-      .pushExpression(originalQualifier)
-      .pop()
-      .chain(firstStep::before)
-      .pushUnknown()
-      .ifConditionIs(true)
       .chain(b -> makeMainLoop(b, firstStep, inType))
       .end();
   }

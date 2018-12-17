@@ -354,7 +354,7 @@ public class DfaUtil {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
       if (value instanceof DfaBoxedValue ||
           (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType()))) {
-        return value.getFactory().getBoxedFactory().createUnboxed(value, ObjectUtils.tryCast(type, PsiPrimitiveType.class));
+        return SpecialField.UNBOX.createValue(value.getFactory(), value, type);
       }
     }
     return value;

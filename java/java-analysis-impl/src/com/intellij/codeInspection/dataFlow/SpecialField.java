@@ -94,6 +94,15 @@ public enum SpecialField implements DfaVariableSource {
       return DfaUnknownValue.getInstance();
     }
 
+    @NotNull
+    @Override
+    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, PsiType targetType) {
+      if (qualifier instanceof DfaBoxedValue) {
+        return ((DfaBoxedValue)qualifier).getWrappedValue();
+      }
+      return super.createValue(factory, qualifier, targetType);
+    }
+
     @Override
     boolean isMyQualifierType(PsiType type) {
       return TypeConversionUtil.isPrimitiveWrapper(type);
@@ -157,19 +166,14 @@ public enum SpecialField implements DfaVariableSource {
    * @param qualifier a known qualifier value
    * @return a DfaValue which represents this special field
    */
-  public DfaValue createValue(DfaValueFactory factory, DfaValue qualifier) {
+  @NotNull
+  public final DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
     return createValue(factory, qualifier, null);
   }
 
-  /**
-   * Returns a DfaValue which represents this special field
-   *
-   * @param factory a factory to create new values if necessary
-   * @param qualifier a known qualifier value
-   * @param targetType a type of created value
-   * @return a DfaValue which represents this special field
-   */
-  public DfaValue createValue(DfaValueFactory factory, DfaValue qualifier, PsiType targetType) {
+  @NotNull
+  @Override
+  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, PsiType targetType) {
     if (qualifier instanceof DfaVariableValue) {
       DfaVariableValue variableValue = (DfaVariableValue)qualifier;
       PsiModifierListOwner psiVariable = variableValue.getPsiVariable();
@@ -185,7 +189,7 @@ public enum SpecialField implements DfaVariableSource {
           }
         }
       }
-      return factory.getVarFactory().createVariableValue(this, targetType == null ? getType(variableValue) : targetType, variableValue);
+      return DfaVariableSource.super.createValue(factory, qualifier, targetType == null ? getType(variableValue) : targetType);
     }
     if(qualifier instanceof DfaFactMapValue) {
       SpecialFieldValue sfValue = ((DfaFactMapValue)qualifier).get(DfaFactType.SPECIAL_FIELD_VALUE);

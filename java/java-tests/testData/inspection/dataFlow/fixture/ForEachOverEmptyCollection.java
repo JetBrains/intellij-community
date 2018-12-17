@@ -1,4 +1,5 @@
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class ForEachOverEmptyCollection {
@@ -54,6 +55,12 @@ public class ForEachOverEmptyCollection {
     if(!hasItem) {
       System.out.println(
         list.<warning descr="The call to 'get' always fails as index is out of bounds">get</warning>(<warning descr="Condition 'max == null' is always 'true'">max == null</warning> ? 0 : 1));
+    }
+  }
+  
+  void testDirect() {
+    for (Object o : <warning descr="Collection 'Collections.emptyList()' is always empty">Collections.emptyList()</warning>) {
+      System.out.println(o);
     }
   }
 }
