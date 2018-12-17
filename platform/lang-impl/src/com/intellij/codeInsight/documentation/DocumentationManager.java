@@ -723,12 +723,16 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   private ActionCallback cancelAndFetchDocInfo(@NotNull DocumentationComponent component, @NotNull DocumentationCollector provider) {
-    if (myToolWindow != null) {
-      Content content = myToolWindow.getContentManager().getSelectedContent();
-      if (content != null) content.setDisplayName(getTitle(provider.element, true));
-    }
+    updateToolWindowTabName(provider.element);
     myUpdateDocAlarm.cancelAllRequests();
     return doFetchDocInfo(component, provider);
+  }
+
+  void updateToolWindowTabName(@NotNull PsiElement element) {
+    if (myToolWindow != null) {
+      Content content = myToolWindow.getContentManager().getSelectedContent();
+      if (content != null) content.setDisplayName(getTitle(element, true));
+    }
   }
 
   private ActionCallback doFetchDocInfo(@NotNull DocumentationComponent component,

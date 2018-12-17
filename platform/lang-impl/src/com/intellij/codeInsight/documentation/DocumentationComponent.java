@@ -1199,6 +1199,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myProvider = context.provider;
     setDataInternal(context.element, context.text, context.viewRect, null);
     highlightLink(context.highlightedLink);
+
+    if (myManager != null) {
+      PsiElement element  = context.element.getElement();
+      if (element != null) {
+        myManager.updateToolWindowTabName(element);
+      }
+    }
   }
 
   private void updateControlState() {
