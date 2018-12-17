@@ -13,10 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Keeps external system task execution parameters. Basically, this is a model class which holds data represented when
@@ -27,6 +24,8 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
 
   @NotNull @NonNls public static final String TAG_NAME = "ExternalSystemSettings";
   @NotNull @NonNls public static final Key<ParametersList> JVM_AGENT_SETUP_KEY = Key.create("jvmAgentSetup");
+
+  private Map<String, List<String>> myTaskArguments = ContainerUtilRt.newHashMap();
 
   @NotNull
   private List<String> myTaskNames = ContainerUtilRt.newArrayList();
@@ -61,6 +60,30 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
 
     myEnv = source.myEnv.isEmpty() ? Collections.emptyMap() : new THashMap<>(source.myEnv);
     myPassParentEnvs = source.myPassParentEnvs;
+    myTaskArguments = source.myTaskArguments;
+  }
+
+  public void addTasks(String... names) {
+    myTaskNames.addAll(Arrays.asList(names));
+    for (String name : names) {
+      myTaskArguments.put(name, ContainerUtilRt.newArrayList());
+    }
+  }
+
+  public void addTaskArguments(String name, String... arguments) {
+    List<String> taskArguments = myTaskArguments.getOrDefault(name, ContainerUtilRt.newArrayList());
+    taskArguments.addAll(Arrays.asList(arguments));
+    myTaskArguments.put(name, taskArguments);
+    myTaskNames.add(name);
+  }
+
+  public void addScriptParameter(String parameter) {
+    if (myScriptParameters == null) {
+      myScriptParameters = parameter;
+    }
+    else {
+      myScriptParameters += " " + parameter;
+    }
   }
 
   @Nullable
@@ -156,6 +179,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     result = 31 * result + (myExternalSystemIdString != null ? myExternalSystemIdString.hashCode() : 0);
     result = 31 * result + (myExternalProjectPath != null ? myExternalProjectPath.hashCode() : 0);
     result = 31 * result + (myVmOptions != null ? myVmOptions.hashCode() : 0);
+    result = 31 * result + (myTaskArguments != null ? myTaskArguments.hashCode() : 0);
     result = 31 * result + (myScriptParameters != null ? myScriptParameters.hashCode() : 0);
     result = 31 * result + myEnv.hashCode();
     result = 31 * result + (myPassParentEnvs ? 1 : 0);
@@ -182,6 +206,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
       return false;
     }
     if (!Objects.equals(myTaskNames, settings.myTaskNames)) return false;
+    if (!Objects.equals(myTaskArguments, settings.myTaskArguments)) return false;
     if (StringUtil.isEmpty(myVmOptions) ^ StringUtil.isEmpty(settings.myVmOptions)) return false;
     if (StringUtil.isEmpty(myScriptParameters) ^ StringUtil.isEmpty(settings.myScriptParameters)) return false;
     if (!Objects.equals(myEnv, settings.myEnv)) return false;
@@ -191,7 +216,16 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
 
   @Override
   public String toString() {
-    return StringUtil.join(myTaskNames, " ") +
+    StringJoiner tasks = new StringJoiner(" ");
+    for (String name : myTaskNames) {
+      tasks.add(name);
+      List<String> arguments = myTaskArguments.get(name);
+      if (arguments == null) continue;
+      for (String argument : arguments) {
+        tasks.add(argument);
+      }
+    }
+    return tasks.toString() +
            (StringUtil.isEmpty(myScriptParameters) ? "" : " " + myScriptParameters) +
            (StringUtil.isEmpty(myVmOptions) ? "" : " " + myVmOptions);
   }

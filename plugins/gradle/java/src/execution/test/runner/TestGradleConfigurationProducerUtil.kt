@@ -28,17 +28,18 @@ fun <T> applyTestConfiguration(
     scriptParameters.add(createFilter(psiClass, test))
   }
   val (module, _) = testRunConfigurations.values.firstOrNull() ?: return false
-  val projectPath = GradleRunnerUtil.resolveProjectPath(module) ?: return false
-  val scriptParameters = testRunConfigurations.values
-    .map { (module, parameters) -> getTasksToRun(module) + parameters }
-    .flatten()
-    .fold(StringJoiner(" "), StringJoiner::add)
-  if (testRunConfigurations.size > 1) {
-    scriptParameters.add("--continue")
+  settings.externalProjectPath = GradleRunnerUtil.resolveProjectPath(module) ?: return false
+  for ((testModule, arguments) in testRunConfigurations.values) {
+    val tasks = getTasksToRun(testModule)
+    if (tasks.isEmpty()) continue
+    val last = tasks.last()
+    val previous = tasks.dropLast(1)
+    settings.addTasks(*previous.toTypedArray())
+    settings.addTaskArguments(last, *arguments.toTypedArray())
   }
-  settings.externalProjectPath = projectPath
-  settings.taskNames = listOf()
-  settings.scriptParameters = scriptParameters.toString()
+  if (testRunConfigurations.size > 1) {
+    settings.addScriptParameter("--continue")
+  }
   return true
 }
 
