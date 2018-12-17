@@ -115,10 +115,12 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     var seenInit = false
 
     for (currentType in StreamEx.of(clsType).append(cls.getAncestorTypes(context))) {
-      if (currentType == null) break
-      if (!currentType.resolveMember(PyNames.INIT, null, AccessDirection.READ, resolveContext, false).isNullOrEmpty()) break
-      if (!currentType.resolveMember(PyNames.NEW, null, AccessDirection.READ, resolveContext, false).isNullOrEmpty()) break
-      if (currentType !is PyClassType) break
+      if (currentType == null ||
+          !currentType.resolveMember(PyNames.INIT, null, AccessDirection.READ, resolveContext, false).isNullOrEmpty() ||
+          !currentType.resolveMember(PyNames.NEW, null, AccessDirection.READ, resolveContext, false).isNullOrEmpty() ||
+          currentType !is PyClassType) {
+        if (seenInit) continue else break
+      }
 
       val current = currentType.pyClass
       if (PyKnownDecoratorUtil.hasUnknownDecorator(current, context)) break

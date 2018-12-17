@@ -786,7 +786,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> {
-        final Map<String, PsiElement> marks = loadMultiFileTest(4);
+        final Map<String, PsiElement> marks = loadMultiFileTest(5);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int", new String[]{"a: int"});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("b: str", new String[]{"b: str"});
@@ -795,6 +795,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check(Arrays.asList("self: object", "cls: object"),
                                                               Arrays.asList(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY),
                                                               Arrays.asList(new String[]{"self: object"}, new String[]{"cls: object"}));
+
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x: int, z: str", new String[]{"x: int, "});
       }
     );
   }
@@ -871,7 +873,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> {
-        final Map<String, PsiElement> marks = loadTest(4);
+        final Map<String, PsiElement> marks = loadTest(5);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int", new String[]{"a: int"});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("b: str", new String[]{"b: str"});
@@ -880,6 +882,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check(Arrays.asList("self: object", "cls: object"),
                                                               Arrays.asList(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY),
                                                               Arrays.asList(new String[]{"self: object"}, new String[]{"cls: object"}));
+
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x: int, z: str", new String[]{"x: int, "});
       }
     );
   }
@@ -920,12 +924,13 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> {
-        final Map<String, PsiElement> marks = loadMultiFileTest(4);
+        final Map<String, PsiElement> marks = loadMultiFileTest(5);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("obj: B1, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("obj: B2, *, b: str=...", ArrayUtil.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg3>").getTextOffset()).check("obj, **changes", new String[]{"**changes"});
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check("obj, **changes", new String[]{"**changes"});
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("obj: C5, *, x: int=..., z: str=...", ArrayUtil.EMPTY_STRING_ARRAY);
       }
     );
   }
@@ -975,12 +980,13 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> {
-        final Map<String, PsiElement> marks = loadTest(4);
+        final Map<String, PsiElement> marks = loadTest(5);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("inst: B1, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("inst: B2, *, b: str=...", ArrayUtil.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg3>").getTextOffset()).check("inst: _T, **changes", new String[]{"**changes"});
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check("inst: _T, **changes", new String[]{"**changes"});
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("inst: C5, *, x: int=..., z: str=...", ArrayUtil.EMPTY_STRING_ARRAY);
       }
     );
   }

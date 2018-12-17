@@ -40,3 +40,18 @@ class B4(A4):
     b: str
 
 replace(B4(), <arg4>)
+
+
+@dataclass
+class A5:
+    x: int
+
+class B5(A5):
+    def __init__(self):
+        pass
+
+@dataclass
+class C5(B5):
+    z: str
+
+replace(C5(1, "2"), <arg5>)
