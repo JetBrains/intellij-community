@@ -25,7 +25,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -94,7 +93,6 @@ public class DaemonListeners implements Disposable {
   private final ProjectLevelVcsManager myProjectLevelVcsManager;
   private final VcsDirtyScopeManager myVcsDirtyScopeManager;
   private final FileStatusManager myFileStatusManager;
-  @NotNull private final ActionManager myActionManager;
   private final TooltipController myTooltipController;
   private final ErrorStripeUpdateManager myErrorStripeUpdateManager;
 
@@ -114,11 +112,10 @@ public class DaemonListeners implements Disposable {
                          @NotNull final EditorTracker editorTracker,
                          @NotNull EditorFactory editorFactory,
                          @NotNull PsiDocumentManager psiDocumentManager,
-                         @NotNull CommandProcessor commandProcessor,
                          @NotNull final Application application,
                          @NotNull ProjectInspectionProfileManager inspectionProjectProfileManager,
                          @NotNull TodoConfiguration todoConfiguration,
-                         @NotNull ActionManagerEx actionManagerEx,
+                         @NotNull ActionManagerEx actionManager,
                          @SuppressWarnings("UnusedParameters") // for dependency order
                          @NotNull final NamedScopeManager namedScopeManager,
                          @SuppressWarnings("UnusedParameters") // for dependency order
@@ -140,7 +137,6 @@ public class DaemonListeners implements Disposable {
     myProjectLevelVcsManager = projectLevelVcsManager;
     myVcsDirtyScopeManager = vcsDirtyScopeManager;
     myFileStatusManager = fileStatusManager;
-    myActionManager = actionManagerEx;
     myTooltipController = tooltipController;
     myErrorStripeUpdateManager = stripeUpdateManager;
 
@@ -152,14 +148,15 @@ public class DaemonListeners implements Disposable {
     MessageBus messageBus = myProject.getMessageBus();
     myDaemonEventPublisher = messageBus.syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC);
     if (project.isDefault()) return;
-    MessageBusConnection connection = messageBus.connect(this);
 
+    MessageBusConnection connection = messageBus.connect(this);
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         stopDaemon(false, "App closing");
       }
     });
+
     EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
     eventMulticaster.addDocumentListener(new DocumentListener() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
@@ -193,7 +190,6 @@ public class DaemonListeners implements Disposable {
         }
       }
     }, this);
-
     eventMulticaster.addEditorMouseMotionListener(new MyEditorMouseMotionListener(), this);
     eventMulticaster.addEditorMouseListener(new MyEditorMouseListener(myTooltipController), this);
 
@@ -216,6 +212,7 @@ public class DaemonListeners implements Disposable {
         }
       }
     }, this);
+
     editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorCreated(@NotNull EditorFactoryEvent event) {
@@ -267,13 +264,13 @@ public class DaemonListeners implements Disposable {
 
     connection.subscribe(PowerSaveMode.TOPIC, () -> stopDaemon(true, "Power save mode change"));
     connection.subscribe(EditorColorsManager.TOPIC, scheme -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
-    connection.subscribe(CommandListener.TOPIC, new MyCommandListener());
+    connection.subscribe(CommandListener.TOPIC, new MyCommandListener(actionManager));
 
     application.addApplicationListener(new MyApplicationListener(), this);
     inspectionProjectProfileManager.addProfileChangeListener(new MyProfileChangeListener(), this);
     todoConfiguration.addPropertyChangeListener(new MyTodoListener(), this);
     todoConfiguration.colorSettingsChanged();
-    connection.subscribe(AnActionListener.TOPIC, new MyAnActionListener());
+    connection.subscribe(AnActionListener.TOPIC, new MyAnActionListener(actionManager));
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
@@ -451,7 +448,11 @@ public class DaemonListeners implements Disposable {
   }
 
   private class MyCommandListener implements CommandListener {
-    private final String myCutActionName = myActionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
+    private final String myCutActionName;
+
+    private MyCommandListener(@NotNull ActionManager actionManager) {
+      myCutActionName = actionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
+    }
 
     @Override
     public void commandStarted(@NotNull CommandEvent event) {
@@ -554,7 +555,11 @@ public class DaemonListeners implements Disposable {
   }
 
   private class MyAnActionListener implements AnActionListener {
-    private final AnAction escapeAction = myActionManager.getAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    private final AnAction escapeAction;
+
+    private MyAnActionListener(@NotNull ActionManager actionManager) {
+      escapeAction = actionManager.getAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    }
 
     @Override
     public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
