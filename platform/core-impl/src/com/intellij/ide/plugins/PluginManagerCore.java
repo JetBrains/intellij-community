@@ -650,23 +650,24 @@ public class PluginManagerCore {
                                                                 boolean bundled,
                                                                 boolean essential) {
     File descriptorFile = new File(file, META_INF + pathName);
-    if (descriptorFile.exists()) {
-      try {
-        IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
-        descriptor.readExternal(descriptorFile.toURI().toURL());
-        return descriptor;
-      }
-      catch (XmlSerializationException | InvalidDataException e) {
-        if (essential) ExceptionUtil.rethrow(e);
-        getLogger().warn("Cannot load " + descriptorFile, e);
-        prepareLoadingPluginsErrorMessage(singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
-      }
-      catch (Throwable e) {
-        if (essential) ExceptionUtil.rethrow(e);
-        getLogger().warn("Cannot load " + descriptorFile, e);
-      }
+    if (!descriptorFile.exists()) {
+      return null;
     }
 
+    try {
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
+      descriptor.readExternal(descriptorFile.toURI().toURL());
+      return descriptor;
+    }
+    catch (XmlSerializationException | InvalidDataException e) {
+      if (essential) ExceptionUtil.rethrow(e);
+      getLogger().warn("Cannot load " + descriptorFile, e);
+      prepareLoadingPluginsErrorMessage(singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
+    }
+    catch (Throwable e) {
+      if (essential) ExceptionUtil.rethrow(e);
+      getLogger().warn("Cannot load " + descriptorFile, e);
+    }
     return null;
   }
 
