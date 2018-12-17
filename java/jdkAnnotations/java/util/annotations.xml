@@ -2241,6 +2241,96 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.Spliterator boolean hasCharacteristics(int) 0'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterator int characteristics()'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator&lt;T&gt; spliterator(java.util.Collection&lt;? extends T&gt;, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator&lt;T&gt; spliterator(java.util.Iterator&lt;? extends T&gt;, long, int) 2'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator&lt;T&gt; spliteratorUnknownSize(java.util.Iterator&lt;? extends T&gt;, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfDouble spliterator(double[], int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfDouble spliterator(double[], int, int, int) 3'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfDouble spliterator(java.util.PrimitiveIterator.OfDouble, long, int) 2'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfDouble spliteratorUnknownSize(java.util.PrimitiveIterator.OfDouble, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfInt spliterator(java.util.PrimitiveIterator.OfInt, long, int) 2'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfInt spliteratorUnknownSize(java.util.PrimitiveIterator.OfInt, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfLong spliterator(java.util.PrimitiveIterator.OfLong, long, int) 2'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfLong spliteratorUnknownSize(java.util.PrimitiveIterator.OfLong, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators.AbstractDoubleSpliterator AbstractDoubleSpliterator(long, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators.AbstractIntSpliterator AbstractIntSpliterator(long, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators.AbstractLongSpliterator AbstractLongSpliterator(long, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators.AbstractSpliterator AbstractSpliterator(long, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators.IteratorSpliterator IteratorSpliterator(java.util.Iterator&lt;? extends T&gt;, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
   <item name="java.util.TimeZone java.util.TimeZone getTimeZone(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
