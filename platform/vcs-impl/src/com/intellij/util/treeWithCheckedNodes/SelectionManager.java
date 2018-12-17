@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.treeWithCheckedNodes;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.ui.PlusMinus;
-import com.intellij.openapi.vcs.impl.CollectionsDelta;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairProcessor;
@@ -28,6 +13,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.util.containers.ContainerUtil.subtract;
 
 /**
 * @author irengrig
@@ -80,20 +67,16 @@ public class SelectionManager {
     }
     final Set<VirtualFile> selectedAfter = myState.getSelected();
     if (mySelectionChangeListener != null && ! old.equals(selectedAfter)) {
-      final Set<VirtualFile> removed = CollectionsDelta.notInSecond(old, selectedAfter);
-      final Set<VirtualFile> newlyAdded = CollectionsDelta.notInSecond(selectedAfter, old);
-      if (newlyAdded != null) {
-        for (VirtualFile file : newlyAdded) {
-          if (mySelectionChangeListener != null) {
-            mySelectionChangeListener.plus(file);
-          }
+      final Collection<VirtualFile> removed = subtract(old, selectedAfter);
+      final Collection<VirtualFile> newlyAdded = subtract(selectedAfter, old);
+      for (VirtualFile file : newlyAdded) {
+        if (mySelectionChangeListener != null) {
+          mySelectionChangeListener.plus(file);
         }
       }
-      if (removed != null) {
-        for (VirtualFile file : removed) {
-          if (mySelectionChangeListener != null) {
-            mySelectionChangeListener.minus(file);
-          }
+      for (VirtualFile file : removed) {
+        if (mySelectionChangeListener != null) {
+          mySelectionChangeListener.minus(file);
         }
       }
     }
