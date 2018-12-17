@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -122,12 +123,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Deprecated
   public void setPath(@SuppressWarnings("unused") File path) { }
 
-  public void readExternal(@NotNull Element element, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
+  public void readExternal(@NotNull Element element, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver)
+    throws InvalidDataException, MalformedURLException {
     Application application = ApplicationManager.getApplication();
     readExternal(element, url, application != null && application.isUnitTestMode(), pathResolver);
   }
 
-  public void readExternal(@NotNull Element element, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
+  private void readExternal(@NotNull Element element, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver)
+    throws InvalidDataException, MalformedURLException {
     myAppComponents = Collections.emptyList();
     myProjectComponents = Collections.emptyList();
     myModuleComponents = Collections.emptyList();
@@ -138,7 +141,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return;
     }
 
-    JDOMXIncluder.resolveNonXIncludeElement(element, url.toExternalForm(), ignoreMissingInclude, pathResolver);
+    JDOMXIncluder.resolveNonXIncludeElement(element, url, ignoreMissingInclude, pathResolver);
     readExternal(JDOMUtil.internElement(element));
   }
 
@@ -152,6 +155,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     catch (IOException | JDOMException e) {
       throw new InvalidDataException(e);
     }
+  }
+
+  public void loadFromFile(@NotNull File file) throws IOException, JDOMException {
+    readExternal(JDOMUtil.load(file), file.toURI().toURL(), JDOMXIncluder.DEFAULT_PATH_RESOLVER);
   }
 
   // used in upsource

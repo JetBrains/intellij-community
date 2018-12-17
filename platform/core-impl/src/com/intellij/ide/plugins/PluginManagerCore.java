@@ -35,6 +35,7 @@ import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -656,10 +657,10 @@ public class PluginManagerCore {
 
     try {
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
-      descriptor.readExternal(descriptorFile.toURI().toURL());
+      descriptor.loadFromFile(descriptorFile);
       return descriptor;
     }
-    catch (XmlSerializationException | InvalidDataException e) {
+    catch (XmlSerializationException | JDOMException | IOException e) {
       if (essential) ExceptionUtil.rethrow(e);
       getLogger().warn("Cannot load " + descriptorFile, e);
       prepareLoadingPluginsErrorMessage(singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
