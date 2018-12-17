@@ -16,6 +16,8 @@ import java.util.Set;
 public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMapper {
   private static final Logger LOG = Logger.getInstance(AbstractCodeStylePropertyMapper.class);
 
+  public static final String COMMON_DOMAIN_ID = "all";
+
   private final static Set<String> GENERAL_FIELDS = ContainerUtil.newHashSet(
     "LINE_SEPARATOR",
     "RIGHT_MARGIN",
@@ -39,6 +41,12 @@ public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMap
   @Override
   protected boolean useDeclaredFields() {
     return true;
+  }
+
+  @NotNull
+  @Override
+  public String getLanguageDomainId() {
+    return COMMON_DOMAIN_ID;
   }
 
   @Nullable

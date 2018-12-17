@@ -4,8 +4,11 @@ package com.intellij.application.options.codeStyle.properties;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +37,12 @@ public class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMa
       fieldsDescriptors.add(new CodeStyleObjectDescriptor(customSettings, null));
     }
     return fieldsDescriptors;
+  }
+
+  @NotNull
+  @Override
+  public String getLanguageDomainId() {
+    return myLanguage.getID().toLowerCase(Locale.ENGLISH);
   }
 
   private List<CustomCodeStyleSettings> getCustomSettings() {

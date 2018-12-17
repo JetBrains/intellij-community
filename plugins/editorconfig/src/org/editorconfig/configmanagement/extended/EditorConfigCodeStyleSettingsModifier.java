@@ -37,7 +37,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
         try {
           outPairs = getEditorConfigOptions(project, psiFile, EditorConfigNavigationActionsFactory.getInstance(file));
           // Apply editorconfig settings for the current editor
-          if(applyCodeStyleSettings(outPairs, psiFile, settings)) {
+          if (applyCodeStyleSettings(outPairs, psiFile, settings)) {
             settings.addDependencies(EditorConfigNavigationActionsFactory.getInstance(file).getEditorConfigFiles());
             return true;
           }
@@ -61,16 +61,29 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
                                                 @NotNull CodeStyleSettings settings) {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
     if (provider != null) {
-      boolean isModified = false;
       AbstractCodeStylePropertyMapper mapper = provider.getPropertyMapper(settings);
-      for (OutPair option : editorConfigOptions) {
-        if (mapper.setProperty(option.getKey(), option.getVal())) {
+      boolean isModified = processOptions(editorConfigOptions, mapper, false);
+      isModified = processOptions(editorConfigOptions, mapper, true) || isModified;
+      return isModified;
+
+    }
+    return false;
+  }
+
+  private static boolean processOptions(@NotNull List<OutPair> editorConfigOptions,
+                                        @NotNull AbstractCodeStylePropertyMapper mapper,
+                                        boolean languageSpecific) {
+    String ideLangPrefix = EditorConfigIntellijNameUtil.getIdeLangPrefix(mapper);
+    boolean isModified = false;
+    for (OutPair option : editorConfigOptions) {
+      if (!languageSpecific || option.getKey().startsWith(ideLangPrefix)) {
+        String intellijName = EditorConfigIntellijNameUtil.toIntellijName(mapper, option.getKey());
+        if (intellijName != null && mapper.setProperty(intellijName, option.getVal())) {
           isModified = true;
         }
       }
-      return isModified;
     }
-    return false;
+    return isModified;
   }
 
   private static List<OutPair> getEditorConfigOptions(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull ParserCallback callback)
@@ -79,5 +92,4 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     final Set<String> rootDirs = SettingsProviderComponent.getInstance().getRootDirs(project);
     return new EditorConfig().getProperties(filePath, rootDirs, callback);
   }
-
 }

@@ -1,3 +1,9 @@
 [*.java]
 indent_size = 3
 max_line_length = 180
+
+idea_java_brace_style = gnu
+idea_generic_brace_style = end_of_line
+
+idea_java_block_comment_at_first_column = true
+idea_xml_block_comment_at_first_column = false

@@ -47,6 +47,8 @@ public class EditorConfigFileSettingsTest extends LightPlatformTestCase {
     final IndentOptions indentOptions = commonJavaSettings.getIndentOptions();
     assertEquals(3, indentOptions.INDENT_SIZE);
     assertEquals(180, commonJavaSettings.RIGHT_MARGIN);
+    assertEquals(CommonCodeStyleSettings.NEXT_LINE_SHIFTED2, commonJavaSettings.BRACE_STYLE);
+    assertTrue(commonJavaSettings.BLOCK_COMMENT_AT_FIRST_COLUMN);
   }
 
   @NotNull
