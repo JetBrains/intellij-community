@@ -3,7 +3,6 @@ package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmAnnotation;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
-import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +16,7 @@ import java.util.List;
  *
  * @author ven
  */
-public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner, JvmAnnotation {
+public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
   /**
    * The empty array of PSI annotations which can be reused to avoid unnecessary allocations.
    */
