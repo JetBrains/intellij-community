@@ -135,20 +135,28 @@ public class PyStringFormatInspection extends PyInspection {
         else if (rightExpression instanceof PyParenthesizedExpression) {
           final PyExpression rhs = ((PyParenthesizedExpression)rightExpression).getContainedExpression();
           if (rhs != null) {
-            return inspectArguments(rhs, rhs);
+            return inspectArguments(rhs, problemTarget);
           }
         }
         else if (rightExpression instanceof PyTupleExpression) {
-          final PyExpression[] expressions = ((PyTupleExpression)rightExpression).getElements();
-          int i = 1;
-          for (PyExpression expression : expressions) {
-            final String formatSpec = myFormatSpec.get(Integer.toString(i));
-            if (formatSpec != null) {
-              checkExpressionType(expression, formatSpec, expression);
+          if (PsiTreeUtil.isAncestor(problemTarget, rightExpression, false)) {
+            final PyExpression[] expressions = ((PyTupleExpression)rightExpression).getElements();
+            int i = 1;
+            for (PyExpression expression : expressions) {
+              final String formatSpec = myFormatSpec.get(Integer.toString(i));
+              if (formatSpec != null) {
+                checkExpressionType(expression, formatSpec, expression);
+              }
+              ++i;
             }
-            ++i;
+            return expressions.length;
           }
-          return expressions.length;
+          else {
+            final PyTupleType tupleType = (PyTupleType)myTypeEvalContext.getType(rightExpression);
+            assert tupleType != null;
+            matchEntireTupleTypes(problemTarget, tupleType);
+            return tupleType.getElementCount();
+          }
         }
         else if (rightExpression instanceof PyDictLiteralExpression) {
           return inspectDict(rightExpression, problemTarget, false);
