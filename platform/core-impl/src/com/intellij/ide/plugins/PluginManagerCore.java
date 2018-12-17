@@ -21,6 +21,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -791,7 +792,7 @@ public class PluginManagerCore {
         }
       }
     }
-    else if (StringUtil.endsWithIgnoreCase(file.getName(), ".jar")) {
+    else if (StringUtilRt.endsWithIgnoreCase(file.getPath(), ".jar")) {
       descriptor = loadDescriptorFromJar(file, pathName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context, null, bundled, essential);
     }
 
