@@ -6,6 +6,7 @@ import com.intellij.execution.testDiscovery.TestDiscoveryProducer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +31,7 @@ public class TestDataGuessByTestDiscoveryUtil {
     if (testClass == null) return Collections.emptyList();
     String testClassQualifiedName = testClass.getQualifiedName();
     if (testClassQualifiedName == null) return Collections.emptyList();
-    List<String> testQName = Collections.singletonList(testClassQualifiedName + "." + method.getName());
+    List<Couple<String>> testQName = Collections.singletonList(Couple.of(testClassQualifiedName, method.getName()));
     try {
       Project project = method.getProject();
       AffectedPathConsumer consumer = new AffectedPathConsumer(project);

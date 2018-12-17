@@ -93,11 +93,11 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
 
   @NotNull
   @Override
-  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns, byte frameworkId) throws IOException {
+  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<Couple<String>> testFqns, byte frameworkId) throws IOException {
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/test/details";
     return executeQuery(() -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
       r -> {
-        r.write(testFqns.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",", "[", "]")));
+        r.write(testFqns.stream().map(s -> "\"" + s.getFirst() + "." + s.getSecond() + "\"").collect(Collectors.joining(",", "[", "]")));
         return Arrays.stream(new ObjectMapper().readValue(r.getInputStream(), TestDetails[].class))
           .map(details -> details.files)
           .filter(Objects::nonNull)
