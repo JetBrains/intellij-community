@@ -52,9 +52,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
@@ -118,7 +119,6 @@ public class DaemonListeners implements Disposable {
                          @NotNull ProjectInspectionProfileManager inspectionProjectProfileManager,
                          @NotNull TodoConfiguration todoConfiguration,
                          @NotNull ActionManagerEx actionManagerEx,
-                         @NotNull VirtualFileManager virtualFileManager,
                          @SuppressWarnings("UnusedParameters") // for dependency order
                          @NotNull final NamedScopeManager namedScopeManager,
                          @SuppressWarnings("UnusedParameters") // for dependency order
@@ -276,38 +276,55 @@ public class DaemonListeners implements Disposable {
     inspectionProjectProfileManager.addProfileChangeListener(new MyProfileChangeListener(), this);
     todoConfiguration.addPropertyChangeListener(new MyTodoListener(), this);
     todoConfiguration.colorSettingsChanged();
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new MyAnActionListener());
-    virtualFileManager.addVirtualFileListener(new VirtualFileListener() {
+    connection.subscribe(AnActionListener.TOPIC, new MyAnActionListener());
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-        String propertyName = event.getPropertyName();
-        if (VirtualFile.PROP_NAME.equals(propertyName)) {
-          stopDaemonAndRestartAllFiles("Virtual file name changed");
-          VirtualFile virtualFile = event.getFile();
-          PsiFile psiFile = !virtualFile.isValid() ? null : ((PsiManagerEx)psiManager).getFileManager().getCachedPsiFile(virtualFile);
-          if (psiFile != null && !myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
-            Document document = fileDocumentManager.getCachedDocument(virtualFile);
-            if (document != null) {
-              // highlight markers no more
-              //todo clear all highlights regardless the pass id
-
-              // Here color scheme required for TextEditorFields, as far as I understand this
-              // code related to standard file editors, which always use Global color scheme,
-              // thus we can pass null here.
-              final EditorColorsScheme editorColorScheme = null;
-
-              UpdateHighlightersUtil.setHighlightersToEditor(myProject, document, 0, document.getTextLength(),
-                                                             Collections.emptyList(),
-                                                             editorColorScheme,
-                                                             Pass.UPDATE_ALL);
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        boolean isDaemonShouldBeStopped = false;
+        for (VFileEvent event : events) {
+          if (event instanceof VFilePropertyChangeEvent) {
+            VFilePropertyChangeEvent e = (VFilePropertyChangeEvent)event;
+            String propertyName = e.getPropertyName();
+            if (VirtualFile.PROP_NAME.equals(propertyName)) {
+              fileRenamed(e);
+            }
+            if (!isDaemonShouldBeStopped && !propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
+              isDaemonShouldBeStopped = true;
             }
           }
         }
-        if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
+
+        if (isDaemonShouldBeStopped) {
           stopDaemon(true, "Virtual file property change");
         }
       }
-    }, this);
+
+      private void fileRenamed(@NotNull VFilePropertyChangeEvent event) {
+        stopDaemonAndRestartAllFiles("Virtual file name changed");
+        VirtualFile virtualFile = event.getFile();
+        PsiFile psiFile = !virtualFile.isValid() ? null : ((PsiManagerEx)psiManager).getFileManager().getCachedPsiFile(virtualFile);
+        if (psiFile == null || myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
+          return;
+        }
+
+        Document document = fileDocumentManager.getCachedDocument(virtualFile);
+        if (document == null) {
+          return;
+        }
+
+        // highlight markers no more
+        //todo clear all highlights regardless the pass id
+
+        // Here color scheme required for TextEditorFields, as far as I understand this
+        // code related to standard file editors, which always use Global color scheme,
+        // thus we can pass null here.
+        final EditorColorsScheme editorColorScheme = null;
+        UpdateHighlightersUtil.setHighlightersToEditor(myProject, document, 0, document.getTextLength(),
+                                                       Collections.emptyList(),
+                                                       editorColorScheme,
+                                                       Pass.UPDATE_ALL);
+      }
+    });
 
     ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(e -> {
       RangeHighlighter highlighter = e.getHighlighter();
@@ -326,7 +343,7 @@ public class DaemonListeners implements Disposable {
     };
     LaterInvocator.addModalityStateListener(modalityStateListener,this);
 
-    messageBus.connect().subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
+    connection.subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
 
     if (RefResolveService.ENABLED) {
       RefResolveService resolveService = RefResolveService.getInstance(project);
