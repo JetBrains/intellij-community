@@ -79,7 +79,7 @@ public class PyStringFormatInspection extends PyInspection {
       private final Visitor myVisitor;
       private final TypeEvalContext myTypeEvalContext;
 
-      private final Map<String, String> myFormatSpec = new HashMap<>();
+      private final Map<String, String> myFormatSpec = new LinkedHashMap<>();
 
       Inspection(Visitor visitor, TypeEvalContext typeEvalContext) {
         myVisitor = visitor;
@@ -100,14 +100,7 @@ public class PyStringFormatInspection extends PyInspection {
             final PyType rightType = myTypeEvalContext.getType(rightExpression);
             if (rightType instanceof PyTupleType) {
               final PyTupleType tupleType = (PyTupleType)rightType;
-              for (int i = 0; i < tupleType.getElementCount(); i++) {
-                final PyType elementType = tupleType.getElementType(i);
-                if (elementType != null) {
-                  final String typeName = myFormatSpec.get(String.valueOf(i + 1));
-                  final PyType type = typeName != null ? PyTypeParser.getTypeByName(problemTarget, typeName, myTypeEvalContext) : null;
-                  checkTypeCompatible(problemTarget, elementType, type);
-                }
-              }
+              matchEntireTupleTypes(problemTarget, tupleType);
               return tupleType.getElementCount();
             }
             else {
@@ -208,6 +201,22 @@ public class PyStringFormatInspection extends PyInspection {
           return -1;
         }
         return -1;
+      }
+
+      private void matchEntireTupleTypes(@NotNull PsiElement rightExpression, PyTupleType rightExpressionType) {
+        final List<PyType> expectedElementTypes = ContainerUtil.map(myFormatSpec.values(), name -> {
+          if (name == null) {
+            return null;
+          }
+          final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(rightExpression);
+          final PyType expected = PyTypeParser.getTypeByName(rightExpression, name, myTypeEvalContext);
+          if (expected == builtinCache.getStrType()) {
+            return null;
+          }
+          return expected;
+        });
+        final PyTupleType expectedTupleType = PyTupleType.create(rightExpression, expectedElementTypes);
+        checkTypeCompatible(rightExpression, rightExpressionType, expectedTupleType);
       }
 
       private static Map<PyExpression, PyExpression> addSubscriptions(PsiFile file, String operand) {
