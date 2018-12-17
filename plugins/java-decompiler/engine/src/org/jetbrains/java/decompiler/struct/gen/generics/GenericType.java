@@ -28,15 +28,11 @@ public class GenericType {
     this.value = value;
   }
 
-  public GenericType(GenericType other, int arrayDim) {
-    this.type = other.type;
-    this.value = other.value;
-
-    this.enclosingClasses.addAll(other.enclosingClasses);
-    this.arguments.addAll(other.arguments);
-    this.wildcards.addAll(other.wildcards);
-
-    this.arrayDim = arrayDim;
+  private GenericType(GenericType other, int arrayDim) {
+    this(other.type, arrayDim, other.value);
+    enclosingClasses.addAll(other.enclosingClasses);
+    arguments.addAll(other.arguments);
+    wildcards.addAll(other.wildcards);
   }
 
   public GenericType(String signature) {
