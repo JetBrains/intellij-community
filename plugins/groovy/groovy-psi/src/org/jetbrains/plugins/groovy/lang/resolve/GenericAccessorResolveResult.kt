@@ -16,7 +16,10 @@ class GenericAccessorResolveResult(
   arguments: Arguments?
 ) : AccessorResolveResult(element, place, state, arguments) {
 
-  override fun getSubstitutor(): PsiSubstitutor = inferredSubstitutor ?: error("Recursion prevented")
+  override fun getSubstitutor(): PsiSubstitutor = inferredSubstitutor ?: run {
+    log.warn("Recursion prevented")
+    PsiSubstitutor.EMPTY
+  }
 
   private val inferredSubstitutor by recursionPreventingLazy {
     buildTopLevelSession(place).inferSubst(this)

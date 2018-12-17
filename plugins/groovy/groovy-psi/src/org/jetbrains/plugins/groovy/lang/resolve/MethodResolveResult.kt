@@ -26,7 +26,10 @@ class MethodResolveResult(
     GroovyInferenceSessionBuilder(place, myCandidate, contextSubstitutor).build().inferSubst()
   }
 
-  override fun getSubstitutor(): PsiSubstitutor = fullSubstitutor ?: error("Recursion prevented")
+  override fun getSubstitutor(): PsiSubstitutor = fullSubstitutor ?: run {
+    log.warn("Recursion prevented")
+    PsiSubstitutor.EMPTY
+  }
 
   private val fullSubstitutor by recursionPreventingLazy {
     buildTopLevelSession(place).inferSubst(this)
