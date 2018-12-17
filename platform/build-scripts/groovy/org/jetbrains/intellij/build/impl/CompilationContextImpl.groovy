@@ -16,7 +16,6 @@ import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.artifact.JpsArtifactService
-import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
