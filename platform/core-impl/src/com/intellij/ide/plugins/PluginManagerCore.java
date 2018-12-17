@@ -754,8 +754,8 @@ public class PluginManagerCore {
                                                          boolean essential) {
     IdeaPluginDescriptorImpl descriptor = null;
 
-    boolean directory = file.isDirectory();
-    if (directory) {
+    boolean isDirectory = file.isDirectory();
+    if (isDirectory) {
       descriptor = loadDescriptorFromDir(file, pathName, null, bundled, essential);
 
       if (descriptor == null) {
@@ -791,7 +791,7 @@ public class PluginManagerCore {
         }
       }
     }
-    else if (StringUtil.endsWithIgnoreCase(file.getName(), ".jar") && file.isFile()) {
+    else if (StringUtil.endsWithIgnoreCase(file.getName(), ".jar")) {
       descriptor = loadDescriptorFromJar(file, pathName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context, null, bundled, essential);
     }
 
@@ -810,7 +810,7 @@ public class PluginManagerCore {
         if (optionalDescriptor == null) {
           optionalDescriptor = loadDescriptor(file, optPathName, context, bundled, essential);
         }
-        if (optionalDescriptor == null && (directory || resolveDescriptorsInResources())) {
+        if (optionalDescriptor == null && (isDirectory || resolveDescriptorsInResources())) {
           // JDOMXIncluder can find included descriptor files via classloading in URLUtil.openResourceStream
           // and here code supports the same behavior.
           // Note that this code is meant for IDE development / testing purposes
