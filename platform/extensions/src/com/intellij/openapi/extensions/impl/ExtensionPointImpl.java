@@ -273,7 +273,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         }
         catch (ExtensionNotApplicableException ignore) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug(adapter + " not loaded because reported that not applicable");
+            LOG.debug(adapter + " not loaded because it reported that not applicable");
           }
         }
         catch (ProcessCanceledException e) {
