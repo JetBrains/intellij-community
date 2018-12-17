@@ -14,7 +14,7 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
 
   @Test
   fun `test generation of gradle test settings`() {
-    createProjectSubFile("src/test/java/AbstractSuite.java", """
+    createProjectSubFile("module/src/test/java/AbstractSuite.java", """
       import org.junit.Assert;
       import org.junit.Test;
 
@@ -27,7 +27,7 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
           }
       }
     """.trimIndent())
-    val aSimpleTestCaseFile = createProjectSubFile("src/test/java/SimpleTestCase.java", """
+    val aSimpleTestCaseFile = createProjectSubFile("module/src/test/java/SimpleTestCase.java", """
       import org.junit.Assert;
       import org.junit.Test;
 
@@ -38,25 +38,78 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
           }
       }
     """.trimIndent())
-    val buildScript = GradleBuildScriptBuilderEx()
+    val aDepSimpleTestCaseFile = createProjectSubFile("dep-module/src/test/java/SimpleTestCase.java", """
+      import org.junit.Assert;
+      import org.junit.Test;
+
+      public class SimpleTestCase extends AbstractSuite {
+          @Override
+          protected int x() {
+              return 1;
+          }
+
+          @Test
+          public void test() {
+              Assert.fail();
+          }
+      }
+    """.trimIndent())
+    val moduleBuildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
       .withJUnit("4.12")
-    importProject(buildScript.generate())
-    assertModules("project", "project.test", "project.main")
+      .addPostfix("""
+        task myTestsJar(type: Jar, dependsOn: testClasses) {
+            baseName = "test-${'$'}{project.archivesBaseName}"
+            from sourceSets.test.output
+        }
+
+        configurations {
+            testArtifacts
+        }
+
+        artifacts {
+            testArtifacts  myTestsJar
+        }
+      """.trimIndent())
+    val depModuleBuildScript = GradleBuildScriptBuilderEx()
+      .withJavaPlugin()
+      .withJUnit("4.12")
+      .addDependency("compile project(':module')")
+      .addDependency("testCompile project(path: ':module', configuration: 'testArtifacts')")
+    createProjectSubFile("module/build.gradle", moduleBuildScript.generate())
+    createProjectSubFile("dep-module/build.gradle", depModuleBuildScript.generate())
+    createSettingsFile("""
+      rootProject.name = 'project'
+      include 'module'
+      include 'dep-module'
+    """.trimIndent())
+    importProject()
+    assertModules("project",
+                  "project.module", "project.module.test", "project.module.main",
+                  "project.dep-module", "project.dep-module.test", "project.dep-module.main")
 
     runReadActionAndWait {
       val psiManager = PsiManager.getInstance(myProject)
       val aSimpleTestCasePsiFile = psiManager.findFile(aSimpleTestCaseFile)!!
+      val aDepSimpleTestCasePsiFile = psiManager.findFile(aDepSimpleTestCaseFile)!!
       val aSimpleTestCase = aSimpleTestCasePsiFile.findChildByType<PsiClass>()
+      val aDepSimpleTestCase = aDepSimpleTestCasePsiFile.findChildByType<PsiClass>()
 
-      ExternalSystemTaskExecutionSettings().let { settings ->
-        val isApplied = applyTestConfiguration(myProject, settings, arrayOf(aSimpleTestCase)) { psiClass ->
-          GradleExecutionSettingsUtil.createTestFilterFrom(psiClass, false)
-        }
-        assertTrue(isApplied)
-        assertEquals(":cleanTest :test --tests \"SimpleTestCase\"", settings.toString())
-      }
+      assertClassRunConfigurationSettings(":module:cleanTest :module:test --tests \"SimpleTestCase\"", aSimpleTestCase)
+      assertClassRunConfigurationSettings(":dep-module:cleanTest :dep-module:test --tests \"SimpleTestCase\"", aDepSimpleTestCase)
+      assertClassRunConfigurationSettings(":module:cleanTest :module:test --tests \"SimpleTestCase\" " +
+                                          ":dep-module:cleanTest :dep-module:test --tests \"SimpleTestCase\" " +
+                                          "--continue", aSimpleTestCase, aDepSimpleTestCase)
     }
+  }
+
+  private fun assertClassRunConfigurationSettings(expectedSettings: String, vararg classes: PsiClass) {
+    val settings = ExternalSystemTaskExecutionSettings()
+    val isApplied = applyTestConfiguration(myProject, settings, arrayOf(*classes)) { psiClass ->
+      GradleExecutionSettingsUtil.createTestFilterFrom(psiClass, false)
+    }
+    assertTrue(isApplied)
+    assertEquals(expectedSettings, settings.toString().trim())
   }
 
   companion object {
