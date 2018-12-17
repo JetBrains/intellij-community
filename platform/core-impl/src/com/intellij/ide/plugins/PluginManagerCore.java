@@ -758,7 +758,6 @@ public class PluginManagerCore {
     boolean isDirectory = file.isDirectory();
     if (isDirectory) {
       descriptor = loadDescriptorFromDir(file, pathName, null, bundled, essential);
-
       if (descriptor == null) {
         File libDir = new File(file, "lib");
         if (!libDir.isDirectory()) {
@@ -796,34 +795,35 @@ public class PluginManagerCore {
       descriptor = loadDescriptorFromJar(file, pathName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context, null, bundled, essential);
     }
 
-    if (descriptor != null) {
-      if (PLUGIN_XML.equals(pathName) && (descriptor.getPluginId() == null || descriptor.getName() == null)) {
-        getLogger().info("Cannot load descriptor from " + file + ": ID or name missing");
-        prepareLoadingPluginsErrorMessage(singletonList("'" + file.getName() + "' contains invalid plugin descriptor."));
-        return null;
-      }
-
-      resolveOptionalDescriptors(pathName, descriptor, (@SystemIndependent String optPathName) -> {
-        IdeaPluginDescriptorImpl optionalDescriptor = null;
-        if (context.myLastZipFileContainingDescriptor != null) { // try last file that had the descriptor that worked
-          optionalDescriptor = loadDescriptor(context.myLastZipFileContainingDescriptor, optPathName, context, bundled, essential);
-        }
-        if (optionalDescriptor == null) {
-          optionalDescriptor = loadDescriptor(file, optPathName, context, bundled, essential);
-        }
-        if (optionalDescriptor == null && (isDirectory || resolveDescriptorsInResources())) {
-          // JDOMXIncluder can find included descriptor files via classloading in URLUtil.openResourceStream
-          // and here code supports the same behavior.
-          // Note that this code is meant for IDE development / testing purposes
-          URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + optPathName);
-          if (resource != null) {
-            optionalDescriptor = loadDescriptorFromResource(resource, optPathName, bundled, false);
-          }
-        }
-        return optionalDescriptor;
-      });
+    if (descriptor == null) {
+      return null;
     }
 
+    if (PLUGIN_XML.equals(pathName) && (descriptor.getPluginId() == null || descriptor.getName() == null)) {
+      getLogger().info("Cannot load descriptor from " + file + ": ID or name missing");
+      prepareLoadingPluginsErrorMessage(singletonList("'" + file.getName() + "' contains invalid plugin descriptor."));
+      return null;
+    }
+
+    resolveOptionalDescriptors(pathName, descriptor, (@SystemIndependent String optPathName) -> {
+      IdeaPluginDescriptorImpl optionalDescriptor = null;
+      if (context.myLastZipFileContainingDescriptor != null) { // try last file that had the descriptor that worked
+        optionalDescriptor = loadDescriptor(context.myLastZipFileContainingDescriptor, optPathName, context, bundled, essential);
+      }
+      if (optionalDescriptor == null) {
+        optionalDescriptor = loadDescriptor(file, optPathName, context, bundled, essential);
+      }
+      if (optionalDescriptor == null && (isDirectory || resolveDescriptorsInResources())) {
+        // JDOMXIncluder can find included descriptor files via classloading in URLUtil.openResourceStream
+        // and here code supports the same behavior.
+        // Note that this code is meant for IDE development / testing purposes
+        URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + optPathName);
+        if (resource != null) {
+          optionalDescriptor = loadDescriptorFromResource(resource, optPathName, bundled, false);
+        }
+      }
+      return optionalDescriptor;
+    });
     return descriptor;
   }
 
@@ -915,32 +915,34 @@ public class PluginManagerCore {
                                       int pluginsCount,
                                       boolean bundled) {
     File[] files = pluginsHome.listFiles();
-    if (files != null) {
-      int i = result.size();
-      Set<IdeaPluginDescriptorImpl> existingResults = ContainerUtil.newHashSet(result);
+    if (files == null) {
+      return;
+    }
 
-      for (File file : files) {
-        IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML, bundled, false);
-        if (descriptor == null) continue;
-        if (progress != null) {
-          progress.showProgress(descriptor.getName(), PLUGINS_PROGRESS_PART * ((float)++i / pluginsCount));
-        }
+    int i = result.size();
+    Set<IdeaPluginDescriptorImpl> existingResults = ContainerUtil.newHashSet(result);
 
-        int oldIndex = !existingResults.add(descriptor) ? result.indexOf(descriptor) : -1;
-        if (oldIndex >= 0) {
-          IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
-          if (VersionComparatorUtil.compare(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
-            if (isIncompatible(descriptor) && isCompatible(oldDescriptor)) {
-              getLogger().info("newer plugin is incompatible, ignoring: " + descriptor.getPath());
-            }
-            else {
-              result.set(oldIndex, descriptor);
-            }
+    for (File file : files) {
+      IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML, bundled, false);
+      if (descriptor == null) continue;
+      if (progress != null) {
+        progress.showProgress(descriptor.getName(), PLUGINS_PROGRESS_PART * ((float)++i / pluginsCount));
+      }
+
+      int oldIndex = !existingResults.add(descriptor) ? result.indexOf(descriptor) : -1;
+      if (oldIndex >= 0) {
+        IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
+        if (VersionComparatorUtil.compare(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
+          if (isIncompatible(descriptor) && isCompatible(oldDescriptor)) {
+            getLogger().info("newer plugin is incompatible, ignoring: " + descriptor.getPath());
+          }
+          else {
+            result.set(oldIndex, descriptor);
           }
         }
-        else {
-          result.add(descriptor);
-        }
+      }
+      else {
+        result.add(descriptor);
       }
     }
   }
