@@ -8,15 +8,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a source of {@link DfaVariableValue}. Two variables are the same if they have the same source and qualifier.
- * A source could be a PsiVariable, getter method, array element with given index, this expression, etc.
+ * Represents a descriptor of {@link DfaVariableValue}. Two variables are the same if they have the same descriptor and qualifier.
+ * A descriptor could be a PsiVariable, getter method, array element with given index, this expression, etc.
  * <p>
  * Subclasses must have proper {@link Object#equals(Object)} and implementation or instantiation must be controlled to prevent
- * creating equal objects. Also {@link #toString()} must return sane representation of the source.
+ * creating equal objects. Also {@link #toString()} must return sane representation of the descriptor.
  */
-public interface DfaVariableSource {
+public interface VariableDescriptor {
   /**
-   * @return a PSI element associated with given source or null if not applicable
+   * @return a PSI element associated with this descriptor or null if not applicable
    */
   @Nullable
   default PsiModifierListOwner getPsiElement() {
@@ -24,26 +24,26 @@ public interface DfaVariableSource {
   }
 
   /**
-   * @return true if the value stored in this source cannot be changed implicitly (e.g. inside the unknown method call)
+   * @return true if the value stored in this descriptor cannot be changed implicitly (e.g. inside the unknown method call)
    */
   boolean isStable();
 
   /**
-   * @return true if the value behind this source is a method call which result might be computed from other sources
+   * @return true if the value behind this descriptor is a method call which result might be computed from other sources
    */
   default boolean isCall() {
     return false;
   }
 
   /**
-   * Must be overridden to return stable string representation of the source.
-   * In particular {@code source1.equals(source2)} implies that {@code source1.toString().equals(source2.toString())}
+   * Must be overridden to return stable string representation of the descriptor.
+   * In particular {@code desc1.equals(desc2)} implies that {@code desc1.toString().equals(desc2.toString())}
    */
   @Override
   String toString();
 
   /**
-   * Returns a value which describes the field qualified by given qualifier and described by this source
+   * Returns a value which describes the field qualified by given qualifier and described by this descriptor
    * @param factory factory to use
    * @param qualifier qualifier to use
    * @param type field type

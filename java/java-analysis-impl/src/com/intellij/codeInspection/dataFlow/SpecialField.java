@@ -25,7 +25,7 @@ import static com.intellij.psi.CommonClassNames.*;
  *
  * @author Tagir Valeev
  */
-public enum SpecialField implements DfaVariableSource {
+public enum SpecialField implements VariableDescriptor {
   ARRAY_LENGTH(null, "length", true) {
     @Override
     boolean isMyQualifierType(PsiType type) {
@@ -189,7 +189,7 @@ public enum SpecialField implements DfaVariableSource {
           }
         }
       }
-      return DfaVariableSource.super.createValue(factory, qualifier, targetType == null ? getType(variableValue) : targetType);
+      return VariableDescriptor.super.createValue(factory, qualifier, targetType == null ? getType(variableValue) : targetType);
     }
     if(qualifier instanceof DfaFactMapValue) {
       SpecialFieldValue sfValue = ((DfaFactMapValue)qualifier).get(DfaFactType.SPECIAL_FIELD_VALUE);

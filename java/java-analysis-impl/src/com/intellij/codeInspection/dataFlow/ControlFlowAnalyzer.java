@@ -179,9 +179,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     for (DfaValue value : myFactory.getValues()) {
       if (value instanceof DfaVariableValue) {
         DfaVariableValue var = (DfaVariableValue)value;
-        DfaVariableSource source = var.getSource();
-        if (source instanceof Synthetic) {
-          if (((Synthetic)source).myLocation >= startOffset) {
+        VariableDescriptor descriptor = var.getDescriptor();
+        if (descriptor instanceof Synthetic) {
+          if (((Synthetic)descriptor).myLocation >= startOffset) {
             synthetics.add(var);
           }
         }
@@ -900,7 +900,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
       if (syntheticVar) {
-        expressionValue = getFactory().getVarFactory().createVariableValue(new DfaVariableSource() {
+        expressionValue = getFactory().getVarFactory().createVariableValue(new VariableDescriptor() {
           @Override
           public boolean isStable() {
             return true;
@@ -2114,7 +2114,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    * @return true if supplied variable is a temp variable.
    */
   public static boolean isTempVariable(@NotNull DfaVariableValue variable) {
-    return variable.getSource() instanceof Synthetic;
+    return variable.getDescriptor() instanceof Synthetic;
   }
 
   /**
@@ -2125,7 +2125,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return Arrays.stream(INLINERS).anyMatch(inliner -> inliner.mayInferPreciseType(expression));
   }
 
-  private static final class Synthetic implements DfaVariableSource {
+  private static final class Synthetic implements VariableDescriptor {
     private final int myLocation;
 
     private Synthetic(int location) {

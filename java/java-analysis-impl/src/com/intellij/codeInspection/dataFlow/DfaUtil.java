@@ -298,7 +298,7 @@ public class DfaUtil {
 
   static boolean isEffectivelyUnqualified(DfaVariableValue variableValue) {
     return variableValue.getQualifier() == null ||
-     variableValue.getQualifier().getSource() instanceof DfaExpressionFactory.ThisSource;
+     variableValue.getQualifier().getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor;
   }
 
   public static boolean hasImplicitImpureSuperCall(PsiClass aClass, PsiMethod constructor) {

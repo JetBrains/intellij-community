@@ -1020,7 +1020,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private boolean applyBooleanInequality(DfaValue var, DfaValue value) {
     if (!(var instanceof DfaVariableValue) ||
         !PsiType.BOOLEAN.equals(var.getType()) ||
-        ((DfaVariableValue)var).getSource() == SpecialField.UNBOX) {
+        ((DfaVariableValue)var).getDescriptor() == SpecialField.UNBOX) {
       return false;
     }
     if (!(value instanceof DfaConstValue)) return false;

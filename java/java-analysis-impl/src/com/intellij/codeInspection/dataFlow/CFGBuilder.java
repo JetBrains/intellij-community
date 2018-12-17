@@ -118,18 +118,18 @@ public class CFGBuilder {
   }
 
   /**
-   * Generate instructions to load a qualified field described by given source which qualifier is on the stack
+   * Generate instructions to load a qualified field described by given descriptor which qualifier is on the stack
    * <p>
    * Stack before: ... qualifier
    * <p>
    * Stack after: ... loaded_field
    *
-   * @param source a {@link DfaVariableSource} which describes a field to load
+   * @param descriptor a {@link VariableDescriptor} which describes a field to load
    * @param type a loaded field type
    * @return this builder
    */
-  public CFGBuilder getField(@NotNull DfaVariableSource source, @Nullable PsiType type) {
-    return add(new GetFieldInstruction(source, type));
+  public CFGBuilder getField(@NotNull VariableDescriptor descriptor, @Nullable PsiType type) {
+    return add(new GetFieldInstruction(descriptor, type));
   }
 
   /**

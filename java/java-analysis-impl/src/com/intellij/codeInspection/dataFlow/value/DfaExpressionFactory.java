@@ -65,7 +65,7 @@ public class DfaExpressionFactory {
   }
 
   private final DfaValueFactory myFactory;
-  private final Map<Integer, ArrayElementSource> myMockIndices = ContainerUtil.newHashMap();
+  private final Map<Integer, ArrayElementDescriptor> myArrayIndices = ContainerUtil.newHashMap();
 
   DfaExpressionFactory(DfaValueFactory factory) {
     myFactory = factory;
@@ -147,7 +147,7 @@ public class DfaExpressionFactory {
         if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, variable)) return constValue;
       }
     }
-    DfaVariableSource var = getAccessedVariableOrGetter(target);
+    VariableDescriptor var = getAccessedVariableOrGetter(target);
     if (var == null) {
       return null;
     }
@@ -216,27 +216,27 @@ public class DfaExpressionFactory {
 
   @Contract("null -> null")
   @Nullable
-  public static DfaVariableSource getAccessedVariableOrGetter(final PsiElement target) {
+  public static VariableDescriptor getAccessedVariableOrGetter(final PsiElement target) {
     SpecialField sf = SpecialField.findSpecialField(target);
     if (sf != null) {
       return sf;
     }
     if (target instanceof PsiVariable) {
-      return new PlainSource((PsiVariable)target);
+      return new PlainDescriptor((PsiVariable)target);
     }
     if (target instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)target;
       if (PropertyUtilBase.isSimplePropertyGetter(method) && isContractAllowedForGetter(method)) {
         String qName = PsiUtil.getMemberQualifiedName(method);
         if (qName == null || !FALSE_GETTERS.value(qName)) {
-          return new GetterSource(method);
+          return new GetterDescriptor(method);
         }
       }
       if (method.getParameterList().isEmpty()) {
         if ((JavaMethodContractUtil.isPure(method) ||
             AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) &&
             isContractAllowedForGetter(method)) {
-          return new GetterSource(method);
+          return new GetterDescriptor(method);
         }
       }
     }
@@ -315,23 +315,23 @@ public class DfaExpressionFactory {
         return getAdvancedExpressionDfaValue(constantArrayElement, componentType);
       }
     }
-    ArrayElementSource indexVariable = getArrayIndexVariable(index);
+    ArrayElementDescriptor indexVariable = getArrayIndexVariable(index);
     if (indexVariable == null) return null;
     return indexVariable.createValue(myFactory, arrayDfaVar, componentType);
   }
 
   @Nullable
-  private ArrayElementSource getArrayIndexVariable(int index) {
+  private ArrayElementDescriptor getArrayIndexVariable(int index) {
     if (index >= 0) {
-      return myMockIndices.computeIfAbsent(index, ArrayElementSource::new);
+      return myArrayIndices.computeIfAbsent(index, ArrayElementDescriptor::new);
     }
     return null;
   }
 
-  static final class PlainSource implements DfaVariableSource {
+  static final class PlainDescriptor implements VariableDescriptor {
     private final @NotNull PsiVariable myVariable;
 
-    PlainSource(@NotNull PsiVariable variable) {
+    PlainDescriptor(@NotNull PsiVariable variable) {
       myVariable = variable;
     }
 
@@ -367,19 +367,19 @@ public class DfaExpressionFactory {
            (!myVariable.hasModifierProperty(PsiModifier.FINAL) || !DfaUtil.hasInitializationHacks((PsiField)myVariable)))) {
         return factory.getVarFactory().createVariableValue(this, type);
       }
-      return DfaVariableSource.super.createValue(factory, qualifier, type);
+      return VariableDescriptor.super.createValue(factory, qualifier, type);
     }
 
     @Override
     public boolean equals(Object obj) {
-      return obj == this || obj instanceof PlainSource && ((PlainSource)obj).myVariable == myVariable;
+      return obj == this || obj instanceof PlainDescriptor && ((PlainDescriptor)obj).myVariable == myVariable;
     }
   }
 
-  private static final class GetterSource implements DfaVariableSource {
+  private static final class GetterDescriptor implements VariableDescriptor {
     private final @NotNull PsiMethod myGetter;
 
-    GetterSource(@NotNull PsiMethod getter) {
+    GetterDescriptor(@NotNull PsiMethod getter) {
       myGetter = getter;
     }
 
@@ -411,19 +411,19 @@ public class DfaExpressionFactory {
       if (myGetter.hasModifierProperty(PsiModifier.STATIC)) {
         return factory.getVarFactory().createVariableValue(this, type);
       }
-      return DfaVariableSource.super.createValue(factory, qualifier, type);
+      return VariableDescriptor.super.createValue(factory, qualifier, type);
     }
 
     @Override
     public boolean equals(Object obj) {
-      return obj == this || (obj instanceof GetterSource && ((GetterSource)obj).myGetter == myGetter);
+      return obj == this || (obj instanceof GetterDescriptor && ((GetterDescriptor)obj).myGetter == myGetter);
     }
   }
 
-  private static final class ArrayElementSource implements DfaVariableSource {
+  private static final class ArrayElementDescriptor implements VariableDescriptor {
     private final int myIndex;
 
-    ArrayElementSource(int index) {
+    ArrayElementDescriptor(int index) {
       myIndex = index;
     }
 
@@ -439,11 +439,11 @@ public class DfaExpressionFactory {
     }
   }
 
-  public static final class ThisSource implements DfaVariableSource {
+  public static final class ThisDescriptor implements VariableDescriptor {
     @NotNull
     private final PsiClass myQualifier;
 
-    ThisSource(@NotNull PsiClass qualifier) {
+    ThisDescriptor(@NotNull PsiClass qualifier) {
       myQualifier = qualifier;
     }
 
@@ -465,7 +465,7 @@ public class DfaExpressionFactory {
 
     @Override
     public boolean equals(Object obj) {
-      return this == obj || obj instanceof ThisSource && ((ThisSource)obj).myQualifier == myQualifier;
+      return this == obj || obj instanceof ThisDescriptor && ((ThisDescriptor)obj).myQualifier == myQualifier;
     }
   }
 }

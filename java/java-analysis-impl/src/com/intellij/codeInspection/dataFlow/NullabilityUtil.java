@@ -26,7 +26,7 @@ import java.util.List;
 public class NullabilityUtil {
 
   static DfaNullability calcCanBeNull(DfaVariableValue value) {
-    if (value.getSource() instanceof DfaExpressionFactory.ThisSource) {
+    if (value.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor) {
       return DfaNullability.NOT_NULL;
     }
     PsiModifierListOwner var = value.getPsiVariable();

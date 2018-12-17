@@ -63,7 +63,7 @@ public class DfaBoxedValue extends DfaValue {
 
     @Nullable
     public DfaValue createBoxed(DfaValue valueToWrap, @Nullable PsiType type) {
-      if (valueToWrap instanceof DfaVariableValue && ((DfaVariableValue)valueToWrap).getSource() == SpecialField.UNBOX) {
+      if (valueToWrap instanceof DfaVariableValue && ((DfaVariableValue)valueToWrap).getDescriptor() == SpecialField.UNBOX) {
         return ((DfaVariableValue)valueToWrap).getQualifier();
       }
       if (valueToWrap instanceof DfaConstValue || valueToWrap instanceof DfaFactMapValue) {

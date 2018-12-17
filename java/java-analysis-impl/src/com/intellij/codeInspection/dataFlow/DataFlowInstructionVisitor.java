@@ -79,7 +79,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     if (!(target instanceof DfaVariableValue)) return false;
     DfaVariableValue var = (DfaVariableValue)target;
     if (!(var.getPsiVariable() instanceof PsiField) || var.getQualifier() == null ||
-        !(var.getQualifier().getSource() instanceof DfaExpressionFactory.ThisSource)) {
+        !(var.getQualifier().getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor)) {
       return false;
     }
 

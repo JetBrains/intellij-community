@@ -5,7 +5,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableSource;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -16,16 +16,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GetFieldInstruction extends Instruction implements ExpressionPushingInstruction {
   @Nullable private final PsiType myTargetType;
-  @NotNull private final DfaVariableSource mySource;
+  @NotNull private final VariableDescriptor myDescriptor;
   @Nullable private final PsiExpression myAnchor;
 
-  public GetFieldInstruction(@NotNull DfaVariableSource source, @Nullable PsiType targetType) {
-    this(null, source, targetType);
+  public GetFieldInstruction(@NotNull VariableDescriptor descriptor, @Nullable PsiType targetType) {
+    this(null, descriptor, targetType);
   }
 
-  public GetFieldInstruction(@Nullable PsiExpression anchor, @NotNull DfaVariableSource source, @Nullable PsiType targetType) {
+  public GetFieldInstruction(@Nullable PsiExpression anchor, @NotNull VariableDescriptor descriptor, @Nullable PsiType targetType) {
     myTargetType = targetType;
-    mySource = source;
+    myDescriptor = descriptor;
     myAnchor = anchor;
   }
 
@@ -35,8 +35,8 @@ public class GetFieldInstruction extends Instruction implements ExpressionPushin
   }
 
   @NotNull
-  public DfaVariableSource getSource() {
-    return mySource;
+  public VariableDescriptor getDescriptor() {
+    return myDescriptor;
   }
 
   @Nullable
@@ -46,7 +46,7 @@ public class GetFieldInstruction extends Instruction implements ExpressionPushin
 
   @Override
   public String toString() {
-    return "GET_FIELD " + mySource;
+    return "GET_FIELD " + myDescriptor;
   }
 
   @Nullable
