@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
@@ -94,30 +95,27 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   @Override
   public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns, byte frameworkId) throws IOException {
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/test/details";
-    ThrowableComputable<List<String>, IOException> query =
-      () -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
-        r -> {
-          r.write(testFqns.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",", "[", "]")));
-          return ContainerUtil.immutableList(new ObjectMapper().readValue(r.getInputStream(), String[].class));
-        });
-    return executeQuery(query, project);
+    return executeQuery(() -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
+      r -> {
+        r.write(testFqns.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",", "[", "]")));
+        return Arrays.stream(new ObjectMapper().readValue(r.getInputStream(), TestDetails[].class))
+          .map(details -> details.files)
+          .filter(Objects::nonNull)
+          .flatMap(Collection::stream)
+          .collect(Collectors.toList());
+      }), project);
   }
 
   @NotNull
   @Override
   public List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassName, byte frameworkId) throws IOException {
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/files/affected/by-test-classes";
-    ThrowableComputable<List<String>, IOException> query =
-      () -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
-        r -> {
-          r.write("[" + testClassName +  "]");
-          return Arrays.stream(new ObjectMapper().readValue(r.getInputStream(), TestDetails[].class))
-            .map(details -> details.files)
-            .filter(Objects::nonNull)
-            .flatMap(Collection::stream)
-            .collect(Collectors.toList());
-        });
-    return executeQuery(query, project);
+    return executeQuery(() -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
+      r -> {
+        r.write("[\"" + testClassName +  "\"]");
+        Map<String, List<String>> map = new ObjectMapper().readValue(r.getInputStream(), new TypeReference<Map<String, List<String>>>() {});
+        return ObjectUtils.notNull(ContainerUtil.getFirstItem(map.values()), Collections.emptyList());
+      }), project);
   }
 
   @NotNull
