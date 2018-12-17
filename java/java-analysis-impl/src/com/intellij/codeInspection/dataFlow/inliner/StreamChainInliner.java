@@ -738,7 +738,7 @@ public class StreamChainInliner implements CallInliner {
     if (qualifierExpression != null) {
       builder.pushExpression(qualifierExpression)
         .chain(firstStep::before)
-        .getField(sizeField, PsiType.INT)
+        .unwrap(sizeField, PsiType.INT)
         .push(builder.getFactory().getInt(0))
         .ifCondition(JavaTokenType.GT);
     } else {

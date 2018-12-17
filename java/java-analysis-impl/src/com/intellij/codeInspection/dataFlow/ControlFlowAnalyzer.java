@@ -533,7 +533,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         length = SpecialField.COLLECTION_SIZE;
       }
       if (length != null) {
-        addInstruction(new GetFieldInstruction(length, PsiType.INT));
+        addInstruction(new UnwrapSpecialFieldInstruction(length, PsiType.INT));
         addInstruction(new PushInstruction(myFactory.getInt(0), null));
         addInstruction(new BinopInstruction(JavaTokenType.EQEQ, iteratedValue, PsiType.BOOLEAN));
         addInstruction(new ConditionalGotoInstruction(loopEndOffset, false, null));
@@ -1493,7 +1493,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(actualType)) {
       PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(actualType); // expectedType is not always precise unboxed type
-      addInstruction(new GetFieldInstruction(SpecialField.UNBOX, unboxedType));
+      addInstruction(new UnwrapSpecialFieldInstruction(SpecialField.UNBOX, unboxedType));
     }
     else if (TypeConversionUtil.isPrimitiveAndNotNull(actualType) && TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType)) {
       addConditionalRuntimeThrow();

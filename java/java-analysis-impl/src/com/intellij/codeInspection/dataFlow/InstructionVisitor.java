@@ -159,10 +159,10 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, state);
   }
 
-  public DfaInstructionState[] visitGetField(GetFieldInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+  public DfaInstructionState[] visitUnwrapField(UnwrapSpecialFieldInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
     DfaValue value = state.pop();
-    DfaValue field = instruction.getDescriptor().createValue(runner.getFactory(), value, instruction.getTargetType());
-    pushExpressionResult(field, instruction, state);
+    DfaValue field = instruction.getSpecialField().createValue(runner.getFactory(), value, instruction.getTargetType());
+    state.push(field);
     return nextInstruction(instruction, runner, state);
   }
 

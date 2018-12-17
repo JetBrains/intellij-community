@@ -18,7 +18,10 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.inliner.CallInliner;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -118,18 +121,18 @@ public class CFGBuilder {
   }
 
   /**
-   * Generate instructions to load a qualified field described by given descriptor which qualifier is on the stack
+   * Generate instructions to load a special field value which qualifier is on the stack
    * <p>
    * Stack before: ... qualifier
    * <p>
    * Stack after: ... loaded_field
    *
-   * @param descriptor a {@link VariableDescriptor} which describes a field to load
+   * @param descriptor a {@link SpecialField} which describes a field to get
    * @param type a loaded field type
    * @return this builder
    */
-  public CFGBuilder getField(@NotNull VariableDescriptor descriptor, @Nullable PsiType type) {
-    return add(new GetFieldInstruction(descriptor, type));
+  public CFGBuilder unwrap(@NotNull SpecialField descriptor, @Nullable PsiType type) {
+    return add(new UnwrapSpecialFieldInstruction(descriptor, type));
   }
 
   /**
