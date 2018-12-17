@@ -32,9 +32,10 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    */
   @NonNls @Language("RegExp")
   public static final String VALID_ID_PATTERN = "[a-zA-Z_0-9.-]+";
+  private static final java.util.regex.Pattern COMPILED_VALID_ID_PATTERN = java.util.regex.Pattern.compile(VALID_ID_PATTERN);
 
   public static boolean isValidID(@NotNull String id) {
-    return !id.isEmpty() && id.matches(VALID_ID_PATTERN);
+    return !id.isEmpty() && COMPILED_VALID_ID_PATTERN.matcher(id).matches();
   }
 
   /**
