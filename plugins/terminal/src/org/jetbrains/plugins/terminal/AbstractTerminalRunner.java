@@ -212,7 +212,12 @@ public abstract class AbstractTerminalRunner<T extends Process> {
           // Resize ASAP once the process started.
           // Even though it will be resized in invokeLater, it takes some time until invokeLater is executed.
           // Sometimes it's enough to have cropped output, if the output is restricted by the terminal width.
-          TerminalStarter.resizeTerminal(terminalWidget.getTerminal(), connector, size, RequestOrigin.User);
+          try {
+            TerminalStarter.resizeTerminal(terminalWidget.getTerminal(), connector, size, RequestOrigin.User);
+          }
+          catch (Exception e) {
+            LOG.warn("Cannot resize right after creation, process.isAlive: " + process.isAlive(), e);
+          }
         }
 
         ApplicationManager.getApplication().invokeLater(() -> {
