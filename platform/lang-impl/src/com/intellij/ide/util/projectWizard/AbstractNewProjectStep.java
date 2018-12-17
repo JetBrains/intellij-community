@@ -40,7 +40,7 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
   private static final Logger LOG = Logger.getInstance(AbstractNewProjectStep.class);
 
   protected AbstractNewProjectStep(@NotNull Customization<T> customization) {
-    super("Select Project Type", true);
+    super(null, true);
 
     AbstractCallback<T> callback = customization.createCallback();
     ProjectSpecificAction projectSpecificAction = customization.createProjectSpecificAction(callback);
