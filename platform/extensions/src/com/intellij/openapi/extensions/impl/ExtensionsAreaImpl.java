@@ -204,34 +204,34 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       registerExtensionPoint(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME, EPAvailabilityListenerExtension.class.getName(),
                              new UndefinedPluginDescriptor(), ExtensionPoint.Kind.INTERFACE);
     point.addExtensionPointListener(new ExtensionPointListener<EPAvailabilityListenerExtension>() {
-        @Override
-        public void extensionAdded(@NotNull EPAvailabilityListenerExtension extension, @Nullable PluginDescriptor pluginDescriptor) {
-          synchronized (myAvailabilityListeners) {
-            Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extension.getExtensionPointName());
-            for (Iterator<ExtensionPointAvailabilityListener> iterator = listeners.iterator(); iterator.hasNext();) {
-              ExtensionPointAvailabilityListener listener = iterator.next();
-              if (listener.getClass().getName().equals(extension.getListenerClass())) {
-                iterator.remove();
-                return;
-              }
+      @Override
+      public void extensionRemoved(@NotNull EPAvailabilityListenerExtension extension, @Nullable PluginDescriptor pluginDescriptor) {
+        synchronized (myAvailabilityListeners) {
+          Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extension.getExtensionPointName());
+          for (Iterator<ExtensionPointAvailabilityListener> iterator = listeners.iterator(); iterator.hasNext();) {
+            ExtensionPointAvailabilityListener listener = iterator.next();
+            if (listener.getClass().getName().equals(extension.getListenerClass())) {
+              iterator.remove();
+              return;
             }
           }
-          LOG.warn("Failed to find EP availability listener: " + extension.getListenerClass());
         }
+        LOG.warn("Failed to find EP availability listener: " + extension.getListenerClass());
+      }
 
-        @Override
-        public void extensionRemoved(@NotNull EPAvailabilityListenerExtension extension, @Nullable PluginDescriptor pluginDescriptor) {
-          try {
-            String epName = extension.getExtensionPointName();
+      @Override
+      public void extensionAdded(@NotNull EPAvailabilityListenerExtension extension, @Nullable PluginDescriptor pluginDescriptor) {
+        try {
+          String epName = extension.getExtensionPointName();
 
-            ExtensionPointAvailabilityListener listener = (ExtensionPointAvailabilityListener) instantiate(extension.loadListenerClass());
-            addAvailabilityListener(epName, listener);
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
+          ExtensionPointAvailabilityListener listener = (ExtensionPointAvailabilityListener) instantiate(extension.loadListenerClass());
+          addAvailabilityListener(epName, listener);
         }
-      });
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @NotNull
