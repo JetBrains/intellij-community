@@ -262,7 +262,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
     }
 
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
       if (!myIsRunningAction) resetState();
     }
 

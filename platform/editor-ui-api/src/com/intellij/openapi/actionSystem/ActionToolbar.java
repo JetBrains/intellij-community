@@ -100,7 +100,7 @@ public interface ActionToolbar {
 
   void setReservePlaceAutoPopupIcon(boolean reserve);
 
-  void setSecondaryActionsTooltip(String secondaryActionsTooltip);
+  void setSecondaryActionsTooltip(@NotNull String secondaryActionsTooltip);
 
   void setSecondaryActionsIcon(Icon icon);
 
@@ -109,6 +109,7 @@ public interface ActionToolbar {
 
   void setMiniMode(boolean minimalMode);
 
+  @NotNull
   DataContext getToolbarDataContext();
 
   /**

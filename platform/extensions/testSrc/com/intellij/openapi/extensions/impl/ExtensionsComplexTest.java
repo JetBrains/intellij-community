@@ -1,9 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -103,14 +101,15 @@ public class ExtensionsComplexTest {
     final Element element = JDOMUtil.load(data);
     for (final Object o : element.getChildren()) {
       Element child = (Element)o;
-      ((ExtensionsAreaImpl)Extensions.getArea(instance)).registerExtensionPoint(ExtensionsComplexTest.PLUGIN_NAME, child);
+      Extensions.getArea(instance)
+        .registerExtensionPoint(new DefaultPluginDescriptor(PluginId.getId(PLUGIN_NAME)), child);
     }
   }
 
   private static void initExtensions(@NonNls String data, AreaInstance instance) throws IOException, JDOMException {
     final Element element = JDOMUtil.load(data);
     for (final Element child : element.getChildren()) {
-      ExtensionsImplTest.registerExtension(((ExtensionsAreaImpl)Extensions.getArea(instance)), element.getNamespaceURI(), child);
+      ExtensionsImplTest.registerExtension((ExtensionsAreaImpl)Extensions.getArea(instance), element.getNamespaceURI(), child);
     }
   }
 

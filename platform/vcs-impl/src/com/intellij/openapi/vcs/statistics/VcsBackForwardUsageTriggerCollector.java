@@ -28,7 +28,7 @@ public class VcsBackForwardUsageTriggerCollector extends ApplicationUsageTrigger
     public void componentsInitialized() {
       ApplicationManager.getApplication().getMessageBus().connect().subscribe(AnActionListener.TOPIC, new AnActionListener() {
         @Override
-        public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent e) {
+        public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent e) {
           if (action instanceof BackAction ||
               action instanceof ForwardAction) {
             FUSApplicationUsageTrigger.getInstance().trigger(VcsBackForwardUsageTriggerCollector.class, getContextName(e));

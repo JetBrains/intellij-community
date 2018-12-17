@@ -134,7 +134,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     busConnection.subscribe(ToolWindowManagerListener.TOPIC, myDispatcher.getMulticaster());
     busConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         if (myCurrentState != KeyState.hold) {
           resetHoldState();
         }

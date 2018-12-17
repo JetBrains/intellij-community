@@ -208,7 +208,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myActionManager = manager;
     AnActionListener actionListener = new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         JBPopup hint = getDocInfoHint();
         if (hint != null) {
           if (action instanceof HintManagerImpl.ActionToIgnore) return;

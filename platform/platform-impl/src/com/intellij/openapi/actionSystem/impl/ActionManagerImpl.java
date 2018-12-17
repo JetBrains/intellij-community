@@ -15,7 +15,6 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
@@ -31,7 +30,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,7 +46,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -57,49 +54,52 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.Timer;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.*;
 
 public final class ActionManagerImpl extends ActionManagerEx implements Disposable {
-  public static final String ACTION_ELEMENT_NAME = "action";
-  public static final String GROUP_ELEMENT_NAME = "group";
-  public static final String CLASS_ATTR_NAME = "class";
-  public static final String ID_ATTR_NAME = "id";
-  public static final String INTERNAL_ATTR_NAME = "internal";
-  public static final String ICON_ATTR_NAME = "icon";
-  public static final String ADD_TO_GROUP_ELEMENT_NAME = "add-to-group";
-  public static final String SHORTCUT_ELEMENT_NAME = "keyboard-shortcut";
-  public static final String MOUSE_SHORTCUT_ELEMENT_NAME = "mouse-shortcut";
-  public static final String DESCRIPTION = "description";
-  public static final String TEXT_ATTR_NAME = "text";
-  public static final String POPUP_ATTR_NAME = "popup";
-  public static final String COMPACT_ATTR_NAME = "compact";
-  public static final String SEPARATOR_ELEMENT_NAME = "separator";
-  public static final String REFERENCE_ELEMENT_NAME = "reference";
-  public static final String ABBREVIATION_ELEMENT_NAME = "abbreviation";
-  public static final String GROUPID_ATTR_NAME = "group-id";
-  public static final String ANCHOR_ELEMENT_NAME = "anchor";
-  public static final String FIRST = "first";
-  public static final String LAST = "last";
-  public static final String BEFORE = "before";
-  public static final String AFTER = "after";
-  public static final String SECONDARY = "secondary";
-  public static final String RELATIVE_TO_ACTION_ATTR_NAME = "relative-to-action";
-  public static final String FIRST_KEYSTROKE_ATTR_NAME = "first-keystroke";
-  public static final String SECOND_KEYSTROKE_ATTR_NAME = "second-keystroke";
-  public static final String REMOVE_SHORTCUT_ATTR_NAME = "remove";
-  public static final String REPLACE_SHORTCUT_ATTR_NAME = "replace-all";
-  public static final String KEYMAP_ATTR_NAME = "keymap";
-  public static final String KEYSTROKE_ATTR_NAME = "keystroke";
-  public static final String REF_ATTR_NAME = "ref";
-  public static final String VALUE_ATTR_NAME = "value";
-  public static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
-  public static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
-  public static final String OVERRIDES_ATTR_NAME = "overrides";
-  public static final String KEEP_CONTENT_ATTR_NAME = "keep-content";
-  public static final String PROJECT_TYPE = "project-type";
-  public static final String UNREGISTER_ELEMENT_NAME = "unregister";
+  private static final String ACTION_ELEMENT_NAME = "action";
+  private static final String GROUP_ELEMENT_NAME = "group";
+  private static final String CLASS_ATTR_NAME = "class";
+  private static final String ID_ATTR_NAME = "id";
+  private static final String INTERNAL_ATTR_NAME = "internal";
+  private static final String ICON_ATTR_NAME = "icon";
+  private static final String ADD_TO_GROUP_ELEMENT_NAME = "add-to-group";
+  private static final String SHORTCUT_ELEMENT_NAME = "keyboard-shortcut";
+  private static final String MOUSE_SHORTCUT_ELEMENT_NAME = "mouse-shortcut";
+  private static final String DESCRIPTION = "description";
+  private static final String TEXT_ATTR_NAME = "text";
+  private static final String POPUP_ATTR_NAME = "popup";
+  private static final String COMPACT_ATTR_NAME = "compact";
+  private static final String SEPARATOR_ELEMENT_NAME = "separator";
+  private static final String REFERENCE_ELEMENT_NAME = "reference";
+  private static final String ABBREVIATION_ELEMENT_NAME = "abbreviation";
+  private static final String GROUPID_ATTR_NAME = "group-id";
+  private static final String ANCHOR_ELEMENT_NAME = "anchor";
+  private static final String FIRST = "first";
+  private static final String LAST = "last";
+  private static final String BEFORE = "before";
+  private static final String AFTER = "after";
+  private static final String SECONDARY = "secondary";
+  private static final String RELATIVE_TO_ACTION_ATTR_NAME = "relative-to-action";
+  private static final String FIRST_KEYSTROKE_ATTR_NAME = "first-keystroke";
+  private static final String SECOND_KEYSTROKE_ATTR_NAME = "second-keystroke";
+  private static final String REMOVE_SHORTCUT_ATTR_NAME = "remove";
+  private static final String REPLACE_SHORTCUT_ATTR_NAME = "replace-all";
+  private static final String KEYMAP_ATTR_NAME = "keymap";
+  private static final String KEYSTROKE_ATTR_NAME = "keystroke";
+  private static final String REF_ATTR_NAME = "ref";
+  private static final String VALUE_ATTR_NAME = "value";
+  private static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
+  private static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
+  private static final String OVERRIDES_ATTR_NAME = "overrides";
+  private static final String KEEP_CONTENT_ATTR_NAME = "keep-content";
+  private static final String PROJECT_TYPE = "project-type";
+  private static final String UNREGISTER_ELEMENT_NAME = "unregister";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionManagerImpl");
   private static final int DEACTIVATED_TIMER_DELAY = 5000;
@@ -108,16 +108,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   private final Object myLock = new Object();
   private final Map<String,AnAction> myId2Action = new THashMap<>();
-  private final Map<PluginId, THashSet<String>> myPlugin2Id = new THashMap<>();
+  private final MultiMap<PluginId, String> myPlugin2Id = new MultiMap<>();
   private final TObjectIntHashMap<String> myId2Index = new TObjectIntHashMap<>();
   private final Map<Object,String> myAction2Id = new THashMap<>();
   private final MultiMap<String,String> myId2GroupId = new MultiMap<>();
   private final List<String> myNotRegisteredInternalActionIds = new ArrayList<>();
   private final List<AnActionListener> myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<ActionPopupMenuListener> myActionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final KeymapManagerEx myKeymapManager;
   private final DataManager myDataManager;
-  private final List<Object> myPopups = new ArrayList<>();
+  private final List<Object/*ActionPopupMenuImpl|JBPopup*/> myPopups = new ArrayList<>();
   private final Map<AnAction, DataContext> myQueuedNotifications = new LinkedHashMap<>();
   private final Map<AnAction, AnActionEvent> myQueuedNotificationsEvents = new LinkedHashMap<>();
   private MyTimer myTimer;
@@ -126,9 +125,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private String myPrevPerformedActionId;
   private long myLastTimeEditorWasTypedIn;
   private boolean myTransparentOnlyUpdate;
-  private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
   private final AnActionListener messageBusPublisher;
-  private int myAnonymousGroupIdCounter = 0;
+  private int myAnonymousGroupIdCounter;
 
   ActionManagerImpl(@NotNull KeymapManager keymapManager, DataManager dataManager, @NotNull MessageBus messageBus) {
     myKeymapManager = (KeymapManagerEx)keymapManager;
@@ -258,10 +256,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return CommonBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, value == null ? "" : value);
   }
 
-  public static boolean checkRelativeToAction(final String relativeToActionId,
-                                       @NotNull final Anchor anchor,
-                                       @NotNull final String actionName,
-                                       @Nullable final PluginId pluginId) {
+  private static boolean checkRelativeToAction(final String relativeToActionId,
+                                               @NotNull final Anchor anchor,
+                                               @NotNull final String actionName,
+                                               @Nullable final PluginId pluginId) {
     if ((Anchor.BEFORE == anchor || Anchor.AFTER == anchor) && relativeToActionId == null) {
       reportActionError(pluginId, actionName + ": \"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
       return false;
@@ -270,9 +268,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Nullable
-  public static Anchor parseAnchor(final String anchorStr,
-                            @Nullable final String actionName,
-                            @Nullable final PluginId pluginId) {
+  private static Anchor parseAnchor(final String anchorStr,
+                                    @Nullable final String actionName,
+                                    @Nullable final PluginId pluginId) {
     if (anchorStr == null) {
       return Anchor.LAST;
     }
@@ -383,22 +381,22 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void addTimerListener(int delay, final TimerListener listener) {
+  public void addTimerListener(int delay, @NotNull final TimerListener listener) {
     _addTimerListener(listener, false);
   }
 
   @Override
-  public void removeTimerListener(TimerListener listener) {
+  public void removeTimerListener(@NotNull TimerListener listener) {
     _removeTimerListener(listener, false);
   }
 
   @Override
-  public void addTransparentTimerListener(int delay, TimerListener listener) {
+  public void addTransparentTimerListener(int delay, @NotNull TimerListener listener) {
     _addTimerListener(listener, true);
   }
 
   @Override
-  public void removeTransparentTimerListener(TimerListener listener) {
+  public void removeTransparentTimerListener(@NotNull TimerListener listener) {
     _removeTimerListener(listener, true);
   }
 
@@ -425,7 +423,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @NotNull
   @Override
-  public ActionPopupMenu createActionPopupMenu(String place, @NotNull ActionGroup group) {
+  public ActionPopupMenu createActionPopupMenu(@NotNull String place, @NotNull ActionGroup group) {
     return new ActionPopupMenuImpl(place, group, this, null);
   }
 
@@ -437,7 +435,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @NotNull
   @Override
-  public ActionToolbar createActionToolbar(final String place, @NotNull final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
+  public ActionToolbar createActionToolbar(@NotNull final String place, @NotNull final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
     return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myDataManager, this, myKeymapManager);
   }
 
@@ -461,7 +459,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Nullable
-  private AnAction getActionImpl(String id, boolean canReturnStub) {
+  private AnAction getActionImpl(@NotNull String id, boolean canReturnStub) {
     AnAction action;
     synchronized (myLock) {
       action = myId2Action.get(id);
@@ -510,6 +508,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
+  @NotNull
   @Override
   public String[] getActionIds(@NotNull String idPrefix) {
     synchronized (myLock) {
@@ -530,12 +529,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @NotNull
   @Override
-  public JComponent createButtonToolbar(final String actionPlace, @NotNull final ActionGroup messageActionGroup) {
+  public JComponent createButtonToolbar(@NotNull final String actionPlace, @NotNull final ActionGroup messageActionGroup) {
     return new ButtonToolbarImpl(actionPlace, messageActionGroup, myDataManager, this);
   }
 
   @Override
-  public AnAction getActionOrStub(String id) {
+  public AnAction getActionOrStub(@NotNull String id) {
     return getActionImpl(id, true);
   }
 
@@ -632,17 +631,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return null;
     }
-    boolean customClass = false;
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null) { // use default group if class isn't specified
-      if ("true".equals(element.getAttributeValue(COMPACT_ATTR_NAME))) {
-        className = DefaultCompactActionGroup.class.getName();
-      } else {
-        className = DefaultActionGroup.class.getName();
-      }
+      className = "true".equals(element.getAttributeValue(COMPACT_ATTR_NAME))
+                  ? DefaultCompactActionGroup.class.getName()
+                  : DefaultActionGroup.class.getName();
     }
     try {
       ActionGroup group;
+      boolean customClass = false;
       if (DefaultActionGroup.class.getName().equals(className)) {
         group = new DefaultActionGroup();
       } else if (DefaultCompactActionGroup.class.getName().equals(className)) {
@@ -677,7 +674,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
 
       if (id == null) {
-        id = "<anonymous-group-" + (myAnonymousGroupIdCounter++) + ">";
+        id = "<anonymous-group-" + myAnonymousGroupIdCounter++ + ">";
       }
 
       registerOrReplaceActionInner(element, id, group, pluginId);
@@ -991,7 +988,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       myId2Index.put(actionId, myRegisteredActionsCount++);
       myAction2Id.put(action, actionId);
       if (pluginId != null && !(action instanceof ActionGroup)){
-        myPlugin2Id.computeIfAbsent(pluginId, k -> new THashSet<>()).add(actionId);
+        myPlugin2Id.putValue(pluginId, actionId);
       }
       action.registerCustomShortcutSet(new ProxyShortcutSet(actionId, myKeymapManager), null);
     }
@@ -1056,11 +1053,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       AnAction oldValue = myId2Action.remove(actionId);
       myAction2Id.remove(oldValue);
       myId2Index.remove(actionId);
-      for (PluginId pluginName : myPlugin2Id.keySet()) {
-        final THashSet<String> pluginActions = myPlugin2Id.get(pluginName);
-        if (pluginActions != null) {
-          pluginActions.remove(actionId);
-        }
+
+      for (final Map.Entry<PluginId, Collection<String>> entry : myPlugin2Id.entrySet()) {
+        Collection<String> pluginActions = entry.getValue();
+        pluginActions.remove(actionId);
       }
       if (removeFromGroups) {
         for (String groupId : myId2GroupId.get(actionId)) {
@@ -1086,22 +1082,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return ArrayUtilRt.toStringArray(myPlugin2Id.get(pluginName));
   }
 
-  public void addActionPopup(final Object menu) {
-    boolean added = myPopups.add(menu);
-    if (added && menu instanceof ActionPopupMenu) {
-      for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
-        listener.actionPopupMenuCreated((ActionPopupMenu)menu);
-      }
-    }
+  void addActionPopup(@NotNull Object /*ActionPopupMenuImpl|JBPopup*/menu) {
+    myPopups.add(menu);
   }
 
-  void removeActionPopup(final Object menu) {
+  void removeActionPopup(@NotNull Object /*ActionPopupMenuImpl|JBPopup*/ menu) {
     final boolean removed = myPopups.remove(menu);
-    if (removed && menu instanceof ActionPopupMenu) {
-      for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
-        listener.actionPopupMenuReleased((ActionPopupMenu)menu);
-      }
-    }
     if (removed && myPopups.isEmpty()) {
       flushActionPerformed();
     }
@@ -1138,17 +1124,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void addActionPopupMenuListener(ActionPopupMenuListener listener, Disposable parentDisposable) {
-    myActionPopupMenuListeners.add(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        myActionPopupMenuListeners.remove(listener);
-      }
-    });
-  }
-
-  @Override
   public void replaceAction(@NotNull String actionId, @NotNull AnAction newAction) {
     Class callerClass = ReflectionUtil.getGrandCallerClass();
     PluginId pluginId = callerClass != null ? PluginManagerCore.getPluginByClassName(callerClass.getName()) : null;
@@ -1158,9 +1133,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private AnAction replaceAction(@NotNull String actionId, @NotNull AnAction newAction, @Nullable PluginId pluginId) {
     AnAction oldAction = newAction instanceof OverridingAction ? getAction(actionId) : getActionOrStub(actionId);
     if (oldAction != null) {
-      if (newAction instanceof OverridingAction) {
-        myBaseActions.put((OverridingAction) newAction, oldAction);
-      }
       boolean isGroup = oldAction instanceof ActionGroup;
       if (isGroup != newAction instanceof ActionGroup) {
         throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
@@ -1178,17 +1150,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return oldAction;
   }
 
-  /**
-   * Returns the action overridden by the specified overriding action (with overrides="true" in plugin.xml).
-   */
-  public AnAction getBaseAction(OverridingAction overridingAction) {
-    return myBaseActions.get(overridingAction);
-  }
-
   private void flushActionPerformed() {
-    final Set<AnAction> actions = myQueuedNotifications.keySet();
-    for (final AnAction eachAction : actions) {
-      final DataContext eachContext = myQueuedNotifications.get(eachAction);
+    for (final Map.Entry<AnAction, DataContext> entry : myQueuedNotifications.entrySet()) {
+      AnAction eachAction = entry.getKey();
+      final DataContext eachContext = entry.getValue();
       fireAfterActionPerformed(eachAction, eachContext, myQueuedNotificationsEvents.get(eachAction));
     }
     myQueuedNotifications.clear();
@@ -1222,7 +1187,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+  public void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
     myPrevPerformedActionId = myLastPreformedActionId;
     myLastPreformedActionId = getId(action);
     //noinspection AssignmentToStaticFieldFromInstanceMethod
@@ -1297,6 +1262,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
+  @NotNull
   @Override
   public ActionCallback tryToExecute(@NotNull final AnAction action, @NotNull final InputEvent inputEvent, @Nullable final Component contextComponent, @Nullable final String place,
                                      boolean now) {
@@ -1309,7 +1275,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     if (now) {
       doRunnable.run();
-    } else {
+    }
+    else {
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(doRunnable);
     }
@@ -1351,15 +1318,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
         fireBeforeActionPerformed(action, context, event);
 
-        UIUtil.addAwtListener(new AWTEventListener() {
-          @Override
-          public void eventDispatched(AWTEvent event) {
-            if (event.getID() == WindowEvent.WINDOW_OPENED ||event.getID() == WindowEvent.WINDOW_ACTIVATED) {
-              if (!result.isProcessed()) {
-                final WindowEvent we = (WindowEvent)event;
-                IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(result.createSetDoneRunnable(),
-                                                                                               ModalityState.defaultModalityState());
-              }
+        UIUtil.addAwtListener(event1 -> {
+          if (event1.getID() == WindowEvent.WINDOW_OPENED || event1.getID() == WindowEvent.WINDOW_ACTIVATED) {
+            if (!result.isProcessed()) {
+              final WindowEvent we = (WindowEvent)event1;
+              IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(result.createSetDoneRunnable(),
+                                                                                             ModalityState.defaultModalityState());
             }
           }
         }, AWTEvent.WINDOW_EVENT_MASK, result);
@@ -1400,11 +1364,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       return "Action manager timer";
     }
 
-    public void addTimerListener(TimerListener listener, boolean transparent){
+    void addTimerListener(@NotNull TimerListener listener, boolean transparent){
       (transparent ? myTransparentTimerListeners : myTimerListeners).add(listener);
     }
 
-    public void removeTimerListener(TimerListener listener, boolean transparent){
+    void removeTimerListener(@NotNull TimerListener listener, boolean transparent){
       (transparent ? myTransparentTimerListeners : myTimerListeners).remove(listener);
     }
 
@@ -1424,8 +1388,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       boolean transparentOnly = myLastTimePerformed == lastEventCount;
 
       try {
-        Set<TimerListener> notified = new HashSet<>();
         myTransparentOnlyUpdate = transparentOnly;
+        Set<TimerListener> notified = new HashSet<>();
         notifyListeners(myTransparentTimerListeners, notified);
 
         if (transparentOnly) {
@@ -1439,7 +1403,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
 
-    private void notifyListeners(final List<TimerListener> timerListeners, final Set<? super TimerListener> notified) {
+    private void notifyListeners(final List<? extends TimerListener> timerListeners, final Set<? super TimerListener> notified) {
       for (TimerListener listener : timerListeners) {
         if (notified.add(listener)) {
           runListenerAction(listener);
@@ -1447,7 +1411,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
 
-    private void runListenerAction(final TimerListener listener) {
+    private void runListenerAction(@NotNull TimerListener listener) {
       ModalityState modalityState = listener.getModalityState();
       if (modalityState == null) return;
       LOG.debug("notify ", listener);
