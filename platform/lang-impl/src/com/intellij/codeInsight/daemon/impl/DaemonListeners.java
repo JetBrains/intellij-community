@@ -197,7 +197,7 @@ public class DaemonListeners implements Disposable {
     eventMulticaster.addEditorMouseMotionListener(new MyEditorMouseMotionListener(), this);
     eventMulticaster.addEditorMouseListener(new MyEditorMouseListener(myTooltipController), this);
 
-    EditorTrackerListener editorTrackerListener = new EditorTrackerListener() {
+    editorTracker.addEditorTrackerListener(new EditorTrackerListener() {
       private List<Editor> myActiveEditors = Collections.emptyList();
       @Override
       public void activeEditorsChanged(@NotNull List<Editor> editors) {
@@ -215,10 +215,8 @@ public class DaemonListeners implements Disposable {
           myErrorStripeUpdateManager.repaintErrorStripePanel(editor);
         }
       }
-    };
-    editorTracker.addEditorTrackerListener(editorTrackerListener, this);
-
-    EditorFactoryListener editorFactoryListener = new EditorFactoryListener() {
+    }, this);
+    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorCreated(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
@@ -241,8 +239,7 @@ public class DaemonListeners implements Disposable {
         // mem leak after closing last editor otherwise
         UIUtil.invokeLaterIfNeeded(IntentionsUI.getInstance(myProject)::invalidate);
       }
-    };
-    editorFactory.addEditorFactoryListener(editorFactoryListener, this);
+    }, this);
 
     PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)psiDocumentManager;
     PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, documentManager, editorFactory, connection, daemonCodeAnalyzer.getFileStatusMap());
