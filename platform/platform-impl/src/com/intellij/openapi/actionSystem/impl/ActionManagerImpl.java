@@ -117,8 +117,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final KeymapManagerEx myKeymapManager;
   private final DataManager myDataManager;
   private final List<Object/*ActionPopupMenuImpl|JBPopup*/> myPopups = new ArrayList<>();
-  private final Map<AnAction, DataContext> myQueuedNotifications = new LinkedHashMap<>();
-  private final Map<AnAction, AnActionEvent> myQueuedNotificationsEvents = new LinkedHashMap<>();
   private MyTimer myTimer;
   private int myRegisteredActionsCount;
   private String myLastPreformedActionId;
@@ -417,7 +415,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  public ActionPopupMenu createActionPopupMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory presentationFactory) {
+  public ActionPopupMenu createActionPopupMenu(@NotNull String place, @NotNull ActionGroup group, @Nullable PresentationFactory presentationFactory) {
     return new ActionPopupMenuImpl(place, group, this, presentationFactory);
   }
 
@@ -1087,18 +1085,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   void removeActionPopup(@NotNull Object /*ActionPopupMenuImpl|JBPopup*/ menu) {
-    final boolean removed = myPopups.remove(menu);
-    if (removed && myPopups.isEmpty()) {
-      flushActionPerformed();
-    }
+    myPopups.remove(menu);
   }
 
   @Override
   public void queueActionPerformedEvent(@NotNull final AnAction action, @NotNull DataContext context, @NotNull AnActionEvent event) {
-    if (!myPopups.isEmpty()) {
-      myQueuedNotifications.put(action, context);
-    }
-    else {
+    if (myPopups.isEmpty()) {
       fireAfterActionPerformed(action, context, event);
     }
   }
@@ -1148,16 +1140,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     registerAction(actionId, newAction, pluginId);
     return oldAction;
-  }
-
-  private void flushActionPerformed() {
-    for (final Map.Entry<AnAction, DataContext> entry : myQueuedNotifications.entrySet()) {
-      AnAction eachAction = entry.getKey();
-      final DataContext eachContext = entry.getValue();
-      fireAfterActionPerformed(eachAction, eachContext, myQueuedNotificationsEvents.get(eachAction));
-    }
-    myQueuedNotifications.clear();
-    myQueuedNotificationsEvents.clear();
   }
 
   @Override
