@@ -1,20 +1,10 @@
 package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.JavaResolveResult;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
@@ -28,7 +18,7 @@ import java.util.HashSet;
 /**
  * @author Plushnikov Michail
  */
-public class LombokInspection extends BaseJavaLocalInspectionTool {
+public class LombokInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private final ValProcessor valProcessor;
 
