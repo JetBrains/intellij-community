@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -102,6 +103,11 @@ public class JavaFxHtmlPanel implements Disposable {
   @Override
   public void dispose() {
   }
+
+  public void addKeyListener(KeyListener l) {
+    runInPlatformWhenAvailable(() -> myPanel.addKeyListener(l));
+  }
+
 
   @NotNull
   protected WebView getWebViewGuaranteed() {
