@@ -493,7 +493,6 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("KotlinJavaRuntime"),
     jetbrainsLibrary("KotlinScriptRuntime"),
     jetbrainsLibrary("KotlinTest"),
-    jetbrainsLibrary("kotlinx-coroutines-core"),
     jetbrainsLibrary("kotlinx-coroutines-jdk8"),
     jetbrainsLibrary("Maven Embedder"),
     jetbrainsLibrary("optimizedFileManager.jar"),
