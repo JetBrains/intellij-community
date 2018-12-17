@@ -288,7 +288,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
       if (extensionIndex != result.length) {
         //noinspection unchecked
-        result = ArrayUtil.realloc(result, extensionIndex, size -> (T[])Array.newInstance(extensionClass, size));
+        result = (T[])Arrays.copyOf(result, extensionIndex, result.getClass());
       }
       return result;
     }
