@@ -2,7 +2,10 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.patterns.PsiJavaPatterns.psiElement
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
@@ -68,9 +71,8 @@ class GradleMiscContributor : GradleMethodContextContributor {
     // resolve closure type to delegate based on return method type, e.g.
     // FlatDirectoryArtifactRepository flatDir(Closure configureClosure)
     if (parent is GrMethodCall) {
-      val psiType = parent.invokedExpression.type
-      if (psiType != null && psiType != PsiType.VOID) {
-        return DelegatesToInfo(psiType, Closure.DELEGATE_FIRST)
+      parent.resolveMethod()?.returnType?.let { type ->
+        return DelegatesToInfo(type, Closure.DELEGATE_FIRST)
       }
     }
     return null
