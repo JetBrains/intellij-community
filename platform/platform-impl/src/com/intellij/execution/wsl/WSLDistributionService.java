@@ -47,6 +47,8 @@ class WSLDistributionService implements PersistentStateComponent<WSLDistribution
     new WslDistributionDescriptor("KALI", "kali-linux", "kali.exe", "Kali Linux"),
     new WslDistributionDescriptor("OPENSUSE42", "openSUSE-42", "opensuse-42.exe", "openSUSE Leap 42"),
     new WslDistributionDescriptor("SLES12", "SLES-12", "sles-12.exe", "SUSE Linux Enterprise Server 12"),
+    new WslDistributionDescriptor("SLES15", "SLES-15", "sles-15.exe", "SUSE Linux Enterprise Server 15"),
+    new WslDistributionDescriptor("OPENSUSE15", "openSUSE-Leap-15", "openSUSE-Leap-15.exe", "openSUSE Leap 15"),
     new WslDistributionDescriptor("UBUNTU", "Ubuntu", "ubuntu.exe", "Ubuntu"),
     new WslDistributionDescriptor("UBUNTU1604", "Ubuntu-16.04", "ubuntu1604.exe", "Ubuntu 16.04"),
     new WslDistributionDescriptor("UBUNTU1804", "Ubuntu-18.04", "ubuntu1804.exe", "Ubuntu 18.04"),
