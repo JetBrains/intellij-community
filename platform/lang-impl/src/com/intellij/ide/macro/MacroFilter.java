@@ -4,6 +4,10 @@ package com.intellij.ide.macro;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * This filter allows to hide some macro irrelevant or invalid in certain IDE-related context
+ * (e.g. "JDKPath" macro is useless when IDE doesn't support Java at all)
+ */
 public abstract class MacroFilter {
   public static final ExtensionPointName<MacroFilter> EP_NAME = ExtensionPointName.create("com.intellij.macroFilter");
 
