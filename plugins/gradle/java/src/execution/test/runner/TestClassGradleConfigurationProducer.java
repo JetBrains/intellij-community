@@ -11,15 +11,15 @@ import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import kotlin.jvm.functions.Function1;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassOwner;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
+import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
 
 /**
  * @author Vladislav.Soroka
@@ -147,7 +148,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
         }
 
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
-        if (!applyTestConfiguration(configuration, context, ArrayUtil.toObjectArray(classes, PsiClass.class))) return;
+        if (!applyTestClassConfiguration(configuration, context, ArrayUtil.toObjectArray(classes, PsiClass.class))) return;
         super.runForClasses(classes, method, context, performRunnable);
       }
 
@@ -163,7 +164,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
         }
 
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
-        if (!applyTestConfiguration(configuration, context, aClass)) return;
+        if (!applyTestClassConfiguration(configuration, context, aClass)) return;
         super.runForClass(aClass, psiMethod, context, performRunnable);
       }
     };
@@ -171,32 +172,21 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     super.onFirstRun(fromContext, context, performRunnable);
   }
 
-  private static boolean applyTestConfiguration(@NotNull ExternalSystemRunConfiguration configuration,
-                                                @NotNull ConfigurationContext context,
-                                                @NotNull PsiClass... containingClasses) {
-    final Module module = context.getModule();
-    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return false;
-
-    final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
-    if (projectPath == null) return false;
-
-    List<String> tasksToRun = getTasksToRun(module);
-    if (tasksToRun.isEmpty()) return false;
-
-    configuration.getSettings().setExternalProjectPath(projectPath);
-    configuration.getSettings().setTaskNames(tasksToRun);
-
-    StringBuilder buf = new StringBuilder();
-    for (PsiClass aClass : containingClasses) {
-      String filter = GradleExecutionSettingsUtil.createTestFilterFrom(aClass, /*hasSuffix=*/true);
-      buf.append(filter);
+  private static boolean applyTestClassConfiguration(@NotNull ExternalSystemRunConfiguration configuration,
+                                                     @NotNull ConfigurationContext context,
+                                                     @NotNull PsiClass... containingClasses) {
+    final Project project = context.getProject();
+    final ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
+    final Function1<PsiClass, String> createFilter = (psiClass) ->
+      GradleExecutionSettingsUtil.createTestFilterFrom(psiClass, /*hasSuffix=*/true);
+    if (!applyTestConfiguration(project, settings, containingClasses, createFilter)) {
+      return false;
     }
-
-    configuration.getSettings().setScriptParameters(buf.toString());
     configuration.setName(StringUtil.join(containingClasses, aClass -> aClass.getName(), "|"));
     return true;
   }
 
+  @Deprecated
   public static String getRuntimeQualifiedName(PsiClass psiClass) {
     PsiElement parent = psiClass.getParent();
     if (parent instanceof PsiClass) {

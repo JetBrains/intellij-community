@@ -40,6 +40,10 @@ import java.util.List;
  */
 public class GradleRunnerUtil {
 
+  public static boolean isGradleModule(@NotNull Module module) {
+    return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
+  }
+
   @Nullable
   public static Location<PsiMethod> getMethodLocation(@NotNull Location contextLocation) {
     Location<PsiMethod> methodLocation = getTestMethod(contextLocation);
