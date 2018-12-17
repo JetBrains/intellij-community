@@ -67,16 +67,23 @@ internal fun Map<File, Collection<CommitInfo>>.description() = entries.joinToStr
 
 private fun Map<File, Collection<CommitInfo>>.commitMessage() = "Synchronization of changed icons from ${description()}"
 
-private fun withTmpBranch(repos: Collection<File>, action: (String) -> Review?): Review? {
+private fun withTmpBranch(repos: Collection<File>, master: String, action: (String) -> Review?): Review? {
   val branch = "icons-sync/${UUID.randomUUID()}"
   return try {
     action(branch)
   }
   catch (e: Throwable) {
-    repos.forEach {
+    repos.parallelStream().forEach {
       deleteBranch(it, branch)
     }
     throw e
+  }
+  finally {
+    repos.parallelStream().forEach {
+      callSafely {
+        checkout(it, master)
+      }
+    }
   }
 }
 
@@ -91,7 +98,8 @@ private fun createReviewForDev(context: Context, user: String, email: String): R
     context.byDesigners.clear()
     return null
   }
-  return withTmpBranch(repos) { branch ->
+  val master = repos.parallelStream().map(::head).collect(Collectors.toSet()).single()
+  return withTmpBranch(repos, master) { branch ->
     val commitsForReview = commitAndPush(branch, user, email, context.iconsCommitsToSync.commitMessage(), repos)
     val projectId = UPSOURCE_DEV_PROJECT_ID
     if (projectId.isNullOrEmpty()) {
@@ -99,8 +107,7 @@ private fun createReviewForDev(context: Context, user: String, email: String): R
       PlainOldReview(branch, projectId)
     }
     else {
-      val head = repos.parallelStream().map(::head).collect(Collectors.toSet()).single()
-      val review = createReview(projectId, branch, head, commitsForReview)
+      val review = createReview(projectId, branch, master, commitsForReview)
       try {
         addReviewer(projectId, review, triggeredBy() ?: DEFAULT_INVESTIGATOR)
         postVerificationResultToReview(review)
@@ -140,30 +147,31 @@ private fun postVerificationResultToReview(review: Review) {
 
 private fun createReviewForIcons(context: Context, user: String, email: String): Collection<Review> {
   if (context.devCommitsToSync.isEmpty()) return emptyList()
-  if (gitStage(context.iconsRepo).isEmpty()) {
-    log("Nothing to commit")
-    context.byDev.clear()
-    return emptyList()
-  }
   val repos = listOf(context.iconsRepo)
-  val head = head(context.iconsRepo)
+  val master = head(context.iconsRepo)
   return context.devCommitsToSync.values.flatten()
     .groupBy(CommitInfo::committerEmail)
-    .entries.parallelStream()
-    .map {
-      val (committer, commits) = it
-      withTmpBranch(repos) { branch ->
-        commits.forEach { commit ->
-          val change = context.byCommit[commit.hash] ?: error("Unable to find changes for commit ${commit.hash} by $committer")
-          log("[$committer] syncing ${commit.hash} in ${context.iconsRepoName}")
-          syncIconsRepo(context, change)
-        }
+    .entries.map {
+    val (committer, commits) = it
+    withTmpBranch(repos, master) { branch ->
+      commits.forEach { commit ->
+        val change = context.byCommit[commit.hash] ?: error("Unable to find changes for commit ${commit.hash} by $committer")
+        log("[$committer] syncing ${commit.hash} in ${context.iconsRepoName}")
+        syncIconsRepo(context, change)
+      }
+      if (gitStage(context.iconsRepo).isEmpty()) {
+        log("Nothing to commit")
+        context.byDev.clear()
+        null
+      }
+      else {
         val commitsForReview = commitAndPush(branch, user, email, commits.groupBy(CommitInfo::repo).commitMessage(), repos)
-        val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, head, commitsForReview)
+        val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, master, commitsForReview)
         addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, committer)
         review
       }
-    }.filter(Objects::nonNull).map { it as Review }.toList()
+    }
+  }.filter(Objects::nonNull).map { it as Review }.toList()
 }
 
 internal fun createReviews(context: Context) = callSafely {

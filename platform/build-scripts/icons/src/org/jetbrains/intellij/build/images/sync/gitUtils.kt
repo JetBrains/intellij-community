@@ -142,6 +142,8 @@ internal fun commitAndPush(repo: File, branch: String, message: String): String 
   return commitInfo(repo)?.hash ?: error("Unable to read last commit")
 }
 
+internal fun checkout(repo: File, branch: String) = execute(repo, GIT, "checkout", branch)
+
 internal fun deleteBranch(repo: File, branch: String) {
   try {
     push(repo, ":$branch")
