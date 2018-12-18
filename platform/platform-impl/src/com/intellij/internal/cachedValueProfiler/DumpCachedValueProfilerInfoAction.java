@@ -28,7 +28,7 @@ public class DumpCachedValueProfilerInfoAction extends DumbAwareAction {
 
   static void dumpResults(Project project) {
     try {
-      File file = CachedValueProfilerDumper.dumpResults();
+      File file = CachedValueProfilerDumper.dumpResults(null);
       String url = FileUtil.getUrl(file);
       String message = CommonBundle.message("cached.value.snapshot.success", file, url, ShowFilePathAction.getFileManagerName());
       GROUP.createNotification("", message, NotificationType.INFORMATION, ShowFilePathAction.FILE_SELECTING_LISTENER).notify(project);

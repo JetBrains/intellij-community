@@ -7,6 +7,7 @@ import com.intellij.psi.util.ProfilingInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -30,18 +31,18 @@ public class CachedValueProfilerDumper {
   }
 
   @NotNull
-  public static File dumpResults() throws IOException {
+  public static File dumpResults(@Nullable File dir) throws IOException {
     CachedValueProfiler profiler = CachedValueProfiler.getInstance();
     CachedValueProfilerDumper dumper = new CachedValueProfilerDumper(profiler.getStorageSnapshot());
-    return dumper.dump();
+    return dumper.dump(dir);
   }
 
   @NotNull
-  private File dump() throws IOException {
+  private File dump(@Nullable File dir) throws IOException {
     List<TotalInfo> infos = prepareInfo();
 
     String fileName = String.format("dump-%s.cvp", time());
-    File file = new File(fileName);
+    File file = new File(dir, fileName);
     try (JsonWriter writer = new JsonWriter(new BufferedWriter(new FileWriter(file)))) {
       new MyWriter(writer).write(infos);
     }
