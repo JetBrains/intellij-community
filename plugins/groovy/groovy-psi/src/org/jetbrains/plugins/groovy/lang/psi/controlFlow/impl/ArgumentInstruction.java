@@ -3,23 +3,26 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
+
+import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.impl.ArgumentsKt.argumentMapping;
+import static org.jetbrains.plugins.groovy.lang.resolve.impl.ArgumentsKt.getArguments;
 
 /**
  * @author Max Medvedev
@@ -34,37 +37,23 @@ public class ArgumentInstruction extends InstructionImpl implements MixinTypeIns
   @Override
   @Nullable
   public PsiType inferMixinType() {
-    PsiElement element = getElement();
-    assert element != null;
+    final GrReferenceExpression expression = (GrReferenceExpression)getElement();
+    assert expression != null;
+    final GrCall call = findCall(expression);
 
-    GrCall call = findCall(element);
-    GrExpression[] arguments = call.getExpressionArguments();
-    boolean hasNamed = PsiImplUtil.hasNamedArguments(call.getArgumentList());
-
-    int index = ArrayUtil.indexOf(arguments, element) + (hasNamed ? 1 : 0);
-    GroovyResolveResult[] variants = call.getCallVariants((GrReferenceExpression)element);
+    final List<Argument> arguments = getArguments(call);
+    if (arguments == null) return null;
 
     PsiType result = null;
-    for (GroovyResolveResult variant : variants) {
-      GrSignature signature = GrClosureSignatureUtil.createSignature(variant);
-      if (signature == null) continue;
-
-      if (GrClosureSignatureUtil.mapParametersToArguments(signature, call) != null && !haveNullParameters(call)) {
-        return null;
-      }
-      GrClosureParameter[] parameters = signature.getParameters();
-      if (index >= parameters.length) continue;
-
-      result = TypesUtil.getLeastUpperBoundNullable(result, parameters[index].getType(), element.getManager());
+    for (GroovyResolveResult variant : call.multiResolve(true)) {
+      if (variant.isInvokedOnProperty()) continue;
+      final PsiElement element = variant.getElement();
+      if (!(element instanceof PsiMethod)) continue;
+      ArgumentMapping mapping = argumentMapping((PsiMethod)element, variant.getSubstitutor(), arguments, call);
+      PsiType parameterType = mapping.expectedType(new ExpressionArgument(expression));
+      result = TypesUtil.getLeastUpperBoundNullable(result, parameterType, expression.getManager());
     }
     return result;
-  }
-
-  private static boolean haveNullParameters(GrCall call) {
-    for (GrExpression argument : call.getExpressionArguments()) {
-      if (argument.getType() == null) return true;
-    }
-    return false;
   }
 
   private static GrCall findCall(@NotNull PsiElement element) {
