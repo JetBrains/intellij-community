@@ -2,8 +2,6 @@ package de.plushnikov.intellij.plugin.processor;
 
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
-import java.io.IOException;
-
 public class ValueTest extends AbstractLombokParsingTestCase {
 
   protected boolean shouldCompareCodeBlocks() {
