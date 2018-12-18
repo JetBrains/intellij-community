@@ -281,7 +281,8 @@ class CommunityRepositoryModules {
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("android.sdktools.sdklib", "sdklib.jar")
       withModule("android.sdktools.layoutlib-api", "layoutlib-api.jar")
-      withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
+      withModule("intellij.android.layoutlib-loader", "layoutlib-loader.jar")
+      withModuleLibrary("layoutlib", "intellij.android.layoutlib", "")
       withModule("android.sdktools.chunkio", "pixelprobe.jar")
       withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
 
@@ -303,7 +304,6 @@ class CommunityRepositoryModules {
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
       withProjectLibrary("jgraphx") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
-      withProjectLibrary("layoutlib") //todo[nik] move to module libraries
 
       withResourceFromModule("intellij.android","lib/antlr4-runtime-4.5.3.jar", "lib")
       withResourceFromModule("intellij.android","lib/asm-5.0.3.jar", "lib")

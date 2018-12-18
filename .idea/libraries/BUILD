@@ -544,14 +544,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "layoutlib",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/studio/layoutlib:data/layoutlib"],
-    runtime_deps = ["//prebuilts/studio/layoutlib:data/layoutlib"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "Groovy",
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.15:jar"],

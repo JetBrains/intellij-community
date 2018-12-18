@@ -175,7 +175,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("android.sdktools.sdklib", "sdklib.jar")
       withModule("android.sdktools.sdk-common", "sdk-common.jar")
       withModule("android.sdktools.layoutlib-api", "layoutlib-api.jar")
-      withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
+      withModule("intellij.android.layoutlib-loader", "layoutlib-loader.jar")
+      withModuleLibrary("layoutlib", "intellij.android.layoutlib", "")
       withModule("android.sdktools.manifest-merger", "manifest-merger.jar")
       withModule("android.sdktools.chunkio", "pixelprobe.jar")
       withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
@@ -252,10 +253,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     // TODO: figure out if some of these misc resources can be included in a better way
     def androidPluginLib = "$targetDirectory/plugins/android/lib"
-
-    buildContext.ant.copy(todir: "$androidPluginLib") {
-      fileset(file: "$root/prebuilts/studio/layoutlib/data/layoutlib.jar")
-    }
 
     buildContext.ant.copy(todir: "$androidPluginLib/layoutlib") {
       fileset(dir: "$root/prebuilts/studio/layoutlib") {

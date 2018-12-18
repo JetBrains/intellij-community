@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="layoutlib">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../prebuilts/studio/layoutlib/data/layoutlib.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
