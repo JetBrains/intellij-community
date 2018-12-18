@@ -22,7 +22,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 fun getProjectId(project: Project): String {
-  return project.getProjectCacheFileName(false, ".").hashCode().toString()
+  return project.getProjectCacheFileName().hashCode().toString()
 }
 
 fun createData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
