@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.text.CharArrayUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -141,17 +142,9 @@ public class TailTypes {
     @Override
     public boolean isApplicable(@NotNull InsertionContext context) {
       Document document = context.getDocument();
-      int length = document.getTextLength();
       CharSequence chars = document.getCharsSequence();
-      int offset;
-      for(offset = context.getTailOffset(); offset < length; offset++) {
-        char c = chars.charAt(offset);
-        if (c != '\n' && c != ' ' && c != '\t') {
-          break;
-        }
-      }
-      boolean hasArrow = offset + 2 < length && chars.subSequence(offset, offset + 2).toString().equals("->");
-      return !hasArrow;
+      int offset = CharArrayUtil.shiftForward(chars, context.getTailOffset(), " \n\t");
+      return !CharArrayUtil.regionMatches(chars, offset, "->");
     }
 
     @Override
