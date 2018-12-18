@@ -316,7 +316,16 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         }
       }
     }
-    return baseModifiers;
+    return getModifiersVKs(baseModifiers); // We should filter out 'mixed' mask like InputEvent.META_MASK | InputEvent.META_DOWN_MASK
+  }
+
+  @JdkConstants.InputEventMask
+  private static int getModifiersVKs(int mask) {
+    int vks = 0;
+    for (int modifier : new int[]{InputEvent.SHIFT_MASK, InputEvent.CTRL_MASK, InputEvent.META_MASK, InputEvent.ALT_MASK}) {
+      if ((mask & modifier) > 0) vks |= modifier;
+    }
+    return vks;
   }
 
   private void resetHoldState() {
