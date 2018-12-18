@@ -131,8 +131,10 @@ public class ScopeEditorPanel {
 
       @Override
       public void focusLost(FocusEvent e) {
-        myPositionPanel.setVisible(false);
-        myPanel.revalidate();
+        if (!myPatternField.getEditorField().isExpanded()) {
+          myPositionPanel.setVisible(false);
+          myPanel.revalidate();
+        }
       }
     });
 
