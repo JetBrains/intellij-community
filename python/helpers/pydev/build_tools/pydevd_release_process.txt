@@ -135,6 +135,10 @@ cd /D x:\pydev\plugins\org.python.pydev.core\pysrc
 set PYTHONPATH=x:\pydev\plugins\org.python.pydev.core\pysrc
 C:\bin\Miniconda\envs\py36_64\python build_tools\build.py
 
+cd ~/Desktop/Pydev/plugins/org.python.pydev.core/pysrc
+export PYTHONPATH=~/Desktop/Pydev/plugins/org.python.pydev.core/pysrc
+python build_tools/build.py
+
 
 cd /D X:\ptvsd_workspace\ptvsd\src\ptvsd\_vendored\pydevd
 set PYTHONPATH=X:\ptvsd_workspace\ptvsd\src\ptvsd\_vendored\pydevd

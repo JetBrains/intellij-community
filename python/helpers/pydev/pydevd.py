@@ -1763,6 +1763,10 @@ def settrace_forked():
     '''
     When creating a fork from a process in the debugger, we need to reset the whole debugger environment!
     '''
+    from _pydevd_bundle.pydevd_constants import GlobalDebuggerHolder
+    GlobalDebuggerHolder.global_dbg = None
+
+    from _pydevd_frame_eval.pydevd_frame_eval_main import clear_thread_local_info
     host, port = dispatch()
 
     import pydevd_tracing
@@ -1775,6 +1779,9 @@ def settrace_forked():
         forked = True
 
         custom_frames_container_init()
+
+        if clear_thread_local_info is not None:
+            clear_thread_local_info()
 
         settrace(
             host,
