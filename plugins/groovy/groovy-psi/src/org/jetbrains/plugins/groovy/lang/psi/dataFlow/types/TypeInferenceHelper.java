@@ -71,13 +71,17 @@ public class TypeInferenceHelper {
     if (!allowNestedContext && ApplicationManager.getApplication().isUnitTestMode()) {
       throw new IllegalStateException("Unexpected attempt to infer in nested context");
     }
-    InferenceContext old = ourInferenceContext.get();
-    ourInferenceContext.set(new PartialContext(bindings));
+    return withContext(new PartialContext(bindings), computation);
+  }
+
+  private static <T> T withContext(@NotNull InferenceContext context, @NotNull Computable<? extends T> computation) {
+    InferenceContext previous = ourInferenceContext.get();
+    ourInferenceContext.set(context);
     try {
       return computation.compute();
     }
     finally {
-      ourInferenceContext.set(old);
+      ourInferenceContext.set(previous);
     }
   }
 
@@ -86,6 +90,10 @@ public class TypeInferenceHelper {
   public static InferenceContext getCurrentContext() {
     InferenceContext context = ourInferenceContext.get();
     return context != null ? context : getTopContext();
+  }
+
+  public static <T> T inTopContext(@NotNull Computable<? extends T> computation) {
+    return withContext(getTopContext(), computation);
   }
 
   @NotNull

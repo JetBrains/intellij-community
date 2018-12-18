@@ -148,7 +148,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     if (isConstructor()) {
       return null;
     }
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, ourTypesCalculator);
+    return TypeInferenceHelper.inTopContext(() -> GroovyPsiManager.getInstance(getProject()).getType(this, ourTypesCalculator));
   }
 
   @Override
