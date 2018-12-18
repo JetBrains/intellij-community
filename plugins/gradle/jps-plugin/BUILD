@@ -14,6 +14,7 @@ iml_module(
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
     ],
+    test_srcs = ["testSrc"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/.idea/libraries:Ant"],
     # do not sort: must match IML order
@@ -32,5 +33,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Ant",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps[module]",
+        "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
     ],
 )

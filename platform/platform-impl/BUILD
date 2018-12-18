@@ -88,7 +88,6 @@ iml_module(
         "//tools/idea/.idea/libraries:netty-codec-http",
         "//tools/idea/.idea/libraries:netty-handler",
         "//tools/idea/.idea/libraries:jackson",
-        "//tools/idea/.idea/libraries:microba",
         "//tools/idea/.idea/libraries:Java_Compatibility",
         "//tools/idea/.idea/libraries:HdrHistogram",
         "//tools/idea/.idea/libraries:protobuf",
