@@ -30,8 +30,6 @@ public interface CachedValueProvider<T> {
     private final T myValue;
     private final Object[] myDependencyItems;
 
-    @Nullable private final ProfilingInfo myProfilingInfo = CachedValueProfiler.getInstance().createInfo();
-
     /**
      * Constructor
      * @see #getDependencyItems()
@@ -76,11 +74,6 @@ public interface CachedValueProvider<T> {
     @NotNull
     public Object[] getDependencyItems() {
       return myDependencyItems;
-    }
-
-    @Nullable
-    public ProfilingInfo getProfilingInfo() {
-      return myProfilingInfo;
     }
 
     /**
