@@ -56,6 +56,8 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Used directly by IntelliJ IDEA.
@@ -80,12 +82,12 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   public static class State {
     public final List<String> recentPaths = new SmartList<>();
-    public final List<String> openPaths = new SmartList<>();
-    public final Map<String, String> names = ContainerUtil.newLinkedHashMap();
+    public final SmartList<String> openPaths = new SmartList<>();
+    public final Map<String, String> names = new LinkedHashMap<>();
     public final List<ProjectGroup> groups = new SmartList<>();
     public String lastPath;
     public String pid;
-    public final Map<String, RecentProjectMetaInfo> additionalInfo = ContainerUtil.newLinkedHashMap();
+    public final Map<String, RecentProjectMetaInfo> additionalInfo = new LinkedHashMap<>();
 
     public String lastProjectLocation;
 
@@ -125,48 +127,38 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       };
       Consumer<List<String>> convertList = o -> {
         for (ListIterator<String> it = o.listIterator(); it.hasNext(); ) {
-          it.set(convert.fun(it.next()));
+          it.set(convert.apply(it.next()));
         }
       };
 
-      convertList.consume(recentPaths);
-      convertList.consume(openPaths);
+      convertList.accept(recentPaths);
+      convertList.accept(openPaths);
 
-      Map<String, String> namesCopy = new HashMap<>(names);
+      Map<String, String> namesCopy = new LinkedHashMap<>(names);
       names.clear();
       for (Map.Entry<String, String> entry : namesCopy.entrySet()) {
-        names.put(convert.fun(entry.getKey()), entry.getValue());
+        names.put(convert.apply(entry.getKey()), entry.getValue());
       }
 
       for (ProjectGroup group : groups) {
         List<String> paths = new ArrayList<>(group.getProjects());
-        convertList.consume(paths);
+        convertList.accept(paths);
         group.save(paths);
       }
 
       if (lastPath != null) {
-        lastPath = convert.fun(lastPath);
+        lastPath = convert.apply(lastPath);
       }
 
-      Map<String, RecentProjectMetaInfo> additionalInfoCopy = new HashMap<>(additionalInfo);
+      Map<String, RecentProjectMetaInfo> additionalInfoCopy = new LinkedHashMap<>(additionalInfo);
       additionalInfo.clear();
       for (Map.Entry<String, RecentProjectMetaInfo> entry : additionalInfoCopy.entrySet()) {
-        entry.getValue().binFolder = convert.fun(entry.getValue().binFolder);
-        additionalInfo.put(convert.fun(entry.getKey()), entry.getValue());
+        entry.getValue().binFolder = convert.apply(entry.getValue().binFolder);
+        additionalInfo.put(convert.apply(entry.getKey()), entry.getValue());
       }
 
       if (lastProjectLocation != null) {
-        lastProjectLocation = convert.fun(lastProjectLocation);
-      }
-    }
-
-    private void updateOpenProjectsTimestamps(@NotNull RecentProjectsManagerBase mgr) {
-      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-        String path = mgr.getProjectPath(project);
-        RecentProjectMetaInfo info = path == null ? null : additionalInfo.get(path);
-        if (info != null) {
-          info.projectOpenTimestamp = System.currentTimeMillis();
-        }
+        lastProjectLocation = convert.apply(lastProjectLocation);
       }
     }
   }
@@ -190,10 +182,6 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         //todo[kb] uncomment when we will fix JRE-251 The pid is needed for 3rd parties like Toolbox App to show the project is open now
         myState.pid = "";//OSProcessUtil.getApplicationPid();
       }
-
-      // it is not good to have timestamps in state data, anyway, now state saved not on "timer" (not more than once in 5 minutes),
-      // but if modification counter changed
-      myState.updateOpenProjectsTimestamps(this);
       return myState;
     }
   }
@@ -290,10 +278,12 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   @Override
-  public void updateLastProjectPath() {
+  public final void updateLastProjectPath() {
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     synchronized (myStateLock) {
-      myState.openPaths.clear();
+      SmartList<String> openPaths = myState.openPaths;
+      int listModCount = openPaths.getModificationCount();
+      openPaths.clear();
       if (openProjects.length == 0) {
         myState.lastPath = null;
       }
@@ -302,16 +292,29 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         for (Project openProject : openProjects) {
           String path = getProjectPath(openProject);
           if (path != null) {
-            myState.openPaths.add(path);
+            openPaths.add(path);
             myState.names.put(path, getProjectDisplayName(openProject));
           }
         }
       }
       myState.validateRecentProjects(myModCounter);
-    }
 
-    // for simplicity, for now just increment and don't check is something really changed
-    myModCounter.incrementAndGet();
+      if (listModCount != openPaths.getModificationCount()) {
+        myModCounter.incrementAndGet();
+        updateOpenProjectsTimestamps(openProjects);
+      }
+    }
+  }
+
+  private void updateOpenProjectsTimestamps(@NotNull Project[] openProjects) {
+    Map<String, RecentProjectMetaInfo> additionalInfo = myState.additionalInfo;
+    for (Project project : openProjects) {
+      String path = getProjectPath(project);
+      RecentProjectMetaInfo info = path == null ? null : additionalInfo.get(path);
+      if (info != null) {
+        info.projectOpenTimestamp = System.currentTimeMillis();
+      }
+    }
   }
 
   @NotNull
