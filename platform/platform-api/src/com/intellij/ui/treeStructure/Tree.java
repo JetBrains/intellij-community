@@ -396,6 +396,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     super.processMouseEvent(e2);
+
+    if (e != e2 && e2.isConsumed()) e.consume();
   }
 
   /**
