@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
+
 public class ConsoleExecutionEditor implements Disposable {
   private final EditorEx myConsoleEditor;
   private EditorEx myCurrentEditor;
@@ -51,6 +53,7 @@ public class ConsoleExecutionEditor implements Disposable {
     myConsoleEditor.addFocusListener(myFocusListener);
     myConsoleEditor.getSettings().setVirtualSpace(false);
     myCurrentEditor = myConsoleEditor;
+    myConsoleEditor.putUserData(SEARCH_DISABLED, true);
 
     myBusConnection = getProject().getMessageBus().connect();
     // action shortcuts are not yet registered
