@@ -131,8 +131,8 @@ deactivate
 4. Regenerate the .pyx and .c
 ===============================
 
-cd /D x:\PyDev.Debugger
-set PYTHONPATH=x:\PyDev.Debugger
+cd /D x:\pydev\plugins\org.python.pydev.core\pysrc
+set PYTHONPATH=x:\pydev\plugins\org.python.pydev.core\pysrc
 C:\bin\Miniconda\envs\py36_64\python build_tools\build.py
 
 
