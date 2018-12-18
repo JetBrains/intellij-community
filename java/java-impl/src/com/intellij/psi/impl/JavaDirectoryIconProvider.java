@@ -52,7 +52,7 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
         symbolIcon = SourceRootPresentation.getSourceRootIcon(sourceFolder);
       }
       else if (JrtFileSystem.isModuleRoot(vFile)) {
-        symbolIcon = AllIcons.Nodes.JavaModuleRoot;
+        symbolIcon = AllIcons.Nodes.Module;
       }
       else if (JavaDirectoryService.getInstance().getPackage(psiDirectory) != null) {
         symbolIcon = PlatformIcons.PACKAGE_ICON;

@@ -294,10 +294,10 @@ public class AllIcons {
     @Deprecated
     public static final Icon Minimize = AllIcons.General.HideToolWindow;
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.JavaModuleRoot */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Module */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Module = AllIcons.Nodes.JavaModuleRoot;
+    public static final Icon Module = AllIcons.Nodes.Module;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Move_to_button */
     @SuppressWarnings("unused")
@@ -2025,7 +2025,6 @@ public class AllIcons {
     public static final Icon JarDirectory = IconLoader.getIcon("/nodes/jarDirectory.svg"); // 16x16
     public static final Icon JavaDocFolder = IconLoader.getIcon("/nodes/javaDocFolder.svg"); // 16x16
     public static final Icon JavaModule = IconLoader.getIcon("/nodes/javaModule.svg"); // 16x16
-    public static final Icon JavaModuleRoot = IconLoader.getIcon("/nodes/javaModuleRoot.svg"); // 16x16
 
     public final static class Jsf {
       public static final Icon Component = IconLoader.getIcon("/nodes/jsf/component.svg"); // 16x16
@@ -2144,6 +2143,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon FavoriteOnHover = AllIcons.Nodes.Favorite;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Module */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon JavaModuleRoot = AllIcons.Nodes.Module;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
