@@ -329,5 +329,7 @@
     </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean"/>
+
+    <extensionPoint name="fileBreadcrumbsCollector" interface="com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector" area="IDEA_PROJECT"/>
   </extensionPoints>
 </idea-plugin>
