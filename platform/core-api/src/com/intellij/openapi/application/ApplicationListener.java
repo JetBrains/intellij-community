@@ -19,6 +19,7 @@ public interface ApplicationListener extends EventListener {
 
   /**
    * Is called when application is exiting.
+   * Consider to use {@link com.intellij.ide.AppLifecycleListener#appWillBeClosed(boolean)}
    */
   default void applicationExiting() {
   }

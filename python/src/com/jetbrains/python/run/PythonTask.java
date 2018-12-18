@@ -14,13 +14,13 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationListener;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.AppLifecycleListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -231,8 +231,8 @@ public class PythonTask {
    */
   public void run(@Nullable final Map<String, String> env, @Nullable final ConsoleView consoleView) throws ExecutionException {
     final ProcessHandler process = createProcess(env);
-    stopProcessWhenAppClosed(process);
     final Project project = myModule.getProject();
+    stopProcessWhenAppClosed(process, project);
     new RunContentExecutor(project, process)
       .withFilter(new PythonTracebackFilter(project))
       .withConsole(consoleView)
@@ -262,24 +262,21 @@ public class PythonTask {
    * Adds process listener that kills process on application shutdown.
    * Listener is removed from process stopped to prevent leak
    */
-  private void stopProcessWhenAppClosed(@NotNull final ProcessHandler process) {
-
-    final ApplicationListener processStopper = new ApplicationListener() {
-      @Override
-      public void applicationExiting() {
-        process.destroyProcess();
-      }
-    };
-
-    final Application app = ApplicationManager.getApplication();
+  private void stopProcessWhenAppClosed(@NotNull final ProcessHandler process, @NotNull Project project) {
+    final Disposable disposable = Disposer.newDisposable();
+    Disposer.register(myModule, disposable);
     process.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
-        super.processTerminated(event);
-        app.removeApplicationListener(processStopper);
+        Disposer.dispose(disposable);
       }
     }, myModule);
-    app.addApplicationListener(processStopper);
+    project.getMessageBus().connect(disposable).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void appWillBeClosed(boolean isRestart) {
+        process.destroyProcess();
+      }
+    });
   }
 
   /**
