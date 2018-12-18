@@ -6,21 +6,17 @@ try:
 except ImportError:
     from urllib.parse import quote, quote_plus, unquote_plus  # @UnresolvedImport
 
-import os
 import re
 import socket
 import subprocess
-import sys
 import threading
 import time
 import traceback
-import platform
+from tests_python.debug_constants import *
 
 from _pydev_bundle import pydev_localhost
 
-IS_PY3K = sys.version_info[0] >= 3
-IS_PY36_OR_GREATER = sys.version_info[0:2] >= (3, 6)
-IS_CPYTHON = platform.python_implementation() == 'CPython'
+
 
 # Note: copied (don't import because we want it to be independent on the actual code because of backward compatibility).
 CMD_RUN = 101
@@ -510,6 +506,14 @@ class AbstractWriterThread(threading.Thread):
             if line.strip().startswith('at '):
                 return True
 
+        if IS_PY26:
+            # Sometimes in the ci there's an unhandled exception which doesn't have a stack trace
+            # (apparently this happens when a daemon thread dies during process shutdown).
+            # This was only reproducible on the ci on Python 2.6, so, ignoring that output on Python 2.6 only.
+            for expected in (
+                'Unhandled exception in thread started by <_pydev_bundle.pydev_monkey._NewThreadStartupWithTrace'):
+                if expected in line:
+                    return True
         return False
 
     def additional_output_checks(self, stdout, stderr):

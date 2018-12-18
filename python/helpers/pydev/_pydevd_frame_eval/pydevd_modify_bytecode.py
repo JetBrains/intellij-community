@@ -71,7 +71,6 @@ def _modify_new_lines(code_to_modify, offset, code_to_insert):
     byte_increments = code_to_modify.co_lnotab[0::2]
     line_increments = code_to_modify.co_lnotab[1::2]
 
-
     if offset == 0:
         new_list[0] += bytecode_delta
     else:
@@ -176,11 +175,9 @@ def _return_none_fun():
 
 def add_jump_instruction(jump_arg, code_to_insert):
     """
-    Add additional instruction POP_JUMP_IF_TRUE to implement a proper jump for "set next statement" action
-    Jump should be done to the beginning of the inserted fragment
-    :param jump_arg: argument for jump instruction
-    :param code_to_insert: code to insert
-    :return: a code to insert with properly added jump instruction
+    Note: although it's adding a POP_JUMP_IF_TRUE, it's actually no longer used now
+    (we could only return the return and possibly the load of the 'None' before the
+    return -- not done yet because it needs work to fix all related tests).
     """
     extended_arg_list = []
     if jump_arg > MAX_BYTE:
@@ -191,7 +188,30 @@ def add_jump_instruction(jump_arg, code_to_insert):
     return list(code_to_insert.co_code[:-RETURN_VALUE_SIZE]) + extended_arg_list + [opmap['POP_JUMP_IF_TRUE'], jump_arg]
 
 
+_created = {}
+
+
 def insert_code(code_to_modify, code_to_insert, before_line):
+    # This check is needed for generator functions, because after each yield a new frame is created
+    # but the former code object is used.
+
+    ok_and_curr_before_line = _created.get(code_to_modify)
+    if ok_and_curr_before_line is not None:
+        ok, curr_before_line = ok_and_curr_before_line
+        if not ok:
+            return False, code_to_modify
+
+        if curr_before_line == before_line:
+            return True, code_to_modify
+
+        return False, code_to_modify
+
+    ok, new_code = _insert_code(code_to_modify, code_to_insert, before_line)
+    _created[new_code] = ok, before_line
+    return ok, new_code
+
+
+def _insert_code(code_to_modify, code_to_insert, before_line):
     """
     Insert piece of code `code_to_insert` to `code_to_modify` right inside the line `before_line` before the
     instruction on this line by modifying original bytecode
