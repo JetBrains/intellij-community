@@ -38,6 +38,7 @@ public class VcsLogUtil {
   public static final int FULL_HASH_LENGTH = 40;
   public static final int SHORT_HASH_LENGTH = 8;
   public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,40}");
+  public static final String HEAD = "HEAD";
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {

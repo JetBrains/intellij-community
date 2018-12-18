@@ -194,6 +194,10 @@ fun VcsLogFilterCollection.without(filterKey: FilterKey<*>): VcsLogFilterCollect
   return MyVcsLogFilterCollectionImpl(filterSet)
 }
 
+fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean {
+  return this.filters.mapTo(mutableSetOf()) { it.key } == filterKey.toSet()
+}
+
 fun VcsLogFilterCollection.getPresentation(): String {
   if (get(HASH_FILTER) != null) {
     return get(HASH_FILTER)!!.presentation
