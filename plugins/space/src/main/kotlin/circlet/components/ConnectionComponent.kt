@@ -38,9 +38,9 @@ class ConnectionComponent(project: Project) :
                     if (meSession is MeSession.ClientReady) {
                         meSession.clientSession.client.connectionStatus.view(sessionStateLifetime) { connectionStateLifetime, connectionState ->
                             when (connectionState) {
-                                ConnectionStatus.CONNECTED -> notifyConnected(connectionStateLifetime)
-                                ConnectionStatus.CONNECTING -> notifyReconnect(connectionStateLifetime)
-                                ConnectionStatus.AUTH_FAILED -> authCheckFailedNotification(connectionStateLifetime)
+                                ConnectionStatus.Connected -> notifyConnected(connectionStateLifetime)
+                                is ConnectionStatus.Connecting -> notifyReconnect(connectionStateLifetime)
+                                ConnectionStatus.AuthFailed -> authCheckFailedNotification(connectionStateLifetime)
                             }
                         }
                     }
