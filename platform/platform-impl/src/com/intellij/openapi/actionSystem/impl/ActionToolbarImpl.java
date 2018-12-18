@@ -86,6 +86,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   /**
    * @see ActionToolbar#getLayoutPolicy()
    */
+  @LayoutPolicy
   private int myLayoutPolicy;
   private int myOrientation;
   private final ActionGroup myActionGroup;
@@ -251,7 +252,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
-  public void setLayoutPolicy(final int layoutPolicy) {
+  public void setLayoutPolicy(@LayoutPolicy int layoutPolicy) {
     if (layoutPolicy != NOWRAP_LAYOUT_POLICY && layoutPolicy != WRAP_LAYOUT_POLICY && layoutPolicy != AUTO_LAYOUT_POLICY) {
       throw new IllegalArgumentException("wrong layoutPolicy: " + layoutPolicy);
     }
@@ -1087,6 +1088,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myOrientation = orientation;
   }
 
+  @MagicConstant(intValues = {SwingConstants.HORIZONTAL, SwingConstants.VERTICAL})
   int getOrientation() {
     return myOrientation;
   }

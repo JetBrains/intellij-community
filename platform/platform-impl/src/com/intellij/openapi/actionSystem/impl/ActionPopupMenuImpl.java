@@ -29,8 +29,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
-
+final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
   private final Application myApp;
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
@@ -39,53 +38,57 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
   private MessageBusConnection myConnection;
 
   private IdeFrame myFrame;
-  private boolean myIsToolWindowContextMenu = false;
+  private boolean myIsToolWindowContextMenu;
 
-  public ActionPopupMenuImpl(String place, @NotNull ActionGroup group,
-                             ActionManagerImpl actionManager,
-                             @Nullable PresentationFactory factory) {
+  ActionPopupMenuImpl(@NotNull String place, @NotNull ActionGroup group,
+                      @NotNull ActionManagerImpl actionManager,
+                      @Nullable PresentationFactory factory) {
     myManager = actionManager;
     myMenu = new MyMenu(place, group, factory);
     myApp = ApplicationManager.getApplication();
   }
 
+  @NotNull
   @Override
   public JPopupMenu getComponent() {
     return myMenu;
   }
 
   @Override
+  @NotNull
   public String getPlace() {
     return myMenu.myPlace;
   }
 
+  @NotNull
   @Override
   public ActionGroup getActionGroup() {
     return myMenu.myGroup;
   }
 
-  public void setDataContextProvider(@Nullable Getter<? extends DataContext> dataContextProvider) {
+  void setDataContextProvider(@NotNull Getter<? extends DataContext> dataContextProvider) {
     myDataContextProvider = dataContextProvider;
   }
 
   @Override
-  public void setTargetComponent(@Nullable JComponent component) {
-    myDataContextProvider = component == null ? null :
-                            () -> DataManager.getInstance().getDataContext(component);
-    myIsToolWindowContextMenu = component != null && UIUtil.getParentOfType(InternalDecorator.class, component) != null;
+  public void setTargetComponent(@NotNull JComponent component) {
+    myDataContextProvider = () -> DataManager.getInstance().getDataContext(component);
+    myIsToolWindowContextMenu = UIUtil.getParentOfType(InternalDecorator.class, component) != null;
   }
 
-  public boolean isToolWindowContextMenu() {
+  boolean isToolWindowContextMenu() {
     return myIsToolWindowContextMenu;
   }
 
   private class MyMenu extends JBPopupMenu {
+    @NotNull
     private final String myPlace;
+    @NotNull
     private final ActionGroup myGroup;
     private DataContext myContext;
     private final PresentationFactory myPresentationFactory;
 
-    MyMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory factory) {
+    MyMenu(@NotNull String place, @NotNull ActionGroup group, @Nullable PresentationFactory factory) {
       myPlace = place;
       myGroup = group;
       myPresentationFactory = factory != null ? factory : new MenuItemPresentationFactory();
@@ -143,7 +146,7 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
 
       private void disposeMenu() {
         myManager.removeActionPopup(ActionPopupMenuImpl.this);
-        MyMenu.this.removeAll();
+        removeAll();
         if (myConnection != null) {
           myConnection.disconnect();
         }
@@ -151,7 +154,7 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
 
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-        MyMenu.this.removeAll();
+        removeAll();
         Utils.fillMenu(myGroup, MyMenu.this, !UISettings.getInstance().getDisableMnemonics(), myPresentationFactory, myContext, myPlace, false,
                        LaterInvocator.isInModalContext(), false);
         myManager.addActionPopup(ActionPopupMenuImpl.this);
