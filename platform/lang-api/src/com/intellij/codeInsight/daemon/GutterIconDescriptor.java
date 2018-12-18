@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.daemon;
 
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,12 +29,14 @@ import javax.swing.*;
  * @since 144
  */
 public abstract class GutterIconDescriptor {
+
   /**
    * Human-readable provider name for UI.
    *
    * @return null if no configuration needed
    */
   @Nullable("null means disabled")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public abstract String getName();
 
   @Nullable
@@ -44,6 +48,7 @@ public abstract class GutterIconDescriptor {
     return true;
   }
 
+  @NonNls
   public String getId() {
     return getClass().getName();
   }
@@ -65,7 +70,9 @@ public abstract class GutterIconDescriptor {
     private final String myName;
     private final Icon myIcon;
 
-    public Option(@NotNull String id, @NotNull String name, Icon icon) {
+    public Option(@NotNull String id,
+                  @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+                  Icon icon) {
       myId = id;
       myName = name;
       myIcon = icon;
@@ -74,7 +81,7 @@ public abstract class GutterIconDescriptor {
     public boolean isEnabled() {
       return LineMarkerSettings.getSettings().isEnabled(this);
     }
-    
+
     @Nullable
     @Override
     public Icon getIcon() {
