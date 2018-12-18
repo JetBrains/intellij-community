@@ -817,9 +817,10 @@ class AbstractWriterThread(threading.Thread):
     def write_show_return_vars(self, show=1):
         self.write("%s\t%s\tCMD_SHOW_RETURN_VALUES\t%s" % (CMD_SHOW_RETURN_VALUES, self.next_seq(), show))
 
-    def write_add_breakpoint(self, line, func, filename=None, hit_condition=None, is_logpoint=False, suspend_policy=None, condition=None):
+    def write_add_breakpoint(self, line, func='None', filename=None, hit_condition=None, is_logpoint=False, suspend_policy=None, condition=None):
         '''
-            @param line: starts at 1
+        :param line: starts at 1
+        :param func: if None, may hit in any context, empty string only top level, otherwise must be method name.
         '''
         if filename is None:
             filename = self.get_main_filename()
