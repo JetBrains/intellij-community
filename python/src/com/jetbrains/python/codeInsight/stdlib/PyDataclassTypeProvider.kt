@@ -97,7 +97,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       parameters.add(PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter()))
 
       val ellipsis = elementGenerator.createEllipsis()
-      dataclassParameters.mapTo(parameters) { PyCallableParameterImpl.nonPsi(it.name, it.getType(context), it.defaultValue ?: ellipsis) }
+      dataclassParameters.mapTo(parameters) { PyCallableParameterImpl.nonPsi(it.name, it.getType(context), ellipsis) }
 
       return PyCallableTypeImpl(parameters, dataclassType.getReturnType(context))
     }
