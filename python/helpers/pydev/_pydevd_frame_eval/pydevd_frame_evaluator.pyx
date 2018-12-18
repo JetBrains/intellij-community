@@ -255,6 +255,7 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
     cdef int CMD_STEP_INTO = 107
     cdef int CMD_STEP_OVER = 108
     cdef int CMD_STEP_INTO_MY_CODE = 144
+    cdef bint can_skip = True
     try:
         thread_info = _thread_local_info.thread_info
     except:
@@ -312,14 +313,14 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
             if not func_code_info.always_skip_code:
     
                 if main_debugger.has_plugin_line_breaks:
-                    can_not_skip = main_debugger.plugin.can_not_skip(main_debugger, None, <object> frame_obj)
-                    if can_not_skip:
+                    can_skip = not main_debugger.plugin.can_not_skip(main_debugger, None, <object> frame_obj)
+                    if not can_skip:
                         if thread_info.thread_trace_func is not None:
                             frame.f_trace = thread_info.thread_trace_func
                         else:
                             frame.f_trace = <object> main_debugger.trace_dispatch
                             
-                elif func_code_info.breakpoint_found:
+                if can_skip and func_code_info.breakpoint_found:
                     # If breakpoints are found but new_code is None,
                     # this means we weren't able to actually add the code
                     # where needed, so, fallback to tracing.
