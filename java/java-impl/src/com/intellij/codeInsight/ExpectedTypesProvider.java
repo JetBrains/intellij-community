@@ -123,7 +123,7 @@ public class ExpectedTypesProvider {
                                                     final boolean voidable, boolean usedAfter) {
     if (expr == null) return ExpectedTypeInfo.EMPTY_ARRAY;
     PsiElement parent = expr.getParent();
-    if (expr instanceof PsiFunctionalExpression && parent instanceof PsiExpressionStatement) {
+    if (expr instanceof PsiFunctionalExpression && parent instanceof PsiExpressionStatement && !(parent.getParent() instanceof PsiSwitchLabeledRuleStatement)) {
       final Collection<? extends PsiType> types = FunctionalInterfaceSuggester.suggestFunctionalInterfaces((PsiFunctionalExpression)expr);
       if (types.isEmpty()) {
         return ExpectedTypeInfo.EMPTY_ARRAY;

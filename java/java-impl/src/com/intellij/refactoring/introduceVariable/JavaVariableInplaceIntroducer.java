@@ -97,7 +97,8 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     final List<RangeMarker> rangeMarkers = getOccurrenceMarkers();
     editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
                        rangeMarkers.toArray(new RangeMarker[0]));
-    myReplaceSelf = myExpr.getParent() instanceof PsiExpressionStatement;
+    PsiElement parent = myExpr.getParent();
+    myReplaceSelf = parent instanceof PsiExpressionStatement && !(parent.getParent() instanceof PsiSwitchLabeledRuleStatement);
     mySkipTypeExpressionOnStart = !(myExpr instanceof PsiFunctionalExpression && myReplaceSelf);
   }
 

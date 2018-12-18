@@ -102,6 +102,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("i", true, true, true, "int"));
   }
 
+  public void testFunctionalExpressionInSwitch() {
+    doTest(new MockIntroduceVariableHandler("p", true, true, true, "java.util.function.Predicate<java.lang.String>"));
+  }
+
   public void testParenthizedOccurence() {
     doTest(new MockIntroduceVariableHandler("empty", true, true, true, "boolean"));
   }
