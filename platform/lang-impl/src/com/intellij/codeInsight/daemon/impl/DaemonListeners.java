@@ -30,7 +30,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
@@ -58,13 +57,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
-import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -100,6 +97,7 @@ public class DaemonListeners implements Disposable {
 
   private volatile boolean cutOperationJustHappened;
   private final DaemonCodeAnalyzer.DaemonListener myDaemonEventPublisher;
+  private List<Editor> myActiveEditors = Collections.emptyList();
 
   private static final Key<Boolean> DAEMON_INITIALIZED = Key.create("DAEMON_INITIALIZED");
 
@@ -116,10 +114,6 @@ public class DaemonListeners implements Disposable {
                          @NotNull ProjectInspectionProfileManager inspectionProjectProfileManager,
                          @NotNull TodoConfiguration todoConfiguration,
                          @NotNull ActionManagerEx actionManager,
-                         @SuppressWarnings("UnusedParameters") // for dependency order
-                         @NotNull final NamedScopeManager namedScopeManager,
-                         @SuppressWarnings("UnusedParameters") // for dependency order
-                         @NotNull final DependencyValidationManager dependencyValidationManager,
                          @NotNull final FileDocumentManager fileDocumentManager,
                          @NotNull final PsiManager psiManager,
                          @NotNull final FileEditorManager fileEditorManager,
@@ -193,25 +187,21 @@ public class DaemonListeners implements Disposable {
     eventMulticaster.addEditorMouseMotionListener(new MyEditorMouseMotionListener(), this);
     eventMulticaster.addEditorMouseListener(new MyEditorMouseListener(myTooltipController), this);
 
-    editorTracker.addEditorTrackerListener(new EditorTrackerListener() {
-      private List<Editor> myActiveEditors = Collections.emptyList();
-      @Override
-      public void activeEditorsChanged(@NotNull List<Editor> editors) {
-        List<Editor> activeEditors = editorTracker.getActiveEditors();
-        if (myActiveEditors.equals(activeEditors)) {
-          return;
-        }
-        myActiveEditors = activeEditors;
-        stopDaemon(true, "Active editor change");  // do not stop daemon if idea loses/gains focus
-        if (ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext()) {
-          // editor appear in modal context, re-enable the daemon
-          myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-        }
-        for (Editor editor : activeEditors) {
-          myErrorStripeUpdateManager.repaintErrorStripePanel(editor);
-        }
+    editorTracker.addEditorTrackerListener(this, __ -> {
+      List<Editor> activeEditors = editorTracker.getActiveEditors();
+      if (myActiveEditors.equals(activeEditors)) {
+        return;
       }
-    }, this);
+      myActiveEditors = activeEditors;
+      stopDaemon(true, "Active editor change");  // do not stop daemon if idea loses/gains focus
+      if (ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext()) {
+        // editor appear in modal context, re-enable the daemon
+        myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
+      }
+      for (Editor editor : activeEditors) {
+        myErrorStripeUpdateManager.repaintErrorStripePanel(editor);
+      }
+    });
 
     editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       @Override
@@ -263,7 +253,7 @@ public class DaemonListeners implements Disposable {
     });
 
     connection.subscribe(PowerSaveMode.TOPIC, () -> stopDaemon(true, "Power save mode change"));
-    connection.subscribe(EditorColorsManager.TOPIC, scheme -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
+    connection.subscribe(EditorColorsManager.TOPIC, __ -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
     connection.subscribe(CommandListener.TOPIC, new MyCommandListener(actionManager));
 
     application.addApplicationListener(new MyApplicationListener(), this);
@@ -314,10 +304,9 @@ public class DaemonListeners implements Disposable {
         // Here color scheme required for TextEditorFields, as far as I understand this
         // code related to standard file editors, which always use Global color scheme,
         // thus we can pass null here.
-        final EditorColorsScheme editorColorScheme = null;
         UpdateHighlightersUtil.setHighlightersToEditor(myProject, document, 0, document.getTextLength(),
                                                        Collections.emptyList(),
-                                                       editorColorScheme,
+                                                       null,
                                                        Pass.UPDATE_ALL);
       }
     });
@@ -331,7 +320,7 @@ public class DaemonListeners implements Disposable {
       }
     }, this);
 
-    ModalityStateListener modalityStateListener = entering -> {
+    ModalityStateListener modalityStateListener = __ -> {
       // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
       boolean inModalContext = Registry.is("ide.perProjectModality") || LaterInvocator.isInModalContext();
       stopDaemon(inModalContext, "Modality change. Was modal: " + inModalContext);
@@ -373,7 +362,7 @@ public class DaemonListeners implements Disposable {
       }
     });
 
-    connection.subscribe(FileHighlightingSettingListener.SETTING_CHANGE, (root, setting) -> updateStatusBar());
+    connection.subscribe(FileHighlightingSettingListener.SETTING_CHANGE, (__, ___) -> updateStatusBar());
   }
 
   private boolean worthBothering(final Document document, Project project) {

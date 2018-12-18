@@ -287,8 +287,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myExtensionAdapters = Collections.emptySet();
 
       if (extensionIndex != result.length) {
-        //noinspection unchecked
-        result = (T[])Arrays.copyOf(result, extensionIndex, result.getClass());
+        result = Arrays.copyOf(result, extensionIndex);
       }
       return result;
     }
