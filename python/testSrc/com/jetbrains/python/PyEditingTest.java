@@ -132,6 +132,12 @@ public class PyEditingTest extends PyTestCase {
                                           " f'')");
   }
 
+  // PY-32873
+  public void testEnterInTripleQuotedFStringRightBeforeClosingQuotes() {
+    doTestEnter("f\"\"\"<caret>\"\"\"", "f\"\"\"\n" +
+                                        "<caret>\"\"\"");
+  }
+
   public void testOvertypeFromInside() {
     assertEquals("''", doTestTyping("''", 1, '\''));
   }
