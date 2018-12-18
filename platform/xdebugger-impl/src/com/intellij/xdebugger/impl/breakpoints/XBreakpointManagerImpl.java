@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+import static com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollectorKt.getReportableTypeId;
+
 /**
  * @author nik
  */
@@ -142,7 +144,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
       myBreakpoints.put(type, breakpoint);
       if (initUI) {
         BreakpointsUsageCollector.reportUsage(breakpoint, "new.breakpoint");
-        BreakpointsUsageCollector.reportUsage(breakpoint, "new." + type.getId());
+        BreakpointsUsageCollector.reportUsage(breakpoint, "new." + getReportableTypeId(type));
         if (myDebuggerManager.getCurrentSession() != null) {
           BreakpointsUsageCollector.reportUsage(breakpoint, "new.within.session");
         }
