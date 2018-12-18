@@ -880,12 +880,6 @@ cdef class PyDBFrame:
                 elif step_cmd == CMD_STEP_RETURN:
                     stop = is_return and stop_frame is frame
 
-                elif step_cmd == CMD_RUN_TO_LINE or step_cmd == CMD_SET_NEXT_STATEMENT:
-                    try:
-                        stop, _, response_msg = main_debugger.set_next_statement(frame, event, info.pydev_func_name, info.pydev_next_line)
-                    except ValueError:
-                        pass
-
                 else:
                     stop = False
 
