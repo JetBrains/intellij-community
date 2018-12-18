@@ -88,9 +88,9 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   @Override
   public void updateCrumbs(@NotNull VirtualFile virtualFile,
                            @NotNull Editor editor,
+                           int offset,
                            ProgressIndicator progressIndicator,
                            @NotNull Consumer<Iterable<? extends Crumb>> consumer) {
-    int offset = editor.getCaretModel().getOffset();
     PsiAvailabilityService.getInstance(myProject).performWhenPsiAvailable(editor.getDocument(), () -> {
       consumer.consume(collectBreadcrumbs(virtualFile, editor, offset));
     }, progressIndicator);

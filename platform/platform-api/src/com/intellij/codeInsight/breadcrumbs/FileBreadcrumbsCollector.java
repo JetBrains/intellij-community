@@ -5,9 +5,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,6 +37,18 @@ public abstract class FileBreadcrumbsCollector {
 
   public abstract void updateCrumbs(@NotNull VirtualFile virtualFile,
                                     @NotNull Editor editor,
+                                    int offset,
                                     ProgressIndicator progressIndicator,
                                     @NotNull Consumer<Iterable<? extends Crumb>> consumer);
+
+  public static FileBreadcrumbsCollector findBreadcrumbsCollector(Project project, VirtualFile file) {
+    if (file != null) {
+      for (FileBreadcrumbsCollector extension : EP_NAME.getExtensions(project)) {
+        if (extension.handlesFile(file)) {
+          return extension;
+        }
+      }
+    }
+    return ContainerUtil.getLastItem(EP_NAME.getExtensionList(project));
+  }
 }

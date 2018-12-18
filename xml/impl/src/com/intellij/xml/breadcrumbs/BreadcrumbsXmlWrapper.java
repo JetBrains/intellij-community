@@ -120,7 +120,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
     editor.getCaretModel().addCaretListener(caretListener, this);
 
-    myBreadcrumbsCollector = findBreadcrumbsCollector();
+    myBreadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myFile);
     if (myFile != null) {
       myBreadcrumbsCollector.watchForChanges(myFile, editor, this, () -> queueUpdate());
     }
@@ -176,17 +176,6 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     queueUpdate();
   }
 
-  private FileBreadcrumbsCollector findBreadcrumbsCollector() {
-    if (myFile != null) {
-      for (FileBreadcrumbsCollector extension : FileBreadcrumbsCollector.EP_NAME.getExtensions(myProject)) {
-        if (extension.handlesFile(myFile)) {
-          return extension;
-        }
-      }
-    }
-    return new PsiFileBreadcrumbsCollector(myProject);
-  }
-
   private void updateCrumbs() {
     if (myEditor == null || myFile == null || myEditor.isDisposed()) return;
 
@@ -197,7 +186,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     ProgressIndicator progress = new ProgressIndicatorBase();
     myAsyncUpdateProgress = progress;
 
-    myBreadcrumbsCollector.updateCrumbs(myFile, myEditor, myAsyncUpdateProgress, (crumbs) -> {
+    myBreadcrumbsCollector.updateCrumbs(myFile, myEditor, myEditor.getCaretModel().getOffset(), myAsyncUpdateProgress, (crumbs) -> {
       if (!progress.isCanceled() && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
         breadcrumbs.setFont(getNewFont(myEditor));
         if (!breadcrumbs.isShowing() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
