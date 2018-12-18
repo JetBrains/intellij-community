@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
@@ -112,12 +111,7 @@ public class GitVFSListener extends VcsVFSListener {
           List<VirtualFile> files = e.getValue();
           pi.setText(root.getPresentableUrl());
           try {
-            Set<VirtualFile> untrackedForRepo = myGit.untrackedFiles(myProject, root, files);
-            if (Registry.is("git.process.ignored")) {
-              Collection<VirtualFile> ignoredForRepo = ContainerUtil.subtract(files, untrackedForRepo);
-              getIgnoreRepoHolder(root).addFiles(ignoredForRepo);
-            }
-            retainedFiles.addAll(untrackedForRepo);
+            retainedFiles.addAll(myGit.untrackedFiles(myProject, root, files));
           }
           catch (VcsException ex) {
             myVcsConsoleWriter.showMessage(ex.getMessage());
@@ -195,7 +189,6 @@ public class GitVFSListener extends VcsVFSListener {
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException {
         GitFileUtils.deletePaths(myProject, root, files, "--ignore-unmatch", "--cached");
-        getIgnoreRepoHolder(root).removeIgnoredFiles(files);
         if (!myProject.isDisposed()) {
           VcsFileUtil.markFilesDirty(myProject, files);
         }

@@ -60,7 +60,7 @@ public class HgIgnoredFileHolder extends VcsIgnoredFilesHolderBase<HgRepository>
 
     @Override
     public void refresh(Project project) {
-      myManager.getRepositories().forEach(r -> r.getIgnoredFilesHolder().startRescan(null));
+      myManager.getRepositories().forEach(r -> r.getIgnoredFilesHolder().startRescan());
     }
   }
 }

@@ -7,13 +7,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangesViewI;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.util.StopWatch;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -84,6 +85,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, project, !listenToRepoChanges);
     if (listenToRepoChanges) {
       repository.getUntrackedFilesHolder().setupVfsListener(project);
+      repository.getIgnoredFilesHolder().setupVfsListener();
       repository.setupUpdater();
       notifyListenersAsync(repository);
     }
@@ -94,7 +96,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     GitRepositoryUpdater updater = new GitRepositoryUpdater(this, myRepositoryFiles);
     Disposer.register(this, updater);
     if (myIgnoredRepositoryFilesHolder != null) {
-      myIgnoredRepositoryFilesHolder.startRescan(null);
+      myIgnoredRepositoryFilesHolder.startRescan();
     }
   }
 
@@ -266,43 +268,24 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   private static class MyRepositoryIgnoredHolderUpdateListener implements VcsIgnoredHolderUpdateListener {
     @NotNull private final ChangesViewI myChangesViewI;
-    @NotNull private final VcsDirtyScopeManager myDirtyScopeManager;
+    @NotNull private final Project myProject;
 
     MyRepositoryIgnoredHolderUpdateListener(@NotNull Project project) {
       myChangesViewI = ChangesViewManager.getInstance(project);
-      myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-    }
-
-    @Override
-    public void updateStarted(@NotNull String gitIgnorePath) {
-      myChangesViewI.scheduleRefresh(); //TODO optimize: remove additional refresh
+      myProject = project;
     }
 
     @Override
     public void updateStarted() {
-      myChangesViewI.scheduleRefresh();
+      myChangesViewI.scheduleRefresh(); //TODO optimize: remove additional refresh
     }
 
     @Override
-    public void updateFinished(@NotNull String gitIgnorePath) {
-      markGitignoreContainingFolderAsDirty(gitIgnorePath);
+    public void updateFinished(@NotNull Collection<FilePath> ignoredPaths) {
+      if(myProject.isDisposed()) return;
+
+      VcsFileUtil.markFilesDirty(myProject, ContainerUtil.newArrayList(ignoredPaths));
       myChangesViewI.scheduleRefresh();
     }
-
-    @Override
-    public void updateFinished() {
-      myChangesViewI.scheduleRefresh();
-    }
-
-    private void markGitignoreContainingFolderAsDirty(@NotNull String gitIgnorePath) {
-      VirtualFile gitIgnore = LocalFileSystem.getInstance().findFileByPath(gitIgnorePath);
-      if (gitIgnore != null) {
-        VirtualFile gitIgnoreParent = gitIgnore.getParent();
-        if (gitIgnoreParent != null) {
-          myDirtyScopeManager.dirDirtyRecursively(gitIgnoreParent);
-        }
-      }
-    }
-
   }
 }

@@ -17,7 +17,6 @@ package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -25,7 +24,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import git4idea.GitLocalBranch;
@@ -35,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase.getAffectedFile;
 
 /**
  * <p>
@@ -295,35 +296,13 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     boolean excludeChanged = myRepositoryFiles.isExclude(path);
 
     if(gitIgnoreChanged || excludeChanged){
-      rescanIgnoredFiles(path);
+      rescanIgnoredFiles();
     }
     return gitIgnoreChanged || excludeChanged;
   }
 
-  private void rescanIgnoredFiles(@NotNull String gitIgnorePath) { //TODO move to ignore manager
-    myRepository.getIgnoredFilesHolder().startRescan(gitIgnorePath);
-  }
-
-  @Nullable
-  private static VirtualFile getAffectedFile(@NotNull VFileEvent event) {
-    return ReadAction.compute(() -> {
-      if (event instanceof VFileCreateEvent) {
-        return ((VFileCreateEvent)event).getParent().isValid() ? event.getFile() : null;
-      }
-      else if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || isRename(event)) {
-        return event.getFile();
-      }
-      else if (event instanceof VFileCopyEvent) {
-        VFileCopyEvent copyEvent = (VFileCopyEvent) event;
-        VirtualFile newParent = copyEvent.getNewParent();
-        return newParent.isValid() ? newParent.findChild(copyEvent.getNewChildName()) : null;
-      }
-      return null;
-    });
-  }
-
-  private static boolean isRename(@NotNull VFileEvent event) {
-    return event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME);
+  private void rescanIgnoredFiles() { //TODO move to ignore manager
+    myRepository.getIgnoredFilesHolder().startRescan();
   }
 
   private boolean notIgnored(@Nullable VirtualFile file) {

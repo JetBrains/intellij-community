@@ -4,26 +4,17 @@ package git4idea.ignore
 import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vcs.FilePath
 import git4idea.commands.Git
 import git4idea.repo.GitRepository
-import java.util.*
 
 class GitRepositoryIgnoredFilesHolder(private val project: Project,
                                       repository: GitRepository,
                                       private val git: Git)
   : VcsRepositoryIgnoredFilesHolderBase<GitRepository>(repository, "GitIgnoreUpdate", "gitRescanIgnored") {
 
-  override fun requestIgnored(ignoreFilePath: String?) =
-    HashSet(git.ignoredFiles(project, repository.root, findIgnoreFileVcsRootOrDefault(ignoreFilePath)))
-
-  private fun findIgnoreFileVcsRootOrDefault(ignoreFilePath: String?) =
-    if (ignoreFilePath != null) {
-      LocalFileSystem.getInstance().findFileByPath(ignoreFilePath)?.parent ?: repository.root
-    }
-    else {
-      repository.root
-    }
+  override fun requestIgnored(paths: Collection<FilePath>?) =
+    HashSet(git.ignoredFiles(project, repository.root, paths))
 
   override fun scanTurnedOff() = !Registry.`is`("git.process.ignored")
 }

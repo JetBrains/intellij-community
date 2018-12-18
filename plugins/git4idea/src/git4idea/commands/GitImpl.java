@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,13 +75,30 @@ public class GitImpl extends GitImplBase {
 
   @NotNull
   @Override
-  public Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable VirtualFile path)
+  public Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<FilePath> paths)
+    throws VcsException {
+    Set<VirtualFile> ignoredFiles = new HashSet<>();
+
+    if (paths == null) {
+      ignoredFiles.addAll(ignoredFilesNoChunk(project, root, null));
+    }
+    else {
+      for (List<String> relativePaths : VcsFileUtil.chunkPaths(root, paths)) {
+        ignoredFiles.addAll(ignoredFilesNoChunk(project, root, relativePaths));
+      }
+    }
+    return ignoredFiles;
+  }
+
+  @NotNull
+  @Override
+  public Set<VirtualFile> ignoredFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths)
     throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.STATUS);
     h.setSilent(true);
     h.addParameters("--ignored", "--porcelain", "-z");
-    if (path != null) {
-      h.addParameters(path.getPath());
+    if (paths != null) {
+      h.addParameters(paths);
     }
     h.endOptions();
 

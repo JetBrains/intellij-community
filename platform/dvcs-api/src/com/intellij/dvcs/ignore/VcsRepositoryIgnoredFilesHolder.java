@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -15,7 +14,7 @@ public interface VcsRepositoryIgnoredFilesHolder extends Disposable {
 
   void addUpdateStateListener(@NotNull VcsIgnoredHolderUpdateListener listener);
 
-  void startRescan(@Nullable String ignoreFilePath);
+  void startRescan();
 
   boolean isInUpdateMode();
 

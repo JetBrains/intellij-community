@@ -8,13 +8,10 @@ import com.intellij.openapi.vcs.changes.FileHolder
 import com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder
 import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.EventDispatcher
 
 abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private val repositoryManager: AbstractRepositoryManager<REPOSITORY>
 ) : VcsIgnoredFilesHolder {
-
-  private val listeners = EventDispatcher.create(VcsIgnoredHolderUpdateListener::class.java)
 
   private val vcsIgnoredHolderMap =
     repositoryManager.repositories.associateTo(
@@ -39,9 +36,7 @@ abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
   override fun values() = vcsIgnoredHolderMap.flatMap { it.value.ignoredFiles }
 
   override fun startRescan() {
-    fireUpdateStarted()
-    vcsIgnoredHolderMap.values.forEach { it.startRescan(null) }
-    fireUpdateFinished()
+    vcsIgnoredHolderMap.values.forEach { it.startRescan() }
   }
 
   override fun cleanAll() {
@@ -52,12 +47,4 @@ abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
     repositoryManager.getRepositoryForFileQuick(file)?.let { repositoryForFile ->
       vcsIgnoredHolderMap[repositoryForFile]
     }
-
-  private fun fireUpdateStarted() {
-    listeners.multicaster.updateStarted()
-  }
-
-  private fun fireUpdateFinished() {
-    listeners.multicaster.updateFinished()
-  }
 }

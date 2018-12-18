@@ -11,12 +11,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangesViewI;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -53,6 +55,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     myReader = new HgRepositoryReader(vcs, VfsUtilCore.virtualToIoFile(myHgDir));
     myConfig = HgConfig.getInstance(getProject(), rootDir);
     myLocalIgnoredHolder = new HgLocalIgnoredHolder(this);
+    myLocalIgnoredHolder.setupVfsListener();
     Disposer.register(this, myLocalIgnoredHolder);
     myLocalIgnoredHolder.addUpdateStateListener(new MyIgnoredHolderAsyncListener(getProject()));
     update();
@@ -73,7 +76,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   private void setupUpdater() {
     HgRepositoryUpdater updater = new HgRepositoryUpdater(this);
     Disposer.register(this, updater);
-    myLocalIgnoredHolder.startRescan(null);
+    myLocalIgnoredHolder.startRescan();
   }
 
   @NotNull
@@ -254,9 +257,11 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   private static class MyIgnoredHolderAsyncListener implements VcsIgnoredHolderUpdateListener {
     @NotNull private final ChangesViewI myChangesViewI;
+    @NotNull private final Project myProject;
 
     MyIgnoredHolderAsyncListener(@NotNull Project project) {
       myChangesViewI = ChangesViewManager.getInstance(project);
+      myProject = project;
     }
 
     @Override
@@ -265,7 +270,10 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     }
 
     @Override
-    public void updateFinished() {
+    public void updateFinished(@NotNull Collection<FilePath> ignoredPaths) {
+      if(myProject.isDisposed()) return;
+
+      VcsFileUtil.markFilesDirty(myProject, ContainerUtil.newArrayList(ignoredPaths));
       myChangesViewI.scheduleRefresh();
     }
   }

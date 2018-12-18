@@ -24,7 +24,7 @@ class GitIgnoredFilesHolder(val project: Project, val manager: GitRepositoryMana
     override fun createHolder() = GitIgnoredFilesHolder(project, manager)
 
     override fun refresh(project: Project) {
-      manager.repositories.forEach { r -> r.ignoredFilesHolder.startRescan(null) }
+      manager.repositories.forEach { r -> r.ignoredFilesHolder.startRescan() }
     }
   }
 }
