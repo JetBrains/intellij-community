@@ -8,7 +8,6 @@
     <module old-name="IntelliLang-tests" new-name="intellij.platform.langInjection.tests" />
     <module old-name="IntelliLang-xml" new-name="intellij.xml.langInjection" />
     <module old-name="RegExpSupport" new-name="intellij.regexp" />
-    <module old-name="ShortcutPromoter" new-name="intellij.shortcutPromoter" />
     <module old-name="adt-branding" new-name="intellij.android.adt.branding" />
     <module old-name="adt-ui" new-name="intellij.android.adt.ui" />
     <module old-name="adt-ui-model" new-name="intellij.android.adt.ui.model" />
