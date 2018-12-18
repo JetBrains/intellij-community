@@ -95,7 +95,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control TAB",              "Switcher", "Diff.FocusOppositePane"},
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePaneAndScroll"},
     { "ctrl alt ENTER",           "EditorStartNewLineBefore", "QuickActionPopup"},
-    { "button2",                  "EditorPasteFromX11", "GotoDeclaration"}, // False positive: see DefaultKeymapImpl, PasteFromX11Action.update()
+    { "alt button1",              "EditorCreateRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
+    { "button2",                  "EditorPasteFromX11", "GotoDeclaration", "EditorCreateRectangularSelectionOnMouseDrag"},
     { "ctrl alt F",               "IntroduceField", "ShowFilterPopup"},
     { "PAGE_DOWN",                "EditorPageDown", "SearchEverywhere.NavigateToNextGroup"},
     { "PAGE_UP",                  "EditorPageUp", "SearchEverywhere.NavigateToPrevGroup"},

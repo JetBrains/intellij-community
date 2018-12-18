@@ -4019,7 +4019,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static boolean isColumnSelectionDragEvent(@NotNull MouseEvent e) {
-    return e.isAltDown() && !e.isShiftDown() && !e.isControlDown() && !e.isMetaDown();
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
   }
 
   private static boolean isToggleCaretEvent(@NotNull MouseEvent e) {
@@ -4042,7 +4042,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     MouseShortcut mouseShortcut = KeymapUtil.createMouseShortcut(e);
     String[] mappedActions = keymap.getActionIds(mouseShortcut);
     if (!ArrayUtil.contains(actionId, mappedActions)) return false;
-    if (mappedActions.length < 2) return true;
+    if (mappedActions.length < 2 || e.getID() == MouseEvent.MOUSE_DRAGGED /* 'normal' actions are not invoked on mouse drag */) return true;
     ActionManager actionManager = ActionManager.getInstance();
     for (String mappedActionId : mappedActions) {
       if (actionId.equals(mappedActionId)) continue;

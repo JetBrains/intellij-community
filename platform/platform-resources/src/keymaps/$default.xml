@@ -123,6 +123,10 @@
   <action id="EditorAddRectangularSelectionOnMouseDrag">
     <mouse-shortcut keystroke="ctrl alt shift button1"/>
   </action>
+  <action id="EditorCreateRectangularSelectionOnMouseDrag">
+    <mouse-shortcut keystroke="alt button1"/>
+    <mouse-shortcut keystroke="button2"/>
+  </action>
   <action id="EditorCreateRectangularSelection">
     <mouse-shortcut keystroke="alt shift button2"/>
   </action>
