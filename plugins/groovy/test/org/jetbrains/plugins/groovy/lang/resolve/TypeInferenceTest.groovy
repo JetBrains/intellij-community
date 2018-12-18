@@ -217,6 +217,7 @@ class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   void testTraditionalForVar() {
+    TypeInferenceHelper.forceAllowNestedContext(testRootDisposable)
     assertTypeEquals(JAVA_LANG_INTEGER, "A.groovy")
   }
 
@@ -306,6 +307,7 @@ print fou<caret>nd''', 'java.util.HashSet<java.lang.String>')
   }
 
   void testInferArgumentTypeFromMethod1() {
+    TypeInferenceHelper.forceAllowNestedContext(testRootDisposable)
     doTest('''\
 def bar(String s) {}
 
@@ -342,6 +344,7 @@ def foo(Integer a) {
   }
 
   void testInferArgumentTypeFromMethod4() {
+    TypeInferenceHelper.forceAllowNestedContext(testRootDisposable)
     doTest('''\
 def bar(String s) {}
 
@@ -581,6 +584,7 @@ def foo(ii) {
   }
 
   void testIndexProperty() {
+    TypeInferenceHelper.forceAllowNestedContext(testRootDisposable)
     doTest('''\
 private void getCommonAncestor() {
     def c1 = [new File('a')]
@@ -642,6 +646,7 @@ class Any {
   }
 
   void testRange() {
+    TypeInferenceHelper.forceAllowNestedContext(testRootDisposable)
     doTest('''\
         def m = new int[3]
         for (ii in 0..<m.length) {
@@ -736,6 +741,7 @@ class Any {
   }
 
   void testRecursionWithMaps() {
+    TypeInferenceHelper.forceAllowNestedContext(testRootDisposable)
     doTest('''
 def foo(Map map) {
   while(true)
@@ -745,6 +751,7 @@ def foo(Map map) {
   }
 
   void testRecursionWithLists() {
+    TypeInferenceHelper.forceAllowNestedContext(testRootDisposable)
     doTest('''
 def foo(List list) {
   while(true)
@@ -949,12 +956,10 @@ class W {
   }
 
   void "test don't start inference for method parameter type"() {
-    TypeInferenceHelper.disallowNestedContext(testRootDisposable)
     doTest 'def bar(String ss) { <caret>ss }', 'java.lang.String'
   }
 
   void 'test closure param'() {
-    TypeInferenceHelper.disallowNestedContext(testRootDisposable)
     doTest '''\
 interface I { def foo(String s) }
 def bar(I i) {}

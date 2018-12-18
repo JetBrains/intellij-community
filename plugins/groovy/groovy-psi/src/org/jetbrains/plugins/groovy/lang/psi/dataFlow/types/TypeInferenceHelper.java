@@ -5,13 +5,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
@@ -43,6 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.UtilKt.computeAcyclicInstructions;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.*;
 
 /**
@@ -53,16 +53,27 @@ public class TypeInferenceHelper {
 
   private static boolean allowNestedContext = true;
 
-  @TestOnly
-  public static void disallowNestedContext(@NotNull Disposable parent) {
-    allowNestedContext = false;
+  private static void setAllowNestedContext(boolean value, @NotNull Disposable parent) {
+    boolean oldValue = allowNestedContext;
+    if (oldValue == value) return;
+    allowNestedContext = value;
     Disposer.register(parent, new Disposable() {
       @Override
       public void dispose() {
         //noinspection AssignmentToStaticFieldFromInstanceMethod
-        allowNestedContext = true;
+        allowNestedContext = oldValue;
       }
     });
+  }
+
+  @TestOnly
+  public static void disallowNestedContext(@NotNull Disposable parent) {
+    setAllowNestedContext(false, parent);
+  }
+
+  @TestOnly
+  public static void forceAllowNestedContext(@NotNull Disposable parent) {
+    setAllowNestedContext(true, parent);
   }
 
   private static final ThreadLocal<InferenceContext> ourInferenceContext = new ThreadLocal<>();
@@ -249,12 +260,14 @@ public class TypeInferenceHelper {
     private final Instruction[] myFlow;
     private final Set<Instruction> myInteresting;
     private final InferenceCache myCache;
+    private final TIntHashSet myAcyclicInstructions;
 
     TypeDfaInstance(@NotNull GrControlFlowOwner scope, @NotNull Instruction[] flow, @NotNull Set<Instruction> interesting, @NotNull InferenceCache cache) {
       myScope = scope;
       myFlow = flow;
       myInteresting = interesting;
       myCache = cache;
+      myAcyclicInstructions = computeAcyclicInstructions(flow);
     }
 
     @Override
@@ -271,7 +284,7 @@ public class TypeInferenceHelper {
       final String varName = instruction.getVariableName();
       if (varName == null) return;
 
-      updateVariableType(state, instruction, varName, false, (NullableComputable<DFAType>)() -> {
+      updateVariableType(state, instruction, varName, () -> {
         ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(myFlow);
         assert originalInstr != null && !originalInstr.isWrite();
 
@@ -289,7 +302,7 @@ public class TypeInferenceHelper {
       final PsiElement element = instruction.getElement();
       if (element != null && instruction.isWrite()) {
         updateVariableType(
-          state, instruction, instruction.getVariableName(), element instanceof GrParameter,
+          state, instruction, instruction.getVariableName(),
           () -> DFAType.create(getInitializerType(element))
         );
       }
@@ -298,7 +311,6 @@ public class TypeInferenceHelper {
     private void updateVariableType(@NotNull TypeDfaState state,
                                     @NotNull Instruction instruction,
                                     @NotNull String variableName,
-                                    boolean initialWrite,
                                     @NotNull Computable<? extends DFAType> computation) {
       if (!myInteresting.contains(instruction)) {
         state.removeBinding(variableName);
@@ -307,7 +319,7 @@ public class TypeInferenceHelper {
 
       DFAType type = myCache.getCachedInferredType(variableName, instruction);
       if (type == null) {
-        if (initialWrite) {
+        if (myAcyclicInstructions.contains(instruction.num())) {
           type = computation.compute();
         }
         else {
