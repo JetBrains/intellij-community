@@ -810,9 +810,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       lifecycleListener.appWillBeClosed(restart);
 
-      FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.close");
+      FUSApplicationUsageTrigger usageTrigger = FUSApplicationUsageTrigger.getInstance();
+      usageTrigger.trigger(AppLifecycleUsageTriggerCollector.class, "ide.close");
       if (restart) {
-        FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.close.restart");
+        usageTrigger.trigger(AppLifecycleUsageTriggerCollector.class, "ide.close.restart");
       }
       FeatureUsageLogger.INSTANCE.log("lifecycle", "app.closed", Collections.singletonMap("restart", restart));
 
@@ -1408,7 +1409,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private void fireApplicationExiting() {
     myDispatcher.getMulticaster().applicationExiting();
   }
-
   private void fireBeforeWriteActionStart(@NotNull Class action) {
     myDispatcher.getMulticaster().beforeWriteActionStart(action);
   }
