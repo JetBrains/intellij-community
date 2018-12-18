@@ -29,7 +29,11 @@ private fun syncAdded(added: MutableCollection<String>,
                       sourceRepoMap: Map<String, GitObject>,
                       targetDir: File, targetRepo: (File) -> File) {
   stageFiles(added) { file, skip, stage ->
-    val source = sourceRepoMap[file]!!.file
+    val source = sourceRepoMap[file]?.file
+    if (source == null) {
+      log("Sync added: unable to find $file in source map repo")
+      return@stageFiles
+    }
     val target = targetDir.resolve(file)
     if (target.exists()) {
       if (source.readBytes().contentEquals(target.readBytes())) {
@@ -53,9 +57,9 @@ private fun syncModified(targetRoot: File,
                          targetRepoMap: Map<String, GitObject>,
                          sourceRepoMap: Map<String, GitObject>) {
   stageFiles(modified) { file, skip, stage ->
-    val source = sourceRepoMap[file]!!
+    val source = sourceRepoMap[file] ?: error("Sync modified: unable to find $file in source map repo")
     if (targetRepoMap.containsKey(file)) {
-      val target = targetRepoMap[file]!!
+      val target = targetRepoMap[file] ?: error("Sync modified: unable to find $file in target map repo")
       if (target.hash == source.hash) {
         log("$file is not modified, skipping")
         skip()
@@ -64,7 +68,8 @@ private fun syncModified(targetRoot: File,
         source.file.copyTo(target.file, overwrite = true)
         stage(target.repo, target.path)
       }
-    } else{
+    }
+    else {
       log("$file should be modified but not exist, creating")
       val targetFile = targetRoot.resolve(file)
       val repo = changesToReposMap(targetFile)
@@ -82,7 +87,7 @@ private fun syncRemoved(removed: MutableCollection<String>,
       skip()
     }
     else {
-      val gitObject = targetRepoMap[file]!!
+      val gitObject = targetRepoMap[file] ?: error("Sync removed: unable to find $file in target map repo")
       val target = gitObject.file
       if (target.exists()) {
         if (target.delete()) {

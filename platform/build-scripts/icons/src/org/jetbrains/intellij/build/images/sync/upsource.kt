@@ -15,15 +15,23 @@ internal val UPSOURCE_DEV_PROJECT_ID = System.getProperty("intellij.icons.upsour
 
 private fun upsourceGet(method: String, args: String): String {
   val params = if (args.isEmpty()) "" else "?params=${URLEncoder.encode(args, Charsets.UTF_8.name())}"
-  return get("$UPSOURCE/~rpc/$method$params") {
-    upsourceAuthAndLog(method, args)
+  return upsourceRetry {
+    get("$UPSOURCE/~rpc/$method$params") {
+      upsourceAuthAndLog(method, args)
+    }
   }
 }
 
-private fun upsourcePost(method: String, args: String) = post("$UPSOURCE/~rpc/$method", args) {
-  upsourceAuthAndLog(method, args)
-  addHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString())
+private fun upsourcePost(method: String, args: String) = upsourceRetry {
+  post("$UPSOURCE/~rpc/$method", args) {
+    upsourceAuthAndLog(method, args)
+    addHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString())
+  }
 }
+
+private fun <T> upsourceRetry(action: () -> T) = retry(action = action, secondsBeforeRetry = 60, doRetry = {
+  it.message?.contains("Upsource is down for maintenance") == true
+})
 
 private fun HttpRequestBase.upsourceAuthAndLog(method: String, args: String) {
   log("Calling Upsource '$method' with '$args'")

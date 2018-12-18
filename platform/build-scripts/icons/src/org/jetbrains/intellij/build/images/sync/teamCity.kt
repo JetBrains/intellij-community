@@ -43,7 +43,26 @@ internal class Investigator(val email: String = DEFAULT_INVESTIGATOR,
                             var isAssigned: Boolean = false)
 
 internal fun assignInvestigation(investigator: Investigator, context: Context): Investigator {
-  val report = context.report().let { if (it.isNotEmpty()) "$it, " else it }
+  val report = with(context) {
+    val commits = if (investigator.commits.isNotEmpty()) {
+      "You changed icons in ${investigator.commits.entries.joinToString(";") { entry ->
+        val (repo, commits) = entry
+        "${commits.joinToString { it.hash }} in ${getOriginUrl(repo)}"
+      }} which need to be synchronised."
+    }
+    else ""
+    val iconsSync = if (iconsSyncRequired() && iconsReviews().isNotEmpty()) {
+      "Please review and cherry-pick ${iconsReviews().joinToString { it.url }}."
+    }
+    else ""
+    val devSync = if (devReviews().isNotEmpty()) {
+      "Please review and cherry-pick ${devReviews().joinToString { it.url }}."
+    }
+    else ""
+    sequenceOf(commits, iconsSync, devSync)
+      .filter(String::isNotEmpty)
+      .joinToString(" ")
+  }
   assignInvestigation(investigator, report)
   if (!investigator.isAssigned) {
     var nextAttempts = listOf(teamCityEmail(investigator.email), investigator.email.toLowerCase())
@@ -75,9 +94,9 @@ private fun assignInvestigation(investigator: Investigator, report: String) {
       investigator.isAssigned = true
       return
     }
-    val text = report + (if (investigator.commits.isNotEmpty()) "commits: ${investigator.commits.description()}," else "") +
-               " build: ${thisBuildReportableLink()}," +
-               " see also: https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
+    val text = (if (report.isNotEmpty()) "$report " else report) +
+               "Build: ${thisBuildReportableLink()}, " +
+               "see also: https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
     teamCityPost("investigations", """
       <investigation state="TAKEN">
           <assignee id="$id"/>

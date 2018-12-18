@@ -61,11 +61,9 @@ internal fun findCommitsToSync(context: Context) {
   }
 }
 
-internal fun Map<File, Collection<CommitInfo>>.description() = entries.joinToString { entry ->
+private fun Map<File, Collection<CommitInfo>>.commitMessage() = "Synchronization of changed icons from ${entries.joinToString { entry ->
   "${getOriginUrl(entry.key)}: ${entry.value.joinToString { it.hash }}"
-}
-
-private fun Map<File, Collection<CommitInfo>>.commitMessage() = "Synchronization of changed icons from ${description()}"
+}}"
 
 private fun withTmpBranch(repos: Collection<File>, master: String, action: (String) -> Review?): Review? {
   val branch = "icons-sync/${UUID.randomUUID()}"
@@ -280,22 +278,6 @@ internal fun sendNotification(investigator: Investigator?, context: Context) {
 
 private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
 
-internal fun Context.report(slack: Boolean = false): String {
-  val iconsSync = if (iconsSyncRequired() && iconsReviews().isNotEmpty()) {
-    "To sync $iconsRepoName see ${iconsReviews().joinToString {
-      if (slack) slackLink(it.id, it.url) else it.url
-    }}" + if (slack) "\n" else ""
-  }
-  else ""
-  val devSync = if (devReviews().isNotEmpty()) {
-    "To sync $devRepoName see ${devReviews().joinToString {
-      if (slack) slackLink(it.id, it.url) else it.url
-    }}" + if (slack) "\n" else ""
-  }
-  else ""
-  return iconsSync + devSync
-}
-
 private fun notifySlackChannel(investigator: Investigator?, context: Context) {
   val investigation = when {
     investigator == null -> ""
@@ -303,10 +285,8 @@ private fun notifySlackChannel(investigator: Investigator?, context: Context) {
     else -> "Unable to assign investigation to ${investigator.email}\n"
   }
   val reaction = if (context.isFail()) ":scream:" else ":white_check_mark:"
-  val build = "See " + slackLink("build log", thisBuildReportableLink())
-  val text = "*${context.devRepoName}* $reaction\n" + investigation + context.report(slack = true) + build
+  val build = "See <${thisBuildReportableLink()}|build log>"
+  val text = "*${context.devRepoName}* $reaction\n" + investigation + build
   val response = post(CHANNEL_WEB_HOOK, """{ "text": "$text" }""")
   if (response != "ok") error("$CHANNEL_WEB_HOOK responded with $response")
 }
-
-private fun slackLink(name: String, link: String) = if (link == name) link else "<$link|$name>"
