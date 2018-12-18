@@ -163,7 +163,7 @@ cdef FuncCodeInfo get_func_code_info(PyCodeObject * code_obj):
     to initialize _code_extra_index.
     '''
     # f_code = <object> code_obj
-    # DEBUG = f_code.co_filename.endswith('_debugger_case_change_breaks.py') and f_code.co_name not in ('<lambda>', '<listcomp>')
+    # DEBUG = f_code.co_filename.endswith('_debugger_case_multiprocessing.py')
     # if DEBUG:
     #     print('get_func_code_info', f_code.co_name, f_code.co_filename)
 
@@ -278,7 +278,7 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
         return _PyEval_EvalFrameDefault(frame_obj, exc)
 
     # frame = <object> frame_obj
-    # DEBUG = frame.f_code.co_filename.endswith('_debugger_case_change_breaks.py') and frame.f_code.co_name not in ('<lambda>', '<listcomp>')
+    # DEBUG = frame.f_code.co_filename.endswith('_debugger_case_multiprocessing.py')
     # if DEBUG:
     #     print('get_bytecode_while_frame_eval', frame.f_lineno, frame.f_code.co_name, frame.f_code.co_filename)
     
@@ -310,17 +310,25 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
                 frame.f_trace = <object> main_debugger.trace_dispatch
         else:
             func_code_info: FuncCodeInfo = get_func_code_info(frame_obj.f_code)
+            # if DEBUG:
+            #     print('get_bytecode_while_frame_eval always skip', func_code_info.always_skip_code)
             if not func_code_info.always_skip_code:
     
                 if main_debugger.has_plugin_line_breaks:
                     can_skip = not main_debugger.plugin.can_not_skip(main_debugger, None, <object> frame_obj)
+
                     if not can_skip:
+                        # if DEBUG:
+                        #     print('get_bytecode_while_frame_eval not can_skip')
                         if thread_info.thread_trace_func is not None:
                             frame.f_trace = thread_info.thread_trace_func
                         else:
                             frame.f_trace = <object> main_debugger.trace_dispatch
                             
                 if can_skip and func_code_info.breakpoint_found:
+                    # if DEBUG:
+                    #     print('get_bytecode_while_frame_eval new_code', func_code_info.new_code)
+
                     # If breakpoints are found but new_code is None,
                     # this means we weren't able to actually add the code
                     # where needed, so, fallback to tracing.
