@@ -193,7 +193,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
           }
         }).doWhenRejected(() -> {
           if (isSecondAttempt) {
-            result.cancel();
+            result.setError("rejected");
           } else {
             _select(file, file, requestFocus, nonStopCondition, result, indicator, virtualSelectTarget, focusRequestor, true);
           }
