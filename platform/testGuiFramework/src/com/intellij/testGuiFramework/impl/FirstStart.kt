@@ -12,6 +12,7 @@ import com.intellij.testGuiFramework.impl.FirstStart.Utils.button
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.dialog
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.radioButton
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.waitFrame
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.repeatUntil
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.silentWaitUntil
 import com.intellij.testGuiFramework.launcher.ide.IdeType
 import org.fest.swing.core.GenericTypeMatcher
@@ -153,11 +154,15 @@ abstract class FirstStart(val ideType: IdeType) {
     with(myRobot) {
       val title = "Complete Installation"
       LOG.info("Waiting for '$title' dialog")
-      dialog(title)
+      val dialogFixture = dialog(title)
 
       LOG.info("Click OK on 'Do not import settings'")
-      radioButton("Do not import settings").select()
-      button("OK").click()
+      dialogFixture.radioButton("Do not import settings").select()
+
+      repeatUntil(
+        { !dialogFixture.target().isShowing },
+        { dialogFixture.button("OK").click() }
+      )
     }
   }
 
