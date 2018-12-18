@@ -214,8 +214,16 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   private void processOfNullableResult(@NotNull DfaValue value, @NotNull DfaMemoryState memState, PsiElement anchor) {
-    Boolean fact = memState.getValueFact(value, DfaFactType.OPTIONAL_PRESENCE);
-    ThreeState present = fact == null ? ThreeState.UNSURE : ThreeState.fromBoolean(fact);
+    DfaValueFactory factory = value.getFactory();
+    DfaValue optionalValue = factory == null ? DfaUnknownValue.getInstance() : SpecialField.OPTIONAL_VALUE.createValue(factory, value);
+    ThreeState present;
+    if (memState.isNull(optionalValue)) {
+      present = ThreeState.NO;
+    }
+    else if (memState.isNotNull(optionalValue)) {
+      present = ThreeState.YES;
+    }
+    else present = ThreeState.UNSURE;
     myOfNullableCalls.merge(anchor, present, ThreeState::merge);
   }
 

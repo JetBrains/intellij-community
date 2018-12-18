@@ -3,8 +3,9 @@ package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
@@ -37,9 +38,13 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
         PsiClass optionalClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
         if (optionalClass == null) return;
         CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(qualifier);
-        if (result != null &&
-            result.expressionWasAnalyzed(qualifier) &&
-            result.getExpressionFact(qualifier, DfaFactType.OPTIONAL_PRESENCE) == null &&
+        if (result == null || !result.expressionWasAnalyzed(qualifier)) return;
+        SpecialFieldValue fact = result.getExpressionFact(qualifier, DfaFactType.SPECIAL_FIELD_VALUE);
+        DfaValue value = SpecialField.OPTIONAL_VALUE.extract(fact);
+        if (value != null && !(value instanceof DfaFactMapValue)) return;
+        DfaNullability nullability = value != null ? ((DfaFactMapValue)value).get(DfaFactType.NULLABILITY) : null;
+        if (nullability != DfaNullability.NOT_NULL &&
+            nullability != DfaNullability.FLUSHED &&
             !isPresentCallWithSameQualifierExists(qualifier)) {
           holder.registerProblem(nameElement,
                                  InspectionsBundle.message("inspection.optional.get.without.is.present.message", optionalClass.getName()),

@@ -267,17 +267,16 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     void iteration(CFGBuilder builder) {
-      DfaValue presentOptional = DfaOptionalSupport.getOptionalValue(builder.getFactory(), true);
       if (myFunction != null) {
-        builder.push(myResult)
-               .push(presentOptional)
-               .ifCondition(JavaTokenType.INSTANCEOF_KEYWORD)
+        DfaVariableValue optValue = (DfaVariableValue)SpecialField.OPTIONAL_VALUE.createValue(builder.getFactory(), myResult);
+        builder.push(optValue)
+               .ifNotNull()
                  .push(builder.getFactory().getFactValue(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL))
                  .swap()
                  .invokeFunction(2, myFunction, Nullability.NOT_NULL)
                .end();
       }
-      builder.assign(myResult, presentOptional).splice(2);
+      builder.assign(myResult, DfaOptionalSupport.getOptionalValue(builder.getFactory(), true)).splice(2);
     }
   }
 

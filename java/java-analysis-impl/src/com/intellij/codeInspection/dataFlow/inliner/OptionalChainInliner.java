@@ -19,7 +19,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.DfaOptionalSupport;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -221,15 +221,9 @@ public class OptionalChainInliner implements CallInliner {
         return true;
       }
     }
-    DfaValue presentOptional = DfaOptionalSupport.getOptionalValue(builder.getFactory(), true);
     builder
       .pushExpression(expression, problem)
-      .push(presentOptional)
-      .ifCondition(JavaTokenType.INSTANCEOF_KEYWORD)
-      .push(builder.getFactory().createTypeValue(optionalElementType, Nullability.NOT_NULL))
-      .elseBranch()
-      .pushNull()
-      .end()
+      .unwrap(SpecialField.OPTIONAL_VALUE, optionalElementType)
       .assignTo(builder.createTempVariable(optionalElementType));
     return true;
   }

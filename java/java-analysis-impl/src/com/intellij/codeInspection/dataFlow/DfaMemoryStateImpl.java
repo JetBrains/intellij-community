@@ -818,10 +818,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           case IS:
             return applyFacts(dfaVar, factValue.getFacts());
           case IS_NOT: {
-            Boolean optionalPresence = factValue.get(DfaFactType.OPTIONAL_PRESENCE);
-            if(optionalPresence != null) {
-              return applyFact(dfaVar, DfaFactType.OPTIONAL_PRESENCE, !optionalPresence);
-            }
             boolean isNotNull = DfaNullability.isNotNull(factValue.getFacts());
             TypeConstraint constraint = factValue.get(DfaFactType.TYPE_CONSTRAINT);
             if (constraint != null && constraint.getNotInstanceofValues().isEmpty()) {
@@ -864,28 +860,26 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void updateVarStateOnComparison(@NotNull DfaVariableValue dfaVar, DfaValue value, boolean isNegated) {
-    if (!(dfaVar.getType() instanceof PsiPrimitiveType)) {
-      if (isNegated) {
-        if (isNull(value)) {
-          setVariableState(dfaVar, getVariableState(dfaVar).withFact(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL));
+    if (isNegated) {
+      if (isNull(value)) {
+        setVariableState(dfaVar, getVariableState(dfaVar).withFact(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL));
+      }
+    } else {
+      if (value instanceof DfaConstValue) {
+        Object constValue = ((DfaConstValue)value).getValue();
+        if (constValue == null) {
+          setVariableState(dfaVar, getVariableState(dfaVar).withFact(DfaFactType.NULLABILITY, DfaNullability.NULLABLE));
+          return;
         }
-      } else {
-        if (value instanceof DfaConstValue) {
-          Object constValue = ((DfaConstValue)value).getValue();
-          if (constValue == null) {
-            setVariableState(dfaVar, getVariableState(dfaVar).withFact(DfaFactType.NULLABILITY, DfaNullability.NULLABLE));
-            return;
-          }
-          DfaPsiType dfaType = myFactory.createDfaType(((DfaConstValue)value).getType());
-          DfaVariableState state = getVariableState(dfaVar).withInstanceofValue(dfaType);
-          if (state != null) {
-            setVariableState(dfaVar, state);
-          }
+        DfaPsiType dfaType = myFactory.createDfaType(((DfaConstValue)value).getType());
+        DfaVariableState state = getVariableState(dfaVar).withInstanceofValue(dfaType);
+        if (state != null) {
+          setVariableState(dfaVar, state);
         }
-        if (isNotNull(value) && !isNotNull(dfaVar)) {
-          setVariableState(dfaVar, getVariableState(dfaVar).withoutFact(DfaFactType.NULLABILITY));
-          applyRelation(dfaVar, myFactory.getConstFactory().getNull(), true);
-        }
+      }
+      if (isNotNull(value) && !isNotNull(dfaVar)) {
+        setVariableState(dfaVar, getVariableState(dfaVar).withoutFact(DfaFactType.NULLABILITY));
+        applyRelation(dfaVar, myFactory.getConstFactory().getNull(), true);
       }
     }
   }

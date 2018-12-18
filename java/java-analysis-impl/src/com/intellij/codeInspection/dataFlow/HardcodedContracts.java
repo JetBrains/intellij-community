@@ -229,7 +229,8 @@ public class HardcodedContracts {
   }
 
   static MethodContract optionalAbsentContract(ContractReturnValue returnValue) {
-    return singleConditionContract(ContractValue.qualifier(), RelationType.IS, ContractValue.optionalValue(false), returnValue);
+    return singleConditionContract(ContractValue.qualifier().specialField(SpecialField.OPTIONAL_VALUE), RelationType.EQ,
+                                   ContractValue.nullValue(), returnValue);
   }
 
   static MethodContract nonnegativeArgumentContract(int argNumber) {

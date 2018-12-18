@@ -84,7 +84,9 @@ public class DfaOptionalSupport {
    */
   @NotNull
   public static DfaValue getOptionalValue(DfaValueFactory factory, boolean present) {
-    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.OPTIONAL_PRESENCE, present).with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
+    DfaValue value = present ? factory.getFactValue(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL) : factory.getConstFactory().getNull();
+    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
+      .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.OPTIONAL_VALUE.withValue(value));
     return factory.getFactFactory().createValue(facts);
   }
 

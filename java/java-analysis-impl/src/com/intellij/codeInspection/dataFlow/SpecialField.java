@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -10,6 +11,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -112,6 +114,43 @@ public enum SpecialField implements VariableDescriptor {
     boolean isMyAccessor(PsiMember accessor) {
       return accessor instanceof PsiMethod && UNBOXING_CALL.methodMatches((PsiMethod)accessor);
     }
+  },
+  OPTIONAL_VALUE(null, "value", true) {
+    @Override
+    PsiType getType(DfaVariableValue variableValue) {
+      return OptionalUtil.getOptionalElementType(variableValue.getType());
+    }
+
+    @NotNull
+    @Override
+    public DfaValue getDefaultValue(DfaValueFactory factory) {
+      return factory.getFactValue(DfaFactType.NULLABILITY, DfaNullability.NULLABLE);
+    }
+
+    @Override
+    boolean isMyQualifierType(PsiType type) {
+      return TypeUtils.isOptional(type);
+    }
+
+    @Override
+    public String getPresentationText(@NotNull DfaValue value, @Nullable PsiType type) {
+      if (value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == null) {
+        return "empty Optional";
+      }
+      if (value instanceof DfaFactMapValue) {
+        DfaNullability nullability = ((DfaFactMapValue)value).get(DfaFactType.NULLABILITY);
+        if (nullability == DfaNullability.NOT_NULL) {
+          return "present Optional";
+        }
+        return "";
+      }
+      return super.getPresentationText(value, type);
+    }
+
+    @Override
+    boolean isMyAccessor(PsiMember accessor) {
+      return accessor instanceof PsiMethod && OptionalUtil.OPTIONAL_GET.methodMatches((PsiMethod)accessor);
+    }
   };
 
   private final String myClassName;
@@ -145,6 +184,10 @@ public enum SpecialField implements VariableDescriptor {
    */
   boolean isMyAccessor(PsiMember accessor) {
     return accessor instanceof PsiMethod && MethodUtils.methodMatches((PsiMethod)accessor, myClassName, null, myMethodName);
+  }
+
+  public String getPresentationText(@NotNull DfaValue value, @Nullable PsiType type) {
+    return value.toString();
   }
 
   /**
@@ -220,7 +263,7 @@ public enum SpecialField implements VariableDescriptor {
     return factory.getFactValue(DfaFactType.RANGE, LongRangeSet.indexRange());
   }
 
-  PsiPrimitiveType getType(DfaVariableValue variableValue) {
+  PsiType getType(DfaVariableValue variableValue) {
     return PsiType.INT;
   }
 
@@ -251,6 +294,17 @@ public enum SpecialField implements VariableDescriptor {
 
   public SpecialFieldValue withValue(DfaValue value) {
     return new SpecialFieldValue(this, value);
+  }
+
+  /**
+   * Returns a value from given SpecialFieldValue if it's bound to this special field
+   * @param sfValue {@link SpecialFieldValue} to extract the value from
+   * @return en extracted value, or null if argument is null or it's bound to different special field
+   */
+  @Contract("null -> null")
+  @Nullable
+  public DfaValue extract(@Nullable SpecialFieldValue sfValue) {
+    return sfValue != null && sfValue.getField() == this ? sfValue.getValue() : null;
   }
 
   /**

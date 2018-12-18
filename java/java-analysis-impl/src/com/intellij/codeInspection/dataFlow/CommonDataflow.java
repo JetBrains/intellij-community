@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.EndOfInitializerInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.TextRange;
@@ -73,16 +74,19 @@ public class CommonDataflow {
     private void addFacts(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
       DfaFactMap existing = myFacts.get(expression);
       if(existing != DfaFactMap.EMPTY) {
-        DfaFactMap newMap = memState.getFactMap(value);
-        if (!DfaNullability.isNotNull(newMap) && memState.isNotNull(value)) {
-          newMap = newMap.with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
-        }
+        DfaFactMap newMap = getFactMap(memState, value);
         if (value instanceof DfaVariableValue) {
           SpecialField field = SpecialField.fromQualifierType(value.getType());
           if (field != null) {
-            DfaConstValue constValue = memState.getConstantValue(field.createValue(value.getFactory(), value));
-            if (constValue != null) {
-              newMap = newMap.with(DfaFactType.SPECIAL_FIELD_VALUE, field.withValue(constValue));
+            DfaValue specialField = field.createValue(value.getFactory(), value);
+            if (specialField instanceof DfaVariableValue) {
+              DfaConstValue constantValue = memState.getConstantValue(specialField);
+              specialField = constantValue != null
+                             ? constantValue
+                             : specialField.getFactory().getFactFactory().createValue(getFactMap(memState, specialField));
+            }
+            if (specialField instanceof DfaConstValue || specialField instanceof DfaFactMapValue) {
+              newMap = newMap.with(DfaFactType.SPECIAL_FIELD_VALUE, field.withValue(specialField));
             }
           }
         }
@@ -94,6 +98,16 @@ public class CommonDataflow {
           add((PsiExpression)parent, memState, value);
         }
       }
+    }
+
+    @NotNull
+    private static DfaFactMap getFactMap(DfaMemoryStateImpl memState, DfaValue value) {
+      DfaFactMap newMap = memState.getFactMap(value);
+      DfaNullability nullability = newMap.get(DfaFactType.NULLABILITY);
+      if (nullability != DfaNullability.NOT_NULL && memState.isNotNull(value)) {
+        newMap = newMap.with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
+      }
+      return newMap;
     }
 
     /**

@@ -87,15 +87,12 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @Nullable
     @Override
-    DfaNullability fromDfaValue(DfaValue value) {
+    public DfaNullability fromDfaValue(DfaValue value) {
       if (value instanceof DfaConstValue) {
         return ((DfaConstValue)value).getValue() == null ? DfaNullability.NULLABLE : DfaNullability.NOT_NULL;
       }
       if (value instanceof DfaBoxedValue) return DfaNullability.NOT_NULL;
-      if (value instanceof DfaFactMapValue) {
-        DfaFactMapValue factValue = (DfaFactMapValue)value;
-        if (factValue.get(OPTIONAL_PRESENCE) != null || factValue.get(RANGE) != null) return DfaNullability.NOT_NULL;
-      }
+      if (value instanceof DfaFactMapValue && ((DfaFactMapValue)value).get(RANGE) != null) return DfaNullability.NOT_NULL;
       return super.fromDfaValue(value);
     }
 
@@ -127,20 +124,6 @@ public abstract class DfaFactType<T> extends Key<T> {
   };
 
   /**
-   * This fact is applied to the Optional values (like {@link java.util.Optional} or Guava Optional).
-   * When its value is true, then optional is known to be present.
-   * When its value is false, then optional is known to be empty (absent).
-   */
-  public static final DfaFactType<Boolean> OPTIONAL_PRESENCE = new DfaFactType<Boolean>("Optional") {
-
-    @NotNull
-    @Override
-    public String toString(@NotNull Boolean fact) {
-      return fact ? "present Optional" : "absent Optional";
-    }
-  };
-
-  /**
    * This fact is applied to the integral values (of types byte, char, short, int, long).
    * Its value represents a range of possible values.
    */
@@ -157,7 +140,7 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @Nullable
     @Override
-    LongRangeSet fromDfaValue(DfaValue value) {
+    public LongRangeSet fromDfaValue(DfaValue value) {
       if(value instanceof DfaVariableValue) {
         return calcFromVariable((DfaVariableValue)value);
       }
@@ -264,7 +247,7 @@ public abstract class DfaFactType<T> extends Key<T> {
     @NotNull
     @Override
     public String getPresentationText(@NotNull SpecialFieldValue fact, @Nullable PsiType type) {
-      return String.valueOf(fact.getValue());
+      return fact.getPresentationText(type);
     }
   };
 
@@ -284,7 +267,7 @@ public abstract class DfaFactType<T> extends Key<T> {
   }
 
   @Nullable
-  T fromDfaValue(DfaValue value) {
+  public T fromDfaValue(DfaValue value) {
     return value instanceof DfaFactMapValue ? ((DfaFactMapValue)value).get(this) : null;
   }
 

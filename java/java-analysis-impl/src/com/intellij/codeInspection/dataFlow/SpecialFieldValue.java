@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -54,5 +55,9 @@ public final class SpecialFieldValue {
   @Override
   public String toString() {
     return myField + " = " + myValue;
+  }
+
+  public String getPresentationText(PsiType type) {
+    return myField.getPresentationText(myValue, type);
   }
 }

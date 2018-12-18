@@ -29,6 +29,9 @@ public class NullabilityUtil {
     if (value.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor) {
       return DfaNullability.NOT_NULL;
     }
+    if (value.getDescriptor() == SpecialField.OPTIONAL_VALUE) {
+      return DfaNullability.NULLABLE;
+    }
     PsiModifierListOwner var = value.getPsiVariable();
     Nullability nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(value.getType(), var);
     if (nullability != Nullability.UNKNOWN) {
