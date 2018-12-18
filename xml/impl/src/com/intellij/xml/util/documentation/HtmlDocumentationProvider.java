@@ -6,6 +6,7 @@ import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -18,11 +19,14 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,13 +39,19 @@ import static com.intellij.codeInsight.documentation.DocumentationManager.ORIGIN
  * @author maxim
  */
 public class HtmlDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider {
+  private static final ExtensionPointName<DocumentationProvider> SCRIPT_PROVIDER_EP_NAME = ExtensionPointName.create("com.intellij.html.scriptDocumentationProvider");
+
   private DocumentationProvider myStyleProvider = null;
   private final boolean myUseStyleProvider;
-  private static DocumentationProvider ourScriptProvider;
 
   @NonNls public static final String ELEMENT_ELEMENT_NAME = "element";
   @NonNls public static final String NBSP = ":&nbsp;";
   @NonNls public static final String BR = "<br>";
+
+  private static final SynchronizedClearableLazy<DocumentationProvider> ourScriptProvider = new SynchronizedClearableLazy<>(() -> {
+    //noinspection CodeBlock2Expr
+    return ContainerUtil.getFirstItem(SCRIPT_PROVIDER_EP_NAME.getExtensionList());
+  });
 
   public HtmlDocumentationProvider() {
     this(true);
@@ -199,8 +209,11 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
       result = styleProvider.generateDoc(element, originalElement);
     }
 
-    if (result == null && ourScriptProvider !=null) {
-      result = ourScriptProvider.generateDoc(element, originalElement);
+    if (result == null) {
+      DocumentationProvider scriptProvider = ourScriptProvider.getValue();
+      if (scriptProvider != null) {
+        result = scriptProvider.generateDoc(element, originalElement);
+      }
     }
 
     if (result == null && element instanceof XmlAttributeValue) {
@@ -250,8 +263,11 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     if (result== null && styleProvider !=null) {
       result = styleProvider.getDocumentationElementForLookupItem(psiManager, object, element);
     }
-    if (result== null && ourScriptProvider !=null) {
-      result = ourScriptProvider.getDocumentationElementForLookupItem(psiManager, object, element);
+    if (result == null) {
+      DocumentationProvider scriptProvider = ourScriptProvider.getValue();
+      if (scriptProvider != null) {
+        result = scriptProvider.getDocumentationElementForLookupItem(psiManager, object, element);
+      }
     }
     if (result == null && object instanceof String && element != null) {
       result = XmlDocumentationProvider.findDeclWithName((String)object, element);
@@ -267,8 +283,8 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     if (result== null && styleProvider !=null) {
       result = styleProvider.getDocumentationElementForLink(psiManager, link, context);
     }
-    if (result== null && ourScriptProvider != null && !DumbService.isDumb(psiManager.getProject())) {
-      result = ourScriptProvider.getDocumentationElementForLink(psiManager, link,context);
+    if (result== null && ourScriptProvider.getValue() != null && !DumbService.isDumb(psiManager.getProject())) {
+      result = ourScriptProvider.getValue().getDocumentationElementForLink(psiManager, link, context);
     }
     return result;
   }
@@ -322,8 +338,9 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     return PsiTreeUtil.getParentOfType(context,XmlTag.class,false);
   }
 
-  public static void registerScriptDocumentationProvider(final DocumentationProvider provider) {
-    ourScriptProvider = provider;
+  @TestOnly
+  public static void registerScriptDocumentationProvider(@Nullable DocumentationProvider provider) {
+    ourScriptProvider.setValue(provider);
   }
 
   @Nullable
