@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -30,21 +31,21 @@ public class LombokUtilsAllGetterTest {
   public void testToAllGetterNames_NonBoolean() {
     makeResults("myField", false, DEFAULT_ACCESSORS);
 
-    assertThat(result, is(Arrays.asList("getMyField")));
+    assertThat(result, is(Collections.singletonList("getMyField")));
   }
 
   @Test
   public void testToAllGetterNames_NonBoolean_Uppercase() {
     makeResults("myField", false, DEFAULT_ACCESSORS);
 
-    assertThat(result, is(Arrays.asList("getMyField")));
+    assertThat(result, is(Collections.singletonList("getMyField")));
   }
 
   @Test
   public void testToAllGetterNames_NonBoolean_Uppercase_Multiple() {
     makeResults("MYField", false, DEFAULT_ACCESSORS);
 
-    assertThat(result, is(Arrays.asList("getMYField")));
+    assertThat(result, is(Collections.singletonList("getMYField")));
   }
 
   @Test
@@ -87,6 +88,6 @@ public class LombokUtilsAllGetterTest {
   public void testToAllGetterNames_NonBoolean_Fluent() {
     makeResults("myField", false, AccessorsInfo.build(true, false, false));
 
-    assertThat(result, is(Arrays.asList("myField")));
+    assertThat(result, is(Collections.singletonList("myField")));
   }
 }

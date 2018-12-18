@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -30,42 +31,42 @@ public class LombokUtilsAllWitherTest {
   public void testToAllWitherNames_NonBoolean() {
     makeResults("myField", false);
 
-    assertThat(result, is(Arrays.asList("withMyField")));
+    assertThat(result, is(Collections.singletonList("withMyField")));
   }
 
   @Test
   public void testToAllWitherNames_NonBoolean_Uppercase() {
     makeResults("myField", false);
 
-    assertThat(result, is(Arrays.asList("withMyField")));
+    assertThat(result, is(Collections.singletonList("withMyField")));
   }
 
   @Test
   public void testToAllWitherNames_NonBoolean_Uppercase_Multiple() {
     makeResults("MYField", false);
 
-    assertThat(result, is(Arrays.asList("withMYField")));
+    assertThat(result, is(Collections.singletonList("withMYField")));
   }
 
   @Test
   public void testToAllWitherNames_Boolean() {
     makeResults("myField", true);
 
-    assertThat(result, is(Arrays.asList("withMyField")));
+    assertThat(result, is(Collections.singletonList("withMyField")));
   }
 
   @Test
   public void testToAllWitherNames_Boolean_Uppercase() {
     makeResults("MyField", true);
 
-    assertThat(result, is(Arrays.asList("withMyField")));
+    assertThat(result, is(Collections.singletonList("withMyField")));
   }
 
   @Test
   public void testToAllWitherNames_Boolean_is_Lowercase() {
     makeResults("ismyField", true);
 
-    assertThat(result, is(Arrays.asList("withIsmyField")));
+    assertThat(result, is(Collections.singletonList("withIsmyField")));
   }
 
   @Test
@@ -79,7 +80,7 @@ public class LombokUtilsAllWitherTest {
   public void testToAllWitherNames_Boolean_IS() {
     makeResults("ISmyField", true);
 
-    assertThat(result, is(Arrays.asList("withISmyField")));
+    assertThat(result, is(Collections.singletonList("withISmyField")));
   }
 
 }
