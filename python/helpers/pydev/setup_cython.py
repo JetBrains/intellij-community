@@ -74,6 +74,9 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython, 
             from distutils.extension import Extension
             ext_modules = [Extension("%s%s.%s" % (dir_name, "_ext" if extended else "", target_pydevd_name,),
                                      [os.path.join(dir_name, "%s.c" % target_pydevd_name), ],
+                                     # uncomment to generate pdbs for visual studio.
+                                     # extra_compile_args=["-Zi", "/Od"],
+                                     # extra_link_args=["-debug"],
                                      )]
 
         setup(

@@ -59,7 +59,7 @@ class TestInsertCode(unittest.TestCase):
         """
         seq1 = [(offset, op, arg) for offset, op, arg in dis._unpack_opargs(code1)]
         seq2 = [(offset, op, arg) for offset, op, arg in dis._unpack_opargs(code2)]
-        self.assertTrue(len(seq1) == len(seq2), "Bytes sequences have different lengths")
+        assert len(seq1) == len(seq2), "Bytes sequences have different lengths %s != %s" % (len(seq1), len(seq2))
         for i in range(len(seq1)):
             of, op1, arg1 = seq1[i]
             _, op2, arg2 = seq2[i]
@@ -450,7 +450,6 @@ class TestInsertCode(unittest.TestCase):
 
             self.check_insert_to_line_by_symbols(foo, call_tracing, foo.__code__.co_firstlineno + 2,
                                                  check_line_2.__code__)
-
 
         finally:
             sys.stdout = self.original_stdout

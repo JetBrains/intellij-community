@@ -6,8 +6,6 @@
 
     Note that it's a python script but it'll spawn a process to run as jython, ironpython and as python.
 '''
-import os
-import sys
 import time
 
 import pytest
@@ -25,7 +23,7 @@ try:
 except ImportError:
     from urllib.parse import unquote
 
-from tests_python.debug_constants import TEST_CYTHON
+from tests_python.debug_constants import *
 
 pytest_plugins = [
     str('tests_python.debugger_fixtures'),
@@ -51,21 +49,12 @@ try:
 except:
     pass
 
-IS_PY2 = False
-if sys.version_info[0] == 2:
-    IS_PY2 = True
-
-IS_PY26 = sys.version_info[:2] == (2, 6)
-IS_PY34 = sys.version_info[:2] == (3, 4)
 
 if IS_PY2:
     builtin_qualifier = "__builtin__"
 else:
     builtin_qualifier = "builtins"
 
-IS_PY36 = False
-if sys.version_info[0] == 3 and sys.version_info[1] == 6:
-    IS_PY36 = True
 
 
 @pytest.mark.skipif(IS_IRONPYTHON, reason='Test needs gc.get_referrers to really check anything.')
@@ -1982,6 +1971,27 @@ def test_py_37_breakpoint(case_setup, filename):
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit(file=filename, line=3)
+
+        writer.write_run_thread(hit.thread_id)
+
+        writer.finished_ok = True
+
+
+def _get_generator_cases():
+    if IS_PY2:
+        return ('_debugger_case_generator_py2.py',)
+    else:
+        # On py3 we should check both versions.
+        return ('_debugger_case_generator_py2.py', '_debugger_case_generator_py3.py')
+
+
+@pytest.mark.parametrize("filename", _get_generator_cases())
+def test_generator_cases(case_setup, filename):
+    with case_setup.test_file(filename) as writer:
+        writer.write_add_breakpoint(writer.get_line_index_with_content('break here'))
+        writer.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit()
 
         writer.write_run_thread(hit.thread_id)
 
