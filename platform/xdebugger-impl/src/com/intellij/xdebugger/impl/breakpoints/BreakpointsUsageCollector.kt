@@ -4,7 +4,8 @@ package com.intellij.xdebugger.impl.breakpoints
 import com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsageTriggerCollector
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator
-import com.intellij.openapi.project.Project
+import com.intellij.internal.statistic.utils.getPluginType
+import com.intellij.xdebugger.breakpoints.XBreakpoint
 
 /**
  * @author egor
@@ -14,9 +15,11 @@ class BreakpointsUsageCollector : ProjectUsageTriggerCollector() {
 
   companion object {
     @JvmStatic
-    fun reportUsage(project: Project, featureId: String) {
-      FUSProjectUsageTrigger.getInstance(project).trigger(BreakpointsUsageCollector::class.java,
-                                                          UsageDescriptorKeyValidator.ensureProperKey(featureId))
+    fun reportUsage(breakpoint: XBreakpoint<*>, featureId: String) {
+      if (breakpoint is XBreakpointBase<*, *, *> && getPluginType(breakpoint.type.javaClass).isSafeToReport()) {
+        FUSProjectUsageTrigger.getInstance(breakpoint.getProject()).trigger(BreakpointsUsageCollector::class.java,
+                                                                            UsageDescriptorKeyValidator.ensureProperKey(featureId))
+      }
     }
   }
 }
