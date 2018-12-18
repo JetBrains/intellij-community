@@ -25,7 +25,7 @@ abstract class ImplementationViewElement {
   abstract val presentation: ItemPresentation?
   abstract val containingFile: PsiFile?
   abstract val text: String?
-  abstract val parentOrSelf: ImplementationViewElement
+  abstract val containingMemberOrSelf: ImplementationViewElement
   abstract val elementForShowUsages: PsiElement?
 
   abstract fun renderToLabel(label: JLabel)
@@ -55,7 +55,7 @@ class PsiImplementationViewElement(val psiElement: PsiElement) : ImplementationV
     ElementLocationUtil.customizeElementLabel(psiElement, label)
   }
 
-  override val parentOrSelf: ImplementationViewElement
+  override val containingMemberOrSelf: ImplementationViewElement
     get() {
       val parent = PsiTreeUtil.getStubOrPsiParent(psiElement)
       if (parent == null || parent == containingFile) {
