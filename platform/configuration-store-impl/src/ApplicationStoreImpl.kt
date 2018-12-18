@@ -4,13 +4,12 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.PathMacroManager
-import com.intellij.openapi.components.PathMacroSubstitutor
-import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.NamedJDOMExternalizable
+import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader
 
 private class ApplicationPathMacroManager : PathMacroManager(null)
@@ -30,6 +29,7 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
     // app config must be first, because collapseMacros collapse from fist to last, so, at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
     storageManager.addMacro(APP_CONFIG, "$path/${FILE_STORAGE_DIR}")
     storageManager.addMacro(ROOT_CONFIG, path)
+    storageManager.addMacro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve("app.xml").systemIndependentPath)
   }
 
   override fun saveAdditionalComponents(isForce: Boolean) {
