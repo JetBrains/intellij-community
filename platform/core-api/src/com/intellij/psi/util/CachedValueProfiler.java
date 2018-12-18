@@ -59,7 +59,7 @@ public class CachedValueProfiler {
   }
 
   @Nullable
-  public <T> ProfilingInfo getTemporaryInfo(CachedValueProvider.Result<T> result) {
+  public <T> ProfilingInfo getTemporaryInfo(@NotNull CachedValueProvider.Result<T> result) {
     return myTemporaryResults.remove(result);
   }
 

@@ -44,7 +44,7 @@ public abstract class CachedValueBase<T> {
       inferredTimeStamps = timeStamps.toNativeArray();
     }
 
-    if (CachedValueProfiler.canProfile()) {
+    if (result != null && CachedValueProfiler.canProfile()) {
       ProfilingInfo profilingInfo = CachedValueProfiler.getInstance().getTemporaryInfo(result);
       if (profilingInfo != null) {
         return new ProfilingData<>(value, inferredDependencies, inferredTimeStamps, profilingInfo);
