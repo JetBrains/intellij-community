@@ -320,7 +320,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       assert changeLists.size() == 1;
       LocalChangeList changeList = changeLists.get(0);
 
-      myBrowser = new AlienChangeListBrowser(project, changeList, changes);
+      myBrowser = new AlienChangeListBrowser(project, changeList);
       myBrowser.getViewer().setIncludedChanges(included);
       myBrowser.getViewer().rebuildTree();
 

@@ -10,23 +10,21 @@ import com.intellij.openapi.vcs.changes.RemoteRevisionsCache
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.tree.DefaultTreeModel
 
-class AlienChangeListBrowser(project: Project,
-                             private val myChangeList: LocalChangeList,
-                             private val myChanges: List<Change>) : CommitDialogChangesBrowser(project, false, true) {
+class AlienChangeListBrowser(project: Project, private val changeList: LocalChangeList) : CommitDialogChangesBrowser(project, false, true) {
   init {
     init()
   }
 
   override fun buildTreeModel(): DefaultTreeModel {
     val decorator = RemoteRevisionsCache.getInstance(myProject).changesNodeDecorator
-    return TreeModelBuilder.buildFromChanges(myProject, grouping, myChanges, decorator)
+    return TreeModelBuilder.buildFromChanges(myProject, grouping, changeList.changes, decorator)
   }
 
-  override fun getSelectedChangeList(): LocalChangeList = myChangeList
+  override fun getSelectedChangeList(): LocalChangeList = changeList
 
-  override fun getDisplayedChanges(): List<Change> = myChanges
+  override fun getDisplayedChanges(): List<Change> = changeList.changes.toList()
   override fun getSelectedChanges(): List<Change> = VcsTreeModelData.selected(myViewer).userObjects(Change::class.java)
-  override fun getIncludedChanges(): List<Change> = myChanges
+  override fun getIncludedChanges(): List<Change> = changeList.changes.toList()
 
   override fun getDisplayedUnversionedFiles(): List<VirtualFile> = emptyList()
   override fun getSelectedUnversionedFiles(): List<VirtualFile> = emptyList()
@@ -35,7 +33,7 @@ class AlienChangeListBrowser(project: Project,
   override fun updateDisplayedChangeLists() {}
 
   override fun getData(dataId: String) = when (dataId) {
-    VcsDataKeys.CHANGE_LISTS.name -> arrayOf<ChangeList>(myChangeList)
+    VcsDataKeys.CHANGE_LISTS.name -> arrayOf<ChangeList>(changeList)
     else -> super.getData(dataId)
   }
 }
