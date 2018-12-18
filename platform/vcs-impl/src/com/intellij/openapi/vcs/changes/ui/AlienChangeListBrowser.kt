@@ -1,96 +1,41 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeList
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.RemoteRevisionsCache
+import com.intellij.openapi.vfs.VirtualFile
+import javax.swing.tree.DefaultTreeModel
 
-import javax.swing.tree.DefaultTreeModel;
-import java.util.Collections;
-import java.util.List;
-
-public class AlienChangeListBrowser extends CommitDialogChangesBrowser {
-  @NotNull private final LocalChangeList myChangeList;
-  @NotNull private final List<Change> myChanges;
-
-  public AlienChangeListBrowser(@NotNull Project project,
-                                @NotNull LocalChangeList changelist,
-                                @NotNull List<Change> changes) {
-    super(project, false, true);
-    myChangeList = changelist;
-    myChanges = changes;
-
-    init();
+class AlienChangeListBrowser(project: Project,
+                             private val myChangeList: LocalChangeList,
+                             private val myChanges: List<Change>) : CommitDialogChangesBrowser(project, false, true) {
+  init {
+    init()
   }
 
-  @NotNull
-  @Override
-  protected DefaultTreeModel buildTreeModel() {
-    RemoteStatusChangeNodeDecorator decorator = RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator();
-    return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), myChanges, decorator);
+  override fun buildTreeModel(): DefaultTreeModel {
+    val decorator = RemoteRevisionsCache.getInstance(myProject).changesNodeDecorator
+    return TreeModelBuilder.buildFromChanges(myProject, grouping, myChanges, decorator)
   }
 
+  override fun getSelectedChangeList(): LocalChangeList = myChangeList
 
-  @NotNull
-  @Override
-  public LocalChangeList getSelectedChangeList() {
-    return myChangeList;
-  }
+  override fun getDisplayedChanges(): List<Change> = myChanges
+  override fun getSelectedChanges(): List<Change> = VcsTreeModelData.selected(myViewer).userObjects(Change::class.java)
+  override fun getIncludedChanges(): List<Change> = myChanges
 
+  override fun getDisplayedUnversionedFiles(): List<VirtualFile> = emptyList()
+  override fun getSelectedUnversionedFiles(): List<VirtualFile> = emptyList()
+  override fun getIncludedUnversionedFiles(): List<VirtualFile> = emptyList()
 
-  @NotNull
-  @Override
-  public List<Change> getDisplayedChanges() {
-    return myChanges;
-  }
+  override fun updateDisplayedChangeLists() {}
 
-  @NotNull
-  @Override
-  public List<Change> getSelectedChanges() {
-    return VcsTreeModelData.selected(myViewer).userObjects(Change.class);
-  }
-
-  @NotNull
-  @Override
-  public List<Change> getIncludedChanges() {
-    return myChanges;
-  }
-
-  @NotNull
-  @Override
-  public List<VirtualFile> getDisplayedUnversionedFiles() {
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  @Override
-  public List<VirtualFile> getSelectedUnversionedFiles() {
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  @Override
-  public List<VirtualFile> getIncludedUnversionedFiles() {
-    return Collections.emptyList();
-  }
-
-  @Override
-  public void updateDisplayedChangeLists() {
-  }
-
-
-  @Nullable
-  @Override
-  public Object getData(@NotNull String dataId) {
-    if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
-      return new ChangeList[]{myChangeList};
-    }
-    return super.getData(dataId);
+  override fun getData(dataId: String) = when (dataId) {
+    VcsDataKeys.CHANGE_LISTS.name -> arrayOf<ChangeList>(myChangeList)
+    else -> super.getData(dataId)
   }
 }
