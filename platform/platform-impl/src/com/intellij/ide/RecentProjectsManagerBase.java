@@ -82,7 +82,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   public static class State {
     public final List<String> recentPaths = new SmartList<>();
-    public final SmartList<String> openPaths = new SmartList<>();
+    public final List<String> openPaths = new SmartList<>();
     public final Map<String, String> names = new LinkedHashMap<>();
     public final List<ProjectGroup> groups = new SmartList<>();
     public String lastPath;
@@ -281,8 +281,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   public final void updateLastProjectPath() {
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     synchronized (myStateLock) {
-      SmartList<String> openPaths = myState.openPaths;
-      int listModCount = openPaths.getModificationCount();
+      List<String> openPaths = myState.openPaths;
       openPaths.clear();
       if (openProjects.length == 0) {
         myState.lastPath = null;
@@ -297,13 +296,13 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
           }
         }
       }
-      myState.validateRecentProjects(myModCounter);
 
-      if (listModCount != openPaths.getModificationCount()) {
-        myModCounter.incrementAndGet();
-        updateOpenProjectsTimestamps(openProjects);
-      }
+      myState.validateRecentProjects(myModCounter);
+      updateOpenProjectsTimestamps(openProjects);
     }
+
+    // for simplicity, for now just increment and don't check is something really changed
+    myModCounter.incrementAndGet();
   }
 
   private void updateOpenProjectsTimestamps(@NotNull Project[] openProjects) {
