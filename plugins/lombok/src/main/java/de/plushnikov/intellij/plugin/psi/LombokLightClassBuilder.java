@@ -34,7 +34,7 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder {
   @Override
   @NotNull
   public PsiField[] getFields() {
-    return myFields.toArray(new PsiField[myFields.size()]);
+    return myFields.toArray(new PsiField[0]);
   }
 
   public LightPsiClassBuilder addField(PsiField field) {

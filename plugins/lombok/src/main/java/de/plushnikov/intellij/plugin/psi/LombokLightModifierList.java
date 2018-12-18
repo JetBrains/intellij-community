@@ -87,7 +87,7 @@ public class LombokLightModifierList extends LightModifierList {
     PsiAnnotation[] result = PsiAnnotation.EMPTY_ARRAY;
     if (!myAnnotations.isEmpty()) {
       Collection<PsiAnnotation> annotations = myAnnotations.values();
-      result = annotations.toArray(new PsiAnnotation[annotations.size()]);
+      result = annotations.toArray(new PsiAnnotation[0]);
     }
     return result;
   }

@@ -24,7 +24,7 @@ public class GenerateConstructorHandlerTest extends AbstractLombokLightCodeInsig
       protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmpty, boolean copyJavadoc, Project project, Editor editor) {
         if (preSelect) {
           List<ClassMember> preselection = GenerateConstructorHandler.preselect(members);
-          return preselection.toArray(new ClassMember[preselection.size()]);
+          return preselection.toArray(new ClassMember[0]);
         } else {
           return members;
         }

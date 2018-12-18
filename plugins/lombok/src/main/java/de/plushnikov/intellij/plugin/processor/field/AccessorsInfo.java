@@ -110,7 +110,7 @@ public class AccessorsInfo {
       if (prefixDeclared.isEmpty()) {
         prefixes = ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.ACCESSORS_PREFIX, psiClass);
       } else {
-        prefixes = prefixDeclared.toArray(new String[prefixDeclared.size()]);
+        prefixes = prefixDeclared.toArray(new String[0]);
       }
 
       doNotUseIsPrefix = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.GETTER_NO_IS_PREFIX, psiClass);
@@ -118,7 +118,7 @@ public class AccessorsInfo {
     } else {
       isFluent = null == fluentDeclaredValue ? false : fluentDeclaredValue;
       isChained = null == chainDeclaredValue ? false : chainDeclaredValue;
-      prefixes = prefixDeclared.toArray(new String[prefixDeclared.size()]);
+      prefixes = prefixDeclared.toArray(new String[0]);
       doNotUseIsPrefix = false;
     }
 

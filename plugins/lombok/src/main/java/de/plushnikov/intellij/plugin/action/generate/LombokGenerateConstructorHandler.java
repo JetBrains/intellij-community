@@ -45,7 +45,7 @@ public class LombokGenerateConstructorHandler extends GenerateConstructorHandler
       }
       array.add(new PsiFieldMember(field));
     }
-    return array.toArray(new ClassMember[array.size()]);
+    return array.toArray(new ClassMember[0]);
   }
 
   @Override

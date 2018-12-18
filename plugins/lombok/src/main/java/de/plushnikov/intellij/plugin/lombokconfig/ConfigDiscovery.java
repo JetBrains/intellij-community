@@ -69,7 +69,7 @@ public class ConfigDiscovery {
     } else {
       result.add(configKey.getConfigDefaultValue());
     }
-    return result.toArray(new String[result.size()]);
+    return result.toArray(new String[0]);
   }
 
   @Nullable
