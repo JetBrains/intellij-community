@@ -125,7 +125,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
 
   @NotNull
   public static Path baseTestDiscoveryPathForProject(Project project) {
-    return ProjectUtil.getProjectCachePath(project, "testDiscovery", true);
+    return ProjectUtil.getProjectCachePath(project, "testDiscovery");
   }
 
   @Override
