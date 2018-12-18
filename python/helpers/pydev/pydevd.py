@@ -1122,12 +1122,9 @@ class PyDB(object):
                 if stop:
                     cmd = self.cmd_factory.make_thread_run_message(get_current_thread_id(thread), info.pydev_step_cmd)
                     self.writer.add_command(cmd)
-                    if suspend_type == "trace":
-                        info.pydev_state = STATE_SUSPEND
-                        thread.stop_reason= CMD_SET_NEXT_STATEMENT
-                        self.do_wait_suspend(thread, frame, event, arg)
-                    else:
-                        info.pydev_step_stop = frame
+                    info.pydev_state = STATE_SUSPEND
+                    thread.stop_reason = CMD_SET_NEXT_STATEMENT
+                    self.do_wait_suspend(thread, frame, event, arg)
                     return
                 else:
                     info.pydev_step_cmd = -1
