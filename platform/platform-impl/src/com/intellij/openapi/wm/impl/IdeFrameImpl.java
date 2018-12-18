@@ -5,6 +5,7 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
@@ -266,8 +267,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
           return;
         }
 
-        final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-        if (openProjects.length > 1 || (openProjects.length == 1 && SystemInfo.isMacSystemMenu)) {
+        int numberOfOpenedProjects = ProjectManager.getInstance().getOpenProjects().length;
+        // Exit on Linux and Windows if the only opened project frame is closed.
+        // On macOS behaviour is different - to exit app, quit action should be used, otherwise welcome frame is shown.
+        // If welcome screen is disabled, behaviour on all OS is the same.
+        if (numberOfOpenedProjects > 1 || (numberOfOpenedProjects == 1 && SystemInfo.isMacSystemMenu && GeneralSettings.getInstance().isShowWelcomeScreen())) {
           if (myProject != null && myProject.isOpen()) {
             ProjectUtil.closeAndDispose(myProject);
           }
