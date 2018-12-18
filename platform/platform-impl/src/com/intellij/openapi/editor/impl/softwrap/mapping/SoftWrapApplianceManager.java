@@ -272,7 +272,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     myContext.tokenStartOffset = start;
     IterationState iterationState = new IterationState(myEditor, start, document.getTextLength(), null, false, false, true, false);
     TextAttributes attributes = iterationState.getMergedAttributes();
-    myContext.fontType = attributes.getFontType();
+    myContext.fontType = normalizeFontType(attributes.getFontType());
     myContext.rangeEndOffset = event.getMandatoryEndOffset();
 
     EditorPosition position = new EditorPosition(logical, start, myEditor);
@@ -320,7 +320,7 @@ public class SoftWrapApplianceManager implements Dumpable {
 
       iterationState.advance();
       attributes = iterationState.getMergedAttributes();
-      myContext.fontType = attributes.getFontType();
+      myContext.fontType = normalizeFontType(attributes.getFontType());
       myContext.tokenStartOffset = iterationState.getStartOffset();
       myOffset2fontType.fill(myContext.tokenStartOffset, iterationState.getEndOffset(), myContext.fontType);
     }
@@ -328,6 +328,12 @@ public class SoftWrapApplianceManager implements Dumpable {
       myStorage.remove(myContext.delayedSoftWrap);
     }
     event.setActualEndOffset(myContext.currentPosition.offset);
+  }
+
+  @JdkConstants.FontStyle
+  private static int normalizeFontType(int fontType) {
+    //noinspection MagicConstant
+    return fontType & 3;
   }
 
   // this method generates soft-wraps at some places just to ensure visual lines have limited width, to avoid related performance problems
