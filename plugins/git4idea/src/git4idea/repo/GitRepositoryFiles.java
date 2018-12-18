@@ -349,7 +349,7 @@ public class GitRepositoryFiles {
    */
   public void refreshTagsFiles() {
     VirtualFile tagsDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myRefsTagsPath);
-    VirtualFile packedRefsFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getPackedRefsPath());
+    VirtualFile packedRefsFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myPackedRefsPath);
     VfsUtil.markDirtyAndRefresh(true, true, false, tagsDir, packedRefsFile);
   }
 
