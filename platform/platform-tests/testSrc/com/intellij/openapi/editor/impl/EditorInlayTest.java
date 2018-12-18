@@ -370,6 +370,13 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkResultByText("abc\ndef\nghi<caret>");
   }
 
+  public void testInlayAtLineEndCausesSoftWrapping() {
+    initText("abcd efgh");
+    addInlay(9, TEST_CHAR_WIDTH * 3);
+    configureSoftWraps(10);
+    verifySoftWrapPositions(5);
+  }
+
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
                                                      int selectionStartOffset, int selectionEndOffset) {
     checkCaretPosition(offset, logicalColumn, visualColumn);
