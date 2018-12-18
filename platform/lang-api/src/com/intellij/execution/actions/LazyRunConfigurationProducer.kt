@@ -5,10 +5,12 @@ import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.RunConfiguration
 
 /**
- * Additional class and not part of existing RunConfigurationProducer to check code correctness at compile time.
+ * Base class for RunConfigurationProducer that requires to implement [getConfigurationFactory] instead of passing it as a constructor parameter.
  *
- * Approach to pass configuration factory as [RunConfigurationProducer] constructor parameter is better in terms of design,
- * but problem is that iteration of producer list leads to loading of not required configuration factories (in turn, it leads to loading more and more not required classes)
+ * The old approach to pass configuration factory as [RunConfigurationProducer] constructor parameter doesn't support lazy loading, -
+ * operations on producer list lead to loading of not required configuration factories (in turn, it leads to loading more and more not required classes).
+ *
+ * It's an additional class and not part of existing [RunConfigurationProducer] to check code correctness at compile time.
  */
 abstract class LazyRunConfigurationProducer<T : RunConfiguration> : RunConfigurationProducer<T>(true) {
   abstract override fun getConfigurationFactory(): ConfigurationFactory
