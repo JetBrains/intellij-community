@@ -18,6 +18,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.util.PsiTreeUtil
@@ -27,6 +28,9 @@ import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
 
 class JavaUastLanguagePlugin : UastLanguagePlugin {
+
+  private val checkCanConvert = Registry.`is`("uast.java.use.psi.type.precheck")
+
   override val priority: Int = 0
 
   override fun isFileSupported(fileName: String): Boolean = fileName.endsWith(".java", ignoreCase = true)
@@ -85,15 +89,15 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
   }
 
   override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
-    return convertDeclaration(element, parent, requiredType) ?:
-           JavaConverter.convertPsiElement(element, parent, requiredType)
+    if (checkCanConvert && !canConvert(element.javaClass, requiredType ?: UElement::class.java)) return null
+
+    return convertDeclaration(element, parent, requiredType) ?: JavaConverter.convertPsiElement(element, parent, requiredType)
   }
 
   override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
     if (element is PsiJavaFile) return requiredType.el<UFile> { JavaUFile(element, this) }
 
-    return convertDeclaration(element, null, requiredType) ?:
-           JavaConverter.convertPsiElement(element, null, requiredType)
+    return convertElement(element, null, requiredType)
   }
 
   private fun convertDeclaration(element: PsiElement,
