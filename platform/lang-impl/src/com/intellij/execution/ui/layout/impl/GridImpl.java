@@ -224,14 +224,58 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     return getCellFor(content).isMinimized(content);
   }
 
+  public interface ContentProvider {
+    Content[] getContents();
+  }
 
   static class Placeholder extends Wrapper implements NullableComponent {
 
-    private JComponent myContent;
+    private ContentProvider myContentProvider;
+    private JComponent myComponent;
+
+    {
+      setFocusTraversalPolicyProvider(true);
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
+        @Override
+        public Component getDefaultComponent(Container aContainer) {
+          Component content = getContent(true);
+          if (content != null) {
+            return content;
+          }
+          return super.getDefaultComponent(aContainer);
+        }
+
+        @Override
+        public Component getLastComponent(Container aContainer) {
+          Component content = getContent(false);
+          if (content != null) {
+            return content;
+          }
+          return super.getLastComponent(aContainer);
+        }
+
+        private Component getContent(boolean first) {
+          if (myContentProvider != null) {
+            Content[] contents = myContentProvider.getContents();
+            if (contents != null && contents.length > 0) {
+              Component preferred = contents[first ? 0 : contents.length - 1].getPreferredFocusableComponent();
+              if (preferred != null && accept(preferred)) {
+                return preferred;
+              }
+            }
+          }
+          return null;
+        }
+      });
+    }
+
+    void setContentProvider(@NotNull ContentProvider provider) {
+      myContentProvider = provider;
+    }
 
     public CellTransform.Restore detach() {
       if (getComponentCount() == 1) {
-        myContent = (JComponent)getComponent(0);
+        myComponent = (JComponent)getComponent(0);
         removeAll();
       }
 
@@ -243,9 +287,9 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
       return new CellTransform.Restore() {
         @Override
         public ActionCallback restoreInGrid() {
-          if (myContent != null) {
-            setContent(myContent);
-            myContent = null;
+          if (myComponent != null) {
+            setContent(myComponent);
+            myComponent = null;
           }
           return ActionCallback.DONE;
         }

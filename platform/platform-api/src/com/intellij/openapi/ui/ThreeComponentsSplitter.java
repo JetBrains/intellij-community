@@ -79,28 +79,46 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.ThreeComponentsSplitter");
 
-  private class MyFocusTraversalPolicy extends FocusTraversalPolicy {
+  private class MyFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
 
     @Override
+    @SuppressWarnings("Duplicates")
     public Component getComponentAfter(Container aContainer, Component aComponent) {
+      Component comp;
       if (aComponent == myFirstComponent) {
-        return findChildToFocus(myInnerComponent);
+        comp = findChildToFocus(myInnerComponent);
       }
-      if (aComponent == myInnerComponent) {
-        return findChildToFocus(myLastComponent);
+      else if (aComponent == myInnerComponent) {
+        comp = findChildToFocus(myLastComponent);
       }
-      return findChildToFocus(myFirstComponent);
+      else {
+        comp = findChildToFocus(myFirstComponent);
+      }
+      if (comp == aComponent) {
+        // if focus is stuck on the component let it go further
+        return super.getComponentAfter(aContainer, aComponent);
+      }
+      return comp;
     }
 
     @Override
+    @SuppressWarnings("Duplicates")
     public Component getComponentBefore(Container aContainer, Component aComponent) {
+      Component comp;
       if (aComponent == myInnerComponent) {
-        return findChildToFocus(myFirstComponent);
+        comp = findChildToFocus(myFirstComponent);
       }
-      if (aComponent == myLastComponent) {
-        return findChildToFocus(myInnerComponent);
+      else if (aComponent == myLastComponent) {
+        comp = findChildToFocus(myInnerComponent);
       }
-      return findChildToFocus(myFirstComponent);
+      else {
+        comp = findChildToFocus(myFirstComponent);
+      }
+      if (comp == aComponent) {
+        // if focus is stuck on the component let it go further
+        return super.getComponentBefore(aContainer, aComponent);
+      }
+      return comp;
     }
 
     @Override
