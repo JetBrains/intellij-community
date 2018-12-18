@@ -12,6 +12,7 @@ from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items, NEXT_VALUE_SEPARATOR, Null
 from pydev_console.protocol import CompletionOption, CompletionOptionType
+import signal
 
 try:
     import cStringIO as StringIO #may not always be available @UnusedImport
@@ -268,8 +269,6 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                 called = False
                 try:
                     # Fix for #PyDev-500: Console interrupt can't interrupt on sleep
-                    import os
-                    import signal
                     if os.name == 'posix':
                         # On Linux we can't interrupt 0 as in Windows because it's
                         # actually owned by a process -- on the good side, signals

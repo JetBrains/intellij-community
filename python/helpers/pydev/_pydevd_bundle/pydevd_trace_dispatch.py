@@ -41,6 +41,8 @@ if use_cython == 'YES':
     # We must import the cython version if forcing cython
     from _pydevd_bundle.pydevd_cython_wrapper import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, fix_top_level_trace_and_get_trace_func
     def trace_dispatch(py_db, frame, event, arg):
+        if _trace_dispatch is None:
+            return None
         return _trace_dispatch(py_db, frame, event, arg)
 
 elif use_cython == 'NO':
@@ -52,6 +54,8 @@ elif use_cython is None:
     try:
         from _pydevd_bundle.pydevd_cython_wrapper import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, fix_top_level_trace_and_get_trace_func
         def trace_dispatch(py_db, frame, event, arg):
+            if _trace_dispatch is None:
+                return None
             return _trace_dispatch(py_db, frame, event, arg)
 
         # This version number is always available

@@ -54,6 +54,10 @@ from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogge
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads, wrap_asyncio
 from pydevd_file_utils import get_fullname, rPath, get_package_dir
 import pydev_ipython  # @UnusedImport
+from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
+
+get_file_type = DONT_TRACE.get
 
 __version_info__ = (1, 4, 0)
 __version_info_str__ = []
@@ -488,7 +492,7 @@ class PyDB(object):
         threads = threadingEnumerate()
         try:
             for t in threads:
-                if getattr(t, 'is_pydev_daemon_thread', False) or t is ignore_thread:
+                if getattr(t, 'is_pydev_daemon_thread', False) or t is ignore_thread or getattr(t, 'pydev_do_not_trace', False):
                     continue
 
                 additional_info = set_additional_thread_info(t)
@@ -1179,12 +1183,25 @@ class PyDB(object):
     def set_trace_for_frame_and_parents(self, frame, **kwargs):
         disable = kwargs.pop('disable', False)
         assert not kwargs
-        if disable:
-            dispatch_func = NO_FTRACE
-        else:
-            dispatch_func = self.trace_dispatch
+
         while frame is not None:
-            frame.f_trace = dispatch_func
+            try:
+                # Make fast path faster!
+                abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
+            except:
+                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
+
+            # Don't change the tracing on debugger-related files
+            file_type = get_file_type(abs_path_real_path_and_base[-1])
+
+            if file_type is None:
+                if disable:
+                    if frame.f_trace is not None and frame.f_trace is not NO_FTRACE:
+                        frame.f_trace = NO_FTRACE
+                    
+                elif frame.f_trace is not self.trace_dispatch:
+                    frame.f_trace = self.trace_dispatch
+
             frame = frame.f_back
 
         del frame
@@ -1617,6 +1634,14 @@ def _locked_settrace(
             init_stderr_redirect()
 
         patch_stdin(debugger)
+
+        t = threadingCurrentThread()
+        additional_info = set_additional_thread_info(t)
+
+        while not debugger.ready_to_run:
+            time.sleep(0.1)  # busy wait until we receive run command
+
+        # Set the tracing only
         debugger.set_trace_for_frame_and_parents(get_frame().f_back)
 
 
@@ -1627,12 +1652,7 @@ def _locked_settrace(
         finally:
             CustomFramesContainer.custom_frames_lock.release()  # @UndefinedVariable
 
-
-        t = threadingCurrentThread()
-        additional_info = set_additional_thread_info(t)
-
-        while not debugger.ready_to_run:
-            time.sleep(0.1)  # busy wait until we receive run command
+        debugger.start_auxiliary_daemon_threads()
 
         # TODO Liza: it will break frame eval for multiprocess debugging?!
         debugger.enable_tracing()
@@ -1646,8 +1666,6 @@ def _locked_settrace(
 
         # Stop the tracing as the last thing before the actual shutdown for a clean exit.
         atexit.register(stoptrace)
-
-        debugger.start_auxiliary_daemon_threads()
 
     else:
         # ok, we're already in debug mode, with all set, so, let's just set the break
