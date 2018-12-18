@@ -27,14 +27,10 @@ class JetGradlePlugin implements Plugin<Gradle> {
     else {
       gradle.rootProject { project ->
         registries.add(((ProjectInternal)project).services.get(ToolingModelBuilderRegistry.class))
-        try {
-          if (isCompositeBuildsSupported) {
-            project.gradle.includedBuilds.each {
-              registries.add(it.configuredBuild.services.get(ToolingModelBuilderRegistry.class))
-            }
+        if (isCompositeBuildsSupported) {
+          project.gradle.includedBuilds.each {
+            registries.add(it.configuredBuild.services.get(ToolingModelBuilderRegistry.class))
           }
-        }
-        catch (ignore) {
         }
       }
     }
