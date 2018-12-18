@@ -32,5 +32,12 @@ except ImportError:
     except ImportError:
         raise
 
-frame_eval_func, stop_frame_eval, dummy_trace_dispatch, get_thread_info_py = \
-    mod.frame_eval_func, mod.stop_frame_eval, mod.dummy_trace_dispatch, mod.get_thread_info_py
+frame_eval_func = mod.frame_eval_func
+
+stop_frame_eval = mod.stop_frame_eval
+
+dummy_trace_dispatch = mod.dummy_trace_dispatch
+
+get_thread_info_py = mod.get_thread_info_py
+
+clear_thread_local_info = mod.clear_thread_local_info
