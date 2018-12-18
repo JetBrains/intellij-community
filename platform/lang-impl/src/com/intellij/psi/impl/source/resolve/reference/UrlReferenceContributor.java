@@ -19,6 +19,6 @@ public class UrlReferenceContributor extends PsiReferenceContributor {
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
         return o instanceof PsiLiteralValue && ((PsiLiteralValue)o).getValue() instanceof String;
       }
-    }, new ArbitraryPlaceUrlReferenceProvider());
+    }, new ArbitraryPlaceUrlReferenceProvider(), PsiReferenceRegistrar.LOWER_PRIORITY);
   }
 }
