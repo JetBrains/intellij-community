@@ -466,6 +466,14 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestClass();
   }
 
+  public void testSuperJavadocExactResolve() throws Exception {
+    doTestAtCaret();
+  }
+
+  public void testSuperJavadocErasureResolve() throws Exception {
+    doTestAtCaret();
+  }
+
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
