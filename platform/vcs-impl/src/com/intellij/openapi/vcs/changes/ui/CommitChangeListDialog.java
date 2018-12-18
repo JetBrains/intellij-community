@@ -231,9 +231,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     }
 
+    boolean isDefaultChangeListFullyIncluded = newHashSet(changes).containsAll(defaultList.getChanges());
     CommitChangeListDialog dialog =
-      new CommitChangeListDialog(project, changes, included, initialSelection, executors, showVcsCommit, defaultList, changeLists,
-                                 affectedVcses, forceCommitInVcs, false, comment, customResultHandler);
+      new CommitChangeListDialog(project, included, initialSelection, executors, showVcsCommit, changeLists, affectedVcses,
+                                 forceCommitInVcs, isDefaultChangeListFullyIncluded, false, comment, customResultHandler);
     dialog.show();
     return dialog.isOK();
   }
@@ -260,20 +261,19 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                         @NotNull String changelistName,
                                         @Nullable String comment) {
     LocalChangeList changeList = new AlienLocalChangeList(changes, changelistName);
-    new CommitChangeListDialog(project, changes, changes, null, emptyList(), true, AlienLocalChangeList.DEFAULT_ALIEN,
-                               singletonList(changeList), singleton(vcs), vcs, true, comment, null).show();
+    new CommitChangeListDialog(project, changes, null, emptyList(), true, singletonList(changeList), singleton(vcs), vcs, true, true,
+                               comment, null).show();
   }
 
   private CommitChangeListDialog(@NotNull Project project,
-                                 @NotNull List<Change> changes,
                                  @NotNull Collection<?> included,
                                  @Nullable LocalChangeList initialSelection,
                                  @NotNull List<? extends CommitExecutor> executors,
                                  boolean showVcsCommit,
-                                 @NotNull LocalChangeList defaultChangeList,
                                  @NotNull List<? extends LocalChangeList> changeLists,
                                  @NotNull Set<? extends AbstractVcs> affectedVcses,
                                  @Nullable AbstractVcs forceCommitInVcs,
+                                 boolean isDefaultChangeListFullyIncluded,
                                  boolean isAlien,
                                  @Nullable String comment,
                                  @Nullable CommitResultHandler customResultHandler) {
@@ -285,14 +285,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myAffectedVcses = affectedVcses;
     myExecutors = executors;
     myForceCommitInVcs = forceCommitInVcs;
+    myAllOfDefaultChangeListChangesIncluded = isDefaultChangeListFullyIncluded;
     myIsAlien = isAlien;
     myResultHandler = customResultHandler;
 
     if (!myShowVcsCommit && isEmpty(executors)) {
       throw new IllegalArgumentException("nothing found to execute commit with");
     }
-
-    myAllOfDefaultChangeListChangesIncluded = newHashSet(changes).containsAll(newHashSet(defaultChangeList.getChanges()));
 
     myHandlers.addAll(createCheckinHandlers(project, this, myCommitContext));
 

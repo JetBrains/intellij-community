@@ -27,11 +27,4 @@ open class AlienLocalChangeList(private val myChanges: List<Change>, private var
   override fun getData(): Any? = throw UnsupportedOperationException()
 
   override fun copy(): LocalChangeList = throw UnsupportedOperationException()
-
-  companion object {
-    @JvmField
-    val DEFAULT_ALIEN: AlienLocalChangeList = object : AlienLocalChangeList(emptyList(), "Default") {
-      override fun isDefault(): Boolean = true
-    }
-  }
 }
