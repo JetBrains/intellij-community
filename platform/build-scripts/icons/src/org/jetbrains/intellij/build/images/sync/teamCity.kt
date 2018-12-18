@@ -65,7 +65,7 @@ internal fun assignInvestigation(investigator: Investigator, context: Context): 
   }
   assignInvestigation(investigator, report)
   if (!investigator.isAssigned) {
-    var nextAttempts = listOf(teamCityEmail(investigator.email), investigator.email.toLowerCase())
+    var nextAttempts = guessEmail(investigator.email)
     if (!isInvestigationAssigned()) nextAttempts += DEFAULT_INVESTIGATOR
     nextAttempts.forEach {
       if (it != investigator.email) {
@@ -117,11 +117,6 @@ private fun assignInvestigation(investigator: Investigator, report: String) {
   catch (e: Exception) {
     log("Unable to assign investigation to ${investigator.email}, ${e.message}")
   }
-}
-
-private fun teamCityEmail(email: String): String {
-  val (username, domain) = email.split("@")
-  return username.splitNotBlank(".").joinToString(".", transform = String::capitalize) + "@$domain"
 }
 
 internal fun thisBuildReportableLink() =

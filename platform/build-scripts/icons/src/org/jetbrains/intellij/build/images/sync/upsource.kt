@@ -103,7 +103,7 @@ private fun getBranchRevisions(projectId: String, branch: String, commits: Colle
 
 internal fun addReviewer(projectId: String, review: Review, email: String) {
   try {
-    val userId = userId(email, projectId)
+    val userId = userId(email) ?: guessEmail(email).asSequence().map(::userId).filterNotNull().first()
     upsourcePost("addParticipantToReview", """{
       "reviewId" : {
         "projectId" : "$projectId",
@@ -121,9 +121,14 @@ internal fun addReviewer(projectId: String, review: Review, email: String) {
   }
 }
 
-private fun userId(email: String, projectId: String): String {
-  val invitation = upsourceGet("inviteUser", """{"projectId":"$projectId","email":"$email"}""")
-  return extract(invitation, Regex(""""userId":"([^,"]+)""""))
+private val HUB by lazy { System.getProperty("hub.url") }
+
+private fun userId(email: String): String? {
+  log("Calling Hub 'users' with '$email'")
+  val response = get("$HUB/api/rest/users?fields=id&top=1&query=email:$email+and+has:verifiedEmail") {
+    basicAuth(System.getProperty("upsource.user.name"), System.getProperty("upsource.user.password"))
+  }
+  return extractOrNull(response, Regex(""""id":"([^,"]+)""""))
 }
 
 private fun extract(json: String, regex: Regex) = extractOrNull(json, regex) ?: error(json)

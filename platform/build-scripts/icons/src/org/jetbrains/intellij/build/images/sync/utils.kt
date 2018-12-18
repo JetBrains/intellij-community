@@ -92,3 +92,13 @@ internal fun <T> retry(maxRetries: Int = 20,
   }
   error("Unable to complete")
 }
+
+internal fun guessEmail(invalidEmail: String): Collection<String> {
+  val (username, domain) = invalidEmail.split("@")
+  val guesses = mutableListOf(
+    username.splitNotBlank(".").joinToString(".", transform = String::capitalize) + "@$domain",
+    invalidEmail.toLowerCase()
+  )
+  if (domain != "jetbrains.com") guesses += "$username@jetbrains.com"
+  return guesses
+}
