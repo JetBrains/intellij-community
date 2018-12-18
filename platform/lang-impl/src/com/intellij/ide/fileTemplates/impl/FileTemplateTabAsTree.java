@@ -114,7 +114,12 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
   private class MyTreeCellRenderer extends DefaultTreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, false);
+      setBorderSelectionColor(null);
+      setBackgroundSelectionColor(null);
+      setBackgroundNonSelectionColor(null);
+      super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+      setBackground(UIUtil.getTreeBackground(sel, hasFocus));
+      setForeground(UIUtil.getTreeForeground(sel, hasFocus));
 
       if (value instanceof FileTemplateNode) {
         final FileTemplateNode node = (FileTemplateNode)value;
@@ -129,7 +134,6 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
           }
         }
       }
-      if (sel) setBackgroundSelectionColor(UIUtil.getTreeSelectionBackground(hasFocus));
       return this;
     }
   }
