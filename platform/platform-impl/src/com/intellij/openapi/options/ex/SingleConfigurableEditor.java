@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,7 +212,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     }
 
     private void addUpdateRequest(final Runnable updateRequest) {
-      myUpdateAlarm.addRequest(updateRequest, 500, ModalityState.stateForComponent(getWindow()));
+      myUpdateAlarm.addRequest(updateRequest, 500, ObjectUtils.doIfNotNull(getWindow(), ModalityState::stateForComponent));
     }
 
     @Override
