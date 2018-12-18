@@ -121,6 +121,9 @@ public class GradleJavaProjectOpenProcessor extends ProjectOpenProcessorBase<Gra
         if (GRADLE_HOME != null) {
           projectSettings.setGradleHome(GRADLE_HOME);
         }
+        // <hack> with this flag set to true gradle import seems to work more stable: TODO[jetzajac]
+        projectSettings.setResolveModulePerSourceSet(true);
+        // </hack>
         gradleProjectSettingsControl.reset();
 
         final GradleSystemSettingsControl systemSettingsControl =

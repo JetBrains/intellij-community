@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.settings;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
@@ -60,6 +61,13 @@ public abstract class GradleSettingsControlProvider {
 
       @Override
       public GradleProjectSettingsControlBuilder getProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
+        // <hack> with this flag set to true gradle import seems to work more stable: TODO[jetzajac]
+        if (ApplicationManager.getApplication().isOnAir()) {
+          // if checkbox is absent, this flag will not take effect
+          initialSettings.setResolveModulePerSourceSet(true);
+          return new IdeaGradleProjectSettingsControlBuilder(initialSettings);
+        }
+        // </hack>
         return new IdeaGradleProjectSettingsControlBuilder(initialSettings)
           // always use qualified module names
           .dropModulesGroupingOptionPanel()
