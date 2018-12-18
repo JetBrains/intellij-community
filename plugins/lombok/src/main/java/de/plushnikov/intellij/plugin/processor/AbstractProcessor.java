@@ -42,6 +42,7 @@ public abstract class AbstractProcessor implements Processor {
    * @param supportedClass           kind of output elements this processor supports
    * @param supportedAnnotationClass annotation this processor supports
    */
+  @SuppressWarnings("unchecked")
   protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                               @NotNull Class<? extends Annotation> supportedAnnotationClass) {
     this.supportedClass = supportedClass;
@@ -55,6 +56,7 @@ public abstract class AbstractProcessor implements Processor {
    * @param supportedAnnotationClass  annotation this processor supports
    * @param equivalentAnnotationClass another equivalent annotation
    */
+  @SuppressWarnings("unchecked")
   protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                               @NotNull Class<? extends Annotation> supportedAnnotationClass,
                               @NotNull Class<? extends Annotation> equivalentAnnotationClass) {
@@ -70,7 +72,8 @@ public abstract class AbstractProcessor implements Processor {
    * @param oneEquivalentAnnotationClass    another equivalent annotation
    * @param secondEquivalentAnnotationClass another equivalent annotation
    */
-  protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
+  @SuppressWarnings("unchecked")
+  AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                               @NotNull Class<? extends Annotation> supportedAnnotationClass,
                               @NotNull Class<? extends Annotation> oneEquivalentAnnotationClass,
                               @NotNull Class<? extends Annotation> secondEquivalentAnnotationClass) {

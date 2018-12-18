@@ -25,6 +25,7 @@ public class ValProcessor extends AbstractProcessor {
   private static final String LOMBOK_VAR_FQN = "lombok.var";
   private static final String LOMBOK_VAR_EXPERIMENTAL_FQN = "lombok.experimental.var";
 
+  @SuppressWarnings("deprecation")
   public ValProcessor() {
     super(PsiElement.class, val.class, lombok.experimental.var.class, lombok.var.class);
   }

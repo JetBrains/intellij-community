@@ -220,7 +220,8 @@ public class EqualsAndHashCodeToStringHandler {
       final String getterName = LombokUtils.getGetterName(classField);
 
       final boolean hasGetter;
-      if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, Data.class, Value.class, Getter.class)) {
+      @SuppressWarnings("unchecked") final boolean annotatedWith = PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, Data.class, Value.class, Getter.class);
+      if (annotatedWith) {
         final PsiAnnotation getterLombokAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, Getter.class);
         hasGetter = null == getterLombokAnnotation || null != LombokProcessorUtil.getMethodModifier(getterLombokAnnotation);
       } else {

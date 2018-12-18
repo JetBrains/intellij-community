@@ -108,8 +108,9 @@ public class DataProcessor extends AbstractClassProcessor {
   private boolean shouldGenerateRequiredArgsConstructor(@NotNull PsiClass psiClass, @Nullable String staticName) {
     boolean result = false;
     // create required constructor only if there are no other constructor annotations
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class,
-      Builder.class)) {
+    @SuppressWarnings("unchecked") final boolean notAnnotatedWith = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class,
+      RequiredArgsConstructor.class, AllArgsConstructor.class, Builder.class);
+    if (notAnnotatedWith) {
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       filterToleratedElements(definedConstructors);
 
