@@ -39,7 +39,7 @@ class CreateSdksGuiTest : KotlinGuiTestCase() {
         }
         finally {
           logUIStep("Close `$dialogName` dialog with OK")
-          button("OK").click()
+          button("OK").clickWhenEnabled(Timeouts.seconds05)
         }
       }
     }
