@@ -175,6 +175,25 @@ def fix_top_level_trace_and_get_trace_func(py_db, frame):
 # ELSE
 def trace_dispatch(py_db, frame, event, arg):
 # ENDIF
+    if fix_top_level_trace_and_get_trace_func is None or threadingCurrentThread is None or splitext is None:
+        # When the application is being exited with live daemon threads, it's possible that some
+        # of the names we require are already None, so, check that tokens we need are there.
+        # Code to diagnose where this happens below.
+        # msg = ''
+        # msg += 'fix_top_level_trace_and_get_trace_func: %s\n' % (fix_top_level_trace_and_get_trace_func,)
+        # msg += 'threadingCurrentThread: %s\n' % (threadingCurrentThread,)
+        # msg += 'splitext: %s\n' % (splitext,)
+        # while frame is not None:
+        #     msg += 'location 1: %s %s %s=n' % (frame.f_lineno, frame.f_code.co_name, frame.f_code.co_filename)
+        #     if 't' in frame.f_locals:
+        #         t = frame.f_locals['t']
+        #         if hasattr(t, 'run'):
+        #             msg += 'Error 1 in thread with function: %s %s %s\n' % (t._Thread__target, t.run, t.__class__)
+        #         t = None
+        #
+        #     frame = frame.f_back
+        # print(msg)
+        return None
     thread_trace_func, apply_to_settrace = fix_top_level_trace_and_get_trace_func(py_db, frame)
     if thread_trace_func is None:
         if event != 'call': frame.f_trace = NO_FTRACE
