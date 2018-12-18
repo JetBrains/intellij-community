@@ -21,41 +21,40 @@ import com.intellij.util.indexing.FileContentImpl;
 
 import java.util.Map;
 
-import static com.jetbrains.jsonSchema.impl.JsonCachedValues.ID_CACHE_KEY;
-import static com.jetbrains.jsonSchema.impl.JsonCachedValues.URL_CACHE_KEY;
+import static com.jetbrains.jsonSchema.impl.JsonCachedValues.*;
 
 public class JsonSchemaFileValuesIndexTest extends JsonTestCase {
 
   public void testEmpty() {
     final VirtualFile file = myFixture.configureByFile("indexing/empty.json").getVirtualFile();
     Map<String, String> map = new JsonSchemaFileValuesIndex().getIndexer().map(FileContentImpl.createByFile(file));
-    assertTrue(map.isEmpty());
+    assertAllCacheNulls(map);
   }
 
   public void testSimple() {
     final VirtualFile file = myFixture.configureByFile("indexing/empty.json").getVirtualFile();
     Map<String, String> map = new JsonSchemaFileValuesIndex().getIndexer().map(FileContentImpl.createByFile(file));
-    assertTrue(map.isEmpty());
+    assertAllCacheNulls(map);
   }
 
   public void testValid() {
     final VirtualFile file = myFixture.configureByFile("indexing/valid.json").getVirtualFile();
     Map<String, String> map = new JsonSchemaFileValuesIndex().getIndexer().map(FileContentImpl.createByFile(file));
     assertEquals("the-id", map.get(ID_CACHE_KEY));
-    assertNull(map.get(URL_CACHE_KEY));
+    assertCacheNull(map.get(URL_CACHE_KEY));
   }
 
   public void testValid2() {
     final VirtualFile file = myFixture.configureByFile("indexing/valid2.json5").getVirtualFile();
     Map<String, String> map = new JsonSchemaFileValuesIndex().getIndexer().map(FileContentImpl.createByFile(file));
     assertEquals("the-schema", map.get(URL_CACHE_KEY));
-    assertNull(map.get(ID_CACHE_KEY));
+    assertCacheNull(map.get(ID_CACHE_KEY));
   }
 
   public void testInvalid() {
     final VirtualFile file = myFixture.configureByFile("indexing/invalid.json").getVirtualFile();
     Map<String, String> map = new JsonSchemaFileValuesIndex().getIndexer().map(FileContentImpl.createByFile(file));
-    assertTrue(map.isEmpty());
+    assertAllCacheNulls(map);
   }
 
   public void testStopsOnAllFound() {
@@ -63,5 +62,14 @@ public class JsonSchemaFileValuesIndexTest extends JsonTestCase {
     Map<String, String> map = new JsonSchemaFileValuesIndex().getIndexer().map(FileContentImpl.createByFile(file));
     assertEquals("the-schema", map.get(URL_CACHE_KEY));
     assertEquals("the-id", map.get(ID_CACHE_KEY));
+    assertEquals("the-obsolete-id", map.get(OBSOLETE_ID_CACHE_KEY));
+  }
+
+  private static void assertCacheNull(String value) {
+    assertEquals(JsonSchemaFileValuesIndex.NULL, value);
+  }
+
+  private static void assertAllCacheNulls(Map<String, String> map) {
+    map.values().forEach(JsonSchemaFileValuesIndexTest::assertCacheNull);
   }
 }

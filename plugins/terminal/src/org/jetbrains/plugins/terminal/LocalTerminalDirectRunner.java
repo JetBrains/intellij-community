@@ -17,7 +17,6 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
-import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -135,7 +134,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
 
-    EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
+    if (SystemInfo.isMac) {
+      EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
+    }
 
     PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
     for (Map.Entry<String, String> env : TerminalOptionsProvider.Companion.getInstance().getUserSpecifiedEnvs().entrySet()) {
@@ -152,10 +153,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Override
   protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
     Map<String, String> envs = getTerminalEnvironment();
-
-    if (SystemInfo.isMac) {
-      EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
-    }
 
     String[] command = getCommand(envs);
 

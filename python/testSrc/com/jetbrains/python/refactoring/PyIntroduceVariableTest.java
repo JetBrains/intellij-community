@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
@@ -313,6 +314,11 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
   // PY-25488
   public void testNotParenthesizedTupleInlined() {
     doTest();
+  }
+
+  // PY-31991
+  public void testNoExtraSpacesAroundFStringFragmentExpression() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
   @Override

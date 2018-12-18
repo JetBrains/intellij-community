@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.util.resolve;
 
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ModuleVersionIdentifier;
-import org.gradle.api.artifacts.ProjectDependency;
-import org.gradle.api.artifacts.ResolvedArtifact;
+import org.gradle.api.artifacts.*;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
@@ -27,6 +24,8 @@ import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
 
 import java.io.File;
 import java.util.*;
+
+import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.is31OrBetter;
 
 class ArtifactQueryResolver {
   private final Configuration myConfiguration;
@@ -59,9 +58,23 @@ class ArtifactQueryResolver {
       return ExternalDepsResolutionResult.EMPTY;
     }
 
-    Set<ResolvedArtifact> resolvedArtifacts = myConfiguration.getResolvedConfiguration()
-                                                             .getLenientConfiguration()
-                                                             .getArtifacts(Specs.SATISFIES_ALL);
+    LenientConfiguration lenientConfiguration = myConfiguration.getResolvedConfiguration().getLenientConfiguration();
+    Set<UnresolvedDependency> unresolvedModuleDependencies = lenientConfiguration.getUnresolvedModuleDependencies();
+    Set<ResolvedArtifact> resolvedArtifacts;
+    if(unresolvedModuleDependencies.isEmpty() || !is31OrBetter) {
+      resolvedArtifacts = lenientConfiguration.getArtifacts(Specs.SATISFIES_ALL);
+    } else {
+      resolvedArtifacts = new LinkedHashSet<ResolvedArtifact>();
+      // org.gradle.api.artifacts.LenientConfiguration.getAllModuleDependencies method was added in Gradle 3.1
+      Set<ResolvedDependency> allModuleDependencies = lenientConfiguration.getAllModuleDependencies();
+      for (ResolvedDependency dependency : allModuleDependencies) {
+        try {
+          resolvedArtifacts.addAll(dependency.getModuleArtifacts());
+        } catch (Exception ignore) {
+          // ignore org.gradle.internal.resolve.ArtifactResolveException
+        }
+      }
+    }
 
     final Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap =
       groupByModuleVersionId(resolvedArtifacts);

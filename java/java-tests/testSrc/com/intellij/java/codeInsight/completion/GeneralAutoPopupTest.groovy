@@ -19,4 +19,17 @@ class GeneralAutoPopupTest extends CompletionAutoPopupTestCase {
     type '"'
     assert !lookup
   }
+
+  void "test no lookup after typing and quickly moving caret to another place"() {
+    myFixture.configureByText 'a.java', 'class Foo { <caret> }'
+    edt {
+      myFixture.type('F')
+      myFixture.editor.caretModel.moveToOffset(myFixture.caretOffset + 1)
+    }
+
+    myTester.joinAutopopup()
+    myTester.joinCompletion()
+
+    assert !lookup
+  }
 }

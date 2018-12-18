@@ -98,8 +98,22 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   @NotNull
   public JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable VirtualFile currentWorkingDirectory) {
+    return createTerminalWidget(parent, currentWorkingDirectory, true);
+  }
+
+  @NotNull
+  protected JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
+                                                  @Nullable VirtualFile currentWorkingDirectory,
+                                                  boolean deferSessionUntilFirstShown) {
+
     JBTerminalWidget terminalWidget = new JBTerminalWidget(myProject, mySettingsProvider, parent);
-    UiNotifyConnector.doWhenFirstShown(terminalWidget, () -> openSessionForFile(terminalWidget, currentWorkingDirectory));
+    Runnable openSession = () -> openSessionForFile(terminalWidget, currentWorkingDirectory);
+    if (deferSessionUntilFirstShown) {
+      UiNotifyConnector.doWhenFirstShown(terminalWidget, openSession);
+    }
+    else {
+      openSession.run();
+    }
     return terminalWidget;
   }
 
@@ -214,6 +228,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
         }, modalityState);
       }
       catch (Exception e) {
+        LOG.info("Cannot open " + runningTargetName(), e);
         ApplicationManager.getApplication().invokeLater(() -> showCannotOpenTerminalDialog(e), modalityState);
       }
     });

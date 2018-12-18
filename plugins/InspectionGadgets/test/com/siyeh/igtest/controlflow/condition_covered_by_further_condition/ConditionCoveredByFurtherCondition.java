@@ -141,5 +141,13 @@ public class ConditionCoveredByFurtherCondition {
         if(obj instanceof <error descr="Cannot resolve symbol 'Unresolved'">Unresolved</error> || obj == null) { }
         if((obj instanceof <error descr="Cannot resolve symbol 'Unresolved'">Unresolved</error>) || obj == null) { }
     }
+
+    void testIncompleteLambda(Object x) {
+        if (x != null && <error descr="Lambda expression not expected here">() -> x</error><EOLError descr="')' expected"></EOLError>
+    }
+
+    void testIncompleteLambda2(Object x) {
+        if (x != null && () -> x instanceof<error descr="')' expected"><error descr="Type expected"> </error></error>
+    }
 }
 enum X {A, B, C}

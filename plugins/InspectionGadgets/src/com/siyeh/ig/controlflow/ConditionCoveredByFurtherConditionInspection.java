@@ -13,6 +13,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -20,6 +21,7 @@ import com.intellij.util.ThreeState;
 import com.siyeh.ig.fixes.RemoveRedundantPolyadicOperandFix;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -137,7 +139,8 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         Object value = DfaUtil.computeValue(operands.get(0));
         return Boolean.valueOf(and).equals(value) ? new int[]{0} : ArrayUtil.EMPTY_INT_ARRAY;
       }
-      String text = StreamEx.ofReversed(operands).map(PsiElement::getText).joining(and ? " && " : " || ");
+      String text = StreamEx.ofReversed(operands)
+        .map(expression -> ParenthesesUtils.getText(expression, PsiPrecedenceUtil.AND_PRECEDENCE)).joining(and ? " && " : " || ");
       PsiExpression expression = JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(text, context);
       if (!(expression instanceof PsiPolyadicExpression)) {
         LOG.error("Unexpected expression type: " + expression.getClass().getName(), new Attachment("reversed.txt", text));

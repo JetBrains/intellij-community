@@ -101,7 +101,7 @@ public final class MavenRunConfigurationType implements ConfigurationType {
 
   @Override
   public Icon getIcon() {
-    return MavenIcons.Phase;
+    return MavenIcons.MavenLogo;
   }
 
   @Override

@@ -16,7 +16,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import com.intellij.util.ObjectUtils;
@@ -126,7 +125,7 @@ public class ProjectViewTree extends DnDAwareTree {
         Project project = node.getProject();
         if (project != null && !project.isDisposed()) {
           Color color = VfsPresentationUtil.getFileBackgroundColor(project, file);
-          if (color != null) return ColorUtil.softer(color);
+          if (color != null) return color;
         }
       }
     }
@@ -162,7 +161,7 @@ public class ProjectViewTree extends DnDAwareTree {
         }
       }
     }
-    return color == null ? null : ColorUtil.softer(color);
+    return color;
   }
 
   @Override

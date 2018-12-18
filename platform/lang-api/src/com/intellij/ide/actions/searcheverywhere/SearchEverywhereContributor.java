@@ -28,6 +28,11 @@ public interface SearchEverywhereContributor<F> {
   @NotNull
   String getGroupName();
 
+  @NotNull
+  default String getFullGroupName() {
+    return getGroupName();
+  }
+
   @Nullable
   String includeNonProjectItemsText();
 

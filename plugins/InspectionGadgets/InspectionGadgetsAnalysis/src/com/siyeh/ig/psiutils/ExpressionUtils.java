@@ -156,11 +156,6 @@ public class ExpressionUtils {
         return false;
       }
       final PsiElement element = referenceExpression.resolve();
-      if (element instanceof PsiField) {
-        final PsiField field = (PsiField)element;
-        final PsiExpression initializer = field.getInitializer();
-        return field.hasModifierProperty(PsiModifier.FINAL) && isEvaluatedAtCompileTime(initializer);
-      }
       if (element instanceof PsiVariable) {
         final PsiVariable variable = (PsiVariable)element;
         if (PsiTreeUtil.isAncestor(variable, expression, true)) {

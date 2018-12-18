@@ -362,6 +362,14 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertEquals(TEST_LINE_HEIGHT, myEditor.visualLineToY(1));
   }
 
+  public void testVerticalCaretMovementInPresenceOfBothTypesOfInlays() {
+    initText("abc\nd<caret>ef\nghi");
+    addBlockInlay(0);
+    addInlay(4, TEST_CHAR_WIDTH * 2);
+    down();
+    checkResultByText("abc\ndef\nghi<caret>");
+  }
+
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
                                                      int selectionStartOffset, int selectionEndOffset) {
     checkCaretPosition(offset, logicalColumn, visualColumn);

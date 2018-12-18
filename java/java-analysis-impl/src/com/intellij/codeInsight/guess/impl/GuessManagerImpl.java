@@ -359,6 +359,10 @@ public class GuessManagerImpl extends GuessManager {
     if (result == null) {
       result = getTypesFromDfa(expr);
     }
+    result = ContainerUtil.filter(result, t -> {
+      PsiClass typeClass = PsiUtil.resolveClassInType(t);
+      return typeClass == null || PsiUtil.isAccessible(typeClass, expr, null);
+    });
     if (result.equals(Collections.singletonList(expr.getType()))) {
       return Collections.emptyList();
     }

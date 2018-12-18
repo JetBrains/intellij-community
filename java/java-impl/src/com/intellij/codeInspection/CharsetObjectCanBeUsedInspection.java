@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.psi.CommonClassNames.*;
 
@@ -261,6 +262,11 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
               if (type.equalsToText("java.io.UnsupportedEncodingException") ||
                   type.equalsToText("java.io.IOException")) {
                 Collection<PsiClassType> unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
+                PsiResourceList resourceList = tryStatement.getResourceList();
+                if (resourceList != null) {
+                  Collection<PsiClassType> resourceExceptions = ExceptionUtil.collectUnhandledExceptions(resourceList, resourceList);
+                  unhandledExceptions = StreamEx.of(unhandledExceptions, resourceExceptions).toFlatList(Function.identity());
+                }
                 if(unhandledExceptions.stream().noneMatch(ue -> ue.isAssignableFrom(type) || type.isAssignableFrom(ue))) {
                   if(parameter.getType() instanceof PsiDisjunctionType) {
                     DeleteMultiCatchFix.deleteCaughtExceptionType(element);

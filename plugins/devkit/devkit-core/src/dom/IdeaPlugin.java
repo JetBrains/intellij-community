@@ -69,6 +69,7 @@ public interface IdeaPlugin extends DomElement {
 
 
   @NotNull
+  @Required(false)
   GenericDomValue<String> getVersion();
 
 

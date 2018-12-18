@@ -177,7 +177,9 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
 
   fun testModuleSources() {
     val file = createFile("src/A.java", "class A{}")
+    val testFile = createFile("tests/ATest.java", "class ATest{}")
     val m = addModule("m", PathUtil.getParentPath(file))
+    m.addSourceRoot(JpsPathUtil.pathToUrl(PathUtil.getParentPath(testFile)), JavaSourceRootType.TEST_SOURCE)
     val a = addArtifact(root().moduleSource(m))
     buildAll()
     assertOutput(a, directoryContent {

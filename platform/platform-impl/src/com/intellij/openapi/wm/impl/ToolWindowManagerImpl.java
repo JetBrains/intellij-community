@@ -1166,6 +1166,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     decorator.dispose();
     decorator.removeInternalDecoratorListener(myInternalDecoratorListener);
     myId2InternalDecorator.remove(id);
+
+    ((ToolWindowImpl)toolWindow).dispose();
   }
 
   private void applyInfo(@NotNull String id, WindowInfoImpl info, List<FinalizableCommand> commandsList) {

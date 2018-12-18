@@ -44,13 +44,12 @@ configurations {
 
 def EduToolsPluginId = "com.jetbrains.edu"
 def EduToolsPluginName = "EduTools"
-def EduToolsRepo= EduToolsChannel == "Stable" ? "com.jetbrains.plugins" : "${EduToolsChannel}.com.jetbrains.plugins"
 
 def ScalaPluginId = "org.intellij.scala"
 def ScalaPluginName = "Scala"
 
 dependencies {
-  eduPlugin "$EduToolsRepo:$EduToolsPluginId:$EduToolsPluginVersion@zip"
+  eduPlugin "com.jetbrains.plugins:$EduToolsPluginId:$EduToolsPluginVersion@zip"
   scalaPlugin "com.jetbrains.plugins:$ScalaPluginId:$ScalaPluginVersion@zip"
 }
 

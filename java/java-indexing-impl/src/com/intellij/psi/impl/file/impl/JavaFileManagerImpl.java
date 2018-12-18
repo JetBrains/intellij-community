@@ -197,7 +197,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return super.contains(file) && !myIndex.isInLibrarySource(file);
+      return super.contains(file) && (!myIndex.isInLibrarySource(file) || myIndex.isInLibraryClasses(file));
     }
   }
 

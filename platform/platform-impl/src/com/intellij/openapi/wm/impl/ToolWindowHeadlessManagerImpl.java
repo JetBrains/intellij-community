@@ -129,7 +129,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   @Override
   public void unregisterToolWindow(@NotNull String id) {
-    myToolWindows.remove(id);
+    ToolWindow toolWindow = myToolWindows.remove(id);
+    if (toolWindow != null) {
+      Disposer.dispose(((MockToolWindow)toolWindow).myContentManager);
+    }
   }
 
   @Override
@@ -236,7 +239,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   public static class MockToolWindow implements ToolWindowEx {
-    ContentManager myContentManager = new MockContentManager();
+    final ContentManager myContentManager = new MockContentManager();
 
     public MockToolWindow(@NotNull Project project) {
       Disposer.register(project, myContentManager);

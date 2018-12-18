@@ -928,6 +928,11 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testMultilineFStringExpressions() {
-    doTest();
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-31991
+  public void testSpacesAroundFStringFragmentExpressionStripped() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 }

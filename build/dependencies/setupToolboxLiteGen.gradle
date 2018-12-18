@@ -13,7 +13,7 @@ apply plugin: "de.undercouch.download"
 import de.undercouch.gradle.tasks.download.Download
 
 //see https://buildserver.labs.intellij.net/viewType.html?buildTypeId=JetBrainsToolbox_Feed_PublishLiteGen&branch_JetBrainsToolbox_Feed=%3Cdefault%3E&tab=buildTypeStatusDiv
-String liteGenVersion = '1.2.684.1326'
+String liteGenVersion = project.findProperty('intellij.build.toolbox.litegen.version') ?: '___LITEGEN_VERSION_IS_NOT_SET_IN_PARAMETERS___'
 File liteGenZipFile = new File(buildDir, "toolbox-lite-gen/lite-gen-${liteGenVersion}.zip")
 File liteGenDir = new File(buildDir, "toolbox-lite-gen/lite-gen-${liteGenVersion}")
 File liteGenApp = new File(buildDir, "toolbox-lite-gen/lite-gen-${liteGenVersion}/jetbrains-toolbox-litegen/bin/lite")

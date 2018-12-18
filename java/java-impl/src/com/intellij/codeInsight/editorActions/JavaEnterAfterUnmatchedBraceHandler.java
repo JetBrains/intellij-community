@@ -16,12 +16,15 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiExpressionListStatement;
+import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaEnterAfterUnmatchedBraceHandler extends EnterAfterUnmatchedBraceHandler {
+  @Override
+  public boolean isApplicable(@NotNull PsiFile file, int caretOffset) {
+    return file instanceof PsiJavaFile;
+  }
+
   @Override
   protected int calculateOffsetToInsertClosingBraceInsideElement(PsiElement element) {
     if (element instanceof PsiExpressionListStatement) {

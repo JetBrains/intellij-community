@@ -8,12 +8,11 @@ import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CodeCompletionOptions extends CompositeConfigurable<UnnamedConfigurable> implements EditorOptionsProvider {
   private static final ExtensionPointName<CodeCompletionConfigurableEP> EP_NAME = ExtensionPointName.create("com.intellij.codeCompletionConfigurable");
@@ -28,12 +27,13 @@ public class CodeCompletionOptions extends CompositeConfigurable<UnnamedConfigur
   @Override
   public JComponent createComponent() {
     List<UnnamedConfigurable> configurables = getConfigurables();
-    List<JComponent> components = configurables.isEmpty()
-                                  ? Collections.emptyList()
-                                  : configurables.stream()
-                                                 .map(UnnamedConfigurable::createComponent)
-                                                 .collect(Collectors.toList());
-    myPanel = new CodeCompletionPanel(components);
+    List<JComponent> addonComponents = ContainerUtil.newArrayListWithCapacity(configurables.size());
+    List<JComponent> sectionComponents = ContainerUtil.newArrayListWithCapacity(configurables.size());
+    for (UnnamedConfigurable configurable : configurables) {
+      if (configurable instanceof CodeCompletionOptionsCustomSection) sectionComponents.add(configurable.createComponent());
+      else addonComponents.add(configurable.createComponent());
+    }
+    myPanel = new CodeCompletionPanel(addonComponents, sectionComponents);
     return myPanel.myPanel;
   }
 

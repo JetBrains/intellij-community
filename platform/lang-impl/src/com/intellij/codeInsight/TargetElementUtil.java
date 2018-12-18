@@ -10,7 +10,6 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -166,8 +165,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
    */
   @Nullable
   public static PsiElement findTargetElement(Editor editor, int flags) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
     int offset = editor.getCaretModel().getOffset();
     final PsiElement result = getInstance().findTargetElement(editor, flags, offset);
     if (result != null) return result;

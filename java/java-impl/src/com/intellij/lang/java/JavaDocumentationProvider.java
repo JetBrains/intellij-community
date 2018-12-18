@@ -745,7 +745,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     PsiFile file = aClass.getContainingFile();
     if (!(file instanceof PsiJavaFile)) return null;
 
-    VirtualFile virtualFile = file.getVirtualFile();
+    VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
     if (virtualFile == null) return null;
 
     String packageName = ((PsiJavaFile)file).getPackageName();
@@ -788,14 +788,11 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       }
     }
 
+    PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByFile(virtualFile, project);
+    String altRelPath = javaModule != null ? javaModule.getName() + '/' + relPath : null;
+
     for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
-      String altRelPath = null;
-      if (orderEntry instanceof JdkOrderEntry && JavaSdkVersionUtil.isAtLeast(((JdkOrderEntry)orderEntry).getJdk(), JavaSdkVersion.JDK_11)) {
-        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByFile(virtualFile, project);
-        if (javaModule != null) {
-          altRelPath = javaModule.getName() + '/' + relPath;
-        }
-      }
+      boolean altUrl = orderEntry instanceof JdkOrderEntry && JavaSdkVersionUtil.isAtLeast(((JdkOrderEntry)orderEntry).getJdk(), JavaSdkVersion.JDK_11);
 
       for (VirtualFile root : orderEntry.getFiles(JavadocOrderRootType.getInstance())) {
         if (root.getFileSystem() == JarFileSystem.getInstance()) {
@@ -813,7 +810,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       String[] webUrls = JavadocOrderRootType.getUrls(orderEntry);
       if (webUrls.length > 0) {
         List<String> httpRoots = new ArrayList<>();
-        if (altRelPath != null) {
+        if (altUrl && altRelPath != null) {
           httpRoots.addAll(notNull(PlatformDocumentationUtil.getHttpRoots(webUrls, altRelPath), Collections.emptyList()));
         }
         httpRoots.addAll(notNull(PlatformDocumentationUtil.getHttpRoots(webUrls, relPath), Collections.emptyList()));

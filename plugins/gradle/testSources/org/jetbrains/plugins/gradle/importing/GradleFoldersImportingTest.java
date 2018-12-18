@@ -311,6 +311,48 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertTestSources("project", "test-src/java");
   }
 
+
+  @Test
+  public void testSourceAndResourceFoldersCollision() throws Exception {
+    createProjectSubFile("src/A.java");
+    createProjectSubFile("src/production.properties");
+    createProjectSubFile("test/Test.java");
+    createProjectSubFile("test/test.properties");
+
+    importProject("apply plugin: 'java'\n" +
+                  "sourceSets {\n" +
+                  "  main {\n" +
+                  "    java {\n" +
+                  "      srcDir 'src'\n" +
+                  "    }\n" +
+                  "    resources {\n" +
+                  "      srcDir 'src'\n" +
+                  "    }\n" +
+                  "  }\n" +
+                  "  test {\n" +
+                  "    java {\n" +
+                  "      srcDir 'test'\n" +
+                  "    }\n" +
+                  "    resources {\n" +
+                  "      srcDir 'test'\n" +
+                  "    }\n" +
+                  "  }\n" +
+                  "}\n");
+    assertModules("project", "project.main", "project.test");
+    assertSources("project.main", "");
+    // assert relative to linked project path because several content roots are created for "project.test" module
+    assertTestSources("project.test", "test");
+
+    importProjectUsingSingeModulePerGradleProject();
+
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+    assertSources("project", "src");
+    assertTestSources("project", "test");
+    assertResources("project");
+    assertTestResources("project");
+  }
+
   protected void assertDefaultGradleJavaProjectFolders(@NotNull String mainModuleName) {
     assertExcludes(mainModuleName, ".gradle", "build", "out");
     final String mainSourceSetModuleName = mainModuleName + ".main";

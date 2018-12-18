@@ -20,12 +20,12 @@ public class JsonQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
   @Nullable
   @Override
   public CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
-    return "\"";
+    return iterator.getTokenType() == JsonElementTypes.SINGLE_QUOTED_STRING ? "'" : "\"";
   }
 
   @Override
   public void insertClosingQuote(@NotNull Editor editor, int offset, PsiFile file, @NotNull CharSequence closingQuote) {
     editor.getDocument().insertString(offset, closingQuote);
-    JsonTypedHandler.processPairedBracesComma('"', editor, file);
+    JsonTypedHandler.processPairedBracesComma(closingQuote.charAt(0), editor, file);
   }
 }

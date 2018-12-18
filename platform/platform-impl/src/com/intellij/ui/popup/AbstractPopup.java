@@ -506,8 +506,26 @@ public class AbstractPopup implements JBPopup {
         return relativePointWithDominantRectangle(layeredPane, dominantArea);
       }
     }
+    RelativePoint location = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
+    if (myLocateWithinScreen) {
+      Point screenPoint = location.getScreenPoint();
+      Rectangle rectangle = new Rectangle(screenPoint, getSizeForPositioning());
+      Rectangle screen = ScreenUtil.getScreenRectangle(screenPoint);
+      ScreenUtil.moveToFit(rectangle, screen, null);
+      location = new RelativePoint(rectangle.getLocation()).getPointOn(location.getComponent());
+    }
+    return location;
+  }
 
-    return JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
+  private Dimension getSizeForPositioning() {
+    Dimension size = getSize();
+    if (size == null && myDimensionServiceKey != null) {
+      size = DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
+    }
+    if (size == null) {
+      size = myContent.getPreferredSize();
+    }
+    return size;
   }
 
   @Override
@@ -1567,11 +1585,16 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public Point getLocationOnScreen() {
-    Point screenPoint = myContent.getLocation();
-    SwingUtilities.convertPointToScreen(screenPoint, myContent);
-    return fixLocateByContent(screenPoint, false);
+    Window window = getContentWindow(myContent);
+    Point screenPoint = window == null ? new Point() : window.getLocation();
+    fixLocateByContent(screenPoint, false);
+    Insets insets = myContent.getInsets();
+    if (insets != null) {
+      screenPoint.x += insets.left;
+      screenPoint.y += insets.top;
+    }
+    return screenPoint;
   }
-
 
   @Override
   public void setSize(@NotNull final Dimension size) {

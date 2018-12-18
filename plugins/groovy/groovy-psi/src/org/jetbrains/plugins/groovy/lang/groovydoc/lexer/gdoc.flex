@@ -104,4 +104,4 @@ VALUE_IDENTIFIER = ({ALPHA} | {DIGIT} | [_\."$"\[\]])+
 }
 
 "*/"                            { return mGDOC_COMMENT_END; }
-[^]                             { return TokenType.BAD_CHARACTER; }
+[^]                             { return mGDOC_COMMENT_DATA; }

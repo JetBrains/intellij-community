@@ -152,11 +152,4 @@ class BuildOptions {
    * Specifies JRE build to be bundled with distributions. If {@code null} then jdkBuild from gradle.properties will be used.
    */
   String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
-
-
-  /**
-   * if {@code true} the build will use JetBrains Toolbox LiteGen to generate a toolbox one-click
-   * install link for the product(s) from the current build.
-   */
-  boolean buildToolboxLiteGenLink = Boolean.getBoolean("intellij.build.toolbox.litegen")
 }

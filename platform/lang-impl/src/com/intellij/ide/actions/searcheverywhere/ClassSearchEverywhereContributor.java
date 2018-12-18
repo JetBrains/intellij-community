@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -43,6 +44,15 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
   @Override
   public String getGroupName() {
     return GotoClassPresentationUpdater.getTabTitle(true);
+  }
+
+  @NotNull
+  @Override
+  public String getFullGroupName() {
+    String[] split = GotoClassPresentationUpdater.getActionTitle().split("/");
+    return Arrays.stream(split)
+      .map(StringUtil::pluralize)
+      .collect(Collectors.joining("/"));
   }
 
   @Override

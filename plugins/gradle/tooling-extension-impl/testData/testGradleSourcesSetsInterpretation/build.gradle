@@ -47,7 +47,11 @@ project("withIntegrationTests") {
 
   //noinspection GrUnresolvedAccess
   task integrationTest(type: Test, dependsOn: jar) {
-    testClassesDir = sourceSets.integrationTest.output.classesDir
+    if (sourceSets.integrationTest.output.hasProperty("classesDir")) {
+      testClassesDir = sourceSets.integrationTest.output.classesDir
+    } else {
+      testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    }
     classpath = sourceSets.integrationTest.runtimeClasspath
   }
 

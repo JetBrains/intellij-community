@@ -72,7 +72,7 @@ abstract class ProductProperties {
 
   /**
    * Now file containing information about third-party libraries is bundled and shown inside IDE.
-   * If {@code true} html file of third-party libraries will be placed alongside with build artifacts.
+   * If {@code true} html & json files of third-party libraries will be placed alongside with build artifacts.
    */
   boolean generateLibrariesLicensesTable = true
 
@@ -101,6 +101,11 @@ abstract class ProductProperties {
    * If {@code true} cross-platform ZIP archive containing binaries for all OS will be built
    */
   boolean buildCrossPlatformDistribution = false
+
+  /**
+   * @deprecated for 183-branch only
+   */
+  String crossPlatformDistributionSuffix_183only = null
 
   /**
    * Paths to properties files the content of which should be appended to idea.properties file

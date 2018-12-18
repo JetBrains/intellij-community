@@ -120,6 +120,12 @@ public class PyEditingTest extends PyTestCase {
                                     "    f'bar'");
   }
 
+  // PY-31984
+  public void testEnterInFStringRightBeforeFragment() {
+    doTestEnter("f'foo<caret>{42}bar'", "f'foo' \\\n" +
+                                        "    f'{42}bar'");
+  }
+
   public void testOvertypeFromInside() {
     assertEquals("''", doTestTyping("''", 1, '\''));
   }

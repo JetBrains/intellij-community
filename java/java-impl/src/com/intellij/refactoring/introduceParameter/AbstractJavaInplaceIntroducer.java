@@ -82,6 +82,8 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     if (parent instanceof PsiExpressionStatement && parent.getLastChild() instanceof PsiErrorElement) {
       myExpr = ((PsiExpressionStatement)WriteAction
         .compute(() -> parent.replace(JavaPsiFacade.getElementFactory(myProject).createStatementFromText(parent.getText() + ";", parent)))).getExpression();
+      //postfix templates start introduce in write action so postprocess reformatting aspect doesn't run automatically on write action finish
+      PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
       myEditor.getCaretModel().moveToOffset(myExpr.getTextRange().getStartOffset());
     }
   }

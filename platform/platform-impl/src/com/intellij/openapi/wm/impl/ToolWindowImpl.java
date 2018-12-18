@@ -504,6 +504,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
     return myContentManager.isDisposed();
   }
 
+  public void dispose() {
+    Disposer.dispose(myContentManager);
+  }
+
   boolean isPlaceholderMode() {
     return myPlaceholderMode;
   }
