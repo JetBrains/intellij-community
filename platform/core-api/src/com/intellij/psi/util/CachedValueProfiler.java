@@ -1,14 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.containers.ConcurrentMultiMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.concurrent.ConcurrentMap;
 
 public class CachedValueProfiler {
   private static final CachedValueProfiler ourInstance = new CachedValueProfiler();
@@ -16,11 +12,6 @@ public class CachedValueProfiler {
   private volatile ConcurrentMultiMap<StackTraceElement, ProfilingInfo> myStorage = null;
 
   private final Object myLock = new Object();
-  private final ConcurrentMap<CachedValueProvider.Result, ProfilingInfo> myTemporaryResults = ContainerUtil.newConcurrentMap();
-
-  public static boolean canProfile() {
-    return ApplicationManager.getApplication().isInternal();
-  }
 
   public boolean isEnabled() {
     return myStorage != null;
@@ -45,22 +36,17 @@ public class CachedValueProfiler {
     return ourInstance;
   }
 
-  public void createInfo(@NotNull CachedValueProvider.Result<?> result) {
+  @Nullable
+  public ProfilingInfo createInfo() {
     ConcurrentMultiMap<StackTraceElement, ProfilingInfo> storage = myStorage;
-    if (storage == null) return;
+    if (storage == null) return null;
 
     StackTraceElement origin = findOrigin();
-    if (origin == null) return;
+    if (origin == null) return null;
 
     ProfilingInfo info = new ProfilingInfo(origin);
     storage.putValue(origin, info);
-
-    myTemporaryResults.put(result, info);
-  }
-
-  @Nullable
-  public <T> ProfilingInfo getTemporaryInfo(CachedValueProvider.Result<T> result) {
-    return myTemporaryResults.remove(result);
+    return info;
   }
 
   public MultiMap<StackTraceElement, ProfilingInfo> getStorageSnapshot() {

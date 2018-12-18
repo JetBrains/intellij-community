@@ -30,6 +30,8 @@ public interface CachedValueProvider<T> {
     private final T myValue;
     private final Object[] myDependencyItems;
 
+    @Nullable private final ProfilingInfo myProfilingInfo = CachedValueProfiler.getInstance().createInfo();
+
     /**
      * Constructor
      * @see #getDependencyItems()
@@ -46,10 +48,6 @@ public interface CachedValueProvider<T> {
         if (dependencyItems[i] == null) {
           LOG.error("Null dependencies are not allowed, index=" + i);
         }
-      }
-
-      if (CachedValueProfiler.canProfile()) {
-        CachedValueProfiler.getInstance().createInfo(this);
       }
     }
 
@@ -78,6 +76,11 @@ public interface CachedValueProvider<T> {
     @NotNull
     public Object[] getDependencyItems() {
       return myDependencyItems;
+    }
+
+    @Nullable
+    public ProfilingInfo getProfilingInfo() {
+      return myProfilingInfo;
     }
 
     /**

@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.psi.util.CachedValueProfiler;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ProfilingInfo;
 import com.intellij.reference.SoftReference;
@@ -28,30 +27,17 @@ public abstract class CachedValueBase<T> {
   private Data<T> computeData(@Nullable CachedValueProvider.Result<T> result) {
     T value = result == null ? null : result.getValue();
     Object[] dependencies = getDependencies(result);
+    ProfilingInfo profilingInfo = result != null ? result.getProfilingInfo() : null;
 
-    Object[] inferredDependencies;
-    long[] inferredTimeStamps;
     if (dependencies == null) {
-      inferredDependencies = null;
-      inferredTimeStamps = null;
-    }
-    else {
-      TLongArrayList timeStamps = new TLongArrayList(dependencies.length);
-      List<Object> deps = new NotNullList<>(dependencies.length);
-      collectDependencies(timeStamps, deps, dependencies);
-
-      inferredDependencies = ArrayUtil.toObjectArray(deps);
-      inferredTimeStamps = timeStamps.toNativeArray();
+      return new Data<>(value, null, null, profilingInfo);
     }
 
-    if (CachedValueProfiler.canProfile()) {
-      ProfilingInfo profilingInfo = CachedValueProfiler.getInstance().getTemporaryInfo(result);
-      if (profilingInfo != null) {
-        return new ProfilingData<>(value, inferredDependencies, inferredTimeStamps, profilingInfo);
-      }
-    }
+    TLongArrayList timeStamps = new TLongArrayList(dependencies.length);
+    List<Object> deps = new NotNullList<>(dependencies.length);
+    collectDependencies(timeStamps, deps, dependencies);
 
-    return new Data<>(value, inferredDependencies, inferredTimeStamps);
+    return new Data<>(value, ArrayUtil.toObjectArray(deps), timeStamps.toNativeArray(), profilingInfo);
   }
 
   @Nullable
@@ -113,8 +99,8 @@ public abstract class CachedValueBase<T> {
       if (dispose && data.myValue instanceof Disposable && compareAndClearData(data)) {
         Disposer.dispose((Disposable)data.myValue);
       }
-      if (data instanceof ProfilingData) {
-        ((ProfilingData<T>)data).myProfilingInfo.valueDisposed();
+      if (data.myProfilingInfo != null) {
+        data.myProfilingInfo.valueDisposed();
       }
     }
     return null;
@@ -196,15 +182,17 @@ public abstract class CachedValueBase<T> {
 
   public abstract boolean isFromMyProject(Project project);
 
-  protected static class Data<T> implements Disposable {
+  protected static final class Data<T> implements Disposable {
     private final T myValue;
     private final Object[] myDependencies;
     private final long[] myTimeStamps;
+    @Nullable private final ProfilingInfo myProfilingInfo;
 
-    Data(final T value, final Object[] dependencies, final long[] timeStamps) {
+    Data(final T value, final Object[] dependencies, final long[] timeStamps, @Nullable ProfilingInfo profilingInfo) {
       myValue = value;
       myDependencies = dependencies;
       myTimeStamps = timeStamps;
+      myProfilingInfo = profilingInfo;
     }
 
     @Override
@@ -215,25 +203,10 @@ public abstract class CachedValueBase<T> {
     }
 
     public T getValue() {
+      if (myProfilingInfo != null) {
+        myProfilingInfo.valueUsed();
+      }
       return myValue;
-    }
-  }
-
-  private static class ProfilingData<T> extends Data<T> {
-    @NotNull private final ProfilingInfo myProfilingInfo;
-
-    private ProfilingData(T value,
-                          Object[] dependencies,
-                          long[] timeStamps,
-                          @NotNull ProfilingInfo profilingInfo) {
-      super(value, dependencies, timeStamps);
-      myProfilingInfo = profilingInfo;
-    }
-
-    @Override
-    public T getValue() {
-      myProfilingInfo.valueUsed();
-      return super.getValue();
     }
   }
 
