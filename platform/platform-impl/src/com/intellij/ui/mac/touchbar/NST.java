@@ -73,12 +73,14 @@ public class NST {
       LOG.info("touchbar-server isn't running, skip nst loading");
 
 
-    final String appId = Utils.getAppId();
-    if (appId == null || appId.isEmpty()) {
-      LOG.error("can't obtain application id from NSBundle");
-    } else if (NSDefaults.isShowFnKeysEnabled(appId)){
-      LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
-      ourNSTLibrary = null;
+    if (ourNSTLibrary != null) {
+      final String appId = Utils.getAppId();
+      if (appId == null || appId.isEmpty()) {
+        LOG.error("can't obtain application id from NSBundle");
+      } else if (NSDefaults.isShowFnKeysEnabled(appId)) {
+        LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
+        ourNSTLibrary = null;
+      }
     }
   }
 
