@@ -8,13 +8,14 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager.checkForPass
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle
 
-class ConvertToStaticIntention: Intention() {
+class ConvertToStaticIntention : Intention() {
 
   override fun getText(): String {
     return GroovyRefactoringBundle.message("intention.converting.to.static")
@@ -24,8 +25,14 @@ class ConvertToStaticIntention: Intention() {
     return GroovyRefactoringBundle.message("intention.converting.to.static.family")
   }
 
+  private fun isCSAnnotated(element: PsiElement): Boolean {
+    if (element !is GrMember) return false
+    val annotation = GroovyPsiManager.getCompileStaticAnnotation(element) ?: return false
+    return checkForPass(annotation)
+  }
+
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
-    val containingMember = PsiTreeUtil.getParentOfType(element, GrMember::class.java, false, GrAnnotation::class.java) ?: return
+    val containingMember = PsiTreeUtil.findFirstParent(element, false, ::isCSAnnotated) as? GrMember ?: return
     applyDeclarationFixes(containingMember)
     applyErrorFixes(containingMember)
   }

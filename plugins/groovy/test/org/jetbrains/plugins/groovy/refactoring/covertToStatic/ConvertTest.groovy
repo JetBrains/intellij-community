@@ -67,4 +67,8 @@ class ConvertTest extends LightGroovyTestCase {
   void testIntentionOnProperties() {
     doIntentionTest()
   }
+
+  void testIntentionNecessaryConverts() {
+    doIntentionTest()
+  }
 }
