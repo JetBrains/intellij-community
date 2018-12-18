@@ -686,7 +686,7 @@ public class XDebugSessionImpl implements XDebugSession {
       if (timestamp != 0 && XDebuggerUtilImpl.getVerifiedIcon(breakpoint).equals(icon)) {
         long delay = System.currentTimeMillis() - timestamp;
         presentation.setTimestamp(0);
-        BreakpointsUsageCollector.reportUsage(myProject, "verified." + (int)Math.pow(10,(int)Math.log10(delay)) + "+");
+        BreakpointsUsageCollector.reportUsage(breakpoint, "verified." + (int)Math.pow(10, (int)Math.log10(delay)) + "+");
       }
     }
     myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate((XLineBreakpointImpl<?>)breakpoint);
@@ -987,7 +987,7 @@ public class XDebugSessionImpl implements XDebugSession {
         CustomizedBreakpointPresentation presentation = getBreakpointPresentation(breakpoint);
         if (presentation != null) {
           if (XDebuggerUtilImpl.getVerifiedIcon(breakpoint).equals(presentation.getIcon())) {
-            BreakpointsUsageCollector.reportUsage(myProject, "verified.0");
+            BreakpointsUsageCollector.reportUsage(breakpoint, "verified.0");
           }
           else {
             presentation.setTimestamp(System.currentTimeMillis());

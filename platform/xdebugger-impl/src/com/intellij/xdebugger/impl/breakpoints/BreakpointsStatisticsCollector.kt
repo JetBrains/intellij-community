@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.ensureProperKey
 import com.intellij.internal.statistic.utils.getCountingUsage
+import com.intellij.internal.statistic.utils.getPluginType
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
@@ -26,6 +27,7 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
       val res = XBreakpointUtil.breakpointTypes()
         .filter { it.isSuspendThreadSupported() }
         .filter { breakpointManager.getBreakpointDefaults(it).getSuspendPolicy() != it.getDefaultSuspendPolicy() }
+        .filter { getPluginType(it.javaClass).isSafeToReport() }
         .map {
           UsageDescriptor(
             ensureProperKey("not.default.suspend.${breakpointManager.getBreakpointDefaults(it).getSuspendPolicy()}.${it.getId()}"))
@@ -36,7 +38,9 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
         res.add(UsageDescriptor("using.groups"))
       }
 
-      val breakpoints = breakpointManager.allBreakpoints.filter { !breakpointManager.isDefaultBreakpoint(it) }
+      val breakpoints = breakpointManager.allBreakpoints
+        .filter { !breakpointManager.isDefaultBreakpoint(it) }
+        .filter { getPluginType(it.getType().javaClass).isSafeToReport() }
 
       res.add(getCountingUsage("total", breakpoints.size))
 
