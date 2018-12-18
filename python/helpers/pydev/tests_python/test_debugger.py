@@ -1323,13 +1323,18 @@ def test_case_set_next_statement(case_setup):
         breakpoint_id = writer.write_add_breakpoint(6, None)
         writer.write_make_initial_run()
 
-        hit = writer.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT, line=6)
+        hit = writer.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT, line=6)  # Stop in line a=3 (before setting it)
 
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'a')
         writer.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="int: 2"'.format(builtin_qualifier))
         writer.write_set_next_statement(hit.thread_id, 2, 'method')
         hit = writer.wait_for_breakpoint_hit('127', line=2)
 
+        # Check that it's still unchanged
+        writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'a')
+        writer.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="int: 2"'.format(builtin_qualifier))
+
+        # After a step over it should become 1 as we executed line which sets a = 1
         writer.write_step_over(hit.thread_id)
         hit = writer.wait_for_breakpoint_hit('108')
 
