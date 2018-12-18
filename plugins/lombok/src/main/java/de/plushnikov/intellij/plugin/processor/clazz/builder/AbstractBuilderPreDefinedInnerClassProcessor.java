@@ -44,7 +44,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
 
     final PsiElement parentElement = psiClass.getParent();
     if (parentElement instanceof PsiClass && !(parentElement instanceof LombokLightClassBuilder)) {
-      result = new ArrayList<PsiElement>();
+      result = new ArrayList<>();
 
       final PsiClass psiParentClass = (PsiClass) parentElement;
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParentClass, getSupportedAnnotationClasses());

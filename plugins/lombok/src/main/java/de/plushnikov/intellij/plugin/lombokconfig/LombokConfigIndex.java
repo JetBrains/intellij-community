@@ -54,7 +54,7 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
           if (null != canonicalPath) {
             final Map<String, String> configValues = extractValues((LombokConfigFile) inputData.getPsiFile());
 
-            result = new HashMap<ConfigIndexKey, String>();
+            result = new HashMap<>();
             for (Map.Entry<String, String> entry : configValues.entrySet()) {
               result.put(new ConfigIndexKey(canonicalPath, entry.getKey()), entry.getValue());
             }
@@ -65,7 +65,7 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
       }
 
       private Map<String, String> extractValues(LombokConfigFile configFile) {
-        Map<String, String> result = new HashMap<String, String>();
+        Map<String, String> result = new HashMap<>();
 
         final LombokConfigCleaner[] configCleaners = LombokConfigUtil.getLombokConfigCleaners(configFile);
         for (LombokConfigCleaner configCleaner : configCleaners) {

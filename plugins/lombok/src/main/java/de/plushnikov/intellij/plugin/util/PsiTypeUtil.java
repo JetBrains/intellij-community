@@ -2,18 +2,7 @@ package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.PsiWildcardType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -130,8 +119,8 @@ public class PsiTypeUtil {
       final PsiClassType.ClassResolveResult classResolveResult = psiType.resolveGenerics();
       final PsiSubstitutor derivedSubstitutor = classResolveResult.getSubstitutor();
 
-      final List<PsiType> typeList = new ArrayList<PsiType>(2);
-      final Map<String, PsiType> nameTypeMap = new HashMap<String, PsiType>();
+      final List<PsiType> typeList = new ArrayList<>(2);
+      final Map<String, PsiType> nameTypeMap = new HashMap<>();
       for (Map.Entry<PsiTypeParameter, PsiType> entry : derivedSubstitutor.getSubstitutionMap().entrySet()) {
         final PsiType entryValue = entry.getValue();
         if (null != entryValue) {

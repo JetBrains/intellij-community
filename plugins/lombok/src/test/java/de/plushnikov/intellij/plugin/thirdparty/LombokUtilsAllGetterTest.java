@@ -13,8 +13,8 @@ import static org.junit.Assert.assertThat;
 public class LombokUtilsAllGetterTest {
 
   private static final AccessorsInfo DEFAULT_ACCESSORS = AccessorsInfo.build(false, false, false);
-  private final List<String> lombokResult = new ArrayList<String>();
-  private final List<String> result = new ArrayList<String>();
+  private final List<String> lombokResult = new ArrayList<>();
+  private final List<String> result = new ArrayList<>();
 
   private void makeResults(String fieldName, boolean isBoolean, AccessorsInfo accessorsInfo) {
     lombokResult.clear();

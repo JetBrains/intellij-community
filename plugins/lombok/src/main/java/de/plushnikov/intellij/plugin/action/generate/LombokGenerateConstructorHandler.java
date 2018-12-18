@@ -9,7 +9,6 @@ import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifier;
 import com.intellij.util.IncorrectOperationException;
 import de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider;
@@ -27,7 +26,7 @@ public class LombokGenerateConstructorHandler extends GenerateConstructorHandler
   @Override
   protected ClassMember[] getAllOriginalMembers(PsiClass aClass) {
     PsiField[] fields = aClass.getFields();
-    ArrayList<ClassMember> array = new ArrayList<ClassMember>();
+    ArrayList<ClassMember> array = new ArrayList<>();
     ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
     fieldLoop:
     for (PsiField field : fields) {
@@ -56,9 +55,9 @@ public class LombokGenerateConstructorHandler extends GenerateConstructorHandler
 
     final List<? extends GenerationInfo> memberPrototypes = super.generateMemberPrototypes(proxyClass, members);
 
-    final List<GenerationInfo> result = new ArrayList<GenerationInfo>();
+    final List<GenerationInfo> result = new ArrayList<>();
     for (GenerationInfo memberPrototype : memberPrototypes) {
-      result.add(new PsiGenerationInfo<PsiMember>(memberPrototype.getPsiMember(), false));
+      result.add(new PsiGenerationInfo<>(memberPrototype.getPsiMember(), false));
     }
     return result;
   }

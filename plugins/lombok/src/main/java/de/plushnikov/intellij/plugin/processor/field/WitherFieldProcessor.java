@@ -152,7 +152,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
   private Collection<PsiField> filterFields(@NotNull PsiClass psiClass) {
     final Collection<PsiField> psiFields = PsiClassUtil.collectClassFieldsIntern(psiClass);
 
-    Collection<PsiField> result = new ArrayList<PsiField>(psiFields.size());
+    Collection<PsiField> result = new ArrayList<>(psiFields.size());
     for (PsiField classField : psiFields) {
       final String classFieldName = classField.getName();
       if (classFieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER)) {

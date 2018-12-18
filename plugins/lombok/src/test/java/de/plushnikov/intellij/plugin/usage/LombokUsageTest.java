@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -42,7 +41,7 @@ public class LombokUsageTest extends AbstractLombokLightCodeInsightTestCase {
 
   private void assertUsages(Collection<UsageInfo> usages, String... usageTexts) {
     assertEquals(usageTexts.length, usages.size());
-    List<UsageInfo> sortedUsages = new ArrayList<UsageInfo>(usages);
+    List<UsageInfo> sortedUsages = new ArrayList<>(usages);
     sortedUsages.sort(UsageInfo::compareToByStartOffset);
     for (int i = 0; i < usageTexts.length; i++) {
       assertEquals(usageTexts[i], sortedUsages.get(i).getElement().getText().replaceAll("\\s*", ""));

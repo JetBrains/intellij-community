@@ -60,7 +60,7 @@ public class LombokProcessorUtil {
       return Collections.emptyList();
     }
     Collection<PsiAnnotation> annotations = PsiAnnotationUtil.getAnnotationValues((PsiAnnotation) onXValue, "value", PsiAnnotation.class);
-    Collection<String> annotationStrings = new ArrayList<String>();
+    Collection<String> annotationStrings = new ArrayList<>();
     for (PsiAnnotation annotation : annotations) {
       PsiAnnotationParameterList params = annotation.getParameterList();
       annotationStrings.add(PsiAnnotationSearchUtil.getSimpleNameOf(annotation) + params.getText());

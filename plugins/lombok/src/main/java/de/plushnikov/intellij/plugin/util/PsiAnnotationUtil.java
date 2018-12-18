@@ -39,7 +39,7 @@ public class PsiAnnotationUtil {
     PsiAnnotationMemberValue attributeValue = psiAnnotation.findAttributeValue(parameter);
     if (attributeValue instanceof PsiArrayInitializerMemberValue) {
       final PsiAnnotationMemberValue[] memberValues = ((PsiArrayInitializerMemberValue) attributeValue).getInitializers();
-      result = new ArrayList<T>(memberValues.length);
+      result = new ArrayList<>(memberValues.length);
 
       for (PsiAnnotationMemberValue memberValue : memberValues) {
         T value = resolveElementValue(memberValue, asClass);
@@ -127,7 +127,7 @@ public class PsiAnnotationUtil {
 
   @NotNull
   public static Collection<String> collectAnnotationsToCopy(@NotNull PsiField psiField, final Pattern... patterns) {
-    Collection<String> annotationsToCopy = new ArrayList<String>();
+    Collection<String> annotationsToCopy = new ArrayList<>();
     PsiModifierList modifierList = psiField.getModifierList();
     if (null != modifierList) {
       for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {

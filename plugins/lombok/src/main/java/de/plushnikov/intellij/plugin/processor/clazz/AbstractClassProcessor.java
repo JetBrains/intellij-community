@@ -62,7 +62,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
   @NotNull
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
-    Collection<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
+    Collection<PsiAnnotation> result = new ArrayList<>();
     PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClasses());
     if (null != psiAnnotation) {
       result.add(psiAnnotation);

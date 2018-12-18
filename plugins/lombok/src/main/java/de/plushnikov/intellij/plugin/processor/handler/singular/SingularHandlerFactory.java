@@ -49,7 +49,7 @@ public class SingularHandlerFactory {
   }};
 
   private static Set<String> toSet(String... from) {
-    return new HashSet<String>(Arrays.asList(from));
+    return new HashSet<>(Arrays.asList(from));
   }
 
   public static boolean isInvalidSingularType(@Nullable String qualifiedName) {

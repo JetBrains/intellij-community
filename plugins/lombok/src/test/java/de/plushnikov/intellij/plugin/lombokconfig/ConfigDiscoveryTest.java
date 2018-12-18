@@ -16,7 +16,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
@@ -114,7 +116,7 @@ public class ConfigDiscoveryTest {
     final String[] properties = discovery.getMultipleValueLombokConfigProperty(configKey, psiClass);
     assertNotNull(properties);
     assertEquals(3, properties.length);
-    final ArrayList<String> list = new ArrayList<String>(Arrays.asList(properties));
+    final ArrayList<String> list = new ArrayList<>(Arrays.asList(properties));
     assertTrue(list.contains("b"));
     assertTrue(list.contains("cc"));
     assertTrue(list.contains("_d"));
@@ -135,7 +137,7 @@ public class ConfigDiscoveryTest {
     final String[] properties = discovery.getMultipleValueLombokConfigProperty(configKey, psiClass);
     assertNotNull(properties);
     assertEquals(1, properties.length);
-    final ArrayList<String> list = new ArrayList<String>(Arrays.asList(properties));
+    final ArrayList<String> list = new ArrayList<>(Arrays.asList(properties));
     assertTrue(list.contains("_d"));
   }
 }

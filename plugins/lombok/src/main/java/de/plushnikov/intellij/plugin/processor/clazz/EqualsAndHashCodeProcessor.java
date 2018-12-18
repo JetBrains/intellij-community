@@ -140,7 +140,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
     final boolean shouldGenerateCanEqual = shouldGenerateCanEqual(psiClass);
 
-    Collection<PsiMethod> result = new ArrayList<PsiMethod>(3);
+    Collection<PsiMethod> result = new ArrayList<>(3);
     result.add(createEqualsMethod(psiClass, psiAnnotation, shouldGenerateCanEqual, memberInfos));
 
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);

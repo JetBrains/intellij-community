@@ -2,25 +2,7 @@ package de.plushnikov.intellij.plugin.processor.handler;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -115,12 +97,12 @@ public class DelegateHandler {
     final Project project = psiElement.getProject();
     final PsiManager manager = psiElement.getContainingFile().getManager();
 
-    final Collection<Pair<PsiMethod, PsiSubstitutor>> includesMethods = new HashSet<Pair<PsiMethod, PsiSubstitutor>>();
+    final Collection<Pair<PsiMethod, PsiSubstitutor>> includesMethods = new HashSet<>();
 
     final Collection<PsiType> types = collectDelegateTypes(psiAnnotation, psiElementType);
     addMethodsOfTypes(types, includesMethods);
 
-    final Collection<Pair<PsiMethod, PsiSubstitutor>> excludeMethods = new HashSet<Pair<PsiMethod, PsiSubstitutor>>();
+    final Collection<Pair<PsiMethod, PsiSubstitutor>> excludeMethods = new HashSet<>();
     PsiClassType javaLangObjectType = PsiType.getJavaLangObject(manager, GlobalSearchScope.allScope(project));
     addMethodsOfType(javaLangObjectType, excludeMethods);
 
@@ -161,7 +143,7 @@ public class DelegateHandler {
       for (PsiMethod psiMethod : psiMethods) {
         if (!psiMethod.isConstructor() && psiMethod.hasModifierProperty(PsiModifier.PUBLIC) && !psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
 
-          Pair<PsiMethod, PsiSubstitutor> newMethodSubstitutorPair = new Pair<PsiMethod, PsiSubstitutor>(psiMethod, classSubstitutor);
+          Pair<PsiMethod, PsiSubstitutor> newMethodSubstitutorPair = new Pair<>(psiMethod, classSubstitutor);
 
           boolean acceptMethod = true;
           for (Pair<PsiMethod, PsiSubstitutor> uniquePair : allMethods) {
@@ -187,7 +169,7 @@ public class DelegateHandler {
   }
 
   private Collection<Pair<PsiMethod, PsiSubstitutor>> findMethodsToDelegate(Collection<Pair<PsiMethod, PsiSubstitutor>> includesMethods, Collection<Pair<PsiMethod, PsiSubstitutor>> excludeMethods) {
-    final Collection<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
+    final Collection<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<>();
     for (Pair<PsiMethod, PsiSubstitutor> includesMethodPair : includesMethods) {
       boolean acceptMethod = true;
       for (Pair<PsiMethod, PsiSubstitutor> excludeMethodPair : excludeMethods) {

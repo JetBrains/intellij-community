@@ -40,7 +40,7 @@ public class RefactorGetterHandler extends BaseRefactorHandler {
 
   @Override
   protected List<EncapsulatableClassMember> getEncapsulatableClassMembers(PsiClass psiClass) {
-    final List<EncapsulatableClassMember> result = new ArrayList<EncapsulatableClassMember>();
+    final List<EncapsulatableClassMember> result = new ArrayList<>();
     for (PsiField field : psiClass.getFields()) {
       if (null != PropertyUtil.findPropertyGetter(psiClass, field.getName(), false, false)) {
         result.add(new PsiFieldMember(field));

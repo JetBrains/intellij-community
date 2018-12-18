@@ -23,13 +23,13 @@ import java.util.Set;
  * @author Plushnikov Michail
  */
 public class LombokLightModifierList extends LightModifierList {
-  private static final Set<String> ALL_MODIFIERS = new HashSet<String>(Arrays.asList(PsiModifier.MODIFIERS));
+  private static final Set<String> ALL_MODIFIERS = new HashSet<>(Arrays.asList(PsiModifier.MODIFIERS));
 
   private final Map<String, PsiAnnotation> myAnnotations;
 
   public LombokLightModifierList(PsiManager manager, final Language language, String... modifiers) {
     super(manager, language, modifiers);
-    myAnnotations = new HashMap<String, PsiAnnotation>();
+    myAnnotations = new HashMap<>();
   }
 
   public void setModifierProperty(@PsiModifier.ModifierConstant @NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
@@ -54,7 +54,7 @@ public class LombokLightModifierList extends LightModifierList {
   }
 
   private Collection<String> collectAllModifiers() {
-    Collection<String> result = new HashSet<String>();
+    Collection<String> result = new HashSet<>();
     for (@PsiModifier.ModifierConstant String modifier : ALL_MODIFIERS) {
       if (hasModifierProperty(modifier)) {
         result.add(modifier);

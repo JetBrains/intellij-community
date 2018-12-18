@@ -39,9 +39,9 @@ public class LombokProcessorProvider {
   private LombokProcessorProvider(@NotNull PropertiesComponent propertiesComponent) {
     myPropertiesComponent = propertiesComponent;
 
-    lombokProcessors = new HashMap<String, Collection<Processor>>();
-    lombokTypeProcessors = new HashMap<Class, Collection<Processor>>();
-    registeredAnnotationNames = new HashSet<String>();
+    lombokProcessors = new HashMap<>();
+    lombokTypeProcessors = new HashMap<>();
+    registeredAnnotationNames = new HashSet<>();
 
     initProcessors();
   }
@@ -73,7 +73,7 @@ public class LombokProcessorProvider {
   }
 
   private <K, V> void putProcessor(final Map<K, Collection<V>> map, final K key, final V value) {
-    Collection<V> valueList = map.computeIfAbsent(key, k -> new HashSet<V>());
+    Collection<V> valueList = map.computeIfAbsent(key, k -> new HashSet<>());
     valueList.add(value);
   }
 
@@ -127,7 +127,7 @@ public class LombokProcessorProvider {
   public Collection<LombokProcessorData> getApplicableProcessors(@NotNull PsiMember psiMember) {
     Collection<LombokProcessorData> result = Collections.emptyList();
     if (verifyLombokAnnotationPresent(psiMember)) {
-      result = new ArrayList<LombokProcessorData>();
+      result = new ArrayList<>();
 
       addApplicableProcessors(psiMember, result);
       final PsiClass psiClass = psiMember.getContainingClass();

@@ -229,7 +229,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
   }
 
   private Collection<PsiMethod> filterMethods(PsiMethod[] beforeMethods, PsiMethod compareMethod) {
-    Collection<PsiMethod> result = new ArrayList<PsiMethod>();
+    Collection<PsiMethod> result = new ArrayList<>();
     for (PsiMethod psiMethod : beforeMethods) {
       final PsiParameterList compareMethodParameterList = compareMethod.getParameterList();
       final PsiParameterList psiMethodParameterList = psiMethod.getParameterList();
@@ -247,7 +247,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
 
   @NotNull
   private Collection<String> mapToTypeString(PsiParameterList compareMethodParameterList) {
-    Collection<String> result = new ArrayList<String>();
+    Collection<String> result = new ArrayList<>();
     final PsiParameter[] compareMethodParameterListParameters = compareMethodParameterList.getParameters();
     for (PsiParameter compareMethodParameterListParameter : compareMethodParameterListParameters) {
       result.add(stripJavaLang(compareMethodParameterListParameter.getType().getCanonicalText()));

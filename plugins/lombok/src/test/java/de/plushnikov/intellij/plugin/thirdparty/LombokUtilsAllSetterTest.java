@@ -12,8 +12,8 @@ import static org.junit.Assert.assertThat;
 
 public class LombokUtilsAllSetterTest {
 
-  private final List<String> lombokResult = new ArrayList<String>();
-  private final List<String> result = new ArrayList<String>();
+  private final List<String> lombokResult = new ArrayList<>();
+  private final List<String> result = new ArrayList<>();
 
   private void makeResults(String fieldName, boolean isBoolean) {
     lombokResult.clear();

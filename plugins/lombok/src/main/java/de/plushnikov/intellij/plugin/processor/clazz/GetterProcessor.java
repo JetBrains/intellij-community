@@ -74,7 +74,7 @@ public class GetterProcessor extends AbstractClassProcessor {
 
   @NotNull
   public Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass, @NotNull String methodModifier) {
-    Collection<PsiMethod> result = new ArrayList<PsiMethod>();
+    Collection<PsiMethod> result = new ArrayList<>();
     final Collection<PsiField> getterFields = filterGetterFields(psiClass);
     for (PsiField getterField : getterFields) {
       result.add(fieldProcessor.createGetterMethod(getterField, psiClass, methodModifier));
@@ -84,7 +84,7 @@ public class GetterProcessor extends AbstractClassProcessor {
 
   @NotNull
   private Collection<PsiField> filterGetterFields(@NotNull PsiClass psiClass) {
-    final Collection<PsiField> getterFields = new ArrayList<PsiField>();
+    final Collection<PsiField> getterFields = new ArrayList<>();
 
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     filterToleratedElements(classMethods);

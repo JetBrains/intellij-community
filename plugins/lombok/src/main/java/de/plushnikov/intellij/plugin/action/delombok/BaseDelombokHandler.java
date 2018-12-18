@@ -46,7 +46,7 @@ public class BaseDelombokHandler {
   }
 
   private void invoke(Project project, PsiClass psiClass, boolean processInnerClasses) {
-    Collection<PsiAnnotation> processedAnnotations = new HashSet<PsiAnnotation>();
+    Collection<PsiAnnotation> processedAnnotations = new HashSet<>();
 
     // get all inner classes before first lombok processing
     final PsiClass[] allInnerClasses = psiClass.getAllInnerClasses();
@@ -92,7 +92,7 @@ public class BaseDelombokHandler {
   }
 
   public Collection<PsiAnnotation> collectProcessableAnnotations(@NotNull PsiClass psiClass) {
-    Collection<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
+    Collection<PsiAnnotation> result = new ArrayList<>();
 
     for (AbstractProcessor lombokProcessor : lombokProcessors) {
       result.addAll(lombokProcessor.collectProcessedAnnotations(psiClass));

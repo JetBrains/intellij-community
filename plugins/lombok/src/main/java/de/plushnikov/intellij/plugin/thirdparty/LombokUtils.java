@@ -180,7 +180,7 @@ Various problems with spring have also been reported. See issue #287, issue #271
   }
 
   private static Collection<String> toAllAccessorNames(AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean, String booleanPrefix, String normalPrefix) {
-    Collection<String> result = new HashSet<String>();
+    Collection<String> result = new HashSet<>();
 
     fieldName = accessorsInfo.removePrefix(fieldName);
     if (accessorsInfo.isFluent()) {

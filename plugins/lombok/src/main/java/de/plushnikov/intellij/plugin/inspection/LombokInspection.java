@@ -81,7 +81,7 @@ public class LombokInspection extends AbstractBaseJavaLocalInspectionTool {
     public void visitAnnotation(PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
 
-      final Collection<LombokProblem> problems = new HashSet<LombokProblem>();
+      final Collection<LombokProblem> problems = new HashSet<>();
 
       final LombokProcessorProvider processorProvider = LombokProcessorProvider.getInstance(annotation.getProject());
       for (Processor inspector : processorProvider.getProcessors(annotation)) {
