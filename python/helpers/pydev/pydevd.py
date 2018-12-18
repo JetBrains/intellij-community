@@ -1255,6 +1255,13 @@ class PyDB(object):
         module_name = None
         entry_point_fn = ''
         if is_module:
+            # When launching with `python -m <module>`, python automatically adds
+            # an empty path to the PYTHONPATH which resolves files in the current
+            # directory, so, depending how pydevd itself is launched, we may need
+            # to manually add such an entry to properly resolve modules in the
+            # current directory
+            if '' not in sys.path:
+                sys.path.insert(0, '')
             file, _,  entry_point_fn = file.partition(':')
             module_name = file
             filename = get_fullname(file)
