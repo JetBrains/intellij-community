@@ -96,7 +96,7 @@ private fun assignInvestigation(investigator: Investigator, report: String) {
     }
     val text = (if (report.isNotEmpty()) "$report " else report) +
                "Build: ${thisBuildReportableLink()}, " +
-               "see also: https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
+               "see also: https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform, https://jetbrains.team/blog/1yjtD11nVsDA"
     teamCityPost("investigations", """
       <investigation state="TAKEN">
           <assignee id="$id"/>
