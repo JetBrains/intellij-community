@@ -196,7 +196,9 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myUpdateMethodComboBox.setSelectedItem(projectSettings.getUpdateType());
     myProtectedBranchesField.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getForcePushProhibitedPatterns()));
     myUpdateBranchInfoCheckBox.setSelected(projectSettings.shouldUpdateBranchInfo());
-    myUpdateBranchInfoCheckBox.setEnabled(isBranchInfoSupported());
+    boolean branchInfoSupported = isBranchInfoSupported();
+    myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
+    UIUtil.setEnabled(myBranchTimePanel, myUpdateBranchInfoCheckBox.isSelected() && branchInfoSupported, true);
     updateSupportedBranchInfo();
     myBranchUpdateTimeField.setValue(projectSettings.getBranchInfoUpdateTime());
     myPreviewPushOnCommitAndPush.setSelected(projectSettings.shouldPreviewPushOnCommitAndPush());
@@ -297,7 +299,9 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   }
 
   private void applyBranchUpdateInfo(@NotNull GitVcsSettings projectSettings) {
-    myUpdateBranchInfoCheckBox.setEnabled(isBranchInfoSupported());
+    boolean branchInfoSupported = isBranchInfoSupported();
+    myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
+    UIUtil.setEnabled(myBranchTimePanel, myUpdateBranchInfoCheckBox.isSelected() && branchInfoSupported, true);
     updateSupportedBranchInfo();
     if (isUpdateBranchSettingsModified(projectSettings)) {
       projectSettings.setBranchInfoUpdateTime((Integer)myBranchUpdateTimeField.getValue());
