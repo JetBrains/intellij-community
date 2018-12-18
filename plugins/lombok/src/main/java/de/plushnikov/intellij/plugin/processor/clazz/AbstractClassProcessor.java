@@ -45,12 +45,6 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     super(supportedClass, supportedAnnotationClass);
   }
 
-  protected AbstractClassProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                                   @NotNull Class<? extends Annotation> supportedAnnotationClass,
-                                   @NotNull Class<? extends Annotation>... equivalentAnnotationClasses) {
-    super(supportedClass, supportedAnnotationClass, equivalentAnnotationClasses);
-  }
-
   @NotNull
   @Override
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {

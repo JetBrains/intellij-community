@@ -34,8 +34,8 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
     super(supportedClass, supportedAnnotationClass);
   }
 
-  AbstractFieldProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass, Class<? extends Annotation>... equivalentAnnotationClasses) {
-    super(supportedClass, supportedAnnotationClass, equivalentAnnotationClasses);
+  AbstractFieldProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass, Class<? extends Annotation> equivalentAnnotationClass) {
+    super(supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
   }
 
   @NotNull

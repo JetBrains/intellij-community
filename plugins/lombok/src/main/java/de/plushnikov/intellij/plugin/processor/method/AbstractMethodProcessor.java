@@ -31,8 +31,8 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
     super(supportedClass, supportedAnnotationClass);
   }
 
-  AbstractMethodProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass, Class<? extends Annotation>... equivalentAnnotationClasses) {
-    super(supportedClass, supportedAnnotationClass, equivalentAnnotationClasses);
+  AbstractMethodProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass, Class<? extends Annotation> equivalentAnnotationClass) {
+    super(supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
   }
 
   @NotNull

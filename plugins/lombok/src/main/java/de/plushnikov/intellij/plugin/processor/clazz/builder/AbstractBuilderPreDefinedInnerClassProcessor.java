@@ -32,13 +32,6 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
     this.builderHandler = builderHandler;
   }
 
-  AbstractBuilderPreDefinedInnerClassProcessor(@NotNull BuilderHandler builderHandler, @NotNull Class<? extends PsiElement> supportedClass,
-                                               @NotNull Class<? extends Annotation> supportedAnnotationClass,
-                                               @NotNull Class<? extends Annotation>... equivalentAnnotationClasses) {
-    super(supportedClass, supportedAnnotationClass, equivalentAnnotationClasses);
-    this.builderHandler = builderHandler;
-  }
-
   @Override
   public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
     return ProjectSettings.isEnabled(propertiesComponent, ProjectSettings.IS_BUILDER_ENABLED);
