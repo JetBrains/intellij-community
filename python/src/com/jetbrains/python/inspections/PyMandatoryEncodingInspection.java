@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.ui.CheckBox;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.inspections.quickfix.AddEncodingQuickFix;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -63,7 +65,7 @@ public class PyMandatoryEncodingInspection extends PyInspection {
 
     @Override
     public void visitPyFile(PyFile node) {
-      if (!LanguageLevel.forElement(node).isPython2()) return;
+      if (!(myAllPythons || LanguageLevel.forElement(node).isPython2())) return;
 
       final String charsetString = PythonFileType.getCharsetFromEncodingDeclaration(node);
       if (charsetString == null) {
@@ -78,6 +80,7 @@ public class PyMandatoryEncodingInspection extends PyInspection {
 
   public String myDefaultEncoding = "utf-8";
   public int myEncodingFormatIndex = 0;
+  public boolean myAllPythons = false;
 
   @Override
   public JComponent createOptionsPanel() {
@@ -103,6 +106,10 @@ public class PyMandatoryEncodingInspection extends PyInspection {
       }
     });
 
-    return PyEncodingUtil.createEncodingOptionsPanel(defaultEncoding, encodingFormat);
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(new CheckBox("Enable in Python 3+", this, "myAllPythons"), BorderLayout.NORTH);
+    panel.add(PyEncodingUtil.createEncodingOptionsPanel(defaultEncoding, encodingFormat), BorderLayout.CENTER);
+
+    return panel;
   }
 }
