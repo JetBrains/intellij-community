@@ -241,8 +241,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   public void testModuleInfo() {
-    myJdkVersion = 9;
-    setUpJdk();
+    useJava9();
     PsiClass aClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT);
     assertNotNull(aClass);
     PsiFile moduleFile = aClass.getContainingFile().getParent().getParentDirectory().getParentDirectory().findFile("module-info.class");
@@ -357,13 +356,18 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     }
   }
 
+  private void useJava7() {
+    myJdkVersion = 7;
+    setUpJdk();
+  }
+
   private void useJava8() {
     myJdkVersion = 8;
     setUpJdk();
   }
 
-  private void useJava7() {
-    myJdkVersion = 7;
+  private void useJava9() {
+    myJdkVersion = 9;
     setUpJdk();
   }
 
