@@ -21,9 +21,6 @@ public class AllIcons {
     public static final Icon Checked_selected = IconLoader.getIcon("/actions/checked_selected.svg"); // 12x12
     public static final Icon CheckMulticaret = IconLoader.getIcon("/actions/CheckMulticaret.svg"); // 16x16
     public static final Icon CheckOut = IconLoader.getIcon("/actions/checkOut.svg"); // 16x16
-    public static final Icon Clean = IconLoader.getIcon("/actions/clean.png"); // 16x16
-    public static final Icon CleanLight = IconLoader.getIcon("/actions/cleanLight.png"); // 16x16
-    public static final Icon Clear = IconLoader.getIcon("/actions/clear.png"); // 16x16
     public static final Icon Close = IconLoader.getIcon("/actions/close.svg"); // 16x16
     public static final Icon CloseHovered = IconLoader.getIcon("/actions/closeHovered.svg"); // 16x16
     public static final Icon Collapseall = IconLoader.getIcon("/actions/collapseall.svg"); // 16x16
@@ -186,6 +183,21 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon CheckedGrey = AllIcons.Actions.Checked;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.CloseHovered */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Clean = AllIcons.Actions.CloseHovered;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Close */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon CleanLight = AllIcons.Actions.Close;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Clear = IconLoader.getIcon("/actions/clear.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Close */
     @SuppressWarnings("unused")
