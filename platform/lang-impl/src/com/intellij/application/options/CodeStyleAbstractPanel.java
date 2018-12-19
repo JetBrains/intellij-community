@@ -134,7 +134,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
 
   @Nullable
   private Editor createEditor() {
-    if (getPreviewText() == null) return null;
+    if (StringUtil.isEmpty(getPreviewText())) return null;
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument("");
     EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument);
