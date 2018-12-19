@@ -42,7 +42,7 @@ class JavaUAnnotationCallExpression(
 
   override val classReference: UReferenceExpression? by lz {
     psi.nameReferenceElement?.let { ref ->
-      JavaConverter.convertReference(ref, this, null) as? UReferenceExpression
+      JavaConverter.convertReference(ref, this) as? UReferenceExpression
     }
   }
 

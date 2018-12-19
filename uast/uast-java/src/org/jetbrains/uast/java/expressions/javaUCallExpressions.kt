@@ -141,7 +141,7 @@ class JavaConstructorUCallExpression(
 
   override val classReference: UReferenceExpression? by lz {
     psi.classReference?.let { ref ->
-      JavaConverter.convertReference(ref, this, null) as? UReferenceExpression
+      JavaConverter.convertReference(ref, this) as? UReferenceExpression
     }
   }
 

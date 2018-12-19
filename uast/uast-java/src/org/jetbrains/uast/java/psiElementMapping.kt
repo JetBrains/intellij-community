@@ -8,8 +8,8 @@ import org.jetbrains.uast.internal.ClassSet
 import org.jetbrains.uast.internal.UElementToPsiElementMapping
 
 
-internal fun canConvert(psiCls: Class<out PsiElement>, vararg targets: Class<out UElement>) =
-  conversionMapping.canConvert(psiCls, *targets)
+internal fun canConvert(psiCls: Class<out PsiElement>, targets: List<Class<out UElement>>) =
+  conversionMapping.canConvert(psiCls, targets)
 
 private val conversionMapping = UElementToPsiElementMapping(
   UClass::class.java to ClassSet(PsiClass::class.java),

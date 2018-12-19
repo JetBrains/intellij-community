@@ -113,6 +113,10 @@ fun PsiElement?.toUElement(): UElement? =
 fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? =
   this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, cls) as T? }
 
+fun <T : UElement> PsiElement?.toUElementOfExpectedTypes(vararg clss: Class<out T>): T? =
+  this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, clss.toList()) as T? }
+
+
 inline fun <reified T : UElement> PsiElement?.toUElementOfType(): T? =
   this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, T::class.java) as T? }
 
