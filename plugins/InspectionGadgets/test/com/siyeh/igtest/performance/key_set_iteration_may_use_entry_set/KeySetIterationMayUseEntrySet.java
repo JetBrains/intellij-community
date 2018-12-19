@@ -2,6 +2,7 @@ package com.siyeh.igtest.performance.key_set_iteration_may_use_entry_set;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 
 public class KeySetIterationMayUseEntrySet {
@@ -17,6 +18,21 @@ public class KeySetIterationMayUseEntrySet {
     for (String a : <warning descr="Iteration over 'map.keySet()' may be replaced with 'entrySet()' iteration">map.keySet()</warning>) {
       System.out.println(map.get(a));
     }
+  }
+  
+  void forEach(Map<String, String> map) {
+    <warning descr="'map.keySet().forEach()' may be replaced with 'Map.forEach()'">map.keySet()</warning>.forEach(x -> {
+      String value = map.get(x);
+      System.out.println(x+"="+value);
+    });
+  }
+  
+  void forEach2(Map<String, String> map) {
+    Set<String> keySet = map.keySet();
+    (<warning descr="'keySet.forEach()' may be replaced with 'Map.forEach()'">keySet</warning>).forEach(x -> {
+      String value = map.get(x);
+      System.out.println(x+"="+value);
+    });
   }
 
   HashMap<String, String> get() {

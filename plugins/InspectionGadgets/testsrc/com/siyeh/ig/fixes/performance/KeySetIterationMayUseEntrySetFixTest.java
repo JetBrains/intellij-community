@@ -15,6 +15,10 @@
  */
 package com.siyeh.ig.fixes.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.performance.KeySetIterationMayUseEntrySetInspection;
@@ -28,6 +32,13 @@ public class KeySetIterationMayUseEntrySetFixTest extends IGQuickFixesTestCase {
     myRelativePath = "performance/key_set_with_entry_set";
     myDefaultHint = InspectionGadgetsBundle.message("key.set.iteration.may.use.entry.set.quickfix");
   }
+  
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
+    super.tuneFixture(builder);
+    builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
+    builder.setLanguageLevel(LanguageLevel.JDK_1_8);
+  }
 
   public void testSimple() { doTest(); }
   public void testParentheses() { doTest(); }
@@ -36,5 +47,7 @@ public class KeySetIterationMayUseEntrySetFixTest extends IGQuickFixesTestCase {
   public void testCastNeeded2() { doTest(); }
   public void testReference() { doTest(); }
   public void testEntryIterationBug() { doTest(); }
+  public void testLambda() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Map.forEach()")); }
+  public void testLambdaNoVar() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Map.forEach()")); }
 
 }
