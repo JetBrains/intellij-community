@@ -26,10 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -378,9 +375,12 @@ public class DfaExpressionFactory {
 
   private static final class GetterDescriptor implements VariableDescriptor {
     private final @NotNull PsiMethod myGetter;
+    private final boolean myStable;
 
     GetterDescriptor(@NotNull PsiMethod getter) {
       myGetter = getter;
+      PsiField field = PsiUtil.canBeOverridden(getter) ? null : PropertyUtil.getFieldOfGetter(getter);
+      myStable = field != null && field.hasModifierProperty(PsiModifier.FINAL);
     }
 
     @NotNull
@@ -397,7 +397,7 @@ public class DfaExpressionFactory {
 
     @Override
     public boolean isStable() {
-      return false;
+      return myStable;
     }
 
     @Override
