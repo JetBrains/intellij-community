@@ -156,18 +156,12 @@ class InferenceCache {
     );
   }
 
-  private void cacheDfaResult(@NotNull List<? extends TypeDfaState> dfaResult) {
-    while (true) {
-      List<TypeDfaState> oldTypes = myVarTypes.get();
-      if (myVarTypes.compareAndSet(oldTypes, addDfaResult(dfaResult, oldTypes))) {
-        return;
-      }
-    }
+  private void cacheDfaResult(@NotNull List<TypeDfaState> dfaResult) {
+    myVarTypes.accumulateAndGet(dfaResult, InferenceCache::addDfaResult);
   }
 
   @NotNull
-  private static List<TypeDfaState> addDfaResult(@NotNull List<? extends TypeDfaState> dfaResult,
-                                                 @NotNull List<? extends TypeDfaState> oldTypes) {
+  private static List<TypeDfaState> addDfaResult(@NotNull List<TypeDfaState> oldTypes, @NotNull List<TypeDfaState> dfaResult) {
     List<TypeDfaState> newTypes = new ArrayList<>(oldTypes);
     for (int i = 0; i < dfaResult.size(); i++) {
       newTypes.set(i, newTypes.get(i).mergeWith(dfaResult.get(i)));
