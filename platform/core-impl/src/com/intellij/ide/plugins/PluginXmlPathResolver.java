@@ -1,9 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jetbrains.annotations.NotNull;
@@ -12,16 +10,15 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 
 /**
  * @author nik
  */
-class PluginXmlPathResolver implements JDOMXIncluder.PathResolver {
-  private final List<File> myPluginJarFiles;
+final class PluginXmlPathResolver implements JDOMXIncluder.PathResolver {
+  private final File[] myPluginJarFiles;
 
-  PluginXmlPathResolver(@NotNull File[] filesInLib) {
-    myPluginJarFiles = ContainerUtil.filter(filesInLib, FileUtil::isJarOrZip);
+  PluginXmlPathResolver(@NotNull File[] jarFiles) {
+    myPluginJarFiles = jarFiles;
   }
 
   @NotNull

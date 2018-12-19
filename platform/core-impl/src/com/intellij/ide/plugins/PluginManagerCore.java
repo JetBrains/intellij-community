@@ -55,7 +55,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static com.intellij.util.ObjectUtils.notNull;
-import static java.util.Collections.singletonList;
 
 public class PluginManagerCore {
   private static final Logger LOG = Logger.getInstance(PluginManagerCore.class);
@@ -664,7 +663,7 @@ public class PluginManagerCore {
     catch (XmlSerializationException | JDOMException | IOException e) {
       if (essential) ExceptionUtil.rethrow(e);
       getLogger().warn("Cannot load " + descriptorFile, e);
-      prepareLoadingPluginsErrorMessage(singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
+      prepareLoadingPluginsErrorMessage(Collections.singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
     }
     catch (Throwable e) {
       if (essential) ExceptionUtil.rethrow(e);
@@ -703,7 +702,7 @@ public class PluginManagerCore {
     catch (XmlSerializationException | InvalidDataException e) {
       if (essential) ExceptionUtil.rethrow(e);
       getLogger().info("Cannot load " + file + "!/META-INF/" + fileName, e);
-      prepareLoadingPluginsErrorMessage(singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
+      prepareLoadingPluginsErrorMessage(Collections.singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
     }
     catch (Throwable e) {
       if (essential) ExceptionUtil.rethrow(e);
@@ -768,7 +767,7 @@ public class PluginManagerCore {
 
         putMoreLikelyPluginJarsFirst(file, files);
 
-        PluginXmlPathResolver pathResolver = new PluginXmlPathResolver(files);
+        List<File> pluginJarFiles = null;
         for (File f : files) {
           if (f.isDirectory()) {
             IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromDir(f, pathName, file, bundled, essential);
@@ -781,7 +780,22 @@ public class PluginManagerCore {
             }
           }
           else if (FileUtil.isJarOrZip(f, false)) {
-            descriptor = loadDescriptorFromJar(f, pathName, pathResolver, context, file, bundled, essential);
+            if (files.length == 1) {
+              pluginJarFiles = Collections.singletonList(f);
+            }
+            else {
+              if (pluginJarFiles == null) {
+                pluginJarFiles = new ArrayList<>();
+              }
+              pluginJarFiles.add(f);
+            }
+          }
+        }
+
+        if (pluginJarFiles != null) {
+          PluginXmlPathResolver pathResolver = new PluginXmlPathResolver(files);
+          for (File jarFile : pluginJarFiles) {
+            descriptor = loadDescriptorFromJar(jarFile, pathName, pathResolver, context, file, bundled, essential);
             if (descriptor != null) {
               break;
             }
@@ -799,7 +813,7 @@ public class PluginManagerCore {
 
     if (PLUGIN_XML.equals(pathName) && (descriptor.getPluginId() == null || descriptor.getName() == null)) {
       getLogger().info("Cannot load descriptor from " + file + ": ID or name missing");
-      prepareLoadingPluginsErrorMessage(singletonList("'" + file.getName() + "' contains invalid plugin descriptor."));
+      prepareLoadingPluginsErrorMessage(Collections.singletonList("'" + file.getName() + "' contains invalid plugin descriptor."));
       return null;
     }
 
@@ -1490,7 +1504,7 @@ public class PluginManagerCore {
       descriptor = loadDescriptorFromJar(pluginRoot, fileName, true);
     }
     if (descriptor != null) {
-      registerExtensionPointsAndExtensions(area, singletonList(descriptor));
+      registerExtensionPointsAndExtensions(area, Collections.singletonList(descriptor));
     }
     else {
       getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
