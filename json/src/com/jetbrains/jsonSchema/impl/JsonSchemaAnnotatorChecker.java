@@ -488,6 +488,7 @@ class JsonSchemaAnnotatorChecker {
                                         @Nullable JsonValueAdapter adapter,
                                         @NotNull String text,
                                         @NotNull BiFunction<String, String, Boolean> stringEq) {
+    if (adapter != null && !adapter.shouldCheckAsValue()) return true;
     if (object instanceof EnumArrayValueWrapper) {
       if (adapter instanceof JsonArrayValueAdapter) {
         List<JsonValueAdapter> elements = ((JsonArrayValueAdapter)adapter).getElements();
@@ -673,6 +674,7 @@ class JsonSchemaAnnotatorChecker {
       for (Map.Entry<String, Collection<JsonValueAdapter>> entry: valueTexts.entrySet()) {
         if (entry.getValue().size() > 1) {
           for (JsonValueAdapter item: entry.getValue()) {
+            if (!item.shouldCheckAsValue()) continue;
             error("Item is not unique", item.getDelegate(), JsonErrorPriority.TYPE_MISMATCH);
           }
         }
@@ -727,6 +729,8 @@ class JsonSchemaAnnotatorChecker {
   private void checkString(PsiElement propValue, JsonSchemaObject schema) {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(propValue, schema);
     assert walker != null;
+    JsonValueAdapter adapter = walker.createValueAdapter(propValue);
+    if (adapter != null && !adapter.shouldCheckAsValue()) return;
     final String value = StringUtil.unquoteString(walker.getNodeTextForValidation(propValue));
     if (schema.getMinLength() != null) {
       if (value.length() < schema.getMinLength()) {
@@ -760,6 +764,8 @@ class JsonSchemaAnnotatorChecker {
     Number value;
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(propValue, schema);
     assert walker != null;
+    JsonValueAdapter adapter = walker.createValueAdapter(propValue);
+    if (adapter != null && !adapter.shouldCheckAsValue()) return;
     String valueText = walker.getNodeTextForValidation(propValue);
     if (JsonSchemaType._integer.equals(schemaType)) {
       try {
