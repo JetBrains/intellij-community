@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PartialContext;
 import java.util.List;
 import java.util.Map;
 
+import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexes;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.*;
 
 /**
@@ -159,7 +160,7 @@ public class TypeInferenceHelper {
       @Override
       public Result<Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>>> compute() {
         final Instruction[] flow = scope.getControlFlow();
-        final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow) {
+        final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow, getVarIndexes(scope)) {
           @Override
           public void fun(@NotNull DefinitionMap m, @NotNull Instruction instruction) {
             if (instruction instanceof MixinTypeInstruction) {
