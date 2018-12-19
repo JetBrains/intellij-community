@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.StateSplitterEx;
+import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,11 +44,6 @@ public class FileStorageAnnotation implements Storage {
   @Override
   public String value() {
     return path;
-  }
-
-  @Override
-  public StorageScheme scheme() {
-    return StorageScheme.DEFAULT;
   }
 
   @Override

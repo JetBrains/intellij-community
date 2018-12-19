@@ -83,7 +83,7 @@ import static java.util.stream.Collectors.toList;
 
 @State(
   name = "ChangesViewManager",
-  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public class ChangesViewManager implements ChangesViewI, ProjectComponent, PersistentStateComponent<ChangesViewManager.State> {
 
@@ -571,7 +571,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   private class MyChangeViewContent extends DnDActivateOnHoldTargetContent {
-  
+
     private MyChangeViewContent(JComponent component, @NotNull String displayName, boolean isLockable) {
       super(myProject, component, displayName, isLockable);
     }
