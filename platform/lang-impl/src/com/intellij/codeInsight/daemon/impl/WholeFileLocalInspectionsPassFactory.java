@@ -28,6 +28,7 @@ import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -105,14 +106,16 @@ public class WholeFileLocalInspectionsPassFactory implements TextEditorHighlight
         return DaemonBundle.message("pass.whole.inspections");
       }
 
+      @NotNull
       @Override
-      void inspectInjectedPsi(@NotNull List<? extends PsiElement> elements,
+      Set<PsiFile> inspectInjectedPsi(@NotNull List<? extends PsiElement> elements,
                               boolean onTheFly,
                               @NotNull ProgressIndicator indicator,
                               @NotNull InspectionManager iManager,
                               boolean inVisibleRange,
-                              @NotNull List<? extends LocalInspectionToolWrapper> wrappers) {
+                              @NotNull List<? extends LocalInspectionToolWrapper> wrappers, @NotNull Set<? extends PsiFile> alreadyVisitedInjected) {
         // already inspected in LIP
+        return Collections.emptySet();
       }
 
       @Override
