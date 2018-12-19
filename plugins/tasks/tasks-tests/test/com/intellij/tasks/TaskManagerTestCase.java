@@ -18,6 +18,7 @@ package com.intellij.tasks;
 import com.intellij.openapi.util.Couple;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.SimpleDateFormat;
@@ -46,6 +47,7 @@ public abstract class TaskManagerTestCase extends LightPlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      MultiThreadedHttpConnectionManager.shutdownAll();
       myTaskManager.setRepositories(Collections.emptyList());
       removeAllTasks();
     }

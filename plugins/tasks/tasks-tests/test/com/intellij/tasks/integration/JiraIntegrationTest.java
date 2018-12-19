@@ -27,7 +27,6 @@ import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraRepositoryType;
 import com.intellij.tasks.jira.JiraVersion;
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
@@ -234,18 +233,5 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
     myRepository.setUsername("buildtest");
     myRepository.setPassword("buildtest");
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      MultiThreadedHttpConnectionManager.shutdownAll();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
   }
 }
