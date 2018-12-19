@@ -6,5 +6,6 @@ public class B {
     new A().relaxedToPackageLevel(2);
     A.FooException exception =
       new A.FooException("");
+    new AChild().aProtectedMethod();
   }
 }

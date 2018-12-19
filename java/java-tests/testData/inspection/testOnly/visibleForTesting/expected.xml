@@ -20,5 +20,9 @@
     <line>8</line>
     <description>Test-only method is called in production code</description>
   </problem>
-
+  <problem>
+    <file>AGrandChild.java</file>
+    <line>6</line>
+    <description>Test-only method is called in production code</description>
+  </problem>
 </problems>

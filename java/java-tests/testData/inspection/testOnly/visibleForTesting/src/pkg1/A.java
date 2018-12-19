@@ -20,6 +20,8 @@ public class A {
 
   }
 
+  protected void aProtectedMethod() {}
+
   @com.google.common.annotations.VisibleForTesting
   static class FooException extends RuntimeException {
     FooException(String message) {
