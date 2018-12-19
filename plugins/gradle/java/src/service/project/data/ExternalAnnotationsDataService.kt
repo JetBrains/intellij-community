@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.project.data
 
 import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
+import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationSearcher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
@@ -26,6 +27,37 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
                                projectData: ProjectData?,
                                project: Project,
                                modelsProvider: IdeModelsProvider) {
+
+    val resolver = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList.firstOrNull() ?: return
+    val searcher = AnnotationsLocationSearcher.getInstance(project)
+
+    val providedAnnotations = imported.mapNotNull {
+      val libData = it.data
+      val lib = modelsProvider.getLibraryByName(libData.internalName) ?: return@mapNotNull null
+      val locations = searcher.findAnnotationsLocation(lib, libData.artifactId, libData.groupId, libData.version)
+      if (locations.isEmpty()) {
+        return@mapNotNull null
+      }
+      lib to locations
+    }.toMap()
+
+    if (providedAnnotations.isNotEmpty()) {
+      val total = providedAnnotations.map { it.value.size }.sum().toDouble()
+      runBackgroundableTask("Resolving known external annotations") { indicator ->
+        indicator.isIndeterminate = false
+        var index = 0
+        providedAnnotations.forEach { (lib, locations) ->
+          indicator.text = "Looking for annotations for '${lib.name}'"
+          locations.forEach { location ->
+            resolver.resolve(project, lib, location)
+            index++
+            indicator.fraction = index / total
+          }
+        }
+      }
+    }
+
+
     if (!Registry.`is`("external.system.import.resolve.annotations")) {
       return
     }
@@ -46,7 +78,6 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
       }
     }
 
-    val resolver = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList.firstOrNull() ?: return
     val totalSize = imported.size
 
     runBackgroundableTask("Resolving external annotations", project) { indicator ->
