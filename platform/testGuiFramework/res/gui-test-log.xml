@@ -28,6 +28,12 @@
     </layout>
   </appender>
 
+  <appender name="CONSOLE-Short" class="org.apache.log4j.ConsoleAppender">
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="[%d] %m \n"/>
+    </layout>
+  </appender>
+
   <appender name="DIALOG" class="com.intellij.diagnostic.DialogAppender">
     <filter class="org.apache.log4j.varia.LevelRangeFilter">
       <param name="LevelMin" value="INFO"/>
@@ -66,11 +72,19 @@
   <logger name="com.intellij.ide.projectWizard">
     <!--<priority value="INFO"/>-->
     <appender-ref ref="GUILOG"/>
+    <appender-ref ref="CONSOLE-Short"/>
   </logger>
 
   <logger name="com.intellij.testGuiFramework">
     <!--<priority value="INFO"/>-->
     <appender-ref ref="GUILOG"/>
+    <appender-ref ref="CONSOLE-Short"/>
+  </logger>
+
+  <logger name="org.fest">
+    <!--<priority value="INFO"/>-->
+    <appender-ref ref="GUILOG"/>
+    <appender-ref ref="CONSOLE-Short"/>
   </logger>
 
   <root>
