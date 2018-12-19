@@ -25,7 +25,7 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
-import com.intellij.vcs.log.visible.filters.VcsLogFileFilter;
+import com.intellij.vcs.log.visible.filters.FilterPair;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import com.intellij.vcsUtil.VcsUtil;
@@ -52,7 +52,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull private VcsLogDataPack myDataPack;
 
   @NotNull private final BranchFilterModel myBranchFilterModel;
-  @NotNull private final FilterModel<VcsLogUserFilter> myUserFilterModel;
+  @NotNull private final FilterModel.SingleFilterModel<VcsLogUserFilter> myUserFilterModel;
   @NotNull private final FilterModel<VcsLogDateFilter> myDateFilterModel;
   @NotNull private final FileFilterModel myStructureFilterModel;
   @NotNull private final TextFilterModel myTextFilterModel;
@@ -83,8 +83,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     for (FilterModel<?> model : models) {
       model.addSetFilterListener(() -> {
         myUi.applyFiltersAndUpdateUi(getFilters());
-        myBranchFilterModel
-          .onStructureFilterChanged(new HashSet<>(myLogData.getRoots()), myStructureFilterModel.getFilter());
+        myBranchFilterModel.onStructureFilterChanged(new HashSet<>(myLogData.getRoots()), myStructureFilterModel.getRootFilter(),
+                                                     myStructureFilterModel.getStructureFilter());
       });
     }
   }
@@ -116,8 +116,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @Override
   public VcsLogFilterCollection getFilters() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return VcsLogFilterObject.collection(myBranchFilterModel.getFilter(), myUserFilterModel.getFilter(), myTextFilterModel.getHashFilters(),
-                                         myDateFilterModel.getFilter(), myTextFilterModel.getTextFilter(),
+    return VcsLogFilterObject.collection(myBranchFilterModel.getFilter(), myUserFilterModel.getFilter(), myTextFilterModel.getFilter2(),
+                                         myDateFilterModel.getFilter(), myTextFilterModel.getFilter1(),
                                          myStructureFilterModel.getStructureFilter(),
                                          myStructureFilterModel.getRootFilter());
   }
@@ -139,7 +139,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       myBranchFilterModel.setFilter((VcsLogBranchFilter)filter);
     }
     else if (filter instanceof VcsLogStructureFilter) {
-      myStructureFilterModel.setFilter(new VcsLogFileFilter((VcsLogStructureFilter)filter, null));
+      myStructureFilterModel.setStructureFilter((VcsLogStructureFilter)filter);
     }
 
     JComponent toolbar = myUi.getToolbar();
@@ -166,7 +166,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
   }
 
-  public static class BranchFilterModel extends FilterModel<VcsLogBranchFilter> {
+  public static class BranchFilterModel extends FilterModel.SingleFilterModel<VcsLogBranchFilter> {
     @Nullable
     private Collection<VirtualFile> myVisibleRoots;
 
@@ -175,12 +175,14 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       super(VcsLogFilterCollection.BRANCH_FILTER, provider, properties, filters);
     }
 
-    public void onStructureFilterChanged(@NotNull Set<VirtualFile> roots, @Nullable VcsLogFileFilter filter) {
-      if (filter == null) {
+    public void onStructureFilterChanged(@NotNull Set<VirtualFile> roots,
+                                         @Nullable VcsLogRootFilter rootFilter,
+                                         @Nullable VcsLogStructureFilter structureFilter) {
+      if (rootFilter == null && structureFilter == null) {
         myVisibleRoots = null;
       }
       else {
-        myVisibleRoots = VcsLogUtil.getAllVisibleRoots(roots, filter.getRootFilter(), filter.getStructureFilter());
+        myVisibleRoots = VcsLogUtil.getAllVisibleRoots(roots, rootFilter, structureFilter);
       }
     }
 
@@ -203,12 +205,12 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
   }
 
-  private static class TextFilterModel extends FilterModel<VcsLogTextFilter> {
+  private static class TextFilterModel extends FilterModel.PairFilterModel<VcsLogTextFilter, VcsLogHashFilter> {
     @Nullable private String myText;
 
     TextFilterModel(@NotNull NotNullComputable<? extends VcsLogDataPack> dataPackProvider, @NotNull MainVcsLogUiProperties properties,
                     @Nullable VcsLogFilterCollection filters) {
-      super(VcsLogFilterCollection.TEXT_FILTER, dataPackProvider, properties, filters);
+      super(VcsLogFilterCollection.TEXT_FILTER, VcsLogFilterCollection.HASH_FILTER, dataPackProvider, properties, filters);
     }
 
     @NotNull
@@ -216,8 +218,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       if (myText != null) {
         return myText;
       }
-      else if (getFilter() != null) {
-        return getFilter().getText();
+      else if (getFilter1() != null) {
+        return getFilter1().getText();
       }
       else {
         return "";
@@ -230,54 +232,59 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     boolean hasUnsavedChanges() {
       if (myText == null) return false;
-      return getFilter() == null || !myText.equals(getFilter().getText());
+      return getFilter1() == null || !myText.equals(getFilter1().getText());
     }
 
     @Override
-    void setFilter(@Nullable VcsLogTextFilter filter) {
+    void setFilter(@Nullable FilterPair<VcsLogTextFilter, VcsLogHashFilter> filter) {
       super.setFilter(filter);
       myText = null;
     }
 
     @NotNull
     @Override
-    protected VcsLogTextFilter createFilter(@NotNull List<String> values) {
-      return VcsLogFilterObject.fromPattern(ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(values)),
-                                            myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX),
-                                            myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE));
+    protected List<String> getFilter1Values(@NotNull VcsLogTextFilter filter) {
+      return Collections.singletonList(filter.getText());
     }
 
     @NotNull
     @Override
-    protected List<String> getFilterValues(@NotNull VcsLogTextFilter filter) {
-      return Collections.singletonList(filter.getText());
+    protected List<String> getFilter2Values(@NotNull VcsLogHashFilter filter) {
+      return ContainerUtil.newArrayList(filter.getHashes());
     }
 
     @Nullable
-    VcsLogTextFilter getTextFilter() {
-      VcsLogTextFilter filter = getFilter();
-      if (filter == null) return null;
-      String text = filter.getText().trim();
-      if (StringUtil.isEmptyOrSpaces(text)) return null;
+    @Override
+    protected VcsLogTextFilter createFilter1(@NotNull List<String> values) {
+      return createTextFilter(ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(values)));
+    }
 
-      return VcsLogFilterObject.fromPattern(text, myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX),
+    @Nullable
+    @Override
+    protected VcsLogHashFilter createFilter2(@NotNull List<String> values) {
+      return VcsLogFilterObject.fromHashes(values);
+    }
+
+    @NotNull
+    private VcsLogTextFilter createTextFilter(@NotNull String text) {
+      return VcsLogFilterObject.fromPattern(text,
+                                            myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX),
                                             myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE));
     }
 
-    @Nullable
-    VcsLogHashFilter getHashFilters() {
-      VcsLogTextFilter filter = getFilter();
-      if (filter == null) return null;
-      String text = filter.getText().trim();
-      if (StringUtil.isEmptyOrSpaces(text)) return null;
-
-      return VcsLogFilterObject.fromHash(text);
+    public void setFilterText(@NotNull String text) {
+      if (StringUtil.isEmptyOrSpaces(text)) {
+        setFilter(null);
+      }
+      else {
+        VcsLogTextFilter textFilter = createTextFilter(text);
+        VcsLogHashFilter hashFilter = VcsLogFilterObject.fromHash(text);
+        setFilter(new FilterPair<>(textFilter, hashFilter));
+      }
     }
   }
 
-  static class FileFilterModel extends FilterModel<VcsLogFileFilter> {
-    @NotNull private static final String ROOTS = "roots";
-    @NotNull private static final String STRUCTURE = "structure";
+  static class FileFilterModel extends FilterModel.PairFilterModel<VcsLogStructureFilter, VcsLogRootFilter> {
     @NotNull private static final String DIR = "dir:";
     @NotNull private static final String FILE = "file:";
     @NotNull private final Set<VirtualFile> myRoots;
@@ -286,31 +293,20 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
                     @NotNull Set<VirtualFile> roots,
                     @NotNull MainVcsLogUiProperties uiProperties,
                     @Nullable VcsLogFilterCollection filters) {
-      super(VcsLogFileFilter.FILE_FILTER, dataPackGetter, uiProperties, filters);
+      super(VcsLogFilterCollection.STRUCTURE_FILTER, VcsLogFilterCollection.ROOT_FILTER, dataPackGetter, uiProperties, filters);
       myRoots = roots;
     }
 
-    @Nullable
     @Override
-    protected VcsLogFileFilter getFilterFromCollection(@NotNull VcsLogFilterCollection filters) {
-      VcsLogRootFilter rootFilter = filters.get(VcsLogFilterCollection.ROOT_FILTER);
-      VcsLogStructureFilter structureFilter = filters.get(VcsLogFilterCollection.STRUCTURE_FILTER);
-      if (rootFilter == null && structureFilter == null) return null;
-      return new VcsLogFileFilter(structureFilter, rootFilter);
+    @NotNull
+    protected List<String> getFilter1Values(@NotNull VcsLogStructureFilter filter) {
+      return getFilterValues(filter);
     }
 
     @Override
-    protected void saveFilter(@Nullable VcsLogFileFilter filter) {
-      if (filter == null) {
-        myUiProperties.saveFilterValues(ROOTS, null);
-        myUiProperties.saveFilterValues(STRUCTURE, null);
-      }
-      else if (filter.getStructureFilter() != null) {
-        myUiProperties.saveFilterValues(STRUCTURE, getFilterValues(filter.getStructureFilter()));
-      }
-      else if (filter.getRootFilter() != null) {
-        myUiProperties.saveFilterValues(ROOTS, getFilterValues(filter.getRootFilter()));
-      }
+    @NotNull
+    protected List<String> getFilter2Values(@NotNull VcsLogRootFilter filter) {
+      return ContainerUtil.map(filter.getRoots(), VirtualFile::getPath);
     }
 
     @NotNull
@@ -318,40 +314,15 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       return ContainerUtil.map(filter.getFiles(), path -> (path.isDirectory() ? DIR : FILE) + path.getPath());
     }
 
-    @NotNull
-    private static List<String> getFilterValues(@NotNull VcsLogRootFilter filter) {
-      return ContainerUtil.map(filter.getRoots(), VirtualFile::getPath);
-    }
-
-    @NotNull
-    static VcsLogStructureFilter createStructureFilter(@NotNull List<String> values) {
-      return VcsLogFilterObject.fromPaths(ContainerUtil.map(values, path -> {
-        if (path.startsWith(DIR)) {
-          return VcsUtil.getFilePath(path.substring(DIR.length()), true);
-        }
-        else if (path.startsWith(FILE)) {
-          return VcsUtil.getFilePath(path.substring(FILE.length()), false);
-        }
-        return VcsUtil.getFilePath(path);
-      }));
-    }
-
-    @Nullable
     @Override
-    protected VcsLogFileFilter getLastFilter() {
-      List<String> values = myUiProperties.getFilterValues(STRUCTURE);
-      if (values != null) {
-        return new VcsLogFileFilter(createStructureFilter(values), null);
-      }
-      values = myUiProperties.getFilterValues(ROOTS);
-      if (values != null) {
-        return new VcsLogFileFilter(null, createRootsFilter(values));
-      }
-      return null;
+    @NotNull
+    protected VcsLogStructureFilter createFilter1(@NotNull List<String> values) {
+      return createStructureFilter(values);
     }
 
+    @Override
     @Nullable
-    private VcsLogRootFilter createRootsFilter(@NotNull List<String> values) {
+    protected VcsLogRootFilter createFilter2(@NotNull List<String> values) {
       List<VirtualFile> selectedRoots = ContainerUtil.newArrayList();
       for (String path : values) {
         VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
@@ -371,34 +342,35 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       return VcsLogFilterObject.fromRoots(selectedRoots);
     }
 
-    @NotNull
-    @Override
-    protected VcsLogFileFilter createFilter(@NotNull List<String> values) {
-      throw new UnsupportedOperationException("Can not create file filter from list of strings");
-    }
-
-    @NotNull
-    @Override
-    protected List<String> getFilterValues(@NotNull VcsLogFileFilter filter) {
-      throw new UnsupportedOperationException("Can not save file filter to a list of strings");
+    @Nullable
+    protected VcsLogRootFilter getRootFilter() {
+      return getFilter2();
     }
 
     @Nullable
-    VcsLogRootFilter getRootFilter() {
-      VcsLogFileFilter filter = getFilter();
-      if (filter == null) return null;
-      return filter.getRootFilter();
+    protected VcsLogStructureFilter getStructureFilter() {
+      return getFilter1();
     }
 
-    @Nullable
-    VcsLogStructureFilter getStructureFilter() {
-      VcsLogFileFilter filter = getFilter();
-      if (filter == null) return null;
-      return filter.getStructureFilter();
+    protected void setStructureFilter(@NotNull VcsLogStructureFilter filter) {
+      setFilter(new FilterPair<>(filter, null));
+    }
+
+    @NotNull
+    static VcsLogStructureFilter createStructureFilter(@NotNull List<String> values) {
+      return VcsLogFilterObject.fromPaths(ContainerUtil.map(values, path -> {
+        if (path.startsWith(DIR)) {
+          return VcsUtil.getFilePath(path.substring(DIR.length()), true);
+        }
+        else if (path.startsWith(FILE)) {
+          return VcsUtil.getFilePath(path.substring(FILE.length()), false);
+        }
+        return VcsUtil.getFilePath(path);
+      }));
     }
   }
 
-  private static class DateFilterModel extends FilterModel<VcsLogDateFilter> {
+  private static class DateFilterModel extends FilterModel.SingleFilterModel<VcsLogDateFilter> {
     DateFilterModel(@NotNull NotNullComputable<? extends VcsLogDataPack> dataPackGetter, @NotNull MainVcsLogUiProperties uiProperties,
                     @Nullable VcsLogFilterCollection filters) {
       super(VcsLogFilterCollection.DATE_FILTER, dataPackGetter, uiProperties, filters);
@@ -433,7 +405,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
   }
 
-  private class UserFilterModel extends FilterModel<VcsLogUserFilter> {
+  private class UserFilterModel extends FilterModel.SingleFilterModel<VcsLogUserFilter> {
     UserFilterModel(@NotNull NotNullComputable<? extends VcsLogDataPack> dataPackGetter, @NotNull MainVcsLogUiProperties uiProperties,
                     @Nullable VcsLogFilterCollection filters) {
       super(VcsLogFilterCollection.USER_FILTER, dataPackGetter, uiProperties, filters);
@@ -478,9 +450,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
 
     protected void applyFilter() {
-      boolean isRegexpAllowed = myTextFilterModel.myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX);
-      boolean isMatchCase = myTextFilterModel.myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE);
-      myTextFilterModel.setFilter(VcsLogFilterObject.fromPattern(getText(), isRegexpAllowed, isMatchCase));
+      myTextFilterModel.setFilterText(getText());
       addCurrentTextToHistory();
     }
 
