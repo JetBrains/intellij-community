@@ -109,7 +109,9 @@ open class GuiTestCase {
    * the receiver object (WelcomeFrameFixture instance).
    */
   open fun welcomeFrame(timeout: Timeout = Timeouts.minutes05, body: WelcomeFrameFixture.() -> Unit) {
-    body(guiTestRule.findWelcomeFrame(timeout))
+    step("at Welcome frame") {
+      body(guiTestRule.findWelcomeFrame(timeout))
+    }
   }
 
   /**
@@ -117,7 +119,7 @@ open class GuiTestCase {
    * receiver object (IdeFrameFixture instance).
    */
   fun ideFrame(timeout: Timeout = Timeouts.defaultTimeout, func: IdeFrameFixture.() -> Unit) {
-    func(guiTestRule.findIdeFrame(timeout))
+    step("at IDE frame") { func(guiTestRule.findIdeFrame(timeout)) }
   }
 
   /**
@@ -134,23 +136,27 @@ open class GuiTestCase {
              timeout: Timeout = Timeouts.defaultTimeout,
              needToKeepDialog: Boolean = false,
              func: JDialogFixture.() -> Unit) {
-    val dialog = dialog(
-      title = title,
-      ignoreCaseTitle = ignoreCaseTitle,
-      predicate = predicate,
-      timeout = timeout
-    )
-    func(dialog)
-    if (!needToKeepDialog) dialog.waitTillGone()
+    step("at '$title' dialog") {
+      val dialog = dialog(
+        title = title,
+        ignoreCaseTitle = ignoreCaseTitle,
+        predicate = predicate,
+        timeout = timeout
+      )
+      func(dialog)
+      if (!needToKeepDialog) dialog.waitTillGone()
+    }
   }
 
   fun dialogWithTextComponent(timeout: Timeout, predicate: (JTextComponent) -> Boolean, func: JDialogFixture.() -> Unit) {
-    val dialog: JDialog = waitUntilFound(null, JDialog::class.java, timeout) {
-      JDialogFixture(robot(), it).containsChildComponent(predicate)
+    step("at dialog with text component") {
+      val dialog: JDialog = waitUntilFound(null, JDialog::class.java, timeout) {
+        JDialogFixture(robot(), it).containsChildComponent(predicate)
+      }
+      val dialogFixture = JDialogFixture(robot(), dialog)
+      func(dialogFixture)
+      dialogFixture.waitTillGone()
     }
-    val dialogFixture = JDialogFixture(robot(), dialog)
-    func(dialogFixture)
-    dialogFixture.waitTillGone()
   }
 
   fun settingsDialog(timeout: Timeout = Timeouts.defaultTimeout,
@@ -161,9 +167,11 @@ open class GuiTestCase {
   }
 
   fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout, needToKeepDialog: Boolean = false, func: PluginDialogFixture.() -> Unit) {
-    val pluginDialog = PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
-    func(pluginDialog)
-    if (!needToKeepDialog) pluginDialog.waitTillGone()
+    step("at 'Plugins' dialog") {
+      val pluginDialog = PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
+      func(pluginDialog)
+      if (!needToKeepDialog) pluginDialog.waitTillGone()
+    }
   }
 
   fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout): PluginDialogFixture {
@@ -175,41 +183,43 @@ open class GuiTestCase {
    * is a Mac native.
    */
   fun chooseFileInFileChooser(path: String, timeout: Timeout = Timeouts.defaultTimeout, needToRefresh: Boolean = false) {
-    val macNativeFileChooser = SystemInfo.isMac() && (System.getProperty("ide.mac.file.chooser.native", "true").toLowerCase() == "false")
-    if (macNativeFileChooser) {
-      MacFileChooserDialogFixture(robot()).selectByPath(path)
-    }
-    else {
-      val fileChooserDialog: JDialog
-      try {
-        fileChooserDialog = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) {
-          robot().finder()
-            .findAll(GuiTestUtilKt.typeMatcher(JDialog::class.java) { true })
-            .firstOrNull {
-              GuiTestUtilKt.findAllWithBFS(it, JPanel::class.java).any {
-                it.javaClass.name.contains(FileChooserDialogImpl::class.java.simpleName)
+    step("choose '$path' file in File Chooser") {
+      val macNativeFileChooser = SystemInfo.isMac() && (System.getProperty("ide.mac.file.chooser.native", "true").toLowerCase() == "false")
+      if (macNativeFileChooser) {
+        MacFileChooserDialogFixture(robot()).selectByPath(path)
+      }
+      else {
+        val fileChooserDialog: JDialog
+        try {
+          fileChooserDialog = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) {
+            robot().finder()
+              .findAll(GuiTestUtilKt.typeMatcher(JDialog::class.java) { true })
+              .firstOrNull {
+                GuiTestUtilKt.findAllWithBFS(it, JPanel::class.java).any { panel ->
+                  panel.javaClass.name.contains(FileChooserDialogImpl::class.java.simpleName)
+                }
               }
-            }
-        }
-      }
-      catch (timeoutError: WaitTimedOutError) {
-        throw ComponentLookupException("Unable to find file chooser dialog in ${timeout.toPrintable()}")
-      }
-      val dialogFixture = JDialogFixture(robot(), fileChooserDialog)
-      with(dialogFixture) {
-        asyncProcessIcon().waitUntilStop(Timeouts.seconds30)
-        textfield("")
-        invokeAction("\$SelectAll")
-        typeText(path)
-        if (needToRefresh) {
-          tryWithPause(ComponentLookupException::class.java, "Path is located in the tree", Timeouts.seconds10) {
-            actionButton("Refresh").click()
-            textfield("").deleteText()
-            typeText(path)
           }
         }
-        button("OK").clickWhenEnabled()
-        waitTillGone()
+        catch (timeoutError: WaitTimedOutError) {
+          throw ComponentLookupException("Unable to find file chooser dialog in ${timeout.toPrintable()}")
+        }
+        val dialogFixture = JDialogFixture(robot(), fileChooserDialog)
+        with(dialogFixture) {
+          asyncProcessIcon().waitUntilStop(Timeouts.seconds30)
+          textfield("")
+          invokeAction("\$SelectAll")
+          typeText(path)
+          if (needToRefresh) {
+            tryWithPause(ComponentLookupException::class.java, "Path is located in the tree", Timeouts.seconds10) {
+              actionButton("Refresh").click()
+              textfield("").deleteText()
+              typeText(path)
+            }
+          }
+          button("OK").clickWhenEnabled()
+          waitTillGone()
+        }
       }
     }
   }
@@ -219,7 +229,9 @@ open class GuiTestCase {
    * is loaded. Code block after it call methods on the receiver object (IdeFrameFixture instance).
    */
   fun simpleProject(func: IdeFrameFixture.() -> Unit) {
-    func(guiTestRule.importSimpleProject())
+    step("at simple project") {
+      func(guiTestRule.importSimpleProject())
+    }
   }
 
   /**
@@ -227,7 +239,9 @@ open class GuiTestCase {
    * it call methods on the receiver object (NewProjectWizardFixture instance).
    */
   fun projectWizard(func: NewProjectWizardFixture.() -> Unit) {
-    func(guiTestRule.findNewProjectWizard())
+    step("at New Project wizard") {
+      func(guiTestRule.findNewProjectWizard())
+    }
   }
 
   /**
@@ -235,7 +249,9 @@ open class GuiTestCase {
    * it call methods on the receiver object (ProjectViewFixture instance).
    */
   fun IdeFrameFixture.projectView(func: ProjectViewFixture.() -> Unit) {
-    func(this.projectView)
+    step("at Project view") {
+      func(this.projectView)
+    }
   }
 
   /**
@@ -245,7 +261,9 @@ open class GuiTestCase {
    * @id - a toolwindow id.
    */
   fun IdeFrameFixture.toolwindow(id: String, func: CustomToolWindowFixture.() -> Unit) {
-    func(CustomToolWindowFixture(id, this))
+    step("at '$id' tool window") {
+      func(CustomToolWindowFixture(id, this))
+    }
   }
 
   //*********FIXTURES METHODS FOR IDEFRAME WITHOUT ROBOT and TARGET
@@ -255,7 +273,9 @@ open class GuiTestCase {
    * it call methods on the receiver object (EditorFixture instance).
    */
   fun IdeFrameFixture.editor(func: FileEditorFixture.() -> Unit) {
-    func(this.editor)
+    step("at editor") {
+      func(this.editor)
+    }
   }
 
   /**
@@ -263,8 +283,10 @@ open class GuiTestCase {
    * it call methods on the receiver object (EditorFixture instance).
    */
   fun IdeFrameFixture.editor(tabName: String, func: FileEditorFixture.() -> Unit) {
-    val editorFixture = this.editor.selectTab(tabName)
-    func(editorFixture)
+    step("at '$tabName' tab of editor") {
+      val editorFixture = this.editor.selectTab(tabName)
+      func(editorFixture)
+    }
   }
 
   /**
@@ -272,7 +294,9 @@ open class GuiTestCase {
    * it call methods on the receiver object (MainToolbarFixture instance).
    */
   fun IdeFrameFixture.toolbar(func: MainToolbarFixture.() -> Unit) {
-    func(this.toolbar)
+    step("at toolbar") {
+      func(this.toolbar)
+    }
   }
 
   /**
@@ -280,15 +304,21 @@ open class GuiTestCase {
    * it call methods on the receiver object (NavigationBarFixture instance).
    */
   fun IdeFrameFixture.navigationBar(func: NavigationBarFixture.() -> Unit) {
-    func(this.navigationBar)
+    step("at navigation bar") {
+      func(this.navigationBar)
+    }
   }
 
   fun IdeFrameFixture.configurationList(func: RunConfigurationListFixture.() -> Unit) {
-    func(this.runConfigurationList)
+    step("at configuration list") {
+      func(this.runConfigurationList)
+    }
   }
 
   fun IdeFrameFixture.gutter(func: GutterFixture.() -> Unit) {
-    func(this.gutter)
+    step("at gutter panel") {
+      func(this.gutter)
+    }
   }
 
   /**

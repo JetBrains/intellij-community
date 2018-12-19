@@ -11,6 +11,7 @@ import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.scenarios.openProjectStructureAndCheck
 import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogModel
 import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
+import com.intellij.testGuiFramework.util.step
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -51,15 +52,19 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
     )
 
     waitAMoment()
-    waitForGradleReimport(projectName)
+    step("wait for initial gradle import") {
+      waitForGradleReimport(projectName)
+    }
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = false
     )
 
-    gradleReimport()
-    assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
+    step("gradle reimport after editing gradle files") {
+      gradleReimport()
+      assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
+    }
     waitAMoment()
 
     projectStructureDialogScenarios.openProjectStructureAndCheck {

@@ -6,7 +6,8 @@ import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.Predicate
-import com.intellij.testGuiFramework.util.logTestStep
+import com.intellij.testGuiFramework.util.logInfo
+import com.intellij.testGuiFramework.util.step
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.exception.ComponentLookupException
@@ -198,40 +199,48 @@ fun RunConfigurationModel.connectDialog(): JDialogFixture =
 
 fun RunConfigurationModel.checkConfigurationExistsAndSelect(vararg configuration: String) {
   with(connectDialog()) {
-    guiTestCase.logTestStep("Going to check that configuration '${configuration.joinToString()}' exists")
-    assert(guiTestCase.exists { jTree(*configuration) }){"Cannot find configuration '${configuration.joinToString()}'"}
-    jTree(*configuration).clickPath()
+    step("check configuration '${configuration.joinToString()}' exists") {
+      assert(guiTestCase.exists { jTree(*configuration) }) { "Cannot find configuration '${configuration.joinToString()}'" }
+      jTree(*configuration).clickPath()
+    }
   }
 }
 
 fun RunConfigurationModel.closeWithCancel() {
   with(connectDialog()) {
-    button(RunConfigurationModel.Constants.buttonCancel).click()
+    step("close dialog with 'Cancel' button") {
+      button(RunConfigurationModel.Constants.buttonCancel).click()
+    }
   }
 }
 
 fun RunConfigurationModel.closeWithOK() {
   with(connectDialog()) {
-    button(RunConfigurationModel.Constants.buttonOK).click()
+    step("close dialog with 'OK' button") {
+      button(RunConfigurationModel.Constants.buttonOK).click()
+    }
   }
 }
 
 fun RunConfigurationModel.checkOneValue(expectedField: RunConfigurationModel.ConfigurationField, expectedValue: String) {
   with(expectedField) {
+    step("check field '$title'") {
     if (!isFieldPresent()) throw ComponentLookupException("Cannot find component with label `$title`")
     val actualValue = getFieldValue()
-    guiTestCase.logTestStep("Field `$title`: actual value = `$actualValue`, expected value = `$expectedValue`")
-    assert(predicate(actualValue, expectedValue)) {
-      "Field `$title`: actual value = `$actualValue`, expected value = `$expectedValue`"
+      logInfo("actual value = `$actualValue`, expected value = `$expectedValue`")
+      assert(predicate(actualValue, expectedValue)) {
+        "Field `$title`: actual value = `$actualValue`, expected value = `$expectedValue`"
+      }
     }
   }
 }
 
 fun RunConfigurationModel.changeOneValue(expectedField: RunConfigurationModel.ConfigurationField, newValue: String) {
   with(expectedField) {
-    if (!isFieldPresent()) throw ComponentLookupException("Cannot find component with label `$title`")
-    guiTestCase.logTestStep("Going to set field `${expectedField.title}`to a value = `$newValue`")
-    setFieldValue(newValue)
+    step("change field `${expectedField.title}`to value = `$newValue`") {
+      if (!isFieldPresent()) throw ComponentLookupException("Cannot find component with label `$title`")
+      setFieldValue(newValue)
+    }
   }
 }
 

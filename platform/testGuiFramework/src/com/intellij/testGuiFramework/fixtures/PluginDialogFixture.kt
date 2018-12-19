@@ -12,6 +12,7 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickCancelBut
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickOkButton
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.util.step
 import com.intellij.testGuiFramework.util.waitFor
 import com.intellij.ui.components.BasicOptionButtonUI.ArrowButton
 import com.intellij.ui.components.JBOptionButton
@@ -52,9 +53,11 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(
   }
 
   fun installPluginFromDiskDialog(func: InstallPluginFromDiskFixture.() -> Unit) {
-    val installPluginFromDiskDialog: JDialog =
-      waitUntilFound(target(), JDialog::class.java, Timeouts.defaultTimeout) { it.title == "Choose Plugin File" }
-    func(InstallPluginFromDiskFixture(robot(), installPluginFromDiskDialog))
+    step("install plugin from disk") {
+      val installPluginFromDiskDialog: JDialog =
+        waitUntilFound(target(), JDialog::class.java, Timeouts.defaultTimeout) { it.title == "Choose Plugin File" }
+      func(InstallPluginFromDiskFixture(robot(), installPluginFromDiskDialog))
+    }
   }
 
   fun ok() = findAndClickOkButton(this)
@@ -135,12 +138,14 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(
                                                                                                           installPluginFromDiskDialog),
                                                                                            ContainerFixture<JDialog> {
     fun setPath(pluginPath: String) {
-      waitFor {
-        val pluginPathTextField: JTextField =
-          waitUntilFound(target(), JTextField::class.java, Timeouts.defaultTimeout) { it.isEnabled && it.isShowing }
-        clickRefresh()
-        JTextComponentFixture(robot(), pluginPathTextField).deleteText().enterText(pluginPath)
-        pluginPathTextField.text == pluginPath
+      step("specify path where installed plugin is taken from") {
+        waitFor {
+          val pluginPathTextField: JTextField =
+            waitUntilFound(target(), JTextField::class.java, Timeouts.defaultTimeout) { it.isEnabled && it.isShowing }
+          clickRefresh()
+          JTextComponentFixture(robot(), pluginPathTextField).deleteText().enterText(pluginPath)
+          pluginPathTextField.text == pluginPath
+        }
       }
     }
 

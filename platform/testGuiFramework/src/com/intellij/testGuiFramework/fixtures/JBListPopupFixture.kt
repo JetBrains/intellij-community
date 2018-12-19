@@ -3,6 +3,7 @@ package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.util.FinderPredicate
+import com.intellij.testGuiFramework.util.step
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.PopupFactoryImpl
 import org.fest.swing.core.Robot
@@ -22,7 +23,9 @@ class JBListPopupFixture(
   }
 
   fun clickSearchedItem(){
-    jListFixture.clickItem(searchedItem)
+    step("click '$searchedItem' in popup menu") {
+      jListFixture.clickItem(searchedItem)
+    }
   }
 
   fun clickItem(item: String) {
