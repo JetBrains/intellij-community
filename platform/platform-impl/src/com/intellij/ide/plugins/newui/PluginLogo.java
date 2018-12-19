@@ -42,6 +42,11 @@ import java.util.zip.ZipFile;
  */
 public class PluginLogo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.newui.PluginLogo");
+
+  private static final String CACHE_DIR = "imageCache";
+  private static final String PLUGIN_ICON = "pluginIcon.svg";
+  private static final String PLUGIN_ICON_DARK = "pluginIcon_dark.svg";
+
   private static final Map<String, Pair<PluginLogoIconProvider, PluginLogoIconProvider>> ICONS = new HashMap<>();
   private static PluginLogoIconProvider Default;
 
@@ -90,10 +95,7 @@ public class PluginLogo {
       if (path != null) {
         if (path.isDirectory()) {
           if (System.getProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY) != null) {
-            PluginLogoIconProvider light = tryLoadIcon(new File(path, "classes/" + PluginManagerCore.META_INF + "pluginIcon.svg"));
-            PluginLogoIconProvider dark = tryLoadIcon(new File(path, "classes/" + PluginManagerCore.META_INF + "pluginIcon_dark.svg"));
-            if (light != null || dark != null) {
-              putIcon(idPlugin, lazyIcon, light, dark);
+            if (tryLoadDirIcons(idPlugin, lazyIcon, new File(path, "classes"))) {
               return;
             }
           }
@@ -128,7 +130,7 @@ public class PluginLogo {
       }
 
       String idFileName = FileUtil.sanitizeFileName(idPlugin);
-      File cache = new File(PathManager.getPluginTempPath(), "imageCache");
+      File cache = new File(PathManager.getPluginTempPath(), CACHE_DIR);
       File lightFile = new File(cache, idFileName + ".svg");
       File darkFile = new File(cache, idFileName + "_dark.svg");
 
@@ -159,8 +161,8 @@ public class PluginLogo {
   }
 
   private static boolean tryLoadDirIcons(@NotNull String idPlugin, @NotNull LazyPluginLogoIcon lazyIcon, @NotNull File path) {
-    PluginLogoIconProvider light = tryLoadIcon(new File(path, PluginManagerCore.META_INF + "pluginIcon.svg"));
-    PluginLogoIconProvider dark = tryLoadIcon(new File(path, PluginManagerCore.META_INF + "pluginIcon_dark.svg"));
+    PluginLogoIconProvider light = tryLoadIcon(new File(path, PluginManagerCore.META_INF + PLUGIN_ICON));
+    PluginLogoIconProvider dark = tryLoadIcon(new File(path, PluginManagerCore.META_INF + PLUGIN_ICON_DARK));
 
     if (light != null || dark != null) {
       putIcon(idPlugin, lazyIcon, light, dark);
@@ -178,8 +180,8 @@ public class PluginLogo {
       return false;
     }
     try (ZipFile zipFile = new ZipFile(path)) {
-      PluginLogoIconProvider light = tryLoadIcon(zipFile, "pluginIcon.svg");
-      PluginLogoIconProvider dark = tryLoadIcon(zipFile, "pluginIcon_dark.svg");
+      PluginLogoIconProvider light = tryLoadIcon(zipFile, PLUGIN_ICON);
+      PluginLogoIconProvider dark = tryLoadIcon(zipFile, PLUGIN_ICON_DARK);
       if (put || light != null || dark != null) {
         putIcon(idPlugin, lazyIcon, light, dark);
         return true;
