@@ -50,7 +50,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   @NotNull
   public String getName() {
     if (StringUtil.isEmptyOrSpaces(name)) {
-      return getMatchOptions().getSearchPattern();
+      return StringUtil.collapseWhiteSpace(getMatchOptions().getSearchPattern());
     }
     return name;
   }
