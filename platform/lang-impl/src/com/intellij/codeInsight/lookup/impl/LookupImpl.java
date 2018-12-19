@@ -76,10 +76,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     // 'myList' is focused when "Screen Reader" mode is enabled
     @Override
     protected void processKeyEvent(@NotNull final KeyEvent e) {
-      if (e.getKeyCode() != KeyEvent.VK_UP && e.getKeyCode() != KeyEvent.VK_DOWN) {
-        myEditor.getContentComponent().dispatchEvent(e); // let user change the lookup text in the editor
-      }
-      super.processKeyEvent(e);
+      myEditor.getContentComponent().dispatchEvent(e); // let the editor handle actions properly for the lookup list
     }
 
     @NotNull
@@ -706,6 +703,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       delegateActionToEditor(IdeActions.ACTION_EDITOR_ESCAPE, null, actionEvent);
       delegateActionToEditor(IdeActions.ACTION_EDITOR_TAB, new ChooseItemAction.Replacing(), actionEvent);
       delegateActionToEditor(IdeActions.ACTION_EDITOR_ENTER, new ChooseItemAction.FocusedOnly(), actionEvent);
+      delegateActionToEditor(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, null, actionEvent);
+      delegateActionToEditor(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, null, actionEvent);
     }
     try {
       HintManagerImpl.getInstanceImpl().showEditorHint(this, myEditor, p, HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false,
