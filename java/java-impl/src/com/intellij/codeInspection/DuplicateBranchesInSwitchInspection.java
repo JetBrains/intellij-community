@@ -57,7 +57,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
 
     void registerProblems(List<Branch> branches) {
       int size = branches.size();
-      if (size > 1 && size <= 20) {
+      if (size > 1) {
         boolean[] isDuplicate = new boolean[size];
 
         int defaultIndex = ContainerUtil.indexOf(branches, Branch::isDefault);
@@ -74,12 +74,14 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
           }
         }
 
+        int compareCount = 0;
         for (int index = 0; index < size - 1; index++) {
           if (isDuplicate[index]) continue;
           Branch branch = branches.get(index);
 
           for (int otherIndex = index + 1; otherIndex < size; otherIndex++) {
             if (isDuplicate[otherIndex]) continue;
+            if (++compareCount > 200) return; // avoid quadratic loop over too large list, but at least try to do something in that case
             Branch otherBranch = branches.get(otherIndex);
 
             if (areDuplicates(branch, otherBranch)) {
