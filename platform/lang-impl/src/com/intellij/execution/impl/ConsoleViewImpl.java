@@ -52,10 +52,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.awt.RelativePoint;
@@ -76,9 +73,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -653,13 +648,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final boolean shouldStickToEnd = !myCancelStickToEnd && isStickingToEnd();
     myCancelStickToEnd = false; // Cancel only needs to last for one update. Next time, isStickingToEnd() will be false.
 
-    final StringBuilder addedText;
+    Ref<CharSequence> addedTextRef = Ref.create();
     List<TokenBuffer.TokenInfo> deferredTokens;
     final Document document = myEditor.getDocument();
 
     synchronized (LOCK) {
       if (myOutputPaused) return;
-      addedText = new StringBuilder(myDeferredBuffer.length());
 
       deferredTokens = myDeferredBuffer.drain();
       if (deferredTokens.isEmpty()) return;
@@ -676,11 +670,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       try {
         // the text can contain one "\r" at the start meaning we should delete the last line
         boolean startsWithCR = deferredTokens.get(0) == TokenBuffer.CR_TOKEN;
-        int startIndex = startsWithCR ? 1 : 0;
-        for (int i = startIndex; i < deferredTokens.size(); i++) {
-          TokenBuffer.TokenInfo deferredToken = deferredTokens.get(i);
-          addedText.append(deferredToken.getText()); // can just append texts because \r inside these tokens were already taken care of
-        }
         if (startsWithCR) {
           // remove last line if any
           if (document.getLineCount() != 0) {
@@ -688,8 +677,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
             document.deleteString(lineStartOffset, document.getTextLength());
           }
         }
-        normalizeBackspaceCharacters(addedText);
-        int backspacePrefixLength = getBackspacePrefixLength(addedText);
+        int startIndex = startsWithCR ? 1 : 0;
+        List<TokenBuffer.TokenInfo> refinedTokens = new ArrayList<>(deferredTokens.size() - startIndex);
+        int backspacePrefixLength = evaluateBackspacesInTokens(deferredTokens, startIndex, refinedTokens);
         if (backspacePrefixLength > 0) {
           int lineCount = document.getLineCount();
           if (lineCount != 0) {
@@ -697,22 +687,25 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
             document.deleteString(Math.max(lineStartOffset, document.getTextLength() - backspacePrefixLength), document.getTextLength());
           }
         }
-        document.insertString(document.getTextLength(), addedText.substring(backspacePrefixLength));
+        addedTextRef.set(TokenBuffer.getRawText(refinedTokens));
+        document.insertString(document.getTextLength(), addedTextRef.get());
         // add token information as range markers
         // start from the end because portion of the text can be stripped from the document beginning because of a cycle buffer
         int offset = document.getTextLength();
         int tokenLength = 0;
-        for (int i = deferredTokens.size() - 1; i >= startIndex; i--) {
-          TokenBuffer.TokenInfo token = deferredTokens.get(i);
+        for (int i = refinedTokens.size() - 1; i >= 0; i--) {
+          TokenBuffer.TokenInfo token = refinedTokens.get(i);
           contentTypes.add(token.contentType);
           tokenLength += token.length();
-          TokenBuffer.TokenInfo prevToken = i == startIndex ? null : deferredTokens.get(i - 1);
+          TokenBuffer.TokenInfo prevToken = i == 0 ? null : refinedTokens.get(i - 1);
           if (prevToken != null && token.contentType == prevToken.contentType && token.getHyperlinkInfo() == prevToken.getHyperlinkInfo()) {
             // do not create highlighter yet because can merge previous token with the current
             continue;
           }
           int start = Math.max(0, offset - tokenLength);
-          if (start == offset) break;
+          if (start == offset) {
+            continue;
+          }
           final HyperlinkInfo info = token.getHyperlinkInfo();
           if (info != null) {
             myHyperlinks.createHyperlink(start, offset, null, info).putUserData(MANUAL_HYPERLINK, true);
@@ -742,7 +735,34 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (shouldStickToEnd) {
       scrollToEnd();
     }
-    sendUserInput(addedText);
+    sendUserInput(addedTextRef.get());
+  }
+
+  private static int evaluateBackspacesInTokens(@NotNull List<TokenBuffer.TokenInfo> source,
+                                                int sourceStartIndex,
+                                                @NotNull List<TokenBuffer.TokenInfo> dest) {
+    int backspacesFromNextToken = 0;
+    for (int i = source.size() - 1; i >= sourceStartIndex; i--) {
+      TokenBuffer.TokenInfo token = source.get(i);
+      final TokenBuffer.TokenInfo newToken;
+      if (StringUtil.containsChar(token.getText(), BACKSPACE) || backspacesFromNextToken > 0) {
+        StringBuilder tokenTextBuilder = new StringBuilder(token.getText().length() + backspacesFromNextToken);
+        tokenTextBuilder.append(token.getText());
+        for (int j = 0; j < backspacesFromNextToken; j++) {
+          tokenTextBuilder.append(BACKSPACE);
+        }
+        normalizeBackspaceCharacters(tokenTextBuilder);
+        backspacesFromNextToken = getBackspacePrefixLength(tokenTextBuilder);
+        String newText = tokenTextBuilder.substring(backspacesFromNextToken);
+        newToken = new TokenBuffer.TokenInfo(token.contentType, newText, token.getHyperlinkInfo());
+      }
+      else {
+        newToken = token;
+      }
+      dest.add(newToken);
+    }
+    Collections.reverse(dest);
+    return backspacesFromNextToken;
   }
 
   private static int getBackspacePrefixLength(@NotNull CharSequence text) {
