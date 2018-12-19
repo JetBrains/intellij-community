@@ -8,8 +8,11 @@ import com.intellij.openapi.roots.libraries.Library
  * Component that looks for an external annotations locations using plugin providers.
  */
 class AnnotationsLocationSearcher {
-  fun findAnnotationsLocation(library: Library): Collection<AnnotationsLocation> {
-    return AnnotationsLocationProvider.EP_NAME.extensions.flatMap { it.getLocations(library) }
+  fun findAnnotationsLocation(library: Library,
+                              artifactId: String?,
+                              groupId: String?,
+                              version: String?): Collection<AnnotationsLocation> {
+    return AnnotationsLocationProvider.EP_NAME.extensions.flatMap { it.getLocations(library, artifactId, groupId, version) }
   }
 
   companion object {

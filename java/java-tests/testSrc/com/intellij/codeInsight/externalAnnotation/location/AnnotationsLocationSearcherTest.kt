@@ -40,12 +40,12 @@ class AnnotationsLocationSearcherTest: PlatformTestCase() {
 
   @Test fun testUnknownLibrary() {
     val library = createLibrary("unknown-library")
-    assertEmpty(searcher.findAnnotationsLocation(library))
+    assertEmpty(searcher.findAnnotationsLocation(library, null, null, null))
   }
 
   @Test fun testKnownLibrary() {
     val library = createLibrary("known-library-name")
-    assertSize(1, searcher.findAnnotationsLocation(library))
+    assertSize(1, searcher.findAnnotationsLocation(library, null, null, null))
   }
 
   @Test fun testAllProvidersCalled() {
@@ -60,7 +60,7 @@ class AnnotationsLocationSearcherTest: PlatformTestCase() {
     ep.registerExtension(secondProvider)
 
     val library = createLibrary("known-library-name")
-    assertSize(2, searcher.findAnnotationsLocation(library))
+    assertSize(2, searcher.findAnnotationsLocation(library, null, null, null))
   }
 
 
@@ -87,7 +87,10 @@ class AnnotationsLocationSearcherTest: PlatformTestCase() {
 
 class TestAnnotationProvider: AnnotationsLocationProvider {
   private val myLibraryLocationMap = MultiMap.createLinked<String, AnnotationsLocation>()
-  override fun getLocations(library: Library): Collection<AnnotationsLocation> = myLibraryLocationMap[library.name]
+  override fun getLocations(library: Library,
+                            artifactId: String?,
+                            groupId: String?,
+                            version: String?): MutableCollection<AnnotationsLocation> = myLibraryLocationMap[library.name]
 
   fun register(name: String, location: AnnotationsLocation) {
     myLibraryLocationMap.putValue(name, location)
