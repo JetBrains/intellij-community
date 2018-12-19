@@ -976,8 +976,6 @@ public class AllIcons {
     public static final Icon Settings = IconLoader.getIcon("/general/settings.svg"); // 16x16
     public static final Icon Show_to_implement = IconLoader.getIcon("/general/show_to_implement.svg"); // 16x16
     public static final Icon ShowWarning = IconLoader.getIcon("/general/showWarning.svg"); // 16x16
-    public static final Icon SplitGlueH = IconLoader.getIcon("/general/splitGlueH.png"); // 6x17
-    public static final Icon SplitGlueV = IconLoader.getIcon("/general/splitGlueV.png"); // 17x6
     public static final Icon TbHidden = IconLoader.getIcon("/general/tbHidden.svg"); // 16x16
     public static final Icon TbShown = IconLoader.getIcon("/general/tbShown.svg"); // 16x16
     public static final Icon Tip = IconLoader.getIcon("/general/tip.svg"); // 32x32
@@ -1431,6 +1429,16 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon SplitDown = AllIcons.General.ArrowDown;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SplitGlueH = IconLoader.getIcon("/general/splitGlueH.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SplitGlueV = IconLoader.getIcon("/general/splitGlueV.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft */
     @SuppressWarnings("unused")

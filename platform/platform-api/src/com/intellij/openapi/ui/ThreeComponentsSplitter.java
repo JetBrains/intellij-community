@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -46,6 +47,7 @@ import java.util.Objects;
  * @author Vladimir Kondratyev
  */
 public class ThreeComponentsSplitter extends JPanel implements Disposable {
+  private static final Icon SplitGlueV = EmptyIcon.create(17, 6);
   private int myDividerWidth;
   /**
    *                        /------/
@@ -704,7 +706,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       int xMask = isVerticalSplit ? 1 : 0;
       int yMask = isVerticalSplit ? 0 : 1;
 
-      Icon glueIcon = isVerticalSplit ? AllIcons.General.SplitGlueV : AllIcons.General.ArrowSplitCenterH;
+      Icon glueIcon = isVerticalSplit ? SplitGlueV : AllIcons.General.ArrowSplitCenterH;
       int glueFill = isVerticalSplit ? GridBagConstraints.VERTICAL : GridBagConstraints.HORIZONTAL;
       add(new JLabel(glueIcon),
           new GridBagConstraints(0, 0, 1, 1, 0, 0, isVerticalSplit ? GridBagConstraints.EAST : GridBagConstraints.NORTH, glueFill, new Insets(0, 0, 0, 0), 0, 0));
