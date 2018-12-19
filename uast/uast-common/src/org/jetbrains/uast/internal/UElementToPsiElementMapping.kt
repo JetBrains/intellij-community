@@ -28,7 +28,7 @@ class UElementToPsiElementMapping(val baseMapping: Map<Class<out UElement>, Clas
     return result
   }
 
-  fun canConvert(psiCls: Class<out PsiElement>, vararg targets: Class<out UElement>): Boolean {
+  fun canConvert(psiCls: Class<out PsiElement>, targets: List<Class<out UElement>>): Boolean {
     for (target in targets) {
       if (this[target].any { it.contains(psiCls) })
         return true

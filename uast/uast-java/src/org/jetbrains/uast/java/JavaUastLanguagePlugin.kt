@@ -89,9 +89,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
   }
 
   override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
-    if (checkCanConvert && !canConvert(element.javaClass, requiredType ?: UElement::class.java)) return null
-
-    return convertDeclaration(element, parent, requiredType) ?: JavaConverter.convertPsiElement(element, parent, requiredType)
+    return convertElement(element, parent, elementTypes(requiredType))
   }
 
   override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
@@ -100,9 +98,22 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
     return convertElement(element, null, requiredType)
   }
 
+  @Suppress("UNCHECKED_CAST")
+  fun <T : UElement> convertElement(element: PsiElement, parent: UElement?, requiredTypes: List<Class<out T>>): T? {
+    val nonEmptyRequiredTypes = requiredTypes.takeIf { it.isNotEmpty() } ?: DEFAULT_TYPES_LIST
+    if (checkCanConvert && !canConvert(element.javaClass, nonEmptyRequiredTypes)) return null
+
+    return (convertDeclaration(element, parent, nonEmptyRequiredTypes)
+            ?: JavaConverter.convertPsiElement(element, parent, nonEmptyRequiredTypes)) as? T
+  }
+
+  override fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: List<Class<out T>>): T? {
+    return convertElement(element, null, requiredTypes)
+  }
+
   private fun convertDeclaration(element: PsiElement,
                                  givenParent: UElement?,
-                                 requiredType: Class<out UElement>?): UElement? {
+                                 requiredType: List<Class<out UElement>>): UElement? {
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UElement): () -> UElement? {
       return fun(): UElement? {
         return ctor(element as P, givenParent)
@@ -136,9 +147,15 @@ internal inline fun <reified ActualT : UElement> Class<out UElement>?.el(f: () -
   return if (this == null || isAssignableFrom(ActualT::class.java)) f() else null
 }
 
-internal inline fun <reified ActualT : UElement> Class<out UElement>?.expr(f: () -> UExpression?): UExpression? {
-  return if (this == null || isAssignableFrom(ActualT::class.java)) f() else null
+internal inline fun <reified ActualT : UElement> List<Class<out UElement>>.el(f: () -> UElement?): UElement? {
+  return if (isAssignableFrom(ActualT::class.java)) f() else null
 }
+
+internal inline fun <reified ActualT : UElement> List<Class<out UElement>>.expr(f: () -> UExpression?): UExpression? {
+  return if (isAssignableFrom(ActualT::class.java)) f() else null
+}
+
+internal fun List<Class<out UElement>>.isAssignableFrom(cls: Class<*>) = any { it.isAssignableFrom(cls) }
 
 internal object JavaConverter {
 
@@ -156,7 +173,7 @@ internal object JavaConverter {
 
   internal fun convertPsiElement(el: PsiElement,
                                  givenParent: UElement?,
-                                 requiredType: Class<out UElement>? = null): UElement? {
+                                 requiredType: List<Class<out UElement>> = DEFAULT_TYPES_LIST): UElement? {
 
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UElement): () -> UElement? {
       return fun(): UElement? {
@@ -189,7 +206,7 @@ internal object JavaConverter {
 
   internal fun convertReference(reference: PsiJavaCodeReferenceElement,
                                 givenParent: UElement?,
-                                requiredType: Class<out UElement>?): UExpression? {
+                                requiredType: List<Class<out UElement>> = DEFAULT_TYPES_LIST): UExpression? {
     return with(requiredType) {
       if (reference.isQualified) {
         expr<UQualifiedReferenceExpression> { JavaUQualifiedReferenceExpression(reference, givenParent) }
@@ -203,7 +220,7 @@ internal object JavaConverter {
 
   internal fun convertExpression(el: PsiExpression,
                                  givenParent: UElement?,
-                                 requiredType: Class<out UElement>? = null): UExpression? {
+                                 requiredType: List<Class<out UElement>> = DEFAULT_EXPRESSION_TYPES_LIST): UExpression? {
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
       return fun(): UExpression? {
         return ctor(el as P, givenParent)
@@ -222,14 +239,13 @@ internal object JavaConverter {
         }
         is PsiMethodCallExpression -> {
           if (el.methodExpression.qualifierExpression != null) {
-            if (requiredType == null ||
-                requiredType.isAssignableFrom(UQualifiedReferenceExpression::class.java) ||
+            if (requiredType.isAssignableFrom(UQualifiedReferenceExpression::class.java) ||
                 requiredType.isAssignableFrom(UCallExpression::class.java)) {
               val expr = JavaUCompositeQualifiedExpression(el, givenParent).apply {
                 receiverInitializer = { convertOrEmpty(el.methodExpression.qualifierExpression!!, this) }
                 selector = JavaUCallExpression(el, this)
               }
-              if (requiredType?.isAssignableFrom(UCallExpression::class.java) == true)
+              if (!requiredType.isAssignableFrom(UQualifiedReferenceExpression::class.java))
                 expr.selector
               else
                 expr
@@ -265,7 +281,7 @@ internal object JavaConverter {
 
   internal fun convertStatement(el: PsiStatement,
                                 givenParent: UElement?,
-                                requiredType: Class<out UElement>? = null): UExpression? {
+                                requiredType: List<Class<out UElement>> = DEFAULT_EXPRESSION_TYPES_LIST): UExpression? {
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
       return fun(): UExpression? {
         return ctor(el as P, givenParent)
@@ -329,7 +345,7 @@ internal object JavaConverter {
   }
 
   internal fun convertOrEmpty(statement: PsiStatement?, parent: UElement?): UExpression {
-    return statement?.let { convertStatement(it, parent, null) } ?: UastEmptyExpression(parent)
+    return statement?.let { convertStatement(it, parent) } ?: UastEmptyExpression(parent)
   }
 
   internal fun convertOrEmpty(expression: PsiExpression?, parent: UElement?): UExpression {
@@ -344,3 +360,11 @@ internal object JavaConverter {
     return if (block != null) convertBlock(block, parent) else UastEmptyExpression(parent)
   }
 }
+
+private val DEFAULT_TYPES_LIST: List<Class<UElement>> = listOf(UElement::class.java)
+
+private val DEFAULT_EXPRESSION_TYPES_LIST: List<Class<UExpression>> = listOf(UExpression::class.java)
+
+private fun expressionTypes(requiredType: Class<out UElement>?) = requiredType?.let { listOf(it) } ?: DEFAULT_EXPRESSION_TYPES_LIST
+
+private fun elementTypes(requiredType: Class<out UElement>?) = requiredType?.let { listOf(it) } ?: DEFAULT_TYPES_LIST
