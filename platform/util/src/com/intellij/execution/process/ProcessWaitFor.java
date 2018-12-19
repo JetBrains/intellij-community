@@ -17,7 +17,6 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.TaskExecutor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +40,7 @@ public class ProcessWaitFor {
     myWaitForThreadFuture = executor.executeTask(new Runnable() {
       @Override
       public void run() {
-        String threadName = StringUtil.isEmptyOrSpaces(presentableName) ? Thread.currentThread().getName() : presentableName;
+        String threadName = Thread.currentThread().getName() + ": waiting for " + presentableName;
         ConcurrencyUtil.runUnderThreadName(threadName, new Runnable() {
           @Override
           public void run() {
