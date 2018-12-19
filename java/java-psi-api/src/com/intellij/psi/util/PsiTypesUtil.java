@@ -274,7 +274,7 @@ public class PsiTypesUtil {
       }
     }
     else if (PsiUtil.isCondition(element, parent)) {
-      return PsiType.BOOLEAN.getBoxedType(parent);
+      return PsiType.BOOLEAN;
     } 
     else if (parent instanceof PsiArrayInitializerExpression) {
       final PsiElement gParent = parent.getParent();

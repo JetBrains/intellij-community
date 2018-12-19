@@ -296,7 +296,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testGenericTypeMismatch() {
-    doTest(new MockIntroduceVariableHandler("i", true, true, false, "java.lang.String"));
+    doTest(new MockIntroduceVariableHandler("i", true, true, false, CommonClassNames.JAVA_LANG_OBJECT));
   }
 
   public void testGenericTypeMismatch1() {
