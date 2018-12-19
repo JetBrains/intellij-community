@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
@@ -25,6 +27,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement;
+import static org.jetbrains.plugins.groovy.util.GraphKt.findNodesOutsideCycles;
+import static org.jetbrains.plugins.groovy.util.GraphKt.mapGraph;
 
 class InferenceCache {
 
@@ -60,10 +64,10 @@ class InferenceCache {
     TypeDfaState cache = myVarTypes.get().get(instruction.num());
     if (!cache.containsVariable(variableName)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
-      Set<Instruction> interesting = collectRequiredInstructions(instruction, variableName, mixinPredicate);
+      Couple<Set<Instruction>> interesting = collectRequiredInstructions(instruction, variableName, mixinPredicate);
       List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, interesting);
       if (dfaResult == null) {
-        myTooComplexInstructions.addAll(interesting);
+        myTooComplexInstructions.addAll(interesting.first);
       }
       else {
         cacheDfaResult(dfaResult);
@@ -76,7 +80,7 @@ class InferenceCache {
   @Nullable
   private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
                                             @NotNull Instruction[] flow,
-                                            @NotNull Set<Instruction> interesting) {
+                                            @NotNull Couple<Set<Instruction>> interesting) {
     final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, interesting, this);
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
@@ -88,22 +92,28 @@ class InferenceCache {
     return dfaType == null ? null : dfaType.negate(instruction);
   }
 
-  private Set<Instruction> collectRequiredInstructions(@NotNull Instruction instruction,
-                                                       @NotNull String variableName,
-                                                       @NotNull Predicate<? super Instruction> predicate) {
-    Set<Instruction> interesting = ContainerUtil.newHashSet(instruction);
+  private Couple<Set<Instruction>> collectRequiredInstructions(@NotNull Instruction instruction,
+                                                               @NotNull String variableName,
+                                                               @NotNull Predicate<? super Instruction> predicate) {
+    Map<Pair<Instruction, String>, Collection<Pair<Instruction, String>>> interesting = new LinkedHashMap<>();
     LinkedList<Pair<Instruction, String>> queue = ContainerUtil.newLinkedList();
     queue.add(Pair.create(instruction, variableName));
     while (!queue.isEmpty()) {
       Pair<Instruction, String> pair = queue.removeFirst();
-      for (Pair<Instruction, String> dep : findDependencies(pair.first, pair.second)) {
-        if (interesting.add(dep.first)) {
-          queue.addLast(dep);
-        }
+      if (!interesting.containsKey(pair)) {
+        Set<Pair<Instruction, String>> dependencies = findDependencies(pair.first, pair.second);
+        interesting.put(pair, dependencies);
+        dependencies.forEach(queue::addLast);
       }
     }
-
-    return interesting.stream().filter(predicate).collect(Collectors.toSet());
+    Set<Instruction> interestingInstructions = interesting.keySet().stream()
+      .map(it -> it.getFirst())
+      .filter(predicate).collect(Collectors.toSet());
+    Set<Instruction> acyclicInstructions = findNodesOutsideCycles(mapGraph(interesting)).stream()
+      .map(it -> it.getFirst())
+      .filter(predicate)
+      .collect(Collectors.toSet());
+    return Couple.of(interestingInstructions, acyclicInstructions);
   }
 
   @NotNull
@@ -150,7 +160,9 @@ class InferenceCache {
   private static PsiElement findDependencyScope(@Nullable PsiElement element) {
     return PsiTreeUtil.findFirstParent(
       element,
-      element1 -> isExpressionStatement(element1) || !(element1.getParent() instanceof GrExpression)
+      element1 -> !(element1.getParent() instanceof GrExpression)
+                  || element1 instanceof GrInstanceOfExpression
+                  || isExpressionStatement(element1)
     );
   }
 

@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiElement;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
@@ -13,20 +13,18 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.UtilKt.computeAcyclicInstructions;
-
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private final Instruction[] myFlow;
   private final Set<Instruction> myInteresting;
+  private final Set<Instruction> myAcyclicInstructions;
   private final InferenceCache myCache;
-  private final TIntHashSet myAcyclicInstructions;
 
-  TypeDfaInstance(@NotNull Instruction[] flow, @NotNull Set<Instruction> interesting, @NotNull InferenceCache cache) {
+  TypeDfaInstance(@NotNull Instruction[] flow, @NotNull Couple<Set<Instruction>> interesting, @NotNull InferenceCache cache) {
     myFlow = flow;
-    myInteresting = interesting;
+    myInteresting = interesting.first;
+    myAcyclicInstructions = interesting.second;
     myCache = cache;
-    myAcyclicInstructions = computeAcyclicInstructions(flow);
   }
 
   @Override
@@ -78,7 +76,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
     DFAType type = myCache.getCachedInferredType(variableName, instruction);
     if (type == null) {
-      if (myAcyclicInstructions.contains(instruction.num())) {
+      if (myAcyclicInstructions.contains(instruction)) {
         type = computation.compute();
       }
       else {

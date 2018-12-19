@@ -7,7 +7,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
@@ -21,7 +21,7 @@ abstract class TypeInferenceTestBase extends GroovyResolveTestCase {
     super.setUp()
 
     myFixture.addClass("package java.math; public class BigDecimal extends Number implements Comparable<BigDecimal> {}")
-    TypeInferenceHelper.disallowNestedContext(testRootDisposable)
+    NestedContextKt.forbidNestedContext(testRootDisposable)
   }
 
   protected void doTest(String text, @Nullable String type) {

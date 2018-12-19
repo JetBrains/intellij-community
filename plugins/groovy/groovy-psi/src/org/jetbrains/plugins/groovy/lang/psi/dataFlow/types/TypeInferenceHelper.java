@@ -1,10 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -14,7 +12,6 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -39,6 +36,7 @@ import java.util.Map;
 
 import static com.intellij.psi.util.PsiModificationTracker.MODIFICATION_COUNT;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexes;
+import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.checkNestedContext;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.*;
 
 /**
@@ -47,36 +45,11 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.*;
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class TypeInferenceHelper {
 
-  private static boolean allowNestedContext = true;
-
-  private static void setAllowNestedContext(boolean value, @NotNull Disposable parent) {
-    boolean oldValue = allowNestedContext;
-    if (oldValue == value) return;
-    allowNestedContext = value;
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        allowNestedContext = oldValue;
-      }
-    });
-  }
-
-  @TestOnly
-  public static void disallowNestedContext(@NotNull Disposable parent) {
-    setAllowNestedContext(false, parent);
-  }
-
-  @TestOnly
-  public static void forceAllowNestedContext(@NotNull Disposable parent) {
-    setAllowNestedContext(true, parent);
-  }
-
   private static final ThreadLocal<InferenceContext> ourInferenceContext = new ThreadLocal<>();
 
   static <T> T doInference(@NotNull Map<String, PsiType> bindings, @NotNull Computable<? extends T> computation) {
-    if (!allowNestedContext && ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new IllegalStateException("Unexpected attempt to infer in nested context");
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      checkNestedContext();
     }
     return withContext(new PartialContext(bindings), computation);
   }
