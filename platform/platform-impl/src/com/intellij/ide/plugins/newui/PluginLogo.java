@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginManagerConfigurableNew;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -88,22 +89,42 @@ public class PluginLogo {
       File path = descriptor.getPath();
       if (path != null) {
         if (path.isDirectory()) {
-          PluginLogoIconProvider light = tryLoadIcon(new File(path, PluginManagerCore.META_INF + "pluginIcon.svg"));
-          PluginLogoIconProvider dark = tryLoadIcon(new File(path, PluginManagerCore.META_INF + "pluginIcon_dark.svg"));
-          putIcon(idPlugin, lazyIcon, light, dark);
-          return;
-        }
-        if (FileUtil.isJarOrZip(path)) {
-          try (ZipFile zipFile = new ZipFile(path)) {
-            PluginLogoIconProvider light = tryLoadIcon(zipFile, "pluginIcon.svg");
-            PluginLogoIconProvider dark = tryLoadIcon(zipFile, "pluginIcon_dark.svg");
-            putIcon(idPlugin, lazyIcon, light, dark);
+          if (System.getProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY) != null) {
+            PluginLogoIconProvider light = tryLoadIcon(new File(path, "classes/" + PluginManagerCore.META_INF + "pluginIcon.svg"));
+            PluginLogoIconProvider dark = tryLoadIcon(new File(path, "classes/" + PluginManagerCore.META_INF + "pluginIcon_dark.svg"));
+            if (light != null || dark != null) {
+              putIcon(idPlugin, lazyIcon, light, dark);
+              return;
+            }
+          }
+
+          if (tryLoadDirIcons(idPlugin, lazyIcon, path)) {
             return;
           }
-          catch (Exception e) {
-            LOG.error(e);
+
+          File libFile = new File(path, "lib");
+          if (!libFile.exists() || !libFile.isDirectory()) {
+            return;
+          }
+
+          File[] files = libFile.listFiles();
+          if (files == null || files.length == 0) {
+            return;
+          }
+
+          for (File file : files) {
+            if (tryLoadDirIcons(idPlugin, lazyIcon, file)) {
+              return;
+            }
+            if (tryLoadJarIcons(idPlugin, lazyIcon, file, false)) {
+              return;
+            }
           }
         }
+        else {
+          tryLoadJarIcons(idPlugin, lazyIcon, path, true);
+        }
+        return;
       }
 
       String idFileName = FileUtil.sanitizeFileName(idPlugin);
@@ -135,6 +156,39 @@ public class PluginLogo {
     });
 
     return lazyIcons;
+  }
+
+  private static boolean tryLoadDirIcons(@NotNull String idPlugin, @NotNull LazyPluginLogoIcon lazyIcon, @NotNull File path) {
+    PluginLogoIconProvider light = tryLoadIcon(new File(path, PluginManagerCore.META_INF + "pluginIcon.svg"));
+    PluginLogoIconProvider dark = tryLoadIcon(new File(path, PluginManagerCore.META_INF + "pluginIcon_dark.svg"));
+
+    if (light != null || dark != null) {
+      putIcon(idPlugin, lazyIcon, light, dark);
+      return true;
+    }
+
+    return false;
+  }
+
+  private static boolean tryLoadJarIcons(@NotNull String idPlugin,
+                                         @NotNull LazyPluginLogoIcon lazyIcon,
+                                         @NotNull File path,
+                                         boolean put) {
+    if (!FileUtil.isJarOrZip(path) || !path.exists()) {
+      return false;
+    }
+    try (ZipFile zipFile = new ZipFile(path)) {
+      PluginLogoIconProvider light = tryLoadIcon(zipFile, "pluginIcon.svg");
+      PluginLogoIconProvider dark = tryLoadIcon(zipFile, "pluginIcon_dark.svg");
+      if (put || light != null || dark != null) {
+        putIcon(idPlugin, lazyIcon, light, dark);
+        return true;
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    return false;
   }
 
   private static void downloadFile(@NotNull String idPlugin, @NotNull File file, @NotNull String theme) {
