@@ -1,576 +1,576 @@
 <component>
   <actions>
-    <action id="CaptureMemorySnapShot" class="xcom.intellij.util.CaptureMemorySnapshotAction" text="Capture memory snapshot" description="Capture memory snapshot" icon="/actions/profileMemory.png" />
-    <action id="CaptureCPUUsageData" class="xcom.intellij.util.CaptureCPUUsageDataAction" text="Capture cpu usage data" description="Capture cpu usage data" icon="/actions/profuleCPU.png" />
-    <action id="ContextHelp" class="xcom.intellij.ide.actions.ContextHelpAction" text="Conte_xt Help" description="Show context help"/>
-    <action id="RunConfiguration" text="Select Run/Debug Configuration" description="Select Run/Debug Configuration" class="xcom.intellij.execution.actions.RunConfigurationAction"/>
-    <action id="ShowIntentionActions" text="Show Intention Actions" class="xcom.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
-    <action id="ToggleReadOnlyAttribute" text="Toggle Read-Only Attribute" description="Toggle read-only attribute of current file" class="xcom.intellij.ide.actions.ToggleReadOnlyAttributeAction"/>
-    <action id="TogglePopupHints" text="Toggle Popup Hints for Current File" class="xcom.intellij.ide.actions.TogglePopupHintsAction"/>
-    <action id="RunGc" text="Run Garbage Collector" class="xcom.intellij.ide.actions.RunGcAction"/>
-    <action id="ShowPopupMenu" text="Show Context Menu" class="xcom.intellij.ide.actions.ShowPopupMenuAction"/>
-    <action id="CloseWindow" text="Close Active Window" class="xcom.intellij.ide.actions.CloseWindowAction"/>
+    <action id="xCaptureMemorySnapShot" class="xcom.intellij.util.CaptureMemorySnapshotAction" text="Capture memory snapshot" description="Capture memory snapshot" icon="/actions/profileMemory.png" />
+    <action id="xCaptureCPUUsageData" class="xcom.intellij.util.CaptureCPUUsageDataAction" text="Capture cpu usage data" description="Capture cpu usage data" icon="/actions/profuleCPU.png" />
+    <action id="xContextHelp" class="xcom.intellij.ide.actions.ContextHelpAction" text="Conte_xt Help" description="Show context help"/>
+    <action id="xRunConfiguration" text="Select Run/Debug Configuration" description="Select Run/Debug Configuration" class="xcom.intellij.execution.actions.RunConfigurationAction"/>
+    <action id="xShowIntentionActions" text="Show Intention Actions" class="xcom.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
+    <action id="xToggleReadOnlyAttribute" text="Toggle Read-Only Attribute" description="Toggle read-only attribute of current file" class="xcom.intellij.ide.actions.ToggleReadOnlyAttributeAction"/>
+    <action id="xTogglePopupHints" text="Toggle Popup Hints for Current File" class="xcom.intellij.ide.actions.TogglePopupHintsAction"/>
+    <action id="xRunGc" text="Run Garbage Collector" class="xcom.intellij.ide.actions.RunGcAction"/>
+    <action id="xShowPopupMenu" text="Show Context Menu" class="xcom.intellij.ide.actions.ShowPopupMenuAction"/>
+    <action id="xCloseWindow" text="Close Active Window" class="xcom.intellij.ide.actions.CloseWindowAction"/>
 
-    <action id="Vcs.ShowHistory" class="xcom.intellij.openapi.vcs.actions.FileHistoryAction" text="Show File History" description="Show history of file"/>
-    <action id="Vcs.ShowHistoryForBlock" class="xcom.intellij.openapi.vcs.actions.SelectedBlockHistoryAction" text="Show History _for Selection" description="Show history for editor selection"/>
-    <action id="Vcs.ShowTabbedFileHistory" class="xcom.intellij.openapi.vcs.actions.TabbedShowHistoryAction" text="_Show History" description="Show history of file"/>
+    <action id="xVcs.ShowHistory" class="xcom.intellij.openapi.vcs.actions.FileHistoryAction" text="Show File History" description="Show history of file"/>
+    <action id="xVcs.ShowHistoryForBlock" class="xcom.intellij.openapi.vcs.actions.SelectedBlockHistoryAction" text="Show History _for Selection" description="Show history for editor selection"/>
+    <action id="xVcs.ShowTabbedFileHistory" class="xcom.intellij.openapi.vcs.actions.TabbedShowHistoryAction" text="_Show History" description="Show history of file"/>
 
-    <group id="RunContextGroup" popup="false">
-      <action id="CreateRunConfiguration" text="Create Run Configuration" description="Create run configuration from context" class="xcom.intellij.execution.actions.CreateAction"/>
+    <group id="xRunContextGroup" popup="false">
+      <action id="xCreateRunConfiguration" text="Create Run Configuration" description="Create run configuration from context" class="xcom.intellij.execution.actions.CreateAction"/>
     </group>
-    <group id="RunContextPopupGroup" popup="false" text="Run Configurations">
+    <group id="xRunContextPopupGroup" popup="false" text="Run Configurations">
       <reference ref="RunContextGroup"/>
     </group>
     <!--Editor -->
-    <group id="EditorActions" text="Editor Actions">
+    <group id="xEditorActions" text="Editor Actions">
 
-      <action id="EditorChooseLookupItem" class="xcom.intellij.codeInsight.lookup.impl.actions.ChooseItemAction" text="Choose Lookup Item"/>
-      <action id="EditorChooseLookupItemReplace" class="xcom.intellij.codeInsight.lookup.impl.actions.ChooseItemReplaceAction" text="Choose Lookup Item Replace"/>
+      <action id="xEditorChooseLookupItem" class="xcom.intellij.codeInsight.lookup.impl.actions.ChooseItemAction" text="Choose Lookup Item"/>
+      <action id="xEditorChooseLookupItemReplace" class="xcom.intellij.codeInsight.lookup.impl.actions.ChooseItemReplaceAction" text="Choose Lookup Item Replace"/>
 
-      <action id="NextTemplateVariable" text="Next Template Variable" class="xcom.intellij.codeInsight.template.impl.actions.NextVariableAction"/>
-      <action id="PreviousTemplateVariable" text="Previous Template Variable" class="xcom.intellij.codeInsight.template.impl.actions.PreviousVariableAction"/>
+      <action id="xNextTemplateVariable" text="Next Template Variable" class="xcom.intellij.codeInsight.template.impl.actions.NextVariableAction"/>
+      <action id="xPreviousTemplateVariable" text="Previous Template Variable" class="xcom.intellij.codeInsight.template.impl.actions.PreviousVariableAction"/>
 
-      <action id="NextParameter" text="Next Parameter" class="xcom.intellij.codeInsight.hint.actions.NextParameterAction"/>
-      <action id="PrevParameter" text="Prev Parameter" class="xcom.intellij.codeInsight.hint.actions.PrevParameterAction"/>
+      <action id="xNextParameter" text="Next Parameter" class="xcom.intellij.codeInsight.hint.actions.NextParameterAction"/>
+      <action id="xPrevParameter" text="Prev Parameter" class="xcom.intellij.codeInsight.hint.actions.PrevParameterAction"/>
 
-      <action id="EditorPageUp" class="xcom.intellij.openapi.editor.actions.PageUpAction" text="Page Up"/>
-      <action id="EditorPageDown" class="xcom.intellij.openapi.editor.actions.PageDownAction" text="Page Down"/>
-      <action id="EditorPageUpWithSelection" class="xcom.intellij.openapi.editor.actions.PageUpWithSelectionAction" text="Page Up with Selection"/>
-      <action id="EditorPageDownWithSelection" class="xcom.intellij.openapi.editor.actions.PageDownWithSelectionAction" text="Page Up with Selection"/>
-      <action id="EditorCopy" class="xcom.intellij.openapi.editor.actions.CopyAction" text="Copy"/>
-      <action id="EditorCut" class="xcom.intellij.openapi.editor.actions.CutAction" text="Cut"/>
-      <action id="EditorPaste" class="xcom.intellij.openapi.editor.actions.PasteAction" text="Paste"/>
-      <action id="EditorPasteFromX11" class="xcom.intellij.openapi.editor.actions.PasteFromX11Action" text="Paste from X clipboard"/>
-      <action id="EditorDelete" class="xcom.intellij.openapi.editor.actions.DeleteAction" text="Delete"/>
-      <action id="EditorBackSpace" class="xcom.intellij.openapi.editor.actions.BackspaceAction" text="Backspace"/>
-      <action id="EditorMoveToPageTop" class="xcom.intellij.openapi.editor.actions.PageTopAction" text="Move Caret to Page Top"/>
-      <action id="EditorMoveToPageBottom" class="xcom.intellij.openapi.editor.actions.PageBottomAction" text="Move Caret to Page Bottom"/>
-      <action id="EditorMoveToPageTopWithSelection" class="xcom.intellij.openapi.editor.actions.PageTopWithSelectionAction" text="Move Caret to Page Top with Selection"/>
-      <action id="EditorMoveToPageBottomWithSelection" class="xcom.intellij.openapi.editor.actions.PageBottomWithSelectionAction" text="Move Caret to Page Bottom with Selection"/>
-      <action id="EditorEnter" class="xcom.intellij.openapi.editor.actions.EnterAction" text="Enter"/>
-      <action id="EditorEscape" class="xcom.intellij.openapi.editor.actions.EscapeAction" text="Escape"/>
-      <action id="EditorUp" class="xcom.intellij.openapi.editor.actions.MoveCaretUpAction" text="Up"/>
-      <action id="EditorDown" class="xcom.intellij.openapi.editor.actions.MoveCaretDownAction" text="Down"/>
-      <action id="EditorLeft" class="xcom.intellij.openapi.editor.actions.MoveCaretLeftAction" text="Left"/>
-      <action id="EditorRight" class="xcom.intellij.openapi.editor.actions.MoveCaretRightAction" text="Right"/>
-      <action id="EditorUpWithSelection" class="xcom.intellij.openapi.editor.actions.MoveCaretUpWithSelectionAction" text="Up with Selection"/>
-      <action id="EditorDownWithSelection" class="xcom.intellij.openapi.editor.actions.MoveCaretDownWithSelectionAction" text="Down with Selection"/>
-      <action id="EditorLeftWithSelection" class="xcom.intellij.openapi.editor.actions.MoveCaretLeftWithSelectionAction" text="Left with Selection"/>
-      <action id="EditorRightWithSelection" class="xcom.intellij.openapi.editor.actions.MoveCaretRightWithSelectionAction" text="Right with Selection"/>
-      <action id="EditorIndentSelection" class="xcom.intellij.openapi.editor.actions.IndentSelectionAction" text="Indent Selection"/>
-      <action id="EditorUnindentSelection" class="xcom.intellij.openapi.editor.actions.UnindentSelectionAction" text="Unindent Selection"/>
-      <action id="EditorTab" class="xcom.intellij.openapi.editor.actions.TabAction" text="Tab"/>
-      <action id="EmacsStyleIndent" class="xcom.intellij.openapi.editor.actions.EmacsStyleIndentAction" text="Emacs Tab"/>
-      <action id="EditorScrollUp" class="xcom.intellij.openapi.editor.actions.ScrollUpAction" text="Scroll Up"/>
-      <action id="EditorScrollDown" class="xcom.intellij.openapi.editor.actions.ScrollDownAction" text="Scroll Down"/>
-      <action id="EditorMoveUpAndScroll" class="xcom.intellij.openapi.editor.actions.MoveUpAndScrollAction" text="Move Up and Scroll"/>
-      <action id="EditorMoveDownAndScroll" class="xcom.intellij.openapi.editor.actions.MoveDownAndScrollAction" text="Move Down and Scroll"/>
-      <action id="EditorMoveUpAndScrollWithSelection" class="xcom.intellij.openapi.editor.actions.MoveUpWithSelectionAndScrollAction" text="Move Up and Scroll with Selection"/>
-      <action id="EditorMoveDownAndScrollWithSelection" class="xcom.intellij.openapi.editor.actions.MoveDownWithSelectionAndScrollAction" text="Move Down and Scroll with Selection"/>
-      <action id="EditorLineStart" class="xcom.intellij.openapi.editor.actions.LineStartAction" text="Move Caret to Line Start"/>
-      <action id="EditorLineEnd" class="xcom.intellij.openapi.editor.actions.LineEndAction" text="Move Caret to Line End"/>
-      <action id="EditorCutLineEnd" class="xcom.intellij.openapi.editor.actions.CutLineEndAction" text="Cut up to Line End"/>
-      <action id="EditorTextStart" class="xcom.intellij.openapi.editor.actions.TextStartAction" text="Move Caret to Text Start"/>
-      <action id="EditorTextEnd" class="xcom.intellij.openapi.editor.actions.TextEndAction" text="Move Caret to Text End"/>
-      <action id="EditorLineStartWithSelection" class="xcom.intellij.openapi.editor.actions.LineStartWithSelectionAction" text="Move Caret to Line Start with Selection"/>
-      <action id="EditorLineEndWithSelection" class="xcom.intellij.openapi.editor.actions.LineEndWithSelectionAction" text="Move Caret to Line End with Selection"/>
-      <action id="EditorTextStartWithSelection" class="xcom.intellij.openapi.editor.actions.TextStartWithSelectionAction" text="Move Caret to Text Start with Selection"/>
-      <action id="EditorTextEndWithSelection" class="xcom.intellij.openapi.editor.actions.TextEndWithSelectionAction" text="Move Caret to Text End with Selection"/>
-      <action id="EditorNextWord" class="xcom.intellij.openapi.editor.actions.NextWordAction" text="Move Caret to Next Word"/>
-      <action id="EditorPreviousWord" class="xcom.intellij.openapi.editor.actions.PreviousWordAction" text="Move Caret to Previous Word"/>
-      <action id="EditorNextWordWithSelection" class="xcom.intellij.openapi.editor.actions.NextWordWithSelectionAction" text="Move Caret to Next Word with Selection"/>
-      <action id="EditorPreviousWordWithSelection" class="xcom.intellij.openapi.editor.actions.PreviousWordWithSelectionAction" text="Move Caret to Previous Word with Selection"/>
-      <action id="EditorCodeBlockStart" class="xcom.intellij.codeInsight.editorActions.CodeBlockStartAction" text="Move Caret to Code Block Start"/>
-      <action id="EditorCodeBlockEnd" class="xcom.intellij.codeInsight.editorActions.CodeBlockEndAction" text="Move Caret to Code Block End"/>
-      <action id="EditorCodeBlockStartWithSelection" class="xcom.intellij.codeInsight.editorActions.CodeBlockStartWithSelectionAction" text="Move Caret to Code Block Start with Selection"/>
-      <action id="EditorCodeBlockEndWithSelection" class="xcom.intellij.codeInsight.editorActions.CodeBlockEndWithSelectionAction" text="Move Caret to Code Block End with Selection"/>
-      <action id="EditorDeleteToWordStart" class="xcom.intellij.openapi.editor.actions.DeleteToWordStartAction" text="Delete to Word Start"/>
-      <action id="EditorDeleteToWordEnd" class="xcom.intellij.openapi.editor.actions.DeleteToWordEndAction" text="Delete to Word End"/>
-      <action id="EditorDeleteLine" class="xcom.intellij.openapi.editor.actions.DeleteLineAtCaretAction" text="Delete Line at Caret"/>
-      <action id="EditorDuplicate" class="xcom.intellij.openapi.editor.actions.DuplicateAction" text="Duplicate Line or Block"/>
-      <action id="EditorSelectWord" class="xcom.intellij.openapi.editor.actions.SelectWordAtCaretAction" text="Select Word at Caret"/>
-      <action id="EditorUnSelectWord" class="xcom.intellij.openapi.editor.actions.UnselectWordAtCaretAction" text="Unselect Word at Caret"/>
-      <action id="EditorToggleInsertState" class="xcom.intellij.openapi.editor.actions.ToggleInsertStateAction" text="Toggle Insert/Overwrite"/>
-      <action id="EditorToggleColumnMode" class="xcom.intellij.openapi.editor.actions.ToggleColumnModeAction" text="Column Mode" description="Toggle editor column mode"/>
-      <action id="EditorToggleShowWhitespaces" class="xcom.intellij.openapi.editor.actions.ToggleShowWhitespacesAction" text="Sh_ow Whitespaces" description="Toggle display whitespaces in current editor"/>
-      <action id="EditorToggleShowLineNumbers" class="xcom.intellij.openapi.editor.actions.ToggleShowLineNumbersAction" text="Show Line _Numbers" description="Toggle display line numbers in current editor"/>
-      <action id="EditorScrollToCenter" class="xcom.intellij.openapi.editor.actions.ScrollToCenterAction" text="Scroll to Center"/>
-      <action id="EditorToggleCase" class="xcom.intellij.openapi.editor.actions.ToggleCaseAction" text="Toggle Case"/>
-      <action id="EditorJoinLines" class="xcom.intellij.openapi.editor.actions.JoinLinesAction" text="Join Lines"/>
-      <action id="EditorSelectLine" class="xcom.intellij.openapi.editor.actions.SelectLineAction" text="Select Line at Caret"/>
-      <action id="EditorSplitLine" class="xcom.intellij.openapi.editor.actions.SplitLineAction" text="Split Line"/>
-      <action id="EditorStartNewLine" class="xcom.intellij.openapi.editor.actions.StartNewLineAction" text="Start New Line"/>
-      <action id="EditorCompleteStatement" class="xcom.intellij.codeInsight.editorActions.smartEnter.SmartEnterAction" text="Complete Current Statement"/>
+      <action id="xEditorPageUp" class="xcom.intellij.openapi.editor.actions.PageUpAction" text="Page Up"/>
+      <action id="xEditorPageDown" class="xcom.intellij.openapi.editor.actions.PageDownAction" text="Page Down"/>
+      <action id="xEditorPageUpWithSelection" class="xcom.intellij.openapi.editor.actions.PageUpWithSelectionAction" text="Page Up with Selection"/>
+      <action id="xEditorPageDownWithSelection" class="xcom.intellij.openapi.editor.actions.PageDownWithSelectionAction" text="Page Up with Selection"/>
+      <action id="xEditorCopy" class="xcom.intellij.openapi.editor.actions.CopyAction" text="Copy"/>
+      <action id="xEditorCut" class="xcom.intellij.openapi.editor.actions.CutAction" text="Cut"/>
+      <action id="xEditorPaste" class="xcom.intellij.openapi.editor.actions.PasteAction" text="Paste"/>
+      <action id="xEditorPasteFromX11" class="xcom.intellij.openapi.editor.actions.PasteFromX11Action" text="Paste from X clipboard"/>
+      <action id="xEditorDelete" class="xcom.intellij.openapi.editor.actions.DeleteAction" text="Delete"/>
+      <action id="xEditorBackSpace" class="xcom.intellij.openapi.editor.actions.BackspaceAction" text="Backspace"/>
+      <action id="xEditorMoveToPageTop" class="xcom.intellij.openapi.editor.actions.PageTopAction" text="Move Caret to Page Top"/>
+      <action id="xEditorMoveToPageBottom" class="xcom.intellij.openapi.editor.actions.PageBottomAction" text="Move Caret to Page Bottom"/>
+      <action id="xEditorMoveToPageTopWithSelection" class="xcom.intellij.openapi.editor.actions.PageTopWithSelectionAction" text="Move Caret to Page Top with Selection"/>
+      <action id="xEditorMoveToPageBottomWithSelection" class="xcom.intellij.openapi.editor.actions.PageBottomWithSelectionAction" text="Move Caret to Page Bottom with Selection"/>
+      <action id="xEditorEnter" class="xcom.intellij.openapi.editor.actions.EnterAction" text="Enter"/>
+      <action id="xEditorEscape" class="xcom.intellij.openapi.editor.actions.EscapeAction" text="Escape"/>
+      <action id="xEditorUp" class="xcom.intellij.openapi.editor.actions.MoveCaretUpAction" text="Up"/>
+      <action id="xEditorDown" class="xcom.intellij.openapi.editor.actions.MoveCaretDownAction" text="Down"/>
+      <action id="xEditorLeft" class="xcom.intellij.openapi.editor.actions.MoveCaretLeftAction" text="Left"/>
+      <action id="xEditorRight" class="xcom.intellij.openapi.editor.actions.MoveCaretRightAction" text="Right"/>
+      <action id="xEditorUpWithSelection" class="xcom.intellij.openapi.editor.actions.MoveCaretUpWithSelectionAction" text="Up with Selection"/>
+      <action id="xEditorDownWithSelection" class="xcom.intellij.openapi.editor.actions.MoveCaretDownWithSelectionAction" text="Down with Selection"/>
+      <action id="xEditorLeftWithSelection" class="xcom.intellij.openapi.editor.actions.MoveCaretLeftWithSelectionAction" text="Left with Selection"/>
+      <action id="xEditorRightWithSelection" class="xcom.intellij.openapi.editor.actions.MoveCaretRightWithSelectionAction" text="Right with Selection"/>
+      <action id="xEditorIndentSelection" class="xcom.intellij.openapi.editor.actions.IndentSelectionAction" text="Indent Selection"/>
+      <action id="xEditorUnindentSelection" class="xcom.intellij.openapi.editor.actions.UnindentSelectionAction" text="Unindent Selection"/>
+      <action id="xEditorTab" class="xcom.intellij.openapi.editor.actions.TabAction" text="Tab"/>
+      <action id="xEmacsStyleIndent" class="xcom.intellij.openapi.editor.actions.EmacsStyleIndentAction" text="Emacs Tab"/>
+      <action id="xEditorScrollUp" class="xcom.intellij.openapi.editor.actions.ScrollUpAction" text="Scroll Up"/>
+      <action id="xEditorScrollDown" class="xcom.intellij.openapi.editor.actions.ScrollDownAction" text="Scroll Down"/>
+      <action id="xEditorMoveUpAndScroll" class="xcom.intellij.openapi.editor.actions.MoveUpAndScrollAction" text="Move Up and Scroll"/>
+      <action id="xEditorMoveDownAndScroll" class="xcom.intellij.openapi.editor.actions.MoveDownAndScrollAction" text="Move Down and Scroll"/>
+      <action id="xEditorMoveUpAndScrollWithSelection" class="xcom.intellij.openapi.editor.actions.MoveUpWithSelectionAndScrollAction" text="Move Up and Scroll with Selection"/>
+      <action id="xEditorMoveDownAndScrollWithSelection" class="xcom.intellij.openapi.editor.actions.MoveDownWithSelectionAndScrollAction" text="Move Down and Scroll with Selection"/>
+      <action id="xEditorLineStart" class="xcom.intellij.openapi.editor.actions.LineStartAction" text="Move Caret to Line Start"/>
+      <action id="xEditorLineEnd" class="xcom.intellij.openapi.editor.actions.LineEndAction" text="Move Caret to Line End"/>
+      <action id="xEditorCutLineEnd" class="xcom.intellij.openapi.editor.actions.CutLineEndAction" text="Cut up to Line End"/>
+      <action id="xEditorTextStart" class="xcom.intellij.openapi.editor.actions.TextStartAction" text="Move Caret to Text Start"/>
+      <action id="xEditorTextEnd" class="xcom.intellij.openapi.editor.actions.TextEndAction" text="Move Caret to Text End"/>
+      <action id="xEditorLineStartWithSelection" class="xcom.intellij.openapi.editor.actions.LineStartWithSelectionAction" text="Move Caret to Line Start with Selection"/>
+      <action id="xEditorLineEndWithSelection" class="xcom.intellij.openapi.editor.actions.LineEndWithSelectionAction" text="Move Caret to Line End with Selection"/>
+      <action id="xEditorTextStartWithSelection" class="xcom.intellij.openapi.editor.actions.TextStartWithSelectionAction" text="Move Caret to Text Start with Selection"/>
+      <action id="xEditorTextEndWithSelection" class="xcom.intellij.openapi.editor.actions.TextEndWithSelectionAction" text="Move Caret to Text End with Selection"/>
+      <action id="xEditorNextWord" class="xcom.intellij.openapi.editor.actions.NextWordAction" text="Move Caret to Next Word"/>
+      <action id="xEditorPreviousWord" class="xcom.intellij.openapi.editor.actions.PreviousWordAction" text="Move Caret to Previous Word"/>
+      <action id="xEditorNextWordWithSelection" class="xcom.intellij.openapi.editor.actions.NextWordWithSelectionAction" text="Move Caret to Next Word with Selection"/>
+      <action id="xEditorPreviousWordWithSelection" class="xcom.intellij.openapi.editor.actions.PreviousWordWithSelectionAction" text="Move Caret to Previous Word with Selection"/>
+      <action id="xEditorCodeBlockStart" class="xcom.intellij.codeInsight.editorActions.CodeBlockStartAction" text="Move Caret to Code Block Start"/>
+      <action id="xEditorCodeBlockEnd" class="xcom.intellij.codeInsight.editorActions.CodeBlockEndAction" text="Move Caret to Code Block End"/>
+      <action id="xEditorCodeBlockStartWithSelection" class="xcom.intellij.codeInsight.editorActions.CodeBlockStartWithSelectionAction" text="Move Caret to Code Block Start with Selection"/>
+      <action id="xEditorCodeBlockEndWithSelection" class="xcom.intellij.codeInsight.editorActions.CodeBlockEndWithSelectionAction" text="Move Caret to Code Block End with Selection"/>
+      <action id="xEditorDeleteToWordStart" class="xcom.intellij.openapi.editor.actions.DeleteToWordStartAction" text="Delete to Word Start"/>
+      <action id="xEditorDeleteToWordEnd" class="xcom.intellij.openapi.editor.actions.DeleteToWordEndAction" text="Delete to Word End"/>
+      <action id="xEditorDeleteLine" class="xcom.intellij.openapi.editor.actions.DeleteLineAtCaretAction" text="Delete Line at Caret"/>
+      <action id="xEditorDuplicate" class="xcom.intellij.openapi.editor.actions.DuplicateAction" text="Duplicate Line or Block"/>
+      <action id="xEditorSelectWord" class="xcom.intellij.openapi.editor.actions.SelectWordAtCaretAction" text="Select Word at Caret"/>
+      <action id="xEditorUnSelectWord" class="xcom.intellij.openapi.editor.actions.UnselectWordAtCaretAction" text="Unselect Word at Caret"/>
+      <action id="xEditorToggleInsertState" class="xcom.intellij.openapi.editor.actions.ToggleInsertStateAction" text="Toggle Insert/Overwrite"/>
+      <action id="xEditorToggleColumnMode" class="xcom.intellij.openapi.editor.actions.ToggleColumnModeAction" text="Column Mode" description="Toggle editor column mode"/>
+      <action id="xEditorToggleShowWhitespaces" class="xcom.intellij.openapi.editor.actions.ToggleShowWhitespacesAction" text="Sh_ow Whitespaces" description="Toggle display whitespaces in current editor"/>
+      <action id="xEditorToggleShowLineNumbers" class="xcom.intellij.openapi.editor.actions.ToggleShowLineNumbersAction" text="Show Line _Numbers" description="Toggle display line numbers in current editor"/>
+      <action id="xEditorScrollToCenter" class="xcom.intellij.openapi.editor.actions.ScrollToCenterAction" text="Scroll to Center"/>
+      <action id="xEditorToggleCase" class="xcom.intellij.openapi.editor.actions.ToggleCaseAction" text="Toggle Case"/>
+      <action id="xEditorJoinLines" class="xcom.intellij.openapi.editor.actions.JoinLinesAction" text="Join Lines"/>
+      <action id="xEditorSelectLine" class="xcom.intellij.openapi.editor.actions.SelectLineAction" text="Select Line at Caret"/>
+      <action id="xEditorSplitLine" class="xcom.intellij.openapi.editor.actions.SplitLineAction" text="Split Line"/>
+      <action id="xEditorStartNewLine" class="xcom.intellij.openapi.editor.actions.StartNewLineAction" text="Start New Line"/>
+      <action id="xEditorCompleteStatement" class="xcom.intellij.codeInsight.editorActions.smartEnter.SmartEnterAction" text="Complete Current Statement"/>
     </group>
 
-    <action id="ExpandAll" class="xcom.intellij.ide.actions.ExpandAllAction" text="Expand All" icon="/actions/expandall.png"/>
-    <action id="CollapseAll" class="xcom.intellij.ide.actions.CollapseAllAction" text="Collapse All" icon="/actions/collapseall.png"/>
-    <action id="ExportToTextFile" class="xcom.intellij.ide.actions.ExportToTextFileAction" text="Export to Text File" icon="/actions/export.png"/>
-    <action id="ExpandTreeNode" text="Expand Tree Node" class="xcom.intellij.ide.actions.tree.ExpandTreeNodeAction"/>
-    <action id="CollapseTreeNode" text="Collapse Tree Node" class="xcom.intellij.ide.actions.tree.CollapseTreeNodeAction"/>
-    <action id="FullyExpandTreeNode" text="Fully Expand Tree Node" class="xcom.intellij.ide.actions.tree.FullyExpandTreeNodeAction"/>
+    <action id="xExpandAll" class="xcom.intellij.ide.actions.ExpandAllAction" text="Expand All" icon="/actions/expandall.png"/>
+    <action id="xCollapseAll" class="xcom.intellij.ide.actions.CollapseAllAction" text="Collapse All" icon="/actions/collapseall.png"/>
+    <action id="xExportToTextFile" class="xcom.intellij.ide.actions.ExportToTextFileAction" text="Export to Text File" icon="/actions/export.png"/>
+    <action id="xExpandTreeNode" text="Expand Tree Node" class="xcom.intellij.ide.actions.tree.ExpandTreeNodeAction"/>
+    <action id="xCollapseTreeNode" text="Collapse Tree Node" class="xcom.intellij.ide.actions.tree.CollapseTreeNodeAction"/>
+    <action id="xFullyExpandTreeNode" text="Fully Expand Tree Node" class="xcom.intellij.ide.actions.tree.FullyExpandTreeNodeAction"/>
 
-    <group id="J2EEGenerateGroup">
-      <action id="CreateSessionBean" text="_Session Bean" class="xcom.intellij.javaee.module.view.ejb.actions.CreateSessionBeanAction" icon="/nodes/ejbSession.png"/>
-      <action id="CreateContainerManagedEntityBeanAction" text="_CMP Entity Bean" class="xcom.intellij.javaee.module.view.ejb.actions.CreateCMPEntityBeanAction" icon="/nodes/ejbEntity.png"/>
-      <action id="CreateBeanManagedEntityBeanAction" text="_BMP Entity Bean" class="xcom.intellij.javaee.module.view.ejb.actions.CreateBMPEntityBeanAction" icon="/nodes/ejbEntity.png"/>
-      <action id="CreateMessageBean" text="_Message Bean" class="xcom.intellij.javaee.module.view.ejb.actions.CreateMessageBeanAction" icon="/nodes/ejbMessage.png"/>
-      <action id="CreateTransferObject" text="_Transfer Object" class="xcom.intellij.javaee.module.view.ejb.actions.CreateTransferObjectAction" icon="/nodes/class.png"/>
-      <action id="CreateCMPField" text="_CMP Field" class="xcom.intellij.javaee.module.view.ejb.actions.CreateCmpFieldAction" icon="/nodes/ejbCmpField.png"/>
-      <action id="CreateEJBRelationship" text="EJB _Relationship" class="xcom.intellij.javaee.module.view.ejb.actions.CreateEjbRelationshipAction" icon="/nodes/ejbCmrField.png"/>
+    <group id="xJ2EEGenerateGroup">
+      <action id="xCreateSessionBean" text="_Session Bean" class="xcom.intellij.javaee.module.view.ejb.actions.CreateSessionBeanAction" icon="/nodes/ejbSession.png"/>
+      <action id="xCreateContainerManagedEntityBeanAction" text="_CMP Entity Bean" class="xcom.intellij.javaee.module.view.ejb.actions.CreateCMPEntityBeanAction" icon="/nodes/ejbEntity.png"/>
+      <action id="xCreateBeanManagedEntityBeanAction" text="_BMP Entity Bean" class="xcom.intellij.javaee.module.view.ejb.actions.CreateBMPEntityBeanAction" icon="/nodes/ejbEntity.png"/>
+      <action id="xCreateMessageBean" text="_Message Bean" class="xcom.intellij.javaee.module.view.ejb.actions.CreateMessageBeanAction" icon="/nodes/ejbMessage.png"/>
+      <action id="xCreateTransferObject" text="_Transfer Object" class="xcom.intellij.javaee.module.view.ejb.actions.CreateTransferObjectAction" icon="/nodes/class.png"/>
+      <action id="xCreateCMPField" text="_CMP Field" class="xcom.intellij.javaee.module.view.ejb.actions.CreateCmpFieldAction" icon="/nodes/ejbCmpField.png"/>
+      <action id="xCreateEJBRelationship" text="EJB _Relationship" class="xcom.intellij.javaee.module.view.ejb.actions.CreateEjbRelationshipAction" icon="/nodes/ejbCmrField.png"/>
 
-      <action id="CreateJSPAction" text="_Jsp" class="xcom.intellij.javaee.module.view.web.CreateJspAction" description="Create new JSP file in this directory" icon="/fileTypes/jsp.png"/>
-      <action id="CreateServletAction" text="_Servlet" class="xcom.intellij.javaee.module.view.web.servlet.CreateServletAction" description="Create new Servlet" icon="/nodes/servlet.png"/>
-      <action id="CreateFilterAction" text="_Filter" class="xcom.intellij.javaee.module.view.web.filter.CreateFilterAction" description="Create new Servlet Filter" icon="/ant/filter.png"/>
+      <action id="xCreateJSPAction" text="_Jsp" class="xcom.intellij.javaee.module.view.web.CreateJspAction" description="Create new JSP file in this directory" icon="/fileTypes/jsp.png"/>
+      <action id="xCreateServletAction" text="_Servlet" class="xcom.intellij.javaee.module.view.web.servlet.CreateServletAction" description="Create new Servlet" icon="/nodes/servlet.png"/>
+      <action id="xCreateFilterAction" text="_Filter" class="xcom.intellij.javaee.module.view.web.filter.CreateFilterAction" description="Create new Servlet Filter" icon="/ant/filter.png"/>
     </group>
-    <group id="GenerateGroup" text="_Generate">
-      <action id="GenerateConstructor" text="Constructor" class="xcom.intellij.codeInsight.generation.actions.GenerateConstructorAction"/>
-      <action id="GenerateGetter" text="Getter" class="xcom.intellij.codeInsight.generation.actions.GenerateGetterAction"/>
-      <action id="GenerateSetter" text="Setter" class="xcom.intellij.codeInsight.generation.actions.GenerateSetterAction"/>
-      <action id="GenerateGetterAndSetter" text="Getter and Setter" class="xcom.intellij.codeInsight.generation.actions.GenerateGetterAndSetterAction"/>
-      <action id="GenerateEquals" text="equals() and hashCode()" class="xcom.intellij.codeInsight.generation.actions.GenerateEqualsAction"/>
-      <action id="OverrideMethods" class="xcom.intellij.codeInsight.generation.actions.OverrideMethodsAction" text="_Override Methods..." description="Override base class methods in the current class"/>
-      <action id="ImplementMethods" class="xcom.intellij.codeInsight.generation.actions.ImplementMethodsAction" text="_Implement Methods..." description="Implement base interface/class methods in the current class"/>
-      <action id="GenerateSuperMethodCall" text="super method call" class="xcom.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
+    <group id="xGenerateGroup" text="_Generate">
+      <action id="xGenerateConstructor" text="Constructor" class="xcom.intellij.codeInsight.generation.actions.GenerateConstructorAction"/>
+      <action id="xGenerateGetter" text="Getter" class="xcom.intellij.codeInsight.generation.actions.GenerateGetterAction"/>
+      <action id="xGenerateSetter" text="Setter" class="xcom.intellij.codeInsight.generation.actions.GenerateSetterAction"/>
+      <action id="xGenerateGetterAndSetter" text="Getter and Setter" class="xcom.intellij.codeInsight.generation.actions.GenerateGetterAndSetterAction"/>
+      <action id="xGenerateEquals" text="equals() and hashCode()" class="xcom.intellij.codeInsight.generation.actions.GenerateEqualsAction"/>
+      <action id="xOverrideMethods" class="xcom.intellij.codeInsight.generation.actions.OverrideMethodsAction" text="_Override Methods..." description="Override base class methods in the current class"/>
+      <action id="xImplementMethods" class="xcom.intellij.codeInsight.generation.actions.ImplementMethodsAction" text="_Implement Methods..." description="Implement base interface/class methods in the current class"/>
+      <action id="xGenerateSuperMethodCall" text="super method call" class="xcom.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
     </group>
 
-    <action id="NextDiff" class="xcom.intellij.openapi.diff.actions.NextDiffAction" text="Move to the next difference" description="Move to the next difference" icon="/actions/moveDown.png"/>
-    <action id="PreviousDiff" class="xcom.intellij.openapi.diff.actions.PreviousDiffAction" text="Move to the previous difference" description="Move to the previous difference" icon="/actions/moveUp.png"/>
+    <action id="xNextDiff" class="xcom.intellij.openapi.diff.actions.NextDiffAction" text="Move to the next difference" description="Move to the next difference" icon="/actions/moveDown.png"/>
+    <action id="xPreviousDiff" class="xcom.intellij.openapi.diff.actions.PreviousDiffAction" text="Move to the previous difference" description="Move to the previous difference" icon="/actions/moveUp.png"/>
 
-    <action id="CheckinProject" class="xcom.intellij.openapi.vcs.actions.CommonCheckinProjectAction" text="Check In Project">
+    <action id="xCheckinProject" class="xcom.intellij.openapi.vcs.actions.CommonCheckinProjectAction" text="Check In Project">
       <keyboard-shortcut first-keystroke="control K" keymap="$default"/>
     </action>
-    <action id="CheckinFiles" class="xcom.intellij.openapi.vcs.actions.CommonCheckinFilesAction" text="Check In"/>
-    <action id="UpdateFiles" class="xcom.intellij.openapi.vcs.update.CommonUpdateFileOrDirectoryAction" text="Update"/>
-    <action id="CheckStatusForFiles" class="xcom.intellij.openapi.vcs.update.CommonStatusFileOrDirectoryAction" text="Check Status"/>
+    <action id="xCheckinFiles" class="xcom.intellij.openapi.vcs.actions.CommonCheckinFilesAction" text="Check In"/>
+    <action id="xUpdateFiles" class="xcom.intellij.openapi.vcs.update.CommonUpdateFileOrDirectoryAction" text="Update"/>
+    <action id="xCheckStatusForFiles" class="xcom.intellij.openapi.vcs.update.CommonStatusFileOrDirectoryAction" text="Check Status"/>
 
-    <group id="NewGroup" text="New" popup="true">
-      <action id="NewClass" text="Class" class="xcom.intellij.ide.actions.CreateClassAction"/>
-      <action id="NewInterface" text="Interface" class="xcom.intellij.ide.actions.CreateInterfaceAction"/>
-      <action id="NewEnum" text="Enum" class="xcom.intellij.ide.actions.CreateEnumAction"/>
-      <action id="NewAnnotationType" text="@Interface" class="xcom.intellij.ide.actions.CreateAnnotationTypeAction"/>
-      <action id="NewFile" text="File" class="xcom.intellij.ide.actions.CreateFileAction"/>
-      <action id="NewDir" text="Directory/Package" class="xcom.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
+    <group id="xNewGroup" text="New" popup="true">
+      <action id="xNewClass" text="Class" class="xcom.intellij.ide.actions.CreateClassAction"/>
+      <action id="xNewInterface" text="Interface" class="xcom.intellij.ide.actions.CreateInterfaceAction"/>
+      <action id="xNewEnum" text="Enum" class="xcom.intellij.ide.actions.CreateEnumAction"/>
+      <action id="xNewAnnotationType" text="@Interface" class="xcom.intellij.ide.actions.CreateAnnotationTypeAction"/>
+      <action id="xNewFile" text="File" class="xcom.intellij.ide.actions.CreateFileAction"/>
+      <action id="xNewDir" text="Directory/Package" class="xcom.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
       <separator/>
-      <action id="NewFromTemplate" text="From Template" class="xcom.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
+      <action id="xNewFromTemplate" text="From Template" class="xcom.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
       <separator/>
-      <action id="NewDialog" text="Dialog" class="xcom.intellij.uiDesigner.actions.CreateDialogAction"/>
+      <action id="xNewDialog" text="Dialog" class="xcom.intellij.uiDesigner.actions.CreateDialogAction"/>
       <separator/>
       <reference ref="J2EEGenerateGroup"/>
     </group>
 
-    <action id="CompareTwoFiles" class="xcom.intellij.openapi.diff.actions.CompareFiles" text="Compare Two _Files" description="Compare two selected files"/>
-    <action id="CompareFileWithEditor" class="xcom.intellij.openapi.diff.actions.CompareFileWithEditor" text="Co_mpare File with Editor" description="Compare selected file with editor"/>
+    <action id="xCompareTwoFiles" class="xcom.intellij.openapi.diff.actions.CompareFiles" text="Compare Two _Files" description="Compare two selected files"/>
+    <action id="xCompareFileWithEditor" class="xcom.intellij.openapi.diff.actions.CompareFileWithEditor" text="Co_mpare File with Editor" description="Compare selected file with editor"/>
 
-    <group id="VcsGroups" class="xcom.intellij.openapi.vcs.actions.VcsActionGroup" text="Version Control" popup="true">
+    <group id="xVcsGroups" class="xcom.intellij.openapi.vcs.actions.VcsActionGroup" text="Version Control" popup="true">
 
-      <group class="xcom.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup" test="Version Control" text="Version Control">
-        <action id="Vcs.FileView" class="xcom.intellij.openapi.vcs.actions.FileViewAction" text="Show File _View" description="Show version control related information for all local files"/>
+      <group class="xcom.intellij.openapi.vcs.actions.VcsActionGroup" id="xVcsGlobalGroup" test="Version Control" text="Version Control">
+        <action id="xVcs.FileView" class="xcom.intellij.openapi.vcs.actions.FileViewAction" text="Show File _View" description="Show version control related information for all local files"/>
         <reference ref="CheckinProject"/>
-        <action id="Vcs.UpdateProject" class="xcom.intellij.openapi.vcs.update.CommonUpdateProjectAction" text="Update Project">
+        <action id="xVcs.UpdateProject" class="xcom.intellij.openapi.vcs.update.CommonUpdateProjectAction" text="Update Project">
           <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
         </action>
-        <action id="Vcs.ProjectStatus" class="xcom.intellij.openapi.vcs.update.CommonStatusProjectAction" text="Check Project Status">
+        <action id="xVcs.ProjectStatus" class="xcom.intellij.openapi.vcs.update.CommonStatusProjectAction" text="Check Project Status">
         </action>
       </group>
 
       <separator/>
-      <action id="Vcs.MarkSourcesAsCurrent" class="xcom.intellij.openapi.vcs.actions.MarkSourcesAsCurrent" text="Mark Project as Current" description="Mark sources as up-to-date"/>
+      <action id="xVcs.MarkSourcesAsCurrent" class="xcom.intellij.openapi.vcs.actions.MarkSourcesAsCurrent" text="Mark Project as Current" description="Mark sources as up-to-date"/>
     </group>
-    <group class="xcom.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup" test="Version Control" text="Version Control"/>
+    <group class="xcom.intellij.openapi.vcs.actions.VcsActionGroup" id="xVcsGroup" test="Version Control" text="Version Control"/>
 
-    <group id="VssGlobalGroup"
+    <group id="xVssGlobalGroup"
       class="xcom.intellij.vssSupport.actions.VssGroup"
       text="SourceSa_fe"
       test="SourceSafe"
       popup="true" >
-      <add-to-group group-id="VcsGroups" anchor="last"/>
-      <action id="Vss.RunExplorer" class="xcom.intellij.vssSupport.actions.RunExplorerAction" text="Open SourceSafe _Explorer" description="Open SourceSafe explorer"/>
+      <add-to-group group-id="xVcsGroups" anchor="last"/>
+      <action id="xVss.RunExplorer" class="xcom.intellij.vssSupport.actions.RunExplorerAction" text="Open SourceSafe _Explorer" description="Open SourceSafe explorer"/>
     </group>
 
-    <group id="VssFilePopupGroup"
+    <group id="xVssFilePopupGroup"
       class="xcom.intellij.vssSupport.actions.VssGroup"
       text="SourceSa_fe"
       test="SourceSafe"
       popup="true" >
-      <add-to-group group-id="VcsGroup" anchor="last"/>
+      <add-to-group group-id="xVcsGroup" anchor="last"/>
     </group>
 
 
-    <group id="VssGroup">
-      <add-to-group group-id="VssGlobalGroup" anchor="last"/>
-      <add-to-group group-id="VssFilePopupGroup" anchor="last"/>
-      <action id="Vss.Checkout" class="xcom.intellij.vssSupport.actions.CheckoutAction" text="Check _Out..." description="Check out the file(s) from SourceSafe database for editing"/>
-      <action id="Vss.Checkin" class="xcom.intellij.vssSupport.actions.CheckinAction" text="Check _In..." description="Update SourceSafe database with changes made to the checked out file(s)"/>
-      <action id="Vss.Add" class="xcom.intellij.vssSupport.actions.AddAction" text="_Add File..." description="Add new file to the SourceSafe database"/>
-      <action id="Vss.Undocheckout" class="xcom.intellij.vssSupport.actions.UndocheckoutAction" text="_Undo Check Out..." description="Cancel a check out, voiding all changes"/>
+    <group id="xVssGroup">
+      <add-to-group group-id="xVssGlobalGroup" anchor="last"/>
+      <add-to-group group-id="xVssFilePopupGroup" anchor="last"/>
+      <action id="xVss.Checkout" class="xcom.intellij.vssSupport.actions.CheckoutAction" text="Check _Out..." description="Check out the file(s) from SourceSafe database for editing"/>
+      <action id="xVss.Checkin" class="xcom.intellij.vssSupport.actions.CheckinAction" text="Check _In..." description="Update SourceSafe database with changes made to the checked out file(s)"/>
+      <action id="xVss.Add" class="xcom.intellij.vssSupport.actions.AddAction" text="_Add File..." description="Add new file to the SourceSafe database"/>
+      <action id="xVss.Undocheckout" class="xcom.intellij.vssSupport.actions.UndocheckoutAction" text="_Undo Check Out..." description="Cancel a check out, voiding all changes"/>
       <separator/>
-      <action id="Vss.Diff" class="xcom.intellij.vssSupport.actions.DiffAction"
+      <action id="xVss.Diff" class="xcom.intellij.vssSupport.actions.DiffAction"
         text="_Compare with SourceSafe Version..."
         description="Compare SourceSafe and local version of file"/>
 
-      <action id="Vss.Get"
+      <action id="xVss.Get"
         class="xcom.intellij.vssSupport.actions.GetAction"
         text="_Get Latest Version..."
         description="Retrieve the most recent version of the file(s)"/>
     </group>
 
-    <group class="xcom.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" test="Version Control"
+    <group class="xcom.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="xVcsFileGroupPopup" test="Version Control"
       text="Version Control" popup="true">
     </group>
 
-    <group id="VersionControlsGroup">
-      <group id="LocalVcsGroup" class="xcom.intellij.localVcs.actions.LocalVcsGroup" text="Local _History" popup="true">
-        <action id="LocalVcs.ShowHistory" class="xcom.intellij.localVcs.actions.ShowHistoryAction" text="Show _History" description="Show local history"/>
-        <action id="LocalVcs.HistoryForBlock" class="xcom.intellij.localVcs.actions.HistoryForSelectedBlockAction" text="Show History for _Selection" description="Show local history for editor selection"/>
-        <action id="LocalVcs.AddLabel" class="xcom.intellij.localVcs.actions.AddLabelAction" text="Add _Label..." description="Add label"/>
+    <group id="xVersionControlsGroup">
+      <group id="xLocalVcsGroup" class="xcom.intellij.localVcs.actions.LocalVcsGroup" text="Local _History" popup="true">
+        <action id="xLocalVcs.ShowHistory" class="xcom.intellij.localVcs.actions.ShowHistoryAction" text="Show _History" description="Show local history"/>
+        <action id="xLocalVcs.HistoryForBlock" class="xcom.intellij.localVcs.actions.HistoryForSelectedBlockAction" text="Show History for _Selection" description="Show local history for editor selection"/>
+        <action id="xLocalVcs.AddLabel" class="xcom.intellij.localVcs.actions.AddLabelAction" text="Add _Label..." description="Add label"/>
       </group>
       <reference ref="VcsFileGroupPopup"/>
     </group>
 
-    <group id="MainMenu">
+    <group id="xMainMenu">
 
       <!-- File  -->
-      <group text="_File" id="FileMenu">
-        <action id="NewProject" class="xcom.intellij.ide.actions.NewProjectAction" text="_New Project..." description="Create a new project"/>
-        <action id="NewModule" class="xcom.intellij.openapi.roots.ui.configuration.actions.NewModuleAction" text="New _Module..." description="Add new module to the project"/>
-        <action id="OpenProject" class="xcom.intellij.ide.actions.OpenProjectAction" text="_Open Project..." description="Open an existing project"/>
-        <action id="OpenFile" class="xcom.intellij.ide.actions.OpenFileAction" text="_Open File..." icon="/actions/menu-open.png" description="Open file in editor"/>
-        <group id="$LRU" class="xcom.intellij.ide.actions.RecentProjectsGroup" text="_Reopen" popup="true" description="List of recently opened projects"/>
-        <action id="CloseProject" class="xcom.intellij.ide.actions.CloseProjectAction" text="Close Pro_ject" description="Close current project"/>
+      <group text="_File" id="xFileMenu">
+        <action id="xNewProject" class="xcom.intellij.ide.actions.NewProjectAction" text="_New Project..." description="Create a new project"/>
+        <action id="xNewModule" class="xcom.intellij.openapi.roots.ui.configuration.actions.NewModuleAction" text="New _Module..." description="Add new module to the project"/>
+        <action id="xOpenProject" class="xcom.intellij.ide.actions.OpenProjectAction" text="_Open Project..." description="Open an existing project"/>
+        <action id="xOpenFile" class="xcom.intellij.ide.actions.OpenFileAction" text="_Open File..." icon="/actions/menu-open.png" description="Open file in editor"/>
+        <group id="x$LRU" class="xcom.intellij.ide.actions.RecentProjectsGroup" text="_Reopen" popup="true" description="List of recently opened projects"/>
+        <action id="xCloseProject" class="xcom.intellij.ide.actions.CloseProjectAction" text="Close Pro_ject" description="Close current project"/>
 
         <separator/>
-        <action id="ShowSettings" class="xcom.intellij.ide.actions.ShowSettingsAction" text="Se_ttings" icon="/general/ideOptions.png" description="Configure application and current project settings"/>
-        <action id="TemplateProjectProperties" class="xcom.intellij.ide.actions.TemplateProjectPropertiesAction" text="Templ_ate Project Settings" description="Configure template settings for all new projects"/>
+        <action id="xShowSettings" class="xcom.intellij.ide.actions.ShowSettingsAction" text="Se_ttings" icon="/general/ideOptions.png" description="Configure application and current project settings"/>
+        <action id="xTemplateProjectProperties" class="xcom.intellij.ide.actions.TemplateProjectPropertiesAction" text="Templ_ate Project Settings" description="Configure template settings for all new projects"/>
         <separator/>
-        <action id="SaveAll" class="xcom.intellij.ide.actions.SaveAllAction" text="_Save All" icon="/actions/menu-saveall.png" description="Save all files and settings"/>
-        <action id="ExportSettings" class="xcom.intellij.ide.actions.ExportSettingsAction" text="_Export Settings..." description="Export global settings"/>
-        <action id="ImportSettings" class="xcom.intellij.ide.actions.ImportSettingsAction" text="_Import Settings..." description="Import global settings"/>
-        <action id="Synchronize" class="xcom.intellij.ide.actions.SynchronizeAction" text="S_ynchronize" icon="/actions/sync.png" description="Detect all externally changed files and reload them from disk"/>
-        <action id="ReloadFromDisk" class="xcom.intellij.ide.actions.ReloadFromDiskAction" text="Reload from Dis_k" description="Reload current file from disk and lose all changes"/>
+        <action id="xSaveAll" class="xcom.intellij.ide.actions.SaveAllAction" text="_Save All" icon="/actions/menu-saveall.png" description="Save all files and settings"/>
+        <action id="xExportSettings" class="xcom.intellij.ide.actions.ExportSettingsAction" text="_Export Settings..." description="Export global settings"/>
+        <action id="xImportSettings" class="xcom.intellij.ide.actions.ImportSettingsAction" text="_Import Settings..." description="Import global settings"/>
+        <action id="xSynchronize" class="xcom.intellij.ide.actions.SynchronizeAction" text="S_ynchronize" icon="/actions/sync.png" description="Detect all externally changed files and reload them from disk"/>
+        <action id="xReloadFromDisk" class="xcom.intellij.ide.actions.ReloadFromDiskAction" text="Reload from Dis_k" description="Reload current file from disk and lose all changes"/>
         <separator/>
-        <action id="ExportToHTML" class="xcom.intellij.codeEditor.printing.ExportToHTMLAction" text="Export to _HTML..." description="Save file content in HTML format with syntax coloring"/>
-        <action id="Print" class="xcom.intellij.codeEditor.printing.PrintAction" text="_Print..." description="Print file"/>
+        <action id="xExportToHTML" class="xcom.intellij.codeEditor.printing.ExportToHTMLAction" text="Export to _HTML..." description="Save file content in HTML format with syntax coloring"/>
+        <action id="xPrint" class="xcom.intellij.codeEditor.printing.PrintAction" text="_Print..." description="Print file"/>
         <separator/>
-        <action id="Exit" class="xcom.intellij.ide.actions.ExitAction" text="E_xit" description="Quit IDEA"/>
+        <action id="xExit" class="xcom.intellij.ide.actions.ExitAction" text="E_xit" description="Quit IDEA"/>
       </group>
 
       <!-- Edit -->
-      <group text="_Edit" id="EditMenu">
-        <action id="$Undo" class="xcom.intellij.ide.actions.UndoAction" text="_Undo" icon="/actions/undo.png" description="Undo last operation"/>
-        <action id="$Redo" class="xcom.intellij.ide.actions.RedoAction" text="_Redo" icon="/actions/redo.png" description="Redo last undone operation"/>
+      <group text="_Edit" id="xEditMenu">
+        <action id="x$Undo" class="xcom.intellij.ide.actions.UndoAction" text="_Undo" icon="/actions/undo.png" description="Undo last operation"/>
+        <action id="x$Redo" class="xcom.intellij.ide.actions.RedoAction" text="_Redo" icon="/actions/redo.png" description="Redo last undone operation"/>
         <separator/>
-        <group id="CutCopyPasteGroup">
-          <action id="$Cut" class="xcom.intellij.ide.actions.CutAction" text="Cu_t" icon="/actions/menu-cut.png" description="Cut to clipboard"/>
-          <action id="$Copy" class="xcom.intellij.ide.actions.CopyAction" text="_Copy" icon="/actions/copy.png" description="Copy to clipboard"/>
-          <action id="CopyPaths" class="xcom.intellij.ide.actions.CopyPathsAction" text="C_opy Paths" description="Copy paths corresponding to selected files or directories to clipboard"/>
-          <action id="$Paste" class="xcom.intellij.ide.actions.PasteAction" text="_Paste" icon="/actions/menu-paste.png" description="Paste from clipboard"/>
-          <action id="PasteMultiple" class="xcom.intellij.openapi.editor.actions.MultiplePasteAction" text="Past_e..." description="Paste from recent clipboards"/>
+        <group id="xCutCopyPasteGroup">
+          <action id="x$Cut" class="xcom.intellij.ide.actions.CutAction" text="Cu_t" icon="/actions/menu-cut.png" description="Cut to clipboard"/>
+          <action id="x$Copy" class="xcom.intellij.ide.actions.CopyAction" text="_Copy" icon="/actions/copy.png" description="Copy to clipboard"/>
+          <action id="xCopyPaths" class="xcom.intellij.ide.actions.CopyPathsAction" text="C_opy Paths" description="Copy paths corresponding to selected files or directories to clipboard"/>
+          <action id="x$Paste" class="xcom.intellij.ide.actions.PasteAction" text="_Paste" icon="/actions/menu-paste.png" description="Paste from clipboard"/>
+          <action id="xPasteMultiple" class="xcom.intellij.openapi.editor.actions.MultiplePasteAction" text="Past_e..." description="Paste from recent clipboards"/>
           <reference ref="EditorToggleColumnMode"/>
         </group>
         <separator/>
-        <action id="$SelectAll" class="xcom.intellij.ide.actions.SelectAllAction" text="Select _All" description="Select all"/>
+        <action id="x$SelectAll" class="xcom.intellij.ide.actions.SelectAllAction" text="Select _All" description="Select all"/>
         <separator/>
-        <action id="NewElement" class="xcom.intellij.ide.actions.NewElementAction" text="_New..." description="Create new class, interface, file or directory"/>
-        <action id="$Delete" class="xcom.intellij.ide.actions.DeleteAction" text="_Delete" description="Delete selected item"/>
+        <action id="xNewElement" class="xcom.intellij.ide.actions.NewElementAction" text="_New..." description="Create new class, interface, file or directory"/>
+        <action id="x$Delete" class="xcom.intellij.ide.actions.DeleteAction" text="_Delete" description="Delete selected item"/>
         <separator/>
-        <action id="ToggleBookmark" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmarkAction" text="Toggle _Bookmark" description="Toggle bookmark at the current location"/>
-        <action id="ShowBookmarks" class="xcom.intellij.ide.bookmarks.actions.ShowBookmarksAction" text="_Show Bookmarks" description="Show list of all bookmarks"/>
+        <action id="xToggleBookmark" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmarkAction" text="Toggle _Bookmark" description="Toggle bookmark at the current location"/>
+        <action id="xShowBookmarks" class="xcom.intellij.ide.bookmarks.actions.ShowBookmarksAction" text="_Show Bookmarks" description="Show list of all bookmarks"/>
       </group>
 
       <!-- Search -->
-      <group text="_Search" id="SearchMenu">
-        <action id="Find" class="xcom.intellij.openapi.editor.actions.FindAction" text="_Find..." icon="/actions/menu-find.png" description="Find a string in active editor"/>
-        <action id="Replace" class="xcom.intellij.openapi.editor.actions.ReplaceAction" text="_Replace..." icon="/actions/menu-replace.png" description="Replace a string in active editor with another string"/>
-        <action id="FindNext" class="xcom.intellij.ide.actions.SearchAgainAction" text="Find _Next" description="Repeat the last Find/Replace operation"/>
-        <action id="FindPrevious" class="xcom.intellij.ide.actions.SearchBackAction" text="Find Pre_vious" description="Repeat the last Find/Replace operation in reverse direction"/>
-        <action id="FindWordAtCaret" class="xcom.intellij.openapi.editor.actions.FindWordAtCaretAction" text="Find _Word at Caret" description="Find next occurrence of the word at caret"/>
-        <action id="IncrementalSearch" class="xcom.intellij.codeInsight.navigation.actions.IncrementalSearchAction" text="Incrementa_l Search" description="Start incremental search (searches string as you type)"/>
+      <group text="_Search" id="xSearchMenu">
+        <action id="xFind" class="xcom.intellij.openapi.editor.actions.FindAction" text="_Find..." icon="/actions/menu-find.png" description="Find a string in active editor"/>
+        <action id="xReplace" class="xcom.intellij.openapi.editor.actions.ReplaceAction" text="_Replace..." icon="/actions/menu-replace.png" description="Replace a string in active editor with another string"/>
+        <action id="xFindNext" class="xcom.intellij.ide.actions.SearchAgainAction" text="Find _Next" description="Repeat the last Find/Replace operation"/>
+        <action id="xFindPrevious" class="xcom.intellij.ide.actions.SearchBackAction" text="Find Pre_vious" description="Repeat the last Find/Replace operation in reverse direction"/>
+        <action id="xFindWordAtCaret" class="xcom.intellij.openapi.editor.actions.FindWordAtCaretAction" text="Find _Word at Caret" description="Find next occurrence of the word at caret"/>
+        <action id="xIncrementalSearch" class="xcom.intellij.codeInsight.navigation.actions.IncrementalSearchAction" text="Incrementa_l Search" description="Start incremental search (searches string as you type)"/>
         <separator/>
-        <action id="FindUsages" class="xcom.intellij.find.actions.FindUsagesAction" text="Find _Usages..." description="Find usages of the symbol at caret"/>
-        <action id="FindUsagesInFile" class="xcom.intellij.find.actions.FindUsagesInFileAction" text="F_ind Usages in File..." description="Find usages of the symbol at caret in active editor"/>
-        <action id="HighlightUsagesInFile" class="xcom.intellij.codeInsight.highlighting.actions.HighlightUsagesAction" text="_Highlight Usages in File" description="Highlight usages of the symbol at caret in active editor"/>
+        <action id="xFindUsages" class="xcom.intellij.find.actions.FindUsagesAction" text="Find _Usages..." description="Find usages of the symbol at caret"/>
+        <action id="xFindUsagesInFile" class="xcom.intellij.find.actions.FindUsagesInFileAction" text="F_ind Usages in File..." description="Find usages of the symbol at caret in active editor"/>
+        <action id="xHighlightUsagesInFile" class="xcom.intellij.codeInsight.highlighting.actions.HighlightUsagesAction" text="_Highlight Usages in File" description="Highlight usages of the symbol at caret in active editor"/>
         <separator/>
-        <action id="FindInPath" class="xcom.intellij.find.actions.FindInPathAction" text="Find in _Path..." description="Find a string in multiple files"/>
-        <action id="ReplaceInPath" class="xcom.intellij.find.actions.ReplaceInPathAction" text="Repl_ace in Path..." description="Replace a string in multiple files with another string"/>
+        <action id="xFindInPath" class="xcom.intellij.find.actions.FindInPathAction" text="Find in _Path..." description="Find a string in multiple files"/>
+        <action id="xReplaceInPath" class="xcom.intellij.find.actions.ReplaceInPathAction" text="Repl_ace in Path..." description="Replace a string in multiple files with another string"/>
       </group>
 
       <!-- View -->
-      <group text="_View" id="ViewMenu">
-        <action id="ViewToolBar" class="xcom.intellij.ide.actions.ViewToolbarAction" text="_Toolbar" description="Show/hide the main toolbar"/>
-        <action id="ViewStatusBar" class="xcom.intellij.ide.actions.ViewStatusBarAction" text="_Status Bar" description="Show/hide the status bar"/>
+      <group text="_View" id="xViewMenu">
+        <action id="xViewToolBar" class="xcom.intellij.ide.actions.ViewToolbarAction" text="_Toolbar" description="Show/hide the main toolbar"/>
+        <action id="xViewStatusBar" class="xcom.intellij.ide.actions.ViewStatusBarAction" text="_Status Bar" description="Show/hide the status bar"/>
         <reference ref="EditorToggleShowWhitespaces"/>
         <reference ref="EditorToggleShowLineNumbers"/>
         <separator/>
-        <action id="ToggleFullScreenMode" class="xcom.intellij.ide.actions.ToggleFullScreenModeAction" text="F_ull Screen" description="Maximize window to full screen"/>
+        <action id="xToggleFullScreenMode" class="xcom.intellij.ide.actions.ToggleFullScreenModeAction" text="F_ull Screen" description="Maximize window to full screen"/>
         <separator/>
-        <group id="CodeEditorViewGroup" class="xcom.intellij.ide.actions.CodeEditorActionGroup">
-          <action id="FileStructurePopup" class="xcom.intellij.ide.actions.ViewStructureAction" text="_File Structure Popup" description="Popup structure of the current file for quick navigation"/>
-          <action id="SelectIn" class="xcom.intellij.ide.actions.SelectInAction" text="Se_lect In..." description="Select the current class or method in any view"/>
-          <action id="QuickJavaDoc" class="xcom.intellij.codeInsight.javadoc.actions.ShowQuickDocInfoAction" text="_Quick JavaDoc" description="Show a popup window with JavaDoc for the symbol at caret"/>
-          <action id="QuickImplementations" class="xcom.intellij.codeInsight.hint.actions.ShowImplementationsAction" text="Quick _Implementations" description="Show a popup window with the symbol (and its implementations) code"/>
-          <action id="ParameterInfo" class="xcom.intellij.codeInsight.hint.actions.ShowParameterInfoAction" text="_Parameter Info" description="Show parameters of the method call at caret"/>
-          <action id="EditorContextInfo" class="xcom.intellij.codeInsight.hint.actions.ShowContainerInfoAction" text="_Context Info" description="Show the current method or class declaration when it is not visible"/>
-          <action id="ShowErrorDescription" class="xcom.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction" text="E_rror Description" description="Show description of error or warning at caret"/>
+        <group id="xCodeEditorViewGroup" class="xcom.intellij.ide.actions.CodeEditorActionGroup">
+          <action id="xFileStructurePopup" class="xcom.intellij.ide.actions.ViewStructureAction" text="_File Structure Popup" description="Popup structure of the current file for quick navigation"/>
+          <action id="xSelectIn" class="xcom.intellij.ide.actions.SelectInAction" text="Se_lect In..." description="Select the current class or method in any view"/>
+          <action id="xQuickJavaDoc" class="xcom.intellij.codeInsight.javadoc.actions.ShowQuickDocInfoAction" text="_Quick JavaDoc" description="Show a popup window with JavaDoc for the symbol at caret"/>
+          <action id="xQuickImplementations" class="xcom.intellij.codeInsight.hint.actions.ShowImplementationsAction" text="Quick _Implementations" description="Show a popup window with the symbol (and its implementations) code"/>
+          <action id="xParameterInfo" class="xcom.intellij.codeInsight.hint.actions.ShowParameterInfoAction" text="_Parameter Info" description="Show parameters of the method call at caret"/>
+          <action id="xEditorContextInfo" class="xcom.intellij.codeInsight.hint.actions.ShowContainerInfoAction" text="_Context Info" description="Show the current method or class declaration when it is not visible"/>
+          <action id="xShowErrorDescription" class="xcom.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction" text="E_rror Description" description="Show description of error or warning at caret"/>
         </group>
         <separator/>
-        <group id="CommanderViewGroup" class="xcom.intellij.ide.actions.CommanderViewActionGroup">
-          <action id="CommanderSyncViews" class="xcom.intellij.ide.actions.SyncViewsAction" text="S_ynchronize Views" description="Synchronize both panels"/>
-          <action id="CommanderSwapPanels" class="xcom.intellij.ide.actions.SwapPanelsAction" text="Swap _Panels" description="Swap the panels"/>
+        <group id="xCommanderViewGroup" class="xcom.intellij.ide.actions.CommanderViewActionGroup">
+          <action id="xCommanderSyncViews" class="xcom.intellij.ide.actions.SyncViewsAction" text="S_ynchronize Views" description="Synchronize both panels"/>
+          <action id="xCommanderSwapPanels" class="xcom.intellij.ide.actions.SwapPanelsAction" text="Swap _Panels" description="Swap the panels"/>
           <reference ref="CompareTwoFiles"/>
           <reference ref="CompareFileWithEditor"/>
         </group>
         <separator/>
-        <group id="ProjectViewGroup" class="xcom.intellij.ide.projectView.actions.ProjectViewActionGroup">
-          <action id="ProjectViewChangeView" class="xcom.intellij.ide.projectView.actions.ChangeProjectViewAction" text="Change View" description="Choose Project, Sourcepath or Classpath tree in the Project View window"/>
+        <group id="xProjectViewGroup" class="xcom.intellij.ide.projectView.actions.ProjectViewActionGroup">
+          <action id="xProjectViewChangeView" class="xcom.intellij.ide.projectView.actions.ChangeProjectViewAction" text="Change View" description="Choose Project, Sourcepath or Classpath tree in the Project View window"/>
         </group>
         <separator/>
-        <action id="EditSource" class="xcom.intellij.ide.actions.EditSourceAction" text="_Jump to Source" description="Open editor for the selected item and give focus to it"/>
-        <action id="ViewSource" class="xcom.intellij.ide.actions.ViewSourceAction" text="Sho_w Source" description="Open editor for the selected item"/>
+        <action id="xEditSource" class="xcom.intellij.ide.actions.EditSourceAction" text="_Jump to Source" description="Open editor for the selected item and give focus to it"/>
+        <action id="xViewSource" class="xcom.intellij.ide.actions.ViewSourceAction" text="Sho_w Source" description="Open editor for the selected item"/>
         <separator/>
-        <action id="ExternalJavaDoc" class="xcom.intellij.ide.actions.ExternalJavaDocAction" text="External Java_Doc" description="Open browser with JavaDoc for the selected item"/>
-        <action id="RecentFiles" class="xcom.intellij.ide.actions.ShowRecentFilesAction" text="Rece_nt Files..." description="Show list of recently edited files"/>
+        <action id="xExternalJavaDoc" class="xcom.intellij.ide.actions.ExternalJavaDocAction" text="External Java_Doc" description="Open browser with JavaDoc for the selected item"/>
+        <action id="xRecentFiles" class="xcom.intellij.ide.actions.ShowRecentFilesAction" text="Rece_nt Files..." description="Show list of recently edited files"/>
 
-        <action id="QuickChangeScheme" class="xcom.intellij.ide.actions.QuickChangeSchemesAction" text="_Quick Switch Scheme..." description="Change current code style scheme, color&amp;fonts scheme, keymap or Look&amp;Feel"/>
+        <action id="xQuickChangeScheme" class="xcom.intellij.ide.actions.QuickChangeSchemesAction" text="_Quick Switch Scheme..." description="Change current code style scheme, color&amp;fonts scheme, keymap or Look&amp;Feel"/>
         <separator/>
-        <action id="TypeHierarchy" class="xcom.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction" text="Type _Hierarchy" description="Browse hierarchy for the selected class"/>
-        <action id="MethodHierarchy" class="xcom.intellij.ide.hierarchy.actions.BrowseMethodHierarchyAction" text="_Method Hierarchy" description="Browse method hierarchy for the selected method"/>
-        <action id="CallHierarchy" class="xcom.intellij.ide.hierarchy.actions.BrowseCallHierarchyAction" text="Call Hierarch_y" description="Browse call hierarchy for the selected method"/>
+        <action id="xTypeHierarchy" class="xcom.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction" text="Type _Hierarchy" description="Browse hierarchy for the selected class"/>
+        <action id="xMethodHierarchy" class="xcom.intellij.ide.hierarchy.actions.BrowseMethodHierarchyAction" text="_Method Hierarchy" description="Browse method hierarchy for the selected method"/>
+        <action id="xCallHierarchy" class="xcom.intellij.ide.hierarchy.actions.BrowseCallHierarchyAction" text="Call Hierarch_y" description="Browse call hierarchy for the selected method"/>
         <separator/>
-        <group id="FoldingGroup" class="xcom.intellij.codeInsight.folding.impl.actions.FoldingGroup" text="Foldin_g" popup="true">
-          <action id="ExpandRegion" class="xcom.intellij.codeInsight.folding.impl.actions.ExpandRegionAction" text="E_xpand" description="Expand folding region at caret"/>
-          <action id="CollapseRegion" class="xcom.intellij.codeInsight.folding.impl.actions.CollapseRegionAction" text="_Collapse" description="Collapse folding region at caret"/>
+        <group id="xFoldingGroup" class="xcom.intellij.codeInsight.folding.impl.actions.FoldingGroup" text="Foldin_g" popup="true">
+          <action id="xExpandRegion" class="xcom.intellij.codeInsight.folding.impl.actions.ExpandRegionAction" text="E_xpand" description="Expand folding region at caret"/>
+          <action id="xCollapseRegion" class="xcom.intellij.codeInsight.folding.impl.actions.CollapseRegionAction" text="_Collapse" description="Collapse folding region at caret"/>
           <separator/>
-          <action id="ExpandAllRegions" class="xcom.intellij.codeInsight.folding.impl.actions.ExpandAllRegionsAction" text="_Expand All" description="Expand all folding regions"/>
-          <action id="CollapseAllRegions" class="xcom.intellij.codeInsight.folding.impl.actions.CollapseAllRegionsAction" text="Collapse _All" description="Collapse all folding regions"/>
+          <action id="xExpandAllRegions" class="xcom.intellij.codeInsight.folding.impl.actions.ExpandAllRegionsAction" text="_Expand All" description="Expand all folding regions"/>
+          <action id="xCollapseAllRegions" class="xcom.intellij.codeInsight.folding.impl.actions.CollapseAllRegionsAction" text="Collapse _All" description="Collapse all folding regions"/>
           <separator/>
-          <action id="ExpandJavadocs" class="xcom.intellij.codeInsight.folding.impl.actions.ExpandJavadocsAction" text="Expand Java_docs" description="Expand all javadoc comments"/>
-          <action id="CollapseJavadocs" class="xcom.intellij.codeInsight.folding.impl.actions.CollapseJavadocsAction" text="Collapse _Javadocs" description="Collapse all javadoc comments"/>
+          <action id="xExpandJavadocs" class="xcom.intellij.codeInsight.folding.impl.actions.ExpandJavadocsAction" text="Expand Java_docs" description="Expand all javadoc comments"/>
+          <action id="xCollapseJavadocs" class="xcom.intellij.codeInsight.folding.impl.actions.CollapseJavadocsAction" text="Collapse _Javadocs" description="Collapse all javadoc comments"/>
           <separator/>
-          <action id="CollapseSelection" class="xcom.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction" text="Fold _Selection / Remove region" description="Fold selected block"/>
-          <action id="CollapseBlock" class="xcom.intellij.codeInsight.folding.impl.actions.CollapseBlockAction" text="Fold Code Block" description="Fold current code block"/>
+          <action id="xCollapseSelection" class="xcom.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction" text="Fold _Selection / Remove region" description="Fold selected block"/>
+          <action id="xCollapseBlock" class="xcom.intellij.codeInsight.folding.impl.actions.CollapseBlockAction" text="Fold Code Block" description="Fold current code block"/>
         </group>
       </group>
 
       <!-- Go to -->
-      <group text="_Go To" id="GoToMenu">
-        <action id="GotoClass" class="xcom.intellij.ide.actions.GotoClassAction" text="_Class..." description="Quickly navigate to a class by name"/>
-        <action id="GotoFile" class="xcom.intellij.ide.actions.GotoFileAction" text="_File..." description="Quickly navigate to a file by name"/>
-        <action id="GotoSymbol" class="xcom.intellij.ide.actions.GotoSymbolAction" text="_Symbol..." description="Quickly navigate to any symbol by name"/>
-        <action id="GotoLine" class="xcom.intellij.ide.actions.GotoLineAction" text="_Line..." description="Navigate to a line in editor by its number"/>
+      <group text="_Go To" id="xGoToMenu">
+        <action id="xGotoClass" class="xcom.intellij.ide.actions.GotoClassAction" text="_Class..." description="Quickly navigate to a class by name"/>
+        <action id="xGotoFile" class="xcom.intellij.ide.actions.GotoFileAction" text="_File..." description="Quickly navigate to a file by name"/>
+        <action id="xGotoSymbol" class="xcom.intellij.ide.actions.GotoSymbolAction" text="_Symbol..." description="Quickly navigate to any symbol by name"/>
+        <action id="xGotoLine" class="xcom.intellij.ide.actions.GotoLineAction" text="_Line..." description="Navigate to a line in editor by its number"/>
         <separator/>
-        <action id="GotoDeclaration" class="xcom.intellij.codeInsight.navigation.actions.GotoDeclarationAction" text="_Declaration" description="Navigate to the declaration of the symbol at caret"/>
-        <action id="GotoDefinition" class="xcom.intellij.codeInsight.navigation.actions.GotoDefinitionAction" text="_Definition" description="Navigate to the definitions of the current value"/>
-        <action id="GotoUsage" class="xcom.intellij.codeInsight.navigation.actions.GotoUsageAction" text="_Usage" description="Navigate to the usages of the current value"/>
-        <action id="GotoImplementation" class="xcom.intellij.codeInsight.navigation.actions.GotoImplementationAction" text="I_mplementation(s)" description="Navigate to the implementation(s) of the selected class or method"/>
-        <action id="SmartGotoImplementation" class="xcom.intellij.codeInsight.navigation.actions.SmartGotoImplementationAction" text="_Called Implementation(s)" description="Navigate to the implementation(s) of the selected method"/>
-        <action id="GotoTypeDeclaration" class="xcom.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction" text="_Type Declaration" description="Navigate to the declaration of the symbol's type at caret"/>
-        <action id="GotoSuperMethod" class="xcom.intellij.codeInsight.navigation.actions.GotoSuperAction" text="S_uper Method" description="Navigate to the declaration of the method that current method overrides or implements"/>
-        <action id="GotoAspect" class="xcom.intellij.codeInsight.navigation.actions.GotoAspectAction" text="_Aspect" description="Navigate to the declaration of the advice, error or warning declaration that affects a join point at caret"/>
+        <action id="xGotoDeclaration" class="xcom.intellij.codeInsight.navigation.actions.GotoDeclarationAction" text="_Declaration" description="Navigate to the declaration of the symbol at caret"/>
+        <action id="xGotoDefinition" class="xcom.intellij.codeInsight.navigation.actions.GotoDefinitionAction" text="_Definition" description="Navigate to the definitions of the current value"/>
+        <action id="xGotoUsage" class="xcom.intellij.codeInsight.navigation.actions.GotoUsageAction" text="_Usage" description="Navigate to the usages of the current value"/>
+        <action id="xGotoImplementation" class="xcom.intellij.codeInsight.navigation.actions.GotoImplementationAction" text="I_mplementation(s)" description="Navigate to the implementation(s) of the selected class or method"/>
+        <action id="xSmartGotoImplementation" class="xcom.intellij.codeInsight.navigation.actions.SmartGotoImplementationAction" text="_Called Implementation(s)" description="Navigate to the implementation(s) of the selected method"/>
+        <action id="xGotoTypeDeclaration" class="xcom.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction" text="_Type Declaration" description="Navigate to the declaration of the symbol's type at caret"/>
+        <action id="xGotoSuperMethod" class="xcom.intellij.codeInsight.navigation.actions.GotoSuperAction" text="S_uper Method" description="Navigate to the declaration of the method that current method overrides or implements"/>
+        <action id="xGotoAspect" class="xcom.intellij.codeInsight.navigation.actions.GotoAspectAction" text="_Aspect" description="Navigate to the declaration of the advice, error or warning declaration that affects a join point at caret"/>
         <separator/>
-        <action id="GotoNextError" class="xcom.intellij.codeInsight.daemon.impl.actions.GotoNextErrorAction" text="_Next Highlighted Error" description="Navigate to the next highlighted error in the active editor"/>
-        <action id="GotoPreviousError" class="xcom.intellij.codeInsight.daemon.impl.actions.GotoPreviousErrorAction" text="_Previous Highlighted Error" description="Navigate to the previous highlighted error in the active editor"/>
+        <action id="xGotoNextError" class="xcom.intellij.codeInsight.daemon.impl.actions.GotoNextErrorAction" text="_Next Highlighted Error" description="Navigate to the next highlighted error in the active editor"/>
+        <action id="xGotoPreviousError" class="xcom.intellij.codeInsight.daemon.impl.actions.GotoPreviousErrorAction" text="_Previous Highlighted Error" description="Navigate to the previous highlighted error in the active editor"/>
         <separator/>
-        <action id="MethodDown" class="xcom.intellij.codeInsight.navigation.actions.MethodDownAction" text="N_ext Method" description="Navigate to the next method in the active editor"/>
+        <action id="xMethodDown" class="xcom.intellij.codeInsight.navigation.actions.MethodDownAction" text="N_ext Method" description="Navigate to the next method in the active editor"/>
 
 
-        <action id="MethodUp" class="xcom.intellij.codeInsight.navigation.actions.MethodUpAction" text="Prev_ious Method" description="Navigate to the previous method in the active editor"/>
+        <action id="xMethodUp" class="xcom.intellij.codeInsight.navigation.actions.MethodUpAction" text="Prev_ious Method" description="Navigate to the previous method in the active editor"/>
         <separator/>
-        <action id="GotoNextBookmark" class="xcom.intellij.ide.bookmarks.actions.NextBookmarkAction" text="Ne_xt Bookmark" description="Navigate to the next bookmark in the active editor"/>
-        <action id="GotoPreviousBookmark" class="xcom.intellij.ide.bookmarks.actions.PreviousBookmarkAction" text="P_revious Bookmark" description="Navigate to the previous bookmark in the active editor"/>
+        <action id="xGotoNextBookmark" class="xcom.intellij.ide.bookmarks.actions.NextBookmarkAction" text="Ne_xt Bookmark" description="Navigate to the next bookmark in the active editor"/>
+        <action id="xGotoPreviousBookmark" class="xcom.intellij.ide.bookmarks.actions.PreviousBookmarkAction" text="P_revious Bookmark" description="Navigate to the previous bookmark in the active editor"/>
         <separator/>
-        <action id="Back" class="xcom.intellij.ide.actions.BackAction" text="_Back" icon="/actions/back.png" description="Undo last navigation operation"/>
-        <action id="Forward" class="xcom.intellij.ide.actions.ForwardAction" text="For_ward" icon="/actions/forward.png" description="Redo last undone navigation operation"/>
-        <action id="JumpToLastChange" class="xcom.intellij.ide.actions.JumpToLastEditAction" text="La_st Edit Location" description="Move through the most recent change points"/>
+        <action id="xBack" class="xcom.intellij.ide.actions.BackAction" text="_Back" icon="/actions/back.png" description="Undo last navigation operation"/>
+        <action id="xForward" class="xcom.intellij.ide.actions.ForwardAction" text="For_ward" icon="/actions/forward.png" description="Redo last undone navigation operation"/>
+        <action id="xJumpToLastChange" class="xcom.intellij.ide.actions.JumpToLastEditAction" text="La_st Edit Location" description="Move through the most recent change points"/>
         <separator/>
-        <action id="PreviousOccurence" class="xcom.intellij.ide.actions.PreviousOccurenceAction" text="Previ_ous Occurrence" icon="/actions/previousOccurence.png" description="Navigate to the previous occurrence"/>
-        <action id="NextOccurence" class="xcom.intellij.ide.actions.NextOccurenceAction" text="Ne_xt Occurrence" icon="/actions/nextOccurence.png" description="Navigate to the next occurrence"/>
+        <action id="xPreviousOccurence" class="xcom.intellij.ide.actions.PreviousOccurenceAction" text="Previ_ous Occurrence" icon="/actions/previousOccurence.png" description="Navigate to the previous occurrence"/>
+        <action id="xNextOccurence" class="xcom.intellij.ide.actions.NextOccurenceAction" text="Ne_xt Occurrence" icon="/actions/nextOccurence.png" description="Navigate to the next occurrence"/>
         <separator/>
-        <action id="VcsShowNextChangeMarker" class="xcom.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction" text="Go To Next Change" description="Next change" icon="/actions/nextOccurence.png"/>
-        <action id="VcsShowPrevChangeMarker" class="xcom.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction" text="Go To Prev Change" description="Prev change" icon="/actions/previousOccurence.png"/>
+        <action id="xVcsShowNextChangeMarker" class="xcom.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction" text="Go To Next Change" description="Next change" icon="/actions/nextOccurence.png"/>
+        <action id="xVcsShowPrevChangeMarker" class="xcom.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction" text="Go To Prev Change" description="Prev change" icon="/actions/previousOccurence.png"/>
       </group>
 
       <!--  Code  -->
-      <group id="CodeMenu" class="xcom.intellij.codeInsight.actions.CodeGroup" text="Co_de">
+      <group id="xCodeMenu" class="xcom.intellij.codeInsight.actions.CodeGroup" text="Co_de">
         <reference ref="OverrideMethods"/>
         <reference ref="ImplementMethods"/>
-        <action id="DelegateMethod" class="xcom.intellij.codeInsight.generation.actions.GenerateDelegateAction" text="_Delegate Methods..." description="Generate delegate method to a field/getter"/>
+        <action id="xDelegateMethod" class="xcom.intellij.codeInsight.generation.actions.GenerateDelegateAction" text="_Delegate Methods..." description="Generate delegate method to a field/getter"/>
         <separator/>
-        <action id="SurroundWith" class="xcom.intellij.codeInsight.generation.actions.SurroundWithAction" text="_Surround With..." description="Surround selected code fragment with if, while, try/catch or other construct"/>
+        <action id="xSurroundWith" class="xcom.intellij.codeInsight.generation.actions.SurroundWithAction" text="_Surround With..." description="Surround selected code fragment with if, while, try/catch or other construct"/>
         <!-- Alt-Ins in Java code-->
-        <action id="Generate" text="_Generate..." description="Generate constructor, getter or setter method, or EJB components" class="xcom.intellij.codeInsight.generation.actions.GenerateAction"/>
+        <action id="xGenerate" text="_Generate..." description="Generate constructor, getter or setter method, or EJB components" class="xcom.intellij.codeInsight.generation.actions.GenerateAction"/>
         <separator/>
-        <group id="CodeCompletionGroup" class="xcom.intellij.codeInsight.completion.actions.CodeCompletionGroup" text="_Complete Code" popup="true">
-          <action id="CodeCompletion" class="xcom.intellij.codeInsight.completion.actions.CodeCompletionAction" text="Basic" description="Complete code"/>
-          <action id="WordCompletion" class="xcom.intellij.codeInsight.completion.actions.WordCompletionAction" text="Complete Word" description="Complete word"/>
-          <action id="SmartTypeCompletion" class="xcom.intellij.codeInsight.completion.actions.SmartCodeCompletionAction" text="SmartType" description="Complete code basing on expected type"/>
-          <action id="ClassNameCompletion" class="xcom.intellij.codeInsight.completion.actions.ClassNameCompletionAction" text="Class Name" description="Complete class name and add import for it"/>
+        <group id="xCodeCompletionGroup" class="xcom.intellij.codeInsight.completion.actions.CodeCompletionGroup" text="_Complete Code" popup="true">
+          <action id="xCodeCompletion" class="xcom.intellij.codeInsight.completion.actions.CodeCompletionAction" text="Basic" description="Complete code"/>
+          <action id="xWordCompletion" class="xcom.intellij.codeInsight.completion.actions.WordCompletionAction" text="Complete Word" description="Complete word"/>
+          <action id="xSmartTypeCompletion" class="xcom.intellij.codeInsight.completion.actions.SmartCodeCompletionAction" text="SmartType" description="Complete code basing on expected type"/>
+          <action id="xClassNameCompletion" class="xcom.intellij.codeInsight.completion.actions.ClassNameCompletionAction" text="Class Name" description="Complete class name and add import for it"/>
         </group>
         <separator/>
-        <action id="InsertLiveTemplate" class="xcom.intellij.codeInsight.template.impl.actions.ListTemplatesAction" text="Insert Live _Template..." description="Show popup list of live templates starting with the specified prefix"/>
-        <action id="SurroundWithLiveTemplate" class="xcom.intellij.codeInsight.template.impl.actions.SurroundWithTemplateAction" text="Surround with Live Tem_plate..." description="Surrounds the selection with one of the template"/>
+        <action id="xInsertLiveTemplate" class="xcom.intellij.codeInsight.template.impl.actions.ListTemplatesAction" text="Insert Live _Template..." description="Show popup list of live templates starting with the specified prefix"/>
+        <action id="xSurroundWithLiveTemplate" class="xcom.intellij.codeInsight.template.impl.actions.SurroundWithTemplateAction" text="Surround with Live Tem_plate..." description="Surrounds the selection with one of the template"/>
         <separator/>
-        <action id="CommentByLineComment" class="xcom.intellij.codeInsight.generation.actions.CommentByLineCommentAction" text="Comment with _Line Comment" description="Comment/uncomment current line or selected block with line comments"/>
-        <action id="CommentByBlockComment" class="xcom.intellij.codeInsight.generation.actions.CommentByBlockCommentAction" text="Comment with _Block Comment" description="Comment/uncomment code with block comments"/>
-        <action id="AutoIndentLines" class="xcom.intellij.codeInsight.generation.actions.AutoIndentLinesAction" text="_Auto-Indent Lines" description="Indent current line or selected block according to the code style settings"/>
+        <action id="xCommentByLineComment" class="xcom.intellij.codeInsight.generation.actions.CommentByLineCommentAction" text="Comment with _Line Comment" description="Comment/uncomment current line or selected block with line comments"/>
+        <action id="xCommentByBlockComment" class="xcom.intellij.codeInsight.generation.actions.CommentByBlockCommentAction" text="Comment with _Block Comment" description="Comment/uncomment code with block comments"/>
+        <action id="xAutoIndentLines" class="xcom.intellij.codeInsight.generation.actions.AutoIndentLinesAction" text="_Auto-Indent Lines" description="Indent current line or selected block according to the code style settings"/>
       </group>
 
-      <group id="AnalyzeMenu" text="Analy_ze" popup="true">
-        <action id="InspectCode" class="xcom.intellij.codeInspection.actions.CodeInspectionAction" text="_Inspect Code..." description="Inspect code"/>
-        <action id="ViewOfflineInspection" class="xcom.intellij.codeInspection.actions.ViewOfflineResultsAction" text="View _Offline Inspection Results..." description="Load offline inspection results"/>
-        <action id="ShowPackageDeps" class="xcom.intellij.packageDependencies.actions.AnalyzeDependenciesAction" text="Analyze _Dependencies..." description="Browse code choosen analysis item depends on" />
-        <action id="DupLocate" class="xcom.intellij.dupLocator.DuplocateAction" text="_Locate Duplicates..." description="Locate duplicate code in project" />
+      <group id="xAnalyzeMenu" text="Analy_ze" popup="true">
+        <action id="xInspectCode" class="xcom.intellij.codeInspection.actions.CodeInspectionAction" text="_Inspect Code..." description="Inspect code"/>
+        <action id="xViewOfflineInspection" class="xcom.intellij.codeInspection.actions.ViewOfflineResultsAction" text="View _Offline Inspection Results..." description="Load offline inspection results"/>
+        <action id="xShowPackageDeps" class="xcom.intellij.packageDependencies.actions.AnalyzeDependenciesAction" text="Analyze _Dependencies..." description="Browse code choosen analysis item depends on" />
+        <action id="xDupLocate" class="xcom.intellij.dupLocator.DuplocateAction" text="_Locate Duplicates..." description="Locate duplicate code in project" />
       </group>
 
       <!-- Refactor -->
-      <group id="RefactoringMenu" class="xcom.intellij.refactoring.actions.RefactoringGroup" text="_Refactor" popup="true">
-        <action id="RenameElement" class="xcom.intellij.refactoring.actions.RenameElementAction" text="_Rename..." description="Rename the selected symbol and correct all references"/>
-        <action id="ChangeSignature" class="xcom.intellij.refactoring.actions.ChangeSignatureAction" text="Change _Signature..." description="Change signature of the selected method or class and correct all references"/>
-        <action id="MakeMethodStatic" class="xcom.intellij.refactoring.actions.MakeStaticAction" text="Make Method S_tatic..." description="Convert method to static and correct all references"/>
-        <action id="ConvertToInstanceMethod" class="xcom.intellij.refactoring.actions.ConvertToInstanceMethodAction" text="C_onvert To Instance Method..." description="Convert static method to instance method and correct all references"/>
+      <group id="xRefactoringMenu" class="xcom.intellij.refactoring.actions.RefactoringGroup" text="_Refactor" popup="true">
+        <action id="xRenameElement" class="xcom.intellij.refactoring.actions.RenameElementAction" text="_Rename..." description="Rename the selected symbol and correct all references"/>
+        <action id="xChangeSignature" class="xcom.intellij.refactoring.actions.ChangeSignatureAction" text="Change _Signature..." description="Change signature of the selected method or class and correct all references"/>
+        <action id="xMakeMethodStatic" class="xcom.intellij.refactoring.actions.MakeStaticAction" text="Make Method S_tatic..." description="Convert method to static and correct all references"/>
+        <action id="xConvertToInstanceMethod" class="xcom.intellij.refactoring.actions.ConvertToInstanceMethodAction" text="C_onvert To Instance Method..." description="Convert static method to instance method and correct all references"/>
         <separator/>
-        <action id="Move" class="xcom.intellij.refactoring.actions.MoveAction" text="_Move..." description="Move the selected class, package or static member to another package or class and correct all references"/>
-        <action id="CopyElement" class="xcom.intellij.ide.actions.CopyElementAction" text="C_opy..." description="Create a copy of the selected class, file(s) or directory(es)"/>
-        <action id="CloneElement" class="xcom.intellij.ide.actions.CloneElementAction" text="Clo_ne..." description="Create a copy of the selected class, file or directory in the same package/directory"/>
-        <action id="SafeDelete" class="xcom.intellij.refactoring.actions.SafeDeleteAction" text="Safe _Delete..." description="Delete the selected class, method or field, checking for usages"/>
+        <action id="xMove" class="xcom.intellij.refactoring.actions.MoveAction" text="_Move..." description="Move the selected class, package or static member to another package or class and correct all references"/>
+        <action id="xCopyElement" class="xcom.intellij.ide.actions.CopyElementAction" text="C_opy..." description="Create a copy of the selected class, file(s) or directory(es)"/>
+        <action id="xCloneElement" class="xcom.intellij.ide.actions.CloneElementAction" text="Clo_ne..." description="Create a copy of the selected class, file or directory in the same package/directory"/>
+        <action id="xSafeDelete" class="xcom.intellij.refactoring.actions.SafeDeleteAction" text="Safe _Delete..." description="Delete the selected class, method or field, checking for usages"/>
         <separator/>
-        <action id="ExtractMethod" class="xcom.intellij.refactoring.actions.ExtractMethodAction" text="E_xtract Method..." description="Turn the selected code fragment into a method"/>
-        <action id="MethodDuplicates" class="xcom.intellij.refactoring.actions.MethodDuplicatesAction" text="Replace Method Code Duplicates..." description="Finds code in current file that can be transformed into a call of selected method"/>
-        <action id="IntroduceVariable" class="xcom.intellij.refactoring.actions.IntroduceVariableAction" text="Introduce _Variable..." description="Put a result of the selected expression into a variable"/>
-        <action id="IntroduceField" class="xcom.intellij.refactoring.actions.IntroduceFieldAction" text="Introduce _Field..." description="Put a result of the selected expression into a field"/>
-        <action id="IntroduceConstant" class="xcom.intellij.refactoring.actions.IntroduceConstantAction" text="Introduce _Constant..." description="Replace selected expression with a constant (static final field)"/>
-        <action id="IntroduceParameter" class="xcom.intellij.refactoring.actions.IntroduceParameterAction" text="Introduce _Parameter..." description="Turn the selected expression into method parameter"/>
+        <action id="xExtractMethod" class="xcom.intellij.refactoring.actions.ExtractMethodAction" text="E_xtract Method..." description="Turn the selected code fragment into a method"/>
+        <action id="xMethodDuplicates" class="xcom.intellij.refactoring.actions.MethodDuplicatesAction" text="Replace Method Code Duplicates..." description="Finds code in current file that can be transformed into a call of selected method"/>
+        <action id="xIntroduceVariable" class="xcom.intellij.refactoring.actions.IntroduceVariableAction" text="Introduce _Variable..." description="Put a result of the selected expression into a variable"/>
+        <action id="xIntroduceField" class="xcom.intellij.refactoring.actions.IntroduceFieldAction" text="Introduce _Field..." description="Put a result of the selected expression into a field"/>
+        <action id="xIntroduceConstant" class="xcom.intellij.refactoring.actions.IntroduceConstantAction" text="Introduce _Constant..." description="Replace selected expression with a constant (static final field)"/>
+        <action id="xIntroduceParameter" class="xcom.intellij.refactoring.actions.IntroduceParameterAction" text="Introduce _Parameter..." description="Turn the selected expression into method parameter"/>
         <separator/>
-        <action id="ExtractModule" class="xcom.intellij.refactoring.actions.ExtractModuleAction" text="Extract _Interface..." description="Extract interface from the selected class"/>
-        <action id="ExtractSuperclass" class="xcom.intellij.refactoring.actions.ExtractSuperclassAction" text="Extract S_uperclass..." description="Extract superclass from the selected class"/>
-        <action id="TurnRefsToSuper" class="xcom.intellij.refactoring.actions.TurnRefsToSuperAction" text="Use Interface _Where Possible..." description="Change usages of a class to those of its superclass or interface"/>
-        <action id="MembersPullUp" class="xcom.intellij.refactoring.actions.PullUpAction" text="Pu_ll Members Up..." description="Pull class members to superclass or implemented interface"/>
-        <action id="MemberPushDown" class="xcom.intellij.refactoring.actions.PushDownAction" text="Pus_h Members Down..." description="Push class members down to directly inheriting subclasses"/>
-        <action id="InheritanceToDelegation" class="xcom.intellij.refactoring.actions.InheritanceToDelegationAction" text="Replace Inheritance with Dele_gation..." description="Replace inheritance with delegation"/>
+        <action id="xExtractModule" class="xcom.intellij.refactoring.actions.ExtractModuleAction" text="Extract _Interface..." description="Extract interface from the selected class"/>
+        <action id="xExtractSuperclass" class="xcom.intellij.refactoring.actions.ExtractSuperclassAction" text="Extract S_uperclass..." description="Extract superclass from the selected class"/>
+        <action id="xTurnRefsToSuper" class="xcom.intellij.refactoring.actions.TurnRefsToSuperAction" text="Use Interface _Where Possible..." description="Change usages of a class to those of its superclass or interface"/>
+        <action id="xMembersPullUp" class="xcom.intellij.refactoring.actions.PullUpAction" text="Pu_ll Members Up..." description="Pull class members to superclass or implemented interface"/>
+        <action id="xMemberPushDown" class="xcom.intellij.refactoring.actions.PushDownAction" text="Pus_h Members Down..." description="Push class members down to directly inheriting subclasses"/>
+        <action id="xInheritanceToDelegation" class="xcom.intellij.refactoring.actions.InheritanceToDelegationAction" text="Replace Inheritance with Dele_gation..." description="Replace inheritance with delegation"/>
         <separator/>
-        <action id="Inline" class="xcom.intellij.refactoring.actions.InlineAction" text="Inli_ne..." description="Inline the selected method or variable"/>
-        <action id="AnonymousToInner" class="xcom.intellij.refactoring.actions.AnonymousToInnerAction" text="Convert Anon_ymous to Inner..." description="Convert anonymous class into an inner class"/>
-        <action id="EncapsulateFields" class="xcom.intellij.refactoring.actions.EncapsulateFieldsAction" text="_Encapsulate Fields..." description="Replace direct access to fields in the selected class with use of accessor methods"/>
-        <action id="ReplaceTempWithQuery" class="xcom.intellij.refactoring.actions.TempWithQueryAction" text="Replace Temp with _Query..." description="Turn the selected variable into a method"/>
-        <action id="ReplaceConstructorWithFactory" class="xcom.intellij.refactoring.actions.ReplaceConstructorWithFactoryAction" text="Replace Constructor with F_actory Method..." description="Create a static factory method and use it instead of a constructor"/>
+        <action id="xInline" class="xcom.intellij.refactoring.actions.InlineAction" text="Inli_ne..." description="Inline the selected method or variable"/>
+        <action id="xAnonymousToInner" class="xcom.intellij.refactoring.actions.AnonymousToInnerAction" text="Convert Anon_ymous to Inner..." description="Convert anonymous class into an inner class"/>
+        <action id="xEncapsulateFields" class="xcom.intellij.refactoring.actions.EncapsulateFieldsAction" text="_Encapsulate Fields..." description="Replace direct access to fields in the selected class with use of accessor methods"/>
+        <action id="xReplaceTempWithQuery" class="xcom.intellij.refactoring.actions.TempWithQueryAction" text="Replace Temp with _Query..." description="Turn the selected variable into a method"/>
+        <action id="xReplaceConstructorWithFactory" class="xcom.intellij.refactoring.actions.ReplaceConstructorWithFactoryAction" text="Replace Constructor with F_actory Method..." description="Create a static factory method and use it instead of a constructor"/>
         <separator/>
-        <action id="Generify" class="xcom.intellij.refactoring.actions.TypeCookAction" text="Generify..." description="Convert your code to use generic types"/>
-        <action id="Type Migration" class="xcom.intellij.refactoring.actions.TypeMigrationAction" text="Type Migration..." description="Migrate one type to another"/>
+        <action id="xGenerify" class="xcom.intellij.refactoring.actions.TypeCookAction" text="Generify..." description="Convert your code to use generic types"/>
+        <action id="xType Migration" class="xcom.intellij.refactoring.actions.TypeMigrationAction" text="Type Migration..." description="Migrate one type to another"/>
         <separator/>
-        <action id="ExtractInclude" class="xcom.intellij.refactoring.actions.ExtractIncludeAction" text="Extract Include File..." description="Turn the selected code fragment into included file"/>
+        <action id="xExtractInclude" class="xcom.intellij.refactoring.actions.ExtractIncludeAction" text="Extract Include File..." description="Turn the selected code fragment into included file"/>
       </group>
 
       <!-- Build -->
-      <group text="_Build" id="BuildMenu">
-        <action id="CompileProject" class="xcom.intellij.compiler.actions.CompileProjectAction" text="_Rebuild Project" description="Recompile all files in the project"/>
-        <action id="CompileDirty" class="xcom.intellij.compiler.actions.CompileDirtyAction" text="Make _Project" icon="/actions/compile.png" description="Compile all modified and dependent files in the project"/>
-        <action id="MakeModule" class="xcom.intellij.compiler.actions.MakeModuleAction" text="Make _Module" description="Compile all modified and dependent files in the module"/>
-        <action id="Compile" class="xcom.intellij.compiler.actions.CompileAction" text="_Compile" description="Compile the selected file or package"/>
+      <group text="_Build" id="xBuildMenu">
+        <action id="xCompileProject" class="xcom.intellij.compiler.actions.CompileProjectAction" text="_Rebuild Project" description="Recompile all files in the project"/>
+        <action id="xCompileDirty" class="xcom.intellij.compiler.actions.CompileDirtyAction" text="Make _Project" icon="/actions/compile.png" description="Compile all modified and dependent files in the project"/>
+        <action id="xMakeModule" class="xcom.intellij.compiler.actions.MakeModuleAction" text="Make _Module" description="Compile all modified and dependent files in the module"/>
+        <action id="xCompile" class="xcom.intellij.compiler.actions.CompileAction" text="_Compile" description="Compile the selected file or package"/>
         <separator/>
-        <action id="GenerateAntBuild" class="xcom.intellij.compiler.actions.GenerateAntBuildAction" text="_Generate Ant Build" description="Generate Ant Build File from the Project"/>
+        <action id="xGenerateAntBuild" class="xcom.intellij.compiler.actions.GenerateAntBuildAction" text="_Generate Ant Build" description="Generate Ant Build File from the Project"/>
         <separator/>
-        <group id="AntBuildGroup" class="xcom.intellij.ant.actions.AntBuildGroup"/>
+        <group id="xAntBuildGroup" class="xcom.intellij.ant.actions.AntBuildGroup"/>
       </group>
 
 
-      <group text="R_un" id="RunMenu">
-        <group id="RunnerActions" text="Run/Debug" />
-        <action id="editRunConfigurations" text="Edit Configurations" class="xcom.intellij.execution.actions.EditRunConfigurationsAction" description="Open edit Run/Debug configurations dialog"/>
-        <action id="Stop" text="Stop" class="xcom.intellij.execution.actions.StopAction" description="Stop process" icon="/actions/suspend.png"/>
-        <action id="Hotswap" class="xcom.intellij.debugger.actions.HotSwapAction" text="_Reload Changed Classes" description="Reload all changed classes into application being debugged (HotSwap)"/>
+      <group text="R_un" id="xRunMenu">
+        <group id="xRunnerActions" text="Run/Debug" />
+        <action id="xeditRunConfigurations" text="Edit Configurations" class="xcom.intellij.execution.actions.EditRunConfigurationsAction" description="Open edit Run/Debug configurations dialog"/>
+        <action id="xStop" text="Stop" class="xcom.intellij.execution.actions.StopAction" description="Stop process" icon="/actions/suspend.png"/>
+        <action id="xHotswap" class="xcom.intellij.debugger.actions.HotSwapAction" text="_Reload Changed Classes" description="Reload all changed classes into application being debugged (HotSwap)"/>
         <separator/>
-        <action id="StepOver" class="xcom.intellij.debugger.actions.StepOverAction" text="Step _Over" icon="/actions/traceOver.png" description="Step to the next line in this file"/>
-        <action id="StepInto" class="xcom.intellij.debugger.actions.StepIntoAction" text="Step _Into" icon="/actions/traceInto.png" description="Step to the next line executed"/>
-        <action id="StepOut" class="xcom.intellij.debugger.actions.StepOutAction" text="Step Ou_t" icon="/actions/stepOut.png" description="Step to the first line executed after returning from this method"/>
-        <action id="ForceStepOver" class="xcom.intellij.debugger.actions.ForceStepOverAction" text="Fo_rce Step Over" icon="/actions/traceOver.png" description="Step over, disable all breakpoints before stepping."/>
-        <action id="ForceStepInto" class="xcom.intellij.debugger.actions.ForceStepIntoAction" text="Fo_rce Step Into" icon="/actions/forceStepInto.png" description="Step into, ignore stepping filters for libraries, constructors, etc."/>
-        <action id="RunToCursor" class="xcom.intellij.debugger.actions.RunToCursorAction" text="Run to _Cursor" icon="/actions/runToCursor.png" description="Run to the line where the caret is"/>
-        <action id="ForceRunToCursor" class="xcom.intellij.debugger.actions.ForceRunToCursorAction" text="Force Run to C_ursor" description="Run to the line where the caret is, ignoring any breakpoints"/>
-        <action id="Debugger.PopFrame" class="xcom.intellij.debugger.actions.PopFrameAction" text="Pop Frame" icon="/actions/popFrame.png" description="Moves execution point back to the method call dropping current method frames from the stack"/>
-        <action id="Pause" class="xcom.intellij.debugger.actions.PauseAction" text="_Pause Program" icon="/actions/pause.png" description="Suspend program execution and enable debugging"/>
-        <action id="Resume" class="xcom.intellij.debugger.actions.ResumeAction" text="Resume Pro_gram" icon="/actions/resume.png" description="Resume program execution"/>
+        <action id="xStepOver" class="xcom.intellij.debugger.actions.StepOverAction" text="Step _Over" icon="/actions/traceOver.png" description="Step to the next line in this file"/>
+        <action id="xStepInto" class="xcom.intellij.debugger.actions.StepIntoAction" text="Step _Into" icon="/actions/traceInto.png" description="Step to the next line executed"/>
+        <action id="xStepOut" class="xcom.intellij.debugger.actions.StepOutAction" text="Step Ou_t" icon="/actions/stepOut.png" description="Step to the first line executed after returning from this method"/>
+        <action id="xForceStepOver" class="xcom.intellij.debugger.actions.ForceStepOverAction" text="Fo_rce Step Over" icon="/actions/traceOver.png" description="Step over, disable all breakpoints before stepping."/>
+        <action id="xForceStepInto" class="xcom.intellij.debugger.actions.ForceStepIntoAction" text="Fo_rce Step Into" icon="/actions/forceStepInto.png" description="Step into, ignore stepping filters for libraries, constructors, etc."/>
+        <action id="xRunToCursor" class="xcom.intellij.debugger.actions.RunToCursorAction" text="Run to _Cursor" icon="/actions/runToCursor.png" description="Run to the line where the caret is"/>
+        <action id="xForceRunToCursor" class="xcom.intellij.debugger.actions.ForceRunToCursorAction" text="Force Run to C_ursor" description="Run to the line where the caret is, ignoring any breakpoints"/>
+        <action id="xDebugger.PopFrame" class="xcom.intellij.debugger.actions.PopFrameAction" text="Pop Frame" icon="/actions/popFrame.png" description="Moves execution point back to the method call dropping current method frames from the stack"/>
+        <action id="xPause" class="xcom.intellij.debugger.actions.PauseAction" text="_Pause Program" icon="/actions/pause.png" description="Suspend program execution and enable debugging"/>
+        <action id="xResume" class="xcom.intellij.debugger.actions.ResumeAction" text="Resume Pro_gram" icon="/actions/resume.png" description="Resume program execution"/>
         <separator/>
-        <action id="EvaluateExpression" class="xcom.intellij.debugger.actions.EvaluateAction" text="_Evaluate Expression..." icon="/debugger/evaluateExpression.png" description="Evaluate arbitrary expression"/>
-        <action id="QuickEvaluateExpression" class="xcom.intellij.debugger.actions.QuickEvaluateAction" text="_Quick Evaluate Expression" description="Evaluate selected expression"/>
-        <action id="ShowExecutionPoint" class="xcom.intellij.debugger.actions.ShowExecutionPointAction" text="Show E_xecution Point" icon="/debugger/showCurrentFrame.png" description="Show the current program execution point"/>
+        <action id="xEvaluateExpression" class="xcom.intellij.debugger.actions.EvaluateAction" text="_Evaluate Expression..." icon="/debugger/evaluateExpression.png" description="Evaluate arbitrary expression"/>
+        <action id="xQuickEvaluateExpression" class="xcom.intellij.debugger.actions.QuickEvaluateAction" text="_Quick Evaluate Expression" description="Evaluate selected expression"/>
+        <action id="xShowExecutionPoint" class="xcom.intellij.debugger.actions.ShowExecutionPointAction" text="Show E_xecution Point" icon="/debugger/showCurrentFrame.png" description="Show the current program execution point"/>
         <separator/>
-        <action id="ToggleLineBreakpoint" class="xcom.intellij.debugger.actions.ToggleLineBreakpointAction" text="Toggle  _Line Breakpoint" description="Toggle line breakpoint at caret"/>
-        <action id="ToggleMethodBreakpoint" class="xcom.intellij.debugger.actions.ToggleMethodBreakpointAction" text="Toggle  _Method Breakpoint" description="Toggle method breakpoint for the method at caret"/>
-        <action id="ToggleFieldBreakpoint" class="xcom.intellij.debugger.actions.ToggleFieldBreakpointAction" text="Toggle  _Field Watchpoint" description="Toggle field watchpoint for the field at caret"/>
-        <action id="ToggleBreakpointEnabled" class="xcom.intellij.debugger.actions.ToggleBreakpointEnabledAction" text="Toggle Breakpoint Enabled" icon="/actions/toggleBreakpoint.png" description="Enable/disable breakpoint at the current line"/>
-        <action id="ViewBreakpoints" class="xcom.intellij.debugger.actions.ViewBreakpointsAction" text="_View Breakpoints" icon="/debugger/viewBreakpoints.png" description="View and manage all breakpoints and watchpoints"/>
+        <action id="xToggleLineBreakpoint" class="xcom.intellij.debugger.actions.ToggleLineBreakpointAction" text="Toggle  _Line Breakpoint" description="Toggle line breakpoint at caret"/>
+        <action id="xToggleMethodBreakpoint" class="xcom.intellij.debugger.actions.ToggleMethodBreakpointAction" text="Toggle  _Method Breakpoint" description="Toggle method breakpoint for the method at caret"/>
+        <action id="xToggleFieldBreakpoint" class="xcom.intellij.debugger.actions.ToggleFieldBreakpointAction" text="Toggle  _Field Watchpoint" description="Toggle field watchpoint for the field at caret"/>
+        <action id="xToggleBreakpointEnabled" class="xcom.intellij.debugger.actions.ToggleBreakpointEnabledAction" text="Toggle Breakpoint Enabled" icon="/actions/toggleBreakpoint.png" description="Enable/disable breakpoint at the current line"/>
+        <action id="xViewBreakpoints" class="xcom.intellij.debugger.actions.ViewBreakpointsAction" text="_View Breakpoints" icon="/debugger/viewBreakpoints.png" description="View and manage all breakpoints and watchpoints"/>
         <separator/>
-        <action id="ExportThreads" class="xcom.intellij.debugger.actions.ExportThreadsAction" text="Export T_hreads..." description="Save all threads information to a text file or clipboard"/>
+        <action id="xExportThreads" class="xcom.intellij.debugger.actions.ExportThreadsAction" text="Export T_hreads..." description="Save all threads information to a text file or clipboard"/>
       </group>
 
       <!-- Tools -->
-      <group text="_Tools" id="ToolsMenu" configurable="true">
-        <action id="ReformatCode" class="xcom.intellij.codeInsight.actions.ReformatCodeAction" text="_Reformat Code..." description="Reformat code"/>
-        <action id="OptimizeImports" class="xcom.intellij.codeInsight.actions.OptimizeImportsAction" text="_Optimize Imports..." description="Remove unused imports and reorder/reorganize imports"/>
-        <action id="SaveAsTemplate" class="xcom.intellij.codeInsight.template.actions.SaveAsTemplateAction" text="Save as L_ive Template..." description="Save the selected text as live template"/>
-        <action id="SaveFileAsTemplate" class="xcom.intellij.ide.actions.SaveFileAsTemplateAction" text="Save File as Temp_late..." description="Save current file as template"/>
-        <action id="GenerateJavadoc" class="xcom.intellij.javadoc.actions.GenerateJavadocAction" text="Generate Java_Doc..." description="Run the JavaDoc tool"/>
+      <group text="_Tools" id="xToolsMenu" configurable="true">
+        <action id="xReformatCode" class="xcom.intellij.codeInsight.actions.ReformatCodeAction" text="_Reformat Code..." description="Reformat code"/>
+        <action id="xOptimizeImports" class="xcom.intellij.codeInsight.actions.OptimizeImportsAction" text="_Optimize Imports..." description="Remove unused imports and reorder/reorganize imports"/>
+        <action id="xSaveAsTemplate" class="xcom.intellij.codeInsight.template.actions.SaveAsTemplateAction" text="Save as L_ive Template..." description="Save the selected text as live template"/>
+        <action id="xSaveFileAsTemplate" class="xcom.intellij.ide.actions.SaveFileAsTemplateAction" text="Save File as Temp_late..." description="Save current file as template"/>
+        <action id="xGenerateJavadoc" class="xcom.intellij.javadoc.actions.GenerateJavadocAction" text="Generate Java_Doc..." description="Run the JavaDoc tool"/>
         <separator/>
-        <group id="Macros" text="_Macros" description="View, Change, Record, Play Macros" popup="true">
-          <group id="StanardMacroActions">
-            <action id="PlaybackLastMacro" class="xcom.intellij.ide.actionMacro.actions.PlaybackLastMacroAction" text="Playback _Last Macro" description="Playback last used macro"/>
-            <action id="StartStopMacroRecording" class="xcom.intellij.ide.actionMacro.actions.StartStopMacroRecordingAction" text="Start/Stop Macro _Recording" description="Start/Stop recording of a new macro"/>
-            <action id="EditMacros" class="xcom.intellij.ide.actionMacro.actions.EditMacrosAction" text="_Edit Macros..." description="Configure existing macros"/>
+        <group id="xMacros" text="_Macros" description="View, Change, Record, Play Macros" popup="true">
+          <group id="xStanardMacroActions">
+            <action id="xPlaybackLastMacro" class="xcom.intellij.ide.actionMacro.actions.PlaybackLastMacroAction" text="Playback _Last Macro" description="Playback last used macro"/>
+            <action id="xStartStopMacroRecording" class="xcom.intellij.ide.actionMacro.actions.StartStopMacroRecordingAction" text="Start/Stop Macro _Recording" description="Start/Stop recording of a new macro"/>
+            <action id="xEditMacros" class="xcom.intellij.ide.actionMacro.actions.EditMacrosAction" text="_Edit Macros..." description="Configure existing macros"/>
           </group>
           <separator/>
-          <group id="PlaySavedMacroActions" class="xcom.intellij.ide.actionMacro.actions.MacrosGroup"/>
+          <group id="xPlaySavedMacroActions" class="xcom.intellij.ide.actionMacro.actions.MacrosGroup"/>
         </group>
         <separator/>
-        <action id="Migrate" class="xcom.intellij.refactoring.actions.MigrateAction" text="Mi_grate..." description="Open migration dialog"/>
+        <action id="xMigrate" class="xcom.intellij.refactoring.actions.MigrateAction" text="Mi_grate..." description="Open migration dialog"/>
         <separator/>
         <group>
-          <action id="ValidateXml" class="xcom.intellij.xml.actions.ValidateXmlAction" text="_Validate" description="Validate the current xml file"/>
-          <action id="AddAntBuildFile" class="xcom.intellij.ant.actions.AddAntBuildFile" text="Add as Ant Build File" description="Add current XML file to the list of project's Ant build files"/>
+          <action id="xValidateXml" class="xcom.intellij.xml.actions.ValidateXmlAction" text="_Validate" description="Validate the current xml file"/>
+          <action id="xAddAntBuildFile" class="xcom.intellij.ant.actions.AddAntBuildFile" text="Add as Ant Build File" description="Add current XML file to the list of project's Ant build files"/>
         </group>
         <separator/>
         <reference ref="LocalVcsGroup"/>
         <separator/>
-        <action id="GenerateDTD" class="xcom.intellij.codeInsight.actions.GenerateDTDAction" text="Generate DTD from XML file"/>
+        <action id="xGenerateDTD" class="xcom.intellij.codeInsight.actions.GenerateDTDAction" text="Generate DTD from XML file"/>
 
         <separator/>
-        <group id="ExternalToolsGroup" text="External Tools" class="xcom.intellij.tools.ExternalToolsGroup"/>
+        <group id="xExternalToolsGroup" text="External Tools" class="xcom.intellij.tools.ExternalToolsGroup"/>
         <separator/>
-        <action id="DataSources" class="xcom.intellij.javaee.dataSource.DataSourcesManagementAction" text="Data Sources..." description="Manage JDBC Data Sources"/>
+        <action id="xDataSources" class="xcom.intellij.javaee.dataSource.DataSourcesManagementAction" text="Data Sources..." description="Manage JDBC Data Sources"/>
         <separator/>
 
         <group text="Unscramble" popup="true">
-          <action id="Unscramble" class="xcom.intellij.unscramble.UnscrambleAction" text="_Unscramble Stacktrace..."/>
-          <action id="UnscrambleFromClipboard" class="xcom.intellij.unscramble.UnscrambleFromClipboardAction" text="Unscramble Stacktrace From Clipboard..."/>
+          <action id="xUnscramble" class="xcom.intellij.unscramble.UnscrambleAction" text="_Unscramble Stacktrace..."/>
+          <action id="xUnscrambleFromClipboard" class="xcom.intellij.unscramble.UnscrambleFromClipboardAction" text="Unscramble Stacktrace From Clipboard..."/>
         </group>
 
         <group text="Internal Actions" internal="true" popup="true">
-          <action id="PsiViewer" internal="true" class="xcom.intellij.internal.psiView.PsiViewerAction" text="View PSI Structure"/>
-          <action id="DebugListen" internal="true" class="xcom.intellij.debugger.actions.ThrowDebugExceptionAction" text="Throw Debug Exception"/>
-          <action id="VirtualFileInfo" internal="true" class="xcom.intellij.openapi.vfs.impl.local.VirtualFileInfoAction" text="Virtual File Info"/>
-          <action id="Merge3Files" internal="true" class="xcom.intellij.openapi.diff.actions.MergeFilesAction" text="Merge"/>
+          <action id="xPsiViewer" internal="true" class="xcom.intellij.internal.psiView.PsiViewerAction" text="View PSI Structure"/>
+          <action id="xDebugListen" internal="true" class="xcom.intellij.debugger.actions.ThrowDebugExceptionAction" text="Throw Debug Exception"/>
+          <action id="xVirtualFileInfo" internal="true" class="xcom.intellij.openapi.vfs.impl.local.VirtualFileInfoAction" text="Virtual File Info"/>
+          <action id="xMerge3Files" internal="true" class="xcom.intellij.openapi.diff.actions.MergeFilesAction" text="Merge"/>
 <!--
-<action class="xcom.intellij.localVcs.CheckFileContentProviderAction" id="CheckFileContentProvider" text="Check File Content Provider"></action>
+<action class="xcom.intellij.localVcs.CheckFileContentProviderAction" id="xCheckFileContentProvider" text="Check File Content Provider"></action>
 -->
           <separator/>
-          <group text="Memory Management" id="MemoryManagement" popup="true">
-            <action id="ScanRefs" internal="true" class="xcom.intellij.internal.scanReferences.actions.ScanRefsAction" text="Scan Refs..."/>
-            <action id="ScanRefsByList" internal="true" class="xcom.intellij.internal.scanReferences.actions.ScanRefsByListAction" text="Scan Refs by List"/>
-            <action id="PrintRefsDump" internal="true" class="xcom.intellij.internal.scanReferences.actions.PrintRefsDumpAction" text="Print Refs Dump"/>
-            <action id="ClearDocumentHistory" internal="true" class="xcom.intellij.internal.scanReferences.actions.ClearDocumentHistoryAction" text="Clear Undo Queue"/>
-            <action id="SaveDump" internal="true" class="xcom.intellij.internal.saveDump.SaveDumpAction" text="Save Dump" description=""/>
-            <action id="DumpPsiMemoryCaches" internal="true" class="xcom.intellij.psi.impl.DumpPsiMemoryCaches" text="Dump what is cached in PSI"/>
-            <action id="AllocationsHistoryAction" internal="true" class="xcom.intellij.internal.scanReferences.allocations.ShowAllocationsAction" text="View Allocations History"/>
+          <group text="Memory Management" id="xMemoryManagement" popup="true">
+            <action id="xScanRefs" internal="true" class="xcom.intellij.internal.scanReferences.actions.ScanRefsAction" text="Scan Refs..."/>
+            <action id="xScanRefsByList" internal="true" class="xcom.intellij.internal.scanReferences.actions.ScanRefsByListAction" text="Scan Refs by List"/>
+            <action id="xPrintRefsDump" internal="true" class="xcom.intellij.internal.scanReferences.actions.PrintRefsDumpAction" text="Print Refs Dump"/>
+            <action id="xClearDocumentHistory" internal="true" class="xcom.intellij.internal.scanReferences.actions.ClearDocumentHistoryAction" text="Clear Undo Queue"/>
+            <action id="xSaveDump" internal="true" class="xcom.intellij.internal.saveDump.SaveDumpAction" text="Save Dump" description=""/>
+            <action id="xDumpPsiMemoryCaches" internal="true" class="xcom.intellij.psi.impl.DumpPsiMemoryCaches" text="Dump what is cached in PSI"/>
+            <action id="xAllocationsHistoryAction" internal="true" class="xcom.intellij.internal.scanReferences.allocations.ShowAllocationsAction" text="View Allocations History"/>
           </group>
-          <action internal="true" id="DecodeBytesAction" class="xcom.intellij.internal.encodings.DecodeBytesAction" text="Decode Bytes"/>
+          <action internal="true" id="xDecodeBytesAction" class="xcom.intellij.internal.encodings.DecodeBytesAction" text="Decode Bytes"/>
           <separator/>
-          <action id="LocalVcs.ShowStatistics" class="xcom.intellij.localVcs.actions.ShowStatistics" text="Show Local VCS Statistics..." description="Show Local VCS statistics" internal="true"/>
-          <action id="LocalVcs.ShowRepHistory" class="xcom.intellij.localVcs.actions.PringRepositoryHistoryAction" text="Repository History" internal="true"/>
+          <action id="xLocalVcs.ShowStatistics" class="xcom.intellij.localVcs.actions.ShowStatistics" text="Show Local VCS Statistics..." description="Show Local VCS statistics" internal="true"/>
+          <action id="xLocalVcs.ShowRepHistory" class="xcom.intellij.localVcs.actions.PringRepositoryHistoryAction" text="Repository History" internal="true"/>
           <separator/>
-          <action id="Compile2" class="xcom.intellij.intellijac.CompileAction" text="_Compile(Intellijac)..." description="" internal="true"/>
-          <action id="DropAnError" internal="true" class="xcom.intellij.diagnostic.DropAnErrorAction" text="Drop an error"/>
+          <action id="xCompile2" class="xcom.intellij.intellijac.CompileAction" text="_Compile(Intellijac)..." description="" internal="true"/>
+          <action id="xDropAnError" internal="true" class="xcom.intellij.diagnostic.DropAnErrorAction" text="Drop an error"/>
 
           <separator/>
-          <action id="Use new code formatter" class="xcom.intellij.psi.impl.source.codeStyle.NewCodeFormatterAction" text="Use New Code Formatter" description="Use New Code Formatter"/>
+          <action id="xUse new code formatter" class="xcom.intellij.psi.impl.source.codeStyle.NewCodeFormatterAction" text="Use New Code Formatter" description="Use New Code Formatter"/>
 
         </group>
       </group>
@@ -578,54 +578,54 @@
       <reference ref="VcsGroups"/>
 
       <!-- Window -->
-      <group text="_Window" id="WindowMenu">
-        <group id="ToolWindowsGroup" class="xcom.intellij.ide.actions.ToolWindowsGroup" popup="true" text="T_ool Windows"/>
+      <group text="_Window" id="xWindowMenu">
+        <group id="xToolWindowsGroup" class="xcom.intellij.ide.actions.ToolWindowsGroup" popup="true" text="T_ool Windows"/>
         <separator/>
-        <action id="StoreDefaultLayout" class="xcom.intellij.ide.actions.StoreDefaultLayoutAction" text="Store Current Layout as Defa_ult" description="Store current layout as default"/>
-        <action id="RestoreDefaultLayout" class="xcom.intellij.ide.actions.RestoreDefaultLayoutAction" text="Restore Default Layout" description="Restore default layout"/>
+        <action id="xStoreDefaultLayout" class="xcom.intellij.ide.actions.StoreDefaultLayoutAction" text="Store Current Layout as Defa_ult" description="Store current layout as default"/>
+        <action id="xRestoreDefaultLayout" class="xcom.intellij.ide.actions.RestoreDefaultLayoutAction" text="Restore Default Layout" description="Restore default layout"/>
         <separator/>
-        <action id="HideActiveWindow" class="xcom.intellij.ide.actions.HideToolWindowAction" text="_Hide Active Window" description="Hide active tool window"/>
-        <action id="HideAllWindows" class="xcom.intellij.ide.actions.HideAllToolWindowsAction" text="Hi_de All Windows" description="Hide all tool windows"/>
-        <action id="JumpToLastWindow" class="xcom.intellij.ide.actions.JumpToLastWindowAction" text="_Jump to Last Window" description="Activate last focused tool window"/>
+        <action id="xHideActiveWindow" class="xcom.intellij.ide.actions.HideToolWindowAction" text="_Hide Active Window" description="Hide active tool window"/>
+        <action id="xHideAllWindows" class="xcom.intellij.ide.actions.HideAllToolWindowsAction" text="Hi_de All Windows" description="Hide all tool windows"/>
+        <action id="xJumpToLastWindow" class="xcom.intellij.ide.actions.JumpToLastWindowAction" text="_Jump to Last Window" description="Activate last focused tool window"/>
         <separator/>
-        <action id="TogglePinnedMode" class="xcom.intellij.ide.actions.TogglePinnedModeAction" text="_Pinned Mode" description="Pin/unpin active tool window"/>
-        <action id="ToggleDockMode" class="xcom.intellij.ide.actions.ToggleDockModeAction" text="Dock_ed Mode" description="Dock/undock active tool window"/>
-        <action id="ToggleFloatingMode" class="xcom.intellij.ide.actions.ToggleFloatingModeAction" text="_Floating Mode" description="Float/unfloat active tool window"/>
+        <action id="xTogglePinnedMode" class="xcom.intellij.ide.actions.TogglePinnedModeAction" text="_Pinned Mode" description="Pin/unpin active tool window"/>
+        <action id="xToggleDockMode" class="xcom.intellij.ide.actions.ToggleDockModeAction" text="Dock_ed Mode" description="Dock/undock active tool window"/>
+        <action id="xToggleFloatingMode" class="xcom.intellij.ide.actions.ToggleFloatingModeAction" text="_Floating Mode" description="Float/unfloat active tool window"/>
         <separator/>
-        <action id="NextTab" class="xcom.intellij.ide.actions.NextTabAction" text="Select _Next Tab" description="Activate next tab"/>
-        <action id="PreviousTab" class="xcom.intellij.ide.actions.PreviousTabAction" text="Select Previ_ous Tab" description="Activate previous tab"/>
-        <action id="CloseActiveTab" class="xcom.intellij.ide.actions.CloseActiveTabAction" text="Close Active _Tab" description="Close active tool window tab"/>
-        <action id="PinActiveTab" class="xcom.intellij.ide.actions.PinActiveTabAction" text="Pin _Active Tab" description="Pin active tool window or editor tab"/>
+        <action id="xNextTab" class="xcom.intellij.ide.actions.NextTabAction" text="Select _Next Tab" description="Activate next tab"/>
+        <action id="xPreviousTab" class="xcom.intellij.ide.actions.PreviousTabAction" text="Select Previ_ous Tab" description="Activate previous tab"/>
+        <action id="xCloseActiveTab" class="xcom.intellij.ide.actions.CloseActiveTabAction" text="Close Active _Tab" description="Close active tool window tab"/>
+        <action id="xPinActiveTab" class="xcom.intellij.ide.actions.PinActiveTabAction" text="Pin _Active Tab" description="Pin active tool window or editor tab"/>
         <separator/>
-        <action id="CloseEditor" class="xcom.intellij.ide.actions.CloseEditorAction" text="_Close Active Editor" description="Close active editor"/>
-        <action id="CloseAllEditors" class="xcom.intellij.ide.actions.CloseAllEditorsAction" text="Close A_ll Editors" description="Close all editors in active tab group"/>
-        <action id="CloseAllEditorsButActive" class="xcom.intellij.ide.actions.CloseAllEditorsButActiveAction" text="Close All Editors B_ut Active" description="Close all open editors except the active one"/>
-        <action id="CloseAllUnmodifiedEditors" class="xcom.intellij.ide.actions.CloseAllUnmodifiedEditorsAction" text="Close All Unmodified Editors" description="Close all nonmodified editors"/>
+        <action id="xCloseEditor" class="xcom.intellij.ide.actions.CloseEditorAction" text="_Close Active Editor" description="Close active editor"/>
+        <action id="xCloseAllEditors" class="xcom.intellij.ide.actions.CloseAllEditorsAction" text="Close A_ll Editors" description="Close all editors in active tab group"/>
+        <action id="xCloseAllEditorsButActive" class="xcom.intellij.ide.actions.CloseAllEditorsButActiveAction" text="Close All Editors B_ut Active" description="Close all open editors except the active one"/>
+        <action id="xCloseAllUnmodifiedEditors" class="xcom.intellij.ide.actions.CloseAllUnmodifiedEditorsAction" text="Close All Unmodified Editors" description="Close all nonmodified editors"/>
         <separator/>
-        <action id="SplitHorisontal"        class="xcom.intellij.ide.actions.SplitHorizontalAction" text="Split Vertically" description="Split editor area into 2 tab groups and move the current tab to the right group"/>
-        <action id="SplitVertical"          class="xcom.intellij.ide.actions.SplitVerticalAction"   text="Split Horizontally" description="Split editor area into 2 tab groups and move the current tab to the bottom group"/>
-        <action id="ChangeSplitOrientation" class="xcom.intellij.ide.actions.ChangeSplitterOrientationAction" text="Change Splitter Orientation" description="Changes orientation of splitter"/>
-        <action id="Unsplit"                class="xcom.intellij.ide.actions.UnsplitAction"         text="Unsplit"     description="Unsplit Window"/>
-        <action id="UnsplitAll"             class="xcom.intellij.ide.actions.UnsplitAllAction"      text="Unsplit All" description="Remove all splitters"/>
-        <action id="NextSplitter"           class="xcom.intellij.ide.actions.NextSplitAction"       text="Goto Next Splitter"     description="Goto next splitter window"/>
-        <action id="PrevSplitter"           class="xcom.intellij.ide.actions.PrevSplitAction"       text="Goto Previons Splitter"     description="Goto previous splitter window"/>
+        <action id="xSplitHorisontal"        class="xcom.intellij.ide.actions.SplitHorizontalAction" text="Split Vertically" description="Split editor area into 2 tab groups and move the current tab to the right group"/>
+        <action id="xSplitVertical"          class="xcom.intellij.ide.actions.SplitVerticalAction"   text="Split Horizontally" description="Split editor area into 2 tab groups and move the current tab to the bottom group"/>
+        <action id="xChangeSplitOrientation" class="xcom.intellij.ide.actions.ChangeSplitterOrientationAction" text="Change Splitter Orientation" description="Changes orientation of splitter"/>
+        <action id="xUnsplit"                class="xcom.intellij.ide.actions.UnsplitAction"         text="Unsplit"     description="Unsplit Window"/>
+        <action id="xUnsplitAll"             class="xcom.intellij.ide.actions.UnsplitAllAction"      text="Unsplit All" description="Remove all splitters"/>
+        <action id="xNextSplitter"           class="xcom.intellij.ide.actions.NextSplitAction"       text="Goto Next Splitter"     description="Goto next splitter window"/>
+        <action id="xPrevSplitter"           class="xcom.intellij.ide.actions.PrevSplitAction"       text="Goto Previons Splitter"     description="Goto previous splitter window"/>
       </group>
 
       <!-- Help -->
-      <group text="_Help" id="HelpMenu">
-        <action id="HelpTopics" class="xcom.intellij.ide.actions.HelpTopicsAction" text="Help _Topics" icon="/actions/menu-help.png" description="Show help contents"/>
-        <action id="ShowTips" class="xcom.intellij.ide.actions.ShowTipsAction" text="Tip of the _Day" description="Show Tips of the Day"/>
-        <action id="ProductivityGude" class="xcom.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction" text="_Productivity Guide" description="Show productivity features usages statistics"/>
-        <action id="OnlineDocAction" class="xcom.intellij.ide.actions.OnlineDocAction" text="_Online Documentation" description="Show online documentation"/>
+      <group text="_Help" id="xHelpMenu">
+        <action id="xHelpTopics" class="xcom.intellij.ide.actions.HelpTopicsAction" text="Help _Topics" icon="/actions/menu-help.png" description="Show help contents"/>
+        <action id="xShowTips" class="xcom.intellij.ide.actions.ShowTipsAction" text="Tip of the _Day" description="Show Tips of the Day"/>
+        <action id="xProductivityGude" class="xcom.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction" text="_Productivity Guide" description="Show productivity features usages statistics"/>
+        <action id="xOnlineDocAction" class="xcom.intellij.ide.actions.OnlineDocAction" text="_Online Documentation" description="Show online documentation"/>
         <separator/>
-        <action id="Register" class="xcom.intellij.ide.actions.RegisterAction" text="_Register..." description="Enter registration data"/>
-        <action id="About" class="xcom.intellij.ide.actions.AboutAction" text="_About" description="Show information about IDEA"/>
+        <action id="xRegister" class="xcom.intellij.ide.actions.RegisterAction" text="_Register..." description="Enter registration data"/>
+        <action id="xAbout" class="xcom.intellij.ide.actions.AboutAction" text="_About" description="Show information about IDEA"/>
       </group>
 
-      <group id="OtherMenu" class="xcom.intellij.ide.actions.OtherGroup" text="Other" description="Actions that are not properly registered"/>
+      <group id="xOtherMenu" class="xcom.intellij.ide.actions.OtherGroup" text="Other" description="Actions that are not properly registered"/>
     </group>
 
-    <group id="MainToolBar" text="Main Toolbar" configurable="true">
+    <group id="xMainToolBar" text="Main Toolbar" configurable="true">
       <reference ref="OpenFile"/>
       <reference ref="SaveAll"/>
       <reference ref="Synchronize"/>
@@ -656,64 +656,64 @@
       <reference ref="CaptureCPUUsageData"/>
     </group>
 
-    <group id="Bookmarks" text="Bookmarks">
+    <group id="xBookmarks" text="Bookmarks">
       <reference ref="ToggleBookmark"/>
       <reference ref="ShowBookmarks"/>
       <reference ref="GotoNextBookmark"/>
       <reference ref="GotoPreviousBookmark"/>
 
-      <action id="ToggleBookmark0" text="Toggle Bookmark 0" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark0Action"/>
-      <action id="ToggleBookmark1" text="Toggle Bookmark 1" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark1Action"/>
-      <action id="ToggleBookmark2" text="Toggle Bookmark 2" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark2Action"/>
-      <action id="ToggleBookmark3" text="Toggle Bookmark 3" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark3Action"/>
-      <action id="ToggleBookmark4" text="Toggle Bookmark 4" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark4Action"/>
-      <action id="ToggleBookmark5" text="Toggle Bookmark 5" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark5Action"/>
-      <action id="ToggleBookmark6" text="Toggle Bookmark 6" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark6Action"/>
-      <action id="ToggleBookmark7" text="Toggle Bookmark 7" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark7Action"/>
-      <action id="ToggleBookmark8" text="Toggle Bookmark 8" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark8Action"/>
-      <action id="ToggleBookmark9" text="Toggle Bookmark 9" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark9Action"/>
+      <action id="xToggleBookmark0" text="Toggle Bookmark 0" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark0Action"/>
+      <action id="xToggleBookmark1" text="Toggle Bookmark 1" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark1Action"/>
+      <action id="xToggleBookmark2" text="Toggle Bookmark 2" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark2Action"/>
+      <action id="xToggleBookmark3" text="Toggle Bookmark 3" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark3Action"/>
+      <action id="xToggleBookmark4" text="Toggle Bookmark 4" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark4Action"/>
+      <action id="xToggleBookmark5" text="Toggle Bookmark 5" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark5Action"/>
+      <action id="xToggleBookmark6" text="Toggle Bookmark 6" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark6Action"/>
+      <action id="xToggleBookmark7" text="Toggle Bookmark 7" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark7Action"/>
+      <action id="xToggleBookmark8" text="Toggle Bookmark 8" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark8Action"/>
+      <action id="xToggleBookmark9" text="Toggle Bookmark 9" class="xcom.intellij.ide.bookmarks.actions.ToggleBookmark9Action"/>
 
-      <action id="GotoBookmark0" text="Go to Bookmark 0" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark0Action"/>
-      <action id="GotoBookmark1" text="Go to Bookmark 1" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark1Action"/>
-      <action id="GotoBookmark2" text="Go to Bookmark 2" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark2Action"/>
-      <action id="GotoBookmark3" text="Go to Bookmark 3" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark3Action"/>
-      <action id="GotoBookmark4" text="Go to Bookmark 4" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark4Action"/>
-      <action id="GotoBookmark5" text="Go to Bookmark 5" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark5Action"/>
-      <action id="GotoBookmark6" text="Go to Bookmark 6" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark6Action"/>
-      <action id="GotoBookmark7" text="Go to Bookmark 7" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark7Action"/>
-      <action id="GotoBookmark8" text="Go to Bookmark 8" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark8Action"/>
-      <action id="GotoBookmark9" text="Go to Bookmark 9" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark9Action"/>
+      <action id="xGotoBookmark0" text="Go to Bookmark 0" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark0Action"/>
+      <action id="xGotoBookmark1" text="Go to Bookmark 1" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark1Action"/>
+      <action id="xGotoBookmark2" text="Go to Bookmark 2" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark2Action"/>
+      <action id="xGotoBookmark3" text="Go to Bookmark 3" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark3Action"/>
+      <action id="xGotoBookmark4" text="Go to Bookmark 4" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark4Action"/>
+      <action id="xGotoBookmark5" text="Go to Bookmark 5" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark5Action"/>
+      <action id="xGotoBookmark6" text="Go to Bookmark 6" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark6Action"/>
+      <action id="xGotoBookmark7" text="Go to Bookmark 7" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark7Action"/>
+      <action id="xGotoBookmark8" text="Go to Bookmark 8" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark8Action"/>
+      <action id="xGotoBookmark9" text="Go to Bookmark 9" class="xcom.intellij.ide.bookmarks.actions.GotoBookmark9Action"/>
     </group>
 
-    <group id="DebuggerActions">
-      <action id="Debugger.AdjustArrayRange" class="xcom.intellij.debugger.actions.AdjustArrayRangeAction" text="Adjust Range..."/>
-      <action id="Debugger.Inspect" class="xcom.intellij.debugger.actions.InspectAction" text="Inspect"/>
-      <action id="Debugger.CopyValue" class="xcom.intellij.debugger.actions.CopyValueAction" text="Copy Value"/>
-      <action id="Debugger.CustomizeContextView" class="xcom.intellij.debugger.actions.CustomizeContextViewAction" text="Customize Data Views..."/>
-      <action id="Debugger.CustomizeThreadsView" class="xcom.intellij.debugger.actions.CustomizeThreadsViewAction" text="Customize Threads View..."/>
-      <action id="Debugger.NewWatch" class="xcom.intellij.debugger.actions.NewWatchAction" text="New Watch..."/>
-      <action id="Debugger.EditWatch" class="xcom.intellij.debugger.actions.EditWatchAction" text="Edit Watch"/>
-      <action id="Debugger.EditFrameSource" class="xcom.intellij.debugger.actions.EditFrameSourceAction" text="EditFrameSource"/>
-      <action id="Debugger.EditNodeSource" class="xcom.intellij.debugger.actions.EditSourceAction" text="EditNodeSource"/>
+    <group id="xDebuggerActions">
+      <action id="xDebugger.AdjustArrayRange" class="xcom.intellij.debugger.actions.AdjustArrayRangeAction" text="Adjust Range..."/>
+      <action id="xDebugger.Inspect" class="xcom.intellij.debugger.actions.InspectAction" text="Inspect"/>
+      <action id="xDebugger.CopyValue" class="xcom.intellij.debugger.actions.CopyValueAction" text="Copy Value"/>
+      <action id="xDebugger.CustomizeContextView" class="xcom.intellij.debugger.actions.CustomizeContextViewAction" text="Customize Data Views..."/>
+      <action id="xDebugger.CustomizeThreadsView" class="xcom.intellij.debugger.actions.CustomizeThreadsViewAction" text="Customize Threads View..."/>
+      <action id="xDebugger.NewWatch" class="xcom.intellij.debugger.actions.NewWatchAction" text="New Watch..."/>
+      <action id="xDebugger.EditWatch" class="xcom.intellij.debugger.actions.EditWatchAction" text="Edit Watch"/>
+      <action id="xDebugger.EditFrameSource" class="xcom.intellij.debugger.actions.EditFrameSourceAction" text="EditFrameSource"/>
+      <action id="xDebugger.EditNodeSource" class="xcom.intellij.debugger.actions.EditSourceAction" text="EditNodeSource"/>
       <reference ref="Debugger.PopFrame"/>
-      <action id="Debugger.RemoveAllWatches" class="xcom.intellij.debugger.actions.RemoveAllWatchesAction" text="Remove All Watches"/>
-      <action id="Debugger.RemoveWatch" class="xcom.intellij.debugger.actions.RemoveWatchAction" text="Remove Watch"/>
-      <action id="Debugger.ViewAsGroup" class="xcom.intellij.debugger.actions.ViewAsGroup" text="View as"/>
-      <action id="Debugger.SetValue" class="xcom.intellij.debugger.actions.SetValueAction" text="Set Value..."/>
-      <!--<action id="Debugger.ShowAsHex" class="xcom.intellij.debugger.actions.ShowAsHexAction" text="Show as Hex"/>-->
-      <action id="Debugger.ShowFrame" class="xcom.intellij.debugger.actions.ShowFrameAction" text="Show Frame"/>
-      <action id="Debugger.ResumeThread" class="xcom.intellij.debugger.actions.ResumeThreadAction" text="Resume"/>
-      <action id="Debugger.FreezeThread" class="xcom.intellij.debugger.actions.FreezeThreadAction" text="Freeze"/>
-      <action id="Debugger.ToggleStepThreadSuspendPolicy" class="xcom.intellij.debugger.actions.ToggleStepThreadSuspendPolicyAction" text="Suspend All Threads While Stepping" icon="/debugger/suspend_all.png"/>
-      <action id="Debugger.AddToWatch" class="xcom.intellij.debugger.actions.AddToWatchAction" text="Add to Watches"/>
+      <action id="xDebugger.RemoveAllWatches" class="xcom.intellij.debugger.actions.RemoveAllWatchesAction" text="Remove All Watches"/>
+      <action id="xDebugger.RemoveWatch" class="xcom.intellij.debugger.actions.RemoveWatchAction" text="Remove Watch"/>
+      <action id="xDebugger.ViewAsGroup" class="xcom.intellij.debugger.actions.ViewAsGroup" text="View as"/>
+      <action id="xDebugger.SetValue" class="xcom.intellij.debugger.actions.SetValueAction" text="Set Value..."/>
+      <!--<action id="xDebugger.ShowAsHex" class="xcom.intellij.debugger.actions.ShowAsHexAction" text="Show as Hex"/>-->
+      <action id="xDebugger.ShowFrame" class="xcom.intellij.debugger.actions.ShowFrameAction" text="Show Frame"/>
+      <action id="xDebugger.ResumeThread" class="xcom.intellij.debugger.actions.ResumeThreadAction" text="Resume"/>
+      <action id="xDebugger.FreezeThread" class="xcom.intellij.debugger.actions.FreezeThreadAction" text="Freeze"/>
+      <action id="xDebugger.ToggleStepThreadSuspendPolicy" class="xcom.intellij.debugger.actions.ToggleStepThreadSuspendPolicyAction" text="Suspend All Threads While Stepping" icon="/debugger/suspend_all.png"/>
+      <action id="xDebugger.AddToWatch" class="xcom.intellij.debugger.actions.AddToWatchAction" text="Add to Watches"/>
     </group>
 
-    <group id="Debugger.Representation">
-      <action id="Debugger.AutoRenderer" class="xcom.intellij.debugger.actions.AutoRendererAction" text="Auto"/>
+    <group id="xDebugger.Representation">
+      <action id="xDebugger.AutoRenderer" class="xcom.intellij.debugger.actions.AutoRendererAction" text="Auto"/>
     </group>
 
-    <group id="EditorPopupMenu" configurable="true" text="Editor Popup Menu" description="Editor Popup Menu">
-      <action id="Add to migration roots" class="xcom.intellij.refactoring.actions.TypeMigrationAddRootAction" text="_Add to migration roots" description="Add selected element to migration roots"/>
+    <group id="xEditorPopupMenu" configurable="true" text="Editor Popup Menu" description="Editor Popup Menu">
+      <action id="xAdd to migration roots" class="xcom.intellij.refactoring.actions.TypeMigrationAddRootAction" text="_Add to migration roots" description="Add selected element to migration roots"/>
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
       <reference ref="FindUsages"/>
@@ -725,7 +725,7 @@
       <separator/>
       <reference ref="CloseEditor"/>
       <separator/>
-      <group id="EditorPopupMenu.GoTo" text="Go To" description="Go To Editor Popup Menu Group"  popup="true">
+      <group id="xEditorPopupMenu.GoTo" text="Go To" description="Go To Editor Popup Menu Group"  popup="true">
         <reference ref="GotoDeclaration"/>
         <reference ref="GotoImplementation"/>
         <reference ref="GotoTypeDeclaration"/>
@@ -743,24 +743,24 @@
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
       <reference ref="ValidateXml"/>
-      <action id="ValidateJsp" class="xcom.intellij.javaee.module.view.web.ValidateJSPAction" text="_Validate JSP" description="Validate selected JSP files"/>
-      <action id="PackageFile" class="xcom.intellij.javaee.module.view.web.PackageFileAction" text="_Package file" description="Add selected file into exploded deployment directory or J2EE archive" />
+      <action id="xValidateJsp" class="xcom.intellij.javaee.module.view.web.ValidateJSPAction" text="_Validate JSP" description="Validate selected JSP files"/>
+      <action id="xPackageFile" class="xcom.intellij.javaee.module.view.web.PackageFileAction" text="_Package file" description="Add selected file into exploded deployment directory or J2EE archive" />
       <reference ref="AddAntBuildFile"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
-      <action id="CompareClipboardWithSelection" class="xcom.intellij.openapi.diff.actions.CompareClipboardWithSelection" text="Compare with _Clipboard" description="Compare current selection with clipboard"/>
+      <action id="xCompareClipboardWithSelection" class="xcom.intellij.openapi.diff.actions.CompareClipboardWithSelection" text="Compare with _Clipboard" description="Compare current selection with clipboard"/>
       <reference ref="ExternalToolsGroup"/>
     </group>
 
-    <group id="ChangeScheme">
-      <action id="ChangeColorScheme" class="xcom.intellij.ide.actions.QuickChangeColorSchemeAction" text="Switch Color Scheme" description="Change current color scheme"/>
-      <action id="ChangeCodeStyleScheme" class="xcom.intellij.ide.actions.QuickChangeCodeStyleSchemeAction" text="Switch Code Style Scheme" description="Change current code style scheme"/>
-      <action id="ChangeKeymap" class="xcom.intellij.ide.actions.QuickChangeKeymapAction" text="Switch Keymap" description="Change current keymap"/>
-      <action id="ChangeLaf" class="xcom.intellij.ide.actions.QuickChangeLookAndFeel" text="Switch Look&amp;Feel" description="Change current Look&amp;Feel"/>
+    <group id="xChangeScheme">
+      <action id="xChangeColorScheme" class="xcom.intellij.ide.actions.QuickChangeColorSchemeAction" text="Switch Color Scheme" description="Change current color scheme"/>
+      <action id="xChangeCodeStyleScheme" class="xcom.intellij.ide.actions.QuickChangeCodeStyleSchemeAction" text="Switch Code Style Scheme" description="Change current code style scheme"/>
+      <action id="xChangeKeymap" class="xcom.intellij.ide.actions.QuickChangeKeymapAction" text="Switch Keymap" description="Change current keymap"/>
+      <action id="xChangeLaf" class="xcom.intellij.ide.actions.QuickChangeLookAndFeel" text="Switch Look&amp;Feel" description="Change current Look&amp;Feel"/>
     </group>
 
-    <group id="EditorTabPopupMenu">
+    <group id="xEditorTabPopupMenu">
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
       <reference ref="ValidateXml"/>
@@ -770,12 +770,12 @@
       <reference ref="ExternalToolsGroup"/>
     </group>
 
-    <action id="ModuleSettings" text="Module Settings..." description="Open settings dialog for selected module" class="xcom.intellij.ide.actions.ShowModulePropertiesAction"/>
-    <group id="MoveModuleToGroup" text="Move Module to Group" description="Open settings dialog for selected module" class="xcom.intellij.ide.projectView.impl.MoveModuleToGroup" popup="true"/>
+    <action id="xModuleSettings" text="Module Settings..." description="Open settings dialog for selected module" class="xcom.intellij.ide.actions.ShowModulePropertiesAction"/>
+    <group id="xMoveModuleToGroup" text="Move Module to Group" description="Open settings dialog for selected module" class="xcom.intellij.ide.projectView.impl.MoveModuleToGroup" popup="true"/>
 
-    <group id="ProjectViewPopupMenu">
+    <group id="xProjectViewPopupMenu">
       <reference ref="NewGroup"/>
-      <action id="AssociateWithFileType" text="Associate with File Type" description="Associate selected file with one of file types" class="xcom.intellij.ide.actions.AssociateFileType"/>
+      <action id="xAssociateWithFileType" text="Associate with File Type" description="Associate selected file with one of file types" class="xcom.intellij.ide.actions.AssociateFileType"/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
       <reference ref="EditSource"/>
@@ -813,8 +813,8 @@
       <reference ref="MoveModuleToGroup"/>
     </group>
 
-    <group id="J2EEViewPopupMenu">
-      <action id="OpenCustomEditor" class="xcom.intellij.ide.actions.EditSourceAction" text="_Edit..." description="Open editor for the selected item"/>
+    <group id="xJ2EEViewPopupMenu">
+      <action id="xOpenCustomEditor" class="xcom.intellij.ide.actions.EditSourceAction" text="_Edit..." description="Open editor for the selected item"/>
       <reference ref="NewGroup"/>
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
@@ -853,7 +853,7 @@
       <reference ref="ModuleSettings"/>
     </group>
 
-    <group id="StructureViewPopupMenu">
+    <group id="xStructureViewPopupMenu">
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="FindUsages"/>
@@ -873,8 +873,8 @@
       <reference ref="CompareTwoFiles"/>
     </group>
 
-    <group id="TypeHierarchyPopupMenu">
-      <action id="TypeHierarchy.BaseOnThisType" text="Base On This Type" class="xcom.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction" description="Show hierarchy for selected class/interface"/>
+    <group id="xTypeHierarchyPopupMenu">
+      <action id="xTypeHierarchy.BaseOnThisType" text="Base On This Type" class="xcom.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction" description="Show hierarchy for selected class/interface"/>
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="FindUsages"/>
@@ -896,11 +896,11 @@
       <reference ref="CompareFileWithEditor"/>
     </group>
 
-    <group id="MethodHierarchyPopupMenu">
-      <action id="MethodHierarchy.ImplementMethodAction" text="Implement Method" description="Implement Method (from Method Hierarchy)" class="xcom.intellij.ide.hierarchy.method.ImplementMethodAction"/>
-      <action id="MethodHierarchy.OverrideMethodAction" text="Override Method" description="Override Method (from Method Hierarchy)" class="xcom.intellij.ide.hierarchy.method.OverrideMethodAction"/>
+    <group id="xMethodHierarchyPopupMenu">
+      <action id="xMethodHierarchy.ImplementMethodAction" text="Implement Method" description="Implement Method (from Method Hierarchy)" class="xcom.intellij.ide.hierarchy.method.ImplementMethodAction"/>
+      <action id="xMethodHierarchy.OverrideMethodAction" text="Override Method" description="Override Method (from Method Hierarchy)" class="xcom.intellij.ide.hierarchy.method.OverrideMethodAction"/>
       <separator/>
-      <action id="MethodHierarchy.BaseOnThisType" text="Base On This Type" class="xcom.intellij.ide.hierarchy.method.MethodHierarchyBrowser$BaseOnThisMethodAction" description="Show hierarchy for method of selected class/interface"/>
+      <action id="xMethodHierarchy.BaseOnThisType" text="Base On This Type" class="xcom.intellij.ide.hierarchy.method.MethodHierarchyBrowser$BaseOnThisMethodAction" description="Show hierarchy for method of selected class/interface"/>
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="FindUsages"/>
@@ -920,8 +920,8 @@
       <reference ref="CompareFileWithEditor"/>
     </group>
 
-    <group id="CallHierarchyPopupMenu">
-      <action id="CallHierarchy.BaseOnThisType" text="Base On This Method" class="xcom.intellij.ide.hierarchy.call.CallHierarchyBrowser$BaseOnThisMethodAction" description="Show call hierarchy for selected method"/>
+    <group id="xCallHierarchyPopupMenu">
+      <action id="xCallHierarchy.BaseOnThisType" text="Base On This Method" class="xcom.intellij.ide.hierarchy.call.CallHierarchyBrowser$BaseOnThisMethodAction" description="Show call hierarchy for selected method"/>
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="FindUsages"/>
@@ -943,7 +943,7 @@
       <reference ref="CompareFileWithEditor"/>
     </group>
 
-    <group id="CommanderPopupMenu">
+    <group id="xCommanderPopupMenu">
       <reference ref="NewGroup"/>
       <reference ref="AssociateWithFileType"/>
       <separator/>
@@ -976,25 +976,25 @@
       <reference ref="ExternalToolsGroup"/>
     </group>
 
-    <group id="Lvcs.DirectoryHistoryPopup">
-      <action id="Lvcs.ShowLvcsDiffAction" text="Compare Versions" class="xcom.intellij.localVcs.ui.ShowLvcsDiffAction"
+    <group id="xLvcs.DirectoryHistoryPopup">
+      <action id="xLvcs.ShowLvcsDiffAction" text="Compare Versions" class="xcom.intellij.localVcs.ui.ShowLvcsDiffAction"
         description="Show changes" icon="/actions/diff.png"/>
-      <action id="Lvcs.RollbackFileAction" text="Rollback File" class="xcom.intellij.localVcs.ui.RollbackFileAction"
+      <action id="xLvcs.RollbackFileAction" text="Rollback File" class="xcom.intellij.localVcs.ui.RollbackFileAction"
         description="Rollback" icon="/actions/rollback.png"/>
     </group>
 
 
-    <group id="Vcs.CheckinProjectPopup">
-      <action id="Vcs.ShowDiffAction" text="Show Changes" class="xcom.intellij.openapi.vcs.actions.ShowDiffAction" description="Show changes" icon="/actions/diff.png"/>
-      <action id="Vcs.RollbackChanges" text="Rollback Changes" class="xcom.intellij.openapi.vcs.actions.RollbackChangesAction" description="Rollback changes" icon="/actions/rollback.png"/>
-      <action id="Vcs.EditSourceAction" text="Edit Source" class="xcom.intellij.openapi.vcs.actions.EditSourceAction" description="Edit source" icon="/actions/editSource.png"/>
+    <group id="xVcs.CheckinProjectPopup">
+      <action id="xVcs.ShowDiffAction" text="Show Changes" class="xcom.intellij.openapi.vcs.actions.ShowDiffAction" description="Show changes" icon="/actions/diff.png"/>
+      <action id="xVcs.RollbackChanges" text="Rollback Changes" class="xcom.intellij.openapi.vcs.actions.RollbackChangesAction" description="Rollback changes" icon="/actions/rollback.png"/>
+      <action id="xVcs.EditSourceAction" text="Edit Source" class="xcom.intellij.openapi.vcs.actions.EditSourceAction" description="Edit source" icon="/actions/editSource.png"/>
       <separator/>
-      <action id="Vcs.ExcludeAction" text="Exclude from Commit" class="xcom.intellij.openapi.vcs.actions.ExcludeAction" description="Exclude from commit" icon="/actions/exclude.png"/>
-      <action id="Vcs.IncludeAction" text="Include into Commit" class="xcom.intellij.openapi.vcs.actions.IncludeAction" description="Include into commit" icon="/general/add.png"/>
+      <action id="xVcs.ExcludeAction" text="Exclude from Commit" class="xcom.intellij.openapi.vcs.actions.ExcludeAction" description="Exclude from commit" icon="/actions/exclude.png"/>
+      <action id="xVcs.IncludeAction" text="Include into Commit" class="xcom.intellij.openapi.vcs.actions.IncludeAction" description="Include into commit" icon="/general/add.png"/>
       <separator/>
     </group>
 
-    <group id="Vcs.FileViewPopup" text="FileView">
+    <group id="xVcs.FileViewPopup" text="FileView">
       <reference ref="CutCopyPasteGroup"/>
       <reference ref="EditSource"/>
       <separator/>
@@ -1014,7 +1014,7 @@
       <reference ref="ExternalToolsGroup"/>
     </group>
 
-    <group id="Vcs.CheckinProjectToolbar">
+    <group id="xVcs.CheckinProjectToolbar">
       <reference ref="Vcs.ShowDiffAction"/>
       <reference ref="Vcs.ExcludeAction"/>
       <reference ref="Vcs.IncludeAction"/>
@@ -1023,8 +1023,8 @@
       <reference ref="Vcs.EditSourceAction"/>
     </group>
 
-    <group id="TestTreePopupMenu">
-      <action id="openAssertEqualsDiff" text="View assertEquals Difference" class="xcom.intellij.execution.junit2.ui.actions.ViewAssertEqualsDiffAction"/>
+    <group id="xTestTreePopupMenu">
+      <action id="xopenAssertEqualsDiff" text="View assertEquals Difference" class="xcom.intellij.execution.junit2.ui.actions.ViewAssertEqualsDiffAction"/>
       <separator/>
       <reference ref="RunContextGroup"/>
       <separator/>
@@ -1032,17 +1032,17 @@
       <reference ref="ViewSource"/>
     </group>
 
-    <group id="TestStatisticsTablePopupMenu">
+    <group id="xTestStatisticsTablePopupMenu">
       <reference ref="RunContextGroup"/>
       <separator/>
       <reference ref="EditSource"/>
       <reference ref="ViewSource"/>
       <separator/>
-      <action id="JUnitTesting.SelectInTree" class="xcom.intellij.execution.junit2.ui.actions.SelectInTreeAction" text="Select in Tree"/>
+      <action id="xJUnitTesting.SelectInTree" class="xcom.intellij.execution.junit2.ui.actions.SelectInTreeAction" text="Select in Tree"/>
     </group>
 
 
-    <group id="Debugger.FramePanelPopup">
+    <group id="xDebugger.FramePanelPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
       <reference ref="Debugger.Inspect"/>
       <reference ref="Debugger.SetValue"/>
@@ -1059,7 +1059,7 @@
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
-    <group id="Debugger.EvaluationDialogPopup">
+    <group id="xDebugger.EvaluationDialogPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
       <reference ref="Debugger.Inspect"/>
       <reference ref="Debugger.SetValue"/>
@@ -1076,7 +1076,7 @@
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
-    <group id="Debugger.InspectPanelPopup">
+    <group id="xDebugger.InspectPanelPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
       <reference ref="Debugger.Inspect"/>
       <reference ref="Debugger.SetValue"/>
@@ -1093,7 +1093,7 @@
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
-    <group id="Debugger.ThreadsPanelPopup">
+    <group id="xDebugger.ThreadsPanelPopup">
       <reference ref="Debugger.ResumeThread"/>
       <reference ref="Debugger.FreezeThread"/>
       <reference ref="Debugger.ShowFrame"/>
@@ -1106,7 +1106,7 @@
       <reference ref="Debugger.CustomizeThreadsView"/>
     </group>
 
-    <group id="Debugger.WatchesPanelPopup">
+    <group id="xDebugger.WatchesPanelPopup">
       <reference ref="Debugger.NewWatch"/>
       <reference ref="Debugger.EditWatch"/>
       <reference ref="Debugger.RemoveWatch"/>
@@ -1130,28 +1130,28 @@
 
     <!-- *********************** GUI designer actions ********************* -->
 
-    <group id="GuiDesigner.EditorPopupMenu">
-      <action id="GuiDesigner.PreviewForm" class="xcom.intellij.uiDesigner.actions.PreviewFormAction" text="Preview" icon="/com/intellij/uiDesigner/icons/preview.png" description="Preview form" />
-      <action id="GuiDesigner.DataBindingWizard" class="xcom.intellij.uiDesigner.actions.DataBindingWizardAction" text="Data Binding Wizard..." icon="/com/intellij/uiDesigner/icons/dataBindingWizard.png"/>
+    <group id="xGuiDesigner.EditorPopupMenu">
+      <action id="xGuiDesigner.PreviewForm" class="xcom.intellij.uiDesigner.actions.PreviewFormAction" text="Preview" icon="/com/intellij/uiDesigner/icons/preview.png" description="Preview form" />
+      <action id="xGuiDesigner.DataBindingWizard" class="xcom.intellij.uiDesigner.actions.DataBindingWizardAction" text="Data Binding Wizard..." icon="/com/intellij/uiDesigner/icons/dataBindingWizard.png"/>
       <separator/>
       <reference ref="$Cut"/>
       <reference ref="$Copy"/>
       <reference ref="$Paste"/>
       <separator/>
-      <action id="GuiDesigner.LayOutHorizontally" class="xcom.intellij.uiDesigner.actions.LayOutHorizontallyAction" text="Lay Out Horizontally" icon="/com/intellij/uiDesigner/icons/horizontal.png"/>
-      <action id="GuiDesigner.LayOutVertically" class="xcom.intellij.uiDesigner.actions.LayOutVerticallyAction" text="Lay Out Vertically" icon="/com/intellij/uiDesigner/icons/vertical.png"/>
-      <action id="GuiDesigner.LayOutInGrid" class="xcom.intellij.uiDesigner.actions.LayOutInAGridAction" text="Lay Out In a Grid" icon="/com/intellij/uiDesigner/icons/grid.png"/>
-      <action id="GuiDesigner.BreakLayout" class="xcom.intellij.uiDesigner.actions.BreakLayoutAction" text="Break Layout" icon="/com/intellij/uiDesigner/icons/break.png"/>
+      <action id="xGuiDesigner.LayOutHorizontally" class="xcom.intellij.uiDesigner.actions.LayOutHorizontallyAction" text="Lay Out Horizontally" icon="/com/intellij/uiDesigner/icons/horizontal.png"/>
+      <action id="xGuiDesigner.LayOutVertically" class="xcom.intellij.uiDesigner.actions.LayOutVerticallyAction" text="Lay Out Vertically" icon="/com/intellij/uiDesigner/icons/vertical.png"/>
+      <action id="xGuiDesigner.LayOutInGrid" class="xcom.intellij.uiDesigner.actions.LayOutInAGridAction" text="Lay Out In a Grid" icon="/com/intellij/uiDesigner/icons/grid.png"/>
+      <action id="xGuiDesigner.BreakLayout" class="xcom.intellij.uiDesigner.actions.BreakLayoutAction" text="Break Layout" icon="/com/intellij/uiDesigner/icons/break.png"/>
       <separator/>
       <reference ref="EditSource"/>
-      <action id="GuiDesigner.ExpandSelection" class="xcom.intellij.uiDesigner.actions.ExpandSelectionAction" text="Expand Selection" description="Expand selection structurally" />
-      <action id="GuiDesigner.ShrinkSelection" class="xcom.intellij.uiDesigner.actions.ShrinkSelectionAction" text="Shrink Selection" description="Shrink selection structurally" />
+      <action id="xGuiDesigner.ExpandSelection" class="xcom.intellij.uiDesigner.actions.ExpandSelectionAction" text="Expand Selection" description="Expand selection structurally" />
+      <action id="xGuiDesigner.ShrinkSelection" class="xcom.intellij.uiDesigner.actions.ShrinkSelectionAction" text="Shrink Selection" description="Shrink selection structurally" />
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
     </group>
 
-    <group id="GuiDesigner.ComponentTreePopupMenu">
+    <group id="xGuiDesigner.ComponentTreePopupMenu">
       <reference ref="EditSource"/>
       <reference ref="GuiDesigner.ExpandSelection"/>
       <reference ref="GuiDesigner.ShrinkSelection"/>
@@ -1161,20 +1161,20 @@
       <reference ref="$Paste"/>
     </group>
 
-    <group id="GuiDesigner.PropertyInspectorPopupMenu">
-      <action id="GuiDesigner.QuickJavadoc" class="xcom.intellij.uiDesigner.actions.ShowJavadocAction" text="_Quick JavaDoc" description="Show a popup window with JavaDoc for selected property"/>
+    <group id="xGuiDesigner.PropertyInspectorPopupMenu">
+      <action id="xGuiDesigner.QuickJavadoc" class="xcom.intellij.uiDesigner.actions.ShowJavadocAction" text="_Quick JavaDoc" description="Show a popup window with JavaDoc for selected property"/>
       <reference ref="EditSource"/>
     </group>
 
     <!-- ****************************************************************** -->
 
-    <group id="StructuralSearchActions">
-      <action id="StructuralSearchPlugin.StructuralSearchAction" class="xcom.intellij.structuralsearch.plugin.StructuralSearchAction" text="_Search Structurally..." description="Structural Search">
-        <add-to-group group-id="SearchMenu" anchor="last"/>
+    <group id="xStructuralSearchActions">
+      <action id="xStructuralSearchPlugin.StructuralSearchAction" class="xcom.intellij.structuralsearch.plugin.StructuralSearchAction" text="_Search Structurally..." description="Structural Search">
+        <add-to-group group-id="xSearchMenu" anchor="last"/>
       </action>
 
-      <action id="StructuralSearchPlugin.StructuralReplaceAction" class="xcom.intellij.structuralsearch.plugin.StructuralReplaceAction" text="Replace Str_ucturally..." description="Structural Replace">
-        <add-to-group group-id="SearchMenu" anchor="last"/>
+      <action id="xStructuralSearchPlugin.StructuralReplaceAction" class="xcom.intellij.structuralsearch.plugin.StructuralReplaceAction" text="Replace Str_ucturally..." description="Structural Replace">
+        <add-to-group group-id="xSearchMenu" anchor="last"/>
       </action>
     </group>
 
