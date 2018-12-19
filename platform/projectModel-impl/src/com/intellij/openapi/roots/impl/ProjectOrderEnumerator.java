@@ -59,6 +59,11 @@ public class ProjectOrderEnumerator extends OrderEnumeratorBase {
   }
 
   @Override
+  public void forEachModule(@NotNull Processor<Module> processor) {
+    processRootModules(processor);
+  }
+
+  @Override
   public boolean isRootModuleModel(@NotNull ModuleRootModel rootModel) {
     return true;
   }
