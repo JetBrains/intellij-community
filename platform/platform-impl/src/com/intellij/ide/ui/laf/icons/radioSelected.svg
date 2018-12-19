@@ -8,7 +8,8 @@
     </filter>
   </defs>
   <g fill="none" fill-rule="evenodd">
-    <circle cx="11" cy="11" r="7.75" fill="#3B99FC" stroke="#000" stroke-opacity=".04" stroke-width=".5"/>
+    <circle cx="11" cy="11" r="8" fill="#3B99FC"/>
+    <path fill="#000" fill-opacity=".05" d="M11,19 C6.581722,19 3,15.418278 3,11 C3,6.581722 6.581722,3 11,3 C15.418278,3 19,6.581722 19,11 C19,15.418278 15.418278,19 11,19 Z M11,18 C14.8659932,18 18,14.8659932 18,11 C18,7.13400675 14.8659932,4 11,4 C7.13400675,4 4,7.13400675 4,11 C4,14.8659932 7.13400675,18 11,18 Z"/>
     <use fill="#000" filter="url(#radioselected-a)" xlink:href="#radioselected-b"/>
     <use fill="#FFF" xlink:href="#radioselected-b"/>
   </g>
