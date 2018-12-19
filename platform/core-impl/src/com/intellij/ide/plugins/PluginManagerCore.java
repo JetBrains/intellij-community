@@ -760,9 +760,7 @@ public class PluginManagerCore {
       descriptor = loadDescriptorFromDir(file, pathName, null, bundled, essential);
       if (descriptor == null) {
         File libDir = new File(file, "lib");
-        if (!libDir.isDirectory()) {
-          return null;
-        }
+        // don't check libDir.isDirectory() because no need - better to reduce fs calls
         File[] files = libDir.listFiles();
         if (files == null || files.length == 0) {
           return null;
@@ -842,7 +840,7 @@ public class PluginManagerCore {
   private static void putMoreLikelyPluginJarsFirst(File pluginDir, File[] filesInLibUnderPluginDir) {
     String pluginDirName = pluginDir.getName();
 
-    Arrays.sort(filesInLibUnderPluginDir, (o1, o2) -> {
+    Arrays.parallelSort(filesInLibUnderPluginDir, (o1, o2) -> {
       String o2Name = o2.getName();
       String o1Name = o1.getName();
 
