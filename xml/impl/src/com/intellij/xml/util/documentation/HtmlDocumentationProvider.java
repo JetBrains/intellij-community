@@ -5,10 +5,12 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -25,6 +27,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -339,8 +342,14 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
   }
 
   @TestOnly
-  public static void registerScriptDocumentationProvider(@Nullable DocumentationProvider provider) {
+  public static void registerScriptDocumentationProvider(@NotNull DocumentationProvider provider, @NotNull Disposable parentDisposable) {
     ourScriptProvider.setValue(provider);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        ourScriptProvider.setValue(null);
+      }
+    });
   }
 
   @Nullable
