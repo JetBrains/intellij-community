@@ -115,12 +115,14 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   @NotNull
   @Override
   public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
-    return (SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog")) ? new MacFileSaverDialog(descriptor, project) : new FileSaverDialogImpl(descriptor, project);
+    return SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog")
+           ? new MacFileSaverDialog(descriptor, project) : new FileSaverDialogImpl(descriptor, project);
   }
 
   @NotNull
   @Override
   public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
-    return (SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog"))? new MacFileSaverDialog (descriptor, parent) : new FileSaverDialogImpl(descriptor, parent);
+    return SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog")
+           ? new MacFileSaverDialog (descriptor, parent) : new FileSaverDialogImpl(descriptor, parent);
   }
 }

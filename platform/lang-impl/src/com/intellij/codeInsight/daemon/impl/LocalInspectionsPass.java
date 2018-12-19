@@ -129,7 +129,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                @NotNull final List<? extends LocalInspectionToolWrapper> toolWrappers) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     inspect(new ArrayList<>(toolWrappers), iManager, false, progress);
-    addDescriptorsFromInjectedResults(iManager, context);
+    addDescriptorsFromInjectedResults(context);
     List<InspectionResult> resultList = result.get(getFile());
     if (resultList == null) return;
     for (InspectionResult inspectionResult : resultList) {
@@ -159,7 +159,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                    toolWrapper.getTool());
   }
 
-  private void addDescriptorsFromInjectedResults(@NotNull InspectionManager iManager, @NotNull GlobalInspectionContextImpl context) {
+  private void addDescriptorsFromInjectedResults(@NotNull GlobalInspectionContextImpl context) {
     for (Map.Entry<PsiFile, List<InspectionResult>> entry : result.entrySet()) {
       PsiFile file = entry.getKey();
       if (file == getFile()) continue; // not injected
