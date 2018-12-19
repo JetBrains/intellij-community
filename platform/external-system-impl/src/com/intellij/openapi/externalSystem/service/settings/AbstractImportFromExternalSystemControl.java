@@ -216,12 +216,12 @@ public abstract class AbstractImportFromExternalSystemControl<
   }
 
   public void reset() {
-    reset(null);
+    reset(null, null);
   }
 
   @Override
-  public void reset(@Nullable WizardContext wizardContext) {
-    super.reset(wizardContext);
+  public void reset(@Nullable WizardContext wizardContext, @Nullable Project project) {
+    super.reset(wizardContext, project);
     myLinkedProjectPathField.setNameComponentVisible(false);
     myLinkedProjectPathField.setNameValue("untitled");
     myLinkedProjectPathField.setPath("");

@@ -123,20 +123,25 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
 
   @Override
   public void reset() {
-    reset(false);
+    reset(false, null);
+  }
+
+  @Override
+  public void reset(@Nullable Project project) {
+    reset(false, project);
   }
 
   @Override
   public void reset(@Nullable WizardContext wizardContext) {
-    reset(false, wizardContext);
+    reset(false, wizardContext, null);
   }
 
-  public void reset(boolean isDefaultModuleCreation) {
-    reset(isDefaultModuleCreation, null);
+  public void reset(boolean isDefaultModuleCreation, @Nullable Project project) {
+    reset(isDefaultModuleCreation, null, project);
   }
 
-  public void reset(boolean isDefaultModuleCreation, @Nullable WizardContext wizardContext) {
-    super.reset(wizardContext);
+  public void reset(boolean isDefaultModuleCreation, @Nullable WizardContext wizardContext, @Nullable Project project) {
+    super.reset(wizardContext, project);
     if (!myCustomizer.isUseAutoImportBoxHidden() && myUseAutoImportBox != null) {
       myUseAutoImportBox.setSelected(getInitialSettings().isUseAutoImport());
     }

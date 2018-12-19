@@ -34,12 +34,14 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.File;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -255,10 +257,10 @@ public abstract class AbstractExternalSystemConfigurable<
   @Override
   public void reset() {
     for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
-      control.reset();
+      control.reset(myProject);
     }
     if (mySystemSettingsControl != null) {
-      mySystemSettingsControl.reset();
+      mySystemSettingsControl.reset(myProject);
     }
   }
 
@@ -275,5 +277,11 @@ public abstract class AbstractExternalSystemConfigurable<
     myProjectsList = null;
     myProjectsModel = null;
     mySystemSettingsControl = null;
+  }
+
+  @TestOnly
+  @NotNull
+  List<ExternalSystemSettingsControl<ProjectSettings>> getProjectSettingsControls() {
+    return Collections.unmodifiableList(myProjectSettingsControls);
   }
 }
