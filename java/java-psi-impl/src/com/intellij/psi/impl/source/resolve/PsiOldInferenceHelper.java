@@ -685,6 +685,10 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
         expectedType = methodCall instanceof PsiCallExpression ? policy.getDefaultExpectedType((PsiCallExpression)methodCall) : null;
       }
 
+      if (policy.requestForBoxingExplicitly() && TypeConversionUtil.isPrimitiveAndNotNull(expectedType)) {
+        expectedType = ((PsiPrimitiveType)expectedType).getBoxedType(typeParameter);
+      }
+
       returnType = ((PsiMethod)typeParameter.getOwner()).getReturnType();
 
       constraint =

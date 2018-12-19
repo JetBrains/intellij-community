@@ -6,7 +6,7 @@ class Foo<T> {
   }
 
   static {
-    new Foo<Integer>().to(Bar.<Integer>method(<caret>))
+    new Foo<Integer>().to(Bar.method(<caret>))
   }
 }
 
