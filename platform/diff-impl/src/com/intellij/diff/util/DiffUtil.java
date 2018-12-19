@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.diff.*;
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonMergeUtil;
@@ -73,6 +73,9 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
@@ -178,11 +181,14 @@ public class DiffUtil {
     if (highlighter != null) editor.setHighlighter(highlighter);
   }
 
-  public static void setEditorCodeStyle(@Nullable Project project, @NotNull EditorEx editor, @Nullable FileType fileType) {
-    if (project != null && fileType != null && editor.getVirtualFile() == null) {
-      CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
-      editor.getSettings().setTabSize(codeStyleFacade.getTabSize(fileType));
-      editor.getSettings().setUseTabCharacter(codeStyleFacade.useTabCharacter(fileType));
+  public static void setEditorCodeStyle(@Nullable Project project, @NotNull EditorEx editor, @Nullable DocumentContent content) {
+    if (project != null && content != null && editor.getVirtualFile() == null) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(content.getDocument());
+      CommonCodeStyleSettings.IndentOptions indentOptions = psiFile != null
+                                                            ? CodeStyle.getSettings(psiFile).getIndentOptionsByFile(psiFile)
+                                                            : CodeStyle.getSettings(project).getIndentOptions(content.getContentType());
+      editor.getSettings().setTabSize(indentOptions.TAB_SIZE);
+      editor.getSettings().setUseTabCharacter(indentOptions.USE_TAB_CHARACTER);
     }
     editor.getSettings().setCaretRowShown(false);
     editor.reinitSettings();
@@ -228,7 +234,7 @@ public class DiffUtil {
     }
 
     setEditorHighlighter(project, editor, content);
-    setEditorCodeStyle(project, editor, content.getContentType());
+    setEditorCodeStyle(project, editor, content);
   }
 
   public static boolean isMirrored(@NotNull Editor editor) {
