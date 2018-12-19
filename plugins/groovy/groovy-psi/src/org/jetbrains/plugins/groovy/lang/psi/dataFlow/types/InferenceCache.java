@@ -1,0 +1,177 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
+
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsDfaInstance;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement;
+
+class InferenceCache {
+
+  private final GrControlFlowOwner myScope;
+  private final Instruction[] myFlow;
+  private final Map<PsiElement, List<Instruction>> myFromByElements;
+
+  private final AtomicReference<List<TypeDfaState>> myVarTypes;
+  private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
+
+  InferenceCache(@NotNull GrControlFlowOwner scope) {
+    myScope = scope;
+    myFlow = scope.getControlFlow();
+    myFromByElements = Arrays.stream(myFlow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
+    List<TypeDfaState> noTypes = new ArrayList<>();
+    for (int i = 0; i < myFlow.length; i++) {
+      noTypes.add(new TypeDfaState());
+    }
+    myVarTypes = new AtomicReference<>(noTypes);
+  }
+
+  @Nullable
+  PsiType getInferredType(@NotNull String variableName, @NotNull Instruction instruction, boolean mixinOnly) {
+    if (myTooComplexInstructions.contains(instruction)) return null;
+
+    TypeDfaState cache = myVarTypes.get().get(instruction.num());
+    if (!cache.containsVariable(variableName)) {
+      Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> defUse = TypeInferenceHelper.getDefUseMaps(myScope);
+      if (defUse == null) {
+        myTooComplexInstructions.add(instruction);
+        return null;
+      }
+
+      Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
+      Set<Instruction> interesting = collectRequiredInstructions(instruction, variableName, defUse, mixinPredicate);
+      List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, interesting);
+      if (dfaResult == null) {
+        myTooComplexInstructions.addAll(interesting);
+      }
+      else {
+        cacheDfaResult(dfaResult);
+      }
+    }
+    DFAType dfaType = getCachedInferredType(variableName, instruction);
+    return dfaType == null ? null : dfaType.getResultType();
+  }
+
+  @Nullable
+  private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
+                                            @NotNull Instruction[] flow,
+                                            @NotNull Set<Instruction> interesting) {
+    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, interesting, this);
+    final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
+    return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
+  }
+
+  @Nullable
+  DFAType getCachedInferredType(@NotNull String variableName, @NotNull Instruction instruction) {
+    DFAType dfaType = myVarTypes.get().get(instruction.num()).getVariableType(variableName);
+    return dfaType == null ? null : dfaType.negate(instruction);
+  }
+
+  private Set<Instruction> collectRequiredInstructions(@NotNull Instruction instruction,
+                                                       @NotNull String variableName,
+                                                       @NotNull Pair<? extends ReachingDefinitionsDfaInstance, ? extends List<DefinitionMap>> defUse,
+                                                       @NotNull Predicate<? super Instruction> predicate) {
+    Set<Instruction> interesting = ContainerUtil.newHashSet(instruction);
+    LinkedList<Pair<Instruction, String>> queue = ContainerUtil.newLinkedList();
+    queue.add(Pair.create(instruction, variableName));
+    while (!queue.isEmpty()) {
+      Pair<Instruction, String> pair = queue.removeFirst();
+      for (Pair<Instruction, String> dep : findDependencies(defUse, pair.first, pair.second)) {
+        if (interesting.add(dep.first)) {
+          queue.addLast(dep);
+        }
+      }
+    }
+
+    return interesting.stream().filter(predicate).collect(Collectors.toSet());
+  }
+
+  @NotNull
+  private Set<Pair<Instruction, String>> findDependencies(@NotNull Pair<? extends ReachingDefinitionsDfaInstance, ? extends List<DefinitionMap>> defUse,
+                                                          @NotNull Instruction instruction,
+                                                          @NotNull String varName) {
+    DefinitionMap definitionMap = defUse.second.get(instruction.num());
+    int varIndex = defUse.first.getVarIndex(varName);
+    int[] definitions = definitionMap.getDefinitions(varIndex);
+    if (definitions == null) return Collections.emptySet();
+
+    LinkedHashSet<Pair<Instruction, String>> pairs = ContainerUtil.newLinkedHashSet();
+    for (int defIndex : definitions) {
+      Instruction write = myFlow[defIndex];
+      pairs.add(Pair.create(write, varName));
+      PsiElement statement = findDependencyScope(write.getElement());
+      if (statement != null) {
+        pairs.addAll(findAllInstructionsInside(statement));
+      }
+    }
+    return pairs;
+  }
+
+  @NotNull
+  private List<Pair<Instruction, String>> findAllInstructionsInside(@NotNull PsiElement scope) {
+    final List<Pair<Instruction, String>> result = ContainerUtil.newArrayList();
+    scope.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (element instanceof GrReferenceExpression && !((GrReferenceExpression)element).isQualified()) {
+          String varName = ((GrReferenceExpression)element).getReferenceName();
+          List<Instruction> instructionList = myFromByElements.get(element);
+          if (varName != null && instructionList != null) {
+            for (Instruction dependency : instructionList) {
+              result.add(Pair.create(dependency, varName));
+            }
+          }
+        }
+        super.visitElement(element);
+      }
+    });
+    return result;
+  }
+
+  @Nullable
+  private static PsiElement findDependencyScope(@Nullable PsiElement element) {
+    return PsiTreeUtil.findFirstParent(
+      element,
+      element1 -> isExpressionStatement(element1) || !(element1.getParent() instanceof GrExpression)
+    );
+  }
+
+  private void cacheDfaResult(@NotNull List<? extends TypeDfaState> dfaResult) {
+    while (true) {
+      List<TypeDfaState> oldTypes = myVarTypes.get();
+      if (myVarTypes.compareAndSet(oldTypes, addDfaResult(dfaResult, oldTypes))) {
+        return;
+      }
+    }
+  }
+
+  @NotNull
+  private static List<TypeDfaState> addDfaResult(@NotNull List<? extends TypeDfaState> dfaResult,
+                                                 @NotNull List<? extends TypeDfaState> oldTypes) {
+    List<TypeDfaState> newTypes = new ArrayList<>(oldTypes);
+    for (int i = 0; i < dfaResult.size(); i++) {
+      newTypes.set(i, newTypes.get(i).mergeWith(dfaResult.get(i)));
+    }
+    return newTypes;
+  }
+}
