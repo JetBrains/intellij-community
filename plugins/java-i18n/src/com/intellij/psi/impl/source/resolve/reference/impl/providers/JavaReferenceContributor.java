@@ -49,7 +49,8 @@ public class JavaReferenceContributor extends PsiReferenceContributor{
       public boolean isClassAcceptable(Class hintClass) {
         return true;
       }
-    })), filePathReferenceProvider);
+    })), filePathReferenceProvider, PsiReferenceRegistrar.LOWER_PRIORITY);
+
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiDocToken.class),
                                         CommentsReferenceContributor.COMMENTS_REFERENCE_PROVIDER_TYPE.getProvider());
   }

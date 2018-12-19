@@ -51,7 +51,7 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
   @Override
   public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar.registerUastReferenceProvider(registrar, UastPatterns.injectionHostUExpression(),
-                                                         new UastPropertiesReferenceProvider(true), PsiReferenceRegistrar.DEFAULT_PRIORITY);
+                                                         new UastPropertiesReferenceProvider(true), PsiReferenceRegistrar.LOWER_PRIORITY);
 
     UastReferenceRegistrar.registerUastReferenceProvider(registrar,
                                                          UastPatterns.injectionHostUExpression()
