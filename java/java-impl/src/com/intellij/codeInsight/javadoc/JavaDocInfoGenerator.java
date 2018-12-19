@@ -395,16 +395,14 @@ public class JavaDocInfoGenerator {
       }
       else {
         buffer.append(DocumentationMarkup.CONTENT_START).append("<p class='centered'>");
-        buffer.append(DocumentationMarkup.GRAYED_START)
-              .append("The following documentation url").append(docURLs.size() > 1 ? "s were" : " was").append(" checked:")
-              .append(BR_TAG)
-              .append(NBSP)
-              .append(StringUtil.join(docURLs, XmlStringUtil::escapeString, BR_TAG + NBSP))
-              .append(DocumentationMarkup.GRAYED_END);
+        buffer.append(DocumentationMarkup.GRAYED_START);
+        buffer.append("The following documentation url").append(docURLs.size() > 1 ? "s were" : " was").append(" checked:");
+        buffer.append(BR_TAG).append(NBSP);
+        buffer.append(StringUtil.join(docURLs, XmlStringUtil::escapeString, BR_TAG + NBSP));
+        buffer.append(DocumentationMarkup.GRAYED_END);
         buffer.append(BR_TAG);
         buffer.append("<a href=\"open://Project Settings\">Edit API docs paths</a>");
-        buffer.append("</p>");
-        buffer.append(DocumentationMarkup.CONTENT_END);
+        buffer.append("</p>").append(DocumentationMarkup.CONTENT_END);
       }
     }
 
@@ -468,7 +466,7 @@ public class JavaDocInfoGenerator {
   private static boolean generateClassSignature(StringBuilder buffer, PsiClass aClass, SignaturePlace place) {
     boolean generateLink = place == SignaturePlace.Javadoc;
     generateAnnotations(buffer, aClass, place, true);
-    generateModifiers(buffer, aClass);
+    generateModifiers(buffer, aClass, false);
     buffer.append(LangBundle.message(aClass.isInterface() ? "java.terms.interface" : "java.terms.class"));
     buffer.append(' ');
     String refText = JavaDocUtil.getReferenceText(aClass.getProject(), aClass);
@@ -513,7 +511,7 @@ public class JavaDocInfoGenerator {
     for (int i = 0; i < refs.length; i++) {
       generateType(buffer, refs[i], aClass, generateLink);
       if (i < refs.length - 1) {
-        buffer.append(",&nbsp;");
+        buffer.append(',').append(NBSP);
       }
     }
   }
@@ -615,7 +613,7 @@ public class JavaDocInfoGenerator {
 
   private static void generateFieldSignature(StringBuilder buffer, PsiField field, SignaturePlace place) {
     generateAnnotations(buffer, field, place, true);
-    generateModifiers(buffer, field);
+    generateModifiers(buffer, field, false);
     generateType(buffer, field.getType(), field, place == SignaturePlace.Javadoc);
     buffer.append(" <b>");
     buffer.append(field.getName());
@@ -823,12 +821,18 @@ public class JavaDocInfoGenerator {
     return Math.min(index1, index2);
   }
 
-  private static void generateModifiers(StringBuilder buffer, PsiModifierListOwner owner) {
+  private static int generateModifiers(StringBuilder buffer, PsiModifierListOwner owner, boolean nbsp) {
     String modifiers = PsiFormatUtil.formatModifiers(owner, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (!modifiers.isEmpty()) {
       buffer.append(modifiers);
-      buffer.append(' ');
+      if (nbsp) {
+        buffer.append(NBSP);
+      }
+      else {
+        buffer.append(' ');
+      }
     }
+    return modifiers.length();
   }
 
   private static void generateAnnotations(StringBuilder buffer,
@@ -855,7 +859,7 @@ public class JavaDocInfoGenerator {
 
   private static void generateVariableDefinition(StringBuilder buffer, PsiVariable variable, boolean annotations) {
     buffer.append(DocumentationMarkup.DEFINITION_START);
-    generateModifiers(buffer, variable);
+    generateModifiers(buffer, variable, false);
     if (annotations) {
       generateAnnotations(buffer, variable, SignaturePlace.Javadoc, true);
     }
@@ -1035,9 +1039,8 @@ public class JavaDocInfoGenerator {
 
     generateAnnotations(buffer, method, place, true);
 
-    int beforeModifiers = buffer.length();
-    generateModifiers(buffer, method);
-    int indent = buffer.length() - beforeModifiers;
+    int modLength = generateModifiers(buffer, method, true);
+    int indent = modLength == 0 ? 0 : modLength + 1;
 
     String typeParamsString = generateTypeParameters(method, useShortNames);
     indent += StringUtil.unescapeXmlEntities(StringUtil.stripHtml(typeParamsString, true)).length();
