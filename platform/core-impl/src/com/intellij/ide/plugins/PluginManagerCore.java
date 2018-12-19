@@ -1048,8 +1048,8 @@ public class PluginManagerCore {
     return descriptors;
   }
 
-  private static void loadDescriptorsFromClassPath(List<IdeaPluginDescriptorImpl> result, ClassLoader loader, StartupProgress progress) {
-    Map<URL, String> urls = ContainerUtil.newLinkedHashMap();
+  private static void loadDescriptorsFromClassPath(@NotNull List<IdeaPluginDescriptorImpl> result, @NotNull ClassLoader loader, @Nullable StartupProgress progress) {
+    Map<URL, String> urls = new LinkedHashMap<>();
     URL platformPluginURL = null;
 
     String platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
@@ -1074,11 +1074,12 @@ public class PluginManagerCore {
     }
 
     // plugin projects may have the same plugins in plugin path (sandbox or SDK) and on the classpath; latter should be ignored
-    Set<IdeaPluginDescriptorImpl> found = ContainerUtil.newHashSet(result);
+    Set<IdeaPluginDescriptorImpl> found = new THashSet<>(result);
 
     int i = 0;
-    for (URL url : urls.keySet()) {
-      IdeaPluginDescriptorImpl descriptor = loadDescriptorFromResource(url, urls.get(url), true, url.equals(platformPluginURL));
+    for (Map.Entry<URL, String> entry : urls.entrySet()) {
+      URL url = entry.getKey();
+      IdeaPluginDescriptorImpl descriptor = loadDescriptorFromResource(url, entry.getValue(), true, url.equals(platformPluginURL));
       if (descriptor != null && found.add(descriptor)) {
         descriptor.setUseCoreClassLoader(true);
         result.add(descriptor);
