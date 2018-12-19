@@ -183,8 +183,6 @@
     <projectService serviceInterface="com.intellij.compiler.CompilerWorkspaceConfiguration"
                     serviceImplementation="com.intellij.compiler.CompilerWorkspaceConfiguration"/>
 
-    <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesModuleGroupingPolicy$Factory"/>
     <changesGroupingPolicy key="module" id="module"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.ModuleChangesGroupingPolicy$Factory"/>
 

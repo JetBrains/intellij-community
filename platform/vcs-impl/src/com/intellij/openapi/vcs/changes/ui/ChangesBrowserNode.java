@@ -47,8 +47,9 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   protected static final int DEFAULT_CHANGE_LIST_SORT_WEIGHT = 1;
   protected static final int CHANGE_LIST_SORT_WEIGHT = 2;
   protected static final int REPOSITORY_SORT_WEIGHT = 3;
-  protected static final int DIRECTORY_PATH_SORT_WEIGHT = 4;
-  protected static final int FILE_PATH_SORT_WEIGHT = 5;
+  protected static final int MODULE_SORT_WEIGHT = 4;
+  protected static final int DIRECTORY_PATH_SORT_WEIGHT = 5;
+  protected static final int FILE_PATH_SORT_WEIGHT = 6;
   protected static final int CHANGE_SORT_WEIGHT = 7;
   protected static final int VIRTUAL_FILE_SORT_WEIGHT = 8;
   protected static final int UNVERSIONED_SORT_WEIGHT = 9;

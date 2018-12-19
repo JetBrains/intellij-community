@@ -53,7 +53,7 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
 
   @Override
   public int getSortWeight() {
-    return DIRECTORY_PATH_SORT_WEIGHT;
+    return MODULE_SORT_WEIGHT;
   }
 
   @Override
