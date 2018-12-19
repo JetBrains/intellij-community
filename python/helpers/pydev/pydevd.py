@@ -760,12 +760,11 @@ class PyDB(object):
 
                 for thread_id in (curr_thread_id, '*'):
                     queue = self.get_internal_queue(thread_id)
-                    cmdsToReadd = []  # some commands must be processed by the thread itself... if that's the case,
-                                        # we will re-add the commands to the queue after executing.
 
                     # some commands must be processed by the thread itself... if that's the case,
                     # we will re-add the commands to the queue after executing.
                     cmds_to_add_back = []
+
                     try:
                         while True:
                             int_cmd = queue.get(False)
@@ -804,15 +803,15 @@ class PyDB(object):
         global_cache_frame_skips.clear()
 
     def add_break_on_exception(
-            self,
-            exception,
-            condition,
-            expression,
-            notify_on_handled_exceptions,
-            notify_on_unhandled_exceptions,
-            notify_on_first_raise_only,
-            ignore_libraries=False
-    ):
+        self,
+        exception,
+        condition,
+        expression,
+        notify_on_handled_exceptions,
+        notify_on_unhandled_exceptions,
+        notify_on_first_raise_only,
+        ignore_libraries=False
+        ):
         try:
             eb = ExceptionBreakpoint(
                 exception,
@@ -1198,7 +1197,7 @@ class PyDB(object):
                 if disable:
                     if frame.f_trace is not None and frame.f_trace is not NO_FTRACE:
                         frame.f_trace = NO_FTRACE
-                    
+
                 elif frame.f_trace is not self.trace_dispatch:
                     frame.f_trace = self.trace_dispatch
 
@@ -1337,8 +1336,6 @@ class PyDB(object):
 
             while not self.ready_to_run:
                 time.sleep(0.1)  # busy wait until we receive run command
-
-            # TODO Liza: Won't it break plugins?!
 
             # call prepare_to_run when we already have all information about breakpoints
             self.prepare_to_run()
@@ -1537,16 +1534,16 @@ def init_stderr_redirect(on_write=None):
 # settrace
 #=======================================================================================================================
 def settrace(
-        host=None,
-        stdoutToServer=False,
-        stderrToServer=False,
-        port=5678,
-        suspend=True,
-        trace_only_current_thread=False,
-        overwrite_prev_trace=False,
-        patch_multiprocessing=False,
-        stop_at_frame=None,
-):
+    host=None,
+    stdoutToServer=False,
+    stderrToServer=False,
+    port=5678,
+    suspend=True,
+    trace_only_current_thread=False,
+    overwrite_prev_trace=False,
+    patch_multiprocessing=False,
+    stop_at_frame=None,
+    ):
     '''Sets the tracing function with the pydev debug function and initializes needed facilities.
 
     @param host: the user may specify another host, if the debug server is not in the same machine (default is the local
@@ -1593,15 +1590,15 @@ def settrace(
 _set_trace_lock = thread.allocate_lock()
 
 def _locked_settrace(
-        host,
-        stdoutToServer,
-        stderrToServer,
-        port,
-        suspend,
-        trace_only_current_thread,
-        patch_multiprocessing,
-        stop_at_frame,
-):
+    host,
+    stdoutToServer,
+    stderrToServer,
+    port,
+    suspend,
+    trace_only_current_thread,
+    patch_multiprocessing,
+    stop_at_frame,
+    ):
     if patch_multiprocessing:
         try:
             from _pydev_bundle import pydev_monkey
@@ -1651,7 +1648,6 @@ def _locked_settrace(
         # Set the tracing only
         debugger.set_trace_for_frame_and_parents(get_frame().f_back)
 
-
         CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
         try:
             for _frameId, custom_frame in dict_iter_items(CustomFramesContainer.custom_frames):
@@ -1661,7 +1657,6 @@ def _locked_settrace(
 
         debugger.start_auxiliary_daemon_threads()
 
-        # TODO Liza: it will break frame eval for multiprocess debugging?!
         debugger.enable_tracing()
 
         if not trace_only_current_thread:
@@ -1809,12 +1804,12 @@ def settrace_forked():
             clear_thread_local_info()
 
         settrace(
-            host,
-            port=port,
-            suspend=False,
-            trace_only_current_thread=False,
-            overwrite_prev_trace=True,
-            patch_multiprocessing=True,
+                host,
+                port=port,
+                suspend=False,
+                trace_only_current_thread=False,
+                overwrite_prev_trace=True,
+                patch_multiprocessing=True,
         )
 
 #=======================================================================================================================

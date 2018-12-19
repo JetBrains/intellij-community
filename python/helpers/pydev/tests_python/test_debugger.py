@@ -2152,7 +2152,7 @@ def test_remote_debugger_basic(case_setup_remote):
         writer.finished_ok = True
 
 
-@pytest.mark.skip
+@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 def test_py_37_breakpoint_remote(case_setup_remote):
     with case_setup_remote.test_file('_debugger_case_breakpoint_remote.py') as writer:
         writer.write_make_initial_run()
@@ -2174,7 +2174,7 @@ def test_py_37_breakpoint_remote(case_setup_remote):
         writer.finished_ok = True
 
 
-@pytest.mark.skip
+@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 def test_py_37_breakpoint_remote_no_import(case_setup_remote):
 
     def get_environ(writer):
