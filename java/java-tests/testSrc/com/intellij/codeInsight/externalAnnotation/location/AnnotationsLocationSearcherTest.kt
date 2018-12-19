@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.testFramework.PlatformTestCase
+import com.intellij.util.containers.MultiMap
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -23,8 +24,10 @@ class AnnotationsLocationSearcherTest: PlatformTestCase() {
     super.setUp()
 
     testAnnotationProvider = TestAnnotationProvider().apply {
-      register("known-library-name", AnnotationsLocation("group", "artifact-id",
-                                                         "1.0").inRepository("file:///my-repo"))
+      register("known-library-name", AnnotationsLocation("group",
+                                                         "artifact-id",
+                                                         "1.0",
+                                                         "file:///my-repo"))
     }
 
     ep = Extensions.getRootArea().getExtensionPoint<AnnotationsLocationProvider>(AnnotationsLocationProvider.EP_NAME)
@@ -42,8 +45,24 @@ class AnnotationsLocationSearcherTest: PlatformTestCase() {
 
   @Test fun testKnownLibrary() {
     val library = createLibrary("known-library-name")
-    assertNotEmpty(searcher.findAnnotationsLocation(library))
+    assertSize(1, searcher.findAnnotationsLocation(library))
   }
+
+  @Test fun testAllProvidersCalled() {
+    val secondProvider = TestAnnotationProvider().apply {
+      register("known-library-name", AnnotationsLocation(
+        "new_group",
+        "new_artifact",
+        "myVersion",
+        "file:///other-repo"
+      ))
+    }
+    ep.registerExtension(secondProvider)
+
+    val library = createLibrary("known-library-name")
+    assertSize(2, searcher.findAnnotationsLocation(library))
+  }
+
 
   private fun createLibrary(libraryName: String): Library {
     val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
@@ -67,10 +86,10 @@ class AnnotationsLocationSearcherTest: PlatformTestCase() {
 
 
 class TestAnnotationProvider: AnnotationsLocationProvider {
-  private val myLibraryLocationMap = mutableMapOf<String, AnnotationsLocation>()
-  override fun getLocation(library: Library): AnnotationsLocation? = myLibraryLocationMap[library.name]
+  private val myLibraryLocationMap = MultiMap.createLinked<String, AnnotationsLocation>()
+  override fun getLocations(library: Library): Collection<AnnotationsLocation> = myLibraryLocationMap[library.name]
 
   fun register(name: String, location: AnnotationsLocation) {
-    myLibraryLocationMap[name] = location
+    myLibraryLocationMap.putValue(name, location)
   }
 }

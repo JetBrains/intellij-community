@@ -9,9 +9,7 @@ import com.intellij.openapi.roots.libraries.Library
  */
 class AnnotationsLocationSearcher {
   fun findAnnotationsLocation(library: Library): Collection<AnnotationsLocation> {
-    return AnnotationsLocationProvider.EP_NAME.extensions.mapNotNull {
-      it.getLocation(library)
-    }
+    return AnnotationsLocationProvider.EP_NAME.extensions.flatMap { it.getLocations(library) }
   }
 
   companion object {
