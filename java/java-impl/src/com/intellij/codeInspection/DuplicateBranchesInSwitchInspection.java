@@ -1,12 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.guess.impl.ExpressionTypeMemoryState;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
@@ -435,11 +438,37 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
 
     int hash() {
       int hash = myStatements.length;
-      // Don't want to hash the whole PSI tree in-depth because it's rather slow and is rarely needed.
       for (PsiStatement statement : myStatements) {
-        if (statement instanceof TreeElement) { // all known PSI statements are tree elements
-          short index = ((TreeElement)statement).getElementType().getIndex();
-          hash = hash * 31 + index;
+        hash = hash * 31 + hash(statement, 2); // Don't want to hash the whole PSI tree because it might be quite slow
+      }
+      return hash;
+    }
+
+    private static int hash(PsiElement element, int depth) {
+      if (element instanceof PsiNewExpression) {
+        // This probably should be done in EXPRESSION_HASHING_STRATEGY, but it might affect completion in a flaky way
+        PsiJavaCodeReferenceElement reference = ((PsiNewExpression)element).getClassOrAnonymousClassReference();
+        if (reference != null) {
+          return Objects.hashCode(reference.getReferenceName()) * 31 + JavaElementType.NEW_EXPRESSION.getIndex();
+        }
+      }
+      if (element instanceof PsiExpression) {
+        return ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.computeHashCode((PsiExpression)element);
+      }
+      IElementType type = PsiUtilCore.getElementType(element);
+      int hash = type != null ? type.hashCode() : 0;
+      if (depth > 0) {
+        int count = 0;
+        for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+          if (child instanceof PsiWhiteSpace || child instanceof PsiComment ||
+              child instanceof PsiJavaToken) { // significant tokens are taken into account by getElementType()
+            continue;
+          }
+          hash = hash * 31 + hash(child, depth - 1);
+          count++;
+        }
+        if (count != 0) {
+          hash = hash * 31 + count;
         }
       }
       return hash;
