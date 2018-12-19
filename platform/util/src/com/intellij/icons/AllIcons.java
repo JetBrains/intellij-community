@@ -2894,12 +2894,10 @@ public class AllIcons {
     public static final Icon Arrow_right = IconLoader.getIcon("/vcs/arrow_right.svg"); // 16x16
     public static final Icon Branch = IconLoader.getIcon("/vcs/branch.svg"); // 16x16
     public static final Icon Changelist = IconLoader.getIcon("/vcs/changelist.svg"); // 16x16
-    public static final Icon CheckSpelling = IconLoader.getIcon("/vcs/checkSpelling.png"); // 16x16
     public static final Icon CommitNode = IconLoader.getIcon("/vcs/commitNode.svg"); // 16x16
     public static final Icon Equal = IconLoader.getIcon("/vcs/equal.svg"); // 16x16
     public static final Icon Folders = IconLoader.getIcon("/vcs/folders.svg"); // 16x16
     public static final Icon History = IconLoader.getIcon("/vcs/history.svg"); // 16x16
-    public static final Icon MapBase = IconLoader.getIcon("/vcs/mapBase.png"); // 16x16
     public static final Icon Merge = IconLoader.getIcon("/vcs/merge.svg"); // 16x16
     public static final Icon Not_equal = IconLoader.getIcon("/vcs/not_equal.svg"); // 16x16
     public static final Icon Patch = IconLoader.getIcon("/vcs/patch.svg"); // 16x16
@@ -2907,7 +2905,6 @@ public class AllIcons {
     public static final Icon Patch_file = IconLoader.getIcon("/vcs/patch_file.svg"); // 16x16
     public static final Icon Push = IconLoader.getIcon("/vcs/push.svg"); // 16x16
     public static final Icon Remove = IconLoader.getIcon("/vcs/remove.svg"); // 16x16
-    public static final Icon RestoreDefaultSize = IconLoader.getIcon("/vcs/restoreDefaultSize.png"); // 16x16
     public static final Icon Shelve = IconLoader.getIcon("/vcs/Shelve.svg"); // 16x16
     public static final Icon ShelveSilent = IconLoader.getIcon("/vcs/shelveSilent.svg"); // 16x16
     public static final Icon ShowUnversionedFiles = IconLoader.getIcon("/vcs/ShowUnversionedFiles.svg"); // 16x16
@@ -2919,6 +2916,16 @@ public class AllIcons {
 
     }
 
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon CheckSpelling = IconLoader.getIcon("/vcs/checkSpelling.png");
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Folders */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon MapBase = AllIcons.Vcs.Folders;
+
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree */
     @SuppressWarnings("unused")
     @Deprecated
@@ -2928,6 +2935,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon ResetStrip = IconLoader.getIcon("/vcs/resetStrip.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon RestoreDefaultSize = IconLoader.getIcon("/vcs/restoreDefaultSize.png");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
