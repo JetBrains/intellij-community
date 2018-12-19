@@ -16,7 +16,7 @@ import java.util.zip.ZipOutputStream
  */
 fun main(args: Array<String>) {
   if (args.size != 2) {
-    val zipsDirectory = System.getProperty("pycharm.zips.directory")
+    val zipsDirectory = System.getProperty("intellij.build.pycharm.zips.directory")
     val prebuiltStubsArchive = PyCharmBuildOptions.getPrebuiltStubsArchive()
 
     if (zipsDirectory.isNullOrBlank() || prebuiltStubsArchive.isNullOrBlank()) {
