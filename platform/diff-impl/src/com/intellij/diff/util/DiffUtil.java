@@ -179,7 +179,7 @@ public class DiffUtil {
   }
 
   public static void setEditorCodeStyle(@Nullable Project project, @NotNull EditorEx editor, @Nullable FileType fileType) {
-    if (project != null && fileType != null) {
+    if (project != null && fileType != null && editor.getVirtualFile() == null) {
       CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
       editor.getSettings().setTabSize(codeStyleFacade.getTabSize(fileType));
       editor.getSettings().setUseTabCharacter(codeStyleFacade.useTabCharacter(fileType));
@@ -222,13 +222,13 @@ public class DiffUtil {
   }
 
   public static void configureEditor(@NotNull EditorEx editor, @NotNull DocumentContent content, @Nullable Project project) {
-    setEditorHighlighter(project, editor, content);
-    setEditorCodeStyle(project, editor, content.getContentType());
-
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(content.getDocument());
     if (virtualFile != null && Registry.is("diff.enable.psi.highlighting")) {
       editor.setFile(virtualFile);
     }
+
+    setEditorHighlighter(project, editor, content);
+    setEditorCodeStyle(project, editor, content.getContentType());
   }
 
   public static boolean isMirrored(@NotNull Editor editor) {
