@@ -242,10 +242,10 @@ public class TypeInferenceHelper {
     if (parent instanceof GrAssignmentExpression) return ((GrAssignmentExpression)parent).getRValue();
     if (parent instanceof GrTuple) {
       final int i = ((GrTuple)parent).indexOf(lValue);
-      final GrTupleAssignmentExpression pparent = ((GrTuple)parent).getParent();
-      LOG.assertTrue(pparent != null);
+      final GrTupleAssignmentExpression grandParent = ((GrTuple)parent).getParent();
+      LOG.assertTrue(grandParent != null);
 
-      final GrExpression rValue = pparent.getRValue();
+      final GrExpression rValue = grandParent.getRValue();
       if (rValue instanceof GrListOrMap && !((GrListOrMap)rValue).isMap()) {
         final GrExpression[] initializers = ((GrListOrMap)rValue).getInitializers();
         if (i < initializers.length) return initializers[i];
@@ -256,14 +256,12 @@ public class TypeInferenceHelper {
   }
 
   static class TypeDfaInstance implements DfaInstance<TypeDfaState> {
-    private final GrControlFlowOwner myScope;
     private final Instruction[] myFlow;
     private final Set<Instruction> myInteresting;
     private final InferenceCache myCache;
     private final TIntHashSet myAcyclicInstructions;
 
-    TypeDfaInstance(@NotNull GrControlFlowOwner scope, @NotNull Instruction[] flow, @NotNull Set<Instruction> interesting, @NotNull InferenceCache cache) {
-      myScope = scope;
+    TypeDfaInstance(@NotNull Instruction[] flow, @NotNull Set<Instruction> interesting, @NotNull InferenceCache cache) {
       myFlow = flow;
       myInteresting = interesting;
       myCache = cache;
@@ -381,7 +379,7 @@ public class TypeInferenceHelper {
 
     @Nullable
     private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner, @NotNull Instruction[] flow, @NotNull Set<Instruction> interesting) {
-      final TypeDfaInstance dfaInstance = new TypeDfaInstance(owner, flow, interesting, this);
+      final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, interesting, this);
       final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
       return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
     }
@@ -414,9 +412,9 @@ public class TypeInferenceHelper {
 
     @NotNull
     private Set<Pair<Instruction,String>> findDependencies(@NotNull Pair<? extends ReachingDefinitionsDfaInstance, ? extends List<DefinitionMap>> defUse,
-                                                           @NotNull Instruction insn,
+                                                           @NotNull Instruction instruction,
                                                            @NotNull String varName) {
-      DefinitionMap definitionMap = defUse.second.get(insn.num());
+      DefinitionMap definitionMap = defUse.second.get(instruction.num());
       int varIndex = defUse.first.getVarIndex(varName);
       int[] definitions = definitionMap.getDefinitions(varIndex);
       if (definitions == null) return Collections.emptySet();
