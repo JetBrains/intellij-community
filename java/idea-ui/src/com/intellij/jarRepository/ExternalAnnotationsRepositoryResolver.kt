@@ -2,6 +2,7 @@
 package com.intellij.jarRepository
 
 import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
+import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runWriteAction
@@ -18,6 +19,7 @@ import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import java.util.*
 
 /**
  * Resolve external annotations from Maven repositories.
@@ -53,6 +55,24 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
       updateLibrary(roots, mavenLibDescriptor, library)
     }
 
+    return library
+  }
+
+  override fun resolve(project: Project, library: Library, location: AnnotationsLocation): Library {
+    val descriptor = JpsMavenRepositoryLibraryDescriptor(location.groupId, location.artifactId, location.version, false)
+    val repos = if (location.repositoryUrls.isNotEmpty()) {
+      val base = Random().nextInt()
+      location.repositoryUrls.mapIndexed { index, url -> RemoteRepositoryDescription("id_$base$index", "name", url) }
+    }
+    else {
+      null
+    }
+
+    val roots = JarRepositoryManager
+                  .loadDependenciesSync(project, descriptor, setOf(ArtifactKind.ANNOTATIONS), repos, null)
+                ?: return library
+
+    invokeAndWaitIfNeed { updateLibrary(roots, descriptor, library) }
     return library
   }
 
