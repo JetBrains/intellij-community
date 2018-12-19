@@ -92,11 +92,8 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
     });
     boolean firstTime = ui == null;
     if (firstTime) {
-      ui = VcsProjectLog.getInstance(project).getTabsManager().openAnotherLogTab(logManager, true);
       VcsLogFilterCollection filters = createFilters(path, hash, root);
-      for (VcsLogFilter f : filters.getFilters()) {
-        ui.getFilterUi().setFilter(f);
-      }
+      ui = VcsProjectLog.getInstance(project).getTabsManager().openAnotherLogTab(logManager, filters);
     }
     consumer.accept(ui, firstTime);
   }

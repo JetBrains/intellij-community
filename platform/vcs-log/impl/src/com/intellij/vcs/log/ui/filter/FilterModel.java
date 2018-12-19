@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,17 +14,29 @@ import java.util.Collection;
 import java.util.List;
 
 abstract class FilterModel<Filter extends VcsLogFilter> {
-  @NotNull private final String myName;
+  @NotNull private final VcsLogFilterCollection.FilterKey<? extends Filter> myFilterKey;
   @NotNull protected final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Computable<? extends VcsLogDataPack> myDataPackProvider;
   @NotNull private final Collection<Runnable> mySetFilterListeners = ContainerUtil.newArrayList();
 
   @Nullable private Filter myFilter;
 
-  FilterModel(@NotNull String name, @NotNull Computable<? extends VcsLogDataPack> provider, @NotNull MainVcsLogUiProperties uiProperties) {
-    myName = name;
+  FilterModel(@NotNull VcsLogFilterCollection.FilterKey<? extends Filter> filterKey,
+              @NotNull Computable<? extends VcsLogDataPack> provider,
+              @NotNull MainVcsLogUiProperties uiProperties,
+              @Nullable VcsLogFilterCollection filters) {
+    myFilterKey = filterKey;
     myUiProperties = uiProperties;
     myDataPackProvider = provider;
+
+    if (filters != null) {
+      saveFilter(getFilterFromCollection(filters));
+    }
+  }
+
+  @Nullable
+  protected Filter getFilterFromCollection(@NotNull VcsLogFilterCollection filters) {
+    return filters.get(myFilterKey);
   }
 
   void setFilter(@Nullable Filter filter) {
@@ -49,7 +48,7 @@ abstract class FilterModel<Filter extends VcsLogFilter> {
   }
 
   protected void saveFilter(@Nullable Filter filter) {
-    myUiProperties.saveFilterValues(myName, filter == null ? null : getFilterValues(filter));
+    myUiProperties.saveFilterValues(myFilterKey.getName(), filter == null ? null : getFilterValues(filter));
   }
 
   @Nullable
@@ -68,7 +67,7 @@ abstract class FilterModel<Filter extends VcsLogFilter> {
 
   @Nullable
   protected Filter getLastFilter() {
-    List<String> values = myUiProperties.getFilterValues(myName);
+    List<String> values = myUiProperties.getFilterValues(myFilterKey.getName());
     if (values != null) {
       return createFilter(values);
     }

@@ -61,18 +61,19 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   public VcsLogClassicFilterUi(@NotNull VcsLogUiImpl ui,
                                @NotNull VcsLogData logData,
                                @NotNull MainVcsLogUiProperties uiProperties,
-                               @NotNull VcsLogDataPack initialDataPack) {
+                               @NotNull VcsLogDataPack initialDataPack,
+                               @Nullable VcsLogFilterCollection filters) {
     myUi = ui;
     myLogData = logData;
     myUiProperties = uiProperties;
     myDataPack = initialDataPack;
 
     NotNullComputable<VcsLogDataPack> dataPackGetter = () -> myDataPack;
-    myBranchFilterModel = new BranchFilterModel(dataPackGetter, myUiProperties);
-    myUserFilterModel = new UserFilterModel(dataPackGetter, myUiProperties);
-    myDateFilterModel = new DateFilterModel(dataPackGetter, myUiProperties);
-    myStructureFilterModel = new FileFilterModel(dataPackGetter, myLogData.getLogProviders().keySet(), myUiProperties);
-    myTextFilterModel = new TextFilterModel(dataPackGetter, myUiProperties);
+    myBranchFilterModel = new BranchFilterModel(dataPackGetter, myUiProperties, filters);
+    myUserFilterModel = new UserFilterModel(dataPackGetter, myUiProperties, filters);
+    myDateFilterModel = new DateFilterModel(dataPackGetter, myUiProperties, filters);
+    myStructureFilterModel = new FileFilterModel(dataPackGetter, myLogData.getLogProviders().keySet(), myUiProperties, filters);
+    myTextFilterModel = new TextFilterModel(dataPackGetter, myUiProperties, filters);
 
     updateUiOnFilterChange();
     myUi.applyFiltersAndUpdateUi(getFilters());
@@ -195,8 +196,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @Nullable
     private Collection<VirtualFile> myVisibleRoots;
 
-    BranchFilterModel(@NotNull Computable<? extends VcsLogDataPack> provider, @NotNull MainVcsLogUiProperties properties) {
-      super("branch", provider, properties);
+    BranchFilterModel(@NotNull Computable<? extends VcsLogDataPack> provider, @NotNull MainVcsLogUiProperties properties,
+                      @Nullable VcsLogFilterCollection filters) {
+      super(VcsLogFilterCollection.BRANCH_FILTER, provider, properties, filters);
     }
 
     public void onStructureFilterChanged(@NotNull Set<VirtualFile> roots, @Nullable VcsLogFileFilter filter) {
@@ -230,8 +232,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   private static class TextFilterModel extends FilterModel<VcsLogTextFilter> {
     @Nullable private String myText;
 
-    TextFilterModel(NotNullComputable<? extends VcsLogDataPack> dataPackProvider, @NotNull MainVcsLogUiProperties properties) {
-      super("text", dataPackProvider, properties);
+    TextFilterModel(@NotNull NotNullComputable<? extends VcsLogDataPack> dataPackProvider, @NotNull MainVcsLogUiProperties properties,
+                    @Nullable VcsLogFilterCollection filters) {
+      super(VcsLogFilterCollection.TEXT_FILTER, dataPackProvider, properties, filters);
     }
 
     @NotNull
@@ -284,11 +287,21 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @NotNull private static final String FILE = "file:";
     @NotNull private final Set<VirtualFile> myRoots;
 
-    FileFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter,
+    FileFilterModel(@NotNull NotNullComputable<VcsLogDataPack> dataPackGetter,
                     @NotNull Set<VirtualFile> roots,
-                    MainVcsLogUiProperties uiProperties) {
-      super("file", dataPackGetter, uiProperties);
+                    @NotNull MainVcsLogUiProperties uiProperties,
+                    @Nullable VcsLogFilterCollection filters) {
+      super(VcsLogFileFilter.FILE_FILTER, dataPackGetter, uiProperties, filters);
       myRoots = roots;
+    }
+
+    @Nullable
+    @Override
+    protected VcsLogFileFilter getFilterFromCollection(@NotNull VcsLogFilterCollection filters) {
+      VcsLogRootFilter rootFilter = filters.get(VcsLogFilterCollection.ROOT_FILTER);
+      VcsLogStructureFilter structureFilter = filters.get(VcsLogFilterCollection.STRUCTURE_FILTER);
+      if (rootFilter == null && structureFilter == null) return null;
+      return new VcsLogFileFilter(structureFilter, rootFilter);
     }
 
     @Override
@@ -377,8 +390,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   private static class DateFilterModel extends FilterModel<VcsLogDateFilter> {
-    DateFilterModel(NotNullComputable<? extends VcsLogDataPack> dataPackGetter, MainVcsLogUiProperties uiProperties) {
-      super("date", dataPackGetter, uiProperties);
+    DateFilterModel(@NotNull NotNullComputable<? extends VcsLogDataPack> dataPackGetter, @NotNull MainVcsLogUiProperties uiProperties,
+                    @Nullable VcsLogFilterCollection filters) {
+      super(VcsLogFilterCollection.DATE_FILTER, dataPackGetter, uiProperties, filters);
     }
 
     @Nullable
@@ -411,8 +425,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   private class UserFilterModel extends FilterModel<VcsLogUserFilter> {
-    UserFilterModel(NotNullComputable<? extends VcsLogDataPack> dataPackGetter, MainVcsLogUiProperties uiProperties) {
-      super("user", dataPackGetter, uiProperties);
+    UserFilterModel(@NotNull NotNullComputable<? extends VcsLogDataPack> dataPackGetter, @NotNull MainVcsLogUiProperties uiProperties,
+                    @Nullable VcsLogFilterCollection filters) {
+      super(VcsLogFilterCollection.USER_FILTER, dataPackGetter, uiProperties, filters);
     }
 
     @NotNull

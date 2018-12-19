@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class VcsLogFileFilter implements VcsLogFilter {
+  public static final VcsLogFilterCollection.FilterKey<VcsLogFileFilter> FILE_FILTER = VcsLogFilterCollection.FilterKey.create("file");
   @Nullable private final VcsLogStructureFilter myStructureFilter;
   @Nullable private final VcsLogRootFilter myRootFilter;
 
@@ -30,7 +31,7 @@ public class VcsLogFileFilter implements VcsLogFilter {
   @NotNull
   @Override
   public VcsLogFilterCollection.FilterKey<?> getKey() {
-    return VcsLogFilterCollection.FilterKey.create("file");
+    return FILE_FILTER;
   }
 
   @NotNull
