@@ -25,6 +25,7 @@ import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Flow;
 
@@ -39,7 +40,7 @@ import java.util.List;
 public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   private static final String TEST_DATA_FOLDER = "/codeInsight/javadocIG/";
 
-  private boolean myUseJava8Sdk;
+  private int myJdkVersion = 7;
 
   @Override
   protected String getTestDataPath() {
@@ -48,7 +49,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
 
   @Override
   protected Sdk getTestProjectJdk() {
-    return myUseJava8Sdk ? IdeaTestUtil.getMockJdk18() : IdeaTestUtil.getMockJdk17();
+    return IdeaTestUtil.getMockJdk(JavaVersion.compose(myJdkVersion));
   }
 
   public void testSimpleField() { doTestField(); }
@@ -99,6 +100,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   public void testLiteralInsideCode() { useJava8(); doTestClass(); }
   public void testSuperJavadocExactResolve() { doTestAtCaret(); }
   public void testSuperJavadocErasureResolve() { doTestAtCaret(); }
+  public void testPackageInfo() { doTestPackageInfo(); }
+  public void testPackageHtml() { doTestPackageInfo(); }
+  public void testSyntheticEnumValues() { doTestAtCaret(); }
+  public void testVariableDoc() { doTestAtCaret(); }
 
   public void testAnonymousAndSuperJavadoc() {
     PsiClass psiClass = PsiTreeUtil.findChildOfType(getTestClass(), PsiAnonymousClass.class);
@@ -140,17 +145,6 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     String docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(superClass, referenceElement);
     assertNotNull(docInfo);
     assertFileTextEquals(UIUtil.getHtmlBody(docInfo));
-  }
-
-  public void testPackageInfo() {
-    String path = JavaTestUtil.getJavaTestDataPath() + TEST_DATA_FOLDER;
-    String packageInfo = path + getTestName(true);
-    createProjectStructure(path);
-    PsiPackage psiPackage = myJavaFacade.findPackage(getTestName(true));
-    String info = JavaDocumentationProvider.generateExternalJavadoc(psiPackage, (List<String>)null);
-    assertNotNull(info);
-    String htmlText = loadFile(new File(packageInfo, "packageInfo.html"));
-    assertEquals(htmlText, replaceEnvironmentDependentContent(info));
   }
 
   public void testInheritedParameter() {
@@ -246,6 +240,16 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     verifyJavaDoc(aPackage);
   }
 
+  public void testModuleInfo() {
+    myJdkVersion = 9;
+    setUpJdk();
+    PsiClass aClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT);
+    assertNotNull(aClass);
+    PsiFile moduleFile = aClass.getContainingFile().getParent().getParentDirectory().getParentDirectory().findFile("module-info.class");
+    assertNotNull(moduleFile);
+    verifyJavaDoc(((PsiJavaFile)moduleFile).getModuleDeclaration());
+  }
+
   private void doTestClass() {
     PsiClass psiClass = getTestClass();
     verifyJavaDoc(psiClass);
@@ -296,16 +300,22 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     assertEquals(StringUtil.convertLineSeparators(htmlFile.getText().trim()), replaceEnvironmentDependentContent(doc));
   }
 
+  private void doTestPackageInfo() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER);
+    PsiPackage psiPackage = myJavaFacade.findPackage(getTestName(true));
+    assertNotNull(psiPackage);
+    String info = JavaDocumentationProvider.generateExternalJavadoc(psiPackage, (List<String>)null);
+    assertFileTextEquals(info, getTestName(true) + "/packageInfo.html");
+  }
+
   private void doTestPackageInfo(String caretPositionedAt) {
-    String rootPath = getTestDataPath() + TEST_DATA_FOLDER;
-    VirtualFile root = createProjectStructure(rootPath);
-    VirtualFile piFile = root.findFileByRelativePath(getTestName(true) + "/package-info.java");
-    assertNotNull(piFile);
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(piFile);
+    VirtualFile root = createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER);
+    VirtualFile file = root.findFileByRelativePath(getTestName(true) + "/package-info.java");
+    assertNotNull(file);
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     assertNotNull(psiFile);
     String info = JavaExternalDocumentationTest.getDocumentationText(psiFile, psiFile.getText().indexOf(caretPositionedAt));
-    String htmlText = loadFile(new File(rootPath + getTestName(true) + File.separator + "packageInfo.html"));
-    assertEquals(htmlText, replaceEnvironmentDependentContent(info));
+    assertFileTextEquals(info, getTestName(true) + "/packageInfo.html");
   }
 
   private VirtualFile createProjectStructure(String rootPath) {
@@ -334,8 +344,12 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   private void assertFileTextEquals(String docInfo) {
+    assertFileTextEquals(docInfo, getTestName(true) + ".html");
+  }
+
+  private void assertFileTextEquals(String docInfo, String expectedFile) {
     String actualText = replaceEnvironmentDependentContent(docInfo);
-    File htmlPath = new File(getTestDataPath() + TEST_DATA_FOLDER + getTestName(true) + ".html");
+    File htmlPath = new File(getTestDataPath() + TEST_DATA_FOLDER + expectedFile);
     String expectedText = loadFile(htmlPath);
     if (!StringUtil.equals(expectedText, actualText)) {
       String message = "Text mismatch in file: " + htmlPath.getName();
@@ -344,12 +358,12 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   private void useJava8() {
-    myUseJava8Sdk = true;
+    myJdkVersion = 8;
     setUpJdk();
   }
 
   private void useJava7() {
-    myUseJava8Sdk = false;
+    myJdkVersion = 7;
     setUpJdk();
   }
 
