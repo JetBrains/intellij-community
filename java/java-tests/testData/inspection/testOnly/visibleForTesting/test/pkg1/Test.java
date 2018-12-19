@@ -1,3 +1,4 @@
+package pkg1;
 public class Test {
   void publicMethod() {
     new A().invisibleMethod(3);
