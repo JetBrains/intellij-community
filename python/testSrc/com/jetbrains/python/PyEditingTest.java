@@ -99,6 +99,15 @@ public class PyEditingTest extends PyTestCase {
     assertEquals("fr''''''", doTestTyping("fr''", 3, "''"));
   }
 
+  // PY-32872
+  public void testClosingQuotesCompletionForTripleQuotedFString() {
+    assertEquals("f''''''\n", doTestTyping("f''\n", 3, "'"));
+  }
+
+  public void testNoClosingQuotesAfterTripleQuotesInsideTripleQuotedFString() {
+    assertEquals("f'''\"\"\"@'''", doTestTyping("f'''\"\"@'''", 6, "\""));
+  }
+
   public void testFStringFragmentBraces() {
     assertEquals("f'{}'", doTestTyping("f''", 2, '{'));
   }
