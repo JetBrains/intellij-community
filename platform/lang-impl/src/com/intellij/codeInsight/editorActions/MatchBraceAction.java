@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * Moves caret to the the matching brace:
  * - If caret is on the closing brace - moves to the matching opening
  * - If caret is on the opening brace - moves to the matching closing brace
- * - Otherwise algorithm is clumsy from user perspective: look for the previous opening or close brace and move to the matching one
+ * - Otherwise moves from the caret position to the beginning of the file and finds first opening brace not closed before the caret position
  */
 public class MatchBraceAction extends EditorAction {
   public MatchBraceAction() {
