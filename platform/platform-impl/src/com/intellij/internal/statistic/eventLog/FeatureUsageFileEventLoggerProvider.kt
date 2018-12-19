@@ -3,9 +3,9 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import java.util.*
 
@@ -14,12 +14,7 @@ class FeatureUsageFileEventLoggerProvider : FeatureUsageEventLoggerProvider {
     val sessionId = UUID.randomUUID().toString().shortedUUID()
     val build = ApplicationInfo.getInstance().build.asBuildNumber()
     val logger = FeatureUsageFileEventLogger(sessionId, build, "-1", "9", FeatureUsageLogEventWriter())
-
-    ApplicationManager.getApplication().addApplicationListener(object : ApplicationListener {
-      override fun applicationExiting() {
-        logger.dispose()
-      }
-    })
+    Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
   }
 
