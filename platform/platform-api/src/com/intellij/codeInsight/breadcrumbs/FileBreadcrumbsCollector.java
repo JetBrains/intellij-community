@@ -24,6 +24,13 @@ public abstract class FileBreadcrumbsCollector {
   public abstract boolean handlesFile(@NotNull VirtualFile virtualFile);
 
   /**
+   * Checks if the breadcrumbs should be shown for the given file.
+   */
+  public boolean isShownForFile(@NotNull Editor editor, @NotNull VirtualFile file) {
+    return true;
+  }
+
+  /**
    * Adds event listeners required to redraw the breadcrumbs when the contents of the file changes.
    * @param file the file to watch
    * @param editor

@@ -112,12 +112,8 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
       return false;
     }
 
-    BreadcrumbsProvider provider = BreadcrumbsUtilEx.findProvider(editor.getEditor(), file);
-    if (provider != null) {
-      return true;
-    }
     for (FileBreadcrumbsCollector collector : FileBreadcrumbsCollector.EP_NAME.getExtensions(editor.getEditor().getProject())) {
-      if (collector.handlesFile(file)) {
+      if (collector.handlesFile(file) && collector.isShownForFile(editor.getEditor(), file)) {
         return true;
       }
     }

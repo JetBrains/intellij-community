@@ -28,6 +28,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 
+import static com.intellij.xml.breadcrumbs.BreadcrumbsUtilEx.findProvider;
+
 public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   private final static Logger LOG = Logger.getInstance(PsiFileBreadcrumbsCollector.class);
 
@@ -40,6 +42,11 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   @Override
   public boolean handlesFile(@NotNull VirtualFile virtualFile) {
     return true;
+  }
+
+  @Override
+  public boolean isShownForFile(@NotNull Editor editor, @NotNull VirtualFile file) {
+    return BreadcrumbsUtilEx.findProvider(editor, file) != null;
   }
 
   @Override
@@ -97,7 +104,7 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   }
 
   private Iterable<Crumb> collectBreadcrumbs(VirtualFile file, Editor editor, int offset) {
-    BreadcrumbsProvider defaultInfoProvider = BreadcrumbsUtilEx.findProvider(editor, file);
+    BreadcrumbsProvider defaultInfoProvider = findProvider(editor, file);
 
     Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs =
       getLineElements(offset, file, myProject, defaultInfoProvider, true);
