@@ -1663,7 +1663,6 @@ public class AllIcons {
       public static final Icon WarningEvents = IconLoader.getIcon("/ide/notification/warningEvents.svg"); // 13x13
 
     }
-    public static final Icon Notifications = IconLoader.getIcon("/ide/notifications.png"); // 16x16
     public static final Icon OutgoingChangesOn = IconLoader.getIcon("/ide/outgoingChangesOn.svg"); // 16x16
     public static final Icon Pipette = IconLoader.getIcon("/ide/pipette.svg"); // 16x16
     public static final Icon Pipette_rollover = IconLoader.getIcon("/ide/pipette_rollover.svg"); // 16x16
@@ -1735,6 +1734,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon NoNotifications13 = IconLoader.getIcon("/ide/noNotifications13.png");
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Ide.Notification.NoEvents */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Notifications = AllIcons.Ide.Notification.NoEvents;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Warning */
     @SuppressWarnings("unused")
