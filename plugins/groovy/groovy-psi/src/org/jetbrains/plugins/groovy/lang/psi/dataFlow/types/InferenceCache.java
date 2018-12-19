@@ -7,6 +7,7 @@ import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -17,7 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsDfaInstance;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -32,12 +32,19 @@ class InferenceCache {
   private final Instruction[] myFlow;
   private final Map<PsiElement, List<Instruction>> myFromByElements;
 
+  private final TObjectIntHashMap<String> myVarIndexes;
+  private final List<DefinitionMap> myDefinitions;
+
   private final AtomicReference<List<TypeDfaState>> myVarTypes;
   private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
 
-  InferenceCache(@NotNull GrControlFlowOwner scope) {
+  InferenceCache(@NotNull GrControlFlowOwner scope,
+                 @NotNull TObjectIntHashMap<String> varIndexes,
+                 @NotNull List<DefinitionMap> definitions) {
     myScope = scope;
     myFlow = scope.getControlFlow();
+    myVarIndexes = varIndexes;
+    myDefinitions = definitions;
     myFromByElements = Arrays.stream(myFlow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
     List<TypeDfaState> noTypes = new ArrayList<>();
     for (int i = 0; i < myFlow.length; i++) {
@@ -52,14 +59,8 @@ class InferenceCache {
 
     TypeDfaState cache = myVarTypes.get().get(instruction.num());
     if (!cache.containsVariable(variableName)) {
-      Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> defUse = TypeInferenceHelper.getDefUseMaps(myScope);
-      if (defUse == null) {
-        myTooComplexInstructions.add(instruction);
-        return null;
-      }
-
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
-      Set<Instruction> interesting = collectRequiredInstructions(instruction, variableName, defUse, mixinPredicate);
+      Set<Instruction> interesting = collectRequiredInstructions(instruction, variableName, mixinPredicate);
       List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, interesting);
       if (dfaResult == null) {
         myTooComplexInstructions.addAll(interesting);
@@ -89,14 +90,13 @@ class InferenceCache {
 
   private Set<Instruction> collectRequiredInstructions(@NotNull Instruction instruction,
                                                        @NotNull String variableName,
-                                                       @NotNull Pair<? extends ReachingDefinitionsDfaInstance, ? extends List<DefinitionMap>> defUse,
                                                        @NotNull Predicate<? super Instruction> predicate) {
     Set<Instruction> interesting = ContainerUtil.newHashSet(instruction);
     LinkedList<Pair<Instruction, String>> queue = ContainerUtil.newLinkedList();
     queue.add(Pair.create(instruction, variableName));
     while (!queue.isEmpty()) {
       Pair<Instruction, String> pair = queue.removeFirst();
-      for (Pair<Instruction, String> dep : findDependencies(defUse, pair.first, pair.second)) {
+      for (Pair<Instruction, String> dep : findDependencies(pair.first, pair.second)) {
         if (interesting.add(dep.first)) {
           queue.addLast(dep);
         }
@@ -107,11 +107,9 @@ class InferenceCache {
   }
 
   @NotNull
-  private Set<Pair<Instruction, String>> findDependencies(@NotNull Pair<? extends ReachingDefinitionsDfaInstance, ? extends List<DefinitionMap>> defUse,
-                                                          @NotNull Instruction instruction,
-                                                          @NotNull String varName) {
-    DefinitionMap definitionMap = defUse.second.get(instruction.num());
-    int varIndex = defUse.first.getVarIndex(varName);
+  private Set<Pair<Instruction, String>> findDependencies(@NotNull Instruction instruction, @NotNull String varName) {
+    DefinitionMap definitionMap = myDefinitions.get(instruction.num());
+    int varIndex = myVarIndexes.get(varName);
     int[] definitions = definitionMap.getDefinitions(varIndex);
     if (definitions == null) return Collections.emptySet();
 

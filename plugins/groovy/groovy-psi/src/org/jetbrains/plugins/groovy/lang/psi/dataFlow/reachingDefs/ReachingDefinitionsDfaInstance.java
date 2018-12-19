@@ -14,12 +14,8 @@ import java.util.Arrays;
  */
 public class ReachingDefinitionsDfaInstance implements DfaInstance<DefinitionMap> {
 
-  private final TObjectIntHashMap<String> myVarToIndexMap;
+  protected final TObjectIntHashMap<String> myVarToIndexMap;
   private final Instruction[] myFlow;
-
-  public int getVarIndex(String varName) {
-    return myVarToIndexMap.get(varName);
-  }
 
   public ReachingDefinitionsDfaInstance(@NotNull Instruction[] flow, @NotNull TObjectIntHashMap<String> varIndexes) {
     myVarToIndexMap = varIndexes;
