@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.HttpRequests;
-import org.jdom.Element;
+import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,14 +52,14 @@ public abstract class SourceSearcher {
   }
 
   @NotNull
-  protected static Element readDocumentCancelable(final ProgressIndicator indicator, String url) throws IOException {
+  protected static Document readDocumentCancelable(final ProgressIndicator indicator, String url) throws IOException {
     return HttpRequests.request(url)
       .accept("application/xml")
-      .connect(new HttpRequests.RequestProcessor<Element>() {
+      .connect(new HttpRequests.RequestProcessor<Document>() {
         @Override
-        public Element process(@NotNull HttpRequests.Request request) throws IOException {
+        public Document process(@NotNull HttpRequests.Request request) throws IOException {
           try {
-            return JDOMUtil.load(request.getReader(indicator));
+            return JDOMUtil.loadDocument(request.getReader(indicator));
           }
           catch (JDOMException e) {
             throw new IOException(e);
