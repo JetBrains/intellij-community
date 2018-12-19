@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.impl
 
 import com.google.common.collect.HashMultiset
 import com.google.common.collect.Multiset
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.icons.AllIcons
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -829,6 +830,7 @@ class LineStatusTrackerManager(
   private class RefreshRequest(val document: Document) {
     override fun equals(other: Any?): Boolean = other is RefreshRequest && document == other.document
     override fun hashCode(): Int = document.hashCode()
+    override fun toString(): String = "RefreshRequest: " + (FileDocumentManager.getInstance().getFile(document)?.path ?: "unknown")
   }
 
   private class RefreshData(val text: String, val info: ContentInfo)
@@ -1024,6 +1026,8 @@ class LineStatusTrackerManager(
 
   @TestOnly
   fun waitUntilBaseContentsLoaded() {
+    assert(ApplicationManager.getApplication().isUnitTestMode)
+
     if (ApplicationManager.getApplication().isDispatchThread) {
       UIUtil.dispatchAllInvocationEvents()
     }
@@ -1043,7 +1047,9 @@ class LineStatusTrackerManager(
       if (semaphore.waitFor(10)) {
         return
       }
-      if (System.currentTimeMillis() - start > 2000) {
+      if (System.currentTimeMillis() - start > 10000) {
+        loader.dumpInternalState()
+        System.err.println(ThreadDumper.dumpThreadsToString())
         throw IllegalStateException("Couldn't await base contents")
       }
     }
@@ -1230,6 +1236,21 @@ private abstract class SingleThreadLoader<Request, T> {
       }
       catch (e: Throwable) {
         LOG.error(e)
+      }
+    }
+  }
+
+  @TestOnly
+  fun dumpInternalState() {
+    synchronized(LOCK) {
+      LOG.debug("isScheduled - $isScheduled")
+      LOG.debug("pending callbacks: ${callbacksWaitingUpdateCompletion.size}")
+
+      taskQueue.forEach {
+        LOG.debug("pending task: ${it}")
+      }
+      waitingForRefresh.forEach {
+        LOG.debug("waiting refresh: ${it}")
       }
     }
   }
