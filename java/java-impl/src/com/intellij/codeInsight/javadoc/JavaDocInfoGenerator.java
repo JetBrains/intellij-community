@@ -297,8 +297,14 @@ public class JavaDocInfoGenerator {
         }
       }
     }
-    return DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + JavaDocUtil.getReferenceText(targetElement.getProject(), targetElement) +
-           (fragment == null ? "" : DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR + fragment);
+
+    StringBuilder builder = new StringBuilder();
+    builder.append(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL);
+    builder.append(JavaDocUtil.getReferenceText(targetElement.getProject(), targetElement));
+    if (fragment != null) {
+      builder.append(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR).append(fragment);
+    }
+    return builder.toString();
   }
 
   /**
@@ -672,7 +678,6 @@ public class JavaDocInfoGenerator {
 
     buffer.append(DocumentationMarkup.DEFINITION_START);
     generateAnnotations(buffer, module, SignaturePlace.Javadoc, true);
-
     buffer.append("module <b>").append(module.getName()).append("</b>");
     buffer.append(DocumentationMarkup.DEFINITION_END);
 
@@ -681,7 +686,6 @@ public class JavaDocInfoGenerator {
       generateCommonSection(buffer, comment);
       buffer.append(DocumentationMarkup.SECTIONS_END);
     }
-
   }
 
   /**
