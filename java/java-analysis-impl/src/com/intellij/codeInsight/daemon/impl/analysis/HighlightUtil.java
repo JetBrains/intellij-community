@@ -2077,7 +2077,8 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiClass containingClass = referencedField.getContainingClass();
     if (containingClass == null) return null;
     if (expression.getContainingFile() != referencedField.getContainingFile()) return null;
-    if (expression.getTextRange().getStartOffset() >= referencedField.getTextRange().getEndOffset()) return null;
+    TextRange fieldRange = referencedField.getTextRange();
+    if (fieldRange == null || expression.getTextRange().getStartOffset() >= fieldRange.getEndOffset()) return null;
     // only simple reference can be illegal
     if (!acceptQualified && expression.getQualifierExpression() != null) return null;
     PsiField initField = findEnclosingFieldInitializer(expression);
