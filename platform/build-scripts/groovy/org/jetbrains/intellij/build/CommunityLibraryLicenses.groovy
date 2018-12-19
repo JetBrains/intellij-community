@@ -144,9 +144,11 @@ class CommunityLibraryLicenses {
                        licenseUrl: "https://github.com/dart-lang/vm_service_drivers/blob/master/LICENSE",
                        url: "https://github.com/dart-lang/vm_service_drivers"),
     new LibraryLicense(name: "data-binding", libraryName: "data-binding.jar", license: "Apache 2.0", url: "http://source.android.com/"),
-    new LibraryLicense(name: "delight-nashorn-sandbox", libraryName: "delight-nashorn-sandbox", version: "0.1.15", license: "Apache 2.0",
-                       url: "https://github.com/javadelight/delight-nashorn-sandbox",
-                       licenseUrl: "https://github.com/javadelight/delight-nashorn-sandbox/blob/master/LICENSE.TXT"),
+
+    new LibraryLicense(name: "delight-rhino-sandbox", libraryName: "delight-rhino-sandbox", version: "0.0.9", license: "Apache 2.0",
+                       url: "https://github.com/javadelight/delight-rhino-sandbox",
+                       licenseUrl: "https://github.com/javadelight/delight-rhino-sandbox/blob/master/LICENSE.TXT"),
+
     new LibraryLicense(name: "docutils", attachedTo: "intellij.python.helpers", version: "0.8", license: "BSD",
                        url: "http://docutils.sourceforge.net/"),
     new LibraryLicense(name: "DTDParser", version: "1.13", license: "LGPL", url: "http://sourceforge.net/projects/dtdparser/",
@@ -385,6 +387,10 @@ class CommunityLibraryLicenses {
                        url: "http://pycodestyle.readthedocs.io/"),
     new LibraryLicense(name: "Relax NG Object Model", libraryName: "rngom-20051226-patched.jar", license: "MIT",
                        url: "http://java.net/projects/rngom/", licenseUrl: "http://www.opensource.org/licenses/mit-license.php"),
+
+    new LibraryLicense(name: "Rhino JavaScript Engine", libraryName: "rhino", version: "1.7.10", license: "MPL 1.1",
+                       url: "http://www.mozilla.org/rhino/", licenseUrl: "http://www.mozilla.org/MPL/MPL-1.1.html"),
+
     new LibraryLicense(name: "RMI Stubs", attachedTo: "intellij.xslt.debugger.engine", license: "Apache 2.0",
                        url: "https://confluence.jetbrains.com/display/CONTEST/XSLT-Debugger",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
