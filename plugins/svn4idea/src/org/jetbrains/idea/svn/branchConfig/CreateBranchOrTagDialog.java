@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.ProductIcons;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -85,7 +85,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     setTitle(message("dialog.title.branch"));
     myUseThisVariantToLabel.setBorder(JBUI.Borders.emptyBottom(10));
     mySwitchOnCreate.setBorder(JBUI.Borders.emptyTop(10));
-    myProjectButton.setIcon(AllIcons.Nodes.IdeaProject);
+    myProjectButton.setIcon(ProductIcons.getInstance().getProjectIcon());
     myBranchTagBaseComboBox.setPreferredSize(new Dimension(myBranchTagBaseComboBox.getPreferredSize().width,
                                                            myWorkingCopyField.getPreferredSize().height));
 

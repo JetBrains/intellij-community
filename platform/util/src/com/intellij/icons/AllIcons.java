@@ -64,6 +64,7 @@ public class AllIcons {
     public static final Icon Menu_open = IconLoader.getIcon("/actions/menu-open.svg"); // 16x16
     public static final Icon Menu_paste = IconLoader.getIcon("/actions/menu-paste.svg"); // 16x16
     public static final Icon Menu_saveall = IconLoader.getIcon("/actions/menu-saveall.svg"); // 16x16
+    public static final Icon ModuleDirectory = IconLoader.getIcon("/actions/moduleDirectory.svg"); // 16x16
     public static final Icon More = IconLoader.getIcon("/actions/more.svg"); // 16x16
     public static final Icon Move_to_button = IconLoader.getIcon("/actions/move-to-button.svg"); // 12x12
     public static final Icon MoveDown = IconLoader.getIcon("/actions/moveDown.svg"); // 16x16
@@ -95,6 +96,7 @@ public class AllIcons {
     public static final Icon Profile = IconLoader.getIcon("/actions/profile.svg"); // 16x16
     public static final Icon ProfileCPU = IconLoader.getIcon("/actions/profileCPU.svg"); // 16x16
     public static final Icon ProfileMemory = IconLoader.getIcon("/actions/profileMemory.svg"); // 16x16
+    public static final Icon ProjectDirectory = IconLoader.getIcon("/actions/projectDirectory.svg"); // 16x16
     public static final Icon Properties = IconLoader.getIcon("/actions/properties.svg"); // 16x16
     public static final Icon QuickfixBulb = IconLoader.getIcon("/actions/quickfixBulb.svg"); // 16x16
     public static final Icon QuickfixOffBulb = IconLoader.getIcon("/actions/quickfixOffBulb.svg"); // 16x16
