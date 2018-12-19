@@ -957,7 +957,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     putUserData(FocusModeModel.FOCUS_MODE_RANGES, null);
-    myFocusModeModel.clearFocusMode();
+    if (myFocusModeModel != null) {
+      myFocusModeModel.clearFocusMode();
+    }
   }
 
   /**
