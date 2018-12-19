@@ -30,7 +30,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   private final Map<String, List<T>> myExplicitExtensions = new THashMap<>(); // guarded by lock
   private final ConcurrentMap<String, List<T>> myCache = ContainerUtil.newConcurrentMap();
 
-  @NonNls private final String lock;
+  @NonNls protected final String lock;
 
   private final String myEpName;
   private final SimpleModificationTracker myTracker = new SimpleModificationTracker();
@@ -171,7 +171,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     }
   }
 
-  private List<T> buildExtensionsFromExtensionPoint(@Nullable List<T> result, @NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean) {
+  protected List<T> buildExtensionsFromExtensionPoint(@Nullable List<T> result, @NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean) {
     final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
     if (point != null) {
       final KeyedLazyInstance<T>[] beans = point.getExtensions();
@@ -197,25 +197,30 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   @NotNull
-  protected final List<T> buildExtensions(@NotNull Set<String> keys) {
+  protected List<T> buildExtensions(@NotNull Set<String> keys) {
     synchronized (lock) {
       List<T> result = null;
-      for (Map.Entry<String, List<T>> entry : myExplicitExtensions.entrySet()) {
-        String key = entry.getKey();
-        if (keys.contains(key)) {
-          List<T> list = entry.getValue();
-          if (result == null) {
-            result = new ArrayList<>(list);
-          }
-          else {
-            result.addAll(list);
-          }
-        }
-      }
+      result = buildExtensionsFromExplicitRegistration(result, key -> keys.contains(key));
 
       result = buildExtensionsFromExtensionPoint(result, bean -> keys.contains(bean.getKey()));
       return result == null ? Collections.emptyList() : result;
     }
+  }
+
+  protected List<T> buildExtensionsFromExplicitRegistration(List<T> result, Condition<String> isMyBean) {
+    for (Map.Entry<String, List<T>> entry : myExplicitExtensions.entrySet()) {
+      String key = entry.getKey();
+      if (isMyBean.value(key)) {
+        List<T> list = entry.getValue();
+        if (result == null) {
+          result = new ArrayList<>(list);
+        }
+        else {
+          result.addAll(list);
+        }
+      }
+    }
+    return result;
   }
 
   @Nullable

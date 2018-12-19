@@ -19,13 +19,17 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.util.KeyedLazyInstance;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class ClassExtension<T> extends KeyedExtensionCollector<T, Class> {
   public ClassExtension(@NonNls final String epName) {
@@ -41,9 +45,22 @@ public class ClassExtension<T> extends KeyedExtensionCollector<T, Class> {
   @NotNull
   @Override
   protected List<T> buildExtensions(@NotNull final String key, @NotNull final Class classKey) {
-    final Set<String> allSupers = new THashSet<>();
+    final Set<String> allSupers = new LinkedHashSet<>();
     collectSupers(classKey, allSupers);
-    return buildExtensions(allSupers);
+    return buildExtensionsWithInheritance(allSupers);
+  }
+
+  private List<T> buildExtensionsWithInheritance(Set<String> supers) {
+    synchronized (lock) {
+      List<T> result = null;
+      for (String aSuper : supers) {
+        result = buildExtensionsFromExplicitRegistration(result, key -> aSuper.equals(key));
+      }
+      for (String aSuper : supers) {
+        result = buildExtensionsFromExtensionPoint(result, bean -> aSuper.equals(bean.getKey()));
+      }
+      return result == null ? Collections.emptyList() : result;
+    }
   }
 
   private static void collectSupers(@NotNull Class classKey, @NotNull Set<? super String> allSupers) {
