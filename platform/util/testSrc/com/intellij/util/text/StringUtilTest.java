@@ -779,4 +779,9 @@ public class StringUtilTest {
     assertEquals("-3rd", StringUtil.formatOrdinal(-3));
     assertEquals("-9223372036854775808th", StringUtil.formatOrdinal(Long.MIN_VALUE));
   }
+
+  @Test
+  public void testCollapseWhiteSpace() {
+    assertEquals("one two three four five", StringUtil.collapseWhiteSpace("\t one\ttwo     three\nfour five   "));
+  }
 }
