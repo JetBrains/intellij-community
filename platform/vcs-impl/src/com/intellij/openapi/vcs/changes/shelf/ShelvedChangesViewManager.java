@@ -248,8 +248,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
   @NotNull
   private JPanel createRootPanel() {
-    JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
-    pane.setBorder(null);
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT);
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ShelvedChangesToolbar"));
