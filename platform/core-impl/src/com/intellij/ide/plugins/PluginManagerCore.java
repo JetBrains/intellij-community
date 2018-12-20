@@ -1204,15 +1204,12 @@ public class PluginManagerCore {
     try {
       loadDescriptors(new File(PathManager.getPluginsPath()), result, pluginLoadProgressManager, false, executorService);
       Application application = ApplicationManager.getApplication();
-      boolean fromSources = false;
       if (application == null || !application.isUnitTestMode()) {
-        int size = result.size();
         loadDescriptors(new File(PathManager.getPreInstalledPluginsPath()), result, pluginLoadProgressManager, true, executorService);
-        fromSources = size == result.size();
       }
 
       loadDescriptorsFromProperty(result);
-      loadDescriptorsFromClassPath(urlsFromClassPath, result, PluginManagerCore.class.getClassLoader(), fromSources ? pluginLoadProgressManager : null, executorService);
+      loadDescriptorsFromClassPath(urlsFromClassPath, result, PluginManagerCore.class.getClassLoader(), pluginLoadProgressManager, executorService);
 
       if (application != null && application.isUnitTestMode() && result.size() <= 1) {
         // We're running in unit test mode but the classpath doesn't contain any plugins; try to load bundled plugins anyway
