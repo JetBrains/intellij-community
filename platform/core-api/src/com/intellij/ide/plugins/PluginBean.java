@@ -2,9 +2,13 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.components.OldComponentConfig;
+import com.intellij.util.SmartList;
+import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+
+import java.util.List;
 
 public class PluginBean extends OptimizedPluginBean {
   @XCollection(propertyElementName = APPLICATION_COMPONENTS)
@@ -24,4 +28,8 @@ public class PluginBean extends OptimizedPluginBean {
 
   @Tag("extensionPoints")
   public Element[] extensionPoints;
+
+  @Property(surroundWithTag = false)
+  @XCollection(elementName = "module")
+  public List<String> modules = new SmartList<>();
 }

@@ -287,6 +287,17 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         }
         break;
 
+        case "module": {
+          String moduleName = child.getAttributeValue("value");
+          if (moduleName != null) {
+            if (myModules == null) {
+              myModules = new SmartList<>();
+            }
+            myModules.add(moduleName);
+          }
+        }
+        break;
+
         case OptimizedPluginBean.APPLICATION_COMPONENTS: {
           // because of x-pointer, maybe several application-components tag in document
           if (myAppComponents == Collections.<ComponentConfig>emptyList()) {
@@ -312,10 +323,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         }
         break;
       }
-    }
-
-    if (pluginBean.modules != null && !pluginBean.modules.isEmpty()) {
-      myModules = pluginBean.modules;
     }
   }
 
@@ -749,8 +756,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myAllowBundledUpdate;
   }
 
-  @Nullable
+  @NotNull
   public List<String> getModules() {
-    return myModules;
+    return ContainerUtil.notNullize(myModules);
   }
 }

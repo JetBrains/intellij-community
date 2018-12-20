@@ -1533,8 +1533,7 @@ public class PluginManagerConfigurableNew
         if (plugin == null && PluginManagerCore.isModuleDependency(id)) {
           for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
             if (descriptor instanceof IdeaPluginDescriptorImpl) {
-              List<String> modules = ((IdeaPluginDescriptorImpl)descriptor).getModules();
-              if (modules != null && modules.contains(id.getIdString())) {
+              if (((IdeaPluginDescriptorImpl)descriptor).getModules().contains(id.getIdString())) {
                 plugin = descriptor;
                 break;
               }

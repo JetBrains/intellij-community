@@ -1498,11 +1498,9 @@ public class PluginManagerCore {
 
       if (toNotLoadReason == null) {
         List<String> modules = descriptor.getModules();
-        if (modules != null) {
-          for (String module : modules) {
-            if (!ourModulesToContainingPlugins.containsKey(module)) {
-              ourModulesToContainingPlugins.put(module, descriptor);
-            }
+        for (String module : modules) {
+          if (!ourModulesToContainingPlugins.containsKey(module)) {
+            ourModulesToContainingPlugins.put(module, descriptor);
           }
         }
         result.add(descriptor);
