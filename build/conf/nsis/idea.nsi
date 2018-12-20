@@ -513,15 +513,20 @@ Page custom uninstallOldVersionDialog
 !endif
 
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE OnDirectoryPageLeave
+!define MUI_PAGE_HEADER_TEXT "$(choose_install_location)"
 !insertmacro MUI_PAGE_DIRECTORY
 
 Page custom ConfirmDesktopShortcut
+  !define MUI_PAGE_HEADER_TEXT "$(choose_start_menu_folder)"
   !define MUI_STARTMENUPAGE_NODISABLE
   !define MUI_STARTMENUPAGE_DEFAULTFOLDER "JetBrains"
 
 !insertmacro MUI_PAGE_STARTMENU Application $STARTMENU_FOLDER
 !define MUI_ABORTWARNING
+
+!define MUI_PAGE_HEADER_TEXT "$(installing_product)"
 !insertmacro MUI_PAGE_INSTFILES
+
 !define MUI_FINISHPAGE_RUN_NOTCHECKED
 !define MUI_FINISHPAGE_REBOOTLATER_DEFAULT
 !define MUI_FINISHPAGE_RUN
