@@ -95,7 +95,13 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     myDoNotImportInner = doNotImportInner;
   }
 
+  /** @deprecated Use {@link #REPLACE_INSTANCEOF_AND_CAST} */
+  @SuppressWarnings("DeprecatedIsStillUsed") 
   public boolean REPLACE_INSTANCEOF = false;
+  /** @deprecated Use {@link #REPLACE_INSTANCEOF_AND_CAST} */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public boolean REPLACE_CAST = false;
+  public boolean REPLACE_INSTANCEOF_AND_CAST = false;
   public boolean REPLACE_NULL_CHECK = true;
 
   public boolean SPACES_WITHIN_ANGLE_BRACKETS;
@@ -295,7 +301,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = rootSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(rootSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
     IMPORT_LAYOUT_TABLE.copyFrom(rootSettings.IMPORT_LAYOUT_TABLE);
-    REPLACE_INSTANCEOF = rootSettings.REPLACE_INSTANCEOF;
+    REPLACE_INSTANCEOF_AND_CAST = rootSettings.REPLACE_INSTANCEOF;
     REPLACE_NULL_CHECK = rootSettings.REPLACE_NULL_CHECK;
     FIELD_NAME_PREFIX = rootSettings.FIELD_NAME_PREFIX;
     STATIC_FIELD_NAME_PREFIX = rootSettings.STATIC_FIELD_NAME_PREFIX;
@@ -420,6 +426,14 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
       }
       child.addContent(element);
     }
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  protected void afterLoaded() {
+    super.afterLoaded();
+    REPLACE_INSTANCEOF_AND_CAST |= REPLACE_CAST || REPLACE_INSTANCEOF;
+    REPLACE_CAST = REPLACE_INSTANCEOF = false;
   }
 
   @NotNull

@@ -323,10 +323,10 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   //----------------- FUNCTIONAL EXPRESSIONS -----
 
-  /** @deprecated Use JavaCodeStyleSettings.REPLACE_INSTANCE_OF */
+  /** @deprecated Use JavaCodeStyleSettings.REPLACE_INSTANCEOF_AND_CAST */
   @Deprecated
   public boolean REPLACE_INSTANCEOF;
-  /** @deprecated Use JavaCodeStyleSettings.REPLACE_CAST */
+  /** @deprecated Use JavaCodeStyleSettings.REPLACE_INSTANCEOF_AND_CAST */
   @Deprecated
   public boolean REPLACE_CAST;
   /** @deprecated Use JavaCodeStyleSettings.REPLACE_NULL_CHECK */
