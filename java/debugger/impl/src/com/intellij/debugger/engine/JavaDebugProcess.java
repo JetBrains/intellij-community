@@ -471,7 +471,7 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   @Nullable
-  private static DebugProcessImpl getCurrentDebugProcess(@Nullable Project project) {
+  public static DebugProcessImpl getCurrentDebugProcess(@Nullable Project project) {
     if (project != null) {
       XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
       if (session != null) {
