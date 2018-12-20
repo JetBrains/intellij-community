@@ -15,7 +15,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
 
   private val vcsNotifier = VcsNotifier.getInstance(project)
 
-  private val projectProperties = PropertiesComponent.getInstance(project)
+  protected val projectProperties = PropertiesComponent.getInstance(project)
 
   private val files = mutableSetOf<VirtualFile>()
 

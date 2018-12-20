@@ -4,15 +4,20 @@ package com.intellij.openapi.vcs
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.getProjectStoreDirectory
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcsUtil.VcsImplUtil
 
 private val LOG = Logger.getInstance(ProjectConfigurationFilesProcessorImpl::class.java)
 
@@ -26,11 +31,27 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
                                              parentDisposable: Disposable,
                                              private val vcsName: String,
                                              private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
-  : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor {
+  : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor, ChangeListListener {
 
   private val fileSystem = LocalFileSystem.getInstance()
 
   private val projectConfigurationFilesStore = getProjectConfigurationFilesStore(project)
+
+  private val changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerEx
+
+  init {
+    runReadAction {
+      if (!project.isDisposed) {
+        changeListManager.addChangeListListener(this, parentDisposable)
+      }
+    }
+  }
+
+  override fun changeListUpdateDone() {
+    if (!projectProperties.getBoolean(SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, false) && VcsImplUtil.isProjectSharedInVcs(project)) {
+      projectProperties.setValue(SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, true)
+    }
+  }
 
   override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> {
     val projectBasePath = project.basePath ?: return files
