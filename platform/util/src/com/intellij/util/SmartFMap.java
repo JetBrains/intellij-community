@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.Comparing;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +129,23 @@ public class SmartFMap<K,V> implements Map<K,V> {
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof Map && entrySet().equals(((Map)obj).entrySet());
+    if (myMap instanceof Map) {
+      return myMap.equals(obj);
+    }
+
+    if (!(obj instanceof Map)) return false;
+
+    Map map = (Map)obj;
+    if (size() != map.size()) return false;
+
+    Object[] array = (Object[])myMap;
+    for (int i = 0; i < array.length; i += 2) {
+      if (!Comparing.equal(array[i + 1], map.get(array[i]))) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @Override
