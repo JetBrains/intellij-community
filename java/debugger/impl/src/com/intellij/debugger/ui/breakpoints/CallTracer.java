@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebugProcessEvents;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.request.EventRequest;
@@ -89,7 +91,14 @@ public class CallTracer {
     if (event instanceof MethodEntryEvent) {
       MethodEntryEvent methodEntryEvent = (MethodEntryEvent)event;
       try {
-        int indent = methodEntryEvent.thread().frameCount() - myStartIndent;
+        ThreadReference thread = methodEntryEvent.thread();
+        for (SuspendContextImpl context : myDebugProcess.getSuspendManager().getEventContexts()) {
+          ThreadReferenceProxyImpl contextThread = context.getThread();
+          if (context.isEvaluating() && contextThread != null && contextThread.getThreadReference().equals(thread)) {
+            return; // evaluating - skip
+          }
+        }
+        int indent = thread.frameCount() - myStartIndent;
         if (indent < 0) {
           stop();
           return;
