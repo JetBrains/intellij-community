@@ -33,6 +33,9 @@ public class NullabilityUtil {
       return DfaNullability.NULLABLE;
     }
     PsiModifierListOwner var = value.getPsiVariable();
+    if (value.getType() instanceof PsiPrimitiveType) {
+      return null;
+    }
     Nullability nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(value.getType(), var);
     if (nullability != Nullability.UNKNOWN) {
       return DfaNullability.fromNullability(nullability);
