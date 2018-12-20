@@ -340,13 +340,10 @@ public class JarRepositoryManager {
   private static void notifyArtifactsDownloaded(Project project, Collection<OrderRoot> roots) {
     final StringBuilder sb = new StringBuilder();
     final String title = "The following files were downloaded:";
-    sb.append("<ol>");
     for (OrderRoot root : roots) {
-      sb.append("<li>");
+      sb.append("<p/>");
       sb.append(root.getFile().getName());
-      sb.append("</li>");
     }
-    sb.append("</ol>");
     Notifications.Bus.notify(new Notification("Repository", title, sb.toString(), NotificationType.INFORMATION), project);
   }
 
