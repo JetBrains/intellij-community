@@ -6,4 +6,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class CountingThreadFactory implements ThreadFactory {
   protected final AtomicInteger counter = new AtomicInteger();
+
+  public int getCount() {
+    return counter.get();
+  }
 }

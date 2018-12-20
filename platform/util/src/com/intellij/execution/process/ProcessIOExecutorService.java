@@ -17,8 +17,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ProcessIOExecutorService extends ThreadPoolExecutor {
   public static final String POOLED_THREAD_PREFIX = "Process I/O pool ";
   public static final ExecutorService INSTANCE = new ProcessIOExecutorService();
-  private final AtomicInteger counter = new AtomicInteger();
-
 
   private ProcessIOExecutorService() {
     super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<Runnable>(), new CountingThreadFactory() {
@@ -34,6 +32,6 @@ public class ProcessIOExecutorService extends ThreadPoolExecutor {
 
   @TestOnly
   public int getThreadCounter() {
-    return counter.get();
+    return ((CountingThreadFactory)getThreadFactory()).getCount();
   }
 }
