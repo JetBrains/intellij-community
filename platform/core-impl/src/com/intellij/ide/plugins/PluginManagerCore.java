@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -51,14 +53,15 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class PluginManagerCore {
-  private static final Logger LOG = Logger.getInstance(PluginManagerCore.class);
-
   public static final String META_INF = "META-INF/";
 
   public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
@@ -161,7 +164,7 @@ public class PluginManagerCore {
         }
       }
       catch (IOException e) {
-        LOG.info("Unable to load disabled plugins list from " + file, e);
+        getLogger().info("Unable to load disabled plugins list from " + file, e);
       }
     }
   }
@@ -277,7 +280,7 @@ public class PluginManagerCore {
       return true;
     }
     catch (IOException e) {
-      LOG.warn("Unable to save disabled plugins list", e);
+      getLogger().warn("Unable to save disabled plugins list", e);
       return false;
     }
   }
@@ -535,17 +538,6 @@ public class PluginManagerCore {
 
   public static boolean isRunningFromSources() {
     return Holder.ourIsRunningFromSources;
-  }
-
-  private static int countPlugins(@NotNull String pluginsPath) {
-    File configuredPluginsDir = new File(pluginsPath);
-    if (configuredPluginsDir.exists()) {
-      String[] list = configuredPluginsDir.list();
-      if (list != null) {
-        return list.length;
-      }
-    }
-    return 0;
   }
 
   private static void prepareLoadingPluginsErrorMessage(@NotNull List<String> errors) {
@@ -923,22 +915,38 @@ public class PluginManagerCore {
 
   private static void loadDescriptors(@NotNull File pluginsHome,
                                       @NotNull List<IdeaPluginDescriptorImpl> result,
-                                      @Nullable StartupProgress progress,
-                                      int pluginsCount,
-                                      boolean bundled) {
+                                      @Nullable PluginLoadProgressManager pluginLoadProgressManager,
+                                      boolean bundled,
+                                      @Nullable ExecutorService executorService) throws ExecutionException, InterruptedException {
     File[] files = pluginsHome.listFiles();
-    if (files == null) {
+    if (files == null || files.length == 0) {
       return;
     }
 
-    int i = result.size();
     Set<IdeaPluginDescriptorImpl> existingResults = ContainerUtil.newHashSet(result);
+    List<Future<IdeaPluginDescriptorImpl>> tasks = new ArrayList<>(files.length);
+    boolean isParallel = files.length > 2 && executorService != null;
+    if (isParallel) {
+      for (File file : files) {
+        tasks.add(executorService.submit(() -> loadDescriptor(file, PLUGIN_XML, bundled, false)));
+      }
+    }
 
-    for (File file : files) {
-      IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML, bundled, false);
-      if (descriptor == null) continue;
-      if (progress != null) {
-        progress.showProgress(descriptor.getName(), PLUGINS_PROGRESS_PART * ((float)++i / pluginsCount));
+    for (int index = 0; index < files.length; index++) {
+      IdeaPluginDescriptorImpl descriptor;
+      if (isParallel) {
+        descriptor = tasks.get(index).get();
+      }
+      else {
+        descriptor = loadDescriptor(files[index], PLUGIN_XML, bundled, false);
+      }
+
+      if (descriptor == null) {
+        continue;
+      }
+
+      if (pluginLoadProgressManager != null) {
+        pluginLoadProgressManager.showProgress(descriptor);
       }
 
       int oldIndex = !existingResults.add(descriptor) ? result.indexOf(descriptor) : -1;
@@ -1042,14 +1050,79 @@ public class PluginManagerCore {
   }
 
   @TestOnly
-  public static List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromClassPath(@NotNull ClassLoader loader) {
+  public static List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromClassPath(@NotNull ClassLoader loader)
+    throws ExecutionException, InterruptedException {
     List<IdeaPluginDescriptorImpl> descriptors = ContainerUtil.newSmartList();
-    loadDescriptorsFromClassPath(descriptors, loader, null);
+    loadDescriptorsFromClassPath(computePluginUrlsFromClassPath(loader), descriptors, loader, null, null);
     return descriptors;
   }
 
-  private static void loadDescriptorsFromClassPath(@NotNull List<IdeaPluginDescriptorImpl> result, @NotNull ClassLoader loader, @Nullable StartupProgress progress) {
+  private static void loadDescriptorsFromClassPath(@NotNull Map<URL, String> urls,
+                                                   @NotNull List<IdeaPluginDescriptorImpl> result,
+                                                   @NotNull ClassLoader loader,
+                                                   @Nullable PluginLoadProgressManager pluginLoadProgressManager,
+                                                   @Nullable ExecutorService executorService)
+    throws ExecutionException, InterruptedException {
+    if (urls.isEmpty()) {
+      return;
+    }
+
+    final URL platformPluginURL = computePlatformPluginUrl(loader, urls);
+
+    List<Future<IdeaPluginDescriptorImpl>> tasks;
+    boolean isParallel = executorService != null;
+    if (isParallel) {
+      tasks = new ArrayList<>(urls.size());
+      for (Map.Entry<URL, String> entry : urls.entrySet()) {
+        URL url = entry.getKey();
+        tasks.add(executorService.submit(() -> loadDescriptorFromResource(url, entry.getValue(), true, url.equals(platformPluginURL))));
+      }
+    }
+    else {
+      tasks = Collections.emptyList();
+    }
+
+    // plugin projects may have the same plugins in plugin path (sandbox or SDK) and on the classpath; latter should be ignored
+    Set<IdeaPluginDescriptorImpl> found = new THashSet<>(result);
+    int index = 0;
+    for (Map.Entry<URL, String> entry : urls.entrySet()) {
+      URL url = entry.getKey();
+      IdeaPluginDescriptorImpl descriptor;
+      if (isParallel) {
+        descriptor = tasks.get(index++).get();
+      }
+      else {
+        descriptor = loadDescriptorFromResource(url, entry.getValue(), true, url.equals(platformPluginURL));
+      }
+
+      if (descriptor != null && found.add(descriptor)) {
+        descriptor.setUseCoreClassLoader(true);
+        result.add(descriptor);
+        if (pluginLoadProgressManager != null && !SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) {
+          pluginLoadProgressManager.showProgress(descriptor);
+        }
+      }
+    }
+  }
+
+  @NotNull
+  private static Map<URL, String> computePluginUrlsFromClassPath(@NotNull ClassLoader loader) {
     Map<URL, String> urls = new LinkedHashMap<>();
+    try {
+      Enumeration<URL> enumeration = loader.getResources(PLUGIN_XML_PATH);
+      while (enumeration.hasMoreElements()) {
+        urls.put(enumeration.nextElement(), PLUGIN_XML);
+      }
+    }
+    catch (IOException e) {
+      getLogger().info(e);
+      return Collections.emptyMap();
+    }
+    return urls;
+  }
+
+  @Nullable
+  private static URL computePlatformPluginUrl(@NotNull ClassLoader loader, @NotNull Map<URL, String> urls) {
     URL platformPluginURL = null;
 
     String platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
@@ -1061,33 +1134,7 @@ public class PluginManagerCore {
         platformPluginURL = resource;
       }
     }
-
-    try {
-      Enumeration<URL> enumeration = loader.getResources(PLUGIN_XML_PATH);
-      while (enumeration.hasMoreElements()) {
-        urls.put(enumeration.nextElement(), PLUGIN_XML);
-      }
-    }
-    catch (IOException e) {
-      getLogger().info(e);
-      return;
-    }
-
-    // plugin projects may have the same plugins in plugin path (sandbox or SDK) and on the classpath; latter should be ignored
-    Set<IdeaPluginDescriptorImpl> found = new THashSet<>(result);
-
-    int i = 0;
-    for (Map.Entry<URL, String> entry : urls.entrySet()) {
-      URL url = entry.getKey();
-      IdeaPluginDescriptorImpl descriptor = loadDescriptorFromResource(url, entry.getValue(), true, url.equals(platformPluginURL));
-      if (descriptor != null && found.add(descriptor)) {
-        descriptor.setUseCoreClassLoader(true);
-        result.add(descriptor);
-        if (progress != null && !SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) {
-          progress.showProgress("Plugin loaded: " + descriptor.getName(), PLUGINS_PROGRESS_PART * (++i) / urls.size());
-        }
-      }
-    }
+    return platformPluginURL;
   }
 
   @Nullable
@@ -1148,24 +1195,37 @@ public class PluginManagerCore {
 
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
 
-    int pluginsCount = countPlugins(PathManager.getPluginsPath()) + countPlugins(PathManager.getPreInstalledPluginsPath());
-    loadDescriptors(new File(PathManager.getPluginsPath()), result, progress, pluginsCount, false);
-    Application application = ApplicationManager.getApplication();
-    boolean fromSources = false;
-    if (application == null || !application.isUnitTestMode()) {
-      int size = result.size();
-      loadDescriptors(new File(PathManager.getPreInstalledPluginsPath()), result, progress, pluginsCount, true);
-      fromSources = size == result.size();
+    long start = System.currentTimeMillis();
+    int maxThreads = JobSchedulerImpl.getCPUCoresCount();
+    boolean isParallel = maxThreads > 1 && SystemProperties.getBooleanProperty("parallel.pluginDescriptors.loading", false);
+    ExecutorService executorService = isParallel ? AppExecutorUtil.createBoundedApplicationPoolExecutor("PluginManager Loader", maxThreads) : null;
+    Map<URL, String> urlsFromClassPath = computePluginUrlsFromClassPath(PluginManagerCore.class.getClassLoader());
+    PluginLoadProgressManager pluginLoadProgressManager = progress == null ? null : new PluginLoadProgressManager(progress, urlsFromClassPath.size());
+    try {
+      loadDescriptors(new File(PathManager.getPluginsPath()), result, pluginLoadProgressManager, false, executorService);
+      Application application = ApplicationManager.getApplication();
+      boolean fromSources = false;
+      if (application == null || !application.isUnitTestMode()) {
+        int size = result.size();
+        loadDescriptors(new File(PathManager.getPreInstalledPluginsPath()), result, pluginLoadProgressManager, true, executorService);
+        fromSources = size == result.size();
+      }
+
+      loadDescriptorsFromProperty(result);
+      loadDescriptorsFromClassPath(urlsFromClassPath, result, PluginManagerCore.class.getClassLoader(), fromSources ? pluginLoadProgressManager : null, executorService);
+
+      if (application != null && application.isUnitTestMode() && result.size() <= 1) {
+        // We're running in unit test mode but the classpath doesn't contain any plugins; try to load bundled plugins anyway
+        ourUnitTestWithBundledPlugins = true;
+        loadDescriptors(new File(PathManager.getPreInstalledPluginsPath()), result, pluginLoadProgressManager, true, executorService);
+      }
+    }
+    catch (InterruptedException | ExecutionException e) {
+      ExceptionUtilRt.rethrow(e);
     }
 
-    loadDescriptorsFromProperty(result);
-
-    loadDescriptorsFromClassPath(result, PluginManagerCore.class.getClassLoader(), fromSources ? progress : null);
-    if (application != null && application.isUnitTestMode() && result.size() <= 1) {
-      // We're running in unit test mode but the classpath doesn't contain any plugins; try to load bundled plugins anyway
-      ourUnitTestWithBundledPlugins = true;
-      loadDescriptors(new File(PathManager.getPreInstalledPluginsPath()), result, progress, pluginsCount, true);
-    }
+    long duration = System.currentTimeMillis() - start;
+    getLogger().info("load plugin descriptors took " + duration + " ms");
 
     return topoSortPlugins(result, errors);
   }
@@ -1294,7 +1354,7 @@ public class PluginManagerCore {
       return isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild(), descriptor.getName(), descriptor.toString());
     }
     catch (RuntimeException e) {
-      LOG.error(e);
+      getLogger().error(e);
     }
 
     return false;
@@ -1316,7 +1376,7 @@ public class PluginManagerCore {
       messages = messages.append("until build " + untilBuildNumber + " < " + buildNumber);
     }
     if (messages.isNotEmpty()) {
-      LOG.warn(ObjectUtils.coalesce(descriptorName, descriptorDebugString) + " not loaded: " + StringUtil.join(messages, ", "));
+      getLogger().warn(ObjectUtils.coalesce(descriptorName, descriptorDebugString) + " not loaded: " + StringUtil.join(messages, ", "));
       return true;
     }
 
