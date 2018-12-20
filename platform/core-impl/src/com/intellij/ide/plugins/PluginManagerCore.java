@@ -1053,7 +1053,10 @@ public class PluginManagerCore {
   public static List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromClassPath(@NotNull ClassLoader loader)
     throws ExecutionException, InterruptedException {
     List<IdeaPluginDescriptorImpl> descriptors = ContainerUtil.newSmartList();
-    loadDescriptorsFromClassPath(computePluginUrlsFromClassPath(loader), descriptors, loader, null, null);
+    Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
+    URL platformPluginURL = computePlatformPluginUrl(loader, urlsFromClassPath);
+    computePluginUrlsFromClassPath(loader, urlsFromClassPath);
+    loadDescriptorsFromClassPath(urlsFromClassPath, descriptors, loader, null, null, platformPluginURL);
     return descriptors;
   }
 
@@ -1061,13 +1064,12 @@ public class PluginManagerCore {
                                                    @NotNull List<IdeaPluginDescriptorImpl> result,
                                                    @NotNull ClassLoader loader,
                                                    @Nullable PluginLoadProgressManager pluginLoadProgressManager,
-                                                   @Nullable ExecutorService executorService)
+                                                   @Nullable ExecutorService executorService,
+                                                   @Nullable URL platformPluginURL)
     throws ExecutionException, InterruptedException {
     if (urls.isEmpty()) {
       return;
     }
-
-    final URL platformPluginURL = computePlatformPluginUrl(loader, urls);
 
     List<Future<IdeaPluginDescriptorImpl>> tasks;
     boolean isParallel = executorService != null;
@@ -1105,9 +1107,7 @@ public class PluginManagerCore {
     }
   }
 
-  @NotNull
-  private static Map<URL, String> computePluginUrlsFromClassPath(@NotNull ClassLoader loader) {
-    Map<URL, String> urls = new LinkedHashMap<>();
+  private static void computePluginUrlsFromClassPath(@NotNull ClassLoader loader, @NotNull Map<URL, String> urls) {
     try {
       Enumeration<URL> enumeration = loader.getResources(PLUGIN_XML_PATH);
       while (enumeration.hasMoreElements()) {
@@ -1116,25 +1116,21 @@ public class PluginManagerCore {
     }
     catch (IOException e) {
       getLogger().info(e);
-      return Collections.emptyMap();
     }
-    return urls;
   }
 
   @Nullable
   private static URL computePlatformPluginUrl(@NotNull ClassLoader loader, @NotNull Map<URL, String> urls) {
-    URL platformPluginURL = null;
-
     String platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
     if (platformPrefix != null) {
       String fileName = platformPrefix + "Plugin.xml";
       URL resource = loader.getResource(META_INF + fileName);
       if (resource != null) {
         urls.put(resource, fileName);
-        platformPluginURL = resource;
+        return resource;
       }
     }
-    return platformPluginURL;
+    return null;
   }
 
   @Nullable
@@ -1199,7 +1195,11 @@ public class PluginManagerCore {
     int maxThreads = JobSchedulerImpl.getCPUCoresCount();
     boolean isParallel = maxThreads > 1 && SystemProperties.getBooleanProperty("parallel.pluginDescriptors.loading", false);
     ExecutorService executorService = isParallel ? AppExecutorUtil.createBoundedApplicationPoolExecutor("PluginManager Loader", maxThreads) : null;
-    Map<URL, String> urlsFromClassPath = computePluginUrlsFromClassPath(PluginManagerCore.class.getClassLoader());
+
+    Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
+    URL platformPluginURL = computePlatformPluginUrl(PluginManagerCore.class.getClassLoader(), urlsFromClassPath);
+    computePluginUrlsFromClassPath(PluginManagerCore.class.getClassLoader(), urlsFromClassPath);
+
     PluginLoadProgressManager pluginLoadProgressManager = progress == null ? null : new PluginLoadProgressManager(progress, urlsFromClassPath.size());
     try {
       loadDescriptorsFromDir(new File(PathManager.getPluginsPath()), result, pluginLoadProgressManager, false, executorService);
@@ -1209,7 +1209,7 @@ public class PluginManagerCore {
       }
 
       loadDescriptorsFromProperty(result);
-      loadDescriptorsFromClassPath(urlsFromClassPath, result, PluginManagerCore.class.getClassLoader(), pluginLoadProgressManager, executorService);
+      loadDescriptorsFromClassPath(urlsFromClassPath, result, PluginManagerCore.class.getClassLoader(), pluginLoadProgressManager, executorService, platformPluginURL);
 
       if (application != null && application.isUnitTestMode() && result.size() <= 1) {
         // We're running in unit test mode but the classpath doesn't contain any plugins; try to load bundled plugins anyway
