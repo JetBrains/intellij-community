@@ -255,7 +255,9 @@ class RetypeSession(
   }
 
   private fun typeNext() {
-    threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
+    }
 
     val timerTick = System.currentTimeMillis()
     waitingForTimerInvokeLater = true
