@@ -913,12 +913,12 @@ public class PluginManagerCore {
     }
   }
 
-  private static void loadDescriptors(@NotNull File pluginsHome,
-                                      @NotNull List<IdeaPluginDescriptorImpl> result,
-                                      @Nullable PluginLoadProgressManager pluginLoadProgressManager,
-                                      boolean bundled,
-                                      @Nullable ExecutorService executorService) throws ExecutionException, InterruptedException {
-    File[] files = pluginsHome.listFiles();
+  private static void loadDescriptorsFromDir(@NotNull File dir,
+                                             @NotNull List<IdeaPluginDescriptorImpl> result,
+                                             @Nullable PluginLoadProgressManager pluginLoadProgressManager,
+                                             boolean bundled,
+                                             @Nullable ExecutorService executorService) throws ExecutionException, InterruptedException {
+    File[] files = dir.listFiles();
     if (files == null || files.length == 0) {
       return;
     }
@@ -1202,10 +1202,10 @@ public class PluginManagerCore {
     Map<URL, String> urlsFromClassPath = computePluginUrlsFromClassPath(PluginManagerCore.class.getClassLoader());
     PluginLoadProgressManager pluginLoadProgressManager = progress == null ? null : new PluginLoadProgressManager(progress, urlsFromClassPath.size());
     try {
-      loadDescriptors(new File(PathManager.getPluginsPath()), result, pluginLoadProgressManager, false, executorService);
+      loadDescriptorsFromDir(new File(PathManager.getPluginsPath()), result, pluginLoadProgressManager, false, executorService);
       Application application = ApplicationManager.getApplication();
       if (application == null || !application.isUnitTestMode()) {
-        loadDescriptors(new File(PathManager.getPreInstalledPluginsPath()), result, pluginLoadProgressManager, true, executorService);
+        loadDescriptorsFromDir(new File(PathManager.getPreInstalledPluginsPath()), result, pluginLoadProgressManager, true, executorService);
       }
 
       loadDescriptorsFromProperty(result);
@@ -1214,7 +1214,7 @@ public class PluginManagerCore {
       if (application != null && application.isUnitTestMode() && result.size() <= 1) {
         // We're running in unit test mode but the classpath doesn't contain any plugins; try to load bundled plugins anyway
         ourUnitTestWithBundledPlugins = true;
-        loadDescriptors(new File(PathManager.getPreInstalledPluginsPath()), result, pluginLoadProgressManager, true, executorService);
+        loadDescriptorsFromDir(new File(PathManager.getPreInstalledPluginsPath()), result, pluginLoadProgressManager, true, executorService);
       }
     }
     catch (InterruptedException | ExecutionException e) {
