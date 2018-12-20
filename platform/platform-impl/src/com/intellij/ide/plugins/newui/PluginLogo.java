@@ -87,7 +87,7 @@ public class PluginLogo {
 
   @Nullable
   private static Pair<PluginLogoIconProvider, PluginLogoIconProvider> getOrLoadIcon(@NotNull IdeaPluginDescriptor descriptor) {
-    String idPlugin = descriptor.getPluginId().getIdString();
+    String idPlugin = getIdForKey(descriptor);
     Pair<PluginLogoIconProvider, PluginLogoIconProvider> icons = ICONS.get(idPlugin);
 
     if (icons != null) {
@@ -123,7 +123,7 @@ public class PluginLogo {
   }
 
   private static void loadPluginIcons(@NotNull IdeaPluginDescriptor descriptor, @NotNull LazyPluginLogoIcon lazyIcon) {
-    String idPlugin = descriptor.getPluginId().getIdString();
+    String idPlugin = getIdForKey(descriptor);
     File path = descriptor.getPath();
 
     if (path != null) {
@@ -192,6 +192,11 @@ public class PluginLogo {
     PluginLogoIconProvider light = tryLoadIcon(lightFile);
     PluginLogoIconProvider dark = tryLoadIcon(darkFile);
     putIcon(idPlugin, lazyIcon, light, dark);
+  }
+
+  @NotNull
+  private static String getIdForKey(@NotNull IdeaPluginDescriptor descriptor) {
+    return descriptor.getPluginId().getIdString() + (descriptor.getPath() == null ? "" : "#local");
   }
 
   private static boolean tryLoadDirIcons(@NotNull String idPlugin, @NotNull LazyPluginLogoIcon lazyIcon, @NotNull File path) {
