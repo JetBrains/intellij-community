@@ -598,8 +598,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (!(o instanceof IdeaPluginDescriptorImpl)) return false;
 
     final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)o;
-
-    return myName == null ? pluginDescriptor.myName == null : myName.equals(pluginDescriptor.myName);
+    return Objects.equals(myName, pluginDescriptor.myName);
   }
 
   @Override
