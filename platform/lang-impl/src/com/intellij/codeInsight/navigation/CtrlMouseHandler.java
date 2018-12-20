@@ -794,17 +794,7 @@ public class CtrlMouseHandler {
       JComponent component = HintUtil.createInformationLabel(docInfo.text, hyperlinkListener, null, newTextConsumerRef);
       component.setBorder(JBUI.Borders.empty(6, 6, 5, 6));
 
-      Dimension preferredSize = component.getPreferredSize();
-      Dimension maxSize = getMaxPopupSize(editor);
-      if (preferredSize.width > maxSize.width || preferredSize.height > maxSize.height) {
-        // We expect documentation providers to exercise good judgement in limiting the displayed information,
-        // but in any case, we don't want the hint to cover the whole screen, so we also implement certain limiting here.
-        component = ScrollPaneFactory.createScrollPane(component, true);
-        component.setPreferredSize(new Dimension(Math.min(preferredSize.width, maxSize.width),
-                                                  Math.min(preferredSize.height, maxSize.height)));
-      }
-
-      final LightweightHint hint = new LightweightHint(component);
+      final LightweightHint hint = new LightweightHint(wrapInScrollPaneIfNeeded(component, editor));
 
       myHint = hint;
       hint.addHintListener(new HintListener() {
@@ -823,9 +813,25 @@ public class CtrlMouseHandler {
     }
 
     @NotNull
+    private JComponent wrapInScrollPaneIfNeeded(@NotNull JComponent component, @NotNull Editor editor) {
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        Dimension preferredSize = component.getPreferredSize();
+        Dimension maxSize = getMaxPopupSize(editor);
+        if (preferredSize.width > maxSize.width || preferredSize.height > maxSize.height) {
+          // We expect documentation providers to exercise good judgement in limiting the displayed information,
+          // but in any case, we don't want the hint to cover the whole screen, so we also implement certain limiting here.
+          JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(component, true);
+          scrollPane.setPreferredSize(new Dimension(Math.min(preferredSize.width, maxSize.width),
+                                                    Math.min(preferredSize.height, maxSize.height)));
+          return scrollPane;
+        }
+      }
+      return component;
+    }
+
+    @NotNull
     private Dimension getMaxPopupSize(@NotNull Editor editor) {
-      Rectangle rectangle = ApplicationManager.getApplication().isHeadlessEnvironment()
-                            ? new Rectangle() : ScreenUtil.getScreenRectangle(editor.getContentComponent());
+      Rectangle rectangle = ScreenUtil.getScreenRectangle(editor.getContentComponent());
       return new Dimension((int)(0.9 * Math.max(640, rectangle.width)), (int)(0.33 * Math.max(480, rectangle.height)));
     }
 
