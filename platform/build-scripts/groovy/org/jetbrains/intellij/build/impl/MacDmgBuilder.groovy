@@ -97,7 +97,7 @@ class MacDmgBuilder {
 
       ftpAction("get", true, null, 3) {
         ant.fileset(dir: signedFilesDir) {
-          ant.include(name: fileName)
+          ant.include(name: '**/' + fileName)
         }
       }
       if (new File(signedFilesDir, fileName).exists()) {
@@ -153,7 +153,7 @@ class MacDmgBuilder {
     sshExec("$remoteDir/makedmg.sh ${targetFileName} ${buildContext.fullBuildNumber}", "makedmg.log")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
-        include(name: "${targetFileName}.dmg")
+        include(name: "**/${targetFileName}.dmg")
       }
     }
     deleteRemoteDir()
@@ -204,7 +204,7 @@ class MacDmgBuilder {
               + " ${this.macHostProperties.password} \"${this.macHostProperties.codesignString}\" $helpFileName$jreFileNameArgument", "signapp.log")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
-        include(name: "${targetFileName}.sit")
+        include(name: "**/${targetFileName}.sit")
       }
     }
     if (!new File(sitFilePath).exists()) {
@@ -226,7 +226,7 @@ class MacDmgBuilder {
       buildContext.messages.info("SSH command failed, retrieving log file")
       ftpAction("get", true, null, 3) {
         ant.fileset(dir: artifactsPath) {
-          include(name: logFileName)
+          include(name: '**/' + logFileName)
         }
       }
       buildContext.notifyArtifactBuilt(new File(artifactsPath, logFileName).absolutePath)
