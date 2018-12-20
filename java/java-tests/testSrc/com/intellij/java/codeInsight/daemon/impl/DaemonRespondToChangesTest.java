@@ -33,6 +33,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.lang.*;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -127,6 +128,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author cdr
  */
 @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
+@HardwareAgentRequired
 @SkipSlowTestLocally
 public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/typing/";
