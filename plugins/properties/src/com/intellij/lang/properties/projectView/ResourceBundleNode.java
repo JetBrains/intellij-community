@@ -67,7 +67,9 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
 
   @Override
   public VirtualFile getVirtualFile() {
-    final List<PropertiesFile> list = getResourceBundle().getPropertiesFiles();
+    ResourceBundle rb = getResourceBundle();
+    if (!rb.isValid()) return null;
+    final List<PropertiesFile> list = rb.getPropertiesFiles();
     if (!list.isEmpty()) {
       return list.get(0).getVirtualFile();
     }
@@ -77,7 +79,10 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
   @Override
   public void update(@NotNull PresentationData presentation) {
     presentation.setIcon(AllIcons.Nodes.ResourceBundle);
-    presentation.setPresentableText(PropertiesBundle.message("project.view.resource.bundle.tree.node.text", ObjectUtils.notNull(getValue()).getBaseName()));
+    ResourceBundle rb = getResourceBundle();
+    if (rb.isValid()) {
+      presentation.setPresentableText(PropertiesBundle.message("project.view.resource.bundle.tree.node.text", rb.getBaseName()));
+    }
   }
 
   @Override
