@@ -824,7 +824,8 @@ public class CtrlMouseHandler {
 
     @NotNull
     private Dimension getMaxPopupSize(@NotNull Editor editor) {
-      Rectangle rectangle = ScreenUtil.getScreenRectangle(editor.getContentComponent());
+      Rectangle rectangle = ApplicationManager.getApplication().isHeadlessEnvironment()
+                            ? new Rectangle() : ScreenUtil.getScreenRectangle(editor.getContentComponent());
       return new Dimension((int)(0.9 * Math.max(640, rectangle.width)), (int)(0.33 * Math.max(480, rectangle.height)));
     }
 
