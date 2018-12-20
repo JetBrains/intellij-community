@@ -126,7 +126,7 @@ public class ResolveClassTest extends ResolveTestCase {
   public void testImportConflict1() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
-    assertTrue(target == null);
+    assertNull(target);
   }
 
   public void testImportConflict2() throws Exception {
@@ -156,8 +156,8 @@ public class ResolveClassTest extends ResolveTestCase {
     PsiReference ref = configure();
     JavaResolveResult result = ((PsiJavaReference)ref).advancedResolve(true);
     assertTrue(result.getElement() instanceof PsiClass);
-    assertTrue(!result.isValidResult());
-    assertTrue(!result.isAccessible());
+    assertFalse(result.isValidResult());
+    assertFalse(result.isAccessible());
   }
 
   public void testStaticImportVsImplicit() throws Exception {
@@ -165,7 +165,7 @@ public class ResolveClassTest extends ResolveTestCase {
     JavaResolveResult result = ((PsiJavaReference)ref).advancedResolve(true);
     final PsiElement element = result.getElement();
     assertTrue(element instanceof PsiClass);
-    assertTrue("Outer.Double".equals(((PsiClass)element).getQualifiedName()));
+    assertEquals("Outer.Double", ((PsiClass)element).getQualifiedName());
   }
 
   public void testTwoModules() throws Exception {
