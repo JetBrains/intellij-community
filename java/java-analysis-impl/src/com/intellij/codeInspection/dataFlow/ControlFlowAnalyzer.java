@@ -150,10 +150,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private ControlFlowOffset getEndOffset(PsiElement element) {
+    assert !(element instanceof PsiExpression) || element instanceof PsiSwitchExpression; 
     return myCurrentFlow.getEndOffset(element);
   }
 
   private ControlFlowOffset getStartOffset(PsiElement element) {
+    assert !(element instanceof PsiExpression) || element instanceof PsiSwitchExpression;
     return myCurrentFlow.getStartOffset(element);
   }
 
@@ -165,7 +167,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myCurrentFlow.finishElement(element);
     if (element instanceof PsiStatement && !(element instanceof PsiReturnStatement) && 
         !(element instanceof PsiSwitchLabeledRuleStatement)) {
-      List<DfaVariableValue> synthetics = getSynthetics(element);
+      List<DfaVariableValue> synthetics = getSynthetics((PsiStatement)element);
       FinishElementInstruction instruction = new FinishElementInstruction(element);
       instruction.getVarsToFlush().addAll(synthetics);
       addInstruction(instruction);
@@ -173,8 +175,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @NotNull
-  private List<DfaVariableValue> getSynthetics(PsiElement element) {
-    int startOffset = myCurrentFlow.getStartOffset(element).getInstructionOffset();
+  private List<DfaVariableValue> getSynthetics(PsiStatement element) {
+    int startOffset = getStartOffset(element).getInstructionOffset();
     List<DfaVariableValue> synthetics = new ArrayList<>();
     for (DfaValue value : myFactory.getValues()) {
       if (value instanceof DfaVariableValue) {
@@ -1354,19 +1356,19 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     PsiType type = expression.getType();
     if (op == JavaTokenType.ANDAND) {
-      generateAndOrExpression(expression, operands, type, true, true);
+      generateShortCircuitAndOr(expression, operands, type, true);
     }
     else if (op == JavaTokenType.OROR) {
-      generateAndOrExpression(expression, operands, type, false, true);
+      generateShortCircuitAndOr(expression, operands, type, false);
     }
     else if (op == JavaTokenType.XOR && PsiType.BOOLEAN.equals(type)) {
       generateXorExpression(expression, operands, type, false);
     }
     else if (op == JavaTokenType.AND && PsiType.BOOLEAN.equals(type)) {
-      generateAndOrExpression(expression, operands, type, true, false);
+      generateAndOr(operands, type, true);
     }
     else if (op == JavaTokenType.OR && PsiType.BOOLEAN.equals(type)) {
-      generateAndOrExpression(expression, operands, type, false, false);
+      generateAndOr(operands, type, false);
     }
     else if (isBinaryDivision(op) && operands.length == 2 &&
              type != null && PsiType.LONG.isAssignableFrom(type)) {
@@ -1553,33 +1555,35 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     overPushSuccess.setOffset(pushSuccess.getIndex() + 1);
   }
 
-  private void generateAndOrExpression(PsiExpression expression,
-                                       PsiExpression[] operands,
-                                       final PsiType exprType,
-                                       boolean and,
-                                       boolean shortCircuit) {
+  private void generateAndOr(PsiExpression[] operands, PsiType exprType, boolean and) {
     for (int i = 0; i < operands.length; i++) {
       PsiExpression operand = operands[i];
       operand.accept(this);
       generateBoxingUnboxingInstructionFor(operand, exprType);
-      finishElement(operand); // rewrite finish to point after boxing/unboxing
-      if (!shortCircuit) {
-        if (i > 0) {
-          combineStackBooleans(and, operand);
-        }
-        continue;
+      if (i > 0) {
+        combineStackBooleans(and, operand);
       }
+    }
+  }
+
+  private void generateShortCircuitAndOr(PsiExpression expression, PsiExpression[] operands, PsiType exprType, boolean and) {
+    ControlFlow.DeferredOffset endOffset = new ControlFlow.DeferredOffset();
+    for (int i = 0; i < operands.length; i++) {
+      PsiExpression operand = operands[i];
+      operand.accept(this);
+      generateBoxingUnboxingInstructionFor(operand, exprType);
 
       PsiExpression nextOperand = i == operands.length - 1 ? null : operands[i + 1];
       if (nextOperand != null) {
-        addInstruction(new ConditionalGotoInstruction(getStartOffset(nextOperand), !and, operand));
+        ControlFlow.DeferredOffset nextOffset = new ControlFlow.DeferredOffset();
+        addInstruction(new ConditionalGotoInstruction(nextOffset, !and, operand));
         addInstruction(new PushInstruction(myFactory.getBoolean(!and), expression));
-        addInstruction(new GotoInstruction(getEndOffset(operands[operands.length - 1])));
+        addInstruction(new GotoInstruction(endOffset));
+        nextOffset.setOffset(getInstructionCount());
       }
     }
-    if (shortCircuit) {
-      addInstruction(new ResultOfInstruction(expression));
-    }
+    endOffset.setOffset(getInstructionCount());
+    addInstruction(new ResultOfInstruction(expression));
   }
 
   @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
@@ -1598,7 +1602,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression thenExpression = expression.getThenExpression();
     PsiExpression elseExpression = expression.getElseExpression();
 
-    final ControlFlowOffset elseOffset = elseExpression == null ? ControlFlow.deltaOffset(getEndOffset(expression), -1) : getStartOffset(elseExpression);
+    ControlFlow.DeferredOffset elseOffset = new ControlFlow.DeferredOffset();
     if (thenExpression != null) {
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
@@ -1607,8 +1611,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       thenExpression.accept(this);
       generateBoxingUnboxingInstructionFor(thenExpression,type);
 
-      addInstruction(new GotoInstruction(getEndOffset(expression)));
+      ControlFlow.DeferredOffset endOffset = new ControlFlow.DeferredOffset();
+      addInstruction(new GotoInstruction(endOffset));
 
+      elseOffset.setOffset(getInstructionCount());
       if (elseExpression != null) {
         elseExpression.accept(this);
         generateBoxingUnboxingInstructionFor(elseExpression,type);
@@ -1616,6 +1622,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       else {
         pushUnknown();
       }
+      endOffset.setOffset(getInstructionCount());
     }
     else {
       pushUnknown();
