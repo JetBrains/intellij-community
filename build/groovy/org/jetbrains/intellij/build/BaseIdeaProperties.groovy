@@ -125,6 +125,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
         withoutProjectLibrary("Ant")
         withoutProjectLibrary("Gradle")
         removeVersionFromProjectLibraryJarNames("jetbrains-annotations")
+        withProjectLibrary("JUnit3")
         removeVersionFromProjectLibraryJarNames("JUnit3") //for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
       }
     } as Consumer<PlatformLayout>
