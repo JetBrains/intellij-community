@@ -50,7 +50,7 @@ public class EditorMouseFixture {
     component.dispatchEvent(new MouseEvent(myLastComponent = component,
                                            myLastId = MouseEvent.MOUSE_PRESSED,
                                            System.currentTimeMillis(),
-                                           getModifiers(),
+                                           myModifiers,
                                            myX = p.x,
                                            myY = p.y,
                                            clickCount,
@@ -68,7 +68,7 @@ public class EditorMouseFixture {
     myLastComponent.dispatchEvent(new MouseEvent(myLastComponent,
                                                  myLastId = MouseEvent.MOUSE_RELEASED,
                                                  System.currentTimeMillis(),
-                                                 getModifiers(),
+                                                 myModifiers,
                                                  myX,
                                                  myY,
                                                  clickCount,
@@ -78,7 +78,7 @@ public class EditorMouseFixture {
       myLastComponent.dispatchEvent(new MouseEvent(myLastComponent,
                                                    myLastId = MouseEvent.MOUSE_CLICKED,
                                                    System.currentTimeMillis(),
-                                                   getModifiers(),
+                                                   myModifiers,
                                                    myX,
                                                    myY,
                                                    clickCount,
@@ -121,7 +121,7 @@ public class EditorMouseFixture {
     component.dispatchEvent(new MouseEvent(component,
                                            myLastId = MouseEvent.MOUSE_MOVED,
                                            System.currentTimeMillis(),
-                                           getModifiers(),
+                                           myModifiers,
                                            myX = x,
                                            myY = y,
                                            0,
@@ -141,7 +141,7 @@ public class EditorMouseFixture {
     component.dispatchEvent(new MouseEvent(component,
                                            myLastId = MouseEvent.MOUSE_DRAGGED,
                                            System.currentTimeMillis(),
-                                           getModifiers(),
+                                           myModifiers,
                                            myX = x,
                                            myY = y,
                                            1,
@@ -182,18 +182,5 @@ public class EditorMouseFixture {
 
   private Point getPoint(int visualLine, int visualColumn) {
     return myEditor.visualPositionToXY(new VisualPosition(visualLine, visualColumn));
-  }
-
-  @MagicConstant(flagsFromClass = InputEvent.class)
-  private int getModifiers() {
-    if (myButton == MouseEvent.BUTTON3) {
-      return myModifiers | InputEvent.META_MASK;
-    }
-    else if (myButton == MouseEvent.BUTTON2) {
-      return myModifiers | InputEvent.ALT_MASK;
-    }
-    else {
-      return myModifiers;
-    }
   }
 }
