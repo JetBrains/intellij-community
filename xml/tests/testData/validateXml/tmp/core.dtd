@@ -1,0 +1,3 @@
+<!ENTITY rights "All rights reserved">
+<!ENTITY % booleanT '(true | false) "true"'>
+<!ENTITY % booleanF '(true | false) "false"'>
