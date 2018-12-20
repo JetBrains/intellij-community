@@ -91,8 +91,8 @@ public abstract class AbstractExternalFilter {
 
   public CharSequence correctRefs(String root, CharSequence read) {
     CharSequence result = read;
-    for (RefConvertor myReferenceConvertor : getRefConverters()) {
-      result = myReferenceConvertor.refFilter(root, result);
+    for (RefConvertor converter : getRefConverters()) {
+      result = converter.refFilter(root, result);
     }
     return result;
   }
@@ -187,16 +187,14 @@ public abstract class AbstractExternalFilter {
     }
     while (read != null && matchStart && !startSection.matcher(StringUtil.toUpperCase(read)).find());
 
-    if (input instanceof MyReader && contentEncoding != null && !contentEncoding.equalsIgnoreCase(CharsetToolkit.UTF8) &&
-        !contentEncoding.equals(((MyReader)input).getEncoding())) {
+    if (input instanceof MyReader && contentEncoding != null &&
+        !(contentEncoding.equalsIgnoreCase(CharsetToolkit.UTF8) || contentEncoding.equals(((MyReader)input).getEncoding()))) {
       //restart page parsing with correct encoding
       try {
         data.setLength(0);
         doBuildFromStream(url, new MyReader(((MyReader)input).myInputStream, contentEncoding), data, false, true);
       }
-      catch (ProcessCanceledException e) {
-        return;
-      }
+      catch (ProcessCanceledException ignored) { }
       return;
     }
 
@@ -268,7 +266,7 @@ public abstract class AbstractExternalFilter {
   }
 
   private static boolean skipBlockList(String read) {
-    return StringUtil.toUpperCase(read).contains(HR) ||
+    return StringUtil.containsIgnoreCase(read, HR) ||
            StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">") ||
            StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">");
   }

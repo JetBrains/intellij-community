@@ -78,9 +78,9 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     return text == null ? null : PlatformDocumentationUtil.fixupText(text);
   }
 
-  @Override
   @Nullable
-   public String getExternalDocInfoForElement(@NotNull String docURL, PsiElement element) throws Exception {
+  @Override
+  public String getExternalDocInfoForElement(@NotNull String docURL, PsiElement element) throws Exception {
     String externalDoc = null;
     myElement = element;
 

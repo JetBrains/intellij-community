@@ -224,16 +224,13 @@ public class JavaDocInfoGenerator {
       int groupStart = matcher.start(1);
       int groupEnd = matcher.end(1);
       result.append(text, prev, groupStart);
-      result.append(convertReference(text.substring(groupStart, groupEnd)));
+      String href = text.substring(groupStart, groupEnd);
+      result.append(ObjectUtils.notNull(createReferenceForRelativeLink(href, myElement), href));
       prev = groupEnd;
     }
     if (result.length() == 0) return text; // don't copy text over, if there are no matches
     result.append(text, prev, text.length());
     return result.toString();
-  }
-
-  private String convertReference(String href) {
-    return ObjectUtils.notNull(createReferenceForRelativeLink(href, myElement), href);
   }
 
   /**
