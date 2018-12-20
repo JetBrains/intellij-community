@@ -86,7 +86,7 @@ public final class Presentation implements Cloneable {
   public static final double HIGHER_WEIGHT = 42;
   public static final double EVEN_HIGHER_WEIGHT = 239;
 
-  private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
+  private PropertyChangeSupport myChangeSupport;
   private String myText;
   private String myDescription;
   private Icon myIcon;
@@ -107,11 +107,18 @@ public final class Presentation implements Cloneable {
   }
 
   public void addPropertyChangeListener(PropertyChangeListener l) {
-    myChangeSupport.addPropertyChangeListener(l);
+    PropertyChangeSupport support = myChangeSupport;
+    if (support == null) {
+      support = myChangeSupport = new PropertyChangeSupport(this);
+    }
+    support.addPropertyChangeListener(l);
   }
 
   public void removePropertyChangeListener(PropertyChangeListener l) {
-    myChangeSupport.removePropertyChangeListener(l);
+    PropertyChangeSupport support = myChangeSupport;
+    if (support != null) {
+      support.removePropertyChangeListener(l);
+    }
   }
 
   public String getText() {
@@ -294,29 +301,39 @@ public final class Presentation implements Cloneable {
   }
 
   private void fireBooleanPropertyChange(String propertyName, boolean oldValue, boolean newValue) {
-    if (oldValue != newValue) {
-      myChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    PropertyChangeSupport support = myChangeSupport;
+    if (oldValue != newValue && support != null) {
+      support.firePropertyChange(propertyName, oldValue, newValue);
     }
   }
 
   private void fireObjectPropertyChange(String propertyName, Object oldValue, Object newValue) {
-    if (!Objects.equals(oldValue, newValue)) {
-      myChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    PropertyChangeSupport support = myChangeSupport;
+    if (support != null && !Objects.equals(oldValue, newValue)) {
+      support.firePropertyChange(propertyName, oldValue, newValue);
     }
   }
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public Presentation clone() {
-    Presentation presentation = new Presentation();
-    presentation.copyFrom(this);
-    return presentation;
+    try {
+      Presentation clone = (Presentation)super.clone();
+      clone.myChangeSupport = null;
+      return clone;
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void copyFrom(Presentation presentation) {
     if (presentation == this) return;
 
-    setText(presentation.getTextWithMnemonic(), presentation.myDisplayedMnemonicIndex > -1);
+    if (!Objects.equals(myText, presentation.myText) ||
+        myDisplayedMnemonicIndex != presentation.myDisplayedMnemonicIndex ||
+        myMnemonic != presentation.myMnemonic) {
+      setText(presentation.getTextWithMnemonic(), presentation.myDisplayedMnemonicIndex > -1);
+    }
     setDescription(presentation.getDescription());
     setIcon(presentation.getIcon());
     setSelectedIcon(presentation.getSelectedIcon());
@@ -326,11 +343,13 @@ public final class Presentation implements Cloneable {
     setEnabled(presentation.isEnabled());
     setWeight(presentation.getWeight());
 
-    Set<String> allKeys = new HashSet<>(presentation.myUserMap.keySet());
-    allKeys.addAll(myUserMap.keySet());
-    if (!allKeys.isEmpty()) {
-      for (String key : allKeys) {
-        putClientProperty(key, presentation.getClientProperty(key));
+    if (!myUserMap.equals(presentation.myUserMap)) {
+      Set<String> allKeys = new HashSet<>(presentation.myUserMap.keySet());
+      allKeys.addAll(myUserMap.keySet());
+      if (!allKeys.isEmpty()) {
+        for (String key : allKeys) {
+          putClientProperty(key, presentation.getClientProperty(key));
+        }
       }
     }
   }
@@ -354,7 +373,7 @@ public final class Presentation implements Cloneable {
     Object oldValue = myUserMap.get(key);
     if (Comparing.equal(oldValue, value)) return;
     myUserMap = value == null ? myUserMap.minus(key) : myUserMap.plus(key, value);
-    myChangeSupport.firePropertyChange(key, oldValue, value);
+    fireObjectPropertyChange(key, oldValue, value);
   }
 
   public double getWeight() {
