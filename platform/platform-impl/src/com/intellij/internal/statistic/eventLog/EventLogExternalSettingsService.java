@@ -64,17 +64,12 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
     if (approvedGroupsServiceUrl == null) {
       return Collections.emptySet();
     }
-    final BuildNumber build = ApplicationInfo.getInstance().getBuild();
-    final String productUrl = approvedGroupsServiceUrl + build.getProductCode() + ".json";
-    return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl, toReportedBuild(build));
+    final String productUrl = approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
+    return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl, getReportedBuild());
   }
 
   @NotNull
-  private static BuildNumber toReportedBuild(@NotNull BuildNumber build) {
-    if (build.isSnapshot()) {
-      final String buildString = build.asStringWithoutProductCodeAndSnapshot();
-      return BuildNumber.fromString(buildString.endsWith(".") ? buildString + "0" : buildString);
-    }
-    return build;
+  private static BuildNumber getReportedBuild() {
+    return BuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
   }
 }

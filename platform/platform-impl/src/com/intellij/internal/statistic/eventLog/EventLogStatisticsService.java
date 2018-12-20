@@ -128,8 +128,7 @@ public class EventLogStatisticsService implements StatisticsService {
     if (percent == 0) {
       return false;
     }
-    final String userId = PermanentInstallationID.get();
-    return (Math.abs(userId.hashCode()) % 100) < percent;
+    return EventLogConfiguration.INSTANCE.getBucket() < percent * 2.56;
   }
 
   @Nullable
