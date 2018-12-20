@@ -214,7 +214,9 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "prefer_longer_names = true\n" +
       "prefer_parameters_wrap = false\n" +
       "repeat_synchronized = true\n" +
+      "replace_cast = false\n" +
       "replace_instance_of = false\n" +
+      "replace_instance_of_and_cast = false\n" +
       "replace_null_check = true\n" +
       "resource_list_left_paren_on_next_line = false\n" +
       "resource_list_right_paren_on_next_line = false\n" +
