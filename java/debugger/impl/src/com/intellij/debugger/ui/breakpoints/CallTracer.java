@@ -112,11 +112,8 @@ public class CallTracer {
           }
         }
         int indent = thread.frameCount() - myStartIndent;
-        if (indent < 0) {
-          stop();
-          return;
-        }
-        myDebugProcess.printToConsole("\n" + StringUtil.repeat(" ", indent) + methodEntryEvent.method());
+        String indentString = indent < 0 ? "-" : StringUtil.repeat(" ", indent);
+        myDebugProcess.printToConsole("\n" + indentString + methodEntryEvent.method() + " thread " + thread.uniqueID());
       }
       catch (IncompatibleThreadStateException e) {
         LOG.error(e);
