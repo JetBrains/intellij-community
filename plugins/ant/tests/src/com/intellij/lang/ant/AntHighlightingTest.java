@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.lang.ant.dom.AntResolveInspection;
 import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
 import com.intellij.openapi.application.PluginPathManager;
@@ -35,6 +36,7 @@ import java.util.List;
  * @author Maxim.Mossienko
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
+@HardwareAgentRequired
 public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   @Override
   protected String getTestDataPath() {
