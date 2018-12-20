@@ -3765,7 +3765,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         processMousePressed(e);
       }
 
-      invokePopupIfNeeded(event);
+      if (!event.isConsumed()) invokePopupIfNeeded(event);
     }
 
     private void runMouseClickedCommand(@NotNull final MouseEvent e) {
@@ -3790,18 +3790,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
-      invokePopupIfNeeded(event);
       if (event.isConsumed()) {
         return;
       }
       for (EditorMouseListener listener : myMouseListeners) {
         listener.mouseReleased(event);
-        if (isReleased) return;
-        if (event.isConsumed()) {
-          e.consume();
+        if (isReleased || event.isConsumed()) {
           return;
         }
       }
+
+      invokePopupIfNeeded(event);
 
       if (myCommandProcessor != null) {
         Runnable runnable = () -> processMouseReleased(e);
