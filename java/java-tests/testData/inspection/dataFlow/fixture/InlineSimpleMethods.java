@@ -1,0 +1,48 @@
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+class Scratch {
+  String[] data;
+  @Nullable String value;
+  
+  void testArray() {
+    for(String s : getData()) {}
+    if(data.length != 0) return;
+    for(String s : <warning descr="Array 'getData()' is always empty">getData()</warning>) {}
+  }
+
+  void test() {
+    if (hasValue() && value.isEmpty()) {}
+    if (!hasValue() && value.<warning descr="Method invocation 'isEmpty' will produce 'NullPointerException'">isEmpty</warning>()) {}
+  }
+  
+  void testAndChainInlining() {
+    if (!hasData() && data != null) {
+      for (String s : <warning descr="Array 'data' is always empty">data</warning>) { }
+    }
+    if (hasData() && <warning descr="Condition 'data.length > 0' is always 'true' when reached">data.length > 0</warning>) {}
+    if (<warning descr="Dereference of 'data' may produce 'NullPointerException'">data</warning>.length > 0 && <warning descr="Condition 'hasData()' is always 'true' when reached">hasData()</warning>) {}
+  }
+  
+  void testOverriddenNullity() {
+    // we inline nullable value, but should not report nullability problem here: it's reported inside the inlined method
+    System.out.println(getValueNotNull().trim());
+  }
+
+  private boolean hasValue() {
+    return value != null;
+  }
+  
+  @NotNull
+  private String getValueNotNull() {
+    return <warning descr="Expression 'value' might evaluate to null but is returned by the method declared as @NotNull">value</warning>;
+  }
+  
+  private boolean hasData() {
+    return data != null && data.length > 0;
+  }
+  
+  private String[] getData() {
+    return data;
+  }
+}

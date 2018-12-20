@@ -262,7 +262,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     allProblems.addAll(falseSet);
     StreamEx.of(runner.getInstructions()).select(InstanceofInstruction.class).filter(visitor::isInstanceofRedundant).into(allProblems);
 
-    ProblemReporter reporter = new ProblemReporter(holder);
+    ProblemReporter reporter = new ProblemReporter(holder, scope);
 
     reportFailingCasts(reporter, visitor);
     reportUnreachableSwitchBranches(trueSet, falseSet, holder);
@@ -1105,9 +1105,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   private static class ProblemReporter {
     private final Set<PsiElement> myReportedAnchors = new HashSet<>();
     private final ProblemsHolder myHolder;
+    private final PsiElement myScope;
 
-    ProblemReporter(ProblemsHolder holder) {
+    ProblemReporter(ProblemsHolder holder, PsiElement scope) {
       myHolder = holder;
+      myScope = scope;
     }
 
     void registerProblem(PsiElement element, String message, LocalQuickFix... fixes) {
@@ -1132,6 +1134,12 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     }
 
     private boolean register(PsiElement element) {
+      // Suppress reporting for inlined simple methods
+      if (!PsiTreeUtil.isAncestor(myScope, element, false)) return false;
+      if (myScope instanceof PsiClass) {
+        PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
+        if (member instanceof PsiMethod && !((PsiMethod)member).isConstructor()) return false;
+      }
       if (!myReportedAnchors.add(element)) return false;
       if (element instanceof PsiParenthesizedExpression) {
         PsiExpression deparenthesized = PsiUtil.skipParenthesizedExprDown((PsiExpression)element);
