@@ -284,7 +284,8 @@ idea.fatal.error.notification=disabled
                       productLayout.additionalPlatformJars.values() +
                       DistributionJARsBuilder.toolModules + buildContext.productProperties.additionalModulesToCompile
     compileModules(moduleNames + (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) +
-                   productLayout.mainModules, buildContext.productProperties.modulesToCompileTests)
+                   productLayout.mainModules + buildContext.productProperties.mavenArtifacts.additionalModules,
+                   buildContext.productProperties.modulesToCompileTests)
 
     def pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>();
     for (PluginLayout plugin  : DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish)) {
