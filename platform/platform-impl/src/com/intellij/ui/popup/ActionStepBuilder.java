@@ -2,10 +2,8 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SizedIcon;
@@ -113,10 +111,6 @@ public class ActionStepBuilder extends PresentationFactory {
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
     List<AnAction> newVisibleActions = Utils.expandActionGroup(false, actionGroup, this, myDataContext, myActionPlace);
     for (AnAction action : newVisibleActions) {
-      if (action == null) {
-        LOG.error("null action in group " + actionGroup);
-        continue;
-      }
       if (action instanceof Separator) {
         myPrependWithSeparator = true;
         mySeparatorText = ((Separator)action).getText();
@@ -129,9 +123,6 @@ public class ActionStepBuilder extends PresentationFactory {
 
   private void appendAction(@NotNull AnAction action) {
     Presentation presentation = getPresentation(action);
-    AnActionEvent event = createActionEvent(action);
-
-    ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, true);
     boolean enabled = presentation.isEnabled();
     if ((myShowDisabled || enabled) && presentation.isVisible()) {
       String text = presentation.getText();
