@@ -57,6 +57,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -1680,10 +1681,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     @TestOnly
     private void awaitAll() {
+      List<Throwable> throwables = new ArrayList<>();
+
       long start = System.currentTimeMillis();
       while (true) {
         if (System.currentTimeMillis() - start > TimeUnit.MINUTES.toMillis(10)) {
-          throw new IllegalStateException("Too long waiting for VCS update");
+          cancelAll();
+          throwables.add(new IllegalStateException("Too long waiting for VCS update"));
+          break;
         }
         Future future;
         synchronized (myFutures) {
@@ -1697,22 +1702,22 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
         try {
           future.get(10, TimeUnit.MILLISECONDS);
-          synchronized (myFutures) {
-            myFutures.remove(future);
-          }
         }
         catch (TimeoutException ignore) {
+          continue;
         }
-        catch (CancellationException e) {
-          synchronized (myFutures) {
-            myFutures.remove(future);
-          }
+        catch (CancellationException ignored) {
         }
         catch (InterruptedException | ExecutionException e) {
-          LOG.error(e);
-          break;
+          throwables.add(e);
+        }
+
+        synchronized (myFutures) {
+          myFutures.remove(future);
         }
       }
+
+      CompoundRuntimeException.throwIfNotEmpty(throwables);
     }
   }
 }
