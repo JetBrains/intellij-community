@@ -27,7 +27,6 @@ import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -138,8 +137,7 @@ public class AutoUnboxingInspection extends BaseInspection {
         return;
       }
       final CommentTracker commentTracker = new CommentTracker();
-      final PsiExpression enhancedExpression = ObjectUtils.notNull(AddTypeArgumentsFix.addTypeArguments(expression, null), expression);
-      final String newExpressionText = buildNewExpressionText(enhancedExpression, unboxedType, commentTracker);
+      final String newExpressionText = buildNewExpressionText(expression, unboxedType, commentTracker);
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
       final PsiElement parent = expression.getParent();
@@ -224,7 +222,7 @@ public class AutoUnboxingInspection extends BaseInspection {
       if (constantText != null) {
         return constantText;
       }
-      final String expressionText = expression.getText();
+      final String expressionText = getExpressionText(expression, new StringBuilder()).toString();
       final String boxMethodName = s_unboxingMethods.get(unboxedType.getCanonicalText());
       if (expression instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
@@ -243,6 +241,37 @@ public class AutoUnboxingInspection extends BaseInspection {
       return PsiPrecedenceUtil.getPrecedence(expression) > PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE
              ? '(' + expressionText + ")." + boxMethodName + "()"
              : expressionText + '.' + boxMethodName + "()";
+    }
+
+    private static StringBuilder getExpressionText(PsiExpression expression, StringBuilder out) {
+      if (expression instanceof PsiMethodCallExpression) {
+        final PsiExpression explicitExpression = AddTypeArgumentsFix.addTypeArguments(expression, null);
+        if (explicitExpression != null) {
+          out.append(explicitExpression.getText());
+        }
+        else {
+          out.append(expression.getText());
+        }
+      }
+      else if (expression instanceof PsiParenthesizedExpression) {
+        out.append('(');
+        final PsiExpression expression1 = ((PsiParenthesizedExpression)expression).getExpression();
+        if (expression1 != null) {
+          getExpressionText(expression1, out);
+        }
+        out.append(')');
+      }
+      else if (expression instanceof PsiConditionalExpression) {
+        final PsiConditionalExpression conditional = (PsiConditionalExpression)expression;
+        out.append(conditional.getCondition().getText()).append('?');
+        getExpressionText(conditional.getThenExpression(), out);
+        out.append(':');
+        getExpressionText(conditional.getElseExpression(), out);
+      }
+      else {
+        out.append(expression.getText());
+      }
+      return out;
     }
 
     private static boolean isValueOfCall(PsiMethodCallExpression methodCallExpression) {
@@ -395,16 +424,7 @@ public class AutoUnboxingInspection extends BaseInspection {
       checkExpression(expression);
     }
 
-    @Override
-    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
-      super.visitParenthesizedExpression(expression);
-      checkExpression(expression);
-    }
-
     private void checkExpression(PsiExpression expression) {
-      if (expression.getParent() instanceof PsiParenthesizedExpression) {
-        return;
-      }
       final PsiType expressionType = expression.getType();
       if (!TypeConversionUtil.isAssignableFromPrimitiveWrapper(expressionType)) {
         return;
