@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,7 +83,7 @@ public class ExternalJavadocPresentationTest extends LightCodeInsightTestCase {
 
   private String loadFile(String testFile) {
     try {
-      return FileUtil.loadFile(new File(getTestDataPath() + TEST_ROOT, testFile));
+      return StringUtil.convertLineSeparators(FileUtil.loadFile(new File(getTestDataPath() + TEST_ROOT, testFile)));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
