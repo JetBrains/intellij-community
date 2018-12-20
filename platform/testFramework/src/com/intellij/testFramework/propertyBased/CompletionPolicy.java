@@ -17,6 +17,7 @@ package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.paths.WebReference;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -67,7 +68,7 @@ public class CompletionPolicy {
       
       if (ref instanceof PsiMultiReference) {
         for (PsiReference ref1 : ((PsiMultiReference)ref).getReferences()) {
-          if (target == ref1.resolve() && !shouldSuggestReferenceText(ref1, target)) return null;
+          if (target.getClass().isInstance(ref1.resolve()) && !shouldSuggestReferenceText(ref1, target)) return null;
         }
       }
     }
@@ -113,6 +114,6 @@ public class CompletionPolicy {
   }
 
   protected boolean shouldSuggestReferenceText(@NotNull PsiReference ref, @NotNull PsiElement target) { 
-    return true;
+    return !(ref instanceof WebReference);
   }
 }

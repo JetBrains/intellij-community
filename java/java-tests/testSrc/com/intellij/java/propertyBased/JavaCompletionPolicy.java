@@ -85,7 +85,7 @@ class JavaCompletionPolicy extends CompletionPolicy {
         return false; // IDEA-178629
       }
     }
-    return true;
+    return super.shouldSuggestReferenceText(ref, target);
   }
 
   private static boolean isAdoptedOrphanPsiAfterClassEnd(PsiElement element) {
