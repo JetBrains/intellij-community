@@ -85,7 +85,9 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
             int fromIndex = group.ui.plugins.size();
             int toIndex = Math.min(fromIndex + gapSize, group.descriptors.size());
             int uiIndex = getComponentIndex(group.ui.plugins.get(fromIndex - 1));
+            PluginLogo.startBatchMode();
             addToGroup(group, group.descriptors.subList(fromIndex, toIndex), uiIndex);
+            PluginLogo.endBatchMode();
 
             if (group.descriptors.size() == group.ui.plugins.size()) {
               scrollBar.removeAdjustmentListener(this);

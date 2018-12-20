@@ -6,10 +6,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurableNew;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.LafManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.JetBrainsProtocolHandler;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
@@ -31,9 +28,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -49,6 +44,7 @@ public class PluginLogo {
 
   private static final Map<String, Pair<PluginLogoIconProvider, PluginLogoIconProvider>> ICONS = new HashMap<>();
   private static PluginLogoIconProvider Default;
+  private static List<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>> myPrepareToLoad;
 
   static {
     LafManager.getInstance().addLafManagerListener(_0 -> Default = null);
@@ -66,6 +62,18 @@ public class PluginLogo {
       return JBColor.isBright() ? icons.first : icons.second;
     }
     return getDefault();
+  }
+
+  public static void startBatchMode() {
+    assert myPrepareToLoad == null;
+    myPrepareToLoad = new ArrayList<>();
+  }
+
+  public static void endBatchMode() {
+    assert myPrepareToLoad != null;
+    List<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>> descriptors = myPrepareToLoad;
+    myPrepareToLoad = null;
+    runLoadTask(descriptors);
   }
 
   @NotNull
@@ -90,74 +98,100 @@ public class PluginLogo {
     Pair<PluginLogoIconProvider, PluginLogoIconProvider> lazyIcons = Pair.create(lazyIcon, lazyIcon);
     ICONS.put(idPlugin, lazyIcons);
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      File path = descriptor.getPath();
-      if (path != null) {
-        if (path.isDirectory()) {
-          if (System.getProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY) != null) {
-            if (tryLoadDirIcons(idPlugin, lazyIcon, new File(path, "classes"))) {
-              return;
-            }
-          }
+    Pair<IdeaPluginDescriptor, LazyPluginLogoIcon> info = Pair.create(descriptor, lazyIcon);
 
-          if (tryLoadDirIcons(idPlugin, lazyIcon, path)) {
-            return;
-          }
-
-          File libFile = new File(path, "lib");
-          if (!libFile.exists() || !libFile.isDirectory()) {
-            return;
-          }
-
-          File[] files = libFile.listFiles();
-          if (files == null || files.length == 0) {
-            return;
-          }
-
-          for (File file : files) {
-            if (tryLoadDirIcons(idPlugin, lazyIcon, file)) {
-              return;
-            }
-            if (tryLoadJarIcons(idPlugin, lazyIcon, file, false)) {
-              return;
-            }
-          }
-        }
-        else {
-          tryLoadJarIcons(idPlugin, lazyIcon, path, true);
-        }
-        return;
-      }
-
-      String idFileName = FileUtil.sanitizeFileName(idPlugin);
-      File cache = new File(PathManager.getPluginTempPath(), CACHE_DIR);
-      File lightFile = new File(cache, idFileName + ".svg");
-      File darkFile = new File(cache, idFileName + "_dark.svg");
-
-      if (cache.exists()) {
-        PluginLogoIconProvider light = tryLoadIcon(lightFile);
-        PluginLogoIconProvider dark = tryLoadIcon(darkFile);
-        if (light != null || dark != null) {
-          putIcon(idPlugin, lazyIcon, light, dark);
-          return;
-        }
-      }
-
-      try {
-        FileUtil.createParentDirs(cache);
-        downloadFile(idPlugin, lightFile, "");
-        downloadFile(idPlugin, darkFile, "&theme=DARCULA");
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-
-      PluginLogoIconProvider light = tryLoadIcon(lightFile);
-      PluginLogoIconProvider dark = tryLoadIcon(darkFile);
-      putIcon(idPlugin, lazyIcon, light, dark);
-    });
+    if (myPrepareToLoad == null) {
+      runLoadTask(Collections.singletonList(info));
+    }
+    else {
+      myPrepareToLoad.add(info);
+    }
 
     return lazyIcons;
+  }
+
+  private static void runLoadTask(@NotNull List<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>> loadInfo) {
+    Application application = ApplicationManager.getApplication();
+    application.executeOnPooledThread(() -> {
+      for (Pair<IdeaPluginDescriptor, LazyPluginLogoIcon> info : loadInfo) {
+        if (application.isDisposed()) {
+          return;
+        }
+        loadPluginIcons(info.first, info.second);
+      }
+    });
+  }
+
+  private static void loadPluginIcons(@NotNull IdeaPluginDescriptor descriptor, @NotNull LazyPluginLogoIcon lazyIcon) {
+    String idPlugin = descriptor.getPluginId().getIdString();
+    File path = descriptor.getPath();
+
+    if (path != null) {
+      if (path.isDirectory()) {
+        if (System.getProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY) != null) {
+          if (tryLoadDirIcons(idPlugin, lazyIcon, new File(path, "classes"))) {
+            return;
+          }
+        }
+
+        if (tryLoadDirIcons(idPlugin, lazyIcon, path)) {
+          return;
+        }
+
+        File libFile = new File(path, "lib");
+        if (!libFile.exists() || !libFile.isDirectory()) {
+          return;
+        }
+
+        File[] files = libFile.listFiles();
+        if (files == null || files.length == 0) {
+          return;
+        }
+
+        for (File file : files) {
+          if (tryLoadDirIcons(idPlugin, lazyIcon, file)) {
+            return;
+          }
+          if (tryLoadJarIcons(idPlugin, lazyIcon, file, false)) {
+            return;
+          }
+        }
+      }
+      else {
+        tryLoadJarIcons(idPlugin, lazyIcon, path, true);
+      }
+      return;
+    }
+
+    String idFileName = FileUtil.sanitizeFileName(idPlugin);
+    File cache = new File(PathManager.getPluginTempPath(), CACHE_DIR);
+    File lightFile = new File(cache, idFileName + ".svg");
+    File darkFile = new File(cache, idFileName + "_dark.svg");
+
+    if (cache.exists()) {
+      PluginLogoIconProvider light = tryLoadIcon(lightFile);
+      PluginLogoIconProvider dark = tryLoadIcon(darkFile);
+      if (light != null || dark != null) {
+        putIcon(idPlugin, lazyIcon, light, dark);
+        return;
+      }
+    }
+
+    try {
+      downloadFile(idPlugin, lightFile, "");
+      downloadFile(idPlugin, darkFile, "&theme=DARCULA");
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+
+    if (ApplicationManager.getApplication().isDisposed()) {
+      return;
+    }
+
+    PluginLogoIconProvider light = tryLoadIcon(lightFile);
+    PluginLogoIconProvider dark = tryLoadIcon(darkFile);
+    putIcon(idPlugin, lazyIcon, light, dark);
   }
 
   private static boolean tryLoadDirIcons(@NotNull String idPlugin, @NotNull LazyPluginLogoIcon lazyIcon, @NotNull File path) {
@@ -194,15 +228,25 @@ public class PluginLogo {
   }
 
   private static void downloadFile(@NotNull String idPlugin, @NotNull File file, @NotNull String theme) {
+    if (ApplicationManager.getApplication().isDisposed()) {
+      return;
+    }
+
     try {
       Url url = Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() +
                                     "/api/icon?pluginId=" + URLUtil.encodeURIComponent(idPlugin) + theme);
 
-      HttpRequests.request(url).forceHttps(PluginManagerConfigurableNew.forceHttps()).throwStatusCodeException(false)
-        .productNameAsUserAgent().saveToFile(file, null);
+      HttpRequests.request(url).forceHttps(PluginManagerConfigurableNew.forceHttps()).productNameAsUserAgent()
+        .connect(request -> {
+          request.getConnection();
+          request.saveToFile(file, null);
+          return null;
+        });
+    }
+    catch (HttpRequests.HttpStatusException ignore) {
     }
     catch (IOException e) {
-      LOG.debug(e);
+      LOG.error(e);
     }
   }
 
@@ -225,7 +269,7 @@ public class PluginLogo {
   @Nullable
   private static PluginLogoIconProvider tryLoadIcon(@NotNull File iconFile) {
     //noinspection IOResourceOpenedButNotSafelyClosed
-    return iconFile.exists() ? loadFileIcon(() -> new FileInputStream(iconFile)) : null;
+    return iconFile.exists() && iconFile.length() > 0 ? loadFileIcon(() -> new FileInputStream(iconFile)) : null;
   }
 
   @Nullable
