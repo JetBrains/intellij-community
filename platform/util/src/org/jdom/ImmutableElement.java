@@ -3,6 +3,7 @@ package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -25,7 +26,7 @@ class ImmutableElement extends Element {
     content = null;
     name = interner.internString(origin.getName());
 
-    List<Attribute> originAttributes = origin.getAttributes();
+    List<Attribute> originAttributes = JDOMUtil.getAttributes(origin);
     String[] nameValues = new String[originAttributes.size() * 2];
     AttributeType type = null;
     Namespace namespace = null;
