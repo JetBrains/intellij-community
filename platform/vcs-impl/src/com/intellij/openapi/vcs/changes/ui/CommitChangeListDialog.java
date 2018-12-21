@@ -322,8 +322,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myBrowser = new AlienChangeListBrowser(project, changeList);
       myBrowser.getViewer().setIncludedChanges(included);
       myBrowser.getViewer().rebuildTree();
-
-      myCommitMessageArea.setChangeList(changeList);
     }
     else {
       LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
@@ -346,7 +344,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       browserBottomPanel.add(branchComponent);
 
       if (initialSelection != null) browser.setSelectedChangeList(initialSelection);
-      myCommitMessageArea.setChangeList(browser.getSelectedChangeList());
       browser.getViewer().setIncludedChanges(included);
       browser.getViewer().rebuildTree();
       browser.getViewer().setKeepTreeState(true);
@@ -359,7 +356,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         updateButtons();
       });
       browser.setSelectedListChangeListener(() -> {
-        myCommitMessageArea.setChangeList(browser.getSelectedChangeList());
         updateOnListSelection();
         updateWarning();
       });
@@ -534,6 +530,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (!myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
       updateComment();
     }
+    myCommitMessageArea.setChangeList(myBrowser.getSelectedChangeList());
     myCommitOptions.onChangeListSelected(myBrowser.getSelectedChangeList(),
                                          ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles());
   }
