@@ -204,7 +204,22 @@ public class JavaDocInfoGenerator {
     String text = buffer.toString();
     if (text.isEmpty()) return null;
 
-    text = convertHtmlLinks(text);
+    if (myElement != null) {  // PSI element refs can't be resolved without a context
+      StringBuilder result = new StringBuilder();
+      int lastRef = 0;
+      Matcher matcher = ourRelativeHtmlLinks.matcher(text);
+      while (matcher.find()) {
+        int groupStart = matcher.start(1), groupEnd = matcher.end(1);
+        result.append(text, lastRef, groupStart);
+        String href = text.substring(groupStart, groupEnd);
+        result.append(ObjectUtils.notNull(createReferenceForRelativeLink(href, myElement), href));
+        lastRef = groupEnd;
+      }
+      if (lastRef > 0) {  // don't copy text over if there are no matches
+        result.append(text, lastRef, text.length());
+        text = result.toString();
+      }
+    }
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Generated JavaDoc:");
@@ -212,29 +227,12 @@ public class JavaDocInfoGenerator {
     }
 
     text = StringUtil.replaceIgnoreCase(text, "<p/>", "<p></p>");
-    return StringUtil.replace(text, "/>", ">");
-  }
-
-  private String convertHtmlLinks(String text) {
-    if (myElement == null) return text; // we are resolving links in a context, without context, don't change links
-    StringBuilder result = new StringBuilder();
-    int prev = 0;
-    Matcher matcher = ourRelativeHtmlLinks.matcher(text);
-    while (matcher.find()) {
-      int groupStart = matcher.start(1);
-      int groupEnd = matcher.end(1);
-      result.append(text, prev, groupStart);
-      String href = text.substring(groupStart, groupEnd);
-      result.append(ObjectUtils.notNull(createReferenceForRelativeLink(href, myElement), href));
-      prev = groupEnd;
-    }
-    if (result.length() == 0) return text; // don't copy text over, if there are no matches
-    result.append(text, prev, text.length());
-    return result.toString();
+    text = StringUtil.replace(text, "/>", ">");
+    return text;
   }
 
   /**
-   * Converts a relative link into {@link DocumentationManagerProtocol#PSI_ELEMENT_PROTOCOL PSI_ELEMENT_PROTOCOL}-type link if possible
+   * Converts a relative link into {@link DocumentationManagerProtocol#PSI_ELEMENT_PROTOCOL PSI_ELEMENT_PROTOCOL}-type link if possible.
    */
   @Nullable
   static String createReferenceForRelativeLink(@NotNull String relativeLink, @NotNull PsiElement contextElement) {
@@ -244,6 +242,7 @@ public class JavaDocInfoGenerator {
       fragment = relativeLink.substring(hashPosition + 1);
       relativeLink = relativeLink.substring(0, hashPosition);
     }
+
     PsiElement targetElement;
     if (relativeLink.isEmpty()) {
       targetElement = contextElement instanceof PsiField || contextElement instanceof PsiMethod ?
@@ -258,7 +257,7 @@ public class JavaDocInfoGenerator {
       String packageName = getPackageName(contextElement);
       if (packageName == null) return null;
 
-      Couple<String> pathWithPackage = removeParentReferences(Couple.of(relativeLink, packageName));
+      Couple<String> pathWithPackage = removeParentReferences(relativeLink, packageName);
       if (pathWithPackage == null) return null;
       relativeLink = pathWithPackage.first;
       packageName = pathWithPackage.second;
@@ -284,7 +283,7 @@ public class JavaDocInfoGenerator {
           }
         }
       }
-      else  {
+      else {
         for (PsiField field : ((PsiClass)targetElement).getFields()) {
           if (fragment.equals(field.getName())) {
             targetElement = field;
@@ -310,9 +309,7 @@ public class JavaDocInfoGenerator {
    * components.
    */
   @Nullable
-  private static Couple<String> removeParentReferences(Couple<String> pathWithContextPackage) {
-    String path = pathWithContextPackage.first;
-    String packageName = pathWithContextPackage.second;
+  private static Couple<String> removeParentReferences(String path, String packageName) {
     while (path.startsWith("../")) {
       if (packageName.isEmpty()) return null;
       int dotPos = packageName.lastIndexOf('.');
