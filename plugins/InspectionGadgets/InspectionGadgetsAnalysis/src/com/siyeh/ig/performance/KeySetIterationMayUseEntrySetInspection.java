@@ -199,7 +199,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
         }
       }
       keyParameter.replace(entryParameter);
-      String replacement = insertCast ? "((Map.Entry)" + entryVariableName + ')' : entryVariableName;
+      String replacement = insertCast ? "(("+ CommonClassNames.JAVA_UTIL_MAP_ENTRY+")" + entryVariableName + ')' : entryVariableName;
       replaceParameterAccess(accesses, keyTypeText, replacement);
     }
 
