@@ -217,16 +217,15 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   private void showRecentFilesPopup() {
-    final JBList files = new JBList(getRecentFiles()) {
+    final JBList<String> files = new JBList<String>(getRecentFiles()) {
       @Override
       public Dimension getPreferredSize() {
         return new Dimension(myPathTextField.getField().getWidth(), super.getPreferredSize().height);
       }
     };
-    files.setCellRenderer(new ColoredListCellRenderer() {
+    files.setCellRenderer(new ColoredListCellRenderer<String>() {
       @Override
-      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        final String path = value.toString();
+      protected void customizeCellRenderer(@NotNull JList list, String path, int index, boolean selected, boolean hasFocus) {
         append(path);
         final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
         if (file != null) {
