@@ -37,7 +37,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -51,9 +50,10 @@ import static com.intellij.util.containers.UtilKt.getIfSingle;
 public abstract class DvcsCompareWithBranchAction<T extends Repository> extends DumbAwareAction {
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent event) {
-    Project project = event.getRequiredData(CommonDataKeys.PROJECT);
-    VirtualFile file = getAffectedFile(event);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    VirtualFile file = assertNotNull(getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)));
+
     T repository = assertNotNull(getRepositoryManager(project).getRepositoryForFile(file));
     assert !repository.isFresh();
     String presentableRevisionName = chooseNotNull(repository.getCurrentBranchName(),
@@ -72,12 +72,6 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
 
   @NotNull
   protected abstract List<String> getBranchNamesExceptCurrent(@NotNull T repository);
-
-  private static VirtualFile getAffectedFile(@NotNull AnActionEvent event) {
-    final VirtualFile[] vFiles = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    assert vFiles != null && vFiles.length == 1 && vFiles[0] != null : "Illegal virtual files selected: " + Arrays.toString(vFiles);
-    return vFiles[0];
-  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
