@@ -9,12 +9,15 @@ import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.TraceSettings;
+import com.intellij.debugger.ui.overhead.OverheadProducer;
+import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ThreadReference;
@@ -34,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author egor
  */
-public class CallTracer {
+public class CallTracer implements OverheadProducer {
   private static final Logger LOG = Logger.getInstance(CallTracer.class);
   public static final Key<CallTracer> CALL_TRACER_KEY = Key.create("CALL_TRACER");
 
@@ -78,11 +81,8 @@ public class CallTracer {
     requests.forEach(ThreadRequest::stop);
   }
 
-  private boolean isActive() {
-    return !myThreadRequests.isEmpty();
-  }
-
   private void accept(Event event) {
+    OverheadTimings.add(myDebugProcess, this, 1, null);
     if (event instanceof MethodEntryEvent) {
       MethodEntryEvent methodEntryEvent = (MethodEntryEvent)event;
       try {
@@ -104,6 +104,38 @@ public class CallTracer {
         LOG.error(e);
       }
     }
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return !myThreadRequests.isEmpty();
+  }
+
+  @Override
+  public void setEnabled(boolean state) {
+    myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> {
+      DebuggerContextImpl debuggerContext = myDebugProcess.getDebuggerContext();
+      ThreadReferenceProxyImpl threadProxy = debuggerContext.getThreadProxy();
+      if (state) {
+        StackFrameProxyImpl frame = debuggerContext.getFrameProxy();
+        if (frame != null && threadProxy != null) {
+          start(threadProxy.getThreadReference(), frame.getIndexFromBottom());
+        }
+      }
+      else {
+        if (threadProxy != null) {
+          stop(threadProxy.getThreadReference());
+        }
+        else {
+          stopAll();
+        }
+      }
+    });
+  }
+
+  @Override
+  public void customizeRenderer(SimpleColoredComponent renderer) {
+    renderer.append("Call Tracer");
   }
 
   @NotNull
@@ -165,7 +197,7 @@ public class CallTracer {
       if (process != null) {
         CallTracer tracer = process.getUserData(CALL_TRACER_KEY);
         if (tracer != null) {
-          return tracer.isActive();
+          return tracer.isEnabled();
         }
       }
       return false;
@@ -175,25 +207,7 @@ public class CallTracer {
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       DebugProcessImpl process = JavaDebugProcess.getCurrentDebugProcess(e.getProject());
       if (process != null) {
-        CallTracer tracer = get(process);
-        process.getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> {
-          DebuggerContextImpl debuggerContext = process.getDebuggerContext();
-          ThreadReferenceProxyImpl threadProxy = debuggerContext.getThreadProxy();
-          if (state) {
-            StackFrameProxyImpl frame = debuggerContext.getFrameProxy();
-            if (frame != null && threadProxy != null) {
-              tracer.start(threadProxy.getThreadReference(), frame.getIndexFromBottom());
-            }
-          }
-          else {
-            if (threadProxy != null) {
-              tracer.stop(threadProxy.getThreadReference());
-            }
-            else {
-              tracer.stopAll();
-            }
-          }
-        });
+        get(process).setEnabled(state);
       }
     }
   }
