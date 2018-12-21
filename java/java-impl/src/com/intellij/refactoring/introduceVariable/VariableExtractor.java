@@ -120,18 +120,6 @@ class VariableExtractor {
     if (myAnchor instanceof PsiExpression) {
       myAnchor = RefactoringUtil.getParentStatement(RefactoringUtil.ensureCodeBlock(((PsiExpression)myAnchor)), false);
     }
-    else if (myAnchor instanceof PsiSwitchLabeledRuleStatement) {
-      PsiStatement body = ((PsiSwitchLabeledRuleStatement)myAnchor).getBody();
-      if (body instanceof PsiExpressionStatement) {
-        myAnchor = RefactoringUtil.getParentStatement(RefactoringUtil.ensureCodeBlock(((PsiExpressionStatement)body).getExpression()), false);
-      }
-      else if (body instanceof PsiThrowStatement) {
-        PsiExpression exception = ((PsiThrowStatement)body).getException();
-        if (exception != null) {
-          myAnchor = RefactoringUtil.getParentStatement(RefactoringUtil.ensureCodeBlock(exception), false);
-        }
-      }
-    }
   }
 
   private void highlight(PsiVariable var) {
@@ -264,10 +252,13 @@ class VariableExtractor {
         return firstOccurrence;
       }
     }
+    if (anchor.getParent() instanceof PsiSwitchLabeledRuleStatement) {
+      return ExpressionUtils.getTopLevelExpression(expr);
+    }
     if (anchor instanceof PsiSwitchLabelStatement) {
-      PsiSwitchStatement statement = ((PsiSwitchLabelStatement)anchor).getEnclosingSwitchStatement();
-      if (statement != null) {
-        return statement;
+      PsiSwitchBlock block = ((PsiSwitchLabelStatement)anchor).getEnclosingSwitchBlock();
+      if (block instanceof PsiSwitchStatement) {
+        return block;
       }
     }
     if (RefactoringUtil.isLoopOrIf(anchor.getParent())) return anchor;
