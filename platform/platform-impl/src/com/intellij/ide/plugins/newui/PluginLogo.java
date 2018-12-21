@@ -20,6 +20,8 @@ import com.intellij.util.Urls;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.JBImageIcon;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -286,8 +288,9 @@ public class PluginLogo {
   @Nullable
   private static PluginLogoIconProvider loadFileIcon(@NotNull ThrowableComputable<InputStream, IOException> provider) {
     try {
-      Icon logo40 = new JBImageIcon(SVGLoader.load(null, provider.compute(), 40, 40));
-      Icon logo80 = new JBImageIcon(SVGLoader.load(null, provider.compute(), 80, 80));
+      ScaleContext ctx = ScaleContext.create();
+      Icon logo40 = new JBImageIcon(SVGLoader.loadHiDPI(null, provider.compute(), ctx, 40, 40));
+      Icon logo80 = new JBImageIcon(SVGLoader.loadHiDPI(null, provider.compute(), ctx, 80, 80));
 
       return new PluginLogoIcon(logo40, Objects.requireNonNull(IconLoader.getDisabledIcon(logo40)),
                                 logo80, Objects.requireNonNull(IconLoader.getDisabledIcon(logo80)));

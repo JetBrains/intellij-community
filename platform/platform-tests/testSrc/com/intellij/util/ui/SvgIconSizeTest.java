@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
+import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 import static com.intellij.util.ui.TestScaleHelper.loadImage;
 import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
@@ -42,11 +43,13 @@ public class SvgIconSizeTest {
      * Test overridden size.
      */
     URL url = new File(getSvgIconPath("20x10")).toURI().toURL();
-    Image image = SVGLoader.load(url, url.openStream(), 25, 15);
+    ScaleContext ctx = ScaleContext.create(SYS_SCALE.of(2));
+    double pixScale = ctx.getScale(PIX_SCALE);
+    Image image = SVGLoader.load(url, url.openStream(), ctx, 25, 15);
     assertNotNull(image);
     image = ImageUtil.toBufferedImage(image);
-    assertEquals("wrong image width", 25, image.getWidth(null));
-    assertEquals("wrong image height", 15, image.getHeight(null));
+    assertEquals("wrong image width", pixScale * 25, (double)image.getWidth(null));
+    assertEquals("wrong image height", pixScale * 15, (double)image.getHeight(null));
   }
 
   private static void test(ScaleContext ctx) {
