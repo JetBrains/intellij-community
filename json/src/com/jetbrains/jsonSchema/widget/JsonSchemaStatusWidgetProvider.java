@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetProvider;
+import com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidget;
 import org.jetbrains.annotations.NotNull;
 
 public class JsonSchemaStatusWidgetProvider implements StatusBarWidgetProvider {
@@ -18,6 +19,6 @@ public class JsonSchemaStatusWidgetProvider implements StatusBarWidgetProvider {
   @NotNull
   @Override
   public String getAnchor() {
-    return StatusBar.Anchors.after(StatusBar.StandardWidgets.ENCODING_PANEL);
+    return StatusBar.Anchors.after(CodeStyleStatusBarWidget.WIDGET_ID);
   }
 }
