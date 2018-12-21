@@ -238,20 +238,7 @@ public class VariableAccessUtils {
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       return mayEvaluateToVariable(qualifier, variable, true);
     }
-    return evaluatesToVariable(expression, variable);
-  }
-
-  public static boolean evaluatesToVariable(
-    @Nullable PsiExpression expression,
-    @NotNull PsiVariable variable) {
-    expression = ParenthesesUtils.stripParentheses(expression);
-    if (!(expression instanceof PsiReferenceExpression)) {
-      return false;
-    }
-    final PsiReferenceExpression referenceExpression =
-      (PsiReferenceExpression)expression;
-    final PsiElement target = referenceExpression.resolve();
-    return variable.equals(target);
+    return ExpressionUtils.isReferenceTo(expression, variable);
   }
 
   @Contract("_, null -> false")
@@ -284,7 +271,7 @@ public class VariableAccessUtils {
         return false;
       }
       final PsiExpression operand = unaryExpression.getOperand();
-      return evaluatesToVariable(operand, variable);
+      return ExpressionUtils.isReferenceTo(operand, variable);
     }
     if (expression instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression assignmentExpression =
@@ -292,7 +279,7 @@ public class VariableAccessUtils {
       final IElementType tokenType =
         assignmentExpression.getOperationTokenType();
       final PsiExpression lhs = assignmentExpression.getLExpression();
-      if (!evaluatesToVariable(lhs, variable)) {
+      if (!ExpressionUtils.isReferenceTo(lhs, variable)) {
         return false;
       }
       PsiExpression rhs = assignmentExpression.getRExpression();
@@ -311,14 +298,10 @@ public class VariableAccessUtils {
         final PsiExpression lOperand = binaryExpression.getLOperand();
         final PsiExpression rOperand = binaryExpression.getROperand();
         if (ExpressionUtils.isOne(lOperand)) {
-          if (evaluatesToVariable(rOperand, variable)) {
-            return true;
-          }
+          return ExpressionUtils.isReferenceTo(rOperand, variable);
         }
-        else if (ExpressionUtils.isOne(rOperand)) {
-          if (evaluatesToVariable(lOperand, variable)) {
-            return true;
-          }
+        if (ExpressionUtils.isOne(rOperand)) {
+          return ExpressionUtils.isReferenceTo(lOperand, variable);
         }
       }
       else if (tokenType == (incremented ? JavaTokenType.PLUSEQ : JavaTokenType.MINUSEQ)) {

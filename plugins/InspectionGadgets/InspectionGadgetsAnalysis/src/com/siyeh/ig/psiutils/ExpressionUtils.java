@@ -403,8 +403,7 @@ public class ExpressionUtils {
 
   private static boolean expressionIsOffsetVariableLookup(
     @Nullable PsiExpression expression, @NotNull PsiVariable variable) {
-    if (VariableAccessUtils.evaluatesToVariable(expression,
-                                                variable)) {
+    if (isReferenceTo(expression, variable)) {
       return true;
     }
     final PsiExpression strippedExpression =
@@ -428,48 +427,28 @@ public class ExpressionUtils {
            !JavaTokenType.MINUS.equals(tokenType);
   }
 
-  public static boolean isVariableLessThanComparison(
-    @Nullable PsiExpression expression,
-    @NotNull PsiVariable variable) {
-    expression = ParenthesesUtils.stripParentheses(expression);
-    if (!(expression instanceof PsiBinaryExpression)) {
-      return false;
-    }
-    final PsiBinaryExpression binaryExpression =
-      (PsiBinaryExpression)expression;
+  public static boolean isVariableLessThanComparison(@Nullable PsiExpression expression, @NotNull PsiVariable variable) {
+    PsiBinaryExpression binaryExpression = tryCast(ParenthesesUtils.stripParentheses(expression), PsiBinaryExpression.class);
+    if (binaryExpression == null) return false;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
-    if (tokenType.equals(JavaTokenType.LT) ||
-        tokenType.equals(JavaTokenType.LE)) {
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      return VariableAccessUtils.evaluatesToVariable(lhs, variable);
+    if (tokenType.equals(JavaTokenType.LT) || tokenType.equals(JavaTokenType.LE)) {
+      return isReferenceTo(binaryExpression.getLOperand(), variable);
     }
-    else if (tokenType.equals(JavaTokenType.GT) ||
-             tokenType.equals(JavaTokenType.GE)) {
-      final PsiExpression rhs = binaryExpression.getROperand();
-      return VariableAccessUtils.evaluatesToVariable(rhs, variable);
+    else if (tokenType.equals(JavaTokenType.GT) || tokenType.equals(JavaTokenType.GE)) {
+      return isReferenceTo(binaryExpression.getROperand(), variable);
     }
     return false;
   }
 
-  public static boolean isVariableGreaterThanComparison(
-    @Nullable PsiExpression expression,
-    @NotNull PsiVariable variable) {
-    expression = ParenthesesUtils.stripParentheses(expression);
-    if (!(expression instanceof PsiBinaryExpression)) {
-      return false;
-    }
-    final PsiBinaryExpression binaryExpression =
-      (PsiBinaryExpression)expression;
+  public static boolean isVariableGreaterThanComparison(@Nullable PsiExpression expression, @NotNull PsiVariable variable) {
+    PsiBinaryExpression binaryExpression = tryCast(ParenthesesUtils.stripParentheses(expression), PsiBinaryExpression.class);
+    if (binaryExpression == null) return false;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
-    if (tokenType.equals(JavaTokenType.GT) ||
-        tokenType.equals(JavaTokenType.GE)) {
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      return VariableAccessUtils.evaluatesToVariable(lhs, variable);
+    if (tokenType.equals(JavaTokenType.GT) || tokenType.equals(JavaTokenType.GE)) {
+      return isReferenceTo(binaryExpression.getLOperand(), variable);
     }
-    else if (tokenType.equals(JavaTokenType.LT) ||
-             tokenType.equals(JavaTokenType.LE)) {
-      final PsiExpression rhs = binaryExpression.getROperand();
-      return VariableAccessUtils.evaluatesToVariable(rhs, variable);
+    else if (tokenType.equals(JavaTokenType.LT) || tokenType.equals(JavaTokenType.LE)) {
+      return isReferenceTo(binaryExpression.getROperand(), variable);
     }
     return false;
   }

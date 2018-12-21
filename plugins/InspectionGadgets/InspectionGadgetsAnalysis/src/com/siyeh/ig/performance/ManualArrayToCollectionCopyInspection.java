@@ -590,8 +590,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
           return false;
         }
       }
-      else if (!VariableAccessUtils.evaluatesToVariable(argument,
-                                                        variable)) {
+      else if (!ExpressionUtils.isReferenceTo(argument, variable)) {
         return false;
       }
       final PsiMethod method = methodCallExpression.resolveMethod();
