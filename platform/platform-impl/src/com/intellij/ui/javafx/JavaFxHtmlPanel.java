@@ -24,6 +24,8 @@ import org.cef.CefClient;
 import org.cef.CefSettings;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
+import org.cef.handler.CefFocusHandler;
+import org.cef.handler.CefFocusHandlerAdapter;
 import org.cef.handler.CefLifeSpanHandlerAdapter;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +59,6 @@ public class JavaFxHtmlPanel implements Disposable {
 
   private @NotNull final CefBrowser myCefBrowser;
   private boolean myIsCefBrowserCreated;
-  private boolean myIsCefBrowserClosed;
   private @Nullable String myHtml;
 
   static {
@@ -70,7 +71,7 @@ public class JavaFxHtmlPanel implements Disposable {
       @Override
       public void onAfterCreated(CefBrowser browser) {
         JavaFxHtmlPanel panel = ourCefBrowser2Panel.get(browser);
-        if (panel != null && !panel.myIsCefBrowserClosed) {
+        if (panel != null) {
           panel.myIsCefBrowserCreated = true;
           if (panel.myHtml != null) {
             browser.loadString(panel.myHtml, ourUrl);
@@ -83,10 +84,17 @@ public class JavaFxHtmlPanel implements Disposable {
       @Override
       public void onLoadEnd(CefBrowser browser, CefFrame frame, int i) {
         JavaFxHtmlPanel panel = ourCefBrowser2Panel.get(browser);
-        if (panel != null && !panel.myIsCefBrowserClosed && browser.getURL() != null && panel.isHtmlLoaded()) {
+        if (panel != null && browser.getURL() != null && panel.isHtmlLoaded()) {
           browser.getUIComponent().setSize(panel.myPanelWrapper.getSize());
           panel.myPanelWrapper.revalidate();
         }
+      }
+    });
+    ourCefClient.addFocusHandler(new CefFocusHandlerAdapter() {
+      @Override
+      public boolean onSetFocus(CefBrowser browser, FocusSource source) {
+        if (source == FocusSource.FOCUS_SOURCE_NAVIGATION) return true;
+        return false;
       }
     });
     Disposer.register(ApplicationManager.getApplication(), () -> ourCefApp.dispose()); // todo: crashes on exit
@@ -98,14 +106,7 @@ public class JavaFxHtmlPanel implements Disposable {
       public void removeNotify() {
         super.removeNotify();
         ourCefBrowser2Panel.remove(myCefBrowser);
-        myIsCefBrowserClosed = true;
         myCefBrowser.close(true);
-      }
-
-      @Override
-      public void addNotify() {
-        super.addNotify();
-        if (myIsCefBrowserClosed) throw new IllegalStateException("CefBrowser has been closed");
       }
     };
     myPanelWrapper.setBackground(JBColor.background());
@@ -204,7 +205,6 @@ public class JavaFxHtmlPanel implements Disposable {
   }
 
   public void setHtml(@NotNull String html) {
-    if (myIsCefBrowserClosed) return;
     final String htmlToRender = prepareHtml(html);
     //runInPlatformWhenAvailable(() -> getWebViewGuaranteed().getEngine().loadContent(htmlToRender));
     if (!myIsCefBrowserCreated) {
