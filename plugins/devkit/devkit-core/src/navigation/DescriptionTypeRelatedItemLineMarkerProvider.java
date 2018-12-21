@@ -17,7 +17,6 @@ package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
-import com.intellij.icons.AllIcons;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.module.Module;
@@ -48,7 +47,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
     psiFile -> GotoRelatedItem.createItems(Collections.singleton(psiFile), "DevKit");
 
   private final Option myDescriptionOption = new Option("devkit.description", "Description", DevkitIcons.Gutter.DescriptionFile);
-  private final Option myBeforeAfterOption = new Option("devkit.beforeAfter", "Before/After templates", AllIcons.Actions.Diff);
+  private final Option myBeforeAfterOption = new Option("devkit.beforeAfter", "Before/After templates", DevkitIcons.Gutter.Diff);
 
   @NotNull
   @Override
@@ -140,7 +139,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
     if (templateFiles.isEmpty()) return;
 
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
-      .create(AllIcons.Actions.Diff, CONVERTER, RELATED_ITEM_PROVIDER)
+      .create(DevkitIcons.Gutter.Diff, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTargets(templateFiles)
       .setPopupTitle("Select Template")
       .setTooltipText("Before/After Templates")
