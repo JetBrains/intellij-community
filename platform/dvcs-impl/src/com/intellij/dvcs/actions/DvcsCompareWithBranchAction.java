@@ -62,7 +62,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
 
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(branchNames)
-      .setTitle("Select branch to compare")
+      .setTitle("Select Branch to Compare")
       .setItemChosenCallback(selected -> showDiffWithBranchUnderModalProgress(project, file, presentableRevisionName, selected))
       .setAutoselectOnMouseMove(true)
       .setNamerForFiltering(o -> o)
