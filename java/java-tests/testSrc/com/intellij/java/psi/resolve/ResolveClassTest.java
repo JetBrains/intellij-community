@@ -217,7 +217,7 @@ public class ResolveClassTest extends ResolveTestCase {
 
     PsiReference ref = configure();
     ensureIndexUpToDate();
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 50, () -> assertNull(ref.resolve()))
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 60, () -> assertNull(ref.resolve()))
       .attempts(1).assertTiming();
   }
 
