@@ -55,14 +55,14 @@ class TestMethodGradleConfigurationProducerTest : GradleConfigurationProducerTes
     assertModules("project", "project.main", "project.test")
 
     currentExternalProjectSettings.testRunner = TestRunner.GRADLE
-    assertTestFilter("package1.T1Test", null, "--tests \"package1.T1Test\"")
-    assertTestFilter("package1.T1Test", "testFoo", "--tests \"package1.T1Test.testFoo[*]\"")
-    assertParameterizedLocationTestFilter("package1.T1Test", "testFoo", "param1", "--tests \"package1.T1Test.testFoo[*param1*]\"")
-    assertParameterizedLocationTestFilter("package1.T1Test", "testFoo", "param2", "--tests \"package1.T1Test.testFoo[*param2*]\"")
-    assertTestFilter("package1.T2Test", null, "--tests \"package1.T2Test\"")
-    assertTestFilter("package1.T2Test", "testFoo2", "--tests \"package1.T2Test.testFoo2[*]\"")
-    assertParameterizedLocationTestFilter("package1.T2Test", "testFoo2", "param1", "--tests \"package1.T2Test.testFoo2[*param1*]\"")
-    assertParameterizedLocationTestFilter("package1.T2Test", "testFoo2", "param2", "--tests \"package1.T2Test.testFoo2[*param2*]\"")
+    assertTestSettings("package1.T1Test", null, ":cleanTest :test --tests \"package1.T1Test\"")
+    assertTestSettings("package1.T1Test", "testFoo", ":cleanTest :test --tests \"package1.T1Test.testFoo[*]\"")
+    assertParameterizedLocationTestSettings("package1.T1Test", "testFoo", "param1", ":cleanTest :test --tests \"package1.T1Test.testFoo[*param1*]\"")
+    assertParameterizedLocationTestSettings("package1.T1Test", "testFoo", "param2", ":cleanTest :test --tests \"package1.T1Test.testFoo[*param2*]\"")
+    assertTestSettings("package1.T2Test", null, ":cleanTest :test --tests \"package1.T2Test\"")
+    assertTestSettings("package1.T2Test", "testFoo2", ":cleanTest :test --tests \"package1.T2Test.testFoo2[*]\"")
+    assertParameterizedLocationTestSettings("package1.T2Test", "testFoo2", "param1", ":cleanTest :test --tests \"package1.T2Test.testFoo2[*param1*]\"")
+    assertParameterizedLocationTestSettings("package1.T2Test", "testFoo2", "param2", ":cleanTest :test --tests \"package1.T2Test.testFoo2[*param2*]\"")
   }
 
   @Test
@@ -92,7 +92,7 @@ class TestMethodGradleConfigurationProducerTest : GradleConfigurationProducerTes
     importProject(buildScript.generate())
 
     currentExternalProjectSettings.testRunner = TestRunner.GRADLE
-    val filter = "--tests \"MyGroovyTest.Don\\'t use single * quo\\*tes\"  --tests \"MyGroovyTest.test2\" "
-    assertTestPatternFilter(filter, virtualFile, "Don\\'t use single . quo\\\"tes", "test2")
+    val filter = ":cleanTest :test --tests \"MyGroovyTest.Don\\'t use single * quo\\*tes\" --tests \"MyGroovyTest.test2\""
+    assertTestPatternSettings(filter, virtualFile, "Don\\'t use single . quo\\\"tes", "test2")
   }
 }

@@ -50,20 +50,9 @@ public class ReRunTaskFilter extends GradleReRunBuildFilter {
       if (!(conf instanceof ExternalSystemRunConfiguration)) return;
 
       ExternalSystemTaskExecutionSettings taskExecutionSettings = ((ExternalSystemRunConfiguration)conf).getSettings();
-      String scriptParameters = taskExecutionSettings.getScriptParameters();
-      List<String> params;
-      if (StringUtil.isEmpty(scriptParameters)) {
-        params = new SmartList<>();
-      }
-      else {
-        params = StringUtil.split(scriptParameters, " ");
-        params.remove("--stacktrace");
-        params.remove("--info");
-        params.remove("--debug");
-      }
-      params.addAll(options);
-      taskExecutionSettings.setScriptParameters(StringUtil.join(params, " "));
-
+      taskExecutionSettings.removeUnorderedArgument("--stacktrace");
+      taskExecutionSettings.removeUnorderedArgument("--info");
+      taskExecutionSettings.removeUnorderedArgument("--debug");
       ExecutionUtil.restart(myEnv);
     };
   }

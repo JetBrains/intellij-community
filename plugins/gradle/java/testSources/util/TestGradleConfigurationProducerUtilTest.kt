@@ -112,8 +112,8 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
 
   private fun assertClassRunConfigurationSettings(expectedSettings: String, vararg classes: PsiClass) {
     val settings = ExternalSystemTaskExecutionSettings()
-    val isApplied = applyTestConfiguration(myProject, settings, arrayOf(*classes)) { psiClass ->
-      GradleExecutionSettingsUtil.createTestFilterFrom(psiClass, false)
+    val isApplied = applyTestConfiguration(myProject, settings, *classes) { psiClass ->
+      GradleExecutionSettingsUtil.createTestFilterFrom(psiClass)
     }
     assertTrue(isApplied)
     assertEquals(expectedSettings, settings.toString().trim())

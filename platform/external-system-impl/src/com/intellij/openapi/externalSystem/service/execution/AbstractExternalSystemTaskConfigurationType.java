@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
+import com.intellij.openapi.externalSystem.service.ExternalSystemTaskExecutionSettingsUtilKt;
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -103,7 +104,10 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
   @NotNull
   public static String generateName(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings settings) {
     return generateName(
-      project, settings.getExternalSystemId(), settings.getExternalProjectPath(), settings.getTaskNames(), settings.getExecutionName()
+      project, settings.getExternalSystemId(),
+      settings.getExternalProjectPath(),
+      ExternalSystemTaskExecutionSettingsUtilKt.getAllTaskNames(settings),
+      settings.getExecutionName()
     );
   }
 

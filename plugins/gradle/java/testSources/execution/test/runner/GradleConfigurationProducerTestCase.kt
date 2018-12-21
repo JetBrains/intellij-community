@@ -25,20 +25,20 @@ import org.junit.runners.Parameterized
 
 abstract class GradleConfigurationProducerTestCase : GradleImportingTestCase() {
 
-  protected fun assertTestFilter(className: String, methodName: String?, testFilter: String) {
+  protected fun assertTestSettings(className: String, methodName: String?, settings: String) {
     val locationProvider = { c: PsiClass?, m: PsiMethod? -> PsiLocation.fromPsiElement((m ?: c) as PsiElement?) }
     val configurations = getConfigurations(className, methodName, locationProvider)
     assertSize(1, configurations)
     val executionSettings = configurations.first().settings
-    assertEquals(testFilter, executionSettings.scriptParameters)
+    assertEquals(settings, executionSettings.toString())
   }
 
-  protected fun assertParameterizedLocationTestFilter(className: String, methodName: String?, paramSetName: String, testFilter: String) {
+  protected fun assertParameterizedLocationTestSettings(className: String, methodName: String?, paramSetName: String, settings: String) {
     val locationProvider = { c: PsiClass?, m: PsiMethod? -> PsiMemberParameterizedLocation(myProject, m!!, c, paramSetName) }
     val configurations = getConfigurations(className, methodName, locationProvider)
     assertSize(1, configurations)
     val executionSettings = configurations.first().settings
-    assertEquals(testFilter, executionSettings.scriptParameters)
+    assertEquals(settings, executionSettings.toString())
   }
 
   private fun getConfigurations(className: String,
@@ -61,7 +61,7 @@ abstract class GradleConfigurationProducerTestCase : GradleImportingTestCase() {
     })
   }
 
-  fun assertTestPatternFilter(patternFilter: String, virtualFile: VirtualFile, vararg methodNames: String) {
+  fun assertTestPatternSettings(patternFilter: String, virtualFile: VirtualFile, vararg methodNames: String) {
     ApplicationManager.getApplication().runReadAction {
       val psiManager = PsiManager.getInstance(myProject)
       val psiClass = psiManager.findFile(virtualFile)!!
@@ -85,8 +85,7 @@ abstract class GradleConfigurationProducerTestCase : GradleImportingTestCase() {
       }
       val runConfiguration = configurationProducer.createLightConfiguration(configurationContext)
       runConfiguration as ExternalSystemRunConfiguration
-      val scriptParameters = runConfiguration.settings.scriptParameters
-      assertEquals(patternFilter, scriptParameters)
+      assertEquals(patternFilter, runConfiguration.settings.toString())
     }
   }
 

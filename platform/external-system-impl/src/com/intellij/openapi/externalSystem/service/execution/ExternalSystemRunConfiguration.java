@@ -39,11 +39,14 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
+import com.intellij.openapi.externalSystem.model.execution.TaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
+import com.intellij.openapi.externalSystem.serialization.service.execution.ExternalSystemTaskExecutionSettingsState;
+import com.intellij.openapi.externalSystem.service.ExternalSystemTaskExecutionSettingsUtilKt;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -79,6 +82,7 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DEBUG_FORK_SOCKET_PARAM;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DEBUG_SETUP_PREFIX;
@@ -129,9 +133,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
-    Element e = element.getChild(ExternalSystemTaskExecutionSettings.TAG_NAME);
+    Element e = element.getChild(ExternalSystemTaskExecutionSettingsState.TAG_NAME);
     if (e != null) {
-      mySettings = XmlSerializer.deserialize(e, ExternalSystemTaskExecutionSettings.class);
+      ExternalSystemTaskExecutionSettingsState settingsState =
+        XmlSerializer.deserialize(e, ExternalSystemTaskExecutionSettingsState.class);
+      mySettings = settingsState.toTaskExecutionSettings();
     }
     JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstanceOrNull();
     if (javaRunConfigurationExtensionManager != null) {
@@ -142,7 +148,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
-    element.addContent(XmlSerializer.serialize(mySettings, new SerializationFilter() {
+    ExternalSystemTaskExecutionSettingsState settingsState = ExternalSystemTaskExecutionSettingsState.valueOf(mySettings);
+    element.addContent(XmlSerializer.serialize(settingsState, new SerializationFilter() {
       @Override
       public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
         // only these fields due to backward compatibility
@@ -291,7 +298,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
                                    : StringUtil.isNotEmpty(myConfiguration.getName())
                                      ? myConfiguration.getName() : AbstractExternalSystemTaskConfigurationType.generateName(
                                      myProject, mySettings.getExternalSystemId(), mySettings.getExternalProjectPath(),
-                                     mySettings.getTaskNames(), mySettings.getExecutionName(), ": ", "");
+                                     ExternalSystemTaskExecutionSettingsUtilKt.getAllTaskNames(mySettings),
+                                     mySettings.getExecutionName(), ": ", "");
 
       final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(task, executionName);
       final ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
@@ -335,7 +343,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
         final String greeting;
         final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings.toString());
-        if (mySettings.getTaskNames().size() > 1) {
+        if (mySettings.getTasksSettings().size() > 1) {
           greeting = ExternalSystemBundle.message("run.text.starting.multiple.task", startDateTime, settingsDescription) + "\n";
         }
         else {
@@ -413,7 +421,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
           public void onEnd(@NotNull ExternalSystemTaskId id) {
             final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
             final String farewell;
-            if (mySettings.getTaskNames().size() > 1) {
+            if (mySettings.getTasksSettings().size() > 1) {
               farewell = ExternalSystemBundle.message("run.text.ended.multiple.task", endDateTime, settingsDescription);
             }
             else {

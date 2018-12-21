@@ -62,9 +62,10 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     };
     final Function2<PsiClass, String, String> createFilter = (psiClass, test) -> {
       final int i = StringUtil.indexOf(test, ",");
+      String aClass = i < 0 ? test : test.substring(0, i);
       final String method = i != -1 && test.length() > i + 1 ? test.substring(i + 1) : null;
       resolvedTests.add(psiClass.getName() + "," + (method == null ? "" : method));
-      return GradleExecutionSettingsUtil.createTestFilterFrom(psiClass, /*hasSuffix=*/true);
+      return GradleExecutionSettingsUtil.createTestFilterFromMethod(aClass, method);
     };
     if (!applyTestConfiguration(project, settings, tests, findPsiClass, createFilter)) {
       return false;

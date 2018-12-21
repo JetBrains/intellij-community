@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
+import com.intellij.openapi.externalSystem.service.ExternalSystemTaskExecutionSettingsUtilKt;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectPathField;
 import com.intellij.openapi.externalSystem.util.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -156,6 +157,8 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
 
   @Override
   public void apply(@NotNull ExternalSystemTaskExecutionSettings settings) {
+    settings.resetTaskSettings();
+    settings.resetUnorderedArguments();
     String projectPath = myProjectPathField.getText();
     settings.setExternalProjectPath(projectPath);
     settings.setTaskNames(StringUtil.split(myTasksTextField.getText(), " "));

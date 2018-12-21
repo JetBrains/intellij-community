@@ -8,19 +8,14 @@ import com.intellij.psi.*
 
 object GradleExecutionSettingsUtil {
 
-  private fun createTestFilter(filter: String, hasSuffix: Boolean): String {
-    return if (hasSuffix) {
-      String.format("--tests %s ", filter)
-    }
-    else {
-      String.format("--tests %s", filter)
-    }
+  private fun createTestFilter(filter: String): String {
+    return String.format("--tests %s", filter)
   }
 
-  private fun createTestFilterFrom(filter: String, hasSuffix: Boolean): String {
+  private fun createTestFilterFrom(filter: String): String {
     val escaped = filter.replace('"', '*')
     val wrapped = String.format("\"%s\"", escaped)
-    return createTestFilter(wrapped, hasSuffix)
+    return createTestFilter(wrapped)
   }
 
   private fun createLocationName(aClass: String?, method: String?): String {
@@ -30,40 +25,40 @@ object GradleExecutionSettingsUtil {
   }
 
   @JvmStatic
-  fun createTestFilterFromMethod(aClass: String?, method: String?, hasSuffix: Boolean): String {
-    return createTestFilterFrom(createLocationName(aClass, method), hasSuffix)
+  fun createTestFilterFromMethod(aClass: String?, method: String?): String {
+    return createTestFilterFrom(createLocationName(aClass, method))
   }
 
   @JvmStatic
-  fun createTestFilterFromClass(aClass: String?, hasSuffix: Boolean): String {
+  fun createTestFilterFromClass(aClass: String?): String {
     if (aClass == null) return ""
-    return createTestFilterFrom(aClass, hasSuffix)
+    return createTestFilterFrom(aClass)
   }
 
   @JvmStatic
-  fun createTestFilterFromPackage(aPackage: String, hasSuffix: Boolean): String {
-    if (aPackage.isEmpty()) return createTestFilter("*", hasSuffix)
+  fun createTestFilterFromPackage(aPackage: String): String {
+    if (aPackage.isEmpty()) return createTestFilter("*")
     val packageFilter = String.format("%s.*", aPackage)
-    return createTestFilterFrom(packageFilter, hasSuffix)
+    return createTestFilterFrom(packageFilter)
   }
 
   @JvmStatic
-  fun createTestFilterFrom(psiClass: PsiClass, hasSuffix: Boolean): String {
-    return createTestFilterFromClass(psiClass.getRuntimeQualifiedName(), hasSuffix)
+  fun createTestFilterFrom(psiClass: PsiClass): String {
+    return createTestFilterFromClass(psiClass.getRuntimeQualifiedName())
   }
 
   @JvmStatic
-  fun createTestFilterFrom(aClass: PsiClass, psiMethod: PsiMethod, hasSuffix: Boolean): String {
-    return createTestFilterFromMethod(aClass.getRuntimeQualifiedName(), psiMethod.name, hasSuffix)
+  fun createTestFilterFrom(aClass: PsiClass, psiMethod: PsiMethod): String {
+    return createTestFilterFromMethod(aClass.getRuntimeQualifiedName(), psiMethod.name)
   }
 
   @JvmStatic
-  fun createTestFilterFrom(psiPackage: PsiPackage, hasSuffix: Boolean): String {
-    return createTestFilterFromPackage(psiPackage.qualifiedName, hasSuffix)
+  fun createTestFilterFrom(psiPackage: PsiPackage): String {
+    return createTestFilterFromPackage(psiPackage.qualifiedName)
   }
 
   @JvmStatic
-  fun createTestFilterFrom(location: Location<*>?, aClass: PsiClass, method: PsiMethod, hasSuffix: Boolean): String {
+  fun createTestFilterFrom(location: Location<*>?, aClass: PsiClass, method: PsiMethod): String {
     var locationName = createLocationName(aClass.getRuntimeQualifiedName(), method.name)
     if (location is PsiMemberParameterizedLocation) {
       val wrappedParamSetName = location.paramSetName
@@ -76,7 +71,7 @@ object GradleExecutionSettingsUtil {
     else if (aClass.isParameterized()) {
       locationName += "[*]"
     }
-    return createTestFilterFrom(locationName, hasSuffix)
+    return createTestFilterFrom(locationName)
   }
 
   private fun PsiClass.getRuntimeQualifiedName(): String? {

@@ -50,7 +50,7 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
 
     configuration.getSettings().setExternalProjectPath(projectPath);
     configuration.getSettings().setTaskNames(tasksToRun);
-    String filter = GradleExecutionSettingsUtil.createTestFilterFrom(psiPackage, /*hasSuffix=*/false);
+    String filter = GradleExecutionSettingsUtil.createTestFilterFrom(psiPackage);
     configuration.getSettings().setScriptParameters(filter);
     configuration.setName(suggestName(psiPackage, module));
     return true;
@@ -71,7 +71,7 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
     if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(context.getModule()))) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
-    final String filter = GradleExecutionSettingsUtil.createTestFilterFrom(psiPackage, /*hasSuffix=*/true);
+    final String filter = GradleExecutionSettingsUtil.createTestFilterFrom(psiPackage);
     return scriptParameters.contains(filter);
   }
 

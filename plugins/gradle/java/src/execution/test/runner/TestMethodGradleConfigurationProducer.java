@@ -11,7 +11,6 @@ import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,7 +18,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtil;
-import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
@@ -28,8 +26,9 @@ import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil;
 
 import java.util.List;
 
+import static com.intellij.openapi.externalSystem.service.ExternalSystemTaskExecutionSettingsUtilKt.isSameSettings;
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
-import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
+import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfigurationFor;
 
 /**
  * @author Vladislav.Soroka
@@ -56,8 +55,6 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
 
     final PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass == null) return false;
-
-    if (context.getModule() == null) return false;
 
     if (!applyTestMethodConfiguration(configuration, context, psiMethod, containingClass)) return false;
 
@@ -86,20 +83,12 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     final PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass == null) return false;
 
-    final Module module = context.getModule();
-    if (module == null) return false;
-
-    final String projectPath = resolveProjectPath(module);
-    if (projectPath == null) return false;
-
-    if (!StringUtil.equals(projectPath, configuration.getSettings().getExternalProjectPath())) {
+    final Project project = context.getProject();
+    final ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
+    if (!applyTestConfigurationFor(project, settings, contextLocation, psiMethod, containingClass)) {
       return false;
     }
-    if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(module))) return false;
-
-    final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
-    final String testFilter = createTestFilter(contextLocation, containingClass, psiMethod);
-    return testFilter != null && scriptParameters.contains(testFilter);
+    return isSameSettings(settings, configuration.getSettings());
   }
 
   @Override
@@ -145,25 +134,16 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
                                                       @NotNull PsiMethod psiMethod,
                                                       @NotNull PsiClass... containingClasses) {
     final Project project = context.getProject();
+    final Location location = context.getLocation();
+    assert location != null;
     final ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
-    final Function1<PsiClass, String> createFilter = (psiClass) ->
-      createTestFilter(context.getLocation(), psiClass, psiMethod);
-    if (!applyTestConfiguration(project, settings, containingClasses, createFilter)) {
-      return false;
-    }
-
+    if (!applyTestConfigurationFor(project, settings, location, psiMethod, containingClasses)) return false;
     configuration.setName((containingClasses.length == 1 ? containingClasses[0].getName() + "." : "") + psiMethod.getName());
     return true;
   }
 
-  @Nullable
-  private static String createTestFilter(@Nullable Location location, @NotNull PsiClass aClass, @NotNull PsiMethod psiMethod) {
-    String filter = GradleExecutionSettingsUtil.createTestFilterFrom(location, aClass, psiMethod, true);
-    return filter.isEmpty() ? null : filter;
-  }
-
   @NotNull
   public static String createTestFilter(@Nullable String aClass, @Nullable String method) {
-    return GradleExecutionSettingsUtil.createTestFilterFromMethod(aClass, method, /*hasSuffix=*/true);
+    return GradleExecutionSettingsUtil.createTestFilterFromMethod(aClass, method);
   }
 }
