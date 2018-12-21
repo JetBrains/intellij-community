@@ -23,6 +23,11 @@ public class JavaWebReferenceTest extends LightCodeInsightFixtureTestCase {
     assertEquals(1, references.size());
   }
 
+  public void testHighlighting() {
+    getReferences("class Hi { String url=\"<info descr=\"Open in browser (Ctrl+Click, Ctrl+B)\">http://foo</info>\"; }");
+    myFixture.testHighlighting(true, true, true);
+  }
+
   @NotNull
   private List<WebReference> getReferences(String s) {
     PsiFile file = myFixture.configureByText(JavaFileType.INSTANCE, s);

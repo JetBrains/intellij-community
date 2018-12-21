@@ -357,6 +357,12 @@
           <option name="EFFECT_TYPE" value="1"/>
         </value>
       </option>
+      <option name="INACTIVE_HYPERLINK_ATTRIBUTES">
+        <value>
+          <option name="EFFECT_COLOR" value="808080"/>
+          <option name="EFFECT_TYPE" value="1"/>
+        </value>
+      </option>
       <option name="INFORMATION_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
@@ -1713,6 +1719,12 @@
         <value>
           <option name="FOREGROUND" value="287bde" />
           <option name="EFFECT_COLOR" value="287bde" />
+          <option name="EFFECT_TYPE" value="1" />
+        </value>
+      </option>
+      <option name="INACTIVE_HYPERLINK_ATTRIBUTES">
+        <value>
+          <option name="EFFECT_COLOR" value="707d95" />
           <option name="EFFECT_TYPE" value="1" />
         </value>
       </option>
