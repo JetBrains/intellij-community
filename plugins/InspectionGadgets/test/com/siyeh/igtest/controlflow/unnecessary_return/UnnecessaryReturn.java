@@ -126,4 +126,22 @@ class Switch {
             }
         }
     }
+
+  void f(int n) {
+    int a;
+    switch (n) {
+      case 1 -> a = 0;
+      default -> {return;}
+    }
+    System.out.println("a = " + a);
+  }
+
+  void g(int n) {
+    switch (n) {
+      case 1:
+        return;
+      default:
+        <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
+    }
+  }
 }
