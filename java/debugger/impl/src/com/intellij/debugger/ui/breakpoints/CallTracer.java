@@ -19,8 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.sun.jdi.IncompatibleThreadStateException;
-import com.sun.jdi.ThreadReference;
+import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.request.EventRequest;
@@ -97,10 +96,47 @@ public class CallTracer implements OverheadProducer {
           }
           int indent = thread.frameCount() - request.myStartIndent;
           String indentString = indent < 0 ? "-" : StringUtil.repeat(" ", indent);
-          myDebugProcess.printToConsole("\n" + indentString + methodEntryEvent.method() + " thread " + thread.uniqueID());
+          Method method = methodEntryEvent.method();
+          StringBuilder res = new StringBuilder("\n");
+          res.append(indentString).append(method.declaringType().name()).append('.').append(method.name()).append('(');
+          if (Registry.is("debugger.call.tracing.arguments")) {
+            StackFrame frame = thread.frame(0);
+            boolean first = true;
+            for (Value value : DebuggerUtilsEx.getArgumentValues(frame)) {
+              if (!first) {
+                res.append(", ");
+              }
+              first = false;
+              if (value == null) {
+                res.append("null");
+              }
+              else if (value instanceof StringReference) {
+                res.append(((StringReference)value).value());
+              }
+              else if (value instanceof ObjectReference) {
+                ObjectReference objectReference = (ObjectReference)value;
+                res.append(StringUtil.getShortName(objectReference.referenceType().name())).append("@").append(objectReference.uniqueID());
+              }
+              else {
+                res.append(value.toString());
+              }
+            }
+          }
+          else {
+            boolean first = true;
+            for (String typeName : method.argumentTypeNames()) {
+              if (!first) {
+                res.append(", ");
+              }
+              first = false;
+              res.append(StringUtil.getShortName(typeName));
+            }
+          }
+          res.append(')').append(" thread ").append(thread.uniqueID());
+          myDebugProcess.printToConsole(res.toString());
         }
       }
-      catch (IncompatibleThreadStateException e) {
+      catch (Exception e) {
         LOG.error(e);
       }
     }
