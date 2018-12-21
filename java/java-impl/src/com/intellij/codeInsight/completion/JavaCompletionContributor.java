@@ -619,7 +619,9 @@ public class JavaCompletionContributor extends CompletionContributor {
           if (Comparing.equal(existingAttr.getName(), attrName) ||
               PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(attrName) && existingAttr.getName() == null) continue methods;
         }
-        LookupElementBuilder element = LookupElementBuilder.createWithIcon(method).withInsertHandler(new InsertHandler<LookupElement>() {
+        LookupElementBuilder element = LookupElementBuilder.createWithIcon(method)
+                            .withStrikeoutness(PsiImplUtil.isDeprecated(method))
+                            .withInsertHandler(new InsertHandler<LookupElement>() {
           @Override
           public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
             final Editor editor = context.getEditor();
