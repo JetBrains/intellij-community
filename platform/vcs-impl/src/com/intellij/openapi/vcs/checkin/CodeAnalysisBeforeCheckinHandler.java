@@ -141,7 +141,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
   @NotNull
   private ReturnResult runCodeAnalysis(@Nullable CommitExecutor commitExecutor) {
     final List<VirtualFile> files = CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(myCheckinPanel.getVirtualFiles(), myProject);
-    if (Registry.is("vcs.code.analysis.before.checkin.show.only.new", false)) {
+    if (files.size() <= Registry.intValue("vcs.code.analysis.before.checkin.show.only.new.threshold", 0)) {
       return runCodeAnalysisNew(commitExecutor, files);
     }
     return runCodeAnalysisOld(commitExecutor, files);
