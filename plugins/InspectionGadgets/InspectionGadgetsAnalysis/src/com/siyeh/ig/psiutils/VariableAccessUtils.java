@@ -26,10 +26,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class VariableAccessUtils {
 
@@ -241,6 +238,18 @@ public class VariableAccessUtils {
     return ExpressionUtils.isReferenceTo(expression, variable);
   }
 
+  public static List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable, @Nullable PsiElement context) {
+    if (context == null) return Collections.emptyList();
+    List<PsiReferenceExpression> result = new ArrayList<>();
+    PsiTreeUtil.processElements(context, e -> {
+      if (e instanceof PsiReferenceExpression && ((PsiReferenceExpression)e).isReferenceTo(variable)) {
+        result.add((PsiReferenceExpression)e);
+      }
+      return true;
+    });
+    return result;
+  }
+  
   @Contract("_, null -> false")
   public static boolean variableIsUsed(@NotNull PsiVariable variable,
                                        @Nullable PsiElement context) {

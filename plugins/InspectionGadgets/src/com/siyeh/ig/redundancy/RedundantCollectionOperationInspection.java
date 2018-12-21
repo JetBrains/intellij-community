@@ -16,6 +16,8 @@ import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
@@ -443,13 +445,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
           return null;
         }
         PsiCodeBlock block = PsiTreeUtil.getParentOfType(localVariable, PsiCodeBlock.class);
-        if (block != null && VariableAccessUtils.variableIsUsed(localVariable, block) &&
-            PsiTreeUtil.processElements(block, element -> {
-          if (!(element instanceof PsiReferenceExpression)) return true;
-          PsiReferenceExpression ref = (PsiReferenceExpression)element;
-          if (!(ref.isReferenceTo(localVariable))) return true;
-          return isAllowedContext(ref);
-        })) {
+        List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(localVariable, block);
+        if (!references.isEmpty() && references.stream().allMatch(RedundantAsListForIterationHandler::isAllowedContext)) {
           return new RedundantAsListForIterationHandler();
         }
       }
