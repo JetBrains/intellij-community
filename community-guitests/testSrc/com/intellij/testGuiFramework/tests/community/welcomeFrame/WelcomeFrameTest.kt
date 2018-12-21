@@ -8,11 +8,9 @@ import com.intellij.testGuiFramework.framework.RunWithIde
 import com.intellij.testGuiFramework.framework.Timeouts.seconds01
 import com.intellij.testGuiFramework.framework.wait
 import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.GuiTestThread
 import com.intellij.testGuiFramework.impl.actionLink
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
-import com.intellij.testGuiFramework.remote.transport.MessageType
-import com.intellij.testGuiFramework.remote.transport.TransportMessage
+import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key
 import org.junit.Test
 
@@ -20,14 +18,9 @@ import org.junit.Test
 class WelcomeFrameTest(private val testCounter: TestCounterParameters): GuiTestCase() {
 
   @Test
-  fun testConfigureLink() {
+  fun testConfigureLinkAndImportProject() {
     clickConfigureOnWelcomeFrame()
-  }
-
-  override fun tearDown() {
-    super.tearDown()
-    GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AFTER_TEST,
-                                                "This test is required to restart IDE"))
+    CommunityProjectCreator.importCommandLineApp()
   }
 
   private fun clickConfigureOnWelcomeFrame() {

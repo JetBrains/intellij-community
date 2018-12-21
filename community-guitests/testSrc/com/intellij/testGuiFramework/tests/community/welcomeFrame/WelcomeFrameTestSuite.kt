@@ -26,7 +26,6 @@ class WelcomeFrameTestSuite : GuiTestSuite() {
   @RunWithIde(CommunityIde::class)
   @FirstStartWith(CommunityIdeFirstStart::class)
   @Suite.SuiteClasses(
-    WelcomeFrameTest::class
   )
   class Regular
 
