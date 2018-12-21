@@ -61,7 +61,7 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
     }
     @NonNls final StringBuilder newStatement = new StringBuilder();
     newStatement.append("for(").append(variableType.getCanonicalText()).append(' ');
-    final String iterator = new VariableNameGenerator(statement, VariableKind.LOCAL_VARIABLE).byType(variableType)
+    final String iterator = new VariableNameGenerator(statement, VariableKind.LOCAL_VARIABLE)
       .byName("iterator", "iter", "it").generate(true);
     newStatement.append(iterator).append("=").append(iteratorCall.getText()).append(';');
     newStatement.append(iterator).append(".hasNext();) {");

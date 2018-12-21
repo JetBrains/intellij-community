@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
@@ -71,10 +71,8 @@ public final class VariableNameGenerator {
    */
   public VariableNameGenerator byCollectionName(@Nullable String name) {
     if (name != null) {
-      String nameCandidate = StringUtil.unpluralize(name);
-      if (nameCandidate != null && !name.equals(nameCandidate)) {
-        byName(nameCandidate);
-      }
+      PsiExpression expr = JavaPsiFacade.getElementFactory(myContext.getProject()).createExpressionFromText(name + "[0]", myContext);
+      byExpression(expr);
     }
     return this;
   }

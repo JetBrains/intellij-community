@@ -104,7 +104,7 @@ public class ForeachStatementInspection extends BaseInspection {
         final PsiType parameterType = iterationParameter.getType();
         final String typeText = parameterType.getCanonicalText();
         newStatement.append("for(").append(variableType.getCanonicalText()).append(' ');
-        final String iterator = new VariableNameGenerator(statement, VariableKind.LOCAL_VARIABLE).byType(variableType)
+        final String iterator = new VariableNameGenerator(statement, VariableKind.LOCAL_VARIABLE)
           .byName("iterator", "iter", "itr").generate(true);
         newStatement.append(iterator).append("=").append(iteratorCall.getText()).append(';');
         newStatement.append(iterator).append(".hasNext();){");

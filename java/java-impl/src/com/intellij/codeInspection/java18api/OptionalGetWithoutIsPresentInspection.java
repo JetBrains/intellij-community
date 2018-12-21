@@ -119,7 +119,8 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
       PsiType elementType = OptionalUtil.getOptionalElementType(qualifier.getType());
       PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(call);
       if (nextCall == null) return;
-      String name = new VariableNameGenerator(qualifier, VariableKind.PARAMETER).byType(elementType).byName("value").generate(true);
+      String name = new VariableNameGenerator(qualifier, VariableKind.PARAMETER).byExpression(qualifier)
+        .byType(elementType).byName("value").generate(true);
       CommentTracker ct = new CommentTracker();
       PsiReferenceExpression methodExpression = nextCall.getMethodExpression();
       ct.markRangeUnchanged(Objects.requireNonNull(methodExpression.getQualifierExpression()).getNextSibling(),

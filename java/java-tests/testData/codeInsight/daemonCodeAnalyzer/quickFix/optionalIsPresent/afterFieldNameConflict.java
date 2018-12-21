@@ -13,6 +13,6 @@ public class Test {
 
   void testOpt(String powerValue) {
     Optional<Power> optPower = Power.parseValue(powerValue);
-      optPower.ifPresent(power1 -> power = power1);
+      optPower.ifPresent(value -> power = value);
   }
 }

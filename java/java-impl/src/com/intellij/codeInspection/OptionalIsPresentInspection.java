@@ -204,7 +204,8 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
                                        PsiReferenceExpression optionalRef,
                                        PsiElement trueValue) {
     PsiType type = optionalRef.getType();
-    String paramName = new VariableNameGenerator(trueValue, VariableKind.PARAMETER).byType(type).byName("value").generate(true);
+    String paramName = new VariableNameGenerator(trueValue, VariableKind.PARAMETER)
+      .byType(OptionalUtil.getOptionalElementType(type)).byName("value").generate(true);
     if(trueValue instanceof PsiExpressionStatement) {
       trueValue = ((PsiExpressionStatement)trueValue).getExpression();
     }
