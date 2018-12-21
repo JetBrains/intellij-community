@@ -1594,10 +1594,18 @@ public class AllIcons {
   public final static class Icons {
 
     public final static class Ide {
-      public static final Icon NextStep = IconLoader.getIcon("/icons/ide/nextStep.png"); // 12x12
-      public static final Icon NextStepGrayed = IconLoader.getIcon("/icons/ide/nextStepGrayed.png"); // 12x12
-      public static final Icon NextStepInverted = IconLoader.getIcon("/icons/ide/nextStepInverted.png"); // 12x12
-      public static final Icon SpeedSearchPrompt = IconLoader.getIcon("/icons/ide/speedSearchPrompt.png"); // 16x16
+      public static final Icon NextStep = IconLoader.getIcon("/icons/ide/nextStep.svg"); // 12x12
+      public static final Icon NextStepInverted = IconLoader.getIcon("/icons/ide/nextStepInverted.svg"); // 12x12
+
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Icons.Ide.NextStep */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon NextStepGrayed = AllIcons.Icons.Ide.NextStep;
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon SpeedSearchPrompt = IconLoader.getIcon("/icons/ide/speedSearchPrompt.png");
 
     }
 
