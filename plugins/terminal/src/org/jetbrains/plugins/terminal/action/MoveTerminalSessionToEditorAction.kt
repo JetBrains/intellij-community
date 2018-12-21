@@ -16,7 +16,7 @@ class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuActionBase()
     val tabInfo = TabInfo(selectedContent!!.component)
       .setText(selectedContent.displayName)
     val terminalView = TerminalView.getInstance(e.project!!)
-    val terminalWidget = selectedContent.getUserData(TerminalView.TERMINAL_WIDGET_KEY)!!
+    val terminalWidget = TerminalView.getWidgetByContent(selectedContent)
     val file = TerminalSessionVirtualFileImpl(tabInfo, terminalWidget, terminalView.terminalRunner.settingsProvider)
     tabInfo.setObject(file)
     file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, java.lang.Boolean.TRUE)

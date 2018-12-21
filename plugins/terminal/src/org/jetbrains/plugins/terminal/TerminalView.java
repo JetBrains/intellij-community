@@ -70,7 +70,7 @@ import java.util.stream.Collectors;
  * @author traff
  */
 public class TerminalView {
-  public final static Key<JBTerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
+  private final static Key<JBTerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
 
   private ToolWindow myToolWindow;
   private final Project myProject;
