@@ -305,8 +305,23 @@ public class ExpectedTypesProvider {
 
     @Override
     public void visitExpressionStatement(PsiExpressionStatement statement) {
+      if (statement.getParent() instanceof PsiSwitchLabeledRuleStatement) {
+        PsiSwitchBlock block = ((PsiSwitchLabeledRuleStatement)statement.getParent()).getEnclosingSwitchBlock();
+        if (block instanceof PsiSwitchExpression) {
+          block.getParent().accept(this);
+          return;
+        }
+      }
       if (myVoidable) {
         myResult.add(VOID_EXPECTED);
+      }
+    }
+
+    @Override
+    public void visitBreakStatement(PsiBreakStatement statement) {
+      PsiElement exitedElement = statement.findExitedElement();
+      if (exitedElement instanceof PsiSwitchExpression) {
+        exitedElement.getParent().accept(this);
       }
     }
 
@@ -469,6 +484,15 @@ public class ExpectedTypesProvider {
 
     @Override
     public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
+      processSwitchBlock(statement);
+    }
+
+    @Override
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
+      processSwitchBlock(expression);
+    }
+
+    public void processSwitchBlock(@NotNull PsiSwitchBlock statement) {
       myResult.add(createInfoImpl(PsiType.LONG, PsiType.INT));
       if (!PsiUtil.isLanguageLevel5OrHigher(statement)) {
         return;
