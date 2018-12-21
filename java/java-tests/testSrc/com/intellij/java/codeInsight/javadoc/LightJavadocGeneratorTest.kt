@@ -22,10 +22,12 @@ class LightJavadocGeneratorTest : LightCodeInsightFixtureTestCase() {
   fun testRootedClassLink() = doTestLink("{@docRoot}/java/lang/Character.html#unicode", "psi_element://java.lang.Character###unicode")
   fun testRootedPackageLink() = doTestLink("{@docRoot}/java/util/package-summary.html", "psi_element://java.util")
   fun testRootedFileLink() = doTestLink("{@docRoot}/java/lang/doc-files/ValueBased.html", "../../java/lang/doc-files/ValueBased.html")
+  fun testRootedExtLink() = doTestLink("{@docRoot}/../techNotes/guides/index.html", "../../../techNotes/guides/index.html")
 
   fun testRelativeClassLink() = doTestLink("../../java/lang/Character.html#unicode", "psi_element://java.lang.Character###unicode")
   fun testRelativePackageLink() = doTestLink("../../java/util/package-summary.html", "psi_element://java.util")
   fun testRelativeFileLink() = doTestLink("../../java/lang/doc-files/ValueBased.html", "../../java/lang/doc-files/ValueBased.html")
+  fun testRelativeExtLink() = doTestLink("../../../techNotes/guides/index.html", "../../../techNotes/guides/index.html")
 
   //<editor-fold desc="Helpers.">
   private fun doTestModule(text: String, expected: String) {
