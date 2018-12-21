@@ -1,6 +1,7 @@
 package circlet.components
 
 import circlet.app.*
+import circlet.client.*
 import circlet.client.api.*
 import circlet.messages.*
 import circlet.utils.*
@@ -25,6 +26,7 @@ class ConnectionsComponent : ApplicationComponent, LifetimedComponent by SimpleL
             LoginModel(
                 appLifetime = connectionLifetime,
                 server = url,
+                circletOAuth = dummyOAuthClientInstance(), // idea plugin does not support new oauth yet
                 credentialsPersistence = IdeaPersistence.substorage("$url-"),
                 offlinePersistence = Persistence.nothing,
                 offlinePersistenceConfiguration = CircletPersistenceConfiguration.storeNothing
