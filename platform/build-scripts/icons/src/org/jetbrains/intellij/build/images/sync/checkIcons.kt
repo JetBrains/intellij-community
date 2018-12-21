@@ -60,8 +60,7 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
   when {
     isUnderTeamCity() && context.isFail() -> context.doFail(report)
     // partial sync shouldn't make build successful
-    (context.iconsCommitHashesToSync.isNotEmpty() ||
-     context.devIconsCommitHashesToSync.isNotEmpty()) &&
+    context.devIconsCommitHashesToSync.isNotEmpty() &&
     isUnderTeamCity() && isPreviousBuildFailed() -> context.doFail(report)
     else -> log(report)
   }
