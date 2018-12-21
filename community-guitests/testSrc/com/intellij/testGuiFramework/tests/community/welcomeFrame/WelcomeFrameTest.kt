@@ -20,7 +20,7 @@ class WelcomeFrameTest(private val testCounter: TestCounterParameters): GuiTestC
   @Test
   fun testConfigureLinkAndImportProject() {
     clickConfigureOnWelcomeFrame()
-    CommunityProjectCreator.importCommandLineApp()
+    CommunityProjectCreator.importCommandLineAppAndOpenMain()
   }
 
   private fun clickConfigureOnWelcomeFrame() {

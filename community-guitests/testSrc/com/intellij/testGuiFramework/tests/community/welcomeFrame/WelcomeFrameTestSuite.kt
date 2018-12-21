@@ -4,6 +4,7 @@
 
 package com.intellij.testGuiFramework.tests.community.welcomeFrame
 
+import com.intellij.ide.projectWizard.CommandLineProjectGuiTest
 import com.intellij.testGuiFramework.framework.FirstStartWith
 import com.intellij.testGuiFramework.framework.GuiTestSuite
 import com.intellij.testGuiFramework.framework.GuiTestSuiteRunner
@@ -26,6 +27,7 @@ class WelcomeFrameTestSuite : GuiTestSuite() {
   @RunWithIde(CommunityIde::class)
   @FirstStartWith(CommunityIdeFirstStart::class)
   @Suite.SuiteClasses(
+    CommandLineProjectGuiTest::class
   )
   class Regular
 
