@@ -47,9 +47,11 @@ import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
-import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -80,7 +82,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
-  public static final int THROTTLING_TIMEOUT = 200;
+  public static final int THROTTLING_TIMEOUT = 100;
 
   private final List<? extends SearchEverywhereContributor> myServiceContributors;
   private final List<? extends SearchEverywhereContributor> myShownContributors;
@@ -97,7 +99,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
   private JBPopup myHint;
 
-  private final Alarm mySearchAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private final SESearcher mySearcher;
   private final ThrottlingListenerWrapper myBufferedListener;
   private ProgressIndicator mySearchProgressIndicator;
@@ -191,7 +192,9 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   }
 
   private void switchToTab(SETab tab) {
+    boolean prevTabIsAll = mySelectedTab != null && isAllTabSelected();
     mySelectedTab = tab;
+    boolean nextTabIsAll = isAllTabSelected();
 
     String checkBoxText = tab.getContributor()
                      .map(SearchEverywhereContributor::includeNonProjectItemsText)
@@ -228,6 +231,10 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       }
     }
 
+    if (prevTabIsAll != nextTabIsAll) {
+      //reset cell renderer to show/hide group titles in "All" tab
+      myResultsList.setCellRenderer(myResultsList.getCellRenderer());
+    }
     repaint();
     rebuildList();
   }
@@ -493,50 +500,51 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + matcherString, NameUtil.MatchingCaseSensitivity.NONE);
     MatcherHolder.associateMatcher(myResultsList, matcher);
 
-    mySearchAlarm.addRequest(() -> {
+    Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
+    Optional<SearchEverywhereContributor> selectedContributor = mySelectedTab.getContributor();
+    if (selectedContributor.isPresent()) {
+      contributorsMap.put(selectedContributor.get(), SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT);
+    } else {
+      contributorsMap.putAll(getUsedContributors().stream().collect(Collectors.toMap(c -> c, c -> MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT)));
+    }
+
+    Set<SearchEverywhereContributor<?>> contributors = contributorsMap.keySet();
+    boolean dumbModeSupported = contributors.stream().anyMatch(c -> c.isDumbModeSupported());
+    if (!dumbModeSupported && DumbService.getInstance(myProject).isDumb()) {
+      String tabName = mySelectedTab.getText();
+      String productName = ApplicationNamesInfo.getInstance().getFullProductName();
+      myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported", tabName, productName));
       myListModel.clear();
-      Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
-      Optional<SearchEverywhereContributor> selectedContributor = mySelectedTab.getContributor();
-      if (selectedContributor.isPresent()) {
-        contributorsMap.put(selectedContributor.get(), SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT);
-      } else {
-        contributorsMap.putAll(getUsedContributors().stream().collect(Collectors.toMap(c -> c, c -> MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT)));
-      }
+      return;
+    }
 
-      Set<SearchEverywhereContributor<?>> contributors = contributorsMap.keySet();
-      boolean dumbModeSupported = contributors.stream().anyMatch(c -> c.isDumbModeSupported());
-      if (!dumbModeSupported && DumbService.getInstance(myProject).isDumb()) {
-        String tabName = mySelectedTab.getText();
-        String productName = ApplicationNamesInfo.getInstance().getFullProductName();
-        myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported", tabName, productName));
-        return;
-      }
+    myListModel.expireResults();
+    contributors.forEach(contributor -> myListModel.setHasMore(contributor, false));
+    String commandPrefix = SearchTopHitProvider.getTopHitAccelerator();
+    if (pattern.startsWith(commandPrefix)) {
+      String typedCommand = pattern.split(" ")[0].substring(commandPrefix.length());
+      List<SearchEverywhereCommandInfo> commands = getCommandsForCompletion(contributors, typedCommand);
 
-      String commandPrefix = SearchTopHitProvider.getTopHitAccelerator();
-      if (pattern.startsWith(commandPrefix)) {
-        String typedCommand = pattern.split(" ")[0].substring(commandPrefix.length());
-        List<SearchEverywhereCommandInfo> commands = getCommandsForCompletion(contributors, typedCommand);
-
-        if (!commands.isEmpty()) {
-          if (pattern.contains(" ")) {
-            // important point!!!
-            // since contributors set is backed with contributorsMap
-            // removing elements from contributors leads to removing
-            // corresponding entries from contributorsMap
-            contributors.retainAll(commands.stream()
-                                     .map(SearchEverywhereCommandInfo::getContributor)
-                                     .collect(Collectors.toSet()));
-          }
-          else {
-            List<SESearcher.ElementInfo> lst =
-              ContainerUtil.map(commands, command -> new SESearcher.ElementInfo(command, 0, stubCommandContributor));
-            myListModel.addElements(lst, stubCommandContributor);
-            ScrollingUtil.ensureSelectionExists(myResultsList);
-          }
+      if (!commands.isEmpty()) {
+        if (pattern.contains(" ")) {
+          // important point!!!
+          // since contributors set is backed with contributorsMap
+          // removing elements from contributors leads to removing
+          // corresponding entries from contributorsMap
+          contributors.retainAll(commands.stream()
+                                   .map(SearchEverywhereCommandInfo::getContributor)
+                                   .collect(Collectors.toSet()));
+        }
+        else {
+          myListModel.clear();
+          List<SESearcher.ElementInfo> lst =
+            ContainerUtil.map(commands, command -> new SESearcher.ElementInfo(command, 0, stubCommandContributor));
+          myListModel.addElements(lst);
+          ScrollingUtil.ensureSelectionExists(myResultsList);
         }
       }
-      mySearchProgressIndicator = mySearcher.search(contributorsMap, pattern, isUseNonProjectItems(), c -> myContributorFilters.get(c.getSearchProviderId()));
-    }, 200);
+    }
+    mySearchProgressIndicator = mySearcher.search(contributorsMap, pattern, isUseNonProjectItems(), c -> myContributorFilters.get(c.getSearchProviderId()));
   }
 
   private void initSearchActions() {
@@ -846,7 +854,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   }
 
   private void stopSearching() {
-    mySearchAlarm.cancelAllRequests();
     if (mySearchProgressIndicator != null && !mySearchProgressIndicator.isCanceled()) {
       mySearchProgressIndicator.cancel();
     }
@@ -988,6 +995,16 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
     private final List<SESearcher.ElementInfo> listElements = new ArrayList<>();
 
+    private boolean resultsExpired = false;
+
+    public boolean isResultsExpired() {
+      return resultsExpired;
+    }
+
+    public void expireResults() {
+      resultsExpired = true;
+    }
+
     @Override
     public int getSize() {
       return listElements.size();
@@ -1010,15 +1027,102 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         .anyMatch(info -> info.getElement() == MORE_ELEMENT && info.getContributor() == contributor);
     }
 
-    public void addElements(List<SESearcher.ElementInfo> items, SearchEverywhereContributor contributor) {
+    public void addElements(List<SESearcher.ElementInfo> items) {
       if (items.isEmpty()) {
         return;
       }
+      Map<SearchEverywhereContributor<?>, List<SESearcher.ElementInfo>> itemsMap = new HashMap<>();
+      items.forEach(info -> {
+        List<SESearcher.ElementInfo> list = itemsMap.computeIfAbsent(info.getContributor(), contributor -> new ArrayList<>());
+        list.add(info);
+      });
 
-      int startIndex = getInsertionPoint(contributor);
-      int endIndex = startIndex + items.size() - 1;
-      listElements.addAll(startIndex, items);
-      fireIntervalAdded(this, startIndex, endIndex);
+      if (resultsExpired) {
+        retainContributors(itemsMap.keySet());
+
+        itemsMap.forEach((contributor, list) -> {
+          Object[] oldItems = ArrayUtil.toObjectArray(getFoundItems(contributor));
+          Object[] newItems = list.stream()
+            .map(SESearcher.ElementInfo::getElement)
+            .toArray();
+          try {
+            Diff.Change change = Diff.buildChanges(oldItems, newItems);
+            applyChange(change, contributor, list);
+          }
+          catch (FilesTooBigForDiffException e) {
+            LOG.error("Cannot calculate diff for updated search results");
+          }
+        });
+        resultsExpired = false;
+      }
+      else {
+        itemsMap.forEach((contributor, list) -> {
+          int startIndex = getInsertionPoint(contributor);
+          int endIndex = startIndex + list.size() - 1;
+          listElements.addAll(startIndex, list);
+          fireIntervalAdded(this, startIndex, endIndex);
+        });
+      }
+    }
+
+    private void retainContributors(Collection<SearchEverywhereContributor<?>> retainContributors) {
+      Iterator<SESearcher.ElementInfo> iterator = listElements.iterator();
+      int startInterval = 0;
+      int endInterval = -1;
+      while (iterator.hasNext()) {
+        SESearcher.ElementInfo item = iterator.next();
+        if (retainContributors.contains(item.getContributor())) {
+          if (startInterval <= endInterval) {
+            fireIntervalRemoved(this, startInterval, endInterval);
+            startInterval = endInterval + 2;
+          }
+          else {
+            startInterval++;
+          }
+        }
+        else {
+          iterator.remove();
+        }
+        endInterval++;
+      }
+
+      if (startInterval <= endInterval) {
+        fireIntervalRemoved(this, startInterval, endInterval);
+      }
+    }
+
+    private void applyChange(Diff.Change change,
+                             SearchEverywhereContributor<?> contributor,
+                             List<SESearcher.ElementInfo> newItems) {
+      int firstItemIndex = contributors().indexOf(contributor);
+      if (firstItemIndex < 0) {
+        firstItemIndex = getInsertionPoint(contributor);
+      }
+
+      for (Diff.Change ch : toRevertedList(change)) {
+        if (ch.deleted > 0) {
+          for (int i = ch.deleted - 1; i >= 0; i--) {
+            int index = firstItemIndex + ch.line0 + i;
+            listElements.remove(index);
+          }
+          fireIntervalRemoved(this, firstItemIndex + ch.line0, firstItemIndex + ch.line0 + ch.deleted - 1);
+        }
+
+        if (ch.inserted > 0) {
+          List<SESearcher.ElementInfo> addedItems = newItems.subList(ch.line1, ch.line1 + ch.inserted);
+          listElements.addAll(firstItemIndex + ch.line0, addedItems);
+          fireIntervalAdded(this, firstItemIndex + ch.line0, firstItemIndex + ch.line0 + ch.inserted - 1);
+        }
+      }
+    }
+
+    private static List<Diff.Change> toRevertedList(Diff.Change change) {
+      List<Diff.Change> res = new ArrayList<>();
+      while (change != null) {
+        res.add(0, change);
+        change = change.link;
+      }
+      return res;
     }
 
     public void removeElement(@NotNull Object item, SearchEverywhereContributor contributor) {
@@ -1379,10 +1483,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     @Override
     public void elementsAdded(@NotNull List<SESearcher.ElementInfo> list) {
       int index = myResultsList.getSelectedIndex();
-      Map<SearchEverywhereContributor<?>, List<SESearcher.ElementInfo>> map =
-        list.stream().collect(Collectors.groupingBy(info -> info.getContributor()));
-
-      map.forEach((key, lst) -> myListModel.addElements(lst, key));
+      myListModel.addElements(list);
       if (index == 0 || index == -1) {
         myResultsList.setSelectedIndex(0);
       }
@@ -1396,7 +1497,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
     @Override
     public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
-      if (myResultsList.isEmpty()) {
+      if (myResultsList.isEmpty() || myListModel.isResultsExpired()) {
         if (nonProjectCheckBoxAutoSet && !isUseNonProjectItems() && !getSearchPattern().isEmpty()) {
           doSetUseNonProjectItems(true, true);
           notFoundString = getSearchPattern();
@@ -1404,6 +1505,9 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         }
 
         hideHint();
+        if (myListModel.isResultsExpired()) {
+          myListModel.clear();
+        }
       }
 
       myResultsList.setEmptyText(getSearchPattern().isEmpty() ? "" : getNotFoundText());
