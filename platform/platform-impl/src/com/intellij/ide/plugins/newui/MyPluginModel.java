@@ -346,7 +346,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   private void appendDependsAfterInstall() {
     for (IdeaPluginDescriptor descriptor : InstalledPluginsState.getInstance().getInstalledPlugins()) {
-      if (myDownloaded.ui.findComponent(descriptor) != null) {
+      if (myDownloaded != null && myDownloaded.ui != null && myDownloaded.ui.findComponent(descriptor) != null) {
         continue;
       }
 
