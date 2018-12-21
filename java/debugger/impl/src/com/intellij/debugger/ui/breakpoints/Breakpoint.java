@@ -284,10 +284,10 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   private void runAction(EvaluationContextImpl context, LocatableEvent event) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
     if (getProperties().isTRACING_START() && Registry.is("debugger.call.tracing")) {
-      CallTracer.get(debugProcess).start(context);
+      CallTracer.get(debugProcess).start(context.getSuspendContext().getThread());
     }
     if (getProperties().isTRACING_END() && Registry.is("debugger.call.tracing")) {
-      CallTracer.get(debugProcess).stop();
+      CallTracer.get(debugProcess).stop(event.thread());
     }
     if (isLogEnabled() || isLogExpressionEnabled() || isLogStack()) {
       StringBuilder buf = new StringBuilder();

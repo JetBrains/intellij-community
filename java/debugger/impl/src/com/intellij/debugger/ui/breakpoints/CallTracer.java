@@ -3,7 +3,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -24,9 +24,12 @@ import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.MethodEntryRequest;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author egor
@@ -37,67 +40,46 @@ public class CallTracer {
 
   private final EventRequestManager myRequestManager;
   private final DebugProcessImpl myDebugProcess;
-  private final List<MethodEntryRequest> myEntryRequests = new ArrayList<>(1);
-  private int myStartIndent = 0;
+  private final Map<ThreadReference, ThreadRequest> myThreadRequests = new ConcurrentHashMap<>();
 
   public CallTracer(DebugProcessImpl debugProcess) {
     myDebugProcess = debugProcess;
     myRequestManager = debugProcess.getRequestsManager().getVMRequestManager();
   }
 
-  public void start(EvaluationContextImpl context) {
-    int indent = 0;
+  public void start(@Nullable ThreadReferenceProxyImpl thread) {
     try {
-      ThreadReferenceProxyImpl thread = context.getSuspendContext().getThread();
       if (thread != null) {
-        indent = thread.frameCount();
+        start(thread.getThreadReference(), thread.frameCount());
       }
     }
     catch (EvaluateException e) {
       LOG.error(e);
     }
-    start(indent);
   }
 
-  private void start(int startIndent) {
+  private void start(@NotNull ThreadReference thread, int startIndent) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (myEntryRequests.isEmpty()) {
-      myStartIndent = startIndent;
-      TraceSettings traceSettings = TraceSettings.getInstance();
-      ClassFilter[] classFilters = traceSettings.getClassFilters();
-      ClassFilter[] exclusionFilters = traceSettings.getClassExclusionFilters();
-      if (DebuggerUtilsEx.getEnabledNumber(classFilters) == 0) {
-        addEntryRequest(null, exclusionFilters);
-      }
-      else {
-        for (ClassFilter filter : classFilters) {
-          if (filter.isEnabled()) {
-            addEntryRequest(filter, exclusionFilters);
-          }
-        }
-      }
+    myThreadRequests.computeIfAbsent(thread, t -> new ThreadRequest(t, startIndent));
+  }
+
+  public void stop(@NotNull ThreadReference thread) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    ThreadRequest request = myThreadRequests.remove(thread);
+    if (request != null) {
+      request.stop();
     }
   }
 
-  private void addEntryRequest(ClassFilter filter, ClassFilter[] exclusionFilters) {
-    MethodEntryRequest request = myRequestManager.createMethodEntryRequest();
-    request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD); // to be able to detect frameCount inside the event handler
-    myDebugProcess.getRequestsManager()
-      .addClassFilters(request, filter != null ? new ClassFilter[]{filter} : ClassFilter.EMPTY_ARRAY, exclusionFilters);
-    myEntryRequests.add(request);
-    DebugProcessEvents.enableRequestWithHandler(request, this::accept);
-  }
-
-  public void stop() {
+  public void stopAll() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (!myEntryRequests.isEmpty()) {
-      myEntryRequests.forEach(myRequestManager::deleteEventRequest);
-      myEntryRequests.clear();
-    }
+    List<ThreadRequest> requests = new ArrayList<>(myThreadRequests.values());
+    myThreadRequests.clear();
+    requests.forEach(ThreadRequest::stop);
   }
 
   private boolean isActive() {
-    return !myEntryRequests.isEmpty();
+    return !myThreadRequests.isEmpty();
   }
 
   private void accept(Event event) {
@@ -105,15 +87,18 @@ public class CallTracer {
       MethodEntryEvent methodEntryEvent = (MethodEntryEvent)event;
       try {
         ThreadReference thread = methodEntryEvent.thread();
-        for (SuspendContextImpl context : myDebugProcess.getSuspendManager().getEventContexts()) {
-          ThreadReferenceProxyImpl contextThread = context.getThread();
-          if (context.isEvaluating() && contextThread != null && contextThread.getThreadReference().equals(thread)) {
-            return; // evaluating - skip
+        ThreadRequest request = myThreadRequests.get(thread);
+        if (request != null) {
+          for (SuspendContextImpl context : myDebugProcess.getSuspendManager().getEventContexts()) {
+            ThreadReferenceProxyImpl contextThread = context.getThread();
+            if (context.isEvaluating() && contextThread != null && contextThread.getThreadReference().equals(thread)) {
+              return; // evaluating - skip
+            }
           }
+          int indent = thread.frameCount() - request.myStartIndent;
+          String indentString = indent < 0 ? "-" : StringUtil.repeat(" ", indent);
+          myDebugProcess.printToConsole("\n" + indentString + methodEntryEvent.method() + " thread " + thread.uniqueID());
         }
-        int indent = thread.frameCount() - myStartIndent;
-        String indentString = indent < 0 ? "-" : StringUtil.repeat(" ", indent);
-        myDebugProcess.printToConsole("\n" + indentString + methodEntryEvent.method() + " thread " + thread.uniqueID());
       }
       catch (IncompatibleThreadStateException e) {
         LOG.error(e);
@@ -129,6 +114,42 @@ public class CallTracer {
       debugProcess.putUserData(CALL_TRACER_KEY, tracer);
     }
     return tracer;
+  }
+
+  private class ThreadRequest {
+    private final List<MethodEntryRequest> myEntryRequests = new ArrayList<>(1);
+    private final int myStartIndent;
+
+    private ThreadRequest(ThreadReference thread, int startIndent) {
+      myStartIndent = startIndent;
+      TraceSettings traceSettings = TraceSettings.getInstance();
+      ClassFilter[] classFilters = traceSettings.getClassFilters();
+      ClassFilter[] exclusionFilters = traceSettings.getClassExclusionFilters();
+      if (DebuggerUtilsEx.getEnabledNumber(classFilters) == 0) {
+        addEntryRequest(null, exclusionFilters, thread);
+      }
+      else {
+        for (ClassFilter filter : classFilters) {
+          if (filter.isEnabled()) {
+            addEntryRequest(filter, exclusionFilters, thread);
+          }
+        }
+      }
+    }
+
+    private void addEntryRequest(ClassFilter filter, ClassFilter[] exclusionFilters, ThreadReference thread) {
+      MethodEntryRequest request = myRequestManager.createMethodEntryRequest();
+      request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD); // to be able to detect frameCount inside the event handler
+      request.addThreadFilter(thread);
+      myDebugProcess.getRequestsManager()
+        .addClassFilters(request, filter != null ? new ClassFilter[]{filter} : ClassFilter.EMPTY_ARRAY, exclusionFilters);
+      myEntryRequests.add(request);
+      DebugProcessEvents.enableRequestWithHandler(request, CallTracer.this::accept);
+    }
+
+    void stop() {
+      myEntryRequests.forEach(myRequestManager::deleteEventRequest);
+    }
   }
 
   public static class CallTracerToggleAction extends DumbAwareToggleAction {
@@ -156,14 +177,21 @@ public class CallTracer {
       if (process != null) {
         CallTracer tracer = get(process);
         process.getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> {
+          DebuggerContextImpl debuggerContext = process.getDebuggerContext();
+          ThreadReferenceProxyImpl threadProxy = debuggerContext.getThreadProxy();
           if (state) {
-            StackFrameProxyImpl frame = process.getDebuggerContext().getFrameProxy();
-            if (frame != null) {
-              tracer.start(frame.getIndexFromBottom());
+            StackFrameProxyImpl frame = debuggerContext.getFrameProxy();
+            if (frame != null && threadProxy != null) {
+              tracer.start(threadProxy.getThreadReference(), frame.getIndexFromBottom());
             }
           }
           else {
-            tracer.stop();
+            if (threadProxy != null) {
+              tracer.stop(threadProxy.getThreadReference());
+            }
+            else {
+              tracer.stopAll();
+            }
           }
         });
       }
