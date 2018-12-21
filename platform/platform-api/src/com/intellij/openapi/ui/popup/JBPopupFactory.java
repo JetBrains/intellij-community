@@ -44,7 +44,7 @@ public abstract class JBPopupFactory {
   }
 
   /**
-   * @deprecated Please use {@link #createPopupChooserBuilder(List)}} instead
+   * @deprecated Please use {@link #createPopupChooserBuilder(List)} instead
   */
   @Deprecated
   @NotNull
