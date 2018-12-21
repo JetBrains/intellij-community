@@ -86,7 +86,6 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   public void testNoSpaceAfterTagName() { doTestClass(); }
   public void testLambdaParameter() { doTestLambdaParameter(); }
   public void testLocalClassInsideAnonymous() { doTestAtCaret(); }
-  public void testDocRoot() { doTestClass(); }
   public void testPackageInfoFromComment() { doTestPackageInfo("some"); }
   public void testPackageInfoWithCopyright() { doTestPackageInfo("packageInfoWithCopyright"); }
   public void testHtmlLinkWithRef() { verifyJavaDoc(getTestClass()); }
@@ -240,15 +239,6 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     verifyJavaDoc(aPackage);
   }
 
-  public void testModuleInfo() {
-    useJava9();
-    PsiClass aClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT);
-    assertNotNull(aClass);
-    PsiFile moduleFile = aClass.getContainingFile().getParent().getParentDirectory().getParentDirectory().findFile("module-info.class");
-    assertNotNull(moduleFile);
-    verifyJavaDoc(((PsiJavaFile)moduleFile).getModuleDeclaration());
-  }
-
   private void doTestClass() {
     PsiClass psiClass = getTestClass();
     verifyJavaDoc(psiClass);
@@ -363,11 +353,6 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
 
   private void useJava8() {
     myJdkVersion = 8;
-    setUpJdk();
-  }
-
-  private void useJava9() {
-    myJdkVersion = 9;
     setUpJdk();
   }
 
