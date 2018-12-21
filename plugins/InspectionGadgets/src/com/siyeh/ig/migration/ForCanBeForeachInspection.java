@@ -4,18 +4,14 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -630,13 +626,8 @@ public class ForCanBeForeachInspection extends BaseInspection {
   }
 
   static  String createNewVariableName(@NotNull PsiElement scope, PsiType type, @Nullable String containerName) {
-    final Project project = scope.getProject();
-    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    final PsiExpression expr =
-      containerName != null ? JavaPsiFacade.getElementFactory(project).createExpressionFromText(containerName + "[0]", scope) : null;
-    final SuggestedNameInfo suggestions = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expr, type, true);
-    @NonNls String baseName = ArrayUtil.getFirstElement(suggestions.names);
-    return codeStyleManager.suggestUniqueVariableName(StringUtil.defaultIfEmpty(baseName, "value"), scope, true);
+    return new VariableNameGenerator(scope, VariableKind.PARAMETER).byCollectionName(containerName).byType(type)
+      .byName("value", "item", "element").generate(true);
   }
 
   @Nullable

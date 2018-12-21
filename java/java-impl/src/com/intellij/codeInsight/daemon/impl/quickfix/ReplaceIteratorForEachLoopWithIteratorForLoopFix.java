@@ -21,11 +21,9 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,7 +80,8 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements Intenti
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final JavaCodeStyleManager javaStyleManager = JavaCodeStyleManager.getInstance(project);
-    final String name = javaStyleManager.suggestUniqueVariableName("it", myStatement, true);
+    final String name = new VariableNameGenerator(myStatement, VariableKind.LOCAL_VARIABLE)
+      .byName("it", "iter", "iterator").generate(true);
     PsiForStatement newForLoop = (PsiForStatement)elementFactory.createStatementFromText(
       "for (Iterator " + name + " = initializer; " + name + ".hasNext();) { Object next = " + name + ".next(); }", myStatement);
 

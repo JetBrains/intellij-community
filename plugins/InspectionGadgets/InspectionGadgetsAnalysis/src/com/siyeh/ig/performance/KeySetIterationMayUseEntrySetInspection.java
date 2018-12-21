@@ -19,14 +19,11 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
-import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -140,13 +137,8 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       List<PsiExpression> accesses = ParameterAccessCollector.collectParameterAccesses(keyParameter, mapRef, lambdaBody);
       String valueName = tryReuseVariable(lambdaBody, accesses);
       if (valueName == null) {
-        JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-        SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, valueType);
-        String name = ArrayUtil.getFirstElement(nameInfo.names);
-        if (name == null) {
-          name = "k".equals(keyParameter.getName()) ? "v" : "value";
-        }
-        valueName = codeStyleManager.suggestUniqueVariableName(name, lambdaBody, false);
+        valueName = new VariableNameGenerator(lambdaBody, VariableKind.PARAMETER).byType(valueType)
+          .byName("k".equals(keyParameter.getName()) ? "v" : "value").generate(false);
       }
       for (PsiExpression access : accesses) {
         if (access instanceof PsiMethodCallExpression && access.isValid()) {
@@ -236,13 +228,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     }
 
     private static String createNewVariableName(@NotNull PsiElement scope, @NotNull PsiType type) {
-      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(scope.getProject());
-      final SuggestedNameInfo suggestions = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, type);
-      @NonNls String baseName = suggestions.names.length > 0 ? suggestions.names[0] : "entry";
-      if (baseName == null || baseName.isEmpty()) {
-        baseName = "entry";
-      }
-      return codeStyleManager.suggestUniqueVariableName(baseName, scope, true);
+      return new VariableNameGenerator(scope, VariableKind.LOCAL_VARIABLE).byType(type).byName("entry", "e").generate(true);
     }
 
     private static class ParameterAccessCollector extends JavaRecursiveElementWalkingVisitor {

@@ -18,7 +18,7 @@ package com.siyeh.ig.assignment;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -29,6 +29,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -183,15 +184,12 @@ public class IncrementDecrementUsedAsExpressionInspection
         if (returnValue == null) {
           return;
         }
-        final JavaCodeStyleManager javaCodeStyleManager =
-          JavaCodeStyleManager.getInstance(project);
-        final String variableName =
-          javaCodeStyleManager.suggestUniqueVariableName(
-            "result", returnValue, true);
         final PsiType type = returnValue.getType();
         if (type == null) {
           return;
         }
+        final String variableName = new VariableNameGenerator(returnValue, VariableKind.LOCAL_VARIABLE).byType(type)
+          .byExpression(returnValue).byName("result").generate(true);
         final String newReturnValueText = PsiReplacementUtil.getElementText(
           returnValue, element, operandText);
         final String declarationStatementText =
@@ -223,11 +221,8 @@ public class IncrementDecrementUsedAsExpressionInspection
         if (exception == null) {
           return;
         }
-        final JavaCodeStyleManager javaCodeStyleManager =
-          JavaCodeStyleManager.getInstance(project);
-        final String variableName =
-          javaCodeStyleManager.suggestUniqueVariableName(
-            "e", exception, true);
+        final String variableName = new VariableNameGenerator(exception, VariableKind.LOCAL_VARIABLE)
+          .byName("e", "ex", "exc").generate(true);
         final PsiType type = exception.getType();
         if (type == null) {
           return;

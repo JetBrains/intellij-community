@@ -10,14 +10,13 @@ import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -120,10 +119,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
       PsiType elementType = OptionalUtil.getOptionalElementType(qualifier.getType());
       PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(call);
       if (nextCall == null) return;
-      JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
-      SuggestedNameInfo info = manager.suggestVariableName(VariableKind.PARAMETER, null, qualifier, elementType, true);
-      String name = info.names.length == 0 ? "value" : info.names[0];
-      name = manager.suggestUniqueVariableName(name, call, true);
+      String name = new VariableNameGenerator(qualifier, VariableKind.PARAMETER).byType(elementType).byName("value").generate(true);
       CommentTracker ct = new CommentTracker();
       PsiReferenceExpression methodExpression = nextCall.getMethodExpression();
       ct.markRangeUnchanged(Objects.requireNonNull(methodExpression.getQualifierExpression()).getNextSibling(),

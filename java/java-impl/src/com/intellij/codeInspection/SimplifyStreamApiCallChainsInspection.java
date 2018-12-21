@@ -11,11 +11,9 @@ import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
@@ -1133,21 +1131,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       PsiParameter indexParameter = ArrayUtil.getFirstElement(lambda.getParameterList().getParameters());
       PsiElement body = lambda.getBody();
       if (body == null || indexParameter == null) return null;
-      String nameCandidate = null;
+      VariableNameGenerator generator = new VariableNameGenerator(mapToObjCall, VariableKind.PARAMETER);
       if (containerQualifier instanceof PsiReferenceExpression) {
-        String name = ((PsiReferenceExpression)containerQualifier).getReferenceName();
-        if (name != null) {
-          nameCandidate = StringUtil.unpluralize(name);
-          if (name.equals(nameCandidate)) {
-            nameCandidate = null;
-          }
-        }
+        generator.byCollectionName(((PsiReferenceExpression)containerQualifier).getReferenceName());
       }
-      JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
-      SuggestedNameInfo info =
-        javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, nameCandidate, null, elementType, true);
-      nameCandidate = ArrayUtil.getFirstElement(info.names);
-      String name = javaCodeStyleManager.suggestUniqueVariableName(nameCandidate == null ? "item" : nameCandidate, mapToObjCall, true);
+      String name = generator.byType(elementType).byName("item", "element").generate(true);
       Collection<PsiReference> refs = ReferencesSearch.search(indexParameter, new LocalSearchScope(body)).findAll();
       for (PsiReference ref : refs) {
         PsiExpression getExpression = container.extractGetExpressionFromIndex(tryCast(ref, PsiExpression.class));

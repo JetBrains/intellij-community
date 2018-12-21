@@ -11,13 +11,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
@@ -207,10 +204,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
                                        PsiReferenceExpression optionalRef,
                                        PsiElement trueValue) {
     PsiType type = optionalRef.getType();
-    JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(trueValue.getProject());
-    SuggestedNameInfo info = javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, type);
-    String baseName = ObjectUtils.coalesce(ArrayUtil.getFirstElement(info.names), "value");
-    String paramName = javaCodeStyleManager.suggestUniqueVariableName(baseName, trueValue, true);
+    String paramName = new VariableNameGenerator(trueValue, VariableKind.PARAMETER).byType(type).byName("value").generate(true);
     if(trueValue instanceof PsiExpressionStatement) {
       trueValue = ((PsiExpressionStatement)trueValue).getExpression();
     }
