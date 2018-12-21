@@ -467,7 +467,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     return new Tree();
   }
 
-  private final void registerMouseListener(final ActionGroup group) {
+  private void registerMouseListener(final ActionGroup group) {
     myFileSystemTree.registerMouseListener(group);
   }
 
