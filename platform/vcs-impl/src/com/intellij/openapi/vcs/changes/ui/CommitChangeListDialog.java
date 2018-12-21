@@ -401,32 +401,57 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     JPanel rootPane = JBUI.Panels.simplePanel(mainPanel).addToBottom(myWarningLabel);
+    myDetailsSplitter = createDetailsSplitter(rootPane);
 
+    init();
+  }
+
+  @Override
+  protected void init() {
+    super.init();
+    afterInit();
+  }
+
+  private void afterInit() {
+    updateButtons();
+    updateLegend();
+    updateOnListSelection();
+    myCommitMessageArea.requestFocusInMessage();
+
+    for (EditChangelistSupport support : EditChangelistSupport.EP_NAME.getExtensions(myProject)) {
+      support.installSearch(myCommitMessageArea.getEditorField(), myCommitMessageArea.getEditorField());
+    }
+
+    showDetailsIfSaved();
+  }
+
+  @NotNull
+  private SplitterWithSecondHideable createDetailsSplitter(@NotNull JPanel rootPane) {
+    SplitterWithSecondHideable.OnOffListener<Integer> listener = new SplitterWithSecondHideable.OnOffListener<Integer>() {
+      @Override
+      public void on(Integer integer) {
+        if (integer == 0) return;
+        myDiffDetails.refresh(false);
+        mySplitter.skipNextLayout();
+        myDetailsSplitter.getComponent().skipNextLayout();
+        Dimension dialogSize = getSize();
+        setSize(dialogSize.width, dialogSize.height + integer);
+        repaint();
+      }
+
+      @Override
+      public void off(Integer integer) {
+        if (integer == 0) return;
+        myDiffDetails.clear();
+        mySplitter.skipNextLayout();
+        myDetailsSplitter.getComponent().skipNextLayout();
+        Dimension dialogSize = getSize();
+        setSize(dialogSize.width, dialogSize.height - integer);
+        repaint();
+      }
+    };
     // TODO: there are no reason to use such heavy interface for a simple task.
-    myDetailsSplitter = new SplitterWithSecondHideable(true, "Diff", rootPane,
-                                                       new SplitterWithSecondHideable.OnOffListener<Integer>() {
-                                                         @Override
-                                                         public void on(Integer integer) {
-                                                           if (integer == 0) return;
-                                                           myDiffDetails.refresh(false);
-                                                           mySplitter.skipNextLayout();
-                                                           myDetailsSplitter.getComponent().skipNextLayout();
-                                                           Dimension dialogSize = getSize();
-                                                           setSize(dialogSize.width, dialogSize.height + integer);
-                                                           repaint();
-                                                         }
-
-                                                         @Override
-                                                         public void off(Integer integer) {
-                                                           if (integer == 0) return;
-                                                           myDiffDetails.clear();
-                                                           mySplitter.skipNextLayout();
-                                                           myDetailsSplitter.getComponent().skipNextLayout();
-                                                           Dimension dialogSize = getSize();
-                                                           setSize(dialogSize.width, dialogSize.height - integer);
-                                                           repaint();
-                                                         }
-                                                       }) {
+    return new SplitterWithSecondHideable(true, "Diff", rootPane, listener) {
       @Override
       protected RefreshablePanel createDetails() {
         JPanel panel = JBUI.Panels.simplePanel(myDiffDetails.getComponent());
@@ -448,18 +473,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         return value <= 0.05 || value >= 0.95 ? DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT : value;
       }
     };
-
-    init();
-    updateButtons();
-    updateLegend();
-    updateOnListSelection();
-    myCommitMessageArea.requestFocusInMessage();
-
-    for (EditChangelistSupport support : EditChangelistSupport.EP_NAME.getExtensions(project)) {
-      support.installSearch(myCommitMessageArea.getEditorField(), myCommitMessageArea.getEditorField());
-    }
-
-    showDetailsIfSaved();
   }
 
   @NotNull
