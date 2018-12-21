@@ -177,7 +177,7 @@ class GuiTestRule : TestRule {
       LOG.info("tearDown: check opened modal dialogs...")
       errors.addAll(checkForModalDialogs())
       LOG.info("tearDown: tearDown project")
-      errors.addAll(thrownFromRunning(Runnable { this.closeIdeProject() }))
+      errors.addAll(thrownFromRunning(Runnable { this.tearDownProject() }))
       LOG.info("tearDown: waiting for welcome frame (return if necessary)...")
       errors.addAll(thrownFromRunning(Runnable { this.returnToTheFirstStepOfWelcomeFrame() }))
       LOG.info("tearDown: collecting fatal errors from IDE...")
@@ -194,11 +194,11 @@ class GuiTestRule : TestRule {
       return errors.toList()
     }
 
-    private fun closeIdeProject() {
+    private fun tearDownProject() {
       try {
         val ideFrameFixture = IdeFrameFixture.find(robot(), null, null, Timeouts.seconds02)
         if (ideFrameFixture.target().isShowing)
-          ideFrameFixture.closeProject()
+          ideFrameFixture.closeProjectAndWaitWelcomeFrame()
       }
       catch (e: ComponentLookupException) {
         // do nothing because ideFixture is already closed

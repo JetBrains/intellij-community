@@ -32,7 +32,7 @@ fun GuiTestCase.closeProject() {
   ideFrame {
     logUIStep("Close the project")
     waitAMoment()
-    closeProject()
+    closeProjectAndWaitWelcomeFrame()
   }
 }
 
