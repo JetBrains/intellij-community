@@ -17,12 +17,10 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
-import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
-import com.intellij.diff.chains.AsyncDiffRequestChain;
+import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.ListSelection;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -46,7 +44,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.CacheOneStepIterator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -93,35 +90,14 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     VcsRevisionNumber revisionNumber = myFileAnnotation.getLineRevisionNumber(actualNumber);
     if (revisionNumber == null) return;
 
-    MyLoadingRequestChain requestChain = new MyLoadingRequestChain(myFileAnnotation, myChangesProvider, actualNumber);
+    DiffRequestChain requestChain = new ChangeDiffRequestChain.Async() {
+      @NotNull
+      @Override
+      protected ListSelection<ChangeDiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException {
+        return loadRequests(myFileAnnotation, myChangesProvider, actualNumber);
+      }
+    };
     DiffManager.getInstance().showDiff(myProject, requestChain, DiffDialogHints.FRAME);
-  }
-
-  private static class MyLoadingRequestChain extends AsyncDiffRequestChain implements GoToChangePopupBuilder.Chain {
-    @NotNull private final FileAnnotation myFileAnnotation;
-    @NotNull private final RevisionChangesProvider myChangesProvider;
-    private final int myLineNumber;
-
-    private MyLoadingRequestChain(@NotNull FileAnnotation fileAnnotation,
-                                  @NotNull RevisionChangesProvider changesProvider,
-                                  int lineNuber) {
-
-      myFileAnnotation = fileAnnotation;
-      myChangesProvider = changesProvider;
-      myLineNumber = lineNuber;
-    }
-
-    @NotNull
-    @Override
-    protected ListSelection<ChangeDiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException {
-      return loadRequests(myFileAnnotation, myChangesProvider, myLineNumber);
-    }
-
-    @NotNull
-    @Override
-    public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected) {
-      return ChangeDiffRequestChain.createGoToChangeAction(this, onSelected);
-    }
   }
 
   @NotNull
