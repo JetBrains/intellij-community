@@ -1917,9 +1917,13 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
   static class EntrySetMapFix implements CallChainSimplification {
     private final String myMapMethod;
+    private final boolean myDeleteMap;
+    private final String[] myNames;
 
-    EntrySetMapFix(String mapMethod) {
-      myMapMethod = mapMethod;
+    EntrySetMapFix(String entryMethod, boolean deleteMap) {
+      myMapMethod = entryMethod.equals("getKey") ? "keySet" : "values";
+      myDeleteMap = deleteMap;
+      myNames = myMapMethod.equals("keySet") ? new String[]{"k", "key"} : new String[]{"v", "value"};
     }
 
     @Override
@@ -1936,30 +1940,116 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     public PsiElement simplify(PsiMethodCallExpression call) {
       PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
       if (qualifierCall == null) return null;
-      PsiMethodCallExpression qualifierQualifierCall = getQualifierMethodCall(qualifierCall);
-      if (qualifierQualifierCall == null) return null;
-      CommentTracker ct = new CommentTracker();
-      PsiMethodCallExpression result = (PsiMethodCallExpression)ct.replaceAndRestoreComments(call, qualifierCall);
-      PsiMethodCallExpression newQualifier = Objects.requireNonNull(getQualifierMethodCall(result));
-      ExpressionUtils.bindCallTo(newQualifier, myMapMethod);
+      if (myDeleteMap) {
+        CommentTracker ct = new CommentTracker();
+        call = (PsiMethodCallExpression)ct.replaceAndRestoreComments(call, qualifierCall);
+      }
+      PsiMethodCallExpression result = call;
+      while (call != null) {
+        if (STREAM_MAP_TO_ALL.test(call) || STREAM_FILTER.test(call)) {
+          PsiExpression arg = PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]);
+          if (arg instanceof PsiLambdaExpression) {
+            updateLambda((PsiLambdaExpression)arg);
+          }
+          else if (arg instanceof PsiMethodReferenceExpression) {
+            PsiType type = LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)arg);
+            String name = new VariableNameGenerator(arg, VariableKind.PARAMETER).byType(type).byName(myNames).generate(false);
+            new CommentTracker().replaceAndRestoreComments(arg, name + "->" + name);
+          }
+        }
+        call = getQualifierMethodCall(call);
+        if (MAP_ENTRY_SET.test(call)) {
+          ExpressionUtils.bindCallTo(call, myMapMethod);
+          break;
+        }
+      }
+      LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       return result;
     }
 
+    private void updateLambda(PsiLambdaExpression lambda) {
+      PsiParameter[] parameters = lambda.getParameterList().getParameters();
+      if (parameters.length != 1) return;
+      PsiParameter parameter = parameters[0];
+      PsiType type = PsiUtil.substituteTypeParameter(parameter.getType(), JAVA_UTIL_MAP_ENTRY, 1, true);
+      PsiElement body = lambda.getBody();
+      if (body == null) return;
+      List<PsiMethodCallExpression> calls = new ArrayList<>();
+      PsiLocalVariable declaration = null;
+      for (PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(parameter, body)) {
+        PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(ref);
+        if (call != null) {
+          calls.add(call);
+          if (declaration == null) {
+            PsiLocalVariable var = tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiLocalVariable.class);
+            if (var != null && var.getParent() instanceof PsiDeclarationStatement && var.getParent().getParent() == body) {
+              declaration = var;
+            }
+          }
+        }
+      }
+      String name = declaration == null ? null : declaration.getName();
+      if (name == null) {
+        name = new VariableNameGenerator(lambda, VariableKind.PARAMETER).byType(type).byName(myNames).generate(false);
+      }
+      for (PsiMethodCallExpression call : calls) {
+        PsiElement result = new CommentTracker().replaceAndRestoreComments(call, name);
+        if (call == body) {
+          body = result;
+        }
+      }
+      if (declaration != null) {
+        new CommentTracker().deleteAndRestoreComments(declaration);
+      }
+      CommentTracker ct = new CommentTracker();
+      ct.replaceAndRestoreComments(lambda, name + "->" + ct.text(body));
+    }
+
     public static CallHandler<CallChainSimplification> handler() {
-      return CallHandler.of(STREAM_MAP, call -> {
+      return CallHandler.of(STREAM_MAP_TO_ALL, call -> {
         PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
+        List<String> methods = new ArrayList<>(Arrays.asList("getKey", "getValue"));
+        while (STREAM_FILTER.test(qualifierCall)) {
+          String methodName = getSingleCalledMethodName(qualifierCall.getArgumentList().getExpressions()[0]);
+          if (methodName == null || !methods.contains(methodName)) return null;
+          methods = Collections.singletonList(methodName);
+          qualifierCall = getQualifierMethodCall(qualifierCall);
+        }
         if (!COLLECTION_STREAM.test(qualifierCall)) return null;
         PsiMethodCallExpression qualifierQualifierCall = getQualifierMethodCall(qualifierCall);
         if (!MAP_ENTRY_SET.test(qualifierQualifierCall)) return null;
         PsiExpression arg = call.getArgumentList().getExpressions()[0];
-        if (FunctionalExpressionUtils.isFunctionalReferenceTo(arg, JAVA_UTIL_MAP_ENTRY, null, "getKey")) {
-          return new EntrySetMapFix("keySet");
+        for (String method : methods) {
+          if (FunctionalExpressionUtils.isFunctionalReferenceTo(arg, JAVA_UTIL_MAP_ENTRY, null, method)) {
+            return new EntrySetMapFix(method, "map".equals(call.getMethodExpression().getReferenceName()));
+          }
         }
-        if (FunctionalExpressionUtils.isFunctionalReferenceTo(arg, JAVA_UTIL_MAP_ENTRY, null, "getValue")) {
-          return new EntrySetMapFix("values");
+        String methodName = getSingleCalledMethodName(arg);
+        if (methodName != null && methods.contains(methodName)) {
+          return new EntrySetMapFix(methodName, false);
         }
         return null;
       });
+    }
+
+    @Nullable
+    private static String getSingleCalledMethodName(PsiExpression arg) {
+      PsiLambdaExpression lambda = tryCast(PsiUtil.skipParenthesizedExprDown(arg), PsiLambdaExpression.class);
+      if (lambda == null) return null;
+      PsiParameter[] parameters = lambda.getParameterList().getParameters();
+      if (parameters.length != 1) return null;
+      PsiParameter parameter = parameters[0];
+      PsiElement body = lambda.getBody();
+      if (body == null) return null;
+      String methodName = null;
+      for (PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(parameter, body)) {
+        PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(ref);
+        if (call == null || !call.getArgumentList().isEmpty()) return null;
+        String name = call.getMethodExpression().getReferenceName();
+        if (name == null || (methodName != null && !methodName.equals(name))) return null;
+        methodName = name;
+      }
+      return methodName;
     }
   }
 }
