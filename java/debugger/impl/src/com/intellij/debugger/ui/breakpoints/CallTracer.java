@@ -136,6 +136,9 @@ public class CallTracer implements OverheadProducer {
           myDebugProcess.printToConsole(res.toString());
         }
       }
+      catch (VMDisconnectedException vmd) {
+        throw vmd;
+      }
       catch (Exception e) {
         LOG.error(e);
       }
