@@ -454,7 +454,7 @@ public class ExpectedHighlightingData {
       }
       @Override
       public boolean equals(HighlightInfo o1, HighlightInfo o2) {
-        return infoEquals(o1, o2);
+        return haveSamePresentation(o1, o2, true);
       }
     });
     if (!myIgnoreExtraHighlighting) {
@@ -692,7 +692,7 @@ public class ExpectedHighlightingData {
 
   private static boolean infosContainsExpectedInfo(Collection<? extends HighlightInfo> infos, HighlightInfo expectedInfo) {
     for (HighlightInfo info : infos) {
-      if (infoEquals(expectedInfo, info)) {
+      if (matchesPattern(expectedInfo, info, false)) {
         return true;
       }
     }
@@ -707,7 +707,7 @@ public class ExpectedHighlightingData {
       if (!highlightingSet.enabled) return ThreeState.UNSURE;
       Set<HighlightInfo> infos = highlightingSet.infos;
       for (HighlightInfo expectedInfo : infos) {
-        if (infoEquals(expectedInfo, info)) {
+        if (matchesPattern(expectedInfo, info, false)) {
           return ThreeState.YES;
         }
       }
@@ -715,19 +715,27 @@ public class ExpectedHighlightingData {
     return ThreeState.NO;
   }
 
-  private static boolean infoEquals(HighlightInfo expectedInfo, HighlightInfo info) {
+  private static boolean matchesPattern(HighlightInfo expectedInfo, HighlightInfo info, boolean strictMatch) {
     if (expectedInfo == info) return true;
+    boolean typeMatches = expectedInfo.type.equals(info.type) || !strictMatch && expectedInfo.type == WHATEVER;
+    boolean textAttributesMatches = Comparing.equal(expectedInfo.getTextAttributes(null, null), info.getTextAttributes(null, null)) ||
+                                    !strictMatch && expectedInfo.forcedTextAttributes == null;
+    boolean attributesKeyMatches = !strictMatch && expectedInfo.forcedTextAttributesKey == null ||
+                                   Objects.equals(expectedInfo.forcedTextAttributesKey, info.forcedTextAttributesKey);
     return
+      haveSamePresentation(info, expectedInfo, strictMatch) &&
       info.getSeverity() == expectedInfo.getSeverity() &&
-      info.startOffset == expectedInfo.startOffset &&
-      info.endOffset == expectedInfo.endOffset &&
-      info.isAfterEndOfLine() == expectedInfo.isAfterEndOfLine() &&
-      (expectedInfo.type == WHATEVER || expectedInfo.type.equals(info.type)) &&
-      (Comparing.strEqual(ANY_TEXT, expectedInfo.getDescription()) ||
-       Comparing.strEqual(info.getDescription(), expectedInfo.getDescription())) &&
-      (expectedInfo.forcedTextAttributes == null ||
-       Comparing.equal(expectedInfo.getTextAttributes(null, null), info.getTextAttributes(null, null))) &&
-      (expectedInfo.forcedTextAttributesKey == null || expectedInfo.forcedTextAttributesKey.equals(info.forcedTextAttributesKey));
+      typeMatches &&
+      textAttributesMatches &&
+      attributesKeyMatches;
+  }
+
+  private static boolean haveSamePresentation(HighlightInfo info1, HighlightInfo info2, boolean strictMatch) {
+    return info1.startOffset == info2.startOffset &&
+           info1.endOffset == info2.endOffset &&
+           info1.isAfterEndOfLine() == info2.isAfterEndOfLine() &&
+           (Comparing.strEqual(info1.getDescription(), info2.getDescription()) ||
+            !strictMatch && Comparing.strEqual(ANY_TEXT, info2.getDescription()));
   }
 
   private static String rangeString(String text, int startOffset, int endOffset) {
