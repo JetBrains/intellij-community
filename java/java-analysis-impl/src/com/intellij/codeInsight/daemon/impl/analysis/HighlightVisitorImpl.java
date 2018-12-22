@@ -784,6 +784,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     else if (PsiKeyword.INTERFACE.equals(text) && parent instanceof PsiClass) {
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkInterfaceCannotBeLocal((PsiClass)parent));
     }
+    else if (PsiKeyword.DEFAULT.equals(text) && parent instanceof PsiSwitchLabelStatementBase) {
+      myHolder.add(HighlightNamesUtil.highlightControlKeyword(keyword));
+    }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkStaticDeclarationInInnerClass(keyword));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIllegalVoidType(keyword));
   }
@@ -860,8 +863,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (parent instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
       PsiElement methodNameElement = element.getReferenceNameElement();
-      if (method != null && methodNameElement != null&& !(methodNameElement instanceof PsiKeyword)) {
-        myHolder.add(HighlightNamesUtil.highlightMethodName(method, methodNameElement, false, colorsScheme));
+      if (method != null && methodNameElement != null) {
+        if (methodNameElement instanceof PsiKeyword) {
+          myHolder.add(HighlightNamesUtil.highlightControlKeyword(methodNameElement));
+        } else {
+          myHolder.add(HighlightNamesUtil.highlightMethodName(method, methodNameElement, false, colorsScheme));
+        }
         myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(element, colorsScheme));
       }
     }

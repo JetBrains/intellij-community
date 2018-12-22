@@ -31,6 +31,8 @@ public final class JavaHighlightInfoTypes {
     HighlightDisplayKey.findOrRegister(UnusedImportInspection.SHORT_NAME, UnusedImportInspection.DISPLAY_NAME), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
 
   public final static HighlightInfoType JAVA_KEYWORD = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, JavaHighlightingColors.KEYWORD);
+  public final static HighlightInfoType JAVA_CONTROL_KEYWORD =
+    new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, JavaHighlightingColors.CONTROL_KEYWORD);
 
   public final static HighlightInfoType CLASS_NAME = createSymbolTypeInfo(JavaHighlightingColors.CLASS_NAME_ATTRIBUTES);
   public final static HighlightInfoType LOCAL_VARIABLE = createSymbolTypeInfo(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES);

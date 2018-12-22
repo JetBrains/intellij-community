@@ -14,7 +14,7 @@ public class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey NUMBER = TextAttributesKey.createTextAttributesKey("DEFAULT_NUMBER");
   public static final TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey("DEFAULT_KEYWORD");
   /**
-   * @since 2018.3
+   * @since 2019.1
    */
   public static final TextAttributesKey CONTROL_KEYWORD = TextAttributesKey.createTextAttributesKey("DEFAULT_CONTROL_KEYWORD", KEYWORD);
   public static final TextAttributesKey STRING = TextAttributesKey.createTextAttributesKey("DEFAULT_STRING");

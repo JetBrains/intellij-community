@@ -363,4 +363,10 @@ public class HighlightNamesUtil {
     }
     return builder.createUnconditionally();
   }
+
+  static HighlightInfo highlightControlKeyword(@NotNull PsiElement elementToHighlight) {
+    HighlightInfoType type = JavaHighlightInfoTypes.JAVA_CONTROL_KEYWORD;
+    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(elementToHighlight);
+    return builder.createUnconditionally();
+  }
 }
