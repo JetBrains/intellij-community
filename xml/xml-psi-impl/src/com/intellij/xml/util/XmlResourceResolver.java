@@ -222,29 +222,37 @@ public class XmlResourceResolver implements XMLEntityResolver {
   @Override
   @Nullable
   public XMLInputSource resolveEntity(XMLResourceIdentifier xmlResourceIdentifier) throws XNIException {
-    String publicId  = xmlResourceIdentifier.getLiteralSystemId() != null ?
-                  xmlResourceIdentifier.getLiteralSystemId():
-                  xmlResourceIdentifier.getNamespace();
+    String literalSystemId = xmlResourceIdentifier.getLiteralSystemId();
+    String baseSystemId = xmlResourceIdentifier.getBaseSystemId();
+    String namespace = xmlResourceIdentifier.getNamespace();
 
-    if (publicId != null && publicId.startsWith("file:")) {
-      Path basePath = new File(URI.create(xmlResourceIdentifier.getBaseSystemId())).getParentFile().toPath();
-      Path publicIdPath = new File(URI.create(publicId)).toPath();
+    String publicId = literalSystemId != null ? literalSystemId : namespace;
+    if (publicId == null) {
+      return null;
+    }
+
+    if (publicId.startsWith("file:")) {
+      Path basePath = new File(URI.create(baseSystemId)).getParentFile().toPath();
+
+      URI publicIdUri = URI.create(publicId);
+      Path publicIdPath;
+      if (publicIdUri.isOpaque()) {
+        publicIdPath = basePath.resolve(publicIdUri.getSchemeSpecificPart()).normalize();
+      } else {
+        publicIdPath = new File(publicIdUri).toPath();
+      }
+
       publicId = basePath.relativize(publicIdPath).toString().replace(File.separatorChar, '/');
     }
 
-    PsiFile psiFile = resolve(xmlResourceIdentifier.getBaseSystemId(), publicId);
-    if (psiFile == null && xmlResourceIdentifier.getBaseSystemId() != null) {
-        psiFile = ExternalResourceManager.getInstance().getResourceLocation(xmlResourceIdentifier.getBaseSystemId(), myFile, null);
-    }
-    if (psiFile==null && xmlResourceIdentifier.getLiteralSystemId()!=null && xmlResourceIdentifier.getNamespace()!=null) {
-      psiFile = resolve(
-        xmlResourceIdentifier.getBaseSystemId(),
-        publicId = xmlResourceIdentifier.getNamespace()
-      );
+    PsiFile psiFile = resolve(baseSystemId, publicId);
+    if (psiFile == null && literalSystemId != null && namespace != null) {
+      publicId = namespace;
+      psiFile = resolve(baseSystemId, publicId);
     }
 
     if (psiFile == null) {
-      if (publicId != null && publicId.contains(":/")) {
+      if (publicId.contains(":/")) {
         try {
           myErrorReporter.processError(
             new SAXParseException(XmlErrorMessages.message("xml.validate.external.resource.is.not.registered", publicId), publicId, null, 0,0), ValidateXmlActionHandler.ProblemType.ERROR);
@@ -260,8 +268,8 @@ public class XmlResourceResolver implements XMLEntityResolver {
       return null;
     }
 
-    XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
-    if (xmlResourceIdentifier.getLiteralSystemId() == null) {
+    final XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
+    if (literalSystemId == null) {
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
         final String url = VfsUtilCore.fixIDEAUrl(virtualFile.getUrl());
