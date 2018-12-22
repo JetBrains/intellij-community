@@ -178,7 +178,7 @@ args = dict(
         'Environment :: Console',
         'Intended Audience :: Developers',
 
-        'Apache Software License (Apache License 2.0)',
+        'License :: OSI Approved :: Apache Software License',
 
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
