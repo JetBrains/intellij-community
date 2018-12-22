@@ -590,7 +590,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun `test rollback delete branch should recreate branches`() {
-    `prepare_delete_branch_failure_in_2nd_repo`()
+    prepare_delete_branch_failure_in_2nd_repo()
 
     var rollbackMsg: String? = null
     deleteBranch("todelete", object : TestUiHandler() {
@@ -607,7 +607,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun `test deny rollback delete branch should do nothing`() {
-    `prepare_delete_branch_failure_in_2nd_repo`()
+    prepare_delete_branch_failure_in_2nd_repo()
 
     var rollbackMsg: String? = null
     deleteBranch("todelete", object : TestUiHandler() {
@@ -659,7 +659,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertTrue("'Branch is not fully merged' dialog was not shown", dialogShown)
   }
 
-  private fun `prepare_delete_branch_failure_in_2nd_repo`() {
+  private fun prepare_delete_branch_failure_in_2nd_repo() {
     for (repository in myRepositories) {
       repository.git("branch todelete")
     }
