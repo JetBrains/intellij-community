@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.util.Map;
 
 /**
@@ -129,6 +130,15 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     return new BuilderImpl(dialog, project);
   }
 
+  private void setKeyStrokeReplace(char keyStroke, char newKeyStroke) {
+    myNameField.getInputMap().put(KeyStroke.getKeyStroke(keyStroke), new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myNameField.setText(myNameField.getText() + newKeyStroke);
+      }
+    });
+  }
+
   private static class BuilderImpl implements Builder {
     private final CreateFileFromTemplateDialog myDialog;
     private final Project myProject;
@@ -200,12 +210,19 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     public Map<String,String> getCustomProperties() {
       return null;
     }
+
+    @Override
+    public Builder setKeyStrokeReplace(char keyStroke, char newKeyStroke) {
+      myDialog.setKeyStrokeReplace(keyStroke, newKeyStroke);
+      return this;
+    }
   }
 
   public interface Builder {
     Builder setTitle(String title);
     Builder setValidator(InputValidator validator);
     Builder addKind(@NotNull String kind, @Nullable Icon icon, @NotNull String templateName);
+    Builder setKeyStrokeReplace(char keyStroke, char newKeyStroke);
     @Nullable
     <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator);
     @Nullable

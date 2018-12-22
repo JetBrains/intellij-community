@@ -36,7 +36,8 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     builder
       .setTitle(IdeBundle.message("action.create.new.class"))
       .addKind("Class", PlatformIcons.CLASS_ICON, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
-      .addKind("Interface", PlatformIcons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
+      .addKind("Interface", PlatformIcons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME)
+      .setKeyStrokeReplace('/', '.');
     LanguageLevel level = PsiUtil.getLanguageLevel(directory);
     if (level.isAtLeast(LanguageLevel.JDK_1_5)) {
       builder.addKind("Enum", PlatformIcons.ENUM_ICON, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME);
