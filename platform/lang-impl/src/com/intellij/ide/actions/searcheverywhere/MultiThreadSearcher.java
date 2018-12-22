@@ -110,7 +110,7 @@ class MultiThreadSearcher implements SESearcher {
   }
 
   /**
-   * Starts process of expanding (search for more elemetns) specified contributors section (when user choosed "more" item)
+   * Starts process of expanding (search for more elements) specified contributors section (when user chose "more" item)
    * @param alreadyFound map of already found items for all used search contributors
    * @param pattern search pattern
    * @param useNonProjectItems flags indicating if non-projects items should be included in search results
@@ -215,15 +215,18 @@ class MultiThreadSearcher implements SESearcher {
                                             return false;
                                           }
                                         });
-          } catch (ProcessCanceledException pce) {}
+          }
+          catch (ProcessCanceledException pce) {}
           repeat = !myIndicator.isCanceled() && wrapperIndicator.isCanceled();
-        } while (repeat);
+        }
+        while (repeat);
 
         if (myIndicator.isCanceled()) {
           return;
         }
         myAccumulator.contributorFinished(myContributor);
-      } finally {
+      }
+      finally {
         finishCallback.run();
       }
       LOG.debug("Search task finished for contributor ", myContributor);
@@ -398,7 +401,8 @@ class MultiThreadSearcher implements SESearcher {
           stopSearchIfNeeded();
         }
         return true;
-      } finally {
+      }
+      finally {
         lock.unlock();
       }
     }
@@ -409,7 +413,8 @@ class MultiThreadSearcher implements SESearcher {
       try {
         finishedContributorsSet.add(contributor);
         stopSearchIfNeeded();
-      } finally {
+      }
+      finally {
         lock.unlock();
       }
     }
@@ -423,7 +428,8 @@ class MultiThreadSearcher implements SESearcher {
       try {
         mySearchFinished = true;
         conditionsMap.values().forEach(Condition::signalAll);
-      } finally {
+      }
+      finally {
         lock.unlock();
       }
     }
