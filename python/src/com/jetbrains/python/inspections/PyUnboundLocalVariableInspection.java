@@ -159,11 +159,10 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
       }
       boolean isExceptionRaised = false;
       boolean isUnderContextManager = false;
-      PsiElement firstWith = PsiTreeUtil.getParentOfType(resolvedElement, PyWithStatement.class, true, ScopeOwner.class);
+      PyWithStatement firstWith = PsiTreeUtil.getParentOfType(resolvedElement, PyWithStatement.class, true, ScopeOwner.class);
       if (firstWith != null && PsiTreeUtil.findChildOfType(firstWith, PyRaiseStatement.class) != null) {
         isExceptionRaised = true;
-        PyWithStatement withStatement = (PyWithStatement)firstWith;
-        for (PyWithItem withItem : withStatement.getWithItems()) {
+        for (PyWithItem withItem : firstWith.getWithItems()) {
           PyExpression contextManager = withItem.getExpression();
           if (contextManager != null) {
             isUnderContextManager = true;
