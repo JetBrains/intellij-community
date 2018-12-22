@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea
+package git4idea.runanything
 
 import com.intellij.ide.actions.runAnything.RunAnythingUtil
+import com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProviderBase
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.DataContext
@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -64,15 +65,12 @@ abstract class GitRunAnythingProviderBase : RunAnythingProviderBase<String>() {
     }
     repository.update()
 
-    val notification: Notification
-    if (result.success()) {
-      notification = Notification(VcsNotifier.STANDARD_NOTIFICATION.displayId, "", "git ${command.name()} succeeded",
-                                  NotificationType.INFORMATION)
+    val notification = if (result.success()) {
+      STANDARD_NOTIFICATION.createNotification("git ${command.name()} succeeded", NotificationType.INFORMATION)
     }
     else {
-      notification = Notification(VcsNotifier.STANDARD_NOTIFICATION.displayId, "", "git ${command.name()} failed", NotificationType.ERROR)
+      STANDARD_NOTIFICATION.createNotification("git ${command.name()} failed", NotificationType.ERROR)
     }
-
     val action = NotificationAction.createSimple("View Output") {
       ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate {
         val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
@@ -85,10 +83,16 @@ abstract class GitRunAnythingProviderBase : RunAnythingProviderBase<String>() {
   }
 
   private fun getGitCommandInstance(commandName: String): GitCommand {
-    val fieldName = commandName.toUpperCase().replace('-', '_')
-    return GitCommand::class.java.getDeclaredField(fieldName).get(null) as GitCommand
+    var command: GitCommand?
+    try {
+      val fieldName = commandName.toUpperCase().replace('-', '_')
+      command = GitCommand::class.java.getDeclaredField(fieldName).get(null) as? GitCommand
+    }
+    catch (e: NoSuchFieldException) {
+      command = null
+    }
+    return command ?: GitCommand.createWritingCommand(commandName)
   }
-
 
   override fun getHelpCommandPlaceholder(): String {
     return "$helpCommand <command> <parameters>"
@@ -103,26 +107,11 @@ abstract class GitRunAnythingProviderBase : RunAnythingProviderBase<String>() {
       return emptyList()
     }
 
-    val options = getAllOptions().filter { it.startsWith(pattern) }
-    return options + pattern // even if we don't provide an option in completion, we still can execute it via the common Git runner
-  }
-
-  private fun getAllOptions() : List<String> {
-    val resetCommand = "reset"
-    val resetOptions = listOf("--hard", "--keep", "--soft", "--mixed")
-    val resetParams = "origin/master"
-
-    val res = mutableListOf<String>()
-    for (option in resetOptions) {
-      res.add("git $resetCommand $option $resetParams")
-      res.add("gitall $resetCommand $option $resetParams")
-    }
-    return res
+    return GitRunAnythingOptionsSuggester(fetchProject(dataContext), helpCommand).suggest(pattern.substring(helpCommand.length).trim())
   }
 
   override fun getCompletionGroupTitle(): String {
     return "Git Commands"
   }
-
 }
 

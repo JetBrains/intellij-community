@@ -89,6 +89,16 @@ public class GitCommand {
   @NotNull @NonNls private final String myName; // command name passed to git
   @NotNull private final LockingPolicy myLocking; // Locking policy for the command
 
+  @NotNull
+  public static GitCommand createReadingCommand(@NotNull String name) {
+    return new GitCommand(name, LockingPolicy.READ);
+  }
+
+  @NotNull
+  public static GitCommand createWritingCommand(@NotNull String name) {
+    return new GitCommand(name, LockingPolicy.WRITE);
+  }
+
   private GitCommand(@NotNull String name, @NotNull LockingPolicy lockingPolicy) {
     myLocking = lockingPolicy;
     myName = name;

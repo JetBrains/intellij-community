@@ -210,9 +210,9 @@
     <vcs.ignoredFilesHolder implementation="git4idea.ignore.GitIgnoredFilesHolder$Provider"/>
     <projectConfigurable id="vcs.Git" displayName="Git" instance="git4idea.config.GitVcsConfigurable"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
-    <runAnything.executionProvider implementation="git4idea.GitRunAnythingProvider" />
-    <runAnything.executionProvider implementation="git4idea.GitAllRunAnythingProvider" />
-    <runAnything.helpGroup implementation="git4idea.GitRunAnythingHelpGroup"/>
+    <runAnything.executionProvider implementation="git4idea.runanything.GitRunAnythingProvider" />
+    <runAnything.executionProvider implementation="git4idea.runanything.GitAllRunAnythingProvider" />
+    <runAnything.helpGroup implementation="git4idea.runanything.GitRunAnythingHelpGroup"/>
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
