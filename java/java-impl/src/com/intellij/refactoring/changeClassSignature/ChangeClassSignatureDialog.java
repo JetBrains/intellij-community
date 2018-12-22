@@ -134,9 +134,9 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     Project project = myClass.getProject();
     nameColumn.setCellRenderer(new MyCellRenderer());
     nameColumn.setCellEditor(new StringTableCellEditor(project));
-    boundColumn.setCellRenderer(new MyCodeFragmentTableCellRenderer());
+    boundColumn.setCellRenderer(new CodeFragmentTableCellRenderer(project));
     boundColumn.setCellEditor(new JavaCodeFragmentTableCellEditor(project));
-    valueColumn.setCellRenderer(new MyCodeFragmentTableCellRenderer());
+    valueColumn.setCellRenderer(new CodeFragmentTableCellRenderer(project));
     valueColumn.setCellEditor(new JavaCodeFragmentTableCellEditor(project));
 
     myTable.setPreferredScrollableViewportSize(new Dimension(210, myTable.getRowHeight() * 4));
@@ -343,7 +343,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     }
   }
 
-  private class MyCellRenderer extends ColoredTableCellRenderer {
+  private static class MyCellRenderer extends ColoredTableCellRenderer {
 
     @Override
     public void customizeCellRenderer(JTable table, Object value,
@@ -353,25 +353,6 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       acquireState(table, isSelected, false, row, col);
       getCellState().updateRenderer(this);
       append((String)value);
-    }
-  }
-
-  private class MyCodeFragmentTableCellRenderer extends CodeFragmentTableCellRenderer {
-
-    MyCodeFragmentTableCellRenderer() {
-      super(getProject());
-    }
-
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      //if (!myTableModel.isCellEditable(row, column)) {
-      //  component.setBackground(component.getBackground().darker());
-      //}
-
-      //TODO: better solution
-
-      return component;
     }
   }
 
