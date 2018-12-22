@@ -1,24 +1,8 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
-import com.sun.tools.javac.util.Context;
-import com.sun.tools.javac.util.JCDiagnostic;
+import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.List;
-import com.sun.tools.javac.util.ListBuffer;
 
 import javax.lang.model.SourceVersion;
 import javax.tools.*;
@@ -300,27 +284,33 @@ class OptimizedFileManager extends DefaultFileManager {
       this.f = f;
     }
 
+    @Override
     public InputStream openInputStream() throws IOException {
       return new FileInputStream(f);
     }
 
+    @Override
     public Reader openReader(boolean ignoreEncodingErrors) throws IOException {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public OutputStream openOutputStream() throws IOException {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public Writer openWriter() throws IOException {
       throw new UnsupportedOperationException();
     }
 
     @Deprecated
+    @Override
     public String getName() {
       return f.getPath();
     }
 
+    @Override
     public boolean isNameCompatible(String simpleName, JavaFileObject.Kind kind) {
       final String n = simpleName + kind.extension;
       final String fileName = f.getName();
@@ -340,18 +330,22 @@ class OptimizedFileManager extends DefaultFileManager {
 
     /** @deprecated see bug 6410637 */
     @Deprecated
+    @Override
     public String getPath() {
       return f.getPath();
     }
 
+    @Override
     public long getLastModified() {
       return f.lastModified();
     }
 
+    @Override
     public boolean delete() {
       return f.delete();
     }
 
+    @Override
     public CharBuffer getCharContent(boolean ignoreEncodingErrors) throws IOException {
       CharBuffer cb;
       if (ourUseContentCache) {
@@ -403,6 +397,7 @@ class OptimizedFileManager extends DefaultFileManager {
       return f.hashCode();
     }
 
+    @Override
     public URI toUri() {
       try {
         return convertToURI(f.getPath());
@@ -542,6 +537,7 @@ class OptimizedFileManager extends DefaultFileManager {
 
   private static volatile boolean ourPathCacheClearProblem = false;
 
+  @Override
   public void close() {
     try {
       super.close();
