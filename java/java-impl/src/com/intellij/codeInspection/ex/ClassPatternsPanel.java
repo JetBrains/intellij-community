@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -29,12 +28,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.*;
+import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -53,34 +53,23 @@ class ClassPatternsPanel extends JPanel {
     myTable = createTableForPatterns();
     final String addClassMessage = "Add Class";
     final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTable)
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myTable));
-          if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-          TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-            .createWithInnerClassesScopeChooser(addClassMessage, GlobalSearchScope.allScope(project), ClassFilter.ALL, null);
-          chooser.showDialog();
-          final PsiClass selected = chooser.getSelected();
-          if (selected != null) {
-            insertRow(selected.getQualifiedName());
-          }
+      .setAddAction(button -> {
+        Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myTable));
+        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
+          .createWithInnerClassesScopeChooser(addClassMessage, GlobalSearchScope.allScope(project), ClassFilter.ALL, null);
+        chooser.showDialog();
+        final PsiClass selected = chooser.getSelected();
+        if (selected != null) {
+          insertRow(selected.getQualifiedName());
         }
       })
       .setAddActionName(addClassMessage)
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          TableUtil.removeSelectedItems(myTable);
-          myTable.repaint();
-        }
+      .setRemoveAction(button -> {
+        TableUtil.removeSelectedItems(myTable);
+        myTable.repaint();
       })
-      .setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          return myTable.getSelectedRow() >= 0;
-        }
-      });
+      .setRemoveActionUpdater(e -> myTable.getSelectedRow() >= 0);
     add(SeparatorFactory.createSeparator("Mark code as entry point if qualified name matches", null), BorderLayout.NORTH);
     add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
     add(new MultiLineLabel("Leave method blank to represent constructors\n" +

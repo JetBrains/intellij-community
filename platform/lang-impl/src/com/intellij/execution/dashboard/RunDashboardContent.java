@@ -48,7 +48,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -197,25 +196,21 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         return nodeDescriptor.getValue();
       }
     });
-    putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
-      @Nullable
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        if (KEY.getName().equals(dataId)) {
-          return RunDashboardContent.this;
-        }
-        else if (PlatformDataKeys.HELP_ID.is(dataId)) {
-          return RunDashboardManager.getInstance(myProject).getToolWindowContextHelpId();
-        }
-        Content content = myContentManager.getSelectedContent();
-        if (content != null && content.getComponent() != null) {
-          DataProvider dataProvider = DataManagerImpl.getDataProviderEx(content.getComponent());
-          if (dataProvider != null) {
-            return dataProvider.getData(dataId);
-          }
-        }
-        return null;
+    putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, (DataProvider)dataId -> {
+      if (KEY.getName().equals(dataId)) {
+        return RunDashboardContent.this;
       }
+      else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+        return RunDashboardManager.getInstance(myProject).getToolWindowContextHelpId();
+      }
+      Content content = myContentManager.getSelectedContent();
+      if (content != null && content.getComponent() != null) {
+        DataProvider dataProvider = DataManagerImpl.getDataProviderEx(content.getComponent());
+        if (dataProvider != null) {
+          return dataProvider.getData(dataId);
+        }
+      }
+      return null;
     });
     new DoubleClickListener() {
       @Override
@@ -342,14 +337,11 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private void onContentSelectionChanged(Content content) {
-    myBuilder.queueUpdate().doWhenDone(() -> myBuilder.accept(RunDashboardNode.class, new TreeVisitor<RunDashboardNode>() {
-      @Override
-      public boolean visit(@NotNull RunDashboardNode node) {
-        if (node.getContent() == content) {
-          myBuilder.select(node);
-        }
-        return false;
+    myBuilder.queueUpdate().doWhenDone(() -> myBuilder.accept(RunDashboardNode.class, (TreeVisitor<RunDashboardNode>)node -> {
+      if (node.getContent() == content) {
+        myBuilder.select(node);
       }
+      return false;
     }));
     showContentPanel();
   }
@@ -477,12 +469,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         // Remove nodes not presented in the tree from collapsed node values set.
         // Children retrieving is quick since grouping and run configuration nodes are already constructed.
         Set<Object> nodes = new HashSet<>();
-        myBuilder.accept(AbstractTreeNode.class, new TreeVisitor<AbstractTreeNode>() {
-          @Override
-          public boolean visit(@NotNull AbstractTreeNode node) {
-            nodes.add(node.getValue());
-            return false;
-          }
+        myBuilder.accept(AbstractTreeNode.class, (TreeVisitor<AbstractTreeNode>)node -> {
+          nodes.add(node.getValue());
+          return false;
         });
         myCollapsedTreeNodeValues.retainAll(nodes);
       });

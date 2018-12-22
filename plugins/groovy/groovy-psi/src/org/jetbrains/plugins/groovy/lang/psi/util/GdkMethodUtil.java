@@ -191,29 +191,25 @@ public class GdkMethodUtil {
     if (!(statement instanceof GrAssignmentExpression)) return null;
 
     final GrAssignmentExpression assignment = (GrAssignmentExpression)statement;
-    return CachedValuesManager.getCachedValue(statement, new CachedValueProvider<Trinity<PsiClassType, GrReferenceExpression, List<GrMethod>>>() {
-      @Nullable
-      @Override
-      public Result<Trinity<PsiClassType, GrReferenceExpression, List<GrMethod>>> compute() {
+    return CachedValuesManager.getCachedValue(statement, () -> {
 
-        Pair<PsiClassType, GrReferenceExpression> original = getTypeToMixIn(assignment);
-        if (original == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
+      Pair<PsiClassType, GrReferenceExpression> original = getTypeToMixIn(assignment);
+      if (original == null) return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
-        final Pair<List<GrSignature>, String> signatures = getTypeToMix(assignment);
-        if (signatures == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
+      final Pair<List<GrSignature>, String> signatures = getTypeToMix(assignment);
+      if (signatures == null) return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
-        final String name = signatures.second;
+      final String name = signatures.second;
 
-        final List<GrMethod> methods = ContainerUtil.newArrayList();
-        final PsiClass closure = JavaPsiFacade.getInstance(statement.getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, statement.getResolveScope());
-        if (closure == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
+      final List<GrMethod> methods = ContainerUtil.newArrayList();
+      final PsiClass closure = JavaPsiFacade.getInstance(statement.getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, statement.getResolveScope());
+      if (closure == null) return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
-        for (GrSignature signature : signatures.first) {
-          methods.add(createMethod(signature, name, assignment, closure));
-        }
-
-        return Result.create(Trinity.create(original.first, original.second, methods), PsiModificationTracker.MODIFICATION_COUNT);
+      for (GrSignature signature : signatures.first) {
+        methods.add(createMethod(signature, name, assignment, closure));
       }
+
+      return CachedValueProvider.Result.create(Trinity.create(original.first, original.second, methods), PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 

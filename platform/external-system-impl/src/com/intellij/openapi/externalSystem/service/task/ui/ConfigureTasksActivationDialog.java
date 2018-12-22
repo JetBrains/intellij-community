@@ -20,7 +20,6 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -46,9 +45,6 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.AnActionButtonUpdater;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.*;
@@ -68,8 +64,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 
 import static com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl.getInstance;
@@ -128,12 +122,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
       SwingHelper.updateItems(projectCombobox, projects,
                               new ProjectItem(uiAware.getProjectRepresentationName(projectPath, null), currentProjectSettings));
     }
-    projectCombobox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateTree(myRootNode);
-      }
-    });
+    projectCombobox.addActionListener(e -> updateTree(myRootNode));
   }
 
   private static AbstractTreeBuilder createTreeBuilder(@NotNull Project project, @NotNull SimpleNode root, @NotNull Tree tree) {
@@ -151,69 +140,43 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree).
-      setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          ProjectItem projectItem = (ProjectItem)projectCombobox.getSelectedItem();
-          if(projectItem == null) return;
+      setAddAction(button -> {
+        ProjectItem projectItem = (ProjectItem)projectCombobox.getSelectedItem();
+        if(projectItem == null) return;
 
-          final ExternalProjectInfo projectData = ProjectDataManager.getInstance()
-            .getExternalProjectData(myProject, myProjectSystemId, projectItem.myProjectSettings.getExternalProjectPath());
+        final ExternalProjectInfo projectData = ProjectDataManager.getInstance()
+          .getExternalProjectData(myProject, myProjectSystemId, projectItem.myProjectSettings.getExternalProjectPath());
 
-          if (projectData == null || projectData.getExternalProjectStructure() == null) return;
+        if (projectData == null || projectData.getExternalProjectStructure() == null) return;
 
-          final List<ProjectPopupItem> popupItems = ContainerUtil.newArrayList();
-          for (DataNode<ModuleData> moduleDataNode : ExternalSystemApiUtil
-            .findAllRecursively(projectData.getExternalProjectStructure(), ProjectKeys.MODULE)) {
-            if(moduleDataNode.isIgnored()) continue;
+        final List<ProjectPopupItem> popupItems = ContainerUtil.newArrayList();
+        for (DataNode<ModuleData> moduleDataNode : ExternalSystemApiUtil
+          .findAllRecursively(projectData.getExternalProjectStructure(), ProjectKeys.MODULE)) {
+          if(moduleDataNode.isIgnored()) continue;
 
-            final List<String> tasks = ContainerUtil.map(
-              ExternalSystemApiUtil.findAll(moduleDataNode, ProjectKeys.TASK), node -> node.getData().getName());
-            if (!tasks.isEmpty()) {
-              popupItems.add(new ProjectPopupItem(moduleDataNode.getData(), tasks));
-            }
+          final List<String> tasks = ContainerUtil.map(
+            ExternalSystemApiUtil.findAll(moduleDataNode, ProjectKeys.TASK), node -> node.getData().getName());
+          if (!tasks.isEmpty()) {
+            popupItems.add(new ProjectPopupItem(moduleDataNode.getData(), tasks));
           }
+        }
 
-          final ChooseProjectStep projectStep = new ChooseProjectStep(popupItems);
-          final List<ProjectPopupItem> projectItems = projectStep.getValues();
-          ListPopupStep step = projectItems.size() == 1 ? (ListPopupStep)projectStep.onChosen(projectItems.get(0), false) : projectStep;
-          assert step != null;
-          JBPopupFactory.getInstance().createListPopup(step).show(
-            ObjectUtils.notNull(button.getPreferredPopupPoint(), RelativePoint.getSouthEastOf(projectCombobox)));
-        }
+        final ChooseProjectStep projectStep = new ChooseProjectStep(popupItems);
+        final List<ProjectPopupItem> projectItems = projectStep.getValues();
+        ListPopupStep step = projectItems.size() == 1 ? (ListPopupStep)projectStep.onChosen(projectItems.get(0), false) : projectStep;
+        assert step != null;
+        JBPopupFactory.getInstance().createListPopup(step).show(
+          ObjectUtils.notNull(button.getPreferredPopupPoint(), RelativePoint.getSouthEastOf(projectCombobox)));
       }).
-      setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          List<TaskActivationEntry> tasks = findSelectedTasks();
-          myTaskActivator.removeTasks(tasks);
-          updateTree(null);
-        }
+      setRemoveAction(button -> {
+        List<TaskActivationEntry> tasks = findSelectedTasks();
+        myTaskActivator.removeTasks(tasks);
+        updateTree(null);
       }).
-      setMoveUpAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          moveAction(-1);
-        }
-      }).
-      setMoveUpActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          return isMoveActionEnabled(-1);
-        }
-      }).
-      setMoveDownAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          moveAction(+1);
-        }
-      }).
-      setMoveDownActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          return isMoveActionEnabled(+1);
-        }
-      }).
+      setMoveUpAction(button -> moveAction(-1)).
+      setMoveUpActionUpdater(e -> isMoveActionEnabled(-1)).
+      setMoveDownAction(button -> moveAction(+1)).
+      setMoveDownActionUpdater(e -> isMoveActionEnabled(+1)).
       setToolbarPosition(ActionToolbarPosition.RIGHT).
       setToolbarBorder(JBUI.Borders.empty());
     tasksPanel.add(decorator.createPanel());

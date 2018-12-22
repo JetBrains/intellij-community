@@ -7,7 +7,6 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -66,64 +65,58 @@ public class ExistingTemplatesComponent {
     final TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
     final CommonActionsManager actionManager = CommonActionsManager.getInstance();
     panel = ToolbarDecorator.createDecorator(patternTree)
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          final Object selection = patternTree.getLastSelectedPathComponent();
-          if (!(selection instanceof DefaultMutableTreeNode)) {
-            return;
+      .setRemoveAction(button -> {
+        final Object selection = patternTree.getLastSelectedPathComponent();
+        if (!(selection instanceof DefaultMutableTreeNode)) {
+          return;
+        }
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
+        if (!(node.getUserObject() instanceof Configuration)) {
+          return;
+        }
+        final Configuration configuration = (Configuration)node.getUserObject();
+        if (configuration.isPredefined()) {
+          return;
+        }
+        final String configurationName = configuration.getName();
+        for (Configuration otherConfiguration : ConfigurationManager.getInstance(project).getConfigurations()) {
+          final MatchVariableConstraint constraint =
+            otherConfiguration.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+          if (constraint == null) {
+            continue;
           }
+          final String within = constraint.getWithinConstraint();
+          if (configurationName.equals(within)) {
+            if (Messages.CANCEL == Messages.showOkCancelDialog(
+              project,
+              SSRBundle.message("template.in.use.message", configurationName, otherConfiguration.getName()),
+              SSRBundle.message("template.in.use.title", configurationName),
+              CommonBundle.message("button.remove"),
+              Messages.CANCEL_BUTTON,
+              AllIcons.General.WarningDialog
+            )) {
+              return;
+            }
+            break;
+          }
+        }
+        final int[] rows = patternTree.getSelectionRows();
+        if (rows != null && rows.length > 0) {
+          patternTree.addSelectionRow(rows[0] - 1);
+        }
+        patternTreeModel.removeNodeFromParent(node);
+        queuedActions.add(() -> ConfigurationManager.getInstance(project).removeConfiguration(configuration));
+      }).setRemoveActionUpdater(e -> {
+        final Object selection = patternTree.getLastSelectedPathComponent();
+        if (selection instanceof DefaultMutableTreeNode) {
           final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
-          if (!(node.getUserObject() instanceof Configuration)) {
-            return;
+          final Object userObject = node.getUserObject();
+          if (userObject instanceof Configuration) {
+            final Configuration configuration = (Configuration)userObject;
+            return !configuration.isPredefined();
           }
-          final Configuration configuration = (Configuration)node.getUserObject();
-          if (configuration.isPredefined()) {
-            return;
-          }
-          final String configurationName = configuration.getName();
-          for (Configuration otherConfiguration : ConfigurationManager.getInstance(project).getConfigurations()) {
-            final MatchVariableConstraint constraint =
-              otherConfiguration.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
-            if (constraint == null) {
-              continue;
-            }
-            final String within = constraint.getWithinConstraint();
-            if (configurationName.equals(within)) {
-              if (Messages.CANCEL == Messages.showOkCancelDialog(
-                project,
-                SSRBundle.message("template.in.use.message", configurationName, otherConfiguration.getName()),
-                SSRBundle.message("template.in.use.title", configurationName),
-                CommonBundle.message("button.remove"),
-                Messages.CANCEL_BUTTON,
-                AllIcons.General.WarningDialog
-              )) {
-                return;
-              }
-              break;
-            }
-          }
-          final int[] rows = patternTree.getSelectionRows();
-          if (rows != null && rows.length > 0) {
-            patternTree.addSelectionRow(rows[0] - 1);
-          }
-          patternTreeModel.removeNodeFromParent(node);
-          queuedActions.add(() -> ConfigurationManager.getInstance(project).removeConfiguration(configuration));
         }
-      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          final Object selection = patternTree.getLastSelectedPathComponent();
-          if (selection instanceof DefaultMutableTreeNode) {
-            final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
-            final Object userObject = node.getUserObject();
-            if (userObject instanceof Configuration) {
-              final Configuration configuration = (Configuration)userObject;
-              return !configuration.isPredefined();
-            }
-          }
-          return false;
-        }
+        return false;
       })
       .addExtraAction(AnActionButton.fromAction(actionManager.createExpandAllAction(treeExpander, patternTree)))
       .addExtraAction(AnActionButton.fromAction(actionManager.createCollapseAllAction(treeExpander, patternTree)))
@@ -340,7 +333,7 @@ public class ExistingTemplatesComponent {
 
   public void finish(boolean performQueuedActions) {
     if (performQueuedActions) {
-      queuedActions.forEach(a -> a.run());
+      queuedActions.forEach(Runnable::run);
     }
     queuedActions.clear();
   }

@@ -16,14 +16,11 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -42,14 +39,11 @@ public class DirDiffFrame extends FrameWrapper {
       setProject(project);
     }
     closeOnEsc();
-    DataManager.registerDataProvider(myPanel.getPanel(), new DataProvider() {
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        if (PlatformDataKeys.HELP_ID.is(dataId)) {
-          return "reference.dialogs.diff.folder";
-        }
-        return null;
+    DataManager.registerDataProvider(myPanel.getPanel(), dataId -> {
+      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+        return "reference.dialogs.diff.folder";
       }
+      return null;
     });
   }
 

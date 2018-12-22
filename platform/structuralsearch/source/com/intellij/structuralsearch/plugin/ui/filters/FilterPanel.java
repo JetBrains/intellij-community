@@ -4,7 +4,6 @@ package com.intellij.structuralsearch.plugin.ui.filters;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ReadAction;
@@ -17,7 +16,10 @@ import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.ui.*;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
@@ -34,8 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
 
@@ -72,12 +72,7 @@ public class FilterPanel implements FilterTable {
 
       @Override
       protected JBTableRowRenderer getRowRenderer(int row) {
-        return new JBTableRowRenderer() {
-          @Override
-          public JComponent getRowRendererComponent(JTable table, int row, boolean selected, boolean focused) {
-            return myTableModel.getRowValue(row).getRenderer();
-          }
-        };
+        return (table, row1, selected, focused) -> myTableModel.getRowValue(row1).getRenderer();
       }
 
       @Override
@@ -91,31 +86,20 @@ public class FilterPanel implements FilterTable {
     myFilterPanel = ToolbarDecorator.createDecorator(table)
                                     .disableUpDownActions()
                                     .setToolbarPosition(ActionToolbarPosition.RIGHT)
-                                    .setAddAction(new AnActionButtonRunnable() {
-                                      @Override
-                                      public void run(AnActionButton button) {
-                                        final RelativePoint point = button.getPreferredPopupPoint();
-                                        if (point == null) return;
-                                        showAddFilterPopup(button.getContextComponent(), point);
+                                    .setAddAction(button -> {
+                                      final RelativePoint point = button.getPreferredPopupPoint();
+                                      if (point == null) return;
+                                      showAddFilterPopup(button.getContextComponent(), point);
+                                    })
+                                    .setRemoveAction(button -> {
+                                      myFilterTable.stopEditing();
+                                      final int selectedRow = myFilterTable.getTable().getSelectedRow();
+                                      final Filter filter = myTableModel.getRowValue(selectedRow);
+                                      if (filter instanceof FilterAction) {
+                                        removeFilter((FilterAction)filter);
                                       }
                                     })
-                                    .setRemoveAction(new AnActionButtonRunnable() {
-                                      @Override
-                                      public void run(AnActionButton button) {
-                                        myFilterTable.stopEditing();
-                                        final int selectedRow = myFilterTable.getTable().getSelectedRow();
-                                        final Filter filter = myTableModel.getRowValue(selectedRow);
-                                        if (filter instanceof FilterAction) {
-                                          removeFilter((FilterAction)filter);
-                                        }
-                                      }
-                                    })
-                                    .setRemoveActionUpdater(new AnActionButtonUpdater() {
-                                      @Override
-                                      public boolean isEnabled(@NotNull AnActionEvent e) {
-                                        return myFilterTable.getTable().getSelectedRow() != 0;
-                                      }
-                                    })
+                                    .setRemoveActionUpdater(e -> myFilterTable.getTable().getSelectedRow() != 0)
                                     .setPanelBorder(null)
                                     .createPanel();
     myFilterPanel.setPreferredSize(new Dimension(350, 60));
@@ -246,12 +230,9 @@ public class FilterPanel implements FilterTable {
                            : "No Filters added for $" + varName + "$.";
     myFilterTable.getTable().getEmptyText().setText(message)
                  .appendSecondaryText("Add filter", SimpleTextAttributes.LINK_ATTRIBUTES,
-                                      new ActionListener() {
-                                        @Override
-                                        public void actionPerformed(ActionEvent e) {
-                                          final JBTable table = myFilterTable.getTable();
-                                          showAddFilterPopup(table, new RelativePoint(table, table.getMousePosition()));
-                                        }
+                                      e -> {
+                                        final JBTable table = myFilterTable.getTable();
+                                        showAddFilterPopup(table, new RelativePoint(table, table.getMousePosition()));
                                       });
   }
 

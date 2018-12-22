@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.containers.UtilKt.stream;
 
@@ -133,15 +132,11 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
   }
 
   private AnActionEvent createEventFor(AnAction a, final VirtualFile[] files, final Project p) {
-    DataContext dc = new DataContext() {
-      @Override
-      @Nullable
-      public Object getData(@NotNull String id) {
-        if (VcsDataKeys.VIRTUAL_FILE_STREAM.is(id)) return stream(files);
-        if (CommonDataKeys.EDITOR.is(id)) return editor;
-        if (CommonDataKeys.PROJECT.is(id)) return p;
-        return null;
-      }
+    DataContext dc = id -> {
+      if (VcsDataKeys.VIRTUAL_FILE_STREAM.is(id)) return stream(files);
+      if (CommonDataKeys.EDITOR.is(id)) return editor;
+      if (CommonDataKeys.PROJECT.is(id)) return p;
+      return null;
     };
     return AnActionEvent.createFromAnAction(a, null, "", dc);
   }
