@@ -46,6 +46,7 @@ class CommunityStandaloneJpsBuilder {
         }
         jar("jps-builders-6.jar") {
           module("intellij.platform.jps.build.javac.rt")
+          module("intellij.platform.jps.build.javac.rt7")
         }
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
         jar("groovy-jps-plugin.jar") {
@@ -82,7 +83,6 @@ class CommunityStandaloneJpsBuilder {
           jpsLibrary(it)
         }
 
-        moduleLibrary("intellij.platform.jps.build.javac.rt", "optimizedFileManager.jar")
         jar("ant-jps-plugin.jar") { module("intellij.ant.jps") }
         include(additionalJars)
       }

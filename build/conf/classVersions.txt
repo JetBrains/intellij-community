@@ -36,8 +36,6 @@
 1.6 => lib/util.jar
 1.6 => lib/rt/debugger-agent.jar
 
-1.7 => lib/optimizedFileManager.jar
-
 1.5 => plugins/Groovy/lib/groovy_rt.jar
 1.5 => plugins/Groovy/lib/groovy-rt-constants.jar
 1.5 => plugins/coverage/lib/coverage_rt.jar

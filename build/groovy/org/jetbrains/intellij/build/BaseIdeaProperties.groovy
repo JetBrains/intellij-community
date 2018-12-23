@@ -83,7 +83,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.put("external-system-impl.jar", "intellij.platform.externalSystem.impl")
     productLayout.additionalPlatformJars.put("jps-launcher.jar", "intellij.platform.jps.build.launcher")
     productLayout.additionalPlatformJars.put("jps-builders.jar", "intellij.platform.jps.build")
-    productLayout.additionalPlatformJars.put("jps-builders-6.jar", "intellij.platform.jps.build.javac.rt")
+    productLayout.additionalPlatformJars.putAll("jps-builders-6.jar", ["intellij.platform.jps.build.javac.rt", "intellij.platform.jps.build.javac.rt7"])
     productLayout.additionalPlatformJars.put("aether-dependency-resolver.jar", "intellij.java.aetherDependencyResolver")
     productLayout.additionalPlatformJars.put("jshell-protocol.jar", "intellij.java.jshell.protocol")
     productLayout.additionalPlatformJars.putAll("resources.jar", ["intellij.java.resources", "intellij.java.resources.en"])
@@ -138,9 +138,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     context.ant.jar(destfile: "$targetDirectory/lib/jdkAnnotations.jar") {
       fileset(dir: "$context.paths.communityHome/java/jdkAnnotations")
-    }
-    context.ant.copy(todir: "$targetDirectory/lib") {
-      fileset(file: "$context.paths.communityHome/jps/lib/optimizedFileManager.jar")
     }
     context.ant.copy(todir: "$targetDirectory/lib/ant") {
       fileset(dir: "$context.paths.communityHome/lib/ant") {
