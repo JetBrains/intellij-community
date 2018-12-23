@@ -283,14 +283,19 @@ class GuiTestRule : TestRule {
       return null
     }
 
-
     private fun assumeOnlyWelcomeFrameShowing() {
       var attemptsToReturnToWelcomeFrame = 0
       try {
         //if IDE started with a previous project we need to close it firstly; let's give few attempts for it
         while (!isWelcomeFrameFirstStep(Timeouts.seconds01) && attemptsToReturnToWelcomeFrame++ <= 3 ) {
-          anyIdeFrame(Timeouts.seconds01)?.apply { invokeMainMenu("CloseProject") }
-          ignoreComponentLookupException { returnToTheFirstStepOfWelcomeFrame() }
+          val someIdeFrame = anyIdeFrame(Timeouts.seconds01)
+          if (someIdeFrame != null) {
+            LOG.warn("Opened IDE frame (${someIdeFrame.target().title}) detected. Let's close active project.")
+            someIdeFrame.closeProject()
+          } else {
+            LOG.warn("Trying to return to the first step of the welcome frame")
+            ignoreComponentLookupException { returnToTheFirstStepOfWelcomeFrame() }
+          }
         }
         WelcomeFrameFixture.find(robot(), Timeouts.seconds05)
       }
