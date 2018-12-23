@@ -288,7 +288,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     return panel;
   }
 
-  private class DeleteMethodIntention implements LocalQuickFix {
+  private static class DeleteMethodIntention implements LocalQuickFix {
     private final String myHint;
 
     DeleteMethodIntention(final String hint) {
@@ -323,7 +323,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   }
 
 
-  private class DeleteMethodQuickFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
+  private static class DeleteMethodQuickFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
     private final ProblemDescriptionsProcessor myProcessor;
     private final boolean myNeedToDeleteHierarchy;
 
@@ -343,7 +343,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
        applyFix(project, new ProblemDescriptor[]{descriptor}, new ArrayList<>(), null);
     }
 
-    private void deleteHierarchy(RefMethod refMethod, List<? super PsiElement> result) {
+    private static void deleteHierarchy(RefMethod refMethod, List<? super PsiElement> result) {
       Collection<RefMethod> derivedMethods = refMethod.getDerivedMethods();
       RefMethod[] refMethods = derivedMethods.toArray(new RefMethod[0]);
       for (RefMethod refDerived : refMethods) {
@@ -352,7 +352,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
       deleteMethod(refMethod, result);
     }
 
-    private void deleteMethod(RefMethod refMethod, List<? super PsiElement> result) {
+    private static void deleteMethod(RefMethod refMethod, List<? super PsiElement> result) {
       PsiElement psiElement = refMethod.getPsiElement();
       if (psiElement == null) return;
       if (!result.contains(psiElement)) result.add(psiElement);

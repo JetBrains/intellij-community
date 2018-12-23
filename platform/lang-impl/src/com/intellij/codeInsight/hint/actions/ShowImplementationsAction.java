@@ -389,9 +389,9 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     return false;
   }
 
-  private class ImplementationViewComponentUpdater implements ListComponentUpdater {
-    private ImplementationViewComponent myComponent;
-    private PsiElement myElement;
+  private static class ImplementationViewComponentUpdater implements ListComponentUpdater {
+    private final ImplementationViewComponent myComponent;
+    private final PsiElement myElement;
 
     ImplementationViewComponentUpdater(ImplementationViewComponent component, PsiElement element) {
       myComponent = component;
@@ -412,7 +412,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       Collections.addAll(result, elements);
       for (PsiElement element : data.subList(startIdx, data.size())) {
         result.add(new PsiImplementationViewElement(element));
-      };
+      }
       myComponent.update(result, myComponent.getIndex());
     }
   }

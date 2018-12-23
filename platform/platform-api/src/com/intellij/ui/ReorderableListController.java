@@ -259,7 +259,7 @@ public abstract class ReorderableListController <T> {
     }
   }
 
-  public abstract class AddActionDescriptionBase<V> extends CustomActionDescription<V> {
+  public abstract static class AddActionDescriptionBase<V> extends CustomActionDescription<V> {
     private final String myActionDescription;
     private final Factory<? extends V> myAddHandler;
     private final boolean myCreateShortcut;

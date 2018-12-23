@@ -38,7 +38,7 @@ public class HgHeadsCommand {
     return new HeadsCommand(project, branch).executeInCurrentThread(repo);
   }
 
-  private class HeadsCommand extends HgChangesetsCommand {
+  private static class HeadsCommand extends HgChangesetsCommand {
     private final String branch;
     HeadsCommand(Project project, String branch) {
       super(project, "heads");

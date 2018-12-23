@@ -81,7 +81,7 @@ public class JsonSmartEnterProcessor extends SmartEnterProcessorWithFixers {
     }
   }
 
-  private class JsonObjectPropertyFixer extends SmartEnterProcessorWithFixers.Fixer<JsonSmartEnterProcessor> {
+  private static class JsonObjectPropertyFixer extends SmartEnterProcessorWithFixers.Fixer<JsonSmartEnterProcessor> {
     @Override
     public void apply(@NotNull Editor editor, @NotNull JsonSmartEnterProcessor processor, @NotNull PsiElement element)
       throws IncorrectOperationException {

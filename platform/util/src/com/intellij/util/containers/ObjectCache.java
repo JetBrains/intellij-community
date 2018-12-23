@@ -265,7 +265,7 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
     return new ObjectCacheIterator<K, V>(this);
   }
 
-  protected class ObjectCacheIterator<K,V> implements Iterator<V> {
+  protected static class ObjectCacheIterator<K,V> implements Iterator<V> {
     private final ObjectCache<? super K, ? extends V> myCache;
     private int myCurrentEntry;
 

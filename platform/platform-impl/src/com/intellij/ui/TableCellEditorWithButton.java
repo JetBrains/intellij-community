@@ -115,7 +115,7 @@ public class TableCellEditorWithButton extends AbstractCellEditor implements Tab
     }
   }
 
-  private class MyComponent extends JPanel {
+  private static class MyComponent extends JPanel {
     private final JTextField myTextField;
     private final FixedSizeButton myButton;
 
