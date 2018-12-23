@@ -123,6 +123,8 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
             "Transport exception: Message with type RESTART_IDE_AND_RESUME should have content type RestartIdeAndResumeContainer but has a ${message.content?.javaClass?.canonicalName}")
           when (message.content.restartIdeCause) {
             RestartIdeCause.PLUGIN_INSTALLED -> {
+              //do not restart IDE from previously opened project
+              deleteRecentProjectsSettings()
               restartIde(ide = getIdeFromMethod(method), runIde = ::runIde)
               resumeTest(method, PLUGINS_INSTALLED)
             }
