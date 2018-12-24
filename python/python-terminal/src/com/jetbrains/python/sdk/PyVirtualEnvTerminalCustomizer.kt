@@ -67,7 +67,6 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
       }
     }
 
-    // for some reason virtualenv isn't activated in the rcfile for the login shell, so we make it non-login
     return command
   }
 
