@@ -107,7 +107,13 @@ interface UastLanguagePlugin {
 
   @JvmDefault
   fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: List<Class<out T>>): T? =
-    requiredTypes.asSequence().mapNotNull { convertElementWithParent(element, it) }.firstOrNull() as T?
+    when {
+      requiredTypes.isEmpty() -> convertElementWithParent(element, null)
+      requiredTypes.size == 1 -> convertElementWithParent(element, requiredTypes.single())
+      else -> convertElementWithParent(element, null)
+        ?.takeIf { result -> requiredTypes.any { it.isAssignableFrom(result.javaClass) } }
+    } as? T
+
 }
 
 inline fun <reified T : UElement> UastLanguagePlugin.convertOpt(element: PsiElement?, parent: UElement?): T? {
