@@ -372,12 +372,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
       new MouseEvent(jMenuBar, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, MouseInfo.getPointerInfo().getLocation().x,
                      MouseInfo.getPointerInfo().getLocation().y, 1, false);
     DumbService.getInstance(getProject())
-      .repeatUntilPassesInSmartMode(() -> execute(new GuiTask() {
-        @Override
-        protected void executeInEDT() throws Throwable {
-          actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true);
-        }
-      }));
+      .smartInvokeLater(() -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
   }
 
   /**
