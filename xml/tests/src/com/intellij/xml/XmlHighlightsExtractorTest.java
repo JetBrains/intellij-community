@@ -6,7 +6,7 @@ import com.intellij.application.options.colors.highlighting.HighlightsExtractor;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.options.colors.pages.XMLColorsPage;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class XmlHighlightsExtractorTest  extends PlatformTestCase {
+public class XmlHighlightsExtractorTest extends LightPlatformTestCase {
   private static final TextAttributesKey INLINE_KEY = TextAttributesKey.createTextAttributesKey("INLINE_KEY");
   private static final ColorKey COLOR_KEY = ColorKey.createColorKey("COLOR_KEY");
 
