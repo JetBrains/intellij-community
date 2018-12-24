@@ -114,6 +114,11 @@ interface UastLanguagePlugin {
         ?.takeIf { result -> requiredTypes.any { it.isAssignableFrom(result.javaClass) } }
     } as? T
 
+
+  @JvmDefault
+  fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: List<Class<out T>>): Sequence<T> =
+    sequenceOf(convertElementWithParent(element, requiredTypes)).filterNotNull()
+
 }
 
 inline fun <reified T : UElement> UastLanguagePlugin.convertOpt(element: PsiElement?, parent: UElement?): T? {
