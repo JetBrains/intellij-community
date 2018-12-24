@@ -344,6 +344,31 @@ public class XDebugSessionImpl implements XDebugSession {
   private void initSessionTab(@Nullable RunContentDescriptor contentToReuse) {
     mySessionTab = XDebugSessionTab.create(this, myIcon, myEnvironment, contentToReuse);
     myDebugProcess.sessionInitialized();
+    addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionPaused() {
+        updateActions();
+      }
+
+      @Override
+      public void sessionResumed() {
+        updateActions();
+      }
+
+      @Override
+      public void sessionStopped() {
+        updateActions();
+      }
+
+      @Override
+      public void stackFrameChanged() {
+        updateActions();
+      }
+
+      private void updateActions() {
+        UIUtil.invokeLaterIfNeeded(() -> mySessionTab.getUi().updateActionsNow());
+      }
+    });
   }
 
   @NotNull
