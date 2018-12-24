@@ -27,6 +27,10 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
     private set
   var enableBackgroundChanges: Boolean by propComponentProperty(project, false)
     private set
+  var largeIndexFilesCount: Int by propComponentProperty(project, 50_000)
+    private set
+  var enableLargeIndexing: Boolean by propComponentProperty(project, false)
+    private set
   var fileCount: Int by propComponentProperty(project, 10)
     private set
   var retypeExtension: String by propComponentProperty(project, "")
@@ -40,6 +44,9 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
   private val threadDumpDelaySpinner = JBIntSpinner(threadDumpDelay, 50, 5000, 50)
   private val interfereFileChaneDelaySpinner = JBIntSpinner(backgroundChangesDelay, 50, 5000, 50)
   private val interfereFileChangerEnabled = JBCheckBox(null, enableBackgroundChanges)
+
+  private val largeIndexFileCountSpinner = JBIntSpinner(largeIndexFilesCount, 100, 1_000_000, 1_000)
+  private val largeIndexEnabled = JBCheckBox(null, enableLargeIndexing)
 
   private val retypeCurrentFile = JRadioButton(
     if (editor?.selectionModel?.hasSelection() == true) "Retype selected text" else "Retype current file")
@@ -57,6 +64,11 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
       interfereFileChaneDelaySpinner.isEnabled = it.stateChange == ItemEvent.SELECTED
     }
     interfereFileChaneDelaySpinner.isEnabled = interfereFileChangerEnabled.isSelected
+
+    largeIndexEnabled.addItemListener {
+      largeIndexFileCountSpinner.isEnabled = it.stateChange == ItemEvent.SELECTED
+    }
+    largeIndexFileCountSpinner.isEnabled = largeIndexEnabled.isSelected
   }
 
   override fun createCenterPanel(): JComponent {
@@ -78,6 +90,10 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
       row(label = JLabel("Change files in background with period (ms):")) {
         interfereFileChaneDelaySpinner()
         interfereFileChangerEnabled()
+      }
+      row(label = JLabel("Create files for start background index (count of files):")) {
+        largeIndexFileCountSpinner()
+        largeIndexEnabled()
       }
       buttonGroup(::updateEnabledState) {
         row {
@@ -104,6 +120,7 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
     extensionTextField.isEnabled = retypeRandomFiles.isSelected
   }
 
+  @Suppress("Duplicates")
   override fun doOKAction() {
     retypeDelay = typeDelaySpinner.number
     threadDumpDelay = threadDumpDelaySpinner.number
@@ -113,6 +130,9 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
 
     backgroundChangesDelay = interfereFileChaneDelaySpinner.number
     enableBackgroundChanges = interfereFileChangerEnabled.isSelected
+
+    largeIndexFilesCount = largeIndexFileCountSpinner.number
+    enableLargeIndexing = largeIndexEnabled.isSelected
 
     restoreOriginalText = restoreTextBox.isSelected
 

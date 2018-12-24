@@ -42,6 +42,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
 import com.intellij.util.Alarm
+import org.intellij.lang.annotations.Language
 import java.awt.event.KeyEvent
 import java.io.File
 import java.util.*
@@ -121,6 +122,7 @@ class RetypeSession(
   private val threadDumpDelay: Int,
   private val threadDumps: MutableList<String> = mutableListOf(),
   private val interfereFilesChangePeriod: Long = -1,
+  private val filesForIndexCount: Int = -1,
   private val restoreText: Boolean = !ApplicationManager.getApplication().isUnitTestMode
 ) : Disposable {
   private val document = editor.document
@@ -156,7 +158,6 @@ class RetypeSession(
   private val completionStack = ArrayDeque<String>()
 
   private var stopInterfereFileChanger = false
-  val interfereFileName = "IdeaRetypeBackgroundChanges.java"
 
   var retypePaused: Boolean = false
 
@@ -203,6 +204,7 @@ class RetypeSession(
     runInterfereFileChanger()
     EditorNotifications.getInstance(project).updateNotifications(editor.virtualFile)
     retypePaused = false
+    startLargeIndexing()
     timerThread.start()
     checkStop()
   }
@@ -236,6 +238,7 @@ class RetypeSession(
     if (startNext) {
       startNextCallback?.invoke()
     }
+    removeLargeIndexing()
     stopInterfereFileChanger = true
     EditorNotifications.getInstance(project).updateAllNotifications()
   }
@@ -561,7 +564,7 @@ class RetypeSession(
     if (interfereFilesChangePeriod <= 0) return
     stopInterfereFileChanger = false
 
-    val file = File(editor.virtualFile.parent.path, interfereFileName)
+    val file = File(editor.virtualFile.parent.path, INTERFERE_FILE_NAME)
     file.createNewFile()
 
     val text = "// Text\n".repeat(500)
@@ -583,8 +586,39 @@ class RetypeSession(
     }
   }
 
+  private fun startLargeIndexing() {
+    if (filesForIndexCount <= 0) return
+
+    val dir = File(editor.virtualFile.parent.path, LARGE_INDEX_DIR_NAME)
+    dir.mkdir()
+
+    for (i in 0..filesForIndexCount) {
+      val file = File(dir, "MyClass$i.java")
+      file.createNewFile()
+      file.writeText(code.repeat(500))
+    }
+  }
+
+  private fun removeLargeIndexing() {
+    if (filesForIndexCount <= 0) return
+
+    val dir = File(editor.virtualFile.parent.path, LARGE_INDEX_DIR_NAME)
+    dir.deleteRecursively()
+  }
+
+  @Language("JAVA")
+  val code = """
+    class MyClass {
+        public static void main1(String[] args) {
+          int x = 5;
+        }
+    }
+  """.trimIndent()
+
   companion object {
     val LOG = Logger.getInstance("#com.intellij.internal.retype.RetypeSession")
+    const val INTERFERE_FILE_NAME = "IdeaRetypeBackgroundChanges.java"
+    const val LARGE_INDEX_DIR_NAME = "_indexDir_"
   }
 }
 
