@@ -390,7 +390,7 @@ class PyDataclassInspection : PyInspection() {
             ?.also { name ->
               val attribute = cls.findClassAttribute(name, false, myTypeEvalContext)
               if (attribute != null) {
-                initializers.computeIfAbsent(name, { _ -> mutableListOf() }).add(method)
+                initializers.computeIfAbsent(name, { mutableListOf() }).add(method)
 
                 val stub = PyDataclassFieldStubImpl.create(attribute)
                 if (stub != null && (stub.hasDefault() || stub.hasDefaultFactory())) {

@@ -51,7 +51,7 @@ fun <C : Container> ContainerFixture<C>.jList(containingItem: String? = null, ti
     val myJList: JList<*> = findComponentWithTimeout(timeout) { jList: JList<*> ->
       if (containingItem == null) true //if were searching for any jList()
       else {
-        val elements = (0 until jList.model.size).map { it: Int -> extCellReader.valueAt(jList as JList<Any?>, it) }
+        val elements = (0 until jList.model.size).map { it: Int -> extCellReader.valueAt(jList, it) }
         elements.any { it.toString() == containingItem } && jList.isShowing
       }
     }
@@ -472,7 +472,7 @@ fun <ComponentType : Component> waitUntilFoundList(container: Container?,
  */
 inline fun <reified ComponentType : Component, ContainerComponentType : Container> ContainerFixture<ContainerComponentType>?.findComponentWithTimeout(
   timeout: Timeout = defaultTimeout,
-  crossinline finderFunction: (ComponentType) -> Boolean = { _ -> true }): ComponentType {
+  crossinline finderFunction: (ComponentType) -> Boolean = { true }): ComponentType {
   try {
     return GuiTestUtil.waitUntilFound(GuiRobotHolder.robot, this?.target() as Container?,
                                       GuiTestUtilKt.typeMatcher(ComponentType::class.java) { finderFunction(it) },
@@ -487,7 +487,7 @@ inline fun <reified ComponentType : Component, ContainerComponentType : Containe
 fun <ComponentType : Component> findComponentWithTimeout(container: Container?,
                                                          componentClass: Class<ComponentType>,
                                                          timeout: Timeout = defaultTimeout,
-                                                         finderFunction: (ComponentType) -> Boolean = { _ -> true }): ComponentType {
+                                                         finderFunction: (ComponentType) -> Boolean = { true }): ComponentType {
   try {
     return GuiTestUtil.waitUntilFound(GuiRobotHolder.robot, container, GuiTestUtilKt.typeMatcher(componentClass) { finderFunction(it) },
                                       timeout)
@@ -500,7 +500,7 @@ fun <ComponentType : Component> findComponentWithTimeout(container: Container?,
 
 fun <ComponentType : Component> Robot.findComponent(container: Container?,
                                                     componentClass: Class<ComponentType>,
-                                                    finderFunction: (ComponentType) -> Boolean = { _ -> true }): ComponentType {
+                                                    finderFunction: (ComponentType) -> Boolean = { true }): ComponentType {
   return if (container == null)
     this.finder().find(typeMatcher(componentClass, finderFunction))
   else
