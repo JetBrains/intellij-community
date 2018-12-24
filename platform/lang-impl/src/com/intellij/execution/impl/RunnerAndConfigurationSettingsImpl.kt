@@ -299,8 +299,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
-    configuration.checkConfiguration()
+    var warning: RuntimeConfigurationWarning?
+
+    warning = doCheck { configuration.checkConfiguration() }
     if (configuration !is RunConfigurationBase<*>) {
+      if (warning != null) {
+        throw warning
+      }
       return
     }
 
@@ -309,11 +314,26 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     runners.addAll(configurationPerRunnerSettings.settings.keys)
     for (runner in runners) {
       if (executor == null || runner.canRun(executor.id, configuration)) {
-        configuration.checkRunnerSettings(runner, runnerSettings.settings.get(runner), configurationPerRunnerSettings.settings.get(runner))
+        val runnerWarning = doCheck { configuration.checkRunnerSettings(runner, runnerSettings.settings[runner], configurationPerRunnerSettings.settings[runner]) }
+        if (warning == null && runnerWarning != null) warning = runnerWarning
       }
     }
     if (executor != null) {
-      configuration.checkSettingsBeforeRun()
+      val beforeRunWarning = doCheck { configuration.checkSettingsBeforeRun() }
+      if (warning == null && beforeRunWarning != null) warning = beforeRunWarning
+    }
+
+    if (warning != null) {
+      throw warning
+    }
+  }
+
+  private inline fun doCheck(crossinline check: () -> Unit): RuntimeConfigurationWarning? {
+    try {
+      check()
+      return null
+    } catch (ex: RuntimeConfigurationWarning) {
+      return ex
     }
   }
 
