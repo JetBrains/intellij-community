@@ -990,7 +990,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  private void addConditionalRuntimeThrow() {
+  void addConditionalRuntimeThrow() {
     if (!shouldHandleException()) {
       return;
     }
@@ -1610,8 +1610,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  private void addMethodThrows(PsiMethod method, @Nullable PsiElement explicitCall) {
-    if (method != null) {
+  void addMethodThrows(PsiMethod method, @Nullable PsiElement explicitCall) {
+    if (method != null && shouldHandleException()) {
       addThrows(explicitCall, method.getThrowsList().getReferencedTypes());
     }
   }
@@ -1730,9 +1730,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       ifNotFail.setOffset(myCurrentFlow.getInstructionCount());
     }
 
-    if (shouldHandleException()) {
-      addMethodThrows(method, anchor);
-    }
+    addMethodThrows(method, anchor);
   }
 
   /**
@@ -1818,9 +1816,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new MethodCallInstruction(expression, null, constructor == null ? Collections.emptyList() : JavaMethodContractUtil
         .getMethodContracts(constructor)));
 
-      if (shouldHandleException()) {
-        addMethodThrows(constructor, expression);
-      }
+      addMethodThrows(constructor, expression);
       setEmptyCollectionSize(expression);
     }
 
