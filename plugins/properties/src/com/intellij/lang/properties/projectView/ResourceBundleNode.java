@@ -183,7 +183,8 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
   @NotNull
   @Override
   public Collection<VirtualFile> getRoots() {
-    return ContainerUtil.map(getResourceBundle().getPropertiesFiles(), PropertiesFile::getVirtualFile);
+    ResourceBundle rb = getResourceBundle();
+    return rb.isValid() ? ContainerUtil.map(rb.getPropertiesFiles(), PropertiesFile::getVirtualFile) : Collections.emptyList();
   }
 
   @NotNull
