@@ -16,10 +16,7 @@ public class NSColor {
   }
 
   public static @Nullable Color getAccentColor() {
-    if (!SystemInfo.isMac || !SystemInfo.isOsVersionAtLeast("10.14"))
-      return null;
-
-    return _getNSColor("controlAccentColor");
+    return SystemInfo.isMacOSMojave ? _getNSColor("controlAccentColor") : null;
   }
 
   private static @Nullable Color _getNSColor(@NotNull String selector) {
@@ -37,6 +34,7 @@ public class NSColor {
       final double nsBlue   = Foundation.invoke_fpret(nsCol, "blueComponent");
       final double nsAlpha  = Foundation.invoke_fpret(nsCol, "alphaComponent");
 
+      //noinspection UseJBColor
       return new Color((float)nsRed, (float)nsGreen, (float)nsBlue, (float)nsAlpha);
     } finally {
       pool.drain();

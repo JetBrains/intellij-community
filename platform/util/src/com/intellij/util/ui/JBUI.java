@@ -8,9 +8,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.mac.foundation.NSColor;
 import com.intellij.util.Function;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
@@ -1734,12 +1736,14 @@ public class JBUI {
       private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
 
       public static Color focusColor() {
-        return UIUtil.isGraphite() ? GRAPHITE_COLOR : JBColor.namedColor("Component.focusColor", JBColor.namedColor("Focus.borderColor", 0x8ab2eb));
+        Color defaultFocusColor = UIUtil.isGraphite() ? GRAPHITE_COLOR : JBColor.namedColor("Component.focusColor", JBColor.namedColor("Focus.borderColor", 0x8ab2eb));
+        return UIUtil.isUnderIntelliJLaF() && SystemInfo.isMacOSMojave ? ColorUtil.darker(NSColor.getHighlightColor(), 1) : defaultFocusColor;
       }
 
       public static Color defaultButtonColor() {
-        return UIUtil.isUnderDarcula() ? JBColor.namedColor("Button.default.focusColor",
-                                           JBColor.namedColor("Focus.defaultButtonBorderColor", 0x97c3f3)) : focusColor();
+        return UIUtil.isUnderDarcula() ?
+                 JBColor.namedColor("Button.default.focusColor", JBColor.namedColor("Focus.defaultButtonBorderColor", 0x97c3f3)) :
+                 focusColor();
       }
 
       public static Color errorColor(boolean active) {

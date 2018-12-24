@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,5 +69,22 @@ public class IntelliJLaf extends DarculaLaf {
   public static Color getSelectedControlColor() {
     // https://developer.apple.com/library/mac/e/Cocoa/Reference/ApplicationKit/Classes/NSColor_Class/#//apple_ref/occ/clm/NSColor/alternateSelectedControlColor
     return MacUtil.colorFromNative(Foundation.invoke("NSColor", "alternateSelectedControlColor"));
+  }
+
+  @Override
+  public void initialize() {
+    super.initialize();
+
+    if(SystemInfo.isMacOSMojave) {
+      SVGLoader.setColorPatcher(null);
+    }
+  }
+
+  @Override
+  public void uninitialize() {
+    if(SystemInfo.isMacOSMojave) {
+      SVGLoader.setColorPatcher(null);
+    }
+    super.uninitialize();
   }
 }
