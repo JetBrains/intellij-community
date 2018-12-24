@@ -18,7 +18,6 @@ package com.intellij.diff.tools.util;
 import com.intellij.diff.tools.util.DiffSplitter.Painter;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ThreeDiffSplitter extends JPanel {
-  private static final Icon SplitGlueH = EmptyIcon.create(6, 17);
   @NotNull private final List<? extends JComponent> myContents;
   @NotNull private final Divider myDivider1;
   @NotNull private final Divider myDivider2;
@@ -161,11 +159,9 @@ public class ThreeDiffSplitter extends JPanel {
     @Nullable private Painter myPainter;
 
     Divider(@NotNull Side side) {
-      super(new GridBagLayout());
       mySide = side;
       enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
       setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
-      add(new JLabel(SplitGlueH), new GridBagConstraints());
     }
 
     @Override
