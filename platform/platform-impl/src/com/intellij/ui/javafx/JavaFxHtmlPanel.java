@@ -94,6 +94,11 @@ public class JavaFxHtmlPanel implements Disposable {
       @Override
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
         if (source == FocusSource.FOCUS_SOURCE_NAVIGATION) return true;
+        // Workaround: JCEF doesn't change current focus on the client side.
+        // Clear the focus manually and this will report focus loss to the client
+        // and will let focus return to the client on mouse click.
+        // tav [todo]: the opposite is inadequate
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
         return false;
       }
     });
