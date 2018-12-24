@@ -19,7 +19,6 @@ import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import java.util.*
 
 /**
  * Resolve external annotations from Maven repositories.
@@ -61,8 +60,10 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
   override fun resolve(project: Project, library: Library, location: AnnotationsLocation): Library {
     val descriptor = JpsMavenRepositoryLibraryDescriptor(location.groupId, location.artifactId, location.version, false)
     val repos = if (location.repositoryUrls.isNotEmpty()) {
-      val base = Random().nextInt()
-      location.repositoryUrls.mapIndexed { index, url -> RemoteRepositoryDescription("id_$base$index", "name", url) }
+      location.repositoryUrls.mapIndexed { index, url ->
+        val someUniqueId = "id_${url.hashCode()}_$index"
+        RemoteRepositoryDescription(someUniqueId, "name", url)
+      }
     }
     else {
       null
