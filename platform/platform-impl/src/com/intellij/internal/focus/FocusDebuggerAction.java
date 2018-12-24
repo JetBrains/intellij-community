@@ -211,22 +211,6 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
           g.setColor(myApplicationState.getColor());
           g.fillOval(5,5, 10, 10);
         });
-        Arrays.stream(Window.getOwnerlessWindows()).
-          filter(window -> window instanceof RootPaneContainer).
-          map(window -> (RootPaneContainer)window).
-          filter(f -> f.getRootPane() != null).
-          filter(window -> window.getRootPane() != null).
-          map(window -> (window).getGlassPane()).
-          map(jGlassPane -> jGlassPane.getGraphics()).
-          filter(g -> g != null).
-          forEach(graphics -> {
-            Graphics2D glassPaneGraphics = ((Graphics2D)graphics.create());
-            try {
-
-            } finally {
-              glassPaneGraphics.dispose();
-            }
-          });
       }
     }
   }
