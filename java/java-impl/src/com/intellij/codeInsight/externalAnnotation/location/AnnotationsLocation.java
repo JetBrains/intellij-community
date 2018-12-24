@@ -20,7 +20,7 @@ public class AnnotationsLocation {
   @NotNull private final String myArtifactId;
   @NotNull private final String myVersion;
 
-  @NotNull private final List<String> myRepositoryUrls = new SmartList<>();
+  @NotNull private final List<String> myRepositoryUrls;
 
 
   public AnnotationsLocation(@NotNull String groupId,
@@ -30,7 +30,7 @@ public class AnnotationsLocation {
     myGroupId = groupId;
     myArtifactId = artifactId;
     myVersion = version;
-    Collections.addAll(myRepositoryUrls, repositoryUrls);
+    myRepositoryUrls = new SmartList<>(repositoryUrls);
   }
 
 
