@@ -48,6 +48,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
             if (pathEnv != null) {
               envs.put("PATH", pathEnv)
             }
+            // Note: "Shell integration" should be be checked in "Tools | Terminal" to source JEDITERM_SOURCE
             envs.put("JEDITERM_SOURCE",  activate.first)
             envs.put("JEDITERM_SOURCE_ARGS", activate.second?:"")
           }
@@ -67,7 +68,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
     }
 
     // for some reason virtualenv isn't activated in the rcfile for the login shell, so we make it non-login
-    return command.filter { arg -> arg != "--login" && arg != "-l" }.toTypedArray()
+    return command
   }
 
 
