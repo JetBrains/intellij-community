@@ -3002,7 +3002,6 @@ public class AllIcons {
     public static final Icon Restore = IconLoader.getIcon("/windows/restore.svg"); // 16x16
     public static final Icon RestoreInactive = IconLoader.getIcon("/windows/restoreInactive.svg"); // 16x16
     public static final Icon RestoreSmall = IconLoader.getIcon("/windows/restoreSmall.svg"); // 16x16
-    public static final Icon WinHelp = IconLoader.getIcon("/windows/winHelp.png"); // 16x16
 
   }
 
