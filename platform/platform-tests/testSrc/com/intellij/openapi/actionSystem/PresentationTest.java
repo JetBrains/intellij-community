@@ -3,16 +3,9 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
-import com.intellij.testFramework.PlatformTestCase;
-import junit.framework.Assert;
+import com.intellij.testFramework.LightPlatformTestCase;
 
-/**
- * Created in IntelliJ IDEA.
- * By: Alexander.Chernikov
- * When: 10.10.2006, 20:19:35
- */
-public class PresentationTest extends PlatformTestCase {
-
+public class PresentationTest extends LightPlatformTestCase {
   private final String[] inputTextsUnderscores = new String[]{"No mnemonic", "_First char",
     "S_econd char", "Pre-last and not unique ch_ar", "Last cha_r", "Too late_", "Do__uble", "Dou_&ble",
     "Complete double__", "Complete double_&", "Repea_te_d", "Re_peate&d", "Run 'test__1' with Co&verage"
@@ -36,20 +29,20 @@ public class PresentationTest extends PlatformTestCase {
     for (int i = 0; i < inputTextsUnderscores.length; i++) {
       Presentation p = new Presentation();
       p.setText(inputTextsUnderscores[i]);
-      Assert.assertEquals(menuTexts[i], p.getText());
-      Assert.assertEquals(mnemonics[i], p.getMnemonic());
-      Assert.assertEquals(indeces[i], p.getDisplayedMnemonicIndex());
-      Assert.assertEquals(fullMenuTexts[i], p.getTextWithMnemonic());
+      assertEquals(menuTexts[i], p.getText());
+      assertEquals(mnemonics[i], p.getMnemonic());
+      assertEquals(indeces[i], p.getDisplayedMnemonicIndex());
+      assertEquals(fullMenuTexts[i], p.getTextWithMnemonic());
     }
     for (int i = 0; i < inputTextsAmpersands.length; i++) {
       Presentation p = new Presentation();
       p.setText(inputTextsAmpersands[i]);
-      Assert.assertEquals(menuTexts[i], p.getText());
-      Assert.assertEquals(mnemonics[i], p.getMnemonic());
-      Assert.assertEquals(indeces[i], p.getDisplayedMnemonicIndex());
-      Assert.assertEquals(fullMenuTexts[i], p.getTextWithMnemonic());
+      assertEquals(menuTexts[i], p.getText());
+      assertEquals(mnemonics[i], p.getMnemonic());
+      assertEquals(indeces[i], p.getDisplayedMnemonicIndex());
+      assertEquals(fullMenuTexts[i], p.getTextWithMnemonic());
 
-      Assert.assertTrue(menuTexts[i].length() > p.getDisplayedMnemonicIndex());
+      assertTrue(menuTexts[i].length() > p.getDisplayedMnemonicIndex());
     }
   }
 

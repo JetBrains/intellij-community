@@ -203,7 +203,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
         LaterInvocator.invokeLater(new Runnable() {
           @Override
           public void run() {
-            TestCase.assertTrue(!LaterInvocator.isInModalContext());
+            assertFalse(LaterInvocator.isInModalContext());
           }
 
           public String toString() {
@@ -229,10 +229,9 @@ public class LaterInvocatorTest extends PlatformTestCase {
 
         SwingUtilities.invokeLater(LEAVE_MODAL);
         flushSwingQueue();
-        TestCase.assertTrue(!LaterInvocator.isInModalContext());
+        assertFalse(LaterInvocator.isInModalContext());
 
         checkOrder(1);
-
 
         LaterInvocator.leaveAllModals();
         myOrder.clear();
@@ -605,7 +604,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
   }
 
   public void testProgressModality() {
-    ApplicationManager.getApplication().invokeAndWait(() -> ProgressManager.getInstance().run(new Task.Modal(myProject, "", false) {
+    ApplicationManager.getApplication().invokeAndWait(() -> ProgressManager.getInstance().run(new Task.Modal(getProject(), "", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         ModalityState state = indicator.getModalityState();
