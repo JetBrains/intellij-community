@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.FocusChangeListenerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,15 +123,18 @@ public abstract class CompletionPhase implements Disposable {
         ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListenerImpl() {
           @Override
           public void focusLost(@NotNull Editor editor, @NotNull FocusEvent event) {
-            // When ScreenReader is active the lookup gets focus and in that case we should not close it.
-            if (indicator.getLookup() == null ||
-                event.getOppositeComponent() == null ||
-                indicator.getLookup().getComponent() == null ||
-                (SwingUtilities.getWindowAncestor(indicator.getLookup().getComponent()) !=
-                 SwingUtilities.getWindowAncestor(event.getOppositeComponent())))
+            // When ScreenReader is active the lookup gets focus on show and we should not close it.
+            if (ScreenReader.isActive() &&
+                indicator.getLookup() != null &&
+                event.getOppositeComponent() != null &&
+                indicator.getLookup().getComponent() != null &&
+                // Check the opposite is in the lookup ancestor
+                (SwingUtilities.getWindowAncestor(event.getOppositeComponent())) ==
+                 SwingUtilities.getWindowAncestor(indicator.getLookup().getComponent()))
             {
-              indicator.closeAndFinish(true);
+              return;
             }
+            indicator.closeAndFinish(true);
           }
         }, this);
       }
