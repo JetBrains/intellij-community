@@ -1204,7 +1204,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       if (!(PsiUtil.resolveClassInClassTypeOnly(castType) instanceof PsiTypeParameter)) {
         if (performCastToWrapperClass) {
-          castType = ObjectUtils.notNull(PsiPrimitiveType.getUnboxedType(castType), castType);
+          castType = ObjectUtils.notNull(PsiPrimitiveType.getUnboxedType(castType), operandType);
         }
 
         myResult = createTypeCastEvaluator(operandEvaluator, castType);
