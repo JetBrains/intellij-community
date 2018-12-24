@@ -170,7 +170,7 @@ public class DefaultJDOMExternalizer {
         if (BitUtil.isSet(modifiers, Modifier.FINAL)) {
           // read external contents of final field
           Object value = field.get(data);
-          if (JDOMExternalizable.class.isInstance(value)) {
+          if (value instanceof JDOMExternalizable) {
             final List children = e.getChildren("value");
             for (Object child : children) {
               Element valueTag = (Element)child;

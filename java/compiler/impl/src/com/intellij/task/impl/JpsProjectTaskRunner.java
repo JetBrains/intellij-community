@@ -243,7 +243,7 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
     Collection<? extends ProjectTask> filesTargets = tasksMap.get(ModuleFilesBuildTask.class);
     if (!ContainerUtil.isEmpty(filesTargets)) {
       VirtualFile[] files = filesTargets.stream()
-        .flatMap(target -> Stream.of(ModuleFilesBuildTask.class.cast(target).getFiles()))
+        .flatMap(target -> Stream.of(((ModuleFilesBuildTask)target).getFiles()))
         .toArray(VirtualFile[]::new);
       CompilerManager.getInstance(project).compile(files, compileNotification);
     }

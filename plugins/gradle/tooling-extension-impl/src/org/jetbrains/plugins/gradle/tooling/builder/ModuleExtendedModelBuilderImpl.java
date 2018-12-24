@@ -113,7 +113,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
         if (test.hasProperty(TEST_SRC_DIRS_PROPERTY)) {
           Object testSrcDirs = test.property(TEST_SRC_DIRS_PROPERTY);
           if (testSrcDirs instanceof Iterable) {
-            for (Object dir : Iterable.class.cast(testSrcDirs)) {
+            for (Object dir : (Iterable)testSrcDirs) {
               addFilePath(directorySet.getTestDirectories(), dir);
             }
           }

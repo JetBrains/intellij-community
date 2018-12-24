@@ -164,7 +164,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public static List<PyExpression> getUnfoldedSuperClassExpressions(@NotNull PyClass pyClass) {
     return StreamEx
       .of(pyClass.getSuperClassExpressions())
-      .filter(expression -> !PyKeywordArgument.class.isInstance(expression))
+      .filter(expression -> !(expression instanceof PyKeywordArgument))
       .flatCollection(PyClassImpl::unfoldSuperClassExpression)
       .toList();
   }

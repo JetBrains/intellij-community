@@ -116,7 +116,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     LibraryOrderEntry dep = null;
     for (OrderEntry e : getRootManager("project").getOrderEntries()) {
       // can be commons-io:commons-io:2.4 or commons-io:commons-io:RELEASE
-      if (LibraryOrderEntry.class.isInstance(e) && e.getPresentableName().startsWith("Maven: commons-io:commons-io:")) {
+      if (e instanceof LibraryOrderEntry && e.getPresentableName().startsWith("Maven: commons-io:commons-io:")) {
         dep = (LibraryOrderEntry)e;
       }
     }

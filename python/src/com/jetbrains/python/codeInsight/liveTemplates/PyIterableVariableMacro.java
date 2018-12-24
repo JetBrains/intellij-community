@@ -110,7 +110,7 @@ public class PyIterableVariableMacro extends Macro {
 
       StreamEx
         .of(scope.getImportedNameDefiners())
-        .filter(definer -> !PyImplicitImportNameDefiner.class.isInstance(definer))
+        .filter(definer -> !(definer instanceof PyImplicitImportNameDefiner))
         .flatMap(definer -> StreamSupport.stream(definer.iterateNames().spliterator(), false))
         .select(PsiNamedElement.class)
         .forEach(results::add);

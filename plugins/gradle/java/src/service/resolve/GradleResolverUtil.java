@@ -146,6 +146,6 @@ public class GradleResolverUtil {
 
   public static boolean isLShiftElement(@Nullable PsiElement psiElement) {
     return (psiElement instanceof GrBinaryExpression &&
-            GroovyElementTypes.COMPOSITE_LSHIFT_SIGN.equals(GrBinaryExpression.class.cast(psiElement).getOperationTokenType()));
+            GroovyElementTypes.COMPOSITE_LSHIFT_SIGN.equals(((GrBinaryExpression)psiElement).getOperationTokenType()));
   }
 }
