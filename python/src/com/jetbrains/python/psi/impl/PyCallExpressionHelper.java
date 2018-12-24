@@ -127,9 +127,9 @@ public class PyCallExpressionHelper {
       .collect(
         Collectors.groupingBy(markedCallee -> markedCallee.getCallableType(), LinkedHashMap::new, Collectors.toList())
       )
-      .entrySet()
+      .values()
       .stream()
-      .map(entry -> entry.getValue().stream().max(Comparator.comparingInt(PyCallExpression.PyMarkedCallee::getRate)).orElse(null))
+      .map(callees -> callees.stream().max(Comparator.comparingInt(PyCallExpression.PyMarkedCallee::getRate)).orElse(null))
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
   }
@@ -823,16 +823,12 @@ public class PyCallExpressionHelper {
 
   @NotNull
   public static List<PyExpression> getArgumentsMappedToPositionalContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
-    return mapping.entrySet().stream()
-      .filter(e -> e.getValue().isPositionalContainer())
-      .map(e -> e.getKey()).collect(Collectors.toList());
+    return StreamEx.ofKeys(mapping, PyCallableParameter::isPositionalContainer).toList();
   }
 
   @NotNull
   public static List<PyExpression> getArgumentsMappedToKeywordContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
-    return mapping.entrySet().stream()
-      .filter(e -> e.getValue().isKeywordContainer())
-      .map(e -> e.getKey()).collect(Collectors.toList());
+    return StreamEx.ofKeys(mapping, PyCallableParameter::isKeywordContainer).toList();
   }
 
   @NotNull
