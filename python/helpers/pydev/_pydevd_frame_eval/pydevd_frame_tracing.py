@@ -2,7 +2,7 @@ import sys
 
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_comm import get_global_debugger
+from _pydevd_bundle.pydevd_comm import get_global_debugger, CMD_SET_BREAK
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 
 
@@ -43,9 +43,8 @@ def suspend_at_builtin_breakpoint():
         debugger = get_global_debugger()
         debugger.set_suspend(t, CMD_SET_BREAK)
         debugger.do_wait_suspend(t, frame, 'line', None, "frame_eval")
+        frame.f_trace = debugger.get_thread_local_trace_func()
         t.additional_info.is_tracing = False
-        return t.additional_info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT
-    return False
 
 
 def _pydev_stop_at_break(line):
