@@ -1202,9 +1202,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   public void updateActionsImmediately() {
-    if (myToolbar.getTargetComponent() instanceof ActionToolbar) {
-      ((ActionToolbar)myToolbar.getTargetComponent()).updateActionsImmediately();
-    }
+    StreamEx.of(myToolbar).append(myCommonActionsPlaceholder.values())
+      .map(Wrapper::getTargetComponent)
+      .select(ActionToolbar.class)
+      .distinct()
+      .forEach(ActionToolbar::updateActionsImmediately);
   }
 
   public void setMinimizeActionEnabled(final boolean enabled) {
