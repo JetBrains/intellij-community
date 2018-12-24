@@ -394,11 +394,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         fileNames = FilenameIndex.getAllFilenames(myProject);
       }
       final Set<String> array = new THashSet<>();
-      for (String fileName : fileNames) {
-        if (!array.contains(fileName)) {
-          array.add(fileName);
-        }
-      }
+      Collections.addAll(array, fileNames);
 
       final String[] result = ArrayUtil.toStringArray(array);
       Arrays.sort(result);

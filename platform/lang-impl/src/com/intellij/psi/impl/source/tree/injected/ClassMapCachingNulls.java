@@ -87,11 +87,7 @@ class ClassMapCachingNulls<T> {
       if (value == null) {
         value = new HashSet<>(fromUpper.length);
       }
-      for (T t : fromUpper) {
-        if (!value.contains(t)) {
-          value.add(t);
-        }
-      }
+      Collections.addAll(value, fromUpper);
       assert !value.isEmpty();
     }
     return value;

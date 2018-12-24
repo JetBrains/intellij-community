@@ -568,8 +568,6 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
         }
 
       }
-
-      assert referenceList != null;
       referenceList.add(ref);
     }
   }
@@ -606,8 +604,8 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
    * @return if removed  - a reference to the class or null if there were no references to this class in the reference list
    */
   public static PsiQualifiedReferenceElement removeFromReferenceList(PsiReferenceList refList, PsiClass aClass) throws IncorrectOperationException {
-    List<? extends PsiQualifiedReferenceElement> refs = Arrays.asList(
-      refList instanceof GrReferenceList ? ((GrReferenceList)refList).getReferenceElementsGroovy() : refList.getReferenceElements());
+    PsiQualifiedReferenceElement[] refs =
+      refList instanceof GrReferenceList ? ((GrReferenceList)refList).getReferenceElementsGroovy() : refList.getReferenceElements();
 
     for (PsiQualifiedReferenceElement ref : refs) {
       if (ref.isReferenceTo(aClass)) {

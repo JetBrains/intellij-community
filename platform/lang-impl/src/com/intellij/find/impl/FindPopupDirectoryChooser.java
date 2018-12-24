@@ -119,9 +119,7 @@ public class FindPopupDirectoryChooser extends JPanel {
       myDirectoryComboBox.removeAllItems();
     }
     if (directoryName != null && !directoryName.isEmpty()) {
-      if (strings.contains(directoryName)) {
-        strings.remove(directoryName);
-      }
+      strings.remove(directoryName);
       myDirectoryComboBox.addItem(directoryName);
     }
     for (int i = strings.size() - 1; i >= 0; i--) {
