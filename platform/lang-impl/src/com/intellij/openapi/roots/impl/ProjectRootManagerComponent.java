@@ -25,6 +25,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.changes.IgnoredFileProvider;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl;
@@ -40,6 +41,7 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -183,6 +185,13 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
   }
 
+  private boolean isDirVcsIgnored(@NotNull File dir) {
+    for (IgnoredFileProvider extension : IgnoredFileProvider.IGNORE_FILE.getExtensions()) {
+      if (extension.isIgnoredFile(myProject, VcsUtil.getFilePath(dir, true))) return true;
+    }
+    return false;
+  }
+
   @NotNull
   private Pair<Set<String>, Set<String>> getAllRoots() {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -191,10 +200,29 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     final Set<String> files = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
     final String projectFilePath = myProject.getProjectFilePath();
-    final File projectDirFile = projectFilePath == null ? null : new File(projectFilePath).getParentFile();
-    if (projectDirFile != null && projectDirFile.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
-      String absolutePath = projectDirFile.getAbsolutePath();
-      recursiveDirs.add(absolutePath);
+    final File dotIdea = projectFilePath == null ? null : new File(projectFilePath).getParentFile().getAbsoluteFile();
+    if (dotIdea != null && dotIdea.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
+      // add all subdirectories except "shelf"
+      boolean foundShelf = false;
+      File[] children = dotIdea.listFiles();
+      if (children != null) {
+        for (File child : children) {
+          if (child.isDirectory()) {
+            if (isDirVcsIgnored(child)) {
+              foundShelf = true;
+            }
+            else {
+              recursiveDirs.add(child.getPath());
+            }
+          }
+        }
+      }
+
+      if (!foundShelf) {
+        // optimization: if the "shelf" is not under .idea, we can monitor .idea recursively instead of all its children except shelf
+        recursiveDirs.clear();
+        recursiveDirs.add(dotIdea.getPath());
+      }
     }
     else {
       files.add(projectFilePath);
@@ -204,7 +232,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
     for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
       Collection<VirtualFile> toWatch = extension.getRootsToWatch(myProject);
-      recursiveDirs.addAll(ContainerUtil.map(toWatch, VirtualFile::getPath));
+      if (!toWatch.isEmpty()) recursiveDirs.addAll(ContainerUtil.map(toWatch, VirtualFile::getPath));
     }
 
     for (WatchedRootsProvider extension : WatchedRootsProvider.EP_NAME.getExtensions(myProject)) {

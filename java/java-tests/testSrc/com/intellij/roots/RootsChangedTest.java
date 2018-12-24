@@ -16,9 +16,12 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -29,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Collections;
 
 /**
  * @author dsl
@@ -347,7 +352,7 @@ public class RootsChangedTest extends ModuleTestCase {
     private int afterCount;
     private long modificationCount;
 
-    public MyModuleRootListener(Project project) {
+    MyModuleRootListener(Project project) {
       myProject = project;
     }
 
@@ -383,5 +388,33 @@ public class RootsChangedTest extends ModuleTestCase {
         rename(xxx, dirName);
       }
     }).assertTiming();
+  }
+
+  @NotNull
+  @Override
+  protected Path getProjectDirOrFile() {
+    // create ".idea" - based project because it's 1) needed for testShelveChangesMustNotLeadToRootsChangedEvent and 2) is more common
+    return getProjectDirOrFile(true);
+  }
+
+  public void testShelveChangesMustNotLeadToRootsChangedEvent() {
+    ProjectKt.getStateStore(getProject()).save(Collections.emptyList(), false); // create .idea
+    VirtualFile shelf = createChildDirectory(getProject().getProjectFile().getParent(), "shelf");
+
+    myModuleRootListener.reset();
+
+    VirtualFile xxx = createChildData(shelf, "shelf1.dat");
+    assertTrue(ChangeListManager.getInstance(myProject).isPotentiallyIgnoredFile(xxx));
+
+    assertEquals(myModuleRootListener.modificationCount, ProjectRootManager.getInstance(myProject).getModificationCount());
+
+    VirtualFile newShelf = createChildDirectory(getProject().getBaseDir().getParent(), "newShelf");
+    VcsConfiguration vcs = VcsConfiguration.getInstance(myProject);
+    vcs.USE_CUSTOM_SHELF_PATH = true;
+    vcs.CUSTOM_SHELF_PATH = newShelf.getPath();
+    myModuleRootListener.reset();
+
+    VirtualFile xxx2 = createChildData(newShelf, "shelf1.dat");
+    assertTrue(ChangeListManager.getInstance(myProject).isPotentiallyIgnoredFile(xxx2));
   }
 }
