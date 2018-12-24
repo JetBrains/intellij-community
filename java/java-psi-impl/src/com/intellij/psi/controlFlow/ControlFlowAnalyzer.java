@@ -11,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
@@ -1589,25 +1590,32 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override
   public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-    startElement(expression);
+    ArrayDeque<PsiMethodCallExpression> calls = new ArrayDeque<>();
+    while (true) {
+      calls.addFirst(expression);
+      startElement(expression);
 
-    PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    startElement(methodExpression);
-    PsiExpression qualifier = methodExpression.getQualifierExpression();
-    if (qualifier != null) {
-      qualifier.accept(this);
+      PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
+      expression = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(qualifierExpression), PsiMethodCallExpression.class);
+      if (expression == null) {
+        if (qualifierExpression != null) {
+          qualifierExpression.accept(this);
+        }
+        break;
+      }
     }
-    finishElement(methodExpression);
 
-    final PsiExpressionList argumentList = expression.getArgumentList();
-    argumentList.accept(this);
-    // just to increase counter - there is some executable code here
-    emitEmptyInstruction();
+    for (PsiMethodCallExpression call : calls) {
+      final PsiExpressionList argumentList = call.getArgumentList();
+      argumentList.accept(this);
+      // just to increase counter - there is some executable code here
+      emitEmptyInstruction();
 
-    //generate jumps to all handled exception handlers
-    generateExceptionJumps(expression, ExceptionUtil.getUnhandledExceptions(expression, expression.getParent()));
+      //generate jumps to all handled exception handlers
+      generateExceptionJumps(call, ExceptionUtil.getUnhandledExceptions(call, call.getParent()));
 
-    finishElement(expression);
+      finishElement(call);
+    }
   }
 
   @Override
