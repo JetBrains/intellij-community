@@ -538,14 +538,14 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     }
   }
 
-  private static final ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Windows.Shadow.Top,
-                                                                          AllIcons.Windows.Shadow.TopRight,
-                                                                          AllIcons.Windows.Shadow.Right,
-                                                                          AllIcons.Windows.Shadow.BottomRight,
-                                                                          AllIcons.Windows.Shadow.Bottom,
-                                                                          AllIcons.Windows.Shadow.BottomLeft,
-                                                                          AllIcons.Windows.Shadow.Left,
-                                                                          AllIcons.Windows.Shadow.TopLeft);
+  private static final ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Ide.Shadow.Top,
+                                                                          AllIcons.Ide.Shadow.TopRight,
+                                                                          AllIcons.Ide.Shadow.Right,
+                                                                          AllIcons.Ide.Shadow.BottomRight,
+                                                                          AllIcons.Ide.Shadow.Bottom,
+                                                                          AllIcons.Ide.Shadow.BottomLeft,
+                                                                          AllIcons.Ide.Shadow.Left,
+                                                                          AllIcons.Ide.Shadow.TopLeft);
 
   @Override
   public void paint(@NotNull Graphics g) {
@@ -566,10 +566,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   public void doLayout() {
     super.doLayout();
     if (!isInFullScreen() && IdeRootPane.isFrameDecorated()) {
-      final int leftSide = AllIcons.Windows.Shadow.Left.getIconWidth();
-      final int rightSide = AllIcons.Windows.Shadow.Right.getIconWidth();
-      final int top = AllIcons.Windows.Shadow.Top.getIconHeight();
-      final int bottom = AllIcons.Windows.Shadow.Bottom.getIconHeight();
+      final int leftSide = AllIcons.Ide.Shadow.Left.getIconWidth();
+      final int rightSide = AllIcons.Ide.Shadow.Right.getIconWidth();
+      final int top = AllIcons.Ide.Shadow.Top.getIconHeight();
+      final int bottom = AllIcons.Ide.Shadow.Bottom.getIconHeight();
       getRootPane().setBounds(leftSide, top, getWidth() - leftSide - rightSide, getHeight() - top - bottom);
     }
   }

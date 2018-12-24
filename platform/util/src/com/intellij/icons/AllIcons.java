@@ -1676,18 +1676,6 @@ public class AllIcons {
       public static final Icon GearHover = IconLoader.getIcon("/ide/notification/gearHover.svg"); // 16x16
       public static final Icon InfoEvents = IconLoader.getIcon("/ide/notification/infoEvents.svg"); // 13x13
       public static final Icon NoEvents = IconLoader.getIcon("/ide/notification/noEvents.svg"); // 13x13
-
-      public final static class Shadow {
-        public static final Icon Bottom_left = IconLoader.getIcon("/ide/notification/shadow/bottom-left.png"); // 14x16
-        public static final Icon Bottom_right = IconLoader.getIcon("/ide/notification/shadow/bottom-right.png"); // 14x16
-        public static final Icon Bottom = IconLoader.getIcon("/ide/notification/shadow/bottom.png"); // 4x8
-        public static final Icon Left = IconLoader.getIcon("/ide/notification/shadow/left.png"); // 6x4
-        public static final Icon Right = IconLoader.getIcon("/ide/notification/shadow/right.png"); // 6x4
-        public static final Icon Top_left = IconLoader.getIcon("/ide/notification/shadow/top-left.png"); // 14x12
-        public static final Icon Top_right = IconLoader.getIcon("/ide/notification/shadow/top-right.png"); // 14x12
-        public static final Icon Top = IconLoader.getIcon("/ide/notification/shadow/top.png"); // 4x4
-
-      }
       public static final Icon WarningEvents = IconLoader.getIcon("/ide/notification/warningEvents.svg"); // 13x13
 
     }
@@ -1703,26 +1691,14 @@ public class AllIcons {
     public static final Icon Readwrite = IconLoader.getIcon("/ide/readwrite.svg"); // 16x16
 
     public final static class Shadow {
-      public static final Icon Bottom_left = IconLoader.getIcon("/ide/shadow/bottom-left.svg"); // 18x22
-      public static final Icon Bottom_right = IconLoader.getIcon("/ide/shadow/bottom-right.svg"); // 18x22
       public static final Icon Bottom = IconLoader.getIcon("/ide/shadow/bottom.svg"); // 4x14
+      public static final Icon BottomLeft = IconLoader.getIcon("/ide/shadow/bottomLeft.svg"); // 18x22
+      public static final Icon BottomRight = IconLoader.getIcon("/ide/shadow/bottomRight.svg"); // 18x22
       public static final Icon Left = IconLoader.getIcon("/ide/shadow/left.svg"); // 11x4
-
-      public final static class Popup {
-        public static final Icon Bottom_left = IconLoader.getIcon("/ide/shadow/popup/bottom-left.png"); // 20x20
-        public static final Icon Bottom_right = IconLoader.getIcon("/ide/shadow/popup/bottom-right.png"); // 20x20
-        public static final Icon Bottom = IconLoader.getIcon("/ide/shadow/popup/bottom.png"); // 1x10
-        public static final Icon Left = IconLoader.getIcon("/ide/shadow/popup/left.png"); // 7x1
-        public static final Icon Right = IconLoader.getIcon("/ide/shadow/popup/right.png"); // 7x1
-        public static final Icon Top_left = IconLoader.getIcon("/ide/shadow/popup/top-left.png"); // 14x14
-        public static final Icon Top_right = IconLoader.getIcon("/ide/shadow/popup/top-right.png"); // 14x14
-        public static final Icon Top = IconLoader.getIcon("/ide/shadow/popup/top.png"); // 1x4
-
-      }
       public static final Icon Right = IconLoader.getIcon("/ide/shadow/right.svg"); // 11x4
-      public static final Icon Top_left = IconLoader.getIcon("/ide/shadow/top-left.svg"); // 18x14
-      public static final Icon Top_right = IconLoader.getIcon("/ide/shadow/top-right.svg"); // 18x14
       public static final Icon Top = IconLoader.getIcon("/ide/shadow/top.svg"); // 4x7
+      public static final Icon TopLeft = IconLoader.getIcon("/ide/shadow/topLeft.svg"); // 18x14
+      public static final Icon TopRight = IconLoader.getIcon("/ide/shadow/topRight.svg"); // 18x14
 
     }
     public static final Icon Statusbar_arrows = IconLoader.getIcon("/ide/statusbar_arrows.svg"); // 7x10
@@ -3026,18 +3002,6 @@ public class AllIcons {
     public static final Icon Restore = IconLoader.getIcon("/windows/restore.svg"); // 16x16
     public static final Icon RestoreInactive = IconLoader.getIcon("/windows/restoreInactive.svg"); // 16x16
     public static final Icon RestoreSmall = IconLoader.getIcon("/windows/restoreSmall.svg"); // 16x16
-
-    public final static class Shadow {
-      public static final Icon Bottom = IconLoader.getIcon("/windows/shadow/bottom.png"); // 1x13
-      public static final Icon BottomLeft = IconLoader.getIcon("/windows/shadow/bottomLeft.png"); // 24x24
-      public static final Icon BottomRight = IconLoader.getIcon("/windows/shadow/bottomRight.png"); // 24x24
-      public static final Icon Left = IconLoader.getIcon("/windows/shadow/left.png"); // 13x1
-      public static final Icon Right = IconLoader.getIcon("/windows/shadow/right.png"); // 13x1
-      public static final Icon Top = IconLoader.getIcon("/windows/shadow/top.png"); // 1x13
-      public static final Icon TopLeft = IconLoader.getIcon("/windows/shadow/topLeft.png"); // 24x24
-      public static final Icon TopRight = IconLoader.getIcon("/windows/shadow/topRight.png"); // 24x24
-
-    }
     public static final Icon WinHelp = IconLoader.getIcon("/windows/winHelp.png"); // 16x16
 
   }
