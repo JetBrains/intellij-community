@@ -227,7 +227,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   private static LocalAttachInfo getProcessAttachInfoInt(String pid) {
     VirtualMachine vm = null;
     try {
-      vm = VirtualMachine.attach(pid);
+      vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
       Properties agentProperties = vm.getAgentProperties();
       String command = agentProperties.getProperty("sun.java.command");
       if (!StringUtil.isEmpty(command)) {

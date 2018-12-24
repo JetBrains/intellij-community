@@ -233,7 +233,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
         try {
           String pid = String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler)myProcessHandler).getProcess()));
           if (!JavaDebuggerAttachUtil.getAttachedPids(project).contains(pid)) {
-            vm = VirtualMachine.attach(pid);
+            vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
             InputStream inputStream = ((HotSpotVirtualMachine)vm).remoteDataDump();
             String text = StreamUtil.readText(inputStream, CharsetToolkit.UTF8_CHARSET);
             List<ThreadState> threads = ThreadDumpParser.parse(text);

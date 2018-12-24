@@ -3,9 +3,13 @@ package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.openapi.project.Project;
+import com.sun.tools.attach.AttachNotSupportedException;
+import com.sun.tools.attach.VirtualMachine;
+import com.sun.tools.attach.VirtualMachineDescriptor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.Set;
 
 /**
@@ -32,5 +36,14 @@ public class JavaDebuggerAttachUtil {
       .select(PidRemoteConnection.class)
       .map(PidRemoteConnection::getPid)
       .toSet();
+  }
+
+  @NotNull
+  public static VirtualMachine attachVirtualMachine(String id) throws IOException, AttachNotSupportedException {
+    // avoid attaching to the 3rd party vms
+    if (VirtualMachine.list().stream().map(VirtualMachineDescriptor::id).noneMatch(id::equals)) {
+      throw new AttachNotSupportedException("AttachProvider for the vm is not found");
+    }
+    return VirtualMachine.attach(id);
   }
 }
