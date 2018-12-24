@@ -213,6 +213,31 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       super(VcsLogFilterCollection.TEXT_FILTER, VcsLogFilterCollection.HASH_FILTER, dataPackProvider, properties, filters);
     }
 
+    @Nullable
+    @Override
+    protected FilterPair<VcsLogTextFilter, VcsLogHashFilter> getFilterFromProperties() {
+      FilterPair<VcsLogTextFilter, VcsLogHashFilter> filterPair = super.getFilterFromProperties();
+      if (filterPair == null) return null;
+      // check filters correctness
+      if (filterPair.getFilter1() != null && !StringUtil.isEmptyOrSpaces(filterPair.getFilter1().getText())) {
+        VcsLogHashFilter hashFilterFromText = VcsLogFilterObject.fromHash(filterPair.getFilter1().getText());
+        if (!Objects.equals(filterPair.getFilter2(), hashFilterFromText)) {
+          LOG.warn("Set hash filter " + filterPair.getFilter2() + " is inconsistent with text filter." +
+                   " Replacing with " + hashFilterFromText);
+          return new FilterPair<>(filterPair.getFilter1(), hashFilterFromText);
+        }
+      }
+      else if (filterPair.getFilter2() != null && !filterPair.getFilter2().getHashes().isEmpty()) {
+        VcsLogTextFilter textFilterFromHashes = createTextFilter(StringUtil.join(filterPair.getFilter2().getHashes(), " "));
+        LOG.warn("Set hash filter " +
+                 filterPair.getFilter2() +
+                 " is inconsistent with empty text filter. Using text filter " +
+                 textFilterFromHashes);
+        return new FilterPair<>(textFilterFromHashes, filterPair.getFilter2());
+      }
+      return filterPair;
+    }
+
     @NotNull
     String getText() {
       if (myText != null) {
