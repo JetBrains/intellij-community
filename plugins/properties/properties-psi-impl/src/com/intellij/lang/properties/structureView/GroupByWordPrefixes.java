@@ -25,17 +25,15 @@ import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewEl
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author cdr
- */
 public class GroupByWordPrefixes implements Grouper, Sorter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.structureView.GroupByWordPrefixes");
+  private static final Logger LOG = Logger.getInstance(GroupByWordPrefixes.class);
   @NonNls public static final String ID = "GROUP_BY_PREFIXES";
   private String mySeparator;
 
@@ -95,6 +93,8 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
       }
       // find longest group prefix
       List<String> firstKey = groupStart == keys.size() ? Collections.emptyList() : keys.get(groupStart).words;
+      List<TreeElement> groupChildren = new SmartList<>();
+      groupChildren.add(keys.get(groupStart).node);
       int prefixLen = firstKey.size();
       for (int j = groupStart+1; j < i; j++) {
         List<String> prevKey = keys.get(j-1).words;
@@ -107,13 +107,14 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
             break;
           }
         }
+        groupChildren.add(keys.get(j).node);
       }
       String[] strings = firstKey.subList(0,prefixLen).toArray(new String[prefixLen]);
       String prefix = StringUtil.join(strings, mySeparator);
       String presentableName = prefix.substring(parentPrefix.length());
       presentableName = StringUtil.trimStart(presentableName, mySeparator);
       if (i - groupStart > 1) {
-        groups.add(new PropertiesPrefixGroup(children, prefix, presentableName, mySeparator));
+        groups.add(new PropertiesPrefixGroup(groupChildren, prefix, presentableName, mySeparator));
       }
       else if (groupStart != keys.size()) {
         TreeElement node = keys.get(groupStart).node;
