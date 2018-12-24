@@ -382,22 +382,12 @@ public class ResolveImportUtil {
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
     // VFS may be case insensitive on Windows, but resolve is always case sensitive (PEP 235, PY-18958), so we check name here
     if (subdir != null && subdir.getName().equals(referencedName) && (!checkForPackage || PyUtil.isPackage(subdir, containingFile))) {
-      final PsiDirectory stubPackage = PyStubPackages.findStubPackage(dir, referencedName, checkForPackage, withoutStubs);
-
-      if (stubPackage == null || PyStubPackages.stubPackageIsPartial(stubPackage)) {
-        result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, PyStubPackages.transferStubPackageMarker(dir, subdir)));
-      }
-
-      if (stubPackage != null) {
-        result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, stubPackage));
-      }
+      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, PyStubPackages.transferStubPackageMarker(dir, subdir)));
     }
 
-    if (subdir == null) {
-      final PsiDirectory stubPackage = PyStubPackages.findStubPackage(dir, referencedName, checkForPackage, withoutStubs);
-      if (stubPackage != null) {
-        result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, stubPackage));
-      }
+    final PsiDirectory stubPackage = PyStubPackages.findStubPackage(dir, referencedName, checkForPackage, withoutStubs);
+    if (stubPackage != null) {
+      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, stubPackage));
     }
 
     final PsiFile module = findPyFileInDir(dir, referencedName, withoutStubs);
