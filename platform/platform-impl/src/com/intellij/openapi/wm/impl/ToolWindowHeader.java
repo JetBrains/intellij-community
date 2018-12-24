@@ -7,8 +7,6 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -328,8 +326,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     public void actionPerformed(@NotNull AnActionEvent e) {
       final InputEvent inputEvent = e.getInputEvent();
       final ActionPopupMenu popupMenu =
-        ((ActionManagerImpl)ActionManager.getInstance())
-          .createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, myGearProducer.get(), new MenuItemPresentationFactory());
+        ActionManager.getInstance().createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, myGearProducer.get());
 
       int x = 0;
       int y = 0;
