@@ -5,11 +5,11 @@ package com.intellij.ide.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.options.ConfigurableEP;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.JdomKt;
 import org.jdom.Element;
 
-public class ConfigurableExtensionTest extends PlatformTestCase {
+public class ConfigurableExtensionTest extends LightPlatformTestCase {
   public void testDeserialize() throws Exception {
     final Element element = JdomKt.loadElement(
       "<projectConfigurable instance=\"com.intellij.javaee.ExternalResourceConfigurable\" key=\"display.name.edit.external.resource\" bundle=\"messages.XmlBundle\">\n" +
