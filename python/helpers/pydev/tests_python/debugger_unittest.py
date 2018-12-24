@@ -9,6 +9,7 @@ except ImportError:
 import re
 import socket
 import subprocess
+import sys
 import threading
 import time
 import traceback
@@ -107,6 +108,8 @@ IS_CPYTHON = platform.python_implementation() == 'CPython'
 IS_IRONPYTHON = platform.python_implementation() == 'IronPython'
 IS_JYTHON = platform.python_implementation() == 'Jython'
 IS_APPVEYOR = os.environ.get('APPVEYOR', '') in ('True', 'true', '1')
+
+IS_PY37_OR_GREATER = sys.version_info >= (3, 7)
 
 try:
     from thread import start_new_thread
