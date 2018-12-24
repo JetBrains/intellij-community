@@ -6,7 +6,6 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -28,7 +27,6 @@ import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool
 import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
-import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -39,7 +37,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcsUtil.VcsUtil;
@@ -65,7 +62,6 @@ import static com.intellij.util.ArrayUtil.toObjectArray;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
-import static com.intellij.util.ui.JBUI.Borders.emptyRight;
 import static com.intellij.util.ui.SwingHelper.buildHtml;
 import static com.intellij.util.ui.UIUtil.*;
 import static java.util.Collections.emptyList;
@@ -104,6 +100,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final CommitContext myCommitContext;
   @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
   @NotNull private final CommitDialogChangesBrowser myBrowser;
+  @NotNull private final JComponent myBrowserBottomPanel = createHorizontalBox();
   @NotNull private final MyChangeProcessor myDiffDetails;
   @NotNull private final CommitMessage myCommitMessageArea;
   @NotNull private final CommitLegendPanel myLegend;
@@ -283,78 +280,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myDiffDetails = new MyChangeProcessor(myProject, myWorkflow.isPartialCommitEnabled());
     myCommitMessageArea = new CommitMessage(myProject, true, true, myShowVcsCommit);
-
-    JComponent browserBottomPanel = createHorizontalBox();
-    if (myWorkflow.isAlien()) {
-      myBrowser = new AlienChangeListBrowser(myProject, ((AlienCommitWorkflow)workflow).getChangeList());
-      myBrowser.getViewer().setIncludedChanges(myWorkflow.getInitiallyIncluded());
-      myBrowser.getViewer().rebuildTree();
-    }
-    else {
-      LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
-
-      MultipleLocalChangeListsBrowser browser =
-        new MultipleLocalChangeListsBrowser(myProject, true, true, myShowVcsCommit, myWorkflow.isPartialCommitEnabled()) {
-        @Override
-        protected List<? extends AnAction> createAdditionalRollbackActions() {
-          return StreamEx.of(myAffectedVcses)
-            .map(AbstractVcs::getRollbackEnvironment)
-            .nonNull()
-            .flatCollection(RollbackEnvironment::createCustomRollbackActions)
-            .toList();
-        }
-      };
-      myBrowser = browser;
-
-      CurrentBranchComponent branchComponent = new CurrentBranchComponent(myProject, myBrowser);
-      addBorder(branchComponent, emptyRight(16));
-      browserBottomPanel.add(branchComponent);
-
-      if (myWorkflow.getInitialChangeList() != null) browser.setSelectedChangeList(myWorkflow.getInitialChangeList());
-      browser.getViewer().setIncludedChanges(myWorkflow.getInitiallyIncluded());
-      browser.getViewer().rebuildTree();
-      browser.getViewer().setKeepTreeState(true);
-
-      DiffCommitMessageEditor commitMessageEditor = new DiffCommitMessageEditor(myProject, myCommitMessageArea);
-      browser.setBottomDiffComponent(commitMessageEditor);
-
-      browser.setInclusionChangedListener(() -> {
-        myHandlers.forEach(CheckinHandler::includedChangesChanged);
-        updateButtons();
-      });
-      browser.setSelectedListChangeListener(() -> {
-        updateOnListSelection();
-        updateWarning();
-      });
-
-      browser.getViewer().addSelectionListener(() -> {
-        boolean fromModelRefresh = browser.getViewer().isModelUpdateInProgress();
-        SwingUtilities.invokeLater(() -> changeDetails(fromModelRefresh));
-      });
-    }
-
+    myBrowser = myWorkflow.createBrowser();
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
-    browserBottomPanel.add(myLegend.getComponent());
-    BorderLayoutPanel topPanel = JBUI.Panels.simplePanel().addToCenter(myBrowser).addToBottom(browserBottomPanel);
-
     mySplitter = new Splitter(true);
-    mySplitter.setHonorComponentsMinimumSize(true);
-    mySplitter.setFirstComponent(topPanel);
-    mySplitter.setSecondComponent(myCommitMessageArea);
-    mySplitter.setProportion(PropertiesComponent.getInstance().getFloat(SPLITTER_PROPORTION_OPTION, SPLITTER_PROPORTION_OPTION_DEFAULT));
-
-    if (!myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
-      initComment(myWorkflow.getInitialCommitMessage());
-    }
-
     myCommitOptions = new CommitOptionsPanel(this, myHandlers, myShowVcsCommit ? myAffectedVcses : emptySet());
-    restoreState();
-
     myWarningLabel = new JBLabel();
-    myWarningLabel.setForeground(JBColor.RED);
-    myWarningLabel.setBorder(JBUI.Borders.empty(5, 5, 0, 5));
-    updateWarning();
 
     JPanel mainPanel;
     if (!myCommitOptions.isEmpty()) {
@@ -368,14 +299,33 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     JPanel rootPane = JBUI.Panels.simplePanel(mainPanel).addToBottom(myWarningLabel);
     myDetailsSplitter = createDetailsSplitter(rootPane);
-
-    init();
   }
 
   @Override
   protected void init() {
+    beforeInit();
     super.init();
     afterInit();
+  }
+
+  private void beforeInit() {
+    myBrowserBottomPanel.add(myLegend.getComponent());
+    BorderLayoutPanel topPanel = JBUI.Panels.simplePanel().addToCenter(myBrowser).addToBottom(myBrowserBottomPanel);
+
+    mySplitter.setHonorComponentsMinimumSize(true);
+    mySplitter.setFirstComponent(topPanel);
+    mySplitter.setSecondComponent(myCommitMessageArea);
+    mySplitter.setProportion(PropertiesComponent.getInstance().getFloat(SPLITTER_PROPORTION_OPTION, SPLITTER_PROPORTION_OPTION_DEFAULT));
+
+    if (!myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
+      initComment(myWorkflow.getInitialCommitMessage());
+    }
+
+    restoreState();
+
+    myWarningLabel.setForeground(JBColor.RED);
+    myWarningLabel.setBorder(JBUI.Borders.empty(5, 5, 0, 5));
+    updateWarning();
   }
 
   private void afterInit() {
@@ -502,7 +452,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (showDetails) {
       myDetailsSplitter.initOn();
     }
-    SwingUtilities.invokeLater(() -> changeDetails(false));
+    changeDetails(false);
   }
 
   private void updateOnListSelection() {
@@ -1061,6 +1011,31 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
+  CommitDialogChangesBrowser getBrowser() {
+    return myBrowser;
+  }
+
+  @NotNull
+  CommitMessage getCommitMessageComponent() {
+    return myCommitMessageArea;
+  }
+
+  @NotNull
+  JComponent getBrowserBottomPanel() {
+    return myBrowserBottomPanel;
+  }
+
+  void inclusionChanged() {
+    myHandlers.forEach(CheckinHandler::includedChangesChanged);
+    updateButtons();
+  }
+
+  void selectedChangeListChanged() {
+    updateOnListSelection();
+    updateWarning();
+  }
+
+  @NotNull
   static String getExecutorPresentableText(@NotNull CommitExecutor executor) {
     return trimEllipsis(removeMnemonic(executor.getActionText()));
   }
@@ -1107,23 +1082,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  private static class DiffCommitMessageEditor extends CommitMessage implements Disposable {
-    DiffCommitMessageEditor(@NotNull Project project, @NotNull CommitMessage commitMessage) {
-      super(project);
-      getEditorField().setDocument(commitMessage.getEditorField().getDocument());
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      // we don't want to be squeezed to one line
-      return new JBDimension(400, 120);
-    }
-  }
-
-  private void changeDetails(boolean fromModelRefresh) {
-    if (myDetailsSplitter.isOn()) {
-      myDiffDetails.refresh(fromModelRefresh);
-    }
+  void changeDetails(boolean fromModelRefresh) {
+    SwingUtilities.invokeLater(() -> {
+      if (myDetailsSplitter.isOn()) {
+        myDiffDetails.refresh(fromModelRefresh);
+      }
+    });
   }
 
   private class MyChangeProcessor extends ChangeViewDiffRequestProcessor {

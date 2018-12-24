@@ -18,4 +18,13 @@ class AlienCommitWorkflow(val vcs: AbstractVcs<*>, changeListName: String, chang
   override fun doRunBeforeCommitChecks(changeList: LocalChangeList, checks: Runnable) = checks.run()
 
   override fun canExecute(executor: CommitExecutor, changes: Collection<Change>) = true
+
+  override fun createBrowser() = AlienChangeListBrowser(project, changeList)
+
+  override fun initDialog(dialog: CommitChangeListDialog) {
+    val browser = dialog.browser
+
+    browser.viewer.setIncludedChanges(initiallyIncluded)
+    browser.viewer.rebuildTree()
+  }
 }

@@ -16,17 +16,23 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.getExecutorPresentableText
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
+import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.NullableFunction
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.Borders.emptyRight
+import com.intellij.util.ui.UIUtil.addBorder
+import java.awt.Dimension
 
 private val LOG = logger<DialogCommitWorkflow>()
 private val TASK_TITLE = message("commit.dialog.title")
 
 open class DialogCommitWorkflow(val project: Project,
                                 val initiallyIncluded: Collection<*>,
-                                val initialChangeList: LocalChangeList? = null,
+                                private val initialChangeList: LocalChangeList? = null,
                                 val executors: List<CommitExecutor> = emptyList(),
                                 val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
                                 val vcsToCommit: AbstractVcs<*>? = null,
@@ -38,6 +44,8 @@ open class DialogCommitWorkflow(val project: Project,
 
   fun showDialog(): Boolean {
     val dialog = CommitChangeListDialog(this)
+    initDialog(dialog)
+    dialog.init()
     return dialog.showAndGet()
   }
 
@@ -71,4 +79,40 @@ open class DialogCommitWorkflow(val project: Project,
                               additionalData, resultHandler, isAlien, vcsToCommit)
     helper.doCommit()
   }
+
+  protected open fun createBrowser(): CommitDialogChangesBrowser =
+    object : MultipleLocalChangeListsBrowser(project, true, true, isDefaultCommitEnabled, isPartialCommitEnabled) {
+      override fun createAdditionalRollbackActions() = affectedVcses.mapNotNull { it.rollbackEnvironment }.flatMap { it.createCustomRollbackActions() }
+    }
+
+  protected open fun initDialog(dialog: CommitChangeListDialog) {
+    val browser = dialog.browser as MultipleLocalChangeListsBrowser
+
+    LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
+
+    val branchComponent = CurrentBranchComponent(project, browser)
+    addBorder(branchComponent, emptyRight(16))
+    dialog.browserBottomPanel.add(branchComponent)
+
+    if (initialChangeList != null) browser.selectedChangeList = initialChangeList
+    browser.viewer.setIncludedChanges(initiallyIncluded)
+    browser.viewer.rebuildTree()
+    browser.viewer.setKeepTreeState(true)
+
+    val commitMessageEditor = DiffCommitMessageEditor(project, dialog.commitMessageComponent)
+    browser.setBottomDiffComponent(commitMessageEditor)
+
+    browser.setInclusionChangedListener { dialog.inclusionChanged() }
+    browser.setSelectedListChangeListener { dialog.selectedChangeListChanged() }
+    browser.viewer.addSelectionListener { dialog.changeDetails(browser.viewer.isModelUpdateInProgress) }
+  }
+}
+
+private class DiffCommitMessageEditor(project: Project, commitMessage: CommitMessage) : CommitMessage(project) {
+  init {
+    editorField.document = commitMessage.editorField.document
+  }
+
+  // we don't want to be squeezed to one line
+  override fun getPreferredSize(): Dimension = JBUI.size(400, 120)
 }
