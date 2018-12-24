@@ -8,6 +8,7 @@ import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Objects;
 
 /**
  * @author Alexander Lobas
@@ -39,8 +40,7 @@ class PluginLogoIcon implements PluginLogoIconProvider {
     myPluginLogoError_40 = setSouthWest(logo_40, AllIcons.Plugins.ModifierInvalid);
     myPluginLogoJBError_40 = setSouthEastWest(logo_40, AllIcons.Plugins.ModifierJBLogo, AllIcons.Plugins.ModifierInvalid);
 
-    Icon disabledJBLogo = IconLoader.getDisabledIcon(AllIcons.Plugins.ModifierJBLogo);
-    assert disabledJBLogo != null;
+    Icon disabledJBLogo = getDisabledIcon(AllIcons.Plugins.ModifierJBLogo);
 
     myPluginLogoDisabled_40 = logoDisabled_40;
     myPluginLogoDisabledJB_40 = setSouthEast(logoDisabled_40, disabledJBLogo);
@@ -55,8 +55,7 @@ class PluginLogoIcon implements PluginLogoIconProvider {
     myPluginLogoError_80 = setSouthWest(logo_80, errorLogo2x);
     myPluginLogoJBError_80 = setSouthEastWest(logo_80, jbLogo2x, errorLogo2x);
 
-    Icon disabledJBLogo2x = IconLoader.getDisabledIcon(jbLogo2x);
-    assert disabledJBLogo2x != null;
+    Icon disabledJBLogo2x = getDisabledIcon(jbLogo2x);
 
     myPluginLogoDisabled_80 = logoDisabled_80;
     myPluginLogoDisabledJB_80 = setSouthEast(logoDisabled_80, disabledJBLogo2x);
@@ -72,6 +71,11 @@ class PluginLogoIcon implements PluginLogoIconProvider {
     layeredIcon.setIcon(southEast, 1, SwingConstants.SOUTH_EAST);
 
     return layeredIcon;
+  }
+
+  @NotNull
+  protected Icon getDisabledIcon(Icon icon) {
+    return Objects.requireNonNull(IconLoader.getDisabledIcon(icon));
   }
 
   @NotNull

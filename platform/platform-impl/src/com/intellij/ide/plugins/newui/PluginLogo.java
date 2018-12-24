@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
@@ -21,15 +22,16 @@ import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.ScaleContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -142,11 +144,13 @@ public class PluginLogo {
 
         File libFile = new File(path, "lib");
         if (!libFile.exists() || !libFile.isDirectory()) {
+          putIcon(idPlugin, lazyIcon, null, null);
           return;
         }
 
         File[] files = libFile.listFiles();
         if (files == null || files.length == 0) {
+          putIcon(idPlugin, lazyIcon, null, null);
           return;
         }
 
@@ -162,6 +166,7 @@ public class PluginLogo {
       else {
         tryLoadJarIcons(idPlugin, lazyIcon, path, true);
       }
+      putIcon(idPlugin, lazyIcon, null, null);
       return;
     }
 
@@ -288,16 +293,69 @@ public class PluginLogo {
   @Nullable
   private static PluginLogoIconProvider loadFileIcon(@NotNull ThrowableComputable<InputStream, IOException> provider) {
     try {
-      ScaleContext ctx = ScaleContext.create();
-      Icon logo40 = new JBImageIcon(SVGLoader.loadHiDPI(null, provider.compute(), ctx, 40, 40));
-      Icon logo80 = new JBImageIcon(SVGLoader.loadHiDPI(null, provider.compute(), ctx, 80, 80));
+      JBUI.ScaleContext context = JBUI.ScaleContext.create();
+      Icon logo40 = getHiDPI(context, SVGLoader.loadHiDPI(null, provider.compute(), context, 40, 40));
+      Icon logo80 = getHiDPI(context, SVGLoader.loadHiDPI(null, provider.compute(), context, 80, 80));
 
-      return new PluginLogoIcon(logo40, Objects.requireNonNull(IconLoader.getDisabledIcon(logo40)),
-                                logo80, Objects.requireNonNull(IconLoader.getDisabledIcon(logo80)));
+      return new PluginLogoIcon(logo40, getHiDPI(context, Objects.requireNonNull(IconLoader.getDisabledIcon(logo40))),
+                                logo80, getHiDPI(context, Objects.requireNonNull(IconLoader.getDisabledIcon(logo80)))) {
+        @NotNull
+        @Override
+        protected Icon getDisabledIcon(Icon icon) {
+          return getHiDPI(context, super.getDisabledIcon(icon));
+        }
+      };
     }
     catch (IOException e) {
       LOG.error(e);
       return null;
     }
+  }
+
+  @NotNull
+  private static Icon getHiDPI(@NotNull JBUI.ScaleContext context, @NotNull Object source) {
+    if (source instanceof ImageIcon) {
+      Image image = ((ImageIcon)source).getImage();
+      if (image instanceof JBHiDPIScaledImage) {
+        return wrapHiDPI(context, (JBHiDPIScaledImage)image);
+      }
+      return (Icon)source;
+    }
+    if (source instanceof JBHiDPIScaledImage) {
+      return wrapHiDPI(context, (JBHiDPIScaledImage)source);
+    }
+    if (source instanceof Image) {
+      return new JBImageIcon((Image)source);
+    }
+    return (Icon)source;
+  }
+
+  @NotNull
+  private static Icon wrapHiDPI(@NotNull JBUI.ScaleContext context, @NotNull JBHiDPIScaledImage image) {
+    return new JBImageIcon(image) {
+      final double myBase = context.getScale(JBUI.ScaleType.USR_SCALE);
+
+      {
+        context.addUpdateListener(() -> setImage(image.scale(context.getScale(JBUI.ScaleType.USR_SCALE) / myBase)));
+      }
+
+      @Override
+      public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
+        context.update();
+        super.paintIcon(c, g, x, y);
+      }
+
+      @Override
+      public int getIconWidth() {
+        context.update();
+        return super.getIconWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        context.update();
+        return super.getIconHeight();
+      }
+    };
   }
 }
