@@ -426,7 +426,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     PsiVariable variable = VariableExtractor
       .introduce(myProject, myExpr, myEditor, myChosenAnchor.getElement(), getOccurrences(), mySettings);
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
-    if (variable instanceof PsiField) {
+    if (variable instanceof PsiField || variable instanceof PsiResourceVariable) {
       myPointer = smartPointerManager.createSmartPsiElementPointer(variable);
     }
     else {

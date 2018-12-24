@@ -28,6 +28,7 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -387,7 +388,8 @@ public class TooBroadScopeInspection extends BaseInspection {
       CommentTracker tracker = new CommentTracker();
       if (commonParent instanceof PsiTryStatement) {
         PsiElement resourceReference = referenceElement.getParent();
-        PsiResourceVariable resourceVariable = createResourceVariable(project, variable, initializer != null ? tracker.markUnchanged(initializer) : null);
+        PsiResourceVariable resourceVariable = RefactoringUtil
+          .createResourceVariable(project, variable, initializer != null ? tracker.markUnchanged(initializer) : null);
         newDeclaration = resourceReference.getParent().addBefore(resourceVariable, resourceReference);
         resourceReference.delete();
       }
@@ -430,23 +432,6 @@ public class TooBroadScopeInspection extends BaseInspection {
       if (isOnTheFly()) {
         HighlightUtils.highlightElement(newDeclaration);
       }
-    }
-
-    private PsiResourceVariable createResourceVariable(@NotNull Project project, PsiLocalVariable variable, PsiExpression initializer) {
-      PsiTryStatement tryStatement = (PsiTryStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("try (X x = null){}", variable);
-      PsiResourceList resourceList = tryStatement.getResourceList();
-      assert resourceList != null;
-      PsiResourceVariable resourceVariable = (PsiResourceVariable)resourceList.iterator().next();
-      resourceVariable.getTypeElement().replace(variable.getTypeElement());
-      PsiIdentifier nameIdentifier = resourceVariable.getNameIdentifier();
-      assert nameIdentifier != null;
-      PsiIdentifier oldIdentifier = variable.getNameIdentifier();
-      assert oldIdentifier != null;
-      nameIdentifier.replace(oldIdentifier);
-      if (initializer != null) {
-        resourceVariable.setInitializer(initializer);
-      }
-      return resourceVariable;
     }
 
     private void removeOldVariable(@NotNull PsiVariable variable, CommentTracker tracker) {

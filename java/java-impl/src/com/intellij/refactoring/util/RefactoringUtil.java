@@ -1023,6 +1023,23 @@ public class RefactoringUtil {
     return null;
   }
 
+  public static PsiResourceVariable createResourceVariable(@NotNull Project project, PsiLocalVariable variable, PsiExpression initializer) {
+    PsiTryStatement tryStatement = (PsiTryStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("try (X x = null){}", variable);
+    PsiResourceList resourceList = tryStatement.getResourceList();
+    assert resourceList != null;
+    PsiResourceVariable resourceVariable = (PsiResourceVariable)resourceList.iterator().next();
+    resourceVariable.getTypeElement().replace(variable.getTypeElement());
+    PsiIdentifier nameIdentifier = resourceVariable.getNameIdentifier();
+    assert nameIdentifier != null;
+    PsiIdentifier oldIdentifier = variable.getNameIdentifier();
+    assert oldIdentifier != null;
+    nameIdentifier.replace(oldIdentifier);
+    if (initializer != null) {
+      resourceVariable.setInitializer(initializer);
+    }
+    return resourceVariable;
+  }
+
   public interface ImplicitConstructorUsageVisitor {
     void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor);
 

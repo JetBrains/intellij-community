@@ -275,6 +275,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
   }
 
+  public void testInsideTryWithResources() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "java.io.FileInputStream"));
+  }
+
   public void testInsideForLoop() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
   }

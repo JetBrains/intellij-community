@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
@@ -199,6 +200,12 @@ class VariableExtractor {
         }
       }
     }
+    if (anchor instanceof PsiResourceListElement) {
+      PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)declaration;
+      PsiLocalVariable localVariable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
+      PsiResourceVariable resourceVariable = RefactoringUtil.createResourceVariable(anchor.getProject(), localVariable, initializer);
+      return anchor.replace(resourceVariable);
+    }
     return anchor.getParent().addBefore(declaration, anchor);
   }
 
@@ -250,6 +257,14 @@ class VariableExtractor {
       if (PsiTreeUtil.isAncestor(anchor, ancestorCandidate, false) &&
           ReorderingUtils.canExtract(ancestorCandidate, firstOccurrence) == ThreeState.NO) {
         return firstOccurrence;
+      }
+    }
+    if (anchor instanceof PsiTryStatement && firstOccurrence != null) {
+      PsiResourceList resourceList = ((PsiTryStatement)anchor).getResourceList();
+      PsiElement parent = firstOccurrence.getParent();
+      if (resourceList != null && parent instanceof PsiResourceExpression && parent.getParent() == resourceList
+          && InheritanceUtil.isInheritor(firstOccurrence.getType(), CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE)) {
+        return parent;
       }
     }
     if (anchor.getParent() instanceof PsiSwitchLabeledRuleStatement) {
