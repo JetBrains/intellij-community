@@ -139,9 +139,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     context.ant.jar(destfile: "$targetDirectory/lib/jdkAnnotations.jar") {
       fileset(dir: "$context.paths.communityHome/java/jdkAnnotations")
     }
-    context.ant.copy(todir: "$targetDirectory/lib") {
-      fileset(file: "$context.paths.communityHome/jps/lib/optimizedFileManager.jar")
-    }
     context.ant.copy(todir: "$targetDirectory/lib/ant") {
       fileset(dir: "$context.paths.communityHome/lib/ant") {
         exclude(name: "**/src/**")

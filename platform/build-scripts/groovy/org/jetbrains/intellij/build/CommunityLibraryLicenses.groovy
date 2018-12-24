@@ -495,7 +495,6 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("KotlinTest"),
     jetbrainsLibrary("kotlinx-coroutines-jdk8"),
     jetbrainsLibrary("Maven Embedder"),
-    jetbrainsLibrary("optimizedFileManager.jar"),
     jetbrainsLibrary("precompiled_jshell-frontend"),
     jetbrainsLibrary("tcServiceMessages"),
   ] as List<LibraryLicense>
