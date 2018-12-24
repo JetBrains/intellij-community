@@ -72,6 +72,8 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     if (integer != null){
       myMaxGutterIconWidth = integer.intValue();
     }
+
+    selectionBackground = UIUtil.getListSelectionBackground(true);
   }
 
   private static boolean isSelected(JMenuItem item) {
