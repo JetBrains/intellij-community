@@ -60,8 +60,7 @@ public abstract class BaseDataReader {
             doRun();
           }
           else {
-            String threadName = Thread.currentThread().getName() + ": " + presentableName;
-            ConcurrencyUtil.runUnderThreadName(threadName, new Runnable() {
+            ConcurrencyUtil.runUnderThreadName("BaseDataReader: " + presentableName, new Runnable() {
               @Override
               public void run() {
                 doRun();
