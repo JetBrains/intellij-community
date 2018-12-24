@@ -93,13 +93,13 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testBytecodeModification() {
-    unittests("tests_python/test_bytecode_modification.py", Sets.newHashSet("python36", "pytest"));
+    unittests("tests_python/test_bytecode_modification.py", Sets.newHashSet("python3.6", "pytest"));
   }
 
   @Test
   @Staging
   public void testFrameEvalAndTracing() {
-    unittests("tests_python/test_frame_eval_and_tracing.py", Sets.newHashSet("python36"), true);
+    unittests("tests_python/test_frame_eval_and_tracing.py", Sets.newHashSet("python3.6"), true);
   }
 
   private void pytests(final String script, @Nullable Set<String> tags) {
@@ -1119,7 +1119,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron", "-python36");
+        return ImmutableSet.of("-iron", "-python3.6");
       }
     });
   }
