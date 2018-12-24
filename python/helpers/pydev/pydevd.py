@@ -194,6 +194,12 @@ class TrackedLock(object):
         self._lock.release()
         self._tls.is_lock_acquired = False
 
+    def __enter__(self):
+        self.acquire()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.release()
+
     def is_acquired_by_current_thread(self):
         return self._tls.is_lock_acquired
 

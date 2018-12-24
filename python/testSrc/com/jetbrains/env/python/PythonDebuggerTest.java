@@ -113,7 +113,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
                                       @NotNull String stdout,
                                       @NotNull String stderr,
-                                      @NotNull String all) {
+                                      @NotNull String all,
+                                      int exitCode) {
         runner.assertNoFailures();
       }
 
