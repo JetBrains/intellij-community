@@ -379,7 +379,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
       @NotNull
       @Override
-      protected Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> filePaths) {
+      protected Set<VirtualFile> getVcsRoots(@NotNull Collection<? extends FilePath> filePaths) {
         return HgUtil.hgRoots(myProject, filePaths);
       }
 

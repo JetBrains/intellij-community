@@ -25,7 +25,7 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
   public abstract boolean isInUpdate();
 
   @NotNull
-  public abstract Collection<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes);
+  public abstract Collection<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes);
 
   @NotNull
   public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data);

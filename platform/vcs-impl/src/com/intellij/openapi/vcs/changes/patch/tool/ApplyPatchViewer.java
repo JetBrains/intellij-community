@@ -483,7 +483,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
 
     @Override
-    protected void apply(@NotNull List<ApplyPatchChange> changes) {
+    protected void apply(@NotNull List<? extends ApplyPatchChange> changes) {
       for (int i = changes.size() - 1; i >= 0; i--) {
         replaceChange(changes.get(i));
       }
@@ -505,7 +505,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
 
     @Override
-    protected void apply(@NotNull List<ApplyPatchChange> changes) {
+    protected void apply(@NotNull List<? extends ApplyPatchChange> changes) {
       for (ApplyPatchChange change : changes) {
         markChangeResolved(change);
       }
@@ -582,7 +582,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     protected abstract boolean isEnabled(@NotNull ApplyPatchChange change);
 
     @CalledWithWriteLock
-    protected abstract void apply(@NotNull List<ApplyPatchChange> changes);
+    protected abstract void apply(@NotNull List<? extends ApplyPatchChange> changes);
   }
 
   private class ApplyNonConflictsAction extends DumbAwareAction {

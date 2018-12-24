@@ -108,7 +108,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  override fun removeIgnoredFiles(files: MutableCollection<FilePath>): MutableList<FilePath> {
+  override fun removeIgnoredFiles(files: MutableCollection<out FilePath>): MutableList<FilePath> {
     val removedIgnoredFiles = arrayListOf<FilePath>()
     SET_LOCK.write {
       val iter = ignoredSet.iterator()

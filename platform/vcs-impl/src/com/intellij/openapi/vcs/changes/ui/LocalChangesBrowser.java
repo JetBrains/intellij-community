@@ -101,7 +101,7 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
     myToggleChangeDiffAction.getTemplatePresentation().setText(title);
   }
 
-  public void setChangeLists(@Nullable List<LocalChangeList> changeLists) {
+  public void setChangeLists(@Nullable List<? extends LocalChangeList> changeLists) {
     myChangeListNames = changeLists != null ? ContainerUtil.map2Set(changeLists, LocalChangeList::getName) : null;
     myViewer.rebuildTree();
   }

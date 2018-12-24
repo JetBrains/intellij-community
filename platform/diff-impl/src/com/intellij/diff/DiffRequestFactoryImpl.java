@@ -218,7 +218,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                          @NotNull List<String> textContents,
                                          @Nullable String title,
                                          @NotNull List<String> titles,
-                                         @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException {
+                                         @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     if (textContents.size() != 3) throw new IllegalArgumentException();
     if (titles.size() != 3) throw new IllegalArgumentException();
 
@@ -242,7 +242,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                          @NotNull List<byte[]> byteContents,
                                          @Nullable String title,
                                          @NotNull List<String> contentTitles,
-                                         @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException {
+                                         @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     if (byteContents.size() != 3) throw new IllegalArgumentException();
     if (contentTitles.size() != 3) throw new IllegalArgumentException();
 
@@ -261,7 +261,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                                  @NotNull List<byte[]> byteContents,
                                                  @Nullable String title,
                                                  @NotNull List<String> contentTitles,
-                                                 @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException {
+                                                 @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     if (byteContents.size() != 3) throw new IllegalArgumentException();
     if (contentTitles.size() != 3) throw new IllegalArgumentException();
 
@@ -287,7 +287,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                                @NotNull List<byte[]> byteContents,
                                                @Nullable String title,
                                                @NotNull List<String> contentTitles,
-                                               @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException {
+                                               @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     if (byteContents.size() != 3) throw new IllegalArgumentException();
     if (contentTitles.size() != 3) throw new IllegalArgumentException();
 
@@ -312,8 +312,8 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   @Override
   public MergeRequest createMergeRequestFromFiles(@Nullable Project project,
                                                   @NotNull VirtualFile output,
-                                                  @NotNull List<VirtualFile> fileContents,
-                                                  @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException {
+                                                  @NotNull List<? extends VirtualFile> fileContents,
+                                                  @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     String title = "Merge " + output.getPresentableUrl();
     List<String> titles = ContainerUtil.list("Your Version", "Base Version", "Their Version");
     return createMergeRequestFromFiles(project, output, fileContents, title, titles, applyCallback);
@@ -323,10 +323,10 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   @Override
   public MergeRequest createMergeRequestFromFiles(@Nullable Project project,
                                                   @NotNull VirtualFile output,
-                                                  @NotNull List<VirtualFile> fileContents,
+                                                  @NotNull List<? extends VirtualFile> fileContents,
                                                   @Nullable String title,
                                                   @NotNull List<String> contentTitles,
-                                                  @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException {
+                                                  @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     if (fileContents.size() != 3) throw new IllegalArgumentException();
     if (contentTitles.size() != 3) throw new IllegalArgumentException();
 
@@ -342,10 +342,10 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   @Override
   public TextMergeRequest createTextMergeRequestFromFiles(@Nullable Project project,
                                                           @NotNull VirtualFile output,
-                                                          @NotNull List<VirtualFile> fileContents,
+                                                          @NotNull List<? extends VirtualFile> fileContents,
                                                           @Nullable String title,
                                                           @NotNull List<String> contentTitles,
-                                                          @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException {
+                                                          @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     List<byte[]> byteContents = new ArrayList<>(3);
     for (VirtualFile file : fileContents) {
       try {
@@ -362,10 +362,10 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   @NotNull
   public MergeRequest createBinaryMergeRequestFromFiles(@Nullable Project project,
                                                         @NotNull VirtualFile output,
-                                                        @NotNull List<VirtualFile> fileContents,
+                                                        @NotNull List<? extends VirtualFile> fileContents,
                                                         @Nullable String title,
                                                         @NotNull List<String> contentTitles,
-                                                        @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException {
+                                                        @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     if (fileContents.size() != 3) throw new IllegalArgumentException();
     if (contentTitles.size() != 3) throw new IllegalArgumentException();
 

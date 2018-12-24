@@ -64,15 +64,15 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   }
 
   public static boolean addUnversioned(@NotNull Project project,
-                                       @NotNull List<VirtualFile> files,
+                                       @NotNull List<? extends VirtualFile> files,
                                        @Nullable ChangesBrowserBase browser) {
     return addUnversioned(project, files, browser, null);
   }
 
   protected static boolean addUnversioned(@NotNull Project project,
-                                          @NotNull List<VirtualFile> files,
+                                          @NotNull List<? extends VirtualFile> files,
                                           @Nullable ChangesBrowserBase browser,
-                                          @Nullable PairConsumer<ProgressIndicator, List<VcsException>> additionalTask) {
+                                          @Nullable PairConsumer<? super ProgressIndicator, ? super List<VcsException>> additionalTask) {
     if (files.isEmpty()) return true;
 
     LocalChangeList targetChangeList = browser instanceof CommitDialogChangesBrowser
@@ -111,13 +111,13 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
   public static boolean addUnversionedFilesToVcs(@NotNull Project project,
                                                  @NotNull LocalChangeList list,
-                                                 @NotNull List<VirtualFile> files) {
+                                                 @NotNull List<? extends VirtualFile> files) {
     return addUnversionedFilesToVcs(project, list, files, null, null);
   }
 
   protected static boolean addUnversionedFilesToVcs(@NotNull Project project,
                                                     @NotNull LocalChangeList list,
-                                                    @NotNull List<VirtualFile> files,
+                                                    @NotNull List<? extends VirtualFile> files,
                                                     @Nullable Consumer<? super List<Change>> changesConsumer,
                                                     @Nullable PairConsumer<? super ProgressIndicator, ? super List<VcsException>> additionalTask) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
@@ -184,9 +184,9 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
   private static void addUnversionedFilesToVcs(@NotNull Project project,
                                                @NotNull AbstractVcs vcs,
-                                               @NotNull List<VirtualFile> items,
-                                               @NotNull Set<VirtualFile> allProcessedFiles,
-                                               @NotNull List<VcsException> exceptions) {
+                                               @NotNull List<? extends VirtualFile> items,
+                                               @NotNull Set<? super VirtualFile> allProcessedFiles,
+                                               @NotNull List<? super VcsException> exceptions) {
     CheckinEnvironment environment = vcs.getCheckinEnvironment();
     if (environment == null) return;
 

@@ -739,8 +739,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   private static Runnable createAdditionRunnable(final Project project,
                                final SvnVcs vcs,
                                final Map<VirtualFile, File> copyFromMap,
-                               final Collection<VirtualFile> filesToProcess,
-                               final List<VcsException> exceptions) {
+                               final Collection<? extends VirtualFile> filesToProcess,
+                               final List<? super VcsException> exceptions) {
     return () -> {
       for (VirtualFile file : filesToProcess) {
         final File ioFile = virtualToIoFile(file);
@@ -808,9 +808,9 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
   private void fillAddedFiles(Project project,
                               SvnVcs vcs,
-                              List<VirtualFile> addedVFiles,
+                              List<? super VirtualFile> addedVFiles,
                               Map<VirtualFile, File> copyFromMap,
-                              Set<VirtualFile> recursiveItems) {
+                              Set<? super VirtualFile> recursiveItems) {
     final Collection<AddedFileInfo> addedFileInfos = myAddedFiles.remove(project);
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 
@@ -879,8 +879,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
   private static Runnable createDeleteRunnable(final Project project,
                                         final SvnVcs vcs,
-                                        final Collection<FilePath> filesToProcess,
-                                        final List<VcsException> exceptions) {
+                                        final Collection<? extends FilePath> filesToProcess,
+                                        final List<? super VcsException> exceptions) {
     return () -> {
       for (FilePath file : filesToProcess) {
         VirtualFile vFile = file.getVirtualFile();  // for deleted directories
@@ -902,10 +902,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     };
   }
 
-  private static Collection<FilePath> promptAboutDeletion(List<Pair<FilePath, WorkingCopyFormat>> deletedFiles,
-                                                   SvnVcs vcs,
-                                                   VcsShowConfirmationOption.Value value,
-                                                   AbstractVcsHelper vcsHelper) {
+  private static Collection<FilePath> promptAboutDeletion(List<? extends Pair<FilePath, WorkingCopyFormat>> deletedFiles,
+                                                          SvnVcs vcs,
+                                                          VcsShowConfirmationOption.Value value,
+                                                          AbstractVcsHelper vcsHelper) {
     Collection<FilePath> filesToProcess;
     if (value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       filesToProcess = map(deletedFiles, Functions.pairFirst());
@@ -928,7 +928,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     return filesToProcess;
   }
 
-  private void fillDeletedFiles(Project project, List<Pair<FilePath, WorkingCopyFormat>> deletedFiles, Collection<FilePath> deleteAnyway)
+  private void fillDeletedFiles(Project project, List<? super Pair<FilePath, WorkingCopyFormat>> deletedFiles, Collection<? super FilePath> deleteAnyway)
     throws VcsException {
     final SvnVcs vcs = SvnVcs.getInstance(project);
     final Collection<File> files = myDeletedFiles.remove(project);

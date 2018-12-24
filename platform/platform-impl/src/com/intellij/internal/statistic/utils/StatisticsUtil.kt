@@ -148,12 +148,12 @@ private fun humanize(number: Int): String {
   return ms + ks + rs
 }
 
-fun <T> addIfDiffers(set: MutableSet<UsageDescriptor>, settingsBean: T, defaultSettingsBean: T,
+fun <T> addIfDiffers(set: MutableSet<in UsageDescriptor>, settingsBean: T, defaultSettingsBean: T,
                      valueFunction: (T) -> Any, featureIdPrefix: String) {
   addIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, { "$featureIdPrefix.$it" })
 }
 
-fun <T, V> addIfDiffers(set: MutableSet<UsageDescriptor>, settingsBean: T, defaultSettingsBean: T,
+fun <T, V> addIfDiffers(set: MutableSet<in UsageDescriptor>, settingsBean: T, defaultSettingsBean: T,
                         valueFunction: (T) -> V,
                         featureIdFunction: (V) -> String) {
   val value = valueFunction(settingsBean)

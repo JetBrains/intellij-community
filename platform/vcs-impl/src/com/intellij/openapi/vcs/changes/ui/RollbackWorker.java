@@ -49,19 +49,19 @@ public class RollbackWorker {
     myExceptions = new ArrayList<>(0);
   }
 
-  public void doRollback(@NotNull Collection<Change> changes,
+  public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles) {
     doRollback(changes, deleteLocallyAddedFiles, null, null);
   }
 
-  public void doRollback(@NotNull Collection<Change> changes,
+  public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles,
                          @Nullable Runnable afterVcsRefreshInAwt,
                          @Nullable String localHistoryActionName) {
     doRollback(changes, deleteLocallyAddedFiles, true, afterVcsRefreshInAwt, localHistoryActionName);
   }
 
-  public void doRollback(@NotNull Collection<Change> changes,
+  public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles,
                          boolean rollbackRangesExcludedFromCommit,
                          @Nullable Runnable afterVcsRefreshInAwt,
@@ -123,7 +123,7 @@ public class RollbackWorker {
   }
 
   @NotNull
-  private List<Change> revertPartialChanges(@NotNull Collection<Change> changes, boolean rollbackRangesExcludedFromCommit) {
+  private List<Change> revertPartialChanges(@NotNull Collection<? extends Change> changes, boolean rollbackRangesExcludedFromCommit) {
     return PartialChangesUtil.processPartialChanges(
       myProject, changes, true,
       (partialChanges, tracker) -> {
@@ -141,12 +141,12 @@ public class RollbackWorker {
   }
 
   private class MyRollbackRunnable implements Runnable {
-    private final Collection<Change> myChanges;
+    private final Collection<? extends Change> myChanges;
     private final boolean myDeleteLocallyAddedFiles;
     private final Runnable myAfterRefresh;
     private ProgressIndicator myIndicator;
 
-    private MyRollbackRunnable(final Collection<Change> changes,
+    private MyRollbackRunnable(final Collection<? extends Change> changes,
                                final boolean deleteLocallyAddedFiles,
                                final Runnable afterRefresh) {
       myChanges = changes;
@@ -206,7 +206,7 @@ public class RollbackWorker {
       AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, myOperationName);
     }
 
-    private void doRefresh(final Project project, final List<Change> changesToRefresh) {
+    private void doRefresh(final Project project, final List<? extends Change> changesToRefresh) {
       final Runnable forAwtThread = () -> {
         final VcsDirtyScopeManager manager = project.getComponent(VcsDirtyScopeManager.class);
         VcsGuess vcsGuess = new VcsGuess(myProject);
@@ -247,7 +247,7 @@ public class RollbackWorker {
       return vcsGuess.getVcsForDirty(path) != null;
     }
 
-    private void deleteAddedFilesLocally(final List<Change> changes) {
+    private void deleteAddedFilesLocally(final List<? extends Change> changes) {
       if (myIndicator != null) {
         myIndicator.setText("Deleting added files locally...");
         myIndicator.setFraction(0);

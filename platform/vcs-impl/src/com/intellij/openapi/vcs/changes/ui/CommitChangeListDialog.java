@@ -103,8 +103,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final boolean myIsAlien;
   @Nullable private final CommitResultHandler myResultHandler;
 
-  @NotNull private final Set<AbstractVcs> myAffectedVcses;
-  @NotNull private final List<CommitExecutor> myExecutors;
+  @NotNull private final Set<? extends AbstractVcs> myAffectedVcses;
+  @NotNull private final List<? extends CommitExecutor> myExecutors;
   @NotNull private final List<CheckinHandler> myHandlers = newArrayList();
   private final boolean myAllOfDefaultChangeListChangesIncluded;
   @NotNull private final String myCommitActionName;
@@ -174,7 +174,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull Collection<? extends Change> changes,
                                       @Nullable LocalChangeList initialSelection,
-                                      @NotNull List<CommitExecutor> executors,
+                                      @NotNull List<? extends CommitExecutor> executors,
                                       boolean showVcsCommit,
                                       @Nullable String comment,
                                       @Nullable CommitResultHandler customResultHandler) {
@@ -184,7 +184,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull List<Change> changes,
                                       @Nullable LocalChangeList initialSelection,
-                                      @NotNull List<CommitExecutor> executors,
+                                      @NotNull List<? extends CommitExecutor> executors,
                                       boolean showVcsCommit,
                                       @Nullable String comment,
                                       @Nullable CommitResultHandler customResultHandler,
@@ -197,7 +197,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                       @NotNull List<Change> changes,
                                       @NotNull Collection<?> included,
                                       @Nullable LocalChangeList initialSelection,
-                                      @NotNull List<CommitExecutor> executors,
+                                      @NotNull List<? extends CommitExecutor> executors,
                                       boolean showVcsCommit,
                                       @Nullable AbstractVcs forceCommitInVcs,
                                       @Nullable String comment,
@@ -226,7 +226,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     for (BaseCheckinHandlerFactory factory : getCheckInFactories(project)) {
       BeforeCheckinDialogHandler handler = factory.createSystemReadyHandler(project);
-      if (handler != null && !handler.beforeCommitDialogShown(project, changes, executors, showVcsCommit)) {
+      if (handler != null && !handler.beforeCommitDialogShown(project, changes, (Iterable<CommitExecutor>)executors, showVcsCommit)) {
         return false;
       }
     }
@@ -268,11 +268,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                  @NotNull List<Change> changes,
                                  @NotNull Collection<?> included,
                                  @Nullable LocalChangeList initialSelection,
-                                 @NotNull List<CommitExecutor> executors,
+                                 @NotNull List<? extends CommitExecutor> executors,
                                  boolean showVcsCommit,
                                  @NotNull LocalChangeList defaultChangeList,
-                                 @NotNull List<LocalChangeList> changeLists,
-                                 @NotNull Set<AbstractVcs> affectedVcses,
+                                 @NotNull List<? extends LocalChangeList> changeLists,
+                                 @NotNull Set<? extends AbstractVcs> affectedVcses,
                                  @Nullable AbstractVcs forceCommitInVcs,
                                  boolean isAlien,
                                  @Nullable String comment,
@@ -482,7 +482,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
-  private List<CommitExecutorAction> createExecutorActions(@NotNull List<CommitExecutor> executors) {
+  private List<CommitExecutorAction> createExecutorActions(@NotNull List<? extends CommitExecutor> executors) {
     if(executors.isEmpty()) return emptyList();
     List<CommitExecutorAction> result = newArrayList();
 
@@ -500,7 +500,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @Nullable
-  private static String getHelpId(@NotNull List<CommitExecutor> executors) {
+  private static String getHelpId(@NotNull List<? extends CommitExecutor> executors) {
     return StreamEx.of(executors).select(HelpIdProvider.class).map(HelpIdProvider::getHelpId).nonNull().findFirst().orElse(null);
   }
 
@@ -776,7 +776,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
-  private static String getCommitActionName(@NotNull Collection<AbstractVcs> affectedVcses) {
+  private static String getCommitActionName(@NotNull Collection<? extends AbstractVcs> affectedVcses) {
     Set<String> names = map2SetNotNull(affectedVcses, vcs -> {
       CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
       return checkinEnvironment != null ? checkinEnvironment.getCheckinOperationName() : null;
@@ -958,12 +958,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
-  public Set<AbstractVcs> getAffectedVcses() {
+  public Set<? extends AbstractVcs> getAffectedVcses() {
     return myShowVcsCommit ? myAffectedVcses : emptySet();
   }
 
   @NotNull
-  public List<CommitExecutor> getExecutors() {
+  public List<? extends CommitExecutor> getExecutors() {
     return myExecutors;
   }
 
@@ -1215,7 +1215,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     @NotNull
-    private List<Wrapper> wrap(@NotNull Collection<Change> changes, @NotNull Collection<VirtualFile> unversioned) {
+    private List<Wrapper> wrap(@NotNull Collection<? extends Change> changes, @NotNull Collection<? extends VirtualFile> unversioned) {
       return ContainerUtil.concat(map(changes, ChangeWrapper::new), map(unversioned, UnversionedFileWrapper::new));
     }
 

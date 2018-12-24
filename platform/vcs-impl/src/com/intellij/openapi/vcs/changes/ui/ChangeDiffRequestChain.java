@@ -48,7 +48,7 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
 
   @NotNull
   @Override
-  public AnAction createGoToChangeAction(@NotNull Consumer<Integer> onSelected) {
+  public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected) {
     return createGoToChangeAction(this, onSelected);
   }
 

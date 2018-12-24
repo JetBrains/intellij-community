@@ -1121,7 +1121,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   @NotNull
-  public List<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes) {
+  public List<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes) {
     synchronized (myDataLock) {
       return myWorker.getAffectedLists(changes);
     }
@@ -1225,7 +1225,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void addUnversionedFiles(@NotNull final LocalChangeList list, @NotNull final List<VirtualFile> files) {
+  public void addUnversionedFiles(@NotNull final LocalChangeList list, @NotNull final List<? extends VirtualFile> files) {
     ScheduleForAdditionAction.addUnversionedFilesToVcs(myProject, list, files);
   }
 
@@ -1255,11 +1255,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
+  public void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes) {
     doCommit(changeList, changes, false);
   }
 
-  private void doCommit(final LocalChangeList changeList, final List<Change> changes, final boolean synchronously) {
+  private void doCommit(final LocalChangeList changeList, final List<? extends Change> changes, final boolean synchronously) {
     FileDocumentManager.getInstance().saveAllDocuments();
     new CommitHelper(myProject, changeList, changes, changeList.getName(),
                      StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment(), new ArrayList<>(),
@@ -1267,7 +1267,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @TestOnly
-  public void commitChangesSynchronouslyWithResult(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
+  public void commitChangesSynchronouslyWithResult(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes) {
     doCommit(changeList, changes, true);
   }
 
@@ -1306,7 +1306,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   // used in TeamCity
   @Override
-  public void reopenFiles(@NotNull List<FilePath> paths) {
+  public void reopenFiles(@NotNull List<? extends FilePath> paths) {
     final ReadonlyStatusHandlerImpl readonlyStatusHandler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject);
     final boolean savedOption = readonlyStatusHandler.getState().SHOW_DIALOG;
     readonlyStatusHandler.getState().SHOW_DIALOG = false;

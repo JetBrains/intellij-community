@@ -93,7 +93,7 @@ public class VcsShelveChangesSaver {
     }
   }
 
-  protected void doRollback(@NotNull Collection<VirtualFile> rootsToSave) {
+  protected void doRollback(@NotNull Collection<? extends VirtualFile> rootsToSave) {
     Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
     List<Change> changes4Rollback = ContainerUtil
       .filter(myChangeManager.getAllChanges(), change -> rootsSet.contains(myVcsManager.getVcsRootFor(ChangesUtil.getFilePath(change))));

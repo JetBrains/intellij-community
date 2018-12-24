@@ -41,7 +41,7 @@ class DummyChangesView implements ChangesViewI {
   }
 
   @Override
-  public void selectChanges(@NotNull List<Change> changes) {
+  public void selectChanges(@NotNull List<? extends Change> changes) {
   }
 
   @Override

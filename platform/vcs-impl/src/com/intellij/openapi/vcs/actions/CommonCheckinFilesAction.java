@@ -116,7 +116,7 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   }
 
   @Nullable
-  private static AbstractVcs getCommonVcs(@NotNull Stream<FilePath> roots, @NotNull Project project) {
+  private static AbstractVcs getCommonVcs(@NotNull Stream<? extends FilePath> roots, @NotNull Project project) {
     return getIfSingle(
       roots.map(root -> VcsUtil.getVcsFor(project, root))
         .filter(Objects::nonNull)

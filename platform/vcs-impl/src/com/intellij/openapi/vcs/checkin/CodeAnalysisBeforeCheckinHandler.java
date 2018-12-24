@@ -149,7 +149,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
   @NotNull
   private ReturnResult runCodeAnalysisNew(@Nullable CommitExecutor commitExecutor,
-                                          @NotNull List<VirtualFile> files) {
+                                          @NotNull List<? extends VirtualFile> files) {
     Ref<List<CodeSmellInfo>> codeSmells = Ref.create();
     Ref<Exception> exception = Ref.create();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -181,7 +181,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
   @NotNull
   private ReturnResult runCodeAnalysisOld(@Nullable CommitExecutor commitExecutor,
-                                          @NotNull List<VirtualFile> files) {
+                                          @NotNull List<? extends VirtualFile> files) {
     final List<CodeSmellInfo> codeSmells = CodeSmellDetector.getInstance(myProject).findCodeSmells(files);
     if (!codeSmells.isEmpty()) {
       return processFoundCodeSmells(codeSmells, commitExecutor);

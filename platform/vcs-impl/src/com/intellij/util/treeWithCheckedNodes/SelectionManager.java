@@ -23,10 +23,10 @@ import static com.intellij.util.containers.ContainerUtil.subtract;
 */
 public class SelectionManager {
   private final SelectedState<VirtualFile> myState;
-  private final Convertor<DefaultMutableTreeNode, VirtualFile> myNodeConvertor;
-  private PlusMinus<VirtualFile> mySelectionChangeListener;
+  private final Convertor<? super DefaultMutableTreeNode, ? extends VirtualFile> myNodeConvertor;
+  private PlusMinus<? super VirtualFile> mySelectionChangeListener;
 
-  public SelectionManager(int selectedSize, int queueSize, final Convertor<DefaultMutableTreeNode, VirtualFile> nodeConvertor) {
+  public SelectionManager(int selectedSize, int queueSize, final Convertor<? super DefaultMutableTreeNode, ? extends VirtualFile> nodeConvertor) {
     myNodeConvertor = nodeConvertor;
     myState = new SelectedState<>(selectedSize, queueSize);
   }
@@ -86,7 +86,7 @@ public class SelectionManager {
     return myState.canAddSelection();
   }
 
-  public void setSelection(Collection<VirtualFile> files) {
+  public void setSelection(Collection<? extends VirtualFile> files) {
     myState.setSelection(files);
     for (VirtualFile file : files) {
       if (mySelectionChangeListener != null) {
@@ -136,10 +136,10 @@ public class SelectionManager {
 
   private static class StateWorker {
     private final DefaultMutableTreeNode myNode;
-    private final Convertor<DefaultMutableTreeNode, VirtualFile> myConvertor;
+    private final Convertor<? super DefaultMutableTreeNode, ? extends VirtualFile> myConvertor;
     private final VirtualFile myVf;
 
-    private StateWorker(DefaultMutableTreeNode node, final Convertor<DefaultMutableTreeNode, VirtualFile> convertor) {
+    private StateWorker(DefaultMutableTreeNode node, final Convertor<? super DefaultMutableTreeNode, ? extends VirtualFile> convertor) {
       myNode = node;
       myConvertor = convertor;
       myVf = myConvertor.convert(node);
@@ -149,7 +149,7 @@ public class SelectionManager {
       return myVf;
     }
 
-    public void iterateParents(final SelectedState<VirtualFile> states, final PairProcessor<VirtualFile, TreeNodeState> parentsProcessor) {
+    public void iterateParents(final SelectedState<? super VirtualFile> states, final PairProcessor<? super VirtualFile, ? super TreeNodeState> parentsProcessor) {
       DefaultMutableTreeNode current = (DefaultMutableTreeNode) myNode.getParent();
       // up cycle
       while (current != null) {
@@ -163,7 +163,7 @@ public class SelectionManager {
     }
   }
 
-  public void setSelectionChangeListener(@Nullable PlusMinus<VirtualFile> selectionChangeListener) {
+  public void setSelectionChangeListener(@Nullable PlusMinus<? super VirtualFile> selectionChangeListener) {
     mySelectionChangeListener = selectionChangeListener;
   }
 }

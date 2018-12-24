@@ -588,7 +588,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
     @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel(@NotNull List<AbstractFilePatchInProgress.PatchChange> changes) {
+    protected DefaultTreeModel buildTreeModel(@NotNull List<? extends AbstractFilePatchInProgress.PatchChange> changes) {
       return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), changes, myChangeNodeDecorator);
     }
 
@@ -603,7 +603,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @NotNull
-    private List<AbstractFilePatchInProgress.PatchChange> getOnlyValidChanges(@NotNull Collection<AbstractFilePatchInProgress.PatchChange> changes) {
+    private List<AbstractFilePatchInProgress.PatchChange> getOnlyValidChanges(@NotNull Collection<? extends AbstractFilePatchInProgress.PatchChange> changes) {
       return ContainerUtil.filter(changes, AbstractFilePatchInProgress.PatchChange::isValid);
     }
 
@@ -659,7 +659,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private static boolean sameBase(final List<AbstractFilePatchInProgress.PatchChange> selectedChanges) {
+  private static boolean sameBase(final List<? extends AbstractFilePatchInProgress.PatchChange> selectedChanges) {
     VirtualFile base = null;
     for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
       final VirtualFile changeBase = change.getPatchInProgress().getBase();
@@ -725,7 +725,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private Collection<AbstractFilePatchInProgress.PatchChange> getIncluded(boolean doInitCheck,
-                                                                          List<AbstractFilePatchInProgress.PatchChange> changes) {
+                                                                          List<? extends AbstractFilePatchInProgress.PatchChange> changes) {
     final NamedLegendStatuses totalNameStatuses = new NamedLegendStatuses();
     final NamedLegendStatuses includedNameStatuses = new NamedLegendStatuses();
 
@@ -805,7 +805,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private static List<AbstractFilePatchInProgress> changes2patches(final List<AbstractFilePatchInProgress.PatchChange> selectedChanges) {
+  private static List<AbstractFilePatchInProgress> changes2patches(final List<? extends AbstractFilePatchInProgress.PatchChange> selectedChanges) {
     return map(selectedChanges, AbstractFilePatchInProgress.PatchChange::getPatchInProgress);
   }
 

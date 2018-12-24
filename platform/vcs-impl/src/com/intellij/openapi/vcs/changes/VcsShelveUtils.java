@@ -56,7 +56,7 @@ public class VcsShelveUtils {
 
   @CalledInAwt
   private static void markUnshelvedFilesNonUndoable(@NotNull final Project project,
-                                                    @NotNull List<ShelvedChange> changes) {
+                                                    @NotNull List<? extends ShelvedChange> changes) {
     final UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);
     if (undoManager != null && !changes.isEmpty()) {
       ContainerUtil.process(changes, change -> {
@@ -105,7 +105,7 @@ public class VcsShelveUtils {
    * @return created shelved change list or null in case failure
    */
   @Nullable
-  public static ShelvedChangeList shelveChanges(final Project project, final ShelveChangesManager shelveManager, Collection<Change> changes,
+  public static ShelvedChangeList shelveChanges(final Project project, final ShelveChangesManager shelveManager, Collection<? extends Change> changes,
                                                 final String description,
                                                 final List<? super VcsException> exceptions, boolean rollback, boolean markToBeDeleted) {
     try {

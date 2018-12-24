@@ -143,7 +143,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       }
     }
 
-    private void validateAndWritePatchToFile(@NotNull Collection<Change> changes) throws VcsException, IOException {
+    private void validateAndWritePatchToFile(@NotNull Collection<? extends Change> changes) throws VcsException, IOException {
       final String fileName = myPanel.getFileName();
       final File file = new File(fileName).getAbsoluteFile();
       if (!checkIsFileValid(file)) return;

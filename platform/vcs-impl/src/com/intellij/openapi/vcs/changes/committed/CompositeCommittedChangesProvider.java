@@ -179,7 +179,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
       return myMap.get(vcs);
     }
 
-    public void setEnabledVcss(Collection<AbstractVcs> vcss) {
+    public void setEnabledVcss(Collection<? extends AbstractVcs> vcss) {
       myEnabledVcs.clear();
       myEnabledVcs.addAll(vcss);
     }

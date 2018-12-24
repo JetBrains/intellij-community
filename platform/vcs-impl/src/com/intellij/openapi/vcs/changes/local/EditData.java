@@ -28,7 +28,7 @@ public class EditData implements ChangeListCommand {
   }
 
   @Override
-  public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
+  public void doNotify(final EventDispatcher<? extends ChangeListListener> dispatcher) {
     if (myListCopy != null) {
       dispatcher.getMulticaster().changeListDataChanged(myListCopy);
     }

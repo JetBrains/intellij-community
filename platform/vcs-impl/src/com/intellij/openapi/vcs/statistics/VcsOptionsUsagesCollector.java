@@ -65,12 +65,12 @@ public class VcsOptionsUsagesCollector extends ProjectUsagesCollector {
     return set;
   }
 
-  private static <T> void addBoolIfDiffers(Set<UsageDescriptor> set, T settingsBean, T defaultSettingsBean,
+  private static <T> void addBoolIfDiffers(Set<? super UsageDescriptor> set, T settingsBean, T defaultSettingsBean,
                                            Function1<T, Boolean> valueFunction, String featureId) {
     addIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, (it) -> it ? featureId : featureId + ".disabled");
   }
 
-  private static <T> void addConfirmationIfDiffers(Set<UsageDescriptor> set, T settingsBean, T defaultSettingsBean,
+  private static <T> void addConfirmationIfDiffers(Set<? super UsageDescriptor> set, T settingsBean, T defaultSettingsBean,
                                                    Function1<T, VcsShowConfirmationOption.Value> valueFunction, String featureId) {
     addIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, (it) -> {
       switch (it) {

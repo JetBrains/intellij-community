@@ -42,7 +42,7 @@ public class VcsCherryPickManager {
     log.requestSelectedDetails( details -> myTaskQueue.run(new CherryPickingTask(ContainerUtil.reverse(details))));
   }
 
-  public boolean isCherryPickAlreadyStartedFor(@NotNull List<CommitId> commits) {
+  public boolean isCherryPickAlreadyStartedFor(@NotNull List<? extends CommitId> commits) {
     for (CommitId commit : commits) {
       if (myIdsInProgress.contains(commit)) {
         return true;
@@ -66,10 +66,10 @@ public class VcsCherryPickManager {
   }
 
   private class CherryPickingTask extends Task.Backgroundable {
-    @NotNull private final List<VcsFullCommitDetails> myAllDetailsInReverseOrder;
+    @NotNull private final List<? extends VcsFullCommitDetails> myAllDetailsInReverseOrder;
     @NotNull private final ChangeListManagerEx myChangeListManager;
 
-    CherryPickingTask(@NotNull List<VcsFullCommitDetails> detailsInReverseOrder) {
+    CherryPickingTask(@NotNull List<? extends VcsFullCommitDetails> detailsInReverseOrder) {
       super(VcsCherryPickManager.this.myProject, "Cherry-Picking");
       myAllDetailsInReverseOrder = detailsInReverseOrder;
       myChangeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);

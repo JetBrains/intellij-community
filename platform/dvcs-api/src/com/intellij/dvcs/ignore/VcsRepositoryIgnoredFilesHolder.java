@@ -28,7 +28,7 @@ public interface VcsRepositoryIgnoredFilesHolder extends Disposable {
   boolean containsFile(@NotNull VirtualFile file);
 
   @NotNull
-  List<FilePath> removeIgnoredFiles(@NotNull Collection<FilePath> files);
+  List<FilePath> removeIgnoredFiles(@NotNull Collection<? extends FilePath> files);
 
   @NotNull
   Set<VirtualFile> getIgnoredFiles();

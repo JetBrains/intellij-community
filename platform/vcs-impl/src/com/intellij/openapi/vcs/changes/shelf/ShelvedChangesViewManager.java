@@ -447,8 +447,8 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @NotNull
-    private List<Change> getChangesFromShelvedChanges(@NotNull List<ShelvedChange> shelvedChanges,
-                                                      @NotNull List<ShelvedBinaryFile> shelvedBinaryFiles) {
+    private List<Change> getChangesFromShelvedChanges(@NotNull List<? extends ShelvedChange> shelvedChanges,
+                                                      @NotNull List<? extends ShelvedBinaryFile> shelvedBinaryFiles) {
       final List<Change> changes = new ArrayList<>(shelvedChanges.size() + shelvedBinaryFiles.size());
       for (ShelvedChange shelvedChange : shelvedChanges) {
         changes.add(shelvedChange.getChange(myProject));
@@ -460,7 +460,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @NotNull
-    private Set<ShelvedChangeList> getSelectedLists(@NotNull Predicate<ShelvedChangeList> condition) {
+    private Set<ShelvedChangeList> getSelectedLists(@NotNull Predicate<? super ShelvedChangeList> condition) {
       TreePath[] selectionPaths = getSelectionPaths();
       if (selectionPaths == null) return Collections.emptySet();
       return StreamEx.of(selectionPaths)
@@ -626,7 +626,7 @@ public class ShelvedChangesViewManager implements Disposable {
       }
     }
 
-    private void showUndoDeleteNotification(@NotNull List<ShelvedChangeList> shelvedListsToDelete,
+    private void showUndoDeleteNotification(@NotNull List<? extends ShelvedChangeList> shelvedListsToDelete,
                                             int fileListSize,
                                             @NotNull Map<ShelvedChangeList, Date> createdDeletedListsWithOriginalDate) {
       String message = constructDeleteSuccessfullyMessage(fileListSize, shelvedListsToDelete.size(), getFirstItem(shelvedListsToDelete));
@@ -657,8 +657,8 @@ public class ShelvedChangesViewManager implements Disposable {
       }
     }
 
-    private List<ShelvedBinaryFile> getBinariesNotInLists(@NotNull List<ShelvedChangeList> listsToDelete,
-                                                          @NotNull List<ShelvedBinaryFile> binaryFiles) {
+    private List<ShelvedBinaryFile> getBinariesNotInLists(@NotNull List<? extends ShelvedChangeList> listsToDelete,
+                                                          @NotNull List<? extends ShelvedBinaryFile> binaryFiles) {
       List<ShelvedBinaryFile> result = new ArrayList<>(binaryFiles);
       for (ShelvedChangeList list : listsToDelete) {
         result.removeAll(list.getBinaryFiles());
@@ -667,8 +667,8 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @NotNull
-    private List<ShelvedChange> getChangesNotInLists(@NotNull List<ShelvedChangeList> listsToDelete,
-                                                     @NotNull List<ShelvedChange> shelvedChanges) {
+    private List<ShelvedChange> getChangesNotInLists(@NotNull List<? extends ShelvedChangeList> listsToDelete,
+                                                     @NotNull List<? extends ShelvedChange> shelvedChanges) {
       List<ShelvedChange> result = new ArrayList<>(shelvedChanges);
       for (ShelvedChangeList list : listsToDelete) {
         result.removeAll(list.getChanges(myProject));

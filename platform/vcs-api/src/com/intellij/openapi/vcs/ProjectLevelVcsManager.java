@@ -29,7 +29,7 @@ public abstract class ProjectLevelVcsManager {
   public static final Topic<VcsListener> VCS_CONFIGURATION_CHANGED = Topic.create("VCS configuration changed", VcsListener.class);
   public static final Topic<VcsListener> VCS_CONFIGURATION_CHANGED_IN_PLUGIN = Topic.create("VCS configuration changed in VCS plugin", VcsListener.class);
 
-  public abstract void iterateVfUnderVcsRoot(VirtualFile file, Processor<VirtualFile> processor);
+  public abstract void iterateVfUnderVcsRoot(VirtualFile file, Processor<? super VirtualFile> processor);
 
   /**
    * Returns the <code>ProjectLevelVcsManager<code> instance for the specified project.
@@ -249,9 +249,9 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract void setDirectoryMappings(final List<VcsDirectoryMapping> items);
 
-  public abstract void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator);
+  public abstract void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator);
   
-  public abstract void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator,
+  public abstract void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator,
                                       @Nullable VirtualFileFilter directoryFilter);
 
   @Nullable

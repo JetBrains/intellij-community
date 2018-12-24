@@ -157,7 +157,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public abstract List<CommitExecutor> getRegisteredExecutors();
 
-  public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<Change> changes);
+  public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes);
 
 
   public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list);
@@ -180,8 +180,8 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @param file file to check if ignored
    * @return true if file ignored
    * @deprecated Deprecated since idea level ignores will be substituted by corresponding VCS native ignore (e.g. .gitignore, .hgignore).
-   * Use {@link #isVcsIgnoredFile} to check if the file already ignored
-   * or use {@link #isPotentiallyIgnoredFile} to check if the file/directory should be always ignored (but may not ignored with specific VCS ignore yet).
+   * Use {@link #isVcsIgnoredFile(VirtualFile)} to check if the file already ignored
+   * or use {@link #isPotentiallyIgnoredFile(VirtualFile)} to check if the file/directory should be always ignored (but may not ignored with specific VCS ignore yet).
    */
   @Deprecated
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
@@ -229,7 +229,7 @@ public abstract class ChangeListManager implements ChangeListModification {
 
 
   @Deprecated // used in TeamCity
-  public abstract void reopenFiles(@NotNull List<FilePath> paths);
+  public abstract void reopenFiles(@NotNull List<? extends FilePath> paths);
 
   @TestOnly
   public abstract boolean ensureUpToDate(boolean canBeCanceled);

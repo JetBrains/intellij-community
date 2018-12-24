@@ -888,9 +888,9 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
 
   private static class MyTreeCellRenderer implements TreeCellRenderer {
     private final TreeCellRenderer myDefaultCellRenderer;
-    private final Getter<VcsHistorySession> myHistorySession;
+    private final Getter<? extends VcsHistorySession> myHistorySession;
 
-    MyTreeCellRenderer(final TreeCellRenderer defaultCellRenderer, final Getter<VcsHistorySession> historySession) {
+    MyTreeCellRenderer(final TreeCellRenderer defaultCellRenderer, final Getter<? extends VcsHistorySession> historySession) {
       myDefaultCellRenderer = defaultCellRenderer;
       myHistorySession = historySession;
     }
@@ -930,9 +930,9 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
   }
 
   private static class MyCellWrapper implements CellWrapper {
-    private final Getter<VcsHistorySession> myHistorySession;
+    private final Getter<? extends VcsHistorySession> myHistorySession;
 
-    MyCellWrapper(final Getter<VcsHistorySession> historySession) {
+    MyCellWrapper(final Getter<? extends VcsHistorySession> historySession) {
       myHistorySession = historySession;
     }
 

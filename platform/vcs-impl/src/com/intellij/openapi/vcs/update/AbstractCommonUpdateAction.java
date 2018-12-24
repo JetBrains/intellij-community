@@ -129,7 +129,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     }
   }
 
-  private boolean canGroupByChangelist(final Set<AbstractVcs> abstractVcses) {
+  private boolean canGroupByChangelist(final Set<? extends AbstractVcs> abstractVcses) {
     if (myActionInfo.canGroupByChangelist()) {
       for(AbstractVcs vcs: abstractVcses) {
         if (vcs.getCachingCommittedChangesProvider() != null) {
@@ -140,7 +140,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     return false;
   }
 
-  private static boolean someSessionWasCanceled(List<UpdateSession> updateSessions) {
+  private static boolean someSessionWasCanceled(List<? extends UpdateSession> updateSessions) {
     for (UpdateSession updateSession : updateSessions) {
       if (updateSession.isCanceled()) {
         return true;
@@ -401,7 +401,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       }
     }
 
-    private void putExceptions(final HotfixData key, @NotNull final List<VcsException> list) {
+    private void putExceptions(final HotfixData key, @NotNull final List<? extends VcsException> list) {
       if (list.isEmpty()) return;
       myGroupedExceptions.computeIfAbsent(key, k -> new ArrayList<>()).addAll(list);
     }
@@ -425,7 +425,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     @NotNull
     private Notification prepareNotification(@NotNull UpdateInfoTree tree,
                                              boolean someSessionWasCancelled,
-                                             @NotNull List<UpdateSession> updateSessions) {
+                                             @NotNull List<? extends UpdateSession> updateSessions) {
       int allFiles = getUpdatedFilesCount();
       String additionalContent = nullize(updateSessions.stream().
         map(UpdateSession::getAdditionalNotificationContent).

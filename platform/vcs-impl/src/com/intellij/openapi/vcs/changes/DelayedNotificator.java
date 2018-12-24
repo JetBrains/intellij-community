@@ -16,11 +16,11 @@ public class DelayedNotificator implements ChangeListListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.DelayedNotificator");
 
   @NotNull private final ChangeListManagerImpl myManager;
-  @NotNull private final EventDispatcher<ChangeListListener> myDispatcher;
+  @NotNull private final EventDispatcher<? extends ChangeListListener> myDispatcher;
   @NotNull private final ChangeListManagerImpl.Scheduler myScheduler;
 
   public DelayedNotificator(@NotNull ChangeListManagerImpl manager,
-                            @NotNull EventDispatcher<ChangeListListener> dispatcher,
+                            @NotNull EventDispatcher<? extends ChangeListListener> dispatcher,
                             @NotNull ChangeListManagerImpl.Scheduler scheduler) {
     myManager = manager;
     myDispatcher = dispatcher;

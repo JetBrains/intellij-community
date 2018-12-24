@@ -36,7 +36,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
     myShelveViewManager = ShelvedChangesViewManager.getInstance(myProject);
     myVcsShelveChangesSaver = new VcsShelveChangesSaver(project, indicator, stashMessage) {
       @Override
-      protected void doRollback(@NotNull Collection<VirtualFile> rootsToSave) {
+      protected void doRollback(@NotNull Collection<? extends VirtualFile> rootsToSave) {
         for (VirtualFile root : rootsToSave) {
           GitRollbackEnvironment.resetHardLocal(myProject, root);
         }

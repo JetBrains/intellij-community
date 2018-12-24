@@ -226,7 +226,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   @NotNull
   private List<VcsException> commitRepository(@NotNull GitRepository repository,
-                                              @NotNull Collection<CommitChange> changes,
+                                              @NotNull Collection<? extends CommitChange> changes,
                                               @NotNull String message) {
     List<VcsException> exceptions = new ArrayList<>();
     VirtualFile root = repository.getRoot();
@@ -283,8 +283,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   @NotNull
   private List<VcsException> commitUsingIndex(@NotNull GitRepository repository,
-                                              @NotNull Collection<CommitChange> rootChanges,
-                                              @NotNull Set<CommitChange> changedWithIndex,
+                                              @NotNull Collection<? extends CommitChange> rootChanges,
+                                              @NotNull Set<? extends CommitChange> changedWithIndex,
                                               @NotNull File messageFile) {
     List<VcsException> exceptions = new ArrayList<>();
     try {
@@ -351,7 +351,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   @NotNull
   private Pair<Runnable, List<CommitChange>> addPartialChangesToIndex(@NotNull GitRepository repository,
-                                                                      @NotNull Collection<CommitChange> changes) throws VcsException {
+                                                                      @NotNull Collection<? extends CommitChange> changes) throws VcsException {
     Set<String> changelistIds = map2SetNotNull(changes, change -> change.changelistId);
     if (changelistIds.isEmpty()) return Pair.create(EmptyRunnable.INSTANCE, emptyList());
     if (changelistIds.size() != 1) throw new VcsException("Can't commit changes from multiple changelists at once");
@@ -486,9 +486,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   @NotNull
   private List<CommitChange> addCaseOnlyRenamesToIndex(@NotNull GitRepository repository,
-                                                       @NotNull Collection<CommitChange> changes,
+                                                       @NotNull Collection<? extends CommitChange> changes,
                                                        @NotNull Set<CommitChange> alreadyProcessed,
-                                                       @NotNull List<VcsException> exceptions) {
+                                                       @NotNull List<? super VcsException> exceptions) {
     if (SystemInfo.isFileSystemCaseSensitive) return Collections.emptyList();
 
     List<CommitChange> caseOnlyRenames = filter(changes, it -> !alreadyProcessed.contains(it) && isCaseOnlyRename(it));
@@ -515,7 +515,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @NotNull
-  private static List<FilePath> getPaths(@NotNull Collection<CommitChange> changes) {
+  private static List<FilePath> getPaths(@NotNull Collection<? extends CommitChange> changes) {
     List<FilePath> files = new ArrayList<>();
     for (CommitChange change : changes) {
       if (CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(change.beforePath, change.afterPath)) {
@@ -530,7 +530,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @NotNull
-  private static String getLogString(@NotNull String root, @NotNull Collection<CommitChange> changes) {
+  private static String getLogString(@NotNull String root, @NotNull Collection<? extends CommitChange> changes) {
     return GitUtil.getLogString(root, changes, it -> it.beforePath, it -> it.afterPath);
   }
 
@@ -582,8 +582,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   @Nullable
   private Pair<List<CommitChange>, List<CommitChange>> addExplicitMovementsToIndex(@NotNull GitRepository repository,
-                                                                                   @NotNull Collection<CommitChange> changes,
-                                                                                   @NotNull Collection<Movement> explicitMoves)
+                                                                                   @NotNull Collection<? extends CommitChange> changes,
+                                                                                   @NotNull Collection<? extends Movement> explicitMoves)
     throws VcsException {
     explicitMoves = filterExcludedChanges(explicitMoves, changes);
     if (explicitMoves.isEmpty()) return null;
@@ -669,8 +669,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @NotNull
-  private static List<Movement> filterExcludedChanges(@NotNull Collection<Movement> explicitMoves,
-                                                      @NotNull Collection<CommitChange> changes) {
+  private static List<Movement> filterExcludedChanges(@NotNull Collection<? extends Movement> explicitMoves,
+                                                      @NotNull Collection<? extends CommitChange> changes) {
     HashMultiset<FilePath> movedPathsMultiSet = HashMultiset.create();
     for (Movement move : explicitMoves) {
       movedPathsMultiSet.add(move.getBefore());
@@ -693,7 +693,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   private static void resetExcluded(@NotNull Project project,
                                     @NotNull VirtualFile root,
-                                    @NotNull Collection<CommitChange> changes) throws VcsException {
+                                    @NotNull Collection<? extends CommitChange> changes) throws VcsException {
     Set<FilePath> allPaths = new THashSet<>(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
     for (CommitChange change : changes) {
       addIfNotNull(allPaths, change.afterPath);
@@ -710,7 +710,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   private static void restoreExcluded(@NotNull Project project,
                                       @NotNull VirtualFile root,
-                                      @NotNull Collection<CommitChange> changes) {
+                                      @NotNull Collection<? extends CommitChange> changes) {
     List<VcsException> restoreExceptions = new ArrayList<>();
 
     Set<FilePath> toAdd = new HashSet<>();
@@ -733,7 +733,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   private static boolean addAsCaseOnlyRename(@NotNull Project project, @NotNull VirtualFile root, @NotNull CommitChange change,
-                                             @NotNull List<VcsException> exceptions) {
+                                             @NotNull List<? super VcsException> exceptions) {
     try {
       if (!isCaseOnlyRename(change)) return false;
 
@@ -773,9 +773,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   private boolean mergeCommit(@NotNull Project project,
                               @NotNull VirtualFile root,
-                              @NotNull Collection<CommitChange> rootChanges,
+                              @NotNull Collection<? extends CommitChange> rootChanges,
                               @NotNull File messageFile,
-                              @NotNull List<VcsException> exceptions,
+                              @NotNull List<? super VcsException> exceptions,
                               @NotNull PartialOperation partialOperation) {
     Set<FilePath> added = map2SetNotNull(rootChanges, it -> it.afterPath);
     Set<FilePath> removed = map2SetNotNull(rootChanges, it -> it.beforePath);
@@ -920,8 +920,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   private static boolean updateIndex(final Project project,
                                      final VirtualFile root,
                                      final Collection<FilePath> added,
-                                     final Collection<FilePath> removed,
-                                     final List<VcsException> exceptions) {
+                                     final Collection<? extends FilePath> removed,
+                                     final List<? super VcsException> exceptions) {
     boolean rc = true;
     if (!added.isEmpty()) {
       try {
@@ -967,7 +967,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   private static void runWithMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull String message,
-                                         @NotNull ThrowableConsumer<File, VcsException> task) throws VcsException {
+                                         @NotNull ThrowableConsumer<? super File, ? extends VcsException> task) throws VcsException {
     File messageFile;
     try {
       messageFile = createCommitMessageFile(project, root, message);
@@ -1010,7 +1010,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return rc;
   }
 
-  private void commit(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<FilePath> files, @NotNull File message)
+  private void commit(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files, @NotNull File message)
     throws VcsException {
     boolean amend = myNextCommitAmend;
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
@@ -1081,7 +1081,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull List<Change> changes, List<VcsException> exceptions) {
+  private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull List<? extends Change> changes, List<? super VcsException> exceptions) {
     Map<VirtualFile, Collection<Change>> result = new HashMap<>();
     for (Change change : changes) {
       // note that any path will work, because changes could happen within single vcs root
@@ -1249,7 +1249,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
       @NotNull
       @Override
-      protected Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> files) {
+      protected Set<VirtualFile> getVcsRoots(@NotNull Collection<? extends FilePath> files) {
         return gitRoots(files);
       }
 

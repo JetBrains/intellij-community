@@ -252,7 +252,7 @@ public class VcsGeneralConfigurationPanel {
     return myPanel;
   }
 
-  public void updateAvailableOptions(final Collection<AbstractVcs> activeVcses) {
+  public void updateAvailableOptions(final Collection<? extends AbstractVcs> activeVcses) {
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       final JCheckBox checkBox = myPromptOptions.get(setting);
       checkBox.setEnabled(setting.isApplicableTo(activeVcses) || myProject.isDefault());
@@ -275,7 +275,7 @@ public class VcsGeneralConfigurationPanel {
     }
   }
 
-  private static String composeText(final List<AbstractVcs> applicableVcses) {
+  private static String composeText(final List<? extends AbstractVcs> applicableVcses) {
     final TreeSet<String> result = new TreeSet<>();
     for (AbstractVcs abstractVcs : applicableVcses) {
       result.add(abstractVcs.getDisplayName());

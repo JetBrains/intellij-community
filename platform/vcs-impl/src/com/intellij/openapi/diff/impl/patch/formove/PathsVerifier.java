@@ -101,7 +101,7 @@ public class PathsVerifier {
     return affected;
   }
 
-  private static void addAllFilePath(final Collection<VirtualFile> files, final Collection<FilePath> paths) {
+  private static void addAllFilePath(final Collection<? extends VirtualFile> files, final Collection<? super FilePath> paths) {
     for (VirtualFile file : files) {
       paths.add(VcsUtil.getFilePath(file));
     }

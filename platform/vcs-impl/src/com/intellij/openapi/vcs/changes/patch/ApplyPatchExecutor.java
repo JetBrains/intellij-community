@@ -35,7 +35,7 @@ public interface ApplyPatchExecutor<T extends AbstractFilePatchInProgress> {
   @Nls(capitalization = Nls.Capitalization.Title)
   String getName();
 
-  void apply(@NotNull List<FilePatch> remaining, @NotNull final MultiMap<VirtualFile, T> patchGroupsToApply,
+  void apply(@NotNull List<? extends FilePatch> remaining, @NotNull final MultiMap<VirtualFile, T> patchGroupsToApply,
              @Nullable final LocalChangeList localList,
              @Nullable String fileName,
              @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo);

@@ -229,7 +229,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   }
 
   @Override
-  public void filesChanged(@NotNull List<VFileEvent> events) {
+  public void filesChanged(@NotNull List<? extends VFileEvent> events) {
     boolean allChanged = false;
     Set<VirtualFile> filesToRefresh = new HashSet<>();
 

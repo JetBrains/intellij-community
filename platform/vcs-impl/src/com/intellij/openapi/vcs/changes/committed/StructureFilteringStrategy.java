@@ -189,7 +189,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
       myStructureTree.setModel(TreeModelBuilder.buildEmpty());
     }
 
-    public void append(final List<CommittedChangeList> changeLists) {
+    public void append(final List<? extends CommittedChangeList> changeLists) {
       final TreeState localState = myState != null && myFilePaths.isEmpty()
                                    ? myState
                                    : TreeState.createOn(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());

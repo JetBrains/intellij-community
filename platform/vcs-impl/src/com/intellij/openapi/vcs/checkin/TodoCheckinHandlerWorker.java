@@ -150,14 +150,14 @@ public class TodoCheckinHandlerWorker {
     @NotNull private final String myBeforeContent;
     @NotNull private final String myAfterContent;
     @NotNull private final FilePath myAfterFile;
-    @NotNull private final List<TodoItem> myNewTodoItems;
+    @NotNull private final List<? extends TodoItem> myNewTodoItems;
     private final TodoFilter myTodoFilter;
 
     private MyEditedFileProcessor(@NotNull Project project,
                                   @NotNull FilePath afterFilePath,
                                   @NotNull String beforeContent,
                                   @NotNull String afterContent,
-                                  @NotNull List<TodoItem> newTodoItems,
+                                  @NotNull List<? extends TodoItem> newTodoItems,
                                   @Nullable TodoFilter todoFilter) {
       myProject = project;
       myAfterFile = afterFilePath;

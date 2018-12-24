@@ -262,12 +262,12 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
+  public void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void reopenFiles(@NotNull List<FilePath> paths) {
+  public void reopenFiles(@NotNull List<? extends FilePath> paths) {
     throw new UnsupportedOperationException();
   }
 
@@ -425,7 +425,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @NotNull
   @Override
-  public Collection<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes) {
+  public Collection<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes) {
     throw new UnsupportedOperationException();
   }
 

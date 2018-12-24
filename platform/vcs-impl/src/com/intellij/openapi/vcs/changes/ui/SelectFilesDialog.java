@@ -30,7 +30,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
 
   @Deprecated
   protected SelectFilesDialog(Project project,
-                              @NotNull List<VirtualFile> files,
+                              @NotNull List<? extends VirtualFile> files,
                               @Nullable String prompt,
                               @Nullable VcsShowConfirmationOption confirmationOption,
                               boolean selectableFiles,
@@ -40,7 +40,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   }
 
   protected SelectFilesDialog(Project project,
-                              @NotNull List<VirtualFile> files,
+                              @NotNull List<? extends VirtualFile> files,
                               @Nullable String prompt,
                               @Nullable VcsShowConfirmationOption confirmationOption,
                               boolean selectableFiles,
@@ -53,7 +53,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   @NotNull
   @Deprecated
   public static SelectFilesDialog init(Project project,
-                                       @NotNull List<VirtualFile> originalFiles,
+                                       @NotNull List<? extends VirtualFile> originalFiles,
                                        @Nullable String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
@@ -64,7 +64,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
 
   @NotNull
   public static SelectFilesDialog init(Project project,
-                                       @NotNull List<VirtualFile> originalFiles,
+                                       @NotNull List<? extends VirtualFile> originalFiles,
                                        @Nullable String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
@@ -76,7 +76,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
 
   @NotNull
   public static SelectFilesDialog init(Project project,
-                                       @NotNull List<VirtualFile> originalFiles,
+                                       @NotNull List<? extends VirtualFile> originalFiles,
                                        @Nullable String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
@@ -125,7 +125,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   public static class VirtualFileList extends ChangesTreeImpl.VirtualFiles {
     @Nullable private final DeleteProvider myDeleteProvider;
 
-    public VirtualFileList(Project project, boolean selectableFiles, boolean deletableFiles, @NotNull List<VirtualFile> files) {
+    public VirtualFileList(Project project, boolean selectableFiles, boolean deletableFiles, @NotNull List<? extends VirtualFile> files) {
       super(project, selectableFiles, true, files);
       myDeleteProvider = (deletableFiles ?  new VirtualFileDeleteProvider() : null);
     }

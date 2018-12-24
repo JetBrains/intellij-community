@@ -67,11 +67,11 @@ public class AlienDirtyScope extends VcsDirtyScope {
   }
 
   @Override
-  public void iterate(final Processor<FilePath> iterator) {
+  public void iterate(final Processor<? super FilePath> iterator) {
   }
 
   @Override
-  public void iterateExistingInsideScope(Processor<VirtualFile> vf) {
+  public void iterateExistingInsideScope(Processor<? super VirtualFile> vf) {
   }
 
   @Override

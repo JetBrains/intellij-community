@@ -42,7 +42,7 @@ import static com.intellij.openapi.vcs.ui.FontUtil.getHtmlWithFonts;
 class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
   @NotNull private final Project myProject;
   @NotNull private final StatusText myStatusText;
-  @Nullable private List<TreeNodeOnVcsRevision> mySelection;
+  @Nullable private List<? extends TreeNodeOnVcsRevision> mySelection;
 
   DetailsPanel(@NotNull Project project) {
     myProject = project;
@@ -64,7 +64,7 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
     myStatusText.paint(this, g);
   }
 
-  public void update(@NotNull List<TreeNodeOnVcsRevision> selection) {
+  public void update(@NotNull List<? extends TreeNodeOnVcsRevision> selection) {
     mySelection = selection;
     update();
   }

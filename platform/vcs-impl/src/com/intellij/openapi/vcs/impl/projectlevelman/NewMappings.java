@@ -184,10 +184,10 @@ public class NewMappings {
     }
   }
 
-  public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
+  public void setDirectoryMappings(final List<? extends VcsDirectoryMapping> items) {
     LOG.debug("setDirectoryMappings, size: " + items.size());
 
-    final List<VcsDirectoryMapping> itemsCopy;
+    final List<? extends VcsDirectoryMapping> itemsCopy;
     if (items.isEmpty()) {
       itemsCopy = singletonList(new VcsDirectoryMapping("", ""));
     }
