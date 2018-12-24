@@ -56,7 +56,7 @@ public class LogUtil {
   public static String getSystemMemoryInfo() {
     try {
       @SuppressWarnings("SpellCheckingInspection") Process process = new ProcessBuilder()
-        .command(new String[]{SystemInfo.isWindows ? "systeminfo" : SystemInfo.isMac ? "vm_stat" : "free"})
+        .command(SystemInfo.isWindows ? "systeminfo" : SystemInfo.isMac ? "vm_stat" : "free")
         .redirectErrorStream(true)
         .start();
       return FileUtil.loadTextAndClose(process.getInputStream());

@@ -33,7 +33,7 @@ public class ProxyTest extends TestCase {
 
   public void testExtendClass() throws Throwable {
     final List<String> invocations = new ArrayList<>();
-    Implementation implementation = AdvancedProxy.createProxy(Implementation.class, new Class[]{Interface3.class}, new InvocationHandler(){
+    Implementation implementation = AdvancedProxy.createProxy(Implementation.class, new Class[]{Interface3.class}, new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         invocations.add(method.getName());
@@ -43,6 +43,7 @@ public class ProxyTest extends TestCase {
         return Implementation.class.getMethod("getField").invoke(proxy);
       }
     }, "239");
+    //noinspection ResultOfMethodCallIgnored
     implementation.hashCode();
     implementation.method();
     assertEquals("239", implementation.getFoo());
@@ -113,9 +114,9 @@ public class ProxyTest extends TestCase {
 
   public void testAddInterfaces() {
     final BaseImpl proxy = AdvancedProxy.createProxy(BaseImpl.class, BaseIEx.class);
-    assertEquals(proxy.sayA(), "a");
-    assertEquals(((BaseI)proxy).sayA(), "a");
-    assertEquals(((BaseIEx)proxy).sayA(), "a");
+    assertEquals("a", proxy.sayA());
+    assertEquals("a", ((BaseI)proxy).sayA());
+    assertEquals("a", ((BaseIEx)proxy).sayA());
   }
 
   public interface BaseI {
@@ -138,24 +139,27 @@ public class ProxyTest extends TestCase {
     @Override
     public abstract String sayA();
 
-    public abstract static class AbstractBaseImpl extends AbstractBase {}
+    public abstract static class AbstractBaseImpl extends AbstractBase {
+    }
   }
 
   public void testCovariantFromInterface() {
     final AbstractBase.AbstractBaseImpl proxy = AdvancedProxy.createProxy(AbstractBase.AbstractBaseImpl.class, ArrayUtil.EMPTY_CLASS_ARRAY,
                                                                           new InvocationHandler() {
                                                                             @Override
-                                                                            public Object invoke(Object proxy, Method method, Object[] args) {
+                                                                            public Object invoke(Object proxy,
+                                                                                                 Method method,
+                                                                                                 Object[] args) {
                                                                               return "a";
                                                                             }
-                                                                          }, false, new Object[0]);
-    assertEquals(proxy.sayA(), "a");
-    assertEquals(((AbstractBase)proxy).sayA(), "a");
-    assertEquals(((BaseI)proxy).sayA(), "a");
+                                                                          }, false, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    assertEquals("a", proxy.sayA());
+    assertEquals("a", proxy.sayA());
+    assertEquals("a", ((BaseI)proxy).sayA());
   }
 
   public static class CovariantFromBaseClassTest {
-    public static interface Intf {
+    public interface Intf {
       String sayA();
     }
 
@@ -178,10 +182,10 @@ public class ProxyTest extends TestCase {
         public Object invoke(Object proxy, Method method, Object[] args) {
           return "a";
         }
-      }, false, new Object[0]);
-    assertEquals(proxy.sayA(), "a");
-    assertEquals(((CovariantFromBaseClassTest.Base)proxy).sayA(), "a");
-    assertEquals(((CovariantFromBaseClassTest.Intf)proxy).sayA(), "a");
+      }, false, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    assertEquals("a", proxy.sayA());
+    assertEquals("a", ((CovariantFromBaseClassTest.Base)proxy).sayA());
+    assertEquals("a", ((CovariantFromBaseClassTest.Intf)proxy).sayA());
   }
 
   public void testGenericMethodInvocationJava8() throws Throwable {
@@ -205,6 +209,4 @@ public class ProxyTest extends TestCase {
     @Override
     Object foo(String t);
   }
-
-
 }

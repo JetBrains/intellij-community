@@ -170,7 +170,7 @@ public final class Utils {
 
     if (validateConstructor) {
             try {
-                final Constructor constructor = aClass.getConstructor(new Class[0]);
+                final Constructor constructor = aClass.getConstructor();
                 if ((constructor.getModifiers() & Modifier.PUBLIC) == 0) {
         return "Class \"" + className + "\" does not have default public constructor";
       }
@@ -315,7 +315,7 @@ public final class Utils {
         continue;
       }
       try {
-        componentClass.getConstructor(new Class[]{});
+        componentClass.getConstructor();
       }
       catch (NoSuchMethodException ex) {
         continue;

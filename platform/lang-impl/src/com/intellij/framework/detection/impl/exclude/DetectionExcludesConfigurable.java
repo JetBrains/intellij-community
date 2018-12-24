@@ -177,7 +177,7 @@ public class DetectionExcludesConfigurable implements Configurable {
 
   private PopupStep addExcludedFramework(final @NotNull FrameworkType frameworkType) {
     final String projectItem = "In the whole project";
-    return new BaseListPopupStep<String>(null, new String[]{projectItem, "In directory..."}) {
+    return new BaseListPopupStep<String>(null, projectItem, "In directory...") {
       @Override
       public PopupStep onChosen(String selectedValue, boolean finalChoice) {
         if (selectedValue.equals(projectItem)) {

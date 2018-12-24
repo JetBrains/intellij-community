@@ -131,7 +131,7 @@ public class IpnbJfxUtils {
 
     final ExtDecorator decorator = new ExtDecorator();
     final Configuration.Builder builder = Configuration.builder().forceExtentedProfile()
-      .registerPlugins(new Plugin[]{new YumlPlugin(), new WebSequencePlugin(), new IncludePlugin()}).setDecorator(decorator)
+      .registerPlugins(new YumlPlugin(), new WebSequencePlugin(), new IncludePlugin()).setDecorator(decorator)
       .setCodeBlockEmitter(new CodeBlockEmitter());
     String processed = Processor.process(result, builder.build());
     processed = unwrapMath(processed);
