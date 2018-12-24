@@ -361,10 +361,6 @@ internal object JavaConverter {
   }
 }
 
-private val DEFAULT_TYPES_LIST: List<Class<UElement>> = listOf(UElement::class.java)
-
-private val DEFAULT_EXPRESSION_TYPES_LIST: List<Class<UExpression>> = listOf(UExpression::class.java)
-
 private fun expressionTypes(requiredType: Class<out UElement>?) = requiredType?.let { listOf(it) } ?: DEFAULT_EXPRESSION_TYPES_LIST
 
 private fun elementTypes(requiredType: Class<out UElement>?) = requiredType?.let { listOf(it) } ?: DEFAULT_TYPES_LIST
