@@ -16,7 +16,7 @@ from tests_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON_CAUGH
     CMD_GET_THREAD_STACK, REASON_STEP_INTO_MY_CODE, CMD_GET_EXCEPTION_DETAILS, IS_IRONPYTHON, IS_JYTHON, IS_CPYTHON,
     IS_APPVEYOR, wait_for_condition, CMD_GET_FRAME, CMD_GET_BREAKPOINT_EXCEPTION,
     CMD_THREAD_SUSPEND, CMD_STEP_OVER, REASON_STEP_OVER, CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION,
-    CMD_THREAD_RESUME_SINGLE_NOTIFICATION)
+    CMD_THREAD_RESUME_SINGLE_NOTIFICATION, IS_PY37_OR_GREATER)
 from _pydevd_bundle.pydevd_constants import IS_WINDOWS
 try:
     from urllib import unquote
@@ -1967,6 +1967,7 @@ def _get_breakpoint_cases():
 
 
 @pytest.mark.parametrize("filename", _get_breakpoint_cases())
+@pytest.mark.skipif(not IS_PY37_OR_GREATER, reason="Supported only in Python 3.7")
 def test_py_37_breakpoint(case_setup, filename):
     with case_setup.test_file(filename) as writer:
         writer.write_make_initial_run()
@@ -2152,7 +2153,7 @@ def test_remote_debugger_basic(case_setup_remote):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.skipif(not IS_CPYTHON or not IS_PY37_OR_GREATER, reason='CPython only test.')
 def test_py_37_breakpoint_remote(case_setup_remote):
     with case_setup_remote.test_file('_debugger_case_breakpoint_remote.py') as writer:
         writer.write_make_initial_run()
@@ -2174,7 +2175,7 @@ def test_py_37_breakpoint_remote(case_setup_remote):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.skipif(not IS_CPYTHON or not IS_PY37_OR_GREATER, reason='CPython only test.')
 def test_py_37_breakpoint_remote_no_import(case_setup_remote):
 
     def get_environ(writer):
