@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -27,7 +27,7 @@ import java.awt.event.MouseEvent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class KeymapTest extends PlatformTestCase {
+public class KeymapTest extends LightPlatformTestCase {
   private static final String ACTION_1 = "ACTION_1";
   private static final String ACTION_2 = "ACTION_2";
   private static final String ACTION_NON_EXISTENT = "NON_EXISTENT";
