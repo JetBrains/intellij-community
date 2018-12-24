@@ -100,7 +100,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
 
   @Suppress("UNCHECKED_CAST")
   fun <T : UElement> convertElement(element: PsiElement, parent: UElement?, requiredTypes: List<Class<out T>>): T? {
-    val nonEmptyRequiredTypes = requiredTypes.takeIf { it.isNotEmpty() } ?: DEFAULT_TYPES_LIST
+    val nonEmptyRequiredTypes = requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)
     if (checkCanConvert && !canConvert(element.javaClass, nonEmptyRequiredTypes)) return null
 
     return (convertDeclaration(element, parent, nonEmptyRequiredTypes)
@@ -109,6 +109,14 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
 
   override fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: List<Class<out T>>): T? {
     return convertElement(element, null, requiredTypes)
+  }
+
+  override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: List<Class<out T>>) = when (element) {
+    is `PsiMethodCallExpression` ->
+      JavaConverter.psiMethodCallConversionAlternatives(element,
+                                                        null,
+                                                        requiredTypes.nonEmptyOr(DEFAULT_EXPRESSION_TYPES_LIST)) as Sequence<T>
+    else -> sequenceOf(convertElementWithParent(element, requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)) as? T).filterNotNull()
   }
 
   private fun convertDeclaration(element: PsiElement,
@@ -143,7 +151,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
   }
 }
 
-internal inline fun <reified ActualT : UElement> Class<out UElement>?.el(f: () -> UElement?): UElement? {
+internal inline fun <reified ActualT : UElement> Class<*>?.el(f: () -> UElement?): UElement? {
   return if (this == null || isAssignableFrom(ActualT::class.java)) f() else null
 }
 
@@ -236,25 +244,7 @@ internal object JavaConverter {
           else
             expr<UCallExpression>(build(::JavaConstructorUCallExpression))
         }
-        is PsiMethodCallExpression -> {
-          if (el.methodExpression.qualifierExpression != null) {
-            if (requiredType.isAssignableFrom(UQualifiedReferenceExpression::class.java) ||
-                requiredType.isAssignableFrom(UCallExpression::class.java)) {
-              val expr = JavaUCompositeQualifiedExpression(el, givenParent).apply {
-                receiverInitializer = { convertOrEmpty(el.methodExpression.qualifierExpression!!, this) }
-                selector = JavaUCallExpression(el, this)
-              }
-              if (!requiredType.isAssignableFrom(UQualifiedReferenceExpression::class.java))
-                expr.selector
-              else
-                expr
-            }
-            else
-              null
-          }
-          else
-            expr<UCallExpression>(build(::JavaUCallExpression))
-        }
+        is PsiMethodCallExpression -> psiMethodCallConversionAlternatives(el, givenParent, requiredType).firstOrNull()
         is PsiArrayInitializerExpression -> expr<UCallExpression>(build(::JavaArrayInitializerUCallExpression))
         is PsiBinaryExpression -> expr<UBinaryExpression>(build(::JavaUBinaryExpression))
       // Should go after PsiBinaryExpression since it implements PsiPolyadicExpression
@@ -276,6 +266,28 @@ internal object JavaConverter {
         else -> expr<UExpression>(build(::UnknownJavaExpression))
       }
     }
+  }
+
+  internal fun psiMethodCallConversionAlternatives(element: PsiMethodCallExpression,
+                                                   givenParent: UElement?,
+                                                   requiredTypes: List<Class<out UElement>>): Sequence<UExpression> {
+    if (element.methodExpression.qualifierExpression == null) {
+      return sequenceOf(requiredTypes.expr<UCallExpression> { JavaUCallExpression(element, givenParent) }).filterNotNull()
+    }
+
+    if (!requiredTypes.isAssignableFrom(UQualifiedReferenceExpression::class.java) &&
+        !requiredTypes.isAssignableFrom(UCallExpression::class.java)) return emptySequence()
+
+
+    val expr = JavaUCompositeQualifiedExpression(element, givenParent).apply {
+      receiverInitializer = {
+        convertOrEmpty(element.methodExpression.qualifierExpression!!, this@apply)
+      }
+      selector = JavaUCallExpression(element, this@apply)
+    }
+
+    val results = sequenceOf(expr, expr.selector)
+    return requiredTypes.asSequence().flatMap { required -> results.filter { required.isInstance(it) } }.distinct()
   }
 
   internal fun convertStatement(el: PsiStatement,
@@ -363,3 +375,5 @@ internal object JavaConverter {
 private fun expressionTypes(requiredType: Class<out UElement>?) = requiredType?.let { listOf(it) } ?: DEFAULT_EXPRESSION_TYPES_LIST
 
 private fun elementTypes(requiredType: Class<out UElement>?) = requiredType?.let { listOf(it) } ?: DEFAULT_TYPES_LIST
+
+private fun <T : UElement> List<Class<out T>>.nonEmptyOr(default: List<Class<out UElement>>) = takeIf { it.isNotEmpty() } ?: default
