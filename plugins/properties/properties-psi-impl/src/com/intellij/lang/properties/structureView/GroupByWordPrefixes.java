@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -66,14 +67,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
       parentPrefixLength = 0;
     }
     for (TreeElement element : children) {
-      if (!(element instanceof StructureViewTreeElement)) {
-        continue;
-      }
-      Object value = ((StructureViewTreeElement)element).getValue();
-      if (!(value instanceof IProperty)) {
-        continue;
-      }
-      final String text = ((IProperty) value).getUnescapedKey();
+      final String text = getPropertyUnescapedKey(element);
       if (text == null) continue;
       boolean expected = text.startsWith(parentPrefix) || text.startsWith(mySeparator);
       if (!expected) LOG.error("unexpected text: " + text + "; parentPrefix=" + parentPrefix + "; mySeparator=" + mySeparator);
@@ -187,4 +181,15 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
     }
   }
 
+  @Nullable
+  static String getPropertyUnescapedKey(@NotNull TreeElement element) {
+    if (!(element instanceof StructureViewTreeElement)) {
+      return null;
+    }
+    Object value = ((StructureViewTreeElement)element).getValue();
+    if (!(value instanceof IProperty)) {
+      return null;
+    }
+    return ((IProperty) value).getUnescapedKey();
+  }
 }

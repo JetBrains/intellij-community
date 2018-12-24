@@ -16,7 +16,6 @@
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
@@ -96,17 +95,8 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
     Collection<TreeElement> result = new ArrayList<>();
     List<String> prefixWords = StringUtil.split(myPrefix, mySeparator);
     for (TreeElement treeElement : myProperties) {
-      if (!(treeElement instanceof StructureViewTreeElement)) {
-        continue;
-      }
-      Object value = ((StructureViewTreeElement)treeElement).getValue();
-      if (!(value instanceof IProperty)) {
-        continue;
-      }
-      final String key = ((IProperty) value).getUnescapedKey();
-      if (key == null) {
-        continue;
-      }
+      String key = GroupByWordPrefixes.getPropertyUnescapedKey(treeElement);
+      if (key == null) continue;
       boolean startsWith;
       if (!key.equals(myPrefix)) {
         List<String> keyWords = StringUtil.split(key, mySeparator);
