@@ -23,20 +23,10 @@ import org.jetbrains.uast.UFile;
 import org.jetbrains.uast.UastContextKt;
 
 public class RefJavaFileImpl extends RefFileImpl {
-  private final RefModule myRefModule;
+  private volatile RefModule myRefModule;
 
   RefJavaFileImpl(PsiFile elem, RefManager manager) {
-    super(elem, manager, false);
-    myRefModule = manager.getRefModule(ModuleUtilCore.findModuleForPsiElement(elem));
-    UFile file = ObjectUtils.notNull(UastContextKt.toUElement(elem, UFile.class));
-    String packageName = file.getPackageName();
-    if (!packageName.isEmpty()) {
-      ((RefPackageImpl)getRefManager().getExtension(RefJavaManager.MANAGER).getPackage(packageName)).add(this);
-    } else if (myRefModule != null) {
-      ((WritableRefEntity)myRefModule).add(this);
-    } else {
-      ((RefProjectImpl)manager.getRefProject()).add(this);
-    }
+    super(elem, manager);
   }
 
   @Override
@@ -72,6 +62,22 @@ public class RefJavaFileImpl extends RefFileImpl {
         }
       }
     getRefManager().fireBuildReferences(this);
+  }
+
+  @Override
+  protected void initialize() {
+    PsiFile psiFile = getPsiElement();
+    if (psiFile == null) return;
+    myRefModule = getRefManager().getRefModule(ModuleUtilCore.findModuleForFile(psiFile));
+    UFile file = ObjectUtils.notNull(UastContextKt.toUElement(psiFile, UFile.class));
+    String packageName = file.getPackageName();
+    if (!packageName.isEmpty()) {
+      ((RefPackageImpl)getRefManager().getExtension(RefJavaManager.MANAGER).getPackage(packageName)).add(this);
+    } else if (myRefModule != null) {
+      ((WritableRefEntity)myRefModule).add(this);
+    } else {
+      ((RefProjectImpl)getRefManager().getRefProject()).add(this);
+    }
   }
 
   @Override

@@ -272,18 +272,10 @@ public class RefJavaManagerImpl extends RefJavaManager {
       return new RefClassImpl((UClass)uElement, psi, myRefManager);
     }
     if (uElement instanceof UMethod) {
-      UMethod method = (UMethod)uElement;
-      final RefElement parentRef = findParentRef(psi, method);
-      if (parentRef != null) {
-        return new RefMethodImpl(parentRef, method, psi, myRefManager);
-      }
+      return new RefMethodImpl((UMethod)uElement, psi, myRefManager);
     }
     else if (uElement instanceof UField) {
-      final UField field = (UField)uElement;
-      final RefElement parentRef = findParentRef(psi, field);
-      if (parentRef != null) {
-        return new RefFieldImpl(parentRef, field, psi, myRefManager);
-      }
+      return new RefFieldImpl((UField)uElement, psi, myRefManager);
     }
     return null;
   }
@@ -606,22 +598,5 @@ public class RefJavaManagerImpl extends RefJavaManager {
         }
       }
     }
-  }
-
-  private RefElement findParentRef(@NotNull PsiElement psiElement, @NotNull UElement uElement) {
-    UDeclaration containingUDecl = UDeclarationKt.getContainingDeclaration(uElement);
-    PsiElement containingDeclaration = containingUDecl == null ? null : containingUDecl.getSourcePsi();
-    if (containingDeclaration instanceof LightElement) {
-      containingDeclaration = containingDeclaration.getNavigationElement();
-    }
-    final RefElement parentRef;
-    //TODO strange
-    if (containingDeclaration == null || containingDeclaration instanceof LightElement) {
-      parentRef = myRefManager.getReference(psiElement.getContainingFile(), true);
-    }
-    else {
-      parentRef = myRefManager.getReference(containingDeclaration, true);
-    }
-    return parentRef;
   }
 }

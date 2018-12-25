@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
@@ -45,15 +46,15 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private RefParameter[] myParameters; //guarded by this
   private String myReturnValueTemplate; //guarded by this
 
-  RefMethodImpl(@NotNull RefElement owner, UMethod method, PsiElement psi, RefManager manager) {
+  RefMethodImpl(UMethod method, PsiElement psi, RefManager manager) {
     super(method, psi, manager);
-
-    ((WritableRefEntity)owner).add(this);
   }
 
-  // To be used only from RefImplicitConstructor.
+  // To be used only from RefImplicitConstructor!
   protected RefMethodImpl(@NotNull String name, @NotNull RefClass ownerClass) {
     super(name, ownerClass);
+
+    // fair enough to add parent here
     ((RefClassImpl)ownerClass).add(this);
 
     addOutReference(ownerClass);
@@ -88,8 +89,14 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   protected void initialize() {
     UMethod method = (UMethod)getUastElement();
     LOG.assertTrue(method != null);
-    PsiMethod javaPsi = method.getJavaPsi();
+    PsiElement sourcePsi = method.getSourcePsi();
+    LOG.assertTrue(sourcePsi != null);
 
+    RefElement parentRef = findParentRef(sourcePsi, method, myManager);
+    if (parentRef == null) return;
+    ((WritableRefEntity)parentRef).add(this);
+
+    PsiMethod javaPsi = method.getJavaPsi();
     setConstructor(method.isConstructor());
     final PsiType returnType = method.getReturnType();
     setFlag(returnType == null || 
@@ -145,8 +152,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       updateThrowsList(null);
     }
 
-    PsiElement sourcePsi = method.getSourcePsi();
-    if (sourcePsi != null && sourcePsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+    if (sourcePsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       collectUncaughtExceptions((PsiMethod)sourcePsi);
     }
   }
@@ -676,5 +682,22 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (expression == null) return true;
     if (expression instanceof UBlockExpression) return ((UBlockExpression)expression).getExpressions().isEmpty();
     return false;
+  }
+
+  static RefElement findParentRef(@NotNull PsiElement psiElement, @NotNull UElement uElement, @NotNull RefManagerImpl refManager) {
+    UDeclaration containingUDecl = UDeclarationKt.getContainingDeclaration(uElement);
+    PsiElement containingDeclaration = containingUDecl == null ? null : containingUDecl.getSourcePsi();
+    if (containingDeclaration instanceof LightElement) {
+      containingDeclaration = containingDeclaration.getNavigationElement();
+    }
+    final RefElement parentRef;
+    //TODO strange
+    if (containingDeclaration == null || containingDeclaration instanceof LightElement) {
+      parentRef = refManager.getReference(psiElement.getContainingFile(), true);
+    }
+    else {
+      parentRef = refManager.getReference(containingDeclaration, true);
+    }
+    return parentRef;
   }
 }
