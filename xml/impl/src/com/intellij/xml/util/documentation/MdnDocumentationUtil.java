@@ -161,7 +161,7 @@ public class MdnDocumentationUtil {
         break;
       }
     }
-    return path.replace('/', '_').replace('\\', '_');
+    return path.replace('/', '_').replace('\\', '_').replace(':', '_');
   }
 
   @NotNull
