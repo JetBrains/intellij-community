@@ -24,8 +24,12 @@ fun GuiTestCase.logEndTest(testName: String) {
   logInfo("<<<----------------- Test `$testName` finished")
 }
 
-inline fun <reified T> T.logError(error: String) {
-  guilog.error(LogIndent.indent + error)
+inline fun <reified T> T.logError(error: String, t: Throwable? = null) {
+  guilog.error(LogIndent.indent + error, t)
+}
+
+inline fun <reified T> T.logWarning(warning: String, t: Throwable? = null) {
+  guilog.warn(LogIndent.indent + warning, t)
 }
 
 fun getClassFileNameAndMethod(): String =
