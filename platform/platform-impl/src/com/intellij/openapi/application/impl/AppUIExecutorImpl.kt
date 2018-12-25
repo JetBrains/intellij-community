@@ -64,32 +64,28 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
 
   override fun withDocumentsCommitted(project: Project): AppUIExecutor {
     return withConstraint(object : ExpirableContextConstraint {
-      override val expirable = project
-
       override val isCorrectContext: Boolean
         get() = !PsiDocumentManager.getInstance(project).hasUncommitedDocuments()
 
-      override fun scheduleExpirable(runnable: Runnable) {
+      override fun scheduleExpirable(expirable: Disposable, runnable: Runnable) {
         PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, myModality)
       }
 
       override fun toString() = "withDocumentsCommitted"
-    })
+    }, project)
   }
 
   override fun inSmartMode(project: Project): AppUIExecutor {
     return withConstraint(object : ExpirableContextConstraint {
-      override val expirable = project
-
       override val isCorrectContext: Boolean
         get() = !DumbService.getInstance(project).isDumb
 
-      override fun scheduleExpirable(runnable: Runnable) {
+      override fun scheduleExpirable(expirable: Disposable, runnable: Runnable) {
         DumbService.getInstance(project).runWhenSmart(runnable)
       }
 
       override fun toString() = "inSmartMode"
-    })
+    }, project)
   }
 
   override fun inTransaction(parentDisposable: Disposable): AppUIExecutor {

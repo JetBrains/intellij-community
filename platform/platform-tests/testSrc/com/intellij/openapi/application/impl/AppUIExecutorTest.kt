@@ -187,12 +187,10 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
     val executor = AppUIExecutor.onUiThread()
       .withConstraint(object : AsyncExecution.ExpirableContextConstraint {
-        override val expirable = disposable
-
         override val isCorrectContext: Boolean
           get() = scheduled
 
-        override fun scheduleExpirable(runnable: Runnable) {
+        override fun scheduleExpirable(expirable: Disposable, runnable: Runnable) {
           if (Disposer.isDisposed(disposable)) {
             queue.add("refuse to run already disposed")
             return
@@ -203,7 +201,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         }
 
         override fun toString() = "test"
-      })
+      }, disposable)
 
     queue.add("start")
 
@@ -258,12 +256,10 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     val uiExecutor = AppUIExecutor.onUiThread()
     val executor = uiExecutor
       .withConstraint(object : AsyncExecution.ExpirableContextConstraint {
-        override val expirable = disposable
-
         override val isCorrectContext: Boolean
           get() = scheduled
 
-        override fun scheduleExpirable(runnable: Runnable) {
+        override fun scheduleExpirable(expirable: Disposable, runnable: Runnable) {
           if (Disposer.isDisposed(disposable)) {
             queue.add("refuse to run already disposed")
             return
@@ -274,7 +270,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         }
 
         override fun toString() = "test"
-      })
+      }, disposable)
 
     GlobalScope.async(SwingDispatcher) {
       queue.add("start")
@@ -354,12 +350,10 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     val uiExecutor = AppUIExecutor.onUiThread()
     val executor = uiExecutor
       .withConstraint(object : AsyncExecution.ExpirableContextConstraint {
-        override val expirable = disposable
-
         override val isCorrectContext: Boolean
           get() = outerScheduled
 
-        override fun scheduleExpirable(runnable: Runnable) {
+        override fun scheduleExpirable(expirable: Disposable, runnable: Runnable) {
           if (shouldDisposeOnDispatch) {
             queue.add("disposing")
             Disposer.dispose(disposable)
@@ -374,7 +368,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         }
 
         override fun toString() = "test outer"
-      })
+      }, disposable)
       .withConstraint(object : AsyncExecution.SimpleContextConstraint {
         override val isCorrectContext: Boolean
           get() = innerScheduled

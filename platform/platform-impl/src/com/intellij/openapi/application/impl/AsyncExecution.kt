@@ -18,13 +18,13 @@ interface AsyncExecution<E : AsyncExecution<E>> {
 
   fun shutdown(cause: Throwable? = null)
 
-  fun withConstraint(constraint: ContextConstraint): E
+  fun withConstraint(constraint: SimpleContextConstraint): E
+  fun withConstraint(constraint: ExpirableContextConstraint, expirable: Disposable): E
+
   fun expireWith(parentDisposable: Disposable): E
 
   interface ContextConstraint {
     val isCorrectContext: Boolean
-
-    fun toCoroutineDispatcher(delegate: CoroutineDispatcher): CoroutineDispatcher
 
     override fun toString(): String
   }
@@ -36,9 +36,6 @@ interface AsyncExecution<E : AsyncExecution<E>> {
    */
   interface SimpleContextConstraint : ContextConstraint {
     fun schedule(runnable: Runnable)
-
-    override fun toCoroutineDispatcher(delegate: CoroutineDispatcher): CoroutineDispatcher =
-      AsyncExecutionSupport.SimpleConstraintDispatcher(delegate, this)
   }
 
   /**
@@ -46,14 +43,10 @@ interface AsyncExecution<E : AsyncExecution<E>> {
    * even if the underlying dispatcher doesn't usually run a task once some [Disposable] is disposed.
    *
    * At the very least, the implementation MUST guarantee to execute a runnable passed to [scheduleExpirable]
-   * if the corresponding [expirable] is still not disposed by the time the dispatcher arranges the proper execution context.
-   * It is OK to execute it after the [expirable] has been disposed though.
+   * if the corresponding expirable is still not disposed by the time the dispatcher arranges the proper execution context.
+   * It is OK to execute it after the expirable has been disposed though.
    */
   interface ExpirableContextConstraint : ContextConstraint {
-    val expirable: Disposable
-    fun scheduleExpirable(runnable: Runnable)
-
-    override fun toCoroutineDispatcher(delegate: CoroutineDispatcher): CoroutineDispatcher =
-      AsyncExecutionSupport.ExpirableConstraintDispatcher(delegate, this)
+    fun scheduleExpirable(expirable: Disposable, runnable: Runnable)
   }
 }

@@ -63,8 +63,11 @@ fun AppUIExecutor.inUndoTransparentAction() =
   (this as AppUIExecutorEx).inUndoTransparentAction()
 fun AppUIExecutor.inWriteAction() =
   (this as AppUIExecutorEx).inWriteAction()
-fun AppUIExecutor.withConstraint(constraint: AsyncExecution.ContextConstraint): AppUIExecutor =
+
+fun AppUIExecutor.withConstraint(constraint: AsyncExecution.SimpleContextConstraint): AppUIExecutor =
   (this as AppUIExecutorEx).withConstraint(constraint)
+fun AppUIExecutor.withConstraint(constraint: AsyncExecution.ExpirableContextConstraint, expirable: Disposable): AppUIExecutor =
+  (this as AppUIExecutorEx).withConstraint(constraint, expirable)
 
 /**
  * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.

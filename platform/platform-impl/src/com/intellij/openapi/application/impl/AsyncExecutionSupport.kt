@@ -69,10 +69,11 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
 
   protected abstract fun cloneWith(disposables: Set<Disposable>, dispatcher: CoroutineDispatcher): E
 
-  override fun withConstraint(constraint: ContextConstraint): E {
-    val disposables = if (constraint is ExpirableContextConstraint) disposables + constraint.expirable else disposables
-    return cloneWith(disposables, constraint.toCoroutineDispatcher(dispatcher))
-  }
+  override fun withConstraint(constraint: SimpleContextConstraint): E =
+    cloneWith(disposables, SimpleConstraintDispatcher(dispatcher, constraint))
+
+  override fun withConstraint(constraint: ExpirableContextConstraint, expirable: Disposable): E =
+    cloneWith(disposables + expirable, ExpirableConstraintDispatcher(dispatcher, constraint, expirable))
 
   override fun expireWith(parentDisposable: Disposable): E {
     val disposables = disposables + parentDisposable
@@ -148,9 +149,9 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
 
   /** @see ExpirableContextConstraint */
   internal class ExpirableConstraintDispatcher(delegate: CoroutineDispatcher,
-                                               constraint: ExpirableContextConstraint) : ChainedConstraintDispatcher(delegate, constraint) {
+                                               constraint: ExpirableContextConstraint,
+                                               private val expirable: Disposable) : ChainedConstraintDispatcher(delegate, constraint) {
     override val constraint get() = super.constraint as ExpirableContextConstraint
-    private val expirable: Disposable get() = constraint.expirable
 
     override fun isScheduleNeeded(context: CoroutineContext): Boolean = !(expirable.isDisposed || constraint.isCorrectContext)
 
@@ -167,7 +168,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
         }
       }
       if (runOnce.isActive) {
-        constraint.scheduleExpirable(runOnce.runnable {
+        constraint.scheduleExpirable(expirable, runOnce.runnable {
           jobDisposableCloseable.close()
           retryDispatchRunnable.run()
         })
