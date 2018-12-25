@@ -30,14 +30,14 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    */
   Stream<String> names();
 
-  @Contract("null -> false")
+  @Contract(value = "null -> false", pure = true)
   boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef);
 
   @Override
-  @Contract("null -> false")
+  @Contract(value = "null -> false", pure = true)
   boolean test(@Nullable PsiMethodCallExpression call);
 
-  @Contract("null -> false")
+  @Contract(value = "null -> false", pure = true)
   boolean methodMatches(@Nullable PsiMethod method);
 
   /**
