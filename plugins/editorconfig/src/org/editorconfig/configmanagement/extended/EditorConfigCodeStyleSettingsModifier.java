@@ -29,7 +29,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   @Override
   public boolean modifySettings(@NotNull TransientCodeStyleSettings settings, @NotNull PsiFile psiFile) {
     final VirtualFile file = psiFile.getVirtualFile();
-    if (Utils.isFullSettingsSupport() && file != null) {
+    if (Utils.isFullIntellijSettingsSupport() && file != null) {
       final Project project = psiFile.getProject();
       if (!project.isDisposed() && Utils.isEnabled(settings)) {
         // Get editorconfig settings

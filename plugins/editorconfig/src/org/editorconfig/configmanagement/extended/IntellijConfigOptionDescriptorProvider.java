@@ -4,11 +4,13 @@ package org.editorconfig.configmanagement.extended;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.properties.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.editorconfig.Utils;
 import org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider;
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor;
 import org.editorconfig.language.schema.descriptors.impl.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -17,12 +19,15 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
   @NotNull
   @Override
   public List<EditorConfigOptionDescriptor> getOptionDescriptors() {
+    if (!Utils.isFullIntellijSettingsSupport()) {
+      return Collections.emptyList();
+    }
     return getAllOptions();
   }
 
   @Override
   public boolean requiresFullSupport() {
-    return true;
+    return Utils.isFullIntellijSettingsSupport();
   }
 
   private static List<EditorConfigOptionDescriptor> getAllOptions() {

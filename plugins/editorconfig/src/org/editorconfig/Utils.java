@@ -52,8 +52,8 @@ public class Utils {
     return currentSettings != null && currentSettings.getCustomSettings(EditorConfigSettings.class).ENABLED;
   }
 
-  public static boolean isFullSettingsSupport() {
-    return Registry.is(FULL_SETTINGS_SUPPORT_REG_KEY);
+  public static boolean isFullIntellijSettingsSupport() {
+    return Registry.is(FULL_SETTINGS_SUPPORT_REG_KEY) && !EditorConfigRegistry.shouldSupportCSharp();
   }
 
   public static void setFullSettingsSupportEnabled(boolean enabled) {
