@@ -24,13 +24,13 @@ public class EditorConfigFileSettingsTest extends LightPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    Utils.setFullSettingsSupportEnabled(true);
+    Utils.setFullIntellijSettingsSupportEnabledInTest(true);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      Utils.setFullSettingsSupportEnabled(false);
+      Utils.setFullIntellijSettingsSupportEnabledInTest(false);
     }
     catch (Throwable e) {
       addSuppressedException(e);
