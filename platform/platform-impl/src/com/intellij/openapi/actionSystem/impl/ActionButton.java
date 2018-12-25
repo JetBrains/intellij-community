@@ -291,13 +291,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   /**
-   * @return button's icon. Icon depends on action's state. It means that the method returns
-   *         disabled icon if action is disabled. If the action's icon is {@code null} then it returns
+   * @return button's icon. Icon depends on action's state and button's state. It means that the method returns
+   *         disabled icon if action is disabled.
+   *         In case of rollover (POPPED) or pressed (PUSHED) button's state hovered icon is used (if presented)
+   *         If the action's icon is {@code null} then it returns
    *         an empty icon.
    */
   public Icon getIcon() {
     boolean enabled = isButtonEnabled();
-    Icon icon = enabled ? myIcon : myDisabledIcon;
+    int popState = getPopState();
+    Icon hoveredIcon = (popState == POPPED || popState == PUSHED) ? myPresentation.getHoveredIcon() : null;
+    Icon icon = enabled ? hoveredIcon != null ? hoveredIcon : myIcon : myDisabledIcon;
     return icon == null ? getFallbackIcon(enabled) : icon;
   }
 
