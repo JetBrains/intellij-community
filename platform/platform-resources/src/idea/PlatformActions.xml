@@ -406,6 +406,7 @@
         <group id="ViewRecentActions">
           <action id="RecentFiles" class="com.intellij.ide.actions.ShowRecentFilesAction"/>
           <action id="RecentChangedFiles" class="com.intellij.ide.actions.ShowRecentlyEditedFilesAction"/>
+          <action id="RecentLocations" class="com.intellij.ide.actions.RecentLocationsAction"/>
         </group>
         <separator/>
         <group id="CompareActions">

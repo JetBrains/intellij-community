@@ -37,7 +37,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.Topic;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -380,6 +382,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   @Override
+  public List<PlaceInfo> getChangePlaces() {
+    return myChangePlaces;
+  }
+
+  @Override
   public final boolean isNavigatePreviousChangeAvailable() {
     return myCurrentIndex > 0;
   }
@@ -427,7 +434,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return removed;
   }
 
-  private void gotoPlaceInfo(@NotNull PlaceInfo info) {
+  @Override
+  public void gotoPlaceInfo(@NotNull PlaceInfo info) {
     final boolean wasActive = ToolWindowManager.getInstance(myProject).isEditorComponentActive();
     EditorWindow wnd = info.getWindow();
     FileEditorManagerEx editorManager = myFileEditorManager;
@@ -469,15 +477,18 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow());
   }
 
-  private static void putLastOrMerge(@NotNull LinkedList<PlaceInfo> list, @NotNull PlaceInfo next, int limit) {
+  private void putLastOrMerge(@NotNull LinkedList<PlaceInfo> list, @NotNull PlaceInfo next, int limit) {
+    MessageBus messageBus = myProject.getMessageBus();
     if (!list.isEmpty()) {
       PlaceInfo prev = list.getLast();
       if (isSame(prev, next)) {
-        list.removeLast();
+        PlaceInfo removed = list.removeLast();
+        messageBus.syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(removed);
       }
     }
 
     list.add(next);
+    messageBus.syncPublisher(RecentPlacesListener.TOPIC).recentPlacePushed(next);
     if (list.size() > limit) {
       list.removeFirst();
     }
@@ -490,7 +501,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return myFileDocumentManager;
   }
 
-  protected static final class PlaceInfo {
+  public static final class PlaceInfo {
     private final VirtualFile myFile;
     private final FileEditorState myNavigationState;
     private final String myEditorTypeId;
@@ -511,7 +522,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     }
 
     @NotNull
-    private FileEditorState getNavigationState() {
+    public FileEditorState getNavigationState() {
       return myNavigationState;
     }
 
@@ -531,9 +542,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     }
   }
 
+  @Override
   @NotNull
-  @TestOnly
-  List<PlaceInfo> getBackPlaces() {
+  public List<PlaceInfo> getBackPlaces() {
     return myBackPlaces;
   }
 
@@ -546,7 +557,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     CommandProcessor.getInstance().executeCommand(myProject, runnable, name, groupId);
   }
 
-  private static boolean isSame(@NotNull PlaceInfo first, @NotNull PlaceInfo second) {
+  public static boolean isSame(@NotNull PlaceInfo first, @NotNull PlaceInfo second) {
     if (first.getFile().equals(second.getFile())) {
       FileEditorState firstState = first.getNavigationState();
       FileEditorState secondState = second.getNavigationState();
@@ -554,5 +565,21 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     }
 
     return false;
+  }
+
+  public interface ChangePlacesListener {
+    Topic<ChangePlacesListener> TOPIC = Topic.create("ChangePlacesListener", ChangePlacesListener.class);
+
+    void changedPlacePushed(@NotNull PlaceInfo changePlace);
+
+    void changedPlaceRemoved(@NotNull PlaceInfo changePlace);
+  }
+
+  public interface RecentPlacesListener {
+    Topic<RecentPlacesListener> TOPIC = Topic.create("RecentPlacesListener", RecentPlacesListener.class);
+
+    void recentPlacePushed(@NotNull PlaceInfo changePlace);
+
+    void recentPlaceRemoved(@NotNull PlaceInfo changePlace);
   }
 }

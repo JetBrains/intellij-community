@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import org.jetbrains.annotations.NotNull;
@@ -95,6 +96,11 @@ public final class TextEditorState implements FileEditorState {
       }
     }
     return result;
+  }
+
+  public int getRelativeCaretPositionLine(@NotNull Editor editor) {
+    int viewAreaPosition = editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
+    return (viewAreaPosition + RELATIVE_CARET_POSITION) / editor.getLineHeight();
   }
 
   @Override
