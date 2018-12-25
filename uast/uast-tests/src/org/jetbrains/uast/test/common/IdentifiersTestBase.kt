@@ -7,11 +7,9 @@ import com.intellij.psi.PsiCodeBlock
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
-import org.jetbrains.uast.UFile
-import org.jetbrains.uast.UIdentifier
-import org.jetbrains.uast.sourcePsiElement
+import junit.framework.TestCase
+import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.assertEqualsToFile
-import org.jetbrains.uast.toUElementOfType
 import java.io.File
 
 interface IdentifiersTestBase {
@@ -29,6 +27,13 @@ interface IdentifiersTestBase {
           builder.append(" -> ")
           builder.append(uIdentifier.uastParent?.asLogString())
           builder.appendln()
+
+          //check uIdentifier is walkable to top (e.g. IDEA-200372)
+          TestCase.assertEquals("should be able to reach the file from identifier '${uIdentifier.sourcePsiElement!!.text}'",
+                                this@asIdentifiers,
+                                element.toUElementOfType<UIdentifier>()!!.getParentOfType<UFile>()
+          )
+
         }
         if (element is PsiCodeBlock) level++
         element.acceptChildren(this)

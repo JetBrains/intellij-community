@@ -16,5 +16,8 @@ class JavaIdentifiersTest : AbstractJavaIdentifiersTest() {
   @Test
   fun testTryWithResources() = doTest("Simple/TryWithResources.java")
 
+  @Test
+  fun testInnerClass() = doTest("Simple/InnerClass.java")
+
 
 }

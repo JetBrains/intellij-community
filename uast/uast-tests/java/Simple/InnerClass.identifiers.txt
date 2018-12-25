@@ -1,0 +1,11 @@
+AccessingProtectedMembersFromSubclass -> UClass (name = AccessingProtectedMembersFromSubclass)
+ProtectedMembers -> USimpleNameReferenceExpression (identifier = ProtectedMembers)
+StaticInnerImpl1 -> UClass (name = StaticInnerImpl1)
+ProtectedMembers -> USimpleNameReferenceExpression (identifier = ProtectedMembers)
+StaticInner -> UQualifiedReferenceExpression
+StaticInnerImpl2 -> UClass (name = StaticInnerImpl2)
+StaticInner -> USimpleNameReferenceExpression (identifier = StaticInner)
+ProtectedMembers -> UClass (name = ProtectedMembers)
+method -> UMethod (name = method)
+staticMethod -> UMethod (name = staticMethod)
+StaticInner -> UClass (name = StaticInner)
