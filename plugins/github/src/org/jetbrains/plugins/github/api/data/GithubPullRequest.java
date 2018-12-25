@@ -38,7 +38,7 @@ public class GithubPullRequest {
   @Mandatory private List<GithubUser> assignees;
   @Mandatory private List<GithubUser> requestedReviewers;
   //requestedTeams
-  @Mandatory private List<GithubIssueLabel> labels;
+  private List<GithubIssueLabel> labels;
   //milestone
 
   private Tag head;
@@ -120,7 +120,7 @@ public class GithubPullRequest {
     return requestedReviewers;
   }
 
-  @NotNull
+  @Nullable
   public List<GithubIssueLabel> getLabels() {
     return labels;
   }
