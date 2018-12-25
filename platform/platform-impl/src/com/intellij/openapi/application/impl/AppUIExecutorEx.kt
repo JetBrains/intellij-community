@@ -66,8 +66,8 @@ fun AppUIExecutor.inWriteAction() =
 
 fun AppUIExecutor.withConstraint(constraint: AsyncExecution.SimpleContextConstraint): AppUIExecutor =
   (this as AppUIExecutorEx).withConstraint(constraint)
-fun AppUIExecutor.withConstraint(constraint: AsyncExecution.ExpirableContextConstraint, expirable: Disposable): AppUIExecutor =
-  (this as AppUIExecutorEx).withConstraint(constraint, expirable)
+fun AppUIExecutor.withConstraint(constraint: AsyncExecution.ExpirableContextConstraint, parentDisposable: Disposable): AppUIExecutor =
+  (this as AppUIExecutorEx).withConstraint(constraint, parentDisposable)
 
 /**
  * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
