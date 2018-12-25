@@ -15,13 +15,10 @@
  */
 package com.intellij.openapi.vcs.roots;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.registry.Registry;
@@ -41,7 +38,7 @@ import java.util.function.Function;
 
 import static com.intellij.openapi.vfs.VirtualFileVisitor.*;
 
-public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListener {
+public class VcsRootScanner implements AsyncVfsEventsListener {
 
   @NotNull private final VcsRootProblemNotifier myRootProblemNotifier;
   @NotNull private final Project myProject;
@@ -62,7 +59,6 @@ public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListene
     myCheckers = checkers;
 
     AsyncVfsEventsPostProcessor.getInstance().addListener(this, project);
-    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, this);
 
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
   }
@@ -114,11 +110,6 @@ public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListene
 
   private boolean isVcsDir(@NotNull String filePath) {
     return myCheckers.stream().anyMatch(it -> it.isVcsDir(filePath));
-  }
-
-  @Override
-  public void rootsChanged(@NotNull ModuleRootEvent event) {
-    scheduleScan();
   }
 
   private void scheduleScan() {
