@@ -308,6 +308,9 @@ public class ExpectedTypesProvider {
       if (statement.getParent() instanceof PsiSwitchLabeledRuleStatement) {
         PsiSwitchBlock block = ((PsiSwitchLabeledRuleStatement)statement.getParent()).getEnclosingSwitchBlock();
         if (block instanceof PsiSwitchExpression) {
+          if (myForCompletion) {
+            myExpr = (PsiSwitchExpression)block;
+          }
           block.getParent().accept(this);
           return;
         }
@@ -321,6 +324,9 @@ public class ExpectedTypesProvider {
     public void visitBreakStatement(PsiBreakStatement statement) {
       PsiElement exitedElement = statement.findExitedElement();
       if (exitedElement instanceof PsiSwitchExpression) {
+        if (myForCompletion) {
+          myExpr = (PsiExpression)exitedElement;
+        }
         exitedElement.getParent().accept(this);
       }
     }
