@@ -460,4 +460,11 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                       "-\n" +
                       "[<html><b>String... b</b></html>]");
   }
+
+  public void testDoNotShowUnrelatedInfoOnTyping() {
+    configureJava("class C { void m(String a, String b) { String s = <caret>a + b).trim(); } }");
+    type('(');
+    waitForAllAsyncStuff();
+    checkHintContents(null);
+  }
 }
