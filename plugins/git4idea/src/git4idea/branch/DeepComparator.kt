@@ -214,23 +214,21 @@ class DeepComparator(private val project: Project,
     private fun getCommitsByPatch(root: VirtualFile,
                                   targetBranch: String,
                                   sourceBranch: String): TIntHashSet {
-      val startTimeWithGit = System.currentTimeMillis()
-      val resultFromGit = getCommitsFromGit(root, targetBranch, sourceBranch)
-      LOG.debug("Getting non picked commits with git took " +
-                "${StopWatch.formatTime(System.currentTimeMillis() - startTimeWithGit)} for ${root.name}")
+      val (resultFromGit, time) = measureTimeMillis { getCommitsFromGit(root, targetBranch, sourceBranch) }
+      LOG.debug("Getting non picked commits with git took ${StopWatch.formatTime(time)} for ${root.name}")
       return resultFromGit
     }
 
     private fun getCommitsByIndexReliable(root: VirtualFile, sourceBranch: String, targetBranch: String): TIntHashSet {
       val resultFromGit = getCommitsByPatch(root, targetBranch, sourceBranch)
 
-      val startTimeWithIndex = System.currentTimeMillis()
-      val sourceBranchRef = dataPack?.refsModel?.findBranch(sourceBranch, root) ?: return resultFromGit
-      val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return resultFromGit
-      val resultFromIndex = getCommitsFromIndex(dataPack, root, sourceBranchRef, targetBranchRef, resultFromGit, true)
+      val (resultFromIndex, time) = measureTimeMillis {
+        val sourceBranchRef = dataPack?.refsModel?.findBranch(sourceBranch, root) ?: return resultFromGit
+        val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return resultFromGit
+        getCommitsFromIndex(dataPack, root, sourceBranchRef, targetBranchRef, resultFromGit, true)
+      }
       if (resultFromIndex != null) {
-        LOG.debug("Getting non picked commits with index took " +
-                  "${StopWatch.formatTime(System.currentTimeMillis() - startTimeWithIndex)} for ${root.name}")
+        LOG.debug("Getting non picked commits with index took ${StopWatch.formatTime(time)} for ${root.name}")
         return resultFromIndex
       }
 
@@ -240,14 +238,14 @@ class DeepComparator(private val project: Project,
     private fun getCommitsByIndexFast(root: VirtualFile, sourceBranch: String): TIntHashSet? {
       if (!vcsLogData.index.isIndexed(root)) return null
 
-      val startTimeWithIndex = System.currentTimeMillis()
-      val sourceBranchRef = dataPack?.refsModel?.findBranch(sourceBranch, root) ?: return null
-      val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return null
-      val sourceBranchCommits = dataPack.subgraphDifference(sourceBranchRef, targetBranchRef, storage) ?: return null
-      val result = getCommitsFromIndex(dataPack, root, sourceBranchRef, targetBranchRef, sourceBranchCommits, false)
+      val (result, time) = measureTimeMillis {
+        val sourceBranchRef = dataPack?.refsModel?.findBranch(sourceBranch, root) ?: return null
+        val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return null
+        val sourceBranchCommits = dataPack.subgraphDifference(sourceBranchRef, targetBranchRef, storage) ?: return null
+        getCommitsFromIndex(dataPack, root, sourceBranchRef, targetBranchRef, sourceBranchCommits, false)
+      }
       if (result != null) {
-        LOG.debug("Getting non picked commits with index took " +
-                  "${StopWatch.formatTime(System.currentTimeMillis() - startTimeWithIndex)} for ${root.name}")
+        LOG.debug("Getting non picked commits with index took ${StopWatch.formatTime(time)} for ${root.name}")
       }
       return result
     }
@@ -339,4 +337,10 @@ class DeepComparator(private val project: Project,
       return ServiceManager.getService(project, DeepComparatorHolder::class.java).getInstance(dataProvider, logUi)
     }
   }
+}
+
+private inline fun <R> measureTimeMillis(block: () -> R): Pair<R, Long> {
+  val start = System.currentTimeMillis()
+  val result = block()
+  return Pair(result, System.currentTimeMillis() - start)
 }
