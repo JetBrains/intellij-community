@@ -14,5 +14,13 @@ public final class EclipseIcons {
     return IconLoader.getIcon(path, EclipseIcons.class);
   }
 
-  public static final Icon Eclipse = load("/icons/eclipse.png"); // 16x16
+  private static Icon load(String path, Class<?> clazz) {
+    return IconLoader.getIcon(path, clazz);
+  }
+
+
+  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Providers.Eclipse */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Eclipse = load("/providers/eclipse.svg", com.intellij.icons.AllIcons.class);
 }
