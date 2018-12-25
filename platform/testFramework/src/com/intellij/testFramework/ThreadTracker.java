@@ -2,6 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -62,6 +63,7 @@ public class ThreadTracker {
     return ContainerUtil.newMapFromValues(ContainerUtil.iterate(threads), Thread::getName);
   }
 
+  // contains prefixes of the thread names which are known to be long-running (and thus exempted from the leaking threads detection)
   private static final Set<String> wellKnownOffenders = new THashSet<>();
   static {
     List<String> offenders = Arrays.asList(
@@ -97,7 +99,7 @@ public class ThreadTracker {
     List<String> sorted = offenders.stream().sorted(String::compareToIgnoreCase).collect(Collectors.toList());
     if (!offenders.equals(sorted)) {
       String proper = StringUtil.join(ContainerUtil.map(sorted, s -> '"' + s + '"'), ",\n").replaceAll('"'+FlushingDaemon.NAME+'"', "FlushingDaemon.NAME");
-      throw new AssertionError("The thread names must be sorted. Something like this will do:\n" + proper);
+      throw new AssertionError("Thread names must be sorted (for ease of maintainance). Something like this will do:\n" + proper);
     }
     wellKnownOffenders.addAll(offenders);
     Application application = ApplicationManager.getApplication();
@@ -119,8 +121,7 @@ public class ThreadTracker {
   }
 
   // marks Thread with this name as long-running, which should be ignored from the thread-leaking checks
-  public static void longRunningThreadCreated(@NotNull Disposable parentDisposable,
-                                              @NotNull final String... threadNamePrefixes) {
+  public static void longRunningThreadCreated(@NotNull Disposable parentDisposable, @NotNull final String... threadNamePrefixes) {
     wellKnownOffenders.addAll(Arrays.asList(threadNamePrefixes));
     Disposer.register(parentDisposable, () -> wellKnownOffenders.removeAll(Arrays.asList(threadNamePrefixes)));
   }
@@ -169,7 +170,7 @@ public class ThreadTracker {
         if (shouldIgnore(thread, stackTrace)) continue;
 
         String trace = PerformanceWatcher.printStacktrace("Thread leaked", thread, stackTrace);
-        Assert.fail(trace);
+        Assert.fail(trace + "\n\nFull thread dump:\n"+ThreadDumper.dumpThreadsToString());
       }
     }
     finally {
