@@ -133,4 +133,8 @@ public abstract class RefManager {
   public PsiNamedElement getContainerElement(@NotNull PsiElement element) {
     return null;
   }
+
+  public boolean isGraphRequired() {
+    return true;
+  }
 }

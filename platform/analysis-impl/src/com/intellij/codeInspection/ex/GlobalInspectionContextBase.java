@@ -295,7 +295,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   @NotNull
-  protected List<Tools> getUsedTools() {
+  public List<Tools> getUsedTools() {
     InspectionProfileImpl profile = getCurrentProfile();
     List<Tools> tools = profile.getAllEnabledInspectionTools(myProject);
     Set<InspectionToolWrapper<?, ?>> dependentTools = new LinkedHashSet<>();

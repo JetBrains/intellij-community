@@ -102,6 +102,8 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       }
     }
 
+    if (!myManager.isGraphRequired()) return;
+
     PsiClass javaPsi = uClass.getJavaPsi();
     setAbstract(javaPsi.hasModifier(JvmModifier.ABSTRACT));
     setAnonymous(uClass.getName() == null);

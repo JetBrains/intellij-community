@@ -95,6 +95,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     RefElement parentRef = findParentRef(sourcePsi, method, myManager);
     if (parentRef == null) return;
     ((WritableRefEntity)parentRef).add(this);
+    if (!myManager.isGraphRequired()) return;
 
     PsiMethod javaPsi = method.getJavaPsi();
     setConstructor(method.isConstructor());
