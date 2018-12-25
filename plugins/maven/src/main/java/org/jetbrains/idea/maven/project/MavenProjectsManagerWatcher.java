@@ -270,6 +270,13 @@ public class MavenProjectsManagerWatcher {
                                       final boolean forceImportAndResolve) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
+
+    if (LOG.isDebugEnabled()) {
+      String withForceOptionMessage = force ? " with force option" : "";
+      LOG.debug("Scheduling update for " + myProjectsTree + withForceOptionMessage +
+                ". Files to update: " + filesToUpdate + ". Files to delete: " + filesToDelete);
+    }
+
     myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(filesToUpdate,
                                                                           filesToDelete,
                                                                           force,
