@@ -44,7 +44,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private List<String> myUnThrownExceptions;//guarded by this
 
   private RefParameter[] myParameters; //guarded by this
-  private String myReturnValueTemplate; //guarded by this
+  private volatile String myReturnValueTemplate = RETURN_VALUE_UNDEFINED; //guarded by this
 
   RefMethodImpl(UMethod method, PsiElement psi, RefManager manager) {
     super(method, psi, manager);
@@ -102,12 +102,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     setFlag(returnType == null || 
             PsiType.VOID.equals(returnType) || 
             returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID), IS_RETURN_VALUE_USED_MASK);
-
-    if (!isReturnValueUsed()) {
-      synchronized (this) {
-        myReturnValueTemplate = RETURN_VALUE_UNDEFINED;
-      }
-    }
 
     RefClass ownerClass = getOwnerClass();
     if (isConstructor()) {
