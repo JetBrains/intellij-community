@@ -21,15 +21,20 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 
 public class ResourceBundleFileStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
+  @NotNull
   private final ResourceBundle myResourceBundle;
+  @NotNull
+  private final BooleanSupplier myGrouped;
 
   private volatile boolean myShowOnlyIncomplete;
-  private final Map<String, ResourceBundlePropertyStructureViewElement> myElements = ContainerUtil.newLinkedHashMap();
+  private final Map<String, PropertyStructureViewElement> myElements = ContainerUtil.newLinkedHashMap();
 
-  public ResourceBundleFileStructureViewElement(final ResourceBundle resourceBundle) {
+  public ResourceBundleFileStructureViewElement(@NotNull ResourceBundle resourceBundle, @NotNull BooleanSupplier grouped) {
     myResourceBundle = resourceBundle;
+    myGrouped = grouped;
   }
 
   public void setShowOnlyIncomplete(boolean showOnlyIncomplete) {
@@ -54,7 +59,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
     for (Map.Entry<String, Collection<IProperty>> entry : propertyNames.entrySet()) {
       final String propKey = entry.getKey();
       Collection<IProperty> properties = entry.getValue();
-      final ResourceBundlePropertyStructureViewElement oldPropertyNode = myElements.get(propKey);
+      final PropertyStructureViewElement oldPropertyNode = myElements.get(propKey);
       if (oldPropertyNode != null && properties.contains(oldPropertyNode.getProperty())) {
         remains.remove(propKey);
         continue;
@@ -63,7 +68,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
         remains.remove(propKey);
       }
       final IProperty representative = properties.iterator().next();
-      myElements.put(propKey, new ResourceBundlePropertyStructureViewElement(representative));
+      myElements.put(propKey, new PropertyStructureViewElement(representative, myGrouped));
     }
 
     for (String remain : remains) {
@@ -82,7 +87,8 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
     final MultiMap<String, IProperty> propertyNames;
     if (onlyIncomplete) {
       propertyNames = getChildrenIdShowOnlyIncomplete(resourceBundle);
-    } else {
+    }
+    else {
       propertyNames = MultiMap.createLinked();
       for (PropertiesFile propertiesFile : propertiesFiles) {
         List<IProperty> properties = propertiesFile.getProperties();

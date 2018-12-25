@@ -21,7 +21,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
+import com.intellij.lang.properties.editor.PropertyStructureViewElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -118,12 +118,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
       }
       else if (groupStart != keys.size()) {
         TreeElement node = keys.get(groupStart).node;
-        if (node instanceof PropertiesStructureViewElement) {
-          ((PropertiesStructureViewElement)node).setPresentableName(presentableName);
-        }
-        else {
-          ((ResourceBundlePropertyStructureViewElement)node).setPresentableName(presentableName);
-        }
+        ((PropertyStructureViewElement)node).setPresentableName(presentableName);
       }
       groupStart = i;
     }

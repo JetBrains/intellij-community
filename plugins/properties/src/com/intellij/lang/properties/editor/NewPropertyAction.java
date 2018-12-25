@@ -98,7 +98,7 @@ class NewPropertyAction extends AnAction {
         prefix = group.getPrefix();
         separator = group.getSeparator();
       }
-      else if (selectedElement instanceof ResourceBundlePropertyStructureViewElement ||
+      else if (selectedElement instanceof PropertyStructureViewElement ||
                selectedElement instanceof ResourceBundleFileStructureViewElement) {
         prefix = null;
         separator = null;

@@ -194,7 +194,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     TreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
     if (children.length != 0) {
       TreeElement child = children[0];
-      IProperty property = ((ResourceBundlePropertyStructureViewElement)child).getProperty();
+      IProperty property = ((PropertyStructureViewElement)child).getProperty();
       if (property != null) {
         String propName = property.getUnescapedKey();
         setState(new ResourceBundleEditorState(propName));
@@ -294,8 +294,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
     while (!toCheck.isEmpty()) {
       TreeElement element = toCheck.pop();
-      PsiElement value = element instanceof ResourceBundlePropertyStructureViewElement
-                     ? ((ResourceBundlePropertyStructureViewElement)element).getPsiElement()
+      PsiElement value = element instanceof PropertyStructureViewElement
+                     ? ((PropertyStructureViewElement)element).getPsiElement()
                      : null;
       final IProperty property = PropertiesImplUtil.getProperty(value);
       if (property != null && propertyName.equals(property.getUnescapedKey())) {
@@ -592,8 +592,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       .filterMap(AbstractTreeNode::getValue)
       .filter(ResourceBundleEditorViewElement.class)
       .first();
-    return first instanceof ResourceBundlePropertyStructureViewElement ?
-           ((ResourceBundlePropertyStructureViewElement)first).getProperty() : null;
+    return first instanceof PropertyStructureViewElement ?
+           ((PropertyStructureViewElement)first).getProperty() : null;
   }
 
   @NotNull

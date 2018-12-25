@@ -20,7 +20,7 @@ import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.editor.ResourceBundleEditorViewElement;
-import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
+import com.intellij.lang.properties.editor.PropertyStructureViewElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.NullableFunction;
@@ -94,12 +94,8 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
   @Override
   public IProperty[] getProperties() {
     final List<IProperty> elements = ContainerUtil.mapNotNull(getChildren(), (NullableFunction<TreeElement, IProperty>)treeElement -> {
-      if (treeElement instanceof PropertiesStructureViewElement) {
-        PropertiesStructureViewElement propertiesElement = (PropertiesStructureViewElement)treeElement;
-        return propertiesElement.getValue();
-      }
-      else if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
-        return ((ResourceBundlePropertyStructureViewElement)treeElement).getProperties()[0];
+      if (treeElement instanceof PropertyStructureViewElement) {
+        return ((PropertyStructureViewElement)treeElement).getProperties()[0];
       }
       return null;
     });

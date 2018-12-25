@@ -19,21 +19,22 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.BooleanSupplier;
 
-public class ResourceBundlePropertyStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
+public class PropertyStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private static final TextAttributesKey GROUP_KEY;
 
   public static final String PROPERTY_GROUP_KEY_TEXT = "<property>";
   @NotNull
   private final IProperty myProperty;
+  @NotNull
+  private final BooleanSupplier myGrouped;
   private String myPresentableName;
-
 
   static {
     TextAttributes groupKeyTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_KEY).clone();
@@ -43,8 +44,9 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
   private volatile InspectedPropertyProblems myInspectedPropertyProblems;
 
-  public ResourceBundlePropertyStructureViewElement(@NotNull IProperty property) {
+  public PropertyStructureViewElement(@NotNull IProperty property, @NotNull BooleanSupplier grouped) {
     myProperty = property;
+    myGrouped = grouped;
   }
 
   @Nullable
@@ -74,6 +76,10 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
     myPresentableName = presentableName;
   }
 
+  private String getPresentableName() {
+    return myGrouped.getAsBoolean() ? myPresentableName : null;
+  }
+
   @Override
   public IProperty getValue() {
     return getProperty();
@@ -99,11 +105,17 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   public ItemPresentation getPresentation() {
     return new ResourceBundleEditorRenderer.TextAttributesPresentation() {
 
+      @Nullable
+      @Override
+      public TextAttributesKey getTextAttributesKey() {
+        return (getPresentableName() != null && getPresentableName().isEmpty()) ? GROUP_KEY : null;
+      }
+
       @Override
       public String getPresentableText() {
         IProperty property = getProperty();
         if (property == null) return null;
-        return myPresentableName == null ? property.getName() : myPresentableName.isEmpty() ? PROPERTY_GROUP_KEY_TEXT : myPresentableName;
+        return getPresentableName() == null ? property.getName() : getPresentableName().isEmpty() ? PROPERTY_GROUP_KEY_TEXT : getPresentableName();
       }
 
       @Override
@@ -113,13 +125,13 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
       @Override
       public Icon getIcon(boolean open) {
-        return PlatformIcons.PROPERTY_ICON;
+        return myProperty.getIcon(0);
       }
 
       @Override
       public TextAttributes getTextAttributes(EditorColorsScheme colorsScheme) {
         final TextAttributesKey baseAttrKey =
-          (myPresentableName != null && myPresentableName.isEmpty()) ? GROUP_KEY : PropertiesHighlighter.PROPERTY_KEY;
+          (getPresentableName() != null && getPresentableName().isEmpty()) ? GROUP_KEY : PropertiesHighlighter.PROPERTY_KEY;
         final TextAttributes baseAttrs = colorsScheme.getAttributes(baseAttrKey);
         if (getPsiElement() != null) {
           if (myInspectedPropertyProblems != null) {
@@ -136,16 +148,16 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
   @Override
   public void navigate(boolean requestFocus) {
-    //todo
+    myProperty.navigate(requestFocus);
   }
 
   @Override
   public boolean canNavigate() {
-    return false;
+    return myProperty.canNavigate();
   }
 
   @Override
   public boolean canNavigateToSource() {
-    return false;
+    return myProperty.canNavigateToSource();
   }
 }

@@ -91,8 +91,8 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
       queue.addLast(model.getRoot());
       while (!queue.isEmpty()) {
         final TreeElement treeElement = queue.pullFirst();
-        if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
-          IProperty property = ((ResourceBundlePropertyStructureViewElement)treeElement).getProperty();
+        if (treeElement instanceof PropertyStructureViewElement) {
+          IProperty property = ((PropertyStructureViewElement)treeElement).getProperty();
           if (property == null) continue;
           final String key = property.getKey();
           if (key == null) continue;
@@ -116,7 +116,7 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
                 }
               }
             }
-            ((ResourceBundlePropertyStructureViewElement)treeElement).setInspectedPropertyProblems(allDescriptors.isEmpty()
+            ((PropertyStructureViewElement)treeElement).setInspectedPropertyProblems(allDescriptors.isEmpty()
                                               ? null
                                               : new InspectedPropertyProblems(allDescriptors.toArray(new Pair[0]),
                                                                               highlightTypes));

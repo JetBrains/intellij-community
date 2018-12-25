@@ -24,4 +24,6 @@ public interface PropertiesGroupingStructureViewModel extends StructureViewModel
   void setSeparator(String separator);
 
   String getSeparator();
+
+  void setGroupingActive(boolean state);
 }
