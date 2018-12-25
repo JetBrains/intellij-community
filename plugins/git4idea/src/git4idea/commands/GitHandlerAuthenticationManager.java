@@ -11,7 +11,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
-import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +53,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
   public static GitHandlerAuthenticationManager prepare(@NotNull Project project, @NotNull GitLineHandler handler) throws IOException {
     GitHandlerAuthenticationManager manager = new GitHandlerAuthenticationManager(project, handler);
     manager.prepareHttpAuth();
-    if (GitVcsApplicationSettings.getInstance().isUseIdeaSsh()) {
+    if (Registry.is("git.use.builtin.ssh")) {
       manager.prepareSshAuth();
     }
     else if (Registry.is("git.ssh.native.override.ssh.askpass")) {

@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getCountingUsage
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.URLUtil
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
@@ -25,7 +26,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     usages.add(UsageDescriptor("config.repo.sync." + settings.syncSetting.name, 1))
     usages.add(UsageDescriptor("config.update.type." + settings.updateType.name, 1))
     usages.add(UsageDescriptor("config.save.policy." + settings.updateChangesPolicy().name, 1))
-    usages.add(getBooleanUsage("config.ssh", appSettings.isUseIdeaSsh))
+    usages.add(getBooleanUsage("config.ssh", Registry.`is`("git.use.builtin.ssh")))
 
     usages.add(getBooleanUsage("config.push.autoupdate", settings.autoUpdateIfPushRejected()))
     usages.add(getBooleanUsage("config.push.update.all.roots", settings.shouldUpdateAllRootsIfPushRejected()))
