@@ -4,7 +4,6 @@
       <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-stdlib.jar!/" />
       <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-stdlib-jdk7.jar!/" />
       <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-stdlib-jdk8.jar!/" />
-      <root url="jar://$KOTLIN_BUNDLED$/lib/mutability-annotations-compat.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
