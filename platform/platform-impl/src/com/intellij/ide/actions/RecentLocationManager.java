@@ -67,7 +67,7 @@ public class RecentLocationManager implements ProjectComponent {
       public void after(@NotNull List<? extends VFileEvent> events) {
         List<IdeDocumentHistoryImpl.PlaceInfo> toRemove =
           ContainerUtil.filter(myItems.keySet(),
-                               placeInfo -> events.stream().anyMatch(event -> placeInfo.getFile().equals(event.getFile())));
+                               placeInfo -> events.stream().anyMatch(event -> event.isFromRefresh() && placeInfo.getFile().equals(event.getFile())));
 
         toRemove.forEach(placeInfo -> removePlace(placeInfo));
       }
