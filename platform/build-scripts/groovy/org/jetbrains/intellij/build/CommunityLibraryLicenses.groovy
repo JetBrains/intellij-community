@@ -500,6 +500,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("intellij-markdown"),
     jetbrainsLibrary("intellij-test-discovery"),
     jetbrainsLibrary("JPS"),
+    jetbrainsLibrary("kotlin-reflect"),
     jetbrainsLibrary("KotlinJavaRuntime"),
     jetbrainsLibrary("KotlinScriptRuntime"),
     jetbrainsLibrary("KotlinTest"),

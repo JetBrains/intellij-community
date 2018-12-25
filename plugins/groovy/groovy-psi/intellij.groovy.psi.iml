@@ -26,5 +26,6 @@
     <orderEntry type="module" module-name="intellij.java.structureView" />
     <orderEntry type="module" module-name="intellij.properties.psi.impl" />
     <orderEntry type="module" module-name="intellij.properties.psi" />
+    <orderEntry type="library" name="kotlin-reflect" level="project" />
   </component>
 </module>
