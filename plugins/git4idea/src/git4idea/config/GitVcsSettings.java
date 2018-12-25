@@ -290,15 +290,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.COMMIT_RENAMES_SEPARATELY = state;
   }
 
-  /**
-   * Provides migration from project settings.
-   * This method is to be removed in IDEA 13: it should be moved to {@link GitVcsApplicationSettings}
-   */
-  @Deprecated
-  public boolean isIdeaSsh() {
-    return getAppSettings().isUseIdeaSsh();
-  }
-
   @NotNull
   public DvcsBranchSettings getFavoriteBranchSettings() {
     return myState.FAVORITE_BRANCH_SETTINGS;
