@@ -3744,12 +3744,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myDragOnGutterSelectionStartLine = EditorUtil.yPositionToLogicalLine(EditorImpl.this, e);
       }
 
-      // On some systems (for example on Linux) popup trigger is MOUSE_PRESSED event.
-      // But this trigger is always consumed by popup handler. In that case we have to
-      // also move caret.
-      if (event.isConsumed() && !(event.getMouseEvent().isPopupTrigger() || event.getArea() == EditorMouseEventArea.EDITING_AREA)) {
-        return;
-      }
+      if (event.isConsumed()) return;
 
       if (myCommandProcessor != null) {
         Runnable runnable = () -> {
@@ -3765,7 +3760,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         processMousePressed(e);
       }
 
-      if (!event.isConsumed()) invokePopupIfNeeded(event);
+      invokePopupIfNeeded(event);
     }
 
     private void runMouseClickedCommand(@NotNull final MouseEvent e) {
