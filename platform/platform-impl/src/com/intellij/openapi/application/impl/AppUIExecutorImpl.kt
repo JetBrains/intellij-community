@@ -22,10 +22,11 @@ import kotlin.coroutines.CoroutineContext
  * @author eldar
  */
 internal class AppUIExecutorImpl private constructor(private val myModality: ModalityState,
-                                                     override val disposables: Set<Disposable>,
-                                                     override val dispatcher: CoroutineDispatcher) : AsyncExecutionSupport<AppUIExecutorEx>(),
-                                                                                                     AppUIExecutorEx {
-  constructor(modality: ModalityState) : this(modality, emptySet<Disposable>(), /* fallback */ object : CoroutineDispatcher() {
+                                                     dispatcher: CoroutineDispatcher,
+                                                     expirableHandles: Set<ExpirableHandle>)
+  : AsyncExecutionSupport<AppUIExecutorEx>(dispatcher, expirableHandles), AppUIExecutorEx {
+
+  constructor(modality: ModalityState) : this(modality, /* fallback */ object : CoroutineDispatcher() {
     // TODO[eldar] please don't @Suppress("EXPERIMENTAL_OVERRIDE") until we understand the implications and resolve the cause
     override fun isDispatchNeeded(context: CoroutineContext): Boolean =
       !ApplicationManager.getApplication().isDispatchThread || ModalityState.current().dominates(modality)
@@ -34,10 +35,10 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
       ApplicationManager.getApplication().invokeLater(block, modality)
 
     override fun toString() = "onUiThread($modality)"
-  })
+  }, emptySet<ExpirableHandle>())
 
-  override fun cloneWith(disposables: Set<Disposable>, dispatcher: CoroutineDispatcher): AppUIExecutorImpl =
-    AppUIExecutorImpl(myModality, disposables, dispatcher)
+  override fun cloneWith(dispatcher: CoroutineDispatcher, expirableHandles: Set<ExpirableHandle>): AppUIExecutorEx =
+    AppUIExecutorImpl(myModality, dispatcher, expirableHandles)
 
   override fun later(): AppUIExecutor {
     val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else null

@@ -22,23 +22,9 @@ import kotlin.coroutines.CoroutineContext
  *
  * @author eldar
  */
-internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExecution<E> {
+internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val dispatcher: CoroutineDispatcher,
+                                                                     private val expirableHandles: Set<ExpirableHandle>) : AsyncExecution<E> {
 
-  protected abstract val disposables: Set<Disposable>
-  protected abstract val dispatcher: CoroutineDispatcher
-
-  /**
-   * An expirable job serves as a proxy between the set of disposables and each individual coroutine job
-   * that must be cancelled once any of the disposables is expired.
-   * The expirable job does not have children or a parent. Unlike the regular parent-children job relation,
-   * having coroutine jobs attached to the expirable job doesn't imply waiting of any kind, neither does
-   * coroutine cancellation affect the expirable job state.
-   *
-   * Introducing the expirable job primarily has performance considerations
-   * (single lock-free Job.invokeOnCompletion vs. multiple synchronized Disposer.register calls per each launched coroutine)
-   * and simplicity (using homogeneous Job API to setup coroutine cancellation).
-   */
-  private val myExpirableJob = Job()  // initialized once in createExpirableJobContinuationInterceptor()
   private val myCoroutineDispatchingContext: CoroutineContext by lazy {
     val exceptionHandler = CoroutineExceptionHandler { context, throwable -> dispatcher.processUncaughtException(context, throwable) }
     val delegateDispatcherChain = generateSequence(dispatcher as? DelegateDispatcher) { it.delegate as? DelegateDispatcher }
@@ -47,38 +33,87 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
   }
 
   private fun createExpirableJobContinuationInterceptor(): ContinuationInterceptor {
-    val expirableJob = myExpirableJob
-    val wrappedDispatcher = RescheduleAttemptLimitAwareDispatcher(dispatcher)
+    val delegateInterceptor = RescheduleAttemptLimitAwareDispatcher(dispatcher)
+    val expirableJob = composeExpirableJob()
 
-    return ExpirableJobContinuationInterceptor(wrappedDispatcher, expirableJob).also { interceptor ->
-      initializeExpirableJob(expirableJob, disposables, interceptor)
+    return object : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
+      @Suppress("unused")  // need to keep a hard ref
+      private val expirableHandles = this@AsyncExecutionSupport.expirableHandles
+
+      /** Invoked once on each newly launched coroutine when dispatching it for the first time. */
+      override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
+        expirableJob.cancelJobOnCompletion(continuation.context[Job]!!)
+        return delegateInterceptor.interceptContinuation(continuation)
+      }
     }
   }
 
-  private class ExpirableJobContinuationInterceptor(val delegateInterceptor: ContinuationInterceptor,
-                                                    val expirableJob: Job) : AbstractCoroutineContextElement(ContinuationInterceptor),
-                                                                            ContinuationInterceptor {
-    /** Invoked once on each newly launched coroutine when dispatching it for the first time. */
-    override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
-      expirableJob.cancelJobOnCompletion(continuation.context[Job]!!)
-      return delegateInterceptor.interceptContinuation(continuation)
+  private fun composeExpirableJob(): Job =
+    SupervisorJob().also { job ->
+      expirableHandles.forEach {
+        it.job.cancelJobOnCompletion(job)
+      }
     }
+
+  /**
+   * An ExpirableHandle isolates interactions with a Disposable and the Disposer, using
+   * an expirable supervisor job that gets cancelled whenever the Disposable is disposed.
+   *
+   * A supervisor Job is easier to interact with because of using homogeneous Job API to setup
+   * coroutine cancellation, and w.r.t. its lifecycle and memory management. Using it also has
+   * performance considerations: two lock-free Job.invokeOnCompletion calls vs. multiple
+   * synchronized Disposer calls per each launched coroutine.
+   *
+   * The whole thing ultimately aims to be a proxy between a set of disposables that come from
+   * [expireWith] and [withConstraint], and each individual coroutine job that must be cancelled
+   * once any of the disposables is expired.
+   */
+  internal class ExpirableHandle(val disposable: Disposable) {
+    /**
+     * Does not have children or a parent. Unlike the regular parent-children job relation,
+     * having coroutine jobs attached to the supervisor job doesn't imply waiting of any kind,
+     * neither does coroutine cancellation affect the supervisor job state.
+     */
+    val job by lazy {
+      SupervisorJob().also { job ->
+        // Technically, this creates a leak through the Disposer tree...
+        disposable.cancelJobOnDisposal(job)
+        // ... which is mitigated by creating a PhantomReference to the interceptor instance,
+        // which unregisters the job from the tree once the corresponding instance is GC'ed.
+        val reference = RunnableReference(referent = this) {
+          job.cancel()  // unregister from the Disposer tree
+        }
+        job.invokeOnCompletion { reference.clear() }  // essentially to hold a hard ref to the Reference instance
+
+        RunnableReference.reapCollectedRefs()
+      }
+    }
+
+    init {
+      RunnableReference.reapCollectedRefs()
+    }
+
+    override fun equals(other: Any?): Boolean = other is ExpirableHandle && disposable === other.disposable
+    override fun hashCode(): Int = System.identityHashCode(disposable)
   }
 
   override fun coroutineDispatchingContext(): CoroutineContext = myCoroutineDispatchingContext
 
-  protected abstract fun cloneWith(disposables: Set<Disposable>, dispatcher: CoroutineDispatcher): E
+  protected abstract fun cloneWith(dispatcher: CoroutineDispatcher, expirableHandles: Set<ExpirableHandle>): E
 
   override fun withConstraint(constraint: SimpleContextConstraint): E =
-    cloneWith(disposables, SimpleConstraintDispatcher(dispatcher, constraint))
+    cloneWith(SimpleConstraintDispatcher(dispatcher, constraint), expirableHandles)
 
-  override fun withConstraint(constraint: ExpirableContextConstraint, expirable: Disposable): E =
-    cloneWith(disposables + expirable, ExpirableConstraintDispatcher(dispatcher, constraint, expirable))
+  override fun withConstraint(constraint: ExpirableContextConstraint, parentDisposable: Disposable): E {
+    val expirableHandle = ExpirableHandle(parentDisposable)
+    return cloneWith(ExpirableConstraintDispatcher(dispatcher, constraint, expirableHandle),
+                     expirableHandles + expirableHandle)
+  }
 
   override fun expireWith(parentDisposable: Disposable): E {
-    val disposables = disposables + parentDisposable
+    val expirableHandle = ExpirableHandle(parentDisposable)
     @Suppress("UNCHECKED_CAST")
-    return if (disposables == this.disposables) this as E else cloneWith(disposables, dispatcher)
+    return if (expirableHandle in expirableHandles) this as E else cloneWith(dispatcher, expirableHandles + expirableHandle)
   }
 
   /** A CoroutineDispatcher which dispatches after ensuring its delegate is dispatched. */
@@ -138,32 +173,30 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
   /** @see ExpirableContextConstraint */
   internal class ExpirableConstraintDispatcher(delegate: CoroutineDispatcher,
                                                constraint: ExpirableContextConstraint,
-                                               private val expirable: Disposable) : ChainedConstraintDispatcher(delegate, constraint) {
+                                               private val expirableHandle: ExpirableHandle) : ChainedConstraintDispatcher(delegate,
+                                                                                                                           constraint) {
     override val constraint get() = super.constraint as ExpirableContextConstraint
 
-    override fun isScheduleNeeded(context: CoroutineContext): Boolean = !(expirable.isDisposed || constraint.isCorrectContext)
+    override fun isScheduleNeeded(context: CoroutineContext): Boolean =
+      !if (expirableHandle.job.isCancelled) expirableHandle.disposable.isDisposed else constraint.isCorrectContext
 
     override fun doSchedule(context: CoroutineContext, retryDispatchRunnable: Runnable) {
       val runOnce = RunOnce()
 
-      val jobDisposableCloseable = expirable.registerOrInvokeDisposable {
+      val jobDisposableHandle = expirableHandle.job.invokeOnCompletion {
         runOnce {
-          LOG.assertTrue(expirable.isDisposing || expirable.isDisposed, "Must only be called on disposal of $expirable")
-
-          // Defer executing the retryDispatchRunnable until this Job is cancelled through the expirableJob.
-          val continuationInterceptor = context[ContinuationInterceptor]!! as ExpirableJobContinuationInterceptor
-          continuationInterceptor.expirableJob.invokeOnCompletion {
-            LOG.assertTrue(context[Job]!!.isCancelled, "Must have already been cancelled through the expirableJob")
-
-            // Implementation of a completion handler must be fast and lock-free.
-            fallbackDispatch(context, retryDispatchRunnable)  // invokeLater, basically
+          if (!context[Job]!!.isCancelled) { // TODO[eldar] relying on the order of invocations of CompletionHandlers
+            LOG.warn("Must have already been cancelled through the expirableHandle")
+            context.cancel()
           }
+          // Implementation of a completion handler must be fast and lock-free.
+          fallbackDispatch(context, retryDispatchRunnable)  // invokeLater, basically
         }
       }
       if (runOnce.isActive) {
-        constraint.scheduleExpirable(expirable, Runnable {
+        constraint.scheduleExpirable(expirableHandle.disposable, Runnable {
           runOnce {
-            jobDisposableCloseable.close()
+            jobDisposableHandle.dispose()
             retryDispatchRunnable.run()
           }
         })
@@ -329,23 +362,6 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       }.also { handle ->
         job.invokeOnCompletion { handle.dispose() }
       }
-    }
-
-    internal fun initializeExpirableJob(job: Job, disposables: Collection<Disposable>, referent: Any) {
-      if (disposables.isNotEmpty() && job.isActive) {
-        // Technically, this creates a leak through the Disposer tree...
-        disposables.forEach { disposable ->
-          disposable.cancelJobOnDisposal(job)
-        }
-        // ... which is mitigated by creating a PhantomReference to the interceptor instance,
-        // which unregisters the job from the tree once the corresponding instance is GC'ed.
-        val reference = RunnableReference(referent) {
-          job.cancel()  // unregister from the Disposer tree
-        }
-        job.invokeOnCompletion { reference.clear() }  // essentially to hold a hard ref to the Reference instance
-      }
-
-      RunnableReference.reapCollectedRefs()
     }
 
     private class RunnableReference(referent: Any, private val finalizer: () -> Unit) : PhantomReference<Any>(referent, myRefQueue) {
