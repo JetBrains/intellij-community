@@ -35,6 +35,11 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton", "singletonList").parameterCount(1),
       staticCall(CommonClassNames.JAVA_UTIL_LIST, "of").parameterTypes("E"),
       staticCall(CommonClassNames.JAVA_UTIL_SET, "of").parameterTypes("E"));
+  private static final CallMatcher EMPTY_COLLECTION =
+    anyOf(
+      staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet").parameterCount(0),
+      staticCall(CommonClassNames.JAVA_UTIL_LIST, "of").parameterCount(0),
+      staticCall(CommonClassNames.JAVA_UTIL_SET, "of").parameterCount(0));
   private static final CallMatcher CONTAINS_ALL =
     instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "containsAll").parameterTypes(CommonClassNames.JAVA_UTIL_COLLECTION);
   private static final CallMatcher CONTAINS =
@@ -54,6 +59,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   private static final CallMatcher COLLECTIONS_SORT = staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "sort");
   private static final CallMatcher LIST_SORT = instanceCall(CommonClassNames.JAVA_UTIL_LIST, "sort").parameterTypes(
     CommonClassNames.JAVA_UTIL_COMPARATOR);
+  private static final CallMatcher ITERABLE_ITERATOR = instanceCall(CommonClassNames.JAVA_LANG_ITERABLE, "iterator").parameterCount(0);
 
   private static final CallMapper<RedundantCollectionOperationHandler> HANDLERS =
     new CallMapper<RedundantCollectionOperationHandler>()
@@ -63,7 +69,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       .register(anyOf(CONTAINS, CONTAINS_KEY), ContainsBeforeAddRemoveHandler::handler)
       .register(REMOVE_BY_INDEX, RedundantIndexOfHandler::handler)
       .register(AS_LIST, RedundantAsListForIterationHandler::handler)
-      .register(AS_LIST, RedundantSortAsListHandler::handler);
+      .register(AS_LIST, RedundantSortAsListHandler::handler)
+      .register(ITERABLE_ITERATOR, RedundantEmptyIteratorHandler::handler);
 
   @NotNull
   @Override
@@ -514,6 +521,33 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
         }
       }
       return null;
+    }
+  }
+
+  private static class RedundantEmptyIteratorHandler implements RedundantCollectionOperationHandler {
+    @Override
+    public void performFix(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+      PsiType type = call.getType();
+      PsiType elementType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_ITERATOR, 0, false);
+      elementType = GenericsUtil.getVariableTypeByExpressionType(elementType);
+      String replacement = CommonClassNames.JAVA_UTIL_COLLECTIONS + "."
+                           + (elementType == null ? "" : "<" + elementType.getCanonicalText() + ">") + "emptyIterator()";
+      PsiElement result = new CommentTracker().replaceAndRestoreComments(call, replacement);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
+    }
+
+    @NotNull
+    @Override
+    public String getReplacement() {
+      return "Collections.emptyIterator()";
+    }
+
+    static RedundantEmptyIteratorHandler handler(PsiMethodCallExpression call) {
+      if (!PsiUtil.isLanguageLevel7OrHigher(call)) return null;
+      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
+      if (!EMPTY_COLLECTION.matches(qualifier) && !ConstructionUtils.isEmptyCollectionInitializer(qualifier)) return null; 
+      return new RedundantEmptyIteratorHandler();
     }
   }
 
