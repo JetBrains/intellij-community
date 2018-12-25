@@ -394,14 +394,16 @@ object GuiTestUtil {
   }
 
   fun findAndClickButtonWhenEnabled(container: ContainerFixture<out Container>, text: String) {
-    val robot = container.robot()
-    val button = findButton(container, text, robot)
-    Pause.pause(object : Condition("Wait for button $text to be enabled.") {
-      override fun test(): Boolean {
-        return button.isEnabled && button.isVisible && button.isShowing
-      }
-    }, Timeouts.minutes02)
-    robot.click(button)
+    step("find and click button '$text' when enabled") {
+      val robot = container.robot()
+      val button = findButton(container, text, robot)
+      Pause.pause(object : Condition("Wait for button $text to be enabled.") {
+        override fun test(): Boolean {
+          return button.isEnabled && button.isVisible && button.isShowing
+        }
+      }, Timeouts.minutes02)
+      robot.click(button)
+    }
   }
 
   fun invokeMenuPathOnRobotIdle(projectFrame: IdeFrameFixture, vararg path: String) {
@@ -696,9 +698,11 @@ object GuiTestUtil {
                                                                          timeout) { jTextField -> jTextField.isShowing }
       return JTextComponentFixture(GuiRobotHolder.robot, jTextField)
     }
-    //wait until label has appeared
-    com.intellij.testGuiFramework.impl.waitUntilFound(container, Component::class.java, timeout) {
-      it.isShowing && it.isVisible && it.isTextComponent() && it.getComponentText() == textLabel
+    step("wait until label '$textLabel' has appeared, timeout = ${timeout.toPrintable()}") {
+      com.intellij.testGuiFramework.impl.waitUntilFound(container, Component::class.java, timeout) {
+        logInfo("found component: isShowing=${it.isShowing}, isVisible=${it.isVisible}, isTextComponent()=${it.isTextComponent()}")
+        it.isShowing && it.isVisible && it.isTextComponent() && it.getComponentText() == textLabel
+      }
     }
     val jTextComponent = GuiTestUtilKt.findBoundedComponentByText(GuiRobotHolder.robot, container, textLabel!!, JTextComponent::class.java)
     return JTextComponentFixture(GuiRobotHolder.robot, jTextComponent)

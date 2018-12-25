@@ -12,6 +12,7 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickCancelBut
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickOkButton
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.step
 import com.intellij.testGuiFramework.util.waitFor
 import com.intellij.ui.components.BasicOptionButtonUI.ArrowButton
@@ -24,7 +25,12 @@ import javax.swing.*
 import javax.swing.text.Position
 
 class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(robot, pluginDialog), ContainerFixture<JDialog> {
-  fun isPluginInstalled(pluginName: String): Boolean = findPluginsAppearedOnTheScreen().find { it.name == pluginName } != null
+  fun isPluginInstalled(pluginName: String): Boolean =
+    step("check whether plugin '$pluginName' installed") {
+      val result = findPluginsAppearedOnTheScreen().find { it.name == pluginName } != null
+      logInfo("plugin '$pluginName' is ${if(result) "" else "NOT"}installed")
+      return@step result
+    }
 
   fun isPluginEnabled(pluginName: String): Boolean = findCheckBox(pluginName).isSelected
 
@@ -37,8 +43,10 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(
   }
 
   fun showInstalledPlugins() {
-    val tabHeader: TabHeaderComponent = findTabHeader()
-    robot().click(tabHeader, tabHeader.getTabLocation("Installed"))
+    step("show 'Installed' tab") {
+      val tabHeader: TabHeaderComponent = findTabHeader()
+      robot().click(tabHeader, tabHeader.getTabLocation("Installed"))
+    }
   }
 
   fun pluginDetails(pluginName: String, func: PluginDetailsFixture.() -> Unit) {
@@ -47,9 +55,11 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(
   }
 
   fun showInstallPluginFromDiskDialog() {
-    val actionButton: ActionButton = waitUntilFound(findTabHeader(), ActionButton::class.java, Timeouts.defaultTimeout) { true }
-    robot().click(actionButton)
-    popupMenu("Install Plugin from Disk...").clickSearchedItem()
+    step("call 'Install Plugin from Disk dialog'") {
+      val actionButton: ActionButton = waitUntilFound(findTabHeader(), ActionButton::class.java, Timeouts.defaultTimeout) { true }
+      robot().click(actionButton)
+      popupMenu("Install Plugin from Disk...").clickSearchedItem()
+    }
   }
 
   fun installPluginFromDiskDialog(func: InstallPluginFromDiskFixture.() -> Unit) {
