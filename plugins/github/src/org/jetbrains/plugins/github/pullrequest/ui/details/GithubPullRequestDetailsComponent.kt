@@ -32,7 +32,10 @@ internal class GithubPullRequestDetailsComponent(sharedProjectSettings: GithubSh
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
     isOpaque = false
   }
-  private val backgroundLoadingPanel = ProgressStripe(loadingPanel, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
+  private val backgroundLoadingPanel = ProgressStripe(loadingPanel, this,
+                                                      ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
+    isOpaque = false
+  }
 
   init {
     isOpaque = true

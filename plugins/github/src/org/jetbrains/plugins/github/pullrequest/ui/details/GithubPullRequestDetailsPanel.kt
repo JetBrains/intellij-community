@@ -69,6 +69,7 @@ internal class GithubPullRequestDetailsPanel(private val sharedProjectSettings: 
     layout = MigLayout(LC().flowY().fill()
                          .gridGap("0", "0")
                          .insets("0", "0", "0", "0"))
+    isOpaque = false
 
     val scrollPane = ScrollPaneFactory.createScrollPane(ScrollablePanel(VerticalFlowLayout(0, 0)).apply {
       add(metaPanel)
