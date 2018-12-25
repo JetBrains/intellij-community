@@ -65,6 +65,23 @@ class DataNodeTest {
       .contains("foo.Baz")
   }
 
+  @Test
+  fun `ProjectSystemIds are re-used after deserialization`() {
+    val id = ProjectSystemId("MyTest")
+    val dataNodes = listOf(DataNode(Key.create(ProjectSystemId::class.java, 0), id, null),
+                           DataNode(Key.create(ProjectSystemId::class.java, 0), id, null))
+
+    val bos = ByteArrayOutputStream()
+    ObjectOutputStream(bos).use { it.writeObject(dataNodes) }
+    val bytes = bos.toByteArray()
+    val deserializedList = ObjectInputStream(ByteArrayInputStream(bytes)).use { it.readObject() } as List<DataNode<ProjectSystemId>>
+
+    assertThat(deserializedList).hasSize(2)
+    assertThat(deserializedList[0].data === deserializedList[1].data)
+      .`as`("project system ID instances should be re-used")
+      .isTrue()
+  }
+
 
   private fun wrapAndDeserialize(clz: Class<Any>,
                                  barObject: Any): DataNode<Any> {
