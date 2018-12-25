@@ -67,10 +67,6 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
 
   override fun coroutineDispatchingContext(): CoroutineContext = myCoroutineDispatchingContext
 
-  override fun shutdown(cause: Throwable?) {
-    myExpirableJob.cancel(cause)
-  }
-
   protected abstract fun cloneWith(disposables: Set<Disposable>, dispatcher: CoroutineDispatcher): E
 
   override fun withConstraint(constraint: SimpleContextConstraint): E =
