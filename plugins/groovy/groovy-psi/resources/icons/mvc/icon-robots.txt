@@ -1,0 +1,2 @@
+deprecated: domain_class.png -> com.intellij.icons.AllIcons@/nodes/DataTables.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.DataTables
+deprecated: service.png -> com.intellij.icons.AllIcons@/fileTypes/config.svg; to be removed in IDEA 2020 - use AllIcons.FileTypes.Config

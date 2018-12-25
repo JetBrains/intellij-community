@@ -6,7 +6,7 @@ import com.intellij.lang.ant.dom.AntDomExtender;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import icons.JetgroovyIcons;
+import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -31,7 +31,7 @@ class AntBuilderMethod extends LightMethodBuilder implements GrBuilderMethod {
     myAntClass = antClass;
     setModifiers(PsiModifier.PUBLIC);
     addParameter("args", GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP);
-    setBaseIcon(JetgroovyIcons.Groovy.Ant_task);
+    setBaseIcon(AntIcons.Task);
     addParameter(new GrLightParameter("singleArg", stringType, this).setOptional(true));
     addParameter(new GrLightParameter("body", closureType, this).setOptional(true));
     setMethodReturnType(() -> PsiType.getJavaLangObject(getManager(), getResolveScope()));
