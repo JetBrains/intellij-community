@@ -233,4 +233,7 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   @TestOnly
   public abstract boolean ensureUpToDate(boolean canBeCanceled);
+
+  @TestOnly
+  public boolean ensureUpToDate() { return ensureUpToDate(false); }
 }

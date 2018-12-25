@@ -15,7 +15,6 @@
  */
 package com.intellij.tasks.vcs;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -408,14 +407,14 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     runOpenTaskDialog(task);
     runOpenTaskDialog(new LocalTaskImpl("next", ""));
 
+    myChangeListManager.ensureUpToDate();
     final String changelistName = myTaskManager.getChangelistName(task);
     myChangeListManager.removeChangeList(changelistName);
 
-    myChangeListManager.invokeAfterUpdate(() -> {
-      assertTrue(myTaskManager.isLocallyClosed(task));
-      myTaskManager.activateTask(task, false);
-      assertNotNull(myChangeListManager.findChangeList(changelistName));
-    }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "foo", ModalityState.NON_MODAL);
+    myChangeListManager.ensureUpToDate();
+    assertTrue(myTaskManager.isLocallyClosed(task));
+    myTaskManager.activateTask(task, false);
+    assertNotNull(myChangeListManager.findChangeList(changelistName));
   }
 
   public void testSuggestBranchName() {
