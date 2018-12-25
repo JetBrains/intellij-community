@@ -19,7 +19,7 @@ buildscript {
     maven { url "https://cache-redirector.jetbrains.com/plugins.gradle.org" }
   }
   dependencies {
-    classpath "de.undercouch:gradle-download-task:3.2.0"
+    classpath "de.undercouch:gradle-download-task:3.4.2"
   }
 }
 apply plugin: "de.undercouch.download"
@@ -31,25 +31,25 @@ def currentOs = org.gradle.internal.os.OperatingSystem.current()
 task downloadGradleDistribution(type: Download) {
   src "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-4.4-bin.zip"
   dest "$buildDir/android-sdk/tools/external/gradle/gradle-4.4-bin.zip"
-  onlyIfNewer true
+  onlyIf { !dest.exists() }
 }
 
 task downloadGradleDistribution2(type: Download) {
   src "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-2.4-bin.zip"
   dest "$buildDir/android-sdk/tools/external/gradle/gradle-2.4-bin.zip"
-  onlyIfNewer true
+  onlyIf { !dest.exists() }
 }
 
 task downloadOfflineRepo(type: Download) {
   src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk-offline-repo/3.1.2/android-sdk-offline-repo.zip"
   dest "$buildDir/android-sdk/offline_repo_repo.zip"
-  onlyIfNewer true
+  onlyIf { !dest.exists() }
 }
 
 task downloadKotlinPlugin(type: Download) {
   src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk-kotlin-plugin/1.2.50-eap-17-IJ2018.2/android-sdk-kotlin-plugin.zip"
   dest "$buildDir/android-sdk/kotlin-plugin.zip"
-  onlyIfNewer true
+  onlyIf { !dest.exists() }
 }
 
 task setupKotlinPluginForAndroid(dependsOn: downloadKotlinPlugin, type: Copy) {
@@ -66,8 +66,7 @@ task downloadAndroidSdk(type: Download) {
   def osFamily = currentOs.familyName
   src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk/${osFamily}.3.1.2/android-sdk.tar.gz"
   dest "$buildDir/android-sdk/${osFamily}.tar.gz"
-  onlyIfNewer true
-  onlyIf { !currentOs.isMacOsX() }
+  onlyIf { !dest.exists() && !currentOs.isMacOsX() }
 }
 
 task setupAndroidSdk(
