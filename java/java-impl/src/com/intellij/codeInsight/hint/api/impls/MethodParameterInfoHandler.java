@@ -214,7 +214,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
               if (Registry.is("editor.completion.hints.virtual.comma")) {
                 int requiredParameters = varArgs ? parametersCount - 1 : parametersCount;
                 int actualParameters = ((PsiExpressionList)owner).getExpressionCount();
-                if (actualParameters < requiredParameters) return false;
+                if (actualParameters < requiredParameters && ((PsiCall)parent).resolveMethod() == null) return false;
               }
               else if (((PsiExpressionList)owner).isEmpty() &&
                        (parametersCount == 1 && !varArgs || parametersCount == 2 && varArgs) &&
