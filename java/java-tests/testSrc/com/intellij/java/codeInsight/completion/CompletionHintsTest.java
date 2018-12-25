@@ -1678,6 +1678,15 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void some(int a) {} void some(int a, int... b) {} void m() { some(<HINT text=\"a:\"/>1<caret>); } }");
   }
 
+  public void testHideHintsForIncompleteCallIfOverloadMatches() {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    type("\"a");
+    home();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("<caret>class C { void m() { System.getProperty(\"a\") } }");
+  }
+
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }
