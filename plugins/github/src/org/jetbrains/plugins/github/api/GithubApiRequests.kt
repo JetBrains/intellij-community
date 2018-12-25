@@ -325,8 +325,17 @@ object GithubApiRequests {
         .withOperationName("create authorization $note")
 
     @JvmStatic
-    fun get(server: GithubServerPath) = Get.jsonList<GithubAuthorization>(getUrl(server, urlSuffix))
+    fun get(server: GithubServerPath, pagination: GithubRequestPagination? = null) =
+      get(getUrl(server, urlSuffix,
+                 GithubApiUrlQueryBuilder.urlQuery { param(pagination) }))
+
+    @JvmStatic
+    fun get(url: String) = Get.jsonPage<GithubAuthorization>(url)
       .withOperationName("get authorizations")
+
+    @JvmStatic
+    fun pages(server: GithubServerPath, pagination: GithubRequestPagination? = null) =
+      GithubApiPagesLoader.Request(get(server, pagination), ::get)
   }
 
   abstract class Entity(val urlSuffix: String)
