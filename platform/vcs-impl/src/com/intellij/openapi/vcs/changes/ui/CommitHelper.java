@@ -167,10 +167,6 @@ public class CommitHelper {
     }
   }
 
-  static boolean hasOnlyWarnings(@NotNull List<? extends VcsException> exceptions) {
-    return exceptions.stream().allMatch(VcsException::isWarning);
-  }
-
   private void generalCommit() throws RuntimeException {
     try {
       ReadAction.run(() -> markCommittingDocuments());

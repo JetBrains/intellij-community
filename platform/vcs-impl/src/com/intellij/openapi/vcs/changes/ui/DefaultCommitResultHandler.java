@@ -16,7 +16,6 @@ import java.util.Set;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.openapi.vcs.changes.ui.CommitHelper.collectErrors;
-import static com.intellij.openapi.vcs.changes.ui.CommitHelper.hasOnlyWarnings;
 
 public class DefaultCommitResultHandler implements CommitResultHandler {
 
@@ -106,5 +105,9 @@ public class DefaultCommitResultHandler implements CommitResultHandler {
     List<String> FROM = Arrays.asList("<", ">");
     List<String> TO = Arrays.asList("&lt;", "&gt;");
     return replace(s, FROM, TO);
+  }
+
+  private static boolean hasOnlyWarnings(@NotNull List<? extends VcsException> exceptions) {
+    return exceptions.stream().allMatch(VcsException::isWarning);
   }
 }
