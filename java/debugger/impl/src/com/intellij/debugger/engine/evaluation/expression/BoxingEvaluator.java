@@ -24,19 +24,18 @@ public class BoxingEvaluator implements Evaluator{
 
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    final Object result = myOperand.evaluate(context);
-    if (result == null || result instanceof ObjectReference) {
-      return result;
-    }
+    return box(myOperand.evaluate(context), context);
+  }
 
-    if (result instanceof PrimitiveValue) {
-      PrimitiveValue primitiveValue = (PrimitiveValue)result;
+  public static Object box(Object value, EvaluationContextImpl context) throws EvaluateException {
+    if (value instanceof PrimitiveValue) {
+      PrimitiveValue primitiveValue = (PrimitiveValue)value;
       PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name());
       if (primitiveType != null) {
         return convertToWrapper(context, primitiveValue, primitiveType.getBoxedTypeName());
       }
     }
-    throw new EvaluateException("Cannot perform boxing conversion for a value of type " + ((Value)result).type().name());
+    return value;
   }
 
   private static Value convertToWrapper(EvaluationContextImpl context, PrimitiveValue value, String wrapperTypeName) throws
