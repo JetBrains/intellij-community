@@ -324,7 +324,66 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     }.joinNonBlocking()
   }
 
-  fun `test custom expirable constraints disposed during dispatching`() {
+  fun `test custom expirable constraints disposed during dispatching`() =
+    doTestCustomExpirableConstraintsDisposedDuringDispatching(expectedLog = arrayOf(
+      "[context: !outer + !inner] start",
+      "[context: outer + inner] coroutine start",
+      "[context: outer + inner] before receive",
+      "disposing constraint",
+      "constraintDisposable.beforeTreeDispose()",
+      "constraintDisposable.dispose()",
+      "refuse to run already disposed",
+      "[context: !outer + inner] after receive disposed",  // channel.receive() is atomic
+      "[context: !outer + inner] coroutine yield caught DisposedException because of null",
+      "[context: !outer + !inner] end")
+    ) { queue, constraintDisposable, _ ->
+      queue.add("disposing constraint")
+      Disposer.dispose(constraintDisposable)
+    }
+
+
+  fun `test custom expirable constraints disposed during dispatching through both disposables`() =
+    doTestCustomExpirableConstraintsDisposedDuringDispatching(expectedLog = arrayOf(
+      "[context: !outer + !inner] start",
+      "[context: outer + inner] coroutine start",
+      "[context: outer + inner] before receive",
+      "disposing anotherDisposable",
+      "anotherDisposable.beforeTreeDispose()",
+      "anotherDisposable.dispose()",
+      "disposing constraint",
+      "constraintDisposable.beforeTreeDispose()",
+      "constraintDisposable.dispose()",
+      "refuse to run already disposed",
+      "[context: !outer + inner] after receive disposed",  // channel.receive() is atomic
+      "[context: !outer + inner] coroutine yield caught DisposedException because of null",
+      "[context: !outer + !inner] end")
+    ) { queue, constraintDisposable, anotherDisposable ->
+      queue.add("disposing anotherDisposable")
+      Disposer.dispose(anotherDisposable)
+      queue.add("disposing constraint")
+      Disposer.dispose(constraintDisposable)
+    }
+
+  fun `test custom expirable constraints disposed another disposable`() =
+    doTestCustomExpirableConstraintsDisposedDuringDispatching(expectedLog = arrayOf(
+      "[context: !outer + !inner] start",
+      "[context: outer + inner] coroutine start",
+      "[context: outer + inner] before receive",
+      "disposing anotherDisposable",
+      "anotherDisposable.beforeTreeDispose()",
+      "anotherDisposable.dispose()",
+      "[context: outer + inner] after receive disposed",
+      "[context: outer + inner] coroutine yield caught DisposedException because of null",
+      "[context: !outer + !inner] end")
+    ) { queue, _, anotherDisposable ->
+      queue.add("disposing anotherDisposable")
+      Disposer.dispose(anotherDisposable)
+    }
+
+  private fun doTestCustomExpirableConstraintsDisposedDuringDispatching(expectedLog: Array<String>,
+                                                                        doDispose: (queue: LinkedBlockingQueue<String>,
+                                                                                    constraintDisposable: Disposable.Parent,
+                                                                                    anotherDisposable: Disposable.Parent) -> Unit) {
     val queue = LinkedBlockingQueue<String>()
 
     var outerScheduled = false
@@ -337,13 +396,23 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       queue += "[$contextState] $s"
     }
 
-    val disposable = object : Disposable.Parent {
+    val constraintDisposable = object : Disposable.Parent {
       override fun beforeTreeDispose() {
-        queue.add("disposable.beforeTreeDispose()")
+        queue.add("constraintDisposable.beforeTreeDispose()")
       }
 
       override fun dispose() {
-        queue.add("disposable.dispose()")
+        queue.add("constraintDisposable.dispose()")
+      }
+    }.also { Disposer.register(testRootDisposable, it) }
+
+    val anotherDisposable = object : Disposable.Parent {
+      override fun beforeTreeDispose() {
+        queue.add("anotherDisposable.beforeTreeDispose()")
+      }
+
+      override fun dispose() {
+        queue.add("anotherDisposable.dispose()")
       }
     }.also { Disposer.register(testRootDisposable, it) }
 
@@ -355,10 +424,9 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
         override fun scheduleExpirable(expirable: Disposable, runnable: Runnable) {
           if (shouldDisposeOnDispatch) {
-            queue.add("disposing")
-            Disposer.dispose(disposable)
+            doDispose(queue, constraintDisposable, anotherDisposable)
           }
-          if (Disposer.isDisposed(disposable)) {
+          if (Disposer.isDisposed(constraintDisposable)) {
             queue.add("refuse to run already disposed")
             return
           }
@@ -368,7 +436,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         }
 
         override fun toString() = "test outer"
-      }, disposable)
+      }, constraintDisposable)
       .withConstraint(object : AsyncExecution.SimpleContextConstraint {
         override val isCorrectContext: Boolean
           get() = innerScheduled
@@ -381,6 +449,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
         override fun toString() = "test inner"
       })
+      .expireWith(anotherDisposable)
 
     GlobalScope.async(SwingDispatcher) {
       emit("start")
@@ -419,18 +488,8 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       }
       job.join()
       emit("end")
+      assertOrderedEquals(queue, *expectedLog)
 
-      assertOrderedEquals(queue,
-                          "[context: !outer + !inner] start",
-                          "[context: outer + inner] coroutine start",
-                          "[context: outer + inner] before receive",
-                          "disposing",
-                          "disposable.beforeTreeDispose()",
-                          "disposable.dispose()",
-                          "refuse to run already disposed",
-                          "[context: !outer + inner] after receive disposed",  // channel.receive() is atomic
-                          "[context: !outer + inner] coroutine yield caught DisposedException because of null",
-                          "[context: !outer + !inner] end")
     }.joinNonBlocking()
   }
 }

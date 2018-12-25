@@ -155,22 +155,26 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
 
     override fun isScheduleNeeded(context: CoroutineContext): Boolean = !(expirable.isDisposed || constraint.isCorrectContext)
 
+    @InternalCoroutinesApi
     override fun doSchedule(context: CoroutineContext, retryDispatchRunnable: Runnable) {
       val runOnce = RunOnce()
 
       val jobDisposableCloseable = expirable.registerOrInvokeDisposable {
         runOnce {
           LOG.assertTrue(expirable.isDisposing || expirable.isDisposed, "Must only be called on disposal of $expirable")
-          context.cancel(DisposedException(expirable))
-          // Although it is tempting to invoke the retryDispatchRunnable directly,
-          // it is better to avoid executing arbitrary code from inside the disposal handler.
-          fallbackDispatch(context, retryDispatchRunnable)  // invokeLater, basically
+          // Defer executing the retryDispatchRunnable until this Job is cancelled through the expirableJob.
+          context[Job]!!.invokeOnCompletion(onCancelling = true) {
+            // Implementation of a completion handler must be fast and lock-free.
+            fallbackDispatch(context, retryDispatchRunnable)  // invokeLater, basically
+          }
         }
       }
       if (runOnce.isActive) {
-        constraint.scheduleExpirable(expirable, runOnce.runnable {
-          jobDisposableCloseable.close()
-          retryDispatchRunnable.run()
+        constraint.scheduleExpirable(expirable, Runnable {
+          runOnce {
+            jobDisposableCloseable.close()
+            retryDispatchRunnable.run()
+          }
         })
       }
     }
@@ -243,8 +247,6 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       override operator fun invoke(block: () -> Unit) {
         if (hasNotRunYet.compareAndSet(true, false)) block()
       }
-
-      fun runnable(block: () -> Unit) = Runnable { block() }
     }
 
     private val CoroutineDispatcher.chainFallbackDispatcher: CoroutineDispatcher
@@ -265,16 +267,10 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
 
     internal fun CoroutineDispatcher.fallbackDispatch(context: CoroutineContext, block: Runnable) {
       val primaryDispatcher = context[ContinuationInterceptor] as? CoroutineDispatcher
-      val fallbackDispatcher = primaryDispatcher?.chainFallbackDispatcher ?: this.chainFallbackDispatcher
+      val fallbackDispatcher = primaryDispatcher ?: chainFallbackDispatcher
 
-      //      fallbackDispatcher.dispatchIfNeededOrInvoke(context, block)
-      if (fallbackDispatcher !== Dispatchers.Unconfined) {
-        // Invoke later unconditionally to avoid running arbitrary code from inside dispose() handler.
-        fallbackDispatcher.dispatch(context, block)
-      }
-      else {
-        block.run()
-      }
+      // Invoke later unconditionally to avoid running arbitrary code from inside a completion handler.
+      fallbackDispatcher.dispatch(context, block)
     }
 
     internal val Disposable.isDisposed: Boolean
