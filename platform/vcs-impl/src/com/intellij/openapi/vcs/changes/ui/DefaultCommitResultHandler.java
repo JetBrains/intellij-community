@@ -21,13 +21,13 @@ import static com.intellij.openapi.vcs.changes.ui.CommitHelper.hasOnlyWarnings;
 public class DefaultCommitResultHandler implements CommitResultHandler {
 
   @NotNull private final Project myProject;
-  @NotNull private final Collection<?> myIncludedChanges;
+  @NotNull private final Collection<Change> myIncludedChanges;
   @NotNull private final String myCommitMessage;
   @NotNull private final CommitHelper.GeneralCommitProcessor myCommitProcessor;
   @NotNull private final Set<String> myFeedback;
 
   public DefaultCommitResultHandler(@NotNull Project project,
-                                    @NotNull Collection<?> includedChanges,
+                                    @NotNull Collection<Change> includedChanges,
                                     @NotNull String commitMessage,
                                     @NotNull CommitHelper.GeneralCommitProcessor commitProcessor,
                                     @NotNull Set<String> feedback) {

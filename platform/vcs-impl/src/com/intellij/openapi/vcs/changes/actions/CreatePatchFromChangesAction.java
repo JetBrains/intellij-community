@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToClipboard;
@@ -92,13 +91,13 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
 
   public static void createPatch(@Nullable Project project,
                                  @Nullable String commitMessage,
-                                 @NotNull List<? extends Change> changes) {
+                                 @NotNull List<Change> changes) {
     createPatch(project, commitMessage, changes, false);
   }
 
   public static void createPatch(@Nullable Project project,
                                  @Nullable String commitMessage,
-                                 @NotNull List<? extends Change> changes,
+                                 @NotNull List<Change> changes,
                                  boolean silentClipboard) {
     project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     if (silentClipboard) {
@@ -109,7 +108,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
     }
   }
 
-  private static void createWithDialog(@NotNull Project project, @Nullable String commitMessage, @NotNull List<? extends Change> changes) {
+  private static void createWithDialog(@NotNull Project project, @Nullable String commitMessage, @NotNull List<Change> changes) {
     final CreatePatchCommitExecutor executor = CreatePatchCommitExecutor.getInstance(project);
     CommitSession commitSession = executor.createCommitSession();
     if (commitSession instanceof CommitSessionContextAware) {
@@ -124,7 +123,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
 
     preloadContent(project, changes);
 
-    commitSession.execute((Collection<Change>)changes, commitMessage);
+    commitSession.execute(changes, commitMessage);
   }
 
   private static void createIntoClipboard(@NotNull Project project, @NotNull List<? extends Change> changes) {

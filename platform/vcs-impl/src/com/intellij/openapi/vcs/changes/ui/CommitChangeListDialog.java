@@ -174,7 +174,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull Collection<? extends Change> changes,
                                       @Nullable LocalChangeList initialSelection,
-                                      @NotNull List<? extends CommitExecutor> executors,
+                                      @NotNull List<CommitExecutor> executors,
                                       boolean showVcsCommit,
                                       @Nullable String comment,
                                       @Nullable CommitResultHandler customResultHandler) {
@@ -184,7 +184,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull List<Change> changes,
                                       @Nullable LocalChangeList initialSelection,
-                                      @NotNull List<? extends CommitExecutor> executors,
+                                      @NotNull List<CommitExecutor> executors,
                                       boolean showVcsCommit,
                                       @Nullable String comment,
                                       @Nullable CommitResultHandler customResultHandler,
@@ -197,7 +197,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                       @NotNull List<Change> changes,
                                       @NotNull Collection<?> included,
                                       @Nullable LocalChangeList initialSelection,
-                                      @NotNull List<? extends CommitExecutor> executors,
+                                      @NotNull List<CommitExecutor> executors,
                                       boolean showVcsCommit,
                                       @Nullable AbstractVcs forceCommitInVcs,
                                       @Nullable String comment,
@@ -226,7 +226,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     for (BaseCheckinHandlerFactory factory : getCheckInFactories(project)) {
       BeforeCheckinDialogHandler handler = factory.createSystemReadyHandler(project);
-      if (handler != null && !handler.beforeCommitDialogShown(project, changes, (Iterable<CommitExecutor>)executors, showVcsCommit)) {
+      if (handler != null && !handler.beforeCommitDialogShown(project, changes, executors, showVcsCommit)) {
         return false;
       }
     }

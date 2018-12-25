@@ -56,7 +56,7 @@ public class CommitHelper {
   @NotNull private final Project myProject;
 
   @NotNull private final ChangeList myChangeList;
-  @NotNull private final List<? extends Change> myIncludedChanges;
+  @NotNull private final List<Change> myIncludedChanges;
 
   @NotNull private final String myActionName;
   @NotNull private final String myCommitMessage;
@@ -74,7 +74,7 @@ public class CommitHelper {
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
   public CommitHelper(@NotNull Project project,
                       @NotNull ChangeList changeList,
-                      @NotNull List<? extends Change> includedChanges,
+                      @NotNull List<Change> includedChanges,
                       @NotNull String actionName,
                       @NotNull String commitMessage,
                       @NotNull List<? extends CheckinHandler> handlers,
@@ -88,7 +88,7 @@ public class CommitHelper {
 
   public CommitHelper(@NotNull Project project,
                       @NotNull ChangeList changeList,
-                      @NotNull List<? extends Change> includedChanges,
+                      @NotNull List<Change> includedChanges,
                       @NotNull String actionName,
                       @NotNull String commitMessage,
                       @NotNull List<? extends CheckinHandler> handlers,
@@ -211,7 +211,7 @@ public class CommitHelper {
     }
 
     @Override
-    protected void process(@NotNull AbstractVcs vcs, @NotNull List<? extends Change> items) {
+    protected void process(@NotNull AbstractVcs vcs, @NotNull List<Change> items) {
       if (!myVcs.getName().equals(vcs.getName())) return;
       super.process(vcs, items);
     }
@@ -250,11 +250,11 @@ public class CommitHelper {
     public abstract void customRefresh();
     public abstract void doPostRefresh();
 
-    protected void process(@NotNull AbstractVcs vcs, @NotNull List<? extends Change> changes) {
+    protected void process(@NotNull AbstractVcs vcs, @NotNull List<Change> changes) {
       CheckinEnvironment environment = vcs.getCheckinEnvironment();
       if (environment != null) {
         myPathsToRefresh.addAll(ChangesUtil.getPaths(changes));
-        List<VcsException> exceptions = environment.commit((List)changes, myCommitMessage, myAdditionalData, myFeedback);
+        List<VcsException> exceptions = environment.commit(changes, myCommitMessage, myAdditionalData, myFeedback);
         if (!isEmpty(exceptions)) {
           myVcsExceptions.addAll(exceptions);
           myChangesFailedToCommit.addAll(changes);

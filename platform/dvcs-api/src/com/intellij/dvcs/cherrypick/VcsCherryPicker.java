@@ -50,7 +50,6 @@ public abstract class VcsCherryPicker {
 
   /**
    * Return true if cherry picker can manage all commits from roots
-   * @param roots
    */
   public abstract boolean canHandleForRoots(@NotNull Collection<? extends VirtualFile> roots);
 }

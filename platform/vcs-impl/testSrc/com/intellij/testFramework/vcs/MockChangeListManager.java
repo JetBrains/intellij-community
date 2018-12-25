@@ -262,7 +262,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes) {
+  public void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
     throw new UnsupportedOperationException();
   }
 

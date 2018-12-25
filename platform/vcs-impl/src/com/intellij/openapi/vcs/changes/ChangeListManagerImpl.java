@@ -1255,11 +1255,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes) {
+  public void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
     doCommit(changeList, changes, false);
   }
 
-  private void doCommit(final LocalChangeList changeList, final List<? extends Change> changes, final boolean synchronously) {
+  private void doCommit(final LocalChangeList changeList, final List<Change> changes, final boolean synchronously) {
     FileDocumentManager.getInstance().saveAllDocuments();
     new CommitHelper(myProject, changeList, changes, changeList.getName(),
                      StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment(), new ArrayList<>(),
@@ -1267,7 +1267,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @TestOnly
-  public void commitChangesSynchronouslyWithResult(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes) {
+  public void commitChangesSynchronouslyWithResult(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
     doCommit(changeList, changes, true);
   }
 

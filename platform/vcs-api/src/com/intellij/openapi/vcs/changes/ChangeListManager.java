@@ -157,7 +157,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public abstract List<CommitExecutor> getRegisteredExecutors();
 
-  public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes);
+  public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<Change> changes);
 
 
   public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list);
