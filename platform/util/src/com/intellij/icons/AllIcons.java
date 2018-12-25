@@ -2115,6 +2115,7 @@ public class AllIcons {
     public static final Icon TabAlert = IconLoader.getIcon("/nodes/tabAlert.svg"); // 16x16
     public static final Icon TabPin = IconLoader.getIcon("/nodes/tabPin.svg"); // 16x16
     public static final Icon Tag = IconLoader.getIcon("/nodes/tag.svg"); // 16x16
+    public static final Icon Target = IconLoader.getIcon("/nodes/target.svg"); // 13x13
     public static final Icon Test = IconLoader.getIcon("/nodes/test.svg"); // 16x16
     public static final Icon TestGroup = IconLoader.getIcon("/nodes/testGroup.svg"); // 16x16
     public static final Icon TestIgnored = IconLoader.getIcon("/nodes/testIgnored.svg"); // 16x16
