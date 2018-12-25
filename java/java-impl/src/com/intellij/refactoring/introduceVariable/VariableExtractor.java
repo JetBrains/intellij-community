@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -203,7 +204,8 @@ class VariableExtractor {
     if (anchor instanceof PsiResourceListElement) {
       PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)declaration;
       PsiLocalVariable localVariable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
-      PsiResourceVariable resourceVariable = RefactoringUtil.createResourceVariable(anchor.getProject(), localVariable, initializer);
+      PsiResourceVariable resourceVariable = JavaPsiFacade.getElementFactory(anchor.getProject())
+        .createResourceVariable(Objects.requireNonNull(localVariable.getName()), localVariable.getType(), initializer, anchor);
       return anchor.replace(resourceVariable);
     }
     return anchor.getParent().addBefore(declaration, anchor);

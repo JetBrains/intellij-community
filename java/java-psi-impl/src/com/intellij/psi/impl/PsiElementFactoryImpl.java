@@ -621,6 +621,25 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     return statement;
   }
 
+  @Override
+  public PsiResourceVariable createResourceVariable(@NonNls @NotNull String name,
+                                                    @NotNull PsiType type,
+                                                    @Nullable PsiExpression initializer,
+                                                    @Nullable PsiElement context) {
+    PsiTryStatement tryStatement = (PsiTryStatement)createStatementFromText("try (X x = null){}", context);
+    PsiResourceList resourceList = tryStatement.getResourceList();
+    assert resourceList != null;
+    PsiResourceVariable resourceVariable = (PsiResourceVariable)resourceList.iterator().next();
+    resourceVariable.getTypeElement().replace(createTypeElement(type));
+    PsiIdentifier nameIdentifier = resourceVariable.getNameIdentifier();
+    assert nameIdentifier != null;
+    nameIdentifier.replace(createIdentifier(name));
+    if (initializer != null) {
+      resourceVariable.setInitializer(initializer);
+    }
+    return resourceVariable;
+  }
+
   private static void replace(@Nullable PsiElement original, @NotNull PsiElement replacement, @NotNull String message) {
     assert original != null : message;
     original.replace(replacement);

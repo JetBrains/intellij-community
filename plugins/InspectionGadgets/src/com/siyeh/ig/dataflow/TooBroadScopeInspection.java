@@ -28,7 +28,6 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -40,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Objects;
 
 public class TooBroadScopeInspection extends BaseInspection {
 
@@ -388,8 +388,11 @@ public class TooBroadScopeInspection extends BaseInspection {
       CommentTracker tracker = new CommentTracker();
       if (commonParent instanceof PsiTryStatement) {
         PsiElement resourceReference = referenceElement.getParent();
-        PsiResourceVariable resourceVariable = RefactoringUtil
-          .createResourceVariable(project, variable, initializer != null ? tracker.markUnchanged(initializer) : null);
+        if (initializer != null) {
+          tracker.markUnchanged(initializer);
+        }
+        PsiResourceVariable resourceVariable = JavaPsiFacade.getElementFactory(project).createResourceVariable(
+          Objects.requireNonNull(variable.getName()), variable.getType(), initializer, variable);
         newDeclaration = resourceReference.getParent().addBefore(resourceVariable, resourceReference);
         resourceReference.delete();
       }
