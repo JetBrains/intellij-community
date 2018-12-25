@@ -50,14 +50,18 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
     val expirableJob = myExpirableJob
     val wrappedDispatcher = RescheduleAttemptLimitAwareDispatcher(dispatcher)
 
-    return object : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
-      /** Invoked once on each newly launched coroutine when dispatching it for the first time. */
-      override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
-        expirableJob.cancelJobOnCompletion(continuation.context[Job]!!)
-        return wrappedDispatcher.interceptContinuation(continuation)
-      }
-    }.also { interceptor ->
+    return ExpirableJobContinuationInterceptor(wrappedDispatcher, expirableJob).also { interceptor ->
       initializeExpirableJob(expirableJob, disposables, interceptor)
+    }
+  }
+
+  private class ExpirableJobContinuationInterceptor(val delegateInterceptor: ContinuationInterceptor,
+                                                    val expirableJob: Job) : AbstractCoroutineContextElement(ContinuationInterceptor),
+                                                                            ContinuationInterceptor {
+    /** Invoked once on each newly launched coroutine when dispatching it for the first time. */
+    override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
+      expirableJob.cancelJobOnCompletion(continuation.context[Job]!!)
+      return delegateInterceptor.interceptContinuation(continuation)
     }
   }
 
@@ -155,15 +159,18 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
 
     override fun isScheduleNeeded(context: CoroutineContext): Boolean = !(expirable.isDisposed || constraint.isCorrectContext)
 
-    @InternalCoroutinesApi
     override fun doSchedule(context: CoroutineContext, retryDispatchRunnable: Runnable) {
       val runOnce = RunOnce()
 
       val jobDisposableCloseable = expirable.registerOrInvokeDisposable {
         runOnce {
           LOG.assertTrue(expirable.isDisposing || expirable.isDisposed, "Must only be called on disposal of $expirable")
+
           // Defer executing the retryDispatchRunnable until this Job is cancelled through the expirableJob.
-          context[Job]!!.invokeOnCompletion(onCancelling = true) {
+          val continuationInterceptor = context[ContinuationInterceptor]!! as ExpirableJobContinuationInterceptor
+          continuationInterceptor.expirableJob.invokeOnCompletion {
+            LOG.assertTrue(context[Job]!!.isCancelled, "Must have already been cancelled through the expirableJob")
+
             // Implementation of a completion handler must be fast and lock-free.
             fallbackDispatch(context, retryDispatchRunnable)  // invokeLater, basically
           }
