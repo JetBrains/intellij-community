@@ -5,8 +5,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsPreservingExecutor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +28,7 @@ public class GitPreservingExecutor implements VcsPreservingExecutor {
                          @NotNull ProgressIndicator indicator,
                          @NotNull Runnable operation) {
     GitRepositoryManager gitRepositoryManager = GitRepositoryManager.getInstance(project);
-    if (!areRootsUnderGit(rootsToSave, gitRepositoryManager)) {
+    if (!areRootsUnderGitWithInitialCommit(rootsToSave, gitRepositoryManager)) {
       return false;
     }
     new GitPreservingProcess(project, Git.getInstance(), rootsToSave, operationTitle, "",
@@ -34,7 +37,17 @@ public class GitPreservingExecutor implements VcsPreservingExecutor {
     return true;
   }
 
-  private static boolean areRootsUnderGit(Collection<VirtualFile> roots, GitRepositoryManager gitVcs) {
-    return roots.stream().allMatch(root -> gitVcs.getRepositoryForRoot(root) != null);
+  private static boolean areRootsUnderGitWithInitialCommit(@NotNull Collection<VirtualFile> roots,
+                                                           @NotNull GitRepositoryManager gitRepositoryManager) {
+    return ContainerUtil.all(roots, root -> {
+      GitRepository gitRepository = gitRepositoryManager.getRepositoryForRoot(root);
+      if (gitRepository == null) {
+        return false;
+      }
+      if (gitRepository.getCurrentRevision() == null) {
+        return false;
+      }
+      return true;
+    });
   }
 }
