@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -30,6 +31,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -500,13 +502,16 @@ public class ExpectedTypesProvider {
 
     public void processSwitchBlock(@NotNull PsiSwitchBlock statement) {
       myResult.add(createInfoImpl(PsiType.LONG, PsiType.INT));
-      if (!PsiUtil.isLanguageLevel5OrHigher(statement)) {
-        return;
-      }
+      LanguageLevel level = PsiUtil.getLanguageLevel(statement);
+      if (level.isAtLeast(LanguageLevel.JDK_1_5)) {
+        PsiClassType enumType = TypeUtils.getType(CommonClassNames.JAVA_LANG_ENUM, statement);
+        myResult.add(createInfoImpl(enumType, enumType));
 
-      PsiManager manager = statement.getManager();
-      PsiClassType enumType = JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName("java.lang.Enum", statement.getResolveScope());
-      myResult.add(createInfoImpl(enumType, enumType));
+        if (level.isAtLeast(LanguageLevel.JDK_1_7)) {
+          PsiClassType stringType = TypeUtils.getStringType(statement);
+          myResult.add(createInfoImpl(stringType, stringType));
+        }
+      }
     }
 
     @Override
