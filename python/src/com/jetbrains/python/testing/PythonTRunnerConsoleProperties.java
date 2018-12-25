@@ -83,7 +83,7 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
     public void onTestFailed(@NotNull final SMTestProxy test) {
       super.onTestFailed(test);
       SMTestProxy currentTest = test.getParent();
-      while (currentTest != null) {
+      while (currentTest != null && currentTest.getParent() != null) {
         currentTest.setTestFailed(" ", null, false);
         currentTest = currentTest.getParent();
       }
