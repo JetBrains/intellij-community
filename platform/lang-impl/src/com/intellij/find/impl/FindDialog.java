@@ -485,11 +485,9 @@ public class FindDialog extends DialogWrapper implements FindUI {
         @Override
         public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
           final UsageViewPresentation presentation =
-            FindInProjectUtil.setupViewPresentation(FindSettings.getInstance().isShowResultsInSeparateView(), findModel);
-          final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
-
+            FindInProjectUtil.setupViewPresentation(findModel);
           final FindUsagesProcessPresentation processPresentation =
-            FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
+            FindInProjectUtil.setupProcessPresentation(myProject, presentation);
           ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
 
           FindInProjectUtil.findUsages(findModel, myProject, processPresentation, filesToScanInitially, info -> {
@@ -602,8 +600,8 @@ public class FindDialog extends DialogWrapper implements FindUI {
       gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
       optionsPanel.add(createFilterPanel(),gbConstraints);
 
-      myCbToSkipResultsWhenOneUsage = createCheckbox(myHelper.isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.occurrence.checkbox"));
-      myCbToSkipResultsWhenOneUsage.addActionListener(e -> myHelper.setSkipResultsWithOneUsage(myCbToSkipResultsWhenOneUsage.isSelected()));
+      myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.occurrence.checkbox"));
+      myCbToSkipResultsWhenOneUsage.addActionListener(e -> FindSettings.getInstance().setSkipResultsWithOneUsage(myCbToSkipResultsWhenOneUsage.isSelected()));
       resultsOptionPanel = createResultsOptionPanel(optionsPanel, gbConstraints);
       resultsOptionPanel.add(myCbToSkipResultsWhenOneUsage);
 
@@ -659,9 +657,8 @@ public class FindDialog extends DialogWrapper implements FindUI {
 
     myCbToOpenInNewTab = new JCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"));
     myCbToOpenInNewTab.setFocusable(false);
-    myCbToOpenInNewTab.setSelected(myHelper.isUseSeparateView());
-    myCbToOpenInNewTab.setEnabled(myHelper.getModel().isOpenInNewTabEnabled());
-    myCbToOpenInNewTab.addActionListener(e -> myHelper.setUseSeparateView(myCbToOpenInNewTab.isSelected()));
+    myCbToOpenInNewTab.setSelected(FindSettings.getInstance().isShowResultsInSeparateView());
+    myCbToOpenInNewTab.addActionListener(e -> FindSettings.getInstance().setShowResultsInSeparateView(myCbToOpenInNewTab.isSelected()));
 
     if (resultsOptionPanel == null) resultsOptionPanel = createResultsOptionPanel(optionsPanel, gbConstraints);
     resultsOptionPanel.add(myCbToOpenInNewTab);
@@ -1335,6 +1332,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     }
     else{
       if (myCbToOpenInNewTab != null){
+        FindSettings.getInstance().setShowResultsInSeparateView(myCbToOpenInNewTab.isSelected());
         model.setOpenInNewTab(myCbToOpenInNewTab.isSelected());
       }
 

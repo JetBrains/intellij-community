@@ -161,7 +161,7 @@ public class ReplaceInProjectManager {
     findManager.getFindInProjectModel().copyFrom(findModel);
     final FindModel findModelCopy = findModel.clone();
 
-    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModel.isOpenInNewTab(), findModelCopy);
+    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModelCopy);
     final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
     processPresentation.setShowFindOptionsPrompt(findModel.isPromptOnReplace());
 
@@ -177,7 +177,7 @@ public class ReplaceInProjectManager {
     @NotNull
     @Override
     public String getLongDescriptiveName() {
-      UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(false, myFindModel);
+      UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myFindModel);
       return "Replace " + StringUtil.decapitalize(presentation.getToolwindowTitle()) + " with '" + myFindModel.getStringToReplace() + "'";
     }
 
@@ -401,6 +401,7 @@ public class ReplaceInProjectManager {
       myProject,
       null,
       indicator -> {
+        indicator.setIndeterminate(false);
         int processed = 0;
         VirtualFile lastFile = null;
 
