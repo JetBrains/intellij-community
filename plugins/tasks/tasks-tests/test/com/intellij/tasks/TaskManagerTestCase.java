@@ -18,6 +18,7 @@ package com.intellij.tasks;
 import com.intellij.openapi.util.Couple;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.ReflectionUtil;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,11 @@ public abstract class TaskManagerTestCase extends LightPlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      Thread thread = ReflectionUtil.getField(MultiThreadedHttpConnectionManager.class, null, Thread.class, "REFERENCE_QUEUE_THREAD");
       MultiThreadedHttpConnectionManager.shutdownAll();
+      if (thread != null) {
+        thread.join();
+      }
       myTaskManager.setRepositories(Collections.emptyList());
       removeAllTasks();
     }
