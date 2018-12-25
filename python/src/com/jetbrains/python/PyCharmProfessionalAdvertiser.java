@@ -13,11 +13,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author traff
@@ -34,15 +37,14 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
 
+    final Project project = element.getProject();
+    if (getSettings(project).shown) {
+      return;
+    }
+
     if (element instanceof PyFile) {
 
       final PyFile pyFile = (PyFile)element;
-      final Project project = element.getProject();
-
-      if (getSettings(project).shown) {
-        return;
-      }
-
       final VirtualFile vFile = pyFile.getVirtualFile();
       if (vFile != null && FileIndexFacade.getInstance(project).isInLibraryClasses(vFile)) {
         return;
@@ -64,6 +66,11 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
         showInspectionAdvertisement(project, "the Pyramid Framework", null,"pyramid");
       }
     }
+
+    if (isJupyterFile(element)) {
+      showInspectionAdvertisement(element.getProject(), "Jupyter notebook",
+                                  "https://www.jetbrains.com/pycharm/features/scientific_tools.html", "jupyter");
+    }
   }
 
   private static void showInspectionAdvertisement(@NotNull Project project,
@@ -79,6 +86,15 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
                                     source);
                                 }
                               });
+  }
+
+  private static boolean isJupyterFile(@NotNull PsiElement element) {
+    if (!(element instanceof PsiFile)) {
+      return false;
+    }
+    final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
+    return virtualFile != null &&
+           Objects.equals(virtualFile.getExtension(), "ipynb");
   }
 
   private static void showSingletonNotification(@NotNull Project project,
