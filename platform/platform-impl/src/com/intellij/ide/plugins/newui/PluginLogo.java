@@ -51,7 +51,10 @@ public class PluginLogo {
   private static List<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>> myPrepareToLoad;
 
   static {
-    LafManager.getInstance().addLafManagerListener(_0 -> Default = null);
+    LafManager.getInstance().addLafManagerListener(_0 -> {
+      Default = null;
+      PluginLogoIcon.clearCache();
+    });
   }
 
   @NotNull
