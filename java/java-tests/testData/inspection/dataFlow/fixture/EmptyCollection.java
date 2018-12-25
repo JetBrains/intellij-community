@@ -7,8 +7,8 @@ class EmptyCollection {
       System.out.println(s);
     }
     list = fill(Collections.<String>emptyList());
-    for(String s : <warning descr="Collection 'list' is always empty">list</warning>) {
-      System.out.println(s);
+    if (<warning descr="Condition 'list.isEmpty()' is always 'true'">list.isEmpty()</warning>) {
+      
     }
   }
   

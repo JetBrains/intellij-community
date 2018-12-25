@@ -3,27 +3,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class ForEachOverEmptyCollection {
-  void testArray(int[][] arr) {
-    if(arr.length != 0) return;
-    for (int[] ints : <warning descr="Array 'arr' is always empty">arr</warning>) {
-      System.out.println(ints.length);
-    }
-  }
-
-  void testCollection(Collection<?> c) {
-    if(!c.isEmpty()) return;
-    for (Object o : <warning descr="Collection 'c' is always empty">c</warning>) {
-      System.out.println(o);
-    }
-  }
-
-  void testParens(Collection<?> c) {
-    if(!c.isEmpty()) return;
-    for (Object o : (<warning descr="Collection 'c' is always empty">c</warning>)) {
-      System.out.println(o);
-    }
-  }
-
   void testArrayAfter(String[] arr) {
     int count = 0;
     boolean hasItem = false;
@@ -55,12 +34,6 @@ public class ForEachOverEmptyCollection {
     if(!hasItem) {
       System.out.println(
         list.<warning descr="The call to 'get' always fails as index is out of bounds">get</warning>(<warning descr="Condition 'max == null' is always 'true'">max == null</warning> ? 0 : 1));
-    }
-  }
-  
-  void testDirect() {
-    for (Object o : <warning descr="Collection 'Collections.emptyList()' is always empty">Collections.emptyList()</warning>) {
-      System.out.println(o);
     }
   }
 }

@@ -23,17 +23,6 @@ class ArrayInitializerLength {
     }
   }
 
-  void testIterate() {
-    int[] arr = new int[0];
-    for (int i : <warning descr="Array 'arr' is always empty">arr</warning>) {
-      System.out.println("never");
-    }
-    int length = 0;
-    for (int i : <warning descr="Array 'new int[length]' is always empty">new int[length]</warning>) {
-      System.out.println(i);
-    }
-  }
-
   void testConditional() {
     int[] arr = Math.random() > 0.5 ? new int[2] : new int[4];
     if(<warning descr="Condition 'arr.length == 3' is always 'false'">arr.length == 3</warning>) {

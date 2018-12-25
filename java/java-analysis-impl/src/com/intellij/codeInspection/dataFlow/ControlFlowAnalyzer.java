@@ -537,7 +537,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (length != null) {
         addInstruction(new UnwrapSpecialFieldInstruction(length, PsiType.INT));
         addInstruction(new PushInstruction(myFactory.getInt(0), null));
-        addInstruction(new BinopInstruction(JavaTokenType.EQEQ, iteratedValue, PsiType.BOOLEAN));
+        addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
         addInstruction(new ConditionalGotoInstruction(loopEndOffset, false, null));
         hasSizeCheck = true;
       } else {

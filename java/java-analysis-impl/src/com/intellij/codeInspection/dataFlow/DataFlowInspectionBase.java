@@ -716,17 +716,6 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
           reporter.registerProblem(psiAnchor, range, message);
           // do not add to reported anchors if only part of expression was reported
         }
-        else if (PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent()) instanceof PsiForeachStatement) {
-          // highlighted for-each iterated value means evaluatesToTrue == "collection is always empty"
-          if (!evaluatesToTrue) {
-            // loop on always non-empty collection -- nothing to report
-            return;
-          }
-          boolean array = psiAnchor instanceof PsiExpression && ((PsiExpression)psiAnchor).getType() instanceof PsiArrayType;
-          reporter.registerProblem(psiAnchor, array ?
-                                              InspectionsBundle.message("dataflow.message.loop.on.empty.array") :
-                                              InspectionsBundle.message("dataflow.message.loop.on.empty.collection"));
-        }
         else if (!(psiAnchor instanceof PsiMethodReferenceExpression)) {
           reportConstantBoolean(reporter, psiAnchor, evaluatesToTrue);
         }
