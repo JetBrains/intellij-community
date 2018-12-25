@@ -5,11 +5,21 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.messages.Topic;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Executes an action surrounding it with freezing-unfreezing of the ChangeListManager
@@ -26,6 +36,7 @@ public class VcsFreezingProcess {
   @NotNull private final ChangeListManagerEx myChangeListManager;
   @NotNull private final ProjectManagerEx myProjectManager;
   @NotNull private final SaveAndSyncHandler mySaveAndSyncHandler;
+  @Nullable private final FileEditorManagerImpl myFileDocumentManager;
 
   public VcsFreezingProcess(@NotNull Project project, @NotNull String operationTitle, @NotNull Runnable runnable) {
     myProject = project;
@@ -35,10 +46,14 @@ public class VcsFreezingProcess {
     myChangeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(project);
     myProjectManager = ProjectManagerEx.getInstanceEx();
     mySaveAndSyncHandler = SaveAndSyncHandler.getInstance();
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+    myFileDocumentManager = (fileEditorManager instanceof FileEditorManagerImpl) ? (FileEditorManagerImpl)fileEditorManager : null;
   }
 
   public void execute() {
     LOG.debug("starting");
+
+    List<Pair<EditorsSplitters, Element>> states = saveAllFileEditors();
     try {
       LOG.debug("saving documents, blocking project autosync");
       saveAndBlockInAwt();
@@ -57,8 +72,35 @@ public class VcsFreezingProcess {
     finally {
       LOG.debug("unblocking project autosync");
       unblockInAwt();
+      LOG.debug("restoring opened files");
+      loadAllFileEditors(states);
     }
     LOG.debug("finished.");
+  }
+
+  private static void loadAllFileEditors(@NotNull List<Pair<EditorsSplitters, Element>> states) {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      for (Pair<EditorsSplitters, Element> state : states) {
+        state.getFirst().readExternal(state.getSecond());
+        state.getFirst().openFiles();
+      }
+    });
+  }
+
+  @NotNull
+  private List<Pair<EditorsSplitters, Element>> saveAllFileEditors() {
+    List<Pair<EditorsSplitters, Element>> states = Collections.synchronizedList(new ArrayList<>());
+    if (myFileDocumentManager != null) {
+      LOG.debug("saving opened files");
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        for (EditorsSplitters editorsSplitters : myFileDocumentManager.getAllSplitters()) {
+          Element state = new Element("state");
+          editorsSplitters.writeExternal(state);
+          states.add(Pair.create(editorsSplitters, state));
+        }
+      });
+    }
+    return states;
   }
 
   private void saveAndBlockInAwt() {
