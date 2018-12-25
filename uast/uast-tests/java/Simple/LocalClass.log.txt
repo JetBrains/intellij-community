@@ -1,6 +1,7 @@
 UFile (package = )
     UClass (name = LocalClass)
         UMethod (name = foo)
+            UTypeReferenceExpression (name = int)
             UBlockExpression
                 UDeclarationsExpression
                     UClass (name = Local)

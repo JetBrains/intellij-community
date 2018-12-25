@@ -1,6 +1,7 @@
 UFile (package = ) [public class IntLong {...]
     UClass (name = IntLong) [public class IntLong {...}]
         UMethod (name = foo) [public static fun foo() : long {...}]
+            UTypeReferenceExpression (name = long) [long] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var one: int = 1] = Undetermined
                     ULocalVariable (name = one) [var one: int = 1]

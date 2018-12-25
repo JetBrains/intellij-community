@@ -3,6 +3,7 @@ UFile (package = ) [import java.util...]
     UClass (name = For) [public class For {...}]
         UMethod (name = getList) [public static fun getList(size: int) : java.util.List<java.lang.Integer> {...}]
             UParameter (name = size) [var size: int]
+            UTypeReferenceExpression (name = java.util.List<java.lang.Integer>) [java.util.List<java.lang.Integer>] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var result: java.util.List<java.lang.Integer> = LinkedList()] = Undetermined
                     ULocalVariable (name = result) [var result: java.util.List<java.lang.Integer> = LinkedList()]
@@ -36,6 +37,7 @@ UFile (package = ) [import java.util...]
                     USimpleNameReferenceExpression (identifier = result) [result] = (var result = external LinkedList()())
         UMethod (name = sum) [public static fun sum(numbers: java.util.List<java.lang.Integer>) : int {...}]
             UParameter (name = numbers) [var numbers: java.util.List<java.lang.Integer>]
+            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var result: int = 0] = Undetermined
                     ULocalVariable (name = result) [var result: int = 0]

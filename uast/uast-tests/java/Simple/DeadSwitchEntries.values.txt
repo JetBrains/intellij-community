@@ -7,6 +7,7 @@ UFile (package = ) [public final enum DeadSwitchEntries {...]
         UEnumConstant (name = THIRD) [THIRD] = NON-EVALUATED
             USimpleNameReferenceExpression (identifier = DeadSwitchEntries) [DeadSwitchEntries] = external DeadSwitchEntries()
         UMethod (name = bar) [public static fun bar() : int {...}]
+            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var key: DeadSwitchEntries = THIRD] = Undetermined
                     ULocalVariable (name = key) [var key: DeadSwitchEntries = THIRD]

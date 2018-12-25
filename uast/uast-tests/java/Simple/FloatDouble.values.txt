@@ -1,6 +1,7 @@
 UFile (package = ) [public class FloatDouble {...]
     UClass (name = FloatDouble) [public class FloatDouble {...}]
         UMethod (name = foo) [public static fun foo() : double {...}]
+            UTypeReferenceExpression (name = double) [double] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var f1: float = 1.0] = Undetermined
                     ULocalVariable (name = f1) [var f1: float = 1.0]

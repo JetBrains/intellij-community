@@ -1,6 +1,7 @@
 UFile (package = ) [public class IncDec {...]
     UClass (name = IncDec) [public class IncDec {...}]
         UMethod (name = foo) [public static fun foo() : int {...}]
+            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var i1: int = 1] = Undetermined
                     ULocalVariable (name = i1) [var i1: int = 1]

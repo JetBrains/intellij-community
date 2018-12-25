@@ -1,6 +1,7 @@
 UFile (package = ) [public class NotANumber {...]
     UClass (name = NotANumber) [public class NotANumber {...}]
         UMethod (name = foo) [public static fun foo() : boolean {...}]
+            UTypeReferenceExpression (name = boolean) [boolean] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var x: double = 0.0 / 0.0] = Undetermined
                     ULocalVariable (name = x) [var x: double = 0.0 / 0.0]
@@ -47,6 +48,7 @@ UFile (package = ) [public class NotANumber {...]
                         UPrefixExpression (operator = !) [!b6] = false (depending on: (var b6 = true (depending on: (var x = NaN))))
                             USimpleNameReferenceExpression (identifier = b6) [b6] = (var b6 = true (depending on: (var x = NaN)))
         UMethod (name = bar) [public static fun bar() : boolean {...}]
+            UTypeReferenceExpression (name = boolean) [boolean] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var x: float = 0.0 / 0.0] = Undetermined
                     ULocalVariable (name = x) [var x: float = 0.0 / 0.0]

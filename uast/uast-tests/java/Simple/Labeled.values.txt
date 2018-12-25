@@ -1,6 +1,7 @@
 UFile (package = ) [public class Labeled {...]
     UClass (name = Labeled) [public class Labeled {...}]
         UMethod (name = foo) [public static fun foo() : int {...}]
+            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var first: int = 1] = Undetermined
                     ULocalVariable (name = first) [var first: int = 1]

@@ -1,6 +1,7 @@
 UFile (package = ) [public class DoWhile {...]
     UClass (name = DoWhile) [public class DoWhile {...}]
         UMethod (name = foo) [public static fun foo() : int {...}]
+            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var count: int = 0] = Undetermined
                     ULocalVariable (name = count) [var count: int = 0]

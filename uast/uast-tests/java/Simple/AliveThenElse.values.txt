@@ -2,6 +2,7 @@ UFile (package = ) [public class AliveThenElse {...]
     UClass (name = AliveThenElse) [public class AliveThenElse {...}]
         UMethod (name = foo) [public static fun foo(f: boolean) : int {...}]
             UParameter (name = f) [var f: boolean]
+            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var x: int = 0] = Undetermined
                     ULocalVariable (name = x) [var x: int = 0]

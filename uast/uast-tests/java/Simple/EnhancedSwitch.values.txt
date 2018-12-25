@@ -1,6 +1,7 @@
 UFile (package = ) [public class Main {...]
     UClass (name = Main) [public class Main {...}]
         UMethod (name = getString) [private static fun getString() : java.lang.String {...}]
+            UTypeReferenceExpression (name = java.lang.String) [java.lang.String] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var str: var = "baz"] = Undetermined
                     ULocalVariable (name = str) [var str: var = "baz"]

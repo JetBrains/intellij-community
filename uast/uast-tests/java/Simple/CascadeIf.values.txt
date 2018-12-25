@@ -4,6 +4,7 @@ UFile (package = ) [public class CascadeIf {...]
             UParameter (name = f) [var f: boolean]
             UParameter (name = g) [var g: boolean]
             UParameter (name = h) [var h: boolean]
+            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var x: int = 0] = Undetermined
                     ULocalVariable (name = x) [var x: int = 0]

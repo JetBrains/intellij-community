@@ -3,6 +3,7 @@ UFile (package = )
     UImportStatement (isOnDemand = false)
     UClass (name = External)
         UMethod (name = foo)
+            UTypeReferenceExpression (name = boolean)
             UBlockExpression
                 UReturnExpression
                     UBinaryExpression (operator = ===)
@@ -11,6 +12,7 @@ UFile (package = )
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
                             USimpleNameReferenceExpression (identifier = LinkedList)
         UMethod (name = bar)
+            UTypeReferenceExpression (name = boolean)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = list)
@@ -21,6 +23,7 @@ UFile (package = )
                         USimpleNameReferenceExpression (identifier = list)
                         USimpleNameReferenceExpression (identifier = list)
         UMethod (name = baz)
+            UTypeReferenceExpression (name = boolean)
             UBlockExpression
                 UReturnExpression
                     UBinaryExpression (operator = ===)

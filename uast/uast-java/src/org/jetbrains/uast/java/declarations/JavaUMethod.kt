@@ -43,6 +43,11 @@ open class JavaUMethod(
       else -> JavaUMethod(psi, containingElement)
     }
   }
+
+  override val returnTypeReference: UTypeReferenceExpression? by lz {
+    psi.returnTypeElement?.let { JavaUTypeReferenceExpression(it, this) }
+  }
+
 }
 
 class JavaUAnnotationMethod(

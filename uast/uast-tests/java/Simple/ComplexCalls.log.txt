@@ -1,24 +1,28 @@
 UFile (package = )
     UClass (name = A)
         UMethod (name = foo)
+            UTypeReferenceExpression (name = void)
             UBlockExpression
     UClass (name = B)
         UField (name = a)
             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
                 USimpleNameReferenceExpression (identifier = A)
         UMethod (name = bar)
+            UTypeReferenceExpression (name = A)
             UBlockExpression
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
                         USimpleNameReferenceExpression (identifier = A)
         UMethod (name = barR)
             UParameter (name = a)
+            UTypeReferenceExpression (name = A)
             UBlockExpression
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                         UIdentifier (Identifier (bar))
         UMethod (name = main)
             UParameter (name = args)
+            UTypeReferenceExpression (name = void)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = b)

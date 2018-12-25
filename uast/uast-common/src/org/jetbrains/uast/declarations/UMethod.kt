@@ -67,6 +67,7 @@ interface UMethod : UDeclaration, PsiMethod {
     if (visitor.visitMethod(this)) return
     annotations.acceptList(visitor)
     uastParameters.acceptList(visitor)
+    returnTypeReference?.accept(visitor)
     uastBody?.accept(visitor)
     visitor.afterVisitMethod(this)
   }
@@ -100,6 +101,20 @@ interface UMethod : UDeclaration, PsiMethod {
     visitor.visitMethod(this, data)
 
   override fun asLogString(): String = log("name = $name")
+
+  @JvmDefault
+  val returnTypeReference: UTypeReferenceExpression?
+    get() {
+      val sourcePsi = sourcePsi ?: return null
+      for (child in sourcePsi.children) {
+        val expression = child.toUElement(UTypeReferenceExpression::class.java)
+        if (expression != null) {
+          return expression
+        }
+      }
+      return null
+    }
+
 }
 
 interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
@@ -116,6 +131,7 @@ interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
     if (visitor.visitMethod(this)) return
     annotations.acceptList(visitor)
     uastParameters.acceptList(visitor)
+    returnTypeReference?.accept(visitor)
     uastBody?.accept(visitor)
     uastDefaultValue?.accept(visitor)
     visitor.afterVisitMethod(this)

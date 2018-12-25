@@ -1,6 +1,7 @@
 UFile (package = ) [public class Logicals {...]
     UClass (name = Logicals) [public class Logicals {...}]
         UMethod (name = foo) [public static fun foo() : boolean {...}]
+            UTypeReferenceExpression (name = boolean) [boolean] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var one: int = 1] = Undetermined
                     ULocalVariable (name = one) [var one: int = 1]

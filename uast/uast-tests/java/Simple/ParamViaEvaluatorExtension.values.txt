@@ -2,6 +2,7 @@ UFile (package = ) [public class Foo {...]
     UClass (name = Foo) [public class Foo {...}]
         UMethod (name = bar) [public fun bar(x: java.lang.String) : void {...}]
             UParameter (name = x) [var x: java.lang.String]
+            UTypeReferenceExpression (name = void) [void] = Undetermined
             UBlockExpression [{...}] = Undetermined
                 UDeclarationsExpression [var f: java.lang.String = x + "1"] = Undetermined
                     ULocalVariable (name = f) [var f: java.lang.String = x + "1"]

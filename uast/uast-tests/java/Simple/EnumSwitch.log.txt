@@ -8,6 +8,7 @@ UFile (package = )
             USimpleNameReferenceExpression (identifier = EnumSwitch)
         UMethod (name = foo)
             UParameter (name = key)
+            UTypeReferenceExpression (name = int)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = result)

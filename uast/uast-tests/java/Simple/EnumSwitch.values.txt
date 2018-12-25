@@ -8,6 +8,7 @@ UFile (package = ) [public final enum EnumSwitch {...]
             USimpleNameReferenceExpression (identifier = EnumSwitch) [EnumSwitch] = external EnumSwitch()
         UMethod (name = foo) [public static fun foo(key: EnumSwitch) : int {...}]
             UParameter (name = key) [var key: EnumSwitch]
+            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var result: int] = Undetermined
                     ULocalVariable (name = result) [var result: int]

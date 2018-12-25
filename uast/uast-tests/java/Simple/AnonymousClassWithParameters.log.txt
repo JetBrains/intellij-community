@@ -10,7 +10,9 @@ UFile (package = )
                         USimpleNameReferenceExpression (identifier = name)
                     USimpleNameReferenceExpression (identifier = name)
         UMethod (name = bar)
+            UTypeReferenceExpression (name = void)
         UMethod (name = test)
+            UTypeReferenceExpression (name = void)
             UBlockExpression
                 UQualifiedReferenceExpression
                     UObjectLiteralExpression
@@ -18,6 +20,7 @@ UFile (package = )
                         UClass (name = null)
                             UMethod (name = bar)
                                 UAnnotation (fqName = java.lang.Override)
+                                UTypeReferenceExpression (name = void)
                                 UBlockExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                         UIdentifier (Identifier (bar))

@@ -1,6 +1,7 @@
 UFile (package = ) [public class Shift {...]
     UClass (name = Shift) [public class Shift {...}]
         UMethod (name = foo) [public static fun foo() : int {...}]
+            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var one: int = 1] = Undetermined
                     ULocalVariable (name = one) [var one: int = 1]
@@ -34,6 +35,7 @@ UFile (package = ) [public class Shift {...]
                         USimpleNameReferenceExpression (identifier = quarter) [quarter] = (var quarter = -536870912 (depending on: (var minInt = -2147483648)))
                         USimpleNameReferenceExpression (identifier = unsignedQuarter) [unsignedQuarter] = (var unsignedQuarter = 536870912 (depending on: (var minInt = -2147483648)))
         UMethod (name = bar) [public static fun bar() : long {...}]
+            UTypeReferenceExpression (name = long) [long] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var one: long = 1] = Undetermined
                     ULocalVariable (name = one) [var one: long = 1]

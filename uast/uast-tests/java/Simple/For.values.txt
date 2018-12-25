@@ -1,6 +1,7 @@
 UFile (package = ) [public class For {...]
     UClass (name = For) [public class For {...}]
         UMethod (name = foo) [public static fun foo() : int {...}]
+            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var result: int = 0] = Undetermined
                     ULocalVariable (name = result) [var result: int = 0]
@@ -23,6 +24,7 @@ UFile (package = ) [public class For {...]
                 UReturnExpression [return result] = Nothing
                     USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined (depending on: (var i = Undetermined), (var i = Phi(1, 0)), (var i = 0)))
         UMethod (name = foo2) [public static fun foo2() : int {...}]
+            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var result: int = 0] = Undetermined
                     ULocalVariable (name = result) [var result: int = 0]

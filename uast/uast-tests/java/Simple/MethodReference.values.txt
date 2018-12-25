@@ -1,6 +1,7 @@
 UFile (package = ) [public class Anonymous {...]
     UClass (name = Anonymous) [public class Anonymous {...}]
         UMethod (name = bar) [public static fun bar() : void {...}]
+            UTypeReferenceExpression (name = void) [void] = Undetermined
             UBlockExpression [{...}] = (var variable1 = 24)
                 UDeclarationsExpression [var variable1: int = 24] = Undetermined
                     ULocalVariable (name = variable1) [var variable1: int = 24]
@@ -8,6 +9,7 @@ UFile (package = ) [public class Anonymous {...]
                 UPostfixExpression (operator = ++) [variable1++] = (var variable1 = 24)
                     USimpleNameReferenceExpression (identifier = variable1) [variable1] = (var variable1 = 24)
         UMethod (name = foo) [public static fun foo() : int {...}]
+            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var variable: int = 42] = Undetermined
                     ULocalVariable (name = variable) [var variable: int = 42]
