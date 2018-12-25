@@ -220,18 +220,16 @@ class MavenArtifactsBuilder {
       }
       else if (dependency instanceof JpsLibraryDependency) {
         def library = (dependency as JpsLibraryDependency).library
-        def libraryDescriptors = getMavenLibraryDescriptors(library)
-        if (libraryDescriptors.isEmpty()) {
+        def typed = library.asTyped(JpsRepositoryLibraryType.INSTANCE)
+        if (typed != null) {
+          dependencies << createArtifactDependencyByLibrary(typed.properties.data, scope)
+        }
+        else {
           List<String> names = LibraryLicensesListGenerator.getLibraryNames(library)
           for (n in names) {
             buildContext.messages.debug(" module '$module.name' depends on non-maven library $n")
           }
           mavenizable = false
-        }
-        else {
-          libraryDescriptors.each {
-            dependencies << createArtifactDependencyByLibrary(it, scope)
-          }
         }
       }
     }
@@ -252,25 +250,6 @@ class MavenArtifactsBuilder {
 
   static Dependency createDependencyTagByLibrary(JpsMavenRepositoryLibraryDescriptor descriptor) {
     createDependencyTag(createArtifactDependencyByLibrary(descriptor, DependencyScope.COMPILE))
-  }
-
-  private List<JpsMavenRepositoryLibraryDescriptor> getMavenLibraryDescriptors(JpsLibrary library) {
-    def typed = library.asTyped(JpsRepositoryLibraryType.INSTANCE)
-    if (typed != null) {
-      return [typed.properties.data]
-    }
-    if (library.name == "KotlinJavaRuntime") {
-      //todo[nik] remove this when KotlinJavaRuntime will be converted to repository library (we didn't do it yet for historical reasons and to avoid specifying Kotlin version in two places
-      def versionFile = new File(buildContext.paths.kotlinHome, "kotlinc/build.txt")
-      if (!versionFile.exists()) {
-        buildContext.messages.error("Cannot read Kotlin version, $versionFile doesn't exist")
-      }
-      def kotlinVersion = versionFile.text.trim().takeWhile { it != '-' }.toString()
-      return ["kotlin-stdlib", "kotlin-stdlib-jdk7", "kotlin-stdlib-jdk8", "kotlin-reflect", "kotlin-test"].collect {
-        new JpsMavenRepositoryLibraryDescriptor("org.jetbrains.kotlin", it, kotlinVersion, false)
-      }
-    }
-    return []
   }
 
   @Immutable
