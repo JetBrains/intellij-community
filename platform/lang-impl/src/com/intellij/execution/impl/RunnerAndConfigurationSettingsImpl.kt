@@ -8,6 +8,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.configuration.PersistentAwareRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
@@ -219,11 +220,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       }
     }
 
-    if (configuration is PersistentStateComponent<*>) {
-      configuration.deserializeAndLoadState(element)
-    }
-    else {
-      configuration.readExternal(element)
+    when (configuration) {
+      is PersistentStateComponent<*> -> configuration.deserializeAndLoadState(element)
+      is PersistentAwareRunConfiguration -> configuration.readPersistent(element, isTemplate)
+      else -> configuration.readExternal(element)
     }
 
     runnerSettings.loadState(element)
@@ -302,11 +302,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
   }
 
   private fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
-    if (configuration is PersistentStateComponent<*>) {
-      configuration.serializeStateInto(element)
-    }
-    else {
-      configuration.writeExternal(element)
+    when (configuration) {
+      is PersistentStateComponent<*> -> configuration.serializeStateInto(element)
+      is PersistentAwareRunConfiguration -> configuration.writePersistent(element)
+      else -> configuration.writeExternal(element)
     }
   }
 
@@ -407,6 +406,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       else -> null
     }
   }
+
+  fun needsToBeMigrated(): Boolean = (_configuration as? PersistentAwareRunConfiguration)?.needsToBeMigrated() ?: false
 
   private abstract inner class RunnerItem<T>(private val childTagName: String) {
     val settings = THashMap<ProgramRunner<*>, T>()
