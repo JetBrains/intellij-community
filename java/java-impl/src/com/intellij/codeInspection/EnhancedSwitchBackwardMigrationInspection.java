@@ -278,6 +278,9 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
 
     @Override
     String generateExpressionBranch(@NotNull PsiStatement statement, CommentTracker ct) {
+      if (statement instanceof PsiThrowStatement) {
+        return ct.text(statement);
+      }
       return myVariable.getName() + " = " + ct.text(statement) + "\nbreak;";
     }
   }
