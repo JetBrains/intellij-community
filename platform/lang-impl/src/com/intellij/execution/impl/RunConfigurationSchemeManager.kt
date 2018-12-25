@@ -69,11 +69,14 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     }
 
     var elementAfterStateLoaded: Element? = element
-    try {
-      elementAfterStateLoaded = writeScheme(settings)
-    }
-    catch (e: Throwable) {
-      LOG.error("Cannot compute digest for RC using state after load", e)
+
+    if (!settings.needsToBeMigrated()) {
+      try {
+        elementAfterStateLoaded = writeScheme(settings)
+      }
+      catch (e: Throwable) {
+        LOG.error("Cannot compute digest for RC using state after load", e)
+      }
     }
 
     // very important to not write file with only changed line separators
