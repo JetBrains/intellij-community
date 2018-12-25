@@ -119,6 +119,10 @@ public class PyResolveUtil {
     }
   }
 
+  /**
+   * Resolves the passed expression in its containing file.
+   * Does not go outside this file.
+   */
   @NotNull
   public static Collection<PsiElement> resolveLocally(@NotNull PyReferenceExpression referenceExpression) {
     final String referenceName = referenceExpression.getName();
@@ -133,6 +137,10 @@ public class PyResolveUtil {
     return processor.getElements();
   }
 
+  /**
+   * Resolves the passed name in its containing file starting from the passed scope.
+   * Does not go outside this file.
+   */
   @NotNull
   public static Collection<PsiElement> resolveLocally(@NotNull ScopeOwner scopeOwner, @NotNull String name) {
     final PyResolveProcessor processor = new PyResolveProcessor(name, true);
@@ -141,6 +149,10 @@ public class PyResolveUtil {
     return processor.getElements();
   }
 
+  /**
+   * If the passed expression resolves to import elements, returns their qualified names.
+   * Does not go outside the file containing this expression.
+   */
   @NotNull
   public static List<QualifiedName> resolveImportedElementQNameLocally(@NotNull PyReferenceExpression expression) {
     // SUPPORTED CASES:
@@ -276,6 +288,7 @@ public class PyResolveUtil {
 
   /**
    * Follows one of 'target-reference` chain and returns assigned value or null.
+   * Does not go outside the file containing the passed expression.
    *
    * @param referenceExpression expression to resolve
    * @return resolved assigned value.
@@ -287,6 +300,7 @@ public class PyResolveUtil {
 
   /**
    * Runs DFS on assignment chains and returns all reached assigned values.
+   * Does not go outside the file containing the passed expression.
    *
    * @param referenceExpression expression to resolve
    * @param visited             set to store visited references to prevent recursion
