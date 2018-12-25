@@ -8,6 +8,8 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubAuthorization
+import org.jetbrains.plugins.github.api.requests.GithubRequestPagination
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import java.io.IOException
 
@@ -33,7 +35,8 @@ class GithubTokenCreator(private val server: GithubServerPath,
         // we need to change note as well, because it should be unique
 
         //TODO: handle better
-        val current = executor.execute(indicator, GithubApiRequests.Auth.get(server))
+        val current = GithubApiPagesLoader.loadAll(executor, indicator,
+                                                   GithubApiRequests.Auth.pages(server, GithubRequestPagination()))
         for (i in 1..99) {
           val newNote = note + "_" + i
           if (current.find { authorization -> newNote.equals(authorization.note, true) } == null) {
