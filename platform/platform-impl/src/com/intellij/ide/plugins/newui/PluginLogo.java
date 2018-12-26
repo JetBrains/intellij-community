@@ -9,29 +9,22 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.JBHiDPIScaledImage;
-import com.intellij.util.SVGLoader;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -53,7 +46,7 @@ public class PluginLogo {
   static {
     LafManager.getInstance().addLafManagerListener(_0 -> {
       Default = null;
-      PluginLogoIcon.clearCache();
+      HiDPIPluginLogoIcon.clearCache();
     });
   }
 
@@ -296,69 +289,14 @@ public class PluginLogo {
   @Nullable
   private static PluginLogoIconProvider loadFileIcon(@NotNull ThrowableComputable<InputStream, IOException> provider) {
     try {
-      JBUI.ScaleContext context = JBUI.ScaleContext.create();
-      Icon logo40 = getHiDPI(context, SVGLoader.loadHiDPI(null, provider.compute(), context, 40, 40));
-      Icon logo80 = getHiDPI(context, SVGLoader.loadHiDPI(null, provider.compute(), context, 80, 80));
+      Icon logo40 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), 40, 40);
+      Icon logo80 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), 80, 80);
 
-      return new PluginLogoIcon(logo40, getHiDPI(context, Objects.requireNonNull(IconLoader.getDisabledIcon(logo40))),
-                                logo80, getHiDPI(context, Objects.requireNonNull(IconLoader.getDisabledIcon(logo80)))) {
-        @NotNull
-        @Override
-        protected Icon getDisabledIcon(Icon icon) {
-          return getHiDPI(context, super.getDisabledIcon(icon));
-        }
-      };
+      return new HiDPIPluginLogoIcon(logo40, logo80);
     }
     catch (IOException e) {
       LOG.error(e);
       return null;
     }
-  }
-
-  @NotNull
-  private static Icon getHiDPI(@NotNull JBUI.ScaleContext context, @NotNull Object source) {
-    if (source instanceof ImageIcon) {
-      Image image = ((ImageIcon)source).getImage();
-      if (image instanceof JBHiDPIScaledImage) {
-        return wrapHiDPI(context, (JBHiDPIScaledImage)image);
-      }
-      return (Icon)source;
-    }
-    if (source instanceof JBHiDPIScaledImage) {
-      return wrapHiDPI(context, (JBHiDPIScaledImage)source);
-    }
-    if (source instanceof Image) {
-      return new JBImageIcon((Image)source);
-    }
-    return (Icon)source;
-  }
-
-  @NotNull
-  private static Icon wrapHiDPI(@NotNull JBUI.ScaleContext context, @NotNull JBHiDPIScaledImage image) {
-    return new JBImageIcon(image) {
-      final double myBase = context.getScale(JBUI.ScaleType.USR_SCALE);
-
-      {
-        context.addUpdateListener(() -> setImage(image.scale(context.getScale(JBUI.ScaleType.USR_SCALE) / myBase)));
-      }
-
-      @Override
-      public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
-        context.update();
-        super.paintIcon(c, g, x, y);
-      }
-
-      @Override
-      public int getIconWidth() {
-        context.update();
-        return super.getIconWidth();
-      }
-
-      @Override
-      public int getIconHeight() {
-        context.update();
-        return super.getIconHeight();
-      }
-    };
   }
 }

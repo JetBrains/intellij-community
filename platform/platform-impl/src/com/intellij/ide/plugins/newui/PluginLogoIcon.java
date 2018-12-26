@@ -34,58 +34,33 @@ class PluginLogoIcon implements PluginLogoIconProvider {
   private final Icon myPluginLogoDisabledError_80;
   private final Icon myPluginLogoDisabledJBError_80;
 
-  private static Icon myCachedDisabledJBLogo;
-  private static Icon myCachedJBLogo2x;
-  private static Icon myCachedErrorLogo2x;
-  private static Icon myCachedDisabledJBLogo2x;
-
-  static void clearCache() {
-    myCachedDisabledJBLogo = null;
-    myCachedJBLogo2x = null;
-    myCachedErrorLogo2x = null;
-    myCachedDisabledJBLogo2x = null;
-  }
-
   PluginLogoIcon(@NotNull Icon logo_40, @NotNull Icon logoDisabled_40, @NotNull Icon logo_80, @NotNull Icon logoDisabled_80) {
     myPluginLogo_40 = logo_40;
     myPluginLogoJB_40 = setSouthEast(logo_40, AllIcons.Plugins.ModifierJBLogo);
     myPluginLogoError_40 = setSouthWest(logo_40, AllIcons.Plugins.ModifierInvalid);
     myPluginLogoJBError_40 = setSouthEastWest(logo_40, AllIcons.Plugins.ModifierJBLogo, AllIcons.Plugins.ModifierInvalid);
 
-    if (myCachedDisabledJBLogo == null) {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      myCachedDisabledJBLogo = getDisabledIcon(AllIcons.Plugins.ModifierJBLogo);
-    }
+    Icon disabledJBLogo = getDisabledJBLogo();
 
     myPluginLogoDisabled_40 = logoDisabled_40;
-    myPluginLogoDisabledJB_40 = setSouthEast(logoDisabled_40, myCachedDisabledJBLogo);
+    myPluginLogoDisabledJB_40 = setSouthEast(logoDisabled_40, disabledJBLogo);
     myPluginLogoDisabledError_40 = setSouthWest(logoDisabled_40, AllIcons.Plugins.ModifierInvalid);
-    myPluginLogoDisabledJBError_40 = setSouthEastWest(logoDisabled_40, myCachedDisabledJBLogo, AllIcons.Plugins.ModifierInvalid);
+    myPluginLogoDisabledJBError_40 = setSouthEastWest(logoDisabled_40, disabledJBLogo, AllIcons.Plugins.ModifierInvalid);
 
-    if (myCachedJBLogo2x == null) {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      myCachedJBLogo2x = IconUtil.scale(AllIcons.Plugins.ModifierJBLogo, null, 2);
-    }
-
-    if (myCachedErrorLogo2x == null) {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      myCachedErrorLogo2x = IconUtil.scale(AllIcons.Plugins.ModifierInvalid, null, 2);
-    }
+    Icon jbLogo2x = getJBLogo2x();
+    Icon errorLogo2x = getErrorLogo2x();
 
     myPluginLogo_80 = logo_80;
-    myPluginLogoJB_80 = setSouthEast(logo_80, myCachedJBLogo2x);
-    myPluginLogoError_80 = setSouthWest(logo_80, myCachedErrorLogo2x);
-    myPluginLogoJBError_80 = setSouthEastWest(logo_80, myCachedJBLogo2x, myCachedErrorLogo2x);
+    myPluginLogoJB_80 = setSouthEast(logo_80, jbLogo2x);
+    myPluginLogoError_80 = setSouthWest(logo_80, errorLogo2x);
+    myPluginLogoJBError_80 = setSouthEastWest(logo_80, jbLogo2x, errorLogo2x);
 
-    if (myCachedDisabledJBLogo2x == null) {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      myCachedDisabledJBLogo2x = getDisabledIcon(myCachedJBLogo2x);
-    }
+    Icon disabledJBLogo2x = getDisabledJBLogo2x(jbLogo2x);
 
     myPluginLogoDisabled_80 = logoDisabled_80;
-    myPluginLogoDisabledJB_80 = setSouthEast(logoDisabled_80, myCachedDisabledJBLogo2x);
-    myPluginLogoDisabledError_80 = setSouthWest(logoDisabled_80, myCachedErrorLogo2x);
-    myPluginLogoDisabledJBError_80 = setSouthEastWest(logoDisabled_80, myCachedDisabledJBLogo2x, myCachedErrorLogo2x);
+    myPluginLogoDisabledJB_80 = setSouthEast(logoDisabled_80, disabledJBLogo2x);
+    myPluginLogoDisabledError_80 = setSouthWest(logoDisabled_80, errorLogo2x);
+    myPluginLogoDisabledJBError_80 = setSouthEastWest(logoDisabled_80, disabledJBLogo2x, errorLogo2x);
   }
 
   @NotNull
@@ -99,8 +74,18 @@ class PluginLogoIcon implements PluginLogoIconProvider {
   }
 
   @NotNull
-  protected Icon getDisabledIcon(Icon icon) {
+  protected Icon getDisabledIcon(@NotNull Icon icon) {
+    return createDisabledIcon(icon);
+  }
+
+  @NotNull
+  protected static Icon createDisabledIcon(@NotNull Icon icon) {
     return Objects.requireNonNull(IconLoader.getDisabledIcon(icon));
+  }
+
+  @NotNull
+  protected Icon getScaled2xIcon(@NotNull Icon icon) {
+    return IconUtil.scale(icon, null, 2f);
   }
 
   @NotNull
@@ -122,6 +107,26 @@ class PluginLogoIcon implements PluginLogoIconProvider {
     layeredIcon.setIcon(southWest, 2, SwingConstants.SOUTH_WEST);
 
     return layeredIcon;
+  }
+
+  @NotNull
+  protected Icon getDisabledJBLogo() {
+    return getDisabledIcon(AllIcons.Plugins.ModifierJBLogo);
+  }
+
+  @NotNull
+  protected Icon getJBLogo2x() {
+    return getScaled2xIcon(AllIcons.Plugins.ModifierJBLogo);
+  }
+
+  @NotNull
+  protected Icon getErrorLogo2x() {
+    return getScaled2xIcon(AllIcons.Plugins.ModifierInvalid);
+  }
+
+  @NotNull
+  protected Icon getDisabledJBLogo2x(@NotNull Icon jbLogo2x) {
+    return getDisabledIcon(jbLogo2x);
   }
 
   @NotNull
