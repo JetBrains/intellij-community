@@ -1321,7 +1321,9 @@ public class PluginManagerCore {
     }
 
     if (reasonToNotLoad == null && descriptor instanceof IdeaPluginDescriptorImpl && isIncompatible(descriptor)) {
-      reasonToNotLoad = "Plugin since-build or until-build don't match this product's build number";
+      reasonToNotLoad = "Plugin since-build(" + descriptor.getSinceBuild() +
+                        ") or until-build(" + descriptor.getUntilBuild() +
+                        ") don't match this product's build number(" + getBuildNumber() + ").";
     }
 
     return reasonToNotLoad;
