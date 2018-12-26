@@ -82,6 +82,11 @@ public class TestDataUtil {
   static TestDataGroupVirtualFile getTestDataGroup(@NotNull String fileName1, @NotNull String fileName2) {
     VirtualFile file1 = getFileByPath(fileName1);
     VirtualFile file2 = getFileByPath(fileName2);
+    return getTestDataGroup(file1, file2);
+  }
+
+  @Nullable
+  static TestDataGroupVirtualFile getTestDataGroup(@Nullable VirtualFile file1, @Nullable VirtualFile file2) {
     if (file1 == null || file2 == null) {
       return null;
     }

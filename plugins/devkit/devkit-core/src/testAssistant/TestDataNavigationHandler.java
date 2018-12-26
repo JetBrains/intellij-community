@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
@@ -17,7 +17,10 @@ import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static org.jetbrains.idea.devkit.testAssistant.TestDataUtil.getFileByPath;
 
 public class TestDataNavigationHandler implements GutterIconNavigationHandler<PsiMethod> {
   @Override
@@ -84,15 +87,15 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
    * @param point point where the popup will be shown.
    */
   private static void showNavigationPopup(Project project, List<String> filePaths, RelativePoint point) {
-    List<TestDataNavigationElement> elementsToDisplay = getElementsToDisplay(project, filePaths);
+    Collections.sort(filePaths, String.CASE_INSENSITIVE_ORDER);
 
+    Set<VirtualFile> files = ContainerUtil.map2Set(filePaths, p -> getFileByPath(p));
+    List<TestDataNavigationElement> elementsToDisplay = new ArrayList<>();
     // if at least one file doesn't exist add "Create missing files" element
-    for (String path : filePaths) {
-      if (LocalFileSystem.getInstance().refreshAndFindFileByPath(path) == null) {
-        elementsToDisplay.add(TestDataNavigationElementFactory.createForCreateMissingFilesOption(filePaths));
-        break;
-      }
+    if (files.removeIf(f -> f == null)) {
+      elementsToDisplay.add(TestDataNavigationElementFactory.createForCreateMissingFilesOption(filePaths));
     }
+    consumeElementsToDisplay(project, files, elementsToDisplay::add);
 
     JList<TestDataNavigationElement> list = new JBList<>(elementsToDisplay);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -114,41 +117,38 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
       }).setTitle("Test Data").createPopup().show(point);
   }
 
-  private static List<TestDataNavigationElement> getElementsToDisplay(Project project, List<String> filePaths) {
-    ContainerUtil.removeDuplicates(filePaths);
-    Collections.sort(filePaths, String.CASE_INSENSITIVE_ORDER);
+  private static void consumeElementsToDisplay(@NotNull Project project,
+                                               @NotNull Collection<VirtualFile> files,
+                                               @NotNull Consumer<TestDataNavigationElement> consumer) {
 
-    List<TestDataNavigationElement> result = new ArrayList<>();
-    Set<String> usedPaths = new HashSet<>();
-    for (String path1 : filePaths) {
-      if (usedPaths.contains(path1)) {
+    Set<VirtualFile> usedPaths = new HashSet<>();
+    for (VirtualFile file1 : files) {
+      if (usedPaths.contains(file1)) {
         continue;
       }
 
       boolean groupFound = false;
-      for (String path2 : filePaths) {
-        if (usedPaths.contains(path2) || path2.equals(path1)) {
+      for (VirtualFile file2 : files) {
+        if (usedPaths.contains(file2) || file2.equals(file1)) {
           continue;
         }
 
-        TestDataGroupVirtualFile group = TestDataUtil.getTestDataGroup(path1, path2);
+        TestDataGroupVirtualFile group = TestDataUtil.getTestDataGroup(file1, file2);
         if (group == null) {
           continue;
         }
 
         groupFound = true;
-        result.add(TestDataNavigationElementFactory.createForGroup(project, group));
-        usedPaths.add(path1);
-        usedPaths.add(path2);
+        consumer.accept(TestDataNavigationElementFactory.createForGroup(project, group));
+        usedPaths.add(file1);
+        usedPaths.add(file2);
         break;
       }
 
       if (!groupFound) {
-        result.add(TestDataNavigationElementFactory.createForFile(project, path1));
-        usedPaths.add(path1);
+        consumer.accept(TestDataNavigationElementFactory.createForFile(project, file1.getPath()));
+        usedPaths.add(file1);
       }
     }
-
-    return result;
   }
 }
