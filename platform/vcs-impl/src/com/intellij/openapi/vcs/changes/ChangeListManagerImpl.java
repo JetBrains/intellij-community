@@ -1540,9 +1540,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myUpdater.forceGo();
   }
 
-  @Override
   @TestOnly
-  public boolean ensureUpToDate(final boolean canBeCanceled) {
+  public boolean ensureUpToDate() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     if (ApplicationManager.getApplication().isDispatchThread()) {
       updateImmediately();

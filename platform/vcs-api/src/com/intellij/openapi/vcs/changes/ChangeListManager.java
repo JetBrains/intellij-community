@@ -27,7 +27,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.Collection;
@@ -231,9 +230,4 @@ public abstract class ChangeListManager implements ChangeListModification {
   @Deprecated // used in TeamCity
   public abstract void reopenFiles(@NotNull List<? extends FilePath> paths);
 
-  @TestOnly
-  public abstract boolean ensureUpToDate(boolean canBeCanceled);
-
-  @TestOnly
-  public boolean ensureUpToDate() { return ensureUpToDate(false); }
 }

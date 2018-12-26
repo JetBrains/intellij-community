@@ -27,7 +27,6 @@ import com.intellij.util.ThreeState;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
@@ -76,12 +75,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
                                 Consumer<? super VcsDirtyScopeManager> dirtyScopeManager,
                                 ModalityState state) {
     afterUpdate.run();
-  }
-
-  @TestOnly
-  @Override
-  public boolean ensureUpToDate(boolean canBeCanceled) {
-    throw new UnsupportedOperationException();
   }
 
   @Override

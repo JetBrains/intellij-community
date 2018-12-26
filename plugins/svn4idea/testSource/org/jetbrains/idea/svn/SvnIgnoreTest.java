@@ -106,7 +106,7 @@ public class SvnIgnoreTest extends SvnTestCase {
     assertNoChanges();
 
     dirtyScopeManager.fileDirty(file);
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
 
     assertNoChanges();
     final FileStatus status = changeListManager.getStatus(file);

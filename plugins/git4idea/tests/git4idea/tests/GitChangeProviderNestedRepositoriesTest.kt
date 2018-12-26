@@ -61,7 +61,7 @@ class GitChangeProviderNestedRepositoriesTest : GitSingleRepoTest() {
     VcsTestUtil.editFileInCommand(project, grin1, "321*")
 
     dirtyScopeManager.markEverythingDirty()
-    changeListManager.ensureUpToDate(false)
+    changeListManager.ensureUpToDate()
 
     // 3. move changes
     val newList = changeListManager.addChangeList("new", "new")
@@ -71,7 +71,7 @@ class GitChangeProviderNestedRepositoriesTest : GitSingleRepoTest() {
     changeListManager.moveChangesTo(newList, change1, change2, change3)
 
     dirtyScopeManager.filesDirty(listOf(in1), listOf(repo.root))
-    changeListManager.ensureUpToDate(false)
+    changeListManager.ensureUpToDate()
 
     // 4. check that changes are in correct changelists
     val list = changeListManager.getChangeList(in1)!!

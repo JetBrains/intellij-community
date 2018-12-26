@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.test.GitSingleRepoTest
-import git4idea.test.file
 import git4idea.test.last
 
 class GitResetTest : GitSingleRepoTest() {
@@ -44,7 +43,7 @@ class GitResetTest : GitSingleRepoTest() {
 
     assertSuccessfulNotification("Reset successful")
     assertEquals("Branch is on incorrect point", oldHash.asString(), last())
-    changeListManager.ensureUpToDate(false)
+    changeListManager.ensureUpToDate()
     assertEquals("File status wasn't refreshed", FileStatus.MODIFIED, changeListManager.getChange(vf)!!.fileStatus)
   }
 

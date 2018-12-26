@@ -178,11 +178,11 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
 
   protected void refreshChanges() {
     dirtyScopeManager.markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
   }
 
   protected void waitChangesAndAnnotations() {
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     ((VcsAnnotationLocalChangesListenerImpl)vcsManager.getAnnotationLocalChangesListener()).calmDown();
   }
 
