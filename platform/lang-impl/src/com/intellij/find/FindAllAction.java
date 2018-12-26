@@ -1,24 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.find.editorHeaderActions;
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.find;
 
-import com.intellij.find.EditorSearchSession;
-import com.intellij.find.FindManager;
-import com.intellij.find.FindModel;
-import com.intellij.find.FindUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -26,6 +8,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
@@ -58,8 +41,9 @@ public class FindAllAction extends AnAction implements ShortcutProvider, DumbAwa
     Editor editor = e.getRequiredData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);
-
     if (project.isDisposed()) return;
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (file == null) return;
 
     FindModel oldModel = FindManager.getInstance(project).getFindInFileModel();
     FindModel newModel = oldModel.clone();
@@ -67,7 +51,7 @@ public class FindAllAction extends AnAction implements ShortcutProvider, DumbAwa
     if (StringUtil.isEmpty(text)) return;
 
     newModel.setStringToFind(text);
-    FindUtil.findAllAndShow(project, editor, newModel);
+    FindUtil.findAllAndShow(project, file, newModel);
   }
 
   @Nullable

@@ -1,9 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.find.impl;
+package com.intellij.find;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.find.*;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.FindResultImpl;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
@@ -324,7 +323,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     createFile(myModule, "A.test123", "foo fo foo");
 
     // don't use createFile here because it creates PsiFile and runs file type autodetection
-    // in real life some files might not be autodetected as plain text until the search starts 
+    // in real life some files might not be autodetected as plain text until the search starts
     VirtualFile custom = WriteCommandAction.writeCommandAction(myProject).compute(() -> {
       File dir = createTempDirectory();
       File file = new File(dir.getPath(), "A.test1234");
@@ -333,7 +332,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       addSourceContentToRoots(myModule, VfsUtil.findFileByIoFile(dir, true));
       return VfsUtil.findFileByIoFile(file, true);
     });
-    
+
     assertNull(FileDocumentManager.getInstance().getCachedDocument(custom));
     assertEquals(PlainTextFileType.INSTANCE, custom.getFileType());
 
@@ -346,7 +345,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     findModel.setStringToFind("fo");
     assertSize(2, findInProject(findModel));
-    
+
     // and we should get the same with text loaded
     assertNotNull(FileDocumentManager.getInstance().getDocument(custom));
     assertEquals(FileTypes.PLAIN_TEXT, custom.getFileType());
@@ -519,7 +518,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     String text = StringUtil.repeat(toFind + "\n",6);
     configureByText(FileTypes.PLAIN_TEXT, text);
 
-    final List<Usage> usages = FindUtil.findAll(getProject(), myEditor, findModel);
+    final List<Usage> usages = FindUtil.findAll(getProject(), myFile, findModel);
     assertNotNull(usages);
     CommandProcessor.getInstance().executeCommand(getProject(), () -> {
       for (Usage usage : usages) {
@@ -643,7 +642,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     model.setStringToFind("--");
     model.setWholeWordsOnly(true);
 
-    List<Usage> usages = FindUtil.findAll(myProject, myEditor, model);
+    List<Usage> usages = FindUtil.findAll(myProject, myFile, model);
     assertNotNull(usages);
     assertEquals(2, usages.size());
 
@@ -651,7 +650,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     model = new FindModel();
     model.setStringToFind("@AspectJ");
     model.setWholeWordsOnly(true);
-    usages = FindUtil.findAll(myProject, myEditor, model);
+    usages = FindUtil.findAll(myProject, myFile, model);
     assertNotNull(usages);
     assertEquals(1, usages.size());
   }
