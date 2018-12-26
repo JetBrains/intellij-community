@@ -46,10 +46,9 @@ public class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMa
   }
 
   private List<CustomCodeStyleSettings> getCustomSettings() {
-    CodeStyleSettings rootSettings = new CodeStyleSettings();
     List<CustomCodeStyleSettings> customSettingsList = new ArrayList<>();
-    addCustomSettings(customSettingsList, rootSettings, CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList());
-    addCustomSettings(customSettingsList, rootSettings, LanguageCodeStyleSettingsProvider.getSettingsPagesProviders());
+    addCustomSettings(customSettingsList, getRootSettings(), CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList());
+    addCustomSettings(customSettingsList, getRootSettings(), LanguageCodeStyleSettingsProvider.getSettingsPagesProviders());
     return customSettingsList;
   }
 
@@ -58,8 +57,9 @@ public class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMa
                                  @NotNull List<? extends CodeStyleSettingsProvider> providerList) {
     for (CodeStyleSettingsProvider provider : providerList) {
       if (provider.getLanguage() == myLanguage) {
-        CustomCodeStyleSettings customSettings = provider.createCustomSettings(rootSettings);
-        if (customSettings != null) {
+        CustomCodeStyleSettings customSettingsTemplate = provider.createCustomSettings(rootSettings);
+        if (customSettingsTemplate != null) {
+          CustomCodeStyleSettings customSettings = rootSettings.getCustomSettings(customSettingsTemplate.getClass());
           list.add(customSettings);
         }
       }

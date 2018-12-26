@@ -75,7 +75,7 @@ class PropertyAccessorFactory {
         case FORCE_BRACES:
           return new ForceBracesAccessor(codeStyleObject, myField);
         case ENUM:
-          break;
+          return new EnumPropertyAccessor(codeStyleObject, myField);
         case OTHER:
           break;
       }
