@@ -34,6 +34,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ui.JBUI.CurrentTheme.Validator.*;
 
@@ -49,7 +50,9 @@ public class ComponentValidator {
   public static final Function<JComponent, JComponent> CWBB_PROVIDER = c -> ((ComponentWithBrowseButton)c).getChildComponent();
 
   private final Disposable parentDisposable;
-  private Consumer<ComponentValidator> validator;
+  private Supplier<ValidationInfo> validator;
+  private Supplier<ValidationInfo> focusValidator;
+
   private Function<JComponent, JComponent> outlineProvider = Function.identity();
   private HyperlinkListener hyperlinkListener;
 
@@ -67,8 +70,23 @@ public class ComponentValidator {
     this.parentDisposable = parentDisposable;
   }
 
+   // @deprecated Use {@link ComponentValidator#withValidator(Supplier)} instead
+  @Deprecated
   public ComponentValidator withValidator(@NotNull Consumer<ComponentValidator> validator) {
+    this.validator = () -> {
+      validator.accept(this);
+      return validationInfo;
+    };
+    return this;
+  }
+
+  public ComponentValidator withValidator(@NotNull Supplier<ValidationInfo> validator) {
     this.validator = validator;
+    return this;
+  }
+
+  public ComponentValidator withFocusValidator(@NotNull Supplier<ValidationInfo> focusValidator) {
+    this.focusValidator = focusValidator;
     return this;
   }
 
@@ -131,15 +149,17 @@ public class ComponentValidator {
       }
 
       validator = null;
+      focusValidator = null;
       hyperlinkListener = null;
       outlineProvider = null;
+      component.putClientProperty(PROPERTY_NAME, null);
     });
     return this;
   }
 
   public void revalidate() {
     if (validator != null) {
-      validator.accept(this);
+      updateInfo(validator.get());
     }
   }
 
@@ -292,7 +312,14 @@ public class ComponentValidator {
     public void focusLost(FocusEvent e) {
       hidePopup();
 
-      if (disableValidation) {
+      ValidationInfo info = null;
+      if (focusValidator != null) {
+        info = focusValidator.get();
+      }
+
+      if (info != null) {
+        updateInfo(info);
+      } else if (disableValidation) {
         disableValidation = false;
         revalidate();
       }

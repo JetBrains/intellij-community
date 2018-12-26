@@ -149,20 +149,33 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             System.out.println("Text1 link clicked. Desc = " + e.getDescription());
           }
-        }).withValidator(v -> {
+        }).withValidator(() -> {
           String tt = text1.getText();
           if (StringUtil.isNotEmpty(tt)) {
             try {
               Integer.parseInt(tt);
-              v.updateInfo(null);
+              return null;
             }
             catch (NumberFormatException nex) {
-              v.updateInfo(new ValidationInfo("Warning, expecting a number.<br/>Visit the <a href=\"#link.one\">information link</a>" +
-                                              "<br/>Or <a href=\"#link.two\">another link</a>", text1).asWarning());
+              return new ValidationInfo("Warning, expecting a number.<br/>Visit the <a href=\"#link.one\">information link</a>" +
+                                              "<br/>Or <a href=\"#link.two\">another link</a>", text1).asWarning();
             }
           }
           else {
-            v.updateInfo(null);
+            return null;
+          }
+        }).withFocusValidator(() -> {
+          String tt = text1.getText();
+          if (StringUtil.isNotEmpty(tt)) {
+            try {
+              int i = Integer.parseInt(tt);
+              return i == 555 ? new ValidationInfo("Wrong number", text1).asWarning() : null;
+            }
+            catch (NumberFormatException nex) {
+              return new ValidationInfo("Warning, expecting a number.", text1).asWarning();
+            }
+          } else {
+            return null;
           }
         }).installOn(text1);
 
@@ -180,11 +193,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             System.out.println("Text2 link clicked. Desc = " + e.getDescription());
           }
-        }).withValidator(v -> {
+        }).withValidator(() -> {
           String tt = text2.getText();
-          v.updateInfo(
-            StringUtil.isEmpty(tt) || tt.length() < 5 ? new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols.<br/>Please <a href=\"#check.rules\">check rules.</a>",
-                                                                           text2) : null);
+          return StringUtil.isEmpty(tt) || tt.length() < 5 ?
+            new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols.<br/>Please <a href=\"#check.rules\">check rules.</a>", text2) : null;
         }).andStartOnFocusLost().installOn(text2);
 
       gc.gridy++;
@@ -368,8 +380,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private JComponent createValidatorsPanel() {
       // JTextField component with browse button
       TextFieldWithBrowseButton tfbb = new TextFieldWithBrowseButton(e -> System.out.println("JTextField browse button pressed"));
-      new ComponentValidator(getDisposable()).withValidator(v ->
-          v.updateInfo(tfbb.getText().length() != 5 ? new ValidationInfo("Enter 5 symbols",  tfbb) : null)).
+      new ComponentValidator(getDisposable()).withValidator(() -> tfbb.getText().length() != 5 ? new ValidationInfo("Enter 5 symbols",  tfbb) : null).
         withOutlineProvider(ComponentValidator.CWBB_PROVIDER).
         andStartOnFocusLost().
         installOn(tfbb);
@@ -384,12 +395,12 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       // EditorTextField component with browse button
       EditorTextField editor = new EditorTextField();
       ComponentWithBrowseButton<EditorTextField> etfbb = new ComponentWithBrowseButton<>(editor, e -> System.out.println("JTextField browse button pressed"));
-      new ComponentValidator(getDisposable()).withValidator(v -> {
+      new ComponentValidator(getDisposable()).withValidator(() -> {
         try {
           new URL(etfbb.getChildComponent().getDocument().getText());
-          v.updateInfo(null);
+          return null;
         } catch (MalformedURLException mex) {
-          v.updateInfo(new ValidationInfo("Enter a valid URL", etfbb));
+          return new ValidationInfo("Enter a valid URL", etfbb);
         }
       }).withOutlineProvider(ComponentValidator.CWBB_PROVIDER).andStartOnFocusLost().installOn(etfbb);
 
@@ -407,10 +418,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       comboBox.addActionListener(l -> ComponentValidator.getInstance(comboBox).ifPresent(ComponentValidator::revalidate));
 
       new ComponentValidator(getDisposable())
-        .withValidator(v -> {
-          ValidationInfo vi = comboBox.getSelectedIndex() % 2 == 0 ? new ValidationInfo("Can't select odd items", comboBox) : null;
-          v.updateInfo(vi);
-        }).installOn(comboBox);
+        .withValidator(() -> comboBox.getSelectedIndex() % 2 == 0 ? new ValidationInfo("Can't select odd items", comboBox) : null)
+        .installOn(comboBox);
 
       // Panels factory
       return UI.PanelFactory.grid().
