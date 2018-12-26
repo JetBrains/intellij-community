@@ -427,8 +427,8 @@ private class Rename(val filePath1: FilePath, val filePath2: FilePath, val commi
 
     other as Rename
 
-    if (FILE_PATH_HASHING_STRATEGY.equals(filePath1, other.filePath1)) return false
-    if (FILE_PATH_HASHING_STRATEGY.equals(filePath2, other.filePath2)) return false
+    if (!FILE_PATH_HASHING_STRATEGY.equals(filePath1, other.filePath1)) return false
+    if (!FILE_PATH_HASHING_STRATEGY.equals(filePath2, other.filePath2)) return false
     if (commit1 != other.commit1) return false
     if (commit2 != other.commit2) return false
 
@@ -453,7 +453,7 @@ class MaybeDeletedFilePath(val filePath: FilePath, val deleted: Boolean) {
 
     other as MaybeDeletedFilePath
 
-    if (FILE_PATH_HASHING_STRATEGY.equals(filePath, other.filePath)) return false
+    if (!FILE_PATH_HASHING_STRATEGY.equals(filePath, other.filePath)) return false
     if (deleted != other.deleted) return false
 
     return true
