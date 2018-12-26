@@ -727,7 +727,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     assert document instanceof DocumentImpl : document;
     UncommittedInfo info = myUncommittedInfos.get(document);
     if (info != null) {
-      return info.myEvents;
+      return new ArrayList<>(info.myEvents);
     }
     return Collections.emptyList();
 
