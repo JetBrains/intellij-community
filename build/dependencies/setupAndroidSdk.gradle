@@ -43,13 +43,13 @@ task downloadGradleDistribution2(type: Download) {
 task downloadOfflineRepo(type: Download) {
   src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk-offline-repo/3.1.2/android-sdk-offline-repo.zip"
   dest "$buildDir/android-sdk/offline_repo_repo.zip"
-  onlyIf { isEmpty(setupOfflineRepo.destinationDir) }
+  onlyIf { !dest.exists() && isEmpty(setupOfflineRepo.destinationDir) }
 }
 
 task downloadKotlinPlugin(type: Download) {
   src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk-kotlin-plugin/1.2.50-eap-17-IJ2018.2/android-sdk-kotlin-plugin.zip"
   dest "$buildDir/android-sdk/kotlin-plugin.zip"
-  onlyIf { isEmpty(setupKotlinPluginForAndroid.destinationDir) }
+  onlyIf { !dest.exists() && isEmpty(setupKotlinPluginForAndroid.destinationDir) }
 }
 
 task setupKotlinPluginForAndroid(dependsOn: downloadKotlinPlugin, type: Copy) {
@@ -68,7 +68,7 @@ task downloadAndroidSdk(type: Download) {
   def osFamily = currentOs.familyName
   src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk/${osFamily}.3.1.2/android-sdk.tar.gz"
   dest "$buildDir/android-sdk/${osFamily}.tar.gz"
-  onlyIf { isEmpty(untarAndroidSdk.destinationDir) && !currentOs.isMacOsX() }
+  onlyIf { !dest.exists() && isEmpty(untarAndroidSdk.destinationDir) && !currentOs.isMacOsX() }
 }
 
 task untarAndroidSdk(dependsOn: downloadAndroidSdk, type: Copy) {
