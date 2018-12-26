@@ -55,11 +55,17 @@ task downloadKotlinPlugin(type: Download) {
 task setupKotlinPluginForAndroid(dependsOn: downloadKotlinPlugin, type: Copy) {
   from zipTree(downloadKotlinPlugin.outputs.files.singleFile)
   into "$buildDir/android-sdk/prebuilts/tools/common/kotlin-plugin"
+  onlyIf {
+    destinationDir.list() == null || destinationDir.list().length == 0
+  }
 }
 
 task setupOfflineRepo(dependsOn: downloadOfflineRepo, type: Copy) {
   from zipTree(downloadOfflineRepo.outputs.files.singleFile)
   into "$buildDir/android-sdk/prebuilts/tools/common/m2/repository"
+  onlyIf {
+    destinationDir.list() == null || destinationDir.list().length == 0
+  }
 }
 
 task downloadAndroidSdk(type: Download) {
@@ -74,7 +80,11 @@ task setupAndroidSdk(
   type: Copy) {
   from tarTree(downloadAndroidSdk.outputs.files.singleFile)
   into "$buildDir/android-sdk/prebuilts/studio/sdk"
-  onlyIf { !currentOs.isMacOsX() }
+  onlyIf {
+    !currentOs.isMacOsX() &&
+    (destinationDir.list() == null ||
+     destinationDir.list().length == 0)
+  }
   outputs.dir("$buildDir/android-sdk/prebuilts/tools/common")
   doLast {
     file("$buildDir/android-sdk/prebuilts/tools/common/offline-m2").mkdirs()
