@@ -96,12 +96,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
   private volatile boolean myViewClosed = true;
   private long myInspectionStartedTimestamp;
 
-  @NotNull
-  private AnalysisUIOptions myUIOptions;
-
   public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<? extends ContentManager> contentManager) {
     super(project);
-    myUIOptions = AnalysisUIOptions.getInstance(project).copy();
     myContentManager = contentManager;
   }
 
@@ -345,23 +341,20 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
 
   @NotNull
   public AnalysisUIOptions getUIOptions() {
-    return myUIOptions;
+    return AnalysisUIOptions.getInstance(getProject());
   }
 
   public void setSplitterProportion(final float proportion) {
-    myUIOptions.SPLITTER_PROPORTION = proportion;
+    getUIOptions().SPLITTER_PROPORTION = proportion;
   }
 
   @NotNull
   public ToggleAction createToggleAutoscrollAction() {
-    return myUIOptions.getAutoScrollToSourceHandler().createToggleAction();
+    return getUIOptions().getAutoScrollToSourceHandler().createToggleAction();
   }
 
   @Override
   protected void launchInspections(@NotNull final AnalysisScope scope) {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      myUIOptions = AnalysisUIOptions.getInstance(getProject()).copy();
-    }
     myViewClosed = false;
     super.launchInspections(scope);
   }
@@ -374,6 +367,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
 
   @Override
   protected void notifyInspectionsFinished(@NotNull final AnalysisScope scope) {
+    //noinspection TestOnlyProblems
     if (ApplicationManager.getApplication().isUnitTestMode() && !TESTING_VIEW) return;
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
@@ -880,7 +874,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
         return;
       }
     }
-    AnalysisUIOptions.getInstance(getProject()).save(myUIOptions);
     if (myContent != null) {
       final ContentManager contentManager = getContentManager();
       contentManager.removeContent(myContent, true);
@@ -1084,6 +1077,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
   }
 
   private void addProblemsToView(List<Tools> tools) {
+    //noinspection TestOnlyProblems
     if (ApplicationManager.getApplication().isHeadlessEnvironment() && !TESTING_VIEW) {
       return;
     }
