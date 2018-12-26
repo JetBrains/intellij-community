@@ -50,7 +50,8 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     POINTERS_KEY = Key.create("SMART_POINTERS " + anonymize(project));
   }
 
-  private static String anonymize(Project project) {
+  @NotNull
+  private static String anonymize(@NotNull Project project) {
     return project.isDefault() ? "default" : String.valueOf(project.hashCode());
   }
 
@@ -79,6 +80,10 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
                                                                                        boolean forInjected) {
     ensureValid(element, containingFile);
     SmartPointerTracker.processQueue();
+    Project project = containingFile != null ? containingFile.getProject() : element.getProject();
+    if (project != myProject) {
+      throw new IllegalArgumentException("Element from alien project: "+anonymize(project)+" expected: "+anonymize(myProject));
+    }
     SmartPsiElementPointerImpl<E> pointer = getCachedPointer(element);
     if (pointer != null &&
         (!(pointer.getElementInfo() instanceof SelfElementInfo) || ((SelfElementInfo)pointer.getElementInfo()).isForInjected() == forInjected) &&
