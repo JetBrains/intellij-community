@@ -205,8 +205,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myTree.setShowsRootHandles(true);
     registerPsiListener(myProject, this, this::queueUpdate);
 
-    myAutoScrollToSourceHandler.install(myTree);
-    myAutoScrollFromSourceHandler.install();
+    if (showScrollToFromSourceActions()) {
+      myAutoScrollToSourceHandler.install(myTree);
+      myAutoScrollFromSourceHandler.install();
+    }
 
     TreeUtil.installActions(getTree());
 
