@@ -82,6 +82,28 @@ class DataNodeTest {
       .isTrue()
   }
 
+  @Test
+  fun `proxy instance referenced from invocation handler (de-)serialized`() {
+    val handler = object: InvocationHandler, Serializable {
+      var counter: Int = 0
+      override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any? {
+        return when (method?.name) {
+          "incrementAndGet" -> ++counter
+          else -> Unit
+        }
+      }
+
+      var ref: Counter? = null
+    }
+
+    val proxy = Proxy.newProxyInstance(javaClass.classLoader, arrayOf(Counter::class.java, Serializable::class.java), handler) as Counter
+    handler.ref = proxy
+    assertThat(proxy.incrementAndGet()).isEqualTo(1)
+
+    val dataNode = wrapAndDeserialize(Any::class.java, proxy)
+    val counter = dataNode.data as Counter
+    assertThat(counter.incrementAndGet()).isEqualTo(2)
+  }
 
   private fun wrapAndDeserialize(clz: Class<Any>,
                                  barObject: Any): DataNode<Any> {
@@ -91,6 +113,10 @@ class DataNodeTest {
     val bytes = bos.toByteArray()
     return ObjectInputStream(ByteArrayInputStream(bytes)).use { it.readObject() } as DataNode<Any>
   }
+}
+
+interface Counter {
+  fun incrementAndGet(): Int
 }
 
 
