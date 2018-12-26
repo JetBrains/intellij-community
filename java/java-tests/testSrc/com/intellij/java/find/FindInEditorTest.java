@@ -38,7 +38,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 public class FindInEditorTest extends LightCodeInsightTestCase {
-
   private LivePreviewController myLivePreviewController;
   private FindModel myFindModel;
 
@@ -58,13 +57,20 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myFindModel = null;
-    myOutputStream = null;
-    if (myLivePreviewController != null) {
-      myLivePreviewController.dispose();
-      myLivePreviewController = null;
+    try {
+      myFindModel = null;
+      myOutputStream = null;
+      if (myLivePreviewController != null) {
+        myLivePreviewController.dispose();
+        myLivePreviewController = null;
+      }
     }
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
@@ -86,7 +92,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     myFindModel.setStringToFind("a");
     checkResults();
     myFindModel.setStringToFind("a2");
-    assertTrue(!myEditor.getSelectionModel().hasSelection());
+    assertFalse(myEditor.getSelectionModel().hasSelection());
   }
 
   public void testEmacsLikeFallback() {
