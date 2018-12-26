@@ -128,11 +128,10 @@ public class CFGBuilder {
    * Stack after: ... loaded_field
    *
    * @param descriptor a {@link SpecialField} which describes a field to get
-   * @param type a loaded field type
    * @return this builder
    */
-  public CFGBuilder unwrap(@NotNull SpecialField descriptor, @Nullable PsiType type) {
-    return add(new UnwrapSpecialFieldInstruction(descriptor, type));
+  public CFGBuilder unwrap(@NotNull SpecialField descriptor) {
+    return add(new UnwrapSpecialFieldInstruction(descriptor));
   }
 
   /**

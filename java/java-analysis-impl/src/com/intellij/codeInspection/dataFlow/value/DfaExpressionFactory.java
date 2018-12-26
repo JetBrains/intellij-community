@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -150,7 +152,7 @@ public class DfaExpressionFactory {
     }
 
     DfaVariableValue qualifier = getQualifierOrThisVariable(refExpr);
-    return var.createValue(myFactory, qualifier, refExpr.getType(), true);
+    return var.createValue(myFactory, qualifier, true);
   }
 
   /**
@@ -304,17 +306,16 @@ public class DfaExpressionFactory {
     DfaVariableValue arrayDfaVar = (DfaVariableValue)array;
     PsiType type = arrayDfaVar.getType();
     if (!(type instanceof PsiArrayType)) return null;
-    PsiType componentType = ((PsiArrayType)type).getComponentType();
     PsiModifierListOwner arrayPsiVar = arrayDfaVar.getPsiVariable();
     if (arrayPsiVar instanceof PsiVariable) {
       PsiExpression constantArrayElement = ExpressionUtils.getConstantArrayElement((PsiVariable)arrayPsiVar, index);
       if (constantArrayElement != null) {
-        return getAdvancedExpressionDfaValue(constantArrayElement, componentType);
+        return getAdvancedExpressionDfaValue(constantArrayElement, ((PsiArrayType)type).getComponentType());
       }
     }
     ArrayElementDescriptor indexVariable = getArrayIndexVariable(index);
     if (indexVariable == null) return null;
-    return indexVariable.createValue(myFactory, arrayDfaVar, componentType);
+    return indexVariable.createValue(myFactory, arrayDfaVar);
   }
 
   @Nullable
@@ -323,6 +324,18 @@ public class DfaExpressionFactory {
       return myArrayIndices.computeIfAbsent(index, ArrayElementDescriptor::new);
     }
     return null;
+  }
+
+  @NotNull
+  private static PsiSubstitutor getSubstitutor(PsiElement member, @Nullable DfaVariableValue qualifier) {
+    if (member instanceof PsiMember && qualifier != null) {
+      PsiClass fieldClass = ((PsiMember)member).getContainingClass();
+      PsiClassType classType = ObjectUtils.tryCast(qualifier.getType(), PsiClassType.class);
+      if (classType != null && InheritanceUtil.isInheritorOrSelf(classType.resolve(), fieldClass, true)) {
+        return TypeConversionUtil.getSuperClassSubstitutor(fieldClass, classType);
+      }
+    }
+    return PsiSubstitutor.EMPTY;
   }
 
   static final class PlainDescriptor implements VariableDescriptor {
@@ -339,6 +352,15 @@ public class DfaExpressionFactory {
     }
 
     @Override
+    public PsiType getType(@Nullable DfaVariableValue qualifier) {
+      PsiType type = myVariable.getType();
+      if (type instanceof PsiEllipsisType) {
+        type = ((PsiEllipsisType)type).toArrayType();
+      }
+      return getSubstitutor(myVariable, qualifier).substitute(type);
+    }
+
+    @Override
     public PsiVariable getPsiElement() {
       return myVariable;
     }
@@ -352,19 +374,25 @@ public class DfaExpressionFactory {
 
     @NotNull
     @Override
-    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, @Nullable PsiType type, boolean forAccessor) {
+    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
       if (myVariable.getType().equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
         return factory.getConstFactory().getNull();
       }
       if (myVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
+        PsiType type = getType(ObjectUtils.tryCast(qualifier, DfaVariableValue.class));
         return factory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, myVariable));
       }
       if (myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter ||
           (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC) &&
            (!myVariable.hasModifierProperty(PsiModifier.FINAL) || !DfaUtil.hasInitializationHacks((PsiField)myVariable)))) {
-        return factory.getVarFactory().createVariableValue(this, type);
+        return factory.getVarFactory().createVariableValue(this);
       }
-      return VariableDescriptor.super.createValue(factory, qualifier, type, forAccessor);
+      return VariableDescriptor.super.createValue(factory, qualifier, forAccessor);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(myVariable.getName());
     }
 
     @Override
@@ -389,6 +417,12 @@ public class DfaExpressionFactory {
       return myGetter.getName();
     }
 
+    @Nullable
+    @Override
+    public PsiType getType(@Nullable DfaVariableValue qualifier) {
+      return getSubstitutor(myGetter, qualifier).substitute(myGetter.getReturnType());
+    }
+
     @NotNull
     @Override
     public PsiMethod getPsiElement() {
@@ -407,11 +441,16 @@ public class DfaExpressionFactory {
 
     @NotNull
     @Override
-    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, @Nullable PsiType type, boolean forAccessor) {
+    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
       if (myGetter.hasModifierProperty(PsiModifier.STATIC)) {
-        return factory.getVarFactory().createVariableValue(this, type);
+        return factory.getVarFactory().createVariableValue(this);
       }
-      return VariableDescriptor.super.createValue(factory, qualifier, type, forAccessor);
+      return VariableDescriptor.super.createValue(factory, qualifier, forAccessor);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(myGetter.getName());
     }
 
     @Override
@@ -425,6 +464,14 @@ public class DfaExpressionFactory {
 
     ArrayElementDescriptor(int index) {
       myIndex = index;
+    }
+
+    @Nullable
+    @Override
+    public PsiType getType(@Nullable DfaVariableValue qualifier) {
+      if (qualifier == null) return null;
+      PsiType qualifierType = qualifier.getType();
+      return qualifierType instanceof PsiArrayType ? ((PsiArrayType)qualifierType).getComponentType() : null;
     }
 
     @NotNull
@@ -453,6 +500,12 @@ public class DfaExpressionFactory {
       return myQualifier.getName() + ".this";
     }
 
+    @NotNull
+    @Override
+    public PsiType getType(@Nullable DfaVariableValue qualifier) {
+      return new PsiImmediateClassType(myQualifier, PsiSubstitutor.EMPTY);
+    }
+
     @Override
     public PsiClass getPsiElement() {
       return myQualifier;
@@ -461,6 +514,11 @@ public class DfaExpressionFactory {
     @Override
     public boolean isStable() {
       return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(myQualifier.getQualifiedName());
     }
 
     @Override

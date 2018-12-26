@@ -161,7 +161,7 @@ public abstract class InstructionVisitor {
 
   public DfaInstructionState[] visitUnwrapField(UnwrapSpecialFieldInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
     DfaValue value = state.pop();
-    DfaValue field = instruction.getSpecialField().createValue(runner.getFactory(), value, instruction.getTargetType());
+    DfaValue field = instruction.getSpecialField().createValue(runner.getFactory(), value);
     state.push(field);
     return nextInstruction(instruction, runner, state);
   }

@@ -535,7 +535,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         length = SpecialField.COLLECTION_SIZE;
       }
       if (length != null) {
-        addInstruction(new UnwrapSpecialFieldInstruction(length, PsiType.INT));
+        addInstruction(new UnwrapSpecialFieldInstruction(length));
         addInstruction(new PushInstruction(myFactory.getInt(0), null));
         addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
         addInstruction(new ConditionalGotoInstruction(loopEndOffset, false, null));
@@ -902,17 +902,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
       if (syntheticVar) {
-        expressionValue = getFactory().getVarFactory().createVariableValue(new VariableDescriptor() {
-          @Override
-          public boolean isStable() {
-            return true;
-          }
-
-          @Override
-          public String toString() {
-            return "switch$var";
-          }
-        }, targetType);
+        expressionValue = createTempVariable(targetType);
         addInstruction(new PushInstruction(expressionValue, null, true));
       }
       selector.accept(this);
@@ -1494,8 +1484,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (PsiType.VOID.equals(expectedType)) return;
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(actualType)) {
-      PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(actualType); // expectedType is not always precise unboxed type
-      addInstruction(new UnwrapSpecialFieldInstruction(SpecialField.UNBOX, unboxedType));
+      addInstruction(new UnwrapSpecialFieldInstruction(SpecialField.UNBOX));
     }
     else if (TypeConversionUtil.isPrimitiveAndNotNull(actualType) && TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType)) {
       addConditionalRuntimeThrow();
@@ -2107,7 +2096,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if(type == null) {
       type = PsiType.VOID;
     }
-    return getFactory().getVarFactory().createVariableValue(new Synthetic(getInstructionCount()), type);
+    return getFactory().getVarFactory().createVariableValue(new Synthetic(getInstructionCount(), type));
   }
 
   /**
@@ -2130,15 +2119,23 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private static final class Synthetic implements VariableDescriptor {
     private final int myLocation;
+    private final PsiType myType;
 
-    private Synthetic(int location) {
+    private Synthetic(int location, PsiType type) {
       myLocation = location;
+      myType = type;
     }
 
     @NotNull
     @Override
     public String toString() {
       return "tmp$" + myLocation;
+    }
+
+    @Nullable
+    @Override
+    public PsiType getType(@Nullable DfaVariableValue qualifier) {
+      return myType;
     }
 
     @Override

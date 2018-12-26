@@ -354,7 +354,7 @@ public class DfaUtil {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
       if (value instanceof DfaBoxedValue ||
           (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType()))) {
-        return SpecialField.UNBOX.createValue(value.getFactory(), value, type);
+        return SpecialField.UNBOX.createValue(value.getFactory(), value);
       }
     }
     return value;

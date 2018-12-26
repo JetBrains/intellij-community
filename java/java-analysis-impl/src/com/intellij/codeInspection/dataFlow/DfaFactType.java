@@ -196,7 +196,8 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Nullable
     @Override
     TypeConstraint calcFromVariable(@NotNull DfaVariableValue value) {
-      DfaPsiType type = value.getDfaType();
+      PsiType psiType = value.getType();
+      DfaPsiType type = psiType == null ? null : value.getFactory().createDfaType(psiType);
       return type == null ? null : TypeConstraint.empty().withInstanceofValue(type);
     }
 

@@ -1,6 +1,12 @@
 import java.util.*;
 
 class Main {
+  void testGetNonNullWithVar() {
+    Optional<? extends String> opt = getOptional("");
+    if (!opt.isPresent()) return;
+    System.out.println(opt.get().trim());
+  }
+  
   void testGetNonNull() {
     System.out.println(getOptional("x").get().trim());
   }

@@ -86,7 +86,7 @@ public enum SpecialField implements VariableDescriptor {
     );
 
     @Override
-    PsiPrimitiveType getType(DfaVariableValue variableValue) {
+    public PsiPrimitiveType getType(DfaVariableValue variableValue) {
       return PsiPrimitiveType.getUnboxedType(variableValue.getType());
     }
 
@@ -98,11 +98,11 @@ public enum SpecialField implements VariableDescriptor {
 
     @NotNull
     @Override
-    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, PsiType targetType, boolean forAccessor) {
+    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
       if (qualifier instanceof DfaBoxedValue) {
         return ((DfaBoxedValue)qualifier).getWrappedValue();
       }
-      return super.createValue(factory, qualifier, targetType, forAccessor);
+      return super.createValue(factory, qualifier, forAccessor);
     }
 
     @Override
@@ -117,7 +117,7 @@ public enum SpecialField implements VariableDescriptor {
   },
   OPTIONAL_VALUE(null, "value", true) {
     @Override
-    PsiType getType(DfaVariableValue variableValue) {
+    public PsiType getType(DfaVariableValue variableValue) {
       return OptionalUtil.getOptionalElementType(variableValue.getType());
     }
 
@@ -209,14 +209,15 @@ public enum SpecialField implements VariableDescriptor {
    * @param qualifier a known qualifier value
    * @return a DfaValue which represents this special field
    */
+  @Override
   @NotNull
   public final DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
-    return createValue(factory, qualifier, null, false);
+    return createValue(factory, qualifier, false);
   }
 
   @NotNull
   @Override
-  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, PsiType targetType, boolean forAccessor) {
+  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
     if (qualifier instanceof DfaVariableValue) {
       DfaVariableValue variableValue = (DfaVariableValue)qualifier;
       PsiModifierListOwner psiVariable = variableValue.getPsiVariable();
@@ -232,7 +233,7 @@ public enum SpecialField implements VariableDescriptor {
           }
         }
       }
-      return VariableDescriptor.super.createValue(factory, qualifier, targetType == null ? getType(variableValue) : targetType, forAccessor);
+      return VariableDescriptor.super.createValue(factory, qualifier, forAccessor);
     }
     if(qualifier instanceof DfaFactMapValue) {
       SpecialFieldValue sfValue = ((DfaFactMapValue)qualifier).get(DfaFactType.SPECIAL_FIELD_VALUE);
@@ -265,7 +266,8 @@ public enum SpecialField implements VariableDescriptor {
     return factory.getFactValue(DfaFactType.RANGE, LongRangeSet.indexRange());
   }
 
-  PsiType getType(DfaVariableValue variableValue) {
+  @Override
+  public PsiType getType(DfaVariableValue variableValue) {
     return PsiType.INT;
   }
 

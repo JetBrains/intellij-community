@@ -2,19 +2,15 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Instruction to push a field qualified by the value on the stack
  */
 public class UnwrapSpecialFieldInstruction extends Instruction {
-  @Nullable private final PsiType myTargetType;
   @NotNull private final SpecialField mySpecialField;
 
-  public UnwrapSpecialFieldInstruction(@NotNull SpecialField specialField, @Nullable PsiType targetType) {
-    myTargetType = targetType;
+  public UnwrapSpecialFieldInstruction(@NotNull SpecialField specialField) {
     mySpecialField = specialField;
   }
 
@@ -26,11 +22,6 @@ public class UnwrapSpecialFieldInstruction extends Instruction {
   @NotNull
   public SpecialField getSpecialField() {
     return mySpecialField;
-  }
-
-  @Nullable
-  public PsiType getTargetType() {
-    return myTargetType;
   }
 
   @Override

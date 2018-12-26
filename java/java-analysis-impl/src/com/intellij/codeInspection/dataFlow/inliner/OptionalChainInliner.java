@@ -226,7 +226,7 @@ public class OptionalChainInliner implements CallInliner {
     }
     builder
       .pushExpression(expression, problem)
-      .unwrap(SpecialField.OPTIONAL_VALUE, optionalElementType)
+      .unwrap(SpecialField.OPTIONAL_VALUE)
       .assignTo(builder.createTempVariable(optionalElementType));
     return true;
   }

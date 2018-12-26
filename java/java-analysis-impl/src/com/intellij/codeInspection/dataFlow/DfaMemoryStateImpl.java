@@ -596,9 +596,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return (DfaConstValue)value;
     }
     if (value instanceof DfaVariableValue) {
-      PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(value.getType());
-      if (unboxedType != null) {
-        value = SpecialField.UNBOX.createValue(myFactory, value, unboxedType);
+      if (TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
+        value = SpecialField.UNBOX.createValue(myFactory, value);
       }
       EqClass ec = getEqClass(value);
       return ec == null ? null : ec.findConstant();

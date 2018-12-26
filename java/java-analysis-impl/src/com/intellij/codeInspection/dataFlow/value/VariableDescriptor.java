@@ -11,8 +11,8 @@ import org.jetbrains.annotations.Nullable;
  * Represents a descriptor of {@link DfaVariableValue}. Two variables are the same if they have the same descriptor and qualifier.
  * A descriptor could be a PsiVariable, getter method, array element with given index, this expression, etc.
  * <p>
- * Subclasses must have proper {@link Object#equals(Object)} and implementation or instantiation must be controlled to prevent
- * creating equal objects. Also {@link #toString()} must return sane representation of the descriptor.
+ * Subclasses must have proper {@link Object#equals(Object)} and {@link Object#hashCode()} implementation or instantiation must be 
+ * controlled to prevent creating equal objects. Also {@link #toString()} must return sane representation of the descriptor.
  */
 public interface VariableDescriptor {
   /**
@@ -36,37 +36,37 @@ public interface VariableDescriptor {
   }
 
   /**
-   * Must be overridden to return stable string representation of the descriptor.
-   * In particular {@code desc1.equals(desc2)} implies that {@code desc1.toString().equals(desc2.toString())}
-   */
-  @Override
-  String toString();
-
-  /**
    * Returns a value which describes the field qualified by given qualifier and described by this descriptor
    * @param factory factory to use
    * @param qualifier qualifier to use
-   * @param type field type
    * @return a field value
    */
   @NotNull
-  default DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, @Nullable PsiType type) {
-    return createValue(factory, qualifier, type, false);
+  default DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
+    return createValue(factory, qualifier, false);
   }
 
   /**
    * Returns a value which describes the field qualified by given qualifier and described by this descriptor
    * @param factory factory to use
    * @param qualifier qualifier to use
-   * @param type field type
    * @param forAccessor whether the value is created for accessor result
    * @return a field value
    */
   @NotNull
-  default DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, @Nullable PsiType type, boolean forAccessor) {
+  default DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
     if (qualifier instanceof DfaVariableValue) {
-      return factory.getVarFactory().createVariableValue(this, type, (DfaVariableValue)qualifier);
+      return factory.getVarFactory().createVariableValue(this, (DfaVariableValue)qualifier);
     }
+    PsiType type = getType(null);
     return factory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, getPsiElement()));
   }
+
+  /**
+   * Returns the type of the value which is qualified by given qualifier and described by this descriptor
+   * @param qualifier qualifier (may be null if absent)
+   * @return type of the value
+   */
+  @Nullable
+  PsiType getType(@Nullable DfaVariableValue qualifier);
 }

@@ -514,7 +514,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       PsiMethod method = instruction.getTargetMethod();
       VariableDescriptor descriptor = DfaExpressionFactory.getAccessedVariableOrGetter(method);
       if (descriptor != null) {
-        return descriptor.createValue(factory, qualifierValue, instruction.getResultType(), true);
+        return descriptor.createValue(factory, qualifierValue, true);
       }
     }
 
