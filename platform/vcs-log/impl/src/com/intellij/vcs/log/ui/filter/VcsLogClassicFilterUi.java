@@ -21,6 +21,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogStorage;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -36,6 +38,9 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import java.util.*;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -68,7 +73,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     myDataPack = initialDataPack;
 
     NotNullComputable<VcsLogDataPack> dataPackGetter = () -> myDataPack;
-    myBranchFilterModel = new BranchFilterModel(dataPackGetter, myUiProperties, filters);
+    myBranchFilterModel = new BranchFilterModel(dataPackGetter, myLogData.getStorage(), myLogData.getRoots(), myUiProperties, filters);
     myUserFilterModel = new UserFilterModel(dataPackGetter, myUiProperties, filters);
     myDateFilterModel = new DateFilterModel(dataPackGetter, myUiProperties, filters);
     myStructureFilterModel = new FileFilterModel(dataPackGetter, myLogData.getLogProviders().keySet(), myUiProperties, filters);
@@ -83,8 +88,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     for (FilterModel<?> model : models) {
       model.addSetFilterListener(() -> {
         myUi.applyFiltersAndUpdateUi(getFilters());
-        myBranchFilterModel.onStructureFilterChanged(new HashSet<>(myLogData.getRoots()), myStructureFilterModel.getRootFilter(),
-                                                     myStructureFilterModel.getStructureFilter());
+        myBranchFilterModel.onStructureFilterChanged(myStructureFilterModel.getRootFilter(), myStructureFilterModel.getStructureFilter());
       });
     }
   }
@@ -116,10 +120,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @Override
   public VcsLogFilterCollection getFilters() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return VcsLogFilterObject.collection(myBranchFilterModel.getFilter(), myUserFilterModel.getFilter(), myTextFilterModel.getFilter2(),
-                                         myDateFilterModel.getFilter(), myTextFilterModel.getFilter1(),
-                                         myStructureFilterModel.getStructureFilter(),
-                                         myStructureFilterModel.getRootFilter());
+    return VcsLogFilterObject.collection(myBranchFilterModel.getFilter1(), myBranchFilterModel.getFilter2(),
+                                         myTextFilterModel.getFilter1(), myTextFilterModel.getFilter2(),
+                                         myStructureFilterModel.getFilter1(), myStructureFilterModel.getFilter2(),
+                                         myDateFilterModel.getFilter(), myUserFilterModel.getFilter());
   }
 
   /**
@@ -136,7 +140,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       myUserFilterModel.setFilter(null);
     }
     else if (filter instanceof VcsLogBranchFilter) {
-      myBranchFilterModel.setFilter((VcsLogBranchFilter)filter);
+      myBranchFilterModel.setBranchFilter((VcsLogBranchFilter)filter);
     }
     else if (filter instanceof VcsLogStructureFilter) {
       myStructureFilterModel.setStructureFilter((VcsLogStructureFilter)filter);
@@ -166,23 +170,29 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
   }
 
-  public static class BranchFilterModel extends FilterModel.SingleFilterModel<VcsLogBranchFilter> {
+  public static class BranchFilterModel extends FilterModel.PairFilterModel<VcsLogBranchFilter, VcsLogRevisionFilter> {
+    @NotNull private final VcsLogStorage myStorage;
+    @NotNull private final Collection<VirtualFile> myRoots;
     @Nullable
     private Collection<VirtualFile> myVisibleRoots;
 
-    BranchFilterModel(@NotNull Computable<? extends VcsLogDataPack> provider, @NotNull MainVcsLogUiProperties properties,
+    BranchFilterModel(@NotNull Computable<? extends VcsLogDataPack> provider,
+                      @NotNull VcsLogStorage storage,
+                      @NotNull Collection<VirtualFile> roots,
+                      @NotNull MainVcsLogUiProperties properties,
                       @Nullable VcsLogFilterCollection filters) {
-      super(VcsLogFilterCollection.BRANCH_FILTER, provider, properties, filters);
+      super(VcsLogFilterCollection.BRANCH_FILTER, VcsLogFilterCollection.REVISION_FILTER, provider, properties, filters);
+      myStorage = storage;
+      myRoots = roots;
     }
 
-    public void onStructureFilterChanged(@NotNull Set<VirtualFile> roots,
-                                         @Nullable VcsLogRootFilter rootFilter,
+    public void onStructureFilterChanged(@Nullable VcsLogRootFilter rootFilter,
                                          @Nullable VcsLogStructureFilter structureFilter) {
       if (rootFilter == null && structureFilter == null) {
         myVisibleRoots = null;
       }
       else {
-        myVisibleRoots = VcsLogUtil.getAllVisibleRoots(roots, rootFilter, structureFilter);
+        myVisibleRoots = VcsLogUtil.getAllVisibleRoots(myRoots, rootFilter, structureFilter);
       }
     }
 
@@ -191,17 +201,96 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       return myVisibleRoots;
     }
 
-    @NotNull
+    @Nullable
     @Override
-    protected VcsLogBranchFilter createFilter(@NotNull List<String> values) {
+    protected VcsLogBranchFilter createFilter1(@NotNull List<String> values) {
       return VcsLogFilterObject.fromBranchPatterns(values,
                                                    ContainerUtil.map2Set(getDataPack().getRefs().getBranches(), VcsRef::getName));
     }
 
+    @Nullable
+    @Override
+    protected VcsLogRevisionFilter createFilter2(@NotNull List<String> values) {
+      Pattern pattern = Pattern.compile("\\[(.*)\\](" + VcsLogUtil.HASH_REGEX.pattern() + ")");
+      return VcsLogFilterObject.fromCommits(ContainerUtil.mapNotNull(values, s -> {
+        Matcher matcher = pattern.matcher(s);
+        if (!matcher.matches()) {
+          if (s.length() == VcsLogUtil.FULL_HASH_LENGTH && VcsLogUtil.HASH_REGEX.matcher(s).matches()) {
+            CommitId commitId = findCommitId(HashImpl.build(s));
+            if (commitId != null) return commitId;
+          }
+          LOG.warn("Could not parse '" + s + "' while creating revision filter");
+          return null;
+        }
+        MatchResult result = matcher.toMatchResult();
+        VirtualFile root = LocalFileSystem.getInstance().findFileByPath(result.group(1));
+        if (root == null) {
+          LOG.warn("Root '" + result.group(1) + "' does not exist");
+          return null;
+        }
+        else if (!myRoots.contains(root)) {
+          LOG.warn("Root '" + result.group(1) + "' is not registered");
+          return null;
+        }
+        return new CommitId(HashImpl.build(result.group(2)), root);
+      }));
+    }
+
+    @Nullable
+    private CommitId findCommitId(@NotNull Hash hash) {
+      for (VirtualFile root : myRoots) {
+        CommitId commitId = new CommitId(hash, root);
+        if (myStorage.containsCommit(commitId)) {
+          return commitId;
+        }
+      }
+      return null;
+    }
+
     @NotNull
     @Override
-    protected List<String> getFilterValues(@NotNull VcsLogBranchFilter filter) {
+    protected List<String> getFilter1Values(@NotNull VcsLogBranchFilter filter) {
       return ContainerUtil.newArrayList(ContainerUtil.sorted(filter.getTextPresentation()));
+    }
+
+    @NotNull
+    @Override
+    protected List<String> getFilter2Values(@NotNull VcsLogRevisionFilter filter) {
+      return ContainerUtil.map(filter.getHeads(), id -> "[" + id.getRoot().getPath() + "]" + id.getHash().asString());
+    }
+
+    @NotNull
+    protected List<String> getFilter2Presentation(@NotNull VcsLogRevisionFilter filter) {
+      return ContainerUtil.map(filter.getHeads(), id -> id.getHash().asString());
+    }
+
+
+    void setBranchFilter(@NotNull VcsLogBranchFilter filter) {
+      setFilter(new FilterPair<>(filter, null));
+    }
+
+    @NotNull
+    List<String> getFilterPresentation(@NotNull FilterPair<VcsLogBranchFilter, VcsLogRevisionFilter> filter) {
+      List<String> branchFilterValues = filter.getFilter1() == null ? Collections.emptyList() : getFilter1Values(filter.getFilter1());
+      List<String> revisionFilterValues = filter.getFilter2() == null ? Collections.emptyList() : getFilter2Presentation(filter.getFilter2());
+      return ContainerUtil.concat(branchFilterValues, revisionFilterValues);
+    }
+
+    @Nullable
+    FilterPair<VcsLogBranchFilter, VcsLogRevisionFilter> createFilterFromPresentation(@NotNull List<String> values) {
+      List<String> hashes = ContainerUtil.newArrayList();
+      List<String> branches = ContainerUtil.newArrayList();
+      for (String s : values) {
+        if (s.length() == VcsLogUtil.FULL_HASH_LENGTH && VcsLogUtil.HASH_REGEX.matcher(s).matches()) {
+          hashes.add(s);
+        }
+        else {
+          branches.add(s);
+        }
+      }
+      VcsLogBranchFilter branchFilter = branches.isEmpty() ? null : createFilter1(branches);
+      VcsLogRevisionFilter hashFilter = hashes.isEmpty() ? null : createFilter2(hashes);
+      return new FilterPair<>(branchFilter, hashFilter);
     }
   }
 

@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter, Model extends FilterModel.SingleFilterModel<Filter>>
+abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterModel<Filter>>
   extends FilterPopupComponent<Filter, Model> {
 
   private static final int MAX_FILTER_VALUE_LENGTH = 30;
@@ -46,6 +45,12 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter, Mo
   @NotNull
   protected abstract List<String> getAllValues();
 
+  @Nullable
+  protected abstract Filter createFilter(@NotNull List<String> values);
+
+  @NotNull
+  protected abstract List<String> getFilterValues(@NotNull Filter filter);
+
   @NotNull
   protected ActionGroup createRecentItemsActionGroup() {
     DefaultActionGroup group = new DefaultActionGroup();
@@ -60,6 +65,18 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter, Mo
       group.addSeparator();
     }
     return group;
+  }
+
+  @NotNull
+  @Override
+  protected String getText(@NotNull Filter filter) {
+    return displayableText(getFilterValues(filter));
+  }
+
+  @Nullable
+  @Override
+  protected String getToolTip(@NotNull Filter filter) {
+    return tooltip(getFilterValues(filter));
   }
 
   @NotNull
@@ -108,7 +125,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter, Mo
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myFilterModel.setFilter(myFilterModel.createFilter(myValues));
+      myFilterModel.setFilter(createFilter(myValues));
       if (myAddToRecent) rememberValuesInSettings(myValues);
     }
   }
@@ -130,9 +147,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter, Mo
       }
 
       Filter filter = myFilterModel.getFilter();
-      List<String> values = filter == null
-                            ? Collections.emptyList()
-                            : myFilterModel.getFilterValues(filter);
+      List<String> values = filter == null ? Collections.emptyList() : getFilterValues(filter);
       final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants,
                                                                            getPopupText(values),
                                                                            supportsNegativeValues());
@@ -146,7 +161,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter, Mo
               myFilterModel.setFilter(null);
             }
             else {
-              myFilterModel.setFilter(myFilterModel.createFilter(selectedValues));
+              myFilterModel.setFilter(createFilter(selectedValues));
               rememberValuesInSettings(selectedValues);
             }
           }

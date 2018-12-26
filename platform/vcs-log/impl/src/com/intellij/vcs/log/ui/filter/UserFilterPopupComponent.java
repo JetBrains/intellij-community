@@ -36,18 +36,6 @@ public class UserFilterPopupComponent
     myLogData = logData;
   }
 
-  @NotNull
-  @Override
-  protected String getText(@NotNull VcsLogUserFilter filter) {
-    return displayableText(myFilterModel.getFilterValues(filter));
-  }
-
-  @Nullable
-  @Override
-  protected String getToolTip(@NotNull VcsLogUserFilter filter) {
-    return tooltip(myFilterModel.getFilterValues(filter));
-  }
-
   @Override
   protected ActionGroup createActionGroup() {
     DefaultActionGroup group = new DefaultActionGroup();
@@ -84,6 +72,18 @@ public class UserFilterPopupComponent
     ActionGroup speedsearchGroup = createSpeedSearchActionGroup();
     return new UserLogSpeedSearchPopup(new DefaultActionGroup(actionGroup, speedsearchGroup),
                                        DataManager.getInstance().getDataContext(this));
+  }
+
+  @Override
+  @Nullable
+  protected VcsLogUserFilter createFilter(@NotNull List<String> values) {
+    return myFilterModel.createFilter(values);
+  }
+
+  @Override
+  @NotNull
+  protected List<String> getFilterValues(@NotNull VcsLogUserFilter filter) {
+    return myFilterModel.getFilterValues(filter);
   }
 
   @NotNull
