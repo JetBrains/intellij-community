@@ -613,7 +613,7 @@ public class FindUtil {
           if (model.isGlobal()) {
             editor.getSelectionModel().removeSelection();
           }
-        }), null, document);
+        }), null, null);
       }
     }
 
