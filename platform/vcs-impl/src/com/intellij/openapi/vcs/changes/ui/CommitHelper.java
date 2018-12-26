@@ -189,8 +189,7 @@ public class CommitHelper {
     }
     finally {
       commitCompleted(myCommitProcessor.getVcsExceptions());
-      myCommitProcessor.customRefresh();
-      runOrInvokeLaterAboveProgress(() -> myCommitProcessor.doPostRefresh(), null, myProject);
+      myCommitProcessor.onFinish();
     }
   }
 
@@ -225,11 +224,7 @@ public class CommitHelper {
     }
 
     @Override
-    public void customRefresh() {
-    }
-
-    @Override
-    public void doPostRefresh() {
+    public void onFinish() {
     }
   }
 
@@ -243,8 +238,8 @@ public class CommitHelper {
     public abstract void afterFailedCheckIn();
 
     public abstract void doBeforeRefresh();
-    public abstract void customRefresh();
-    public abstract void doPostRefresh();
+
+    public abstract void onFinish();
 
     protected void process(@NotNull AbstractVcs vcs, @NotNull List<? extends Change> changes) {
       CheckinEnvironment environment = vcs.getCheckinEnvironment();
@@ -312,7 +307,12 @@ public class CommitHelper {
     }
 
     @Override
-    public void customRefresh() {
+    public void onFinish() {
+      refreshChanges();
+      runOrInvokeLaterAboveProgress(() -> doPostRefresh(), null, myProject);
+    }
+
+    private void refreshChanges() {
       List<Change> toRefresh = newArrayList();
       processChangesByVcs(myProject, myIncludedChanges, (vcs, changes) -> {
         CheckinEnvironment environment = vcs.getCheckinEnvironment();
@@ -327,8 +327,7 @@ public class CommitHelper {
       }
     }
 
-    @Override
-    public void doPostRefresh() {
+    private void doPostRefresh() {
       myAction.finish();
       if (!myProject.isDisposed()) {
         // after vcs refresh is completed, outdated notifiers should be removed if some exists...
