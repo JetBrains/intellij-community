@@ -209,7 +209,7 @@ public class RemoteConnectionBuilder {
             }
             if (agentFile.exists()) {
               String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(
-                agentFile.getAbsolutePath(), "captureAgent", null, f -> AGENT_FILE_NAME.equals(f.getName()));
+                agentFile.getAbsolutePath(), "captureAgent", null, f -> f.getName().startsWith("debugger-agent"));
               if (agentPath != null) {
                 parametersList.add(prefix + agentPath + generateAgentSettings());
               }

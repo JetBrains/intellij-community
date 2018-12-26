@@ -117,6 +117,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
 
         withModule("intellij.java.rt", "idea_rt.jar", null)
         withArtifact("debugger-agent", "rt")
+        withArtifact("debugger-agent-storage", "rt")
         withProjectLibrary("Eclipse")
         withProjectLibrary("jgoodies-common")
         withProjectLibrary("commons-net")
