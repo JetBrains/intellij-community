@@ -202,13 +202,7 @@ public class CommitHelper {
 
     @Override
     public void commit() {
-      ChangesUtil.processItemsByVcs(myIncludedChanges, change -> myVcs, this::commit);
-    }
-
-    @Override
-    protected void commit(@NotNull AbstractVcs vcs, @NotNull List<? extends Change> items) {
-      if (!myVcs.getName().equals(vcs.getName())) return;
-      super.commit(vcs, items);
+      commit(myVcs, myIncludedChanges);
     }
 
     @Override
