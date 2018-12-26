@@ -263,7 +263,7 @@ class ForkedDebuggerThread extends Thread {
         mainConsoleView.print(debuggerAttachedStatusMessage, ConsoleViewContentType.SYSTEM_OUTPUT);
         mainConsoleView.performWhenNoDeferredOutput(() -> {
           EditorHyperlinkSupport hyperlinkSupport = mainConsoleView.getHyperlinks();
-          int startOffset = contentSize + debuggerAttachedStatusMessage.indexOf(linkText) - 1;
+          int startOffset = contentSize + debuggerAttachedStatusMessage.indexOf(linkText);
           myHyperlink = hyperlinkSupport.createHyperlink(startOffset, startOffset + linkText.length(), null, project -> {
             // open tab
             final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
