@@ -318,7 +318,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
             }
             else if (node instanceof InspectionPackageNode ||
                      node instanceof InspectionModuleNode ||
-                     node instanceof RefElementNode) {
+                     node instanceof RefElementNode ||
+                     (isSingleInspectionRun() && node instanceof InspectionSeverityGroupNode)) {
               showInRightPanel(node.getContainingFileLocalEntity());
             }
             else if (node instanceof InspectionNode) {
