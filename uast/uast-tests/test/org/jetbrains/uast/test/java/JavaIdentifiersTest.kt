@@ -19,5 +19,7 @@ class JavaIdentifiersTest : AbstractJavaIdentifiersTest() {
   @Test
   fun testInnerClass() = doTest("Simple/InnerClass.java")
 
+  @Test
+  fun testComplexCalls() = doTest("Simple/ComplexCalls.java")
 
 }
