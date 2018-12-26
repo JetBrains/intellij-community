@@ -199,7 +199,7 @@ public class HardcodedContracts {
     }
     else if (TypeUtils.isOptional(owner)) {
       if (OptionalUtil.OPTIONAL_GET.methodMatches(method) || "orElseThrow".equals(methodName)) {
-        return Arrays.asList(optionalAbsentContract(fail()), trivialContract(returnNotNull()));
+        return Collections.singletonList(optionalAbsentContract(fail()));
       }
       else if ("isPresent".equals(methodName) && paramCount == 0) {
         return Arrays.asList(optionalAbsentContract(returnFalse()), trivialContract(returnTrue()));

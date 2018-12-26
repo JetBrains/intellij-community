@@ -21,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.DfaOptionalSupport;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -171,11 +172,13 @@ public class OptionalChainInliner implements CallInliner {
     }
     DfaValueFactory factFactory = builder.getFactory();
     if (pushIntermediateOperationValue(builder, call)) {
-      builder.ifNotNull()
-        .push(DfaOptionalSupport.getOptionalValue(factFactory, true))
-        .elseBranch()
-        .push(DfaOptionalSupport.getOptionalValue(factFactory, false))
-        .end();
+      DfaVariableValue result = builder.createTempVariable(call.getType());
+      builder
+        .assign(result, builder.getFactory().createTypeValue(call.getType(), Nullability.NOT_NULL)) // stack: ...value opt
+        .push(SpecialField.OPTIONAL_VALUE.createValue(builder.getFactory(), result)) // stack: ...value opt opt.value
+        .splice(3, 1, 0, 2)
+        .assign()
+        .pop();
       return true;
     }
     if (OPTIONAL_EMPTY.test(call)) {

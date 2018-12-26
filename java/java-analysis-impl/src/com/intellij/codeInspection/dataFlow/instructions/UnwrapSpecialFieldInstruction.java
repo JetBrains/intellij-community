@@ -35,6 +35,6 @@ public class UnwrapSpecialFieldInstruction extends Instruction {
 
   @Override
   public String toString() {
-    return "GET_FIELD " + mySpecialField;
+    return "UNWRAP " + mySpecialField;
   }
 }

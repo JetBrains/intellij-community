@@ -51,6 +51,19 @@ public interface VariableDescriptor {
    */
   @NotNull
   default DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, @Nullable PsiType type) {
+    return createValue(factory, qualifier, type, false);
+  }
+
+  /**
+   * Returns a value which describes the field qualified by given qualifier and described by this descriptor
+   * @param factory factory to use
+   * @param qualifier qualifier to use
+   * @param type field type
+   * @param forAccessor whether the value is created for accessor result
+   * @return a field value
+   */
+  @NotNull
+  default DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, @Nullable PsiType type, boolean forAccessor) {
     if (qualifier instanceof DfaVariableValue) {
       return factory.getVarFactory().createVariableValue(this, type, (DfaVariableValue)qualifier);
     }

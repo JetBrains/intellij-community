@@ -150,7 +150,7 @@ public class DfaExpressionFactory {
     }
 
     DfaVariableValue qualifier = getQualifierOrThisVariable(refExpr);
-    return var.createValue(myFactory, qualifier, refExpr.getType());
+    return var.createValue(myFactory, qualifier, refExpr.getType(), true);
   }
 
   /**
@@ -352,7 +352,7 @@ public class DfaExpressionFactory {
 
     @NotNull
     @Override
-    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, @Nullable PsiType type) {
+    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, @Nullable PsiType type, boolean forAccessor) {
       if (myVariable.getType().equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
         return factory.getConstFactory().getNull();
       }
@@ -364,7 +364,7 @@ public class DfaExpressionFactory {
            (!myVariable.hasModifierProperty(PsiModifier.FINAL) || !DfaUtil.hasInitializationHacks((PsiField)myVariable)))) {
         return factory.getVarFactory().createVariableValue(this, type);
       }
-      return VariableDescriptor.super.createValue(factory, qualifier, type);
+      return VariableDescriptor.super.createValue(factory, qualifier, type, forAccessor);
     }
 
     @Override
@@ -407,11 +407,11 @@ public class DfaExpressionFactory {
 
     @NotNull
     @Override
-    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, @Nullable PsiType type) {
+    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, @Nullable PsiType type, boolean forAccessor) {
       if (myGetter.hasModifierProperty(PsiModifier.STATIC)) {
         return factory.getVarFactory().createVariableValue(this, type);
       }
-      return VariableDescriptor.super.createValue(factory, qualifier, type);
+      return VariableDescriptor.super.createValue(factory, qualifier, type, forAccessor);
     }
 
     @Override

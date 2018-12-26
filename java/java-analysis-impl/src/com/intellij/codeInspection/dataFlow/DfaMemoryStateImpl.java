@@ -927,7 +927,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (field == null) return null;
     DfaValue leftValue = field.createValue(myFactory, left);
     DfaValue rightValue = field.createValue(myFactory, right);
-    return rightValue.equals(field.getDefaultValue(myFactory)) ? null : Couple.of(leftValue, rightValue);
+    return rightValue.equals(field.getDefaultValue(myFactory, false)) ? null : Couple.of(leftValue, rightValue);
   }
 
   private boolean applySpecialFieldEquivalence(@NotNull DfaValue left, @NotNull DfaValue right) {

@@ -245,4 +245,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testObjectsEquals() { doTest(); }
   public void testFlatMapSideEffect() { doTest(); }
+  public void testOptionalValueTracking() { doTest(); }
 }
