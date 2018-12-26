@@ -171,13 +171,13 @@ public class CommitHelper {
     try {
       ReadAction.run(() -> markCommittingDocuments());
       try {
-        myCommitProcessor.callSelf();
+        myCommitProcessor.commit();
       }
       finally {
         ReadAction.run(() -> unmarkCommittingDocuments());
       }
 
-      myCommitProcessor.doBeforeRefresh();
+      myCommitProcessor.afterCommit();
     }
     catch (ProcessCanceledException pce) {
       throw pce;
@@ -201,26 +201,26 @@ public class CommitHelper {
     }
 
     @Override
-    public void callSelf() {
-      ChangesUtil.processItemsByVcs(myIncludedChanges, change -> myVcs, this::process);
+    public void commit() {
+      ChangesUtil.processItemsByVcs(myIncludedChanges, change -> myVcs, this::commit);
     }
 
     @Override
-    protected void process(@NotNull AbstractVcs vcs, @NotNull List<? extends Change> items) {
+    protected void commit(@NotNull AbstractVcs vcs, @NotNull List<? extends Change> items) {
       if (!myVcs.getName().equals(vcs.getName())) return;
-      super.process(vcs, items);
+      super.commit(vcs, items);
     }
 
     @Override
-    public void afterSuccessfulCheckIn() {
+    public void afterCommit() {
     }
 
     @Override
-    public void afterFailedCheckIn() {
+    public void onSuccess() {
     }
 
     @Override
-    public void doBeforeRefresh() {
+    public void onFailure() {
     }
 
     @Override
@@ -228,20 +228,22 @@ public class CommitHelper {
     }
   }
 
-  abstract  class GeneralCommitProcessor {
+  abstract class GeneralCommitProcessor {
     @NotNull protected final List<FilePath> myPathsToRefresh = newArrayList();
     @NotNull protected final List<VcsException> myVcsExceptions = newArrayList();
     @NotNull protected final List<Change> myChangesFailedToCommit = newArrayList();
 
-    public abstract void callSelf();
-    public abstract void afterSuccessfulCheckIn();
-    public abstract void afterFailedCheckIn();
+    public abstract void commit();
 
-    public abstract void doBeforeRefresh();
+    public abstract void afterCommit();
+
+    public abstract void onSuccess();
+
+    public abstract void onFailure();
 
     public abstract void onFinish();
 
-    protected void process(@NotNull AbstractVcs vcs, @NotNull List<? extends Change> changes) {
+    protected void commit(@NotNull AbstractVcs vcs, @NotNull List<? extends Change> changes) {
       CheckinEnvironment environment = vcs.getCheckinEnvironment();
       if (environment != null) {
         myPathsToRefresh.addAll(ChangesUtil.getPaths(changes));
@@ -279,31 +281,31 @@ public class CommitHelper {
     }
 
     @Override
-    public void callSelf() {
+    public void commit() {
       if (myVcs != null && myIncludedChanges.isEmpty()) {
-        process(myVcs, myIncludedChanges);
+        commit(myVcs, myIncludedChanges);
       }
-      processChangesByVcs(myProject, myIncludedChanges, this::process);
+      processChangesByVcs(myProject, myIncludedChanges, this::commit);
     }
 
     @Override
-    public void afterSuccessfulCheckIn() {
+    public void afterCommit() {
+      ChangeListManagerImpl.getInstanceImpl(myProject).showLocalChangesInvalidated();
+
+      myAction = ReadAction.compute(() -> LocalHistory.getInstance().startAction(myActionName));
+    }
+
+    @Override
+    public void onSuccess() {
       myCommitSuccess = true;
     }
 
     @Override
-    public void afterFailedCheckIn() {
+    public void onFailure() {
       getApplication().invokeLater(
         () -> moveToFailedList(myChangeList, myCommitMessage, getChangesFailedToCommit(),
                                message("commit.dialog.failed.commit.template", myChangeList.getName()), myProject),
         ModalityState.defaultModalityState(), myProject.getDisposed());
-    }
-
-    @Override
-    public void doBeforeRefresh() {
-      ChangeListManagerImpl.getInstanceImpl(myProject).showLocalChangesInvalidated();
-
-      myAction = ReadAction.compute(() -> LocalHistory.getInstance().startAction(myActionName));
     }
 
     @Override
@@ -424,7 +426,7 @@ public class CommitHelper {
 
     if (noErrors) {
       myHandlers.forEach(CheckinHandler::checkinSuccessful);
-      myCommitProcessor.afterSuccessfulCheckIn();
+      myCommitProcessor.onSuccess();
       myResultHandler.onSuccess(myCommitMessage);
 
       if (noWarnings) {
@@ -433,7 +435,7 @@ public class CommitHelper {
     }
     else {
       myHandlers.forEach(handler -> handler.checkinFailed(errors));
-      myCommitProcessor.afterFailedCheckIn();
+      myCommitProcessor.onFailure();
       myResultHandler.onFailure();
     }
   }
