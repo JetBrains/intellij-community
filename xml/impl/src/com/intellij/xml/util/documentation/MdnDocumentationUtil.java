@@ -5,9 +5,11 @@ import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.templates.github.DownloadUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,6 +168,14 @@ public class MdnDocumentationUtil {
 
   @NotNull
   public static String buildDoc(@NotNull String name, @NotNull String description, @Nullable Map mdnCompatData) {
+    return buildDoc(name, description, mdnCompatData, null);
+  }
+
+  @NotNull
+  public static String buildDoc(@NotNull String name,
+                                @NotNull String description,
+                                @Nullable Map mdnCompatData,
+                                @Nullable List<Couple<String>> additionalData) {
     StringBuilder buf = new StringBuilder();
 
     buf.append(DocumentationMarkup.DEFINITION_START).append(name).append(DocumentationMarkup.DEFINITION_END);
@@ -176,8 +186,15 @@ public class MdnDocumentationUtil {
     String compatibilityData = getFormattedCompatibilityData(mdnCompatData);
 
     boolean deprecated = isDeprecated(mdnCompatData);
-    if (deprecated || !compatibilityData.isEmpty()) {
+    if (deprecated || !compatibilityData.isEmpty() || !ContainerUtil.isEmpty(additionalData)) {
       buf.append(DocumentationMarkup.SECTIONS_START);
+    }
+    if (!ContainerUtil.isEmpty(additionalData)) {
+      for (Couple<String> entry : additionalData) {
+        buf.append(DocumentationMarkup.SECTION_HEADER_START).append(entry.first);
+        buf.append(DocumentationMarkup.SECTION_SEPARATOR).append(entry.second);
+        buf.append(DocumentationMarkup.SECTION_END);
+      }
     }
     if (deprecated) {
       buf.append(DocumentationMarkup.SECTION_HEADER_START).append("Deprecated");
@@ -188,7 +205,7 @@ public class MdnDocumentationUtil {
       buf.append(DocumentationMarkup.SECTION_SEPARATOR).append(compatibilityData);
       buf.append(DocumentationMarkup.SECTION_END);
     }
-    if (deprecated || !compatibilityData.isEmpty()) {
+    if (deprecated || !compatibilityData.isEmpty() || !ContainerUtil.isEmpty(additionalData)) {
       buf.append(DocumentationMarkup.SECTIONS_END);
     }
 
