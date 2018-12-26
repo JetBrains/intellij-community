@@ -190,7 +190,7 @@ public class UsageViewImpl implements UsageViewEx {
       UIUtil.invokeLaterIfNeeded(() -> {
         // lock here to avoid concurrent execution of this init and dispose in other thread
         synchronized (lock) {
-          if (isDisposed) return;
+          if (isDisposed()) return;
           myTree = new Tree(myModel) {
             {
               ToolTipManager.sharedInstance().registerComponent(this);
@@ -248,7 +248,7 @@ public class UsageViewImpl implements UsageViewEx {
           myTree.setCellRenderer(myUsageViewTreeCellRenderer);
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
-            if (isDisposed || myProject.isDisposed()) return;
+            if (isDisposed() || myProject.isDisposed()) return;
             collapseAll();
           });
 
@@ -268,7 +268,7 @@ public class UsageViewImpl implements UsageViewEx {
             public void valueChanged(final TreeSelectionEvent e) {
               //noinspection SSBasedInspection
               SwingUtilities.invokeLater(() -> {
-                if (isDisposed || myProject.isDisposed()) return;
+                if (isDisposed() || myProject.isDisposed()) return;
                 updateOnSelectionChanged();
                 myNeedUpdateButtons = true;
               });
@@ -955,7 +955,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
     //noinspection SSBasedInspection
     appendUsagesInBulk(allUsages).thenRun(()-> SwingUtilities.invokeLater(() -> {
-      if (isDisposed) return;
+      if (isDisposed()) return;
       if (myTree != null) {
         excludeUsages(excludedUsages.toArray(Usage.EMPTY_ARRAY));
         restoreUsageExpandState(states);
@@ -1016,7 +1016,7 @@ public class UsageViewImpl implements UsageViewEx {
    * @param task that expands or collapses a tree
    */
   private void doExpandingCollapsing(@NotNull Runnable task) {
-    if (isDisposed) return;
+    if (isDisposed()) return;
     ApplicationManager.getApplication().assertIsDispatchThread();
     fireEvents();  // drain all remaining insertion events in the queue
 
@@ -1215,7 +1215,7 @@ public class UsageViewImpl implements UsageViewEx {
 
     if (!nodes.isEmpty() && !myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {
-        if (isDisposed) return;
+        if (isDisposed()) return;
         DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
         ((GroupNode)treeModel.getRoot()).removeUsagesBulk(nodes, treeModel);
         if (nodeToSelect != null) {
@@ -1287,7 +1287,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   private void updateImmediately() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myProject.isDisposed()) return;
+    if (isDisposed()) return;
     TreeNode root = (TreeNode)myTree.getModel().getRoot();
     List<Node> toUpdate = new ArrayList<>();
     checkNodeValidity(root, new TreePath(root), toUpdate);
@@ -1335,7 +1335,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   private void updateImmediatelyNodesUpToRoot(@NotNull Collection<? extends Node> nodes) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myProject.isDisposed()) return;
+    if (isDisposed()) return;
     TreeNode root = (TreeNode)myTree.getModel().getRoot();
     Set<Node> queued = new HashSet<>();
     List<Node> toUpdate = new ArrayList<>();
@@ -1398,7 +1398,7 @@ public class UsageViewImpl implements UsageViewEx {
   void updateLater() {
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(() -> {
-      if (myProject.isDisposed()) return;
+      if (isDisposed()) return;
       PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
       documentManager.cancelAndRunWhenAllCommitted("UpdateUsageView", this::updateImmediately);
     }, 300);
@@ -1462,7 +1462,7 @@ public class UsageViewImpl implements UsageViewEx {
     mySearchInProgress = searchInProgress;
     if (!myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {
-        if (isDisposed) return;
+        if (isDisposed()) return;
         final UsageNode firstUsageNode = myModel.getFirstUsageNode();
         if (firstUsageNode == null) return;
 
@@ -1485,7 +1485,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   private void showNode(@NotNull final UsageNode node) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!isDisposed && !myPresentation.isDetachedMode()) {
+    if (!isDisposed() && !myPresentation.isDetachedMode()) {
       fireEvents();
       TreePath usagePath = new TreePath(node.getPath());
       myTree.expandPath(usagePath.getParentPath());
