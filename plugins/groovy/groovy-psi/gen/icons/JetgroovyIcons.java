@@ -68,7 +68,6 @@ public final class JetgroovyIcons {
   public final static class Mvc {
     public static final Icon Action_method = load("/icons/mvc/action_method.svg"); // 16x16
     public static final Icon Groovy_mvc_plugin = load("/icons/mvc/groovy_mvc_plugin.svg"); // 16x16
-    public static final Icon ModelsNode = load("/icons/mvc/modelsNode.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.ConfigFolder */
     @SuppressWarnings("unused")
@@ -84,6 +83,11 @@ public final class JetgroovyIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Domain_class = load("/nodes/DataTables.svg", com.intellij.icons.AllIcons.class);
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Models */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ModelsNode = load("/nodes/models.svg", com.intellij.icons.AllIcons.class);
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.FileTypes.Config */
     @SuppressWarnings("unused")
