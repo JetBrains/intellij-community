@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -87,8 +86,8 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult) throws FindManager.MalformedReplacementStringException;
   }
 
-  private static TextAttributes strikeout() {
-    Color color = EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
+  private TextAttributes strikeout() {
+    Color color = mySearchResults.getEditor().getColorsScheme().getDefaultForeground();
     return new TextAttributes(null, null, color, EffectType.STRIKEOUT, Font.PLAIN);
   }
 
@@ -299,7 +298,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
       return;
     for (FindResult range : mySearchResults.getOccurrences()) {
       if (range.getEndOffset() > mySearchResults.getEditor().getDocument().getTextLength()) continue;
-      TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
+      TextAttributes attributes = mySearchResults.getEditor().getColorsScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
       if (range.getLength() == 0) {
         attributes = attributes.clone();
         attributes.setEffectType(EffectType.BOXED);

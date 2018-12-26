@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -707,10 +706,8 @@ public class FindUtil {
       }
       IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
 
-      EditorColorsManager manager = EditorColorsManager.getInstance();
-      TextAttributes selectionAttributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-
       if (!model.isGlobal()) {
+        TextAttributes selectionAttributes = editor.getColorsScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
         final RangeHighlighterEx segmentHighlighter = (RangeHighlighterEx)editor.getMarkupModel().addRangeHighlighter(
           result.getStartOffset(),
           result.getEndOffset(),
