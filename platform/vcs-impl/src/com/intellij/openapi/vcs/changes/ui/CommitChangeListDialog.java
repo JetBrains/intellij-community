@@ -103,7 +103,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final boolean myIsAlien;
   @Nullable private final CommitResultHandler myResultHandler;
 
-  @NotNull private final Set<? extends AbstractVcs> myAffectedVcses;
+  @NotNull private final Set<? extends AbstractVcs<?>> myAffectedVcses;
   @NotNull private final List<? extends CommitExecutor> myExecutors;
   @NotNull private final List<CheckinHandler> myHandlers = newArrayList();
   private final boolean myAllOfDefaultChangeListChangesIncluded;
@@ -207,14 +207,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     LocalChangeList defaultList = manager.getDefaultChangeList();
     List<LocalChangeList> changeLists = manager.getChangeListsCopy();
 
-    Set<AbstractVcs> affectedVcses = new HashSet<>();
+    Set<AbstractVcs<?>> affectedVcses = new HashSet<>();
     if (forceCommitInVcs != null) affectedVcses.add(forceCommitInVcs);
     for (LocalChangeList list : changeLists) {
-      affectedVcses.addAll(ChangesUtil.getAffectedVcses(list.getChanges(), project));
+      //noinspection unchecked
+      affectedVcses.addAll((Set)ChangesUtil.getAffectedVcses(list.getChanges(), project));
     }
     if (showVcsCommit) {
       List<VirtualFile> unversionedFiles = ChangeListManagerImpl.getInstanceImpl(project).getUnversionedFiles();
-      affectedVcses.addAll(ChangesUtil.getAffectedVcsesForFiles(unversionedFiles, project));
+      //noinspection unchecked
+      affectedVcses.addAll((Set)ChangesUtil.getAffectedVcsesForFiles(unversionedFiles, project));
     }
 
 
@@ -257,7 +259,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   public static void commitAlienChanges(@NotNull Project project,
                                         @NotNull List<Change> changes,
-                                        @NotNull AbstractVcs vcs,
+                                        @NotNull AbstractVcs<?> vcs,
                                         @NotNull String changelistName,
                                         @Nullable String comment) {
     LocalChangeList changeList = new AlienLocalChangeList(changes, changelistName);
@@ -271,7 +273,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                  @NotNull List<? extends CommitExecutor> executors,
                                  boolean showVcsCommit,
                                  @NotNull List<? extends LocalChangeList> changeLists,
-                                 @NotNull Set<? extends AbstractVcs> affectedVcses,
+                                 @NotNull Set<? extends AbstractVcs<?>> affectedVcses,
                                  @Nullable AbstractVcs forceCommitInVcs,
                                  boolean isDefaultChangeListFullyIncluded,
                                  boolean isAlien,
@@ -381,8 +383,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       initComment(comment);
     }
 
-    //noinspection unchecked
-    myCommitOptions = new CommitOptionsPanel(this, myHandlers, (Set)getAffectedVcses());
+    myCommitOptions = new CommitOptionsPanel(this, myHandlers, myShowVcsCommit ? myAffectedVcses : emptySet());
     restoreState();
 
     myWarningLabel = new JBLabel();
@@ -785,7 +786,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
-  private static String getCommitActionName(@NotNull Collection<? extends AbstractVcs> affectedVcses) {
+  private static String getCommitActionName(@NotNull Collection<? extends AbstractVcs<?>> affectedVcses) {
     Set<String> names = map2SetNotNull(affectedVcses, vcs -> {
       CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
       return checkinEnvironment != null ? checkinEnvironment.getCheckinOperationName() : null;
@@ -966,6 +967,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return myDetailsSplitter.getComponent();
   }
 
+  @Deprecated
   @NotNull
   public Set<? extends AbstractVcs> getAffectedVcses() {
     return myShowVcsCommit ? myAffectedVcses : emptySet();
