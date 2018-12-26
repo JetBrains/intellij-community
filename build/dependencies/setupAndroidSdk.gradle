@@ -43,50 +43,54 @@ task downloadGradleDistribution2(type: Download) {
 task downloadOfflineRepo(type: Download) {
   src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk-offline-repo/3.1.2/android-sdk-offline-repo.zip"
   dest "$buildDir/android-sdk/offline_repo_repo.zip"
-  onlyIf { !dest.exists() }
+  onlyIf { isEmpty(setupOfflineRepo.destinationDir) }
 }
 
 task downloadKotlinPlugin(type: Download) {
   src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk-kotlin-plugin/1.2.50-eap-17-IJ2018.2/android-sdk-kotlin-plugin.zip"
   dest "$buildDir/android-sdk/kotlin-plugin.zip"
-  onlyIf { !dest.exists() }
+  onlyIf { isEmpty(setupKotlinPluginForAndroid.destinationDir) }
 }
 
 task setupKotlinPluginForAndroid(dependsOn: downloadKotlinPlugin, type: Copy) {
   from zipTree(downloadKotlinPlugin.outputs.files.singleFile)
   into "$buildDir/android-sdk/prebuilts/tools/common/kotlin-plugin"
-  onlyIf {
-    destinationDir.list() == null || destinationDir.list().length == 0
-  }
+  onlyIf { isEmpty(destinationDir) }
 }
 
 task setupOfflineRepo(dependsOn: downloadOfflineRepo, type: Copy) {
   from zipTree(downloadOfflineRepo.outputs.files.singleFile)
   into "$buildDir/android-sdk/prebuilts/tools/common/m2/repository"
-  onlyIf {
-    destinationDir.list() == null || destinationDir.list().length == 0
-  }
+  onlyIf { isEmpty(destinationDir) }
 }
 
 task downloadAndroidSdk(type: Download) {
   def osFamily = currentOs.familyName
   src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk/${osFamily}.3.1.2/android-sdk.tar.gz"
   dest "$buildDir/android-sdk/${osFamily}.tar.gz"
-  onlyIf { !dest.exists() && !currentOs.isMacOsX() }
+  onlyIf { isEmpty(untarAndroidSdk.destinationDir) && !currentOs.isMacOsX() }
 }
 
-task setupAndroidSdk(
-  dependsOn: [downloadAndroidSdk, downloadGradleDistribution, downloadGradleDistribution2, setupOfflineRepo, setupKotlinPluginForAndroid],
-  type: Copy) {
+task untarAndroidSdk(dependsOn: downloadAndroidSdk, type: Copy) {
   from tarTree(downloadAndroidSdk.outputs.files.singleFile)
   into "$buildDir/android-sdk/prebuilts/studio/sdk"
-  onlyIf {
-    !currentOs.isMacOsX() &&
-    (destinationDir.list() == null ||
-     destinationDir.list().length == 0)
-  }
+  onlyIf { !currentOs.isMacOsX() && isEmpty(destinationDir) }
   outputs.dir("$buildDir/android-sdk/prebuilts/tools/common")
   doLast {
     file("$buildDir/android-sdk/prebuilts/tools/common/offline-m2").mkdirs()
   }
+}
+
+task setupAndroidSdk(dependsOn: [untarAndroidSdk, downloadGradleDistribution,
+                                 downloadGradleDistribution2, setupOfflineRepo,
+                                 setupKotlinPluginForAndroid]) {
+  doLast {
+    [downloadAndroidSdk, downloadOfflineRepo, downloadKotlinPlugin].each {
+      it.outputs.files.singleFile.delete()
+    }
+  }
+}
+
+static def isEmpty(File dir) {
+  dir.list() == null || dir.list().length == 0
 }
