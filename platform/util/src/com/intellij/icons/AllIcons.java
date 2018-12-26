@@ -1992,6 +1992,7 @@ public class AllIcons {
     public static final Icon Class = IconLoader.getIcon("/nodes/class.svg"); // 16x16
     public static final Icon ClassInitializer = IconLoader.getIcon("/nodes/classInitializer.svg"); // 16x16
     public static final Icon CompiledClassesFolder = IconLoader.getIcon("/nodes/compiledClassesFolder.svg"); // 16x16
+    public static final Icon ConfigFolder = IconLoader.getIcon("/nodes/configFolder.svg"); // 16x16
     public static final Icon Constant = IconLoader.getIcon("/nodes/constant.svg"); // 16x16
     public static final Icon CopyOfFolder = IconLoader.getIcon("/nodes/copyOfFolder.svg"); // 16x16
     public static final Icon CustomRegion = IconLoader.getIcon("/nodes/customRegion.svg"); // 16x16
