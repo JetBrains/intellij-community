@@ -411,7 +411,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     final String changelistName = myTaskManager.getChangelistName(task);
     myChangeListManager.removeChangeList(changelistName);
 
-    myChangeListManager.ensureUpToDate();
+    myChangeListManager.waitUntilRefreshed();
     assertTrue(myTaskManager.isLocallyClosed(task));
     myTaskManager.activateTask(task, false);
     assertNotNull(myChangeListManager.findChangeList(changelistName));
