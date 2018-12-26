@@ -107,7 +107,7 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
         if (doc == null) return false;
         CharSequence chars = doc.getCharsSequence();
         if (chars.length() > offset + 1) {
-          Character ch = chars.charAt(offset + 1);
+          char ch = chars.charAt(offset + 1);
           if (Arrays.binarySearch(ourAutoClosingChars, ch) < 0) {
             return false;
           }

@@ -130,7 +130,7 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
     List<String> profiles = ParametersListUtil.parse(profilesComponent.getComponent().getText());
 
     for (String profile : profiles) {
-      Boolean isEnabled = true;
+      boolean isEnabled = true;
       if (profile.startsWith("-") || profile.startsWith("!")) {
         profile = profile.substring(1);
         if (profile.isEmpty()) continue;
