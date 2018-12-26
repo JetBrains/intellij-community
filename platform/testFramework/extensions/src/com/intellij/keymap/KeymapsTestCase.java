@@ -182,6 +182,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift alt G",              "GotoChangedFile", "GotoClass", "hg4idea.QGotoFromPatches"},
     { "shift alt P",              "ParameterInfo", "hg4idea.QPushAction"},
     { "shift control X",          SECOND_STROKE, "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
+    { "shift ctrl DOWN",          "EditorForwardParagraphWithSelection", "ResizeToolWindowDown"},
+    { "shift ctrl UP",            "EditorBackwardParagraphWithSelection", "ResizeToolWindowUp"},
     });
     put("Visual Studio", new String[][] {
     { "F5",                       "Resume", "UML.ApplyCurrentLayout"},

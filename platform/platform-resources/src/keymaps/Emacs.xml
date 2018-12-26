@@ -278,6 +278,12 @@
   <action id="EditorBackwardParagraph">
     <keyboard-shortcut first-keystroke="control UP"/>
   </action>
+  <action id="EditorForwardParagraphWithSelection">
+    <keyboard-shortcut first-keystroke="control shift DOWN"/>
+  </action>
+  <action id="EditorBackwardParagraphWithSelection">
+    <keyboard-shortcut first-keystroke="control shift UP"/>
+  </action>
   <action id="EditorScrollToCenter">
     <keyboard-shortcut first-keystroke="control L"/>
   </action>
@@ -320,4 +326,6 @@
   <action id="EditorScrollDown"/>
   <action id="Vcs.MoveChangedLinesToChangelist"/>
   <action id="ChangesView.Move"/>
+  <action id="MoveStatementUp"/>
+  <action id="MoveStatementDown"/>
 </keymap>
