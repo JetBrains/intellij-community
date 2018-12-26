@@ -1687,6 +1687,12 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("<caret>class C { void m() { System.getProperty(\"a\") } }");
   }
 
+  public void testConstructorInSmartCompletion() {
+    configureJava("class C { void m() { throw new <caret> } }");
+    completeSmart("Error(String message, Throwable cause)");
+    checkResultWithInlays("class C { void m() { throw new Error(<HINT text=\"message:\"/><caret><Hint text=\",cause:\"/>); } }");
+  }
+
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }
