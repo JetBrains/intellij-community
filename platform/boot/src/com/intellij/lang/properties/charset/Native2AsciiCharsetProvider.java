@@ -35,6 +35,6 @@ public class Native2AsciiCharsetProvider extends CharsetProvider {
 
   @Override
   public Iterator<Charset> charsets() {
-    return Collections.<Charset>emptyList().iterator();
+    return Collections.emptyIterator();
   }
 }

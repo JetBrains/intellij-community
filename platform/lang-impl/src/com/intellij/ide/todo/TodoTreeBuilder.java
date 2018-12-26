@@ -62,6 +62,8 @@ import java.util.*;
  */
 public abstract class TodoTreeBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.todo.TodoTreeBuilder");
+  public static final Comparator<NodeDescriptor> NODE_DESCRIPTOR_COMPARATOR =
+      Comparator.<NodeDescriptor>comparingInt(NodeDescriptor::getWeight).thenComparingInt(NodeDescriptor::getIndex);  
   protected final Project myProject;
 
   /**
@@ -158,7 +160,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     if (myUpdatable != updatable) {
       myUpdatable = updatable;
       if (updatable) {
-        DumbService.getInstance(myProject).runWhenSmart(() -> updateTree());
+        DumbService.getInstance(myProject).runWhenSmart(this::updateTree);
       }
     }
   }
@@ -276,7 +278,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     * @see FileTree#getFiles(VirtualFile)
     */
    public Iterator<PsiFile> getFiles(Module module) {
-    if (module.isDisposed()) return Collections.<PsiFile>emptyList().iterator();
+    if (module.isDisposed()) return Collections.emptyIterator();
     ArrayList<PsiFile> psiFileList = new ArrayList<>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
@@ -521,7 +523,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   /**
    * Sets new {@code TodoFilter}, rebuild whole the caches and immediately update the tree.
    *
-   * @see TodoTreeStructure#setTodoFilter
+   * @see TodoTreeStructure#setTodoFilter(TodoFilter)
    */
   void setTodoFilter(TodoFilter filter) {
     getTodoTreeStructure().setTodoFilter(filter);
@@ -559,7 +561,7 @@ public abstract class TodoTreeBuilder implements Disposable {
       return null;
     }
     Object[] children = getTodoTreeStructure().getChildElements(parent);
-    Arrays.sort(children, (Comparator)MyComparator.ourInstance);
+    Arrays.sort(children, (Comparator)NODE_DESCRIPTOR_COMPARATOR);
     int idx = -1;
     for (int i = 0; i < children.length; i++) {
       if (obj.equals(children[i])) {
@@ -605,7 +607,7 @@ public abstract class TodoTreeBuilder implements Disposable {
       return null;
     }
     Object[] children = getTodoTreeStructure().getChildElements(parent);
-    Arrays.sort(children, (Comparator)MyComparator.ourInstance);
+    Arrays.sort(children, (Comparator)NODE_DESCRIPTOR_COMPARATOR);
     int idx = -1;
     for (int i = 0; i < children.length; i++) {
       if (obj.equals(children[i])) {
@@ -642,22 +644,6 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   public boolean isDirectoryEmpty(@NotNull PsiDirectory psiDirectory){
     return myFileTree.isDirectoryEmpty(psiDirectory.getVirtualFile());
-  }
-  
-  protected static final class MyComparator implements Comparator<NodeDescriptor> {
-    public static final Comparator<NodeDescriptor> ourInstance = new MyComparator();
-
-    @Override
-    public int compare(NodeDescriptor descriptor1, NodeDescriptor descriptor2) {
-      int weight1 = descriptor1.getWeight();
-      int weight2 = descriptor2.getWeight();
-      if (weight1 != weight2) {
-        return weight1 - weight2;
-      }
-      else {
-        return descriptor1.getIndex() - descriptor2.getIndex();
-      }
-    }
   }
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {

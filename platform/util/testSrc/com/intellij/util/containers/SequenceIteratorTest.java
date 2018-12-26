@@ -19,10 +19,7 @@ package com.intellij.util.containers;
 import com.intellij.util.Assertion;
 import junit.framework.TestCase;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class SequenceIteratorTest extends TestCase {
   private final Assertion CHECK = new Assertion();
@@ -57,8 +54,8 @@ public class SequenceIteratorTest extends TestCase {
     return Arrays.asList(new Object[]{first, second}).iterator();
   }
 
-  private static Iterator empty() {
-    return new ArrayList().iterator();
+  private static Iterator<Object> empty() {
+    return Collections.emptyIterator();
   }
 
   public void testSimple() {
@@ -76,7 +73,7 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testOne() {
-    final Iterator<Integer> iterator = compose(Arrays.asList(iter(arr1)));
+    final Iterator<Integer> iterator = compose(Collections.singletonList(iter(arr1)));
     int cnt = 0;
     while (iterator.hasNext()) {
       iterator.next();
@@ -86,7 +83,7 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testOneOne() {
-    final Iterator<Integer> iterator = compose(Arrays.asList(iter(new Integer[]{1})));
+    final Iterator<Integer> iterator = compose(Collections.singletonList(iter(new Integer[]{1})));
     int cnt = 0;
     while (iterator.hasNext()) {
       iterator.next();
@@ -96,7 +93,7 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testEmpty() {
-    final Iterator<Integer> iterator = compose(Arrays.asList(iter(new Integer[]{})));
+    final Iterator<Integer> iterator = compose(Collections.singletonList(iter(new Integer[]{})));
     int cnt = 0;
     while (iterator.hasNext()) {
       iterator.next();
@@ -159,8 +156,8 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testRemoveOnlyOne() {
-    final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(1));
-    final Iterator<Integer> iterator = compose(Arrays.asList(list1.iterator()));
+    final ArrayList<Integer> list1 = new ArrayList<>(Collections.singletonList(1));
+    final Iterator<Integer> iterator = compose(Collections.singletonList(list1.iterator()));
     iterator.next();
     iterator.remove();
     assertTrue(list1.isEmpty());
@@ -180,8 +177,8 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testRemoveIfNextNotCalled() {
-    final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(1));
-    final Iterator<Integer> iterator = compose(Arrays.asList(list1.iterator()));
+    final ArrayList<Integer> list1 = new ArrayList<>(Collections.singletonList(1));
+    final Iterator<Integer> iterator = compose(Collections.singletonList(list1.iterator()));
     try {
       iterator.remove();
       fail();
@@ -193,7 +190,7 @@ public class SequenceIteratorTest extends TestCase {
 
   public void testRemoveTwice() {
     final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5));
-    final Iterator<Integer> iterator = compose(Arrays.asList(list1.iterator()));
+    final Iterator<Integer> iterator = compose(Collections.singletonList(list1.iterator()));
     try {
       iterator.next();
       iterator.remove();
@@ -223,11 +220,12 @@ public class SequenceIteratorTest extends TestCase {
 
   public void testRemoveAllWithEmptyInside() {
     final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(1, 2));
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") 
     final ArrayList<Integer> list2 = new ArrayList<>();
     final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(5, 6));
 
-    final Iterator<Integer> iterator =
-      compose(Arrays.asList(list1.iterator(), list2.iterator(), list3.iterator()));
+    @SuppressWarnings("RedundantOperationOnEmptyContainer") 
+    final Iterator<Integer> iterator = compose(Arrays.asList(list1.iterator(), list2.iterator(), list3.iterator()));
     while (iterator.hasNext()) {
       iterator.next();
       iterator.remove();
