@@ -338,8 +338,13 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       if (bodyStatement instanceof PsiBlockStatement) {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)bodyStatement;
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-        for (PsiStatement statement : codeBlock.getStatements()) {
-          out.append(commentTracker.text(statement));
+        PsiElement start = PsiTreeUtil.skipWhitespacesForward(codeBlock.getFirstBodyElement());
+        PsiElement end = PsiTreeUtil.skipWhitespacesBackward(codeBlock.getLastBodyElement());
+        if (start != null && end != null) {
+          for (PsiElement child = start; child != null; child = child.getNextSibling()) {
+            out.append(commentTracker.text(child));
+            if (child == end) break;
+          }
         }
       }
       else {
