@@ -50,7 +50,7 @@ while [[ -n "$1" ]]; do
   elif [[ -z "$DIST" ]]; then
     DIST="$1"
   elif [[ -z "$BNUM" ]]; then
-    BNUM="$1"
+    BNUM="${1/P/-}"  # for AB presubmit: satisfy Integer.parseInt in BuildNumber.parseBuildNumber
   else
     die "[$0] Unknown parameter: $1"
   fi
