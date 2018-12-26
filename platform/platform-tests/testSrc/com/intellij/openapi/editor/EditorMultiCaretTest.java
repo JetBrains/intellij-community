@@ -484,4 +484,24 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     type(' ');
     checkResultByText(" <caret> <caret>");
   }
+
+  public void testCloneCaretBeforeInlay() {
+    initText("\n");
+    addInlay(0);
+    addInlay(1);
+    mouse().clickAt(0, 0);
+    executeAction("EditorCloneCaretBelow");
+    verifyCaretsAndSelections(0, 0, 0, 0,
+                              1, 0, 0, 0);
+  }
+
+  public void testCloneCaretAfterInlay() {
+    initText("\n");
+    addInlay(0);
+    addInlay(1);
+    mouse().clickAt(0, 1);
+    executeAction("EditorCloneCaretBelow");
+    verifyCaretsAndSelections(0, 1, 1, 1,
+                              1, 1, 1, 1);
+  }
 }
