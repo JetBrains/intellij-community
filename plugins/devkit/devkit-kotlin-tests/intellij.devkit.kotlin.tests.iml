@@ -10,5 +10,6 @@
     <orderEntry type="module" module-name="intellij.devkit.tests" />
     <orderEntry type="library" scope="RUNTIME" name="KotlinPlugin" level="project" />
     <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="module" module-name="intellij.devkit.java.tests" scope="TEST" />
   </component>
 </module>
