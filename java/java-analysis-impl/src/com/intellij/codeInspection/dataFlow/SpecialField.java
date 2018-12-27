@@ -12,7 +12,6 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,6 +152,7 @@ public enum SpecialField implements VariableDescriptor {
     }
   };
 
+  private static final SpecialField[] VALUES = values();
   private final String myClassName;
   private final String myMethodName;
   private final boolean myFinal;
@@ -199,7 +199,13 @@ public enum SpecialField implements VariableDescriptor {
   @Nullable
   public static SpecialField findSpecialField(PsiElement accessor) {
     if (!(accessor instanceof PsiMember)) return null;
-    return StreamEx.of(values()).findFirst(sf -> sf.isMyAccessor((PsiMember)accessor)).orElse(null);
+    PsiMember member = (PsiMember)accessor;
+    for (SpecialField sf : VALUES) {
+      if (sf.isMyAccessor(member)) {
+        return sf;
+      }
+    }
+    return null;
   }
 
   /**
@@ -320,7 +326,7 @@ public enum SpecialField implements VariableDescriptor {
    */
   @Nullable
   public static SpecialField fromQualifierType(PsiType type) {
-    for (SpecialField value : SpecialField.values()) {
+    for (SpecialField value : VALUES) {
       if (value.isMyQualifierType(type)) {
         return value;
       }
