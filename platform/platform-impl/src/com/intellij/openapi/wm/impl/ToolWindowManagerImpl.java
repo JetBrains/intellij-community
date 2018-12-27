@@ -1726,6 +1726,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     Element element = new Element("state");
 
     // Save frame's bounds
+    // [tav] Where we load these bounds? Should we just remove this code? (because we load frame bounds in WindowManagerImpl.allocateFrame)
+    // Anyway, we should save bounds in device space to preserve backward compatibility with the IDE-managed HiDPI mode (see JBUI.ScaleType).
+    // However, I won't change thise code because I can't even test it.
     final Rectangle frameBounds = myFrame.getBounds();
     final Element frameElement = new Element(FRAME_ELEMENT);
     element.addContent(frameElement);
