@@ -10,7 +10,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
 class GitIgnoredFilesHolder(val project: Project, val manager: GitRepositoryManager)
-  : VcsIgnoredFilesHolderBase<GitRepository>(project, manager) {
+  : VcsIgnoredFilesHolderBase<GitRepository>(manager) {
   override fun getHolder(repository: GitRepository) = repository.ignoredFilesHolder
 
   override fun copy() = GitIgnoredFilesHolder(project, manager)

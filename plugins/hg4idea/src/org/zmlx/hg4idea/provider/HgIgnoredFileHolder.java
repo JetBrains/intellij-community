@@ -19,7 +19,7 @@ public class HgIgnoredFileHolder extends VcsIgnoredFilesHolderBase<HgRepository>
   private final HgRepositoryManager myManager;
 
   public HgIgnoredFileHolder(@NotNull Project project, @NotNull HgRepositoryManager manager) {
-    super(project, manager);
+    super(manager);
     myProject = project;
     myManager = manager;
   }

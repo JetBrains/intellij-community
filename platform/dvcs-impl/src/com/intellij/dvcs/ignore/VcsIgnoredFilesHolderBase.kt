@@ -3,17 +3,14 @@ package com.intellij.dvcs.ignore
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.FileHolder
 import com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder
 import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
-import com.intellij.vcsUtil.VcsUtil
 
 abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
-  private val project: Project,
   private val repositoryManager: AbstractRepositoryManager<REPOSITORY>
 ) : VcsIgnoredFilesHolder {
 
@@ -52,10 +49,8 @@ abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
   }
 
   private fun findIgnoreHolderByFile(file: VirtualFile): VcsRepositoryIgnoredFilesHolder? =
-    VcsUtil.getVcsRootFor(project, file)?.let { repositoryRoot ->
-      repositoryManager.getRepositoryForRoot(repositoryRoot)?.let { repositoryForRoot ->
-        vcsIgnoredHolderMap[repositoryForRoot]
-      }
+    repositoryManager.getRepositoryForFileQuick(file)?.let { repositoryForFile ->
+      vcsIgnoredHolderMap[repositoryForFile]
     }
 
   private fun fireUpdateStarted() {
