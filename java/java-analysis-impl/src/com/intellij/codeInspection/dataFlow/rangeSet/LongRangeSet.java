@@ -903,7 +903,23 @@ public abstract class LongRangeSet {
         long res = myValue * val;
         return point(isLong ? res : (int)res);
       }
-      return isLong ? Range.LONG_RANGE : Range.INT_RANGE;
+      long min = multiplier.min();
+      long max = multiplier.max();
+      if (isLong) {
+        try {
+          min = Math.multiplyExact(min, myValue);
+          max = Math.multiplyExact(max, myValue);
+        }
+        catch (ArithmeticException e) {
+          return Range.LONG_RANGE;
+        }
+      }
+      else {
+        min *= myValue;
+        max *= myValue;
+        if (min != (int)min || max != (int)max) return Range.INT_RANGE;
+      }
+      return min > max ? range(max, min) : range(min, max);
     }
 
     @NotNull

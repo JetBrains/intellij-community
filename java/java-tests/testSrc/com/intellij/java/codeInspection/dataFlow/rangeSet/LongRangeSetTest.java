@@ -513,6 +513,12 @@ public class LongRangeSetTest {
     checkMul(point(-1), range(10, 20).unite(range(30, 40)), false, "{-40..-30, -20..-10}");
     checkMul(point(-1), range(Integer.MIN_VALUE, Integer.MIN_VALUE+30), false, "{Integer.MIN_VALUE, 2147483618..Integer.MAX_VALUE}");
     checkMul(point(-1), range(Integer.MIN_VALUE, Integer.MIN_VALUE+30), true, "{2147483618..2147483648}");
+
+    checkMul(point(2), range(10, 20), false, "{20..40}");
+    checkMul(point(-2), range(10, 20), false, "{-40..-20}");
+    checkMul(point(2), range(-20, -10), false, "{-40..-20}");
+    checkMul(point(2), range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), false, "{Integer.MIN_VALUE..Integer.MAX_VALUE}");
+    checkMul(point(2), range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), true, "{4294967274..4294967294}");
   }
 
   void checkAdd(LongRangeSet addend1, LongRangeSet addend2, boolean isLong, String expected) {
