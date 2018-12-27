@@ -25,12 +25,14 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -75,11 +77,7 @@ public class TestDataGuessByExistingFilesUtil {
       return Collections.emptyList();
     }
 
-    TestDataDescriptor descriptor = buildDescriptorFromExistingTestData(psiMethod, testDataPath);
-    if (descriptor == null || !descriptor.isComplete()) {
-      return Collections.emptyList();
-    }
-    return descriptor.generate();
+    return buildDescriptorFromExistingTestData(psiMethod, testDataPath).generate();
   }
 
   static String guessTestDataName(PsiMethod method) {
@@ -153,15 +151,15 @@ public class TestDataGuessByExistingFilesUtil {
     return StringUtil.trimStart(methodName, "test");
   }
 
-  @Nullable
+  @NotNull
   private static TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull PsiMethod method, @Nullable String testDataPath) {
-    final TestDataDescriptor cachedValue = CachedValuesManager.getCachedValue(method,
-                                                                              () -> new CachedValueProvider.Result<>(
+    return CachedValuesManager.getCachedValue(method,
+                                              () -> new CachedValueProvider.Result<>(
                                                                                 buildDescriptor(method, testDataPath),
                                                                                 PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
-    return cachedValue == TestDataDescriptor.NOTHING_FOUND ? null : cachedValue;
   }
 
+  @NotNull
   private static TestDataDescriptor buildDescriptor(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class);
     String testName = getTestName(psiMethod);
@@ -460,19 +458,6 @@ public class TestDataGuessByExistingFilesUtil {
     TestDataDescriptor(Collection<TestLocationDescriptor> descriptors, String testName) {
       myTestName = testName;
       myDescriptors.addAll(descriptors);
-    }
-
-    public boolean isComplete() {
-      if (myDescriptors.isEmpty()) {
-        return false;
-      }
-
-      for (TestLocationDescriptor descriptor : myDescriptors) {
-        if (!descriptor.isComplete()) {
-          return false;
-        }
-      }
-      return true;
     }
 
     @NotNull
