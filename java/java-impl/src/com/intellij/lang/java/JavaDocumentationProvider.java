@@ -33,6 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
@@ -658,10 +659,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
         List<String> classUrls = findUrlForClass(aClass);
         if (classUrls != null) {
           urls = ContainerUtil.newSmartList();
-
-          final boolean useJava8Format = PsiUtil.isLanguageLevel8OrHigher(method);
-
-          final Set<String> signatures = getHtmlMethodSignatures(method, useJava8Format);
+          final Set<String> signatures = getHtmlMethodSignatures(method, PsiUtil.getLanguageLevel(method));
           for (String signature : signatures) {
             for (String classUrl : classUrls) {
               urls.add(classUrl + "#" + signature);
@@ -691,27 +689,30 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     }
   }
 
-  public static Set<String> getHtmlMethodSignatures(PsiMethod method, boolean java8FormatFirst) {
+  public static Set<String> getHtmlMethodSignatures(@NotNull PsiMethod method, @Nullable LanguageLevel preferredFormat) {
     final Set<String> signatures = new LinkedHashSet<>();
-    signatures.add(formatMethodSignature(method, true, java8FormatFirst));
-    signatures.add(formatMethodSignature(method, false, java8FormatFirst));
-
-    signatures.add(formatMethodSignature(method, true, !java8FormatFirst));
-    signatures.add(formatMethodSignature(method, false, !java8FormatFirst));
+    if (preferredFormat != null) signatures.add(formatMethodSignature(method, preferredFormat));
+    signatures.add(formatMethodSignature(method, LanguageLevel.JDK_10));
+    signatures.add(formatMethodSignature(method, LanguageLevel.JDK_1_8));
+    signatures.add(formatMethodSignature(method, LanguageLevel.JDK_1_5));
     return signatures;
   }
 
-  private static String formatMethodSignature(PsiMethod method, boolean raw, boolean java8Format) {
-    int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS;
-    int parameterOptions = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES;
-    if (raw) {
-      options |= PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE;
-      parameterOptions |= PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE;
-    }
+  private static String formatMethodSignature(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
+    boolean replaceConstructorWithInit = languageLevel.isAtLeast(LanguageLevel.JDK_10) && method.isConstructor();
+
+    int options = (replaceConstructorWithInit ? 0 : PsiFormatUtilBase.SHOW_NAME) | PsiFormatUtilBase.SHOW_PARAMETERS;
+    int parameterOptions = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES | PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE;
 
     String signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, parameterOptions, 999);
+    if (replaceConstructorWithInit) {
+      signature = "<init>" + signature;
+    }
 
-    if (java8Format) {
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_10)) {
+      signature = signature.replace(" ", "");
+    }
+    else if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       signature = signature.replaceAll("\\(|\\)|, ", "-").replaceAll("\\[]", ":A");
     }
 

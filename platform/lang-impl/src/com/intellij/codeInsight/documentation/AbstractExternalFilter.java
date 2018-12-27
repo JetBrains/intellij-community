@@ -280,7 +280,8 @@ public abstract class AbstractExternalFilter {
     Matcher anchorMatcher = ourAnchorSuffix.matcher(url);
     if (anchorMatcher.find()) {
       anchorPresent = true;
-      startSection = Pattern.compile("<a (name|id)=\"" + Pattern.quote(anchorMatcher.group(1)) + "\"", Pattern.CASE_INSENSITIVE);
+      startSection = Pattern.compile("<a (name|id)=\"" + Pattern.quote(StringUtil.escapeXmlEntities(anchorMatcher.group(1))) + "\"",
+                                     Pattern.CASE_INSENSITIVE);
       endSection = NON_CLASS_DATA_END;
     }
     return new ParseSettings(startSection, endSection, !anchorPresent, anchorPresent);
