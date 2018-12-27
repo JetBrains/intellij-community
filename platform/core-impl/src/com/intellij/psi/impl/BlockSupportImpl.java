@@ -28,6 +28,7 @@ import com.intellij.psi.templateLanguages.ITemplateDataElementType;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IReparseableElementType;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -299,6 +300,7 @@ public class BlockSupportImpl extends BlockSupport {
                                    @NotNull final ASTNode newRoot,
                                    @NotNull ProgressIndicator indicator,
                                    @NotNull CharSequence lastCommittedText) {
+    PsiUtilCore.ensureValid(fileImpl);
     if (newRoot instanceof FileElement) {
       FileElement fileImplElement = fileImpl.getTreeElement();
       if (fileImplElement != null) {
