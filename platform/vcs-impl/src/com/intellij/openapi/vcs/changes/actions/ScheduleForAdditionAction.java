@@ -73,7 +73,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
                                           @NotNull List<? extends VirtualFile> files,
                                           @Nullable ChangesBrowserBase browser,
                                           @Nullable PairConsumer<? super ProgressIndicator, ? super List<VcsException>> additionalTask) {
-    if (files.isEmpty()) return true;
+    if (files.isEmpty() && additionalTask == null) return true;
 
     LocalChangeList targetChangeList = browser instanceof CommitDialogChangesBrowser
                                        ? ((CommitDialogChangesBrowser)browser).getSelectedChangeList()
@@ -130,9 +130,9 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
       public void run(@NotNull ProgressIndicator indicator) {
         ChangesUtil.processVirtualFilesByVcs(project, files, (vcs, files) -> {
           addUnversionedFilesToVcs(project, vcs, files, allProcessedFiles, exceptions);
-
-          if (additionalTask != null) additionalTask.consume(indicator, exceptions);
         });
+
+        if (additionalTask != null) additionalTask.consume(indicator, exceptions);
       }
     });
 

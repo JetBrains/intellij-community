@@ -75,7 +75,7 @@ public class GitAdd extends ScheduleForAdditionAction {
     List<VirtualFile> unversionedFiles = getUnversionedFiles(e, project).collect(Collectors.toList());
 
     addUnversioned(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY),
-                   (indicator, exceptions) -> addPathsToVcs(project, toAdd, exceptions));
+                   !toAdd.isEmpty() ? (indicator, exceptions) -> addPathsToVcs(project, toAdd, exceptions) : null);
   }
 
   private static void addPathsToVcs(@NotNull Project project, @NotNull Collection<FilePath> toAdd, @NotNull List<VcsException> exceptions) {
