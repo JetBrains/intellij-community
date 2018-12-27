@@ -16,12 +16,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.CachedValueProvider;
@@ -31,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.PathUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -185,26 +185,26 @@ public class TestDataGuessByExistingFilesUtil {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     GotoFileModel gotoModel = new GotoFileModel(project);
     String possibleFilePath = test.replace('$', '/');
-    Map<String, TestLocationDescriptor> descriptorsByFileNames = new HashMap<>();
+    Map<String, List<TestLocationDescriptor>> descriptorsByFileNames = new HashMap<>();
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(psiClass));
       Collection<String> fileNames = getAllFileNames(possibleFileName, gotoModel);
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       indicator.setIndeterminate(false);
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.run(() -> {
         int fileNamesCount = fileNames.size();
         double currentIndex = 0;
         for (String name : fileNames) {
           ProgressManager.checkCanceled();
           Object[] elements = gotoModel.getElementsByName(name, false, name);
           for (Object element : elements) {
-            if (!(element instanceof PsiFile)) {
+            if (!(element instanceof PsiFileSystemItem)) {
               continue;
             }
 
-            PsiFile psiFile = (PsiFile)element;
+            PsiFileSystemItem psiFile = (PsiFileSystemItem)element;
             if (normalizedTestDataPath != null) {
-              PsiDirectory containingDirectory = psiFile.getContainingDirectory();
+              PsiFileSystemItem containingDirectory = psiFile.getParent();
               if (containingDirectory != null) {
                 VirtualFile directoryVirtualFile = containingDirectory.getVirtualFile();
                 String normalizedDirPath = StringUtil.trimEnd(StringUtil.trimEnd(directoryVirtualFile.getPath(), "/"), "\\");
@@ -233,19 +233,24 @@ public class TestDataGuessByExistingFilesUtil {
               continue;
             }
 
-            TestLocationDescriptor current = new TestLocationDescriptor();
-            current.populate(possibleFileName, file, project, module);
-            if (!current.isComplete()) {
-              continue;
-            }
+            List<TestLocationDescriptor> currentDescriptors = new SmartList<>();
+            VfsUtilCore.processFilesRecursively(file, f -> {
+              if (f.isDirectory()) return true;
+              TestLocationDescriptor current = new TestLocationDescriptor();
+              current.populate(possibleFileName, f, project, module);
+              if (current.isComplete()) {
+                currentDescriptors.add(current);
+              }
+              return true;
+            });
 
-            TestLocationDescriptor previousDescriptor = descriptorsByFileNames.get(name);
-            if (previousDescriptor == null) {
-              descriptorsByFileNames.put(name, current);
+            List<TestLocationDescriptor> previousDescriptors = descriptorsByFileNames.get(name);
+            if (previousDescriptors == null) {
+              descriptorsByFileNames.put(name, currentDescriptors);
               continue;
             }
-            if (moreRelevantPath(current, previousDescriptor, psiClass)) {
-              descriptorsByFileNames.put(name, current);
+            if (moreRelevantPath(currentDescriptors.get(0), previousDescriptors.get(0), psiClass)) {
+              descriptorsByFileNames.put(name, currentDescriptors);
             }
           }
           indicator.setFraction(++currentIndex / fileNamesCount);
@@ -257,8 +262,9 @@ public class TestDataGuessByExistingFilesUtil {
       throw new ProcessCanceledException();
     }
 
-    filterDirsFromOtherModules(descriptorsByFileNames);
-    return new TestDataDescriptor(descriptorsByFileNames.values(), possibleFileName);
+    List<TestLocationDescriptor> descriptors = ContainerUtil.flatten(descriptorsByFileNames.values());
+    filterDirsFromOtherModules(descriptors);
+    return new TestDataDescriptor(descriptors, possibleFileName);
   }
 
   private static Collection<String> getAllFileNames(final String testName, final GotoFileModel model) {
@@ -273,14 +279,14 @@ public class TestDataGuessByExistingFilesUtil {
     return processor.getResults();
   }
 
-  private static void filterDirsFromOtherModules(Map<String, TestLocationDescriptor> descriptorsByFileNames) {
+  private static void filterDirsFromOtherModules(List<TestLocationDescriptor> descriptorsByFileNames) {
     if (descriptorsByFileNames.size() < 2) {
       return;
     }
-    if (descriptorsByFileNames.values().stream().noneMatch(descriptor -> descriptor.isFromCurrentModule)) {
+    if (descriptorsByFileNames.stream().noneMatch(descriptor -> descriptor.isFromCurrentModule)) {
       return;
     }
-    descriptorsByFileNames.entrySet().removeIf(e -> !e.getValue().isFromCurrentModule);
+    descriptorsByFileNames.removeIf(d -> !d.isFromCurrentModule);
   }
 
   @Nullable
@@ -311,8 +317,8 @@ public class TestDataGuessByExistingFilesUtil {
 
     // By package.
     int lastDotIndex = className.lastIndexOf(".");
-    String candidateLcDir = candidate.dir.toLowerCase();
-    String currentLcDir = current.dir.toLowerCase();
+    String candidateLcDir = candidate.pathPrefix.toLowerCase();
+    String currentLcDir = current.pathPrefix.toLowerCase();
     if (lastDotIndex >= 0) {
       String packageAsPath = className.substring(0, lastDotIndex).replace('.', '/').toLowerCase();
       candidateMatched = candidateLcDir.contains(packageAsPath);
@@ -370,43 +376,32 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   private static class TestLocationDescriptor {
-    public String dir;
-    public String filePrefix;
-    public String fileSuffix;
-    public String ext;
+    public String pathPrefix;
+    public String pathSuffix;
     public boolean startWithLowerCase;
     public boolean isFromCurrentModule;
 
     public boolean isComplete() {
-      return dir != null && filePrefix != null && fileSuffix != null && ext != null;
+      return pathPrefix != null && pathSuffix != null;
     }
 
     public void populate(@NotNull String testName, @NotNull VirtualFile matched, @NotNull Project project, @Nullable Module module) {
       if (testName.isEmpty()) return;
-      final String withoutExtension = FileUtil.getNameWithoutExtension(testName);
-      boolean excludeExtension = !withoutExtension.equals(testName);
-      testName = withoutExtension;
-      final String fileName = matched.getNameWithoutExtension();
-      int i = fileName.indexOf(testName);
-      final char firstChar = testName.charAt(0);
-      boolean testNameStartsWithLowerCase = Character.isLowerCase(firstChar);
-      if (i < 0) {
-        i = fileName.indexOf(
-          (testNameStartsWithLowerCase ? Character.toUpperCase(firstChar) : Character.toLowerCase(firstChar)) + testName.substring(1)
-        );
-        startWithLowerCase = !testNameStartsWithLowerCase;
-      }
-      else {
-        startWithLowerCase = testNameStartsWithLowerCase;
-      }
-      if (i < 0) {
-        return;
+
+      String path = matched.getPath();
+      int idx = StringUtil.indexOf(path, testName);
+      boolean capitalized = StringUtil.isCapitalized(testName);
+      if (idx < 0) {
+        testName = capitalized ? StringUtil.decapitalize(testName) : StringUtil.capitalize(testName);
+        idx = StringUtil.indexOf(path, testName);
+        if (idx < 0) return;
+        startWithLowerCase = !capitalized;
+      } else {
+        startWithLowerCase = capitalized;
       }
 
-      filePrefix = fileName.substring(0, i);
-      fileSuffix = fileName.substring(i + testName.length());
-      ext = excludeExtension ? "" : matched.getExtension();
-      dir = matched.getParent().getPath();
+      pathPrefix = path.substring(0, idx);
+      pathSuffix = path.substring(idx + testName.length());
       if (module != null) {
         isFromCurrentModule = module.equals(ModuleUtilCore.findModuleForFile(matched, project));
       }
@@ -414,10 +409,9 @@ public class TestDataGuessByExistingFilesUtil {
 
     @Override
     public int hashCode() {
-      int result = dir != null ? dir.hashCode() : 0;
-      result = 31 * result + (filePrefix != null ? filePrefix.hashCode() : 0);
-      result = 31 * result + (fileSuffix != null ? fileSuffix.hashCode() : 0);
-      result = 31 * result + (ext != null ? ext.hashCode() : 0);
+      int result = 0;
+      result = 31 * result + (pathPrefix != null ? pathPrefix.hashCode() : 0);
+      result = 31 * result + (pathSuffix != null ? pathSuffix.hashCode() : 0);
       result = 31 * result + (startWithLowerCase ? 1 : 0);
       return result;
     }
@@ -429,17 +423,15 @@ public class TestDataGuessByExistingFilesUtil {
 
       TestLocationDescriptor that = (TestLocationDescriptor)o;
       if (startWithLowerCase != that.startWithLowerCase) return false;
-      if (dir != null ? !dir.equals(that.dir) : that.dir != null) return false;
-      if (ext != null ? !ext.equals(that.ext) : that.ext != null) return false;
-      if (filePrefix != null ? !filePrefix.equals(that.filePrefix) : that.filePrefix != null) return false;
-      if (fileSuffix != null ? !fileSuffix.equals(that.fileSuffix) : that.fileSuffix != null) return false;
+      if (pathPrefix != null ? !pathPrefix.equals(that.pathPrefix) : that.pathPrefix != null) return false;
+      if (pathSuffix != null ? !pathSuffix.equals(that.pathSuffix) : that.pathSuffix != null) return false;
 
       return true;
     }
 
     @Override
     public String toString() {
-      return String.format("%s/%s[...]%s.%s", dir, filePrefix, fileSuffix, ext);
+      return String.format("%s[...]%s", pathPrefix, pathSuffix);
     }
   }
 
@@ -471,13 +463,10 @@ public class TestDataGuessByExistingFilesUtil {
         return result;
       }
       for (TestLocationDescriptor descriptor : myDescriptors) {
-        if (root != null && !root.equals(descriptor.dir)) continue;
-        result.add(String.format(
-          "%s/%s%c%s%s%s",
-          descriptor.dir, descriptor.filePrefix,
-          descriptor.startWithLowerCase ? Character.toLowerCase(testName.charAt(0)) : Character.toUpperCase(testName.charAt(0)),
-          testName.substring(1), descriptor.fileSuffix, StringUtil.isEmpty(descriptor.ext) ? "" : "." + descriptor.ext
-        ));
+        if (root != null && !descriptor.pathPrefix.startsWith(root)) continue;
+        result.add(descriptor.pathPrefix + (descriptor.startWithLowerCase
+                                            ? StringUtil.decapitalize(testName)
+                                            : StringUtil.capitalize(testName)) + descriptor.pathSuffix);
       }
       return result;
     }
