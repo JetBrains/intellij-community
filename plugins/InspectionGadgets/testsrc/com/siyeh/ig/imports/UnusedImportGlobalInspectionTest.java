@@ -220,6 +220,14 @@ public class UnusedImportGlobalInspectionTest extends LightCodeInsightFixtureTes
            "}}");
   }
 
+  public void testUsedButUnresolved() {
+    doTest("package a;" +
+           "import java.util.List1;" +
+           "class X {{" +
+           "  List1 list = null;" +
+           "}}");
+  }
+
   public void testNoConflictInSamePackage() {
     doTest("package a;" +
            "/*Unused import 'import java.util.List;'*/import java.util.List;/**/" +
