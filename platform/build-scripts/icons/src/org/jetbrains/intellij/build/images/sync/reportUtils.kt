@@ -185,38 +185,61 @@ internal fun createReviews(context: Context) = callSafely {
 
 internal fun assignInvestigation(context: Context): Investigator? =
   callSafely {
-    val (investigator, commits) = if (context.iconsSyncRequired()) {
-      context.devCommitsToSync.flatMap { it.value }.maxBy(CommitInfo::timestamp)?.let {
-        log("Assigning investigation to ${it.committerEmail} as author of latest change ${it.hash}")
-        it.committerEmail
+    var (investigator, commits) = if (context.iconsSyncRequired()) {
+      context.devCommitsToSync.flatMap { it.value }.maxBy(CommitInfo::timestamp)?.let { latest ->
+        log("Assigning investigation to ${latest.committerEmail} as author of latest change ${latest.hash}")
+        latest.committerEmail
       } to context.devCommitsToSync
     }
     else triggeredBy() to context.iconsCommitsToSync
+    var reviews = emptyList<String>()
     if (commits.isEmpty()) {
-      log("No commits, no investigation")
-      return@callSafely null
+      if (context.commitsAlreadyInReview.isEmpty()) {
+        log("No commits, no investigation")
+        return@callSafely null
+      }
+      context.commitsAlreadyInReview.keys.maxBy(CommitInfo::timestamp)?.let { latest ->
+        val review = context.commitsAlreadyInReview[latest]!!
+        log("Assigning investigation to ${latest.committerEmail} as author of latest change ${latest.hash} under review $review")
+        investigator = latest.committerEmail
+        commits = context.commitsAlreadyInReview.keys
+          .filter { context.commitsAlreadyInReview[it] == review }
+          .groupBy(CommitInfo::repo)
+        reviews += review
+      }
     }
-    assignInvestigation(Investigator(investigator ?: DEFAULT_INVESTIGATOR, commits), context)
+    if (context.iconsSyncRequired() && context.iconsReviews().isNotEmpty()) {
+      reviews += context.iconsReviews().map(Review::url)
+    }
+    if (context.devReviews().isNotEmpty()) {
+      reviews += context.devReviews().map(Review::url)
+    }
+    assignInvestigation(Investigator(investigator ?: DEFAULT_INVESTIGATOR, commits), context, reviews)
   }
 
 private fun findCommitsByRepo(context: Context, projectId: String?, root: File, changes: Changes,
                               resolveGitObject: (String) -> GitObject
 ): Map<File, Collection<CommitInfo>> {
-  var alreadyInReview = emptyList<String>()
+  var changesAlreadyInReview = emptyList<String>()
   var commits = findCommits(context, root, changes)
   if (commits.isEmpty()) return emptyMap()
-  val titles = if (!projectId.isNullOrEmpty()) getOpenIconsReviewTitles(projectId!!) else emptyList()
+  val reviewTitles = if (!projectId.isNullOrEmpty()) {
+    getOpenIconsReviewTitles(projectId)
+  }
+  else emptyMap()
   val before = commits.size
-  commits = commits.filterNot { entry ->
+  commits = commits.filter { entry ->
     val (commit, change) = entry
-    val skip = titles.any {
-      it.contains(commit.hash)
-    }
-    if (skip) alreadyInReview += change
-    skip
+    reviewTitles.entries.firstOrNull {
+      // review with commit
+      it.value.contains(commit.hash)
+    }?.also {
+      changesAlreadyInReview += change
+      context.commitsAlreadyInReview += commit to it.key
+    } == null
   }
   log("$projectId: ${before - commits.size} commits already in review")
-  alreadyInReview
+  changesAlreadyInReview
     .map { resolveGitObject(it) }
     .groupBy({ it.repo }, { it.path })
     .forEach {

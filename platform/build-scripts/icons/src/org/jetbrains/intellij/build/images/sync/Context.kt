@@ -35,6 +35,10 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val iconsCommitHashesToSync: MutableSet<String>
   val devIconsCommitHashesToSync: MutableSet<String>
   lateinit var devIconsFilter: (File) -> Boolean
+  /**
+   * commits to review id
+   */
+  var commitsAlreadyInReview = emptyMap<CommitInfo, String>()
 
   init {
     val iconsRepoArg = "icons.repo"

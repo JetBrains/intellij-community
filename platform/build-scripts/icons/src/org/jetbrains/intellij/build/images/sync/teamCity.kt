@@ -42,7 +42,7 @@ internal class Investigator(val email: String = DEFAULT_INVESTIGATOR,
                             val commits: Map<File, Collection<CommitInfo>> = emptyMap(),
                             var isAssigned: Boolean = false)
 
-internal fun assignInvestigation(investigator: Investigator, context: Context): Investigator {
+internal fun assignInvestigation(investigator: Investigator, context: Context, reviews: List<String>): Investigator {
   val report = with(context) {
     val commits = if (investigator.commits.isNotEmpty()) {
       "You changed icons in ${investigator.commits.entries.joinToString(";") { entry ->
@@ -51,15 +51,8 @@ internal fun assignInvestigation(investigator: Investigator, context: Context): 
       }} which need to be synchronised."
     }
     else ""
-    val iconsSync = if (iconsSyncRequired() && iconsReviews().isNotEmpty()) {
-      "Please review and cherry-pick ${iconsReviews().joinToString { it.url }}."
-    }
-    else ""
-    val devSync = if (devReviews().isNotEmpty()) {
-      "Please review and cherry-pick ${devReviews().joinToString { it.url }}."
-    }
-    else ""
-    sequenceOf(commits, iconsSync, devSync)
+    val reviewsReport = if (reviews.isNotEmpty()) "Please review and cherry-pick ${reviews.joinToString()}." else ""
+    sequenceOf(commits, reviewsReport)
       .filter(String::isNotEmpty)
       .joinToString(" ")
   }
