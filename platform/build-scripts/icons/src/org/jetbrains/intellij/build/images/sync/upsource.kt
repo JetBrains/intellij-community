@@ -81,7 +81,7 @@ internal fun createReview(projectId: String, branch: String, head: String, commi
     }
   }""")
   val review = UpsourceReview(reviewId, projectId, asUrl(reviewId, projectId))
-  postComment(projectId, review, "Please review changes and cherry-pick into $head (don't forget to delete tmp branch $branch)")
+  postComment(projectId, review, "Please review changes and cherry-pick into $head with `Delete the source branch` box checked")
   return review
 }
 
