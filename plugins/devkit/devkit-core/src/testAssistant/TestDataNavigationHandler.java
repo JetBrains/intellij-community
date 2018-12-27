@@ -10,7 +10,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
@@ -89,13 +88,22 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
   private static void showNavigationPopup(Project project, List<String> filePaths, RelativePoint point) {
     Collections.sort(filePaths, String.CASE_INSENSITIVE_ORDER);
 
-    Set<VirtualFile> files = ContainerUtil.map2Set(filePaths, p -> getFileByPath(p));
     List<TestDataNavigationElement> elementsToDisplay = new ArrayList<>();
-    // if at least one file doesn't exist add "Create missing files" element
-    if (files.removeIf(f -> f == null)) {
-      elementsToDisplay.add(TestDataNavigationElementFactory.createForCreateMissingFilesOption(filePaths));
+    List<TestDataNavigationElement> nonExistingElementsToDisplay = new ArrayList<>();
+    Set<VirtualFile> files = new HashSet<>();
+    for (String p : filePaths) {
+      VirtualFile f = getFileByPath(p);
+      if (f == null) {
+        if (nonExistingElementsToDisplay.isEmpty()) {
+          nonExistingElementsToDisplay.add(TestDataNavigationElementFactory.createForCreateMissingFilesOption(filePaths));
+        }
+        nonExistingElementsToDisplay.add(TestDataNavigationElementFactory.createForFile(project, p));
+      } else {
+        files.add(f);
+      }
     }
     consumeElementsToDisplay(project, files, elementsToDisplay::add);
+    elementsToDisplay.addAll(nonExistingElementsToDisplay);
 
     JList<TestDataNavigationElement> list = new JBList<>(elementsToDisplay);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
