@@ -44,8 +44,9 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
 
     List<String> fileNames = findTestDataFiles(dataContext);
     if (fileNames == null || fileNames.isEmpty()) {
-      String testData = guessTestData(dataContext);
-      if (testData == null) {
+      PsiMethod method = findTargetMethod(dataContext);
+      fileNames = method == null ? null : TestDataGuessByExistingFilesUtil.guessTestDataName(method);
+      if (fileNames == null) {
         Notification notification = new Notification(
           "testdata",
           "Found no test data files",
@@ -54,7 +55,6 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
         Notifications.Bus.notify(notification, project);
         return;
       }
-      fileNames = Collections.singletonList(testData);
     }
 
     TestDataNavigationHandler.navigate(point, fileNames, project);
@@ -125,10 +125,5 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     }
 
     return null;
-  }
-
-  private static String guessTestData(DataContext context) {
-    PsiMethod method = findTargetMethod(context);
-    return method == null ? null : TestDataGuessByExistingFilesUtil.guessTestDataName(method);
   }
 }

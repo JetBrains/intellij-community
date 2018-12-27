@@ -80,7 +80,7 @@ public class TestDataGuessByExistingFilesUtil {
     return buildDescriptorFromExistingTestData(psiMethod, testDataPath).generate();
   }
 
-  static String guessTestDataName(PsiMethod method) {
+  static List<String> guessTestDataName(PsiMethod method) {
     String testName = getTestName(method);
     if (testName == null) return null;
     PsiClass psiClass = method.getContainingClass();
@@ -88,26 +88,25 @@ public class TestDataGuessByExistingFilesUtil {
     int count = 5;
     PsiMethod prev = PsiTreeUtil.getPrevSiblingOfType(method, PsiMethod.class);
     while (prev != null && count-- > 0) {
-      String s = getFilePath(prev, testName);
-      if (s != null) return s;
+      List<String> testData = guessTestDataBySiblingTest(prev, testName);
+      if (testData != null) return testData;
       prev = PsiTreeUtil.getPrevSiblingOfType(prev, PsiMethod.class);
     }
     count = 5;
     PsiMethod next = PsiTreeUtil.getNextSiblingOfType(method, PsiMethod.class);
     while (next != null && count-- > 0) {
-      String s = getFilePath(next, testName);
-      if (s != null) return s;
+      List<String> testData = guessTestDataBySiblingTest(next, testName);
+      if (testData != null) return testData;
       next = PsiTreeUtil.getNextSiblingOfType(next, PsiMethod.class);
     }
     return null;
   }
 
   @Nullable
-  private static String getFilePath(PsiMethod psiMethod, String testName) {
+  private static List<String> guessTestDataBySiblingTest(PsiMethod psiMethod, String testName) {
     List<String> strings = collectTestDataByExistingFiles(psiMethod);
     if (!strings.isEmpty()) {
-      String s = strings.get(0);
-      return new File(new File(s).getParent(), testName + "." + FileUtilRt.getExtension(new File(s).getName())).getPath();
+      return ContainerUtil.map(strings, s -> new File(new File(s).getParent(), testName + "." + FileUtilRt.getExtension(new File(s).getName())).getPath());
     }
     return null;
   }
