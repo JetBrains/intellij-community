@@ -97,7 +97,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
                           "coroutine start",
                           "disposed",
                           "coroutine before yield",
-                          "coroutine yield caught DisposedException because of null",
+                          "coroutine yield caught JobCancellationException because of null",
                           "end")
     }.joinNonBlocking()
   }
@@ -232,7 +232,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
                           "disposing",
                           "disposable.dispose()",
                           "before yield disposed",
-                          "coroutine yield caught DisposedException because of null",
+                          "coroutine yield caught JobCancellationException because of null",
                           "end")
     }.joinNonBlocking()
   }
@@ -319,7 +319,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
                           "disposing",
                           "disposable.beforeTreeDispose()",
                           "disposable.dispose()",
-                          "coroutine yield caught DisposedException because of null",
+                          "coroutine yield caught JobCancellationException because of null",
                           "end")
     }.joinNonBlocking()
   }
@@ -334,7 +334,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       "constraintDisposable.dispose()",
       "refuse to run already disposed",
       "[context: !outer + inner] after receive disposed",  // channel.receive() is atomic
-      "[context: !outer + inner] coroutine yield caught DisposedException because of null",
+      "[context: !outer + inner] coroutine yield caught JobCancellationException because of null",
       "[context: !outer + !inner] end")
     ) { queue, constraintDisposable, _ ->
       queue.add("disposing constraint")
@@ -355,7 +355,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       "constraintDisposable.dispose()",
       "refuse to run already disposed",
       "[context: !outer + inner] after receive disposed",  // channel.receive() is atomic
-      "[context: !outer + inner] coroutine yield caught DisposedException because of null",
+      "[context: !outer + inner] coroutine yield caught JobCancellationException because of null",
       "[context: !outer + !inner] end")
     ) { queue, constraintDisposable, anotherDisposable ->
       queue.add("disposing anotherDisposable")
@@ -373,7 +373,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       "anotherDisposable.beforeTreeDispose()",
       "anotherDisposable.dispose()",
       "[context: outer + inner] after receive disposed",
-      "[context: outer + inner] coroutine yield caught DisposedException because of null",
+      "[context: outer + inner] coroutine yield caught JobCancellationException because of null",
       "[context: !outer + !inner] end")
     ) { queue, _, anotherDisposable ->
       queue.add("disposing anotherDisposable")

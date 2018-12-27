@@ -40,7 +40,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
    */
   private val myExpirableJob = Job()  // initialized once in createExpirableJobContinuationInterceptor()
   private val myCoroutineDispatchingContext: CoroutineContext by lazy {
-    val exceptionHandler = CoroutineExceptionHandler(::handleUncaughtException)
+    val exceptionHandler = CoroutineExceptionHandler { context, throwable -> dispatcher.processUncaughtException(context, throwable) }
     val delegateDispatcherChain = generateSequence(dispatcher as? DelegateDispatcher) { it.delegate as? DelegateDispatcher }
     val coroutineName = CoroutineName("${javaClass.simpleName}(${delegateDispatcherChain.asIterable().reversed().joinToString("::")})")
     exceptionHandler + coroutineName + createExpirableJobContinuationInterceptor()
@@ -79,18 +79,6 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
     val disposables = disposables + parentDisposable
     @Suppress("UNCHECKED_CAST")
     return if (disposables == this.disposables) this as E else cloneWith(disposables, dispatcher)
-  }
-
-  // MUST NOT throw. See https://github.com/Kotlin/kotlinx.coroutines/issues/562
-  // #562 "Exceptions thrown by CoroutineExceptionHandler must be caught by handleCoroutineException()"
-  protected open fun handleUncaughtException(context: CoroutineContext, throwable: Throwable) {
-    try {
-      PluginManager.processException(throwable)  // throws AssertionError in unit testing mode
-    }
-    catch (e: Throwable) {
-      // rethrow on EDT outside the Coroutines machinery
-      dispatcher.fallbackDispatch(context, Runnable { throw e })
-    }
   }
 
   /** A CoroutineDispatcher which dispatches after ensuring its delegate is dispatched. */
@@ -207,7 +195,8 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
         super.dispatch(context, block)
       }
       else {
-        context.cancel(TooManyRescheduleAttemptsException(myLastDispatchers))
+        processUncaughtException(context, TooManyRescheduleAttemptsException(myLastDispatchers))
+        context.cancel()
 
         // The continuation block MUST be invoked at some point in order to give the coroutine a chance
         // to handle the cancellation exception and exit gracefully.
@@ -239,8 +228,6 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
   class TooManyRescheduleAttemptsException internal constructor(lastConstraints: Collection<CoroutineDispatcher>)
     : Exception("Too many reschedule requests, probably constraints can't be satisfied all together: " + lastConstraints.joinToString())
 
-  class DisposedException(disposable: Disposable) : CancellationException("Already disposed: $disposable")
-
   companion object {
     internal val LOG = Logger.getInstance("#com.intellij.openapi.application.impl.AppUIExecutorImpl")
 
@@ -260,6 +247,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
 
     internal inline fun CoroutineDispatcher.dispatchIfNeededOrInvoke(context: CoroutineContext,
                                                                      crossinline block: () -> Unit) {
+      @Suppress("EXPERIMENTAL_API_USAGE")
       if (isDispatchNeeded(context)) {
         dispatch(context, Runnable { block() })
       }
@@ -276,9 +264,19 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       fallbackDispatcher.dispatch(context, block)
     }
 
+    internal fun CoroutineDispatcher.processUncaughtException(context: CoroutineContext, throwable: Throwable) {
+      try {
+        PluginManager.processException(throwable)  // throws AssertionError in unit testing mode
+      }
+      catch (e: Throwable) {
+        // rethrow on EDT outside the Coroutines machinery
+        fallbackDispatch(context, Runnable { throw e })
+      }
+    }
+
     internal val Disposable.isDisposed: Boolean
       get() = Disposer.isDisposed(this)
-    internal val Disposable.isDisposing: Boolean
+    private val Disposable.isDisposing: Boolean
       get() = Disposer.isDisposing(this)
 
     private fun tryRegisterDisposable(parent: Disposable, child: Disposable): Boolean {
@@ -294,8 +292,8 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       return false
     }
 
-    internal fun Disposable.registerOrInvokeDisposable(job: Job? = null,
-                                                       disposableBlock: () -> Unit): AutoCloseable {
+    private fun Disposable.registerOrInvokeDisposable(job: Job? = null,
+                                                      disposableBlock: () -> Unit): AutoCloseable {
       val runOnce = RunOnce()
       val child = Disposable {
         runOnce {
@@ -320,20 +318,14 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       }
     }
 
-    internal fun Disposable.cancelJobOnDisposal(job: Job): AutoCloseable {
-      val debugTraceThrowable = Throwable()
-      return registerOrInvokeDisposable(job) {
-        if (!job.isCancelled && !job.isCompleted) {
-          job.cancel(DisposedException(this).apply {
-            addSuppressed(debugTraceThrowable)
-          })
-        }
+    internal fun Disposable.cancelJobOnDisposal(job: Job): AutoCloseable =
+      registerOrInvokeDisposable(job) {
+        job.cancel()
       }
-    }
 
     internal fun Job.cancelJobOnCompletion(job: Job) {
-      invokeOnCompletion { cause ->
-        job.cancel(cause)
+      invokeOnCompletion {
+        job.cancel()
       }.also { handle ->
         job.invokeOnCompletion { handle.dispose() }
       }
