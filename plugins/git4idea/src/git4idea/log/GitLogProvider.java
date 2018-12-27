@@ -488,7 +488,7 @@ public class GitLogProvider implements VcsLogProvider {
           filterParameters.add(prepareParameter("author", StringUtil.join(authors, "|")));
         }
         else {
-          filterParameters.addAll(authors.stream().map(a -> prepareParameter("author", a)).collect(Collectors.toList()));
+          filterParameters.addAll(ContainerUtil.map(authors, a -> prepareParameter("author", a)));
         }
       }
       else {
