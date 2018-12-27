@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.Key;
@@ -69,7 +70,13 @@ public abstract class DfaFactType<T> extends Key<T> {
     @NotNull
     @Override
     DfaNullability uniteFacts(@NotNull DfaNullability left, @NotNull DfaNullability right) {
-      return left == right ? left : DfaNullability.FLUSHED;
+      if (left == right) {
+        return left;
+      }
+      if (left == DfaNullability.NULL || right == DfaNullability.NULL) {
+        return DfaNullability.UNKNOWN;
+      }
+      return DfaNullability.FLUSHED;
     }
 
     @Nullable
@@ -78,8 +85,8 @@ public abstract class DfaFactType<T> extends Key<T> {
       if (left == DfaNullability.NOT_NULL || right == DfaNullability.NOT_NULL) {
         return DfaNullability.NOT_NULL;
       }
-      if (left == DfaNullability.FLUSHED && right == DfaNullability.NULLABLE ||
-          left == DfaNullability.NULLABLE && right == DfaNullability.FLUSHED) {
+      if (left == DfaNullability.FLUSHED && DfaNullability.toNullability(right) == Nullability.NULLABLE ||
+          right == DfaNullability.FLUSHED && DfaNullability.toNullability(left) == Nullability.NULLABLE) {
         return DfaNullability.NULLABLE;
       }
       return super.intersectFacts(left, right);
@@ -89,7 +96,7 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Override
     public DfaNullability fromDfaValue(DfaValue value) {
       if (value instanceof DfaConstValue) {
-        return ((DfaConstValue)value).getValue() == null ? DfaNullability.NULLABLE : DfaNullability.NOT_NULL;
+        return ((DfaConstValue)value).getValue() == null ? DfaNullability.NULL : DfaNullability.NOT_NULL;
       }
       if (value instanceof DfaBoxedValue) return DfaNullability.NOT_NULL;
       if (value instanceof DfaFactMapValue && ((DfaFactMapValue)value).get(RANGE) != null) return DfaNullability.NOT_NULL;
@@ -243,6 +250,12 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Override
     public String getName(SpecialFieldValue fact) {
       return fact == null ? super.getName(null) : StringUtil.wordsToBeginFromUpperCase(fact.getField().getMethodName());
+    }
+
+    @Nullable
+    @Override
+    SpecialFieldValue uniteFacts(@NotNull SpecialFieldValue left, @NotNull SpecialFieldValue right) {
+      return left.unite(right);
     }
 
     @NotNull

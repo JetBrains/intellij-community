@@ -165,9 +165,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void finishElement(PsiElement element) {
     myCurrentFlow.finishElement(element);
-    if (element instanceof PsiStatement && !(element instanceof PsiReturnStatement) && 
-        !(element instanceof PsiSwitchLabeledRuleStatement)) {
-      List<DfaVariableValue> synthetics = getSynthetics((PsiStatement)element);
+    if (element instanceof PsiField || (element instanceof PsiStatement && !(element instanceof PsiReturnStatement) && 
+        !(element instanceof PsiSwitchLabeledRuleStatement))) {
+      List<DfaVariableValue> synthetics = getSynthetics(element);
       FinishElementInstruction instruction = new FinishElementInstruction(element);
       instruction.getVarsToFlush().addAll(synthetics);
       addInstruction(instruction);
@@ -175,7 +175,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @NotNull
-  private List<DfaVariableValue> getSynthetics(PsiStatement element) {
+  private List<DfaVariableValue> getSynthetics(PsiElement element) {
     int startOffset = getStartOffset(element).getInstructionOffset();
     List<DfaVariableValue> synthetics = new ArrayList<>();
     for (DfaValue value : myFactory.getValues()) {
@@ -298,7 +298,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   public void visitField(PsiField field) {
     PsiExpression initializer = field.getInitializer();
     if (initializer != null) {
+      startElement(field);
       initializeVariable(field, initializer);
+      finishElement(field);
     }
     else if (!field.hasModifierProperty(PsiModifier.FINAL) && !UnusedSymbolUtil.isImplicitWrite(field)) {
       // initialize with default value

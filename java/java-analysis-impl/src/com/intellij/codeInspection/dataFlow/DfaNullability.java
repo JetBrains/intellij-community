@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * @see DfaFactType#NULLABILITY
  */
 public enum DfaNullability {
+  NULL("Null", "null", Nullability.NULLABLE),
   NULLABLE("Nullable", "nullable", Nullability.NULLABLE),
   NOT_NULL("Not-null", "non-null", Nullability.NOT_NULL),
   UNKNOWN("Unknown", "", Nullability.UNKNOWN),
@@ -39,7 +40,7 @@ public enum DfaNullability {
   }
 
   public static boolean isNullable(DfaFactMap map) {
-    return map.get(DfaFactType.NULLABILITY) == NULLABLE;
+    return toNullability(map.get(DfaFactType.NULLABILITY)) == Nullability.NULLABLE;
   }
 
   public static boolean isNotNull(DfaFactMap map) {
