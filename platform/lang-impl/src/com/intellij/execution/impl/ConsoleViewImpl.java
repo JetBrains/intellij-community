@@ -55,6 +55,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,8 +75,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -427,7 +429,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private void initConsoleEditor() {
     myEditor = createConsoleEditor();
     registerConsoleEditorActions();
-    myEditor.getScrollPane().setBorder(null);
+    myEditor.getScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
     MouseAdapter mouseListener = new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
