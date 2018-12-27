@@ -152,6 +152,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "extends_keyword_wrap = off\n" +
       "extends_list_wrap = off\n" +
       "field_annotation_wrap = split_into_lines\n" +
+      "field_name_prefix = m_\n" +
       "finally_on_new_line = false\n" +
       "for_brace_force = never\n" +
       "for_statement_left_paren_on_next_line = false\n" +
@@ -297,6 +298,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "spaces_within_try_parentheses = false\n" +
       "spaces_within_while_parentheses = false\n" +
       "special_else_if_treatment = true\n" +
+      "static_field_name_suffix = _s\n" +
       "subclass_name_suffix = Impl\n" +
       "tab_width = 4\n" +
       "ternary_operation_signs_on_next_line = false\n" +
