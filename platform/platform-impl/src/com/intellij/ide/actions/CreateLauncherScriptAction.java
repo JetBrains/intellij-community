@@ -50,7 +50,10 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   });
 
   public static boolean isAvailable() {
-    return SystemInfo.isUnix && !PathManager.isSnap() && INTERPRETER_NAME.getValue() != null;
+    return SystemInfo.isUnix
+           && INTERPRETER_NAME.getValue() != null
+           && !PathManager.isSnap()
+           && !PathManager.isToolboxApp();
   }
 
   @Override

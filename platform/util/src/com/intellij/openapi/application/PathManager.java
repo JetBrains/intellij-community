@@ -133,6 +133,14 @@ public class PathManager {
            (getHomePath().startsWith("/snap/") || getHomePath().startsWith("/var/lib/snapd/snap/"));
   }
 
+  /**
+   * Check whether IDE is installed via JetBrains Toolbox App https://toolbox.app
+   */
+  public static boolean isToolboxApp() {
+    String path = getHomePath().replace('\\', '/');
+    return path.contains("/apps/") && path.contains("/ch-");
+  }
+
   private static String[] getBinDirectories(File root) {
     List<String> binDirs = ContainerUtil.newSmartList();
 
