@@ -6,7 +6,6 @@ UFile (package = )
             UClass (name = null)
                 UMethod (name = getExitAnimation)
                     UAnnotation (fqName = java.lang.Override)
-                    UTypeReferenceExpression (name = java.lang.String)
                     UBlockExpression
                         UReturnExpression
                             ULiteralExpression (value = "bar")
@@ -14,7 +13,6 @@ UFile (package = )
             UParameter (name = s)
             UBlockExpression
         UMethod (name = getExitAnimation)
-            UTypeReferenceExpression (name = java.lang.String)
             UBlockExpression
                 UReturnExpression
                     ULiteralExpression (value = null)

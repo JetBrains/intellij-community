@@ -1,7 +1,6 @@
 UFile (package = ) [public class Bitwise {...]
     UClass (name = Bitwise) [public class Bitwise {...}]
         UMethod (name = foo) [public static fun foo() : int {...}]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var first: int = 19088743] = Undetermined
                     ULocalVariable (name = first) [var first: int = 19088743]
@@ -24,7 +23,6 @@ UFile (package = ) [public class Bitwise {...]
                                 USimpleNameReferenceExpression (identifier = first) [first] = (var first = 19088743)
                                 USimpleNameReferenceExpression (identifier = second) [second] = (var second = 144358622)
         UMethod (name = bar) [public static fun bar() : long {...}]
-            UTypeReferenceExpression (name = long) [long] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var first: long = 81985529216486895] = Undetermined
                     ULocalVariable (name = first) [var first: long = 81985529216486895]

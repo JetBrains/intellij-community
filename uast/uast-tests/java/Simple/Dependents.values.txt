@@ -1,7 +1,6 @@
 UFile (package = ) [public class Dependents {...]
     UClass (name = Dependents) [public class Dependents {...}]
         UMethod (name = foo) [public static fun foo() : int {...}]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var x: int = 42] = Undetermined
                     ULocalVariable (name = x) [var x: int = 42]

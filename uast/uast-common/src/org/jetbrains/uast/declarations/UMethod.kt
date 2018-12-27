@@ -67,7 +67,6 @@ interface UMethod : UDeclaration, PsiMethod {
     if (visitor.visitMethod(this)) return
     annotations.acceptList(visitor)
     uastParameters.acceptList(visitor)
-    returnTypeReference?.accept(visitor)
     uastBody?.accept(visitor)
     visitor.afterVisitMethod(this)
   }
@@ -131,7 +130,6 @@ interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
     if (visitor.visitMethod(this)) return
     annotations.acceptList(visitor)
     uastParameters.acceptList(visitor)
-    returnTypeReference?.accept(visitor)
     uastBody?.accept(visitor)
     uastDefaultValue?.accept(visitor)
     visitor.afterVisitMethod(this)

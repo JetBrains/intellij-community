@@ -9,7 +9,6 @@ UFile (package = ) [public final enum EnumSwitchConditionalBreak {...]
         UMethod (name = foo) [public static fun foo(key: EnumSwitchConditionalBreak, result: int) : int {...}]
             UParameter (name = key) [var key: EnumSwitchConditionalBreak]
             UParameter (name = result) [var result: int]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var newResult: int] = Undetermined
                     ULocalVariable (name = newResult) [var newResult: int]

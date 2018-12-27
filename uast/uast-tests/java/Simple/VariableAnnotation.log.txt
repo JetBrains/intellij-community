@@ -9,7 +9,6 @@ UFile (package = )
         UMethod (name = foo)
             UParameter (name = a)
                 UAnnotation (fqName = TestAnnotation)
-            UTypeReferenceExpression (name = void)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = b)

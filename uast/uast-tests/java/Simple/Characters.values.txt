@@ -1,7 +1,6 @@
 UFile (package = ) [public class Characters {...]
     UClass (name = Characters) [public class Characters {...}]
         UMethod (name = foo) [public static fun foo() : char {...}]
-            UTypeReferenceExpression (name = char) [char] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var a: char = 'a'] = Undetermined
                     ULocalVariable (name = a) [var a: char = 'a']

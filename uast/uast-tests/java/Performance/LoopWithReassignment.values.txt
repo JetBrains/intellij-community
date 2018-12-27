@@ -1,7 +1,6 @@
 UFile (package = ) [public class LoopWithReassignment {...]
     UClass (name = LoopWithReassignment) [public class LoopWithReassignment {...}]
         UMethod (name = foo) [public static fun foo() : java.lang.String {...}]
-            UTypeReferenceExpression (name = java.lang.String) [java.lang.String] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var name: java.lang.String = ""] = Undetermined
                     ULocalVariable (name = name) [var name: java.lang.String = ""]
@@ -29,13 +28,11 @@ UFile (package = ) [public class LoopWithReassignment {...]
                     USimpleNameReferenceExpression (identifier = name) [name] = (var name = Undetermined)
         UMethod (name = bar) [private static fun bar(name: java.lang.String) : java.lang.String {...}]
             UParameter (name = name) [var name: java.lang.String]
-            UTypeReferenceExpression (name = java.lang.String) [java.lang.String] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return null] = Nothing
                     ULiteralExpression (value = null) [null] = null
         UMethod (name = baz) [private static fun baz(icon: Color) : void {...}]
             UParameter (name = icon) [var icon: Color]
-            UTypeReferenceExpression (name = void) [void] = Undetermined
             UBlockExpression [{...}] = Undetermined
     UClass (name = Color) [class Color {...}]
         UField (name = r) [private final var r: int]

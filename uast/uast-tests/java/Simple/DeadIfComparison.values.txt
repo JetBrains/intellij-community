@@ -1,7 +1,6 @@
 UFile (package = ) [public class DeadIfComparison {...]
     UClass (name = DeadIfComparison) [public class DeadIfComparison {...}]
         UMethod (name = foo) [public static fun foo() : int {...}]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var x: int = 0] = Undetermined
                     ULocalVariable (name = x) [var x: int = 0]

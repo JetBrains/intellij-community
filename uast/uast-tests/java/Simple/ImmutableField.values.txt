@@ -14,7 +14,6 @@ UFile (package = ) [public class ImmutableField {...]
                     USimpleNameReferenceExpression (identifier = immutable) [immutable] = (var immutable = 1)
         UMethod (name = bar) [public static fun bar(arg: int) : int {...}]
             UParameter (name = arg) [var arg: int]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return arg] = Nothing
                     USimpleNameReferenceExpression (identifier = arg) [arg] = Undetermined

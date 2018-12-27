@@ -2,7 +2,6 @@ UFile (package = ) [public class TryCatch {...]
     UClass (name = TryCatch) [public class TryCatch {...}]
         UMethod (name = foo) [public static fun foo(str: java.lang.String) : int {...}]
             UParameter (name = str) [var str: java.lang.String]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var sum: int = 0] = Undetermined
                     ULocalVariable (name = sum) [var sum: int = 0]

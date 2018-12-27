@@ -8,7 +8,6 @@ UFile (package = ) [public final enum EnumSwitchWithoutBreaks {...]
             USimpleNameReferenceExpression (identifier = EnumSwitchWithoutBreaks) [EnumSwitchWithoutBreaks] = external EnumSwitchWithoutBreaks()
         UMethod (name = foo) [public static fun foo(key: EnumSwitchWithoutBreaks) : int {...}]
             UParameter (name = key) [var key: EnumSwitchWithoutBreaks]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var result: int] = Undetermined
                     ULocalVariable (name = result) [var result: int]

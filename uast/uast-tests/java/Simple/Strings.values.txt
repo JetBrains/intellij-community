@@ -1,7 +1,6 @@
 UFile (package = ) [public class Strings {...]
     UClass (name = Strings) [public class Strings {...}]
         UMethod (name = foo) [public static fun foo() : java.lang.String {...}]
-            UTypeReferenceExpression (name = java.lang.String) [java.lang.String] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var s1: java.lang.String = "Hello "] = Undetermined
                     ULocalVariable (name = s1) [var s1: java.lang.String = "Hello "]

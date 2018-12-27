@@ -1,7 +1,6 @@
 UFile (package = ) [public class DeadElse {...]
     UClass (name = DeadElse) [public class DeadElse {...}]
         UMethod (name = foo) [public static fun foo() : int {...}]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var f: boolean = true] = Undetermined
                     ULocalVariable (name = f) [var f: boolean = true]

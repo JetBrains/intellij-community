@@ -1,7 +1,6 @@
 UFile (package = )
     UClass (name = TryWithResources)
         UMethod (name = foo)
-            UTypeReferenceExpression (name = void)
             UBlockExpression
                 UTryExpression (with resources)
                     ULocalVariable (name = br)

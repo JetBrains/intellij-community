@@ -1,7 +1,6 @@
 UFile (package = ) [public class IdentityEquals {...]
     UClass (name = IdentityEquals) [public class IdentityEquals {...}]
         UMethod (name = foo) [public static fun foo() : boolean {...}]
-            UTypeReferenceExpression (name = boolean) [boolean] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var i1: java.lang.Integer = 111] = Undetermined
                     ULocalVariable (name = i1) [var i1: java.lang.Integer = 111]
@@ -24,7 +23,6 @@ UFile (package = ) [public class IdentityEquals {...]
                         USimpleNameReferenceExpression (identifier = i12) [i12] = (var i12 = 333 (depending on: (var i1 = 111), (var i2 = 222)))
                         USimpleNameReferenceExpression (identifier = i21) [i21] = (var i21 = 333 (depending on: (var i2 = 222), (var i1 = 111)))
         UMethod (name = bar) [public static fun bar() : boolean {...}]
-            UTypeReferenceExpression (name = boolean) [boolean] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var s1: java.lang.String = "hello"] = Undetermined
                     ULocalVariable (name = s1) [var s1: java.lang.String = "hello"]

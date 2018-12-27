@@ -1,7 +1,6 @@
 UFile (package = )
     UClass (name = Main)
         UMethod (name = getString)
-            UTypeReferenceExpression (name = java.lang.String)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = str)

@@ -2,7 +2,6 @@ UFile (package = ) [public class Main {...]
     UClass (name = Main) [public class Main {...}]
         UMethod (name = getOneOrTwoString) [private static fun getOneOrTwoString(unknown: java.lang.String) : java.lang.String {...}]
             UParameter (name = unknown) [var unknown: java.lang.String]
-            UTypeReferenceExpression (name = java.lang.String) [java.lang.String] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [final var switchResult: java.lang.String = switch (unknown) ...] = Undetermined
                     ULocalVariable (name = switchResult) [final var switchResult: java.lang.String = switch (unknown) ...]
@@ -24,7 +23,6 @@ UFile (package = ) [public class Main {...]
                     USimpleNameReferenceExpression (identifier = switchResult) [switchResult] = (var switchResult = Phi("foobar", "default"))
         UMethod (name = getOneOrThrow) [private static fun getOneOrThrow(unknown: java.lang.String) : java.lang.String {...}]
             UParameter (name = unknown) [var unknown: java.lang.String]
-            UTypeReferenceExpression (name = java.lang.String) [java.lang.String] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [final var switchResult: java.lang.String = switch (unknown) ...] = Undetermined
                     ULocalVariable (name = switchResult) [final var switchResult: java.lang.String = switch (unknown) ...]
@@ -47,7 +45,6 @@ UFile (package = ) [public class Main {...]
                     USimpleNameReferenceExpression (identifier = switchResult) [switchResult] = (var switchResult = "foobar")
         UMethod (name = getThrowOrOne) [private static fun getThrowOrOne(unknown: java.lang.String) : java.lang.String {...}]
             UParameter (name = unknown) [var unknown: java.lang.String]
-            UTypeReferenceExpression (name = java.lang.String) [java.lang.String] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [final var switchResult: java.lang.String = switch (unknown) ...] = Undetermined
                     ULocalVariable (name = switchResult) [final var switchResult: java.lang.String = switch (unknown) ...]
@@ -70,7 +67,6 @@ UFile (package = ) [public class Main {...]
                     USimpleNameReferenceExpression (identifier = switchResult) [switchResult] = (var switchResult = "foobar")
         UMethod (name = getUnknownString) [private static fun getUnknownString(unknown: java.lang.String) : java.lang.String {...}]
             UParameter (name = unknown) [var unknown: java.lang.String]
-            UTypeReferenceExpression (name = java.lang.String) [java.lang.String] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [final var switchResult: java.lang.String = switch (unknown) ...] = Undetermined
                     ULocalVariable (name = switchResult) [final var switchResult: java.lang.String = switch (unknown) ...]
@@ -96,7 +92,6 @@ UFile (package = ) [public class Main {...]
                     USimpleNameReferenceExpression (identifier = switchResult) [switchResult] = (var switchResult = Undetermined)
         UMethod (name = getOneInsideOrThrow) [private static fun getOneInsideOrThrow(unknown: java.lang.String) : int {...}]
             UParameter (name = unknown) [var unknown: java.lang.String]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var known: java.lang.String = "abc"] = Undetermined
                     ULocalVariable (name = known) [var known: java.lang.String = "abc"]
@@ -132,7 +127,6 @@ UFile (package = ) [public class Main {...]
                     USimpleNameReferenceExpression (identifier = switchResult) [switchResult] = (var switchResult = 12)
         UMethod (name = getThrowOrOneInside) [private static fun getThrowOrOneInside(unknown: java.lang.String) : int {...}]
             UParameter (name = unknown) [var unknown: java.lang.String]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var known: java.lang.String = "abc"] = Undetermined
                     ULocalVariable (name = known) [var known: java.lang.String = "abc"]

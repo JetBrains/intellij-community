@@ -1,12 +1,10 @@
 UFile (package = ) [public class WhileWithContinue {...]
     UClass (name = WhileWithContinue) [public class WhileWithContinue {...}]
         UMethod (name = bar) [public static fun bar() : boolean {...}]
-            UTypeReferenceExpression (name = boolean) [boolean] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return true] = Nothing
                     ULiteralExpression (value = true) [true] = true
         UMethod (name = foo) [public static fun foo() : int {...}]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var first: int = 1] = Undetermined
                     ULocalVariable (name = first) [var first: int = 1]
@@ -33,7 +31,6 @@ UFile (package = ) [public class WhileWithContinue {...]
                 UReturnExpression [return second] = Nothing
                     USimpleNameReferenceExpression (identifier = second) [second] = (var second = Phi(3, 2))
         UMethod (name = baz) [public static fun baz() : int {...}]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var first: int = 2] = Undetermined
                     ULocalVariable (name = first) [var first: int = 2]

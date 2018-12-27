@@ -1,7 +1,6 @@
 UFile (package = ) [public class ByteShort {...]
     UClass (name = ByteShort) [public class ByteShort {...}]
         UMethod (name = foo) [public static fun foo() : int {...}]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var b1: byte = 100] = Undetermined
                     ULocalVariable (name = b1) [var b1: byte = 100]

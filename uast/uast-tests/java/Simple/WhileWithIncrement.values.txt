@@ -1,7 +1,6 @@
 UFile (package = ) [public class WhileWithIncrement {...]
     UClass (name = WhileWithIncrement) [public class WhileWithIncrement {...}]
         UMethod (name = foo) [public static fun foo() : int {...}]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var i: int = 0] = Undetermined
                     ULocalVariable (name = i) [var i: int = 0]

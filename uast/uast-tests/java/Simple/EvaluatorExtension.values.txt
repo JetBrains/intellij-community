@@ -2,9 +2,7 @@ UFile (package = ) [public abstract class Foo {...]
     UClass (name = Foo) [public abstract class Foo {...}]
         UMethod (name = getTestName) [public abstract fun getTestName(upper: boolean) : java.lang.String = UastEmptyExpression]
             UParameter (name = upper) [var upper: boolean]
-            UTypeReferenceExpression (name = java.lang.String) [java.lang.String] = Undetermined
         UMethod (name = bar) [public fun bar() : void {...}]
-            UTypeReferenceExpression (name = void) [void] = Undetermined
             UBlockExpression [{...}] = Undetermined
                 UDeclarationsExpression [var t1: java.lang.String = getTestName(false)] = Undetermined
                     ULocalVariable (name = t1) [var t1: java.lang.String = getTestName(false)]

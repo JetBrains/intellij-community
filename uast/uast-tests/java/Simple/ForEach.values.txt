@@ -2,7 +2,6 @@ UFile (package = ) [public class For {...]
     UClass (name = For) [public class For {...}]
         UMethod (name = sum) [public static fun sum(numbers: List<Integer>) : int {...}]
             UParameter (name = numbers) [var numbers: List<Integer>]
-            UTypeReferenceExpression (name = int) [int] = Undetermined
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var result: int = 0] = Undetermined
                     ULocalVariable (name = result) [var result: int = 0]
