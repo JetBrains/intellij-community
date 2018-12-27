@@ -79,11 +79,11 @@ public class MethodUtils {
 
   @Contract("null -> false")
   public static boolean isEquals(@Nullable PsiMethod method) {
-    if (method == null) {
-      return false;
-    }
-    final PsiClassType objectType = TypeUtils.getObjectType(method);
-    return methodMatches(method, null, PsiType.BOOLEAN, HardcodedMethodConstants.EQUALS, objectType);
+    if (method == null || !HardcodedMethodConstants.EQUALS.equals(method.getName())) return false;
+    PsiParameterList parameterList = method.getParameterList();
+    return parameterList.getParametersCount() == 1 &&
+           PsiType.BOOLEAN.equals(method.getReturnType()) &&
+           TypeUtils.isJavaLangObject(parameterList.getParameters()[0].getType());
   }
 
   @Contract("null -> false")
