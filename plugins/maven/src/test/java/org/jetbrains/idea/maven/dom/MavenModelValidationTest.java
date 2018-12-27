@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.ExpectedHighlightingData;
 
 public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
   @Override
@@ -147,7 +148,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                        "  <artifactId>project</artifactId>" +
                        "  <version>1</version>" +
                        "</project>");
-    checkHighlighting();
+    ExpectedHighlightingData.expectedDuplicatedHighlighting(this::checkHighlighting);
   }
 
   public void testAddingProfilesXmlReadingProblemsToProjectTag() {
@@ -169,7 +170,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                        "  <artifactId>project</artifactId>" +
                        "  <version>1</version>" +
                        "</project>");
-    checkHighlighting();
+    ExpectedHighlightingData.expectedDuplicatedHighlighting(this::checkHighlighting);
   }
 
   public void testAddingStructureReadingProblemsToParentTag() {
@@ -200,7 +201,9 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                        "    <version>1</version>" +
                        "  </parent>" +
                        "</project>");
-    checkHighlighting(myProjectPom, true, false, true);
+
+    ExpectedHighlightingData.expectedDuplicatedHighlighting(() ->
+                                                              checkHighlighting(myProjectPom, true, false, true));
   }
 
   public void testAddingParentReadingProblemsToParentTag() {
@@ -238,7 +241,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                        "    <relativePath>parent/pom.xml</relativePath>" +
                        "  </parent>" +
                        "</project>");
-    checkHighlighting();
+    ExpectedHighlightingData.expectedDuplicatedHighlighting(this::checkHighlighting);
   }
 
   public void testDoNotAddReadingSyntaxProblemsToProjectTag() {
