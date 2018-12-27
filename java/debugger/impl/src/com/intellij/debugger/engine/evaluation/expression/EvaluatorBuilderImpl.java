@@ -1553,7 +1553,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           break;
         }
         final PsiType actualArgType = actualArgumentExpressions[idx].getType();
-        if (TypeConversionUtil.boxingConversionApplicable(declaredParamType, actualArgType)) {
+        if (TypeConversionUtil.boxingConversionApplicable(declaredParamType, actualArgType) ||
+            (declaredParamType != null && actualArgType == null)) {
           final Evaluator argEval = argumentEvaluators[idx];
           argumentEvaluators[idx] = declaredParamType instanceof PsiPrimitiveType ? new UnBoxingEvaluator(argEval) : new BoxingEvaluator(argEval);
         }
