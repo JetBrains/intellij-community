@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.io.URLUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -195,8 +196,11 @@ public class TraverseUIStarter extends ApplicationStarterEx {
   @NotNull
   private static String getModuleByTemplate(@NotNull final BundledFileTemplate template) {
     final String url = template.toString();
-    final String path = StringUtil.substringBefore(url, "fileTemplates");
+    String path = StringUtil.substringBefore(url, "fileTemplates");
     assert path != null : "Template URL doesn't contain 'fileTemplates' directory.";
+    if (path.startsWith(URLUtil.JAR_PROTOCOL)) {
+      path = StringUtil.trimEnd(path, URLUtil.JAR_SEPARATOR);
+    }
     return PathUtil.getFileName(path);
   }
 
