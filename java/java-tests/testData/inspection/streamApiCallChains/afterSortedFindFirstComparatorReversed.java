@@ -1,4 +1,4 @@
-// "Replace with max()" "true"
+// "Replace with 'max()'" "true"
 
 import java.util.*;
 import java.util.stream.Collectors;

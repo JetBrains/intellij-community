@@ -1,4 +1,4 @@
-// "Replace with Stream.generate()" "true"
+// "Replace with 'Stream.generate()'" "true"
 
 import java.util.*;
 import java.util.stream.Collectors;
