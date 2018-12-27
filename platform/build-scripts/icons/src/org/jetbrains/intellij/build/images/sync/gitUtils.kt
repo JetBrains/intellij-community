@@ -337,8 +337,6 @@ internal fun gitStatus(repo: File, includeUntracked: Boolean = false) =
 
 internal fun gitStage(repo: File) = execute(repo, GIT, "diff", "--cached", "--name-status")
 
-internal enum class ChangeType { MODIFIED, ADDED, DELETED }
-
 internal fun changesFromCommit(repo: File, hash: String) =
   execute(repo, GIT, "show", "--pretty=format:none", "--name-status", "--no-renames", hash)
     .lineSequence().map { it.trim() }
@@ -348,10 +346,10 @@ internal fun changesFromCommit(repo: File, hash: String) =
     .map {
       val (type, path) = it
       when (type) {
-        "A" -> ChangeType.ADDED
-        "D" -> ChangeType.DELETED
-        "M" -> ChangeType.MODIFIED
-        "T" -> ChangeType.MODIFIED
+        "A" -> Changes.Type.ADDED
+        "D" -> Changes.Type.DELETED
+        "M" -> Changes.Type.MODIFIED
+        "T" -> Changes.Type.MODIFIED
         else -> return@map null
       } to path
     }.filterNotNull().groupBy({ it.first }, { it.second })

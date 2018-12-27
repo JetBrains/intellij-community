@@ -113,22 +113,17 @@ private fun searchForChangedIconsByDesigners(context: Context) {
   fun asIcons(files: Collection<String>) = files
     .filter { ImageExtension.fromName(it) != null }
     .map { context.iconsRepo.resolve(it).toRelativeString(context.iconsRepoDir) }
-
-  val iterator = context.iconsCommitHashesToSync.iterator()
-  while (iterator.hasNext()) {
-    val commit = iterator.next()
+  ArrayList(context.iconsCommitHashesToSync).map {
+    commitInfo(context.iconsRepo, it) ?: error("Commit $it is not found in ${context.iconsRepoName}")
+  }.sortedBy { it.timestamp }.forEach {
+    val commit = it.hash
     val before = context.iconsChanges().size
     changesFromCommit(context.iconsRepo, commit).forEach { type, files ->
-      val icons = asIcons(files)
-      when (type) {
-        ChangeType.ADDED -> context.byDesigners.added += icons
-        ChangeType.MODIFIED -> context.byDesigners.modified += icons
-        ChangeType.DELETED -> context.byDesigners.removed += icons
-      }
+      context.byDesigners.register(type, asIcons(files))
     }
     if (context.iconsChanges().size == before) {
       log("No icons in $commit, skipping")
-      iterator.remove()
+      context.iconsCommitHashesToSync.remove(commit)
     }
   }
   log("Found ${context.iconsCommitHashesToSync.size} commits to sync from ${context.iconsRepoName} to ${context.devRepoName}")
@@ -141,36 +136,25 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
     .map(repo::resolve)
     .filter(context.devIconsFilter)
     .map { it.toRelativeString(context.devRepoRoot) }.toList()
-
-  val iterator = context.devIconsCommitHashesToSync.iterator()
-  while (iterator.hasNext()) {
-    val commit = iterator.next()
-    val repo = devRepoVcsRoots.firstOrNull {
-      try {
-        commitInfo(it, commit)
-      }
-      catch (ignored: Exception) {
-        null
-      } != null
-    }
-    if (repo == null) {
-      log("No repo is found for $commit, skipping")
-      iterator.remove()
-    }
-    else {
-      val before = context.devChanges().size
-      changesFromCommit(repo, commit).forEach { type, files ->
-        val icons = asIcons(files, repo)
-        when (type) {
-          ChangeType.ADDED -> context.byDev.added += icons
-          ChangeType.MODIFIED -> context.byDev.modified += icons
-          ChangeType.DELETED -> context.byDev.removed += icons
+  ArrayList(context.devIconsCommitHashesToSync).mapNotNull { commit ->
+    devRepoVcsRoots.asSequence()
+      .map { repo -> callSafely { commitInfo(repo, commit) } }
+      .filterNotNull().firstOrNull()
+      .apply {
+        if (this == null) {
+          log("No repo is found for $commit, skipping")
+          context.devIconsCommitHashesToSync.remove(commit)
         }
       }
-      if (context.devChanges().size == before) {
-        log("No icons in $commit, skipping")
-        iterator.remove()
-      }
+  }.sortedBy { it.timestamp }.forEach {
+    val commit = it.hash
+    val before = context.devChanges().size
+    changesFromCommit(it.repo, commit).forEach { type, files ->
+      context.byDev.register(type, asIcons(files, it.repo))
+    }
+    if (context.devChanges().size == before) {
+      log("No icons in $commit, skipping")
+      context.devIconsCommitHashesToSync.remove(commit)
     }
   }
   log("Found ${context.devIconsCommitHashesToSync.size} commits to sync from ${context.devRepoName} to ${context.iconsRepoName}")
