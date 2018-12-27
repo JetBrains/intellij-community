@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -38,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -85,30 +83,27 @@ public class TestDataGuessByExistingFilesUtil {
     if (testName == null) return null;
     PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return null;
+    String testDataBasePath = TestDataLineMarkerProvider.getTestDataBasePath(psiClass);
     int count = 5;
     PsiMethod prev = PsiTreeUtil.getPrevSiblingOfType(method, PsiMethod.class);
     while (prev != null && count-- > 0) {
-      List<String> testData = guessTestDataBySiblingTest(prev, testName);
-      if (testData != null) return testData;
+      List<String> testData = guessTestDataBySiblingTest(prev, testDataBasePath, testName);
+      if (!testData.isEmpty()) return testData;
       prev = PsiTreeUtil.getPrevSiblingOfType(prev, PsiMethod.class);
     }
     count = 5;
     PsiMethod next = PsiTreeUtil.getNextSiblingOfType(method, PsiMethod.class);
     while (next != null && count-- > 0) {
-      List<String> testData = guessTestDataBySiblingTest(next, testName);
-      if (testData != null) return testData;
+      List<String> testData = guessTestDataBySiblingTest(next, testDataBasePath, testName);
+      if (!testData.isEmpty()) return testData;
       next = PsiTreeUtil.getNextSiblingOfType(next, PsiMethod.class);
     }
     return null;
   }
 
-  @Nullable
-  private static List<String> guessTestDataBySiblingTest(PsiMethod psiMethod, String testName) {
-    List<String> strings = collectTestDataByExistingFiles(psiMethod);
-    if (!strings.isEmpty()) {
-      return ContainerUtil.map(strings, s -> new File(new File(s).getParent(), testName + "." + FileUtilRt.getExtension(new File(s).getName())).getPath());
-    }
-    return null;
+  @NotNull
+  private static List<String> guessTestDataBySiblingTest(PsiMethod psiMethod, String testDataBasePath, String testName) {
+    return buildDescriptorFromExistingTestData(psiMethod, testDataBasePath).generate(testName, null);
   }
 
   @Nullable
