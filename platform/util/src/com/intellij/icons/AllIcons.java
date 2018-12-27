@@ -52,11 +52,17 @@ public class AllIcons {
     public static final Icon GroupByTestProduction = IconLoader.getIcon("/actions/groupByTestProduction.svg"); // 16x16
     public static final Icon Help = IconLoader.getIcon("/actions/help.svg"); // 16x16
     public static final Icon Highlighting = IconLoader.getIcon("/actions/highlighting.svg"); // 16x16
+    public static final Icon InSelection = IconLoader.getIcon("/actions/inSelection.svg"); // 16x16
+    public static final Icon InSelectionHovered = IconLoader.getIcon("/actions/inSelectionHovered.svg"); // 16x16
+    public static final Icon InSelectionSelected = IconLoader.getIcon("/actions/inSelectionSelected.svg"); // 16x16
     public static final Icon Install = IconLoader.getIcon("/actions/install.svg"); // 16x16
     public static final Icon IntentionBulb = IconLoader.getIcon("/actions/intentionBulb.svg"); // 16x16
     public static final Icon Lightning = IconLoader.getIcon("/actions/lightning.svg"); // 16x16
     public static final Icon ListChanges = IconLoader.getIcon("/actions/listChanges.svg"); // 16x16
     public static final Icon ListFiles = IconLoader.getIcon("/actions/listFiles.svg"); // 16x16
+    public static final Icon MatchCase = IconLoader.getIcon("/actions/matchCase.svg"); // 16x16
+    public static final Icon MatchCaseHovered = IconLoader.getIcon("/actions/matchCaseHovered.svg"); // 16x16
+    public static final Icon MatchCaseSelected = IconLoader.getIcon("/actions/matchCaseSelected.svg"); // 16x16
     public static final Icon Menu_cut = IconLoader.getIcon("/actions/menu-cut.svg"); // 16x16
     public static final Icon Menu_open = IconLoader.getIcon("/actions/menu-open.svg"); // 16x16
     public static final Icon Menu_paste = IconLoader.getIcon("/actions/menu-paste.svg"); // 16x16
@@ -101,6 +107,9 @@ public class AllIcons {
     public static final Icon Redo = IconLoader.getIcon("/actions/redo.svg"); // 16x16
     public static final Icon RefactoringBulb = IconLoader.getIcon("/actions/refactoringBulb.svg"); // 16x16
     public static final Icon Refresh = IconLoader.getIcon("/actions/refresh.svg"); // 16x16
+    public static final Icon Regex = IconLoader.getIcon("/actions/regex.svg"); // 16x16
+    public static final Icon RegexHovered = IconLoader.getIcon("/actions/regexHovered.svg"); // 16x16
+    public static final Icon RegexSelected = IconLoader.getIcon("/actions/regexSelected.svg"); // 16x16
     public static final Icon RemoveMulticaret = IconLoader.getIcon("/actions/RemoveMulticaret.svg"); // 16x16
     public static final Icon Replace = IconLoader.getIcon("/actions/replace.svg"); // 16x16
     public static final Icon Rerun = IconLoader.getIcon("/actions/rerun.svg"); // 16x16
@@ -143,6 +152,9 @@ public class AllIcons {
     public static final Icon Unselectall = IconLoader.getIcon("/actions/unselectall.svg"); // 16x16
     public static final Icon Unshare = IconLoader.getIcon("/actions/unshare.png"); // 14x14
     public static final Icon Upload = IconLoader.getIcon("/actions/upload.svg"); // 16x16
+    public static final Icon Words = IconLoader.getIcon("/actions/words.svg"); // 16x16
+    public static final Icon WordsHovered = IconLoader.getIcon("/actions/wordsHovered.svg"); // 16x16
+    public static final Icon WordsSelected = IconLoader.getIcon("/actions/wordsSelected.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -897,6 +909,7 @@ public class AllIcons {
   }
 
   public final static class General {
+    public static final Icon ActiveFilter = IconLoader.getIcon("/general/activeFilter.svg"); // 16x16
     public static final Icon ActualZoom = IconLoader.getIcon("/general/actualZoom.svg"); // 16x16
     public static final Icon Add = IconLoader.getIcon("/general/add.svg"); // 16x16
     public static final Icon AddJdk = IconLoader.getIcon("/general/addJdk.svg"); // 16x16
@@ -914,6 +927,7 @@ public class AllIcons {
     public static final Icon BalloonInformation = IconLoader.getIcon("/general/balloonInformation.svg"); // 16x16
     public static final Icon BalloonWarning = IconLoader.getIcon("/general/balloonWarning.svg"); // 16x16
     public static final Icon BalloonWarning12 = IconLoader.getIcon("/general/balloonWarning12.svg"); // 12x12
+    public static final Icon ButtonDropTriangle = IconLoader.getIcon("/general/buttonDropTriangle.svg"); // 8x4
     public static final Icon CollapseComponent = IconLoader.getIcon("/general/collapseComponent.svg"); // 12x12
     public static final Icon CollapseComponentHover = IconLoader.getIcon("/general/collapseComponentHover.svg"); // 12x12
     public static final Icon ContextHelp = IconLoader.getIcon("/general/contextHelp.svg"); // 16x16
@@ -2520,20 +2534,45 @@ public class AllIcons {
     public static final Icon DB2 = IconLoader.getIcon("/providers/DB2.svg"); // 16x16
     public static final Icon Eclipse = IconLoader.getIcon("/providers/eclipse.svg"); // 16x16
     public static final Icon Exasol = IconLoader.getIcon("/providers/exasol.svg"); // 16x16
+    public static final Icon Firebird = IconLoader.getIcon("/providers/firebird.svg"); // 16x16
+    public static final Icon Greenplum = IconLoader.getIcon("/providers/greenplum.svg"); // 16x16
     public static final Icon H2 = IconLoader.getIcon("/providers/h2.svg"); // 16x16
+    public static final Icon HANA = IconLoader.getIcon("/providers/HANA.svg"); // 16x16
     public static final Icon Hibernate = IconLoader.getIcon("/providers/hibernate.svg"); // 16x16
+    public static final Icon Hive = IconLoader.getIcon("/providers/hive.svg"); // 16x16
     public static final Icon Hsqldb = IconLoader.getIcon("/providers/hsqldb.svg"); // 16x16
     public static final Icon Ibm = IconLoader.getIcon("/providers/ibm.svg"); // 16x16
+    public static final Icon Informix = IconLoader.getIcon("/providers/informix.svg"); // 16x16
     public static final Icon Mariadb = IconLoader.getIcon("/providers/mariadb.svg"); // 16x16
     public static final Icon Microsoft = IconLoader.getIcon("/providers/microsoft.svg"); // 16x16
     public static final Icon Mysql = IconLoader.getIcon("/providers/mysql.svg"); // 16x16
     public static final Icon Oracle = IconLoader.getIcon("/providers/oracle.svg"); // 16x16
     public static final Icon Postgresql = IconLoader.getIcon("/providers/postgresql.svg"); // 16x16
+    public static final Icon Presto = IconLoader.getIcon("/providers/presto.svg"); // 16x16
     public static final Icon Redshift = IconLoader.getIcon("/providers/redshift.svg"); // 16x16
+    public static final Icon Snowflake = IconLoader.getIcon("/providers/snowflake.svg"); // 16x16
     public static final Icon Sqlite = IconLoader.getIcon("/providers/sqlite.svg"); // 16x16
     public static final Icon SqlServer = IconLoader.getIcon("/providers/sqlServer.svg"); // 16x16
     public static final Icon Sun = IconLoader.getIcon("/providers/sun.svg"); // 16x16
     public static final Icon Sybase = IconLoader.getIcon("/providers/sybase.svg"); // 16x16
+    public static final Icon Teradata = IconLoader.getIcon("/providers/teradata.svg"); // 16x16
+    public static final Icon UserDriverBlue1 = IconLoader.getIcon("/providers/UserDriverBlue1.svg"); // 16x16
+    public static final Icon UserDriverBlue2 = IconLoader.getIcon("/providers/UserDriverBlue2.svg"); // 16x16
+    public static final Icon UserDriverBlue3 = IconLoader.getIcon("/providers/UserDriverBlue3.svg"); // 16x16
+    public static final Icon UserDriverBlue4 = IconLoader.getIcon("/providers/UserDriverBlue4.svg"); // 16x16
+    public static final Icon UserDriverGreen1 = IconLoader.getIcon("/providers/UserDriverGreen1.svg"); // 16x16
+    public static final Icon UserDriverGreen2 = IconLoader.getIcon("/providers/UserDriverGreen2.svg"); // 16x16
+    public static final Icon UserDriverGreen3 = IconLoader.getIcon("/providers/UserDriverGreen3.svg"); // 16x16
+    public static final Icon UserDriverGreen4 = IconLoader.getIcon("/providers/UserDriverGreen4.svg"); // 16x16
+    public static final Icon UserDriverPink1 = IconLoader.getIcon("/providers/UserDriverPink1.svg"); // 16x16
+    public static final Icon UserDriverPink2 = IconLoader.getIcon("/providers/UserDriverPink2.svg"); // 16x16
+    public static final Icon UserDriverPink3 = IconLoader.getIcon("/providers/UserDriverPink3.svg"); // 16x16
+    public static final Icon UserDriverPink4 = IconLoader.getIcon("/providers/UserDriverPink4.svg"); // 16x16
+    public static final Icon UserDriverRed1 = IconLoader.getIcon("/providers/UserDriverRed1.svg"); // 16x16
+    public static final Icon UserDriverRed2 = IconLoader.getIcon("/providers/UserDriverRed2.svg"); // 16x16
+    public static final Icon UserDriverRed3 = IconLoader.getIcon("/providers/UserDriverRed3.svg"); // 16x16
+    public static final Icon UserDriverRed4 = IconLoader.getIcon("/providers/UserDriverRed4.svg"); // 16x16
+    public static final Icon Vertica = IconLoader.getIcon("/providers/vertica.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
