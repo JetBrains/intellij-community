@@ -5,6 +5,7 @@ import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
@@ -64,9 +65,8 @@ public class RecentLocationManager implements ProjectComponent {
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        List<IdeDocumentHistoryImpl.PlaceInfo> toRemove =
-          ContainerUtil.filter(myItems.keySet(),
-                               placeInfo -> events.stream().anyMatch(event -> event.isFromRefresh() && placeInfo.getFile().equals(event.getFile())));
+        List<IdeDocumentHistoryImpl.PlaceInfo> toRemove = ContainerUtil.filter(myItems.keySet(), placeInfo -> events.stream()
+          .anyMatch(event -> event.isFromRefresh() && placeInfo.getFile().equals(event.getFile())));
 
         toRemove.forEach(placeInfo -> removePlace(placeInfo));
       }
@@ -116,13 +116,15 @@ public class RecentLocationManager implements ProjectComponent {
       return;
     }
 
-    int lineNumber = ((TextEditorState)navigationState).getRelativeCaretPositionLine(editor);
+    int line = ((TextEditorState)navigationState).getRelativeCaretPositionLine(editor);
 
-    Collection<Iterable<? extends Crumb>> result = getBreadcrumbs(project, editor, changePlace, lineNumber);
+    Collection<Iterable<? extends Crumb>> result = getBreadcrumbs(project, editor, changePlace, line);
+
     Document document = editor.getDocument();
-    Pair<Integer, Integer> lines = getBoundLineNumbers(document, lineNumber);
+    PlaceInfoPersistentItem item = myItems.get(changePlace);
+    RangeMarker rangeMarker = item != null ? item.getRangeMarker() : document.createRangeMarker(getLinesRange(document, line));
 
-    myItems.put(changePlace, new PlaceInfoPersistentItem(result, getText(document, lines, lineNumber), lines.getFirst()));
+    myItems.put(changePlace, new PlaceInfoPersistentItem(result, rangeMarker));
   }
 
   @Nullable
@@ -149,12 +151,6 @@ public class RecentLocationManager implements ProjectComponent {
     }
 
     return ((TextEditor)fileEditor).getEditor();
-  }
-
-  @NotNull
-  private static String getText(@NotNull Document document, @NotNull Pair<Integer, Integer> lines, int line) {
-    TextRange linesRange = getLinesRange(document, DocumentUtil.getLineTextRange(document, line), lines.getFirst(), lines.getSecond());
-    return document.getText(linesRange);
   }
 
   @NotNull
@@ -189,13 +185,15 @@ public class RecentLocationManager implements ProjectComponent {
   }
 
   @NotNull
-  private static TextRange getLinesRange(@NotNull Document document, @NotNull TextRange range, int start, int end) {
-    int startOffset = DocumentUtil.getLineTextRange(document, start).getStartOffset();
-    int endOffset = DocumentUtil.getLineTextRange(document, end).getEndOffset();
+  private static TextRange getLinesRange(@NotNull Document document, int line) {
+    Pair<Integer, Integer> lines = getBoundLineNumbers(document, line);
+
+    int startOffset = DocumentUtil.getLineTextRange(document, lines.getFirst()).getStartOffset();
+    int endOffset = DocumentUtil.getLineTextRange(document, lines.getSecond()).getEndOffset();
 
     return startOffset <= endOffset
            ? TextRange.create(startOffset, endOffset)
-           : TextRange.create(range);
+           : TextRange.create(DocumentUtil.getLineTextRange(document, line));
   }
 
   @NotNull
@@ -208,48 +206,29 @@ public class RecentLocationManager implements ProjectComponent {
     return item.getResult();
   }
 
-  @Nullable
-  String getTexts(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo) {
+  @NotNull
+  RangeMarker getRangeMarker(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo) {
     PlaceInfoPersistentItem item = myItems.get(placeInfo);
-    if (item == null) {
-      return null;
-    }
-
-    return item.getText();
-  }
-
-  int getLineNumber(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo) {
-    PlaceInfoPersistentItem item = myItems.get(placeInfo);
-    if (item == null) {
-      return -1;
-    }
-
-    return item.getLineNumber();
+    return item.getRangeMarker();
   }
 
   private static class PlaceInfoPersistentItem {
     private final Collection<Iterable<? extends Crumb>> myResult;
-    private final String myText;
-    private final int myStartLineNumber;
+    @NotNull private final RangeMarker myRangeMarker;
 
-    PlaceInfoPersistentItem(@NotNull Collection<Iterable<? extends Crumb>> crumbs, @NotNull String text, int startLineNumber) {
+    PlaceInfoPersistentItem(@NotNull Collection<Iterable<? extends Crumb>> crumbs, @NotNull RangeMarker rangeMarker) {
       myResult = crumbs;
-      myText = text;
-      myStartLineNumber = startLineNumber;
+      myRangeMarker = rangeMarker;
     }
 
     @NotNull
-    Collection<Iterable<? extends Crumb>> getResult() {
+    private Collection<Iterable<? extends Crumb>> getResult() {
       return myResult;
     }
 
     @NotNull
-    String getText() {
-      return myText;
-    }
-
-    int getLineNumber() {
-      return myStartLineNumber;
+    private RangeMarker getRangeMarker() {
+      return myRangeMarker;
     }
   }
 }

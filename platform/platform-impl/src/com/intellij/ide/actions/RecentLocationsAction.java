@@ -19,11 +19,9 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -54,7 +52,6 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -303,18 +300,8 @@ public class RecentLocationsAction extends DumbAwareAction {
     List<RecentLocationItem> caretsList = ContainerUtil.newArrayList();
 
     for (PlaceInfo placeInfo : topElements) {
-      FileEditorState state = placeInfo.getNavigationState();
-
-      if (!(state instanceof TextEditorState)) {
-        continue;
-      }
-
-      EditorEx smallEditor = createEditor(project, placeInfo.getFile(), placeInfo);
-
-      if (smallEditor == null) {
-        continue;
-      }
-
+      EditorEx smallEditor = createEditor(project, placeInfo.getFile(),
+                                          RecentLocationManager.getInstance(project).getRangeMarker(placeInfo));
       editorsToRelease.add(smallEditor);
 
       caretsList.add(new RecentLocationItem(placeInfo, smallEditor));
@@ -322,22 +309,18 @@ public class RecentLocationsAction extends DumbAwareAction {
     return caretsList;
   }
 
-  @Nullable
+  @NotNull
   private static EditorEx createEditor(@NotNull Project project,
                                        @NotNull VirtualFile file,
-                                       @NotNull PlaceInfo placeInfo) {
-    String text = RecentLocationManager.getInstance(project).getTexts(placeInfo);
+                                       @NotNull RangeMarker rangeMarker) {
+    Document document = rangeMarker.getDocument();
+    int offset = rangeMarker.getStartOffset();
 
-    if (text == null) {
-      return null;
-    }
-
-    int lineNumber = RecentLocationManager.getInstance(project).getLineNumber(placeInfo);
+    String text = document.getText(TextRange.create(offset, rangeMarker.getEndOffset()));
     int newLinesBefore = StringUtil.countNewLines(text) - StringUtil.countNewLines(StringUtil.trimLeading(text));
-
     text = StringUtil.trim(text);
 
-    EditorEx smallEditor = createEditor(project, text, lineNumber + newLinesBefore, file);
+    EditorEx smallEditor = createEditor(project, text, document.getLineNumber(offset) + newLinesBefore, file);
     smallEditor.getGutterComponentEx().setPaintBackground(false);
 
     return smallEditor;
