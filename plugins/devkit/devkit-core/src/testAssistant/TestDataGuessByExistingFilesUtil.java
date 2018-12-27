@@ -244,13 +244,15 @@ public class TestDataGuessByExistingFilesUtil {
               return true;
             });
 
-            List<TestLocationDescriptor> previousDescriptors = descriptorsByFileNames.get(name);
-            if (previousDescriptors == null) {
-              descriptorsByFileNames.put(name, currentDescriptors);
-              continue;
-            }
-            if (moreRelevantPath(currentDescriptors.get(0), previousDescriptors.get(0), psiClass)) {
-              descriptorsByFileNames.put(name, currentDescriptors);
+            if (!currentDescriptors.isEmpty()) {
+              List<TestLocationDescriptor> previousDescriptors = descriptorsByFileNames.get(name);
+              if (previousDescriptors == null) {
+                descriptorsByFileNames.put(name, currentDescriptors);
+                continue;
+              }
+              if (moreRelevantPath(currentDescriptors.get(0), previousDescriptors.get(0), psiClass)) {
+                descriptorsByFileNames.put(name, currentDescriptors);
+              }
             }
           }
           indicator.setFraction(++currentIndex / fileNamesCount);
