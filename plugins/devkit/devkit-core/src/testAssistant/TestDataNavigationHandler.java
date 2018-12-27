@@ -57,18 +57,18 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
   public static void navigate(@NotNull RelativePoint point,
                               @NotNull List<String> testDataFiles,
                               Project project) {
+    if (testDataFiles.isEmpty()) return;
     if (testDataFiles.size() == 1) {
       TestDataUtil.openOrAskToCreateFile(project, testDataFiles.get(0));
     }
-    else if (testDataFiles.size() > 1) {
-      TestDataGroupVirtualFile groupFile = TestDataUtil.getTestDataGroup(testDataFiles);
+    else if (testDataFiles.size() == 2) {
+      TestDataGroupVirtualFile groupFile = TestDataUtil.getTestDataGroup(testDataFiles.get(0), testDataFiles.get(1));
       if (groupFile != null) {
         PsiNavigationSupport.getInstance().createNavigatable(project, groupFile, -1).navigate(true);
-      }
-      else {
-        showNavigationPopup(project, testDataFiles, point);
+        return;
       }
     }
+    showNavigationPopup(project, testDataFiles, point);
   }
 
   @NotNull
@@ -97,11 +97,12 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
         if (nonExistingElementsToDisplay.isEmpty()) {
           nonExistingElementsToDisplay.add(TestDataNavigationElementFactory.createForCreateMissingFilesOption(filePaths));
         }
-        nonExistingElementsToDisplay.add(TestDataNavigationElementFactory.createForFile(project, p));
+        nonExistingElementsToDisplay.add(TestDataNavigationElementFactory.createForNonExistingFile(project, p));
       } else {
         files.add(f);
       }
     }
+
     consumeElementsToDisplay(project, files, elementsToDisplay::add);
     elementsToDisplay.addAll(nonExistingElementsToDisplay);
 
@@ -154,7 +155,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
       }
 
       if (!groupFound) {
-        consumer.accept(TestDataNavigationElementFactory.createForFile(project, file1.getPath()));
+        consumer.accept(TestDataNavigationElementFactory.createForFile(project, file1));
         usedPaths.add(file1);
       }
     }

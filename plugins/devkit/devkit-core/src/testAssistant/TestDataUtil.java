@@ -26,7 +26,6 @@ import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 
 public class TestDataUtil {
@@ -68,14 +67,6 @@ public class TestDataUtil {
     }
 
     return beforeName + " | " + afterName;
-  }
-
-  @Nullable
-  static TestDataGroupVirtualFile getTestDataGroup(@NotNull List<String> fileNames) {
-    if (fileNames.size() != 2) {
-      return null;
-    }
-    return getTestDataGroup(fileNames.get(0), fileNames.get(1));
   }
 
   @Nullable

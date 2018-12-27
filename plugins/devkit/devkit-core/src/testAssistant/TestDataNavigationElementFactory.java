@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -28,8 +29,13 @@ public class TestDataNavigationElementFactory {
   }
 
   @NotNull
-  public static TestDataNavigationElement createForFile(@NotNull Project project, @NotNull String path) {
-    return new TestDataFileNavigationElement(project, path);
+  public static TestDataNavigationElement createForNonExistingFile(@NotNull Project project, @NotNull String path) {
+    return new NonExistingTestDataFileNavigationElement(project, path);
+  }
+
+  @NotNull
+  public static TestDataNavigationElement createForFile(@NotNull Project project, @NotNull VirtualFile file) {
+    return new TestDataFileNavigationElement(project, file);
   }
 
   @NotNull
@@ -41,7 +47,6 @@ public class TestDataNavigationElementFactory {
   public static TestDataNavigationElement createForCreateMissingFilesOption(@NotNull List<String> filePaths) {
     return new CreateMissingTestDataFilesNavigationElement(filePaths);
   }
-
 
   private static class CreateMissingTestDataFilesNavigationElement implements TestDataNavigationElement {
     private final List<String> myFilePaths;
@@ -162,11 +167,11 @@ public class TestDataNavigationElementFactory {
     }
   }
 
-  private static class TestDataFileNavigationElement implements TestDataNavigationElement {
+  private static class NonExistingTestDataFileNavigationElement implements TestDataNavigationElement {
     private final Project myProject;
     private final String myPath;
 
-    private TestDataFileNavigationElement(Project project, String path) {
+    private NonExistingTestDataFileNavigationElement(@NotNull Project project, @NotNull String path) {
       myProject = project;
       myPath = path;
     }
@@ -179,33 +184,53 @@ public class TestDataNavigationElementFactory {
     @Nullable
     @Override
     public Icon getIcon() {
-      return TestDataUtil.getIcon(myPath);
+      return FileTypes.UNKNOWN.getIcon();
     }
 
     @NotNull
     @Override
     public List<Pair<String, SimpleTextAttributes>> getTitleFragments() {
-      VirtualFile file = TestDataUtil.getFileByPath(myPath);
-      String spaceAndThinSpace = FontUtil.spaceAndThinSpace();
+      Pair<String, String> relativePath = TestDataUtil.getRelativePathPairForMissingFile(myProject, myPath);
+      return ContainerUtil.newSmartList(
+        new Pair<>(PathUtil.getFileName(myPath) + FontUtil.spaceAndThinSpace(), SimpleTextAttributes.GRAYED_ATTRIBUTES),
+        new Pair<>(relativePath.first == null ? "" : relativePath.first, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES),
+        new Pair<>(relativePath.first == null ? "" : "/" + relativePath.second, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      );
+    }
+  }
 
-      if (file == null) {
-        Pair<String, String> relativePath = TestDataUtil.getRelativePathPairForMissingFile(myProject, myPath);
-        return ContainerUtil.newSmartList(
-          new Pair<>(PathUtil.getFileName(myPath) + spaceAndThinSpace, SimpleTextAttributes.GRAYED_ATTRIBUTES),
-          new Pair<>(relativePath.first == null ? "" : relativePath.first, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES),
-          new Pair<>(relativePath.first == null ? "" : "/" + relativePath.second, SimpleTextAttributes.GRAYED_ATTRIBUTES)
-        );
-      }
+  private static class TestDataFileNavigationElement implements TestDataNavigationElement {
+    private final Project myProject;
+    private final VirtualFile myFile;
 
-      Pair<String, String> relativePath = TestDataUtil.getModuleOrProjectRelativeParentPath(myProject, file);
+    private TestDataFileNavigationElement(@NotNull Project project, @NotNull VirtualFile file) {
+      myProject = project;
+      myFile = file;
+    }
+
+    @Override
+    public void performAction(@NotNull Project project) {
+      TestDataUtil.openOrAskToCreateFile(project, myFile.getPath());
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+      return myFile.getFileType().getIcon();
+    }
+
+    @NotNull
+    @Override
+    public List<Pair<String, SimpleTextAttributes>> getTitleFragments() {
+      Pair<String, String> relativePath = TestDataUtil.getModuleOrProjectRelativeParentPath(myProject, myFile);
       if (relativePath == null) {
         // cannot calculate module/project relative path, use absolute path
         return ContainerUtil.newSmartList(new Pair<>(
-          String.format("%s (%s)", file.getName(), PathUtil.getParentPath(myPath) + "/"),
+          String.format("%s (%s)", myFile.getName(), myFile.getParent().getPath() + "/"),
           SimpleTextAttributes.REGULAR_ATTRIBUTES));
       }
 
-      return ContainerUtil.newSmartList(new Pair<>(file.getName() + spaceAndThinSpace, SimpleTextAttributes.REGULAR_ATTRIBUTES),
+      return ContainerUtil.newSmartList(new Pair<>(myFile.getName() + FontUtil.spaceAndThinSpace(), SimpleTextAttributes.REGULAR_ATTRIBUTES),
                                         new Pair<>(relativePath.first, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES),
                                         new Pair<>("/" + relativePath.second, SimpleTextAttributes.GRAYED_ATTRIBUTES));
     }
