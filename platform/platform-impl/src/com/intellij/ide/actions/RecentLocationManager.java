@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -155,7 +154,7 @@ public class RecentLocationManager implements ProjectComponent {
   @NotNull
   private static String getText(@NotNull Document document, @NotNull Pair<Integer, Integer> lines, int line) {
     TextRange linesRange = getLinesRange(document, DocumentUtil.getLineTextRange(document, line), lines.getFirst(), lines.getSecond());
-    return StringUtil.trim(document.getText(linesRange));
+    return document.getText(linesRange);
   }
 
   @NotNull

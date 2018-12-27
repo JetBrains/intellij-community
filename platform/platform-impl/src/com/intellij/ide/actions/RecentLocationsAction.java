@@ -333,8 +333,11 @@ public class RecentLocationsAction extends DumbAwareAction {
     }
 
     int lineNumber = RecentLocationManager.getInstance(project).getLineNumber(placeInfo);
+    int newLinesBefore = StringUtil.countNewLines(text) - StringUtil.countNewLines(StringUtil.trimLeading(text));
 
-    EditorEx smallEditor = createEditor(project, text, lineNumber, file);
+    text = StringUtil.trim(text);
+
+    EditorEx smallEditor = createEditor(project, text, lineNumber + newLinesBefore, file);
     smallEditor.getGutterComponentEx().setPaintBackground(false);
 
     return smallEditor;
