@@ -1121,4 +1121,15 @@ class Foo {
     
     myFixture.checkResult '// line comment\n/* block comment */\n// any comment '
   }
+
+  void "test show lookup with groovyScript collection result"() {
+    myFixture.configureByText 'a.java', '<caret>'
+
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    Template template = manager.createTemplate("empty", "user", '$V$')
+    template.addVariable("V", 'groovyScript("[1, 2, true]")', '', true)
+    manager.startTemplate(myFixture.editor, template)
+    
+    assert myFixture.lookupElementStrings == ['1', '2', 'true']
+  }
 }
