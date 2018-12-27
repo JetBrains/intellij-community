@@ -620,13 +620,13 @@ public class DataFlowRunner {
     
     void startMerge() {
       if (myMxBean != null) {
-        myMergeStart = myMxBean.getCurrentThreadCpuTime();
+        myMergeStart = System.nanoTime();
       }
     }
     
     void endMerge() {
       if (myMxBean != null) {
-        myMergeTime += myMxBean.getCurrentThreadCpuTime() - myMergeStart;
+        myMergeTime += System.nanoTime() - myMergeStart;
       }
     }
     
