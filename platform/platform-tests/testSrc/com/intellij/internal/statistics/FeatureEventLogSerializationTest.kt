@@ -6,6 +6,8 @@ import com.google.gson.JsonParser
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.openapi.util.io.FileUtil
 import org.junit.Test
+import java.nio.ByteBuffer
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -450,6 +452,27 @@ class FeatureEventLogSerializationTest {
     val json = "{\"a\":12345,\"b\":\"183.0\",\"d\":\"-1\"}"
     val deserialized = LogEventSerializer.fromString(json)
     assertNull(deserialized)
+  }
+
+  @Test
+  fun testUserIdBytesLayout() {
+    val calendar = Calendar.getInstance()
+    calendar.set(2017, 4, 15)
+    val id = LogEventRecordRequest.calculateId(calendar, 2)
+    val fromString = UUID.fromString(id)
+    val leastSignificantBytes = fromString.leastSignificantBits.toBigInteger().toByteArray()
+
+    assertEquals(2, leastSignificantBytes[10 - 8])
+
+    val bb = ByteBuffer.allocate(4)
+    bb.put(0)
+    bb.put(0)
+    bb.put(leastSignificantBytes[11 - 8])
+    bb.put(leastSignificantBytes[12 - 8])
+    val binaryString = Integer.toBinaryString(ByteBuffer.wrap(bb.array()).int)
+    assertEquals(15, Integer.parseInt(binaryString.substring(0, 4), 2))
+    assertEquals(4, Integer.parseInt(binaryString.substring(5, 8), 2))
+    assertEquals(2017, 2000 + Integer.parseInt(binaryString.substring(9), 2))
   }
 
   private fun testWhitelistFilter(whitelist: Set<String>, all: List<LogEvent>, filtered: List<LogEvent>) {
