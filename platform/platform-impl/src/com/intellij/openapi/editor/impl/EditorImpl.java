@@ -3785,9 +3785,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
-      if (event.isConsumed()) {
-        return;
-      }
       for (EditorMouseListener listener : myMouseListeners) {
         listener.mouseReleased(event);
         if (isReleased || event.isConsumed()) {
@@ -3796,6 +3793,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       invokePopupIfNeeded(event);
+      if (event.isConsumed()) {
+        return;
+      }
 
       if (myCommandProcessor != null) {
         Runnable runnable = () -> processMouseReleased(e);
