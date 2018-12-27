@@ -39,7 +39,7 @@ public class ResetAgent {
     initialized = true;
     inst.addTransformer(new ClassFileTransformer() {
       public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        if (className.indexOf('$') > 0) {
+        if (className.indexOf('$') >= 0) {
           // non-toplevel Groovy classes don't have timestamp fields, so don't Java classes and lambdas
           // let's not care about presumably rare dollar-named Groovy classes
           return null;
