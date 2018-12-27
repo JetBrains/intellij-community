@@ -2520,20 +2520,29 @@ public class AllIcons {
     public static final Icon DB2 = IconLoader.getIcon("/providers/DB2.svg"); // 16x16
     public static final Icon Eclipse = IconLoader.getIcon("/providers/eclipse.svg"); // 16x16
     public static final Icon Exasol = IconLoader.getIcon("/providers/exasol.svg"); // 16x16
+    public static final Icon Firebird = IconLoader.getIcon("/providers/firebird.svg"); // 16x16
+    public static final Icon Greenplum = IconLoader.getIcon("/providers/greenplum.svg"); // 16x16
     public static final Icon H2 = IconLoader.getIcon("/providers/h2.svg"); // 16x16
+    public static final Icon HANA = IconLoader.getIcon("/providers/HANA.svg"); // 16x16
     public static final Icon Hibernate = IconLoader.getIcon("/providers/hibernate.svg"); // 16x16
+    public static final Icon Hive = IconLoader.getIcon("/providers/hive.svg"); // 16x16
     public static final Icon Hsqldb = IconLoader.getIcon("/providers/hsqldb.svg"); // 16x16
     public static final Icon Ibm = IconLoader.getIcon("/providers/ibm.svg"); // 16x16
+    public static final Icon Informix = IconLoader.getIcon("/providers/informix.svg"); // 16x16
     public static final Icon Mariadb = IconLoader.getIcon("/providers/mariadb.svg"); // 16x16
     public static final Icon Microsoft = IconLoader.getIcon("/providers/microsoft.svg"); // 16x16
     public static final Icon Mysql = IconLoader.getIcon("/providers/mysql.svg"); // 16x16
     public static final Icon Oracle = IconLoader.getIcon("/providers/oracle.svg"); // 16x16
     public static final Icon Postgresql = IconLoader.getIcon("/providers/postgresql.svg"); // 16x16
+    public static final Icon Presto = IconLoader.getIcon("/providers/presto.svg"); // 16x16
     public static final Icon Redshift = IconLoader.getIcon("/providers/redshift.svg"); // 16x16
+    public static final Icon Snowflake = IconLoader.getIcon("/providers/snowflake.svg"); // 16x16
     public static final Icon Sqlite = IconLoader.getIcon("/providers/sqlite.svg"); // 16x16
     public static final Icon SqlServer = IconLoader.getIcon("/providers/sqlServer.svg"); // 16x16
     public static final Icon Sun = IconLoader.getIcon("/providers/sun.svg"); // 16x16
     public static final Icon Sybase = IconLoader.getIcon("/providers/sybase.svg"); // 16x16
+    public static final Icon Teradata = IconLoader.getIcon("/providers/teradata.svg"); // 16x16
+    public static final Icon Vertica = IconLoader.getIcon("/providers/vertica.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
