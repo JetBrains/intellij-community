@@ -21,21 +21,30 @@ public class LiveTemplateAutoPopupTest extends CompletionAutoPopupTestCase {
 
   public void testDoNotShowTemplateWithoutShortcutInAutoPopup() {
     myFixture.configureByText("a.java", "<caret>");
-    createTemplate().setShortcutChar(TemplateSettings.NONE_CHAR);
+    createTemplate("z").setShortcutChar(TemplateSettings.NONE_CHAR);
     type("z");
     assertNull(myFixture.getLookup());
   }
 
   public void testShowTemplateWithShortcutInAutoPopup() {
     myFixture.configureByText("a.java", "<caret>");
-    createTemplate().setShortcutChar(TemplateSettings.TAB_CHAR);
+    createTemplate("z").setShortcutChar(TemplateSettings.TAB_CHAR);
     type("z");
     assertNotNull(myFixture.getLookup());
   }
 
-  private TemplateImpl createTemplate() {
+  public void testNoPrematureLookupHidingWhenTemplateNameContainsDash() {
+    myFixture.configureByText("a.java", "class C { int aaaA; { <caret> }}");
+    createTemplate("aaa-bbb");
+    type("aaa");
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "aaaA", "aaa-bbb");
+    type("-");
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "aaa-bbb");
+  }
+
+  private TemplateImpl createTemplate(String key) {
     TemplateManager manager = TemplateManager.getInstance(getProject());
-    TemplateImpl template = (TemplateImpl)manager.createTemplate("z", "user", "");
+    TemplateImpl template = (TemplateImpl)manager.createTemplate(key, "user", "");
     TemplateContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.class);
     template.getTemplateContext().setEnabled(contextType, true);
     CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
