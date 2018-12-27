@@ -2,16 +2,19 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
+import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ObjectUtils;
@@ -20,11 +23,16 @@ import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+
+import static com.intellij.util.containers.ContainerUtil.map2List;
 
 /**
  * Listens to VFS events (such as adding or deleting bunch of files) and performs necessary operations with the VCS.
@@ -299,28 +307,74 @@ public class HgVFSListener extends VcsVFSListener {
 
   @Override
   protected void performMoveRename(@NotNull List<MovedFileInfo> movedFiles) {
+    final List<MovedFileInfo> failedToMove = new ArrayList<>();
     (new VcsBackgroundTask<MovedFileInfo>(myProject,
-                                        HgVcsMessages.message("hg4idea.move.progress"),
-                                        VcsConfiguration.getInstance(myProject).getAddRemoveOption(),
-                                        movedFiles) {
+                                          HgVcsMessages.message("hg4idea.move.progress"),
+                                          VcsConfiguration.getInstance(myProject).getAddRemoveOption(),
+                                          movedFiles) {
+      @Override
+      public void onFinished() {
+        if (!failedToMove.isEmpty()) {
+          handleRenameError();
+        }
+      }
+
+      private void handleRenameError() {
+        NotificationAction viewFilesAction = NotificationAction.createSimple("View Files...", () -> {
+          DialogWrapper dialog =
+            new ProcessedFilePathsDialog(myProject, map2List(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
+          dialog.setTitle("Not Renamed Files");
+          dialog.show();
+        });
+        NotificationAction retryAction = NotificationAction.create("Retry", (e, notification) -> {
+          notification.expire();
+          performMoveRename(failedToMove);
+        });
+        VcsNotifier.getInstance(myProject)
+          .notifyError("Rename Failed", "Couldn't mark some files as renamed", viewFilesAction, retryAction);
+      }
+
       @Override
       protected void process(final MovedFileInfo file) {
         final FilePath source = VcsUtil.getFilePath(file.myOldPath);
         final FilePath target = VcsUtil.getFilePath(file.myNewPath);
         VirtualFile sourceRoot = VcsUtil.getVcsRootFor(myProject, source);
         VirtualFile targetRoot = VcsUtil.getVcsRootFor(myProject, target);
-        if (sourceRoot != null && targetRoot != null) {
-          (new HgMoveCommand(myProject)).execute(new HgFile(sourceRoot, source), new HgFile(targetRoot, target));
+        if (sourceRoot != null && sourceRoot.equals(targetRoot)) {
+          HgCommandResult result;
+          int attempt = 0;
+          do {
+            result = new HgMoveCommand(myProject).execute(sourceRoot, source, target);
+          }
+          while (HgErrorUtil.isWLockError(result) && attempt++ < 2);
+          if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
+            dirtyScopeManager.fileDirty(source);
+            dirtyScopeManager.fileDirty(target);
+          }
+          else {
+            failedToMove.add(file);
+            LOG.warn("Hg rename failed:" + result.getRawError());
+          }
         }
-        dirtyScopeManager.fileDirty(source);
-        dirtyScopeManager.fileDirty(target);
       }
-
     }).queue();
   }
 
   @Override
   protected boolean isDirectoryVersioningSupported() {
     return false;
+  }
+
+  private static class ProcessedFilePathsDialog extends SelectFilePathsDialog {
+
+    ProcessedFilePathsDialog(@NotNull Project project, @NotNull List<FilePath> files) {
+      super(project, files, null, null, null, null, false);
+    }
+
+    @NotNull
+    @Override
+    protected Action[] createActions() {
+      return new Action[]{getOKAction()};
+    }
   }
 }

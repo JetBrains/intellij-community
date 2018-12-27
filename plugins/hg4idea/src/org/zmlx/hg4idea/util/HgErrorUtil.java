@@ -150,4 +150,10 @@ public final class HgErrorUtil {
   public static void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
     HgUtil.markDirectoryDirty(project, repository);
   }
+
+  public static boolean isWLockError(@Nullable HgCommandResult result) {
+    //abort: working directory of repo_name: timed out waiting for lock held by 'process:id'
+    if (result == null) return false;
+    return isAbort(result) && result.getRawError().contains("timed out waiting for lock");
+  }
 }
