@@ -521,9 +521,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (type != null && !(type instanceof PsiPrimitiveType)) {
       Nullability nullability = instruction.getReturnNullability();
       PsiMethod targetMethod = instruction.getTargetMethod();
-      Mutability mutable = Mutability.UNKNOWN;
+      Mutability mutable = instruction.getReturnMutability();
       if (targetMethod != null) {
-        mutable = Mutability.getMutability(targetMethod);
         PsiMethod realMethod = findSpecificMethod(targetMethod, state, qualifierValue);
         if (realMethod != targetMethod) {
           nullability = DfaPsiUtil.getElementNullability(type, realMethod);
