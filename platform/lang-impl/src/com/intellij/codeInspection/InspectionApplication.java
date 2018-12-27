@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.impl.PatchProjectUtil;
@@ -38,6 +39,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * @author max
@@ -76,6 +78,8 @@ public class InspectionApplication {
       logError("Profile to inspect with is not defined");
       printHelp();
     }
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
+    LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors() + "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() + "; factory: " + ForkJoinPool.commonPool().getFactory());
 
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     application.runReadAction(() -> {
