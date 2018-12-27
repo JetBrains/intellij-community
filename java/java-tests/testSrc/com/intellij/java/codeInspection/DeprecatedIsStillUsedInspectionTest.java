@@ -18,19 +18,21 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.DeprecatedIsStillUsedInspection;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-public class DeprecatedIsStillUsedInspectionTest extends InspectionTestCase {
+public class DeprecatedIsStillUsedInspectionTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/deprecatedIsStillUsed";
   }
 
-  private void doTest() {
-    doTest("deprecatedIsStillUsed/" + getTestName(true), new DeprecatedIsStillUsedInspection());
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new DeprecatedIsStillUsedInspection());
   }
 
   public void testSimple() {
-    doTest();
+    myFixture.testHighlighting(getTestName(false) + ".java");
   }
 }
