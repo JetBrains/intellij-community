@@ -55,7 +55,7 @@ public class CommitHelper {
   private final static Logger LOG = Logger.getInstance(CommitHelper.class);
   @NotNull private final Project myProject;
 
-  @NotNull private final ChangeList myChangeList;
+  @NotNull private final LocalChangeList myChangeList;
   @NotNull private final List<? extends Change> myIncludedChanges;
 
   @NotNull private final String myActionName;
@@ -82,12 +82,12 @@ public class CommitHelper {
                       boolean synchronously,
                       @NotNull NullableFunction<Object, Object> additionalDataHolder,
                       @Nullable CommitResultHandler customResultHandler) {
-    this(project, changeList, includedChanges, actionName, commitMessage, handlers, allOfDefaultChangeListChangesIncluded, synchronously,
-         additionalDataHolder, customResultHandler, false, null);
+    this(project, (LocalChangeList)changeList, includedChanges, actionName, commitMessage, handlers, allOfDefaultChangeListChangesIncluded,
+         synchronously, additionalDataHolder, customResultHandler, false, null);
   }
 
   public CommitHelper(@NotNull Project project,
-                      @NotNull ChangeList changeList,
+                      @NotNull LocalChangeList changeList,
                       @NotNull List<? extends Change> includedChanges,
                       @NotNull String actionName,
                       @NotNull String commitMessage,
@@ -346,8 +346,6 @@ public class CommitHelper {
     }
 
     private void updateChangelistAfterRefresh() {
-      if (!(myChangeList instanceof LocalChangeList)) return;
-
       ChangeListManagerEx clManager = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);
       String listName = myChangeList.getName();
 
