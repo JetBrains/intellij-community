@@ -1,15 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitResultHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -18,23 +15,10 @@ import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.openapi.vcs.changes.ui.CommitHelper.collectErrors;
 
 public class DefaultCommitResultHandler implements CommitResultHandler {
+  @NotNull private final CommitHelper myHelper;
 
-  @NotNull private final Project myProject;
-  @NotNull private final Collection<?> myIncludedChanges;
-  @NotNull private final String myCommitMessage;
-  @NotNull private final CommitHelper.GeneralCommitProcessor myCommitProcessor;
-  @NotNull private final Set<String> myFeedback;
-
-  public DefaultCommitResultHandler(@NotNull Project project,
-                                    @NotNull Collection<?> includedChanges,
-                                    @NotNull String commitMessage,
-                                    @NotNull CommitHelper.GeneralCommitProcessor commitProcessor,
-                                    @NotNull Set<String> feedback) {
-    myProject = project;
-    myIncludedChanges = includedChanges;
-    myCommitMessage = commitMessage;
-    myCommitProcessor = commitProcessor;
-    myFeedback = feedback;
+  public DefaultCommitResultHandler(@NotNull CommitHelper helper) {
+    myHelper = helper;
   }
 
   @Override
@@ -48,11 +32,12 @@ public class DefaultCommitResultHandler implements CommitResultHandler {
   }
 
   private void reportResult() {
-    List<VcsException> errors = collectErrors(myCommitProcessor.getVcsExceptions());
+    List<VcsException> allExceptions = myHelper.getExceptions();
+    List<VcsException> errors = collectErrors(allExceptions);
     int errorsSize = errors.size();
-    int warningsSize = myCommitProcessor.getVcsExceptions().size() - errorsSize;
+    int warningsSize = allExceptions.size() - errorsSize;
 
-    VcsNotifier notifier = VcsNotifier.getInstance(myProject);
+    VcsNotifier notifier = VcsNotifier.getInstance(myHelper.getProject());
     String message = getCommitSummary();
     if (errorsSize > 0) {
       String title = pluralize(message("message.text.commit.failed.with.error"), errorsSize);
@@ -69,15 +54,17 @@ public class DefaultCommitResultHandler implements CommitResultHandler {
 
   @NotNull
   private String getCommitSummary() {
-    StringBuilder content = new StringBuilder(getFileSummaryReport(myCommitProcessor.getChangesFailedToCommit()));
-    if (!isEmpty(myCommitMessage)) {
-      content.append(": ").append(escape(myCommitMessage));
+    StringBuilder content = new StringBuilder(getFileSummaryReport());
+    String commitMessage = myHelper.getCommitMessage();
+    if (!isEmpty(commitMessage)) {
+      content.append(": ").append(escape(commitMessage));
     }
-    if (!myFeedback.isEmpty()) {
+    Set<String> feedback = myHelper.getFeedback();
+    if (!feedback.isEmpty()) {
       content.append("<br/>");
-      content.append(join(myFeedback, "<br/>"));
+      content.append(join(feedback, "<br/>"));
     }
-    List<VcsException> exceptions = myCommitProcessor.getVcsExceptions();
+    List<VcsException> exceptions = myHelper.getExceptions();
     if (!hasOnlyWarnings(exceptions)) {
       content.append("<br/>");
       content.append(join(exceptions, Throwable::getMessage, "<br/>"));
@@ -86,9 +73,9 @@ public class DefaultCommitResultHandler implements CommitResultHandler {
   }
 
   @NotNull
-  private String getFileSummaryReport(@NotNull List<Change> changesFailedToCommit) {
-    int failed = changesFailedToCommit.size();
-    int committed = myIncludedChanges.size() - failed;
+  private String getFileSummaryReport() {
+    int failed = myHelper.getFailedToCommitChanges().size();
+    int committed = myHelper.getChanges().size() - failed;
     String fileSummary = committed + " " + pluralize("file", committed) + " committed";
     if (failed > 0) {
       fileSummary += ", " + failed + " " + pluralize("file", failed) + " failed to commit";

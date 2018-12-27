@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.progress.ProgressManager.progress;
@@ -109,8 +110,37 @@ public class CommitHelper {
     myAdditionalData = additionalDataHolder;
     myConfiguration = VcsConfiguration.getInstance(myProject);
     myCommitProcessor = isAlien ? new AlienCommitProcessor(notNull(vcs)) : new CommitProcessor(vcs);
-    myResultHandler =
-      notNull(resultHandler, new DefaultCommitResultHandler(myProject, myIncludedChanges, myCommitMessage, myCommitProcessor, myFeedback));
+    myResultHandler = notNull(resultHandler, new DefaultCommitResultHandler(this));
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
+  @NotNull
+  public List<? extends Change> getChanges() {
+    return myIncludedChanges;
+  }
+
+  @NotNull
+  public String getCommitMessage() {
+    return myCommitMessage;
+  }
+
+  @NotNull
+  public Set<String> getFeedback() {
+    return newHashSet(myFeedback);
+  }
+
+  @NotNull
+  public List<? extends Change> getFailedToCommitChanges() {
+    return newArrayList(myCommitProcessor.myChangesFailedToCommit);
+  }
+
+  @NotNull
+  public List<VcsException> getExceptions() {
+    return newArrayList(myCommitProcessor.getVcsExceptions());
   }
 
   @SuppressWarnings("UnusedReturnValue")
