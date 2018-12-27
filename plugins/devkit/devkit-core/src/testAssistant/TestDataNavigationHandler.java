@@ -10,6 +10,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
@@ -130,33 +131,37 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
                                                @NotNull Collection<VirtualFile> files,
                                                @NotNull Consumer<TestDataNavigationElement> consumer) {
 
-    Set<VirtualFile> usedPaths = new HashSet<>();
-    for (VirtualFile file1 : files) {
-      if (usedPaths.contains(file1)) {
-        continue;
-      }
+    for (Map.Entry<VirtualFile, Collection<VirtualFile>> e: ContainerUtil.groupBy(files, f -> f.getParent()).entrySet()) {
+      Collection<VirtualFile> dirFiles = e.getValue();
+      Set<VirtualFile> usedPaths = new HashSet<>();
 
-      boolean groupFound = false;
-      for (VirtualFile file2 : files) {
-        if (usedPaths.contains(file2) || file2.equals(file1)) {
+      for (VirtualFile file1 : dirFiles) {
+        if (usedPaths.contains(file1)) {
           continue;
         }
 
-        TestDataGroupVirtualFile group = TestDataUtil.getTestDataGroup(file1, file2);
-        if (group == null) {
-          continue;
+        boolean groupFound = false;
+        for (VirtualFile file2 : dirFiles) {
+          if (file2.equals(file1) || usedPaths.contains(file2)) {
+            continue;
+          }
+
+          TestDataGroupVirtualFile group = TestDataUtil.getTestDataGroup(file1, file2);
+          if (group == null) {
+            continue;
+          }
+
+          groupFound = true;
+          consumer.accept(TestDataNavigationElementFactory.createForGroup(project, group));
+          usedPaths.add(file1);
+          usedPaths.add(file2);
+          break;
         }
 
-        groupFound = true;
-        consumer.accept(TestDataNavigationElementFactory.createForGroup(project, group));
-        usedPaths.add(file1);
-        usedPaths.add(file2);
-        break;
-      }
-
-      if (!groupFound) {
-        consumer.accept(TestDataNavigationElementFactory.createForFile(project, file1));
-        usedPaths.add(file1);
+        if (!groupFound) {
+          consumer.accept(TestDataNavigationElementFactory.createForFile(project, file1));
+          usedPaths.add(file1);
+        }
       }
     }
   }
