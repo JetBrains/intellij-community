@@ -22,12 +22,11 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FilteringIterator;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Queue;
-import com.intellij.util.containers.*;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,23 +41,6 @@ public class LiveVariablesAnalyzer {
   private final Instruction[] myInstructions;
   private final MultiMap<Instruction, Instruction> myForwardMap;
   private final MultiMap<Instruction, Instruction> myBackwardMap;
-  private final Map<PsiElement, List<DfaVariableValue>> myClosureReads =
-    FactoryMap.create(closure -> {
-      final Set<DfaVariableValue> result = ContainerUtil.newLinkedHashSet();
-      closure.accept(new PsiRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitElement(PsiElement element) {
-          if (element instanceof PsiReferenceExpression) {
-            DfaValue value = myFactory.createValue((PsiReferenceExpression)element);
-            if (value instanceof DfaVariableValue) {
-              result.add((DfaVariableValue)value);
-            }
-          }
-          super.visitElement(element);
-        }
-      });
-      return ContainerUtil.newArrayList(result);
-    });
 
   public LiveVariablesAnalyzer(ControlFlow flow, DfaValueFactory factory) {
     myFactory = factory;
@@ -113,17 +95,15 @@ public class LiveVariablesAnalyzer {
   }
 
   @NotNull
-  private List<DfaVariableValue> getReadVariables(Instruction instruction) {
+  private static List<DfaVariableValue> getReadVariables(Instruction instruction) {
     if (instruction instanceof PushInstruction && !((PushInstruction)instruction).isReferenceWrite()) {
       DfaValue value = ((PushInstruction)instruction).getValue();
       if (value instanceof DfaVariableValue) {
         return Collections.singletonList((DfaVariableValue)value);
       }
-    } else {
-      PsiElement closure = DfaUtil.getClosureInside(instruction);
-      if (closure != null) {
-        return myClosureReads.get(closure);
-      }
+    } else if (instruction instanceof EscapeInstruction){
+      // Escape instruction is located before any lambda/class which captures something, so we get captured vars here
+      return new ArrayList<>(((EscapeInstruction)instruction).getEscapedVars());
     }
     return Collections.emptyList();
   }
