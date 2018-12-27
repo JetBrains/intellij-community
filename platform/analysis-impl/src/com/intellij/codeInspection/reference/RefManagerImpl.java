@@ -5,10 +5,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.ToolExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
@@ -86,9 +83,8 @@ public class RefManagerImpl extends RefManager {
   private final Map<Key, RefManagerExtension> myExtensions = new THashMap<>();
   private final Map<Language, RefManagerExtension> myLanguageExtensions = new HashMap<>();
   private final StringInterner myNameInterner = new StringInterner();
-  private final boolean myGraphRequired;
 
-  public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContextBase context) {
+  public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
     myProject = project;
     myScope = scope;
     myContext = context;
@@ -108,12 +104,6 @@ public class RefManagerImpl extends RefManager {
         getRefModule(module);
       }
     }
-    myGraphRequired = context
-      .getUsedTools()
-      .stream()
-      .map(t -> t.getTool())
-      .filter(t -> t instanceof GlobalInspectionToolWrapper)
-      .anyMatch(t -> ((GlobalInspectionTool)t.getTool()).isGraphNeeded());
   }
 
   String internName(@NotNull String name) {
@@ -424,11 +414,6 @@ public class RefManagerImpl extends RefManager {
     RefManagerExtension extension = myLanguageExtensions.get(language);
     if (extension == null) return null;
     return extension.getElementContainer(element);
-  }
-
-  @Override
-  public boolean isGraphRequired() {
-    return myGraphRequired;
   }
 
   private synchronized void registerUnprocessed(VirtualFileWithId virtualFile) {
