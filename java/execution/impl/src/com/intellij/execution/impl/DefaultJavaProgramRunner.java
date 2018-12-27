@@ -36,6 +36,7 @@ import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
@@ -46,7 +47,6 @@ import com.intellij.xdebugger.XDebuggerManagerListener;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
-import sun.tools.attach.HotSpotVirtualMachine;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -234,7 +234,8 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
           String pid = String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler)myProcessHandler).getProcess()));
           if (!JavaDebuggerAttachUtil.getAttachedPids(project).contains(pid)) {
             vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
-            InputStream inputStream = ((HotSpotVirtualMachine)vm).remoteDataDump();
+            InputStream inputStream = (InputStream)vm.getClass().getMethod("remoteDataDump", Object[].class)
+              .invoke(vm, new Object[]{ArrayUtil.EMPTY_OBJECT_ARRAY});
             String text = StreamUtil.readText(inputStream, CharsetToolkit.UTF8_CHARSET);
             List<ThreadState> threads = ThreadDumpParser.parse(text);
             DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), mySearchScope);
