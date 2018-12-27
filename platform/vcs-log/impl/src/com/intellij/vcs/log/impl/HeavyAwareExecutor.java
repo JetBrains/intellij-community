@@ -73,7 +73,7 @@ public class HeavyAwareExecutor implements Disposable {
    * @param task      task to execute
    * @param indicator progress indicator for executing the task
    */
-  public Future<?> executeOutOfHeavyOrPowerSave(@NotNull Consumer<ProgressIndicator> task, @NotNull String title,
+  public Future<?> executeOutOfHeavyOrPowerSave(@NotNull Consumer<? super ProgressIndicator> task, @NotNull String title,
                                                 @NotNull ProgressIndicator indicator) {
     return Futures.transformAsync(
       myListener.addTask(() -> {
@@ -91,7 +91,7 @@ public class HeavyAwareExecutor implements Disposable {
 
   @NotNull
   private static ListenableFuture<?> runAsync(@NotNull Project project,
-                                              @NotNull Consumer<ProgressIndicator> task,
+                                              @NotNull Consumer<? super ProgressIndicator> task,
                                               @NotNull String title,
                                               @NotNull ProgressIndicator indicator,
                                               @NotNull Runnable continuation) {
@@ -190,7 +190,7 @@ public class HeavyAwareExecutor implements Disposable {
     }
 
     @NotNull
-    public <T> ListenableFuture<ListenableFuture<T>> addTask(@NotNull Computable<ListenableFuture<T>> task) {
+    public <T> ListenableFuture<ListenableFuture<T>> addTask(@NotNull Computable<? extends ListenableFuture<T>> task) {
       SettableFuture<ListenableFuture<T>> future = SettableFuture.create();
       myTasksToRun.getAndUpdate(tasks -> ContainerUtil.concat(tasks, Collections.singletonList(wrap(task, future))));
       tryRun();
@@ -198,7 +198,7 @@ public class HeavyAwareExecutor implements Disposable {
     }
 
     @NotNull
-    private static <T> Runnable wrap(@NotNull Computable<ListenableFuture<T>> task, @NotNull SettableFuture<ListenableFuture<T>> future) {
+    private static <T> Runnable wrap(@NotNull Computable<? extends ListenableFuture<T>> task, @NotNull SettableFuture<? super ListenableFuture<T>> future) {
       return () -> {
         try {
           future.set(task.compute());

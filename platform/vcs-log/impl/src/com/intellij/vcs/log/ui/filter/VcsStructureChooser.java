@@ -81,7 +81,7 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   @NotNull
-  private Map<VirtualFile, String> calculateModules(@NotNull List<VirtualFile> roots) {
+  private Map<VirtualFile, String> calculateModules(@NotNull List<? extends VirtualFile> roots) {
     Map<VirtualFile, String> result = ContainerUtil.newHashMap();
 
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);

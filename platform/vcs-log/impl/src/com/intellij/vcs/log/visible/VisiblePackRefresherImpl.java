@@ -185,7 +185,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     }
 
     @NotNull
-    private State computeState(@NotNull State state, @NotNull List<Request> requests) {
+    private State computeState(@NotNull State state, @NotNull List<? extends Request> requests) {
       ValidateRequest validateRequest = ContainerUtil.findLastInstance(requests, ValidateRequest.class);
       FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
       SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);

@@ -9,7 +9,7 @@ import java.util.*;
 public class VcsLogMultiRepoJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
   @NotNull
-  public List<Commit> join(@NotNull Collection<List<Commit>> logsFromRepos) {
+  public List<Commit> join(@NotNull Collection<? extends List<Commit>> logsFromRepos) {
     if (logsFromRepos.size() == 1) {
       return logsFromRepos.iterator().next();
     }
@@ -43,7 +43,7 @@ public class VcsLogMultiRepoJoiner<CommitId, Commit extends GraphCommit<CommitId
   }
 
   @NotNull
-  private Commit findLatestCommit(@NotNull Set<Commit> commits) {
+  private Commit findLatestCommit(@NotNull Set<? extends Commit> commits) {
     long maxTimeStamp = Long.MIN_VALUE;
     Commit lastCommit = null;
     for (Commit commit : commits) {

@@ -44,14 +44,14 @@ public interface VcsLogProvider {
    * @return all references and all authors in the repository.
    */
   @NotNull
-  LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException;
+  LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<? super TimedVcsCommit> commitConsumer) throws VcsException;
 
   /**
    * Reads full details of all commits in the repository.
    * <p/>
    * Reports commits to the consumer to avoid creation & even temporary storage of a too large commits collection.
    */
-  void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException;
+  void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer) throws VcsException;
 
   /**
    * Reads full details for specified commits in the repository.
@@ -60,7 +60,7 @@ public interface VcsLogProvider {
    */
   default void readFullDetails(@NotNull VirtualFile root,
                                @NotNull List<String> hashes,
-                               @NotNull Consumer<VcsFullCommitDetails> commitConsumer)
+                               @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer)
     throws VcsException {
     readFullDetails(root, hashes, commitConsumer, false);
   }
@@ -72,7 +72,7 @@ public interface VcsLogProvider {
    */
   void readFullDetails(@NotNull VirtualFile root,
                        @NotNull List<String> hashes,
-                       @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
+                       @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer,
                        boolean isForIndexing)
     throws VcsException;
 
@@ -131,7 +131,7 @@ public interface VcsLogProvider {
    * @return Disposable that unsubscribes from events on dispose.
    */
   @NotNull
-  Disposable subscribeToRootRefreshEvents(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogRefresher refresher);
+  Disposable subscribeToRootRefreshEvents(@NotNull Collection<? extends VirtualFile> roots, @NotNull VcsLogRefresher refresher);
 
   /**
    * <p>Return commits, which correspond to the given filters.</p>

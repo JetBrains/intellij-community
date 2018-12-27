@@ -117,7 +117,7 @@ public class VcsLogProgress implements Disposable {
     }
   }
 
-  private void fireNotification(@NotNull Consumer<ProgressListener> action) {
+  private void fireNotification(@NotNull Consumer<? super ProgressListener> action) {
     synchronized (myLock) {
       List<ProgressListener> list = ContainerUtil.newArrayList(myListeners);
       ApplicationManager.getApplication().invokeLater(() -> list.forEach(action));
@@ -180,9 +180,9 @@ public class VcsLogProgress implements Disposable {
   }
 
   public interface ProgressListener {
-    void progressStarted(@NotNull Collection<ProgressKey> keys);
+    void progressStarted(@NotNull Collection<? extends ProgressKey> keys);
 
-    void progressChanged(@NotNull Collection<ProgressKey> keys);
+    void progressChanged(@NotNull Collection<? extends ProgressKey> keys);
 
     void progressStopped();
   }

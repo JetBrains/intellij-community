@@ -27,8 +27,8 @@ public interface DataGetter<T extends VcsShortCommitDetails> {
   @NotNull
   T getCommitData(int hash, @NotNull Iterable<Integer> neighbourHashes);
 
-  void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<List<T>> consumer,
-                       @NotNull Consumer<Throwable> errorConsumer, @Nullable ProgressIndicator indicator);
+  void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<? super List<T>> consumer,
+                       @NotNull Consumer<? super Throwable> errorConsumer, @Nullable ProgressIndicator indicator);
 
   @Nullable
   T getCommitDataIfAvailable(int hash);

@@ -167,11 +167,11 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     return future;
   }
 
-  public void jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root, @NotNull SettableFuture<Boolean> future) {
+  public void jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root, @NotNull SettableFuture<? super Boolean> future) {
     jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future);
   }
 
-  public void jumpToCommitByPartOfHash(@NotNull String commitHash, @NotNull SettableFuture<Boolean> future) {
+  public void jumpToCommitByPartOfHash(@NotNull String commitHash, @NotNull SettableFuture<? super Boolean> future) {
     if (!VcsLogUtil.HASH_REGEX.matcher(commitHash).matches()) {
       future.set(false);
       return;
@@ -181,7 +181,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   protected <T> void jumpTo(@NotNull final T commitId,
                             @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
-                            @NotNull final SettableFuture<Boolean> future) {
+                            @NotNull final SettableFuture<? super Boolean> future) {
     if (future.isCancelled()) return;
 
     GraphTableModel model = getTable().getModel();
@@ -261,7 +261,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     invokeOnChange(runnable, Conditions.alwaysTrue());
   }
 
-  protected void invokeOnChange(@NotNull Runnable runnable, @NotNull Condition<VcsLogDataPack> condition) {
+  protected void invokeOnChange(@NotNull Runnable runnable, @NotNull Condition<? super VcsLogDataPack> condition) {
     addLogListener(new VcsLogListener() {
       @Override
       public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {

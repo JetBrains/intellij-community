@@ -98,7 +98,7 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs) {
+  public List<RefGroup> groupForBranchFilter(@NotNull Collection<? extends VcsRef> refs) {
     List<RefGroup> simpleGroups = ContainerUtil.newArrayList();
     List<VcsRef> localBranches = ContainerUtil.newArrayList();
     MultiMap<GitRemote, VcsRef> remoteRefGroups = MultiMap.create();
@@ -147,7 +147,7 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references, boolean compact, boolean showTagNames) {
+  public List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> references, boolean compact, boolean showTagNames) {
     List<VcsRef> sortedReferences = ContainerUtil.sorted(references, myLabelsComparator);
     MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType);
 
@@ -210,7 +210,7 @@ public class GitRefManager implements VcsLogRefManager {
 
   @Nullable
   private static SimpleRefGroup createTrackedGroup(@NotNull GitRepository repository,
-                                                   @NotNull Collection<VcsRef> references,
+                                                   @NotNull Collection<? extends VcsRef> references,
                                                    @NotNull VcsRef localRef) {
     List<VcsRef> remoteBranches = ContainerUtil.filter(references, ref -> ref.getType().equals(REMOTE_BRANCH));
 
@@ -238,7 +238,7 @@ public class GitRefManager implements VcsLogRefManager {
   }
 
   @Nullable
-  private GitRepository getRepository(@NotNull Collection<VcsRef> references) {
+  private GitRepository getRepository(@NotNull Collection<? extends VcsRef> references) {
     if (references.isEmpty()) return null;
 
     VcsRef ref = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references));
@@ -301,7 +301,7 @@ public class GitRefManager implements VcsLogRefManager {
   }
 
   @NotNull
-  private static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Iterable<VcsRef> refs) {
+  private static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Iterable<? extends VcsRef> refs) {
     MultiMap<VirtualFile, VcsRef> grouped = MultiMap.create();
     for (VcsRef ref : refs) {
       grouped.putValue(ref.getRoot(), ref);
@@ -328,9 +328,9 @@ public class GitRefManager implements VcsLogRefManager {
 
   private class RemoteRefGroup implements RefGroup {
     private final GitRemote myRemote;
-    private final Collection<VcsRef> myBranches;
+    private final Collection<? extends VcsRef> myBranches;
 
-    RemoteRefGroup(GitRemote remote, Collection<VcsRef> branches) {
+    RemoteRefGroup(GitRemote remote, Collection<? extends VcsRef> branches) {
       myRemote = remote;
       myBranches = branches;
     }

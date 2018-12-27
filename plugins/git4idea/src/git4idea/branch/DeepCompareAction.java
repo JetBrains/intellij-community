@@ -89,7 +89,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     ActionGroup actionGroup = new BranchPopupBuilder(dataPack, visibleRoots, null) {
       @NotNull
       @Override
-      protected AnAction createAction(@NotNull String name, @NotNull Collection<VcsRef> refs) {
+      protected AnAction createAction(@NotNull String name, @NotNull Collection<? extends VcsRef> refs) {
         return new DumbAwareAction(name) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {

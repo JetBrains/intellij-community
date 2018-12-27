@@ -178,12 +178,12 @@ public class IndexDataGetter {
   }
 
   @NotNull
-  private TIntHashSet filterUsers(@NotNull Set<VcsUser> users) {
+  private TIntHashSet filterUsers(@NotNull Set<? extends VcsUser> users) {
     return executeAndCatch(() -> myIndexStorage.users.getCommitsForUsers(users), new TIntHashSet());
   }
 
   @NotNull
-  private TIntHashSet filterPaths(@NotNull Collection<FilePath> paths) {
+  private TIntHashSet filterPaths(@NotNull Collection<? extends FilePath> paths) {
     return executeAndCatch(() -> {
       TIntHashSet result = new TIntHashSet();
       for (FilePath path : paths) {
@@ -235,7 +235,7 @@ public class IndexDataGetter {
   }
 
   @NotNull
-  private <T> TIntHashSet filter(@NotNull PersistentMap<Integer, T> map, @NotNull Condition<T> condition) {
+  private <T> TIntHashSet filter(@NotNull PersistentMap<Integer, T> map, @NotNull Condition<? super T> condition) {
     TIntHashSet result = new TIntHashSet();
     return executeAndCatch(() -> {
       myIndexStorage.commits.process(commit -> {
@@ -303,7 +303,7 @@ public class IndexDataGetter {
   }
 
   @Nullable
-  public Couple<FilePath> findRename(int parent, int child, @NotNull BooleanFunction<Couple<FilePath>> accept) {
+  public Couple<FilePath> findRename(int parent, int child, @NotNull BooleanFunction<? super Couple<FilePath>> accept) {
     return executeAndCatch(() -> myIndexStorage.paths.iterateRenames(parent, child, accept));
   }
 
@@ -335,7 +335,7 @@ public class IndexDataGetter {
 
   @Contract("_, !null -> !null")
   @Nullable
-  private <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable, @Nullable T defaultValue) {
+  private <T> T executeAndCatch(@NotNull Throwable2Computable<? extends T, IOException, StorageException> computable, @Nullable T defaultValue) {
     try {
       return computable.compute();
     }

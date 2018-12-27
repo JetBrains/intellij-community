@@ -99,13 +99,13 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   private class MyBranchPopupBuilder extends BranchPopupBuilder {
     protected MyBranchPopupBuilder(@NotNull VcsLogDataPack dataPack,
                                    @Nullable Collection<VirtualFile> visibleRoots,
-                                   @Nullable List<List<String>> recentItems) {
+                                   @Nullable List<? extends List<String>> recentItems) {
       super(dataPack, visibleRoots, recentItems);
     }
 
     @NotNull
     @Override
-    public AnAction createAction(@NotNull String name, @NotNull Collection<VcsRef> refs) {
+    public AnAction createAction(@NotNull String name, @NotNull Collection<? extends VcsRef> refs) {
       return new BranchFilterAction(name, refs);
     }
 
@@ -116,7 +116,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
 
     @NotNull
     @Override
-    protected AnAction createCollapsedAction(@NotNull String actionName, @NotNull Collection<VcsRef> refs) {
+    protected AnAction createCollapsedAction(@NotNull String actionName, @NotNull Collection<? extends VcsRef> refs) {
       return new BranchFilterAction(actionName, refs);
     }
 
@@ -128,10 +128,10 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     private class BranchFilterAction extends PredefinedValueAction {
       @NotNull private final LayeredIcon myIcon;
       @NotNull private final LayeredIcon myHoveredIcon;
-      @NotNull private final Collection<VcsRef> myReferences;
+      @NotNull private final Collection<? extends VcsRef> myReferences;
       private boolean myIsFavorite;
 
-      BranchFilterAction(@NotNull String value, @NotNull Collection<VcsRef> references) {
+      BranchFilterAction(@NotNull String value, @NotNull Collection<? extends VcsRef> references) {
         super(value);
         myReferences = references;
         myIcon = new LayeredIcon(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16);

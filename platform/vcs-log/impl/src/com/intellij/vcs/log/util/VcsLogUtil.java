@@ -40,12 +40,12 @@ public class VcsLogUtil {
   public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,}");
 
   @NotNull
-  public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
+  public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
     return groupByRoot(refs, VcsRef::getRoot);
   }
 
   @NotNull
-  private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> items, @NotNull Function<T, VirtualFile> rootGetter) {
+  private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<? extends T> items, @NotNull Function<? super T, ? extends VirtualFile> rootGetter) {
     Map<VirtualFile, Set<T>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
     for (T item : items) {
       VirtualFile root = rootGetter.fun(item);
@@ -64,7 +64,7 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  private static Set<VirtualFile> collectRoots(@NotNull Collection<FilePath> files, @NotNull Set<VirtualFile> roots) {
+  private static Set<VirtualFile> collectRoots(@NotNull Collection<? extends FilePath> files, @NotNull Set<? extends VirtualFile> roots) {
     Set<VirtualFile> selectedRoots = new HashSet<>();
 
     List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getPath));

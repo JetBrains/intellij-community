@@ -28,7 +28,7 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
 
   VcsLogUserFilterImpl(@NotNull Collection<String> users,
                        @NotNull Map<VirtualFile, VcsUser> meData,
-                       @NotNull Set<VcsUser> allUsers) {
+                       @NotNull Set<? extends VcsUser> allUsers) {
     myUsers = users;
     myData = meData;
 

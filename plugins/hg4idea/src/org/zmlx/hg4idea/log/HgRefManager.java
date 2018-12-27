@@ -122,7 +122,7 @@ public class HgRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs) {
+  public List<RefGroup> groupForBranchFilter(@NotNull Collection<? extends VcsRef> refs) {
     List<VcsRef> sortedRefs = sort(refs);
     MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedRefs, VcsRef::getType);
 
@@ -151,7 +151,7 @@ public class HgRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references, boolean compact, boolean showTagNames) {
+  public List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> references, boolean compact, boolean showTagNames) {
     List<VcsRef> sortedReferences = sort(references);
 
     List<VcsRef> headAndTip = ContainerUtil.newArrayList();
@@ -221,7 +221,7 @@ public class HgRefManager implements VcsLogRefManager {
   }
 
   @NotNull
-  private List<VcsRef> sort(@NotNull Collection<VcsRef> refs) {
+  private List<VcsRef> sort(@NotNull Collection<? extends VcsRef> refs) {
     return ContainerUtil.sorted(refs, getLabelsOrderComparator());
   }
 }

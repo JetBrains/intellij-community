@@ -234,7 +234,7 @@ class TestPermanentGraphInfo(
     override fun getCommitId(nodeId: Int) = nodeId
     override fun getTimestamp(nodeId: Int) = nodeId.toLong()
     override fun getNodeId(commitId: Int) = commitId
-    override fun convertToNodeIds(heads: MutableCollection<Int>) = ContainerUtil.newHashSet(heads)
+    override fun convertToNodeIds(heads: Collection<Int>) = ContainerUtil.newHashSet(heads)
   }
 
   val timestampGetter = object : TimestampGetter {

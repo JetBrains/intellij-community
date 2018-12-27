@@ -45,7 +45,7 @@ public class HgFileRevisionLogParser extends HgBaseLogParser<HgFileRevision> {
   @Nullable
   protected HgFileRevision convertDetails(@NotNull String rev,
                                           @NotNull String changeset,
-                                          @NotNull SmartList<HgRevisionNumber> parents,
+                                          @NotNull SmartList<? extends HgRevisionNumber> parents,
                                           @NotNull Date revisionDate,
                                           @NotNull String author,
                                           @NotNull String email,

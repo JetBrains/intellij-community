@@ -140,7 +140,7 @@ public class VcsLogContentUtil {
     });
   }
 
-  public static void openMainLogAndExecute(@NotNull Project project, @NotNull Consumer<VcsLogUiImpl> consumer) {
+  public static void openMainLogAndExecute(@NotNull Project project, @NotNull Consumer<? super VcsLogUiImpl> consumer) {
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     if (!selectMainLog(window)) {
       VcsBalloonProblemNotifier.showOverChangesView(project, "Vcs Log is not available", MessageType.WARNING);

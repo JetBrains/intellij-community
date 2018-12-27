@@ -84,13 +84,13 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   }
 
   @NotNull
-  private static String getTextFromRoots(@NotNull Collection<VirtualFile> files,
+  private static String getTextFromRoots(@NotNull Collection<? extends VirtualFile> files,
                                          boolean full) {
     return getText(files, "roots", FILE_BY_NAME_COMPARATOR, VirtualFile::getName, full);
   }
 
   @NotNull
-  private static String getTextFromFilePaths(@NotNull Collection<FilePath> files,
+  private static String getTextFromFilePaths(@NotNull Collection<? extends FilePath> files,
                                              @NotNull String category,
                                              boolean full) {
     return getText(files, category, FILE_PATH_BY_PATH_COMPARATOR,
@@ -98,10 +98,10 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   }
 
   @NotNull
-  private static <F> String getText(@NotNull Collection<F> files,
+  private static <F> String getText(@NotNull Collection<? extends F> files,
                                     @NotNull String category,
-                                    @NotNull Comparator<F> comparator,
-                                    @NotNull NotNullFunction<F, String> getText,
+                                    @NotNull Comparator<? super F> comparator,
+                                    @NotNull NotNullFunction<? super F, String> getText,
                                     boolean full) {
     if (full) {
       return ALL;
@@ -127,7 +127,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   }
 
   @NotNull
-  private String getToolTip(@NotNull Collection<VirtualFile> roots, @NotNull Collection<FilePath> files) {
+  private String getToolTip(@NotNull Collection<? extends VirtualFile> roots, @NotNull Collection<? extends FilePath> files) {
     String tooltip = "";
     if (roots.isEmpty()) {
       tooltip += "No Roots Selected";
@@ -143,19 +143,19 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   }
 
   @NotNull
-  private static String getTooltipTextForRoots(@NotNull Collection<VirtualFile> files) {
+  private static String getTooltipTextForRoots(@NotNull Collection<? extends VirtualFile> files) {
     return getTooltipTextForFiles(files, FILE_BY_NAME_COMPARATOR, VirtualFile::getName);
   }
 
   @NotNull
-  private static String getTooltipTextForFilePaths(@NotNull Collection<FilePath> files) {
+  private static String getTooltipTextForFilePaths(@NotNull Collection<? extends FilePath> files) {
     return getTooltipTextForFiles(files, FILE_PATH_BY_PATH_COMPARATOR, FilePath::getPresentableUrl);
   }
 
   @NotNull
-  private static <F> String getTooltipTextForFiles(@NotNull Collection<F> files,
-                                                   @NotNull Comparator<F> comparator,
-                                                   @NotNull NotNullFunction<F, String> getText) {
+  private static <F> String getTooltipTextForFiles(@NotNull Collection<? extends F> files,
+                                                   @NotNull Comparator<? super F> comparator,
+                                                   @NotNull NotNullFunction<? super F, String> getText) {
     List<F> filesToDisplay = ContainerUtil.sorted(files, comparator);
     filesToDisplay = ContainerUtil.getFirstItems(filesToDisplay, 10);
     String tooltip = StringUtil.join(filesToDisplay, getText, "\n");
