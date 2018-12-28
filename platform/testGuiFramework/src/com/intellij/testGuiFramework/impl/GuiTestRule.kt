@@ -138,8 +138,13 @@ class GuiTestRule : TestRule {
       return object : Statement() {
         @Throws(Throwable::class)
         override fun evaluate() {
-          Assume.assumeTrue("IDE error list is empty", GuiTestUtilKt.fatalErrorsFromIde().isEmpty())
-          assumeOnlyWelcomeFrameShowing()
+          try {
+            Assume.assumeTrue("IDE error list is empty", GuiTestUtilKt.fatalErrorsFromIde().isEmpty())
+            assumeOnlyWelcomeFrameShowing()
+          } catch (e: Exception) {
+            ScreenshotOnFailure.takeScreenshot("$myTestName.welcomeFrameCheckFail")
+            throw e
+          }
           setUp()
           val errors = ArrayList<Throwable>()
           try {
