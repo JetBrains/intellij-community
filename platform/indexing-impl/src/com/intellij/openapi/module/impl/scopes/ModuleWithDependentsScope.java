@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
+import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -44,7 +45,8 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
   private final Module myModule;
 
   private final ProjectFileIndexImpl myProjectFileIndex;
-  private final Set<Module> myModules;
+  private final Set<Module> myModules = new THashSet<>();
+  private final Set<Module> myProductionOnTestModules = new THashSet<>();
 
   ModuleWithDependentsScope(@NotNull Module module) {
     super(module.getProject());
@@ -52,30 +54,28 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
 
     myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
 
-    myModules = buildDependents(myModule);
-  }
-
-  @NotNull
-  private static Set<Module> buildDependents(@NotNull Module module) {
-    Set<Module> result = new THashSet<>();
-    result.add(module);
+    myModules.add(module);
 
     ModuleIndex index = getModuleIndex(module.getProject());
 
     HashSetQueue<Module> walkingQueue = new HashSetQueue<>();
     walkingQueue.add(module);
     for (Module current : walkingQueue) {
-      result.addAll(index.plainUsages.get(current));
-      Collection<Module> exported = index.exportingUsages.get(current);
-      walkingQueue.addAll(exported);
-      result.addAll(exported);
+      Collection<Module> usages = index.allUsages.get(current);
+      myModules.addAll(usages);
+      walkingQueue.addAll(index.exportingUsages.get(current));
+
+      if (myProductionOnTestModules.contains(current)) {
+        myProductionOnTestModules.addAll(usages);
+      }
+      myProductionOnTestModules.addAll(index.productionOnTestUsages.get(current));
     }
-    return result;
   }
 
   private static class ModuleIndex {
-    final MultiMap<Module, Module> plainUsages = MultiMap.create();
+    final MultiMap<Module, Module> allUsages = MultiMap.create();
     final MultiMap<Module, Module> exportingUsages = MultiMap.create();
+    final MultiMap<Module, Module> productionOnTestUsages = MultiMap.create();
   }
 
   @NotNull
@@ -87,8 +87,13 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
           if (orderEntry instanceof ModuleOrderEntry) {
             Module referenced = ((ModuleOrderEntry)orderEntry).getModule();
             if (referenced != null) {
-              MultiMap<Module, Module> map = ((ModuleOrderEntry)orderEntry).isExported() ? index.exportingUsages : index.plainUsages;
-              map.putValue(referenced, module);
+              index.allUsages.putValue(referenced, module);
+              if (((ModuleOrderEntry)orderEntry).isExported()) {
+                index.exportingUsages.putValue(referenced, module);
+              }
+              if (orderEntry instanceof ModuleOrderEntryImpl && ((ModuleOrderEntryImpl)orderEntry).isProductionOnTestDependency()) {
+                index.productionOnTestUsages.putValue(referenced, module);
+              }
             }
           }
         }
@@ -102,12 +107,16 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
     return contains(file, false);
   }
 
-  boolean contains(@NotNull VirtualFile file, boolean myOnlyTests) {
+  boolean contains(@NotNull VirtualFile file, boolean fromTests) {
     // optimization: fewer calls to getInfoForFileOrDirectory()
     DirectoryInfo info = myProjectFileIndex.getInfoForFileOrDirectory(file);
     Module moduleOfFile = info.getModule();
     if (moduleOfFile == null || !myModules.contains(moduleOfFile)) return false;
-    if (myOnlyTests && !TestSourcesFilter.isTestSources(file, moduleOfFile.getProject())) return false;
+    if (fromTests &&
+        !myProductionOnTestModules.contains(moduleOfFile) &&
+        !TestSourcesFilter.isTestSources(file, moduleOfFile.getProject())) {
+      return false;
+    }
     return ProjectFileIndexImpl.isFileInContent(file, info);
   }
 
