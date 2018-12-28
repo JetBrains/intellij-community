@@ -267,7 +267,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
     : Exception("Too many reschedule requests, probably constraints can't be satisfied all together: " + lastConstraints.joinToString())
 
   companion object {
-    internal val LOG = Logger.getInstance("#com.intellij.openapi.application.impl.AppUIExecutorImpl")
+    internal val LOG = Logger.getInstance("#com.intellij.openapi.application.impl.AsyncExecutionSupport")
 
     internal class RunOnce : (() -> Unit) -> Unit {
       val isActive get() = hasNotRunYet.get()  // inherently race-prone
