@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.ExpectedHighlightingData;
 
 public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
   @Override
@@ -148,7 +147,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                        "  <artifactId>project</artifactId>" +
                        "  <version>1</version>" +
                        "</project>");
-    ExpectedHighlightingData.expectedDuplicatedHighlighting(this::checkHighlighting);
+    checkHighlighting();
   }
 
   public void testAddingProfilesXmlReadingProblemsToProjectTag() {
@@ -170,7 +169,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                        "  <artifactId>project</artifactId>" +
                        "  <version>1</version>" +
                        "</project>");
-    ExpectedHighlightingData.expectedDuplicatedHighlighting(this::checkHighlighting);
+    checkHighlighting();
   }
 
   public void testAddingStructureReadingProblemsToParentTag() {
@@ -202,8 +201,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                        "  </parent>" +
                        "</project>");
 
-    ExpectedHighlightingData.expectedDuplicatedHighlighting(() ->
-                                                              checkHighlighting(myProjectPom, true, false, true));
+    checkHighlighting(myProjectPom, true, false, true);
   }
 
   public void testAddingParentReadingProblemsToParentTag() {
@@ -241,7 +239,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                        "    <relativePath>parent/pom.xml</relativePath>" +
                        "  </parent>" +
                        "</project>");
-    ExpectedHighlightingData.expectedDuplicatedHighlighting(this::checkHighlighting);
+    checkHighlighting();
   }
 
   public void testDoNotAddReadingSyntaxProblemsToProjectTag() {
