@@ -17,6 +17,7 @@ import java.util.List;
 
 public class TerminalSignalUtil {
 
+  public static final int SIGQUIT = 3; // POSIX standard constant
   public static final int SIGPIPE = UnixProcessManager.getSignalNumber("PIPE"); // implementation-defined, not a POSIX standard
 
   private static final Logger LOG = Logger.getInstance(TerminalSignalUtil.class);

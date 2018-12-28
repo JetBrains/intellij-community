@@ -202,7 +202,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       long startNano = System.nanoTime();
       String[] finalCommand = command;
       PtyProcess process = TerminalSignalUtil.computeWithIgnoredSignalsResetToDefault(
-        new int[] {TerminalSignalUtil.SIGPIPE}, () -> PtyProcess.exec(finalCommand, envs, workingDir)
+        new int[] {UnixProcessManager.SIGINT, TerminalSignalUtil.SIGQUIT, TerminalSignalUtil.SIGPIPE},
+        () -> PtyProcess.exec(finalCommand, envs, workingDir)
       );
       if (LOG.isDebugEnabled()) {
         LOG.debug("Started " + process.getClass().getName() + " from " + Arrays.toString(command) + " in " + workingDir +
