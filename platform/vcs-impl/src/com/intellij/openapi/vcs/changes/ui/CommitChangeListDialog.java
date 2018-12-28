@@ -56,6 +56,7 @@ import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.VcsBundle.message;
+import static com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter.moveToFailedList;
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
 import static com.intellij.util.ArrayUtil.isEmpty;
 import static com.intellij.util.ArrayUtil.toObjectArray;
@@ -759,8 +760,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
       if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
         ChangeList changeList = myBrowser.getSelectedChangeList();
-        CommitHelper.moveToFailedList(changeList, getCommitMessage(), getIncludedChanges(),
-                                      message("commit.dialog.rejected.commit.template", changeList.getName()), myProject);
+        moveToFailedList(myProject, changeList, getCommitMessage(), getIncludedChanges(),
+                         message("commit.dialog.rejected.commit.template", changeList.getName()));
         doCancelAction();
         return CheckinHandler.ReturnResult.CLOSE_WINDOW;
       }
