@@ -99,6 +99,35 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  /**
+   * Pass here the exception you want to be thrown first
+   * E.g.<pre>
+   * {@code
+   *   void tearDown() {
+   *     try {
+   *       doTearDowns();
+   *     }
+   *     catch(Exception e) {
+   *       addSuppressedException(e);
+   *     }
+   *     finally {
+   *       super.tearDown();
+   *     }
+   *   }
+   * }
+   * </pre>
+   *
+   */
+  protected void addSuppressedException(@NotNull Throwable e) {
+    List<Throwable> list = mySuppressedExceptions;
+    if (list == null) {
+      mySuppressedExceptions = list = new SmartList<>();
+    }
+    list.add(e);
+  }
+  private List<Throwable> mySuppressedExceptions;
+
+
   public UsefulTestCase() {
   }
 
@@ -165,7 +194,7 @@ public abstract class UsefulTestCase extends TestCase {
           }
         },
         () -> UIUtil.removeLeakingAppleListeners()
-      ).run();
+      ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
     }
     finally {
       super.tearDown();
