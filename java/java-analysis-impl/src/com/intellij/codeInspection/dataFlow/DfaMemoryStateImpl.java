@@ -745,14 +745,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return index1 != -1 && index1 == index2;
   }
 
-  /**
-   * Returns a relation between given values within this state, if known
-   * @param left first value
-   * @param right second value
-   * @return a relation (EQ, NE, GT, LT), or null if not known.
-   */
   @Nullable
-  private RelationType getRelation(DfaValue left, DfaValue right) {
+  @Override
+  public RelationType getRelation(DfaValue left, DfaValue right) {
     int leftClass = getEqClassIndex(left);
     int rightClass = getEqClassIndex(right);
     if (leftClass == -1 || rightClass == -1) return null;

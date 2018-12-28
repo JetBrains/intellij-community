@@ -296,6 +296,33 @@ public abstract class LongRangeSet {
     return result;
   }
 
+  /**
+   * Checks whether subtraction of this and other range may overflow
+   * @param other range to subtract from this range
+   * @param isLong whether subtraction should be performed on long values (otherwise int is assumed)
+   * @return true if result may overflow, false if it never overflows
+   */
+  public boolean subtractionMayOverflow(LongRangeSet other, boolean isLong) {
+    long leftMin = min();
+    long leftMax = max();
+    long rightMin = other.min();
+    long rightMax = other.max();
+    return isLong
+           ? overflowsLong(leftMin, rightMax) || overflowsLong(leftMax, rightMin)
+           : overflowsInt(leftMin, rightMax) || overflowsInt(leftMax, rightMin);
+  }
+
+  private static boolean overflowsInt(long a, long b) {
+    long diff = a - b;
+    return diff < Integer.MIN_VALUE || diff > Integer.MAX_VALUE;
+  }
+
+  private static boolean overflowsLong(long a, long b) {
+    long diff = a - b;
+    // Hacker's Delight 2nd Edition, 2-13 Overflow Detection
+    return ((a ^ b) & (a ^ diff)) < 0;
+  }
+
   @NotNull
   private static LongRangeSet divide(long dividendMin, long dividendMax, long divisorMin, long divisorMax, boolean isLong) {
     if (divisorMin == 0) {
