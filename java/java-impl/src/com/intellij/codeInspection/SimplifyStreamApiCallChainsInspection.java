@@ -48,6 +48,7 @@ import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
  */
 public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher COLLECTION_STREAM = instanceCall(JAVA_UTIL_COLLECTION, "stream").parameterCount(0);
+  private static final CallMatcher COLLECTION_SIZE_CHECK = instanceCall(JAVA_UTIL_COLLECTION, "size", "isEmpty").parameterCount(0);
   private static final CallMatcher COLLECTION_CONTAINS = instanceCall(JAVA_UTIL_COLLECTION, "contains").parameterCount(1);
   private static final CallMatcher OPTIONAL_STREAM = instanceCall(JAVA_UTIL_OPTIONAL, "stream").parameterCount(0);
   private static final CallMatcher STREAM_FIND = instanceCall(JAVA_UTIL_STREAM_STREAM, "findFirst", "findAny").parameterCount(0);
@@ -99,7 +100,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     AnyMatchContainsFix.handler(),
     JoiningStringsFix.handler(),
     ReplaceWithCollectorsJoiningFix.handler(),
-    EntrySetMapFix.handler()
+    EntrySetMapFix.handler(),
+    CollectorToListSize.handler()
   ).registerAll(SimplifyMatchNegationFix.handlers());
 
   private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
@@ -2050,6 +2052,57 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         methodName = name;
       }
       return methodName;
+    }
+  }
+  
+  static class CollectorToListSize implements CallChainSimplification {
+    private final boolean mySize;
+    
+    CollectorToListSize(boolean size) {
+      mySize = size;
+    }
+
+    @Override
+    public String getName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", "count()");
+    }
+
+    @Override
+    public String getMessage() {
+      return "Can be replaced with 'count()'";
+    }
+
+    @Override
+    public PsiElement simplify(PsiMethodCallExpression call) {
+      PsiExpression streamExpression = call.getMethodExpression().getQualifierExpression();
+      if (streamExpression == null) return null;
+      PsiMethodCallExpression sizeCheck = ExpressionUtils.getCallForQualifier(call);
+      if (sizeCheck == null) return null;
+      CommentTracker ct = new CommentTracker();
+      String replacement;
+      if (mySize) {
+        boolean addCast = true;
+        PsiType expectedType = ExpectedTypeUtils.findExpectedType(sizeCheck, false);
+        if (PsiType.LONG.equals(expectedType)) addCast = false;
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(sizeCheck.getParent());
+        if (parent instanceof PsiBinaryExpression &&
+            ComparisonUtils.isComparisonOperation(((PsiBinaryExpression)parent).getOperationTokenType())) {
+          addCast = false;
+        }
+        replacement = (addCast ? "(int)" : "") + ct.text(streamExpression) + ".count()";
+      } else {
+        replacement = ct.text(streamExpression) + ".count() == 0";
+      }
+      return ct.replaceAndRestoreComments(sizeCheck, replacement);
+    }
+
+    public static CallHandler<CallChainSimplification> handler() {
+      return CallHandler.of(STREAM_COLLECT, call -> {
+        if (!COLLECTORS_TO_LIST.matches(call.getArgumentList().getExpressions()[0])) return null;
+        PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(call);
+        if (!COLLECTION_SIZE_CHECK.test(nextCall)) return null;
+        return new CollectorToListSize("size".equals(nextCall.getMethodExpression().getReferenceName()));
+      });
     }
   }
 }
