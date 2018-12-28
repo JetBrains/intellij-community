@@ -716,7 +716,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public boolean closeAndDispose(@NotNull final Project project) {
-    return closeProject(project, true, true, true, true);
+    return closeProject(project, true /* save project */, false /* don't save app */, true /* dispose project */, true);
   }
 
   private void fireProjectClosing(@NotNull Project project) {

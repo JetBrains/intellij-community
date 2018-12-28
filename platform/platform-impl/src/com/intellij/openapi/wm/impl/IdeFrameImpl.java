@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
@@ -17,10 +16,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
@@ -29,6 +25,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.impl.ShadowPainter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -50,6 +47,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
+import io.netty.util.internal.SystemPropertyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.PowerSupplyKit;
@@ -272,16 +270,26 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
         // Exit on Linux and Windows if the only opened project frame is closed.
         // On macOS behaviour is different - to exit app, quit action should be used, otherwise welcome frame is shown.
         // If welcome screen is disabled, behaviour on all OS is the same.
-        if (numberOfOpenedProjects > 1 || (numberOfOpenedProjects == 1 && SystemInfo.isMacSystemMenu && GeneralSettings.getInstance().isShowWelcomeScreen())) {
+        if (numberOfOpenedProjects > 1 || (numberOfOpenedProjects == 1 && !isQuitAppOnCloseTheOnlyProjectWindow())) {
           if (myProject != null && myProject.isOpen()) {
-            ProjectUtil.closeAndDispose(myProject);
+            ProjectManagerEx.getInstanceEx().closeAndDispose(myProject);
           }
-          ApplicationManager.getApplication().getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed();
+          Application application = ApplicationManager.getApplication();
+          application.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed();
+          application.saveSettings(true);
+
           WelcomeFrame.showIfNoProjectOpened();
         }
         else {
           ApplicationManagerEx.getApplicationEx().exit();
         }
+      }
+
+      private boolean isQuitAppOnCloseTheOnlyProjectWindow() {
+        if (SystemPropertyUtil.getBoolean("idea.show.welcome.screen", false)) {
+          return true;
+        }
+        return !SystemInfo.isMacSystemMenu || !GeneralSettings.getInstance().isShowWelcomeScreen();
       }
     });
   }
