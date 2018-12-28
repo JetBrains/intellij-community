@@ -39,6 +39,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
@@ -696,33 +697,27 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   /** Inserts, removes or replaces the given text at the given offset */
   private void editDocumentSafely(final int offset, final int length, @Nullable final String text) {
+    Document document = myEditor.getDocument();
+    RangeMarker marker = document.createRangeMarker(offset, offset + length);
+
     TransactionGuard.submitTransaction(myEditor.getDisposable(), () -> {
       Project project = myEditor.getProject();
-      Document document = myEditor.getDocument();
-      if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
+      if (!marker.isValid() || !FileDocumentManager.getInstance().requestWriting(document, project)) {
+        marker.dispose();
         return;
       }
 
       CommandProcessor.getInstance().executeCommand(project, () -> WriteAction.run(() -> {
         document.startGuardedBlockChecking();
         try {
-          if (text == null) {
-            // remove
-            document.deleteString(offset, offset + length);
-          }
-          else if (length == 0) {
-            // insert
-            document.insertString(offset, text);
-          }
-          else {
-            document.replaceString(offset, offset + length, text);
-          }
+          document.replaceString(marker.getStartOffset(), marker.getEndOffset(), StringUtil.notNullize(text));
         }
         catch (ReadOnlyFragmentModificationException e) {
           EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
         }
         finally {
           document.stopGuardedBlockChecking();
+          marker.dispose();
         }
       }), "", document, UndoConfirmationPolicy.DEFAULT, document);
     });
