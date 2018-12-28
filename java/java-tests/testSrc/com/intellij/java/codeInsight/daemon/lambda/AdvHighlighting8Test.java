@@ -15,45 +15,67 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.JavaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * This class intended for "heavy-loaded" tests only, e.g. those need to setup separate project directory structure to run.
- * For "lightweight" tests use LightAdvHighlightingTest.
- */
-public class AdvHighlighting8Test extends DaemonAnalyzerTestCase {
+public class AdvHighlighting8Test extends LightCodeInsightFixtureTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/advHighlighting8";
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_8);
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
   }
 
+  @NotNull
   @Override
-  protected Sdk getTestProjectJdk() {
-    return IdeaTestUtil.getMockJdk18();
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
-  public void testProtectedVariable() throws Exception {
-    doTest(BASE_PATH + "/protectedVariable/p2/B.java", BASE_PATH + "/protectedVariable", false, false);
+  public void testProtectedVariable() {
+    myFixture.addClass("package p1;\n" +
+                       "public class A {\n" +
+                       "  protected String myFoo = \"A\";\n" +
+                       "}");
+    doTest();
   }
 
-  public void testIDEA67842() throws Exception {
-    doTest(BASE_PATH + "/IDEA67842/pck/IDEA67842.java", BASE_PATH + "/IDEA67842", false, false);
+  public void testIDEA67842() {
+    doTest();
   }
 
-  public void testUnrelatedConcreteInConstructors() throws Exception {
-    doTest(BASE_PATH + "/unrelatedConcreteInConstructors/B.java", BASE_PATH + "/unrelatedConcreteInConstructors", false, false);
+  public void testUnrelatedConcreteInConstructors() {
+    myFixture.addClass("package p;\n" +
+                       "import java.util.List;\n" +
+                       "\n" +
+                       "public class A {\n" +
+                       "  public A(List l) {\n" +
+                       "  }\n" +
+                       "}");
+    myFixture.addClass("import java.util.List;\n" +
+                       "public class A<T> extends p.A {\n" +
+                       "  public A(List<T> l) {\n" +
+                       "    super(l);\n" +
+                       "  }\n" +
+                       "}");
+    doTest();
   }
 
-  public void testPackageLocalMethodVisibleInHierarchy() throws Exception {
-    doTest(BASE_PATH + "/packageLocalMethod/foo/bar/C.java",
-           BASE_PATH + "/packageLocalMethod", false, false);
+  public void testPackageLocalMethod() {
+    myFixture.addClass("package foo;\n" +
+                       "public abstract class A {\n" +
+                       "  abstract void foo();\n" +
+                       "}");
+    myFixture.addClass("package foo.bar;\n" +
+                       "import foo.A;\n" +
+                       "abstract class B extends A {}");
+    doTest();
+  }
+
+  private void doTest() {
+    myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
   }
 }
