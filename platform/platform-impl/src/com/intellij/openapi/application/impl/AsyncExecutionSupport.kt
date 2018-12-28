@@ -23,7 +23,7 @@ import kotlin.coroutines.CoroutineContext
  * @author eldar
  */
 internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val dispatcher: CoroutineDispatcher,
-                                                                     private val expirableHandles: Set<ExpirableHandle>) : AsyncExecution<E> {
+                                                                     private val expirableHandles: Set<JobExpiration>) : AsyncExecution<E> {
 
   private val myCoroutineDispatchingContext: CoroutineContext by lazy {
     val exceptionHandler = CoroutineExceptionHandler { context, throwable -> dispatcher.processUncaughtException(context, throwable) }
@@ -34,23 +34,42 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
 
   private fun createExpirableJobContinuationInterceptor(): ContinuationInterceptor {
     val delegateInterceptor = RescheduleAttemptLimitAwareDispatcher(dispatcher)
-    val expirableJob = composeExpirableJob()
+    val jobExpiration = composeJobExpiration()
 
     return object : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
       /** Invoked once on each newly launched coroutine when dispatching it for the first time. */
       override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
-        expirableJob.cancelJobOnCompletion(continuation.context[Job]!!)
+        jobExpiration.cancelJobOnExpiration(continuation.context[Job]!!)
         return delegateInterceptor.interceptContinuation(continuation)
       }
     }
   }
 
-  private fun composeExpirableJob(): Job =
-    SupervisorJob().also { job ->
-      expirableHandles.forEach {
-        it.job.cancelJobOnCompletion(job)
+  private fun composeJobExpiration(): JobExpiration {
+    val job = SupervisorJob()
+    expirableHandles.forEach {
+      it.cancelJobOnExpiration(job)
+    }
+    return SimpleJobExpiration(job)
+  }
+
+  internal abstract class JobExpiration {
+    protected abstract val job: Job
+
+    /** The caller must ensure the returned handle is properly disposed. */
+    fun invokeOnExpiration(handler: CompletionHandler): DisposableHandle =
+      job.invokeOnCompletion(handler)
+
+    fun cancelJobOnExpiration(job: Job) {
+      invokeOnExpiration {
+        job.cancel()
+      }.also { handle ->
+        job.invokeOnCompletion { handle.dispose() }
       }
     }
+  }
+
+  internal class SimpleJobExpiration(override val job: Job) : JobExpiration()
 
   /**
    * An ExpirableHandle isolates interactions with a Disposable and the Disposer, using
@@ -65,17 +84,19 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
    * [expireWith] and [withConstraint], and each individual coroutine job that must be cancelled
    * once any of the disposables is expired.
    */
-  internal class ExpirableHandle(val disposable: Disposable) {
+  internal class ExpirableHandle(val disposable: Disposable) : JobExpiration() {
     /**
      * Does not have children or a parent. Unlike the regular parent-children job relation,
      * having coroutine jobs attached to the supervisor job doesn't imply waiting of any kind,
      * neither does coroutine cancellation affect the supervisor job state.
      */
-    val job by lazy {
+    override val job by lazy {
       SupervisorJob().also { job ->
         disposable.cancelJobOnDisposal(job, weaklyReferencedJob = true)  // the job doesn't leak through Disposer
       }
     }
+    val isExpired: Boolean
+      get() = job.isCancelled && disposable.isDisposed
 
     override fun equals(other: Any?): Boolean = other is ExpirableHandle && disposable === other.disposable
     override fun hashCode(): Int = System.identityHashCode(disposable)
@@ -83,7 +104,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
 
   override fun coroutineDispatchingContext(): CoroutineContext = myCoroutineDispatchingContext
 
-  protected abstract fun cloneWith(dispatcher: CoroutineDispatcher, expirableHandles: Set<ExpirableHandle>): E
+  protected abstract fun cloneWith(dispatcher: CoroutineDispatcher, expirableHandles: Set<JobExpiration>): E
 
   override fun withConstraint(constraint: SimpleContextConstraint): E =
     cloneWith(SimpleConstraintDispatcher(dispatcher, constraint), expirableHandles)
@@ -162,12 +183,12 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
     override val constraint get() = super.constraint as ExpirableContextConstraint
 
     override fun isScheduleNeeded(context: CoroutineContext): Boolean =
-      !if (expirableHandle.job.isCancelled) expirableHandle.disposable.isDisposed else constraint.isCorrectContext
+      !(expirableHandle.isExpired || constraint.isCorrectContext)
 
     override fun doSchedule(context: CoroutineContext, retryDispatchRunnable: Runnable) {
       val runOnce = RunOnce()
 
-      val jobDisposableHandle = expirableHandle.job.invokeOnCompletion {
+      val jobDisposableHandle = expirableHandle.invokeOnExpiration {
         runOnce {
           if (!context[Job]!!.isCancelled) { // TODO[eldar] relying on the order of invocations of CompletionHandlers
             LOG.warn("Must have already been cancelled through the expirableHandle")
@@ -339,14 +360,6 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
           jobCompletionUnregisteringHandle.dispose()
           completionHandler(null)
         }
-      }
-    }
-
-    internal fun Job.cancelJobOnCompletion(job: Job) {
-      invokeOnCompletion {
-        job.cancel()
-      }.also { handle ->
-        job.invokeOnCompletion { handle.dispose() }
       }
     }
 

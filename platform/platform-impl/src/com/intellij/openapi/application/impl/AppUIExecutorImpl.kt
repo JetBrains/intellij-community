@@ -23,7 +23,7 @@ import kotlin.coroutines.CoroutineContext
  */
 internal class AppUIExecutorImpl private constructor(private val myModality: ModalityState,
                                                      dispatcher: CoroutineDispatcher,
-                                                     expirableHandles: Set<ExpirableHandle>)
+                                                     expirableHandles: Set<JobExpiration>)
   : AsyncExecutionSupport<AppUIExecutorEx>(dispatcher, expirableHandles), AppUIExecutorEx {
 
   constructor(modality: ModalityState) : this(modality, /* fallback */ object : CoroutineDispatcher() {
@@ -35,9 +35,9 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
       ApplicationManager.getApplication().invokeLater(block, modality)
 
     override fun toString() = "onUiThread($modality)"
-  }, emptySet<ExpirableHandle>())
+  }, emptySet<JobExpiration>())
 
-  override fun cloneWith(dispatcher: CoroutineDispatcher, expirableHandles: Set<ExpirableHandle>): AppUIExecutorEx =
+  override fun cloneWith(dispatcher: CoroutineDispatcher, expirableHandles: Set<JobExpiration>): AppUIExecutorEx =
     AppUIExecutorImpl(myModality, dispatcher, expirableHandles)
 
   override fun later(): AppUIExecutor {
