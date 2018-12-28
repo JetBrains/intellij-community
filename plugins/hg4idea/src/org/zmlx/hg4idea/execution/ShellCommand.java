@@ -60,7 +60,8 @@ public final class ShellCommand {
     throws ShellCommandException {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     try {
-      OSProcessHandler processHandler = isBinary ? new BinaryOSProcessHandler(myCommandLine) : new OSProcessHandler(myCommandLine);
+      OSProcessHandler processHandler =
+        isBinary ? new BinaryOSProcessHandler(myCommandLine) : new KillableProcessHandler(myCommandLine, true);
       ProcessAdapter outputAdapter = new ProcessAdapter() {
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
