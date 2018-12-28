@@ -9,6 +9,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
+import com.intellij.testFramework.TestSorter;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -25,6 +27,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.*;
+import java.util.function.ToIntFunction;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
 public class TestCaseLoader {
@@ -283,19 +286,43 @@ public class TestCaseLoader {
     return false;
   }
 
+  public int getClassesCount() {
+    return myClassList.size();
+  }
+
   public List<Class> getClasses() {
     List<Class> result = new ArrayList<>(myClassList.size());
-    result.addAll(myClassList);
-    Collections.sort(result, Comparator.comparingInt(TestCaseLoader::getRank));
 
     if (myFirstTestClass != null) {
-      result.add(0, myFirstTestClass);
+      result.add(myFirstTestClass);
     }
+
+    result.addAll(loadTestSorter().sorted(myClassList, TestCaseLoader::getRank));
+
     if (myLastTestClass != null) {
       result.add(myLastTestClass);
     }
 
     return result;
+  }
+
+  @NotNull
+  private static TestSorter loadTestSorter() {
+    final String sorter = System.getProperty("intellij.build.test.sorter");
+    if (sorter != null) {
+      try {
+        return (TestSorter)Class.forName(sorter).newInstance();
+      }
+      catch (Throwable ignore) { }
+    }
+
+    return new TestSorter() {
+      @NotNull
+      @Override
+      public List<Class> sorted(@NotNull List<Class> tests, @NotNull ToIntFunction<? super Class> ranker) {
+        return ContainerUtil.sorted(tests, Comparator.comparingInt(ranker));
+      }
+    };
   }
 
   private void clearClasses() {
@@ -323,10 +350,10 @@ public class TestCaseLoader {
   public void fillTestCases(String rootPackage, List<File> classesRoots) {
     long before = System.currentTimeMillis();
     for (File classesRoot : classesRoots) {
-      int oldCount = getClasses().size();
+      int oldCount = getClassesCount();
       ClassFinder classFinder = new ClassFinder(classesRoot, rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
       loadTestCases(classesRoot.getName(), classFinder.getClasses());
-      int newCount = getClasses().size();
+      int newCount = getClassesCount();
       if (newCount != oldCount) {
         System.out.println("Loaded " + (newCount - oldCount) + " tests from class root " + classesRoot);
       }
@@ -337,7 +364,7 @@ public class TestCaseLoader {
     }
     long after = System.currentTimeMillis();
 
-    String message = "Number of test classes found: " + getClasses().size() + " time to load: " + (after - before) / 1000 + "s.";
+    String message = "Number of test classes found: " + getClassesCount() + " time to load: " + (after - before) / 1000 + "s.";
     System.out.println(message);
     TeamCityLogger.info(message);
   }
