@@ -19,6 +19,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiMethod;
@@ -52,22 +54,16 @@ public class TestDataGuessByExistingFilesUtil {
   private TestDataGuessByExistingFilesUtil() {
   }
 
-
-  @NotNull
-  static List<String> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod) {
-    return collectTestDataByExistingFiles(psiMethod, null);
-  }
-
   /**
    * Tries to guess what test data files match to the given method if it's test method and there are existing test data
    * files for the target test class.
    *
    * @param psiMethod test method candidate
    * @param testDataPath test data path if present (e.g. obtained from @TestDataPath annotation value)
-   * @return List of paths to the test data files for the given test if it's possible to guess them; empty List otherwise
+   * @return List of existing test data files for the given test if it's possible to guess them; empty List otherwise
    */
   @NotNull
-  static List<String> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
+  static List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
     Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode() && application.isHeadlessEnvironment()) {
       // shouldn't be invoked under these conditions anyway, just for additional safety
@@ -75,10 +71,10 @@ public class TestDataGuessByExistingFilesUtil {
       return Collections.emptyList();
     }
 
-    return buildDescriptorFromExistingTestData(psiMethod, testDataPath).generate();
+    return buildDescriptorFromExistingTestData(psiMethod, testDataPath).restoreFiles();
   }
 
-  static List<String> guessTestDataName(PsiMethod method) {
+  static List<TestDataFile> guessTestDataName(PsiMethod method) {
     String testName = getTestName(method);
     if (testName == null) return null;
     PsiClass psiClass = method.getContainingClass();
@@ -87,14 +83,14 @@ public class TestDataGuessByExistingFilesUtil {
     int count = 5;
     PsiMethod prev = PsiTreeUtil.getPrevSiblingOfType(method, PsiMethod.class);
     while (prev != null && count-- > 0) {
-      List<String> testData = guessTestDataBySiblingTest(prev, testDataBasePath, testName);
+      List<TestDataFile> testData = guessTestDataBySiblingTest(prev, testDataBasePath, testName);
       if (!testData.isEmpty()) return testData;
       prev = PsiTreeUtil.getPrevSiblingOfType(prev, PsiMethod.class);
     }
     count = 5;
     PsiMethod next = PsiTreeUtil.getNextSiblingOfType(method, PsiMethod.class);
     while (next != null && count-- > 0) {
-      List<String> testData = guessTestDataBySiblingTest(next, testDataBasePath, testName);
+      List<TestDataFile> testData = guessTestDataBySiblingTest(next, testDataBasePath, testName);
       if (!testData.isEmpty()) return testData;
       next = PsiTreeUtil.getNextSiblingOfType(next, PsiMethod.class);
     }
@@ -102,8 +98,8 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   @NotNull
-  private static List<String> guessTestDataBySiblingTest(PsiMethod psiMethod, String testDataBasePath, String testName) {
-    return buildDescriptorFromExistingTestData(psiMethod, testDataBasePath).generate(testName, null);
+  private static List<TestDataFile> guessTestDataBySiblingTest(PsiMethod psiMethod, String testDataBasePath, String testName) {
+    return buildDescriptorFromExistingTestData(psiMethod, testDataBasePath).generateByTemplates(testName, null);
   }
 
   @Nullable
@@ -161,10 +157,10 @@ public class TestDataGuessByExistingFilesUtil {
     return buildDescriptor(testName, psiClass, testDataPath);
   }
 
-  public static List<String> suggestTestDataFiles(@NotNull String testName,
-                                                  String testDataPath,
-                                                  @NotNull PsiClass psiClass){
-    return buildDescriptor(testName, psiClass, testDataPath).generate(testName, testDataPath);
+  public static List<TestDataFile> suggestTestDataFiles(@NotNull String testName,
+                                                        String testDataPath,
+                                                        @NotNull PsiClass psiClass) {
+    return buildDescriptor(testName, psiClass, testDataPath).restoreFiles();
   }
 
   @NotNull
@@ -266,7 +262,7 @@ public class TestDataGuessByExistingFilesUtil {
 
     List<TestLocationDescriptor> descriptors = ContainerUtil.flatten(descriptorsByFileNames.values());
     filterDirsFromOtherModules(descriptors);
-    return new TestDataDescriptor(descriptors, possibleFileName);
+    return new TestDataDescriptor(descriptors);
   }
 
   private static Collection<String> getAllFileNames(final String testName, final GotoFileModel model) {
@@ -378,10 +374,11 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   private static class TestLocationDescriptor {
-    public String pathPrefix;
-    public String pathSuffix;
-    public boolean startWithLowerCase;
-    public boolean isFromCurrentModule;
+    String pathPrefix;
+    String pathSuffix;
+    boolean startWithLowerCase;
+    boolean isFromCurrentModule;
+    int matchedVFileId;
 
     public boolean isComplete() {
       return pathPrefix != null && pathSuffix != null;
@@ -407,6 +404,7 @@ public class TestDataGuessByExistingFilesUtil {
       if (module != null) {
         isFromCurrentModule = module.equals(ModuleUtilCore.findModuleForFile(matched, project));
       }
+      matchedVFileId = ((VirtualFileWithId)matched).getId();
     }
 
     @Override
@@ -438,37 +436,33 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   private static class TestDataDescriptor {
-    private static final TestDataDescriptor NOTHING_FOUND = new TestDataDescriptor(Collections.emptyList(), null);
+    private static final TestDataDescriptor NOTHING_FOUND = new TestDataDescriptor(Collections.emptyList());
 
     private final List<TestLocationDescriptor> myDescriptors = new ArrayList<>();
-    private final String myTestName;
 
-    TestDataDescriptor(Collection<TestLocationDescriptor> descriptors, String testName) {
-      myTestName = testName;
+    TestDataDescriptor(Collection<TestLocationDescriptor> descriptors) {
       myDescriptors.addAll(descriptors);
     }
 
     @NotNull
-    public List<String> generate(@NotNull final String testName) {
-      return generate(testName, null);
+    public List<TestDataFile> restoreFiles() {
+      return ContainerUtil.mapNotNull(myDescriptors, d -> {
+        VirtualFile file = VirtualFileManager.getInstance().findFileById(d.matchedVFileId);
+        return file == null ? null : new TestDataFile.Existing(file);
+      });
     }
 
     @NotNull
-    public List<String> generate() {
-      return generate(myTestName, null);
-    }
-
-    @NotNull
-    public List<String> generate(@NotNull final String testName, String root) {
-      List<String> result = new ArrayList<>();
+    public List<TestDataFile> generateByTemplates(@NotNull String testName, @Nullable String root) {
+      List<TestDataFile> result = new ArrayList<>();
       if (StringUtil.isEmpty(testName)) {
         return result;
       }
       for (TestLocationDescriptor descriptor : myDescriptors) {
         if (root != null && !descriptor.pathPrefix.startsWith(root)) continue;
-        result.add(descriptor.pathPrefix + (descriptor.startWithLowerCase
-                                            ? StringUtil.decapitalize(testName)
-                                            : StringUtil.capitalize(testName)) + descriptor.pathSuffix);
+        result.add(new TestDataFile.NonExisting(descriptor.pathPrefix + (descriptor.startWithLowerCase
+                                                                         ? StringUtil.decapitalize(testName)
+                                                                         : StringUtil.capitalize(testName)) + descriptor.pathSuffix));
       }
       return result;
     }

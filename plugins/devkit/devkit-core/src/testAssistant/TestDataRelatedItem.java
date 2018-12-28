@@ -6,17 +6,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
 
 public class TestDataRelatedItem extends GotoRelatedItem {
-  private final List<String> myTestDataFiles;
+  private final List<TestDataFile> myTestDataFiles;
   private final Editor myEditor;
 
-  public TestDataRelatedItem(@NotNull PsiElement location, @NotNull Editor editor, @NotNull List<String> testDataFiles) {
+  public TestDataRelatedItem(@NotNull PsiElement location, @NotNull Editor editor, @NotNull List<TestDataFile> testDataFiles) {
     super(location, "Test Data");
     myEditor = editor;
     myTestDataFiles = testDataFiles;
@@ -26,7 +25,7 @@ public class TestDataRelatedItem extends GotoRelatedItem {
   public String getCustomName() {
     return myTestDataFiles.size() != 1
            ? "Test Data"
-           : PathUtil.getFileName(myTestDataFiles.get(0));
+           : myTestDataFiles.get(0).getName();
   }
 
   @Override

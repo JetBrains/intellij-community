@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,14 +41,14 @@ public class TestDataReferenceCollector {
   }
 
   @NotNull
-  List<String> collectTestDataReferences(@NotNull final PsiMethod method) {
+  List<TestDataFile> collectTestDataReferences(@NotNull final PsiMethod method) {
     return collectTestDataReferences(method, true);
   }
 
   @NotNull
-  List<String> collectTestDataReferences(@NotNull final PsiMethod method, boolean collectByExistingFiles) {
+  List<TestDataFile> collectTestDataReferences(@NotNull final PsiMethod method, boolean collectByExistingFiles) {
     myContainingClass = method.getContainingClass();
-    List<String> result = collectTestDataReferences(method, new HashMap<>(), new HashSet<>());
+    List<TestDataFile> result = collectTestDataReferences(method, new HashMap<>(), new HashSet<>());
     if (!myFoundTestDataParameters) {
       myLogMessages.add("Found no parameters annotated with @TestDataFile");
     }
@@ -61,10 +62,10 @@ public class TestDataReferenceCollector {
   }
 
   @NotNull
-  private List<String> collectTestDataReferences(final PsiMethod method,
-                                                 final Map<String, Computable<UValue>> argumentMap,
-                                                 final HashSet<Pair<PsiMethod, Set<UExpression>>> proceed) {
-    final List<String> result = new ArrayList<>();
+  private List<TestDataFile> collectTestDataReferences(PsiMethod method,
+                                                      Map<String, Computable<UValue>> argumentMap,
+                                                      HashSet<Pair<PsiMethod, Set<UExpression>>> proceed) {
+    final List<TestDataFile> result = new ArrayList<>();
     if (myTestDataPath == null) {
       return result;
     }
@@ -115,7 +116,7 @@ public class TestDataReferenceCollector {
       }
 
       private void processCallArgument(UCallExpression expression, Map<String, Computable<UValue>> argumentMap,
-                                       Collection<String> result, int index) {
+                                       Collection<TestDataFile> result, int index) {
         List<UExpression> arguments = expression.getValueArguments();
         if (arguments.size() > index) {
           handleArgument(arguments.get(index), argumentMap, result);
@@ -123,17 +124,17 @@ public class TestDataReferenceCollector {
       }
 
       private void processVarargCallArgument(UCallExpression expression, Map<String, Computable<UValue>> argumentMap,
-                                             Collection<String> result) {
+                                             Collection<TestDataFile> result) {
         List<UExpression> arguments = expression.getValueArguments();
         for (UExpression argument : arguments) {
           handleArgument(argument, argumentMap, result);
         }
       }
 
-      private void handleArgument(UExpression argument, Map<String, Computable<UValue>> argumentMap, Collection<String> result) {
+      private void handleArgument(UExpression argument, Map<String, Computable<UValue>> argumentMap, Collection<TestDataFile> result) {
         UValue testDataFileValue = UEvaluationContextKt.uValueOf(argument, new TestDataEvaluatorExtension(argumentMap));
         if (testDataFileValue instanceof UStringConstant) {
-          result.add(myTestDataPath + ((UStringConstant) testDataFileValue).getValue());
+          result.add(new TestDataFile.LazyResolved(myTestDataPath + ((UStringConstant)testDataFileValue).getValue()));
         }
       }
     });

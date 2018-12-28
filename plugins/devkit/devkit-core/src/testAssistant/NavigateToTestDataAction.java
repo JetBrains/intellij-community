@@ -42,7 +42,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     final RelativePoint point = editor != null ? popupFactory.guessBestPopupLocation(editor) :
                                 popupFactory.guessBestPopupLocation(dataContext);
 
-    List<String> fileNames = findTestDataFiles(dataContext);
+    List<TestDataFile> fileNames = findTestDataFiles(dataContext);
     if (fileNames == null || fileNames.isEmpty()) {
       PsiMethod method = findTargetMethod(dataContext);
       fileNames = method == null ? null : TestDataGuessByExistingFilesUtil.guessTestDataName(method);
@@ -61,7 +61,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
   }
 
   @Nullable
-  static List<String> findTestDataFiles(@NotNull DataContext context) {
+  static List<TestDataFile> findTestDataFiles(@NotNull DataContext context) {
     final PsiMethod method = findTargetMethod(context);
     if (method == null) {
       PsiClass parametrizedTestClass = findParametrizedClass(context);

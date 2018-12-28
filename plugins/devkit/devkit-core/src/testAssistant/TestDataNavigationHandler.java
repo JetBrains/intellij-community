@@ -20,43 +20,37 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.idea.devkit.testAssistant.TestDataUtil.getFileByPath;
-
 public class TestDataNavigationHandler implements GutterIconNavigationHandler<PsiMethod> {
   @Override
   public void navigate(MouseEvent e, PsiMethod elt) {
-    List<String> fileNames = getFileNames(elt);
-
-    if (fileNames.isEmpty()) {
-      return;
-    }
+    List<TestDataFile> fileNames = getFileNames(elt);
+    if (fileNames.isEmpty()) return;
     navigate(new RelativePoint(e), fileNames, elt.getProject());
   }
 
   @NotNull
-  static List<String> getFileNames(PsiMethod method) {
+  static List<TestDataFile> getFileNames(PsiMethod method) {
     return getFileNames(method, true);
   }
 
   @NotNull
-  static List<String> getFileNames(PsiMethod method, boolean collectByExistingFiles) {
-    List<String> fileNames = null;
+  static List<TestDataFile> getFileNames(PsiMethod method, boolean collectByExistingFiles) {
+    List<TestDataFile> fileNames = null;
     String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
     if (testDataPath != null) {
-      fileNames = new TestDataReferenceCollector(testDataPath, method.getName().substring(4))
-        .collectTestDataReferences(method, collectByExistingFiles);
+      fileNames = new TestDataReferenceCollector(testDataPath, method.getName().substring(4)).collectTestDataReferences(method, collectByExistingFiles);
     }
 
     if (collectByExistingFiles && (fileNames == null || fileNames.isEmpty())) {
       fileNames = new ArrayList<>();
-      fileNames.addAll(TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method));
+      fileNames.addAll(TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method, testDataPath));
       fileNames.addAll(TestDataGuessByTestDiscoveryUtil.collectTestDataByExistingFiles(method));
     }
     return fileNames == null ? Collections.emptyList() : fileNames;
   }
 
   public static void navigate(@NotNull RelativePoint point,
-                              @NotNull List<String> testDataFiles,
+                              @NotNull List<TestDataFile> testDataFiles,
                               Project project) {
     if (testDataFiles.isEmpty()) return;
     if (testDataFiles.size() == 1) {
@@ -75,6 +69,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
   @NotNull
   public static List<String> fastGetTestDataPathsByRelativePath(@NotNull String testDataFileRelativePath, PsiMethod method) {
     return getFileNames(method, false).stream()
+      .map(TestDataFile::getPath)
       .filter(path -> path.endsWith(testDataFileRelativePath.startsWith("/") ? testDataFileRelativePath : "/" + testDataFileRelativePath))
       .distinct()
       .collect(Collectors.toList());
@@ -86,21 +81,20 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
    * @param filePaths paths of testdata files with "/" path separator. This List can be changed.
    * @param point point where the popup will be shown.
    */
-  private static void showNavigationPopup(Project project, List<String> filePaths, RelativePoint point) {
-    Collections.sort(filePaths, String.CASE_INSENSITIVE_ORDER);
+  private static void showNavigationPopup(Project project, List<TestDataFile> filePaths, RelativePoint point) {
+    Collections.sort(filePaths, Comparator.comparing(TestDataFile::getName, String.CASE_INSENSITIVE_ORDER));
 
     List<TestDataNavigationElement> elementsToDisplay = new ArrayList<>();
     List<TestDataNavigationElement> nonExistingElementsToDisplay = new ArrayList<>();
-    Set<VirtualFile> files = new HashSet<>();
-    for (String p : filePaths) {
-      VirtualFile f = getFileByPath(p);
-      if (f == null) {
+    Set<TestDataFile> files = new HashSet<>();
+    for (TestDataFile testDataFile : filePaths) {
+      if (!testDataFile.exists()) {
         if (nonExistingElementsToDisplay.isEmpty()) {
           nonExistingElementsToDisplay.add(TestDataNavigationElementFactory.createForCreateMissingFilesOption(filePaths));
         }
-        nonExistingElementsToDisplay.add(TestDataNavigationElementFactory.createForNonExistingFile(project, p));
+        nonExistingElementsToDisplay.add(TestDataNavigationElementFactory.createForNonExistingFile(project, testDataFile));
       } else {
-        files.add(f);
+        files.add(testDataFile);
       }
     }
 
@@ -128,39 +122,45 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
   }
 
   private static void consumeElementsToDisplay(@NotNull Project project,
-                                               @NotNull Collection<VirtualFile> files,
+                                               @NotNull Set<TestDataFile> files,
                                                @NotNull Consumer<TestDataNavigationElement> consumer) {
 
-    for (Map.Entry<VirtualFile, Collection<VirtualFile>> e: ContainerUtil.groupBy(files, f -> f.getParent()).entrySet()) {
-      Collection<VirtualFile> dirFiles = e.getValue();
-      Set<VirtualFile> usedPaths = new HashSet<>();
+    for (Map.Entry<VirtualFile, Collection<TestDataFile>> e: ContainerUtil.groupBy(files, f -> {
+      VirtualFile file = f.getVirtualFile();
+      assert file != null;
+      return file.getParent();
+    }).entrySet()) {
+      Collection<TestDataFile> dirFiles = e.getValue();
+      Set<TestDataFile> usedPaths = new HashSet<>();
 
-      for (VirtualFile file1 : dirFiles) {
-        if (usedPaths.contains(file1)) {
+      for (TestDataFile testDataFile1 : dirFiles) {
+        if (usedPaths.contains(testDataFile1)) {
           continue;
         }
 
         boolean groupFound = false;
-        for (VirtualFile file2 : dirFiles) {
-          if (file2.equals(file1) || usedPaths.contains(file2)) {
+        for (TestDataFile  testDataFile2 : dirFiles) {
+          VirtualFile file2 = testDataFile2.getVirtualFile();
+          assert file2 != null;
+          if (testDataFile1.equals(testDataFile2) || usedPaths.contains(testDataFile1)) {
             continue;
           }
 
-          TestDataGroupVirtualFile group = TestDataUtil.getTestDataGroup(file1, file2);
+          TestDataGroupVirtualFile group = TestDataUtil.getTestDataGroup(testDataFile1, testDataFile2);
           if (group == null) {
             continue;
           }
 
           groupFound = true;
           consumer.accept(TestDataNavigationElementFactory.createForGroup(project, group));
-          usedPaths.add(file1);
-          usedPaths.add(file2);
+          usedPaths.add(testDataFile1);
+          usedPaths.add(testDataFile2);
           break;
         }
 
         if (!groupFound) {
-          consumer.accept(TestDataNavigationElementFactory.createForFile(project, file1));
-          usedPaths.add(file1);
+          consumer.accept(TestDataNavigationElementFactory.createForFile(project, testDataFile1));
+          usedPaths.add(testDataFile1);
         }
       }
     }
