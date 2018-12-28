@@ -205,16 +205,6 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     return false;
   }
 
-  private void executeAction(@NotNull String watch) {
-    AnAction action = ActionManager.getInstance().getAction(watch);
-    Presentation presentation = action.getTemplatePresentation().clone();
-    DataContext context = DataManager.getInstance().getDataContext(getTree());
-
-    AnActionEvent actionEvent =
-      new AnActionEvent(null, context, ActionPlaces.DEBUGGER_TOOLBAR, presentation, ActionManager.getInstance(), 0);
-    action.actionPerformed(actionEvent);
-  }
-
   @Override
   public void addWatchExpression(@NotNull XExpression expression, int index, final boolean navigateToWatchNode) {
     ApplicationManager.getApplication().assertIsDispatchThread();
