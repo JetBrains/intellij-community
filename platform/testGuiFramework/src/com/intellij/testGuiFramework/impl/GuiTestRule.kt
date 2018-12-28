@@ -188,13 +188,14 @@ class GuiTestRule : TestRule {
       LOG.info("tearDown: collecting fatal errors from IDE...")
       errors.addAll(GuiTestUtilKt.fatalErrorsFromIde(currentTestDateStart)) //do not add fatal errors from previous tests
       LOG.info("tearDown: double checking return to the first step on a welcome frame")
-      if (!isWelcomeFrameFirstStep()) {
+      if (!isWelcomeFrameFirstStep() || anyIdeFrame(Timeouts.seconds01) != null) {
+        LOG.warn("tearDown: IDE cannot return to welcome frame, need to restart IDE")
+        ScreenshotOnFailure.takeScreenshot("$myTestName.thrownFromTearDown")
         GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AFTER_TEST,
                                                     "IDE cannot return to the Welcome frame")
         )
         //set last project creation path to null; avoid opening project of the failed test
         RecentProjectsManager.getInstance().lastProjectCreationLocation = null
-        LOG.warn("tearDown: IDE cannot return to welcome frame, need to restart IDE")
       }
       return errors.toList()
     }
