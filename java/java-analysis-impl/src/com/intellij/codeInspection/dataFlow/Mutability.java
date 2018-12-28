@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.util.*;
 import com.intellij.testFramework.LightVirtualFile;
@@ -95,6 +96,7 @@ public enum Mutability {
    */
   @NotNull
   public static Mutability getMutability(@NotNull PsiModifierListOwner owner) {
+    if (owner instanceof LightElement) return UNKNOWN;
     return CachedValuesManager.getCachedValue(owner, () -> 
       CachedValueProvider.Result.create(calcMutability(owner), owner, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
   }
