@@ -81,8 +81,8 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
     return null;
   }
 
-  private static class MyInlineDebuggerHelper extends InlineDebuggerHelper {
-    private static final MyInlineDebuggerHelper INSTANCE = new MyInlineDebuggerHelper();
+  private static class PyInlineDebuggerHelper extends InlineDebuggerHelper {
+    private static final PyInlineDebuggerHelper INSTANCE = new PyInlineDebuggerHelper();
 
     @Override
     public boolean shouldEvaluateChildrenByDefault(XNamedTreeNode node) {
@@ -93,6 +93,6 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
   @NotNull
   @Override
   public InlineDebuggerHelper getInlineDebuggerHelper() {
-    return MyInlineDebuggerHelper.INSTANCE;
+    return PyInlineDebuggerHelper.INSTANCE;
   }
 }
