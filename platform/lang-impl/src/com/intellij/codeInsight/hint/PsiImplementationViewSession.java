@@ -32,7 +32,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PsiImplementationViewSession {
+public class PsiImplementationViewSession implements ImplementationViewSession {
   private static final Logger LOG = Logger.getInstance(PsiImplementationViewSession.class);
 
   @NotNull private final Project myProject;
@@ -57,19 +57,23 @@ public class PsiImplementationViewSession {
     return myProject;
   }
 
+  @Override
   @Nullable
   public PsiElement getElement() {
     return myElement;
   }
 
+  @NotNull
   public List<ImplementationViewElement> getImplementationElements() {
     return ContainerUtil.map(myImpls, PsiImplementationViewElement::new);
   }
 
+  @Override
   public String getText() {
     return myText;
   }
 
+  @Override
   public Editor getEditor() {
     return myEditor;
   }
@@ -79,6 +83,7 @@ public class PsiImplementationViewSession {
     return myFile;
   }
 
+  @Override
   public PsiImplementationViewSession createSessionForLookupElement(Object lookupItemObject, boolean isSearchDeep) {
     final PsiElement element = lookupItemObject instanceof PsiElement
                                ? (PsiElement)lookupItemObject
@@ -97,10 +102,12 @@ public class PsiImplementationViewSession {
     return new PsiImplementationViewSession(myProject, element, impls, text, myEditor, myFile);
   }
 
+  @Override
   public boolean elementRequiresIncludeSelf() {
     return !(myElement instanceof PomTargetPsiElement);
   }
 
+  @Override
   public boolean needUpdateInBackground() {
     return myElement != null;
   }
@@ -184,10 +191,12 @@ public class PsiImplementationViewSession {
     });
   }
 
+  @NotNull
+  @Override
   public List<ImplementationViewElement> searchImplementationsInBackground(@NotNull ProgressIndicator indicator,
                                                                            boolean isSearchDeep,
                                                                            boolean includeSelf,
-                                                                           final Processor<PsiElement> processor) {
+                                                                           @NotNull final Processor<PsiElement> processor) {
     final ImplementationSearcher.BackgroundableImplementationSearcher implementationSearcher =
       new ImplementationSearcher.BackgroundableImplementationSearcher() {
         @Override

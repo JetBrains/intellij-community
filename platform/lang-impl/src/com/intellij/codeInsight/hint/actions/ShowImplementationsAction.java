@@ -3,10 +3,7 @@ package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.codeInsight.hint.ImplementationViewComponent;
-import com.intellij.codeInsight.hint.ImplementationViewElement;
-import com.intellij.codeInsight.hint.PsiImplementationViewElement;
-import com.intellij.codeInsight.hint.PsiImplementationViewSession;
+import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.codeInsight.navigation.ImplementationSearcher;
@@ -81,19 +78,22 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     boolean isInvokedFromEditor = CommonDataKeys.EDITOR.getData(dataContext) != null;
 
-    PsiImplementationViewSession psiImplementationViewSession = PsiImplementationViewSession.create(dataContext, project, isSearchDeep());
-    if (psiImplementationViewSession == null) return;
-    showImplementations(psiImplementationViewSession, isInvokedFromEditor, invokedByShortcut);
+    for (ImplementationViewSessionFactory factory: ImplementationViewSessionFactory.EP_NAME.getExtensionList() ) {
+      ImplementationViewSession session = factory.createSession(dataContext, project, invokedByShortcut);
+      if (session != null) {
+        showImplementations(session, isInvokedFromEditor, invokedByShortcut);
+      }
+    }
   }
 
-  private void updateElementImplementations(final Object lookupItemObject, PsiImplementationViewSession session) {
-    PsiImplementationViewSession newSession = session.createSessionForLookupElement(lookupItemObject, isSearchDeep());
+  private void updateElementImplementations(final Object lookupItemObject, ImplementationViewSession session) {
+    ImplementationViewSession newSession = session.createSessionForLookupElement(lookupItemObject, isSearchDeep());
     if (newSession != null) {
       showImplementations(newSession, false, false);
     }
   }
 
-  protected void showImplementations(@NotNull PsiImplementationViewSession session,
+  protected void showImplementations(@NotNull ImplementationViewSession session,
                                      boolean invokedFromEditor,
                                      boolean invokedByShortcut) {
 
@@ -175,7 +175,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
   }
 
-  private void updateInBackground(@NotNull PsiImplementationViewSession session,
+  private void updateInBackground(@NotNull ImplementationViewSession session,
                                   @NotNull ImplementationViewComponent component,
                                   String title,
                                   @NotNull AbstractPopup popup,
@@ -231,12 +231,12 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
   private class ImplementationsUpdaterTask extends BackgroundUpdaterTask {
     private final String myCaption;
-    private final PsiImplementationViewSession mySession;
+    private final ImplementationViewSession mySession;
     private final boolean myIncludeSelf;
     private final ImplementationViewComponent myComponent;
     private List<ImplementationViewElement> myElements;
 
-    private ImplementationsUpdaterTask(PsiImplementationViewSession session,
+    private ImplementationsUpdaterTask(ImplementationViewSession session,
                                        final String caption,
                                        boolean includeSelf,
                                        ImplementationViewComponent component) {

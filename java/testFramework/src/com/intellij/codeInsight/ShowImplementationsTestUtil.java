@@ -2,8 +2,8 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.hint.ImplementationViewElement;
+import com.intellij.codeInsight.hint.ImplementationViewSession;
 import com.intellij.codeInsight.hint.PsiImplementationViewElement;
-import com.intellij.codeInsight.hint.PsiImplementationViewSession;
 import com.intellij.codeInsight.hint.actions.ShowImplementationsAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -26,7 +26,7 @@ public class ShowImplementationsTestUtil {
     final Ref<List<ImplementationViewElement>> ref = new Ref<>();
     new ShowImplementationsAction() {
       @Override
-      protected void showImplementations(@NotNull PsiImplementationViewSession session,
+      protected void showImplementations(@NotNull ImplementationViewSession session,
                                          boolean invokedFromEditor,
                                          boolean invokedByShortcut) {
         ref.set(session.getImplementationElements());
