@@ -97,11 +97,11 @@ class SmartPointerTracker {
     nextAvailableIndex = index;
   }
 
-  synchronized void removeReference(@NotNull PointerReference reference, @NotNull Key<SmartPointerTracker> expectedKey) {
+  synchronized void removeReference(@NotNull PointerReference reference) {
     int index = reference.index;
     if (index < 0) return;
 
-    assertActual(expectedKey, reference.file, reference.key);
+    assertActual(reference.file, reference.key);
     if (references[index] != reference) {
       throw new AssertionError("At " + index + " expected " + reference + ", found " + references[index]);
     }
@@ -118,13 +118,12 @@ class SmartPointerTracker {
     }
   }
 
-  private void assertActual(@NotNull Key<SmartPointerTracker> expectedKey, @NotNull VirtualFile file, @NotNull Key<SmartPointerTracker> refKey) {
+  private void assertActual(@NotNull VirtualFile file, @NotNull Key<SmartPointerTracker> refKey) {
     if (!isActual(file, refKey)) {
       SmartPointerTracker another = file.getUserData(refKey);
       throw new AssertionError("Smart pointer list mismatch:" +
                                " size=" + size +
-                               ", ref.key=" + expectedKey +
-                               ", manager.key=" + refKey +
+                               ", ref.key=" + refKey +
                                (another != null ? "; has another pointer list with size " + another.size : ""));
     }
   }
@@ -137,7 +136,7 @@ class SmartPointerTracker {
       if (!isActual(ref.file, ref.key)) throw new AssertionError();
       SmartPsiElementPointerImpl<?> pointer = ref.get();
       if (pointer == null) {
-        removeReference(ref, ref.key);
+        removeReference(ref);
         continue;
       }
 
@@ -260,8 +259,8 @@ class SmartPointerTracker {
   }
 
   static class PointerReference extends WeakReference<SmartPsiElementPointerImpl<?>> {
-    @NotNull private final VirtualFile file;
-    @NotNull private final Key<SmartPointerTracker> key;
+    @NotNull final VirtualFile file;
+    @NotNull final Key<SmartPointerTracker> key;
     private int index = -2;
 
     PointerReference(@NotNull SmartPsiElementPointerImpl<?> pointer,
@@ -285,7 +284,7 @@ class SmartPointerTracker {
 
       SmartPointerTracker pointers = reference.file.getUserData(reference.key);
       if (pointers != null) {
-        pointers.removeReference(reference, reference.key);
+        pointers.removeReference(reference);
       }
     }
   }
