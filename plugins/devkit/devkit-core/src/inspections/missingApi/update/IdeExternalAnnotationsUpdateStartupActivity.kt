@@ -31,7 +31,7 @@ class IdeExternalAnnotationsUpdateStartupActivity : StartupActivity {
   private fun updateAnnotationsLaterIfNecessary(project: Project, ideaJdk: Sdk) {
     val buildNumber = getIdeaBuildNumber(ideaJdk)
     if (buildNumber != null) {
-      IdeExternalAnnotationsUpdater.getInstance(project).updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk, buildNumber)
+      IdeExternalAnnotationsUpdater.getInstance().updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk, buildNumber)
     }
   }
 

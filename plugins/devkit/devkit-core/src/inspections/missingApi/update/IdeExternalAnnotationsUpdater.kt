@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Utility class that updates IntelliJ API external annotations.
  */
-class IdeExternalAnnotationsUpdater(project: Project) {
+class IdeExternalAnnotationsUpdater {
 
   companion object {
     private val LOG = Logger.getInstance(IdeExternalAnnotationsUpdater::class.java)
@@ -41,7 +41,7 @@ class IdeExternalAnnotationsUpdater(project: Project) {
 
     private val UPDATE_RETRY_TIMEOUT = Duration.of(10, ChronoUnit.MINUTES)
 
-    fun getInstance(project: Project): IdeExternalAnnotationsUpdater = project.service()
+    fun getInstance(): IdeExternalAnnotationsUpdater = service()
   }
 
   private val buildNumberLastFailedUpdateInstant = hashMapOf<BuildNumber, Instant>()
@@ -49,8 +49,6 @@ class IdeExternalAnnotationsUpdater(project: Project) {
   private val buildNumberNotificationShown = hashSetOf<BuildNumber>()
 
   private val buildNumberUpdateInProgress = hashSetOf<BuildNumber>()
-
-  private val annotationsRepository = PublicIdeExternalAnnotationsRepository(project)
 
   private fun isInspectionEnabled(project: Project): Boolean {
     return runReadAction {
@@ -226,7 +224,7 @@ class IdeExternalAnnotationsUpdater(project: Project) {
 
     private fun tryDownloadAnnotations(ideBuildNumber: BuildNumber): IdeExternalAnnotations? {
       return try {
-        annotationsRepository.downloadExternalAnnotations(ideBuildNumber)
+        PublicIdeExternalAnnotationsRepository(project).downloadExternalAnnotations(ideBuildNumber)
       } catch (e: Exception) {
         throw Exception("Failed to download annotations for $ideBuildNumber", e)
       }

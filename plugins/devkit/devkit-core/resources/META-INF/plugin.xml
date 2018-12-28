@@ -242,7 +242,7 @@
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaHiDPIThemeFilter"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
-    <projectService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdater"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdater"/>
     <postStartupActivity implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdateStartupActivity"/>
     <java.externalAnnotation.locationProvider implementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.IdeExternalAnnotationsLocationProvider"/>
 
