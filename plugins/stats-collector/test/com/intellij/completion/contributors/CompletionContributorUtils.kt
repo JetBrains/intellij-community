@@ -16,32 +16,4 @@
 
 package com.intellij.completion.contributors
 
-import com.intellij.codeInsight.completion.CompletionContributorEP
-import com.intellij.completion.enhancer.CompletionContributors
-
-
-object CompletionContributorUtils {
-
-    fun add(contributorEP: CompletionContributorEP) {
-        val extensionPoint = CompletionContributors.extensionPoint()
-        extensionPoint.registerExtension(contributorEP)
-    }
-
-    fun remove(contributorEP: CompletionContributorEP) {
-        val extensionPoint = CompletionContributors.extensionPoint()
-        extensionPoint.unregisterExtension(contributorEP)
-    }
-
-    fun first(): CompletionContributorEP {
-        val extensionPoint = CompletionContributors.extensionPoint()
-        return extensionPoint.extensions.first()
-    }
-
-    fun removeFirst() {
-        val point = CompletionContributors.extensionPoint()
-        val first = point.extensions.first()
-        point.unregisterExtension(first)
-    }
-
-}
 
