@@ -321,7 +321,7 @@ public class HgVFSListener extends VcsVFSListener {
         NotificationAction viewFilesAction = NotificationAction.createSimple("View Files...", () -> {
           DialogWrapper dialog =
             new ProcessedFilePathsDialog(myProject, map2List(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
-          dialog.setTitle("Not Renamed Files");
+          dialog.setTitle("Failed to Rename");
           dialog.show();
         });
         NotificationAction retryAction = NotificationAction.create("Retry", (e, notification) -> {
