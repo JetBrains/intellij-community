@@ -89,7 +89,9 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     mySearchEverywhereUI.switchToContributor(selectedContributorID);
 
     myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
-    if (searchText == null) {
+    //history could be suppressed by user for some reasons (creating promo video, conference demo etc.)
+    boolean suppressHistory = "true".equals(System.getProperty("idea.searchEverywhere.noHistory", "false"));
+    if (searchText == null && !suppressHistory) {
       searchText = myHistoryIterator.prev();
     }
 
