@@ -66,7 +66,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
           }
           add(muteAction())
         }
-        notification = vcsNotifier.notifyMinorInfo(notificationTitle(), notificationMessage(), *notificationActions.toTypedArray())
+        notification = vcsNotifier.notifyMinorInfo(true, notificationTitle(), notificationMessage(), *notificationActions.toTypedArray())
       }
     }
   }
