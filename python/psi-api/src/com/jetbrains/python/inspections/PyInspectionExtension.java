@@ -108,9 +108,19 @@ public abstract class PyInspectionExtension {
    * Checks whether statement that probably has no effect should not be treated as violation.
    *
    * @param expressionStatement statement being analyzed
-   * @return true if no effect statement could be ignored
+   * @return true if no effect statement should be ignored
    */
   public boolean ignoreNoEffectStatement(@NotNull PyExpressionStatement expressionStatement) {
+    return false;
+  }
+
+  /**
+   * Checks whether statement with trailing semicolon should not be treated as violation.
+   *
+   * @param statement statement being analyzed
+   * @return true if trailing semicolon should be ignored
+   */
+  public boolean ignoreTrailingSemicolon(@NotNull PyStatement statement) {
     return false;
   }
 }
