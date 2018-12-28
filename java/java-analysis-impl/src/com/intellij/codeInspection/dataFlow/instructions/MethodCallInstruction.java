@@ -40,7 +40,6 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
   private final boolean myVarArgCall;
   private final Nullability[] myArgRequiredNullability;
   private final Nullability myReturnNullability;
-  private Mutability myReturnMutability;
 
   public MethodCallInstruction(@NotNull PsiMethodReferenceExpression reference, @NotNull List<? extends MethodContract> contracts) {
     myContext = reference;
@@ -245,14 +244,6 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
   @NotNull
   public Nullability getReturnNullability() {
     return myReturnNullability;
-  }
-
-  @NotNull
-  public Mutability getReturnMutability() {
-    if (myReturnMutability == null) {
-      myReturnMutability = myTargetMethod == null ? Mutability.UNKNOWN : Mutability.getMutability(myTargetMethod);
-    }
-    return myReturnMutability;
   }
 
   public String toString() {
