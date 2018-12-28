@@ -15,16 +15,9 @@
  */
 package com.jetbrains.python.breadcrumbs
 
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.impl.source.tree.LeafElement
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
-import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.psi.*
 
@@ -52,20 +45,7 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
   override fun acceptElement(e: PsiElement): Boolean = getHelper(e) != null
 
-  override fun getParent(e: PsiElement): PsiElement? {
-    val default = e.parent
-
-    val currentOffset = currentOffset(e) ?: return default
-    if (!isElementToMoveBackward(e, currentOffset)) return default
-
-    val nonWhiteSpace = moveBackward(e, currentOffset) ?: return default
-
-    val psiFile = e.containingFile ?: return default
-    val document = PsiDocumentManager.getInstance(e.project).getDocument(psiFile) ?: return default
-    val sameLine = document.getLineNumber(nonWhiteSpace.textOffset) == document.getLineNumber(currentOffset)
-
-    return if (sameLine) nonWhiteSpace.parent else default
-  }
+  override fun getParent(e: PsiElement): PsiElement? = e.parent
 
   override fun getElementInfo(e: PsiElement): String = getHelper(e)!!.elementInfo(e as PyElement)
   override fun getElementTooltip(e: PsiElement): String = getHelper(e)!!.elementTooltip(e as PyElement)
@@ -75,29 +55,6 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
     @Suppress("UNCHECKED_CAST")
     return HELPERS.firstOrNull { it.type.isInstance(e) } as Helper<in PyElement>?
-  }
-
-  private fun currentOffset(e: PsiElement): Int? {
-    val virtualFile = e.containingFile?.virtualFile ?: return null
-    val selectedEditor = FileEditorManager.getInstance(e.project).getSelectedEditor(virtualFile) as? TextEditor ?: return null
-
-    return selectedEditor.editor.caretModel.offset
-  }
-
-  private fun isElementToMoveBackward(e: PsiElement, currentOffset: Int): Boolean {
-    if (e is PsiWhiteSpace) return true
-    if (e !is LeafElement || e.startOffset < currentOffset) return false
-
-    val elementType = e.elementType
-    return elementType == PyTokenTypes.COMMA || elementType in PyTokenTypes.CLOSE_BRACES
-  }
-
-  private fun moveBackward(e: PsiElement, currentOffset: Int): PsiElement? {
-    var result = PsiTreeUtil.prevLeaf(e)
-    while (result != null && isElementToMoveBackward(result, currentOffset)) {
-      result = PsiTreeUtil.prevLeaf(result)
-    }
-    return result
   }
 
   private abstract class Helper<T : PyElement>(val type: Class<T>) {
