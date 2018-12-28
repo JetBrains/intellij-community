@@ -1029,7 +1029,9 @@ public class TypeConversionUtil {
         }
         else { //isSuper
           if (rightWildcard.isSuper() && bound != null) {
-            return checkAssignable(bound, leftBound, rightWildcard, allowUncheckedConversion);
+            NotNullComputable<Boolean> checkAssignable = () -> isAssignable(bound, leftBound, allowUncheckedConversion, false);
+            final Boolean assignable = ourGuard.doPreventingRecursion(rightWildcard, true, checkAssignable);
+            return assignable != null && assignable;
           }
           return false;
         }
@@ -1039,22 +1041,15 @@ public class TypeConversionUtil {
           return isAssignable(leftBound, typeRight, false, false);
         }
         else { // isSuper
-          return checkAssignable(typeRight, leftBound, leftWildcard, false);
+          NotNullComputable<Boolean> checkAssignable = () -> isAssignable(typeRight, leftBound, false, false);
+          final Boolean assignable = ourGuard.doPreventingRecursion(leftWildcard, true, checkAssignable);
+          return assignable == null || assignable.booleanValue();
         }
       }
     }
     else {
       return typeLeft.equals(typeRight);
     }
-  }
-
-  private static boolean checkAssignable(@NotNull PsiType left,
-                                         @NotNull PsiType right,
-                                         @NotNull PsiWildcardType context,
-                                         boolean allowUncheckedConversion) {
-    NotNullComputable<Boolean> isAssignable = () -> isAssignable(left, right, allowUncheckedConversion, false);
-    final Boolean assignable = ourGuard.doPreventingRecursion(context, true, isAssignable);
-    return assignable != null && assignable;
   }
 
   @Nullable
