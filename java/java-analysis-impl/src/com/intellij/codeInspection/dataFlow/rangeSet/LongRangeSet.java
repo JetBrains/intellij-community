@@ -622,7 +622,7 @@ public abstract class LongRangeSet {
    */
   @Nullable
   public static LongRangeSet fromType(PsiType type) {
-    if (!TypeConversionUtil.isPrimitiveWrapper(type)) return null;
+    if (!(type instanceof PsiPrimitiveType) && !TypeConversionUtil.isPrimitiveWrapper(type)) return null;
     type = PsiPrimitiveType.getOptionallyUnboxedType(type);
     if (type != null) {
       if (type.equals(PsiType.BYTE)) {
