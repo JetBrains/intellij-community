@@ -5,7 +5,7 @@ import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.EventDispatcher;
-import one.util.streamex.StreamEx;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,22 +23,24 @@ public class OverheadTimings {
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final List<Pair<Long, Timings>> myLast10Elements = new LinkedList<Pair<Long, Timings>>() {
+    private long totalTime = 0;
+
     @Override
-    public boolean add(Pair<Long, Timings> o) {
+    public synchronized boolean add(Pair<Long, Timings> o) {
       if (size() > 10) {
-        removeFirst();
+        if (isExcessive()) {
+          myEventDispatcher.getMulticaster().excessiveOverheadDetected();
+        }
+        Pair<Long, Timings> first = removeFirst();
+        if (first != null) {
+          totalTime -= ObjectUtils.notNull(first.getSecond().myTime, 0L);
+        }
       }
-      boolean res = super.add(o);
-      if (isExcessive()) {
-        myEventDispatcher.getMulticaster().excessiveOverheadDetected();
-      }
-      return res;
+      totalTime += ObjectUtils.notNull(o.getSecond().myTime, 0L);
+      return super.add(o);
     }
 
     private boolean isExcessive() {
-      int size = size();
-      if (size < 5) return false;
-      long totalTime = StreamEx.of(this).map(p -> p.getSecond().myTime).nonNull().mapToLong(l -> l).sum();
       long timeframe = getLast().first - getFirst().first;
       return totalTime > timeframe || timeframe < 5;
     }
