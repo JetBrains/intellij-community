@@ -397,9 +397,9 @@ public class TestDataGuessByExistingFilesUtil {
         testName = capitalized ? StringUtil.decapitalize(testName) : StringUtil.capitalize(testName);
         idx = StringUtil.indexOf(path, testName);
         if (idx < 0) return;
-        startWithLowerCase = !capitalized;
-      } else {
         startWithLowerCase = capitalized;
+      } else {
+        startWithLowerCase = !capitalized;
       }
 
       pathPrefix = path.substring(0, idx);
