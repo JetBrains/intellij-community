@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.application.impl
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ModalityStateListener
 import com.intellij.openapi.application.impl.LaterInvocator.*
@@ -50,9 +49,7 @@ class RunnableActionsTest : LightPlatformTestCase() {
       }
     }
 
-    val emptyDisposal = Disposable { }
-
-    LaterInvocator.addModalityStateListener(modalityStateListener, emptyDisposal)
+    LaterInvocator.addModalityStateListener(modalityStateListener, testRootDisposable)
 
     val removeModalityListener = { LaterInvocator.removeModalityStateListener(modalityStateListener) }
 
