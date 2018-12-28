@@ -186,9 +186,10 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     }
     else {
       final ParameterInfoImpl lastNewParm = this.newParms[this.newParms.length - 1];
-      obtainsVarags = lastNewParm.isVarargType();
-      retainsVarargs = lastNewParm.oldParameterIndex >= 0 && obtainsVarags;
-      arrayToVarargs = retainsVarargs && oldParameterTypes[lastNewParm.oldParameterIndex].endsWith("[]");
+      boolean isVarargs = lastNewParm.isVarargType();
+      obtainsVarags = isVarargs && lastNewParm.oldParameterIndex < 0;
+      retainsVarargs = lastNewParm.oldParameterIndex >= 0 && oldParameterTypes[lastNewParm.oldParameterIndex].endsWith("...") && isVarargs;
+      arrayToVarargs = lastNewParm.oldParameterIndex >= 0 && oldParameterTypes[lastNewParm.oldParameterIndex].endsWith("[]") && isVarargs;
     }
 
     if (isNameChanged) {
