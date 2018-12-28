@@ -14,7 +14,7 @@ public class Tests {
     if (collection.stream().filter(String::isEmpty).count() > 0) {
       
     }
-    if (collection.filter(String::isEmpty).collect(toList()).size() + 1 > 0) {
+    if ((int) collection.stream().filter(String::isEmpty).count() + 1 > 0) {
       
     }
     if (collection.stream().filter(String::isEmpty).count() == 0) {
