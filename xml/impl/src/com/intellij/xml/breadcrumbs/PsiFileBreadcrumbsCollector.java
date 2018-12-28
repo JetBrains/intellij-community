@@ -105,13 +105,14 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
     }, progressIndicator);
   }
 
+  @NotNull
   private Iterable<Crumb> collectBreadcrumbs(VirtualFile file, Editor editor, int offset) {
     BreadcrumbsProvider defaultInfoProvider = findProvider(editor, file);
 
     Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs =
       getLineElements(editor, offset, file, myProject, defaultInfoProvider, true);
 
-    if (pairs == null) return null;
+    if (pairs == null) return ContainerUtil.emptyIterable();
 
     ArrayList<Crumb> result = new ArrayList<>(pairs.size());
     CrumbPresentation[] presentations = getCrumbPresentations(toPsiElementArray(pairs));
