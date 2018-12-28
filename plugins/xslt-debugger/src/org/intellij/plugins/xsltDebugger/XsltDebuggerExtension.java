@@ -135,15 +135,16 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     final char c = File.separatorChar;
 
     final PluginId pluginId = PluginManagerCore.getPluginByClassName(getClass().getName());
-    assert pluginId != null || System.getProperty("xslt-debugger.plugin.path") != null;
+    assert pluginId != null || System.getProperty("xslt-debugger.plugin.path") != null
+      : "PluginId not found - development builds need to specify -Dxslt-debugger.plugin.path=../out/classes/production/intellij.xslt.debugger.engine";
 
     final File pluginPath;
     if (pluginId != null) {
       final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(pluginId);
       assert descriptor != null;
       pluginPath = descriptor.getPath();
-    } else {
-      // -Dxslt-debugger.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\intellij.xslt.debugger.engine
+    }
+    else {
       pluginPath = new File(System.getProperty("xslt-debugger.plugin.path"));
     }
 

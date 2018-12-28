@@ -136,7 +136,8 @@ public class XsltCommandLineState extends CommandLineState {
       vmParameters.defineProperty("xslt.smart-error-handling", String.valueOf(myXsltRunConfiguration.mySmartErrorHandling));
 
       final PluginId pluginId = PluginManagerCore.getPluginByClassName(getClass().getName());
-      assert pluginId != null || System.getProperty("xslt.plugin.path") != null : "PluginId not found - development builds need to specify -Dxslt.plugin.path=../out/classes/production/intellij.xslt.debugger.rt";
+      assert pluginId != null || System.getProperty("xslt.plugin.path") != null
+        : "PluginId not found - development builds need to specify -Dxslt.plugin.path=../out/classes/production/intellij.xslt.debugger.rt";
 
       final File pluginPath;
       if (pluginId != null) {
@@ -145,7 +146,6 @@ public class XsltCommandLineState extends CommandLineState {
         pluginPath = descriptor.getPath();
       }
       else {
-        // -Dxslt.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\intellij.xslt.debugger.rt
         pluginPath = new File(System.getProperty("xslt.plugin.path"));
       }
 
