@@ -625,7 +625,9 @@ class CompilationPartsUtil {
       if (!errors.isEmpty()) {
         messages.warning("Several (${errors.size()}) errors occured:")
         errors.each { Throwable t ->
-          messages.warning(t.message)
+          def writer = new StringWriter()
+          new PrintWriter(writer).withCloseable { t?.printStackTrace(it) }
+          messages.warning("${t.message}\n$writer" )
         }
         messages.error("Several (${errors.size()}) errors occured, see above")
         return true
