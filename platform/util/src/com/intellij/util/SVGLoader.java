@@ -17,6 +17,7 @@ import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.ImageTranscoder;
 import org.apache.batik.util.XMLResourceDescriptor;
+import org.apache.xmlgraphics.java2d.Dimension2DDouble;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
@@ -27,9 +28,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -152,8 +151,19 @@ public class SVGLoader {
     return (T)ImageUtil.ensureHiDPI(image, ctx);
   }
 
-  public static Dimension2D loadInfo(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
-    return new SVGLoader(url, stream, scale).getDocumentSize();
+  public static Dimension2D getDocumentSize(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
+    // In order to get the size we parse the whole document and build a tree ("GVT"), what might be too expensive.
+    // So, to optimize we extract the svg header and parse only it.
+    StringBuilder builder = new StringBuilder(100);
+    int ch;
+    while((ch = stream.read()) != -1) {
+      builder.append((char)ch);
+      if (ch == '>') {
+        //noinspection SSBasedInspection
+        return new SVGLoader(url, new ByteArrayInputStream(builder.append("</svg>").toString().getBytes()), scale).getDocumentSize();
+      }
+    }
+    return new Dimension2DDouble(ICON_DEFAULT_SIZE * scale, ICON_DEFAULT_SIZE * scale);
   }
 
   public static double getMaxZoomFactor(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx) throws IOException {
