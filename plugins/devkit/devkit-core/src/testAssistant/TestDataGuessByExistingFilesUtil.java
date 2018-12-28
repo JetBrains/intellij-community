@@ -232,9 +232,8 @@ public class TestDataGuessByExistingFilesUtil {
             List<TestLocationDescriptor> currentDescriptors = new SmartList<>();
             VfsUtilCore.processFilesRecursively(file, f -> {
               if (f.isDirectory()) return true;
-              TestLocationDescriptor current = new TestLocationDescriptor();
-              current.populate(possibleFileName, f, project, module);
-              if (current.isComplete()) {
+              TestLocationDescriptor current = TestLocationDescriptor.create(possibleFileName, f, project, module);
+              if (current != null) {
                 currentDescriptors.add(current);
               }
               return true;
@@ -374,37 +373,44 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   private static class TestLocationDescriptor {
-    String pathPrefix;
-    String pathSuffix;
-    boolean startWithLowerCase;
-    boolean isFromCurrentModule;
-    int matchedVFileId;
+    final String pathPrefix;
+    final String pathSuffix;
+    final boolean startWithLowerCase;
+    final boolean isFromCurrentModule;
+    final int matchedVFileId;
 
-    public boolean isComplete() {
-      return pathPrefix != null && pathSuffix != null;
+    private TestLocationDescriptor(String pathPrefix, String pathSuffix, boolean startWithLowerCase, boolean isFromCurrentModule, int id) {
+      this.pathPrefix = pathPrefix;
+      this.pathSuffix = pathSuffix;
+      this.startWithLowerCase = startWithLowerCase;
+      this.isFromCurrentModule = isFromCurrentModule;
+      matchedVFileId = id;
     }
 
-    public void populate(@NotNull String testName, @NotNull VirtualFile matched, @NotNull Project project, @Nullable Module module) {
-      if (testName.isEmpty()) return;
+    static TestLocationDescriptor create(@NotNull String testName, @NotNull VirtualFile matched, @NotNull Project project, @Nullable Module module) {
+      if (testName.isEmpty()) return null;
 
       String path = matched.getPath();
       int idx = StringUtil.indexOf(path, testName);
       boolean capitalized = StringUtil.isCapitalized(testName);
+      boolean startWithLowerCase;
       if (idx < 0) {
         testName = capitalized ? StringUtil.decapitalize(testName) : StringUtil.capitalize(testName);
         idx = StringUtil.indexOf(path, testName);
-        if (idx < 0) return;
+        if (idx < 0) return null;
         startWithLowerCase = capitalized;
       } else {
         startWithLowerCase = !capitalized;
       }
 
-      pathPrefix = path.substring(0, idx);
-      pathSuffix = path.substring(idx + testName.length());
+      String pathPrefix = path.substring(0, idx);
+      String pathSuffix = path.substring(idx + testName.length());
+      boolean isFromCurrentModule = false;
       if (module != null) {
         isFromCurrentModule = module.equals(ModuleUtilCore.findModuleForFile(matched, project));
       }
-      matchedVFileId = ((VirtualFileWithId)matched).getId();
+      int matchedVFileId = ((VirtualFileWithId)matched).getId();
+      return new TestLocationDescriptor(pathPrefix, pathSuffix, startWithLowerCase, isFromCurrentModule, matchedVFileId);
     }
 
     @Override
