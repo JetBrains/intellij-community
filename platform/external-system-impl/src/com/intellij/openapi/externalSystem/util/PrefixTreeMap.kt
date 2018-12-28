@@ -7,6 +7,16 @@ package com.intellij.openapi.externalSystem.util
 interface PrefixTreeMap<K, V> {
 
   /**
+   * Returns all keys for contained values
+   */
+  val keys: List<List<K>>
+
+  /**
+   * Returns all contained values
+   */
+  val values: List<V>
+
+  /**
    * Gets value from the storage by the specified [path]
    *
    * @param path is key identificator
@@ -46,4 +56,12 @@ interface PrefixTreeMap<K, V> {
    * @return list of stored values, [emptyList] if [path] not found
    */
   fun getAllDescendants(path: List<K>): List<V>
+
+  /**
+   * Gets all contained ancestors
+   *
+   * @param path is key identificator
+   * @return list of contained ancestors, `null` if [path] not found
+   */
+  fun getAllAncestorKeys(path: List<K>): List<List<K>>
 }

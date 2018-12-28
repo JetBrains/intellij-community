@@ -4,10 +4,17 @@ package com.intellij.openapi.externalSystem.util
 import com.intellij.util.containers.FList
 import gnu.trove.THashMap
 import gnu.trove.TObjectHashingStrategy
+import kotlin.collections.ArrayList
 
 open class PrefixTreeMapImpl<K, V>(private val strategy: TObjectHashingStrategy<K>? = null) : PrefixTreeMap<K, V> {
 
   private val root = Node()
+
+  override val keys: List<List<K>>
+    get() = root.getKeys()
+
+  override val values: List<V>
+    get() = root.getValues()
 
   override operator fun get(path: List<K>) = root.get(path.toFList())?.getValue()
 
@@ -19,6 +26,8 @@ open class PrefixTreeMapImpl<K, V>(private val strategy: TObjectHashingStrategy<
 
   override fun getAllDescendants(path: List<K>) = root.get(path.toFList())?.getAllDescendants() ?: emptyList()
 
+  override fun getAllAncestorKeys(path: List<K>) = root.getAllAncestorKeys(path.toFList())
+
   private inner class Node {
     private val children = strategy?.let { THashMap<K, Node>(it) } ?: THashMap()
     private val isLeaf get() = children.isEmpty
@@ -27,6 +36,19 @@ open class PrefixTreeMapImpl<K, V>(private val strategy: TObjectHashingStrategy<
     private var value: V? = null
 
     fun getValue() = value
+
+    fun getKeys(): List<FList<K>> {
+      val keys = children.flatMap { it.value.getKeys().map { list -> list.prepend(it.key) } }.toMutableList()
+      if (isPresent) keys.add(FList.emptyList())
+      return keys
+    }
+
+    fun getValues(): List<V> {
+      val values = children.values.flatMap { it.getValues() }.toMutableList()
+      @Suppress("UNCHECKED_CAST")
+      if (isPresent) values.add(value as V)
+      return values
+    }
 
     fun put(path: FList<K>, value: V): V? {
       val (head, tail) = path
@@ -78,7 +100,18 @@ open class PrefixTreeMapImpl<K, V>(private val strategy: TObjectHashingStrategy<
 
     fun getAllDescendants(): List<V> {
       val result = children.flatMap { it.value.getAllDescendants() }.toMutableList()
-      value?.let { result.add(it) }
+      @Suppress("UNCHECKED_CAST")
+      if (isPresent) result.add(value as V)
+      return result
+    }
+
+    fun getAllAncestorKeys(path: FList<K>): List<FList<K>> {
+      val result = ArrayList<FList<K>>()
+      if (isPresent) result.add(FList.emptyList())
+      if (path.isEmpty()) return result
+      val (head, tail) = path
+      val child = children[head] ?: return result
+      result.addAll(child.getAllAncestorKeys(tail).map { list -> list.prepend(head) })
       return result
     }
   }

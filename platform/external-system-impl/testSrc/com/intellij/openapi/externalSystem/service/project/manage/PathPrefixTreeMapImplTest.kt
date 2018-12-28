@@ -60,6 +60,19 @@ class PathPrefixTreeMapImplTest : UsefulTestCase() {
     assertTrue(map.contains("C://path/to/dir4"))
     assertTrue(map.contains("C://path/to/my"))
     assertTrue(map.contains("C://path"))
+    assertEquals(setOf(10, 20, 30, 10, 11, 21, 30, 11, 43, 13), map.values.toSet())
+    assertEquals(setOf(
+      "C://path/to/my/dir1",
+      "C://path/to/my/dir2",
+      "C://path/to/my/dir3",
+      "C://path/to/my/dir4",
+      "C://path/to/dir1",
+      "C://path/to/dir2",
+      "C://path/to/dir3",
+      "C://path/to/dir4",
+      "C://path/to/my",
+      "C://path"
+    ), map.paths.toSet())
   }
 
   @Test
@@ -119,6 +132,15 @@ class PathPrefixTreeMapImplTest : UsefulTestCase() {
     assertFalse(map.contains("C://path/to/dir4"))
     assertTrue(map.contains("C://path/to/my"))
     assertTrue(map.contains("C://path"))
+    assertEquals(setOf(30, 10, 11, 21, 43, 13), map.values.toSet())
+    assertEquals(setOf(
+      "C://path/to/my/dir3",
+      "C://path/to/my/dir4",
+      "C://path/to/dir1",
+      "C://path/to/dir2",
+      "C://path/to/my",
+      "C://path"
+    ), map.paths.toSet())
   }
 
 
@@ -179,6 +201,15 @@ class PathPrefixTreeMapImplTest : UsefulTestCase() {
     assertFalse(map.contains("C://path/to/dir4"))
     assertTrue(map.contains("C://path/to/my"))
     assertTrue(map.contains("C://path"))
+    assertEquals(setOf(null, 10, null, 21, 43, 13), map.values.toSet())
+    assertEquals(setOf(
+      "C://path/to/my/dir3",
+      "C://path/to/my/dir4",
+      "C://path/to/dir1",
+      "C://path/to/dir2",
+      "C://path/to/my",
+      "C://path"
+    ), map.paths.toSet())
   }
 
   @Test
@@ -237,5 +268,36 @@ class PathPrefixTreeMapImplTest : UsefulTestCase() {
     assertTrue(map.contains("/path/to/dir4/"))
     assertTrue(map.contains("/path/to/my"))
     assertFalse(map.contains("/path"))
+  }
+
+  @Test
+  fun `test find all ancestors`() {
+    val map = PathPrefixTreeMapImpl<Boolean>()
+    map["C://path/to/my/dir1/"] = true
+    map["C://path/to/my/dir2"] = true
+    map["C://path/to/my/dir3/"] = true
+    map["C://path/to/my/dir4"] = true
+    map["C://path/to/dir1"] = true
+    map["C://path/to/dir2/"] = true
+    map["C://path/to/dir3"] = true
+    map["C://path/to/dir4/"] = true
+    map["C://path/to/my"] = true
+    map["C://path"] = true
+    val underMyDir1Loc = map.getAllAncestorKeys("C://path/to/my/dir1/loc").toSet()
+    assertEquals(setOf("C://path/to/my", "C://path", "C://path/to/my/dir1"), underMyDir1Loc)
+    val underMyDir1 = map.getAllAncestorKeys("C://path/to/my/dir1").toSet()
+    assertEquals(setOf("C://path/to/my", "C://path", "C://path/to/my/dir1"), underMyDir1)
+    val underMy = map.getAllAncestorKeys("C://path/to/my").toSet()
+    assertEquals(setOf("C://path/to/my", "C://path"), underMy)
+    val underMyDir = map.getAllAncestorKeys("C://path/to/my/").toSet()
+    assertEquals(setOf("C://path/to/my", "C://path"), underMyDir)
+    val underTo = map.getAllAncestorKeys("C://path/to").toSet()
+    assertEquals(setOf("C://path"), underTo)
+    val underToDir = map.getAllAncestorKeys("C://path/to/").toSet()
+    assertEquals(setOf("C://path"), underToDir)
+    val underPath = map.getAllAncestorKeys("C://path").toSet()
+    assertEquals(setOf("C://path"), underPath)
+    val underProto = map.getAllAncestorKeys("C:/").toSet()
+    assertEquals(setOf<String>(), underProto)
   }
 }
