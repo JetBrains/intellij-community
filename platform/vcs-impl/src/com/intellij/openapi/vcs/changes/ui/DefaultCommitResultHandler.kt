@@ -6,7 +6,7 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.CommitResultHandler
-import com.intellij.openapi.vcs.changes.ui.CommitHelper.collectErrors
+import com.intellij.openapi.vcs.changes.ui.AbstractCommitter.Companion.collectErrors
 
 private val FROM = listOf("<", ">")
 private val TO = listOf("&lt;", "&gt;")
@@ -20,18 +20,18 @@ private fun escape(s: String) = replace(s, FROM, TO)
 
 private fun hasOnlyWarnings(exceptions: List<VcsException>) = exceptions.all { it.isWarning }
 
-class DefaultCommitResultHandler(private val myHelper: CommitHelper) : CommitResultHandler {
+class DefaultCommitResultHandler(private val committer: AbstractCommitter) : CommitResultHandler {
 
   override fun onSuccess(commitMessage: String) = reportResult()
   override fun onFailure() = reportResult()
 
   private fun reportResult() {
-    val allExceptions = myHelper.exceptions
+    val allExceptions = committer.exceptions
     val errors = collectErrors(allExceptions)
     val errorsSize = errors.size
     val warningsSize = allExceptions.size - errorsSize
 
-    val notifier = VcsNotifier.getInstance(myHelper.project)
+    val notifier = VcsNotifier.getInstance(committer.project)
     val message = getCommitSummary()
 
     when {
@@ -48,16 +48,16 @@ class DefaultCommitResultHandler(private val myHelper: CommitHelper) : CommitRes
   }
 
   private fun getCommitSummary() = StringBuilder(getFileSummaryReport()).apply {
-    val commitMessage = myHelper.commitMessage
+    val commitMessage = committer.commitMessage
     if (!isEmpty(commitMessage)) {
       append(": ").append(escape(commitMessage))
     }
-    val feedback = myHelper.feedback
+    val feedback = committer.feedback
     if (!feedback.isEmpty()) {
       append("<br/>")
       append(join(feedback, "<br/>"))
     }
-    val exceptions = myHelper.exceptions
+    val exceptions = committer.exceptions
     if (!hasOnlyWarnings(exceptions)) {
       append("<br/>")
       append(join(exceptions, { it.message }, "<br/>"))
@@ -65,8 +65,8 @@ class DefaultCommitResultHandler(private val myHelper: CommitHelper) : CommitRes
   }.toString()
 
   private fun getFileSummaryReport(): String {
-    val failed = myHelper.failedToCommitChanges.size
-    val committed = myHelper.changes.size - failed
+    val failed = committer.failedToCommitChanges.size
+    val committed = committer.changes.size - failed
 
     var fileSummary = "$committed ${pluralize("file", committed)} committed"
     if (failed > 0) {
