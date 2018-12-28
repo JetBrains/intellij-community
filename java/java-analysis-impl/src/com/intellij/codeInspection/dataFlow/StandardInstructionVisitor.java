@@ -159,11 +159,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         alwaysOutOfBounds = true;
       }
       DfaValue dfaLength = SpecialField.ARRAY_LENGTH.createValue(factory, array);
-      if(dfaLength != null) {
-        DfaValue indexLessThanLength = factory.createCondition(index, RelationType.LT, dfaLength);
-        if (!memState.applyCondition(indexLessThanLength)) {
-          alwaysOutOfBounds = true;
-        }
+      DfaValue indexLessThanLength = factory.createCondition(index, RelationType.LT, dfaLength);
+      if (!memState.applyCondition(indexLessThanLength)) {
+        alwaysOutOfBounds = true;
       }
     }
     processArrayAccess(arrayExpression, alwaysOutOfBounds);

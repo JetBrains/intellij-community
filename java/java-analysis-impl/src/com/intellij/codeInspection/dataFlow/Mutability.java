@@ -10,10 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiMethodImpl;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -98,6 +95,12 @@ public enum Mutability {
    */
   @NotNull
   public static Mutability getMutability(@NotNull PsiModifierListOwner owner) {
+    return CachedValuesManager.getCachedValue(owner, () -> 
+      CachedValueProvider.Result.create(calcMutability(owner), owner, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+  }
+
+  @NotNull
+  public static Mutability calcMutability(@NotNull PsiModifierListOwner owner) {
     if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList) {
       PsiParameterList list = (PsiParameterList)owner.getParent();
       PsiMethod method = ObjectUtils.tryCast(list.getParent(), PsiMethod.class);
