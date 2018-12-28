@@ -4,9 +4,7 @@ package com.intellij.psi.availability;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -15,7 +13,6 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.annotations.Language;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -132,23 +129,6 @@ public class PsiAvailabilityServiceTest extends PlatformTestCase {
     asserter.waitForCallBack();
   }
 
-  //public void testCancelDuringLongReparse() throws IOException {
-  //  Document document = createHugeJavaFile();
-  //  getDocManager().commitDocument(document);
-  //  reparse(getDocManager().getPsiFile(document).getVirtualFile());
-  //  assertCommittedAndParsed(document, true, false);
-  //
-  //  CallBackAsserter asserter = new CallBackAsserter(document);
-  //  EmptyProgressIndicator indicator = new EmptyProgressIndicator();
-  //  PsiAvailabilityService.getInstance(getProject()).performWhenPsiAvailable(document, asserter, indicator);
-  //  UIUtil.dispatchAllInvocationEvents();
-  //  TimeoutUtil.sleep(10);
-  //  indicator.cancel();
-  //  PsiAvailabilityService.getInstance(getProject()).performWhenPsiAvailable(document, asserter, null);
-  //  asserter.waitForCallBack();
-  //}
-
-
   private class CallBackAsserter implements Runnable {
     final Document document;
     boolean calledBack = false;
@@ -208,30 +188,6 @@ public class PsiAvailabilityServiceTest extends PlatformTestCase {
     assertNotNull(document);
     getDocManager().commitDocument(document);
     psiFile.getNode().getFirstChildNode();
-    return document;
-  }
-
-  private Document createHugeJavaFile() throws IOException {
-    @Language(value = "JAVA", prefix = "class c {", suffix = "}")
-    String body = "@NotNull\n" +
-                  "  private static String getTooLargeContent() {\n" +
-                  "    return StringUtil.repeat(\"a\", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1);\n" +
-                  "  }\n" +
-                  "private abstract static class FileTooBigExceptionCase extends AbstractExceptionCase {\n" +
-                  "    @Override\n" +
-                  "    public Class getExpectedExceptionClass() {\n" +
-                  "      return FileTooBigException.class;\n" +
-                  "    }\n" +
-                  "  }";
-    VirtualFile vFile = getVirtualFile(createTempFile("a.java", "class c {" + StringUtil.repeat(body, 10000) + "}"));
-    PsiFile psiFile = getPsiManager().findFile(vFile);
-    assertEquals(StdFileTypes.JAVA, psiFile.getFileType());
-    Document document = getDocManager().getDocument(psiFile);
-
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      document.setText("class c {" + StringUtil.repeat(body, 10000) + "}");
-    });
-
     return document;
   }
 }
