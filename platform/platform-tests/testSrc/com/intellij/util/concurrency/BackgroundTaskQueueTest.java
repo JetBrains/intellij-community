@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
@@ -61,7 +62,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
         throw new RuntimeException(e);
       }
 
-      myQueue = new BackgroundTaskQueue(myProject, "test queue");
+      myQueue = new BackgroundTaskQueue(getProject(), "test queue");
       myQueue.setForceAsyncInTests(true, null);
     });
     myThreadRunner = new ThreadRunner();
@@ -233,7 +234,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
     final boolean[] bool = new boolean[]{false};
     final Semaphore semaphore = new Semaphore(1 - RUNS);
 
-    final Task.Backgroundable task = new Task.Backgroundable(myProject, "Test", false) {
+    final Task.Backgroundable task = new Task.Backgroundable(getProject(), "Test", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         Assert.assertFalse(bool[0]);
@@ -261,18 +262,17 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
     myThreadRunner.finish();
   }
 
-
-  private void assertSucceeded(TestTask task) {
+  private static void assertSucceeded(TestTask task) {
     assertEquals(TaskState.SUCCEEDED, task.getState());
   }
 
-  private void assertTaskState(TestTask[] tasks, TaskState state) {
+  private static void assertTaskState(TestTask[] tasks, TaskState state) {
     for (TestTask task : tasks) {
       assertEquals(state, task.getState());
     }
   }
 
-  private TestTask[] createSeveralTasks() {
+  private static TestTask[] createSeveralTasks() {
     final TestTask[] tasks = new TestTask[10];
     for (int i = 0; i < tasks.length; i++) {
       tasks[i] = new TestTask();
@@ -280,7 +280,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
     return tasks;
   }
 
-  private void waitForTasks(TestTask... tasks) throws InterruptedException {
+  private static void waitForTasks(TestTask... tasks) throws InterruptedException {
     for (TestTask task : tasks) {
       task.waitFor(1000);
     }
@@ -302,12 +302,12 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
     }
   }
 
-  private class TestTask extends Task.Backgroundable {
+  private static class TestTask extends Task.Backgroundable {
     private final AtomicReference<TaskState> myState = new AtomicReference<>(TaskState.CREATED);
     private final Semaphore mySemaphore = new Semaphore(0);
 
     TestTask() {
-      super(BackgroundTaskQueueTest.this.getProject(), "Test Task", true);
+      super(LightPlatformTestCase.getProject(), "Test Task", true);
     }
 
     protected void execute(ProgressIndicator indicator) {
@@ -350,8 +350,8 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
     @Override
     public final void onFinished() {
       mySemaphore.release();
-      assertTrue(myState.get() != TaskState.RUNNING);
-      assertTrue(myState.get() != TaskState.CREATED);
+      assertNotSame(TaskState.RUNNING, myState.get());
+      assertNotSame(TaskState.CREATED, myState.get());
     }
 
     public void waitFor(int timeout) throws InterruptedException {
