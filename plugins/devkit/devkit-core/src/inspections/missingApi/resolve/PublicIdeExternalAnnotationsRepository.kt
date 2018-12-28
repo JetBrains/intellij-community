@@ -42,24 +42,49 @@ class PublicIdeExternalAnnotationsRepository(private val project: Project) : Ide
       PRODUCT_CODE_GROUP_ID_AND_ARTIFACT_ID.find { it.first == productCode }?.third
   }
 
-  override fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): VirtualFile? {
+  override fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IdeExternalAnnotations? {
     val productCode = ideBuildNumber.productCode.takeIf { it.isNotEmpty() } ?: "IU"
     val groupId = getGroupId(productCode) ?: return null
     val artifactId = getArtifactId(productCode) ?: return null
 
-    if (ideBuildNumber.isSnapshot) {
-      val snapshotVersion = "${ideBuildNumber.baselineVersion}.SNAPSHOT"
-      val snapshotAnnotations = tryDownload(groupId, artifactId, snapshotVersion, listOf(SNAPSHOTS_REPO_DESCRIPTION))
-      if (snapshotAnnotations != null) {
-        return snapshotAnnotations
-      }
+    val lastReleaseVersion = "${ideBuildNumber.baselineVersion}.999999"
+    val lastReleaseAnnotations = tryDownload(groupId, artifactId, lastReleaseVersion, listOf(RELEASES_REPO_DESCRIPTION))
+    if (lastReleaseAnnotations != null && lastReleaseAnnotations.annotationsBuild >= ideBuildNumber) {
+      return lastReleaseAnnotations
     }
 
-    val lastReleaseAnnotationsVersion = "${ideBuildNumber.baselineVersion}.999999"
-    return tryDownload(groupId, artifactId, lastReleaseAnnotationsVersion, listOf(RELEASES_REPO_DESCRIPTION))
+    val snapshotVersion = "${ideBuildNumber.baselineVersion}-SNAPSHOT"
+    val snapshotAnnotations = tryDownload(groupId, artifactId, snapshotVersion, listOf(SNAPSHOTS_REPO_DESCRIPTION))
+    if (snapshotAnnotations != null && snapshotAnnotations.annotationsBuild >= ideBuildNumber) {
+      return snapshotAnnotations
+    }
+
+    val latestTrunkSnapshot = "LATEST-TRUNK-SNAPSHOT"
+    val latestTrunkSnapshotAnnotations = tryDownload(groupId, artifactId, latestTrunkSnapshot, listOf(SNAPSHOTS_REPO_DESCRIPTION))
+    if (latestTrunkSnapshotAnnotations != null && latestTrunkSnapshotAnnotations.annotationsBuild >= ideBuildNumber) {
+      return latestTrunkSnapshotAnnotations
+    }
+
+    return sequenceOf(lastReleaseAnnotations, snapshotAnnotations, latestTrunkSnapshotAnnotations).filterNotNull().maxBy { it.annotationsBuild }
   }
 
   private fun tryDownload(
+    groupId: String,
+    artifactId: String,
+    version: String,
+    repos: List<RemoteRepositoryDescription>
+  ): IdeExternalAnnotations? {
+    val annotations = tryDownloadAnnotationsArtifact(groupId, artifactId, version, repos)
+    if (annotations != null) {
+      val buildNumber = getAnnotationsBuildNumber(annotations)
+      if (buildNumber != null) {
+        return IdeExternalAnnotations(buildNumber, annotations)
+      }
+    }
+    return null
+  }
+
+  private fun tryDownloadAnnotationsArtifact(
     groupId: String,
     artifactId: String,
     version: String,

@@ -16,17 +16,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.util.Consumer
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection
+import org.jetbrains.idea.devkit.inspections.missingApi.resolve.IdeExternalAnnotations
 import org.jetbrains.idea.devkit.inspections.missingApi.resolve.PublicIdeExternalAnnotationsRepository
+import org.jetbrains.idea.devkit.inspections.missingApi.resolve.getAnnotationsBuildNumber
+import org.jetbrains.idea.devkit.inspections.missingApi.resolve.isAnnotationsRoot
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Utility class that updates IntelliJ API external annotations.
@@ -39,30 +40,6 @@ class IdeExternalAnnotationsUpdater(project: Project) {
     private const val NOTIFICATION_GROUP_DISPLAY_ID = "IntelliJ API Annotations"
 
     private val UPDATE_RETRY_TIMEOUT = Duration.of(10, ChronoUnit.MINUTES)
-
-    private const val BUILD_TXT_FILE_NAME = "build.txt"
-
-    private val ANNOTATIONS_BUILD_NUMBER_KEY = Key.create<BuildNumber>("devkit.intellij.api.annotations.build.number")
-
-    private fun getAnnotationsBuildNumber(annotationsRoot: VirtualFile): BuildNumber? {
-      val cachedValue = annotationsRoot.getUserData(ANNOTATIONS_BUILD_NUMBER_KEY)
-      if (cachedValue != null) {
-        return cachedValue
-      }
-      val loadedValue = loadBuildNumber(annotationsRoot)
-      annotationsRoot.putUserData(ANNOTATIONS_BUILD_NUMBER_KEY, loadedValue)
-      return loadedValue
-    }
-
-    private fun loadBuildNumber(annotationsRoot: VirtualFile): BuildNumber? {
-      val buildTxtFile = annotationsRoot.findFileByRelativePath(BUILD_TXT_FILE_NAME)
-      if (buildTxtFile != null) {
-        return BuildNumber.fromStringOrNull(VfsUtil.loadText(buildTxtFile))
-      }
-      return null
-    }
-
-    private fun VirtualFile.isAnnotationsRoot() = getAnnotationsBuildNumber(this) != null
 
     fun getInstance(project: Project): IdeExternalAnnotationsUpdater = project.service()
   }
@@ -115,8 +92,8 @@ class IdeExternalAnnotationsUpdater(project: Project) {
     }
   }
 
-  private fun reattachAnnotations(project: Project, ideaJdk: Sdk, annotationsRoot: VirtualFile) {
-    val annotationsUrl = runReadAction { annotationsRoot.url }
+  private fun reattachAnnotations(project: Project, ideaJdk: Sdk, annotationsRoot: IdeExternalAnnotations) {
+    val annotationsUrl = runReadAction { annotationsRoot.annotationsRoot.url }
 
     ApplicationManager.getApplication().invokeAndWait {
       if (project.isDisposed) {
@@ -128,7 +105,7 @@ class IdeExternalAnnotationsUpdater(project: Project) {
         val sdkModificator = ideaJdk.sdkModificator
         val attachedUrls = sdkModificator.getRoots(type)
           .asSequence()
-          .filter { it.isAnnotationsRoot() }
+          .filter { isAnnotationsRoot(it) }
           .mapTo(mutableSetOf()) { it.url }
 
         if (annotationsUrl !in attachedUrls) {
@@ -195,14 +172,19 @@ class IdeExternalAnnotationsUpdater(project: Project) {
     UpdateTask(project, ideaJdk, buildNumber).queue()
   }
 
-  private fun showSuccessfullyUpdated(project: Project, buildNumber: BuildNumber) {
+  private fun showSuccessfullyUpdated(project: Project, buildNumber: BuildNumber, annotationsBuild: BuildNumber) {
     synchronized(this) {
       buildNumberLastFailedUpdateInstant.remove(buildNumber)
+    }
+    val updateMessage = if (annotationsBuild >= buildNumber) {
+      DevKitBundle.message("intellij.api.annotations.update.successfully.updated", buildNumber)
+    } else {
+      DevKitBundle.message("intellij.api.annotations.update.successfully.updated.but.not.latest.version", buildNumber, annotationsBuild)
     }
     NotificationGroup.balloonGroup(NOTIFICATION_GROUP_DISPLAY_ID)
       .createNotification(
         DevKitBundle.message("intellij.api.annotations.update.title", buildNumber),
-        DevKitBundle.message("intellij.api.annotations.update.successfully.updated", buildNumber),
+        updateMessage,
         NotificationType.INFORMATION,
         null
       )
@@ -232,14 +214,17 @@ class IdeExternalAnnotationsUpdater(project: Project) {
     private val ideBuildNumber: BuildNumber
   ) : Task.Backgroundable(project, "Updating IntelliJ API Annotations $ideBuildNumber", true) {
 
-    override fun run(indicator: ProgressIndicator) {
-      val ideAnnotations = tryDownloadAnnotations(ideBuildNumber)
-        ?: throw Exception("No external annotations found for $ideBuildNumber in the Maven repository")
+    private val ideAnnotations = AtomicReference<IdeExternalAnnotations>()
 
-      reattachAnnotations(project, ideaJdk, ideAnnotations)
+    override fun run(indicator: ProgressIndicator) {
+      val annotations = tryDownloadAnnotations(ideBuildNumber)
+        ?: throw Exception(DevKitBundle.message("intellij.api.annotations.update.failed.no.annotations.found", ideBuildNumber))
+
+      ideAnnotations.set(annotations)
+      reattachAnnotations(project, ideaJdk, annotations)
     }
 
-    private fun tryDownloadAnnotations(ideBuildNumber: BuildNumber): VirtualFile? {
+    private fun tryDownloadAnnotations(ideBuildNumber: BuildNumber): IdeExternalAnnotations? {
       return try {
         annotationsRepository.downloadExternalAnnotations(ideBuildNumber)
       } catch (e: Exception) {
@@ -248,7 +233,7 @@ class IdeExternalAnnotationsUpdater(project: Project) {
     }
 
     override fun onSuccess() {
-      showSuccessfullyUpdated(project, ideBuildNumber)
+      showSuccessfullyUpdated(project, ideBuildNumber, ideAnnotations.get().annotationsBuild)
     }
 
     override fun onThrowable(error: Throwable) {

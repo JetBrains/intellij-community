@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.inspections.missingApi.resolve
 
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.vfs.VirtualFile
 
 /**
  * Repository interface to download external annotations for IDEs.
@@ -11,8 +10,7 @@ interface IdeExternalAnnotationsRepository {
   /**
    * Downloads external annotations suitable for IDE.
    *
-   * Returns [VirtualFile] to be attached as external annotations root,
-   * or `null` if no suitable annotations are found.
+   * Returns annotations to be attached, or `null` if no suitable annotations are found.
    */
-  fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): VirtualFile?
+  fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IdeExternalAnnotations?
 }
