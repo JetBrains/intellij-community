@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.CommonBundle;
@@ -100,7 +86,7 @@ public class JarRepositoryManager {
   }
 
   @Nullable
-  public static NewLibraryConfiguration chooseLibraryAndDownload(final @NotNull Project project, final @Nullable String initialFilter, JComponent parentComponent) {
+  public static NewLibraryConfiguration chooseLibraryAndDownload(@NotNull Project project, @Nullable String initialFilter, JComponent parentComponent) {
     RepositoryAttachDialog dialog = new RepositoryAttachDialog(project, initialFilter, RepositoryAttachDialog.Mode.DOWNLOAD);
     if (!dialog.showAndGet()) {
       return null;
@@ -162,7 +148,8 @@ public class JarRepositoryManager {
                                                             boolean includeTransitiveDependencies,
                                                             String copyTo,
                                                             Collection<RemoteRepositoryDescription> repositories) {
-    return resolveAndDownload(project, coord, attachSources, attachJavaDoc, JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING, includeTransitiveDependencies, copyTo, repositories);
+    return resolveAndDownload(project, coord, attachSources, attachJavaDoc, JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING,
+                              includeTransitiveDependencies, copyTo, repositories);
   }
 
   @Nullable
@@ -268,9 +255,7 @@ public class JarRepositoryManager {
                                                                @Nullable List<RemoteRepositoryDescription> repos,
                                                                @Nullable String copyTo) {
     Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
-    return submitBackgroundJob(
-      project, "Resolving Maven dependencies...", newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo)
-    );
+    return submitBackgroundJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo));
   }
 
   @Nullable
@@ -280,9 +265,7 @@ public class JarRepositoryManager {
                                                                @Nullable List<RemoteRepositoryDescription> repos,
                                                                @Nullable String copyTo) {
     Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
-    return submitSyncJob(
-      project, "Resolving Maven dependencies...", newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo)
-    );
+    return submitSyncJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo));
   }
 
   @NotNull
@@ -313,7 +296,7 @@ public class JarRepositoryManager {
   @NotNull
   public static Promise<Collection<String>> getAvailableVersions(Project project, RepositoryLibraryDescription libraryDescription) {
     final List<RemoteRepositoryDescription> repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
-    return submitBackgroundJob(project, "Looking up available versions for " + libraryDescription.getDisplayName(), new VersionResolveJob(libraryDescription, repos));
+    return submitBackgroundJob(new VersionResolveJob(libraryDescription, repos));
   }
 
   @Nullable
@@ -347,11 +330,16 @@ public class JarRepositoryManager {
     Notifications.Bus.notify(new Notification("Repository", title, sb.toString(), NotificationType.INFORMATION), project);
   }
 
-  public static void searchArtifacts(final Project project, String coord, final Consumer<? super Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>> resultProcessor) {
+  public static void searchArtifacts(Project project,
+                                     String coord,
+                                     Consumer<? super Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>> resultProcessor) {
     searchArtifacts(project, coord, JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING, resultProcessor);
   }
-  
-  public static void searchArtifacts(final Project project, String coord, String packaging, final Consumer<? super Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>> resultProcessor) {
+
+  public static void searchArtifacts(Project project,
+                                     String coord,
+                                     String packaging,
+                                     Consumer<? super Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>> resultProcessor) {
     if (coord == null || coord.length() == 0) {
       return;
     }
@@ -363,7 +351,6 @@ public class JarRepositoryManager {
       template = new RepositoryArtifactDescription(new RepositoryLibraryProperties(coord, packaging, true), null);
     }
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
-
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final List<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>> resultList = new ArrayList<>();
@@ -399,9 +386,10 @@ public class JarRepositoryManager {
     });
   }
 
-  public static void searchRepositories(final Project project, final Collection<String> serviceUrls, final Processor<? super Collection<RemoteRepositoryDescription>> resultProcessor) {
+  public static void searchRepositories(Project project,
+                                        Collection<String> serviceUrls,
+                                        Processor<? super Collection<RemoteRepositoryDescription>> resultProcessor) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
-
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final Ref<List<RemoteRepositoryDescription>> result = Ref.create(Collections.emptyList());
@@ -431,19 +419,20 @@ public class JarRepositoryManager {
   }
 
   @Nullable
-  private static <T> T submitSyncJob(@Nullable final Project project, final String title, final Function<? super ProgressIndicator, ? extends T> job) {
+  private static <T> T submitSyncJob(Function<? super ProgressIndicator, ? extends T> job) {
     try {
       ourTasksInProgress.incrementAndGet();
       ProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.defaultModalityState());
       return ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
-    } finally {
+    }
+    finally {
       ourTasksInProgress.decrementAndGet();
     }
   }
 
   @Nullable
-  private static <T> T submitModalJob(@Nullable final Project project, final String title, final Function<? super ProgressIndicator, ? extends T> job) {
-    final Ref<T> result = Ref.create(null);
+  private static <T> T submitModalJob(@Nullable Project project, String title, Function<? super ProgressIndicator, ? extends T> job) {
+    Ref<T> result = Ref.create(null);
     new Task.Modal(project, title, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -459,8 +448,8 @@ public class JarRepositoryManager {
     return result.get();
   }
 
-  private static <T> Promise<T> submitBackgroundJob(@Nullable final Project project, final String title, final Function<? super ProgressIndicator, ? extends T> job){
-    final ModalityState startModality = ModalityState.defaultModalityState();
+  private static <T> Promise<T> submitBackgroundJob(Function<? super ProgressIndicator, ? extends T> job) {
+    ModalityState startModality = ModalityState.defaultModalityState();
     AsyncPromise<T> promise = new AsyncPromise<>();
     JobExecutor.INSTANCE.submit(() -> {
       try {
@@ -469,8 +458,7 @@ public class JarRepositoryManager {
         T result = ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
         promise.setResult(result);
       }
-      catch (ProcessCanceledException ignored) {
-      }
+      catch (ProcessCanceledException ignored) { }
       catch (Throwable e) {
         LOG.info(e);
         promise.setError(e);
@@ -482,7 +470,7 @@ public class JarRepositoryManager {
     return promise;
   }
 
-  private static Collection<String> lookupVersionsImpl(final String groupId, final String artifactId, ArtifactRepositoryManager manager) throws Exception {
+  private static Collection<String> lookupVersionsImpl(String groupId, String artifactId, ArtifactRepositoryManager manager) throws Exception {
     try {
       final List<Version> result = manager.getAvailableVersions(groupId, artifactId, "[0,)", ArtifactKind.ARTIFACT);
       return result.stream().sorted(Comparator.reverseOrder()).map(Version::toString).collect(
@@ -544,7 +532,10 @@ public class JarRepositoryManager {
     protected abstract T getDefaultResult();
   }
 
-  private static Function<ProgressIndicator, List<OrderRoot>> newOrderRootResolveJob(@NotNull JpsMavenRepositoryLibraryDescriptor desc, @NotNull Set<ArtifactKind> kinds, @NotNull Collection<RemoteRepositoryDescription> repositories, @Nullable String copyTo) {
+  private static Function<ProgressIndicator, List<OrderRoot>> newOrderRootResolveJob(@NotNull JpsMavenRepositoryLibraryDescriptor desc,
+                                                                                     @NotNull Set<ArtifactKind> kinds,
+                                                                                     @NotNull Collection<RemoteRepositoryDescription> repositories,
+                                                                                     @Nullable String copyTo) {
     return new LibraryResolveJob(desc, kinds, repositories).andThen(
       resolved -> resolved.isEmpty() ? Collections.<OrderRoot>emptyList() : WriteAction.computeAndWait(() -> createRoots(resolved, copyTo)));
   }
@@ -585,7 +576,9 @@ public class JarRepositoryManager {
     @NotNull
     private final Set<ArtifactKind> myKinds;
 
-    LibraryResolveJob(@NotNull JpsMavenRepositoryLibraryDescriptor desc, @NotNull Set<ArtifactKind> kinds, @NotNull Collection<RemoteRepositoryDescription> repositories) {
+    LibraryResolveJob(@NotNull JpsMavenRepositoryLibraryDescriptor desc,
+                      @NotNull Set<ArtifactKind> kinds,
+                      @NotNull Collection<RemoteRepositoryDescription> repositories) {
       super(repositories);
       myDesc = desc;
       myKinds = kinds;
@@ -677,6 +670,5 @@ public class JarRepositoryManager {
     protected Collection<String> getDefaultResult() {
       return Collections.emptyList();
     }
-
   }
 }
