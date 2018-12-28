@@ -128,7 +128,7 @@ public class MavenExternalParameters {
     String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Runner | JRE";
     verifyMavenSdkRequirements(jdk, mavenVersion, sdkConfigLocation);
 
-    params.getProgramParametersList().add("-Didea.version=" + MavenUtil.getIdeaVersionToPassToMavenProcess());
+    params.getProgramParametersList().addProperty("idea.version" + MavenUtil.getIdeaVersionToPassToMavenProcess());
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3") >= 0) {
       params.getVMParametersList().addProperty("maven.multiModuleProjectDirectory",
                                                MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath());

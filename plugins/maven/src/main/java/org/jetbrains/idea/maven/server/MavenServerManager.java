@@ -251,7 +251,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
           params.getVMParametersList().defineProperty(each.getKey(), each.getValue());
         }
 
-        params.getVMParametersList().addProperty("idea.version=", MavenUtil.getIdeaVersionToPassToMavenProcess());
+        params.getVMParametersList().addProperty("idea.version", MavenUtil.getIdeaVersionToPassToMavenProcess());
 
         boolean xmxSet = false;
 
@@ -317,7 +317,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         classPath.add(PathUtil.getJarPathForClass(NotNull.class));//annotations-java5
         classPath.add(PathUtil.getJarPathForClass(Element.class));//JDOM
         classPath.add(PathUtil.getJarPathForClass(TIntHashSet.class));//Trove
-        
+
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Query.class));
         params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
         params.getClassPath().addAll(classPath);
