@@ -192,7 +192,13 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         if (reference.get() != pointer) {
           throw new IllegalStateException("Reference points to " + reference.get());
         }
-        pointers.removeReference(reference, POINTERS_KEY);
+        if (!reference.file.equals(vFile)) {
+          throw new IllegalStateException("Smart pointer's file changed: " + vFile + " vs " + reference.file + "; info=" + info);
+        }
+        if (reference.key != POINTERS_KEY) {
+          throw new IllegalStateException("Reference from wrong project: " + reference.key + " vs " + POINTERS_KEY);
+        }
+        pointers.removeReference(reference);
       }
     }
   }
