@@ -31,6 +31,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
 
 import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 
@@ -151,15 +152,25 @@ public class SVGLoader {
     return (T)ImageUtil.ensureHiDPI(image, ctx);
   }
 
+  @SuppressWarnings("SSBasedInspection")
   public static Dimension2D getDocumentSize(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
     // In order to get the size we parse the whole document and build a tree ("GVT"), what might be too expensive.
-    // So, to optimize we extract the svg header and parse only it.
+    // So, to optimize we extract the svg header (possibly prepended with <?xml> header) and parse only it.
     StringBuilder builder = new StringBuilder(100);
+    byte[] bytes = new byte[3];
+    boolean checkClosingBracket = false;
     int ch;
     while((ch = stream.read()) != -1) {
       builder.append((char)ch);
-      if (ch == '>') {
-        //noinspection SSBasedInspection
+      if (ch == '<') {
+        if (stream.read(bytes, 0, 3) == -1) {
+          break;
+        }
+        String str = new String(bytes);
+        builder.append(str);
+        checkClosingBracket = "svg".equals(str);
+      }
+      else if (checkClosingBracket && ch == '>') {
         return new SVGLoader(url, new ByteArrayInputStream(builder.append("</svg>").toString().getBytes()), scale).getDocumentSize();
       }
     }
