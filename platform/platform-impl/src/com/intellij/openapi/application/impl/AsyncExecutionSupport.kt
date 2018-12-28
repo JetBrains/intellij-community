@@ -3,13 +3,12 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.WeaklyReferencedDisposable
 import com.intellij.openapi.application.impl.AsyncExecution.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.IncorrectOperationException
 import kotlinx.coroutines.*
-import java.lang.ref.ReferenceQueue
-import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -39,19 +38,24 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
     return object : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
       /** Invoked once on each newly launched coroutine when dispatching it for the first time. */
       override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
-        jobExpiration.cancelJobOnExpiration(continuation.context[Job]!!)
+        jobExpiration?.cancelJobOnExpiration(continuation.context[Job]!!)
         return delegateInterceptor.interceptContinuation(continuation)
       }
     }
   }
 
-  private fun composeJobExpiration(): JobExpiration {
-    val job = SupervisorJob()
-    expirableHandles.forEach {
-      it.cancelJobOnExpiration(job)
+  private fun composeJobExpiration(): JobExpiration? =
+    when (expirableHandles.size) {
+      0 -> null
+      1 -> expirableHandles.single()
+      else -> {
+        val job = SupervisorJob()
+        expirableHandles.forEach {
+          it.cancelJobOnExpiration(job)
+        }
+        SimpleJobExpiration(job)
+      }
     }
-    return SimpleJobExpiration(job)
-  }
 
   internal abstract class JobExpiration {
     protected abstract val job: Job
@@ -336,53 +340,34 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
     internal fun Disposable.cancelJobOnDisposal(job: Job,
                                                 weaklyReferencedJob: Boolean = false): AutoCloseable {
       val runOnce = RunOnce()
-      val function = { referencedJob: Job ->
+      val child = Disposable {
         runOnce {
-          referencedJob.cancel()
+          job.cancel()
         }
       }
-      val child =
-        if (!weaklyReferencedJob) Disposable { function(job) }
-        else WeaklyReferencedDisposable(job, function)
+      val childRef =
+        if (!weaklyReferencedJob) child
+        else WeaklyReferencedDisposable(child)
 
-      if (!tryRegisterDisposable(this, child)) {
-        Disposer.dispose(child)  // runs disposableBlock()
+      if (!tryRegisterDisposable(this, childRef)) {
+        Disposer.dispose(childRef)  // runs disposableBlock()
         return AutoCloseable { }
       }
       else {
-        val completionHandler: CompletionHandler = {
-          runOnce {
-            Disposer.dispose(child)  // unregisters only, does not run disposableBlock()
+        val completionHandler = object : CompletionHandler {
+          @Suppress("unused")
+          val hardRefToChild = child  // transitive: job -> completionHandler -> child
+
+          override fun invoke(cause: Throwable?) {
+            runOnce {
+              Disposer.dispose(childRef)  // unregisters only, does not run disposableBlock()
+            }
           }
         }
         val jobCompletionUnregisteringHandle = job.invokeOnCompletion(completionHandler)
         return AutoCloseable {
           jobCompletionUnregisteringHandle.dispose()
           completionHandler(null)
-        }
-      }
-    }
-
-    internal class WeaklyReferencedDisposable<T : Any>(referent: T,
-                                                       private val block: (T) -> Unit) : WeakReference<T>(referent, myRefQueue),
-                                                                                         Disposable {
-      override fun dispose() {
-        val referent = get() ?: return
-        clear()
-        block(referent)
-      }
-
-      companion object {
-        private val myRefQueue = ReferenceQueue<Any>()
-          get() = field.apply {
-            reapCollectedRefs()
-          }
-
-        private fun ReferenceQueue<Any>.reapCollectedRefs() {
-          while (true) {
-            val ref = poll() as? WeaklyReferencedDisposable ?: return
-            Disposer.dispose(ref)
-          }
         }
       }
     }
