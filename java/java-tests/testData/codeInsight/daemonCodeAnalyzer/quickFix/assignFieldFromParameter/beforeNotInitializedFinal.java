@@ -1,4 +1,4 @@
-// "Assign Parameter to Field 'myStr'" "true"
+// "Assign parameter to field 'myStr'" "true"
 
 
 class Foo1 {

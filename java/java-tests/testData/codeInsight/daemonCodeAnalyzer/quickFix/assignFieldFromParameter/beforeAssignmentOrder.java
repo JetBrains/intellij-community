@@ -1,4 +1,4 @@
-// "Assign Parameter to Field 'myName'" "true"
+// "Assign parameter to field 'myName'" "true"
 
 class Person {
     int myId;
