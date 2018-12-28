@@ -87,7 +87,7 @@ public class TipUIUtil {
   }
 
   @Nullable
-  private static TipAndTrickBean getTip(String tipFileName) {
+  public static TipAndTrickBean getTip(String tipFileName) {
     TipAndTrickBean tip = TipAndTrickBean.findByFileName(tipFileName);
     if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
       tip = new TipAndTrickBean();
@@ -143,11 +143,6 @@ public class TipUIUtil {
       return getCantReadText(tip);
     }
 
-  }
-
-  @Deprecated
-  public static void openTipInBrowser(String tipFileName, TipUIUtil.Browser browser, Class providerClass) {
-    openTipInBrowser(getTip(tipFileName), browser);
   }
 
   public static void openTipInBrowser(@Nullable TipAndTrickBean tip, TipUIUtil.Browser browser) {
