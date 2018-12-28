@@ -3,14 +3,12 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.hint.ImplementationViewElement;
 import com.intellij.codeInsight.hint.PsiImplementationViewElement;
+import com.intellij.codeInsight.hint.PsiImplementationViewSession;
 import com.intellij.codeInsight.hint.actions.ShowImplementationsAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,15 +26,10 @@ public class ShowImplementationsTestUtil {
     final Ref<List<ImplementationViewElement>> ref = new Ref<>();
     new ShowImplementationsAction() {
       @Override
-      protected void showImplementations(@NotNull List<ImplementationViewElement> impls,
-                                         @NotNull Project project,
-                                         String text,
-                                         Editor editor,
-                                         PsiFile file,
-                                         PsiElement element,
+      protected void showImplementations(@NotNull PsiImplementationViewSession session,
                                          boolean invokedFromEditor,
                                          boolean invokedByShortcut) {
-        ref.set(impls);
+        ref.set(session.getImplementationElements());
       }
     }.performForContext(context);
     return ContainerUtil.map2Array(ref.get(), PsiElement.class, (element) -> ((PsiImplementationViewElement) element).getPsiElement());
