@@ -20,11 +20,6 @@ class IdeExternalAnnotationsUpdateStartupActivity : StartupActivity {
       return
     }
 
-    val ideaJdks = ProjectJdkTable.getInstance().getSdksOfType(IdeaJdk.getInstance())
-    for (ideaJdk in ideaJdks) {
-      updateAnnotationsLaterIfNecessary(project, ideaJdk)
-    }
-
     subscribeToJdkChanges(project, application)
   }
 
