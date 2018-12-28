@@ -2,7 +2,7 @@
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ui.components.breadcrumbs.Crumb;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 
 public interface BreadcrumbListener {
@@ -10,5 +10,5 @@ public interface BreadcrumbListener {
    * Listener for breadcrumbs updates
    *  @param crumbs             updated collection of breadcrumbs
    */
-  void breadcrumbsChanged(@Nullable Iterable<? extends Crumb> crumbs);
+  void breadcrumbsChanged(@NotNull Iterable<? extends Crumb> crumbs);
 }

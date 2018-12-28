@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventHandler;
 import org.intellij.lang.annotations.JdkConstants.FontStyle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -93,21 +94,19 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     return views.stream().map(view -> view.crumb).filter(crumb -> crumb != null).collect(toList());
   }
 
-  public void setCrumbs(Iterable<? extends Crumb> crumbs) {
+  public void setCrumbs(@NotNull Iterable<? extends Crumb> crumbs) {
     CrumbView view = null;
     int index = 0;
-    if (crumbs != null) {
-      for (Crumb crumb : crumbs) {
-        if (crumb != null) {
-          if (index < views.size()) {
-            view = views.get(index++);
-            view.initialize(crumb);
-          }
-          else {
-            view = new CrumbView(view, crumb);
-            views.add(view);
-            index++;
-          }
+    for (Crumb crumb : crumbs) {
+      if (crumb != null) {
+        if (index < views.size()) {
+          view = views.get(index++);
+          view.initialize(crumb);
+        }
+        else {
+          view = new CrumbView(view, crumb);
+          views.add(view);
+          index++;
         }
       }
     }

@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Gray;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -85,6 +86,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private final FileBreadcrumbsCollector myBreadcrumbsCollector;
 
   public static final Key<BreadcrumbsXmlWrapper> BREADCRUMBS_COMPONENT_KEY = new Key<>("BREADCRUMBS_KEY");
+  private static final Iterable<? extends Crumb> EMPTY_BREADCRUMBS = ContainerUtil.emptyIterable();
 
   public BreadcrumbsXmlWrapper(@NotNull final Editor editor) {
     myEditor = editor;
@@ -188,12 +190,10 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
     myBreadcrumbsCollector.updateCrumbs(myFile, myEditor, myEditor.getCaretModel().getOffset(), myAsyncUpdateProgress, (crumbs) -> {
       if (!progress.isCanceled() && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
-        breadcrumbs.setFont(getNewFont(myEditor));
         if (!breadcrumbs.isShowing() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-          breadcrumbs.setCrumbs(null);
-          notifyListeners(null);
-          return;
+          crumbs = EMPTY_BREADCRUMBS;
         }
+        breadcrumbs.setFont(getNewFont(myEditor));
         breadcrumbs.setCrumbs(crumbs);
         notifyListeners(crumbs);
       }
@@ -214,7 +214,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     myBreadcrumbListeners.remove(listener);
   }
 
-  private void notifyListeners(Iterable<? extends Crumb> breadcrumbs) {
+  private void notifyListeners(@NotNull Iterable<? extends Crumb> breadcrumbs) {
     for (BreadcrumbListener listener : myBreadcrumbListeners) {
       listener.breadcrumbsChanged(breadcrumbs);
     }
@@ -275,8 +275,8 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, null);
     }
     myEditor = null;
-    breadcrumbs.setCrumbs(null);
-    notifyListeners(null);
+    breadcrumbs.setCrumbs(EMPTY_BREADCRUMBS);
+    notifyListeners(EMPTY_BREADCRUMBS);
   }
 
   private void updateEditorFont(PropertyChangeEvent event) {
