@@ -590,6 +590,7 @@ public class ExpectedHighlightingData {
   }
 
   /** This is temporary wrapper to provide a time to fix failing tests */
+  @Deprecated
   public static void expectedDuplicatedHighlighting(@NotNull Runnable check) {
     try {
       isDuplicatedCheckDisabled = true;
