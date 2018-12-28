@@ -6,7 +6,6 @@ import com.intellij.ide.actions.CopyAction;
 import com.intellij.ide.actions.CutAction;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -53,7 +52,7 @@ public class NavBarListener
   private static final String LISTENER = "NavBarListener";
   private static final String BUS = "NavBarMessageBus";
   private final NavBarPanel myPanel;
-  private boolean shouldFocusEditor = false;
+  private boolean shouldFocusEditor;
 
   static void subscribeTo(NavBarPanel panel) {
     if (panel.getClientProperty(LISTENER) != null) {
@@ -179,12 +178,9 @@ public class NavBarListener
     final DialogWrapper dialog = DialogWrapper.findInstance(e.getOppositeComponent());
     shouldFocusEditor =  dialog != null;
     if (dialog != null) {
-      Disposer.register(dialog.getDisposable(), new Disposable() {
-        @Override
-        public void dispose() {
-          if (dialog.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) {
-            shouldFocusEditor = false;
-          }
+      Disposer.register(dialog.getDisposable(), () -> {
+        if (dialog.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) {
+          shouldFocusEditor = false;
         }
       });
     }
@@ -377,9 +373,6 @@ public class NavBarListener
 
   @Override
   public void keyReleased(KeyEvent e) {}
-
-  @Override
-  public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {}
 
   @Override
   public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {}

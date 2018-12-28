@@ -44,7 +44,7 @@ final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
     private final TObjectHashingStrategy<? super K> myStrategy;
     private final V value;
 
-    private SoftKey(@NotNull K k, final int hash, @NotNull TObjectHashingStrategy<? super K> strategy, V v, @NotNull ReferenceQueue<K> q) {
+    private SoftKey(@NotNull K k, final int hash, @NotNull TObjectHashingStrategy<? super K> strategy, @NotNull V v, @NotNull ReferenceQueue<K> q) {
       super(k, q);
       myStrategy = strategy;
       value = v;
@@ -57,6 +57,7 @@ final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
       return value;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof KeyReference)) return false;
@@ -67,6 +68,7 @@ final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
       return myStrategy.equals(t, u);
     }
 
+    @Override
     public int hashCode() {
       return myHash;
     }

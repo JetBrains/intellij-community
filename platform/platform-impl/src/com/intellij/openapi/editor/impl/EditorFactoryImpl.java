@@ -13,10 +13,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorKind;
-import com.intellij.openapi.editor.actionSystem.*;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.actionSystem.ActionPlan;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
+import com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
@@ -68,12 +69,7 @@ public class EditorFactoryImpl extends EditorFactory implements BaseComponent {
         });
       }
     });
-    busConnection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
-      @Override
-      public void globalSchemeChange(EditorColorsScheme scheme) {
-        refreshAllEditors();
-      }
-    });
+    busConnection.subscribe(EditorColorsManager.TOPIC, __ -> refreshAllEditors());
   }
 
   @Override

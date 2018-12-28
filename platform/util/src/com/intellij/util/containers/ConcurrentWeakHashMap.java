@@ -36,7 +36,7 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
     @NotNull private final TObjectHashingStrategy<? super K> myStrategy;
     private final V value;
 
-    private WeakKey(@NotNull K k, final int hash, @NotNull TObjectHashingStrategy<? super K> strategy, V v, ReferenceQueue<K> q) {
+    private WeakKey(@NotNull K k, final int hash, @NotNull TObjectHashingStrategy<? super K> strategy, @NotNull V v, @NotNull ReferenceQueue<K> q) {
       super(k, q);
       myStrategy = strategy;
       value = v;
@@ -56,8 +56,7 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
       K t = get();
       K u = ((KeyReference<K,V>)o).get();
       if (t == null || u == null) return false;
-      if (t == u) return true;
-      return myStrategy.equals(t, u);
+      return t == u || myStrategy.equals(t, u);
     }
 
     @Override

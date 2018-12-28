@@ -155,7 +155,7 @@ public class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
     return ContainerUtil.filterIterator(ContainerUtil.concatIterators(idsIterator, idSetIterator, weirdFileIterator), Objects::nonNull);
   }
 
-  // todo move to ContainerUtil
+  // todo move to ContainerUtil when ported util to java level 8
   @NotNull
   @Contract(pure=true)
   public static <U> Iterator<U> mapIterator(@NotNull final TIntIterator iterator, @NotNull final IntFunction<? extends U> mapper) {
