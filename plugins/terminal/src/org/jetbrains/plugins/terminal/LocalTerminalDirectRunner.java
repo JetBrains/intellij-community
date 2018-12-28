@@ -19,10 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessWaitFor;
+import com.intellij.execution.process.*;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -203,7 +200,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       );
       String workingDir = getWorkingDirectory(directory);
       long startNano = System.nanoTime();
-      PtyProcess process = PtyProcess.exec(command, envs, workingDir);
+      String[] finalCommand = command;
+      PtyProcess process = TerminalSignalUtil.computeWithIgnoredSignalsResetToDefault(
+        new int[] {TerminalSignalUtil.SIGPIPE}, () -> PtyProcess.exec(finalCommand, envs, workingDir)
+      );
       if (LOG.isDebugEnabled()) {
         LOG.debug("Started " + process.getClass().getName() + " from " + Arrays.toString(command) + " in " + workingDir +
                   " (" + TimeoutUtil.getDurationMillis(startNano) + " ms)");
