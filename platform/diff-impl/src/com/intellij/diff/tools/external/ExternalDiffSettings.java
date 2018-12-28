@@ -7,9 +7,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 @State(
   name = "ExternalDiffSettings",
@@ -33,19 +30,19 @@ public class ExternalDiffSettings implements PersistentStateComponent<ExternalDi
   }
 
   public static class State {
-    @Nullable public Boolean DIFF_ENABLED = null;
-    @Nullable public Boolean DIFF_DEFAULT = null;
-    @Nullable public String DIFF_EXE_PATH = null;
-    @Nullable public String DIFF_PARAMETERS = null;
+    public boolean DIFF_ENABLED = false;
+    public boolean DIFF_DEFAULT = false;
+    @NotNull public String DIFF_EXE_PATH = "";
+    @NotNull public String DIFF_PARAMETERS = "%1 %2 %3";
 
-    @Nullable public Boolean MERGE_ENABLED = null;
-    @Nullable public String MERGE_EXE_PATH = null;
-    @Nullable public String MERGE_PARAMETERS = null;
+    public boolean MERGE_ENABLED = false;
+    @NotNull public String MERGE_EXE_PATH = "";
+    @NotNull public String MERGE_PARAMETERS = "%1 %2 %3 %4";
     public boolean MERGE_TRUST_EXIT_CODE = false;
   }
 
   public boolean isDiffEnabled() {
-    return notNull(myState.DIFF_ENABLED, false);
+    return myState.DIFF_ENABLED;
   }
 
   public void setDiffEnabled(boolean value) {
@@ -53,7 +50,7 @@ public class ExternalDiffSettings implements PersistentStateComponent<ExternalDi
   }
 
   public boolean isDiffDefault() {
-    return notNull(myState.DIFF_DEFAULT, false);
+    return myState.DIFF_DEFAULT;
   }
 
   public void setDiffDefault(boolean value) {
@@ -62,7 +59,7 @@ public class ExternalDiffSettings implements PersistentStateComponent<ExternalDi
 
   @NotNull
   public String getDiffExePath() {
-    return notNull(myState.DIFF_EXE_PATH, "");
+    return myState.DIFF_EXE_PATH;
   }
 
   public void setDiffExePath(@NotNull String path) {
@@ -71,7 +68,7 @@ public class ExternalDiffSettings implements PersistentStateComponent<ExternalDi
 
   @NotNull
   public String getDiffParameters() {
-    return notNull(myState.DIFF_PARAMETERS, "%1 %2 %3");
+    return myState.DIFF_PARAMETERS;
   }
 
   public void setDiffParameters(@NotNull String path) {
@@ -80,7 +77,7 @@ public class ExternalDiffSettings implements PersistentStateComponent<ExternalDi
 
 
   public boolean isMergeEnabled() {
-    return notNull(myState.MERGE_ENABLED, false);
+    return myState.MERGE_ENABLED;
   }
 
   public void setMergeEnabled(boolean value) {
@@ -89,7 +86,7 @@ public class ExternalDiffSettings implements PersistentStateComponent<ExternalDi
 
   @NotNull
   public String getMergeExePath() {
-    return notNull(myState.MERGE_EXE_PATH, "");
+    return myState.MERGE_EXE_PATH;
   }
 
   public void setMergeExePath(@NotNull String path) {
@@ -98,7 +95,7 @@ public class ExternalDiffSettings implements PersistentStateComponent<ExternalDi
 
   @NotNull
   public String getMergeParameters() {
-    return notNull(myState.MERGE_PARAMETERS, "%1 %2 %3 %4");
+    return myState.MERGE_PARAMETERS;
   }
 
   public void setMergeParameters(@NotNull String path) {
