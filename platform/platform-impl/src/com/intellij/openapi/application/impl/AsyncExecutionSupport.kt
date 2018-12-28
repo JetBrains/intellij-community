@@ -8,8 +8,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.IncorrectOperationException
 import kotlinx.coroutines.*
-import java.lang.ref.PhantomReference
 import java.lang.ref.ReferenceQueue
+import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -37,9 +37,6 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
     val expirableJob = composeExpirableJob()
 
     return object : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
-      @Suppress("unused")  // need to keep a hard ref
-      private val expirableHandles = this@AsyncExecutionSupport.expirableHandles
-
       /** Invoked once on each newly launched coroutine when dispatching it for the first time. */
       override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
         expirableJob.cancelJobOnCompletion(continuation.context[Job]!!)
@@ -76,21 +73,8 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
      */
     val job by lazy {
       SupervisorJob().also { job ->
-        // Technically, this creates a leak through the Disposer tree...
-        disposable.cancelJobOnDisposal(job)
-        // ... which is mitigated by creating a PhantomReference to the interceptor instance,
-        // which unregisters the job from the tree once the corresponding instance is GC'ed.
-        val reference = RunnableReference(referent = this) {
-          job.cancel()  // unregister from the Disposer tree
-        }
-        job.invokeOnCompletion { reference.clear() }  // essentially to hold a hard ref to the Reference instance
-
-        RunnableReference.reapCollectedRefs()
+        disposable.cancelJobOnDisposal(job, weaklyReferencedJob = true)  // the job doesn't leak through Disposer
       }
-    }
-
-    init {
-      RunnableReference.reapCollectedRefs()
     }
 
     override fun equals(other: Any?): Boolean = other is ExpirableHandle && disposable === other.disposable
@@ -325,14 +309,21 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
       return false
     }
 
-    private fun Disposable.registerOrInvokeDisposable(job: Job? = null,
-                                                      disposableBlock: () -> Unit): AutoCloseable {
+    /**
+     * NOTE: there may be a hard ref to the [job] in the returned handle.
+     */
+    internal fun Disposable.cancelJobOnDisposal(job: Job,
+                                                weaklyReferencedJob: Boolean = false): AutoCloseable {
       val runOnce = RunOnce()
-      val child = Disposable {
+      val function = { referencedJob: Job ->
         runOnce {
-          disposableBlock()
+          referencedJob.cancel()
         }
       }
+      val child =
+        if (!weaklyReferencedJob) Disposable { function(job) }
+        else WeaklyReferencedDisposable(job, function)
+
       if (!tryRegisterDisposable(this, child)) {
         Disposer.dispose(child)  // runs disposableBlock()
         return AutoCloseable { }
@@ -343,18 +334,13 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
             Disposer.dispose(child)  // unregisters only, does not run disposableBlock()
           }
         }
-        val jobCompletionUnregisteringHandle = job?.invokeOnCompletion(completionHandler)
+        val jobCompletionUnregisteringHandle = job.invokeOnCompletion(completionHandler)
         return AutoCloseable {
-          jobCompletionUnregisteringHandle?.dispose()
+          jobCompletionUnregisteringHandle.dispose()
           completionHandler(null)
         }
       }
     }
-
-    internal fun Disposable.cancelJobOnDisposal(job: Job): AutoCloseable =
-      registerOrInvokeDisposable(job) {
-        job.cancel()
-      }
 
     internal fun Job.cancelJobOnCompletion(job: Job) {
       invokeOnCompletion {
@@ -364,14 +350,25 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
       }
     }
 
-    private class RunnableReference(referent: Any, private val finalizer: () -> Unit) : PhantomReference<Any>(referent, myRefQueue) {
+    internal class WeaklyReferencedDisposable<T : Any>(referent: T,
+                                                       private val block: (T) -> Unit) : WeakReference<T>(referent, myRefQueue),
+                                                                                         Disposable {
+      override fun dispose() {
+        val referent = get() ?: return
+        clear()
+        block(referent)
+      }
+
       companion object {
         private val myRefQueue = ReferenceQueue<Any>()
+          get() = field.apply {
+            reapCollectedRefs()
+          }
 
-        fun reapCollectedRefs() {
+        private fun ReferenceQueue<Any>.reapCollectedRefs() {
           while (true) {
-            val ref = myRefQueue.poll() as? RunnableReference ?: return
-            ref.finalizer()
+            val ref = poll() as? WeaklyReferencedDisposable ?: return
+            Disposer.dispose(ref)
           }
         }
       }
