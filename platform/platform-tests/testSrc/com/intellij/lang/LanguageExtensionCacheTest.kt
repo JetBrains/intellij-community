@@ -9,10 +9,9 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.LightPlatformTestCase
 
-class LanguageExtensionCacheTest : PlatformTestCase() {
-
+class LanguageExtensionCacheTest : LightPlatformTestCase() {
   private val myExtensionPointClass = String::class.java.name
   private val myExtensionPointName = "testLangExt"
 
