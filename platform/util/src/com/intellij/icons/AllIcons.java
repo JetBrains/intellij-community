@@ -2537,6 +2537,7 @@ public class AllIcons {
     public static final Icon Presto = IconLoader.getIcon("/providers/presto.svg"); // 16x16
     public static final Icon Redshift = IconLoader.getIcon("/providers/redshift.svg"); // 16x16
     public static final Icon Snowflake = IconLoader.getIcon("/providers/snowflake.svg"); // 16x16
+    public static final Icon Spark = IconLoader.getIcon("/providers/spark.svg"); // 16x16
     public static final Icon Sqlite = IconLoader.getIcon("/providers/sqlite.svg"); // 16x16
     public static final Icon SqlServer = IconLoader.getIcon("/providers/sqlServer.svg"); // 16x16
     public static final Icon Sun = IconLoader.getIcon("/providers/sun.svg"); // 16x16
