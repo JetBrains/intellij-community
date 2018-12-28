@@ -207,10 +207,25 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   public void addWatchExpression(@NotNull XExpression expression, int index, final boolean navigateToWatchNode) {
+    addWatchExpression(expression, index, navigateToWatchNode, false);
+  }
+
+  public void addWatchExpression(@NotNull XExpression expression, int index, final boolean navigateToWatchNode, boolean noDuplicates) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     XDebugSession session = getSession(getTree());
-    myRootNode.addWatchExpression(session != null ? session.getCurrentStackFrame() : null, expression, index, navigateToWatchNode);
-    updateSessionData();
+    boolean found = false;
+    if (noDuplicates) {
+      for (WatchNode child : myRootNode.getWatchChildren()) {
+        if (child.getExpression().equals(expression)) {
+          TreeUtil.selectNode(getTree(), child);
+          found = true;
+        }
+      }
+    }
+    if (!found) {
+      myRootNode.addWatchExpression(session != null ? session.getCurrentStackFrame() : null, expression, index, navigateToWatchNode);
+      updateSessionData();
+    }
     if (navigateToWatchNode && session != null) {
       XDebugSessionTab.showWatchesView((XDebugSessionImpl)session);
     }
