@@ -105,6 +105,7 @@
 
     <projectService serviceImplementation="com.intellij.tasks.impl.TaskProjectConfiguration"/>
     <applicationService serviceImplementation="com.intellij.tasks.config.RecentTaskRepositories"/>
+    <applicationInitializedListener implementation="com.intellij.tasks.config.PasswordConversionEnforcer"/>
     <applicationService serviceImplementation="com.intellij.tasks.config.TaskSettings"/>
     <search.optionContributor implementation="com.intellij.tasks.config.TaskSearchableOptionContributor"/>
 
