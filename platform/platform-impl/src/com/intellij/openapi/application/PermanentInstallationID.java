@@ -61,29 +61,7 @@ public class PermanentInstallationID {
 
     // for Windows attempt to use PermanentUserId, so that DotNet products and IDEA would use the same ID.
     if (SystemInfo.isWindows) {
-      final String appdata = System.getenv("APPDATA");
-      if (appdata != null) {
-        final File dir = new File(appdata, "JetBrains");
-        if (dir.exists() || dir.mkdirs()) {
-          final File permanentIdFile = new File(dir, "PermanentUserId");
-          try {
-            String fromFile = "";
-            if (permanentIdFile.exists()) {
-              fromFile = loadFromFile(permanentIdFile).trim();
-            }
-            if (!fromFile.isEmpty()) {
-              if (!fromFile.equals(installationId)) {
-                installationId = fromFile;
-                prefs.put(INSTALLATION_ID_KEY, installationId);
-              }
-            }
-            else {
-              writeToFile(permanentIdFile, installationId);
-            }
-          }
-          catch (IOException ignored) { }
-        }
-      }
+      installationId = getIdSynchronizedWithDotNetProducts(prefs, "PermanentUserId", installationId);
     }
 
     // make sure values in older location and in the new location are the same
@@ -92,6 +70,34 @@ public class PermanentInstallationID {
     }
 
     return installationId;
+  }
+
+  @NotNull
+  public static String getIdSynchronizedWithDotNetProducts(@NotNull Preferences prefs, @NotNull String idFileName, @NotNull String id) {
+    final String appdata = System.getenv("APPDATA");
+    if (appdata != null) {
+      final File dir = new File(appdata, "JetBrains");
+      if (dir.exists() || dir.mkdirs()) {
+        final File permanentIdFile = new File(dir, idFileName);
+        try {
+          String fromFile = "";
+          if (permanentIdFile.exists()) {
+            fromFile = loadFromFile(permanentIdFile).trim();
+          }
+          if (!fromFile.isEmpty()) {
+            if (!fromFile.equals(id)) {
+              id = fromFile;
+              prefs.put(INSTALLATION_ID_KEY, id);
+            }
+          }
+          else {
+            writeToFile(permanentIdFile, id);
+          }
+        }
+        catch (IOException ignored) { }
+      }
+    }
+    return id;
   }
 
   @NotNull
