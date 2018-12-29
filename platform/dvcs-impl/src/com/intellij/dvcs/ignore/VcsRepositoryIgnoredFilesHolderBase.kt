@@ -5,7 +5,6 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.Alarm
@@ -54,7 +53,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   override fun getIgnoredFiles(): Set<VirtualFile> = SET_LOCK.read { ignoredSet.toHashSet() }
 
   override fun containsFile(file: VirtualFile) =
-    SET_LOCK.read { ignoredSet.any { ignoredFile -> VfsUtil.isAncestor(ignoredFile, file, false) } }
+    SET_LOCK.read { isUnder(ignoredSet, file) }
 
   override fun getSize() = SET_LOCK.read { ignoredSet.size }
 
@@ -96,7 +95,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  override fun removeIgnoredFiles(filePaths: Collection<FilePath>): MutableList<FilePath> {
+  override fun removeIgnoredFiles(filePaths: Collection<FilePath>): List<FilePath> {
     val removedIgnoredFiles = arrayListOf<FilePath>()
     val filePathsSet = filePaths.toHashSet()
     SET_LOCK.write {
