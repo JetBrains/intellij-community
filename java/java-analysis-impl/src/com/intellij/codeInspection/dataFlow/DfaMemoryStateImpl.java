@@ -274,6 +274,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       return myFactory.withFact(myFactory.createTypeValue(value.getType(), Nullability.UNKNOWN), DfaFactType.NULLABILITY, dfaNullability);
     }
+    if (value instanceof DfaSumValue && (((DfaSumValue)value).getLeft() == flushed || ((DfaSumValue)value).getRight() == flushed)) {
+      return myFactory.getFactValue(DfaFactType.RANGE, getValueFact(value, DfaFactType.RANGE));
+    }
     return value;
   }
 
@@ -706,6 +709,27 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaFactMapValue) {
       return ((DfaFactMapValue)value).getFacts().intersect(factType, factValue) != null;
     }
+    if (value instanceof DfaSumValue && factType == DfaFactType.RANGE && factValue != null) {
+      DfaSumValue sum = (DfaSumValue)value;
+      boolean isLong = PsiType.LONG.equals(sum.getType());
+      LongRangeSet appliedRange = (LongRangeSet)factValue;
+      if (!isLong) {
+        appliedRange = appliedRange.intersect(LongRangeSet.fromType(PsiType.INT));
+      }
+      DfaVariableValue left = sum.getLeft();
+      DfaValue right = sum.getRight();
+      if (appliedRange.equals(LongRangeSet.point(0)) && sum.isNegation()) {
+        return applyCondition(myFactory.createCondition(left, RelationType.EQ, right));
+      }
+      LongRangeSet leftRange = getValueFact(left, DfaFactType.RANGE);
+      LongRangeSet rightRange = getValueFact(right, DfaFactType.RANGE);
+      if (leftRange == null || rightRange == null) return true;
+      LongRangeSet result = sum.isNegation() ? leftRange.minus(rightRange, isLong) : leftRange.plus(rightRange, isLong);
+      if (!result.intersects(appliedRange)) return false;
+      LongRangeSet leftConstraint = sum.isNegation() ? rightRange.plus(appliedRange, isLong) : appliedRange.minus(rightRange, isLong);
+      LongRangeSet rightConstraint = sum.isNegation() ? leftRange.minus(appliedRange, isLong) : appliedRange.minus(leftRange, isLong);
+      return applyFact(left, DfaFactType.RANGE, leftConstraint) && applyFact(right, DfaFactType.RANGE, rightConstraint);
+    }
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
       if (factValue != null) {
@@ -737,6 +761,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public boolean areEqual(@NotNull DfaValue value1, @NotNull DfaValue value2) {
+    if (value1 instanceof DfaSumValue && value2 instanceof DfaSumValue) {
+      DfaSumValue sum1 = (DfaSumValue)value1;
+      DfaSumValue sum2 = (DfaSumValue)value2;
+      return sum1.isNegation() == sum2.isNegation() &&
+             areEqual(sum1.getLeft(), sum2.getLeft()) &&
+             areEqual(sum1.getRight(), sum2.getRight());
+    }
     if (!(value1 instanceof DfaConstValue) && !(value1 instanceof DfaVariableValue)) return false;
     if (!(value2 instanceof DfaConstValue) && !(value2 instanceof DfaVariableValue)) return false;
     if (value1 == value2) return true;
@@ -792,6 +823,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           !applyFact(dfaRight, DfaFactType.RANGE, left.fromRelation(relationType.getFlipped()))) {
         return false;
       }
+      if (!applySumRelations(dfaLeft, relationType, dfaRight)) return false;
     }
 
     if (dfaRight instanceof DfaFactMapValue) {
@@ -851,6 +883,76 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     return applyEquivalenceRelation(relationType, dfaLeft, dfaRight);
+  }
+
+  private boolean applySumRelations(DfaValue left, RelationType type, DfaValue right) {
+    if (left instanceof DfaSumValue && right instanceof DfaVariableValue) {
+      DfaSumValue sum = (DfaSumValue)left;
+      LongRangeSet leftRange = getValueFact(sum.getLeft(), DfaFactType.RANGE);
+      LongRangeSet rightRange = getValueFact(sum.getRight(), DfaFactType.RANGE);
+      if (leftRange == null || rightRange == null) return true;
+      boolean isLong = PsiType.LONG.equals(sum.getType());
+      LongRangeSet rightNegated = rightRange.negate(isLong);
+      LongRangeSet rightCorrected = sum.isNegation() ? rightNegated : rightRange;
+
+      if (!sum.isNegation()) {
+        RelationType correctedType = type;
+        if (type == RelationType.LT || type == RelationType.GT) {
+          boolean overflowPossible = true;
+          if (!isLong) {
+            LongRangeSet other = getValueFact(right, DfaFactType.RANGE);
+            LongRangeSet overflowRange = getIntegerSumOverflowValues(leftRange, rightCorrected);
+            overflowPossible = other == null || other.intersects(overflowRange);
+          }
+          if (overflowPossible) {
+            correctedType = RelationType.NE;
+          }
+        }
+        // a+b (rel) c && a == c => b (rel) 0 
+        if (areEqual(sum.getLeft(), right)) {
+          if (!applyCondition(myFactory.createCondition(sum.getRight(), correctedType, myFactory.getInt(0)))) {
+            return false;
+          }
+        }
+        // a+b (rel) c && b == c => a (rel) 0 
+        if (areEqual(sum.getRight(), right)) {
+          if (!applyCondition(myFactory.createCondition(sum.getLeft(), correctedType, myFactory.getInt(0)))) {
+            return false;
+          }
+        }
+      }
+
+      if (!leftRange.subtractionMayOverflow(sum.isNegation() ? rightRange : rightNegated, isLong)) {
+        // a-positiveNumber >= b => a > b
+        if (rightCorrected.max() < 0 && RelationType.GE.isSubRelation(type)) {
+          if (!applyLessThanRelation(right, sum.getLeft())) return false;
+        }
+        // a+positiveNumber >= b => a > b
+        if (rightCorrected.min() > 0 && RelationType.LE.isSubRelation(type)) {
+          if (!applyLessThanRelation(sum.getLeft(), right)) return false;
+        }
+      }
+      if (RelationType.EQ == type && !rightRange.contains(0)) {
+        // a+nonZero == b => a != b
+        if (!applyRelation(sum.getLeft(), right, true)) return false;
+      }
+    }
+    return true;
+  }
+
+  @NotNull
+  private static LongRangeSet getIntegerSumOverflowValues(LongRangeSet left, LongRangeSet right) {
+    if (left.isEmpty() || right.isEmpty()) return LongRangeSet.empty();
+    long sumMin = left.min() + right.min();
+    long sumMax = left.max() + right.max();
+    LongRangeSet result = LongRangeSet.empty();
+    if (sumMin < Integer.MIN_VALUE) {
+      result = result.unite(LongRangeSet.range((int)sumMin, Integer.MAX_VALUE));
+    }
+    if (sumMax > Integer.MAX_VALUE) {
+      result = result.unite(LongRangeSet.range(Integer.MIN_VALUE, (int)sumMax));
+    }
+    return result;
   }
 
   private void updateVarStateOnComparison(@NotNull DfaVariableValue dfaVar, DfaValue value, boolean isNegated) {
@@ -1101,6 +1203,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   @Nullable
   public <T> T getValueFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType) {
+    if (value instanceof DfaSumValue && factType == DfaFactType.RANGE) {
+      //noinspection unchecked
+      return (T)getSumRange((DfaSumValue)value);
+    }
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
       DfaVariableState state = getExistingVariableState(var);
@@ -1113,6 +1219,30 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       value = resolveVariableValue(var);
     }
     return factType.fromDfaValue(value);
+  }
+
+  @Nullable
+  public LongRangeSet getSumRange(DfaSumValue sum) {
+    LongRangeSet left = getValueFact(sum.getLeft(), DfaFactType.RANGE);
+    LongRangeSet right = getValueFact(sum.getRight(), DfaFactType.RANGE);
+    if (left == null || right == null) return null;
+    boolean isLong = PsiType.LONG.equals(sum.getType());
+    LongRangeSet result = left.binOpFromToken(sum.getTokenType(), right, isLong);
+    if (result != null && sum.isNegation()) {
+      RelationType rel = getRelation(sum.getLeft(), sum.getRight());
+      if (rel == RelationType.NE) {
+        return result.without(0);
+      }
+      if (!left.subtractionMayOverflow(right, isLong)) {
+        if (rel == RelationType.GT) {
+          return result.intersect(LongRangeSet.range(1, isLong ? Long.MAX_VALUE : Integer.MAX_VALUE));
+        }
+        if (rel == RelationType.LT) {
+          return result.intersect(LongRangeSet.range(isLong ? Long.MIN_VALUE : Integer.MIN_VALUE, -1));
+        }
+      }
+    }
+    return result;
   }
 
   @Override

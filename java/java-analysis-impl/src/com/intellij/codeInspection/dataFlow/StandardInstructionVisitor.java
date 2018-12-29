@@ -655,30 +655,17 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue result = DfaUnknownValue.getInstance();
     PsiType type = instruction.getResultType();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
-      LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
-      LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
-      if (JavaTokenType.MINUS.equals(opSign) && memState.areEqual(dfaLeft, dfaRight)) {
-        result = runner.getFactory().getInt(0);
-      }
-      else if (left != null && right != null) {
-        boolean isLong = PsiType.LONG.equals(type);
-        LongRangeSet resultRange = left.binOpFromToken(opSign, right, isLong);
-        if (resultRange != null) {
-          if (opSign.equals(JavaTokenType.MINUS)) {
-            RelationType rel = memState.getRelation(dfaLeft, dfaRight);
-            if (rel == RelationType.NE) {
-              resultRange = resultRange.without(0);
-            }
-            else if (!left.subtractionMayOverflow(right, isLong)) {
-              if (rel == RelationType.GT) {
-                resultRange = resultRange.intersect(LongRangeSet.range(1, isLong ? Long.MAX_VALUE : Integer.MAX_VALUE));
-              }
-              else if (rel == RelationType.LT) {
-                resultRange = resultRange.intersect(LongRangeSet.range(isLong ? Long.MIN_VALUE : Integer.MIN_VALUE, -1));
-              }
-            }
+      boolean isLong = PsiType.LONG.equals(type);
+      if (JavaTokenType.PLUS.equals(opSign) || JavaTokenType.MINUS.equals(opSign)) {
+        result = runner.getFactory().getSumFactory().create(dfaLeft, dfaRight, memState, isLong, JavaTokenType.MINUS.equals(opSign));
+      } else {
+        LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
+        LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
+        if (left != null && right != null) {
+          LongRangeSet resultRange = left.binOpFromToken(opSign, right, isLong);
+          if (resultRange != null) {
+            result = runner.getFactory().getFactValue(DfaFactType.RANGE, resultRange);
           }
-          result = runner.getFactory().getFactValue(DfaFactType.RANGE, resultRange);
         }
       }
     }
