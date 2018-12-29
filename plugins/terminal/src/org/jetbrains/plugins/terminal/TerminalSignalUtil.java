@@ -66,13 +66,13 @@ public class TerminalSignalUtil {
     }
     finally {
       if (lib != null) {
-        try {
-          for (int signal : ignored) {
+        for (int signal : ignored) {
+          try {
             setSignalHandler(lib, signal, LibC.SIG_IGN);
           }
-        }
-        catch (Throwable t) {
-          LOG.warn("Cannot restore ignored signals back", t);
+          catch (Throwable t) {
+            LOG.warn("Cannot restore ignored handler for signal " + signal, t);
+          }
         }
       }
     }
