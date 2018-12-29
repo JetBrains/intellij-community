@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
+import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.getExecutorPresentableText
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
@@ -28,7 +29,6 @@ import com.intellij.util.ui.UIUtil.addBorder
 import java.awt.Dimension
 
 private val LOG = logger<DialogCommitWorkflow>()
-private val TASK_TITLE = message("commit.dialog.title")
 
 open class DialogCommitWorkflow(val project: Project,
                                 val initiallyIncluded: Collection<*>,
@@ -49,8 +49,6 @@ open class DialogCommitWorkflow(val project: Project,
     return dialog.showAndGet()
   }
 
-  protected open val isAlien: Boolean get() = false
-
   protected open fun prepareCommit(unversionedFiles: List<VirtualFile>, browser: CommitDialogChangesBrowser): Boolean =
     ScheduleForAdditionAction.addUnversioned(project, unversionedFiles, browser)
 
@@ -69,15 +67,17 @@ open class DialogCommitWorkflow(val project: Project,
     return true
   }
 
-  protected fun doCommit(changeList: LocalChangeList,
-                         changes: List<Change>,
-                         commitMessage: String,
-                         handlers: List<CheckinHandler>,
-                         additionalData: NullableFunction<Any, Any>) {
+  protected open fun doCommit(changeList: LocalChangeList,
+                              changes: List<Change>,
+                              commitMessage: String,
+                              handlers: List<CheckinHandler>,
+                              additionalData: NullableFunction<Any, Any>) {
     LOG.debug("Do actual commit")
-    val helper = CommitHelper(project, changeList, changes, TASK_TITLE, commitMessage, handlers, isDefaultChangeListFullyIncluded, false,
-                              additionalData, resultHandler, isAlien, vcsToCommit)
-    helper.doCommit()
+    val committer = SingleChangeListCommitter(project, changeList, changes, commitMessage, handlers, additionalData, vcsToCommit,
+                                              DIALOG_TITLE, isDefaultChangeListFullyIncluded)
+
+    committer.addResultHandler(resultHandler ?: DefaultCommitResultHandler(committer))
+    committer.runCommit(DIALOG_TITLE, false)
   }
 
   protected open fun createBrowser(): CommitDialogChangesBrowser =

@@ -39,7 +39,8 @@ import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
-import com.intellij.openapi.vcs.changes.ui.CommitHelper;
+import com.intellij.openapi.vcs.changes.ui.DefaultCommitResultHandler;
+import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -72,6 +73,7 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
+import static com.intellij.util.containers.ContainerUtil.emptyList;
 
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, PersistentStateComponent<Element> {
@@ -1261,9 +1263,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private void doCommit(final LocalChangeList changeList, final List<? extends Change> changes, final boolean synchronously) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    new CommitHelper(myProject, changeList, changes, changeList.getName(),
-                     StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment(), new ArrayList<>(),
-                     false, synchronously, FunctionUtil.nullConstant(), null, false, null).doCommit();
+
+    String commitMessage = StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment();
+    SingleChangeListCommitter committer =
+      new SingleChangeListCommitter(myProject, changeList, changes, commitMessage, emptyList(), FunctionUtil.nullConstant(), null,
+                                    changeList.getName(), false);
+
+    committer.addResultHandler(new DefaultCommitResultHandler(committer));
+    committer.runCommit(changeList.getName(), synchronously);
   }
 
   @TestOnly

@@ -5,19 +5,31 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
+import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.NullableFunction
 
 class AlienCommitWorkflow(val vcs: AbstractVcs<*>, changeListName: String, changes: List<Change>, commitMessage: String?) :
   DialogCommitWorkflow(vcs.project, changes, vcsToCommit = vcs, initialCommitMessage = commitMessage) {
   val changeList = AlienLocalChangeList(changes, changeListName)
-
-  override val isAlien: Boolean get() = true
 
   override fun prepareCommit(unversionedFiles: List<VirtualFile>, browser: CommitDialogChangesBrowser) = true
 
   override fun doRunBeforeCommitChecks(changeList: LocalChangeList, checks: Runnable) = checks.run()
 
   override fun canExecute(executor: CommitExecutor, changes: Collection<Change>) = true
+
+  override fun doCommit(changeList: LocalChangeList,
+                        changes: List<Change>,
+                        commitMessage: String,
+                        handlers: List<CheckinHandler>,
+                        additionalData: NullableFunction<Any, Any>) {
+    val committer = AlienCommitter(vcs, changes, commitMessage, handlers, additionalData)
+
+    committer.addResultHandler(DefaultCommitResultHandler(committer))
+    committer.runCommit(DIALOG_TITLE, false)
+  }
 
   override fun createBrowser() = AlienChangeListBrowser(project, changeList)
 

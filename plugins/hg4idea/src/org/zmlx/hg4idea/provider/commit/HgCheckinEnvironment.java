@@ -139,7 +139,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
             //abort
             return exceptions;
           }
-          //firstly selected changes marked dirty in CommitHelper -> postRefresh, so we need to mark others
+          //firstly selected changes marked dirty in SingleChangeListCommitter -> doPostRefresh, so we need to mark others
           VcsDirtyScopeManager dirtyManager = VcsDirtyScopeManager.getInstance(myProject);
           for (HgFile hgFile : changedFilesNotInCommit) {
             dirtyManager.fileDirty(hgFile.toFilePath());

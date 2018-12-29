@@ -71,8 +71,9 @@ import static java.util.Collections.*;
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, DataProvider {
   private static final Logger LOG = getInstance(CommitChangeListDialog.class);
 
+  public static final String DIALOG_TITLE = message("commit.dialog.title");
+
   private static final String HELP_ID = "reference.dialogs.vcs.commit";
-  private static final String TITLE = message("commit.dialog.title");
 
   private static final int LAYOUT_VERSION = 2;
   private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION_" + LAYOUT_VERSION;
@@ -266,7 +267,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myHandlers.addAll(createCheckinHandlers(myProject, this, myCommitContext));
 
-    setTitle(myShowVcsCommit ? TITLE : getExecutorPresentableText(myExecutors.get(0)));
+    setTitle(myShowVcsCommit ? DIALOG_TITLE : getExecutorPresentableText(myExecutors.get(0)));
     myCommitActionName = getCommitActionName(myAffectedVcses);
     myExecutorActions = createExecutorActions(myExecutors);
     if (myShowVcsCommit) {
