@@ -68,6 +68,7 @@ public class GradleProjectResolverUtil {
   private static final Logger LOG = Logger.getInstance(GradleProjectResolverUtil.class);
   @NotNull
   private static final Key<Object> CONTAINER_KEY = Key.create(Object.class, ExternalSystemConstants.UNORDERED);
+  public static final String BUILD_SRC_NAME = "buildSrc";
 
   @NotNull
   public static DataNode<ModuleData> createMainModule(@NotNull ProjectResolverContext resolverCtx,
@@ -138,15 +139,18 @@ public class GradleProjectResolverUtil {
                                       @NotNull ProjectResolverContext resolverCtx) {
     String delimiter;
     StringBuilder moduleName = new StringBuilder();
-    String defaultGroupId = resolverCtx.getDefaultGroupId();
+    String buildSrcGroup = resolverCtx.getBuildSrcGroup();
     if (resolverCtx.isUseQualifiedModuleNames()) {
       delimiter = ".";
+      if (StringUtil.isNotEmpty(buildSrcGroup)) {
+        moduleName.append(buildSrcGroup).append(delimiter);
+      }
       moduleName.append(gradlePathToQualifiedName(gradleModule.getProject().getName(), externalProject.getQName()));
     }
     else {
       delimiter = "_";
-      if (StringUtil.isNotEmpty(defaultGroupId)) {
-        moduleName.append(defaultGroupId).append(delimiter);
+      if (StringUtil.isNotEmpty(buildSrcGroup)) {
+        moduleName.append(buildSrcGroup).append(delimiter);
       }
       moduleName.append(gradleModule.getName());
     }
