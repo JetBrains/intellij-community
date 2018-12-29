@@ -6,7 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Keeps external system task execution parameters. Basically, this is a model class which holds data represented when
@@ -35,16 +37,16 @@ public interface TaskExecutionSettings {
 
   void addTaskSettings(@NotNull TaskSettings taskSettings);
 
-  void addUnorderedArgument(@NotNull String argument);
+  void addUnorderedParameter(@NotNull String argument);
 
   @NotNull
-  @Unmodifiable Set<String> getUnorderedArguments();
+  @Unmodifiable Set<String> getUnorderedParameters();
 
-  void removeUnorderedArgument(@NotNull String argument);
+  void removeUnorderedParameter(@NotNull String argument);
 
   void resetTaskSettings();
 
-  void resetUnorderedArguments();
+  void resetUnorderedParameters();
 
   @NotNull
   Map<String, String> getEnv();

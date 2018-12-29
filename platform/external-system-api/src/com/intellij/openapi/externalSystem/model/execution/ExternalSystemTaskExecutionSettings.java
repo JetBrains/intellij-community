@@ -29,10 +29,10 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
   @NotNull private List<TaskSettings> myTasksSettings = ContainerUtilRt.newArrayList();
   @NotNull private List<String> myTaskNames = ContainerUtilRt.newArrayList();
   @NotNull private List<String> myTaskDescriptions = ContainerUtilRt.newArrayList();
-  @NotNull private Set<String> myUnorderedArguments = ContainerUtilRt.newLinkedHashSet();
+  @NotNull private Set<String> myUnorderedParameters = ContainerUtilRt.newLinkedHashSet();
 
   // needed for supporting old api
-  @NotNull private List<String> myZipTaskArguments = ContainerUtilRt.newArrayList();
+  @NotNull private List<String> myTailTaskArguments = ContainerUtilRt.newArrayList();
 
   @Nullable private String myExecutionName;
   private String myExternalSystemIdString;
@@ -61,9 +61,8 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
     myTasksSettings = ContainerUtil.copyList(source.myTasksSettings);
     myTaskNames = ContainerUtil.copyList(source.myTaskNames);
     myTaskDescriptions = ContainerUtil.copyList(source.myTaskDescriptions);
-    myUnorderedArguments = ContainerUtil.newLinkedHashSet(source.myUnorderedArguments);
-
-    myZipTaskArguments = source.myZipTaskArguments;
+    myUnorderedParameters = ContainerUtil.newLinkedHashSet(source.myUnorderedParameters);
+    myTailTaskArguments = ContainerUtil.copyList(source.myTailTaskArguments);
 
     myEnv = source.myEnv.isEmpty() ? Collections.emptyMap() : new THashMap<>(source.myEnv);
     myPassParentEnvs = source.myPassParentEnvs;
@@ -121,13 +120,13 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
   @Override
   public void addTaskSettings(@NotNull TaskSettings taskSettings) {
     repairSettingsIfNeeded();
-    if (tryToAddTaskSettingsByOldApi(taskSettings)) return;
+    if (tryToAddTaskSettingsIntoOldModel(taskSettings)) return;
     myTasksSettings.add(taskSettings);
   }
 
   @Override
-  public void addUnorderedArgument(@NotNull String argument) {
-    myUnorderedArguments.add(argument);
+  public void addUnorderedParameter(@NotNull String parameter) {
+    myUnorderedParameters.add(parameter);
   }
 
   @Override
@@ -153,7 +152,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
       TaskSettings settings = tasksSettings.remove(tasksSettings.size() - 1);
       String name = settings.getName();
       String description = settings.getDescription();
-      tasksSettings.add(new TaskSettingsImpl(name, myZipTaskArguments, description));
+      tasksSettings.add(new TaskSettingsImpl(name, myTailTaskArguments, description));
     }
     tasksSettings.addAll(myTasksSettings);
     return ContainerUtil.immutableList(tasksSettings);
@@ -167,39 +166,39 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
   }
 
   @Override
-  public void resetUnorderedArguments() {
+  public void resetUnorderedParameters() {
     myScriptParameters = "";
-    myUnorderedArguments = ContainerUtilRt.newHashSet();
-    myZipTaskArguments = ContainerUtilRt.newArrayList();
+    myUnorderedParameters = ContainerUtilRt.newHashSet();
+    myTailTaskArguments = ContainerUtilRt.newArrayList();
   }
 
   @Override
-  public void removeUnorderedArgument(@NotNull String argument) {
-    if (myUnorderedArguments.remove(argument)) return;
-    List<String> parameters = StringUtil.split(myScriptParameters, " ");
-    parameters.remove(argument);
+  public void removeUnorderedParameter(@NotNull String parameter) {
+    if (myUnorderedParameters.remove(parameter)) return;
+    List<String> parameters = StringUtil.splitHonorQuotes(myScriptParameters, ' ');
+    parameters.remove(parameter);
     myScriptParameters = StringUtil.join(parameters, " ");
   }
 
   @Override
   @NotNull
-  public @Unmodifiable Set<String> getUnorderedArguments() {
+  public @Unmodifiable Set<String> getUnorderedParameters() {
     List<String> parameters = StringUtil.splitHonorQuotes(myScriptParameters, ' ');
-    parameters.addAll(myUnorderedArguments);
+    parameters.addAll(myUnorderedParameters);
     return Collections.unmodifiableSet(ContainerUtil.newLinkedHashSet(parameters));
   }
 
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   // Needed for supporting old usages of {@link ExternalSystemTaskExecutionSettings#getTaskNames}
-  private boolean tryToAddTaskSettingsByOldApi(TaskSettings taskSettings) {
+  private boolean tryToAddTaskSettingsIntoOldModel(TaskSettings taskSettings) {
     String name = taskSettings.getName();
     String description = taskSettings.getDescription();
     List<String> arguments = taskSettings.getArguments();
     if (description != null) return false;
     if (!myTasksSettings.isEmpty()) return false;
-    if (!myZipTaskArguments.isEmpty()) return false;
-    myZipTaskArguments = arguments;
+    if (!myTailTaskArguments.isEmpty()) return false;
+    myTailTaskArguments = arguments;
     myTaskNames.add(name);
     return true;
   }
@@ -214,16 +213,16 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
     myTasksSettings = ContainerUtilRt.newArrayList(getTasksSettings());
     myTaskNames = ContainerUtilRt.newArrayList();
     myTaskDescriptions = ContainerUtilRt.newArrayList();
-    myZipTaskArguments = ContainerUtilRt.newArrayList();
+    myTailTaskArguments = ContainerUtilRt.newArrayList();
   }
 
 
-  // Raw getters is deprecated because they are not part of the public API.
+  // Raw getters are deprecated because they are not part of the public API.
   // These is a part of a specific implementation.
 
   @Deprecated
-  public List<String> getRawZipTaskArguments() {
-    return ContainerUtil.immutableList(myZipTaskArguments);
+  public List<String> getRawTailTaskArguments() {
+    return ContainerUtil.immutableList(myTailTaskArguments);
   }
 
   @Deprecated
@@ -233,7 +232,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
 
   @Deprecated
   public Set<String> getRawUnorderedArguments() {
-    return Collections.unmodifiableSet(myUnorderedArguments);
+    return Collections.unmodifiableSet(myUnorderedParameters);
   }
 
   @Deprecated
@@ -242,7 +241,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
   }
 
   /**
-   * Deprecated, instead use the {@link ExternalSystemTaskExecutionSettings#getUnorderedArguments}
+   * Deprecated, instead use the {@link ExternalSystemTaskExecutionSettings#getUnorderedParameters}
    */
   @Deprecated
   public String getScriptParameters() {
@@ -253,13 +252,13 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
   }
 
   /**
-   * Deprecated, instead use the {@link ExternalSystemTaskExecutionSettings#addUnorderedArgument}
-   * or {@link ExternalSystemTaskExecutionSettings#removeUnorderedArgument}
-   * or {@link ExternalSystemTaskExecutionSettings#resetUnorderedArguments}
+   * Deprecated, instead use the {@link ExternalSystemTaskExecutionSettings#addUnorderedParameter}
+   * or {@link ExternalSystemTaskExecutionSettings#removeUnorderedParameter}
+   * or {@link ExternalSystemTaskExecutionSettings#resetUnorderedParameters}
    */
   @Deprecated
   public void setScriptParameters(String scriptParameters) {
-    resetUnorderedArguments();
+    resetUnorderedParameters();
     myScriptParameters = scriptParameters;
   }
 
@@ -325,13 +324,13 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
   }
 
   private void addScriptParameters(StringJoiner joiner) {
-    addAll(joiner, myZipTaskArguments);
+    addAll(joiner, myTailTaskArguments);
     for (TaskSettings settings : myTasksSettings) {
       joiner.add(settings.getName());
       addAll(joiner, settings.getArguments());
     }
     addIfNotEmpty(joiner, myScriptParameters);
-    addAll(joiner, myUnorderedArguments);
+    addAll(joiner, myUnorderedParameters);
   }
 
   private void addCommandLineArguments(StringJoiner joiner) {

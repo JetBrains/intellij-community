@@ -28,7 +28,7 @@ import java.util.List;
 
 import static com.intellij.openapi.externalSystem.service.ExternalSystemTaskExecutionSettingsUtilKt.isSameSettings;
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
-import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfigurationFor;
+import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
 
 /**
  * @author Vladislav.Soroka
@@ -85,7 +85,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
 
     final Project project = context.getProject();
     final ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
-    if (!applyTestConfigurationFor(project, settings, contextLocation, psiMethod, containingClass)) {
+    if (!applyTestConfiguration(settings, project, contextLocation, psiMethod, containingClass)) {
       return false;
     }
     return isSameSettings(settings, configuration.getSettings());
@@ -137,7 +137,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     final Location location = context.getLocation();
     assert location != null;
     final ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
-    if (!applyTestConfigurationFor(project, settings, location, psiMethod, containingClasses)) return false;
+    if (!applyTestConfiguration(settings, project, location, psiMethod, containingClasses)) return false;
     configuration.setName((containingClasses.length == 1 ? containingClasses[0].getName() + "." : "") + psiMethod.getName());
     return true;
   }

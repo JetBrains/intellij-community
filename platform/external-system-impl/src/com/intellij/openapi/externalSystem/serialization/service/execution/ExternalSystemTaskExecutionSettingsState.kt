@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.serialization.service.execution
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.execution.TaskSettings
 import com.intellij.openapi.externalSystem.model.execution.TaskSettingsImpl
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtilRt
 import com.intellij.util.xmlb.annotations.Tag
 
@@ -53,7 +52,7 @@ class ExternalSystemTaskExecutionSettingsState(
       settings.addTaskSettings(taskSettings.toTaskSettings())
     }
     for (argument in unorderedArguments) {
-      settings.addUnorderedArgument(argument)
+      settings.addUnorderedParameter(argument)
     }
     return settings
   }
@@ -61,21 +60,21 @@ class ExternalSystemTaskExecutionSettingsState(
   companion object {
     const val TAG_NAME = "ExternalSystemSettings"
 
-    private fun ExternalSystemTaskExecutionSettings.getZipTask(): TaskSettings? {
+    private fun ExternalSystemTaskExecutionSettings.getTailTask(): TaskSettings? {
       repairSettingsIfNeeded()
-      if (rawZipTaskArguments.isEmpty()) return null
-      val zipTaskName = taskNames.lastOrNull() ?: return null
-      return TaskSettingsImpl(zipTaskName, rawZipTaskArguments)
+      if (rawTailTaskArguments.isEmpty()) return null
+      val tailTaskName = taskNames.lastOrNull() ?: return null
+      return TaskSettingsImpl(tailTaskName, rawTailTaskArguments)
     }
 
     @JvmStatic
     fun valueOf(settings: ExternalSystemTaskExecutionSettings): ExternalSystemTaskExecutionSettingsState {
-      val zipTask = settings.getZipTask()
+      val tailTask = settings.getTailTask()
       val tasksSettings = ArrayList<TaskSettings>()
-      if (zipTask != null) tasksSettings.add(zipTask)
+      if (tailTask != null) tasksSettings.add(tailTask)
       tasksSettings.addAll(settings.rawTasksSettings)
       val tasksSettingStates = tasksSettings.map(TaskSettingsState.Companion::valueOf)
-      val taskNames = when (zipTask) {
+      val taskNames = when (tailTask) {
         null -> settings.taskNames
         else -> settings.taskNames.dropLast(1)
       }

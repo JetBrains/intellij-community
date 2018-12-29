@@ -19,15 +19,32 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
     val settings2 = ExternalSystemTaskExecutionSettings().apply {
       addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
       addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"TestCase\"")))
-      addUnorderedArgument("--continue")
+      addUnorderedParameter("--continue")
     }
     assertEquals(settings1.taskNames, settings2.taskNames)
     assertEquals(settings1, settings2)
     assertEquals(settings1.hashCode(), settings2.hashCode())
     assertTrue(settings1.isSameSettings(settings2))
-    val settings3 = ExternalSystemTaskExecutionSettings()
-    settings3.setFrom(settings2)
-    settings3.addTaskSettings(TaskSettingsImpl(":module:build", listOf("-x test")))
+
+  }
+
+  fun `test setting leaking`() {
+    val settings1 = ExternalSystemTaskExecutionSettings().apply {
+      addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
+      addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"TestCase\"")))
+      addUnorderedParameter("--continue")
+    }
+    val settings2 = ExternalSystemTaskExecutionSettings().apply {
+      addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
+      addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"TestCase\"")))
+      addUnorderedParameter("--continue")
+    }
+    assertEquals(settings1, settings2)
+    assertEquals(settings1.hashCode(), settings2.hashCode())
+    assertTrue(settings1.isSameSettings(settings2))
+    val settings3 = settings2.clone().apply {
+      addTaskSettings(TaskSettingsImpl(":module:build", listOf("-x test")))
+    }
     assertEquals(settings1, settings2)
     assertEquals(settings1.hashCode(), settings2.hashCode())
     assertTrue(settings1.isSameSettings(settings2))
@@ -35,7 +52,7 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
     assertFalse(settings3.isSameSettings(settings2))
   }
 
-  fun `test command line representation`() {
+  fun `test command line presentation`() {
     ExternalSystemTaskExecutionSettings().apply {
       addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
       addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"TestCase\"")))
@@ -54,7 +71,7 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
       addTaskSettings(TaskSettingsImpl(":test", listOf("--tests \"Test\"")))
       addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
       addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"Test\"")))
-      addUnorderedArgument("--continue")
+      addUnorderedParameter("--continue")
     }.run {
       assertEquals(":cleanTest :test --tests \"Test\" :module:cleanTest :module:test --tests \"Test\" --continue", toString())
     }
@@ -63,7 +80,7 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
       addTaskSettings(TaskSettingsImpl(":test", listOf("--tests \"Test1\"", "--tests \"Test2\"", "--tests \"Test3\"")))
       addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
       addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"Test4\"", "--tests \"Test5\"")))
-      addUnorderedArgument("--continue")
+      addUnorderedParameter("--continue")
     }.run {
       assertEquals(":cleanTest :test --tests \"Test1\" --tests \"Test2\" --tests \"Test3\" " +
                    ":module:cleanTest :module:test --tests \"Test4\" --tests \"Test5\" " +
@@ -101,7 +118,7 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
       addTaskSettings(TaskSettingsImpl(":test", listOf("--tests \"Test\"")))
       addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
       addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"Test\"")))
-      addUnorderedArgument("--continue")
+      addUnorderedParameter("--continue")
     }.run {
       assertEquals(emptyList<String>(), taskNames)
       assertEquals(":cleanTest :test --tests \"Test\" :module:cleanTest :module:test --tests \"Test\" --continue", scriptParameters)
@@ -111,7 +128,7 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
       addTaskSettings(TaskSettingsImpl(":test", listOf("--tests \"Test1\"", "--tests \"Test2\"", "--tests \"Test3\"")))
       addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
       addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"Test4\"", "--tests \"Test5\"")))
-      addUnorderedArgument("--continue")
+      addUnorderedParameter("--continue")
     }.run {
       assertEquals(emptyList<String>(), taskNames)
       assertEquals(":cleanTest :test --tests \"Test1\" --tests \"Test2\" --tests \"Test3\" " +
@@ -181,7 +198,7 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
       addTaskSettings(TaskSettingsImpl(":test", listOf("--tests \"Test\"")))
       addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
       addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"Test\"")))
-      addUnorderedArgument("--continue")
+      addUnorderedParameter("--continue")
     }
     assertExternalSystemTaskExecutionSettings("""
       <ExternalSystemSettings>
@@ -246,7 +263,7 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
       addTaskSettings(TaskSettingsImpl(":test", listOf("--tests \"Test1\"", "--tests \"Test2\"", "--tests \"Test3\"")))
       addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
       addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"Test4\"", "--tests \"Test5\"")))
-      addUnorderedArgument("--continue")
+      addUnorderedParameter("--continue")
     }
     assertExternalSystemTaskExecutionSettings("""
       <ExternalSystemSettings>
@@ -314,7 +331,7 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
     """.trimIndent()) {
       addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
       addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"TestCase\"")))
-      addUnorderedArgument("--continue")
+      addUnorderedParameter("--continue")
     }
     assertExternalSystemTaskExecutionSettings("""
       <ExternalSystemSettings>

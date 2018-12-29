@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.execution.Location
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
-import com.intellij.openapi.externalSystem.model.execution.TaskSettings
 import com.intellij.openapi.externalSystem.model.execution.TaskSettingsImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -15,9 +14,8 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigura
 import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom
 import java.util.*
 
-fun <T> applyTestConfiguration(
+fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   project: Project,
-  settings: ExternalSystemTaskExecutionSettings,
   tests: Iterable<T>,
   findPsiClass: (T) -> PsiClass?,
   createFilter: (PsiClass, T) -> String
@@ -33,55 +31,52 @@ fun <T> applyTestConfiguration(
     arguments.add(createFilter(psiClass, test))
   }
   val (module, _) = testRunConfigurations.values.firstOrNull() ?: return false
-  settings.resetTaskSettings()
-  settings.resetUnorderedArguments()
-  settings.externalProjectPath = GradleRunnerUtil.resolveProjectPath(module) ?: return false
+  resetTaskSettings()
+  resetUnorderedParameters()
+  externalProjectPath = GradleRunnerUtil.resolveProjectPath(module) ?: return false
   for ((testModule, arguments) in testRunConfigurations.values) {
     val tasks = getTasksToRun(testModule)
     if (tasks.isEmpty()) continue
     for (task in tasks.dropLast(1)) {
       val taskSettings = TaskSettingsImpl(task)
-      settings.addTaskSettings(taskSettings)
+      addTaskSettings(taskSettings)
     }
     val last = tasks.last()
     val taskSettings = TaskSettingsImpl(last, arguments)
-    settings.addTaskSettings(taskSettings)
+    addTaskSettings(taskSettings)
   }
   if (testRunConfigurations.size > 1) {
-    settings.addUnorderedArgument("--continue")
+    addUnorderedParameter("--continue")
   }
   return true
 }
 
-fun applyTestConfiguration(
+fun ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   project: Project,
-  settings: ExternalSystemTaskExecutionSettings,
   vararg containingClasses: PsiClass,
   createFilter: (PsiClass) -> String
 ): Boolean {
-  return applyTestConfiguration(project, settings, containingClasses.toList(), { it }) { it, _ ->
+  return applyTestConfiguration(project, containingClasses.toList(), { it }) { it, _ ->
     createFilter(it)
   }
 }
 
-fun applyTestConfigurationFor(
+fun ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   project: Project,
-  settings: ExternalSystemTaskExecutionSettings,
   location: Location<*>?,
   psiMethod: PsiMethod,
   vararg containingClasses: PsiClass
 ): Boolean {
-  return applyTestConfiguration(project, settings, *containingClasses) { psiClass ->
+  return applyTestConfiguration(project, *containingClasses) { psiClass ->
     createTestFilterFrom(location, psiClass, psiMethod)
   }
 }
 
-fun applyTestConfigurationFor(
+fun ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   project: Project,
-  settings: ExternalSystemTaskExecutionSettings,
   vararg containingClasses: PsiClass
 ): Boolean {
-  return applyTestConfiguration(project, settings, *containingClasses) { psiClass ->
+  return applyTestConfiguration(project, *containingClasses) { psiClass ->
     createTestFilterFrom(psiClass)
   }
 }

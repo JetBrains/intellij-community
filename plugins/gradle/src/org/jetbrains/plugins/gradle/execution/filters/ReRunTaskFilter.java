@@ -23,8 +23,6 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -50,9 +48,9 @@ public class ReRunTaskFilter extends GradleReRunBuildFilter {
       if (!(conf instanceof ExternalSystemRunConfiguration)) return;
 
       ExternalSystemTaskExecutionSettings taskExecutionSettings = ((ExternalSystemRunConfiguration)conf).getSettings();
-      taskExecutionSettings.removeUnorderedArgument("--stacktrace");
-      taskExecutionSettings.removeUnorderedArgument("--info");
-      taskExecutionSettings.removeUnorderedArgument("--debug");
+      taskExecutionSettings.removeUnorderedParameter("--stacktrace");
+      taskExecutionSettings.removeUnorderedParameter("--info");
+      taskExecutionSettings.removeUnorderedParameter("--debug");
       ExecutionUtil.restart(myEnv);
     };
   }

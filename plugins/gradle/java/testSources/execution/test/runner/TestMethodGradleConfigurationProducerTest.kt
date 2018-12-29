@@ -92,7 +92,7 @@ class TestMethodGradleConfigurationProducerTest : GradleConfigurationProducerTes
     importProject(buildScript.generate())
 
     currentExternalProjectSettings.testRunner = TestRunner.GRADLE
-    val filter = ":cleanTest :test --tests \"MyGroovyTest.Don\\'t use single * quo\\*tes\" --tests \"MyGroovyTest.test2\""
-    assertTestPatternSettings(filter, virtualFile, "Don\\'t use single . quo\\\"tes", "test2")
+    val settings = ":cleanTest :test --tests \"MyGroovyTest.Don\\'t use single * quo\\*tes\" --tests \"MyGroovyTest.test2\""
+    assertTestPatternSettings(settings, virtualFile, "Don\\'t use single . quo\\\"tes", "test2")
   }
 }

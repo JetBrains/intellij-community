@@ -14,9 +14,12 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +31,7 @@ import java.util.List;
 
 import static com.intellij.openapi.externalSystem.service.ExternalSystemTaskExecutionSettingsUtilKt.isSameSettings;
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
-import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfigurationFor;
+import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
 
 /**
  * @author Vladislav.Soroka
@@ -100,7 +103,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
 
     final Project project = context.getProject();
     final ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
-    if (!applyTestConfigurationFor(project, settings, testClass)) return false;
+    if (!applyTestConfiguration(settings, project, testClass)) return false;
     return isSameSettings(settings, configuration.getSettings());
   }
 
@@ -144,7 +147,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
                                                      @NotNull PsiClass... containingClasses) {
     final Project project = context.getProject();
     final ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
-    if (!applyTestConfigurationFor(project, settings, containingClasses)) return false;
+    if (!applyTestConfiguration(settings, project, containingClasses)) return false;
     configuration.setName(StringUtil.join(containingClasses, aClass -> aClass.getName(), "|"));
     return true;
   }
