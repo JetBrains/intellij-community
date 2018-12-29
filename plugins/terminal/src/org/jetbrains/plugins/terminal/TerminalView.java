@@ -15,7 +15,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -166,6 +168,7 @@ public class TerminalView {
     final Content content = createTerminalContent(terminalRunner, toolWindow, terminalWidget, tabState);
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);
+    new TerminalTabCloseListener(content, myProject);
     contentManager.setSelectedContent(content);
     return content;
   }
@@ -176,6 +179,7 @@ public class TerminalView {
     return UniqueNameGenerator.generateUniqueName(suggestedName, "", "", " (", ")", o -> !names.contains(o));
   }
 
+  @NotNull
   private Content createTerminalContent(@NotNull AbstractTerminalRunner terminalRunner,
                                         @NotNull ToolWindow toolWindow,
                                         @Nullable JBTerminalWidget terminalWidget,
