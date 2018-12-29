@@ -24,14 +24,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 
 import java.util.Collection;
 import java.util.Set;
 
 public class HgLocalIgnoredHolder extends VcsRepositoryIgnoredFilesHolderBase<HgRepository> {
 
-  public HgLocalIgnoredHolder(@NotNull HgRepository repository) {
-    super(repository, "HgIgnoreUpdate", "hgRescanIgnored");
+  public HgLocalIgnoredHolder(@NotNull HgRepository repository, @NotNull HgRepositoryManager repositoryManager) {
+    super(repository, repositoryManager, "HgIgnoreUpdate", "hgRescanIgnored");
   }
 
   @NotNull

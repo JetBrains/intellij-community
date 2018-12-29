@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ignore
 
+import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Disposer
@@ -22,6 +23,7 @@ import kotlin.concurrent.write
 abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   @JvmField
   protected val repository: REPOSITORY,
+  private val repositoryManager: AbstractRepositoryManager<REPOSITORY>,
   updateQueueName: String,
   private val rescanIdentityName: String
 ) : VcsRepositoryIgnoredFilesHolder, AsyncVfsEventsListener {
@@ -135,12 +137,12 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   }
 
   private fun doCheckIgnored(paths: Collection<FilePath>): Set<FilePath> {
-    val ignored = requestIgnored(paths)
+    val ignored = requestIgnored(paths).filterByRepository(repository)
     addNotContainedIgnores(ignored)
     return ignored.map(VcsUtil::getFilePath).toSet()
   }
 
-  private fun addNotContainedIgnores(ignored: Set<VirtualFile>) =
+  private fun addNotContainedIgnores(ignored: Collection<VirtualFile>) =
     SET_LOCK.write {
       ignored.forEach { ignored ->
         if (!isUnder(ignoredSet, ignored)) {
@@ -150,13 +152,16 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
 
   private fun doRescan(): Set<FilePath> {
-    val ignored = requestIgnored()
+    val ignored = requestIgnored().filterByRepository(repository)
     SET_LOCK.write {
       ignoredSet.clear()
       ignoredSet.addAll(ignored)
     }
     return ignored.map(VcsUtil::getFilePath).toSet()
   }
+
+  private fun <REPOSITORY> Set<VirtualFile>.filterByRepository(repository: REPOSITORY) =
+    filter { repositoryManager.getRepositoryForFileQuick(it) == repository }
 
   private fun fireUpdateStarted() {
     listeners.multicaster.updateStarted()

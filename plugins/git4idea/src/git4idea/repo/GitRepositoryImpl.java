@@ -60,7 +60,8 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this, myRepositoryFiles);
       Disposer.register(this, myUntrackedFilesHolder);
-      myIgnoredRepositoryFilesHolder = new GitRepositoryIgnoredFilesHolder(project, this, Git.getInstance());
+      myIgnoredRepositoryFilesHolder =
+        new GitRepositoryIgnoredFilesHolder(project, this, GitRepositoryManager.getInstance(project), Git.getInstance());
       Disposer.register(this, myIgnoredRepositoryFilesHolder);
       myIgnoredRepositoryFilesHolder.addUpdateStateListener(new MyRepositoryIgnoredHolderUpdateListener(getProject()));
     }

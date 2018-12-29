@@ -7,11 +7,13 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import git4idea.commands.Git
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
 
 class GitRepositoryIgnoredFilesHolder(private val project: Project,
                                       repository: GitRepository,
+                                      repositoryManager: GitRepositoryManager,
                                       private val git: Git)
-  : VcsRepositoryIgnoredFilesHolderBase<GitRepository>(repository, "GitIgnoreUpdate", "gitRescanIgnored") {
+  : VcsRepositoryIgnoredFilesHolderBase<GitRepository>(repository, repositoryManager, "GitIgnoreUpdate", "gitRescanIgnored") {
 
   override fun requestIgnored(paths: Collection<FilePath>?) =
     HashSet(git.ignoredFiles(project, repository.root, paths))
