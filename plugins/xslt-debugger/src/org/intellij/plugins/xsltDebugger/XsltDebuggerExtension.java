@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.net.NetUtils;
 import gnu.trove.THashMap;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -106,20 +107,16 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
   }
 
   @Override
-  public void patchParameters(final SimpleJavaParameters parameters, XsltRunConfiguration configuration, UserDataHolder extensionData)
-    throws CantRunException {
-    final XsltRunConfiguration.OutputType outputType = configuration.getOutputType();
-
+  public void patchParameters(SimpleJavaParameters parameters, XsltRunConfiguration configuration, UserDataHolder extensionData) throws CantRunException {
     final Sdk jdk = configuration.getEffectiveJDK();
     assert jdk != null;
-
-    final String ver = jdk.getVersionString();
-    if (ver == null || (ver.contains("1.0") || ver.contains("1.1") || ver.contains("1.2") || ver.contains("1.3") || ver.contains("1.4"))) {
-      throw new CantRunException("The XSLT Debugger can only be used with JDK 1.5+");
+    final JavaVersion version = JavaVersion.tryParse(jdk.getVersionString());
+    if (version == null || version.feature < 5 || version.feature > 8) {  // todo: get rid of PortableRemoteObject usages in debugger
+      throw new CantRunException("The XSLT Debugger requires Java 1.5 - 1.8 to run");
     }
 
     // TODO: fix and remove
-    if (outputType != XsltRunConfiguration.OutputType.CONSOLE) {
+    if (configuration.getOutputType() != XsltRunConfiguration.OutputType.CONSOLE) {
       throw new CantRunException("XSLT Debugger requires Output Type == CONSOLE");
     }
 
