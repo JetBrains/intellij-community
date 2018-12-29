@@ -18,12 +18,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class HyperlinkAnnotator implements Annotator {
 
+  private static final String ourMessage = getMessage();
+
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     for (PsiReference reference : element.getReferences()) {
       if (reference instanceof WebReference) {
         Annotation annotation =
-          holder.createInfoAnnotation(reference.getRangeInElement().shiftRight(element.getTextRange().getStartOffset()), getMessage());
+          holder.createInfoAnnotation(reference.getRangeInElement().shiftRight(element.getTextRange().getStartOffset()), ourMessage);
         annotation.setTextAttributes(CodeInsightColors.INACTIVE_HYPERLINK_ATTRIBUTES);
       }
     }

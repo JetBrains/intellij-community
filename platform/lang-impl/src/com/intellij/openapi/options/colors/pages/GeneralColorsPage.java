@@ -44,7 +44,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     "JetBrains Home Page: <hyperlink_f>http://www.jetbrains.com</hyperlink_f>\n" +
     "JetBrains Developer Community: <hyperlink>https://www.jetbrains.com/devnet</hyperlink>\n" +
     "<ref_hyperlink>ReferenceHyperlink</ref_hyperlink>\n" +
-    "<inactive_hyperlink>Inactive hyperlink</inactive_hyperlink>\n" +
+    "Inactive hyperlink in code: \"<inactive_hyperlink>http://jetbrains.com</inactive_hyperlink>\"\n" +
     "\n" +
     "Search:\n" +
     "  <search_result_wr>result</search_result_wr> = \"<search_text>text</search_text>, <search_text>text</search_text>, <search_text>text</search_text>\";\n" +
