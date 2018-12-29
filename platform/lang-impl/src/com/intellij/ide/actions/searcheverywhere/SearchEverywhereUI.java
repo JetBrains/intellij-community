@@ -103,6 +103,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   private final ThrottlingListenerWrapper myBufferedListener;
   private ProgressIndicator mySearchProgressIndicator;
 
+  private final SEListSelectionTracker mySelectionTracker;
+
   public SearchEverywhereUI(Project project,
                             List<? extends SearchEverywhereContributor> serviceContributors,
                             List<? extends SearchEverywhereContributor> contributors,
@@ -141,6 +143,9 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         }
       }
     });
+
+    mySelectionTracker = new SEListSelectionTracker(myResultsList, myListModel);
+    myResultsList.addListSelectionListener(mySelectionTracker);
   }
 
   @Override
@@ -1015,6 +1020,10 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       return listElements.get(index).getElement();
     }
 
+    public List<Object> getItems() {
+      return new ArrayList<>(values());
+    }
+
     public Collection<Object> getFoundItems(SearchEverywhereContributor contributor) {
       return listElements.stream()
                          .filter(info -> info.getContributor() == contributor && info.getElement() != MORE_ELEMENT)
@@ -1482,17 +1491,16 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   private final SESearcher.Listener mySearchListener = new SESearcher.Listener() {
     @Override
     public void elementsAdded(@NotNull List<SESearcher.ElementInfo> list) {
-      int index = myResultsList.getSelectedIndex();
+      mySelectionTracker.setLocked(true);
       myListModel.addElements(list);
-      if (index == 0 || index == -1) {
-        myResultsList.setSelectedIndex(0);
-      }
+      mySelectionTracker.setLocked(false);
+
+      mySelectionTracker.restoreSelection();
     }
 
     @Override
     public void elementsRemoved(@NotNull List<SESearcher.ElementInfo> list) {
       list.forEach(info -> myListModel.removeElement(info.getElement(), info.getContributor()));
-      ScrollingUtil.ensureSelectionExists(myResultsList);
     }
 
     @Override
@@ -1512,7 +1520,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
       myResultsList.setEmptyText(getSearchPattern().isEmpty() ? "" : getNotFoundText());
       hasMoreContributors.forEach(myListModel::setHasMore);
-      ScrollingUtil.ensureSelectionExists(myResultsList);
+
+      mySelectionTracker.resetSelectionIfNeeded();
     }
   };
 
