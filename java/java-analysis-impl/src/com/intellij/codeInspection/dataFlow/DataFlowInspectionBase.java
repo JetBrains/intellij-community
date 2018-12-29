@@ -448,7 +448,10 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
           }
         }
       }
-      reporter.registerProblem(expr, InspectionsBundle.message("dataflow.message.redundant.assignment"), createRemoveAssignmentFix(assignment));
+      String message = assignment != null && !assignment.getOperationTokenType().equals(JavaTokenType.EQ)
+                       ? InspectionsBundle.message("dataflow.message.redundant.update")
+                       : InspectionsBundle.message("dataflow.message.redundant.assignment");
+      reporter.registerProblem(expr, message, createRemoveAssignmentFix(assignment));
     });
   }
 

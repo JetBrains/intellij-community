@@ -20,6 +20,7 @@ public class RedundantAssignment {
     arr[1] = 2;
     arr[2] = 3;
     <warning descr="Variable is already assigned to this value">arr[0]</warning> = 1;
+    <warning descr="Variable update does nothing">arr[4]</warning> += 0;
   }
 
   void withTest(int x) {
