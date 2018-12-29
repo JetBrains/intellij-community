@@ -59,7 +59,6 @@ public interface VcsLogRefManager {
    * <p>Groups VCS references to show them in branch filter.</p>
    * <p>Groups containing only one element will be displayed as a single ref. Others will provide a popup menu.</p>
    * <p>Groups must be pre-sorted in the order which they are to be painted on the panel.</p>
-   * @param refs
    */
   @NotNull
   List<RefGroup> groupForBranchFilter(@NotNull Collection<? extends VcsRef> refs);

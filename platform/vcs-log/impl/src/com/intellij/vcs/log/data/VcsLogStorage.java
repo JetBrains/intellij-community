@@ -53,7 +53,6 @@ public interface VcsLogStorage {
 
   /**
    * Iterates over known commit ids. Stops when consumer returns true.
-   * @param consumer
    */
   void iterateCommits(@NotNull Function<? super CommitId, Boolean> consumer);
 
