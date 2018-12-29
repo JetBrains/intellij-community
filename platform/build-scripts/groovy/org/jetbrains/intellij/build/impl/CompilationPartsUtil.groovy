@@ -291,7 +291,7 @@ class CompilationPartsUtil {
 
     //region Prepare executor
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
-    messages.info("Will use up to $executorThreadsCount threads for packing and uploading")
+    messages.info("Will use up to $executorThreadsCount threads for downloading, verifying and unpacking")
 
     def executor = new NamedThreadPoolExecutor('Compile Parts', executorThreadsCount)
     executor.prestartAllCoreThreads()
