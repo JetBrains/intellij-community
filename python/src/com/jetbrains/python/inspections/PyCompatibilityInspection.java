@@ -204,8 +204,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
             registerForAllMatchingVersions(level -> unsupportedMethods.getOrDefault(level, Collections.emptySet()).contains(functionName),
                                            " not have method " + functionName,
-                                           node,
-                                           null);
+                                           node);
           }
         }
 
@@ -215,8 +214,7 @@ public class PyCompatibilityInspection extends PyInspection {
             !myUsedImports.contains(functionName)) {
           registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.BUILTINS.get(level).contains(functionName),
                                          " not have method " + functionName,
-                                         node,
-                                         null);
+                                         node);
         }
       }
       else if (resolvedCallee instanceof PyTargetExpression) {
@@ -227,8 +225,7 @@ public class PyCompatibilityInspection extends PyInspection {
             PyBuiltinCache.getInstance(resolvedCallee).isBuiltin(resolvedCallee)) {
           registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.BUILTINS.get(level).contains(PyNames.TYPE_LONG),
                                          " not have type long. Use int instead.",
-                                         node,
-                                         null);
+                                         node);
         }
       }
     }
@@ -256,8 +253,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
         registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
                                        " not have module " + moduleName,
-                                       importElement,
-                                       null);
+                                       importElement);
       }
     }
 
@@ -287,8 +283,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
         registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
                                        " not have module " + name,
-                                       source,
-                                       null);
+                                       source);
       }
     }
 
@@ -364,14 +359,19 @@ public class PyCompatibilityInspection extends PyInspection {
       warnAsyncAndAwaitAreBecomingKeywordsInPy37(node);
     }
 
+    @Override
+    protected boolean registerForLanguageLevel(@NotNull LanguageLevel level) {
+      return level != LanguageLevel.forElement(myHolder.getFile());
+    }
+
     private void warnAsyncAndAwaitAreBecomingKeywordsInPy37(@NotNull PsiNameIdentifierOwner nameIdentifierOwner) {
       final PsiElement nameIdentifier = nameIdentifierOwner.getNameIdentifier();
 
       if (nameIdentifier != null &&
           ArrayUtil.contains(nameIdentifierOwner.getName(), PyNames.AWAIT, PyNames.ASYNC) &&
           LanguageLevel.forElement(nameIdentifierOwner).isOlderThan(LanguageLevel.PYTHON37)) {
-        registerOnFirstMatchingVersion(level -> level.isAtLeast(LanguageLevel.PYTHON37),
-                                       "'async' and 'await' are keywords in Python 3.7 and newer",
+        registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON37),
+                                       " not allow 'async' and 'await' as names",
                                        nameIdentifier,
                                        new PyRenameElementQuickFix(nameIdentifierOwner));
       }
