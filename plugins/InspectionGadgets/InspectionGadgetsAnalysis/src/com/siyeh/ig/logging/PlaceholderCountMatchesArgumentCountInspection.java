@@ -1,18 +1,4 @@
-/*
- * Copyright 2013-2016 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
 import com.intellij.psi.*;
@@ -29,6 +15,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspection {
 
   @NonNls
@@ -118,7 +107,6 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       final PsiExpression logStringArgument = arguments[index - 1];
       final int placeholderCount = countPlaceholders(logStringArgument);
       if (placeholderCount < 0 ||
-          argumentCount < 0 ||
           placeholderCount == argumentCount && (!lastArgumentIsException || argumentCount > 1) ||
           placeholderCount == argumentCount - 1 && lastArgumentIsException) {
         // if there is more than one argument and the last argument is an exception, but there is a placeholder for
@@ -142,6 +130,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       }
       return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE);
     }
+
 
     public static int countPlaceholders(PsiExpression expression) {
       final Object value = ExpressionUtils.computeConstantExpression(expression);
@@ -196,12 +185,27 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
 
     private static int countPlaceholders(String string) {
       int count = 0;
-      int index = string.indexOf("{}");
-      while (index >= 0) {
-        if (index == 0 || string.charAt(index - 1) != '\\') {
-          count++;
+      final int length = string.length();
+      boolean escaped = false;
+      boolean placeholder = false;
+      for (int i = 0; i < length; i++) {
+        final char c = string.charAt(i);
+        if (c == '\\') {
+          escaped = !escaped;
         }
-        index = string.indexOf("{}", index + 1);
+        else if (c == '{') {
+          if (!escaped) placeholder = true;
+        }
+        else if (c == '}') {
+          if (placeholder) {
+            count++;
+            placeholder = false;
+          }
+        }
+        else {
+          escaped = false;
+          placeholder = false;
+        }
       }
       return count;
     }
