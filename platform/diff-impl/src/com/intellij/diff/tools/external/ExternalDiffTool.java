@@ -138,18 +138,19 @@ public class ExternalDiffTool {
     return requests;
   }
 
-  public static void showRequest(@Nullable Project project, @NotNull DiffRequest request)
-    throws ExecutionException, IOException {
+  public static void showRequest(@Nullable Project project, @NotNull DiffRequest request) throws ExecutionException, IOException {
     request.onAssigned(true);
+    try {
+      ExternalDiffSettings settings = ExternalDiffSettings.getInstance();
 
-    ExternalDiffSettings settings = ExternalDiffSettings.getInstance();
+      List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
+      List<String> titles = ((ContentDiffRequest)request).getContentTitles();
 
-    List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
-    List<String> titles = ((ContentDiffRequest)request).getContentTitles();
-
-    ExternalDiffToolUtil.execute(project, settings, contents, titles, request.getTitle());
-
-    request.onAssigned(false);
+      ExternalDiffToolUtil.execute(project, settings, contents, titles, request.getTitle());
+    }
+    finally {
+      request.onAssigned(false);
+    }
   }
 
   public static boolean canShow(@NotNull DiffRequest request) {
