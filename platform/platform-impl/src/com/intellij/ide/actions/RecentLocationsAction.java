@@ -82,11 +82,13 @@ public class RecentLocationsAction extends DumbAwareAction {
     }
 
     boolean changed = showChanged(project);
-    List<PlaceInfo> places = getPlaces(project, changed);
 
+    final Ref<List<RecentLocationItem>> changedPlaces = Ref.create();
+    final Ref<List<RecentLocationItem>> navigationPlaces = Ref.create();
     Collection<Editor> editorsToRelease = ContainerUtil.newArrayList();
 
-    JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(getPlaceLinePairs(project, places, editorsToRelease)));
+    JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(
+      cacheAndGetItems(project, changed, changedPlaces, navigationPlaces, editorsToRelease)));
     ListWithFilter<RecentLocationItem> listWithFilter = createListWithFilter(project, list);
     listWithFilter.setBorder(BorderFactory.createEmptyBorder());
 
@@ -131,12 +133,10 @@ public class RecentLocationsAction extends DumbAwareAction {
       .setShowBorder(false)
       .createPopup();
 
-
     project.getMessageBus().connect(popup).subscribe(ShowRecentChangedLocationListener.TOPIC, new ShowRecentChangedLocationListener() {
       @Override
       public void showChangedLocation(boolean state) {
-        updateModel(project, listWithFilter, editorsToRelease, state);
-
+        updateModel(project, listWithFilter, editorsToRelease, state, changedPlaces, navigationPlaces);
 
         updateTitleText(title, state);
 
@@ -158,14 +158,42 @@ public class RecentLocationsAction extends DumbAwareAction {
     popup.showCenteredInCurrentWindow(project);
   }
 
+  @NotNull
+  public static List<RecentLocationItem> cacheAndGetItems(@NotNull Project project,
+                                                          boolean changed,
+                                                          @NotNull Ref<List<RecentLocationItem>> changedPlaces,
+                                                          @NotNull Ref<List<RecentLocationItem>> navigationPlaces,
+                                                          @NotNull Collection<Editor> editorsToRelease) {
+    List<RecentLocationItem> items = getPlaceLinePairs(project, changed);
+    Ref<List<RecentLocationItem>> places = changed ? changedPlaces : navigationPlaces;
+    if (places.get() == null) {
+      places.set(items);
+    }
+
+    editorsToRelease.addAll(ContainerUtil.map(items, item -> item.getEditor()));
+
+    return items;
+  }
+
+  @NotNull
+  public static Collection<Editor> getEditors(List<RecentLocationItem> placeItems) {
+    return ContainerUtil.map(placeItems, item -> item.getEditor());
+  }
+
   private static void updateModel(@NotNull Project project,
                                   @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
                                   @NotNull Collection<Editor> editorsToRelease,
-                                  boolean state) {
+                                  boolean changed,
+                                  @NotNull Ref<List<RecentLocationItem>> changedPlaces,
+                                  @NotNull Ref<List<RecentLocationItem>> navigationPlaces) {
     NameFilteringListModel<RecentLocationItem> model = (NameFilteringListModel<RecentLocationItem>)listWithFilter.getList().getModel();
     DefaultListModel<RecentLocationItem> originalModel = (DefaultListModel<RecentLocationItem>)model.getOriginalModel();
+
+    List<RecentLocationItem> items = cacheAndGetItems(project, changed, changedPlaces, navigationPlaces, editorsToRelease);
+
     originalModel.removeAllElements();
-    getPlaceLinePairs(project, getPlaces(project, state), editorsToRelease).forEach(item -> originalModel.addElement(item));
+    items.forEach(item -> originalModel.addElement(item));
+
     listWithFilter.getSpeedSearch().reset();
   }
 
@@ -290,22 +318,20 @@ public class RecentLocationsAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static List<RecentLocationItem> getPlaceLinePairs(@NotNull Project project,
-                                                            @NotNull List<PlaceInfo> places,
-                                                            @NotNull Collection<Editor> editorsToRelease) {
+  private static List<RecentLocationItem> getPlaceLinePairs(@NotNull Project project, boolean changed) {
+    List<PlaceInfo> places = getPlaces(project, changed);
     if (places.isEmpty()) {
       return ContainerUtil.emptyList();
     }
+
     List<PlaceInfo> topElements = places.subList(0, Math.min(places.size(), LIST_SIZE));
     List<RecentLocationItem> caretsList = ContainerUtil.newArrayList();
 
     for (PlaceInfo placeInfo : topElements) {
-      EditorEx smallEditor = createEditor(project, placeInfo.getFile(),
-                                          RecentLocationManager.getInstance(project).getRangeMarker(placeInfo));
-      editorsToRelease.add(smallEditor);
-
-      caretsList.add(new RecentLocationItem(placeInfo, smallEditor));
+      EditorEx editor = createEditor(project, placeInfo.getFile(), RecentLocationManager.getInstance(project).getRangeMarker(placeInfo));
+      caretsList.add(new RecentLocationItem(placeInfo, editor));
     }
+
     return caretsList;
   }
 
