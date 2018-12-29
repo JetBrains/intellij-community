@@ -18,7 +18,7 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ModalityStateListener
 import com.intellij.openapi.application.impl.LaterInvocator.*
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import junit.framework.TestCase
 import java.awt.Dialog
@@ -33,7 +33,7 @@ private class NumberedRunnable private constructor(private val myNumber: Int, pr
 }
 
 @SkipInHeadlessEnvironment
-class RunnableActionsTest : LightPlatformTestCase() {
+class RunnableActionsTest : PlatformTestCase() {
   private val myPerProjectModalDialog = Dialog(null, "Per-project modal dialog", Dialog.ModalityType.DOCUMENT_MODAL)
   private val myApplicationModalDialog = Dialog(null, "Owned dialog", Dialog.ModalityType.DOCUMENT_MODAL)
 
