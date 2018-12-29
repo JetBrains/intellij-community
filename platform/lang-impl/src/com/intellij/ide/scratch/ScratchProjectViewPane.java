@@ -110,9 +110,9 @@ public class ScratchProjectViewPane extends ProjectViewPane {
         }
       }
     });
-    for (RootType rootId : RootType.getAllRootIds()) {
-      if (rootId.isHidden()) continue;
-      rootId.registerTreeUpdater(project, disposable, onUpdate);
+    for (RootType rootType : RootType.getAllRootTypes()) {
+      if (rootType.isHidden()) continue;
+      rootType.registerTreeUpdater(project, disposable, onUpdate);
     }
   }
 
@@ -148,14 +148,14 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   @Nullable
-  private static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootId) {
-    VirtualFile virtualFile = getVirtualFile(rootId);
+  private static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootType) {
+    VirtualFile virtualFile = getVirtualFile(rootType);
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);
   }
 
   @Nullable
-  private static VirtualFile getVirtualFile(@NotNull RootType rootId) {
-    String path = ScratchFileService.getInstance().getRootPath(rootId);
+  private static VirtualFile getVirtualFile(@NotNull RootType rootType) {
+    String path = ScratchFileService.getInstance().getRootPath(rootType);
     return LocalFileSystem.getInstance().findFileByPath(path);
   }
 
@@ -170,9 +170,9 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   @Nullable
-  private static AbstractTreeNode createRootNode(@NotNull Project project, @NotNull RootType rootId, @NotNull ViewSettings settings) {
-    if (rootId.isHidden()) return null;
-    MyRootNode node = new MyRootNode(project, rootId, settings);
+  private static AbstractTreeNode createRootNode(@NotNull Project project, @NotNull RootType rootType, @NotNull ViewSettings settings) {
+    if (rootType.isHidden()) return null;
+    MyRootNode node = new MyRootNode(project, rootType, settings);
     return node.isEmpty() ? null : node;
   }
 
@@ -184,7 +184,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
                                                ViewSettings settings) {
       Project project = parent instanceof ProjectViewProjectNode? parent.getProject() : null;
       if (project == null || !isScratchesMergedIntoProjectTab()) return children;
-      if (children.isEmpty() && JBIterable.from(RootType.getAllRootIds()).filterMap(
+      if (children.isEmpty() && JBIterable.from(RootType.getAllRootTypes()).filterMap(
         o -> createRootNode(project, o, settings)).isEmpty()) return children;
       ArrayList<AbstractTreeNode> list = new ArrayList<>(children.size() + 1);
       list.addAll(children);
@@ -239,8 +239,8 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
       List<AbstractTreeNode> list = ContainerUtil.newArrayList();
-      for (RootType rootId : RootType.getAllRootIds()) {
-        ContainerUtil.addIfNotNull(list, createRootNode(getProject(), rootId, getSettings()));
+      for (RootType rootType : RootType.getAllRootTypes()) {
+        ContainerUtil.addIfNotNull(list, createRootNode(getProject(), rootType, getSettings()));
       }
       return list;
     }
