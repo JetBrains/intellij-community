@@ -34,19 +34,14 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
   private static class WeakKey<K, V> extends WeakReference<K> implements KeyReference<K, V> {
     private final int myHash; /* Hashcode of key, stored here since the key may be tossed by the GC */
     @NotNull private final TObjectHashingStrategy<? super K> myStrategy;
-    private final V value;
 
-    private WeakKey(@NotNull K k, final int hash, @NotNull TObjectHashingStrategy<? super K> strategy, @NotNull V v, @NotNull ReferenceQueue<K> q) {
+    private WeakKey(@NotNull K k,
+                    final int hash,
+                    @NotNull TObjectHashingStrategy<? super K> strategy,
+                    @NotNull ReferenceQueue<K> q) {
       super(k, q);
       myStrategy = strategy;
-      value = v;
       myHash = hash;
-    }
-
-    @NotNull
-    @Override
-    public V getValue() {
-      return value;
     }
 
     @Override
@@ -67,8 +62,9 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
 
   @NotNull
   @Override
-  protected KeyReference<K, V> createKeyReference(@NotNull K key, @NotNull V value, @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
-    return new WeakKey<K, V>(key, hashingStrategy.computeHashCode(key), hashingStrategy, value, myReferenceQueue);
+  protected KeyReference<K, V> createKeyReference(@NotNull K key,
+                                                  @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
+    return new WeakKey<K, V>(key, hashingStrategy.computeHashCode(key), hashingStrategy, myReferenceQueue);
   }
 
   @Deprecated
