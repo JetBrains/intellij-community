@@ -49,7 +49,7 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
     val defaultDiffSettings = DiffSettings.getDefaultSettings(DiffPlaces.DEFAULT)
     addBoolIfDiffers(usages, diffSettings, defaultDiffSettings, { it.isGoToNextFileOnNextDifference }, "iterate.next.file")
 
-    val externalSettings = ExternalDiffSettings.getInstance()
+    val externalSettings = ExternalDiffSettings.instance
     val defaultExternalSettings = ExternalDiffSettings()
     addBoolIfDiffers(usages, externalSettings, defaultExternalSettings, { it.isDiffEnabled }, "external.diff.enabled")
     addBoolIfDiffers(usages, externalSettings, defaultExternalSettings, { it.isDiffEnabled && it.isDiffDefault }, "external.diff.default")

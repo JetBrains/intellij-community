@@ -13,110 +13,97 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.settings;
+package com.intellij.diff.settings
 
-import com.intellij.diff.tools.external.ExternalDiffSettings;
-import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.diff.tools.external.ExternalDiffSettings
+import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.ui.layout.*
+import javax.swing.AbstractButton
+import javax.swing.JComponent
 
-import javax.swing.*;
-
-public class ExternalDiffSettingsPanel {
-  private static final String DESCRIPTION_TEXT =
-    "<html>" +
-    "Different tools have different parameters. It's important to specify all necessary parameters in proper order<br>" +
-    "<b>%1</b> - left (Local changes)<br>" +
-    "<b>%2</b> - right (Server content)<br>" +
-    "<b>%3</b> - base (Current version without local changes)<br>" +
-    "<b>%4</b> - output (Merge result)" +
-    "</html>";
-
-  private JPanel myPane;
-
-  @NotNull private final ExternalDiffSettings mySettings = ExternalDiffSettings.getInstance();
-
-  private JCheckBox myDiffEnabled;
-  private JBCheckBox myDiffDefault;
-  private TextFieldWithBrowseButton myDiffPath;
-  private JTextField myDiffParameters;
-
-  private JCheckBox myMergeEnabled;
-  private TextFieldWithBrowseButton myMergePath;
-  private JTextField myMergeParameters;
-  private JLabel myDescriptionLabel;
-  private JCheckBox myRespectExitCodeCheckbox;
-
-  public ExternalDiffSettingsPanel() {
-    myDescriptionLabel.setText(DESCRIPTION_TEXT);
-
-    myDiffEnabled.getModel().addActionListener(e -> updateEnabledEffect());
-    myMergeEnabled.getModel().addActionListener(e -> updateEnabledEffect());
-
-    myDiffPath.addBrowseFolderListener(DiffBundle.message("select.external.diff.program.dialog.title"), null, null,
-                                       FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-    myMergePath.addBrowseFolderListener(DiffBundle.message("select.external.merge.program.dialog.title"), null, null,
-                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+class ExternalDiffSettingsPanel {
+  companion object {
+    private const val DESCRIPTION_TEXT = "<html>" +
+                                         "Different tools have different parameters. It's important to specify all necessary parameters in proper order<br>" +
+                                         "<b>%1</b> - left (Local changes)<br>" +
+                                         "<b>%2</b> - right (Server content)<br>" +
+                                         "<b>%3</b> - base (Current version without local changes)<br>" +
+                                         "<b>%4</b> - output (Merge result)" +
+                                         "</html>"
   }
 
-  @NotNull
-  public JComponent getPanel() {
-    return myPane;
+  private val panel: DialogPanel
+
+  init {
+    val settings = ExternalDiffSettings.instance
+
+    panel = panel {
+      row {
+        val diffEnabled = checkBox("Enable external diff tool", settings::isDiffEnabled)
+        enableSubRowsIfSelected(diffEnabled.component)
+
+        row("Path to executable:") {
+          executableTextField(DiffBundle.message("select.external.diff.program.dialog.title"),
+                              { settings.diffExePath }, { settings.diffExePath = it })
+        }
+        row("Parameters:") {
+          textField(settings::diffParameters)
+        }
+        row {
+          checkBox("Use by default", settings::isDiffDefault)
+        }.largeGapAfter()
+      }
+
+      row {
+        val mergeEnabled = checkBox("Enable external merge tool", settings::isMergeEnabled)
+        enableSubRowsIfSelected(mergeEnabled.component)
+
+        row("Path to executable:") {
+          executableTextField(DiffBundle.message("select.external.merge.program.dialog.title"),
+                              { settings.mergeExePath }, { settings.mergeExePath = it })
+        }
+        row("Parameters:") {
+          textField(settings::mergeParameters)
+        }
+        row {
+          checkBox("Trust process exit code", settings::isMergeTrustExitCode)
+        }
+      }
+
+      commentRow(DESCRIPTION_TEXT)
+    }
   }
 
-  public boolean isModified() {
-    if (mySettings.isDiffEnabled() != myDiffEnabled.isSelected()) return true;
-    if (mySettings.isDiffDefault() != myDiffDefault.isSelected()) return true;
-    if (!mySettings.getDiffExePath().equals(myDiffPath.getText())) return true;
-    if (!mySettings.getDiffParameters().equals(myDiffParameters.getText())) return true;
-
-    if (mySettings.isMergeEnabled() != myMergeEnabled.isSelected()) return true;
-    if (!mySettings.getMergeExePath().equals(myMergePath.getText())) return true;
-    if (!mySettings.getMergeParameters().equals(myMergeParameters.getText())) return true;
-    if (mySettings.isMergeTrustExitCode() != myRespectExitCodeCheckbox.isSelected()) return true;
-
-    return false;
+  fun createComponent(): JComponent {
+    return panel
   }
 
-  public void apply() {
-    mySettings.setDiffEnabled(myDiffEnabled.isSelected());
-    mySettings.setDiffDefault(myDiffDefault.isSelected());
-    mySettings.setDiffExePath(myDiffPath.getText());
-    mySettings.setDiffParameters(myDiffParameters.getText());
-
-    mySettings.setMergeEnabled(myMergeEnabled.isSelected());
-    mySettings.setMergeExePath(myMergePath.getText());
-    mySettings.setMergeParameters(myMergeParameters.getText());
-    mySettings.setMergeTrustExitCode(myRespectExitCodeCheckbox.isSelected());
+  fun isModified(): Boolean {
+    return panel.isModified()
   }
 
-  public void reset() {
-    myDiffEnabled.setSelected(mySettings.isDiffEnabled());
-    myDiffDefault.setSelected(mySettings.isDiffDefault());
-    myDiffPath.setText(mySettings.getDiffExePath());
-    myDiffParameters.setText(mySettings.getDiffParameters());
-
-    myMergePath.setText(mySettings.getMergeExePath());
-    myMergeEnabled.setSelected(mySettings.isMergeEnabled());
-    myMergeParameters.setText(mySettings.getMergeParameters());
-    myRespectExitCodeCheckbox.setSelected(mySettings.isMergeTrustExitCode());
-
-    updateEnabledEffect();
+  fun apply() {
+    panel.apply()
   }
 
-  private void updateEnabledEffect() {
-    UIUtil.setEnabled(myDiffPath, myDiffEnabled.isSelected(), true);
-    UIUtil.setEnabled(myDiffParameters, myDiffEnabled.isSelected(), true);
-    UIUtil.setEnabled(myDiffDefault, myDiffEnabled.isSelected(), true);
-
-    UIUtil.setEnabled(myMergePath, myMergeEnabled.isSelected(), true);
-    UIUtil.setEnabled(myMergeParameters, myMergeEnabled.isSelected(), true);
-    UIUtil.setEnabled(myRespectExitCodeCheckbox, myMergeEnabled.isSelected(), true);
+  fun reset() {
+    panel.reset()
   }
 
-  private void createUIComponents() {
+  private fun Row.enableSubRowsIfSelected(button: AbstractButton): Row {
+    subRowsEnabled = button.isSelected
+    button.addChangeListener { subRowsEnabled = button.isSelected }
+    return this
+  }
+
+  private fun Cell.executableTextField(title: String,
+                                       modelGet: () -> String,
+                                       modelSet: (String) -> Unit): CellBuilder<TextFieldWithBrowseButton> {
+    val pathField = TextFieldWithBrowseButton()
+    pathField.addBrowseFolderListener(title, null, null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor())
+    return pathField().withBinding(pathField::getText, pathField::setText, modelGet, modelSet)
   }
 }
