@@ -242,14 +242,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return result;
   }
 
-  public static void commitAlienChanges(@NotNull List<Change> changes,
-                                        @NotNull AbstractVcs<?> vcs,
-                                        @NotNull String changelistName,
-                                        @Nullable String comment) {
-    AlienCommitWorkflow workflow = new AlienCommitWorkflow(vcs, changelistName, changes, comment);
-    workflow.showDialog();
-  }
-
   CommitChangeListDialog(@NotNull DialogCommitWorkflow workflow) {
     super(workflow.getProject(), true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
     myCommitContext = new CommitContext();
@@ -1013,7 +1005,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
-  CommitDialogChangesBrowser getBrowser() {
+  public CommitDialogChangesBrowser getBrowser() {
     return myBrowser;
   }
 
