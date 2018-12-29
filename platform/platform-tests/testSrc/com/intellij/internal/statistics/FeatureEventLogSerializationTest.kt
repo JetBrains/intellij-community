@@ -6,7 +6,6 @@ import com.google.gson.JsonParser
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.openapi.util.io.FileUtil
 import org.junit.Test
-import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
