@@ -2,14 +2,17 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.google.gson.JsonSyntaxException
+import com.intellij.internal.statistic.eventLog.LogEventRecordRequest.Companion.toString
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.PermanentInstallationID.getIdSynchronizedWithDotNetProducts
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.io.IOException
-import java.nio.ByteBuffer
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.prefs.Preferences
 
@@ -17,56 +20,8 @@ class LogEventRecordRequest(val product : String, val user: String, val records:
 
   companion object {
     private const val RECORD_SIZE = 1000 * 1000 // 1000KB
-    private const val USER_ID_KEY = "StatisticsUserId"
     private val LOG = Logger.getInstance(LogEventRecordRequest::class.java)
-    private val userId = getOrCreateUserId()
-
-    private fun getOrCreateUserId(): String {
-      val preferences = Preferences.userNodeForPackage(LogEventRecordRequest::class.java)
-      val userId = preferences.get(USER_ID_KEY, "")
-      if (!userId.isEmpty()) return userId
-      val calculatedId: String = calculateId(Calendar.getInstance(), getOSByte())
-      preferences.put(USER_ID_KEY, calculatedId)
-      return calculatedId
-    }
-
-    /**
-     * Generated user id is the result of [UUID.toString] call, where [UUID] is composed using the following 16 bytes:
-     * Bytes from 0 to 9 are randomly generated and represents actual user.
-     * 10th byte stands for OS of the machine (see [getOSByte])
-     * 11 and 12th bytes contains date of user id creation (see [getDateBytes])
-     * Remaining bytes are random and reserved fo future usage.
-     */
-    fun calculateId(calendar: Calendar, OSByte: Byte): String {
-      val bytes = getRandomBytes()
-      bytes[10] = OSByte
-      val dateBytes = getDateBytes(calendar)
-      bytes[11] = dateBytes[0]
-      bytes[12] = dateBytes[1]
-      val bb = ByteBuffer.wrap(bytes)
-      return UUID(bb.long, bb.long).toString()
-    }
-
-    /**
-     * Return date encoded into 2 bytes with following layout:
-     * First 5 bits are day int value, next 4 bits are month and last 7 bits are (year - 2000) % 128
-     */
-    private fun getDateBytes(calendar: Calendar): ByteArray {
-      val day = calendar.get(Calendar.DAY_OF_MONTH) shl 4 + 7 // 5 bit
-      val month = calendar.get(Calendar.MONTH) shl 7 // 4 bit
-      val year = (calendar.get(Calendar.YEAR) - 2000) % 128 // 7 bit
-      return ByteBuffer.allocate(4).putInt(day or month or year).array().sliceArray(listOf(2, 3))
-    }
-
-    private fun getOSByte() = (if (SystemInfo.isWindows) 1 else if (SystemInfo.isMac) 2 else if (SystemInfo.isLinux) 3 else 0).toByte()
-
-    private fun getRandomBytes(): ByteArray {
-      val randomUUID = UUID.randomUUID()
-      val bb = ByteBuffer.wrap(ByteArray(16))
-      bb.putLong(randomUUID.mostSignificantBits)
-      bb.putLong(randomUUID.leastSignificantBits)
-      return bb.array()
-    }
+    private val userId = UserIdManager.getOrCreateUserId()
 
     fun create(file: File, filter: LogEventFilter): LogEventRecordRequest? {
       try {
@@ -166,4 +121,45 @@ class LogEventRecordSizeEstimator(product : String, user: String) {
   fun estimate(line: String) : Int {
     return line.length + formatAdditionalSize
   }
+}
+
+object UserIdManager {
+  private const val USER_ID_KEY = "StatisticsUserId"
+  private val LOG = Logger.getInstance(UserIdManager::class.java)
+
+  fun getOrCreateUserId(): String {
+    val preferences = Preferences.userNodeForPackage(LogEventRecordRequest::class.java)
+    val userId = preferences.get(USER_ID_KEY, null) ?: saveToPreferences(preferences, calculateId(Calendar.getInstance(), getOSChar()))
+    return if (isVendorJetBrains())
+      getIdSynchronizedWithDotNetProducts(preferences, USER_ID_KEY, userId)
+    else userId
+  }
+
+  private fun isVendorJetBrains(): Boolean {
+    try {
+      return ApplicationInfoImpl.getShadowInstance().isVendorJetBrains
+    }
+    catch (e: Exception) {
+      LOG.warn(e)
+      return false
+    }
+  }
+
+  /**
+   * Generated user id the string, that is result of concatenating following values:
+   * Current date, written in format ddMMyy, where year coerced between 2000 and 2099
+   * Character, representing user's OS (see [getOSChar])
+   * [toString] call on representation of [UUID.randomUUID]
+   */
+  fun calculateId(calendar: Calendar, OSChar: Char): String {
+    calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR).coerceIn(2000, 2099))
+    return SimpleDateFormat("ddMMyy").format(calendar.time) + OSChar + UUID.randomUUID().toString()
+  }
+
+  private fun saveToPreferences(preferences: Preferences, id: String): String {
+    preferences.put(USER_ID_KEY, id)
+    return id
+  }
+
+  private fun getOSChar() = if (SystemInfo.isWindows) '1' else if (SystemInfo.isMac) '2' else if (SystemInfo.isLinux) '3' else '0'
 }
