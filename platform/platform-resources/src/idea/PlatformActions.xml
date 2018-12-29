@@ -920,6 +920,7 @@
     <action id="CopySettingsPath" class="com.intellij.openapi.options.newEditor.CopySettingsPathAction"/>
 
     <action id="ShowFilterPopup" class="com.intellij.find.editorHeaderActions.ShowMoreOptions" text="Show Filter Popup"/>
+    <action id="ShowSearchHistory" class="com.intellij.find.actions.ShowSearchHistoryAction" text="Show Search History"/>
 
     <group id="TabsActions" text="Tabs">
       <action id="GoToTab1" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab1Action"/>

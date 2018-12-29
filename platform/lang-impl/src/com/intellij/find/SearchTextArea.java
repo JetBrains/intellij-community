@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -356,8 +355,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       super((mySearchMode ? "Search" : "Replace") + " History",
             (mySearchMode ? "Search" : "Replace") + " history",
             AllIcons.Actions.SearchWithHistory);
-
-      registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, myTextArea);
+      registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ShowSearchHistory"), myTextArea);
     }
 
     @Override

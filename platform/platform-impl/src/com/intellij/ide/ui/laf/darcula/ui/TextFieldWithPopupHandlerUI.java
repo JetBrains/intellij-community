@@ -6,7 +6,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
 import com.intellij.util.ui.JBInsets;
@@ -621,7 +620,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       String prefix = null;
       if (UIUtil.getClientProperty(getComponent(), INPLACE_HISTORY ) != null) prefix = "Recent Search";
       if (getActionOnClick() != null) prefix = "Search History";
-      return (prefix == null) ? null : prefix + " (" + KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE) + ")";
+      return (prefix == null) ? null : prefix + " (" + KeymapUtil.getFirstKeyboardShortcutText("ShowSearchHistory") + ")";
     }
 
     @Override
