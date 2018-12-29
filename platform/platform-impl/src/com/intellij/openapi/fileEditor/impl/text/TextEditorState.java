@@ -2,13 +2,14 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -98,9 +99,9 @@ public final class TextEditorState implements FileEditorState {
     return result;
   }
 
-  public int getRelativeCaretPositionLine(@NotNull Editor editor) {
-    int viewAreaPosition = editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
-    return (viewAreaPosition + RELATIVE_CARET_POSITION) / editor.getLineHeight();
+  @NotNull
+  public Collection<Integer> getCaretLines() {
+    return ContainerUtil.map(CARETS, caret -> caret.LINE);
   }
 
   @Override

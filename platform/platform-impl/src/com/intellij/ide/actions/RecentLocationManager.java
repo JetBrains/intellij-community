@@ -116,7 +116,11 @@ public class RecentLocationManager implements ProjectComponent {
       return;
     }
 
-    int line = ((TextEditorState)navigationState).getRelativeCaretPositionLine(editor);
+    Collection<Integer> lines = ((TextEditorState)navigationState).getCaretLines();
+    Integer line = ContainerUtil.getFirstItem(lines);
+    if (line == null) {
+      return;
+    }
 
     Collection<Iterable<? extends Crumb>> result = getBreadcrumbs(project, editor, changePlace, line);
 
