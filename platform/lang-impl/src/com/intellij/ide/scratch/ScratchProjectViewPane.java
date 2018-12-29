@@ -104,7 +104,14 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     project.getMessageBus().connect(disposable).subscribe(VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        boolean update = JBIterable.from(events).find(e -> ScratchUtil.isScratch(e.getFile())) != null;
+        boolean update = JBIterable.from(events).find(e -> {
+          VirtualFile file = e.getFile();
+          VirtualFile parent = file == null ? null : file.getParent();
+          if (parent == null) return false;
+          return ScratchUtil.isScratch(parent) ||
+                 file.isDirectory() && parent.equals(
+                   LocalFileSystem.getInstance().findFileByPath(PathManager.getScratchPath()));
+        }) != null;
         if (update) {
           onUpdate.run();
         }
