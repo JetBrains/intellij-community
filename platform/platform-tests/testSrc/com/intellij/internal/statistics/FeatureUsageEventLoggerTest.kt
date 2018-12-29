@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.eventLog.*
 import com.intellij.util.containers.ContainerUtil
 import org.junit.Test
 import java.io.File
-import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
