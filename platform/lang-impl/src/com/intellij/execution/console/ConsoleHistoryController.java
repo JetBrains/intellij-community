@@ -2,9 +2,11 @@
 package com.intellij.execution.console;
 
 import com.intellij.AppTopics;
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.console.ConsoleHistoryModel.Entry;
 import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -337,6 +339,11 @@ public class ConsoleHistoryController {
     public void actionPerformed(@NotNull AnActionEvent e) {
       String title = myConsole.getTitle() + " History";
       final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), title, true, true) {
+        {
+          setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
+          setOKButtonMnemonic('P');
+          setCancelButtonText(CommonBundle.getCloseButtonText());
+        }
 
         @Override
         protected void removeContentAt(String content) {
@@ -382,6 +389,7 @@ public class ConsoleHistoryController {
       chooser.setContentIcon(null);
       chooser.setSplitterOrientation(false);
       chooser.setSelectedIndex(Math.max(0, getModel().getHistorySize() - 1));
+
       if (chooser.showAndGet() && myConsole.getCurrentEditor().getComponent().isShowing()) {
         setConsoleText(new Entry(chooser.getSelectedText(), -1), false, true);
       }
