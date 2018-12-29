@@ -16,7 +16,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.java.execution",
     "intellij.java.remoteServers",
     "intellij.java.testFramework",
-    "intellij.platform.testFramework.core"
+    "intellij.platform.testFramework.core",
+    "intellij.platform.uast.tests"
   ]
   protected static final List<String> JAVA_IMPLEMENTATION_MODULES = [
     "intellij.java.compiler.impl",
