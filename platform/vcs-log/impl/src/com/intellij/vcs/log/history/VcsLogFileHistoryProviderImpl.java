@@ -61,7 +61,7 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
         ui.jumpToRow(0);
       }
     };
-    if (path.isDirectory()) {
+    if (path.isDirectory() && Registry.is("vcs.folder.history.in.log")) {
       findOrOpenFolderHistory(project, logManager, root, correctedPath, hash, historyUiConsumer);
     }
     else {
