@@ -1,0 +1,1 @@
+java -jar ~/Downloads/jflex-1.7.0-2.jar --skel ~/src/ultimate/community/tools/lexer/idea-flex.skeleton --nobak bash.flex -d ../../../../../gen/com/intellij/bash/lexer/

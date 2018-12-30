@@ -1,0 +1,13 @@
+<idea-plugin>
+    <id>com.jetbrains.bash</id>
+    <vendor email="ignatov@jetbrains.com">Sergey Ignatov</vendor>
+    <depends>com.intellij.modules.lang</depends>
+    <name>Bash</name>
+    <description><![CDATA[
+    <p>Bash support for IntelliJ IDEA, RubyMine, WebStorm, etc.</p>
+  ]]></description>
+    <extensions defaultExtensionNs="com.intellij">
+        <fileTypeFactory implementation="com.intellij.bash.BashFileTypeFactory"/>
+    </extensions>
+
+</idea-plugin>
