@@ -309,7 +309,12 @@ public class IndexDataGetter {
 
   @NotNull
   public FileNamesData createFileNamesData(@NotNull FilePath path) {
-    return new FileNamesData(path) {
+    return createFileNamesData(Collections.singletonList(path));
+  }
+
+  @NotNull
+  public FileNamesData createFileNamesData(@NotNull Collection<FilePath> paths) {
+    return new FileNamesData(paths) {
       @NotNull
       @Override
       public TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {

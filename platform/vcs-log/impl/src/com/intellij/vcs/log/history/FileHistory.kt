@@ -31,43 +31,18 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
   val pathsMap = mutableMapOf<Int, MaybeDeletedFilePath>()
 
   override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
-    val needToRepeat = removeTrivialMerges(controller, permanentGraphInfo)
+    val needToRepeat = removeTrivialMerges(controller, permanentGraphInfo, fileNamesData, this::reportTrivialMerges)
 
     pathsMap.putAll(refine(controller, startCommit, permanentGraphInfo))
 
     if (needToRepeat) {
       LOG.info("Some merge commits were not excluded from file history for ${startPath.path}")
-      removeTrivialMerges(controller, permanentGraphInfo)
+      removeTrivialMerges(controller, permanentGraphInfo, fileNamesData, this::reportTrivialMerges)
     }
   }
 
-  private fun removeTrivialMerges(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>): Boolean {
-    val trivialCandidates = TIntHashSet()
-    val nonTrivialMerges = TIntHashSet()
-    fileNamesData.forEach { _, commit, changes ->
-      if (changes.size() > 1) {
-        if (changes.containsValue(ChangeKind.NOT_CHANGED)) {
-          trivialCandidates.add(commit)
-        }
-        else {
-          nonTrivialMerges.add(commit)
-        }
-      }
-    }
-    // since this code can be executed before refine, there can be commits with several files changed in them
-    // if several files are changed in the merge commit, it can be trivial for one file, but not trivial for the other
-    // in this case we may need to repeat the process after refine
-    val needToRepeat = trivialCandidates.removeAll(nonTrivialMerges)
-
-    modifyGraph(controller) { collapsedGraph ->
-      val trivialMerges = hideTrivialMerges(collapsedGraph) { nodeId: Int ->
-        trivialCandidates.contains(permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId))
-      }
-      if (trivialMerges.isNotEmpty()) LOG.debug("Excluding ${trivialMerges.size} trivial merges from history for ${startPath.path}")
-      fileNamesData.removeAll(trivialMerges.map { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) })
-    }
-
-    return needToRepeat
+  private fun reportTrivialMerges(trivialMerges: Set<Int>) {
+    LOG.debug("Excluding ${trivialMerges.size} trivial merges from history for ${startPath.path}")
   }
 
   private fun refine(controller: LinearGraphController,
@@ -118,8 +93,42 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
   }
 }
 
-fun hideTrivialMerges(collapsedGraph: CollapsedGraph,
-                      isCandidateNodeId: (Int) -> Boolean): Set<Int> {
+fun removeTrivialMerges(controller: LinearGraphController,
+                        permanentGraphInfo: PermanentGraphInfo<Int>,
+                        fileNamesData: FileNamesData,
+                        report: (Set<Int>) -> Unit): Boolean {
+  val trivialCandidates = TIntHashSet()
+  val nonTrivialMerges = TIntHashSet()
+  fileNamesData.forEach { _, commit, changes ->
+    if (changes.size() > 1) {
+      if (changes.containsValue(ChangeKind.NOT_CHANGED)) {
+        trivialCandidates.add(commit)
+      }
+      else {
+        nonTrivialMerges.add(commit)
+      }
+    }
+  }
+  // since this code can be executed before refine, there can be commits with several files changed in them
+  // if several files are changed in the merge commit, it can be trivial for one file, but not trivial for the other
+  // in this case we may need to repeat the process after refine
+  val needToRepeat = trivialCandidates.removeAll(nonTrivialMerges)
+
+  if (!trivialCandidates.isEmpty) {
+    modifyGraph(controller) { collapsedGraph ->
+      val trivialMerges = hideTrivialMerges(collapsedGraph) { nodeId: Int ->
+        trivialCandidates.contains(permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId))
+      }
+      if (trivialMerges.isNotEmpty()) report(trivialMerges)
+      fileNamesData.removeAll(trivialMerges.map { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) })
+    }
+  }
+
+  return needToRepeat
+}
+
+internal fun hideTrivialMerges(collapsedGraph: CollapsedGraph,
+                               isCandidateNodeId: (Int) -> Boolean): Set<Int> {
   val result = mutableSetOf<Int>()
   val graph = LinearGraphUtils.asLiteLinearGraph(collapsedGraph.compiledGraph)
 
@@ -228,7 +237,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   }
 }
 
-abstract class FileNamesData(filePath: FilePath) {
+abstract class FileNamesData(startPaths: Collection<FilePath>) {
   // file -> (commitId -> (parent commitId -> change kind))
   private val affectedCommits = THashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
   private val commitToRename = MultiMap.createSmart<UnorderedPair<Int>, Rename>()
@@ -240,9 +249,11 @@ abstract class FileNamesData(filePath: FilePath) {
   val files: Set<FilePath>
     get() = affectedCommits.keys
 
+  constructor(startPath: FilePath) : this(listOf(startPath))
+
   init {
     val newPaths = THashSet<FilePath>(FILE_PATH_HASHING_STRATEGY)
-    newPaths.add(filePath)
+    newPaths.addAll(startPaths)
 
     while (newPaths.isNotEmpty()) {
       val commits = THashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
