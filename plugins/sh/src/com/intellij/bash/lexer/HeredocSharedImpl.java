@@ -1,7 +1,7 @@
 package com.intellij.bash.lexer;
 
 import com.intellij.openapi.util.Pair;
-import org.apache.commons.lang.StringUtils;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,7 +36,7 @@ public class HeredocSharedImpl {
   }
 
   private static String trimNewline(String marker) {
-    return StringUtils.removeEnd(marker, "\n");
+    return StringUtil.trimEnd(marker, "\n");
   }
 
   public static String wrapMarker(String newName, String originalMarker) {
