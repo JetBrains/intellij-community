@@ -215,4 +215,15 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
            "  }" +
            "}");
   }
+
+  public void testNullArgument() {
+    doTest("import org.slf4j.*;" +
+           "class X {" +
+           "  Logger LOG = LoggerFactory.getLogger(X.class);" +
+           "  void m() {" +
+           "    LOG.info(null, new Exception());" +
+           "    LOG.info(\"\", new Exception());" +
+           "  }" +
+           "}");
+  }
 }

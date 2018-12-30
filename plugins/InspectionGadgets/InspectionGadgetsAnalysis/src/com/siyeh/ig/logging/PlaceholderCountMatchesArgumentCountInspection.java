@@ -66,14 +66,13 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
           !InheritanceUtil.isInheritor(aClass, "org.apache.logging.log4j.Logger")) {
         return;
       }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length == 0) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length == 0) {
         return;
       }
       final int index;
-      if (!ExpressionUtils.hasStringType(arguments[0])) {
-        if (arguments.length < 2) {
+      if (!parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        if (parameters.length < 2) {
           return;
         }
         index = 2;
@@ -81,6 +80,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       else {
         index = 1;
       }
+      final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       int argumentCount = arguments.length - index;
       boolean lastArgumentIsException = hasThrowableType(arguments[arguments.length - 1]);
       if (argumentCount == 1) {
