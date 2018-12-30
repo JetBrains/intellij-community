@@ -70,8 +70,9 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       if (index.isIndexed(root) && (dataPack.isFull || filePath.isDirectory)) {
         val visiblePack = filterWithIndex(dataPack, sortType, filters)
         LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
-        checkNotEmpty(dataPack, visiblePack, true)
-        return Pair.create(visiblePack, commitCount)
+        if (checkNotEmpty(dataPack, visiblePack, true)) {
+          return Pair.create(visiblePack, commitCount)
+        }
       }
 
       if (filePath.isDirectory) {
@@ -98,14 +99,17 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
     }
 
-    private fun checkNotEmpty(dataPack: DataPack, visiblePack: VisiblePack, withIndex: Boolean) {
+    private fun checkNotEmpty(dataPack: DataPack, visiblePack: VisiblePack, withIndex: Boolean): Boolean {
       if (!dataPack.isFull) {
         LOG.debug("Data pack is not full while computing file history for $filePath\n" +
                   "Found ${visiblePack.visibleGraph.visibleCommitCount} commits")
+        return true
       }
       else if (visiblePack.visibleGraph.visibleCommitCount == 0) {
         LOG.warn("Empty file history from ${if (withIndex) "index" else "provider"} for $filePath")
+        return false
       }
+      return true
     }
 
     @Throws(VcsException::class)
