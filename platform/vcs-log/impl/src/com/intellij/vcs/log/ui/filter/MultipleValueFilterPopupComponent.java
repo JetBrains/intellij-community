@@ -11,6 +11,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +24,7 @@ import java.util.List;
 abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterModel<Filter>>
   extends FilterPopupComponent<Filter, Model> {
 
-  private static final int MAX_FILTER_VALUE_LENGTH = 30;
+  private static final int MAX_FILTER_VALUE_LENGTH = 20;
 
   @NotNull protected final MainVcsLogUiProperties myUiProperties;
 
@@ -81,10 +83,14 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
 
   @NotNull
   static String displayableText(@NotNull Collection<String> values) {
+    String text;
     if (values.size() == 1) {
-      return values.iterator().next();
+      text = ObjectUtils.notNull(ContainerUtil.getFirstItem(values));
     }
-    return StringUtil.shortenTextWithEllipsis(StringUtil.join(values, "|"), MAX_FILTER_VALUE_LENGTH, 0, true);
+    else {
+      text = StringUtil.join(values, "|");
+    }
+    return StringUtil.shortenTextWithEllipsis(text, MAX_FILTER_VALUE_LENGTH, 0, true);
   }
 
   @NotNull
