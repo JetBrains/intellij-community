@@ -139,9 +139,8 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       }
 
       val refs = getFilteredRefs(dataPack)
-      val providers = ContainerUtil.newHashMap(Pair.create<VirtualFile, VcsLogProvider>(root, logProviders[root]))
 
-      val fakeDataPack = DataPack.build(commits, refs, providers, storage, false)
+      val fakeDataPack = DataPack.build(commits, refs, mapOf(root to logProviders[root]), storage, false)
       val visibleGraph = vcsLogFilterer.createVisibleGraph(fakeDataPack, sortType, null,
                                                            null/*no need to filter here, since we do not have any extra commits in this pack*/)
       return FileHistoryVisiblePack(fakeDataPack, visibleGraph, false, filters, pathsMap)
