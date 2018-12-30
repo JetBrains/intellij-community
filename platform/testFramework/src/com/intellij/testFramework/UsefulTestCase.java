@@ -60,6 +60,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * @author peter
@@ -747,7 +748,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void assertNotEmpty(final Collection<?> collection) {
     assertNotNull(collection);
-    assertTrue(!collection.isEmpty());
+    assertFalse(collection.isEmpty());
   }
 
   public static void assertEmpty(@NotNull Collection<?> collection) {
@@ -821,7 +822,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void assertSameLinesWithFile(@NotNull String filePath,
                                              @NotNull String actualText,
-                                             @NotNull Producer<String> messageProducer) {
+                                             @NotNull Supplier<String> messageProducer) {
     assertSameLinesWithFile(filePath, actualText, true, messageProducer);
   }
 
@@ -832,7 +833,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static void assertSameLinesWithFile(@NotNull String filePath,
                                              @NotNull String actualText,
                                              boolean trimBeforeComparing,
-                                             @Nullable Producer<String> messageProducer) {
+                                             @Nullable Supplier<String> messageProducer) {
     String fileText;
     try {
       if (OVERWRITE_TESTDATA) {
@@ -852,7 +853,7 @@ public abstract class UsefulTestCase extends TestCase {
     String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
     String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
     if (!Comparing.equal(expected, actual)) {
-      throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.produce(), expected, actual, filePath);
+      throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
     }
   }
 
