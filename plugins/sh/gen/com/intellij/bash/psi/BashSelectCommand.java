@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashSelectCommand extends BashCompositeElement {
+public interface BashSelectCommand extends BashCommand {
 
   @NotNull
   BashList getList();

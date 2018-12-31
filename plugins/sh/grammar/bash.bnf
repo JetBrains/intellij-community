@@ -69,6 +69,7 @@
   ]
 
   pin('.*list(?:_\d.*)?')=1
+  extends(".*command")=command
 }
 
 private file ::=

@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashPipelineCommand extends BashCompositeElement {
+public interface BashPipelineCommand extends BashCommand {
 
   @NotNull
   BashPipeline getPipeline();

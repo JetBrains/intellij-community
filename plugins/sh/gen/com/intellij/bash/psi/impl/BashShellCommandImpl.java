@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashShellCommandImpl extends BashCompositeElementImpl implements BashShellCommand {
+public class BashShellCommandImpl extends BashCommandImpl implements BashShellCommand {
 
   public BashShellCommandImpl(ASTNode node) {
     super(node);
@@ -26,12 +26,6 @@ public class BashShellCommandImpl extends BashCompositeElementImpl implements Ba
   }
 
   @Override
-  @Nullable
-  public BashCaseCommand getCaseCommand() {
-    return findChildByClass(BashCaseCommand.class);
-  }
-
-  @Override
   @NotNull
   public List<BashCompoundList> getCompoundListList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCompoundList.class);
@@ -39,32 +33,8 @@ public class BashShellCommandImpl extends BashCompositeElementImpl implements Ba
 
   @Override
   @Nullable
-  public BashForCommand getForCommand() {
-    return findChildByClass(BashForCommand.class);
-  }
-
-  @Override
-  @Nullable
   public BashFunctionDef getFunctionDef() {
     return findChildByClass(BashFunctionDef.class);
-  }
-
-  @Override
-  @Nullable
-  public BashGroupCommand getGroupCommand() {
-    return findChildByClass(BashGroupCommand.class);
-  }
-
-  @Override
-  @Nullable
-  public BashIfCommand getIfCommand() {
-    return findChildByClass(BashIfCommand.class);
-  }
-
-  @Override
-  @Nullable
-  public BashSelectCommand getSelectCommand() {
-    return findChildByClass(BashSelectCommand.class);
   }
 
   @Override

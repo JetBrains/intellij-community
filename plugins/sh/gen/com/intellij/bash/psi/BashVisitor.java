@@ -15,7 +15,7 @@ public class BashVisitor extends PsiElementVisitor {
   }
 
   public void visitCaseCommand(@NotNull BashCaseCommand o) {
-    visitCompositeElement(o);
+    visitCommand(o);
   }
 
   public void visitCommand(@NotNull BashCommand o) {
@@ -35,7 +35,7 @@ public class BashVisitor extends PsiElementVisitor {
   }
 
   public void visitForCommand(@NotNull BashForCommand o) {
-    visitCompositeElement(o);
+    visitCommand(o);
   }
 
   public void visitFunctionDef(@NotNull BashFunctionDef o) {
@@ -43,11 +43,11 @@ public class BashVisitor extends PsiElementVisitor {
   }
 
   public void visitGroupCommand(@NotNull BashGroupCommand o) {
-    visitCompositeElement(o);
+    visitCommand(o);
   }
 
   public void visitIfCommand(@NotNull BashIfCommand o) {
-    visitCompositeElement(o);
+    visitCommand(o);
   }
 
   public void visitList(@NotNull BashList o) {
@@ -79,7 +79,7 @@ public class BashVisitor extends PsiElementVisitor {
   }
 
   public void visitPipelineCommand(@NotNull BashPipelineCommand o) {
-    visitCompositeElement(o);
+    visitCommand(o);
   }
 
   public void visitRedirection(@NotNull BashRedirection o) {
@@ -91,15 +91,15 @@ public class BashVisitor extends PsiElementVisitor {
   }
 
   public void visitSelectCommand(@NotNull BashSelectCommand o) {
-    visitCompositeElement(o);
+    visitCommand(o);
   }
 
   public void visitShellCommand(@NotNull BashShellCommand o) {
-    visitCompositeElement(o);
+    visitCommand(o);
   }
 
   public void visitSimpleCommand(@NotNull BashSimpleCommand o) {
-    visitCompositeElement(o);
+    visitCommand(o);
   }
 
   public void visitSimpleCommandElement(@NotNull BashSimpleCommandElement o) {

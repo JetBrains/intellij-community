@@ -21,7 +21,7 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   public void parseLight(IElementType t, PsiBuilder b) {
     boolean r;
-    b = adapt_builder_(t, b, this, null);
+    b = adapt_builder_(t, b, this, EXTENDS_SETS_);
     Marker m = enter_section_(b, 0, _COLLAPSE_, null);
     if (t == CASE_CLAUSE) {
       r = case_clause(b, 0);
@@ -119,6 +119,12 @@ public class BashParser implements PsiParser, LightPsiParser {
   protected boolean parse_root_(IElementType t, PsiBuilder b, int l) {
     return file(b, l + 1);
   }
+
+  public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
+    create_token_set_(CASE_COMMAND, COMMAND, FOR_COMMAND, GROUP_COMMAND,
+      IF_COMMAND, PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND,
+      SIMPLE_COMMAND),
+  };
 
   /* ********************************************************** */
   // pattern_list
@@ -235,7 +241,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   public static boolean command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "command")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, COMMAND, "<command>");
+    Marker m = enter_section_(b, l, _COLLAPSE_, COMMAND, "<command>");
     r = simple_command(b, l + 1);
     if (!r) r = command_1(b, l + 1);
     exit_section_(b, l, m, r, false, null);
@@ -1440,7 +1446,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   public static boolean shell_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "shell_command")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, SHELL_COMMAND, "<shell command>");
+    Marker m = enter_section_(b, l, _COLLAPSE_, SHELL_COMMAND, "<shell command>");
     r = for_command(b, l + 1);
     if (!r) r = case_command(b, l + 1);
     if (!r) r = shell_command_2(b, l + 1);

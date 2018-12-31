@@ -19,16 +19,15 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              STRING
-                PsiElement(string_begin)('"')
-                PsiElement(string_content)('Hello      World')
-                PsiElement(string_end)('"')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('Hello      World')
+              PsiElement(string_end)('"')
   PsiWhiteSpace(' ')
   PsiWhiteSpace(' ')
   PsiWhiteSpace(' ')
@@ -41,179 +40,167 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              STRING
-                PsiElement(string_begin)('"')
-                PsiElement(string_content)('Hello World')
-                PsiElement(string_end)('"')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('Hello World')
+              PsiElement(string_end)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              STRING
-                PsiElement(string_begin)('"')
-                PsiElement(string_content)('Hello * World')
-                PsiElement(string_end)('"')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('Hello * World')
+              PsiElement(string_end)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('Hello')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('*')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('World')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('Hello')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('*')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('World')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('Hello')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('World')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('Hello')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('World')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              STRING
-                PsiElement(string_begin)('"')
-                PsiElement(string_content)('Hello')
-                PsiElement(string_end)('"')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('World')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('Hello')
+              PsiElement(string_end)('"')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('World')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('Hello')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              STRING
-                PsiElement(string_begin)('"')
-                PsiElement(string_content)('     ')
-                PsiElement(string_end)('"')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('World')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('Hello')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('     ')
+              PsiElement(string_end)('"')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('World')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              STRING
-                PsiElement(string_begin)('"')
-                PsiElement(string_content)('Message')
-                PsiElement(string_end)('"')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('Message')
+              PsiElement(string_end)('"')
         PsiWhiteSpace(' ')
         PsiElement(|)('|')
         PsiWhiteSpace(' ')
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('tail')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(int)('24')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('tail')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(int)('24')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              STRING
-                PsiElement(string_begin)('"')
-                PsiElement(string_content)('Message')
-                PsiElement(string_end)('"')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('Message')
+              PsiElement(string_end)('"')
         PsiWhiteSpace(' ')
         PsiElement(|)('|')
         PsiWhiteSpace(' ')
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('tail')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(int)('25')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('tail')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(int)('25')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              STRING
-                PsiElement(string_begin)('"')
-                PsiElement(string_content)('Message')
-                PsiElement(string_end)('"')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('Message')
+              PsiElement(string_end)('"')
         PsiWhiteSpace(' ')
         PsiElement(|)('|')
         PsiWhiteSpace(' ')
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('tail')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('-n')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(int)('25')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('tail')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('-n')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(int)('25')
   PsiElement(\n)('\n')
   PsiComment(Comment)('#echo $Message | mail -s "disk report `date`" anny')
   PsiElement(\n)('\n')
@@ -221,31 +208,29 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              STRING
-                PsiElement(string_begin)('"')
-                PsiElement(string_content)('Hello ')
-                PsiElement(string_end)('"')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('*')
-            SIMPLE_COMMAND_ELEMENT
-              STRING
-                PsiElement(string_begin)('"')
-                PsiElement(string_content)(' World')
-                PsiElement(string_end)('"')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('Hello ')
+              PsiElement(string_end)('"')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('*')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)(' World')
+              PsiElement(string_end)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('echo')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
   PsiWhiteSpace(' ')
   PsiErrorElement:'&', '&&', ';', <pipeline command>, <simple command element>, '\n', '|' or '||' expected, got '`'
     PsiElement(backquote `)('`')

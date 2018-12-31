@@ -8,12 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface BashCommand extends BashCompositeElement {
 
   @Nullable
+  BashCommand getCommand();
+
+  @Nullable
   BashRedirectionList getRedirectionList();
-
-  @Nullable
-  BashShellCommand getShellCommand();
-
-  @Nullable
-  BashSimpleCommand getSimpleCommand();
 
 }

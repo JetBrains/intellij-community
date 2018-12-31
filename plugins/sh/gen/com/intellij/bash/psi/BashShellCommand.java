@@ -5,28 +5,13 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashShellCommand extends BashCompositeElement {
-
-  @Nullable
-  BashCaseCommand getCaseCommand();
+public interface BashShellCommand extends BashCommand {
 
   @NotNull
   List<BashCompoundList> getCompoundListList();
 
   @Nullable
-  BashForCommand getForCommand();
-
-  @Nullable
   BashFunctionDef getFunctionDef();
-
-  @Nullable
-  BashGroupCommand getGroupCommand();
-
-  @Nullable
-  BashIfCommand getIfCommand();
-
-  @Nullable
-  BashSelectCommand getSelectCommand();
 
   @Nullable
   BashSubshell getSubshell();

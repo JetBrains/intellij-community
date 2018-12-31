@@ -2,24 +2,22 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              STRING
-                PsiElement(string_begin)('"')
-                PsiElement(string_content)('foo')
-                PsiElement(string_end)('"')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('foo')
+              PsiElement(string_end)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        COMMAND
-          SIMPLE_COMMAND
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(word)('bar')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('bar')

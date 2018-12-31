@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashForCommandImpl extends BashCompositeElementImpl implements BashForCommand {
+public class BashForCommandImpl extends BashCommandImpl implements BashForCommand {
 
   public BashForCommandImpl(ASTNode node) {
     super(node);

@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashCaseCommand extends BashCompositeElement {
+public interface BashCaseCommand extends BashCommand {
 
   @Nullable
   BashCaseClause getCaseClause();

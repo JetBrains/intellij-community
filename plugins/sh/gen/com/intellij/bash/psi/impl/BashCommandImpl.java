@@ -27,20 +27,14 @@ public class BashCommandImpl extends BashCompositeElementImpl implements BashCom
 
   @Override
   @Nullable
+  public BashCommand getCommand() {
+    return findChildByClass(BashCommand.class);
+  }
+
+  @Override
+  @Nullable
   public BashRedirectionList getRedirectionList() {
     return findChildByClass(BashRedirectionList.class);
-  }
-
-  @Override
-  @Nullable
-  public BashShellCommand getShellCommand() {
-    return findChildByClass(BashShellCommand.class);
-  }
-
-  @Override
-  @Nullable
-  public BashSimpleCommand getSimpleCommand() {
-    return findChildByClass(BashSimpleCommand.class);
   }
 
 }
