@@ -986,6 +986,10 @@ public class RefactoringUtil {
     else if (statement instanceof PsiExpressionStatement){
       ((PsiExpressionStatement)statement).getExpression().replace(body);
     }
+    PsiElement arrow = PsiTreeUtil.skipWhitespacesBackward(body);
+    if (arrow != null && arrow.getNextSibling() != body) {
+      lambdaExpression.deleteChildRange(arrow.getNextSibling(), body.getPrevSibling());
+    }
     return (PsiCodeBlock)CodeStyleManager.getInstance(project).reformat(body.replace(codeBlock));
   }
 
