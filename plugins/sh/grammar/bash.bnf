@@ -190,13 +190,11 @@ commands_list ::= pipeline_command (
                    | ';' pipeline_command
                  )*
 
-pipeline_command ::= pipeline
-                    |  '!' pipeline
-                    |  timespec pipeline
-                    |  timespec '!' pipeline
-                    |  '!' timespec pipeline
+pipeline_command ::=  '!'? pipeline
+                    | timespec '!'? pipeline
+                    | '!' timespec pipeline
 
 pipeline ::= command ('|' newlines command)* {pin(".*")=1}
 
 time_opt ::= '-p'
-timespec ::=  time time_opt?
+timespec ::= time time_opt?

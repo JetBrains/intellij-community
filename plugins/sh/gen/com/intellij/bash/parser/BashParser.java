@@ -978,61 +978,60 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // pipeline
-  //                     |  '!' pipeline
-  //                     |  timespec pipeline
-  //                     |  timespec '!' pipeline
-  //                     |  '!' timespec pipeline
+  // '!'? pipeline
+  //                     | timespec '!'? pipeline
+  //                     | '!' timespec pipeline
   public static boolean pipeline_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, PIPELINE_COMMAND, "<pipeline command>");
-    r = pipeline(b, l + 1);
+    r = pipeline_command_0(b, l + 1);
     if (!r) r = pipeline_command_1(b, l + 1);
     if (!r) r = pipeline_command_2(b, l + 1);
-    if (!r) r = pipeline_command_3(b, l + 1);
-    if (!r) r = pipeline_command_4(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // '!' pipeline
+  // '!'? pipeline
+  private static boolean pipeline_command_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pipeline_command_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = pipeline_command_0_0(b, l + 1);
+    r = r && pipeline(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '!'?
+  private static boolean pipeline_command_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pipeline_command_0_0")) return false;
+    consumeToken(b, BANG);
+    return true;
+  }
+
+  // timespec '!'? pipeline
   private static boolean pipeline_command_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, BANG);
+    r = timespec(b, l + 1);
+    r = r && pipeline_command_1_1(b, l + 1);
     r = r && pipeline(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // timespec pipeline
-  private static boolean pipeline_command_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pipeline_command_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = timespec(b, l + 1);
-    r = r && pipeline(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // timespec '!' pipeline
-  private static boolean pipeline_command_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pipeline_command_3")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = timespec(b, l + 1);
-    r = r && consumeToken(b, BANG);
-    r = r && pipeline(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+  // '!'?
+  private static boolean pipeline_command_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pipeline_command_1_1")) return false;
+    consumeToken(b, BANG);
+    return true;
   }
 
   // '!' timespec pipeline
-  private static boolean pipeline_command_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pipeline_command_4")) return false;
+  private static boolean pipeline_command_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pipeline_command_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, BANG);
