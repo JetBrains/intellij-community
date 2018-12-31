@@ -33,20 +33,18 @@ BASH_FILE
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 LIST
-                  LIST_0
-                    LIST_1
-                      PIPELINE_COMMAND
-                        PIPELINE
-                          SIMPLE_COMMAND
-                            SIMPLE_COMMAND_ELEMENT
-                              ASSIGNMENT_WORD_RULE
-                                PsiElement(assignment_word)('Message')
-                                PsiElement(=)('=')
-                                STRING
-                                  PsiElement(string_begin)('"')
-                                  PsiElement(string_content)('All is quiet.')
-                                  PsiElement(string_end)('"')
-                    PsiElement(\n)('\n')
+                  PIPELINE_COMMAND
+                    PIPELINE
+                      SIMPLE_COMMAND
+                        SIMPLE_COMMAND_ELEMENT
+                          ASSIGNMENT_WORD_RULE
+                            PsiElement(assignment_word)('Message')
+                            PsiElement(=)('=')
+                            STRING
+                              PsiElement(string_begin)('"')
+                              PsiElement(string_content)('All is quiet.')
+                              PsiElement(string_end)('"')
+                  PsiElement(\n)('\n')
           PsiWhiteSpace(' ')
           PsiWhiteSpace(' ')
           PsiElement(;;)(';;')
@@ -61,22 +59,20 @@ BASH_FILE
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 LIST
-                  LIST_0
-                    LIST_1
-                      PIPELINE_COMMAND
-                        PIPELINE
-                          SIMPLE_COMMAND
-                            SIMPLE_COMMAND_ELEMENT
-                              ASSIGNMENT_WORD_RULE
-                                PsiElement(assignment_word)('Message')
-                                PsiElement(=)('=')
-                                STRING
-                                  PsiElement(string_begin)('"')
-                                  PsiElement(string_content)('Start thinking about cleaning out some stuff.  There's a partition that is ')
-                                  PsiElement(variable)('$space')
-                                  PsiElement(string_content)(' % full.')
-                                  PsiElement(string_end)('"')
-                    PsiElement(\n)('\n')
+                  PIPELINE_COMMAND
+                    PIPELINE
+                      SIMPLE_COMMAND
+                        SIMPLE_COMMAND_ELEMENT
+                          ASSIGNMENT_WORD_RULE
+                            PsiElement(assignment_word)('Message')
+                            PsiElement(=)('=')
+                            STRING
+                              PsiElement(string_begin)('"')
+                              PsiElement(string_content)('Start thinking about cleaning out some stuff.  There's a partition that is ')
+                              PsiElement(variable)('$space')
+                              PsiElement(string_content)(' % full.')
+                              PsiElement(string_end)('"')
+                  PsiElement(\n)('\n')
           PsiWhiteSpace(' ')
           PsiWhiteSpace(' ')
           PsiElement(;;)(';;')
@@ -91,22 +87,20 @@ BASH_FILE
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 LIST
-                  LIST_0
-                    LIST_1
-                      PIPELINE_COMMAND
-                        PIPELINE
-                          SIMPLE_COMMAND
-                            SIMPLE_COMMAND_ELEMENT
-                              ASSIGNMENT_WORD_RULE
-                                PsiElement(assignment_word)('Message')
-                                PsiElement(=)('=')
-                                STRING
-                                  PsiElement(string_begin)('"')
-                                  PsiElement(string_content)('Better hurry with that new disk...  One partition is ')
-                                  PsiElement(variable)('$space')
-                                  PsiElement(string_content)(' % full.')
-                                  PsiElement(string_end)('"')
-                    PsiElement(\n)('\n')
+                  PIPELINE_COMMAND
+                    PIPELINE
+                      SIMPLE_COMMAND
+                        SIMPLE_COMMAND_ELEMENT
+                          ASSIGNMENT_WORD_RULE
+                            PsiElement(assignment_word)('Message')
+                            PsiElement(=)('=')
+                            STRING
+                              PsiElement(string_begin)('"')
+                              PsiElement(string_content)('Better hurry with that new disk...  One partition is ')
+                              PsiElement(variable)('$space')
+                              PsiElement(string_content)(' % full.')
+                              PsiElement(string_end)('"')
+                  PsiElement(\n)('\n')
           PsiWhiteSpace(' ')
           PsiWhiteSpace(' ')
           PsiElement(;;)(';;')
@@ -121,22 +115,20 @@ BASH_FILE
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 LIST
-                  LIST_0
-                    LIST_1
-                      PIPELINE_COMMAND
-                        PIPELINE
-                          SIMPLE_COMMAND
-                            SIMPLE_COMMAND_ELEMENT
-                              ASSIGNMENT_WORD_RULE
-                                PsiElement(assignment_word)('Message')
-                                PsiElement(=)('=')
-                                STRING
-                                  PsiElement(string_begin)('"')
-                                  PsiElement(string_content)('I'm drowning here!  There's a partition at ')
-                                  PsiElement(variable)('$space')
-                                  PsiElement(string_content)(' %!')
-                                  PsiElement(string_end)('"')
-                    PsiElement(\n)('\n')
+                  PIPELINE_COMMAND
+                    PIPELINE
+                      SIMPLE_COMMAND
+                        SIMPLE_COMMAND_ELEMENT
+                          ASSIGNMENT_WORD_RULE
+                            PsiElement(assignment_word)('Message')
+                            PsiElement(=)('=')
+                            STRING
+                              PsiElement(string_begin)('"')
+                              PsiElement(string_content)('I'm drowning here!  There's a partition at ')
+                              PsiElement(variable)('$space')
+                              PsiElement(string_content)(' %!')
+                              PsiElement(string_end)('"')
+                  PsiElement(\n)('\n')
           PsiWhiteSpace(' ')
           PsiWhiteSpace(' ')
           PsiElement(;;)(';;')
@@ -151,20 +143,18 @@ BASH_FILE
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 LIST
-                  LIST_0
-                    LIST_1
-                      PIPELINE_COMMAND
-                        PIPELINE
-                          SIMPLE_COMMAND
-                            SIMPLE_COMMAND_ELEMENT
-                              ASSIGNMENT_WORD_RULE
-                                PsiElement(assignment_word)('Message')
-                                PsiElement(=)('=')
-                                STRING
-                                  PsiElement(string_begin)('"')
-                                  PsiElement(string_content)('I seem to be running with an nonexistent amount of disk space...')
-                                  PsiElement(string_end)('"')
-                    PsiElement(\n)('\n')
+                  PIPELINE_COMMAND
+                    PIPELINE
+                      SIMPLE_COMMAND
+                        SIMPLE_COMMAND_ELEMENT
+                          ASSIGNMENT_WORD_RULE
+                            PsiElement(assignment_word)('Message')
+                            PsiElement(=)('=')
+                            STRING
+                              PsiElement(string_begin)('"')
+                              PsiElement(string_content)('I seem to be running with an nonexistent amount of disk space...')
+                              PsiElement(string_end)('"')
+                  PsiElement(\n)('\n')
           PsiWhiteSpace(' ')
           PsiWhiteSpace(' ')
           PsiElement(;;)(';;')

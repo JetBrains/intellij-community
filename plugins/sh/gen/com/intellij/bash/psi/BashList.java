@@ -8,6 +8,6 @@ import com.intellij.psi.PsiElement;
 public interface BashList extends BashCompositeElement {
 
   @NotNull
-  BashList0 getList0();
+  BashPipelineCommand getPipelineCommand();
 
 }

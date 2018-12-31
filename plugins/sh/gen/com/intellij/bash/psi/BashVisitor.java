@@ -54,14 +54,6 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitList0(@NotNull BashList0 o) {
-    visitCompositeElement(o);
-  }
-
-  public void visitList1(@NotNull BashList1 o) {
-    visitCompositeElement(o);
-  }
-
   public void visitListTerminator(@NotNull BashListTerminator o) {
     visitCompositeElement(o);
   }

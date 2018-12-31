@@ -22,8 +22,6 @@ public interface BashTypes {
   IElementType GROUP_COMMAND = new BashCompositeElementType("GROUP_COMMAND");
   IElementType IF_COMMAND = new BashCompositeElementType("IF_COMMAND");
   IElementType LIST = new BashCompositeElementType("LIST");
-  IElementType LIST_0 = new BashCompositeElementType("LIST_0");
-  IElementType LIST_1 = new BashCompositeElementType("LIST_1");
   IElementType LIST_TERMINATOR = new BashCompositeElementType("LIST_TERMINATOR");
   IElementType PATTERN = new BashCompositeElementType("PATTERN");
   IElementType PATTERN_LIST = new BashCompositeElementType("PATTERN_LIST");
@@ -149,12 +147,6 @@ public interface BashTypes {
       }
       else if (type == LIST) {
         return new BashListImpl(node);
-      }
-      else if (type == LIST_0) {
-        return new BashList0Impl(node);
-      }
-      else if (type == LIST_1) {
-        return new BashList1Impl(node);
       }
       else if (type == LIST_TERMINATOR) {
         return new BashListTerminatorImpl(node);

@@ -180,9 +180,9 @@ pattern ::=  w ('|' w)* {pin('.*')=1}
 list ::= newlines list0 {pin=0}
 compound_list ::= '\n'+ list
 
-list0 ::= list1 ('\n' | '&' | ';') newlines
+private list0 ::= list1 ('\n' | '&' | ';') newlines
 
-list1 ::= pipeline_command [('&&'|  '||' |  '&' |  ';' |  '\n') newlines list1]
+private list1 ::= pipeline_command [('&&'|  '||' |  '&' |  ';' |  '\n') newlines list1]
 
 list_terminator ::= '\n' | ';'
 

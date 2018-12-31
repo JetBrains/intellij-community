@@ -59,12 +59,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == LIST) {
       r = list(b, 0);
     }
-    else if (t == LIST_0) {
-      r = list0(b, 0);
-    }
-    else if (t == LIST_1) {
-      r = list1(b, 0);
-    }
     else if (t == LIST_TERMINATOR) {
       r = list_terminator(b, 0);
     }
@@ -718,14 +712,14 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // list1 ('\n' | '&' | ';') newlines
-  public static boolean list0(PsiBuilder b, int l) {
+  static boolean list0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "list0")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, LIST_0, "<list 0>");
+    Marker m = enter_section_(b);
     r = list1(b, l + 1);
     r = r && list0_1(b, l + 1);
     r = r && newlines(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -743,13 +737,13 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // pipeline_command [('&&'|  '||' |  '&' |  ';' |  '\n') newlines list1]
-  public static boolean list1(PsiBuilder b, int l) {
+  static boolean list1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "list1")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, LIST_1, "<list 1>");
+    Marker m = enter_section_(b);
     r = pipeline_command(b, l + 1);
     r = r && list1_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, null, r);
     return r;
   }
 
