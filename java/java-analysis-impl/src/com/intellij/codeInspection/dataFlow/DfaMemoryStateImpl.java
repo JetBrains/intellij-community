@@ -718,9 +718,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       DfaVariableValue left = sum.getLeft();
       DfaValue right = sum.getRight();
-      if (appliedRange.equals(LongRangeSet.point(0)) && sum.isNegation()) {
-        return applyCondition(myFactory.createCondition(left, RelationType.EQ, right));
-      }
       LongRangeSet leftRange = getValueFact(left, DfaFactType.RANGE);
       LongRangeSet rightRange = getValueFact(right, DfaFactType.RANGE);
       if (leftRange == null || rightRange == null) return true;
@@ -886,7 +883,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean applySumRelations(DfaValue left, RelationType type, DfaValue right) {
-    if (left instanceof DfaSumValue && right instanceof DfaVariableValue) {
+    if (type != RelationType.LT && type != RelationType.GT && type != RelationType.NE && type != RelationType.EQ) return true;
+    if (left instanceof DfaSumValue) {
       DfaSumValue sum = (DfaSumValue)left;
       LongRangeSet leftRange = getValueFact(sum.getLeft(), DfaFactType.RANGE);
       LongRangeSet rightRange = getValueFact(sum.getRight(), DfaFactType.RANGE);
@@ -895,49 +893,69 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       LongRangeSet rightNegated = rightRange.negate(isLong);
       LongRangeSet rightCorrected = sum.isNegation() ? rightNegated : rightRange;
 
-      if (!sum.isNegation()) {
-        RelationType correctedType = type;
-        if (type == RelationType.LT || type == RelationType.GT) {
-          boolean overflowPossible = true;
-          if (!isLong) {
-            LongRangeSet other = getValueFact(right, DfaFactType.RANGE);
-            LongRangeSet overflowRange = getIntegerSumOverflowValues(leftRange, rightCorrected);
-            overflowPossible = other == null || other.intersects(overflowRange);
+      LongRangeSet resultRange = getValueFact(right, DfaFactType.RANGE);
+      RelationType correctedRelation = correctRelation(type, leftRange, rightCorrected, resultRange, isLong);
+      if (sum.isNegation()) {
+        if (resultRange != null) {
+          long min = resultRange.min();
+          long max = resultRange.max();
+          if (min == 0 && max == 0) {
+            // a-b (rel) 0 => a (rel) b
+            if (!applyCondition(myFactory.createCondition(sum.getLeft(), correctedRelation, sum.getRight()))) return false;
           }
-          if (overflowPossible) {
-            correctedType = RelationType.NE;
+          else if (min >= 0 && RelationType.GE.isSubRelation(type)) {
+            RelationType correctedGt = correctRelation(RelationType.GT, leftRange, rightCorrected, resultRange, isLong);
+            if (!applyCondition(myFactory.createCondition(sum.getLeft(), correctedGt, sum.getRight()))) return false;
+          }
+          else if (max <= 0 && RelationType.LE.isSubRelation(type)) {
+            RelationType correctedLt = correctRelation(RelationType.LT, leftRange, rightCorrected, resultRange, isLong);
+            if (!applyCondition(myFactory.createCondition(sum.getLeft(), correctedLt, sum.getRight()))) return false;
+          }
+          if (RelationType.EQ.equals(type) && !resultRange.contains(0)) {
+            // a-b == non-zero => a != b
+            if (!applyRelation(sum.getLeft(), sum.getRight(), true)) return false;
           }
         }
+      }
+      if (right instanceof DfaVariableValue) {
         // a+b (rel) c && a == c => b (rel) 0 
         if (areEqual(sum.getLeft(), right)) {
-          if (!applyCondition(myFactory.createCondition(sum.getRight(), correctedType, myFactory.getInt(0)))) {
-            return false;
-          }
+          RelationType finalRelation = sum.isNegation() ? correctedRelation.getFlipped() : correctedRelation;
+          if (!applyCondition(myFactory.createCondition(sum.getRight(), finalRelation, myFactory.getInt(0)))) return false;
         }
         // a+b (rel) c && b == c => a (rel) 0 
-        if (areEqual(sum.getRight(), right)) {
-          if (!applyCondition(myFactory.createCondition(sum.getLeft(), correctedType, myFactory.getInt(0)))) {
-            return false;
+        if (!sum.isNegation() && areEqual(sum.getRight(), right)) {
+          if (!applyCondition(myFactory.createCondition(sum.getLeft(), correctedRelation, myFactory.getInt(0)))) return false;
+        }
+
+        if (!leftRange.subtractionMayOverflow(sum.isNegation() ? rightRange : rightNegated, isLong)) {
+          // a-positiveNumber >= b => a > b
+          if (rightCorrected.max() < 0 && RelationType.GE.isSubRelation(type)) {
+            if (!applyLessThanRelation(right, sum.getLeft())) return false;
+          }
+          // a+positiveNumber >= b => a > b
+          if (rightCorrected.min() > 0 && RelationType.LE.isSubRelation(type)) {
+            if (!applyLessThanRelation(sum.getLeft(), right)) return false;
           }
         }
-      }
-
-      if (!leftRange.subtractionMayOverflow(sum.isNegation() ? rightRange : rightNegated, isLong)) {
-        // a-positiveNumber >= b => a > b
-        if (rightCorrected.max() < 0 && RelationType.GE.isSubRelation(type)) {
-          if (!applyLessThanRelation(right, sum.getLeft())) return false;
+        if (RelationType.EQ == type && !rightRange.contains(0)) {
+          // a+nonZero == b => a != b
+          if (!applyRelation(sum.getLeft(), right, true)) return false;
         }
-        // a+positiveNumber >= b => a > b
-        if (rightCorrected.min() > 0 && RelationType.LE.isSubRelation(type)) {
-          if (!applyLessThanRelation(sum.getLeft(), right)) return false;
-        }
-      }
-      if (RelationType.EQ == type && !rightRange.contains(0)) {
-        // a+nonZero == b => a != b
-        if (!applyRelation(sum.getLeft(), right, true)) return false;
       }
     }
     return true;
+  }
+
+  private static RelationType correctRelation(RelationType relation, LongRangeSet summand1, LongRangeSet summand2,
+                                              LongRangeSet resultRange, boolean isLong) {
+    if (relation != RelationType.LT && relation != RelationType.GT) return relation;
+    boolean overflowPossible = true;
+    if (!isLong) {
+      LongRangeSet overflowRange = getIntegerSumOverflowValues(summand1, summand2);
+      overflowPossible = !overflowRange.isEmpty() && (resultRange == null || resultRange.fromRelation(relation).intersects(overflowRange));
+    }
+    return overflowPossible ? RelationType.NE : relation;
   }
 
   @NotNull

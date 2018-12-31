@@ -1,6 +1,18 @@
 import java.util.*;
 
 public class Algebraic {
+  void testOverflowDetection(int[] arr1, int[] arr2, int offset) {
+    int l1 = arr1.length;
+    int l2 = arr2.length;
+    if (l1 < l2 || offset < 0) return;
+    if (l1 - offset >= l2) {
+      if (l1 == l2 && <warning descr="Condition 'offset == 0' is always 'true' when reached">offset == 0</warning>) {}
+    }
+    if (l1 - offset <= l2) {
+      if (l1 == l2 && offset == 0) {}
+    }
+  }
+
   void test(int x, int y) {
     if (x + 1 > 0) {
       if (<warning descr="Condition 'x == -2' is always 'false'">x == -2</warning>) {
@@ -39,7 +51,10 @@ public class Algebraic {
         || startOffset + length < 0) {
       throw new IndexOutOfBoundsException();
     }
-    if (<warning descr="Condition 'startOffset == buffer.length && length > 0' is always 'false'">startOffset == buffer.length && <warning descr="Condition 'length > 0' is always 'false' when reached">length > 0</warning></warning>) {
+    // This is always false, but we cannot reliably detect this yet. If startOffset == buffer.length
+    // then startOffset + length <= buffer.length implies that length == 0 *or* startOffset + length overflows
+    // The latest case is ruled out by startOffset + length < 0, but our memory state is unable to track this. 
+    if (startOffset == buffer.length && length > 0) {
     }
   }
 
@@ -77,5 +92,27 @@ public class Algebraic {
   void test3(int c, String text) {
     if (c < 1 || c > text.length() - 1) return;
     if (<warning descr="Condition 'text.length() > c' is always 'true'">text.length() > c</warning>) {}
+  }
+
+  void testDiff(int x, int y) {
+    if (<warning descr="Condition 'x - y > 0 && x == y' is always 'false'">x - y > 0 && <warning descr="Condition 'x == y' is always 'false' when reached">x == y</warning></warning>) {}
+    if (y > 0 && x >= y) {
+      if (<warning descr="Condition 'x - y < 0' is always 'false'">x - y < 0</warning>) {}
+      if (<warning descr="Condition 'x - y > 0 && x == y' is always 'false'">x - y > 0 && <warning descr="Condition 'x == y' is always 'false' when reached">x == y</warning></warning>) {}
+    }
+    if (x > 0 && y > 0) {
+      if (<warning descr="Condition 'x - y > 1 && x <= y' is always 'false'">x - y > 1 && <warning descr="Condition 'x <= y' is always 'false' when reached">x <= y</warning></warning>) {}
+      if (x - y > -1 && x <= y) {}
+      if (x - y < -1 && <warning descr="Condition 'x <= y' is always 'true' when reached">x <= y</warning>) {}
+      if (<warning descr="Condition 'x - y == y && x == y' is always 'false'">x - y == y && <warning descr="Condition 'x == y' is always 'false' when reached">x == y</warning></warning>) {}
+      if (x - y < y && (x == y || x < y)) {}
+      if (x - y > y && (<warning descr="Condition 'x == y || x > y' is always 'true' when reached"><warning descr="Condition 'x == y' is always 'false' when reached">x == y</warning> || <warning descr="Condition 'x > y' is always 'true' when reached">x > y</warning></warning>)) {}
+    } else {
+      if (x - y > 1 && x <= y) {}
+      if (x - y > -1 && x <= y) {}
+      if (x - y < -1 && x <= y) {}
+      if (x - y == y && x == y) {}
+      if (x - y < y && (x == y || x < y)) {}
+    }
   }
 }
