@@ -9,8 +9,8 @@ interface VcsLogFilterer {
 
   fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean
 
-  fun filter(pack: DataPack,
-             type: PermanentGraph.SortType,
+  fun filter(dataPack: DataPack,
+             sortType: PermanentGraph.SortType,
              filters: VcsLogFilterCollection,
-             count: CommitCountStage): Pair<VisiblePack, CommitCountStage>
+             commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>
 }
