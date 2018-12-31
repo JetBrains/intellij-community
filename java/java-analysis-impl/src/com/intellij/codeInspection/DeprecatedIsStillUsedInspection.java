@@ -3,11 +3,10 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -62,7 +61,7 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
       .anyMatch(reference -> {
         PsiElement referenceElement = reference.getElement();
         return !DeprecationInspectionBase.isElementInsideDeprecated(referenceElement) && 
-               PsiTreeUtil.getParentOfType(referenceElement, PsiDocComment.class) == null;
+               !PsiUtil.isInsideJavadocComment(referenceElement);
       });
   }
 }
