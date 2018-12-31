@@ -26,9 +26,9 @@ public class BashGroupCommandImpl extends BashCommandImpl implements BashGroupCo
   }
 
   @Override
-  @NotNull
+  @Nullable
   public BashList getList() {
-    return findNotNullChildByClass(BashList.class);
+    return findChildByClass(BashList.class);
   }
 
   @Override
@@ -38,9 +38,9 @@ public class BashGroupCommandImpl extends BashCommandImpl implements BashGroupCo
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getRightCurly() {
-    return findNotNullChildByType(RIGHT_CURLY);
+    return findChildByType(RIGHT_CURLY);
   }
 
 }

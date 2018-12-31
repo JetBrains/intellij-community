@@ -27,8 +27,8 @@ public class BashListImpl extends BashCompositeElementImpl implements BashList {
 
   @Override
   @NotNull
-  public BashPipelineCommand getPipelineCommand() {
-    return findNotNullChildByClass(BashPipelineCommand.class);
+  public List<BashPipelineCommand> getPipelineCommandList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashPipelineCommand.class);
   }
 
 }

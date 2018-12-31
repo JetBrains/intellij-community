@@ -10,10 +10,10 @@ public interface BashWhileCommand extends BashCommand {
   @NotNull
   List<BashCompoundList> getCompoundListList();
 
-  @NotNull
+  @Nullable
   PsiElement getDo();
 
-  @NotNull
+  @Nullable
   PsiElement getDone();
 
   @NotNull

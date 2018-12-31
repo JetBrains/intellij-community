@@ -16,13 +16,13 @@ public interface BashIfCommand extends BashCommand {
   @Nullable
   PsiElement getElse();
 
-  @NotNull
+  @Nullable
   PsiElement getFi();
 
   @NotNull
   PsiElement getIf();
 
-  @NotNull
+  @Nullable
   PsiElement getThen();
 
 }

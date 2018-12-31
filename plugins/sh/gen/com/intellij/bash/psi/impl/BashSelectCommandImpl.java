@@ -26,9 +26,9 @@ public class BashSelectCommandImpl extends BashCommandImpl implements BashSelect
   }
 
   @Override
-  @NotNull
+  @Nullable
   public BashList getList() {
-    return findNotNullChildByClass(BashList.class);
+    return findChildByClass(BashList.class);
   }
 
   @Override

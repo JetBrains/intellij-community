@@ -32,15 +32,15 @@ public class BashWhileCommandImpl extends BashCommandImpl implements BashWhileCo
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getDo() {
-    return findNotNullChildByType(DO);
+    return findChildByType(DO);
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getDone() {
-    return findNotNullChildByType(DONE);
+    return findChildByType(DONE);
   }
 
   @Override

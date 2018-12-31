@@ -69,6 +69,7 @@
   ]
 
   pin('.*list(?:_\d.*)?')=1
+  pin('.*_command')=1
   extends(".*command")=command
 }
 
@@ -132,21 +133,21 @@ shell_command ::=   for_command
 while_command ::= while compound_list do compound_list done
 until_command ::= until compound_list do compound_list done
 
-for_command ::=
-               for w newlines do compound_list done
-            |  for w newlines '{' compound_list '}'
-            |  for w ';' newlines do compound_list done
-            |  for w ';' newlines '{' compound_list '}'
-            |  for w newlines in word_list list_terminator newlines do compound_list done
-            |  for w newlines in word_list list_terminator newlines '{' compound_list '}'
+for_command ::= for w (
+               newlines do compound_list done
+            |  newlines '{' compound_list '}'
+            |  ';' newlines do compound_list done
+            |  ';' newlines '{' compound_list '}'
+            |  newlines in word_list list_terminator newlines do compound_list done
+            |  newlines in word_list list_terminator newlines '{' compound_list '}')
 
-select_command ::=
-                      select w newlines do list done
-                   |  select w newlines '{' list '}'
-                   |  select w ';' newlines do list done
-                   |  select w ';' newlines '{' list '}'
-                   |  select w newlines in word_list list_terminator newlines do list done
-                   |  select w newlines in word_list list_terminator newlines '{' list '}'
+select_command ::= select w (
+                      newlines do list done
+                   |  newlines '{' list '}'
+                   |  ';' newlines do list done
+                   |  ';' newlines '{' list '}'
+                   |  newlines in word_list list_terminator newlines do list done
+                   |  newlines in word_list list_terminator newlines '{' list '}')
 
 case_command ::= case w newlines "in" (case_clause_list newlines) esac {pin(".*")=1}
 
@@ -156,11 +157,11 @@ function_def ::=  w '(' ')' newlines group_command
 
 subshell ::=  '(' compound_list ')'
 
-if_command ::= if compound_list then compound_list fi |
-               if compound_list then compound_list else compound_list fi |
-               if compound_list then compound_list elif_clause fi
+if_command ::= if compound_list then compound_list (fi |
+               else compound_list fi |
+               elif_clause fi)
 
-group_command ::=  '{' list '}'
+group_command ::= '{' list '}'
 
 elif_clause ::= elif compound_list then compound_list |
                 elif compound_list then compound_list else compound_list |
@@ -177,12 +178,11 @@ private case_clause_list ::= (case_clause ';;')+
 
 pattern ::=  w ('|' w)* {pin('.*')=1}
 
-list ::= newlines list0 {pin=0}
 compound_list ::= '\n'+ list
+list ::= newlines pipeline_command_list ('\n' | '&' | ';') newlines {pin=2}
 
-private list0 ::= list1 ('\n' | '&' | ';') newlines
-
-private list1 ::= pipeline_command [('&&'|  '||' |  '&' |  ';' |  '\n') newlines list1]
+private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {pin=1} // todo with pin
+private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' |  '\n') newlines
 
 list_terminator ::= '\n' | ';'
 

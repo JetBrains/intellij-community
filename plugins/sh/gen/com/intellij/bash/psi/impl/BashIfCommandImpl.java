@@ -44,9 +44,9 @@ public class BashIfCommandImpl extends BashCommandImpl implements BashIfCommand 
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getFi() {
-    return findNotNullChildByType(FI);
+    return findChildByType(FI);
   }
 
   @Override
@@ -56,9 +56,9 @@ public class BashIfCommandImpl extends BashCommandImpl implements BashIfCommand 
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getThen() {
-    return findNotNullChildByType(THEN);
+    return findChildByType(THEN);
   }
 
 }

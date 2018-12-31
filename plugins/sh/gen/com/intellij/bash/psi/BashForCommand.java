@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface BashForCommand extends BashCommand {
 
-  @NotNull
+  @Nullable
   BashCompoundList getCompoundList();
 
   @Nullable

@@ -26,9 +26,9 @@ public class BashForCommandImpl extends BashCommandImpl implements BashForComman
   }
 
   @Override
-  @NotNull
+  @Nullable
   public BashCompoundList getCompoundList() {
-    return findNotNullChildByClass(BashCompoundList.class);
+    return findChildByClass(BashCompoundList.class);
   }
 
   @Override
