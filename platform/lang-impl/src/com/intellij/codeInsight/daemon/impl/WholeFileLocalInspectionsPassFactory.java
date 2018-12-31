@@ -49,20 +49,23 @@ public class WholeFileLocalInspectionsPassFactory implements TextEditorHighlight
     profileManager.addProfileChangeListener(new ProfileChangeAdapter() {
       @Override
       public void profileChanged(InspectionProfile profile) {
-        clearSkipCache();
+        clearCaches();
       }
 
       @Override
       public void profileActivated(InspectionProfile oldProfile, @Nullable InspectionProfile profile) {
-        clearSkipCache();
+        clearCaches();
       }
     }, myProject);
-    Disposer.register(myProject, this::clearSkipCache);
+    Disposer.register(myProject, this::clearCaches);
   }
 
-  private void clearSkipCache() {
+  private void clearCaches() {
     synchronized (mySkipWholeInspectionsCache) {
       mySkipWholeInspectionsCache.clear();
+    }
+    synchronized (myPsiModificationCount) {
+      myPsiModificationCount.clear();
     }
   }
 
