@@ -75,7 +75,6 @@ private file ::=
   shebang? newlines
   simple_list
 
-
 private newlines ::= '\n'*
 private simple_list ::= (commands_list ['&' | ';' | newlines])*
 private word_list ::= word+
@@ -114,7 +113,7 @@ simple_command_element ::= word | assignment_word | redirection | string
 
 redirection_list ::= redirection+
 simple_command ::= simple_command_element+
-command ::=  simple_command | shell_command redirection_list?
+command ::= simple_command | shell_command redirection_list?
 shell_command ::=   for_command
                   | case_command
                   | while compound_list do compound_list done
@@ -165,31 +164,21 @@ elif_clause ::= elif compound_list then compound_list |
 case_clause ::=  pattern_list
                 |  case_clause_sequence pattern_list
 
-pattern_list ::=  newlines pattern ')' compound_list
-                 |  newlines pattern ')' newlines
-                 |  newlines '(' pattern ')' compound_list
-                 |  newlines '(' pattern ')' newlines
+pattern_list ::=   newlines pattern ')' compound_list
+                 | newlines pattern ')' newlines
+                 | newlines '(' pattern ')' compound_list
+                 | newlines '(' pattern ')' newlines {pin=0}
 
-case_clause_sequence ::=  (pattern_list ';;')+
+case_clause_sequence ::= (pattern_list ';;')+
 
-pattern ::=  word ('|' word)*
+pattern ::=  word ('|' word)* {pin('.*')=1}
 
+list ::=   newlines list0 {pin=0}
+compound_list ::= '\n'+ list
 
-list ::=   newlines list0
+list0 ::= list1 ('\n' | '&' | ';') newlines
 
-compound_list ::=  list
-                  |  newlines list1
-
-list0 ::=     list1 '\n' newlines
-           |  list1 '&' newlines
-           |  list1 ';' newlines
-
-list1 ::=   list1 '&&' newlines list1
-           |  list1 '||' newlines list1
-           |  list1 '&' newlines list1
-           |  list1 ';' newlines list1
-           |  list1 '\n' newlines list1
-           |  pipeline_command
+list1 ::= pipeline_command [('&&'|  '||' |  '&' |  ';' |  '\n') newlines list1]
 
 list_terminator ::= '\n' | ';'
 
@@ -206,9 +195,7 @@ pipeline_command ::= pipeline
                     |  timespec '!' pipeline
                     |  '!' timespec pipeline
 
-pipeline ::= //todo
-          command
-//       |  pipeline '|' newline_list pipeline
+pipeline ::= command ('|' newlines pipeline)*
 
 time_opt ::= '-p'
 timespec ::=  time time_opt?

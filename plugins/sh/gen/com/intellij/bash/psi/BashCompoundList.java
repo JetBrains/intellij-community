@@ -10,7 +10,4 @@ public interface BashCompoundList extends BashCompositeElement {
   @Nullable
   BashList getList();
 
-  @Nullable
-  BashList1 getList1();
-
 }

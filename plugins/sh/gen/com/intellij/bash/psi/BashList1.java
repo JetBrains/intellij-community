@@ -7,10 +7,10 @@ import com.intellij.psi.PsiElement;
 
 public interface BashList1 extends BashCompositeElement {
 
-  @NotNull
-  List<BashList1> getList1List();
-
   @Nullable
+  BashList1 getList1();
+
+  @NotNull
   BashPipelineCommand getPipelineCommand();
 
   @Nullable

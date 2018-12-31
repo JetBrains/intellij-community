@@ -32,9 +32,9 @@ public class BashPatternListImpl extends BashCompositeElementImpl implements Bas
   }
 
   @Override
-  @Nullable
+  @NotNull
   public BashPattern getPattern() {
-    return findChildByClass(BashPattern.class);
+    return findNotNullChildByClass(BashPattern.class);
   }
 
   @Override
@@ -44,9 +44,9 @@ public class BashPatternListImpl extends BashCompositeElementImpl implements Bas
   }
 
   @Override
-  @Nullable
+  @NotNull
   public PsiElement getRightParen() {
-    return findChildByType(RIGHT_PAREN);
+    return findNotNullChildByType(RIGHT_PAREN);
   }
 
 }

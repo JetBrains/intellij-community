@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface BashList extends BashCompositeElement {
 
-  @Nullable
+  @NotNull
   BashList0 getList0();
 
 }

@@ -26,9 +26,9 @@ public class BashListImpl extends BashCompositeElementImpl implements BashList {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public BashList0 getList0() {
-    return findChildByClass(BashList0.class);
+    return findNotNullChildByClass(BashList0.class);
   }
 
 }

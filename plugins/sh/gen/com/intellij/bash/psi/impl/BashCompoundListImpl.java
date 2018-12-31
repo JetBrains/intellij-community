@@ -31,10 +31,4 @@ public class BashCompoundListImpl extends BashCompositeElementImpl implements Ba
     return findChildByClass(BashList.class);
   }
 
-  @Override
-  @Nullable
-  public BashList1 getList1() {
-    return findChildByClass(BashList1.class);
-  }
-
 }

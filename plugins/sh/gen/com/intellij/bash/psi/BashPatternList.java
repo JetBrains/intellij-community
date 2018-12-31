@@ -10,13 +10,13 @@ public interface BashPatternList extends BashCompositeElement {
   @Nullable
   BashCompoundList getCompoundList();
 
-  @Nullable
+  @NotNull
   BashPattern getPattern();
 
   @Nullable
   PsiElement getLeftParen();
 
-  @Nullable
+  @NotNull
   PsiElement getRightParen();
 
 }
