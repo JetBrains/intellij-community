@@ -123,9 +123,6 @@ public interface BashTokenTypes extends BashTypes {
   IElementType COMMAND_TOKEN = new BashTokenType("command");//!=
   TokenSet commands = TokenSet.create(COMMAND_TOKEN);
 
-  //variables
-  IElementType VARIABLE = new BashTokenType("variable");
-
   //parameter expansion
   IElementType PARAM_EXPANSION_OP_UNKNOWN = new BashTokenType("Parameter expansion operator (unknown)");
   IElementType PARAM_EXPANSION_OP_EXCL = new BashTokenType("Parameter expansion operator '!'");

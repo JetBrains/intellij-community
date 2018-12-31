@@ -45,6 +45,12 @@ public class BashSimpleCommandElementImpl extends BashCompositeElementImpl imple
 
   @Override
   @Nullable
+  public PsiElement getVariable() {
+    return findChildByType(VARIABLE);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getWord() {
     return findChildByType(WORD);
   }

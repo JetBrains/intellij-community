@@ -105,6 +105,7 @@ public interface BashTypes {
   IElementType THEN = new BashTokenType("then");
   IElementType TIME = new BashTokenType("time");
   IElementType UNTIL = new BashTokenType("until");
+  IElementType VARIABLE = new BashTokenType("variable");
   IElementType WHILE = new BashTokenType("while");
   IElementType WORD = new BashTokenType("word");
 

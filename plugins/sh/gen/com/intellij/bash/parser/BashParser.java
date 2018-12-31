@@ -1288,19 +1288,27 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // redirection+
+  // redirection redirection*
   public static boolean redirection_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_list")) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, REDIRECTION_LIST, "<redirection list>");
     r = redirection(b, l + 1);
-    while (r) {
+    p = r; // pin = 1
+    r = r && redirection_list_1(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // redirection*
+  private static boolean redirection_list_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "redirection_list_1")) return false;
+    while (true) {
       int c = current_position_(b);
       if (!redirection(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "redirection_list", c)) break;
+      if (!empty_element_parsed_guard_(b, "redirection_list_1", c)) break;
     }
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    return true;
   }
 
   /* ********************************************************** */
@@ -1489,7 +1497,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | assignment_word | redirection | string
+  // word | assignment_word | redirection | string | variable
   public static boolean simple_command_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command_element")) return false;
     boolean r;
@@ -1498,6 +1506,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, ASSIGNMENT_WORD);
     if (!r) r = redirection(b, l + 1);
     if (!r) r = string(b, l + 1);
+    if (!r) r = consumeToken(b, VARIABLE);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

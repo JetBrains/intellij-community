@@ -109,9 +109,9 @@ redirection ::=    '>' word
 
 private num ::= number | int
 string ::= string_begin string_content string_end
-simple_command_element ::= word | assignment_word | redirection | string
+simple_command_element ::= word | assignment_word | redirection | string | variable
 
-redirection_list ::= redirection+
+redirection_list ::= redirection redirection*
 simple_command ::= simple_command_element+
 command ::= simple_command | shell_command redirection_list?
 shell_command ::=   for_command
