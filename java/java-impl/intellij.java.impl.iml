@@ -59,7 +59,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="netty-codec-http" level="project" />
   </component>
   <component name="copyright">
     <Base>
