@@ -1278,19 +1278,19 @@ public abstract class _BashLexerGen implements StatesSwitcher {
           case 2: 
             { if (yystate() == X_HERE_STRING) {
                                                         closeHereStringIfAvailable();
-                                                        return BashTokenTypes.LINEFEED;
+                                                        return LINEFEED;
                                                     } else if ((yystate() == S_PARAM_EXPANSION || yystate() == S_SUBSHELL || yystate() == S_ARITH || yystate() == S_ARITH_SQUARE_MODE) && isInState(X_HEREDOC)) {
                                                         backToPreviousState();
-                                                        return BashTokenTypes.LINEFEED;
+                                                        return LINEFEED;
                                                     }
 
                                                     if (!heredocState().isEmpty()) {
                                                         // first linebreak after the start marker
                                                         goToState(X_HEREDOC);
-                                                        return BashTokenTypes.LINEFEED;
+                                                        return LINEFEED;
                                                     }
 
-                                                   return BashTokenTypes.LINEFEED;
+                                                   return LINEFEED;
             } 
             // fall through
           case 186: break;
@@ -1448,7 +1448,7 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             // fall through
           case 215: break;
           case 32: 
-            { return BashTokenTypes.NUMBER;
+            { return NUMBER;
             } 
             // fall through
           case 216: break;
@@ -1719,7 +1719,7 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             // fall through
           case 264: break;
           case 81: 
-            { return BashTokenTypes.LINEFEED;
+            { return LINEFEED;
             } 
             // fall through
           case 265: break;
@@ -1753,7 +1753,7 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             { if (!heredocState().isEmpty()) {
                                             return HEREDOC_LINE;
                                       }
-                                      return BashTokenTypes.LINEFEED;
+                                      return LINEFEED;
             } 
             // fall through
           case 267: break;
@@ -2348,7 +2348,7 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             // fall through
           case 360: break;
           case 177: 
-            { setInCaseBody(false); goToState(S_CASE); return BashTokenTypes.CASE;
+            { setInCaseBody(false); goToState(S_CASE); return CASE;
             } 
             // fall through
           case 361: break;

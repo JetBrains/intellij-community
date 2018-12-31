@@ -152,7 +152,7 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
 <X_HEREDOC_MARKER, X_HEREDOC_MARKER_IGNORE_TABS> {
     {WhiteSpaceLineCont}+        { return WHITESPACE; }
     {LineContinuation}+          { return WHITESPACE; }
-    {LineTerminator}             { return BashTokenTypes.LINEFEED; }
+    {LineTerminator}             { return LINEFEED; }
 
       ("$"? "'" [^\']+ "'")+
     | ("$"? \" [^\"]+ \")+
@@ -170,7 +170,7 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
     {LineTerminator}+           { if (!heredocState().isEmpty()) {
                                             return HEREDOC_LINE;
                                       }
-                                      return BashTokenTypes.LINEFEED;
+                                      return LINEFEED;
                                     }
 
     //escaped dollar
@@ -353,7 +353,7 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
 
 <YYINITIAL, S_CASE, S_SUBSHELL, S_BACKQUOTE> {
 /* keywords and expressions */
-  "case"                        { setInCaseBody(false); goToState(S_CASE); return BashTokenTypes.CASE; }
+  "case"                        { setInCaseBody(false); goToState(S_CASE); return CASE; }
 
   "!"                           { return BANG; }
   "do"                          { return DO; }
@@ -475,7 +475,7 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
 <S_ARITH, S_ARITH_SQUARE_MODE, S_ARITH_ARRAY_MODE> {
   {HexIntegerLiteral}           { return ARITH_HEX_NUMBER; }
   {OctalIntegerLiteral}         { return ARITH_OCTAL_NUMBER; }
-  {IntegerLiteral}              { return BashTokenTypes.NUMBER; }
+  {IntegerLiteral}              { return NUMBER; }
 
   ">"                           { return ARITH_GT; }
   "<"                           { return ARITH_LT; }
@@ -736,19 +736,19 @@ goToState(X_STRINGMODE); return STRING_BEGIN; }
         {LineTerminator}             {
                                                     if (yystate() == X_HERE_STRING) {
                                                         closeHereStringIfAvailable();
-                                                        return BashTokenTypes.LINEFEED;
+                                                        return LINEFEED;
                                                     } else if ((yystate() == S_PARAM_EXPANSION || yystate() == S_SUBSHELL || yystate() == S_ARITH || yystate() == S_ARITH_SQUARE_MODE) && isInState(X_HEREDOC)) {
                                                         backToPreviousState();
-                                                        return BashTokenTypes.LINEFEED;
+                                                        return LINEFEED;
                                                     }
 
                                                     if (!heredocState().isEmpty()) {
                                                         // first linebreak after the start marker
                                                         goToState(X_HEREDOC);
-                                                        return BashTokenTypes.LINEFEED;
+                                                        return LINEFEED;
                                                     }
 
-                                                   return BashTokenTypes.LINEFEED;
+                                                   return LINEFEED;
                                              }
 
         /* Backquote expression */
