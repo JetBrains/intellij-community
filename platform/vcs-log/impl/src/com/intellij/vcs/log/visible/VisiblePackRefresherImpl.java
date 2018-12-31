@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,6 +21,7 @@ import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -271,7 +271,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
 
       VcsLogProgress.updateCurrentKey(new VisiblePackProgressKey(myLogId, false));
 
-      return state.withVisiblePack(pair.first).withCommitCount(pair.second);
+      return state.withVisiblePack(pair.getFirst()).withCommitCount(pair.getSecond());
     }
   }
 

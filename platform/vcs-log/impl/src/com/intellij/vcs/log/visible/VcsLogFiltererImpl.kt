@@ -3,7 +3,6 @@ package com.intellij.vcs.log.visible
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
@@ -57,7 +56,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val visiblePack = VisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters)
 
     LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for filtering by " + filters)
-    return Pair.create(visiblePack, filterResult.commitCount)
+    return Pair(visiblePack, filterResult.commitCount)
   }
 
   fun createVisibleGraph(dataPack: DataPack,
@@ -85,7 +84,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       visibleRoots.partition { index.isIndexed(it) }
     }
     else {
-      kotlin.Pair(emptyList(), visibleRoots.toList())
+      Pair(emptyList(), visibleRoots.toList())
     }
 
     val filteredWithIndex: Set<Int>? = if (rootsForIndex.isNotEmpty()) dataGetter?.filter(detailsFilters) else null
@@ -177,7 +176,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
       val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, hashFilterResult)
       val visiblePack = VisiblePack(dataPack, visibleGraph, false, VcsLogFilterObject.collection(fromHashes(hashes)))
-      return Pair.create(visiblePack, CommitCountStage.ALL)
+      return Pair(visiblePack, CommitCountStage.ALL)
     }
 
     val textFilter = VcsLogFilterObject.fromPatternsList(ContainerUtil.newArrayList(hashes), false)
@@ -189,7 +188,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, filterResult)
     val visiblePack = VisiblePack(dataPack, visibleGraph, textFilterResult.canRequestMore,
                                   VcsLogFilterObject.collection(fromHashes(hashes), textFilter))
-    return Pair.create(visiblePack, textFilterResult.commitCount)
+    return Pair(visiblePack, textFilterResult.commitCount)
   }
 
   fun getMatchingHeads(refs: RefsModel,

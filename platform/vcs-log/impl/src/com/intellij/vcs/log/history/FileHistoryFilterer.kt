@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -71,7 +70,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
         val visiblePack = filterWithIndex(dataPack, sortType, filters)
         LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
         if (checkNotEmpty(dataPack, visiblePack, true)) {
-          return Pair.create(visiblePack, commitCount)
+          return Pair(visiblePack, commitCount)
         }
       }
 
@@ -86,7 +85,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
             LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
                       " for computing history for $filePath with history provider")
             checkNotEmpty(dataPack, visiblePack, false)
-            Pair.create(visiblePack, commitCount)
+            Pair(visiblePack, commitCount)
           }
           catch (e: VcsException) {
             LOG.error(e)
