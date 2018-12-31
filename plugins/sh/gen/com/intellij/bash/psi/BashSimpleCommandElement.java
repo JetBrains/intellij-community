@@ -17,6 +17,12 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
   PsiElement getAssignmentWord();
 
   @Nullable
+  PsiElement getInt();
+
+  @Nullable
+  PsiElement getNumber();
+
+  @Nullable
   PsiElement getVariable();
 
   @Nullable

@@ -15,6 +15,12 @@ echo Hello * World
 echo Hello      World
 echo "Hello" World
 echo Hello "     " World
+
+echo "Message" | tail 24
+echo "Message" | tail 25
+echo "Message" | tail -n 25
+#echo $Message | mail -s "disk report `date`" anny
+
 echo "Hello "*" World"
 echo `hello` world
 echo 'hello' world
@@ -30,4 +36,6 @@ in=$1
 # init
 file="current_line.txt"
 let count=0
+
+
 

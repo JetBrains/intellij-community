@@ -109,7 +109,7 @@ redirection ::=    '>' word
 
 private num ::= number | int
 string ::= string_begin string_content string_end
-simple_command_element ::= word | assignment_word | redirection | string | variable
+simple_command_element ::= word | assignment_word | redirection | string | variable | num
 
 redirection_list ::= redirection redirection*
 simple_command ::= simple_command_element+
@@ -195,7 +195,7 @@ pipeline_command ::= pipeline
                     |  timespec '!' pipeline
                     |  '!' timespec pipeline
 
-pipeline ::= command ('|' newlines pipeline)*
+pipeline ::= command ('|' newlines command)* {pin(".*")=1}
 
 time_opt ::= '-p'
 timespec ::=  time time_opt?

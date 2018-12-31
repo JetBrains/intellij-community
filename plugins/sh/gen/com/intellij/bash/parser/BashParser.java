@@ -935,18 +935,19 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // command ('|' newlines pipeline)*
+  // command ('|' newlines command)*
   public static boolean pipeline(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline")) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, PIPELINE, "<pipeline>");
     r = command(b, l + 1);
+    p = r; // pin = 1
     r = r && pipeline_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
-  // ('|' newlines pipeline)*
+  // ('|' newlines command)*
   private static boolean pipeline_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_1")) return false;
     while (true) {
@@ -957,16 +958,17 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // '|' newlines pipeline
+  // '|' newlines command
   private static boolean pipeline_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, PIPE);
-    r = r && newlines(b, l + 1);
-    r = r && pipeline(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, newlines(b, l + 1));
+    r = p && command(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -1497,7 +1499,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | assignment_word | redirection | string | variable
+  // word | assignment_word | redirection | string | variable | num
   public static boolean simple_command_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command_element")) return false;
     boolean r;
@@ -1507,6 +1509,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = redirection(b, l + 1);
     if (!r) r = string(b, l + 1);
     if (!r) r = consumeToken(b, VARIABLE);
+    if (!r) r = num(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

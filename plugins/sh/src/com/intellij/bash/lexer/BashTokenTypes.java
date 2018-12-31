@@ -167,8 +167,6 @@ public interface BashTokenTypes extends BashTypes {
   IElementType STRING2 = new BashTokenType("unevaluated string (STRING2)");
   IElementType BACKQUOTE = new BashTokenType("backquote `");
 
-  IElementType INT = new BashTokenType("int");
-
   TokenSet stringLiterals = TokenSet.create(WORD, STRING2, INT, COLON);
 
   IElementType HEREDOC_MARKER_TAG = new BashTokenType("heredoc marker tag");
