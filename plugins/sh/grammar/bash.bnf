@@ -118,15 +118,19 @@ assignment_word_rule ::= assignment_word '=' literal
 redirection_list ::= redirection redirection*
 simple_command ::= simple_command_element+
 command ::= simple_command | shell_command redirection_list?
+
 shell_command ::=   for_command
                   | case_command
-                  | while compound_list do compound_list done
-                  | until compound_list do compound_list done
+                  | while_command
+                  | until_command
                   | select_command
                   | if_command
                   | subshell
                   | group_command
                   | function_def
+
+while_command ::= while compound_list do compound_list done
+until_command ::= until compound_list do compound_list done
 
 for_command ::=
                for w newlines do compound_list done

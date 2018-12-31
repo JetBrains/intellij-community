@@ -110,6 +110,12 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == TIMESPEC) {
       r = timespec(b, 0);
     }
+    else if (t == UNTIL_COMMAND) {
+      r = until_command(b, 0);
+    }
+    else if (t == WHILE_COMMAND) {
+      r = while_command(b, 0);
+    }
     else {
       r = parse_root_(t, b, 0);
     }
@@ -123,7 +129,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
     create_token_set_(CASE_COMMAND, COMMAND, FOR_COMMAND, GROUP_COMMAND,
       IF_COMMAND, PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND,
-      SIMPLE_COMMAND),
+      SIMPLE_COMMAND, UNTIL_COMMAND, WHILE_COMMAND),
   };
 
   /* ********************************************************** */
@@ -1534,8 +1540,8 @@ public class BashParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // for_command
   //                   | case_command
-  //                   | while compound_list do compound_list done
-  //                   | until compound_list do compound_list done
+  //                   | while_command
+  //                   | until_command
   //                   | select_command
   //                   | if_command
   //                   | subshell
@@ -1547,42 +1553,14 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _COLLAPSE_, SHELL_COMMAND, "<shell command>");
     r = for_command(b, l + 1);
     if (!r) r = case_command(b, l + 1);
-    if (!r) r = shell_command_2(b, l + 1);
-    if (!r) r = shell_command_3(b, l + 1);
+    if (!r) r = while_command(b, l + 1);
+    if (!r) r = until_command(b, l + 1);
     if (!r) r = select_command(b, l + 1);
     if (!r) r = if_command(b, l + 1);
     if (!r) r = subshell(b, l + 1);
     if (!r) r = group_command(b, l + 1);
     if (!r) r = function_def(b, l + 1);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // while compound_list do compound_list done
-  private static boolean shell_command_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "shell_command_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, WHILE);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, DO);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, DONE);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // until compound_list do compound_list done
-  private static boolean shell_command_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "shell_command_3")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, UNTIL);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, DO);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, DONE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1738,6 +1716,22 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // until compound_list do compound_list done
+  public static boolean until_command(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "until_command")) return false;
+    if (!nextTokenIs(b, UNTIL)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, UNTIL);
+    r = r && compound_list(b, l + 1);
+    r = r && consumeToken(b, DO);
+    r = r && compound_list(b, l + 1);
+    r = r && consumeToken(b, DONE);
+    exit_section_(b, m, UNTIL_COMMAND, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // word | variable
   static boolean w(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "w")) return false;
@@ -1745,6 +1739,22 @@ public class BashParser implements PsiParser, LightPsiParser {
     boolean r;
     r = consumeToken(b, WORD);
     if (!r) r = consumeToken(b, VARIABLE);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // while compound_list do compound_list done
+  public static boolean while_command(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "while_command")) return false;
+    if (!nextTokenIs(b, WHILE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, WHILE);
+    r = r && compound_list(b, l + 1);
+    r = r && consumeToken(b, DO);
+    r = r && compound_list(b, l + 1);
+    r = r && consumeToken(b, DONE);
+    exit_section_(b, m, WHILE_COMMAND, r);
     return r;
   }
 

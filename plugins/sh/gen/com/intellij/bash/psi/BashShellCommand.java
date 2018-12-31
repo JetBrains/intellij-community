@@ -7,25 +7,10 @@ import com.intellij.psi.PsiElement;
 
 public interface BashShellCommand extends BashCommand {
 
-  @NotNull
-  List<BashCompoundList> getCompoundListList();
-
   @Nullable
   BashFunctionDef getFunctionDef();
 
   @Nullable
   BashSubshell getSubshell();
-
-  @Nullable
-  PsiElement getDo();
-
-  @Nullable
-  PsiElement getDone();
-
-  @Nullable
-  PsiElement getUntil();
-
-  @Nullable
-  PsiElement getWhile();
 
 }

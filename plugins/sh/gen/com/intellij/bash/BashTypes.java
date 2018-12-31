@@ -39,6 +39,8 @@ public interface BashTypes {
   IElementType SUBSHELL = new BashCompositeElementType("SUBSHELL");
   IElementType TIMESPEC = new BashCompositeElementType("TIMESPEC");
   IElementType TIME_OPT = new BashCompositeElementType("TIME_OPT");
+  IElementType UNTIL_COMMAND = new BashCompositeElementType("UNTIL_COMMAND");
+  IElementType WHILE_COMMAND = new BashCompositeElementType("WHILE_COMMAND");
 
   IElementType ADD_EQ = new BashTokenType("+=");
   IElementType AMP = new BashTokenType("&");
@@ -198,6 +200,12 @@ public interface BashTypes {
       }
       else if (type == TIME_OPT) {
         return new BashTimeOptImpl(node);
+      }
+      else if (type == UNTIL_COMMAND) {
+        return new BashUntilCommandImpl(node);
+      }
+      else if (type == WHILE_COMMAND) {
+        return new BashWhileCommandImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }
