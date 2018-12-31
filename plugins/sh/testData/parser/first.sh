@@ -16,6 +16,8 @@ echo Hello      World
 echo "Hello" World
 echo Hello "     " World
 
+file="foo"
+
 echo "Message" | tail 24
 echo "Message" | tail 25
 echo "Message" | tail -n 25

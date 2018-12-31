@@ -41,6 +41,9 @@ public interface BashRedirection extends BashCompositeElement {
   PsiElement getNumber();
 
   @Nullable
+  PsiElement getVariable();
+
+  @Nullable
   PsiElement getWord();
 
 }

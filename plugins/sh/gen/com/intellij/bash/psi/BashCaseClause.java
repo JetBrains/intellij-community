@@ -7,9 +7,6 @@ import com.intellij.psi.PsiElement;
 
 public interface BashCaseClause extends BashCompositeElement {
 
-  @Nullable
-  BashCaseClauseSequence getCaseClauseSequence();
-
   @NotNull
   BashPatternList getPatternList();
 

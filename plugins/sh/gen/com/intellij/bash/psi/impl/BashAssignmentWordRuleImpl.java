@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashSimpleCommandElementImpl extends BashCompositeElementImpl implements BashSimpleCommandElement {
+public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl implements BashAssignmentWordRule {
 
-  public BashSimpleCommandElementImpl(ASTNode node) {
+  public BashAssignmentWordRuleImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitSimpleCommandElement(this);
+    visitor.visitAssignmentWordRule(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -27,20 +27,20 @@ public class BashSimpleCommandElementImpl extends BashCompositeElementImpl imple
 
   @Override
   @Nullable
-  public BashAssignmentWordRule getAssignmentWordRule() {
-    return findChildByClass(BashAssignmentWordRule.class);
-  }
-
-  @Override
-  @Nullable
-  public BashRedirection getRedirection() {
-    return findChildByClass(BashRedirection.class);
-  }
-
-  @Override
-  @Nullable
   public BashString getString() {
     return findChildByClass(BashString.class);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getEq() {
+    return findNotNullChildByType(EQ);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getAssignmentWord() {
+    return findNotNullChildByType(ASSIGNMENT_WORD);
   }
 
   @Override

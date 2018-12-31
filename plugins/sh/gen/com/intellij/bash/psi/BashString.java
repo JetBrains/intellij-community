@@ -11,9 +11,6 @@ public interface BashString extends BashCompositeElement {
   PsiElement getStringBegin();
 
   @NotNull
-  PsiElement getStringContent();
-
-  @NotNull
   PsiElement getStringEnd();
 
 }

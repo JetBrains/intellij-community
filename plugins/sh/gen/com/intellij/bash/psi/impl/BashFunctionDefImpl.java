@@ -50,9 +50,15 @@ public class BashFunctionDefImpl extends BashCompositeElementImpl implements Bas
   }
 
   @Override
-  @NotNull
+  @Nullable
+  public PsiElement getVariable() {
+    return findChildByType(VARIABLE);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getWord() {
-    return findNotNullChildByType(WORD);
+    return findChildByType(WORD);
   }
 
 }

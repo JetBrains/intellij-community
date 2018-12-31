@@ -7,22 +7,19 @@ import com.intellij.psi.PsiElement;
 
 public interface BashCaseCommand extends BashCommand {
 
-  @Nullable
-  BashCaseClause getCaseClause();
-
-  @Nullable
-  BashCaseClauseSequence getCaseClauseSequence();
+  @NotNull
+  List<BashCaseClause> getCaseClauseList();
 
   @NotNull
   PsiElement getCase();
 
-  @NotNull
+  @Nullable
   PsiElement getEsac();
 
-  @NotNull
-  PsiElement getIn();
+  @Nullable
+  PsiElement getVariable();
 
-  @NotNull
+  @Nullable
   PsiElement getWord();
 
 }

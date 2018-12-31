@@ -10,8 +10,8 @@ import com.intellij.bash.psi.impl.*;
 
 public interface BashTypes {
 
+  IElementType ASSIGNMENT_WORD_RULE = new BashCompositeElementType("ASSIGNMENT_WORD_RULE");
   IElementType CASE_CLAUSE = new BashCompositeElementType("CASE_CLAUSE");
-  IElementType CASE_CLAUSE_SEQUENCE = new BashCompositeElementType("CASE_CLAUSE_SEQUENCE");
   IElementType CASE_COMMAND = new BashCompositeElementType("CASE_COMMAND");
   IElementType COMMAND = new BashCompositeElementType("COMMAND");
   IElementType COMMANDS_LIST = new BashCompositeElementType("COMMANDS_LIST");
@@ -112,11 +112,11 @@ public interface BashTypes {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-      if (type == CASE_CLAUSE) {
-        return new BashCaseClauseImpl(node);
+      if (type == ASSIGNMENT_WORD_RULE) {
+        return new BashAssignmentWordRuleImpl(node);
       }
-      else if (type == CASE_CLAUSE_SEQUENCE) {
-        return new BashCaseClauseSequenceImpl(node);
+      else if (type == CASE_CLAUSE) {
+        return new BashCaseClauseImpl(node);
       }
       else if (type == CASE_COMMAND) {
         return new BashCaseCommandImpl(node);

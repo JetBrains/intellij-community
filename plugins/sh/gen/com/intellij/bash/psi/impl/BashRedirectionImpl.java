@@ -93,6 +93,12 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
 
   @Override
   @Nullable
+  public PsiElement getVariable() {
+    return findChildByType(VARIABLE);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getWord() {
     return findChildByType(WORD);
   }

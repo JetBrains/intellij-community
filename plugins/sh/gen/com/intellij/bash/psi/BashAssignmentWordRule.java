@@ -5,19 +5,22 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashFunctionDef extends BashCompositeElement {
+public interface BashAssignmentWordRule extends BashCompositeElement {
+
+  @Nullable
+  BashString getString();
 
   @NotNull
-  BashGroupCommand getGroupCommand();
+  PsiElement getEq();
+
+  @NotNull
+  PsiElement getAssignmentWord();
 
   @Nullable
-  PsiElement getLeftParen();
+  PsiElement getInt();
 
   @Nullable
-  PsiElement getRightParen();
-
-  @Nullable
-  PsiElement getFunction();
+  PsiElement getNumber();
 
   @Nullable
   PsiElement getVariable();

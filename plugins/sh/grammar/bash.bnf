@@ -78,39 +78,42 @@ private file ::=
 
 private newlines ::= '\n'*
 private simple_list ::= (commands_list ['&' | ';' | newlines])*
-private word_list ::= word+
+private word_list ::= w+
+private w ::= word | variable
 
-redirection ::=    '>' word
-                |  '<' word
-                |  num '>' word
-                |  num '<' word
-                |  '>>' word
-                |  num '>>' word
-                |  '<<' word
-                |  num '<<' word
+redirection ::=    '>' w
+                |  '<' w
+                |  num '>' w
+                |  num '<' w
+                |  '>>' w
+                |  num '>>' w
+                |  '<<' w
+                |  num '<<' w
                 |  '<&' num
                 |  num '<&' num
                 |  '>&' num
                 |  num '>&' num
-                |  '<&' word
-                |  num '<&' word
-                |  '>&' word
-                |  num '>&' word
-                |  '<<-' word
-                |  num '<<-' word
+                |  '<&' w
+                |  num '<&' w
+                |  '>&' w
+                |  num '>&' w
+                |  '<<-' w
+                |  num '<<-' w
                 |  '>&' '-'
                 |  num '>&' '-'
                 |  '<&' '-'
                 |  num '<&' '-'
-                |  '&>' word
-                |  num '<>' word
-                |  '<>' word
-                |  '>|' word
-                |  num '>|' word
+                |  '&>' w
+                |  num '<>' w
+                |  '<>' w
+                |  '>|' w
+                |  num '>|' w
 
 private num ::= number | int
-string ::= string_begin string_content string_end
-simple_command_element ::= word | assignment_word | redirection | string | variable | num
+string ::= string_begin (string_content|variable)* string_end
+private literal ::= w | string | num
+simple_command_element ::= literal | assignment_word_rule | redirection
+assignment_word_rule ::= assignment_word '=' literal
 
 redirection_list ::= redirection redirection*
 simple_command ::= simple_command_element+
@@ -126,29 +129,26 @@ shell_command ::=   for_command
                   | function_def
 
 for_command ::=
-               for word newlines do compound_list done
-            |  for word newlines '{' compound_list '}'
-            |  for word ';' newlines do compound_list done
-            |  for word ';' newlines '{' compound_list '}'
-            |  for word newlines in word_list list_terminator newlines do compound_list done
-            |  for word newlines in word_list list_terminator newlines '{' compound_list '}'
+               for w newlines do compound_list done
+            |  for w newlines '{' compound_list '}'
+            |  for w ';' newlines do compound_list done
+            |  for w ';' newlines '{' compound_list '}'
+            |  for w newlines in word_list list_terminator newlines do compound_list done
+            |  for w newlines in word_list list_terminator newlines '{' compound_list '}'
 
 select_command ::=
-                      select word newlines do list done
-                   |  select word newlines '{' list '}'
-                   |  select word ';' newlines do list done
-                   |  select word ';' newlines '{' list '}'
-                   |  select word newlines in word_list list_terminator newlines do list done
-                   |  select word newlines in word_list list_terminator newlines '{' list '}'
+                      select w newlines do list done
+                   |  select w newlines '{' list '}'
+                   |  select w ';' newlines do list done
+                   |  select w ';' newlines '{' list '}'
+                   |  select w newlines in word_list list_terminator newlines do list done
+                   |  select w newlines in word_list list_terminator newlines '{' list '}'
 
-case_command ::=
-                    case word newlines in newlines esac
-                 |  case word newlines in case_clause_sequence newlines esac
-                 |  case word newlines in case_clause esac
+case_command ::= case w newlines "in" (case_clause_list newlines) esac {pin(".*")=1}
 
-function_def ::=  word '(' ')' newlines group_command
-                 |  function word '(' ')' newlines group_command
-                 |  function word newlines group_command
+function_def ::=  w '(' ')' newlines group_command
+                 |  function w '(' ')' newlines group_command
+                 |  function w newlines group_command
 
 subshell ::=  '(' compound_list ')'
 
@@ -162,19 +162,18 @@ elif_clause ::= elif compound_list then compound_list |
                 elif compound_list then compound_list else compound_list |
                 elif compound_list then compound_list elif_clause
 
-case_clause ::=  pattern_list
-                |  case_clause_sequence pattern_list
+case_clause ::= pattern_list
 
 pattern_list ::=   newlines pattern ')' compound_list
                  | newlines pattern ')' newlines
                  | newlines '(' pattern ')' compound_list
                  | newlines '(' pattern ')' newlines {pin=0}
 
-case_clause_sequence ::= (pattern_list ';;')+
+private case_clause_list ::= (case_clause ';;')+
 
-pattern ::=  word ('|' word)* {pin('.*')=1}
+pattern ::=  w ('|' w)* {pin('.*')=1}
 
-list ::=   newlines list0 {pin=0}
+list ::= newlines list0 {pin=0}
 compound_list ::= '\n'+ list
 
 list0 ::= list1 ('\n' | '&' | ';') newlines

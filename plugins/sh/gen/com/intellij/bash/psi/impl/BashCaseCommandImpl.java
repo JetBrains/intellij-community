@@ -26,15 +26,9 @@ public class BashCaseCommandImpl extends BashCommandImpl implements BashCaseComm
   }
 
   @Override
-  @Nullable
-  public BashCaseClause getCaseClause() {
-    return findChildByClass(BashCaseClause.class);
-  }
-
-  @Override
-  @Nullable
-  public BashCaseClauseSequence getCaseClauseSequence() {
-    return findChildByClass(BashCaseClauseSequence.class);
+  @NotNull
+  public List<BashCaseClause> getCaseClauseList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCaseClause.class);
   }
 
   @Override
@@ -44,21 +38,21 @@ public class BashCaseCommandImpl extends BashCommandImpl implements BashCaseComm
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getEsac() {
-    return findNotNullChildByType(ESAC);
+    return findChildByType(ESAC);
   }
 
   @Override
-  @NotNull
-  public PsiElement getIn() {
-    return findNotNullChildByType(IN);
+  @Nullable
+  public PsiElement getVariable() {
+    return findChildByType(VARIABLE);
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getWord() {
-    return findNotNullChildByType(WORD);
+    return findChildByType(WORD);
   }
 
 }

@@ -33,12 +33,6 @@ public class BashStringImpl extends BashCompositeElementImpl implements BashStri
 
   @Override
   @NotNull
-  public PsiElement getStringContent() {
-    return findNotNullChildByType(STRING_CONTENT);
-  }
-
-  @Override
-  @NotNull
   public PsiElement getStringEnd() {
     return findNotNullChildByType(STRING_END);
   }

@@ -6,11 +6,11 @@ import com.intellij.psi.PsiElementVisitor;
 
 public class BashVisitor extends PsiElementVisitor {
 
-  public void visitCaseClause(@NotNull BashCaseClause o) {
+  public void visitAssignmentWordRule(@NotNull BashAssignmentWordRule o) {
     visitCompositeElement(o);
   }
 
-  public void visitCaseClauseSequence(@NotNull BashCaseClauseSequence o) {
+  public void visitCaseClause(@NotNull BashCaseClause o) {
     visitCompositeElement(o);
   }
 

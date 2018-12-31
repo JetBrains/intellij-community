@@ -8,13 +8,13 @@ import com.intellij.psi.PsiElement;
 public interface BashSimpleCommandElement extends BashCompositeElement {
 
   @Nullable
+  BashAssignmentWordRule getAssignmentWordRule();
+
+  @Nullable
   BashRedirection getRedirection();
 
   @Nullable
   BashString getString();
-
-  @Nullable
-  PsiElement getAssignmentWord();
 
   @Nullable
   PsiElement getInt();
