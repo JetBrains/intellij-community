@@ -472,6 +472,11 @@ public class TooBroadScopeInspection extends BaseInspection {
         newModifierList.setModifierProperty(PsiModifier.FINAL, variable.hasModifierProperty(PsiModifier.FINAL));
         GenerateMembersUtil.copyAnnotations(modifierList, newModifierList);
       }
+      PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null && typeElement.isInferredType()) {
+        //restore 'var' for local variables
+        newVariable.getTypeElement().replace(factory.createTypeElementFromText("var", variable));
+      }
       return newDeclaration;
     }
 
