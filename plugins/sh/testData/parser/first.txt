@@ -1,0 +1,224 @@
+BASH_FILE
+  PsiComment(Shebang)('#!/bin/bash\n')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# Simple line count example, using bash')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('#')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# Bash tutorial: http://linuxconfig.org/Bash_scripting_Tutorial#8-2-read-file-into-bash-array')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# My scripting link: http://www.macs.hw.ac.uk/~hwloidl/docs/index.html#scripting')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('#')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# Usage: ./line_count.sh file')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# -----------------------------------------------------------------------------')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        COMMAND
+          SIMPLE_COMMAND
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              STRING
+                PsiElement(string_begin)('"')
+                PsiElement(string_content)('Hello      World')
+                PsiElement(string_end)('"')
+  PsiWhiteSpace(' ')
+  PsiWhiteSpace(' ')
+  PsiWhiteSpace(' ')
+  PsiWhiteSpace(' ')
+  PsiWhiteSpace(' ')
+  PsiWhiteSpace(' ')
+  PsiWhiteSpace(' ')
+  PsiComment(Comment)('# This is a comment, too!')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        COMMAND
+          SIMPLE_COMMAND
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              STRING
+                PsiElement(string_begin)('"')
+                PsiElement(string_content)('Hello World')
+                PsiElement(string_end)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        COMMAND
+          SIMPLE_COMMAND
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              STRING
+                PsiElement(string_begin)('"')
+                PsiElement(string_content)('Hello * World')
+                PsiElement(string_end)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        COMMAND
+          SIMPLE_COMMAND
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('Hello')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('*')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('World')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        COMMAND
+          SIMPLE_COMMAND
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('Hello')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('World')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        COMMAND
+          SIMPLE_COMMAND
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              STRING
+                PsiElement(string_begin)('"')
+                PsiElement(string_content)('Hello')
+                PsiElement(string_end)('"')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('World')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        COMMAND
+          SIMPLE_COMMAND
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('Hello')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              STRING
+                PsiElement(string_begin)('"')
+                PsiElement(string_content)('     ')
+                PsiElement(string_end)('"')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('World')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        COMMAND
+          SIMPLE_COMMAND
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              STRING
+                PsiElement(string_begin)('"')
+                PsiElement(string_content)('Hello ')
+                PsiElement(string_end)('"')
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('*')
+            SIMPLE_COMMAND_ELEMENT
+              STRING
+                PsiElement(string_begin)('"')
+                PsiElement(string_content)(' World')
+                PsiElement(string_end)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        COMMAND
+          SIMPLE_COMMAND
+            SIMPLE_COMMAND_ELEMENT
+              PsiElement(word)('echo')
+  PsiWhiteSpace(' ')
+  PsiErrorElement:'&', '&&', ';', <pipeline command>, <simple command element>, '\n' or '||' expected, got '`'
+    PsiElement(backquote `)('`')
+  PsiElement(DUMMY_BLOCK)
+    PsiElement(word)('hello')
+    PsiElement(backquote `)('`')
+    PsiWhiteSpace(' ')
+    PsiElement(word)('world')
+    PsiElement(\n)('\n')
+    PsiElement(word)('echo')
+    PsiWhiteSpace(' ')
+    PsiElement(unevaluated string (STRING2))(''hello'')
+    PsiWhiteSpace(' ')
+    PsiElement(word)('world')
+    PsiElement(\n)('\n')
+    PsiElement(\n)('\n')
+    PsiElement(\n)('\n')
+  PsiElement(DUMMY_BLOCK)
+    PsiComment(Comment)('# Link filedescriptor 10 with stdin')
+    PsiElement(\n)('\n')
+    PsiElement(word)('exec')
+    PsiWhiteSpace(' ')
+    PsiElement(int)('10')
+    PsiElement(<)('<')
+    PsiElement(&[0-9] filedescriptor)('&0')
+    PsiElement(\n)('\n')
+    PsiComment(Comment)('# stdin replaced with a file supplied as a first argument')
+    PsiElement(\n)('\n')
+    PsiElement(word)('exec')
+    PsiWhiteSpace(' ')
+    PsiElement(<)('<')
+    PsiWhiteSpace(' ')
+    PsiElement(variable)('$1')
+  PsiElement(DUMMY_BLOCK)
+    PsiElement(\n)('\n')
+    PsiComment(Comment)('# remember the name of the input file')
+    PsiElement(\n)('\n')
+    PsiElement(assignment_word)('in')
+    PsiElement(=)('=')
+    PsiElement(variable)('$1')
+    PsiElement(\n)('\n')
+    PsiElement(\n)('\n')
+    PsiComment(Comment)('# init')
+    PsiElement(\n)('\n')
+    PsiElement(assignment_word)('file')
+    PsiElement(=)('=')
+  PsiElement(string_begin)('"')
+  PsiElement(string_content)('current_line.txt')
+  PsiElement(string_end)('"')
+  PsiElement(\n)('\n')
+  PsiElement(let)('let')
+  PsiWhiteSpace(' ')
+  PsiElement(assignment_word)('count')
+  PsiElement(=)('=')
+  PsiElement(int)('0')

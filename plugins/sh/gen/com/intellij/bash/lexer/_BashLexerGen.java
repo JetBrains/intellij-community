@@ -214,22 +214,22 @@ public abstract class _BashLexerGen implements StatesSwitcher {
     "\2\11\1\156\1\157\1\160\1\155\1\161\1\162\1\163"+
     "\1\0\1\11\1\164\1\165\1\166\2\0\1\167\1\0"+
     "\1\170\1\171\1\172\1\173\1\174\1\175\1\0\1\176"+
-    "\1\177\1\200\1\201\1\202\1\203\1\204\1\205\1\206"+
-    "\1\207\1\210\1\0\1\167\2\0\1\211\1\212\1\213"+
+    "\1\177\1\200\1\201\1\202\1\203\1\153\1\204\1\205"+
+    "\1\206\1\207\1\0\1\167\2\0\1\210\1\211\1\212"+
     "\2\11\2\130\1\131\1\11\1\153\1\155\1\147\1\11"+
-    "\1\0\1\67\1\76\1\214\1\215\1\0\1\216\1\217"+
-    "\1\220\1\221\1\222\1\223\1\224\2\225\1\4\1\0"+
-    "\1\120\1\0\1\120\1\0\1\124\2\226\1\127\2\227"+
-    "\11\0\3\131\1\0\1\230\2\0\2\11\1\231\1\232"+
-    "\1\233\1\234\5\11\1\235\3\11\1\236\1\237\3\11"+
-    "\1\0\2\240\1\0\2\241\1\242\1\243\1\244\3\0"+
-    "\1\245\1\0\3\246\1\247\1\250\1\251\1\252\1\11"+
-    "\1\0\1\11\1\0\2\11\1\242\1\4\4\120\5\0"+
-    "\2\131\1\135\1\253\1\11\1\0\1\254\1\255\1\256"+
-    "\1\257\1\260\1\261\1\262\1\11\1\263\3\11\1\240"+
-    "\1\0\1\241\2\0\1\254\1\246\1\0\1\264\1\11"+
-    "\3\130\1\265\1\120\2\0\1\120\3\0\2\11\1\266"+
-    "\1\267\1\240\1\241\1\246\1\11\1\270\2\11\1\271";
+    "\1\0\1\67\1\76\1\213\1\214\1\0\1\215\1\216"+
+    "\1\217\1\220\1\221\1\222\1\223\2\224\1\4\1\0"+
+    "\1\120\1\0\1\120\1\0\1\124\2\225\1\127\2\226"+
+    "\11\0\3\131\1\0\1\227\2\0\2\11\1\230\1\231"+
+    "\1\232\1\233\5\11\1\234\3\11\1\235\1\236\3\11"+
+    "\1\0\2\237\1\0\2\240\1\241\1\242\1\243\3\0"+
+    "\1\244\1\0\3\245\1\246\1\247\1\250\1\251\1\11"+
+    "\1\0\1\11\1\0\2\11\1\241\1\4\4\120\5\0"+
+    "\2\131\1\135\1\252\1\11\1\0\1\253\1\254\1\255"+
+    "\1\256\1\257\1\260\1\261\1\11\1\262\3\11\1\237"+
+    "\1\0\1\240\2\0\1\253\1\245\1\0\1\263\1\11"+
+    "\3\130\1\264\1\120\2\0\1\120\3\0\2\11\1\265"+
+    "\1\266\1\237\1\240\1\245\1\11\1\267\2\11\1\270";
 
   private static int [] zzUnpackAction() {
     int [] result = new int[450];
@@ -1274,137 +1274,137 @@ public abstract class _BashLexerGen implements StatesSwitcher {
             { return BAD_CHARACTER;
             } 
             // fall through
-          case 186: break;
+          case 185: break;
           case 2: 
             { if (yystate() == X_HERE_STRING) {
-                                                closeHereStringIfAvailable();
-                                                return LINE_FEED;
-                                            } else if ((yystate() == S_PARAM_EXPANSION || yystate() == S_SUBSHELL || yystate() == S_ARITH || yystate() == S_ARITH_SQUARE_MODE) && isInState(X_HEREDOC)) {
-                                                backToPreviousState();
-                                                return LINE_FEED;
-                                            }
+                                                        closeHereStringIfAvailable();
+                                                        return BashTokenTypes.LINEFEED;
+                                                    } else if ((yystate() == S_PARAM_EXPANSION || yystate() == S_SUBSHELL || yystate() == S_ARITH || yystate() == S_ARITH_SQUARE_MODE) && isInState(X_HEREDOC)) {
+                                                        backToPreviousState();
+                                                        return BashTokenTypes.LINEFEED;
+                                                    }
 
-                                            if (!heredocState().isEmpty()) {
-                                                // first linebreak after the start marker
-                                                goToState(X_HEREDOC);
-                                                return LINE_FEED;
-                                            }
+                                                    if (!heredocState().isEmpty()) {
+                                                        // first linebreak after the start marker
+                                                        goToState(X_HEREDOC);
+                                                        return BashTokenTypes.LINEFEED;
+                                                    }
 
-                                           return LINE_FEED;
+                                                   return BashTokenTypes.LINEFEED;
             } 
             // fall through
-          case 187: break;
+          case 186: break;
           case 3: 
             { return BACKSLASH;
             } 
             // fall through
-          case 188: break;
+          case 187: break;
           case 4: 
             { return WHITESPACE;
             } 
             // fall through
-          case 189: break;
+          case 188: break;
           case 5: 
             { return COMMENT;
             } 
             // fall through
-          case 190: break;
+          case 189: break;
           case 6: 
-            { return BANG_TOKEN;
+            { return BANG;
             } 
             // fall through
-          case 191: break;
+          case 190: break;
           case 7: 
             { return DOLLAR;
             } 
             // fall through
-          case 192: break;
+          case 191: break;
           case 8: 
             { stringParsingState().enterString(); if (yystate() == X_HERE_STRING && !isInHereStringContent()) enterHereStringContent();
 goToState(X_STRINGMODE); return STRING_BEGIN;
             } 
             // fall through
-          case 193: break;
+          case 192: break;
           case 9: 
             { return WORD;
             } 
             // fall through
-          case 194: break;
+          case 193: break;
           case 10: 
-            { return INTEGER_LITERAL;
+            { return INT;
             } 
             // fall through
-          case 195: break;
+          case 194: break;
           case 11: 
             { closeHereStringIfAvailable(); return AMP;
             } 
             // fall through
-          case 196: break;
+          case 195: break;
           case 12: 
             { return AT;
             } 
             // fall through
-          case 197: break;
+          case 196: break;
           case 13: 
             { return RIGHT_PAREN;
             } 
             // fall through
-          case 198: break;
+          case 197: break;
           case 14: 
             { if (yystate() == S_BACKQUOTE) backToPreviousState(); else goToState(S_BACKQUOTE); return BACKQUOTE;
             } 
             // fall through
-          case 199: break;
+          case 198: break;
           case 15: 
             { closeHereStringIfAvailable(); return SEMI;
             } 
             // fall through
-          case 200: break;
+          case 199: break;
           case 16: 
             { return PIPE;
             } 
             // fall through
-          case 201: break;
+          case 200: break;
           case 17: 
             { if (yystate() == S_DOLLAR_PREFIXED) backToPreviousState(); goToState(S_ARITH_SQUARE_MODE); return EXPR_ARITH_SQUARE;
             } 
             // fall through
-          case 202: break;
+          case 201: break;
           case 18: 
             { return EQ;
             } 
             // fall through
-          case 203: break;
+          case 202: break;
           case 19: 
             { if (yystate() == S_DOLLAR_PREFIXED) backToPreviousState(); stringParsingState().enterSubshell(); goToState(S_SUBSHELL); return LEFT_PAREN;
             } 
             // fall through
-          case 204: break;
+          case 203: break;
           case 20: 
             { return LEFT_CURLY;
             } 
             // fall through
-          case 205: break;
+          case 204: break;
           case 21: 
             { if (yystate() == X_HEREDOC && !heredocState().isExpectingEvaluatingHeredoc()) return HEREDOC_LINE; return RIGHT_CURLY;
             } 
             // fall through
-          case 206: break;
+          case 205: break;
           case 22: 
             { return GREATER_THAN;
             } 
             // fall through
-          case 207: break;
+          case 206: break;
           case 23: 
             { return LESS_THAN;
             } 
             // fall through
-          case 208: break;
+          case 207: break;
           case 24: 
             { return COND_OP_NOT;
             } 
             // fall through
-          case 209: break;
+          case 208: break;
           case 25: 
             { if (isEmptyConditionalCommand()) {
                                     setEmptyConditionalCommand(false);
@@ -1416,157 +1416,157 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
                                  }
             } 
             // fall through
-          case 210: break;
+          case 209: break;
           case 26: 
             { return COND_OP;
             } 
             // fall through
-          case 211: break;
+          case 210: break;
           case 27: 
             { return LEFT_PAREN;
             } 
             // fall through
-          case 212: break;
+          case 211: break;
           case 28: 
             { return ARITH_BASE_CHAR;
             } 
             // fall through
-          case 213: break;
+          case 212: break;
           case 29: 
             { return ARITH_NEGATE;
             } 
             // fall through
-          case 214: break;
+          case 213: break;
           case 30: 
             { return ARITH_BITWISE_XOR;
             } 
             // fall through
-          case 215: break;
+          case 214: break;
           case 31: 
             { return RIGHT_SQUARE;
             } 
             // fall through
-          case 216: break;
+          case 215: break;
           case 32: 
-            { return ARITH_NUMBER;
+            { return BashTokenTypes.NUMBER;
             } 
             // fall through
-          case 217: break;
+          case 216: break;
           case 33: 
             { return ARITH_BITWISE_AND;
             } 
             // fall through
-          case 218: break;
+          case 217: break;
           case 34: 
-            { return ARITH_MULT;
+            { return MULT;
             } 
             // fall through
-          case 219: break;
+          case 218: break;
           case 35: 
             { return ARITH_PLUS;
             } 
             // fall through
-          case 220: break;
+          case 219: break;
           case 36: 
             { decOpenParenthesisCount(); return RIGHT_PAREN;
             } 
             // fall through
-          case 221: break;
+          case 220: break;
           case 37: 
             { return ARITH_MINUS;
             } 
             // fall through
-          case 222: break;
+          case 221: break;
           case 38: 
             { return LEFT_SQUARE;
             } 
             // fall through
-          case 223: break;
+          case 222: break;
           case 39: 
             { incOpenParenthesisCount(); return LEFT_PAREN;
             } 
             // fall through
-          case 224: break;
+          case 223: break;
           case 40: 
             { return COMMA;
             } 
             // fall through
-          case 225: break;
+          case 224: break;
           case 41: 
             { return ARITH_BITWISE_NEGATE;
             } 
             // fall through
-          case 226: break;
+          case 225: break;
           case 42: 
             { return ARITH_GT;
             } 
             // fall through
-          case 227: break;
+          case 226: break;
           case 43: 
             { return ARITH_LT;
             } 
             // fall through
-          case 228: break;
+          case 227: break;
           case 44: 
-            { return ARITH_DIV;
+            { return DIV;
+            } 
+            // fall through
+          case 228: break;
+          case 45: 
+            { return MOD;
             } 
             // fall through
           case 229: break;
-          case 45: 
-            { return ARITH_MOD;
-            } 
-            // fall through
-          case 230: break;
           case 46: 
             { return ARITH_QMARK;
             } 
             // fall through
-          case 231: break;
+          case 230: break;
           case 47: 
             { return ARITH_COLON;
             } 
             // fall through
-          case 232: break;
+          case 231: break;
           case 48: 
             { backToPreviousState(); return _EXPR_ARITH_SQUARE;
             } 
             // fall through
-          case 233: break;
+          case 232: break;
           case 49: 
             { return EXPR_ARITH_SQUARE;
             } 
             // fall through
-          case 234: break;
+          case 233: break;
           case 50: 
             { backToPreviousState(); return RIGHT_SQUARE;
             } 
             // fall through
-          case 235: break;
+          case 234: break;
           case 51: 
             { backToPreviousState(); return RIGHT_PAREN;
             } 
             // fall through
-          case 236: break;
+          case 235: break;
           case 52: 
             { backToPreviousState(); if (stringParsingState().isInSubshell()) stringParsingState().leaveSubshell(); return RIGHT_PAREN;
             } 
             // fall through
-          case 237: break;
+          case 236: break;
           case 53: 
             { backToPreviousState(); goToState(S_ARITH_ARRAY_MODE); return LEFT_SQUARE;
             } 
             // fall through
-          case 238: break;
+          case 237: break;
           case 54: 
             { goToState(S_ARITH_ARRAY_MODE); return LEFT_SQUARE;
             } 
             // fall through
-          case 239: break;
+          case 238: break;
           case 55: 
             { return STRING_DATA;
             } 
             // fall through
-          case 240: break;
+          case 239: break;
           case 56: 
             { if (!stringParsingState().isInSubstring() && stringParsingState().isSubstringAllowed()) {
                                     stringParsingState().enterString();
@@ -1579,7 +1579,7 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
                                   return STRING_END;
             } 
             // fall through
-          case 241: break;
+          case 240: break;
           case 57: 
             { if (yystate() == S_BACKQUOTE) {
                                     backToPreviousState();
@@ -1590,52 +1590,52 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
                                 return BACKQUOTE;
             } 
             // fall through
-          case 242: break;
+          case 241: break;
           case 58: 
             { setParamExpansionHash(isParamExpansionWord()); return PARAM_EXPANSION_OP_HASH;
             } 
             // fall through
-          case 243: break;
+          case 242: break;
           case 59: 
             { return PARAM_EXPANSION_OP_EXCL;
             } 
             // fall through
-          case 244: break;
+          case 243: break;
           case 60: 
             { setParamExpansionOther(true); return PARAM_EXPANSION_OP_UPPERCASE_FIRST;
             } 
             // fall through
-          case 245: break;
+          case 244: break;
           case 61: 
             { setParamExpansionOther(true); return PARAM_EXPANSION_OP_DOT;
             } 
             // fall through
-          case 246: break;
+          case 245: break;
           case 62: 
             { setParamExpansionWord(true); return WORD;
             } 
             // fall through
-          case 247: break;
+          case 246: break;
           case 63: 
             { return PARAM_EXPANSION_OP_STAR;
             } 
             // fall through
-          case 248: break;
+          case 247: break;
           case 64: 
             { return PARAM_EXPANSION_OP_AT;
             } 
             // fall through
-          case 249: break;
+          case 248: break;
           case 65: 
             { return PARAM_EXPANSION_OP_PLUS;
             } 
             // fall through
-          case 250: break;
+          case 249: break;
           case 66: 
             { return PARAM_EXPANSION_OP_MINUS;
             } 
             // fall through
-          case 251: break;
+          case 250: break;
           case 67: 
             { if (!isParamExpansionOther() && (!isParamExpansionWord() || !isParamExpansionHash())) {
                                     // If we expect an array reference parse the next tokens as arithmetic expression
@@ -1645,18 +1645,18 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
                                   return LEFT_SQUARE;
             } 
             // fall through
-          case 252: break;
+          case 251: break;
           case 68: 
             { return PARAM_EXPANSION_OP_EQ;
             } 
             // fall through
-          case 253: break;
+          case 252: break;
           case 69: 
             { setParamExpansionWord(false); setParamExpansionHash(false); setParamExpansionOther(false);
                                   return LEFT_CURLY;
             } 
             // fall through
-          case 254: break;
+          case 253: break;
           case 70: 
             { setParamExpansionWord(false); setParamExpansionHash(false); setParamExpansionOther(false);
                                   backToPreviousState();
@@ -1664,52 +1664,52 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
                                   return RIGHT_CURLY;
             } 
             // fall through
-          case 255: break;
+          case 254: break;
           case 71: 
             { setParamExpansionOther(true); return PARAM_EXPANSION_OP_LOWERCASE_FIRST;
             } 
             // fall through
-          case 256: break;
+          case 255: break;
           case 72: 
             { goToState(S_PARAM_EXPANSION_PATTERN); return PARAM_EXPANSION_OP_SLASH;
             } 
             // fall through
-          case 257: break;
+          case 256: break;
           case 73: 
             { setParamExpansionOther(true); return PARAM_EXPANSION_OP_PERCENT;
             } 
             // fall through
-          case 258: break;
+          case 257: break;
           case 74: 
             { setParamExpansionOther(true); return PARAM_EXPANSION_OP_QMARK;
             } 
             // fall through
-          case 259: break;
+          case 258: break;
           case 75: 
             { return PARAM_EXPANSION_OP_COLON;
             } 
             // fall through
-          case 260: break;
+          case 259: break;
           case 76: 
             { backToPreviousState(); return PARAM_EXPANSION_PATTERN;
             } 
             // fall through
-          case 261: break;
+          case 260: break;
           case 77: 
             { yypushback(1); backToPreviousState();
             } 
             // fall through
-          case 262: break;
+          case 261: break;
           case 78: 
             { backToPreviousState(); goToState(S_PARAM_EXPANSION_REPLACEMENT); return PARAM_EXPANSION_OP_SLASH;
             } 
             // fall through
-          case 263: break;
+          case 262: break;
           case 79: 
             { backToPreviousState(); return WORD;
             } 
             // fall through
-          case 264: break;
+          case 263: break;
           case 80: 
             { heredocState().pushMarker(yytext(), yystate() == X_HEREDOC_MARKER_IGNORE_TABS);
         backToPreviousState();
@@ -1717,12 +1717,12 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
         return HEREDOC_MARKER_START;
             } 
             // fall through
-          case 265: break;
+          case 264: break;
           case 81: 
-            { return LINE_FEED;
+            { return BashTokenTypes.LINEFEED;
             } 
             // fall through
-          case 266: break;
+          case 265: break;
           case 82: 
             { //support end marker followed by a backtick if nested in a backtick command
             CharSequence markerText = yytext();
@@ -1748,20 +1748,20 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             return HEREDOC_LINE;
             } 
             // fall through
-          case 267: break;
+          case 266: break;
           case 83: 
             { if (!heredocState().isEmpty()) {
-                                        return HEREDOC_LINE;
-                                  }
-                                  return LINE_FEED;
+                                            return HEREDOC_LINE;
+                                      }
+                                      return BashTokenTypes.LINEFEED;
             } 
             // fall through
-          case 268: break;
+          case 267: break;
           case 84: 
             { return HEREDOC_LINE;
             } 
             // fall through
-          case 269: break;
+          case 268: break;
           case 85: 
             { if (heredocState().isNextMarker(yytext())) {
                 boolean ignoreTabs = heredocState().isIgnoringTabs();
@@ -1775,47 +1775,47 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
          return HEREDOC_LINE;
             } 
             // fall through
-          case 270: break;
+          case 269: break;
           case 86: 
             { if (isInHereStringContent()) { leaveHereStringContent(); backToPreviousState(); } return WHITESPACE;
             } 
             // fall through
-          case 271: break;
+          case 270: break;
           case 87: 
             { if (!isInHereStringContent()) enterHereStringContent(); return WORD;
             } 
             // fall through
-          case 272: break;
+          case 271: break;
           case 88: 
             { return LINE_CONTINUATION;
             } 
             // fall through
-          case 273: break;
+          case 272: break;
           case 89: 
             { return SHEBANG;
             } 
             // fall through
-          case 274: break;
+          case 273: break;
           case 90: 
             { return VARIABLE;
             } 
             // fall through
-          case 275: break;
+          case 274: break;
           case 91: 
             { yypushback(1); goToState(S_ARITH_SQUARE_MODE); return DOLLAR;
             } 
             // fall through
-          case 276: break;
+          case 275: break;
           case 92: 
             { if (yystate() == X_HEREDOC && !heredocState().isExpectingEvaluatingHeredoc()) return HEREDOC_LINE; goToState(S_PARAM_EXPANSION); yypushback(1); return DOLLAR;
             } 
             // fall through
-          case 277: break;
+          case 276: break;
           case 93: 
             { if (yystate() == X_HERE_STRING && !isInHereStringContent()) enterHereStringContent(); return STRING2;
             } 
             // fall through
-          case 278: break;
+          case 277: break;
           case 94: 
             // lookahead expression with fixed lookahead length
             zzMarkedPos = Character.offsetByCodePoints
@@ -1823,17 +1823,17 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             { return ASSIGNMENT_WORD;
             } 
             // fall through
-          case 279: break;
+          case 278: break;
           case 95: 
             { return FILEDESCRIPTOR;
             } 
             // fall through
-          case 280: break;
+          case 279: break;
           case 96: 
             { closeHereStringIfAvailable(); return AND_AND;
             } 
             // fall through
-          case 281: break;
+          case 280: break;
           case 97: 
             { if (isBash4()) {
                                         return REDIRECT_AMP_GREATER;
@@ -1843,12 +1843,12 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
                                     }
             } 
             // fall through
-          case 282: break;
+          case 281: break;
           case 98: 
             { return ADD_EQ;
             } 
             // fall through
-          case 283: break;
+          case 282: break;
           case 99: 
             { if (isBash4()) {
                                         return PIPE_AMP;
@@ -1858,73 +1858,73 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
                                      }
             } 
             // fall through
-          case 284: break;
+          case 283: break;
           case 100: 
             { closeHereStringIfAvailable(); return OR_OR;
             } 
             // fall through
-          case 285: break;
+          case 284: break;
           case 101: 
             { goToState(S_TEST); setEmptyConditionalCommand(false); return EXPR_CONDITIONAL;
             } 
             // fall through
-          case 286: break;
+          case 285: break;
           case 102: 
-            { return IF_KEYWORD;
+            { return IF;
             } 
             // fall through
-          case 287: break;
+          case 286: break;
           case 103: 
             { if (yystate() == S_DOLLAR_PREFIXED) backToPreviousState(); goToState(S_ARITH); return EXPR_ARITH;
             } 
             // fall through
-          case 288: break;
+          case 287: break;
           case 104: 
-            { return DO_KEYWORD;
+            { return DO;
+            } 
+            // fall through
+          case 288: break;
+          case 105: 
+            { return FI;
             } 
             // fall through
           case 289: break;
-          case 105: 
-            { return FI_KEYWORD;
-            } 
-            // fall through
-          case 290: break;
           case 106: 
             { return REDIRECT_GREATER_BAR;
             } 
             // fall through
-          case 291: break;
+          case 290: break;
           case 107: 
             { return SHIFT_RIGHT;
             } 
             // fall through
-          case 292: break;
+          case 291: break;
           case 108: 
             { return REDIRECT_LESS_GREATER;
             } 
             // fall through
-          case 293: break;
+          case 292: break;
           case 109: 
             { goToState(X_HEREDOC_MARKER);
         return HEREDOC_MARKER_TAG;
             } 
             // fall through
-          case 294: break;
+          case 293: break;
           case 110: 
             { backToPreviousState(); setEmptyConditionalCommand(false); return _EXPR_CONDITIONAL;
             } 
             // fall through
-          case 295: break;
+          case 294: break;
           case 111: 
             { return COND_OP_EQ_EQ;
             } 
             // fall through
-          case 296: break;
+          case 295: break;
           case 112: 
             { return COND_OP_REGEX;
             } 
             // fall through
-          case 297: break;
+          case 296: break;
           case 113: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
@@ -1932,22 +1932,22 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             { goToState(S_DOLLAR_PREFIXED); return DOLLAR;
             } 
             // fall through
-          case 298: break;
+          case 297: break;
           case 114: 
             { return AND_AND;
             } 
             // fall through
-          case 299: break;
+          case 298: break;
           case 115: 
             { return OR_OR;
             } 
             // fall through
-          case 300: break;
+          case 299: break;
           case 116: 
             { return ARITH_NE;
             } 
             // fall through
-          case 301: break;
+          case 300: break;
           case 117: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
@@ -1955,12 +1955,12 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             { if (yystate() == X_HEREDOC && !heredocState().isExpectingEvaluatingHeredoc()) return HEREDOC_LINE; goToState(S_DOLLAR_PREFIXED); return DOLLAR;
             } 
             // fall through
-          case 302: break;
+          case 301: break;
           case 118: 
             { return ARITH_ASS_BIT_XOR;
             } 
             // fall through
-          case 303: break;
+          case 302: break;
           case 119: 
             // lookahead expression with fixed lookahead length
             zzMarkedPos = Character.offsetByCodePoints
@@ -1968,37 +1968,37 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             { goToState(S_ARRAY); return ASSIGNMENT_WORD;
             } 
             // fall through
-          case 304: break;
+          case 303: break;
           case 120: 
             { return ARITH_ASS_BIT_AND;
             } 
             // fall through
-          case 305: break;
+          case 304: break;
           case 121: 
-            { return ARITH_EXPONENT;
+            { return EXPONENT;
             } 
             // fall through
-          case 306: break;
+          case 305: break;
           case 122: 
             { return ARITH_ASS_MUL;
             } 
             // fall through
-          case 307: break;
+          case 306: break;
           case 123: 
             { return ARITH_PLUS_PLUS;
             } 
             // fall through
-          case 308: break;
+          case 307: break;
           case 124: 
             { return ARITH_ASS_PLUS;
             } 
             // fall through
-          case 309: break;
+          case 308: break;
           case 125: 
             { return ARITH_OCTAL_NUMBER;
             } 
             // fall through
-          case 310: break;
+          case 309: break;
           case 126: 
             { if (openParenthesisCount() > 0) {
                                     decOpenParenthesisCount();
@@ -2012,58 +2012,53 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
                                   }
             } 
             // fall through
-          case 311: break;
+          case 310: break;
           case 127: 
             { return ARITH_MINUS_MINUS;
             } 
             // fall through
-          case 312: break;
+          case 311: break;
           case 128: 
             { return ARITH_ASS_MINUS;
             } 
             // fall through
-          case 313: break;
+          case 312: break;
           case 129: 
             { return ARITH_ASS_BIT_OR;
             } 
             // fall through
-          case 314: break;
+          case 313: break;
           case 130: 
             { return ARITH_EQ;
             } 
             // fall through
-          case 315: break;
+          case 314: break;
           case 131: 
             { return ARITH_GE;
             } 
             // fall through
-          case 316: break;
+          case 315: break;
           case 132: 
-            { return ARITH_SHIFT_RIGHT;
-            } 
-            // fall through
-          case 317: break;
-          case 133: 
             { return ARITH_LE;
             } 
             // fall through
-          case 318: break;
-          case 134: 
-            { return ARITH_SHIFT_LEFT;
+          case 316: break;
+          case 133: 
+            { return SHIFT_LEFT;
             } 
             // fall through
-          case 319: break;
-          case 135: 
+          case 317: break;
+          case 134: 
             { return ARITH_ASS_DIV;
             } 
             // fall through
-          case 320: break;
-          case 136: 
+          case 318: break;
+          case 135: 
             { return ARITH_ASS_MOD;
             } 
             // fall through
-          case 321: break;
-          case 137: 
+          case 319: break;
+          case 136: 
             { goToState(S_CASE_PATTERN);
                                  if (isBash4()) {
                                     return CASE_END;
@@ -2074,13 +2069,13 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
                                  }
             } 
             // fall through
-          case 322: break;
-          case 138: 
+          case 320: break;
+          case 137: 
             { goToState(S_CASE_PATTERN); return CASE_END;
             } 
             // fall through
-          case 323: break;
-          case 139: 
+          case 321: break;
+          case 138: 
             { if (!isInCaseBody()) {
                                    setInCaseBody(true);
                                    goToState(S_CASE_PATTERN);
@@ -2088,64 +2083,64 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
                                  return WORD;
             } 
             // fall through
-          case 324: break;
-          case 140: 
+          case 322: break;
+          case 139: 
             { setParamExpansionHash(isParamExpansionWord()); return PARAM_EXPANSION_OP_HASH_HASH;
             } 
             // fall through
-          case 325: break;
-          case 141: 
+          case 323: break;
+          case 140: 
             { setParamExpansionOther(true); return PARAM_EXPANSION_OP_UPPERCASE_ALL;
             } 
             // fall through
-          case 326: break;
-          case 142: 
+          case 324: break;
+          case 141: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 1);
             { return LEFT_SQUARE;
             } 
             // fall through
-          case 327: break;
-          case 143: 
+          case 325: break;
+          case 142: 
             { setParamExpansionOther(true); return PARAM_EXPANSION_OP_LOWERCASE_ALL;
             } 
             // fall through
-          case 328: break;
-          case 144: 
+          case 326: break;
+          case 143: 
             { goToState(S_PARAM_EXPANSION_PATTERN); return PARAM_EXPANSION_OP_SLASH_SLASH;
             } 
             // fall through
-          case 329: break;
-          case 145: 
+          case 327: break;
+          case 144: 
             { return PARAM_EXPANSION_OP_COLON_PLUS;
             } 
             // fall through
-          case 330: break;
-          case 146: 
+          case 328: break;
+          case 145: 
             { return PARAM_EXPANSION_OP_COLON_MINUS;
             } 
             // fall through
-          case 331: break;
-          case 147: 
+          case 329: break;
+          case 146: 
             { return PARAM_EXPANSION_OP_COLON_EQ;
             } 
             // fall through
-          case 332: break;
-          case 148: 
+          case 330: break;
+          case 147: 
             { return PARAM_EXPANSION_OP_COLON_QMARK;
             } 
             // fall through
-          case 333: break;
-          case 149: 
+          case 331: break;
+          case 148: 
             // lookahead expression with fixed lookahead length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
             { backToPreviousState(); goToState(S_PARAM_EXPANSION_DELIMITER); return PARAM_EXPANSION_PATTERN;
             } 
             // fall through
-          case 334: break;
-          case 150: 
+          case 332: break;
+          case 149: 
             { if (heredocState().isNextMarker(yytext())) {
                 boolean ignoreTabs = heredocState().isIgnoringTabs();
 
@@ -2160,29 +2155,29 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
                 : HEREDOC_LINE;
             } 
             // fall through
-          case 335: break;
-          case 151: 
+          case 333: break;
+          case 150: 
             { if (!isInHereStringContent()) enterHereStringContent(); return VARIABLE;
             } 
             // fall through
-          case 336: break;
-          case 152: 
+          case 334: break;
+          case 151: 
             // lookahead expression with fixed lookahead length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
             { return ASSIGNMENT_WORD;
             } 
             // fall through
-          case 337: break;
-          case 153: 
+          case 335: break;
+          case 152: 
             // lookahead expression with fixed lookahead length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
             { goToState(S_ASSIGNMENT_LIST); return ASSIGNMENT_WORD;
             } 
             // fall through
-          case 338: break;
-          case 154: 
+          case 336: break;
+          case 153: 
             { if (isBash4()) {
                                         return REDIRECT_AMP_GREATER_GREATER;
                                     } else {
@@ -2191,96 +2186,96 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
                                     }
             } 
             // fall through
-          case 339: break;
-          case 155: 
+          case 337: break;
+          case 154: 
             { goToState(S_TEST_COMMAND); return BRACKET_KEYWORD;
             } 
             // fall through
-          case 340: break;
-          case 156: 
+          case 338: break;
+          case 155: 
             { yypushback(1); goToState(S_TEST); setEmptyConditionalCommand(true); return EXPR_CONDITIONAL;
             } 
             // fall through
-          case 341: break;
-          case 157: 
+          case 339: break;
+          case 156: 
             { if (yystate() == S_DOLLAR_PREFIXED) backToPreviousState(); yypushback(2); goToState(S_SUBSHELL); return LEFT_PAREN;
             } 
             // fall through
-          case 342: break;
+          case 340: break;
+          case 157: 
+            { return LET;
+            } 
+            // fall through
+          case 341: break;
           case 158: 
-            { return LET_KEYWORD;
+            { return FOR;
             } 
             // fall through
-          case 343: break;
+          case 342: break;
           case 159: 
-            { return FOR_KEYWORD;
-            } 
-            // fall through
-          case 344: break;
-          case 160: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 2);
             { return REDIRECT_GREATER_AMP;
             } 
             // fall through
-          case 345: break;
-          case 161: 
+          case 343: break;
+          case 160: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 2);
             { return REDIRECT_LESS_AMP;
             } 
             // fall through
-          case 346: break;
-          case 162: 
+          case 344: break;
+          case 161: 
             { goToState(X_HEREDOC_MARKER_IGNORE_TABS);
         return HEREDOC_MARKER_TAG;
             } 
             // fall through
-          case 347: break;
-          case 163: 
+          case 345: break;
+          case 162: 
             { goToState(X_HERE_STRING); return REDIRECT_HERE_STRING;
             } 
             // fall through
-          case 348: break;
-          case 164: 
+          case 346: break;
+          case 163: 
             { backToPreviousState(); return _BRACKET_KEYWORD;
             } 
             // fall through
-          case 349: break;
-          case 165: 
+          case 347: break;
+          case 164: 
             { return ARITH_HEX_NUMBER;
             } 
             // fall through
-          case 350: break;
-          case 166: 
+          case 348: break;
+          case 165: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 2);
             { yypushback(1); return ARITH_MINUS;
             } 
             // fall through
-          case 351: break;
-          case 167: 
+          case 349: break;
+          case 166: 
             { return ARITH_ASS_SHIFT_RIGHT;
             } 
             // fall through
-          case 352: break;
-          case 168: 
+          case 350: break;
+          case 167: 
             { return ARITH_ASS_SHIFT_LEFT;
             } 
             // fall through
-          case 353: break;
-          case 169: 
+          case 351: break;
+          case 168: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 1);
             { backToPreviousState(); goToState(S_ASSIGNMENT_LIST); return RIGHT_SQUARE;
             } 
             // fall through
-          case 354: break;
-          case 170: 
+          case 352: break;
+          case 169: 
             { goToState(S_CASE_PATTERN);
                                  if (!isBash4()) {
                                     yypushback(1);
@@ -2288,16 +2283,16 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
                                  return CASE_END;
             } 
             // fall through
-          case 355: break;
-          case 171: 
+          case 353: break;
+          case 170: 
             // lookahead expression with fixed lookahead length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -3);
             { goToState(S_ASSIGNMENT_LIST); return ASSIGNMENT_WORD;
             } 
             // fall through
-          case 356: break;
-          case 172: 
+          case 354: break;
+          case 171: 
             // general lookahead, find correct zzMarkedPos
             { int zzFState = 21;
               int zzFPos = zzStartRead;
@@ -2326,72 +2321,72 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             { goToState(S_ARRAY); return ASSIGNMENT_WORD;
             } 
             // fall through
-          case 357: break;
+          case 355: break;
+          case 172: 
+            { return TIME;
+            } 
+            // fall through
+          case 356: break;
           case 173: 
-            { return TIME_KEYWORD;
+            { return TRAP;
+            } 
+            // fall through
+          case 357: break;
+          case 174: 
+            { return THEN;
             } 
             // fall through
           case 358: break;
-          case 174: 
-            { return TRAP_KEYWORD;
+          case 175: 
+            { return ELIF;
             } 
             // fall through
           case 359: break;
-          case 175: 
-            { return THEN_KEYWORD;
+          case 176: 
+            { return ELSE;
             } 
             // fall through
           case 360: break;
-          case 176: 
-            { return ELIF_KEYWORD;
+          case 177: 
+            { setInCaseBody(false); goToState(S_CASE); return BashTokenTypes.CASE;
             } 
             // fall through
           case 361: break;
-          case 177: 
-            { return ELSE_KEYWORD;
+          case 178: 
+            { return DONE;
             } 
             // fall through
           case 362: break;
-          case 178: 
-            { setInCaseBody(false); goToState(S_CASE); return CASE_KEYWORD;
+          case 179: 
+            { backToPreviousState(); return ESAC;
             } 
             // fall through
           case 363: break;
-          case 179: 
-            { return DONE_KEYWORD;
-            } 
-            // fall through
-          case 364: break;
           case 180: 
-            { backToPreviousState(); return ESAC_KEYWORD;
-            } 
-            // fall through
-          case 365: break;
-          case 181: 
             { backToPreviousState(); yypushback(yylength());
             } 
             // fall through
-          case 366: break;
+          case 364: break;
+          case 181: 
+            { return UNTIL;
+            } 
+            // fall through
+          case 365: break;
           case 182: 
-            { return UNTIL_KEYWORD;
+            { return WHILE;
+            } 
+            // fall through
+          case 366: break;
+          case 183: 
+            { return SELECT;
             } 
             // fall through
           case 367: break;
-          case 183: 
-            { return WHILE_KEYWORD;
+          case 184: 
+            { return FUNCTION;
             } 
             // fall through
           case 368: break;
-          case 184: 
-            { return SELECT_KEYWORD;
-            } 
-            // fall through
-          case 369: break;
-          case 185: 
-            { return FUNCTION_KEYWORD;
-            } 
-            // fall through
-          case 370: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }

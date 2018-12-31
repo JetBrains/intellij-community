@@ -72,7 +72,7 @@ public class BashSyntaxHighlighter extends SyntaxHighlighterBase {
   private static final TokenSet parenthesisSet = TokenSet.create(BashTokenTypes.LEFT_PAREN, BashTokenTypes.RIGHT_PAREN);
   private static final TokenSet bracesSet = TokenSet.create(BashTokenTypes.LEFT_CURLY, BashTokenTypes.RIGHT_CURLY);
   private static final TokenSet bracketSet = TokenSet.create(BashTokenTypes.LEFT_SQUARE, BashTokenTypes.RIGHT_SQUARE);
-  private static final TokenSet numberSet = TokenSet.orSet(BashTokenTypes.arithLiterals, TokenSet.create(BashTokenTypes.INTEGER_LITERAL));
+  private static final TokenSet numberSet = TokenSet.orSet(BashTokenTypes.arithLiterals, TokenSet.create(BashTokenTypes.INT));
   private static final TokenSet lineCommentSet = TokenSet.create(BashTokenTypes.COMMENT);
   private static final TokenSet shebangSet = TokenSet.create(BashTokenTypes.SHEBANG);
   private static final TokenSet backquoteSet = TokenSet.create(BashTokenTypes.BACKQUOTE);

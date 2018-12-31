@@ -1,64 +1,36 @@
 package com.intellij.bash.lexer;
 
+import com.intellij.bash.BashTypes;
+import com.intellij.bash.psi.BashTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 
-public interface BashTokenTypes {
+public interface BashTokenTypes extends BashTypes {
   IElementType BAD_CHARACTER = TokenType.BAD_CHARACTER;
 
   // common types
   IElementType WHITESPACE = TokenType.WHITE_SPACE;
   IElementType LINE_CONTINUATION = new BashTokenType("line continuation \\");
+
   TokenSet whitespaceTokens = TokenSet.create(WHITESPACE, LINE_CONTINUATION);
 
-  IElementType ARITH_NUMBER = new BashTokenType("number");
-  IElementType WORD = new BashTokenType("word");
-  IElementType ASSIGNMENT_WORD = new BashTokenType("assignment_word"); //"a" =2
-  IElementType DOLLAR = new BashTokenType("$");
+//  IElementType ASSIGNMENT_WORD = new BashTokenType("assignment_word"); //"a" =2
 
-  IElementType LEFT_PAREN = new BashTokenType("(");
-  IElementType RIGHT_PAREN = new BashTokenType(")");
-
-  IElementType LEFT_CURLY = new BashTokenType("{");
-  IElementType RIGHT_CURLY = new BashTokenType("}");
-
-  IElementType LEFT_SQUARE = new BashTokenType("[ (left square)");
-  IElementType RIGHT_SQUARE = new BashTokenType("] (right square)");
   TokenSet bracketSet = TokenSet.create(LEFT_SQUARE, RIGHT_SQUARE);
 
   // comments
   IElementType COMMENT = new BashTokenType("Comment");
   IElementType SHEBANG = new BashTokenType("Shebang");
 
-  TokenSet commentTokens = TokenSet.create(COMMENT);
+  TokenSet commentTokens = TokenSet.create(COMMENT, SHEBANG);
 
-  // bash reserved keywords, in alphabetic order
-  IElementType BANG_TOKEN = new BashTokenType("!");
-  IElementType CASE_KEYWORD = new BashTokenType("case");
-  IElementType DO_KEYWORD = new BashTokenType("do");
-  IElementType DONE_KEYWORD = new BashTokenType("done");
-  IElementType ELIF_KEYWORD = new BashTokenType("elif");
-  IElementType ELSE_KEYWORD = new BashTokenType("else");
-  IElementType ESAC_KEYWORD = new BashTokenType("esac");
-  IElementType FI_KEYWORD = new BashTokenType("fi");
-  IElementType FOR_KEYWORD = new BashTokenType("for");
-  IElementType FUNCTION_KEYWORD = new BashTokenType("function");
-  IElementType IF_KEYWORD = new BashTokenType("if");
-  IElementType IN_KEYWORD_REMAPPED = new BashTokenType("in");
-  IElementType SELECT_KEYWORD = new BashTokenType("select");
-  IElementType THEN_KEYWORD = new BashTokenType("then");
-  IElementType UNTIL_KEYWORD = new BashTokenType("until");
-  IElementType WHILE_KEYWORD = new BashTokenType("while");
-  IElementType TIME_KEYWORD = new BashTokenType("time");
-  IElementType TRAP_KEYWORD = new BashTokenType("trap");
-  IElementType LET_KEYWORD = new BashTokenType("let");
+  // something new, bash 4?
+  IElementType TRAP = new BashTokenType("trap");
+  IElementType LET = new BashTokenType("let");
   IElementType BRACKET_KEYWORD = new BashTokenType("[[ (left bracket)");
   IElementType _BRACKET_KEYWORD = new BashTokenType("]] (right bracket)");
-
-  //case state
-  IElementType CASE_END = new BashTokenType(";;");//;; for case expressions
 
   // arithmetic expressions
   IElementType EXPR_ARITH = new BashTokenType("((");//))
@@ -70,77 +42,44 @@ public interface BashTokenTypes {
   IElementType EXPR_CONDITIONAL = new BashTokenType("[ (left conditional)");//"[ "
   IElementType _EXPR_CONDITIONAL = new BashTokenType(" ] (right conditional)");//" ]"
 
-  TokenSet keywords = TokenSet.create(BANG_TOKEN, CASE_KEYWORD, DO_KEYWORD, DONE_KEYWORD,
-      ELIF_KEYWORD, ELSE_KEYWORD, ESAC_KEYWORD, FI_KEYWORD, FOR_KEYWORD, FUNCTION_KEYWORD,
-      IF_KEYWORD, IN_KEYWORD_REMAPPED, SELECT_KEYWORD, THEN_KEYWORD, UNTIL_KEYWORD, WHILE_KEYWORD,
-      TIME_KEYWORD, BRACKET_KEYWORD, _BRACKET_KEYWORD,
+  TokenSet keywords = TokenSet.create(BANG, CASE, DO, DONE,
+      ELIF, ELSE, ESAC, FI, FOR, FUNCTION,
+      IF, IN, SELECT, THEN, UNTIL, WHILE,
+      TIME, BRACKET_KEYWORD, _BRACKET_KEYWORD,
       CASE_END, DOLLAR,
       EXPR_ARITH, _EXPR_ARITH, EXPR_CONDITIONAL, _EXPR_CONDITIONAL);
 
-  TokenSet internalCommands = TokenSet.create(TRAP_KEYWORD, LET_KEYWORD);
+  TokenSet internalCommands = TokenSet.create(TRAP, LET);
 
   //these are keyword tokens which may be used as identifiers, e.g. in a for loop
   //these tokens will be remapped to word tokens if they occur at a position where a word token would be accepted
   TokenSet identifierKeywords = TokenSet.create(
-      CASE_KEYWORD, DO_KEYWORD, DONE_KEYWORD, ELIF_KEYWORD, ELSE_KEYWORD, ESAC_KEYWORD, FI_KEYWORD, FOR_KEYWORD, FUNCTION_KEYWORD,
-      IF_KEYWORD, IN_KEYWORD_REMAPPED, SELECT_KEYWORD, THEN_KEYWORD, UNTIL_KEYWORD, WHILE_KEYWORD, TIME_KEYWORD
+      CASE, DO, DONE, ELIF, ELSE, ESAC, FI, FOR, FUNCTION,
+      IF, IN, SELECT, THEN, UNTIL, WHILE, TIME
   );
 
-  // single characters
-  IElementType BACKSLASH = new BashTokenType("\\");
-  IElementType AMP = new BashTokenType("&");
-  IElementType AT = new BashTokenType("@");
-  IElementType COLON = new BashTokenType(":");
-  IElementType COMMA = new BashTokenType(",");
-  IElementType EQ = new BashTokenType("=");
-  IElementType ADD_EQ = new BashTokenType("+=");
-  IElementType SEMI = new BashTokenType(";");
-  IElementType SHIFT_RIGHT = new BashTokenType(">>");//>>
-  IElementType LESS_THAN = new BashTokenType("<");//>>
-  IElementType GREATER_THAN = new BashTokenType(">");//>>
-
-  IElementType PIPE = new BashTokenType("|");// }
-  IElementType PIPE_AMP = new BashTokenType("|&"); //bash 4 only, equivalent to 2>&1 |
-  IElementType AND_AND = new BashTokenType("&&");//!=
-  IElementType OR_OR = new BashTokenType("||");//!=
-
-  IElementType LINE_FEED = new BashTokenType("linefeed");
 
   TokenSet pipeTokens = TokenSet.create(PIPE, PIPE_AMP);
 
   //arithmetic operators: plus
-  IElementType ARITH_PLUS_PLUS = new BashTokenType("++");//++
-  IElementType ARITH_PLUS = new BashTokenType("+");//+
 
-  //arithmetic operators: minus
-  IElementType ARITH_MINUS_MINUS = new BashTokenType("--");//++
-  IElementType ARITH_MINUS = new BashTokenType("-");//+
 
   TokenSet arithmeticPostOps = TokenSet.create(ARITH_PLUS_PLUS, ARITH_MINUS_MINUS);
   TokenSet arithmeticPreOps = TokenSet.create(ARITH_PLUS_PLUS, ARITH_MINUS_MINUS);
   TokenSet arithmeticAdditionOps = TokenSet.create(ARITH_PLUS, ARITH_MINUS);
 
   //arithmetic operators: misc
-  IElementType ARITH_EXPONENT = new BashTokenType("**");//**
-  IElementType ARITH_MULT = new BashTokenType("*");//*
-  IElementType ARITH_DIV = new BashTokenType("/");// /
-  IElementType ARITH_MOD = new BashTokenType("%");//%
-  IElementType ARITH_SHIFT_LEFT = new BashTokenType("<<");//<<
-  IElementType ARITH_SHIFT_RIGHT = new BashTokenType(">>");//>>
+
   IElementType ARITH_NEGATE = new BashTokenType("negation !");//||
   IElementType ARITH_BITWISE_NEGATE = new BashTokenType("bitwise negation ~");//~
 
-  TokenSet arithmeticShiftOps = TokenSet.create(ARITH_SHIFT_LEFT, ARITH_SHIFT_RIGHT);
+  TokenSet arithmeticShiftOps = TokenSet.create(SHIFT_LEFT, SHIFT_RIGHT);
 
   TokenSet arithmeticNegationOps = TokenSet.create(ARITH_NEGATE, ARITH_BITWISE_NEGATE);
 
-  TokenSet arithmeticProduct = TokenSet.create(ARITH_MULT, ARITH_DIV, ARITH_MOD);
+  TokenSet arithmeticProduct = TokenSet.create(MULT, DIV, MOD);
 
   //arithmetic operators: comparision
-  IElementType ARITH_LE = new BashTokenType("<=");//<=
-  IElementType ARITH_GE = new BashTokenType(">=");//>=
-  IElementType ARITH_GT = new BashTokenType("arith >");//>=
-  IElementType ARITH_LT = new BashTokenType("arith <");//>=
 
   TokenSet arithmeticCmpOp = TokenSet.create(ARITH_LE, ARITH_GE, ARITH_LT, ARITH_GT);
 
@@ -178,7 +117,7 @@ public interface BashTokenTypes {
 
   IElementType ARITH_BASE_CHAR = new BashTokenType("arithmetic base char (#)");
 
-  TokenSet arithLiterals = TokenSet.create(ARITH_NUMBER, ARITH_OCTAL_NUMBER, ARITH_HEX_NUMBER);
+  TokenSet arithLiterals = TokenSet.create(NUMBER, ARITH_OCTAL_NUMBER, ARITH_HEX_NUMBER);
 
   //builtin command
   IElementType COMMAND_TOKEN = new BashTokenType("command");//!=
@@ -224,18 +163,16 @@ public interface BashTokenTypes {
 
 
   // Special characters
-  IElementType STRING_BEGIN = new BashTokenType("string begin");
   IElementType STRING_DATA = new BashTokenType("string data");
-  IElementType STRING_END = new BashTokenType("string end");
   //mapped element type
-  IElementType STRING_CONTENT = new BashTokenType("string content");
+//  IElementType STRING_CONTENT = new BashTokenType("string content");
 
   IElementType STRING2 = new BashTokenType("unevaluated string (STRING2)");
   IElementType BACKQUOTE = new BashTokenType("backquote `");
 
-  IElementType INTEGER_LITERAL = new BashTokenType("int literal");
+  IElementType INT = new BashTokenType("int");
 
-  TokenSet stringLiterals = TokenSet.create(WORD, STRING2, INTEGER_LITERAL, COLON);
+  TokenSet stringLiterals = TokenSet.create(WORD, STRING2, INT, COLON);
 
   IElementType HEREDOC_MARKER_TAG = new BashTokenType("heredoc marker tag");
   IElementType HEREDOC_MARKER_START = new BashTokenType("heredoc start marker");
@@ -249,14 +186,10 @@ public interface BashTokenTypes {
   IElementType COND_OP_EQ_EQ = new BashTokenType("cond_op ==");
   IElementType COND_OP_REGEX = new BashTokenType("cond_op =~");
   IElementType COND_OP_NOT = new BashTokenType("cond_op !");
-  TokenSet conditionalOperators = TokenSet.create(COND_OP, OR_OR, AND_AND, BANG_TOKEN, COND_OP_EQ_EQ, COND_OP_REGEX);
+  TokenSet conditionalOperators = TokenSet.create(COND_OP, OR_OR, AND_AND, BANG, COND_OP_EQ_EQ, COND_OP_REGEX);
 
   //redirects
-  IElementType REDIRECT_HERE_STRING = new BashTokenType("<<<");
-  IElementType REDIRECT_LESS_AMP = new BashTokenType("<&");
-  IElementType REDIRECT_GREATER_AMP = new BashTokenType(">&");
-  IElementType REDIRECT_LESS_GREATER = new BashTokenType("<>");
-  IElementType REDIRECT_GREATER_BAR = new BashTokenType(">|");
+
   IElementType FILEDESCRIPTOR = new BashTokenType("&[0-9] filedescriptor");
 
   //Bash 4:

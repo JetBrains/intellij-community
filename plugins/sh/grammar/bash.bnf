@@ -1,0 +1,214 @@
+{
+  generate = [ token-accessors="yes" ]
+
+  parserClass="com.intellij.bash.parser.BashParser"
+  parserUtilClass="com.intellij.bash.parser.BashParserUtil"
+
+  implements="com.intellij.bash.psi.BashCompositeElement"
+  extends="com.intellij.bash.psi.impl.BashCompositeElementImpl"
+
+  elementTypeHolderClass="com.intellij.bash.BashTypes"
+  elementTypeClass="com.intellij.bash.psi.BashCompositeElementType"
+  tokenTypeClass="com.intellij.bash.psi.BashTokenType"
+
+  psiClassPrefix="Bash"
+  psiImplClassSuffix="Impl"
+  psiPackage="com.intellij.bash.psi"
+  psiImplPackage="com.intellij.bash.psi.impl"
+
+  tokens = [
+    DOLLAR = '$'
+    LEFT_PAREN = '('
+    RIGHT_PAREN = ')'
+    LEFT_CURLY = '{'
+    RIGHT_CURLY = '}'
+    LEFT_SQUARE = '['
+    RIGHT_SQUARE = ']'
+    BANG = '!'
+
+    BACKSLASH = '\\'
+    AMP = '&'
+    AT = '@'
+    COLON = ':'
+    COMMA = ','
+    EQ = '='
+    ADD_EQ = '+='
+    SEMI = ';'
+    SHIFT_RIGHT = '>>'
+    LESS_THAN = '<'
+    GREATER_THAN = '>'
+    PIPE = '|'
+    PIPE_AMP = '|&' //bash 4 only, equivalent to 2>&1 |
+    AND_AND = '&&'
+    OR_OR = '||'
+
+    EXPONENT = '**'
+    MULT = '*'
+    DIV = '/'
+    MOD = '%'
+    SHIFT_LEFT = '<<'
+    SHIFT_RIGHT = '>>'
+
+    LINEFEED = '\n'
+    CASE_END = ';;'
+
+    ARITH_LE = '<='
+    ARITH_GE = '>='
+    ARITH_GT = 'arith >'
+    ARITH_LT = 'arith <'
+    ARITH_PLUS_PLUS = "++"
+    ARITH_PLUS = "+"
+    ARITH_MINUS_MINUS = "--"
+    ARITH_MINUS = "-"
+
+    REDIRECT_HERE_STRING = "<<<"
+    REDIRECT_LESS_AMP = "<&"
+    REDIRECT_GREATER_AMP = ">&"
+    REDIRECT_LESS_GREATER = "<>"
+    REDIRECT_GREATER_BAR = ">|"
+  ]
+
+  pin('.*list(?:_\d.*)?')=1
+}
+
+private file ::=
+  shebang? newlines
+  simple_list
+
+
+private newlines ::= '\n'*
+private simple_list ::= (commands_list ['&' | ';' | newlines])*
+private word_list ::= word+
+
+redirection ::=    '>' word
+                |  '<' word
+                |  num '>' word
+                |  num '<' word
+                |  '>>' word
+                |  num '>>' word
+                |  '<<' word
+                |  num '<<' word
+                |  '<&' num
+                |  num '<&' num
+                |  '>&' num
+                |  num '>&' num
+                |  '<&' word
+                |  num '<&' word
+                |  '>&' word
+                |  num '>&' word
+                |  '<<-' word
+                |  num '<<-' word
+                |  '>&' '-'
+                |  num '>&' '-'
+                |  '<&' '-'
+                |  num '<&' '-'
+                |  '&>' word
+                |  num '<>' word
+                |  '<>' word
+                |  '>|' word
+                |  num '>|' word
+
+private num ::= number | int
+string ::= string_begin string_content string_end
+simple_command_element ::= word | assignment_word | redirection | string
+
+redirection_list ::= redirection+
+simple_command ::= simple_command_element+
+command ::=  simple_command | shell_command redirection_list?
+shell_command ::=   for_command
+                  | case_command
+                  | while compound_list do compound_list done
+                  | until compound_list do compound_list done
+                  | select_command
+                  | if_command
+                  | subshell
+                  | group_command
+                  | function_def
+
+for_command ::=
+               for word newlines do compound_list done
+            |  for word newlines '{' compound_list '}'
+            |  for word ';' newlines do compound_list done
+            |  for word ';' newlines '{' compound_list '}'
+            |  for word newlines in word_list list_terminator newlines do compound_list done
+            |  for word newlines in word_list list_terminator newlines '{' compound_list '}'
+
+select_command ::=
+                      select word newlines do list done
+                   |  select word newlines '{' list '}'
+                   |  select word ';' newlines do list done
+                   |  select word ';' newlines '{' list '}'
+                   |  select word newlines in word_list list_terminator newlines do list done
+                   |  select word newlines in word_list list_terminator newlines '{' list '}'
+
+case_command ::=
+                    case word newlines in newlines esac
+                 |  case word newlines in case_clause_sequence newlines esac
+                 |  case word newlines in case_clause esac
+
+function_def ::=  word '(' ')' newlines group_command
+                 |  function word '(' ')' newlines group_command
+                 |  function word newlines group_command
+
+subshell ::=  '(' compound_list ')'
+
+if_command ::= if compound_list then compound_list fi |
+               if compound_list then compound_list else compound_list fi |
+               if compound_list then compound_list elif_clause fi
+
+group_command ::=  '{' list '}'
+
+elif_clause ::= elif compound_list then compound_list |
+                elif compound_list then compound_list else compound_list |
+                elif compound_list then compound_list elif_clause
+
+case_clause ::=  pattern_list
+                |  case_clause_sequence pattern_list
+
+pattern_list ::=  newlines pattern ')' compound_list
+                 |  newlines pattern ')' newlines
+                 |  newlines '(' pattern ')' compound_list
+                 |  newlines '(' pattern ')' newlines
+
+case_clause_sequence ::=  (pattern_list ';;')+
+
+pattern ::=  word ('|' word)*
+
+
+list ::=   newlines list0
+
+compound_list ::=  list
+                  |  newlines list1
+
+list0 ::=     list1 '\n' newlines
+           |  list1 '&' newlines
+           |  list1 ';' newlines
+
+list1 ::=   list1 '&&' newlines list1
+           |  list1 '||' newlines list1
+           |  list1 '&' newlines list1
+           |  list1 ';' newlines list1
+           |  list1 '\n' newlines list1
+           |  pipeline_command
+
+list_terminator ::= '\n' | ';'
+
+commands_list ::= pipeline_command (
+                     '&&' newlines pipeline_command
+                   | '||' newlines pipeline_command
+                   | '&' pipeline_command
+                   | ';' pipeline_command
+                 )*
+
+pipeline_command ::= pipeline
+                    |  '!' pipeline
+                    |  timespec pipeline
+                    |  timespec '!' pipeline
+                    |  '!' timespec pipeline
+
+pipeline ::= //todo
+          command
+//       |  pipeline '|' newline_list pipeline
+
+time_opt ::= '-p'
+timespec ::=  time time_opt?

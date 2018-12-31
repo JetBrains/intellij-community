@@ -1,5 +1,4 @@
-package com.intellij.bash.lexer;
-
+package com.intellij.bash.psi;
 
 import com.intellij.bash.BashLanguage;
 import com.intellij.psi.tree.IElementType;
