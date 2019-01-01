@@ -1,0 +1,29 @@
+BASH_FILE
+  PsiComment(Shebang)('#!/bin/bash\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            ARITHMETIC_EXPANSION
+              PsiElement($)('$')
+              PsiElement((()('((')
+              ADD_EXPR
+                LITERAL_EXPR
+                  PsiElement(number)('1')
+                PsiElement(+)('+')
+                PARENTHESES_EXPR
+                  PsiElement(()('(')
+                  PRE_EXPR
+                    PsiElement(++)('++')
+                    LITERAL_EXPR
+                      PsiElement(number)('1')
+                  PsiElement())(')')
+              PsiElement()))('))')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('#echo "$(( 3 * ( 2 + 1 ) ))"')

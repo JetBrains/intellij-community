@@ -6,8 +6,40 @@ import com.intellij.psi.PsiElementVisitor;
 
 public class BashVisitor extends PsiElementVisitor {
 
+  public void visitAddExpression(@NotNull BashAddExpression o) {
+    visitBinaryExpression(o);
+  }
+
+  public void visitArithmeticExpansion(@NotNull BashArithmeticExpansion o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitAssignmentExpression(@NotNull BashAssignmentExpression o) {
+    visitBinaryExpression(o);
+  }
+
   public void visitAssignmentWordRule(@NotNull BashAssignmentWordRule o) {
     visitCompositeElement(o);
+  }
+
+  public void visitBinaryExpression(@NotNull BashBinaryExpression o) {
+    visitExpression(o);
+  }
+
+  public void visitBitwiseAndExpression(@NotNull BashBitwiseAndExpression o) {
+    visitBinaryExpression(o);
+  }
+
+  public void visitBitwiseExclusiveOrExpression(@NotNull BashBitwiseExclusiveOrExpression o) {
+    visitBinaryExpression(o);
+  }
+
+  public void visitBitwiseOrExpression(@NotNull BashBitwiseOrExpression o) {
+    visitBinaryExpression(o);
+  }
+
+  public void visitBitwiseShiftExpression(@NotNull BashBitwiseShiftExpression o) {
+    visitBinaryExpression(o);
   }
 
   public void visitBlock(@NotNull BashBlock o) {
@@ -22,6 +54,10 @@ public class BashVisitor extends PsiElementVisitor {
     visitCommand(o);
   }
 
+  public void visitCommaExpression(@NotNull BashCommaExpression o) {
+    visitBinaryExpression(o);
+  }
+
   public void visitCommand(@NotNull BashCommand o) {
     visitCompositeElement(o);
   }
@@ -30,8 +66,16 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitComparisonExpression(@NotNull BashComparisonExpression o) {
+    visitBinaryExpression(o);
+  }
+
   public void visitCompoundList(@NotNull BashCompoundList o) {
     visitCompositeElement(o);
+  }
+
+  public void visitConditionalExpression(@NotNull BashConditionalExpression o) {
+    visitBinaryExpression(o);
   }
 
   public void visitDoBlock(@NotNull BashDoBlock o) {
@@ -39,6 +83,18 @@ public class BashVisitor extends PsiElementVisitor {
   }
 
   public void visitElifClause(@NotNull BashElifClause o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitEqualityExpression(@NotNull BashEqualityExpression o) {
+    visitBinaryExpression(o);
+  }
+
+  public void visitExpExpression(@NotNull BashExpExpression o) {
+    visitBinaryExpression(o);
+  }
+
+  public void visitExpression(@NotNull BashExpression o) {
     visitCompositeElement(o);
   }
 
@@ -66,6 +122,30 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitLiteralExpression(@NotNull BashLiteralExpression o) {
+    visitExpression(o);
+  }
+
+  public void visitLogicalAndExpression(@NotNull BashLogicalAndExpression o) {
+    visitBinaryExpression(o);
+  }
+
+  public void visitLogicalBitwiseNegationExpression(@NotNull BashLogicalBitwiseNegationExpression o) {
+    visitExpression(o);
+  }
+
+  public void visitLogicalOrExpression(@NotNull BashLogicalOrExpression o) {
+    visitBinaryExpression(o);
+  }
+
+  public void visitMulExpression(@NotNull BashMulExpression o) {
+    visitBinaryExpression(o);
+  }
+
+  public void visitParenthesesExpression(@NotNull BashParenthesesExpression o) {
+    visitExpression(o);
+  }
+
   public void visitPattern(@NotNull BashPattern o) {
     visitCompositeElement(o);
   }
@@ -80,6 +160,14 @@ public class BashVisitor extends PsiElementVisitor {
 
   public void visitPipelineCommand(@NotNull BashPipelineCommand o) {
     visitCommand(o);
+  }
+
+  public void visitPostExpression(@NotNull BashPostExpression o) {
+    visitExpression(o);
+  }
+
+  public void visitPreExpression(@NotNull BashPreExpression o) {
+    visitExpression(o);
   }
 
   public void visitRedirection(@NotNull BashRedirection o) {
@@ -120,6 +208,10 @@ public class BashVisitor extends PsiElementVisitor {
 
   public void visitTimespec(@NotNull BashTimespec o) {
     visitCompositeElement(o);
+  }
+
+  public void visitUnaryExpression(@NotNull BashUnaryExpression o) {
+    visitExpression(o);
   }
 
   public void visitUntilCommand(@NotNull BashUntilCommand o) {

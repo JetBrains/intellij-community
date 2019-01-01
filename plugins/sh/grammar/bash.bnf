@@ -71,6 +71,9 @@
   pin('.*list(?:_\d.*)?')=1
   pin('.*_command')=1
   extends(".*command")=command
+
+  extends("(comma|assignment|conditional|logical_or|logical_and|bitwise_or|bitwise_exclusive_or|bitwise_and|equality|comparison|bitwise_shift|add|mul|exp)_expression")=binary_expression
+  extends(".*expression")=expression
 }
 
 private file ::=
@@ -113,7 +116,8 @@ redirection ::=    '>' w
 private num ::= number | int
 string ::= string_begin (string_content|variable)* string_end
 private literal ::= w | string | num
-simple_command_element ::= literal | assignment_word_rule | redirection
+simple_command_element ::= literal | assignment_word_rule | redirection | arithmetic_expansion
+arithmetic_expansion ::= '$' '((' expression '))' {pin=2}
 assignment_word_rule ::= assignment_word '=' literal
 
 redirection_list ::= redirection redirection*
@@ -194,3 +198,49 @@ pipeline ::= command ('|' newlines command)* {pin(".*")=1}
 
 time_opt ::= '-p'
 timespec ::= time time_opt?
+
+expression ::=
+    comma_expression
+  | assignment_expression
+  | conditional_expression
+  | logical_or_expression
+  | logical_and_expression
+  | bitwise_or_expression
+  | bitwise_exclusive_or_expression
+  | bitwise_and_expression
+  | equality_expression
+  | comparison_expression
+  | bitwise_shift_expression
+  | add_expression
+  | mul_expression
+  | exp_expression
+  | logical_bitwise_negation_expression
+  | unary_expression
+  | pre_expression
+  | post_expression
+  | literal_expression
+  | parentheses_expression
+
+comma_expression ::= expression ',' expression
+assignment_expression ::= expression ('=' |'*=' |'/=' |'%=' |'+=' |'-=' |'<<=' |'>>=' |'&=' |'^=' |'|=') expression
+conditional_expression ::= expression '?' expression ':' expression
+logical_or_expression ::= expression '||' expression
+logical_and_expression ::= expression '&&' expression
+bitwise_or_expression ::= expression '|' expression
+bitwise_exclusive_or_expression ::= expression '^' expression
+bitwise_and_expression ::= expression '&' expression
+equality_expression ::= expression ('==' | '!=') expression
+comparison_expression ::= expression ('<=' | '>=' | '<' | '>') expression
+bitwise_shift_expression ::= expression ('<<' | '>>') expression
+add_expression ::= expression ('+' | '-') expression
+mul_expression ::= expression ('*' | '/' | '%') expression
+exp_expression ::= expression '**' expression
+fake binary_expression ::= expression+ { methods=[left="expression[0]" right="expression[1]"] }
+
+logical_bitwise_negation_expression ::= ('!' | '~') expression
+unary_expression ::= ('-' | '+') expression
+pre_expression ::= ('--' | '++') expression
+post_expression ::= expression ('--' | '++')
+parentheses_expression ::= '(' expression ')' {pin=1}
+
+literal_expression ::= literal

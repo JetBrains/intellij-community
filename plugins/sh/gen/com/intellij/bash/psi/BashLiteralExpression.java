@@ -5,16 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashSimpleCommandElement extends BashCompositeElement {
-
-  @Nullable
-  BashArithmeticExpansion getArithmeticExpansion();
-
-  @Nullable
-  BashAssignmentWordRule getAssignmentWordRule();
-
-  @Nullable
-  BashRedirection getRedirection();
+public interface BashLiteralExpression extends BashExpression {
 
   @Nullable
   BashString getString();

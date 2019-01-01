@@ -10,25 +10,46 @@ import com.intellij.bash.psi.impl.*;
 
 public interface BashTypes {
 
+  IElementType ADD_EXPRESSION = new BashCompositeElementType("ADD_EXPRESSION");
+  IElementType ARITHMETIC_EXPANSION = new BashCompositeElementType("ARITHMETIC_EXPANSION");
+  IElementType ASSIGNMENT_EXPRESSION = new BashCompositeElementType("ASSIGNMENT_EXPRESSION");
   IElementType ASSIGNMENT_WORD_RULE = new BashCompositeElementType("ASSIGNMENT_WORD_RULE");
+  IElementType BITWISE_AND_EXPRESSION = new BashCompositeElementType("BITWISE_AND_EXPRESSION");
+  IElementType BITWISE_EXCLUSIVE_OR_EXPRESSION = new BashCompositeElementType("BITWISE_EXCLUSIVE_OR_EXPRESSION");
+  IElementType BITWISE_OR_EXPRESSION = new BashCompositeElementType("BITWISE_OR_EXPRESSION");
+  IElementType BITWISE_SHIFT_EXPRESSION = new BashCompositeElementType("BITWISE_SHIFT_EXPRESSION");
   IElementType BLOCK = new BashCompositeElementType("BLOCK");
   IElementType CASE_CLAUSE = new BashCompositeElementType("CASE_CLAUSE");
   IElementType CASE_COMMAND = new BashCompositeElementType("CASE_COMMAND");
   IElementType COMMAND = new BashCompositeElementType("COMMAND");
   IElementType COMMANDS_LIST = new BashCompositeElementType("COMMANDS_LIST");
+  IElementType COMMA_EXPRESSION = new BashCompositeElementType("COMMA_EXPRESSION");
+  IElementType COMPARISON_EXPRESSION = new BashCompositeElementType("COMPARISON_EXPRESSION");
   IElementType COMPOUND_LIST = new BashCompositeElementType("COMPOUND_LIST");
+  IElementType CONDITIONAL_EXPRESSION = new BashCompositeElementType("CONDITIONAL_EXPRESSION");
   IElementType DO_BLOCK = new BashCompositeElementType("DO_BLOCK");
   IElementType ELIF_CLAUSE = new BashCompositeElementType("ELIF_CLAUSE");
+  IElementType EQUALITY_EXPRESSION = new BashCompositeElementType("EQUALITY_EXPRESSION");
+  IElementType EXPRESSION = new BashCompositeElementType("EXPRESSION");
+  IElementType EXP_EXPRESSION = new BashCompositeElementType("EXP_EXPRESSION");
   IElementType FOR_COMMAND = new BashCompositeElementType("FOR_COMMAND");
   IElementType FUNCTION_DEF = new BashCompositeElementType("FUNCTION_DEF");
   IElementType GROUP_COMMAND = new BashCompositeElementType("GROUP_COMMAND");
   IElementType IF_COMMAND = new BashCompositeElementType("IF_COMMAND");
   IElementType LIST = new BashCompositeElementType("LIST");
   IElementType LIST_TERMINATOR = new BashCompositeElementType("LIST_TERMINATOR");
+  IElementType LITERAL_EXPRESSION = new BashCompositeElementType("LITERAL_EXPRESSION");
+  IElementType LOGICAL_AND_EXPRESSION = new BashCompositeElementType("LOGICAL_AND_EXPRESSION");
+  IElementType LOGICAL_BITWISE_NEGATION_EXPRESSION = new BashCompositeElementType("LOGICAL_BITWISE_NEGATION_EXPRESSION");
+  IElementType LOGICAL_OR_EXPRESSION = new BashCompositeElementType("LOGICAL_OR_EXPRESSION");
+  IElementType MUL_EXPRESSION = new BashCompositeElementType("MUL_EXPRESSION");
+  IElementType PARENTHESES_EXPRESSION = new BashCompositeElementType("PARENTHESES_EXPRESSION");
   IElementType PATTERN = new BashCompositeElementType("PATTERN");
   IElementType PATTERN_LIST = new BashCompositeElementType("PATTERN_LIST");
   IElementType PIPELINE = new BashCompositeElementType("PIPELINE");
   IElementType PIPELINE_COMMAND = new BashCompositeElementType("PIPELINE_COMMAND");
+  IElementType POST_EXPRESSION = new BashCompositeElementType("POST_EXPRESSION");
+  IElementType PRE_EXPRESSION = new BashCompositeElementType("PRE_EXPRESSION");
   IElementType REDIRECTION = new BashCompositeElementType("REDIRECTION");
   IElementType REDIRECTION_LIST = new BashCompositeElementType("REDIRECTION_LIST");
   IElementType SELECT_COMMAND = new BashCompositeElementType("SELECT_COMMAND");
@@ -39,6 +60,7 @@ public interface BashTypes {
   IElementType SUBSHELL = new BashCompositeElementType("SUBSHELL");
   IElementType TIMESPEC = new BashCompositeElementType("TIMESPEC");
   IElementType TIME_OPT = new BashCompositeElementType("TIME_OPT");
+  IElementType UNARY_EXPRESSION = new BashCompositeElementType("UNARY_EXPRESSION");
   IElementType UNTIL_COMMAND = new BashCompositeElementType("UNTIL_COMMAND");
   IElementType WHILE_COMMAND = new BashCompositeElementType("WHILE_COMMAND");
 
@@ -113,8 +135,29 @@ public interface BashTypes {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-      if (type == ASSIGNMENT_WORD_RULE) {
+      if (type == ADD_EXPRESSION) {
+        return new BashAddExpressionImpl(node);
+      }
+      else if (type == ARITHMETIC_EXPANSION) {
+        return new BashArithmeticExpansionImpl(node);
+      }
+      else if (type == ASSIGNMENT_EXPRESSION) {
+        return new BashAssignmentExpressionImpl(node);
+      }
+      else if (type == ASSIGNMENT_WORD_RULE) {
         return new BashAssignmentWordRuleImpl(node);
+      }
+      else if (type == BITWISE_AND_EXPRESSION) {
+        return new BashBitwiseAndExpressionImpl(node);
+      }
+      else if (type == BITWISE_EXCLUSIVE_OR_EXPRESSION) {
+        return new BashBitwiseExclusiveOrExpressionImpl(node);
+      }
+      else if (type == BITWISE_OR_EXPRESSION) {
+        return new BashBitwiseOrExpressionImpl(node);
+      }
+      else if (type == BITWISE_SHIFT_EXPRESSION) {
+        return new BashBitwiseShiftExpressionImpl(node);
       }
       else if (type == BLOCK) {
         return new BashBlockImpl(node);
@@ -131,14 +174,29 @@ public interface BashTypes {
       else if (type == COMMANDS_LIST) {
         return new BashCommandsListImpl(node);
       }
+      else if (type == COMMA_EXPRESSION) {
+        return new BashCommaExpressionImpl(node);
+      }
+      else if (type == COMPARISON_EXPRESSION) {
+        return new BashComparisonExpressionImpl(node);
+      }
       else if (type == COMPOUND_LIST) {
         return new BashCompoundListImpl(node);
+      }
+      else if (type == CONDITIONAL_EXPRESSION) {
+        return new BashConditionalExpressionImpl(node);
       }
       else if (type == DO_BLOCK) {
         return new BashDoBlockImpl(node);
       }
       else if (type == ELIF_CLAUSE) {
         return new BashElifClauseImpl(node);
+      }
+      else if (type == EQUALITY_EXPRESSION) {
+        return new BashEqualityExpressionImpl(node);
+      }
+      else if (type == EXP_EXPRESSION) {
+        return new BashExpExpressionImpl(node);
       }
       else if (type == FOR_COMMAND) {
         return new BashForCommandImpl(node);
@@ -158,6 +216,24 @@ public interface BashTypes {
       else if (type == LIST_TERMINATOR) {
         return new BashListTerminatorImpl(node);
       }
+      else if (type == LITERAL_EXPRESSION) {
+        return new BashLiteralExpressionImpl(node);
+      }
+      else if (type == LOGICAL_AND_EXPRESSION) {
+        return new BashLogicalAndExpressionImpl(node);
+      }
+      else if (type == LOGICAL_BITWISE_NEGATION_EXPRESSION) {
+        return new BashLogicalBitwiseNegationExpressionImpl(node);
+      }
+      else if (type == LOGICAL_OR_EXPRESSION) {
+        return new BashLogicalOrExpressionImpl(node);
+      }
+      else if (type == MUL_EXPRESSION) {
+        return new BashMulExpressionImpl(node);
+      }
+      else if (type == PARENTHESES_EXPRESSION) {
+        return new BashParenthesesExpressionImpl(node);
+      }
       else if (type == PATTERN) {
         return new BashPatternImpl(node);
       }
@@ -169,6 +245,12 @@ public interface BashTypes {
       }
       else if (type == PIPELINE_COMMAND) {
         return new BashPipelineCommandImpl(node);
+      }
+      else if (type == POST_EXPRESSION) {
+        return new BashPostExpressionImpl(node);
+      }
+      else if (type == PRE_EXPRESSION) {
+        return new BashPreExpressionImpl(node);
       }
       else if (type == REDIRECTION) {
         return new BashRedirectionImpl(node);
@@ -199,6 +281,9 @@ public interface BashTypes {
       }
       else if (type == TIME_OPT) {
         return new BashTimeOptImpl(node);
+      }
+      else if (type == UNARY_EXPRESSION) {
+        return new BashUnaryExpressionImpl(node);
       }
       else if (type == UNTIL_COMMAND) {
         return new BashUntilCommandImpl(node);

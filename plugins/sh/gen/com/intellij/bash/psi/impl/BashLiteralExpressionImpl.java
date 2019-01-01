@@ -10,37 +10,19 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashSimpleCommandElementImpl extends BashCompositeElementImpl implements BashSimpleCommandElement {
+public class BashLiteralExpressionImpl extends BashExpressionImpl implements BashLiteralExpression {
 
-  public BashSimpleCommandElementImpl(ASTNode node) {
+  public BashLiteralExpressionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitSimpleCommandElement(this);
+    visitor.visitLiteralExpression(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof BashVisitor) accept((BashVisitor)visitor);
     else super.accept(visitor);
-  }
-
-  @Override
-  @Nullable
-  public BashArithmeticExpansion getArithmeticExpansion() {
-    return findChildByClass(BashArithmeticExpansion.class);
-  }
-
-  @Override
-  @Nullable
-  public BashAssignmentWordRule getAssignmentWordRule() {
-    return findChildByClass(BashAssignmentWordRule.class);
-  }
-
-  @Override
-  @Nullable
-  public BashRedirection getRedirection() {
-    return findChildByClass(BashRedirection.class);
   }
 
   @Override
