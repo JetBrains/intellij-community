@@ -27,8 +27,8 @@ public class BashSelectCommandImpl extends BashCommandImpl implements BashSelect
 
   @Override
   @Nullable
-  public BashCompoundList getCompoundList() {
-    return findChildByClass(BashCompoundList.class);
+  public BashBlock getBlock() {
+    return findChildByClass(BashBlock.class);
   }
 
   @Override
@@ -45,32 +45,8 @@ public class BashSelectCommandImpl extends BashCommandImpl implements BashSelect
 
   @Override
   @Nullable
-  public PsiElement getLeftCurly() {
-    return findChildByType(LEFT_CURLY);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getRightCurly() {
-    return findChildByType(RIGHT_CURLY);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getSemi() {
     return findChildByType(SEMI);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getDo() {
-    return findChildByType(DO);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getDone() {
-    return findChildByType(DONE);
   }
 
   @Override

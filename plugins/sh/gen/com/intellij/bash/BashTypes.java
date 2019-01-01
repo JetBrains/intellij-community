@@ -11,11 +11,13 @@ import com.intellij.bash.psi.impl.*;
 public interface BashTypes {
 
   IElementType ASSIGNMENT_WORD_RULE = new BashCompositeElementType("ASSIGNMENT_WORD_RULE");
+  IElementType BLOCK = new BashCompositeElementType("BLOCK");
   IElementType CASE_CLAUSE = new BashCompositeElementType("CASE_CLAUSE");
   IElementType CASE_COMMAND = new BashCompositeElementType("CASE_COMMAND");
   IElementType COMMAND = new BashCompositeElementType("COMMAND");
   IElementType COMMANDS_LIST = new BashCompositeElementType("COMMANDS_LIST");
   IElementType COMPOUND_LIST = new BashCompositeElementType("COMPOUND_LIST");
+  IElementType DO_BLOCK = new BashCompositeElementType("DO_BLOCK");
   IElementType ELIF_CLAUSE = new BashCompositeElementType("ELIF_CLAUSE");
   IElementType FOR_COMMAND = new BashCompositeElementType("FOR_COMMAND");
   IElementType FUNCTION_DEF = new BashCompositeElementType("FUNCTION_DEF");
@@ -114,6 +116,9 @@ public interface BashTypes {
       if (type == ASSIGNMENT_WORD_RULE) {
         return new BashAssignmentWordRuleImpl(node);
       }
+      else if (type == BLOCK) {
+        return new BashBlockImpl(node);
+      }
       else if (type == CASE_CLAUSE) {
         return new BashCaseClauseImpl(node);
       }
@@ -128,6 +133,9 @@ public interface BashTypes {
       }
       else if (type == COMPOUND_LIST) {
         return new BashCompoundListImpl(node);
+      }
+      else if (type == DO_BLOCK) {
+        return new BashDoBlockImpl(node);
       }
       else if (type == ELIF_CLAUSE) {
         return new BashElifClauseImpl(node);

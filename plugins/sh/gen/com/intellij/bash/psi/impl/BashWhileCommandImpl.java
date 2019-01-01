@@ -26,21 +26,15 @@ public class BashWhileCommandImpl extends BashCommandImpl implements BashWhileCo
   }
 
   @Override
-  @NotNull
-  public List<BashCompoundList> getCompoundListList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCompoundList.class);
+  @Nullable
+  public BashCompoundList getCompoundList() {
+    return findChildByClass(BashCompoundList.class);
   }
 
   @Override
   @Nullable
-  public PsiElement getDo() {
-    return findChildByType(DO);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getDone() {
-    return findChildByType(DONE);
+  public BashDoBlock getDoBlock() {
+    return findChildByClass(BashDoBlock.class);
   }
 
   @Override

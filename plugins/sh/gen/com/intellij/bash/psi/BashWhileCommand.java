@@ -7,14 +7,11 @@ import com.intellij.psi.PsiElement;
 
 public interface BashWhileCommand extends BashCommand {
 
-  @NotNull
-  List<BashCompoundList> getCompoundListList();
+  @Nullable
+  BashCompoundList getCompoundList();
 
   @Nullable
-  PsiElement getDo();
-
-  @Nullable
-  PsiElement getDone();
+  BashDoBlock getDoBlock();
 
   @NotNull
   PsiElement getWhile();

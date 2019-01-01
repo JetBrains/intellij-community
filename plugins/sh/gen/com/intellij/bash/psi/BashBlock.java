@@ -5,15 +5,15 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashUntilCommand extends BashCommand {
+public interface BashBlock extends BashCompositeElement {
 
   @Nullable
   BashCompoundList getCompoundList();
 
   @Nullable
-  BashDoBlock getDoBlock();
+  PsiElement getLeftCurly();
 
-  @NotNull
-  PsiElement getUntil();
+  @Nullable
+  PsiElement getRightCurly();
 
 }

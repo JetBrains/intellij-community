@@ -10,6 +10,10 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitBlock(@NotNull BashBlock o) {
+    visitCompositeElement(o);
+  }
+
   public void visitCaseClause(@NotNull BashCaseClause o) {
     visitCompositeElement(o);
   }
@@ -28,6 +32,10 @@ public class BashVisitor extends PsiElementVisitor {
 
   public void visitCompoundList(@NotNull BashCompoundList o) {
     visitCompositeElement(o);
+  }
+
+  public void visitDoBlock(@NotNull BashDoBlock o) {
+    visitBlock(o);
   }
 
   public void visitElifClause(@NotNull BashElifClause o) {

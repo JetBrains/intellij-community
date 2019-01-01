@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashUntilCommandImpl extends BashCommandImpl implements BashUntilCommand {
+public class BashBlockImpl extends BashCompositeElementImpl implements BashBlock {
 
-  public BashUntilCommandImpl(ASTNode node) {
+  public BashBlockImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitUntilCommand(this);
+    visitor.visitBlock(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -33,14 +33,14 @@ public class BashUntilCommandImpl extends BashCommandImpl implements BashUntilCo
 
   @Override
   @Nullable
-  public BashDoBlock getDoBlock() {
-    return findChildByClass(BashDoBlock.class);
+  public PsiElement getLeftCurly() {
+    return findChildByType(LEFT_CURLY);
   }
 
   @Override
-  @NotNull
-  public PsiElement getUntil() {
-    return findNotNullChildByType(UNTIL);
+  @Nullable
+  public PsiElement getRightCurly() {
+    return findChildByType(RIGHT_CURLY);
   }
 
 }
