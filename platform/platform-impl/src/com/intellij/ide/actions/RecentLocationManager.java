@@ -27,6 +27,7 @@ import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,10 +39,11 @@ import java.util.Map;
 
 public class RecentLocationManager implements ProjectComponent {
   private static final int BEFORE_AFTER_LINES_COUNT = Registry.intValue("recent.locations.lines.before.and.after", 2);
+  static final int LIST_SIZE = Registry.intValue("recent.locations.list.size", 10);
   @NotNull
   private final Project myProject;
   @NotNull
-  private final Map<IdeDocumentHistoryImpl.PlaceInfo, PlaceInfoPersistentItem> myItems = ContainerUtil.newHashMap();
+  private final Map<IdeDocumentHistoryImpl.PlaceInfo, PlaceInfoPersistentItem> myItems = new RecentLocationFixedSizeHashMap();
 
   @NotNull
   public static RecentLocationManager getInstance(@NotNull Project project) {
@@ -240,6 +242,13 @@ public class RecentLocationManager implements ProjectComponent {
     @NotNull
     private RangeMarker getRangeMarker() {
       return myRangeMarker;
+    }
+  }
+
+  private static class RecentLocationFixedSizeHashMap extends LinkedHashMap<IdeDocumentHistoryImpl.PlaceInfo, PlaceInfoPersistentItem> {
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<IdeDocumentHistoryImpl.PlaceInfo, PlaceInfoPersistentItem> eldest) {
+      return size() >= LIST_SIZE;
     }
   }
 }

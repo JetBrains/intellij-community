@@ -37,7 +37,6 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -69,7 +68,6 @@ import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPE
 
 public class RecentLocationsAction extends DumbAwareAction {
   private static final JBColor BACKGROUND_COLOR = JBColor.namedColor("Table.lightSelectionBackground", new JBColor(0xE9EEF5, 0x464A4D));
-  private static final int LIST_SIZE = Registry.intValue("recent.locations.list.size", 10);
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
   private static final String NOT_SIGNIFICANT_LINE_REGEXP = "[^A-Za-z0-9]*";
@@ -324,7 +322,7 @@ public class RecentLocationsAction extends DumbAwareAction {
       return ContainerUtil.emptyList();
     }
 
-    List<PlaceInfo> topElements = places.subList(0, Math.min(places.size(), LIST_SIZE));
+    List<PlaceInfo> topElements = places.subList(0, Math.min(places.size(), RecentLocationManager.LIST_SIZE));
     List<RecentLocationItem> caretsList = ContainerUtil.newArrayList();
 
     for (PlaceInfo placeInfo : topElements) {
