@@ -12,15 +12,15 @@ BASH_FILE
             ARITHMETIC_EXPANSION
               PsiElement($)('$')
               PsiElement((()('((')
-              ADD_EXPR
-                LITERAL_EXPR
+              ADD_EXPRESSION
+                LITERAL_EXPRESSION
                   PsiElement(number)('1')
                 PsiElement(+)('+')
-                PARENTHESES_EXPR
+                PARENTHESES_EXPRESSION
                   PsiElement(()('(')
-                  PRE_EXPR
+                  PRE_EXPRESSION
                     PsiElement(++)('++')
-                    LITERAL_EXPR
+                    LITERAL_EXPRESSION
                       PsiElement(number)('1')
                   PsiElement())(')')
               PsiElement()))('))')

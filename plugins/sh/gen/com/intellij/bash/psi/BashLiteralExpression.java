@@ -11,6 +11,9 @@ public interface BashLiteralExpression extends BashExpression {
   BashString getString();
 
   @Nullable
+  PsiElement getAssignmentWord();
+
+  @Nullable
   PsiElement getInt();
 
   @Nullable

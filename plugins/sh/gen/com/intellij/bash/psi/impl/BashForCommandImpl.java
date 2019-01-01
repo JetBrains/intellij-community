@@ -32,6 +32,12 @@ public class BashForCommandImpl extends BashCommandImpl implements BashForComman
   }
 
   @Override
+  @NotNull
+  public List<BashExpression> getExpressionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashExpression.class);
+  }
+
+  @Override
   @Nullable
   public BashListTerminator getListTerminator() {
     return findChildByClass(BashListTerminator.class);
@@ -41,12 +47,6 @@ public class BashForCommandImpl extends BashCommandImpl implements BashForComman
   @NotNull
   public List<BashString> getStringList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashString.class);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getSemi() {
-    return findChildByType(SEMI);
   }
 
   @Override

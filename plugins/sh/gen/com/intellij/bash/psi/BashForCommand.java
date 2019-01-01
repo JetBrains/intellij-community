@@ -10,14 +10,14 @@ public interface BashForCommand extends BashCommand {
   @Nullable
   BashBlock getBlock();
 
+  @NotNull
+  List<BashExpression> getExpressionList();
+
   @Nullable
   BashListTerminator getListTerminator();
 
   @NotNull
   List<BashString> getStringList();
-
-  @Nullable
-  PsiElement getSemi();
 
   @NotNull
   PsiElement getFor();

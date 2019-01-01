@@ -137,7 +137,11 @@ shell_command ::=   for_command
 while_command ::= while compound_list do_block
 until_command ::= until compound_list do_block
 
-for_command ::= for w (newlines in_clause? block | ';' newlines block)
+for_command ::= for (
+                    w (newlines in_clause? block | ';' newlines block)
+                  | arithmetic_for
+                  )
+private arithmetic_for ::= '((' expression ';' expression ';' expression '))' [list_terminator newlines] block {pin=1}
 
 private in_clause ::= "in" word_list list_terminator newlines {pin=1}
 
@@ -243,4 +247,4 @@ pre_expression ::= ('--' | '++') expression
 post_expression ::= expression ('--' | '++')
 parentheses_expression ::= '(' expression ')' {pin=1}
 
-literal_expression ::= literal
+literal_expression ::= literal | assignment_word

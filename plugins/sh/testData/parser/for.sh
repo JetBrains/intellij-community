@@ -5,6 +5,11 @@ do
    echo "Welcome $i times"
 done
 
+for (( c=1; c<=5; c++ ))
+do
+   echo "Welcome $c times"
+done
+
 for file in $(ls)
 do
 	du $file
@@ -24,9 +29,4 @@ done
 for i in $(seq 1 2 20)
 do
    echo "Welcome $i times"
-done
-
-for (( c=1; c<=5; c++ ))
-do
-   echo "Welcome $c times"
 done
