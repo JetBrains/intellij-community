@@ -11,6 +11,9 @@ public interface BashFunctionDef extends BashCompositeElement {
   BashGroupCommand getGroupCommand();
 
   @Nullable
+  BashString getString();
+
+  @Nullable
   PsiElement getLeftParen();
 
   @Nullable
@@ -18,6 +21,12 @@ public interface BashFunctionDef extends BashCompositeElement {
 
   @Nullable
   PsiElement getFunction();
+
+  @Nullable
+  PsiElement getInt();
+
+  @Nullable
+  PsiElement getNumber();
 
   @Nullable
   PsiElement getVariable();

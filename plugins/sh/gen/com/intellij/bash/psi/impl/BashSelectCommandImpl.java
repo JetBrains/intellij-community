@@ -38,6 +38,12 @@ public class BashSelectCommandImpl extends BashCommandImpl implements BashSelect
   }
 
   @Override
+  @NotNull
+  public List<BashString> getStringList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashString.class);
+  }
+
+  @Override
   @Nullable
   public PsiElement getLeftCurly() {
     return findChildByType(LEFT_CURLY);

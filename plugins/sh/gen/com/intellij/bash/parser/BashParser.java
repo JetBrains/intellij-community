@@ -140,6 +140,43 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // '{' compound_list '}' | do compound_list done
+  static boolean block(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block")) return false;
+    if (!nextTokenIs(b, "", DO, LEFT_CURLY)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = block_0(b, l + 1);
+    if (!r) r = block_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '{' compound_list '}'
+  private static boolean block_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LEFT_CURLY);
+    r = r && compound_list(b, l + 1);
+    r = r && consumeToken(b, RIGHT_CURLY);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // do compound_list done
+  private static boolean block_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, DO);
+    r = r && compound_list(b, l + 1);
+    r = r && consumeToken(b, DONE);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // pattern_list
   public static boolean case_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_clause")) return false;
@@ -448,12 +485,9 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // for w (
-  //                newlines do compound_list done
-  //             |  newlines '{' compound_list '}'
-  //             |  ';' newlines do compound_list done
-  //             |  ';' newlines '{' compound_list '}'
-  //             |  newlines in word_list list_terminator newlines do compound_list done
-  //             |  newlines in word_list list_terminator newlines '{' compound_list '}')
+  //                newlines in_clause? block
+  //             |  ';' newlines block
+  //             )
   public static boolean for_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_command")) return false;
     if (!nextTokenIs(b, FOR)) return false;
@@ -467,110 +501,45 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // newlines do compound_list done
-  //             |  newlines '{' compound_list '}'
-  //             |  ';' newlines do compound_list done
-  //             |  ';' newlines '{' compound_list '}'
-  //             |  newlines in word_list list_terminator newlines do compound_list done
-  //             |  newlines in word_list list_terminator newlines '{' compound_list '}'
+  // newlines in_clause? block
+  //             |  ';' newlines block
   private static boolean for_command_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_command_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = for_command_2_0(b, l + 1);
     if (!r) r = for_command_2_1(b, l + 1);
-    if (!r) r = for_command_2_2(b, l + 1);
-    if (!r) r = for_command_2_3(b, l + 1);
-    if (!r) r = for_command_2_4(b, l + 1);
-    if (!r) r = for_command_2_5(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // newlines do compound_list done
+  // newlines in_clause? block
   private static boolean for_command_2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_command_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = newlines(b, l + 1);
-    r = r && consumeToken(b, DO);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, DONE);
+    r = r && for_command_2_0_1(b, l + 1);
+    r = r && block(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // newlines '{' compound_list '}'
+  // in_clause?
+  private static boolean for_command_2_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_command_2_0_1")) return false;
+    in_clause(b, l + 1);
+    return true;
+  }
+
+  // ';' newlines block
   private static boolean for_command_2_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_command_2_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = newlines(b, l + 1);
-    r = r && consumeToken(b, LEFT_CURLY);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, RIGHT_CURLY);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // ';' newlines do compound_list done
-  private static boolean for_command_2_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_command_2_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, SEMI);
     r = r && newlines(b, l + 1);
-    r = r && consumeToken(b, DO);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, DONE);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // ';' newlines '{' compound_list '}'
-  private static boolean for_command_2_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_command_2_3")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, SEMI);
-    r = r && newlines(b, l + 1);
-    r = r && consumeToken(b, LEFT_CURLY);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, RIGHT_CURLY);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // newlines in word_list list_terminator newlines do compound_list done
-  private static boolean for_command_2_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_command_2_4")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = newlines(b, l + 1);
-    r = r && consumeToken(b, IN);
-    r = r && word_list(b, l + 1);
-    r = r && list_terminator(b, l + 1);
-    r = r && newlines(b, l + 1);
-    r = r && consumeToken(b, DO);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, DONE);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // newlines in word_list list_terminator newlines '{' compound_list '}'
-  private static boolean for_command_2_5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_command_2_5")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = newlines(b, l + 1);
-    r = r && consumeToken(b, IN);
-    r = r && word_list(b, l + 1);
-    r = r && list_terminator(b, l + 1);
-    r = r && newlines(b, l + 1);
-    r = r && consumeToken(b, LEFT_CURLY);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, RIGHT_CURLY);
+    r = r && block(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -702,6 +671,21 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // "in" word_list list_terminator newlines
+  static boolean in_clause(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "in_clause")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeToken(b, "in");
+    p = r; // pin = 1
+    r = r && report_error_(b, word_list(b, l + 1));
+    r = p && report_error_(b, list_terminator(b, l + 1)) && r;
+    r = p && newlines(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
   // newlines pipeline_command_list ('\n' | '&' | ';') newlines
   public static boolean list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "list")) return false;
@@ -779,7 +763,6 @@ public class BashParser implements PsiParser, LightPsiParser {
   // w ('|' w)*
   public static boolean pattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pattern")) return false;
-    if (!nextTokenIs(b, "<pattern>", VARIABLE, WORD)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, PATTERN, "<pattern>");
     r = w(b, l + 1);
@@ -1743,13 +1726,14 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | variable
+  // word | variable | string | num
   static boolean w(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "w")) return false;
-    if (!nextTokenIs(b, "", VARIABLE, WORD)) return false;
     boolean r;
     r = consumeToken(b, WORD);
     if (!r) r = consumeToken(b, VARIABLE);
+    if (!r) r = string(b, l + 1);
+    if (!r) r = num(b, l + 1);
     return r;
   }
 
@@ -1774,7 +1758,6 @@ public class BashParser implements PsiParser, LightPsiParser {
   // w+
   static boolean word_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "word_list")) return false;
-    if (!nextTokenIs(b, "", VARIABLE, WORD)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = w(b, l + 1);

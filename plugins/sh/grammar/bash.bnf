@@ -80,7 +80,7 @@ private file ::=
 private newlines ::= '\n'*
 private simple_list ::= (commands_list ['&' | ';' | newlines])*
 private word_list ::= w+
-private w ::= word | variable
+private w ::= word | variable | string | num
 
 redirection ::=    '>' w
                 |  '<' w
@@ -134,12 +134,12 @@ while_command ::= while compound_list do compound_list done
 until_command ::= until compound_list do compound_list done
 
 for_command ::= for w (
-               newlines do compound_list done
-            |  newlines '{' compound_list '}'
-            |  ';' newlines do compound_list done
-            |  ';' newlines '{' compound_list '}'
-            |  newlines in word_list list_terminator newlines do compound_list done
-            |  newlines in word_list list_terminator newlines '{' compound_list '}')
+               newlines in_clause? block
+            |  ';' newlines block
+            )
+private in_clause ::= "in" word_list list_terminator newlines {pin=1}
+
+private block ::= '{' compound_list '}' | do compound_list done
 
 select_command ::= select w (
                       newlines do list done

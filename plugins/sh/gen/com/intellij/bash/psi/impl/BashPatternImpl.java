@@ -25,4 +25,10 @@ public class BashPatternImpl extends BashCompositeElementImpl implements BashPat
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public List<BashString> getStringList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashString.class);
+  }
+
 }

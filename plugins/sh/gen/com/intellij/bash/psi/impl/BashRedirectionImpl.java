@@ -27,6 +27,12 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
 
   @Override
   @Nullable
+  public BashString getString() {
+    return findChildByClass(BashString.class);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getArithMinus() {
     return findChildByType(ARITH_MINUS);
   }

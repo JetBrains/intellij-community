@@ -8,6 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface BashRedirection extends BashCompositeElement {
 
   @Nullable
+  BashString getString();
+
+  @Nullable
   PsiElement getArithMinus();
 
   @Nullable

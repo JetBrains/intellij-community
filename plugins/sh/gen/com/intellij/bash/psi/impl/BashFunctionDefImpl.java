@@ -33,6 +33,12 @@ public class BashFunctionDefImpl extends BashCompositeElementImpl implements Bas
 
   @Override
   @Nullable
+  public BashString getString() {
+    return findChildByClass(BashString.class);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getLeftParen() {
     return findChildByType(LEFT_PAREN);
   }
@@ -47,6 +53,18 @@ public class BashFunctionDefImpl extends BashCompositeElementImpl implements Bas
   @Nullable
   public PsiElement getFunction() {
     return findChildByType(FUNCTION);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getInt() {
+    return findChildByType(INT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getNumber() {
+    return findChildByType(NUMBER);
   }
 
   @Override

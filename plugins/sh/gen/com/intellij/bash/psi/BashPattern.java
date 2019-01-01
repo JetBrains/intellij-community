@@ -7,4 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface BashPattern extends BashCompositeElement {
 
+  @NotNull
+  List<BashString> getStringList();
+
 }

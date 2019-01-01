@@ -13,6 +13,9 @@ public interface BashSelectCommand extends BashCommand {
   @Nullable
   BashListTerminator getListTerminator();
 
+  @NotNull
+  List<BashString> getStringList();
+
   @Nullable
   PsiElement getLeftCurly();
 

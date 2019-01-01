@@ -10,11 +10,20 @@ public interface BashCaseCommand extends BashCommand {
   @NotNull
   List<BashCaseClause> getCaseClauseList();
 
+  @Nullable
+  BashString getString();
+
   @NotNull
   PsiElement getCase();
 
   @Nullable
   PsiElement getEsac();
+
+  @Nullable
+  PsiElement getInt();
+
+  @Nullable
+  PsiElement getNumber();
 
   @Nullable
   PsiElement getVariable();

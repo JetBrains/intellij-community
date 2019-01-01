@@ -32,6 +32,12 @@ public class BashCaseCommandImpl extends BashCommandImpl implements BashCaseComm
   }
 
   @Override
+  @Nullable
+  public BashString getString() {
+    return findChildByClass(BashString.class);
+  }
+
+  @Override
   @NotNull
   public PsiElement getCase() {
     return findNotNullChildByType(CASE);
@@ -41,6 +47,18 @@ public class BashCaseCommandImpl extends BashCommandImpl implements BashCaseComm
   @Nullable
   public PsiElement getEsac() {
     return findChildByType(ESAC);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getInt() {
+    return findChildByType(INT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getNumber() {
+    return findChildByType(NUMBER);
   }
 
   @Override

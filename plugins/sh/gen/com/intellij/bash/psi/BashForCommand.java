@@ -13,6 +13,9 @@ public interface BashForCommand extends BashCommand {
   @Nullable
   BashListTerminator getListTerminator();
 
+  @NotNull
+  List<BashString> getStringList();
+
   @Nullable
   PsiElement getLeftCurly();
 
@@ -30,8 +33,5 @@ public interface BashForCommand extends BashCommand {
 
   @NotNull
   PsiElement getFor();
-
-  @Nullable
-  PsiElement getIn();
 
 }

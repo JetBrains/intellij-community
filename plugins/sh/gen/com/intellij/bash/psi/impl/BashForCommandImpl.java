@@ -38,6 +38,12 @@ public class BashForCommandImpl extends BashCommandImpl implements BashForComman
   }
 
   @Override
+  @NotNull
+  public List<BashString> getStringList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashString.class);
+  }
+
+  @Override
   @Nullable
   public PsiElement getLeftCurly() {
     return findChildByType(LEFT_CURLY);
@@ -71,12 +77,6 @@ public class BashForCommandImpl extends BashCommandImpl implements BashForComman
   @NotNull
   public PsiElement getFor() {
     return findNotNullChildByType(FOR);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getIn() {
-    return findChildByType(IN);
   }
 
 }
