@@ -1,0 +1,265 @@
+BASH_FILE
+  PsiComment(Shebang)('#!/bin/bash\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('This script can make any of the files in this directory private.')
+              PsiElement(string_end)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('Enter the number of the file you want to protect:')
+              PsiElement(string_end)('"')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            ASSIGNMENT_WORD_RULE
+              PsiElement(assignment_word)('PS3')
+              PsiElement(=)('=')
+              STRING
+                PsiElement(string_begin)('"')
+                PsiElement(string_content)('Your choice: ')
+                PsiElement(string_end)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            ASSIGNMENT_WORD_RULE
+              PsiElement(assignment_word)('QUIT')
+              PsiElement(=)('=')
+              STRING
+                PsiElement(string_begin)('"')
+                PsiElement(string_content)('QUIT THIS PROGRAM - I feel safe now.')
+                PsiElement(string_end)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('touch')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(variable)('$QUIT')
+              PsiElement(string_end)('"')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SELECT_COMMAND
+          PsiElement(select)('select')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('FILENAME')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('in')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('*')
+          LIST_TERMINATOR
+            PsiElement(;)(';')
+          PsiElement(\n)('\n')
+          PsiElement(do)('do')
+          COMPOUND_LIST
+            PsiElement(\n)('\n')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  CASE_COMMAND
+                    PsiElement(case)('case')
+                    PsiWhiteSpace(' ')
+                    PsiElement(variable)('$FILENAME')
+                    PsiWhiteSpace(' ')
+                    PsiElement(word)('in')
+                    CASE_CLAUSE
+                      PATTERN_LIST
+                        PsiElement(\n)('\n')
+                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace(' ')
+                        PATTERN
+                          STRING
+                            PsiElement(string_begin)('"')
+                            PsiElement(variable)('$QUIT')
+                            PsiElement(string_end)('"')
+                        PsiElement())(')')
+                        COMPOUND_LIST
+                          PsiElement(\n)('\n')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          LIST
+                            PIPELINE_COMMAND
+                              PIPELINE
+                                SIMPLE_COMMAND
+                                  SIMPLE_COMMAND_ELEMENT
+                                    PsiElement(word)('echo')
+                                  PsiWhiteSpace(' ')
+                                  SIMPLE_COMMAND_ELEMENT
+                                    STRING
+                                      PsiElement(string_begin)('"')
+                                      PsiElement(string_content)('Exiting.')
+                                      PsiElement(string_end)('"')
+                            PsiElement(\n)('\n')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PIPELINE_COMMAND
+                              PIPELINE
+                                SIMPLE_COMMAND
+                                  SIMPLE_COMMAND_ELEMENT
+                                    PsiElement(word)('break')
+                            PsiElement(\n)('\n')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiElement(;;)(';;')
+                    CASE_CLAUSE
+                      PATTERN_LIST
+                        PsiElement(\n)('\n')
+                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace(' ')
+                        PATTERN
+                          PsiElement(word)('*')
+                        PsiElement())(')')
+                        COMPOUND_LIST
+                          PsiElement(\n)('\n')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          PsiWhiteSpace(' ')
+                          LIST
+                            PIPELINE_COMMAND
+                              PIPELINE
+                                SIMPLE_COMMAND
+                                  SIMPLE_COMMAND_ELEMENT
+                                    PsiElement(word)('echo')
+                                  PsiWhiteSpace(' ')
+                                  SIMPLE_COMMAND_ELEMENT
+                                    STRING
+                                      PsiElement(string_begin)('"')
+                                      PsiElement(string_content)('You picked ')
+                                      PsiElement(variable)('$FILENAME')
+                                      PsiElement(string_content)(' (')
+                                      PsiElement(variable)('$REPLY')
+                                      PsiElement(string_content)(')')
+                                      PsiElement(string_end)('"')
+                            PsiElement(\n)('\n')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PsiWhiteSpace(' ')
+                            PIPELINE_COMMAND
+                              PIPELINE
+                                SIMPLE_COMMAND
+                                  SIMPLE_COMMAND_ELEMENT
+                                    PsiElement(word)('chmod')
+                                  PsiWhiteSpace(' ')
+                                  SIMPLE_COMMAND_ELEMENT
+                                    PsiElement(word)('go-rwx')
+                                  PsiWhiteSpace(' ')
+                                  SIMPLE_COMMAND_ELEMENT
+                                    STRING
+                                      PsiElement(string_begin)('"')
+                                      PsiElement(variable)('$FILENAME')
+                                      PsiElement(string_end)('"')
+                            PsiElement(\n)('\n')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiElement(;;)(';;')
+                    PsiElement(\n)('\n')
+                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace(' ')
+                    PsiElement(esac)('esac')
+              PsiElement(\n)('\n')
+          PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('rm')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(variable)('$QUIT')
+              PsiElement(string_end)('"')

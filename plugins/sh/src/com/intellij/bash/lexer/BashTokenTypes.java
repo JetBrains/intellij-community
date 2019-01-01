@@ -26,6 +26,8 @@ public interface BashTokenTypes extends BashTypes {
 
   TokenSet commentTokens = TokenSet.create(COMMENT, SHEBANG);
 
+  IElementType IN = new BashTokenType("in");
+
   // something new, bash 4?
   IElementType TRAP = new BashTokenType("trap");
   IElementType LET = new BashTokenType("let");

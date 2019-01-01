@@ -73,7 +73,6 @@ public interface BashTypes {
   IElementType FUNCTION = new BashTokenType("function");
   IElementType GREATER_THAN = new BashTokenType(">");
   IElementType IF = new BashTokenType("if");
-  IElementType IN = new BashTokenType("in");
   IElementType INT = new BashTokenType("int");
   IElementType LEFT_CURLY = new BashTokenType("{");
   IElementType LEFT_PAREN = new BashTokenType("(");

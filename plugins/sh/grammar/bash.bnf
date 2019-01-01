@@ -133,21 +133,13 @@ shell_command ::=   for_command
 while_command ::= while compound_list do compound_list done
 until_command ::= until compound_list do compound_list done
 
-for_command ::= for w (
-               newlines in_clause? block
-            |  ';' newlines block
-            )
+for_command ::= for w (newlines in_clause? block | ';' newlines block)
+
 private in_clause ::= "in" word_list list_terminator newlines {pin=1}
 
-private block ::= '{' compound_list '}' | do compound_list done
+private block ::= '{' compound_list '}' | do compound_list done {pin(".*")=1}
 
-select_command ::= select w (
-                      newlines do list done
-                   |  newlines '{' list '}'
-                   |  ';' newlines do list done
-                   |  ';' newlines '{' list '}'
-                   |  newlines in word_list list_terminator newlines do list done
-                   |  newlines in word_list list_terminator newlines '{' list '}')
+select_command ::= select w (';'? newlines block | newlines in_clause block)
 
 case_command ::= case w newlines "in" (case_clause_list newlines) esac {pin(".*")=1}
 

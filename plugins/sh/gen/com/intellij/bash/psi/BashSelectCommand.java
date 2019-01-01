@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 public interface BashSelectCommand extends BashCommand {
 
   @Nullable
-  BashList getList();
+  BashCompoundList getCompoundList();
 
   @Nullable
   BashListTerminator getListTerminator();
@@ -30,9 +30,6 @@ public interface BashSelectCommand extends BashCommand {
 
   @Nullable
   PsiElement getDone();
-
-  @Nullable
-  PsiElement getIn();
 
   @NotNull
   PsiElement getSelect();
