@@ -86,6 +86,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == PIPELINE_COMMAND) {
       r = pipeline_command(b, 0);
     }
+    else if (t == PROCESS_SUBSTITUTION) {
+      r = process_substitution(b, 0);
+    }
     else if (t == REDIRECTION) {
       r = redirection(b, 0);
     }
@@ -97,6 +100,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     }
     else if (t == SHELL_COMMAND) {
       r = shell_command(b, 0);
+    }
+    else if (t == SHELL_PARAMETER_EXPANSION) {
+      r = shell_parameter_expansion(b, 0);
     }
     else if (t == SIMPLE_COMMAND) {
       r = simple_command(b, 0);
@@ -146,15 +152,13 @@ public class BashParser implements PsiParser, LightPsiParser {
   };
 
   /* ********************************************************** */
-  // '$' '((' expression '))'
+  // '((' expression '))'
   public static boolean arithmetic_expansion(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arithmetic_expansion")) return false;
-    if (!nextTokenIs(b, DOLLAR)) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, ARITHMETIC_EXPANSION, null);
-    r = consumeToken(b, DOLLAR);
-    r = r && consumeToken(b, "((");
-    p = r; // pin = 2
+    Marker m = enter_section_(b, l, _NONE_, ARITHMETIC_EXPANSION, "<arithmetic expansion>");
+    r = consumeToken(b, "((");
+    p = r; // pin = 1
     r = r && report_error_(b, expression(b, l + 1, -1));
     r = p && consumeToken(b, "))") && r;
     exit_section_(b, l, m, r, p, null);
@@ -200,15 +204,24 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // assignment_word '=' literal
+  // assignment_word '=' (literal | composed_var)
   public static boolean assignment_word_rule(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_word_rule")) return false;
     if (!nextTokenIs(b, ASSIGNMENT_WORD)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokens(b, 0, ASSIGNMENT_WORD, EQ);
-    r = r && literal(b, l + 1);
+    r = r && assignment_word_rule_2(b, l + 1);
     exit_section_(b, m, ASSIGNMENT_WORD_RULE, r);
+    return r;
+  }
+
+  // literal | composed_var
+  private static boolean assignment_word_rule_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_word_rule_2")) return false;
+    boolean r;
+    r = literal(b, l + 1);
+    if (!r) r = composed_var(b, l + 1);
     return r;
   }
 
@@ -338,6 +351,12 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // subshell
+  static boolean command_substitution(PsiBuilder b, int l) {
+    return subshell(b, l + 1);
+  }
+
+  /* ********************************************************** */
   // pipeline_command (
   //                      '&&' newlines pipeline_command
   //                    | '||' newlines pipeline_command
@@ -435,6 +454,29 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = r && pipeline_command(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // '$' (arithmetic_expansion|command_substitution|shell_parameter_expansion)
+  static boolean composed_var(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "composed_var")) return false;
+    if (!nextTokenIs(b, DOLLAR)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, DOLLAR);
+    r = r && composed_var_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // arithmetic_expansion|command_substitution|shell_parameter_expansion
+  private static boolean composed_var_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "composed_var_1")) return false;
+    boolean r;
+    r = arithmetic_expansion(b, l + 1);
+    if (!r) r = command_substitution(b, l + 1);
+    if (!r) r = shell_parameter_expansion(b, l + 1);
+    return r;
   }
 
   /* ********************************************************** */
@@ -1127,6 +1169,33 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // ('<' | '>') '(' list ')'
+  public static boolean process_substitution(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "process_substitution")) return false;
+    if (!nextTokenIs(b, "<process substitution>", GREATER_THAN, LESS_THAN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, PROCESS_SUBSTITUTION, "<process substitution>");
+    r = process_substitution_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, consumeToken(b, LEFT_PAREN));
+    r = p && report_error_(b, list(b, l + 1)) && r;
+    r = p && consumeToken(b, RIGHT_PAREN) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // '<' | '>'
+  private static boolean process_substitution_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "process_substitution_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LESS_THAN);
+    if (!r) r = consumeToken(b, GREATER_THAN);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // '>' w
   //                 |  '<' w
   //                 |  num '>' w
@@ -1584,6 +1653,58 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // '{' literal [":" ['+'|'-'] literal] '}'
+  public static boolean shell_parameter_expansion(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shell_parameter_expansion")) return false;
+    if (!nextTokenIs(b, LEFT_CURLY)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LEFT_CURLY);
+    r = r && literal(b, l + 1);
+    r = r && shell_parameter_expansion_2(b, l + 1);
+    r = r && consumeToken(b, RIGHT_CURLY);
+    exit_section_(b, m, SHELL_PARAMETER_EXPANSION, r);
+    return r;
+  }
+
+  // [":" ['+'|'-'] literal]
+  private static boolean shell_parameter_expansion_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shell_parameter_expansion_2")) return false;
+    shell_parameter_expansion_2_0(b, l + 1);
+    return true;
+  }
+
+  // ":" ['+'|'-'] literal
+  private static boolean shell_parameter_expansion_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shell_parameter_expansion_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COLON);
+    r = r && shell_parameter_expansion_2_0_1(b, l + 1);
+    r = r && literal(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // ['+'|'-']
+  private static boolean shell_parameter_expansion_2_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shell_parameter_expansion_2_0_1")) return false;
+    shell_parameter_expansion_2_0_1_0(b, l + 1);
+    return true;
+  }
+
+  // '+'|'-'
+  private static boolean shell_parameter_expansion_2_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shell_parameter_expansion_2_0_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, ARITH_PLUS);
+    if (!r) r = consumeToken(b, ARITH_MINUS);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // simple_command_element+
   public static boolean simple_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command")) return false;
@@ -1600,7 +1721,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // literal | assignment_word_rule | redirection | arithmetic_expansion
+  // literal | assignment_word_rule | redirection | composed_var
   public static boolean simple_command_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command_element")) return false;
     boolean r;
@@ -1608,7 +1729,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = literal(b, l + 1);
     if (!r) r = assignment_word_rule(b, l + 1);
     if (!r) r = redirection(b, l + 1);
-    if (!r) r = arithmetic_expansion(b, l + 1);
+    if (!r) r = composed_var(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -1657,7 +1778,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // string_begin (string_content|variable)* string_end
+  // string_begin (string_content|vars)* string_end
   public static boolean string(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string")) return false;
     if (!nextTokenIs(b, STRING_BEGIN)) return false;
@@ -1670,7 +1791,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (string_content|variable)*
+  // (string_content|vars)*
   private static boolean string_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string_1")) return false;
     while (true) {
@@ -1681,12 +1802,12 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // string_content|variable
+  // string_content|vars
   private static boolean string_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string_1_0")) return false;
     boolean r;
     r = consumeToken(b, STRING_CONTENT);
-    if (!r) r = consumeToken(b, VARIABLE);
+    if (!r) r = vars(b, l + 1);
     return r;
   }
 
@@ -1748,6 +1869,17 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = p && do_block(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // variable | composed_var
+  static boolean vars(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "vars")) return false;
+    if (!nextTokenIs(b, "", DOLLAR, VARIABLE)) return false;
+    boolean r;
+    r = consumeToken(b, VARIABLE);
+    if (!r) r = composed_var(b, l + 1);
+    return r;
   }
 
   /* ********************************************************** */

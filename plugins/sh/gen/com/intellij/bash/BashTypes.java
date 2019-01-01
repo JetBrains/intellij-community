@@ -50,10 +50,12 @@ public interface BashTypes {
   IElementType PIPELINE_COMMAND = new BashCompositeElementType("PIPELINE_COMMAND");
   IElementType POST_EXPRESSION = new BashCompositeElementType("POST_EXPRESSION");
   IElementType PRE_EXPRESSION = new BashCompositeElementType("PRE_EXPRESSION");
+  IElementType PROCESS_SUBSTITUTION = new BashCompositeElementType("PROCESS_SUBSTITUTION");
   IElementType REDIRECTION = new BashCompositeElementType("REDIRECTION");
   IElementType REDIRECTION_LIST = new BashCompositeElementType("REDIRECTION_LIST");
   IElementType SELECT_COMMAND = new BashCompositeElementType("SELECT_COMMAND");
   IElementType SHELL_COMMAND = new BashCompositeElementType("SHELL_COMMAND");
+  IElementType SHELL_PARAMETER_EXPANSION = new BashCompositeElementType("SHELL_PARAMETER_EXPANSION");
   IElementType SIMPLE_COMMAND = new BashCompositeElementType("SIMPLE_COMMAND");
   IElementType SIMPLE_COMMAND_ELEMENT = new BashCompositeElementType("SIMPLE_COMMAND_ELEMENT");
   IElementType STRING = new BashCompositeElementType("STRING");
@@ -252,6 +254,9 @@ public interface BashTypes {
       else if (type == PRE_EXPRESSION) {
         return new BashPreExpressionImpl(node);
       }
+      else if (type == PROCESS_SUBSTITUTION) {
+        return new BashProcessSubstitutionImpl(node);
+      }
       else if (type == REDIRECTION) {
         return new BashRedirectionImpl(node);
       }
@@ -263,6 +268,9 @@ public interface BashTypes {
       }
       else if (type == SHELL_COMMAND) {
         return new BashShellCommandImpl(node);
+      }
+      else if (type == SHELL_PARAMETER_EXPANSION) {
+        return new BashShellParameterExpansionImpl(node);
       }
       else if (type == SIMPLE_COMMAND) {
         return new BashSimpleCommandImpl(node);

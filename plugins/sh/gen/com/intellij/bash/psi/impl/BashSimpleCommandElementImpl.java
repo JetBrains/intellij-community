@@ -45,8 +45,26 @@ public class BashSimpleCommandElementImpl extends BashCompositeElementImpl imple
 
   @Override
   @Nullable
+  public BashShellParameterExpansion getShellParameterExpansion() {
+    return findChildByClass(BashShellParameterExpansion.class);
+  }
+
+  @Override
+  @Nullable
   public BashString getString() {
     return findChildByClass(BashString.class);
+  }
+
+  @Override
+  @Nullable
+  public BashSubshell getSubshell() {
+    return findChildByClass(BashSubshell.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getDollar() {
+    return findChildByType(DOLLAR);
   }
 
   @Override

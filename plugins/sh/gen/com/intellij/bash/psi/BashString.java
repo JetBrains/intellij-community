@@ -8,6 +8,15 @@ import com.intellij.psi.PsiElement;
 public interface BashString extends BashCompositeElement {
 
   @NotNull
+  List<BashArithmeticExpansion> getArithmeticExpansionList();
+
+  @NotNull
+  List<BashShellParameterExpansion> getShellParameterExpansionList();
+
+  @NotNull
+  List<BashSubshell> getSubshellList();
+
+  @NotNull
   PsiElement getStringBegin();
 
   @NotNull

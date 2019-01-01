@@ -17,7 +17,16 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
   BashRedirection getRedirection();
 
   @Nullable
+  BashShellParameterExpansion getShellParameterExpansion();
+
+  @Nullable
   BashString getString();
+
+  @Nullable
+  BashSubshell getSubshell();
+
+  @Nullable
+  PsiElement getDollar();
 
   @Nullable
   PsiElement getInt();

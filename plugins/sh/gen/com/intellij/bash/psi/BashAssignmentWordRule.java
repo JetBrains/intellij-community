@@ -8,7 +8,19 @@ import com.intellij.psi.PsiElement;
 public interface BashAssignmentWordRule extends BashCompositeElement {
 
   @Nullable
+  BashArithmeticExpansion getArithmeticExpansion();
+
+  @Nullable
+  BashShellParameterExpansion getShellParameterExpansion();
+
+  @Nullable
   BashString getString();
+
+  @Nullable
+  BashSubshell getSubshell();
+
+  @Nullable
+  PsiElement getDollar();
 
   @NotNull
   PsiElement getEq();

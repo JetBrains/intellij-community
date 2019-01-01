@@ -31,10 +31,4 @@ public class BashArithmeticExpansionImpl extends BashCompositeElementImpl implem
     return findChildByClass(BashExpression.class);
   }
 
-  @Override
-  @NotNull
-  public PsiElement getDollar() {
-    return findNotNullChildByType(DOLLAR);
-  }
-
 }

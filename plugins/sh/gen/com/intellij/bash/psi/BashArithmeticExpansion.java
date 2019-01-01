@@ -10,7 +10,4 @@ public interface BashArithmeticExpansion extends BashCompositeElement {
   @Nullable
   BashExpression getExpression();
 
-  @NotNull
-  PsiElement getDollar();
-
 }

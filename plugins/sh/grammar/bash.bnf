@@ -114,11 +114,20 @@ redirection ::=    '>' w
                 |  num '>|' w
 
 private num ::= number | int
-string ::= string_begin (string_content|variable)* string_end
+string ::= string_begin (string_content|vars)* string_end
+
+private vars ::= variable | composed_var
+private composed_var ::= '$' (arithmetic_expansion|command_substitution|shell_parameter_expansion)
+private command_substitution ::= subshell
+shell_parameter_expansion ::= '{' literal [":" ['+'|'-'] literal] '}' // todo: simplify lexer for parameters
+
+process_substitution ::= ('<' | '>') '(' list ')' {pin=1}
+
 private literal ::= w | string | num
-simple_command_element ::= literal | assignment_word_rule | redirection | arithmetic_expansion
-arithmetic_expansion ::= '$' '((' expression '))' {pin=2}
-assignment_word_rule ::= assignment_word '=' literal
+simple_command_element ::= literal | assignment_word_rule | redirection | composed_var
+arithmetic_expansion ::= '((' expression '))' {pin=1}
+//noinspection BnfSuspiciousToken
+assignment_word_rule ::= assignment_word '=' (literal | composed_var)
 
 redirection_list ::= redirection redirection*
 simple_command ::= simple_command_element+

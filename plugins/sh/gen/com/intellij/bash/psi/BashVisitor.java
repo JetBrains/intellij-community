@@ -170,6 +170,10 @@ public class BashVisitor extends PsiElementVisitor {
     visitExpression(o);
   }
 
+  public void visitProcessSubstitution(@NotNull BashProcessSubstitution o) {
+    visitCompositeElement(o);
+  }
+
   public void visitRedirection(@NotNull BashRedirection o) {
     visitCompositeElement(o);
   }
@@ -184,6 +188,10 @@ public class BashVisitor extends PsiElementVisitor {
 
   public void visitShellCommand(@NotNull BashShellCommand o) {
     visitCommand(o);
+  }
+
+  public void visitShellParameterExpansion(@NotNull BashShellParameterExpansion o) {
+    visitCompositeElement(o);
   }
 
   public void visitSimpleCommand(@NotNull BashSimpleCommand o) {
