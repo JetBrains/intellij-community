@@ -33,12 +33,14 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.breadcrumbs.Crumb;
@@ -52,16 +54,15 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.COMPONENT_KEY;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
@@ -69,9 +70,9 @@ import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPE
 public class RecentLocationsAction extends DumbAwareAction {
   private static final JBColor BACKGROUND_COLOR = JBColor.namedColor("Table.lightSelectionBackground", new JBColor(0xE9EEF5, 0x464A4D));
   private static final int LIST_SIZE = Registry.intValue("recent.locations.list.size", 10);
-
-  private static final Ref<Boolean> NAVIGATION_KEY = Ref.create(Boolean.FALSE);
+  private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
+  private static final String NOT_SIGNIFICANT_LINE_REGEXP = "[^A-Za-z0-9]*";
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -108,7 +109,6 @@ public class RecentLocationsAction extends DumbAwareAction {
     ScrollingUtil.installActions(list);
     ScrollingUtil.ensureSelectionExists(list);
 
-
     JLabel title = createTitle(changed);
     JPanel topPanel = createTopPanel(createCheckbox(project, listWithFilter, e, changed), title);
     JPanel mainPanel = createMainPanel(listWithFilter, topPanel);
@@ -116,8 +116,6 @@ public class RecentLocationsAction extends DumbAwareAction {
     Ref<Boolean> navigationRef = Ref.create(false);
     JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(mainPanel, list)
       .setProject(project)
-      .setModalContext(true)
-      .addUserData(NAVIGATION_KEY)
       .setCancelOnClickOutside(true)
       .setRequestFocus(true)
       .setCancelCallback(() -> {
@@ -129,8 +127,9 @@ public class RecentLocationsAction extends DumbAwareAction {
       })
       .setResizable(true)
       .setMovable(true)
-      .setMovable(true)
       .setShowBorder(false)
+      .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
+      .setMinSize(new Dimension(JBUI.scale(500), JBUI.scale(100)))
       .createPopup();
 
     project.getMessageBus().connect(popup).subscribe(ShowRecentChangedLocationListener.TOPIC, new ShowRecentChangedLocationListener() {
@@ -140,8 +139,7 @@ public class RecentLocationsAction extends DumbAwareAction {
 
         updateTitleText(title, state);
 
-        Dimension size = calcSize(popup);
-        popup.setSize(size);
+        popup.pack(false, true);
       }
     });
 
@@ -154,8 +152,20 @@ public class RecentLocationsAction extends DumbAwareAction {
 
     initSearchActions(project, list, popup, navigationRef);
 
-    popup.setSize(calcSize(popup));
-    popup.showCenteredInCurrentWindow(project);
+    popup.setSize(new Dimension(JBUI.scale(500), JBUI.scale(mainPanel.getPreferredSize().height)));
+
+    showPopup(project, e, popup);
+  }
+
+  private static void showPopup(@NotNull Project project, @NotNull AnActionEvent e, @NotNull JBPopup popup) {
+    Point savedLocation = DimensionService.getInstance().getLocation(LOCATION_SETTINGS_KEY, project);
+    Window recentFocusedWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+    if (savedLocation != null && recentFocusedWindow != null) {
+      popup.showInScreenCoordinates(recentFocusedWindow, savedLocation);
+    }
+    else {
+      popup.showCenteredInCurrentWindow(project);
+    }
   }
 
   @NotNull
@@ -243,19 +253,20 @@ public class RecentLocationsAction extends DumbAwareAction {
   }
 
   @NotNull
-  public JLabel createTitle(boolean changed) {
+  private static JLabel createTitle(boolean changed) {
     JLabel title = new JLabel();
     title.setBorder(BorderFactory.createEmptyBorder());
     updateTitleText(title, changed);
     return title;
   }
 
-  public void updateTitleText(@NotNull JLabel title, boolean state) {
+  private static void updateTitleText(@NotNull JLabel title, boolean state) {
     title.setText(state ? IdeBundle.message("title.popup.recent.changed.locations") : IdeBundle.message("title.popup.recent.locations"));
   }
 
   @NotNull
-  public ListWithFilter<RecentLocationItem> createListWithFilter(Project project, JBList<RecentLocationItem> list) {
+  private static ListWithFilter<RecentLocationItem> createListWithFilter(@NotNull Project project,
+                                                                         @NotNull JBList<RecentLocationItem> list) {
     final JScrollPane pane = ScrollPaneFactory
       .createScrollPane(list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -265,18 +276,7 @@ public class RecentLocationsAction extends DumbAwareAction {
   }
 
   @NotNull
-  public static Dimension calcSize(@NotNull JBPopup popup) {
-    JComponent mainPanel = popup.getContent();
-    Dimension size = mainPanel.getPreferredSize();
-
-    size.height = Integer.max(size.height, 500);
-    size.width = 500;
-
-    return size;
-  }
-
-  @NotNull
-  public Function<RecentLocationItem, String> getNamer(@NotNull Project project) {
+  private static Function<RecentLocationItem, String> getNamer(@NotNull Project project) {
     return value -> {
       String breadcrumb = getBreadcrumbs(project, value.getInfo());
       EditorEx editor = value.getEditor();
@@ -298,7 +298,7 @@ public class RecentLocationsAction extends DumbAwareAction {
       return info.getFile().getName();
     }
 
-    return StringUtil.join(crumbs, " > ");
+    return StringUtil.join(ContainerUtil.map(crumbs, crumb -> crumb.getText()), " > ");
   }
 
   private static List<PlaceInfo> getPlaces(@NotNull Project project, boolean showChanged) {
@@ -328,28 +328,70 @@ public class RecentLocationsAction extends DumbAwareAction {
     List<RecentLocationItem> caretsList = ContainerUtil.newArrayList();
 
     for (PlaceInfo placeInfo : topElements) {
-      EditorEx editor = createEditor(project, placeInfo.getFile(), RecentLocationManager.getInstance(project).getRangeMarker(placeInfo));
+      RangeMarker rangeMarker = RecentLocationManager.getInstance(project).getRangeMarker(placeInfo);
+      if (rangeMarker == null) {
+        continue;
+      }
+
+      EditorEx editor = createEditor(project, placeInfo.getFile(), rangeMarker);
+      if (editor == null) {
+        continue;
+      }
+
       caretsList.add(new RecentLocationItem(placeInfo, editor));
     }
 
     return caretsList;
   }
 
-  @NotNull
-  private static EditorEx createEditor(@NotNull Project project,
-                                       @NotNull VirtualFile file,
-                                       @NotNull RangeMarker rangeMarker) {
+  @Nullable
+  private static EditorEx createEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull RangeMarker rangeMarker) {
     Document document = rangeMarker.getDocument();
     int offset = rangeMarker.getStartOffset();
 
     String text = document.getText(TextRange.create(offset, rangeMarker.getEndOffset()));
+    List<String> lines = Arrays.asList(StringUtil.splitByLinesKeepSeparators(text));
+    StringBuilder stringBuilder = new StringBuilder();
+    int skipBeforeLines = getLinesToSkip(lines);
+    int skipAfterLines = getLinesToSkip(ContainerUtil.reverse(lines));
+
+    for (int i = 0; i < lines.size(); i++) {
+      if (i >= skipBeforeLines && i < lines.size() - skipAfterLines) {
+        stringBuilder.append(lines.get(i));
+      }
+    }
+
+    text = stringBuilder.toString();
+
     int newLinesBefore = StringUtil.countNewLines(text) - StringUtil.countNewLines(StringUtil.trimLeading(text));
     text = StringUtil.trim(text);
 
-    EditorEx smallEditor = createEditor(project, text, document.getLineNumber(offset) + newLinesBefore, file);
+    if (StringUtil.isEmpty(text)) {
+      return null;
+    }
+
+    EditorEx smallEditor = createEditor(project, text, document.getLineNumber(offset) + skipBeforeLines + newLinesBefore, file);
     smallEditor.getGutterComponentEx().setPaintBackground(false);
 
     return smallEditor;
+  }
+
+  private static int getLinesToSkip(@NotNull List<String> lines) {
+    int skipLines = 0;
+    boolean matched = false;
+    for (String line : lines) {
+      if (matched) {
+        break;
+      }
+
+      if (line.matches(NOT_SIGNIFICANT_LINE_REGEXP)) {
+        skipLines++;
+      }
+      else {
+        matched = true;
+      }
+    }
+    return skipLines;
   }
 
   private static void initSearchActions(@NotNull Project project,

@@ -176,6 +176,10 @@ public class RecentLocationManager implements ProjectComponent {
   @NotNull
   private static Pair<Integer, Integer> getBoundLineNumbers(@NotNull Document document, int line) {
     int lineCount = document.getLineCount();
+    if (lineCount == 0) {
+      return Pair.create(0, 0);
+    }
+
     int before = Math.min(BEFORE_AFTER_LINES_COUNT, line);
     int after = Math.min(BEFORE_AFTER_LINES_COUNT, lineCount - line - 1);
 
@@ -210,9 +214,12 @@ public class RecentLocationManager implements ProjectComponent {
     return item.getResult();
   }
 
-  @NotNull
+  @Nullable
   RangeMarker getRangeMarker(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo) {
     PlaceInfoPersistentItem item = myItems.get(placeInfo);
+    if (item == null) {
+      return null;
+    }
     return item.getRangeMarker();
   }
 
