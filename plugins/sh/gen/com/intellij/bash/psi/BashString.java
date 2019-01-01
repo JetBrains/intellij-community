@@ -16,10 +16,13 @@ public interface BashString extends BashCompositeElement {
   @NotNull
   List<BashSubshell> getSubshellList();
 
-  @NotNull
+  @Nullable
+  PsiElement getString2();
+
+  @Nullable
   PsiElement getStringBegin();
 
-  @NotNull
+  @Nullable
   PsiElement getStringEnd();
 
 }

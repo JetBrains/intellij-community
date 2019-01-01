@@ -65,6 +65,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == GROUP_COMMAND) {
       r = group_command(b, 0);
     }
+    else if (t == HEREDOC) {
+      r = heredoc(b, 0);
+    }
     else if (t == IF_COMMAND) {
       r = if_command(b, 0);
     }
@@ -752,6 +755,20 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = p && consumeToken(b, RIGHT_CURLY) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // HEREDOC_MARKER_TAG HEREDOC_MARKER_START newlines HEREDOC_CONTENT HEREDOC_MARKER_END
+  public static boolean heredoc(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc")) return false;
+    if (!nextTokenIs(b, HEREDOC_MARKER_TAG)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, HEREDOC_MARKER_TAG, HEREDOC_MARKER_START);
+    r = r && newlines(b, l + 1);
+    r = r && consumeTokens(b, 0, HEREDOC_CONTENT, HEREDOC_MARKER_END);
+    exit_section_(b, m, HEREDOC, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -1721,7 +1738,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // literal | assignment_word_rule | redirection | composed_var
+  // literal | assignment_word_rule | redirection | composed_var | heredoc
   public static boolean simple_command_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command_element")) return false;
     boolean r;
@@ -1730,6 +1747,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = assignment_word_rule(b, l + 1);
     if (!r) r = redirection(b, l + 1);
     if (!r) r = composed_var(b, l + 1);
+    if (!r) r = heredoc(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -1778,33 +1796,44 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // string_begin (string_content|vars)* string_end
+  // (string_begin (string_content|vars)* string_end) | STRING2
   public static boolean string(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string")) return false;
-    if (!nextTokenIs(b, STRING_BEGIN)) return false;
+    if (!nextTokenIs(b, "<string>", STRING2, STRING_BEGIN)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, STRING, "<string>");
+    r = string_0(b, l + 1);
+    if (!r) r = consumeToken(b, STRING2);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // string_begin (string_content|vars)* string_end
+  private static boolean string_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "string_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, STRING_BEGIN);
-    r = r && string_1(b, l + 1);
+    r = r && string_0_1(b, l + 1);
     r = r && consumeToken(b, STRING_END);
-    exit_section_(b, m, STRING, r);
+    exit_section_(b, m, null, r);
     return r;
   }
 
   // (string_content|vars)*
-  private static boolean string_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "string_1")) return false;
+  private static boolean string_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "string_0_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!string_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "string_1", c)) break;
+      if (!string_0_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "string_0_1", c)) break;
     }
     return true;
   }
 
   // string_content|vars
-  private static boolean string_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "string_1_0")) return false;
+  private static boolean string_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "string_0_1_0")) return false;
     boolean r;
     r = consumeToken(b, STRING_CONTENT);
     if (!r) r = vars(b, l + 1);

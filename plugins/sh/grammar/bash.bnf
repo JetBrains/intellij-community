@@ -114,7 +114,7 @@ redirection ::=    '>' w
                 |  num '>|' w
 
 private num ::= number | int
-string ::= string_begin (string_content|vars)* string_end
+string ::= (string_begin (string_content|vars)* string_end) | STRING2
 
 private vars ::= variable | composed_var
 private composed_var ::= '$' (arithmetic_expansion|command_substitution|shell_parameter_expansion)
@@ -124,7 +124,8 @@ shell_parameter_expansion ::= '{' literal [":" ['+'|'-'] literal] '}' // todo: s
 process_substitution ::= ('<' | '>') '(' list ')' {pin=1}
 
 private literal ::= w | string | num
-simple_command_element ::= literal | assignment_word_rule | redirection | composed_var
+simple_command_element ::= literal | assignment_word_rule | redirection | composed_var | heredoc
+heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START newlines HEREDOC_CONTENT HEREDOC_MARKER_END
 arithmetic_expansion ::= '((' expression '))' {pin=1}
 //noinspection BnfSuspiciousToken
 assignment_word_rule ::= assignment_word '=' (literal | composed_var)

@@ -39,6 +39,12 @@ public class BashSimpleCommandElementImpl extends BashCompositeElementImpl imple
 
   @Override
   @Nullable
+  public BashHeredoc getHeredoc() {
+    return findChildByClass(BashHeredoc.class);
+  }
+
+  @Override
+  @Nullable
   public BashRedirection getRedirection() {
     return findChildByClass(BashRedirection.class);
   }

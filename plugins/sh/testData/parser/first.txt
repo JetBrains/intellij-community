@@ -256,7 +256,7 @@ BASH_FILE
     PsiElement(\n)('\n')
     PsiElement(word)('echo')
     PsiWhiteSpace(' ')
-    PsiElement(unevaluated string (STRING2))(''hello'')
+    PsiElement(STRING2)(''hello'')
     PsiWhiteSpace(' ')
     PsiElement(word)('world')
     PsiElement(\n)('\n')

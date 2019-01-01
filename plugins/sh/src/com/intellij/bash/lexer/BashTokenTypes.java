@@ -166,17 +166,13 @@ public interface BashTokenTypes extends BashTypes {
   //mapped element type
 //  IElementType STRING_CONTENT = new BashTokenType("string content");
 
-  IElementType STRING2 = new BashTokenType("unevaluated string (STRING2)");
   IElementType BACKQUOTE = new BashTokenType("backquote `");
 
   TokenSet stringLiterals = TokenSet.create(WORD, STRING2, INT, COLON);
 
-  IElementType HEREDOC_MARKER_TAG = new BashTokenType("heredoc marker tag");
-  IElementType HEREDOC_MARKER_START = new BashTokenType("heredoc start marker");
-  IElementType HEREDOC_MARKER_END = new BashTokenType("heredoc end marker");
   IElementType HEREDOC_MARKER_IGNORING_TABS_END = new BashTokenType("heredoc end marker (ignoring tabs)");
   IElementType HEREDOC_LINE = new BashTokenType("heredoc line (temporary)");
-  IElementType HEREDOC_CONTENT = new BashTokenType("here doc content");
+//  IElementType HEREDOC_CONTENT = new BashTokenType("here doc content");
 
   // test Operators
   IElementType COND_OP = new BashTokenType("cond_op");//all the test operators, e.g. -z, != ...

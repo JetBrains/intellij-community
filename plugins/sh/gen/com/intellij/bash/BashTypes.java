@@ -35,6 +35,7 @@ public interface BashTypes {
   IElementType FOR_COMMAND = new BashCompositeElementType("FOR_COMMAND");
   IElementType FUNCTION_DEF = new BashCompositeElementType("FUNCTION_DEF");
   IElementType GROUP_COMMAND = new BashCompositeElementType("GROUP_COMMAND");
+  IElementType HEREDOC = new BashCompositeElementType("HEREDOC");
   IElementType IF_COMMAND = new BashCompositeElementType("IF_COMMAND");
   IElementType LIST = new BashCompositeElementType("LIST");
   IElementType LIST_TERMINATOR = new BashCompositeElementType("LIST_TERMINATOR");
@@ -98,6 +99,10 @@ public interface BashTypes {
   IElementType FOR = new BashTokenType("for");
   IElementType FUNCTION = new BashTokenType("function");
   IElementType GREATER_THAN = new BashTokenType(">");
+  IElementType HEREDOC_CONTENT = new BashTokenType("HEREDOC_CONTENT");
+  IElementType HEREDOC_MARKER_END = new BashTokenType("HEREDOC_MARKER_END");
+  IElementType HEREDOC_MARKER_START = new BashTokenType("HEREDOC_MARKER_START");
+  IElementType HEREDOC_MARKER_TAG = new BashTokenType("HEREDOC_MARKER_TAG");
   IElementType IF = new BashTokenType("if");
   IElementType INT = new BashTokenType("int");
   IElementType LEFT_CURLY = new BashTokenType("{");
@@ -124,6 +129,7 @@ public interface BashTypes {
   IElementType SHEBANG = new BashTokenType("shebang");
   IElementType SHIFT_LEFT = new BashTokenType("<<");
   IElementType SHIFT_RIGHT = new BashTokenType(">>");
+  IElementType STRING2 = new BashTokenType("STRING2");
   IElementType STRING_BEGIN = new BashTokenType("string_begin");
   IElementType STRING_CONTENT = new BashTokenType("string_content");
   IElementType STRING_END = new BashTokenType("string_end");
@@ -208,6 +214,9 @@ public interface BashTypes {
       }
       else if (type == GROUP_COMMAND) {
         return new BashGroupCommandImpl(node);
+      }
+      else if (type == HEREDOC) {
+        return new BashHeredocImpl(node);
       }
       else if (type == IF_COMMAND) {
         return new BashIfCommandImpl(node);

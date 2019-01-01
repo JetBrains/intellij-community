@@ -110,6 +110,10 @@ public class BashVisitor extends PsiElementVisitor {
     visitCommand(o);
   }
 
+  public void visitHeredoc(@NotNull BashHeredoc o) {
+    visitCompositeElement(o);
+  }
+
   public void visitIfCommand(@NotNull BashIfCommand o) {
     visitCommand(o);
   }

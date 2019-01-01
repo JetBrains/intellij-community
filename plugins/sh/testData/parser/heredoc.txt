@@ -1,0 +1,130 @@
+BASH_FILE
+  PsiComment(Shebang)('#!/bin/bash\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('tee')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(STRING2)(''/lib/systemd/system/add-localhost.service'')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            HEREDOC
+              PsiElement(HEREDOC_MARKER_TAG)('<<')
+              PsiElement(HEREDOC_MARKER_START)('EOF')
+              PsiElement(\n)('\n')
+              PsiElement(HEREDOC_CONTENT)('[Unit]\nDescription=Adds hostname to /etc/hosts\nAfter=network.target\n\n[Service]\nType=oneshot\nExecStart=-/etc/add-localhost.sh\n\n[Install]\nWantedBy=default.target\n')
+              PsiElement(HEREDOC_MARKER_END)('EOF')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('mkdir')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('-p')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('/etc/systemd/system/')
+              PsiElement($)('$')
+              SHELL_PARAMETER_EXPANSION
+                PsiElement({)('{')
+                PsiElement(word)('MAIN_SERVICE')
+                PsiElement(})('}')
+              PsiElement(string_content)('.service.d')
+              PsiElement(string_end)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('tee')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('/etc/systemd/system/')
+              PsiElement($)('$')
+              SHELL_PARAMETER_EXPANSION
+                PsiElement({)('{')
+                PsiElement(word)('MAIN_SERVICE')
+                PsiElement(})('}')
+              PsiElement(string_content)('.service.d/add-localhost.conf')
+              PsiElement(string_end)('"')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            HEREDOC
+              PsiElement(HEREDOC_MARKER_TAG)('<<')
+              PsiElement(HEREDOC_MARKER_START)(''EOF'')
+              PsiElement(\n)('\n')
+              PsiElement(HEREDOC_CONTENT)('[Unit]\nAfter=add-localhost.service\n')
+              PsiElement(HEREDOC_MARKER_END)('EOF')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('systemctl')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('daemon-reload')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('systemctl')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('enable')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('add-localhost.service')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('tee')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(STRING2)(''/etc/add-localhost.sh'')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            HEREDOC
+              PsiElement(HEREDOC_MARKER_TAG)('<<')
+              PsiElement(HEREDOC_MARKER_START)(''EOF'')
+              PsiElement(\n)('\n')
+              PsiElement(HEREDOC_CONTENT)('#!/bin/bash\necho "========================================"\necho "$(date)"\n\nsed -ie '/127.0.0.1 ip\-/d' /etc/hosts\necho "127.0.0.1 $(hostname -s)" >> /etc/hosts;\n\n')
+              PsiElement(HEREDOC_MARKER_END)('EOF')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('chmod')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('+x')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(STRING2)(''/etc/add-localhost.sh'')
