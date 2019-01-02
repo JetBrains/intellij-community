@@ -118,6 +118,7 @@ iml_project(
         "//tools/adt/idea/designer:intellij.android.designer.tests",
         "//tools/adt/idea/jps-plugin:intellij.android.jps",
         "//tools/adt/idea/kotlin-integration:kotlin-integration-tests",
+        "//tools/adt/idea/layout-inspector:intellij.android.layout-inspector",
         "//tools/adt/idea/layoutlib:intellij.android.layoutlib",
         "//tools/adt/idea/native-symbolizer",
         "//tools/adt/idea/naveditor:intellij.android.naveditor",
