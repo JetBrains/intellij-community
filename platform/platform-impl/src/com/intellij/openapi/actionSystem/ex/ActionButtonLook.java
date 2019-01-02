@@ -89,7 +89,9 @@ public abstract class ActionButtonLook {
   public void paintBackground(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
     if (state != ActionButtonComponent.NORMAL) {
       Rectangle rect = new Rectangle(component.getSize());
+/* Android Studio: Removed insets adjustment to get full button size hover effect see: IDEA-199027 for details
       JBInsets.removeFrom(rect, component.getInsets());
+Android Studio: Removed insets adjustment to get full button size hover effect see: IDEA-199027 for details */
 
       Color color = state == ActionButtonComponent.PUSHED ?
                     JBUI.CurrentTheme.ActionButton.pressedBackground() : JBUI.CurrentTheme.ActionButton.hoverBackground();
@@ -99,14 +101,18 @@ public abstract class ActionButtonLook {
 
   public void paintBackground(Graphics g, JComponent component, Color color) {
     Rectangle rect = new Rectangle(component.getSize());
+/* Android Studio: Removed insets adjustment to get full button size hover effect see: IDEA-199027 for details
     JBInsets.removeFrom(rect, component.getInsets());
+Android Studio: Removed insets adjustment to get full button size hover effect see: IDEA-199027 for details */
     paintLookBackground(g, rect, color);
   }
 
   public void paintBorder(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
     if (state != ActionButtonComponent.NORMAL) {
       Rectangle rect = new Rectangle(component.getSize());
+/* Android Studio: Removed insets adjustment to get full button size hover effect see: IDEA-199027 for details
       JBInsets.removeFrom(rect, component.getInsets());
+Android Studio: Removed insets adjustment to get full button size hover effect see: IDEA-199027 for details */
 
       Color color = state == ActionButtonComponent.PUSHED ?
                     JBUI.CurrentTheme.ActionButton.pressedBorder() : JBUI.CurrentTheme.ActionButton.hoverBorder();
@@ -116,7 +122,9 @@ public abstract class ActionButtonLook {
 
   public void paintBorder(Graphics g, JComponent component, Color color) {
     Rectangle rect = new Rectangle(component.getSize());
+/* Android Studio: Removed insets adjustment to get full button size hover effect see: IDEA-199027 for details
     JBInsets.removeFrom(rect, component.getInsets());
+Android Studio: Removed insets adjustment to get full button size hover effect see: IDEA-199027 for details */
     paintLookBorder(g, rect, color);
   }
 
