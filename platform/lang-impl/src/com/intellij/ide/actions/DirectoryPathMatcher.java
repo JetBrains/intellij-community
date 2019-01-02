@@ -48,12 +48,12 @@ import java.util.stream.Collectors;
 class DirectoryPathMatcher {
   @NotNull private final GotoFileModel myModel;
   @Nullable private final List<Pair<VirtualFile, String>> myFiles;
-  @NotNull private final String myPattern;
+  @NotNull final String dirPattern;
 
   private DirectoryPathMatcher(@NotNull GotoFileModel model, @Nullable List<Pair<VirtualFile, String>> files, @NotNull String pattern) {
     myModel = model;
     myFiles = files;
-    myPattern = pattern;
+    dirPattern = pattern;
   }
 
   @Nullable
@@ -68,7 +68,7 @@ class DirectoryPathMatcher {
 
   @Nullable
   DirectoryPathMatcher appendChar(char c) {
-    String nextPattern = myPattern + c;
+    String nextPattern = dirPattern + c;
     if (c == '*' || c == '/' || c == ' ') return new DirectoryPathMatcher(myModel, myFiles, nextPattern);
 
     List<Pair<VirtualFile, String>> files = getMatchingRoots();
