@@ -62,9 +62,9 @@ public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl impleme
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getAssignmentWord() {
-    return findNotNullChildByType(ASSIGNMENT_WORD);
+    return findChildByType(ASSIGNMENT_WORD);
   }
 
   @Override
@@ -83,12 +83,6 @@ public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl impleme
   @Nullable
   public PsiElement getVariable() {
     return findChildByType(VARIABLE);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getWord() {
-    return findChildByType(WORD);
   }
 
 }

@@ -519,7 +519,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       PsiElement(word)('-v')
-              PsiErrorElement:'&', '&&', ';', <simple command element>, '\n', '|' or '||' expected, got '`'
+              PsiErrorElement:'&', '&&', ';', <simple command element>, '=', '\n', '|' or '||' expected, got '`'
                 <empty list>
   PsiWhiteSpace(' ')
   PsiElement(backquote `)('`')

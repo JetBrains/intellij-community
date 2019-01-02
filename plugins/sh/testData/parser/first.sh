@@ -23,6 +23,16 @@ echo "Message" | tail 25
 echo "Message" | tail -n 25
 #echo $Message | mail -s "disk report `date`" anny
 
+function installJDK {
+    local FILE=$1
+    local DIR=$2
+
+    mkdir -p $DIR
+    tar -xzf $FILE --strip-components=1 -C $DIR
+    rm $FILE
+}
+
+
 echo "Hello "*" World"
 echo `hello` world
 echo 'hello' world
@@ -38,6 +48,9 @@ in=$1
 # init
 file="current_line.txt"
 let count=0
+
+
+
 
 
 

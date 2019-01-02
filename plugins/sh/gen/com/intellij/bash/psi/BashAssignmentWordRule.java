@@ -25,7 +25,7 @@ public interface BashAssignmentWordRule extends BashCompositeElement {
   @NotNull
   PsiElement getEq();
 
-  @NotNull
+  @Nullable
   PsiElement getAssignmentWord();
 
   @Nullable
@@ -36,8 +36,5 @@ public interface BashAssignmentWordRule extends BashCompositeElement {
 
   @Nullable
   PsiElement getVariable();
-
-  @Nullable
-  PsiElement getWord();
 
 }

@@ -213,15 +213,25 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // assignment_word '=' [literal | composed_var]
+  // (assignment_word | word) '=' [literal | composed_var]
   public static boolean assignment_word_rule(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_word_rule")) return false;
-    if (!nextTokenIs(b, ASSIGNMENT_WORD)) return false;
+    if (!nextTokenIs(b, "<assignment word rule>", ASSIGNMENT_WORD, WORD)) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, ASSIGNMENT_WORD, EQ);
+    Marker m = enter_section_(b, l, _NONE_, ASSIGNMENT_WORD_RULE, "<assignment word rule>");
+    r = assignment_word_rule_0(b, l + 1);
+    r = r && consumeToken(b, EQ);
     r = r && assignment_word_rule_2(b, l + 1);
-    exit_section_(b, m, ASSIGNMENT_WORD_RULE, r);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // assignment_word | word
+  private static boolean assignment_word_rule_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_word_rule_0")) return false;
+    boolean r;
+    r = consumeToken(b, ASSIGNMENT_WORD);
+    if (!r) r = consumeToken(b, WORD);
     return r;
   }
 
@@ -1820,13 +1830,13 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // literal | assignment_word_rule | redirection | composed_var | heredoc
+  // assignment_word_rule | literal | redirection | composed_var | heredoc
   public static boolean simple_command_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command_element")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, SIMPLE_COMMAND_ELEMENT, "<simple command element>");
-    r = literal(b, l + 1);
-    if (!r) r = assignment_word_rule(b, l + 1);
+    r = assignment_word_rule(b, l + 1);
+    if (!r) r = literal(b, l + 1);
     if (!r) r = redirection(b, l + 1);
     if (!r) r = composed_var(b, l + 1);
     if (!r) r = heredoc(b, l + 1);

@@ -133,10 +133,10 @@ private cond_left ::= EXPR_CONDITIONAL_LEFT | '[['
 process_substitution ::= ('<' | '>') '(' list ')' {pin=1}
 
 private literal ::= w | string | num
-simple_command_element ::= literal | assignment_word_rule | redirection | composed_var | heredoc
+simple_command_element ::= assignment_word_rule | literal | redirection | composed_var | heredoc
 heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START newlines HEREDOC_CONTENT HEREDOC_MARKER_END
 arithmetic_expansion ::= '((' expression '))' {pin=1}
-assignment_word_rule ::= assignment_word '=' [literal | composed_var]
+assignment_word_rule ::= (assignment_word | word) '=' [literal | composed_var]
 
 redirection_list ::= redirection redirection*
 simple_command ::= simple_command_element+
