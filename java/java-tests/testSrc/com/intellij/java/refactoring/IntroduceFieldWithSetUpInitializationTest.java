@@ -17,10 +17,10 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
@@ -28,25 +28,26 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import com.intellij.refactoring.introduceField.LocalToFieldHandler;
-import com.intellij.util.PathUtil;
+import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
 
-import java.io.File;
-
-public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
+public class IntroduceFieldWithSetUpInitializationTest extends LightCodeInsightTestCase {
+  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      super.configureModule(module, model, contentEntry);
+      PsiTestUtil
+        .addProjectLibrary(model, "JUnit4", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"));
+    }
+  };
 
   @NotNull
   @Override
-  protected Module createModule(final String name) {
-    final Module module = super.createModule(name);
-    final String url = VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(Before.class)));
-    ModuleRootModificationUtil.addModuleLibrary(module, url);
-    return module;
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return PROJECT_DESCRIPTOR;
   }
 
   public void testInSetUp() throws Exception {
@@ -82,7 +83,7 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
   }
 
   private void doTest() throws Exception {
-    configureByFile("/refactoring/introduceField/before" + getTestName(false) + ".java");
+    configureByFile("before" + getTestName(false) + ".java");
     final PsiLocalVariable local =
       PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
     new LocalToFieldHandler(getProject(), false) {
@@ -97,6 +98,12 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
                                                          false);
       }
     }.convertLocalToField(local, myEditor);
-    checkResultByFile("/refactoring/introduceField/after" + getTestName(false)+ ".java");
+    checkResultByFile("after" + getTestName(false)+ ".java");
+  }
+
+  @NotNull
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/introduceField/";
   }
 }
