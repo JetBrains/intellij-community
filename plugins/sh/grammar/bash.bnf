@@ -140,7 +140,7 @@ assignment_word_rule ::= (assignment_word | word) '=' [literal | composed_var]
 
 redirection_list ::= redirection redirection*
 simple_command ::= simple_command_element+
-command ::= simple_command | shell_command redirection_list?
+command ::= shell_command redirection_list? | simple_command
 
 shell_command ::=   for_command
                   | case_command
@@ -170,9 +170,9 @@ select_command ::= select w (';'? newlines block | newlines in_clause block)
 
 case_command ::= case w newlines "in" (case_clause_list newlines) esac {pin(".*")=1}
 
-function_def ::=  w '(' ')' newlines group_command
-                 |  function w '(' ')' newlines group_command
-                 |  function w newlines group_command
+function_def ::=             word argument_list  newlines group_command
+                 |  function word argument_list? newlines group_command {pin(".*")="function|argument_list"}
+private argument_list ::= '(' ')'
 
 subshell ::=  '(' list ')' {pin=1}
 

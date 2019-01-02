@@ -7,11 +7,8 @@ import com.intellij.psi.PsiElement;
 
 public interface BashFunctionDef extends BashCompositeElement {
 
-  @NotNull
-  BashGroupCommand getGroupCommand();
-
   @Nullable
-  BashString getString();
+  BashGroupCommand getGroupCommand();
 
   @Nullable
   PsiElement getLeftParen();
@@ -21,15 +18,6 @@ public interface BashFunctionDef extends BashCompositeElement {
 
   @Nullable
   PsiElement getFunction();
-
-  @Nullable
-  PsiElement getInt();
-
-  @Nullable
-  PsiElement getNumber();
-
-  @Nullable
-  PsiElement getVariable();
 
   @Nullable
   PsiElement getWord();

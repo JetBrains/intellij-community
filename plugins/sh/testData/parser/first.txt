@@ -353,7 +353,7 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('echo')
   PsiWhiteSpace(' ')
-  PsiErrorElement:'&', '&&', ';', <pipeline command>, <simple command element>, '=', '\n', '|' or '||' expected, got '`'
+  PsiErrorElement:'&', '&&', '(', ';', <pipeline command>, <simple command element>, '=', '\n', '|' or '||' expected, got '`'
     PsiElement(backquote `)('`')
   PsiElement(DUMMY_BLOCK)
     PsiElement(word)('hello')

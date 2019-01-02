@@ -158,6 +158,19 @@ public class BashParser implements PsiParser, LightPsiParser {
   };
 
   /* ********************************************************** */
+  // '(' ')'
+  static boolean argument_list(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "argument_list")) return false;
+    if (!nextTokenIs(b, LEFT_PAREN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeTokens(b, 1, LEFT_PAREN, RIGHT_PAREN);
+    p = r; // pin = 1
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
   // '((' expression '))'
   public static boolean arithmetic_expansion(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arithmetic_expansion")) return false;
@@ -351,31 +364,31 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // simple_command | shell_command redirection_list?
+  // shell_command redirection_list? | simple_command
   public static boolean command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "command")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, COMMAND, "<command>");
-    r = simple_command(b, l + 1);
-    if (!r) r = command_1(b, l + 1);
+    r = command_0(b, l + 1);
+    if (!r) r = simple_command(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
   // shell_command redirection_list?
-  private static boolean command_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "command_1")) return false;
+  private static boolean command_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "command_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = shell_command(b, l + 1);
-    r = r && command_1_1(b, l + 1);
+    r = r && command_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // redirection_list?
-  private static boolean command_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "command_1_1")) return false;
+  private static boolean command_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "command_0_1")) return false;
     redirection_list(b, l + 1);
     return true;
   }
@@ -791,58 +804,52 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // w '(' ')' newlines group_command
-  //                  |  function w '(' ')' newlines group_command
-  //                  |  function w newlines group_command
+  // word argument_list  newlines group_command
+  //                  |  function word argument_list? newlines group_command
   public static boolean function_def(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "function_def")) return false;
+    if (!nextTokenIs(b, "<function def>", FUNCTION, WORD)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, FUNCTION_DEF, "<function def>");
     r = function_def_0(b, l + 1);
     if (!r) r = function_def_1(b, l + 1);
-    if (!r) r = function_def_2(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // w '(' ')' newlines group_command
+  // word argument_list  newlines group_command
   private static boolean function_def_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "function_def_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = w(b, l + 1);
-    r = r && consumeTokens(b, 0, LEFT_PAREN, RIGHT_PAREN);
-    r = r && newlines(b, l + 1);
-    r = r && group_command(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeToken(b, WORD);
+    r = r && argument_list(b, l + 1);
+    p = r; // pin = function|argument_list
+    r = r && report_error_(b, newlines(b, l + 1));
+    r = p && group_command(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
-  // function w '(' ')' newlines group_command
+  // function word argument_list? newlines group_command
   private static boolean function_def_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "function_def_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, FUNCTION);
-    r = r && w(b, l + 1);
-    r = r && consumeTokens(b, 0, LEFT_PAREN, RIGHT_PAREN);
-    r = r && newlines(b, l + 1);
-    r = r && group_command(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeTokens(b, 1, FUNCTION, WORD);
+    p = r; // pin = function|argument_list
+    r = r && report_error_(b, function_def_1_2(b, l + 1));
+    r = p && report_error_(b, newlines(b, l + 1)) && r;
+    r = p && group_command(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
-  // function w newlines group_command
-  private static boolean function_def_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "function_def_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, FUNCTION);
-    r = r && w(b, l + 1);
-    r = r && newlines(b, l + 1);
-    r = r && group_command(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+  // argument_list?
+  private static boolean function_def_1_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "function_def_1_2")) return false;
+    argument_list(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */

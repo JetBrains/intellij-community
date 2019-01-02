@@ -26,15 +26,9 @@ public class BashFunctionDefImpl extends BashCompositeElementImpl implements Bas
   }
 
   @Override
-  @NotNull
-  public BashGroupCommand getGroupCommand() {
-    return findNotNullChildByClass(BashGroupCommand.class);
-  }
-
-  @Override
   @Nullable
-  public BashString getString() {
-    return findChildByClass(BashString.class);
+  public BashGroupCommand getGroupCommand() {
+    return findChildByClass(BashGroupCommand.class);
   }
 
   @Override
@@ -53,24 +47,6 @@ public class BashFunctionDefImpl extends BashCompositeElementImpl implements Bas
   @Nullable
   public PsiElement getFunction() {
     return findChildByType(FUNCTION);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getInt() {
-    return findChildByType(INT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getNumber() {
-    return findChildByType(NUMBER);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getVariable() {
-    return findChildByType(VARIABLE);
   }
 
   @Override
