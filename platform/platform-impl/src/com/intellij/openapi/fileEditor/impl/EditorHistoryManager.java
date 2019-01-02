@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -305,7 +305,10 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
 
   @Override
   public synchronized void loadState(@NotNull Element state) {
-    myEntriesList.clear();
+    // each HistoryEntry contains myDisposable that must be disposed to dispose corresponding virtual file pointer
+    //noinspection TestOnlyProblems
+    removeAllFiles();
+
     // backward compatibility - previously entry maybe duplicated
     Map<String, Element> fileToElement = new LinkedHashMap<>();
     for (Element e : state.getChildren(HistoryEntry.TAG)) {
