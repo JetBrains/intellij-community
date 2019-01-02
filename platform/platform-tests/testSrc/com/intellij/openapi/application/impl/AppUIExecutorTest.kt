@@ -190,7 +190,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         override val isCorrectContext: Boolean
           get() = scheduled
 
-        override fun scheduleExpirable(expirable: Disposable, runnable: Runnable) {
+        override fun scheduleExpirable(runnable: Runnable) {
           if (Disposer.isDisposed(disposable)) {
             queue.add("refuse to run already disposed")
             return
@@ -259,7 +259,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         override val isCorrectContext: Boolean
           get() = scheduled
 
-        override fun scheduleExpirable(expirable: Disposable, runnable: Runnable) {
+        override fun scheduleExpirable(runnable: Runnable) {
           if (Disposer.isDisposed(disposable)) {
             queue.add("refuse to run already disposed")
             return
@@ -422,7 +422,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         override val isCorrectContext: Boolean
           get() = outerScheduled
 
-        override fun scheduleExpirable(expirable: Disposable, runnable: Runnable) {
+        override fun scheduleExpirable(runnable: Runnable) {
           if (shouldDisposeOnDispatch) {
             doDispose(queue, constraintDisposable, anotherDisposable)
           }

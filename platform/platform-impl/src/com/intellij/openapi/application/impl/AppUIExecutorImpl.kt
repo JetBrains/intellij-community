@@ -68,7 +68,7 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
       override val isCorrectContext: Boolean
         get() = !PsiDocumentManager.getInstance(project).hasUncommitedDocuments()
 
-      override fun scheduleExpirable(expirable: Disposable, runnable: Runnable) {
+      override fun scheduleExpirable(runnable: Runnable) {
         PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, myModality)
       }
 
@@ -81,7 +81,7 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
       override val isCorrectContext: Boolean
         get() = !DumbService.getInstance(project).isDumb
 
-      override fun scheduleExpirable(expirable: Disposable, runnable: Runnable) {
+      override fun scheduleExpirable(runnable: Runnable) {
         DumbService.getInstance(project).runWhenSmart(runnable)
       }
 

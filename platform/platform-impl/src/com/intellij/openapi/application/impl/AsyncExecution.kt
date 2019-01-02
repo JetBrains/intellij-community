@@ -45,6 +45,6 @@ interface AsyncExecution<E : AsyncExecution<E>> {
    * It is OK to execute it after the expirable has been disposed though.
    */
   interface ExpirableContextConstraint : ContextConstraint {
-    fun scheduleExpirable(expirable: Disposable, runnable: Runnable)
+    fun scheduleExpirable(runnable: Runnable)
   }
 }

@@ -88,7 +88,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
    * [expireWith] and [withConstraint], and each individual coroutine job that must be cancelled
    * once any of the disposables is expired.
    */
-  internal class ExpirableHandle(val disposable: Disposable) : JobExpiration() {
+  internal class ExpirableHandle(private val disposable: Disposable) : JobExpiration() {
     /**
      * Does not have children or a parent. Unlike the regular parent-children job relation,
      * having coroutine jobs attached to the supervisor job doesn't imply waiting of any kind,
@@ -203,7 +203,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
         }
       }
       if (runOnce.isActive) {
-        constraint.scheduleExpirable(expirableHandle.disposable, Runnable {
+        constraint.scheduleExpirable(Runnable {
           runOnce {
             jobDisposableHandle.dispose()
             retryDispatchRunnable.run()
