@@ -3,7 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.AsyncExecutionSupport.Companion.cancelJobOnDisposal
+import com.intellij.openapi.application.impl.AsyncExecutionExpirableSupport.Companion.cancelJobOnDisposal
 import kotlinx.coroutines.*
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.CancellablePromise

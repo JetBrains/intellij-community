@@ -24,7 +24,7 @@ import kotlin.coroutines.CoroutineContext
 internal class AppUIExecutorImpl private constructor(private val myModality: ModalityState,
                                                      dispatcher: CoroutineDispatcher,
                                                      expirableHandles: Set<JobExpiration>)
-  : AsyncExecutionSupport<AppUIExecutorEx>(dispatcher, expirableHandles), AppUIExecutorEx {
+  : AsyncExecutionExpirableSupport<AppUIExecutorEx>(dispatcher, expirableHandles), AppUIExecutorEx {
 
   constructor(modality: ModalityState) : this(modality, /* fallback */ object : CoroutineDispatcher() {
     // TODO[eldar] please don't @Suppress("EXPERIMENTAL_OVERRIDE") until we understand the implications and resolve the cause
