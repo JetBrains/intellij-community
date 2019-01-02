@@ -65,3 +65,11 @@
 1.5 => plugins/xslt-debugger/lib/rt/xslt-debugger-engine-impl.jar
 
 1.6 => plugins/cucumber-java/lib/cucumber-jvmFormatter.jar
+
+; the checker produces false positives on module-info.class and META-INF/version/* files
+- => lib/FastInfoset-1.2.15.jar
+- => lib/istack-commons-runtime-3.0.7.jar
+- => lib/jaxb-api-2.3.1.jar
+- => lib/jaxb-runtime-2.3.1.jar
+- => lib/stax-ex-1.8.jar
+- => lib/txw2-2.3.1.jar
