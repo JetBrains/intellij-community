@@ -37,6 +37,7 @@ import com.intellij.util.containers.mapSmart
 import com.intellij.util.io.*
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.text.nullize
+import java.nio.file.AccessDeniedException
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -294,12 +295,30 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
     lastSavedProjectName = currentProjectName
 
     val basePath = projectBasePath
-    if (currentProjectName == PathUtilRt.getFileName(basePath)) {
-      // name equals to base path name - just remove name
-      nameFile.delete()
+
+   fun doSave() {
+      if (currentProjectName == PathUtilRt.getFileName(basePath)) {
+        // name equals to base path name - just remove name
+        nameFile.delete()
+      }
+      else if (Paths.get(basePath).isDirectory()) {
+        nameFile.write(currentProjectName.toByteArray())
+      }
     }
-    else if (Paths.get(basePath).isDirectory()) {
-      nameFile.write(currentProjectName.toByteArray())
+
+    try {
+      doSave()
+    }
+    catch (e: AccessDeniedException) {
+      val status = runReadAction {
+        ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(
+          listOf(LocalFileSystem.getInstance().refreshAndFindFileByPath(nameFile.systemIndependentPath)))
+      }
+      if (status.hasReadonlyFiles()) {
+        throw e
+      }
+
+      doSave()
     }
   }
 
