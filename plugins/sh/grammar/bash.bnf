@@ -126,14 +126,14 @@ private command_substitution ::= subshell
 shell_parameter_expansion ::= '{' literal [":" ['+'|'-'] literal] '}' // todo: simplify lexer for parameters
 bash_expansion ::=
 
-conditional ::= cond_left [literal? <<condOp>> literal] cond_right {pin=1}
+conditional_command ::= cond_left [literal? <<condOp>> literal] cond_right {pin=1}
 private cond_right ::= EXPR_CONDITIONAL_RIGHT | ']]'
 private cond_left ::= EXPR_CONDITIONAL_LEFT | '[['
 
 process_substitution ::= ('<' | '>') '(' compound_list ')' {pin=1}
 
 private literal ::= w | string | num
-simple_command_element ::= assignment_word_rule | literal | redirection | composed_var | heredoc
+simple_command_element ::= assignment_word_rule | literal | redirection | composed_var | heredoc | conditional_command
 heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START newlines HEREDOC_CONTENT HEREDOC_MARKER_END
 arithmetic_expansion ::= '((' expression '))' {pin=1}
 assignment_word_rule ::= (assignment_word | word) '=' [literal | composed_var]
@@ -176,7 +176,7 @@ function_def ::=  w '(' ')' newlines group_command
 
 subshell ::=  '(' list ')' {pin=1}
 
-if_command ::= if conditional list_terminator then compound_list
+if_command ::= if compound_list then compound_list
                (   fi
                  | else compound_list fi
                  | elif_clause fi) {pin(".*")="if|elif|then|else"}

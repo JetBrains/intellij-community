@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashConditional extends BashCompositeElement {
+public interface BashConditionalCommand extends BashCommand {
 
   @NotNull
   List<BashString> getStringList();

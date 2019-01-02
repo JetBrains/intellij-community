@@ -39,6 +39,12 @@ public class BashSimpleCommandElementImpl extends BashCompositeElementImpl imple
 
   @Override
   @Nullable
+  public BashConditionalCommand getConditionalCommand() {
+    return findChildByClass(BashConditionalCommand.class);
+  }
+
+  @Override
+  @Nullable
   public BashHeredoc getHeredoc() {
     return findChildByClass(BashHeredoc.class);
   }

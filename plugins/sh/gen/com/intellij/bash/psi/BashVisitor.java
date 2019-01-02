@@ -78,8 +78,8 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitConditional(@NotNull BashConditional o) {
-    visitCompositeElement(o);
+  public void visitConditionalCommand(@NotNull BashConditionalCommand o) {
+    visitCommand(o);
   }
 
   public void visitConditionalExpression(@NotNull BashConditionalExpression o) {

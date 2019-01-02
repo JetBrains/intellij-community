@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashConditionalImpl extends BashCompositeElementImpl implements BashConditional {
+public class BashConditionalCommandImpl extends BashCommandImpl implements BashConditionalCommand {
 
-  public BashConditionalImpl(ASTNode node) {
+  public BashConditionalCommandImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitConditional(this);
+    visitor.visitConditionalCommand(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

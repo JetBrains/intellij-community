@@ -33,20 +33,8 @@ public class BashIfCommandImpl extends BashCommandImpl implements BashIfCommand 
 
   @Override
   @Nullable
-  public BashConditional getConditional() {
-    return findChildByClass(BashConditional.class);
-  }
-
-  @Override
-  @Nullable
   public BashElifClause getElifClause() {
     return findChildByClass(BashElifClause.class);
-  }
-
-  @Override
-  @Nullable
-  public BashListTerminator getListTerminator() {
-    return findChildByClass(BashListTerminator.class);
   }
 
   @Override

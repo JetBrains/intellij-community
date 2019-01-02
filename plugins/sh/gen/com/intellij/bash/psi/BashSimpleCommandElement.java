@@ -14,6 +14,9 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
   BashAssignmentWordRule getAssignmentWordRule();
 
   @Nullable
+  BashConditionalCommand getConditionalCommand();
+
+  @Nullable
   BashHeredoc getHeredoc();
 
   @Nullable

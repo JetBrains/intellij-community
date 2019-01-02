@@ -27,7 +27,7 @@ public interface BashTypes {
   IElementType COMMA_EXPRESSION = new BashCompositeElementType("COMMA_EXPRESSION");
   IElementType COMPARISON_EXPRESSION = new BashCompositeElementType("COMPARISON_EXPRESSION");
   IElementType COMPOUND_LIST = new BashCompositeElementType("COMPOUND_LIST");
-  IElementType CONDITIONAL = new BashCompositeElementType("CONDITIONAL");
+  IElementType CONDITIONAL_COMMAND = new BashCompositeElementType("CONDITIONAL_COMMAND");
   IElementType CONDITIONAL_EXPRESSION = new BashCompositeElementType("CONDITIONAL_EXPRESSION");
   IElementType DO_BLOCK = new BashCompositeElementType("DO_BLOCK");
   IElementType ELIF_CLAUSE = new BashCompositeElementType("ELIF_CLAUSE");
@@ -199,8 +199,8 @@ public interface BashTypes {
       else if (type == COMPOUND_LIST) {
         return new BashCompoundListImpl(node);
       }
-      else if (type == CONDITIONAL) {
-        return new BashConditionalImpl(node);
+      else if (type == CONDITIONAL_COMMAND) {
+        return new BashConditionalCommandImpl(node);
       }
       else if (type == CONDITIONAL_EXPRESSION) {
         return new BashConditionalExpressionImpl(node);

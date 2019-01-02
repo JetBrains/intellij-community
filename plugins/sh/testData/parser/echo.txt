@@ -87,7 +87,6 @@ BASH_FILE
             PsiElement())(')')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
-  PsiWhiteSpace(' ')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
