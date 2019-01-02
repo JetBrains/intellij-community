@@ -7,13 +7,13 @@ import com.intellij.psi.PsiElement;
 
 public interface BashSubshell extends BashCompositeElement {
 
-  @NotNull
+  @Nullable
   BashCompoundList getCompoundList();
 
   @NotNull
   PsiElement getLeftParen();
 
-  @NotNull
+  @Nullable
   PsiElement getRightParen();
 
 }

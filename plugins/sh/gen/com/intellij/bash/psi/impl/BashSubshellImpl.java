@@ -26,9 +26,9 @@ public class BashSubshellImpl extends BashCompositeElementImpl implements BashSu
   }
 
   @Override
-  @NotNull
+  @Nullable
   public BashCompoundList getCompoundList() {
-    return findNotNullChildByClass(BashCompoundList.class);
+    return findChildByClass(BashCompoundList.class);
   }
 
   @Override
@@ -38,9 +38,9 @@ public class BashSubshellImpl extends BashCompositeElementImpl implements BashSu
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getRightParen() {
-    return findNotNullChildByType(RIGHT_PAREN);
+    return findChildByType(RIGHT_PAREN);
   }
 
 }

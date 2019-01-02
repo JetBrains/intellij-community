@@ -174,7 +174,7 @@ function_def ::=  w '(' ')' newlines group_command
                  |  function w '(' ')' newlines group_command
                  |  function w newlines group_command
 
-subshell ::=  '(' compound_list ')'
+subshell ::=  '(' list ')' {pin=1}
 
 if_command ::= if conditional list_terminator then compound_list
                (   fi
@@ -198,7 +198,9 @@ private case_clause_list ::= (case_clause ';;')+
 
 pattern ::=  w ('|' w)* {pin('.*')=1}
 
-compound_list ::= newlines pipeline_command_list ('\n' | '&' | ';') newlines {pin=2}
+compound_list ::= newlines pipeline_command_list end_of_list  newlines {pin=2}
+list ::=          newlines pipeline_command_list end_of_list? newlines {pin=2 elementType=compound_list}
+private end_of_list ::= '\n' | ';' | '&'
 
 private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {pin=1} // todo with pin
 private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' |  '\n') newlines
