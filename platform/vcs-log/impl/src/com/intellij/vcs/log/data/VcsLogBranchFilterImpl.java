@@ -82,16 +82,16 @@ public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
 
   private boolean isIncluded(@NotNull String name) {
     if (myPatterns.isEmpty() && myBranches.isEmpty()) return true;
-    if (myBranches.contains(name)) return true;
-    for (Pattern regexp : myPatterns) {
-      if (regexp.matcher(name).matches()) return true;
-    }
-    return false;
+    return isMatched(name, myBranches, myPatterns);
   }
 
   private boolean isExcluded(@NotNull String name) {
-    if (myExcludedBranches.contains(name)) return true;
-    for (Pattern regexp : myExcludedPatterns) {
+    return isMatched(name, myExcludedBranches, myExcludedPatterns);
+  }
+
+  private static boolean isMatched(@NotNull String name, @NotNull List<String> branches, @NotNull List<Pattern> patterns) {
+    if (branches.contains(name)) return true;
+    for (Pattern regexp : patterns) {
       if (regexp.matcher(name).matches()) return true;
     }
     return false;
