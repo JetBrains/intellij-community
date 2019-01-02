@@ -556,6 +556,10 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         if (path != null) {
           markPathRecent(path, openProject);
         }
+
+        // update only if there is another opened project - it means that project is not closed on app quit,
+        // but on explicit "Close Project" action.
+        updateLastProjectPath();
       }
       updateSystemDockMenu();
     }
