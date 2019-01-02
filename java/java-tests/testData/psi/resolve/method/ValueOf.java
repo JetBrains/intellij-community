@@ -1,5 +1,5 @@
 class A{
  void foo(){
-  String.<ref>valueOf(1);
+  String.<caret>valueOf(1);
  }
 }

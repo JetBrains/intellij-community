@@ -7,6 +7,6 @@ class A{
 		void foo(B b){}
 	}
 	{
-		new C().<ref>foo(new C())
+		new C().<caret>foo(new C())
 	}
 }

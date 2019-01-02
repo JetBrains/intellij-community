@@ -4,7 +4,7 @@ class ContainerUtil {
     }
 
     public static <T> T find(Iterable<? extends T> iterable, final T equalTo) {
-        return <ref>find(iterable, new Condition<T>() {
+        return <caret>find(iterable, new Condition<T>() {
             public boolean value(final T object) {
                 return equalTo == object || equalTo.equals(object);
             }

@@ -15,6 +15,6 @@ class A {
   class C extends B {
 
     public void method() {
-      <ref>i = 10;
+      <caret>i = 10;
     }
   }

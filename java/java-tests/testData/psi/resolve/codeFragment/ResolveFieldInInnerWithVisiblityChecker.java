@@ -5,7 +5,7 @@ public class FieldVsOuter2 {
     public final String field = "yyy";
 
     public void foo() {
-      System.out.println(<ref>field);
+      System.out.println(<caret>field);
     }
   }
 }

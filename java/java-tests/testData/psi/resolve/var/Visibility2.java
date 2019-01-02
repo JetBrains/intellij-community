@@ -1,3 +1,3 @@
 class Test {
-  int a = 1 + <ref>a;
+  int a = 1 + <caret>a;
 }

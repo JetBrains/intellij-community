@@ -4,6 +4,6 @@ class A{
 	}
 
 	{
-		System.out.println("" + A.B.<ref>a);
+		System.out.println("" + A.B.<caret>a);
 	}
 }

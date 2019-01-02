@@ -1,7 +1,7 @@
 class A{
  {
   class B{
-    <ref>B b;
+    <caret>B b;
   }
 
   new B();

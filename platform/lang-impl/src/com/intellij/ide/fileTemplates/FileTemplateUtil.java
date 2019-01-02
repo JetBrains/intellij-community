@@ -30,7 +30,6 @@ import org.apache.velocity.exception.VelocityException;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.Token;
 import org.apache.velocity.runtime.parser.node.*;
-import org.apache.velocity.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +64,7 @@ public class FileTemplateUtil {
   private static String[] calculateAttributes(@NotNull String templateContent, @NotNull Set<String> propertiesNames, boolean includeDummies, @NotNull Project project) throws ParseException {
     final Set<String> unsetAttributes = new LinkedHashSet<>();
     final Set<String> definedAttributes = new HashSet<>();
-    SimpleNode template = VelocityWrapper.parse(new StringReader(templateContent), "MyTemplate");
+    SimpleNode template = VelocityWrapper.parse(new StringReader(templateContent));
     collectAttributes(unsetAttributes, definedAttributes, template, propertiesNames, includeDummies, new HashSet<>(), project);
     for (String definedAttribute : definedAttributes) {
       unsetAttributes.remove(definedAttribute);
@@ -107,7 +106,7 @@ public class FileTemplateUtil {
             String s = StringUtil.unquoteString(firstToken.toString());
             final FileTemplate includedTemplate = FileTemplateManager.getInstance(project).getTemplate(s);
             if (includedTemplate != null && visitedIncludes.add(s)) {
-              SimpleNode template = VelocityWrapper.parse(new StringReader(includedTemplate.getText()), "MyTemplate");
+              SimpleNode template = VelocityWrapper.parse(new StringReader(includedTemplate.getText()));
               collectAttributes(referenced, defined, template, propertiesNames, includeDummies, visitedIncludes, project);
             }
           }
@@ -182,7 +181,7 @@ public class FileTemplateUtil {
   @NotNull
   private static VelocityContext createVelocityContext() {
     VelocityContext context = new VelocityContext();
-    context.put("StringUtils", StringUtils.class);
+    context.put("StringUtils", Velocity17StringUtils.class);
     return context;
   }
 

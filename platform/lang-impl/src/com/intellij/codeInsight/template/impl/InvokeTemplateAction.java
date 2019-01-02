@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.TemplateManager;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -59,7 +60,7 @@ public class InvokeTemplateAction extends AnAction {
     final Document document = myEditor.getDocument();
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
-      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(file);
+      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(Collections.singletonList(file));
     }
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> myEditor.getCaretModel().runForEachCaret(__ -> {

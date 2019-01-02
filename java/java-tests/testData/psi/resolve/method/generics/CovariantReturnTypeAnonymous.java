@@ -15,6 +15,6 @@ class C {
     };
 
     B[] bar() {
-        return x.f<ref>oo();
+        return x.f<caret>oo();
     }
 }

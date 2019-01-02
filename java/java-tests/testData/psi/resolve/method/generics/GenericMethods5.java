@@ -14,6 +14,6 @@ class IBug {
 
         WKey<Object, String> sk = new WKey<Object, String>();
 
-        items.<ref>addItem(sk,  "");
+        items.<caret>addItem(sk,  "");
     }
 }

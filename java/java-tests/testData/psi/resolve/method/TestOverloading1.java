@@ -8,6 +8,6 @@ public class TestOverloading1 {
     }
 
     {
-        new B().<ref>foo(1);
+        new B().<caret>foo(1);
     }
 }

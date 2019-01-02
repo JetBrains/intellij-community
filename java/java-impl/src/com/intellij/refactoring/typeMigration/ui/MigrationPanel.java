@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -191,7 +190,7 @@ public class MigrationPanel extends JPanel implements Disposable {
 
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (ReadonlyStatusHandler.getInstance(myProject).
-                  ensureFilesWritable(VfsUtilCore.toVirtualFileArray(files)).hasReadonlyFiles()) {
+                  ensureFilesWritable(files).hasReadonlyFiles()) {
                   return;
                 }
                 WriteCommandAction.writeCommandAction(myProject).run(() -> {

@@ -5,6 +5,6 @@ class A{
 
 class B{
   {
-    new A().<ref>foo("a");
+    new A().<caret>foo("a");
   }
 }

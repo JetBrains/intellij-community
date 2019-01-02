@@ -3,7 +3,7 @@ public class C <T> {
 
   class Sub {
     T foo () {
-      return C.this.<ref>foo();
+      return C.this.<caret>foo();
     }
   }
 }
