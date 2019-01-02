@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.application.options.CodeStyle;
@@ -1430,7 +1430,7 @@ public class DiffUtil {
   @CalledInAwt
   public static boolean makeWritable(@Nullable Project project, @NotNull VirtualFile file) {
     if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-    return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles();
+    return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(file)).hasReadonlyFiles();
   }
 
   public static void putNonundoableOperation(@Nullable Project project, @NotNull Document document) {

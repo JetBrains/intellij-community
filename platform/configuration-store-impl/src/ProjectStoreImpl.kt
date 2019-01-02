@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -33,6 +33,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.containers.computeIfAny
 import com.intellij.util.containers.isNullOrEmpty
+import com.intellij.util.containers.mapSmart
 import com.intellij.util.io.*
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.text.nullize
@@ -326,9 +327,9 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
       throw IComponentStore.SaveCancelledException()
     }
 
-    val status = runReadAction { ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(*getFilesList(readonlyFiles)) }
+    val status = runReadAction { ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(getFilesList(readonlyFiles)) }
     if (status.hasReadonlyFiles()) {
-      dropUnableToSaveProjectNotification(project, status.readonlyFiles)
+      dropUnableToSaveProjectNotification(project, status.readonlyFiles.toList())
       throw IComponentStore.SaveCancelledException()
     }
 
@@ -350,7 +351,7 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
   }
 }
 
-private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles: Array<VirtualFile>) {
+private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles: List<VirtualFile>) {
   val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
   if (notifications.isEmpty()) {
     Notifications.Bus.notify(UnableToSaveProjectNotification(project, readOnlyFiles), project)
@@ -360,7 +361,7 @@ private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles:
   }
 }
 
-private fun getFilesList(readonlyFiles: List<SaveSessionAndFile>) = Array(readonlyFiles.size) { readonlyFiles[it].file }
+private fun getFilesList(readonlyFiles: List<SaveSessionAndFile>) = readonlyFiles.mapSmart { it.file }
 
 private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
   override fun beforeSave(readonlyFiles: MutableList<SaveSessionAndFile>) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -496,7 +496,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   }
 
   @Override
-  public void elementRenamedOrMoved(@NotNull PsiModifierListOwner element, @NotNull String oldExternalName) { 
+  public void elementRenamedOrMoved(@NotNull PsiModifierListOwner element, @NotNull String oldExternalName) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     try {
       final List<XmlFile> files = findExternalAnnotationsXmlFiles(element);
@@ -541,7 +541,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     }
   }
 
-  
+
   @Override
   public boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner,
                                         @NotNull final String annotationFQN,
@@ -569,7 +569,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           continue;
         }
         if (ReadonlyStatusHandler.getInstance(myPsiManager.getProject())
-          .ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) {
+          .ensureFilesWritable(Collections.singletonList(file.getVirtualFile())).hasReadonlyFiles()) {
           continue;
         }
         final XmlDocument document = file.getDocument();

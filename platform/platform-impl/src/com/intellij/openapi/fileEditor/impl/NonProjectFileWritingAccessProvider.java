@@ -57,7 +57,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
   @NotNull
   @Override
-  public Collection<VirtualFile> requestWriting(@NotNull List<VirtualFile> files) {
+  public Collection<VirtualFile> requestWriting(@NotNull Collection<VirtualFile> files) {
     if (isAllAccessAllowed()) return Collections.emptyList();
 
     List<VirtualFile> deniedFiles = new ArrayList<>();

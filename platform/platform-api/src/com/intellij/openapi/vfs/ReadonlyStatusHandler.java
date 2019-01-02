@@ -10,11 +10,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 public abstract class ReadonlyStatusHandler {
   public static boolean ensureFilesWritable(@NotNull Project project, @NotNull VirtualFile... files) {
-    return !getInstance(project).ensureFilesWritable(files).hasReadonlyFiles();
+    return !getInstance(project).ensureFilesWritable(Arrays.asList(files)).hasReadonlyFiles();
   }
 
   public static boolean ensureDocumentWritable(@NotNull Project project, @NotNull Document document) {
@@ -46,18 +45,16 @@ public abstract class ReadonlyStatusHandler {
   }
 
   /**
-   * @deprecated Use {@link #ensureFilesWritable(List)}
+   * @deprecated Use {@link #ensureFilesWritable(Collection)}
    */
   @Deprecated
+  @NotNull
   public OperationStatus ensureFilesWritable(@NotNull VirtualFile... files) {
     return ensureFilesWritable(Arrays.asList(files));
   }
 
-  public abstract OperationStatus ensureFilesWritable(@NotNull List<VirtualFile> files);
-
-  public OperationStatus ensureFilesWritable(@NotNull Collection<VirtualFile> files) {
-    return ensureFilesWritable(VfsUtilCore.toVirtualFileArray(files));
-  }
+  @NotNull
+  public abstract OperationStatus ensureFilesWritable(@NotNull Collection<VirtualFile> files);
 
   public static ReadonlyStatusHandler getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ReadonlyStatusHandler.class);

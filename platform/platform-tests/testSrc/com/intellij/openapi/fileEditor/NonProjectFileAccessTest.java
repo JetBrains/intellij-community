@@ -307,7 +307,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), WritingAccessProvider.EP_NAME, new WritingAccessProvider() {
       @NotNull
       @Override
-      public Collection<VirtualFile> requestWriting(@NotNull List<VirtualFile> files) {
+      public Collection<VirtualFile> requestWriting(@NotNull Collection<VirtualFile> files) {
         requested.addAll(files);
         HashSet<VirtualFile> denied = new HashSet<>(Arrays.asList(filesToDeny));
         denied.retainAll(files);

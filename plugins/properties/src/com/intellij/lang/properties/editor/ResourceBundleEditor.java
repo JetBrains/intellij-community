@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.properties.editor;
 
@@ -82,8 +82,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ResourceBundleEditor extends UserDataHolderBase implements DocumentsEditor {
@@ -411,7 +411,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         @Override
         public void keyTyped(KeyEvent e) {
           if (editor.isViewer()) {
-            editor.setViewer( ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(propertiesFile.getVirtualFile()).hasReadonlyFiles());
+            editor.setViewer(ReadonlyStatusHandler.getInstance(myProject)
+                               .ensureFilesWritable(Collections.singletonList(propertiesFile.getVirtualFile())).hasReadonlyFiles());
           }
         }
       });

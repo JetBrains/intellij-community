@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -36,7 +35,6 @@ import java.util.regex.PatternSyntaxException;
 public class ReformatCodeAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.ReformatCodeAction");
 
-  private static final @NonNls String HELP_ID = "editing.codeReformatting";
   protected static ReformatFilesOptions myTestOptions;
 
   public ReformatCodeAction() {
@@ -55,7 +53,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
     PsiFile file = null;
-    PsiDirectory dir = null;
+    PsiDirectory dir;
     boolean hasSelection = false;
 
     if (editor != null){
@@ -65,7 +63,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       hasSelection = editor.getSelectionModel().hasSelection();
     }
     else if (containsAtLeastOneFile(files)) {
-      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
+      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Arrays.asList(files));
       if (!operationStatus.hasReadonlyFiles()) {
         ReformatFilesOptions selectedFlags = getReformatFilesOptions(project, files);
         if (selectedFlags == null)

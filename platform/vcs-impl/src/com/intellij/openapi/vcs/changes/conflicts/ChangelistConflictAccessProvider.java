@@ -10,7 +10,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * @author Dmitry Avdeev
@@ -26,7 +29,7 @@ public class ChangelistConflictAccessProvider extends WritingAccessProvider {
 
   @NotNull
   @Override
-  public Collection<VirtualFile> requestWriting(@NotNull List<VirtualFile> files) {
+  public Collection<VirtualFile> requestWriting(@NotNull Collection<VirtualFile> files) {
     ChangelistConflictTracker.Options options = myManager.getConflictTracker().getOptions();
     if (!options.SHOW_DIALOG) {
       return Collections.emptyList();

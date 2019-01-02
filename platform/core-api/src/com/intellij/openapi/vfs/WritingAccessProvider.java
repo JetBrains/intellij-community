@@ -20,7 +20,7 @@ public abstract class WritingAccessProvider {
    * @return set of files that cannot be accessed
    */
   @NotNull
-  public Collection<VirtualFile> requestWriting(@NotNull List<VirtualFile> files) {
+  public Collection<VirtualFile> requestWriting(@NotNull Collection<VirtualFile> files) {
     //noinspection deprecation
     return requestWriting(files.toArray(VirtualFile.EMPTY_ARRAY));
   }

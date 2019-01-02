@@ -58,8 +58,9 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     myState = state;
   }
 
+  @NotNull
   @Override
-  public OperationStatus ensureFilesWritable(@NotNull List<VirtualFile> files) {
+  public OperationStatus ensureFilesWritable(@NotNull Collection<VirtualFile> files) {
     if (files.isEmpty()) {
       return new OperationStatusImpl(VirtualFile.EMPTY_ARRAY);
     }
@@ -129,7 +130,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
   }
 
-  private static OperationStatus createResultStatus(@NotNull List<VirtualFile> files) {
+  private static OperationStatus createResultStatus(@NotNull Collection<VirtualFile> files) {
     List<VirtualFile> readOnlyFiles = new ArrayList<>();
     for (VirtualFile file : files) {
       if (file.exists()) {
@@ -143,7 +144,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
   }
 
   @NotNull
-  private List<FileInfo> createFileInfos(@NotNull List<VirtualFile> files) {
+  private List<FileInfo> createFileInfos(@NotNull Collection<VirtualFile> files) {
     List<FileInfo> fileInfos = new ArrayList<>();
     for (final VirtualFile file : files) {
       if (file != null && !file.isWritable() && file.isInLocalFileSystem()) {
