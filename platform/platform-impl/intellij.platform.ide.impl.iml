@@ -56,5 +56,6 @@
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="microba" level="project" />
     <orderEntry type="library" name="Java Compatibility" level="project" />
+    <orderEntry type="library" name="javax.activation-api" level="project" />
   </component>
 </module>

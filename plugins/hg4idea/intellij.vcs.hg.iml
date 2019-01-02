@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="XStream" level="project" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="library" name="javax.activation-api" level="project" />
   </component>
 </module>
