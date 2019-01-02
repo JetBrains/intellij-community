@@ -67,5 +67,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="javax.annotation-api" level="project" />
   </component>
 </module>
