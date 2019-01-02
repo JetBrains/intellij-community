@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -212,9 +212,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "https://github.com/TooTallNate/Java-WebSocket/blob/master/LICENSE"),
     new LibraryLicense(name: "Java Compatibility", version: "1.0.1", license: "GPL 2.0 + Classpath", url: "https://github.com/JetBrains/intellij-deps-java-compatibility",
                        licenseUrl: "https://raw.githubusercontent.com/JetBrains/intellij-deps-java-compatibility/master/LICENSE"),
-    new LibraryLicense(name: "JavaBeans Activation Framework", libraryName: "javax-activation", version: "1.1", license: "CDDL 1.0",
-                          url: "http://java.sun.com/products/archive/javabeans/jaf11.html",
-                          licenseUrl: "https://opensource.org/licenses/CDDL-1.0"),
     new LibraryLicense(name: "JavaCVS", attachedTo: "intellij.vcs.cvs.javacvs",
                        version: "no version number available (with patches by JetBrains)", license: "Sun Public License",
                        url: "https://versioncontrol.netbeans.org/javacvs/library/",
@@ -226,8 +223,6 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "javawriter", attachedTo: "intellij.android", license: "Apache 2.0", url: "https://github.com/square/javawriter"),
     new LibraryLicense(name: "javax inject", libraryName: "javax-inject", version: "1", license: "Apache 2.0",
                        licenseUrl: "http://apache.org/licenses/LICENSE-2.0", url: "http://code.google.com/p/atinject/"),
-    new LibraryLicense(name: "JAXB", libraryName: "JAXB", version: "2.2.4-1", license: "CDDL 1.1", url: "http://jaxb.java.net/",
-                       licenseUrl: "http://glassfish.java.net/public/CDDL+GPL_1_1.html"),
     new LibraryLicense(name: "Jaxen", version: "", license: "modified Apache", url: "https://github.com/jaxen-xpath/jaxen",
                        licenseUrl: "https://github.com/jaxen-xpath/jaxen/blob/master/LICENSE.txt"),
     new LibraryLicense(name: "JBcrypt", libraryName: "trilead-ssh2", version: "1.0.0", license: "ISC License",
