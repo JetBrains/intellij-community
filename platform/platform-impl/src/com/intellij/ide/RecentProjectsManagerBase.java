@@ -185,8 +185,10 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   @NotNull
-  protected State getStateInner() {
-    return myState;
+  protected final State getStateInner() {
+    synchronized (myStateLock) {
+      return myState;
+    }
   }
 
   @Override
@@ -256,23 +258,29 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   @Nullable
   @SystemIndependent
   public String getLastProjectCreationLocation() {
-    return myState.lastProjectLocation;
+    synchronized (myStateLock) {
+      return myState.lastProjectLocation;
+    }
   }
 
   @Override
   public void setLastProjectCreationLocation(@Nullable @SystemIndependent String lastProjectLocation) {
     String location = StringUtil.nullize(lastProjectLocation, true);
     String newValue = PathUtil.toSystemIndependentName(location);
-    if (!Objects.equals(newValue, myState.lastProjectLocation)) {
-      myState.lastProjectLocation = newValue;
-      myModCounter.incrementAndGet();
+    synchronized (myStateLock) {
+      if (!Objects.equals(newValue, myState.lastProjectLocation)) {
+        myState.lastProjectLocation = newValue;
+        myModCounter.incrementAndGet();
+      }
     }
   }
 
   @Override
   @SystemIndependent
   public String getLastProjectPath() {
-    return myState.lastPath;
+    synchronized (myStateLock) {
+      return myState.lastPath;
+    }
   }
 
   @Override
@@ -352,7 +360,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     final Set<String> paths;
     synchronized (myStateLock) {
       myState.validateRecentProjects(myModCounter);
-      paths = ContainerUtil.newLinkedHashSet(myState.recentPaths);
+      paths = new LinkedHashSet<>(myState.recentPaths);
     }
 
     Set<String> openedPaths = new THashSet<>();
@@ -366,9 +374,12 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     List<AnAction> actions = new SmartList<>();
     Set<String> duplicates = getDuplicateProjectNames(openedPaths, paths);
     if (useGroups) {
-      final List<ProjectGroup> groups = new ArrayList<>(new ArrayList<>(myState.groups));
+      final List<ProjectGroup> groups;
+      synchronized (myStateLock) {
+        groups = new ArrayList<>(myState.groups);
+      }
       final List<String> projectPaths = new ArrayList<>(paths);
-      Collections.sort(groups, new Comparator<ProjectGroup>() {
+      groups.sort(new Comparator<ProjectGroup>() {
         @Override
         public int compare(ProjectGroup o1, ProjectGroup o2) {
           int ind1 = getGroupIndex(o1);
@@ -471,9 +482,11 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   @Nullable
   private ProjectGroup getProjectGroup(@NotNull @SystemIndependent String path) {
-    for (ProjectGroup group : myState.groups) {
-      if (group.getProjects().contains(path)) {
-        return group;
+    synchronized (myStateLock) {
+      for (ProjectGroup group : myState.groups) {
+        if (group.getProjects().contains(path)) {
+          return group;
+        }
       }
     }
     return null;
@@ -593,28 +606,31 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   protected void doReopenLastProject() {
     GeneralSettings generalSettings = GeneralSettings.getInstance();
-    if (generalSettings.isReopenLastProject()) {
-      Set<String> openPaths;
-      boolean forceNewFrame = true;
-      synchronized (myStateLock) {
-        openPaths = ContainerUtil.newLinkedHashSet(myState.openPaths);
-        if (openPaths.isEmpty()) {
-          openPaths = ContainerUtil.createMaybeSingletonSet(myState.lastPath);
-          forceNewFrame = false;
+    if (!generalSettings.isReopenLastProject()) {
+      return;
+    }
+
+    Set<String> openPaths;
+    boolean forceNewFrame = true;
+    synchronized (myStateLock) {
+      openPaths = ContainerUtil.newLinkedHashSet(myState.openPaths);
+      if (openPaths.isEmpty()) {
+        openPaths = ContainerUtil.createMaybeSingletonSet(myState.lastPath);
+        forceNewFrame = false;
+      }
+    }
+
+    try {
+      myBatchOpening = true;
+      for (String openPath : openPaths) {
+        // https://youtrack.jetbrains.com/issue/IDEA-166321
+        if (ProjectKt.isValidProjectPath(openPath, true)) {
+          doOpenProject(openPath, null, forceNewFrame);
         }
       }
-      try {
-        myBatchOpening = true;
-        for (String openPath : openPaths) {
-          // https://youtrack.jetbrains.com/issue/IDEA-166321
-          if (ProjectKt.isValidProjectPath(openPath, true)) {
-            doOpenProject(openPath, null, forceNewFrame);
-          }
-        }
-      }
-      finally {
-        myBatchOpening = false;
-      }
+    }
+    finally {
+      myBatchOpening = false;
     }
   }
 
@@ -625,19 +641,25 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   @Override
   @NotNull
   public List<ProjectGroup> getGroups() {
-    return Collections.unmodifiableList(myState.groups);
+    synchronized (myStateLock) {
+      return Collections.unmodifiableList(myState.groups);
+    }
   }
 
   @Override
   public void addGroup(@NotNull ProjectGroup group) {
-    if (!myState.groups.contains(group)) {
-      myState.groups.add(group);
+    synchronized (myStateLock) {
+      if (!myState.groups.contains(group)) {
+        myState.groups.add(group);
+      }
     }
   }
 
   @Override
   public void removeGroup(@NotNull ProjectGroup group) {
-    myState.groups.remove(group);
+    synchronized (myStateLock) {
+      myState.groups.remove(group);
+    }
   }
 
   @Override
