@@ -137,7 +137,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
       arrayOf(*delegateChain, this)
     }
 
-    private val myChainDelegate: CoroutineDispatcher = myChain[0].delegate  // outside the chain
+    private val myChainDelegate: CoroutineDispatcher = myChain[0].delegate  // outside the chain, the same as findChainFallbackDispatcher()
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
       myChainDelegate.dispatchIfNeededOrInvoke(context) {
@@ -281,12 +281,6 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
       }
     }
 
-    private val CoroutineDispatcher.chainFallbackDispatcher: CoroutineDispatcher
-      get() = (this as? DelegateDispatcher)?.chainFallbackDispatcher ?: this
-
-    private val DelegateDispatcher.chainFallbackDispatcher: CoroutineDispatcher
-      get() = delegate.chainFallbackDispatcher
-
     internal inline fun CoroutineDispatcher.dispatchIfNeededOrInvoke(context: CoroutineContext,
                                                                      crossinline block: () -> Unit) {
       @Suppress("EXPERIMENTAL_API_USAGE")
@@ -298,12 +292,23 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>>(private val
       }
     }
 
-    internal fun CoroutineDispatcher.fallbackDispatch(context: CoroutineContext, block: Runnable) {
-      val primaryDispatcher = context[ContinuationInterceptor] as? CoroutineDispatcher
-      val fallbackDispatcher = primaryDispatcher ?: chainFallbackDispatcher
+    /**
+     * Chain fallback is the first [CoroutineDispatcher] defined, which then gets wrapped by a chain of [DelegateDispatcher]s.
+     * This function unwraps the chain following the [DelegateDispatcher.delegate] property.
+     * In other words, this returns the very first dispatcher which is checked in [ChainedDispatcher.dispatch]
+     * (which performs, for example, `ApplicationManager.getApplication().invokeLater(block, modality)`).
+     */
+    private fun CoroutineDispatcher.findChainFallbackDispatcher(): CoroutineDispatcher {
+      var dispatcher = this
+      while (dispatcher is DelegateDispatcher) {
+        dispatcher = dispatcher.delegate
+      }
+      return dispatcher
+    }
 
+    internal fun CoroutineDispatcher.fallbackDispatch(context: CoroutineContext, block: Runnable) {
       // Invoke later unconditionally to avoid running arbitrary code from inside a completion handler.
-      fallbackDispatcher.dispatch(context, block)
+      findChainFallbackDispatcher().dispatch(context, block)
     }
 
     internal fun CoroutineDispatcher.processUncaughtException(context: CoroutineContext, throwable: Throwable) {
