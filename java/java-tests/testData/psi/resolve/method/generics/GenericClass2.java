@@ -7,6 +7,6 @@ class Foo<T> {
 
 class User {
     void foo (Foo<String> foo) {
-       foo.<ref>f(new ArrayList<String>());
+       foo.<caret>f(new ArrayList<String>());
     }
 }

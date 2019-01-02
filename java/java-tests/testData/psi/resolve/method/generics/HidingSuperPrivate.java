@@ -9,7 +9,7 @@
      private Object f() {
          new BaseTest() {
              {
-                 <ref>f(); 
+                 <caret>f(); 
              }
          };
 

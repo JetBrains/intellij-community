@@ -3,7 +3,7 @@ class Test {
     public int i = 0;
   }
   static {
-    System.out.println("" + getABC().<ref>i);
+    System.out.println("" + getABC().<caret>i);
   }
 
   static ABC getABC(){

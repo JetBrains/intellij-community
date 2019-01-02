@@ -3,7 +3,7 @@ class TestPage extends WWW {
 
     static class B extends W3 {
         public B() {
-            <ref>log.hashCode();
+            <caret>log.hashCode();
         }
     }
 }

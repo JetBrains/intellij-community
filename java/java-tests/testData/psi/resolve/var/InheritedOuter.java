@@ -3,7 +3,7 @@ class Outer {
 
   class Inner extends Outer {
     void test() {
-      System.out.println(<ref>string); 
+      System.out.println(<caret>string); 
     }
   }
 }

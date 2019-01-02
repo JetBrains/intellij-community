@@ -1,5 +1,5 @@
 class A{
   {
-    "aaa".<ref>indexOf('a');
+    "aaa".<caret>indexOf('a');
   }
 }

@@ -17,7 +17,7 @@ public class SomeClass {
         Object criteria = null;
 
 // IntelliJ finds the find(Collection, Object) method, and reports a non-existent compile error.
-        T someInstance = SomeSubClass.<ref>find(c, criteria);
+        T someInstance = SomeSubClass.<caret>find(c, criteria);
     }
 
 }

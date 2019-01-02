@@ -11,6 +11,6 @@ class Cast {
 
     public void g() {
 // Code is green - but we need a cast here
-        <ref>f(null);
+        <caret>f(null);
     }
 }

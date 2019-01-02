@@ -3,6 +3,6 @@ class Foo {
     }
 
     static {
-      new Foo().<Integer><ref>f();
+      new Foo().<Integer><caret>f();
     }
 }

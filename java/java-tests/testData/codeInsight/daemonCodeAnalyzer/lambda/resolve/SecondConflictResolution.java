@@ -11,7 +11,7 @@ abstract class Token {
 
   private static B<Long> getMode(Optional<Map.Entry<Integer, Long>> max){
     return  max
-      .flatMap(e -> Optional.of(new B<>(Long.valu<ref>eOf(e.getValue().longValue()))))
+      .flatMap(e -> Optional.of(new B<>(Long.valu<caret>eOf(e.getValue().longValue()))))
       .get();
   }
 

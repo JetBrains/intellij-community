@@ -6,6 +6,6 @@ class SomeClass {
     };
 
     public String get() {
-        return OBJECT_OVERRIDDEN.toSt<ref>ring();
+        return OBJECT_OVERRIDDEN.toSt<caret>ring();
     }
 }
