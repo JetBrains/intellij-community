@@ -503,10 +503,10 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         markPathRecent(path, project);
       }
       updateLastProjectPath();
-      updateUI();
+      updateSystemDockMenu();
     }
 
-    private void updateUI() {
+    private void updateSystemDockMenu() {
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
         SystemDock.updateMenu();
       }
@@ -533,7 +533,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
           markPathRecent(path, openProject);
         }
       }
-      updateUI();
+      updateSystemDockMenu();
     }
   }
 
