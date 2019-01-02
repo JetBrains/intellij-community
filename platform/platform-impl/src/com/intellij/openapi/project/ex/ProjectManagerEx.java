@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -61,7 +61,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract boolean closeAndDisposeAllProjects(boolean checkCanClose);
 
   /**
-   * Save, close and dispose project. Please note that only project will be saved, but not application.
+   * Save, close and dispose project. Please note that only the project will be saved, but not the application.
    * @return true on success
    */
   public abstract boolean closeAndDispose(@NotNull Project project);
