@@ -10,3 +10,9 @@ echo Hello "     " World
 echo "Hello "*" World"
 echo `hello` world
 echo 'hello' world
+
+
+echo pre{one,two,three}post
+echo pre{one, wo, three}post
+echo /usr/local/src/bash/{old,new,dist,bugs}
+echo root /usr/{ucb/{ex,edit},lib/{ex?.?*,how_ex}}

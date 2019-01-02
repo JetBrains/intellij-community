@@ -19,7 +19,7 @@ public interface BashElifClause extends BashCompositeElement {
   @Nullable
   PsiElement getElse();
 
-  @NotNull
+  @Nullable
   PsiElement getThen();
 
 }

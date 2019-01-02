@@ -10,25 +10,19 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashCompoundListImpl extends BashCompositeElementImpl implements BashCompoundList {
+public class BashBashExpansionImpl extends BashCompositeElementImpl implements BashBashExpansion {
 
-  public BashCompoundListImpl(ASTNode node) {
+  public BashBashExpansionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitCompoundList(this);
+    visitor.visitBashExpansion(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof BashVisitor) accept((BashVisitor)visitor);
     else super.accept(visitor);
-  }
-
-  @Override
-  @NotNull
-  public BashList getList() {
-    return findNotNullChildByClass(BashList.class);
   }
 
 }

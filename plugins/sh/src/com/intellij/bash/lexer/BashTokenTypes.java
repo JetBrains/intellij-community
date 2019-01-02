@@ -41,15 +41,13 @@ public interface BashTokenTypes extends BashTypes {
   IElementType _EXPR_ARITH_SQUARE = new BashTokenType("] for arithmetic");
 
   //conditional expressions
-  IElementType EXPR_CONDITIONAL = new BashTokenType("[ (left conditional)");//"[ "
-  IElementType _EXPR_CONDITIONAL = new BashTokenType(" ] (right conditional)");//" ]"
 
   TokenSet keywords = TokenSet.create(BANG, CASE, DO, DONE,
       ELIF, ELSE, ESAC, FI, FOR, FUNCTION,
       IF, IN, SELECT, THEN, UNTIL, WHILE,
       TIME, BRACKET_KEYWORD, _BRACKET_KEYWORD,
       CASE_END, DOLLAR,
-      EXPR_ARITH, _EXPR_ARITH, EXPR_CONDITIONAL, _EXPR_CONDITIONAL);
+      EXPR_ARITH, _EXPR_ARITH, EXPR_CONDITIONAL_LEFT, EXPR_CONDITIONAL_RIGHT);
 
   TokenSet internalCommands = TokenSet.create(TRAP, LET);
 

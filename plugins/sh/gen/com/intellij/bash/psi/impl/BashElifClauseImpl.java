@@ -50,9 +50,9 @@ public class BashElifClauseImpl extends BashCompositeElementImpl implements Bash
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getThen() {
-    return findNotNullChildByType(THEN);
+    return findChildByType(THEN);
   }
 
 }

@@ -5,9 +5,15 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashCompoundList extends BashCompositeElement {
+public interface BashConditional extends BashCompositeElement {
 
   @NotNull
-  BashList getList();
+  List<BashString> getStringList();
+
+  @NotNull
+  PsiElement getExprConditionalLeft();
+
+  @Nullable
+  PsiElement getExprConditionalRight();
 
 }

@@ -233,8 +233,8 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
 }
 
 <YYINITIAL, S_CASE, S_SUBSHELL, S_BACKQUOTE> {
-  "[ ]"                         { yypushback(1); goToState(S_TEST); setEmptyConditionalCommand(true); return EXPR_CONDITIONAL; }
-  "[ "                          { goToState(S_TEST); setEmptyConditionalCommand(false); return EXPR_CONDITIONAL; }
+  "[ ]"                         { yypushback(1); goToState(S_TEST); setEmptyConditionalCommand(true); return EXPR_CONDITIONAL_LEFT; }
+  "[ "                          { goToState(S_TEST); setEmptyConditionalCommand(false); return EXPR_CONDITIONAL_LEFT; }
 
   "time"                        { return TIME; }
 
@@ -385,15 +385,15 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
 
 <S_TEST> {
   "]"                          { if (isEmptyConditionalCommand()) {
-                                    setEmptyConditionalCommand(false);
-                                    backToPreviousState();
-                                    return _EXPR_CONDITIONAL;
-                                 } else {
-                                    setEmptyConditionalCommand(false);
-                                    return WORD;
+                                      setEmptyConditionalCommand(false);
+                                      backToPreviousState();
+                                      return EXPR_CONDITIONAL_RIGHT;
+                                   } else {
+                                      setEmptyConditionalCommand(false);
+                                      return WORD;
+                                   }
                                  }
-                               }
-  " ]"                         { backToPreviousState(); setEmptyConditionalCommand(false); return _EXPR_CONDITIONAL; }
+  " ]"                         { backToPreviousState(); setEmptyConditionalCommand(false); return EXPR_CONDITIONAL_RIGHT; }
 }
 
 <S_TEST, S_TEST_COMMAND> {

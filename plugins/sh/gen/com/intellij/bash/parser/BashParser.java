@@ -29,6 +29,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == ASSIGNMENT_WORD_RULE) {
       r = assignment_word_rule(b, 0);
     }
+    else if (t == BASH_EXPANSION) {
+      r = bash_expansion(b, 0);
+    }
     else if (t == BLOCK) {
       r = block(b, 0);
     }
@@ -46,6 +49,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     }
     else if (t == COMPOUND_LIST) {
       r = compound_list(b, 0);
+    }
+    else if (t == CONDITIONAL) {
+      r = conditional(b, 0);
     }
     else if (t == DO_BLOCK) {
       r = do_block(b, 0);
@@ -229,6 +235,13 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  public static boolean bash_expansion(PsiBuilder b, int l) {
+    Marker m = enter_section_(b);
+    exit_section_(b, m, BASH_EXPANSION, true);
+    return true;
+  }
+
+  /* ********************************************************** */
   // '{' compound_list '}' | do_block
   public static boolean block(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block")) return false;
@@ -364,7 +377,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   //                      '&&' newlines pipeline_command
   //                    | '||' newlines pipeline_command
   //                    | '&' pipeline_command
-  //                    | ';' pipeline_command
+  //                    | ';' pipeline_command?
   //                  )*
   public static boolean commands_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list")) return false;
@@ -381,7 +394,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   //                      '&&' newlines pipeline_command
   //                    | '||' newlines pipeline_command
   //                    | '&' pipeline_command
-  //                    | ';' pipeline_command
+  //                    | ';' pipeline_command?
   //                  )*
   private static boolean commands_list_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1")) return false;
@@ -396,7 +409,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   // '&&' newlines pipeline_command
   //                    | '||' newlines pipeline_command
   //                    | '&' pipeline_command
-  //                    | ';' pipeline_command
+  //                    | ';' pipeline_command?
   private static boolean commands_list_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1_0")) return false;
     boolean r;
@@ -447,16 +460,23 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // ';' pipeline_command
+  // ';' pipeline_command?
   private static boolean commands_list_1_0_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1_0_3")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, SEMI);
     p = r; // pin = 1
-    r = r && pipeline_command(b, l + 1);
+    r = r && commands_list_1_0_3_1(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // pipeline_command?
+  private static boolean commands_list_1_0_3_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "commands_list_1_0_3_1")) return false;
+    pipeline_command(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */
@@ -483,32 +503,31 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '\n'+ list
+  // list
   public static boolean compound_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compound_list")) return false;
-    if (!nextTokenIs(b, LINEFEED)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, COMPOUND_LIST, null);
-    r = compound_list_0(b, l + 1);
-    p = r; // pin = 1
-    r = r && list(b, l + 1);
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, COMPOUND_LIST, "<compound list>");
+    r = list(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
-  // '\n'+
-  private static boolean compound_list_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "compound_list_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LINEFEED);
-    while (r) {
-      int c = current_position_(b);
-      if (!consumeToken(b, LINEFEED)) break;
-      if (!empty_element_parsed_guard_(b, "compound_list_0", c)) break;
-    }
-    exit_section_(b, m, null, r);
-    return r;
+  /* ********************************************************** */
+  // EXPR_CONDITIONAL_LEFT literal <<condOp>> literal EXPR_CONDITIONAL_RIGHT
+  public static boolean conditional(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "conditional")) return false;
+    if (!nextTokenIs(b, EXPR_CONDITIONAL_LEFT)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, CONDITIONAL, null);
+    r = consumeToken(b, EXPR_CONDITIONAL_LEFT);
+    p = r; // pin = 1
+    r = r && report_error_(b, literal(b, l + 1));
+    r = p && report_error_(b, condOp(b, l + 1)) && r;
+    r = p && report_error_(b, literal(b, l + 1)) && r;
+    r = p && consumeToken(b, EXPR_CONDITIONAL_RIGHT) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -545,43 +564,46 @@ public class BashParser implements PsiParser, LightPsiParser {
   // elif compound_list then compound_list
   private static boolean elif_clause_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "elif_clause_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, ELIF);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, THEN);
-    r = r && compound_list(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+    p = r; // pin = elif|then|else
+    r = r && report_error_(b, compound_list(b, l + 1));
+    r = p && report_error_(b, consumeToken(b, THEN)) && r;
+    r = p && compound_list(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // elif compound_list then compound_list else compound_list
   private static boolean elif_clause_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "elif_clause_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, ELIF);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, THEN);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, ELSE);
-    r = r && compound_list(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+    p = r; // pin = elif|then|else
+    r = r && report_error_(b, compound_list(b, l + 1));
+    r = p && report_error_(b, consumeToken(b, THEN)) && r;
+    r = p && report_error_(b, compound_list(b, l + 1)) && r;
+    r = p && report_error_(b, consumeToken(b, ELSE)) && r;
+    r = p && compound_list(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // elif compound_list then compound_list elif_clause
   private static boolean elif_clause_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "elif_clause_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, ELIF);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, THEN);
-    r = r && compound_list(b, l + 1);
-    r = r && elif_clause(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+    p = r; // pin = elif|then|else
+    r = r && report_error_(b, compound_list(b, l + 1));
+    r = p && report_error_(b, consumeToken(b, THEN)) && r;
+    r = p && report_error_(b, compound_list(b, l + 1)) && r;
+    r = p && elif_clause(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -772,53 +794,55 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // if compound_list then compound_list (fi |
-  //                else compound_list fi |
-  //                elif_clause fi)
+  // if conditional ';' then compound_list
+  //                (   fi
+  //                  | else compound_list fi
+  //                  | elif_clause fi)
   public static boolean if_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "if_command")) return false;
     if (!nextTokenIs(b, IF)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, IF_COMMAND, null);
     r = consumeToken(b, IF);
-    p = r; // pin = 1
-    r = r && report_error_(b, compound_list(b, l + 1));
-    r = p && report_error_(b, consumeToken(b, THEN)) && r;
+    p = r; // pin = if|elif|then|else
+    r = r && report_error_(b, conditional(b, l + 1));
+    r = p && report_error_(b, consumeTokens(b, -1, SEMI, THEN)) && r;
     r = p && report_error_(b, compound_list(b, l + 1)) && r;
-    r = p && if_command_4(b, l + 1) && r;
+    r = p && if_command_5(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // fi |
-  //                else compound_list fi |
-  //                elif_clause fi
-  private static boolean if_command_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "if_command_4")) return false;
+  // fi
+  //                  | else compound_list fi
+  //                  | elif_clause fi
+  private static boolean if_command_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "if_command_5")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, FI);
-    if (!r) r = if_command_4_1(b, l + 1);
-    if (!r) r = if_command_4_2(b, l + 1);
+    if (!r) r = if_command_5_1(b, l + 1);
+    if (!r) r = if_command_5_2(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // else compound_list fi
-  private static boolean if_command_4_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "if_command_4_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+  private static boolean if_command_5_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "if_command_5_1")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, ELSE);
-    r = r && compound_list(b, l + 1);
-    r = r && consumeToken(b, FI);
-    exit_section_(b, m, null, r);
-    return r;
+    p = r; // pin = if|elif|then|else
+    r = r && report_error_(b, compound_list(b, l + 1));
+    r = p && consumeToken(b, FI) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // elif_clause fi
-  private static boolean if_command_4_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "if_command_4_2")) return false;
+  private static boolean if_command_5_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "if_command_5_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = elif_clause(b, l + 1);

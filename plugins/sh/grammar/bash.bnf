@@ -120,6 +120,9 @@ private vars ::= variable | composed_var
 private composed_var ::= '$' (arithmetic_expansion|command_substitution|shell_parameter_expansion)
 private command_substitution ::= subshell
 shell_parameter_expansion ::= '{' literal [":" ['+'|'-'] literal] '}' // todo: simplify lexer for parameters
+bash_expansion ::=
+
+conditional ::= EXPR_CONDITIONAL_LEFT literal <<condOp>> literal EXPR_CONDITIONAL_RIGHT {pin=1}
 
 process_substitution ::= ('<' | '>') '(' list ')' {pin=1}
 
@@ -168,15 +171,16 @@ function_def ::=  w '(' ')' newlines group_command
 
 subshell ::=  '(' compound_list ')'
 
-if_command ::= if compound_list then compound_list (fi |
-               else compound_list fi |
-               elif_clause fi)
+if_command ::= if conditional ';' then compound_list
+               (   fi
+                 | else compound_list fi
+                 | elif_clause fi) {pin(".*")="if|elif|then|else"}
 
 group_command ::= '{' list '}'
 
 elif_clause ::= elif compound_list then compound_list |
                 elif compound_list then compound_list else compound_list |
-                elif compound_list then compound_list elif_clause
+                elif compound_list then compound_list elif_clause {pin(".*")="elif|then|else"}
 
 case_clause ::= pattern_list
 
@@ -189,7 +193,7 @@ private case_clause_list ::= (case_clause ';;')+
 
 pattern ::=  w ('|' w)* {pin('.*')=1}
 
-compound_list ::= '\n'+ list
+compound_list ::= list
 list ::= newlines pipeline_command_list ('\n' | '&' | ';') newlines {pin=2}
 
 private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {pin=1} // todo with pin
@@ -201,7 +205,7 @@ commands_list ::= pipeline_command (
                      '&&' newlines pipeline_command
                    | '||' newlines pipeline_command
                    | '&' pipeline_command
-                   | ';' pipeline_command
+                   | ';' pipeline_command?
                  )*
 
 pipeline_command ::=  '!'? pipeline

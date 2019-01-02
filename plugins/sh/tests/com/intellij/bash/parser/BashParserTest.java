@@ -20,4 +20,5 @@ public class BashParserTest extends ParsingTestCase {
   public void testSelect()  { doTest(true); }
   public void testExpr()    { doTest(true); }
   public void testHeredoc() { doTest(true); }
+  public void testIf()      { doTest(true); }
 }

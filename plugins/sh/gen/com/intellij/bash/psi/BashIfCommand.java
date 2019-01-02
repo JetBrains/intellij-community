@@ -11,7 +11,13 @@ public interface BashIfCommand extends BashCommand {
   List<BashCompoundList> getCompoundListList();
 
   @Nullable
+  BashConditional getConditional();
+
+  @Nullable
   BashElifClause getElifClause();
+
+  @Nullable
+  PsiElement getSemi();
 
   @Nullable
   PsiElement getElse();

@@ -14,6 +14,7 @@ public interface BashTypes {
   IElementType ARITHMETIC_EXPANSION = new BashCompositeElementType("ARITHMETIC_EXPANSION");
   IElementType ASSIGNMENT_EXPRESSION = new BashCompositeElementType("ASSIGNMENT_EXPRESSION");
   IElementType ASSIGNMENT_WORD_RULE = new BashCompositeElementType("ASSIGNMENT_WORD_RULE");
+  IElementType BASH_EXPANSION = new BashCompositeElementType("BASH_EXPANSION");
   IElementType BITWISE_AND_EXPRESSION = new BashCompositeElementType("BITWISE_AND_EXPRESSION");
   IElementType BITWISE_EXCLUSIVE_OR_EXPRESSION = new BashCompositeElementType("BITWISE_EXCLUSIVE_OR_EXPRESSION");
   IElementType BITWISE_OR_EXPRESSION = new BashCompositeElementType("BITWISE_OR_EXPRESSION");
@@ -26,6 +27,7 @@ public interface BashTypes {
   IElementType COMMA_EXPRESSION = new BashCompositeElementType("COMMA_EXPRESSION");
   IElementType COMPARISON_EXPRESSION = new BashCompositeElementType("COMPARISON_EXPRESSION");
   IElementType COMPOUND_LIST = new BashCompositeElementType("COMPOUND_LIST");
+  IElementType CONDITIONAL = new BashCompositeElementType("CONDITIONAL");
   IElementType CONDITIONAL_EXPRESSION = new BashCompositeElementType("CONDITIONAL_EXPRESSION");
   IElementType DO_BLOCK = new BashCompositeElementType("DO_BLOCK");
   IElementType ELIF_CLAUSE = new BashCompositeElementType("ELIF_CLAUSE");
@@ -95,6 +97,8 @@ public interface BashTypes {
   IElementType EQ = new BashTokenType("=");
   IElementType ESAC = new BashTokenType("esac");
   IElementType EXPONENT = new BashTokenType("**");
+  IElementType EXPR_CONDITIONAL_LEFT = new BashTokenType("EXPR_CONDITIONAL_LEFT");
+  IElementType EXPR_CONDITIONAL_RIGHT = new BashTokenType("EXPR_CONDITIONAL_RIGHT");
   IElementType FI = new BashTokenType("fi");
   IElementType FOR = new BashTokenType("for");
   IElementType FUNCTION = new BashTokenType("function");
@@ -155,6 +159,9 @@ public interface BashTypes {
       else if (type == ASSIGNMENT_WORD_RULE) {
         return new BashAssignmentWordRuleImpl(node);
       }
+      else if (type == BASH_EXPANSION) {
+        return new BashBashExpansionImpl(node);
+      }
       else if (type == BITWISE_AND_EXPRESSION) {
         return new BashBitwiseAndExpressionImpl(node);
       }
@@ -190,6 +197,9 @@ public interface BashTypes {
       }
       else if (type == COMPOUND_LIST) {
         return new BashCompoundListImpl(node);
+      }
+      else if (type == CONDITIONAL) {
+        return new BashConditionalImpl(node);
       }
       else if (type == CONDITIONAL_EXPRESSION) {
         return new BashConditionalExpressionImpl(node);

@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashCompoundListImpl extends BashCompositeElementImpl implements BashCompoundList {
+public class BashConditionalImpl extends BashCompositeElementImpl implements BashConditional {
 
-  public BashCompoundListImpl(ASTNode node) {
+  public BashConditionalImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitCompoundList(this);
+    visitor.visitConditional(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -27,8 +27,20 @@ public class BashCompoundListImpl extends BashCompositeElementImpl implements Ba
 
   @Override
   @NotNull
-  public BashList getList() {
-    return findNotNullChildByClass(BashList.class);
+  public List<BashString> getStringList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashString.class);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getExprConditionalLeft() {
+    return findNotNullChildByType(EXPR_CONDITIONAL_LEFT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getExprConditionalRight() {
+    return findChildByType(EXPR_CONDITIONAL_RIGHT);
   }
 
 }

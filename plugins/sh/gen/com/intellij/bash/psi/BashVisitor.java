@@ -22,6 +22,10 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitBashExpansion(@NotNull BashBashExpansion o) {
+    visitCompositeElement(o);
+  }
+
   public void visitBinaryExpression(@NotNull BashBinaryExpression o) {
     visitExpression(o);
   }
@@ -71,6 +75,10 @@ public class BashVisitor extends PsiElementVisitor {
   }
 
   public void visitCompoundList(@NotNull BashCompoundList o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitConditional(@NotNull BashConditional o) {
     visitCompositeElement(o);
   }
 
