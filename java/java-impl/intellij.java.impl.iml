@@ -59,6 +59,8 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="jaxb-api" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
   </component>
   <component name="copyright">
     <Base>
