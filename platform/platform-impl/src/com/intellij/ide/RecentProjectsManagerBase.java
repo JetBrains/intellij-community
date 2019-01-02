@@ -25,9 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
-import com.intellij.util.Alarm;
-import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -62,8 +60,20 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   private final AtomicLong myModCounter = new AtomicLong();
 
   private final RecentProjectIconHelper myProjectIconHelper = new RecentProjectIconHelper();
-  private final Alarm myNamesResolver = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
-  private final Set<String> myNamesToResolve = new HashSet<>(MAX_PROJECTS_IN_MAIN_MENU);
+
+  private final Set<String> myNamesToResolve = new THashSet<>(MAX_PROJECTS_IN_MAIN_MENU);
+  private final Map<String, String> myNameCache = Collections.synchronizedMap(new THashMap<>());
+
+  private final SingleAlarm myNamesResolver = new SingleAlarm(() -> {
+    final Set<String> paths;
+    synchronized (myNamesToResolve) {
+      paths = new THashSet<>(myNamesToResolve);
+      myNamesToResolve.clear();
+    }
+    for (String p : paths) {
+      myNameCache.put(p, readProjectName(p));
+    }
+  }, 50, Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
 
   public static RecentProjectsManagerBase getInstanceEx() {
     return (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
@@ -155,7 +165,6 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   private final Object myStateLock = new Object();
   private State myState = new State();
 
-  private final Map<String, String> myNameCache = Collections.synchronizedMap(new THashMap<>());
   private boolean myBatchOpening;
 
   protected RecentProjectsManagerBase(@NotNull MessageBus messageBus) {
@@ -208,7 +217,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   private static void removePathFrom(@NotNull List<String> items, @NotNull String path) {
-    for (Iterator<String> iterator = items.iterator(); iterator.hasNext();) {
+    for (Iterator<String> iterator = items.iterator(); iterator.hasNext(); ) {
       final String next = iterator.next();
       if (SystemInfo.isFileSystemCaseSensitive ? path.equals(next) : path.equalsIgnoreCase(next)) {
         iterator.remove();
@@ -425,7 +434,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     // on USB-sticks or flash-cards, and it will be nice to have them in the list
     // when USB device or SD-card is mounted
     //if (new File(path).exists()) {
-      return new ReopenProjectAction(path, projectName, displayName);
+    return new ReopenProjectAction(path, projectName, displayName);
     //}
     //return null;
   }
@@ -478,7 +487,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   @Nullable
   public Project doOpenProject(@NotNull @SystemIndependent String projectPath, Project projectToClose, boolean forceOpenInNewFrame) {
-    VirtualFile dotIdea  = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
+    VirtualFile dotIdea = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
       new File(projectPath, Project.DIRECTORY_STORE_FOLDER));
 
     if (dotIdea != null) {
@@ -515,12 +524,14 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     @Override
     public void projectClosing(@NotNull Project project) {
       String path = getProjectPath(project);
-      if (path == null) return;
+      if (path == null) {
+        return;
+      }
 
       synchronized (myStateLock) {
         myState.names.put(path, getProjectDisplayName(project));
+        myNameCache.put(path, project.getName());
       }
-      myNameCache.put(path, project.getName());
     }
 
     @Override
@@ -538,27 +549,19 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   @NotNull
-  public String getProjectName(@NotNull String path) {
+  public String getProjectName(@NotNull @SystemIndependent String path) {
     String cached = myNameCache.get(path);
     if (cached != null) {
       return cached;
     }
 
-    myNamesResolver.cancelAllRequests();
+    myNamesResolver.cancel();
     synchronized (myNamesToResolve) {
       myNamesToResolve.add(path);
     }
-    myNamesResolver.addRequest(() -> {
-      final Set<String> paths;
-      synchronized (myNamesToResolve) {
-        paths = new THashSet<>(myNamesToResolve);
-        myNamesToResolve.clear();
-      }
-      for (String p : paths) {
-        myNameCache.put(p, readProjectName(p));
-      }
-    }, 50);
-    String name = new File(path).getName();
+    myNamesResolver.request();
+
+    String name = PathUtilRt.getFileName(path);
     return path.endsWith(".ipr") ? FileUtilRt.getNameWithoutExtension(name) : name;
   }
 
