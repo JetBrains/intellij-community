@@ -368,14 +368,14 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
   "then"                        { return THEN; }
   "until"                       { return UNTIL; }
   "while"                       { return WHILE; }
-  "[[ "                         { goToState(S_TEST_COMMAND); return BRACKET_KEYWORD; }
+  "[[ "                         { goToState(S_TEST_COMMAND); return LEFT_DOUBLE_BRACKET; }
   "trap"                        { return TRAP; }
   "let"                         { return LET; }
 }
 /***************** _______ END OF INITIAL STATE _______ **************************/
 
 <S_TEST_COMMAND> {
-  " ]]"                         { backToPreviousState(); return _BRACKET_KEYWORD; }
+  " ]]"                         { backToPreviousState(); return RIGHT_DOUBLE_BRACKET; }
   "&&"                          { return AND_AND; }
   "||"                          { return OR_OR; }
   "$" / "("                     { goToState(S_DOLLAR_PREFIXED); return DOLLAR; }

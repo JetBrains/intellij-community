@@ -10,10 +10,16 @@ public interface BashConditional extends BashCompositeElement {
   @NotNull
   List<BashString> getStringList();
 
-  @NotNull
+  @Nullable
   PsiElement getExprConditionalLeft();
 
   @Nullable
   PsiElement getExprConditionalRight();
+
+  @Nullable
+  PsiElement getLeftDoubleBracket();
+
+  @Nullable
+  PsiElement getRightDoubleBracket();
 
 }

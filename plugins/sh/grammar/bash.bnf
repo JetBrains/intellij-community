@@ -26,6 +26,9 @@
     RIGHT_SQUARE = ']'
     BANG = '!'
 
+    LEFT_DOUBLE_BRACKET = "[["
+    RIGHT_DOUBLE_BRACKET = "]]"
+
     BACKSLASH = '\\'
     AMP = '&'
     AT = '@'
@@ -122,7 +125,9 @@ private command_substitution ::= subshell
 shell_parameter_expansion ::= '{' literal [":" ['+'|'-'] literal] '}' // todo: simplify lexer for parameters
 bash_expansion ::=
 
-conditional ::= EXPR_CONDITIONAL_LEFT literal <<condOp>> literal EXPR_CONDITIONAL_RIGHT {pin=1}
+conditional ::= cond_left [literal? <<condOp>> literal] cond_right {pin=1}
+private cond_right ::= EXPR_CONDITIONAL_RIGHT | ']]'
+private cond_left ::= EXPR_CONDITIONAL_LEFT | '[['
 
 process_substitution ::= ('<' | '>') '(' list ')' {pin=1}
 
@@ -171,7 +176,7 @@ function_def ::=  w '(' ')' newlines group_command
 
 subshell ::=  '(' compound_list ')'
 
-if_command ::= if conditional ';' then compound_list
+if_command ::= if conditional list_terminator then compound_list
                (   fi
                  | else compound_list fi
                  | elif_clause fi) {pin(".*")="if|elif|then|else"}

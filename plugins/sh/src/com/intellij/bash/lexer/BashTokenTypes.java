@@ -31,8 +31,6 @@ public interface BashTokenTypes extends BashTypes {
   // something new, bash 4?
   IElementType TRAP = new BashTokenType("trap");
   IElementType LET = new BashTokenType("let");
-  IElementType BRACKET_KEYWORD = new BashTokenType("[[ (left bracket)");
-  IElementType _BRACKET_KEYWORD = new BashTokenType("]] (right bracket)");
 
   // arithmetic expressions
   IElementType EXPR_ARITH = new BashTokenType("((");//))
@@ -45,7 +43,7 @@ public interface BashTokenTypes extends BashTypes {
   TokenSet keywords = TokenSet.create(BANG, CASE, DO, DONE,
       ELIF, ELSE, ESAC, FI, FOR, FUNCTION,
       IF, IN, SELECT, THEN, UNTIL, WHILE,
-      TIME, BRACKET_KEYWORD, _BRACKET_KEYWORD,
+      TIME, LEFT_DOUBLE_BRACKET, RIGHT_DOUBLE_BRACKET,
       CASE_END, DOLLAR,
       EXPR_ARITH, _EXPR_ARITH, EXPR_CONDITIONAL_LEFT, EXPR_CONDITIONAL_RIGHT);
 

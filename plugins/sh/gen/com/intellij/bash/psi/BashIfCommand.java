@@ -17,7 +17,7 @@ public interface BashIfCommand extends BashCommand {
   BashElifClause getElifClause();
 
   @Nullable
-  PsiElement getSemi();
+  BashListTerminator getListTerminator();
 
   @Nullable
   PsiElement getElse();

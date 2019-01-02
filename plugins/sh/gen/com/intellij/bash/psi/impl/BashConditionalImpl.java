@@ -32,15 +32,27 @@ public class BashConditionalImpl extends BashCompositeElementImpl implements Bas
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getExprConditionalLeft() {
-    return findNotNullChildByType(EXPR_CONDITIONAL_LEFT);
+    return findChildByType(EXPR_CONDITIONAL_LEFT);
   }
 
   @Override
   @Nullable
   public PsiElement getExprConditionalRight() {
     return findChildByType(EXPR_CONDITIONAL_RIGHT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getLeftDoubleBracket() {
+    return findChildByType(LEFT_DOUBLE_BRACKET);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getRightDoubleBracket() {
+    return findChildByType(RIGHT_DOUBLE_BRACKET);
   }
 
 }
