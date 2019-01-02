@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.ui.ProductIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,7 +15,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -27,33 +25,25 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
-import com.intellij.ui.IconDeferrer;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.PathUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.imgscalr.Scalr;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -68,11 +58,10 @@ import java.util.function.Function;
 public class RecentProjectsManagerBase extends RecentProjectsManager implements PersistentStateComponent<RecentProjectsManagerBase.State>,
                                                                                 ModificationTracker {
   private static final int MAX_PROJECTS_IN_MAIN_MENU = 6;
-  private static Icon ourSmallAppIcon;
 
   private final AtomicLong myModCounter = new AtomicLong();
 
-  private final Map<String, MyIcon> myProjectIcons = new THashMap<>();
+  private final RecentProjectIconHelper myProjectIconHelper = new RecentProjectIconHelper();
   private final Alarm myNamesResolver = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private final Set<String> myNamesToResolve = new HashSet<>(MAX_PROJECTS_IN_MAIN_MENU);
 
@@ -80,7 +69,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     return (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
   }
 
-  public static class State {
+  public static final class State {
     public final List<String> recentPaths = new SmartList<>();
     public final List<String> openPaths = new SmartList<>();
     public final Map<String, String> names = new LinkedHashMap<>();
@@ -322,129 +311,18 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   @Nullable
-  public Icon getProjectIcon(@NotNull @SystemIndependent String path, boolean isDark) {
-    final MyIcon icon = myProjectIcons.get(path);
-    if (icon != null) {
-      return icon.getIcon();
-    }
-    return IconDeferrer.getInstance().defer(EmptyIcon.ICON_16,
-                                            Pair.create(path, isDark),
-                                            p -> calculateIcon(p.first, p.second));
+  public final Icon getProjectIcon(@NotNull @SystemIndependent String path, boolean isDark) {
+    return myProjectIconHelper.getProjectIcon(path, isDark);
   }
 
-  @Nullable
-  protected Icon calculateIcon(@NotNull @SystemIndependent String path, boolean isDark) {
-    File file = new File(path + (isDark ? "/.idea/icon_dark.png" : "/.idea/icon.png"));
-    if (file.exists()) {
-      final long timestamp = file.lastModified();
-      MyIcon icon = myProjectIcons.get(path);
-      if (icon != null && icon.getTimestamp() == timestamp) {
-        return icon.getIcon();
-      }
-      try {
-        Icon ico = createIcon(file);
-        icon = new MyIcon(ico, timestamp);
-        myProjectIcons.put(path, icon);
-        return icon.getIcon();
-      }
-      catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-    return null;
+  public final Icon getProjectOrAppIcon(@SystemIndependent @NotNull String path) {
+    return myProjectIconHelper.getProjectOrAppIcon(path);
   }
 
   @NotNull
-  public static Icon createIcon(File file) {
-    final BufferedImage image = loadAndScaleImage(file);
-    return toRetinaAwareIcon(image);
-  }
-
-  @NotNull
-  protected static Icon toRetinaAwareIcon(final BufferedImage image) {
-    return new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        // [tav] todo: the icon is created in def screen scale
-        if (UIUtil.isJreHiDPI()) {
-          final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
-          float s = JBUI.sysScale();
-          newG.scale(1/s, 1/s);
-          newG.drawImage(image, (int)(x / s), (int)(y / s), null);
-          newG.scale(1, 1);
-          newG.dispose();
-        }
-        else {
-          g.drawImage(image, x, y, null);
-        }
-      }
-
-      @Override
-      public int getIconWidth() {
-        return UIUtil.isJreHiDPI() ? (int)(image.getWidth() / JBUI.sysScale()) : image.getWidth();
-      }
-
-      @Override
-      public int getIconHeight() {
-        return UIUtil.isJreHiDPI() ? (int)(image.getHeight() / JBUI.sysScale()) : image.getHeight();
-      }
-    };
-  }
-
-  private static BufferedImage loadAndScaleImage(File file) {
-    try {
-      Image img = ImageLoader.loadFromUrl(file.toURL());
-      return Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : (int)JBUI.pixScale(16));
-    }
-    catch (MalformedURLException e) {//
-    }
-    return null;
-  }
-
-  public Icon getProjectOrAppIcon(@NotNull String path) {
-    Icon icon = getProjectIcon(path, UIUtil.isUnderDarcula());
-    if (icon != null) {
-      return icon;
-    }
-
-    if (UIUtil.isUnderDarcula()) {
-      //No dark icon for this project
-      icon = getProjectIcon(path, false);
-      if (icon != null) {
-        return icon;
-      }
-    }
-
-    return getSmallApplicationIcon();
-  }
-
-  protected static Icon getSmallApplicationIcon() {
-    if (ourSmallAppIcon == null) {
-      try {
-        Icon appIcon = ProductIcons.getInstance().getProductIcon();
-
-        if (appIcon.getIconWidth() == JBUI.pixScale(16) && appIcon.getIconHeight() == JBUI.pixScale(16)) {
-          ourSmallAppIcon = appIcon;
-        }
-        else {
-          BufferedImage image = ImageUtil.toBufferedImage(IconUtil.toImage(appIcon));
-          image = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : (int)JBUI.pixScale(16));
-          ourSmallAppIcon = toRetinaAwareIcon(image);
-        }
-      }
-      catch (Exception e) {//
-      }
-      if (ourSmallAppIcon == null) {
-        ourSmallAppIcon = EmptyIcon.ICON_16;
-      }
-    }
-
-    return ourSmallAppIcon;
-  }
-
-  private Set<String> getDuplicateProjectNames(Set<String> openedPaths, Set<String> recentPaths) {
-    Set<String> names = ContainerUtil.newHashSet();
-    Set<String> duplicates = ContainerUtil.newHashSet();
+  private Set<String> getDuplicateProjectNames(@NotNull Set<String> openedPaths, @NotNull Set<String> recentPaths) {
+    Set<String> names = new THashSet<>();
+    Set<String> duplicates = new THashSet<>();
     for (String path : ContainerUtil.concat(openedPaths, recentPaths)) {
       if (!names.add(getProjectName(path))) {
         duplicates.add(path);
@@ -454,11 +332,13 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   @Override
+  @NotNull
   public AnAction[] getRecentProjectsActions(boolean forMainMenu) {
     return getRecentProjectsActions(forMainMenu, false);
   }
 
   @Override
+  @NotNull
   public AnAction[] getRecentProjectsActions(boolean forMainMenu, boolean useGroups) {
     final Set<String> paths;
     synchronized (myStateLock) {
@@ -506,13 +386,9 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       for (ProjectGroup group : groups) {
         final List<AnAction> children = new ArrayList<>();
         for (String path : group.getProjects()) {
-          final AnAction action = createOpenAction(path, duplicates);
-          if (action != null) {
-            children.add(action);
-
-            if (forMainMenu && children.size() >= MAX_PROJECTS_IN_MAIN_MENU) {
-              break;
-            }
+          children.add(createOpenAction(path, duplicates));
+          if (forMainMenu && children.size() >= MAX_PROJECTS_IN_MAIN_MENU) {
+            break;
           }
         }
         actions.add(new ProjectGroupActionGroup(group, children));
@@ -523,10 +399,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
 
     for (final String path : paths) {
-      final AnAction action = createOpenAction(path, duplicates);
-      if (action != null) {
-        actions.add(action);
-      }
+      actions.add(createOpenAction(path, duplicates));
     }
 
     if (actions.isEmpty()) {
@@ -536,7 +409,9 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  protected /* for Rider */ AnAction createOpenAction(@NotNull @SystemIndependent String path, Set<String> duplicates) {
+  // for Rider
+  @NotNull
+  protected AnAction createOpenAction(@NotNull @SystemIndependent String path, @NotNull Set<String> duplicates) {
     String projectName = getProjectName(path);
     String displayName;
     synchronized (myStateLock) {
@@ -579,6 +454,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     myModCounter.incrementAndGet();
   }
 
+  @SuppressWarnings("unused")
   @Nullable
   protected String getRecentProjectMetadata(@SystemIndependent String path, @NotNull Project project) {
     return null;
@@ -600,6 +476,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     return PathUtil.toSystemIndependentName(project.getPresentableUrl());
   }
 
+  @Nullable
   public Project doOpenProject(@NotNull @SystemIndependent String projectPath, Project projectToClose, boolean forceOpenInNewFrame) {
     VirtualFile dotIdea  = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
       new File(projectPath, Project.DIRECTORY_STORE_FOLDER));
@@ -743,6 +620,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   @Override
+  @NotNull
   public List<ProjectGroup> getGroups() {
     return Collections.unmodifiableList(myState.groups);
   }
@@ -764,7 +642,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     return myModCounter.get();
   }
 
-  private class MyAppLifecycleListener implements AppLifecycleListener {
+  private final class MyAppLifecycleListener implements AppLifecycleListener {
     @Override
     public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
       if (willReopenProjectOnStart()) {
@@ -794,21 +672,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
   }
 
-  private static class MyIcon extends Pair<Icon, Long> {
-    MyIcon(Icon icon, Long timestamp) {
-      super(icon, timestamp);
-    }
-
-    public Icon getIcon() {
-      return first;
-    }
-
-    public long getTimestamp() {
-      return second;
-    }
-  }
-
-  public static class RecentProjectMetaInfo {
+  public final static class RecentProjectMetaInfo {
     public String build;
     public String productionCode;
     public boolean eap;
