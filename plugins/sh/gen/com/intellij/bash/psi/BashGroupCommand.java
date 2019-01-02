@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 public interface BashGroupCommand extends BashCommand {
 
   @Nullable
-  BashList getList();
+  BashCompoundList getCompoundList();
 
   @NotNull
   PsiElement getLeftCurly();

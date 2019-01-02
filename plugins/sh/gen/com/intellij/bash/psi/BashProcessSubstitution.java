@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 public interface BashProcessSubstitution extends BashCompositeElement {
 
   @Nullable
-  BashList getList();
+  BashCompoundList getCompoundList();
 
   @Nullable
   PsiElement getGreaterThan();

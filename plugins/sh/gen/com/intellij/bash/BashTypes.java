@@ -39,7 +39,6 @@ public interface BashTypes {
   IElementType GROUP_COMMAND = new BashCompositeElementType("GROUP_COMMAND");
   IElementType HEREDOC = new BashCompositeElementType("HEREDOC");
   IElementType IF_COMMAND = new BashCompositeElementType("IF_COMMAND");
-  IElementType LIST = new BashCompositeElementType("LIST");
   IElementType LIST_TERMINATOR = new BashCompositeElementType("LIST_TERMINATOR");
   IElementType LITERAL_EXPRESSION = new BashCompositeElementType("LITERAL_EXPRESSION");
   IElementType LOGICAL_AND_EXPRESSION = new BashCompositeElementType("LOGICAL_AND_EXPRESSION");
@@ -232,9 +231,6 @@ public interface BashTypes {
       }
       else if (type == IF_COMMAND) {
         return new BashIfCommandImpl(node);
-      }
-      else if (type == LIST) {
-        return new BashListImpl(node);
       }
       else if (type == LIST_TERMINATOR) {
         return new BashListTerminatorImpl(node);

@@ -230,7 +230,7 @@ BASH_FILE
             PsiWhiteSpace(' ')
             GROUP_COMMAND
               PsiElement({)('{')
-              LIST
+              COMPOUND_LIST
                 PsiElement(\n)('\n')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')

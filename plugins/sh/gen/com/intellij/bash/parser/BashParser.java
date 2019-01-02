@@ -77,9 +77,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == IF_COMMAND) {
       r = if_command(b, 0);
     }
-    else if (t == LIST) {
-      r = list(b, 0);
-    }
     else if (t == LIST_TERMINATOR) {
       r = list_terminator(b, 0);
     }
@@ -520,13 +517,29 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // list
+  // newlines pipeline_command_list ('\n' | '&' | ';') newlines
   public static boolean compound_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compound_list")) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, COMPOUND_LIST, "<compound list>");
-    r = list(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    r = newlines(b, l + 1);
+    r = r && pipeline_command_list(b, l + 1);
+    p = r; // pin = 2
+    r = r && report_error_(b, compound_list_2(b, l + 1));
+    r = p && newlines(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // '\n' | '&' | ';'
+  private static boolean compound_list_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compound_list_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LINEFEED);
+    if (!r) r = consumeToken(b, AMP);
+    if (!r) r = consumeToken(b, SEMI);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -832,7 +845,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' list '}'
+  // '{' compound_list '}'
   public static boolean group_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "group_command")) return false;
     if (!nextTokenIs(b, LEFT_CURLY)) return false;
@@ -840,7 +853,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, GROUP_COMMAND, null);
     r = consumeToken(b, LEFT_CURLY);
     p = r; // pin = 1
-    r = r && report_error_(b, list(b, l + 1));
+    r = r && report_error_(b, compound_list(b, l + 1));
     r = p && consumeToken(b, RIGHT_CURLY) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -932,33 +945,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = p && newlines(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
-  }
-
-  /* ********************************************************** */
-  // newlines pipeline_command_list ('\n' | '&' | ';') newlines
-  public static boolean list(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "list")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, LIST, "<list>");
-    r = newlines(b, l + 1);
-    r = r && pipeline_command_list(b, l + 1);
-    p = r; // pin = 2
-    r = r && report_error_(b, list_2(b, l + 1));
-    r = p && newlines(b, l + 1) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // '\n' | '&' | ';'
-  private static boolean list_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "list_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LINEFEED);
-    if (!r) r = consumeToken(b, AMP);
-    if (!r) r = consumeToken(b, SEMI);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -1278,7 +1264,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ('<' | '>') '(' list ')'
+  // ('<' | '>') '(' compound_list ')'
   public static boolean process_substitution(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "process_substitution")) return false;
     if (!nextTokenIs(b, "<process substitution>", GREATER_THAN, LESS_THAN)) return false;
@@ -1287,7 +1273,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = process_substitution_0(b, l + 1);
     p = r; // pin = 1
     r = r && report_error_(b, consumeToken(b, LEFT_PAREN));
-    r = p && report_error_(b, list(b, l + 1)) && r;
+    r = p && report_error_(b, compound_list(b, l + 1)) && r;
     r = p && consumeToken(b, RIGHT_PAREN) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;

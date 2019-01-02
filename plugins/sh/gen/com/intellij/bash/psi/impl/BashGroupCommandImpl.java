@@ -27,8 +27,8 @@ public class BashGroupCommandImpl extends BashCommandImpl implements BashGroupCo
 
   @Override
   @Nullable
-  public BashList getList() {
-    return findChildByClass(BashList.class);
+  public BashCompoundList getCompoundList() {
+    return findChildByClass(BashCompoundList.class);
   }
 
   @Override

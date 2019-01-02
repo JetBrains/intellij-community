@@ -27,8 +27,8 @@ public class BashCompoundListImpl extends BashCompositeElementImpl implements Ba
 
   @Override
   @NotNull
-  public BashList getList() {
-    return findNotNullChildByClass(BashList.class);
+  public List<BashPipelineCommand> getPipelineCommandList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashPipelineCommand.class);
   }
 
 }
