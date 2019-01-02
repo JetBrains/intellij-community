@@ -89,9 +89,11 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
     val filteredWithIndex: Set<Int>? = if (rootsForIndex.isNotEmpty()) dataGetter?.filter(detailsFilters) else null
 
-    val headsForVcs = if (rootsForVcs.containsAll(visibleRoots)) matchingHeads
-    else getMatchingHeads(dataPack.refsModel, rootsForVcs, filters)
-    val filteredWithVcs = filterWithVcs(dataPack.permanentGraph, filters, detailsFilters, headsForVcs, commitCount)
+    if (rootsForVcs.isEmpty()) return FilterByDetailsResult(filteredWithIndex, false, commitCount)
+    val filterAllWithVcs = rootsForVcs.containsAll(visibleRoots)
+    val filtersForVcs = if (filterAllWithVcs) filters else filters.with(VcsLogFilterObject.fromRoots(rootsForVcs))
+    val headsForVcs = if (filterAllWithVcs) matchingHeads else getMatchingHeads(dataPack.refsModel, rootsForVcs, filtersForVcs)
+    val filteredWithVcs = filterWithVcs(dataPack.permanentGraph, filtersForVcs, detailsFilters, headsForVcs, commitCount)
 
     val filteredCommits: Set<Int>? = union(filteredWithIndex, filteredWithVcs.matchingCommits)
     return FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount)
