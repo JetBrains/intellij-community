@@ -213,7 +213,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // assignment_word '=' (literal | composed_var)
+  // assignment_word '=' [literal | composed_var]
   public static boolean assignment_word_rule(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_word_rule")) return false;
     if (!nextTokenIs(b, ASSIGNMENT_WORD)) return false;
@@ -225,9 +225,16 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // literal | composed_var
+  // [literal | composed_var]
   private static boolean assignment_word_rule_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_word_rule_2")) return false;
+    assignment_word_rule_2_0(b, l + 1);
+    return true;
+  }
+
+  // literal | composed_var
+  private static boolean assignment_word_rule_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_word_rule_2_0")) return false;
     boolean r;
     r = literal(b, l + 1);
     if (!r) r = composed_var(b, l + 1);

@@ -131,7 +131,7 @@ simple_command_element ::= literal | assignment_word_rule | redirection | compos
 heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START newlines HEREDOC_CONTENT HEREDOC_MARKER_END
 arithmetic_expansion ::= '((' expression '))' {pin=1}
 //noinspection BnfSuspiciousToken
-assignment_word_rule ::= assignment_word '=' (literal | composed_var)
+assignment_word_rule ::= assignment_word '=' [literal | composed_var]
 
 redirection_list ::= redirection redirection*
 simple_command ::= simple_command_element+
