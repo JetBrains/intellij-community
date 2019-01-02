@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.application.impl
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.application.async
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.WeaklyReferencedDisposable
-import com.intellij.openapi.application.impl.AsyncExecution.ExpirableContextConstraint
+import com.intellij.openapi.application.async.AsyncExecution.ExpirableContextConstraint
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.IncorrectOperationException
 import kotlinx.coroutines.*
@@ -18,9 +18,9 @@ import kotlin.coroutines.CoroutineContext
  *
  * @author eldar
  */
-internal abstract class AsyncExecutionExpirableSupport<E : AsyncExecution<E>>(dispatcher: CoroutineDispatcher,
+internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(dispatcher: CoroutineDispatcher,
                                                                               private val expirableHandles: Set<JobExpiration>)
-  : AsyncExecutionBaseSupport<E>(dispatcher) {
+  : BaseAsyncExecutionSupport<E>(dispatcher) {
 
   override fun createContinuationInterceptor(): ContinuationInterceptor {
     val delegateInterceptor = super.createContinuationInterceptor()

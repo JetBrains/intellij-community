@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.application.impl
+package com.intellij.openapi.application.async
 
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.openapi.application.impl.AsyncExecution.ContextConstraint
-import com.intellij.openapi.application.impl.AsyncExecution.SimpleContextConstraint
+import com.intellij.openapi.application.async.AsyncExecution.ContextConstraint
+import com.intellij.openapi.application.async.AsyncExecution.SimpleContextConstraint
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -17,7 +17,7 @@ import kotlin.coroutines.CoroutineContext
  *
  * @author eldar
  */
-abstract class AsyncExecutionBaseSupport<E : AsyncExecution<E>>(protected val dispatcher: CoroutineDispatcher) : AsyncExecution<E> {
+abstract class BaseAsyncExecutionSupport<E : AsyncExecution<E>>(protected val dispatcher: CoroutineDispatcher) : AsyncExecution<E> {
   private val myCoroutineDispatchingContext: CoroutineContext by lazy {
     val exceptionHandler = CoroutineExceptionHandler { context, throwable -> dispatcher.processUncaughtException(context, throwable) }
     val delegateDispatcherChain = generateSequence(dispatcher as? DelegateDispatcher) { it.delegate as? DelegateDispatcher }

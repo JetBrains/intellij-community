@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.application.impl
+package com.intellij.openapi.application.async
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Runnable
@@ -10,7 +10,7 @@ import kotlin.coroutines.CoroutineContext
 // must be the ContinuationInterceptor in order to work properly
 internal class RescheduleAttemptLimitAwareDispatcher(delegate: CoroutineDispatcher,
                                                      private val myLimit: Int = 3000)
-  : AsyncExecutionBaseSupport.ChainedDispatcher(delegate) {
+  : BaseAsyncExecutionSupport.ChainedDispatcher(delegate) {
   private var myAttemptCount: Int = 0
 
   private val myLogLimit: Int = 30
@@ -27,11 +27,11 @@ internal class RescheduleAttemptLimitAwareDispatcher(delegate: CoroutineDispatch
 
   override fun retryDispatch(context: CoroutineContext,
                              block: Runnable,
-                             causeDispatcher: AsyncExecutionBaseSupport.ChainedDispatcher) {
+                             causeDispatcher: BaseAsyncExecutionSupport.ChainedDispatcher) {
     if (checkHaveMoreRescheduleAttempts(causeDispatcher)) {
       super.dispatch(context, block)
     }
-    else AsyncExecutionBaseSupport.run {
+    else BaseAsyncExecutionSupport.run {
       processUncaughtException(context, TooManyRescheduleAttemptsException(myLastDispatchers))
       context.cancel()
 
