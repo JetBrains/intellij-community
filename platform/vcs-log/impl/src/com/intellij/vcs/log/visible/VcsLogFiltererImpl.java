@@ -19,6 +19,7 @@ import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
+import com.intellij.vcs.log.impl.VcsLogRootFilterImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -109,6 +110,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
       if (notIndexedRoots.size() < visibleRoots.size()) {
         filteredWidthIndex = dataGetter.filter(detailsFilters);
         if (notIndexedRoots.isEmpty()) return new FilterByDetailsResult(filteredWidthIndex, false, commitCount);
+        filters = new VcsLogFilterCollectionBuilder(filters).with(new VcsLogRootFilterImpl(notIndexedRoots)).build();
         matchingHeads = getMatchingHeads(dataPack.getRefsModel(), notIndexedRoots, filters);
       }
     }
