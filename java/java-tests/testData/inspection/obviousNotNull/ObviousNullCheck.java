@@ -53,4 +53,17 @@ abstract class ObviousNullCheck {
     if(str == null) throw new IllegalArgumentException();
     return str;
   }
+  
+  class X {
+    private String foo;
+    
+    X(String f) {
+      if(f == null) throw new NullPointerException();
+      this.foo = f;
+    }
+    
+    X() {
+      this("");
+    }
+  }
 }
