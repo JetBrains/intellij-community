@@ -405,9 +405,9 @@ public class JavaCompletionUtil {
 
   @NotNull
   private static LookupElement castQualifier(@NotNull LookupElement item, @NotNull PsiTypeLookupItem castTypeItem) {
-    return LookupElementDecorator.withInsertHandler(item, new InsertHandlerDecorator<LookupElement>() {
+    return new LookupElementDecorator<LookupElement>(item) {
       @Override
-      public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
+      public void handleInsert(@NotNull InsertionContext context) {
         final Document document = context.getEditor().getDocument();
         context.commitDocument();
         final PsiFile file = context.getFile();
@@ -433,9 +433,16 @@ public class JavaCompletionUtil {
           }
         }
 
-        item.getDelegate().handleInsert(context);
+        super.handleInsert(context);
       }
-    });
+
+      @Override
+      public void renderElement(LookupElementPresentation presentation) {
+        super.renderElement(presentation);
+
+        presentation.setItemText("((" + castTypeItem.getType().getPresentableText() + ")...)." + presentation.getItemText());
+      }
+    };
   }
 
   private static PsiTypeLookupItem findQualifierCast(@NotNull LookupElement item,

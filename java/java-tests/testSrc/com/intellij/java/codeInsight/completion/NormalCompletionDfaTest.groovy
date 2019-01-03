@@ -16,6 +16,7 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -72,6 +73,8 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testComplexInstanceOfDfa() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'methodFromX', 'methodFromX2', 'methodFromY', 'methodFromY2'
+
+    assert LookupElementPresentation.renderElement(myItems[0]).itemText == '((X)...).methodFromX'
   }
 
   void testCastTwice() {
@@ -104,8 +107,7 @@ public class FooImpl extends Foo {
   
   void testCastQualifierInstanceofedTwice() {
     configureByTestName()
-    myFixture.assertPreferredCompletionItems 0, 'boo', 'foo', 'moo'
-    myFixture.lookup.currentItem = myFixture.lookupElements[1]
+    myFixture.assertPreferredCompletionItems 0, 'foo', 'boo', 'moo'
     myFixture.type('\n')
     checkResultByFile(getTestName(false) + "_after.java")
   }
