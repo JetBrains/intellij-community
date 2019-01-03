@@ -105,6 +105,8 @@ public class CucumberJvm2SMFormatter implements Formatter {
                                escape(getFeatureFileDescription(getEventUri(event)))));
     }
 
+    outCommand(String.format(TEMPLATE_SCENARIO_STARTED, getCurrentTime()));
+
     if (isScenarioOutline(event.testCase)) {
       int mainScenarioLine = getScenarioOutlineLine(event.testCase);
       if (currentScenarioOutlineLine != mainScenarioLine || currentFilePath == null ||
@@ -127,6 +129,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
 
   private void handleTestCaseFinished(TestCaseFinished event) {
     outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), escape(getScenarioName(event))));
+    outCommand(String.format(TEMPLATE_SCENARIO_FINISHED, getCurrentTime()));
   }
 
   private void handleTestRunFinished(TestRunFinished event) {
