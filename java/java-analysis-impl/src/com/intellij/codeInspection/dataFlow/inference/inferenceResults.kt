@@ -14,6 +14,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.util.gist.GistManager
 import com.siyeh.ig.psiutils.ClassUtils
 import java.util.*
 
@@ -162,7 +163,13 @@ data class MethodData(
 
   private fun getDetachedBody(method: PsiMethod): PsiCodeBlock {
     val document = method.containingFile.viewProvider.document ?: return method.body!!
-    val bodyText = PsiDocumentManager.getInstance(method.project).getLastCommittedText(document).substring(bodyStart, bodyEnd)
-    return JavaPsiFacade.getElementFactory(method.project).createCodeBlockFromText(bodyText, method)
+    try {
+      val bodyText = PsiDocumentManager.getInstance(method.project).getLastCommittedText(document).substring(bodyStart, bodyEnd)
+      return JavaPsiFacade.getElementFactory(method.project).createCodeBlockFromText(bodyText, method)
+    }
+    catch (e: Exception) {
+      GistManager.getInstance().invalidateData();
+      throw e
+    }
   }
 }
