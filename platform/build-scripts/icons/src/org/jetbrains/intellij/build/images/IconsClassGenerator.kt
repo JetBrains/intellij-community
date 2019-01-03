@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -140,7 +140,13 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
   fun printStats() {
     println()
     println("Generated classes: ${processedClasses.get()}. Processed icons: ${processedIcons.get()}. Phantom icons: ${processedPhantom.get()}")
-    println("\nObsolete classes:\n${obsoleteClasses.joinToString("\n") }}")
+    if (obsoleteClasses.isNotEmpty()) {
+      println("\nObsolete classes:")
+      println(obsoleteClasses.joinToString("\n"))
+      println("\nObsolete class it is class for icons that cannot be found anymore. Possible reasons:")
+      println("1. Icons not located under resources root. Solution - move icons to resources root or fix existing root type (must be \"resources\")")
+      println("2. Icons were removed but not class. Solution - remove class.")
+    }
   }
 
   fun getModifiedClasses(): List<ModifiedClass> = modifiedClasses
