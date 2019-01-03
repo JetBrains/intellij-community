@@ -8,6 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface BashConditionalCommand extends BashCommand {
 
   @NotNull
+  List<BashShellParameterExpansion> getShellParameterExpansionList();
+
+  @NotNull
   List<BashString> getStringList();
 
   @Nullable

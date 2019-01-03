@@ -574,7 +574,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // cond_left (<<condOp>> | literal)* cond_right
+  // cond_left (<<condOp>> | lit | '$' shell_parameter_expansion)* cond_right
   public static boolean conditional_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command")) return false;
     if (!nextTokenIs(b, "<conditional command>", EXPR_CONDITIONAL_LEFT, LEFT_DOUBLE_BRACKET)) return false;
@@ -588,7 +588,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // (<<condOp>> | literal)*
+  // (<<condOp>> | lit | '$' shell_parameter_expansion)*
   private static boolean conditional_command_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_1")) return false;
     while (true) {
@@ -599,15 +599,28 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // <<condOp>> | literal
+  // <<condOp>> | lit | '$' shell_parameter_expansion
   private static boolean conditional_command_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = condOp(b, l + 1);
-    if (!r) r = literal(b, l + 1);
+    if (!r) r = lit(b, l + 1);
+    if (!r) r = conditional_command_1_0_2(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // '$' shell_parameter_expansion
+  private static boolean conditional_command_1_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "conditional_command_1_0_2")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeToken(b, DOLLAR);
+    p = r; // pin = 1
+    r = r && shell_parameter_expansion(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -920,6 +933,31 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, SEMI);
     exit_section_(b, l, m, r, false, null);
     return r;
+  }
+
+  /* ********************************************************** */
+  // literal | '(' lit ')'
+  static boolean lit(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lit")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = literal(b, l + 1);
+    if (!r) r = lit_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '(' lit ')'
+  private static boolean lit_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lit_1")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeToken(b, LEFT_PAREN);
+    p = r; // pin = 1
+    r = r && report_error_(b, lit(b, l + 1));
+    r = p && consumeToken(b, RIGHT_PAREN) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
