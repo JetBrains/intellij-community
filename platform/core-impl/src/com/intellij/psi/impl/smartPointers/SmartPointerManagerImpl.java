@@ -165,7 +165,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return;
     }
     ensureMyProject(pointer.getProject());
-    PsiFile containingFile = pointer.getContainingFile();
     int refCount = ((SmartPsiElementPointerImpl)pointer).incrementAndGetReferenceCount(-1);
     if (refCount == -1) {
       LOG.error("Double smart pointer removal");
@@ -181,24 +180,18 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       SmartPointerElementInfo info = ((SmartPsiElementPointerImpl)pointer).getElementInfo();
       info.cleanup();
 
-      if (containingFile == null) return;
-
-      ensureMyProject(containingFile.getProject());
-
-      VirtualFile vFile = containingFile.getViewProvider().getVirtualFile();
-      SmartPointerTracker pointers = getTracker(vFile);
       SmartPointerTracker.PointerReference reference = ((SmartPsiElementPointerImpl)pointer).pointerReference;
-      if (pointers != null && reference != null) {
+      if (reference != null) {
         if (reference.get() != pointer) {
           throw new IllegalStateException("Reference points to " + reference.get());
-        }
-        if (!reference.file.equals(vFile)) {
-          throw new IllegalStateException("Smart pointer's file changed: " + vFile + " vs " + reference.file + "; info=" + info);
         }
         if (reference.key != POINTERS_KEY) {
           throw new IllegalStateException("Reference from wrong project: " + reference.key + " vs " + POINTERS_KEY);
         }
-        pointers.removeReference(reference);
+        SmartPointerTracker pointers = getTracker(reference.file);
+        if (pointers != null) {
+          pointers.removeReference(reference);
+        }
       }
     }
   }
