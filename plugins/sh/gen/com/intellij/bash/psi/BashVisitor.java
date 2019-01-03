@@ -94,6 +94,10 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitElseClause(@NotNull BashElseClause o) {
+    visitCompositeElement(o);
+  }
+
   public void visitEqualityExpression(@NotNull BashEqualityExpression o) {
     visitBinaryExpression(o);
   }
@@ -212,6 +216,10 @@ public class BashVisitor extends PsiElementVisitor {
 
   public void visitSubshellCommand(@NotNull BashSubshellCommand o) {
     visitCommand(o);
+  }
+
+  public void visitThenClause(@NotNull BashThenClause o) {
+    visitCompositeElement(o);
   }
 
   public void visitTimeOpt(@NotNull BashTimeOpt o) {

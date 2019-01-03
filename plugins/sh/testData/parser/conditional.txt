@@ -53,23 +53,24 @@ BASH_FILE
                     PsiElement(word)('foo.txt')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
-          PsiElement(then)('then')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('echo')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    STRING
-                      PsiElement(string_begin)('"')
-                      PsiElement(string_content)('foo')
-                      PsiElement(string_end)('"')
-            PsiElement(\n)('\n')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      STRING
+                        PsiElement(string_begin)('"')
+                        PsiElement(string_content)('foo')
+                        PsiElement(string_end)('"')
+              PsiElement(\n)('\n')
           PsiElement(fi)('fi')
     PsiElement(;)(';')
   PsiElement(\n)('\n')
@@ -119,22 +120,23 @@ BASH_FILE
                       PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
-          PsiElement(then)('then')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('echo')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(int)('1')
-            PsiElement(\n)('\n')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(int)('1')
+              PsiElement(\n)('\n')
           PsiElement(fi)('fi')
     PsiElement(;)(';')
   PsiElement(\n)('\n')
@@ -160,16 +162,17 @@ BASH_FILE
                       PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
             PsiWhiteSpace(' ')
             PsiElement(;)(';')
-          PsiElement(then)('then')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('echo')
-            PsiElement(\n)('\n')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('echo')
+              PsiElement(\n)('\n')
           PsiElement(fi)('fi')
     PsiElement(;)(';')
   PsiElement(\n)('\n')
@@ -195,22 +198,23 @@ BASH_FILE
                       PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
-          PsiElement(then)('then')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('echo')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(int)('1')
-            PsiElement(\n)('\n')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(int)('1')
+              PsiElement(\n)('\n')
           PsiElement(fi)('fi')
     PsiElement(;)(';')
   PsiElement(\n)('\n')
@@ -242,22 +246,23 @@ BASH_FILE
                       PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
-          PsiElement(then)('then')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('echo')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(int)('1')
-            PsiElement(\n)('\n')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(int)('1')
+              PsiElement(\n)('\n')
           PsiElement(fi)('fi')
     PsiElement(;)(';')
   PsiElement(\n)('\n')
@@ -289,22 +294,23 @@ BASH_FILE
                       PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
-          PsiElement(then)('then')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('echo')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(int)('1')
-            PsiElement(\n)('\n')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(int)('1')
+              PsiElement(\n)('\n')
           PsiElement(fi)('fi')
     PsiElement(;)(';')
   PsiElement(\n)('\n')
@@ -336,18 +342,19 @@ BASH_FILE
                       PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
-          PsiElement(then)('then')
-          PsiWhiteSpace(' ')
-          COMPOUND_LIST
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('echo')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(int)('2')
-            PsiElement(\n)('\n')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(int)('2')
+              PsiElement(\n)('\n')
           PsiElement(fi)('fi')
     PsiElement(;)(';')
   PsiElement(\n)('\n')
@@ -379,40 +386,42 @@ BASH_FILE
                       PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
-          PsiElement(then)('then')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    ASSIGNMENT_WORD_RULE
-                      PsiElement(assignment_word)('SERVER_URL')
-                      PsiElement(=)('=')
-                      STRING
-                        PsiElement(string_begin)('"')
-                        PsiElement($)('$')
-                        SHELL_PARAMETER_EXPANSION
-                          PsiElement({)('{')
-                          PsiElement(word)('TEAMCITY_SERVER')
-                          PsiElement(})('}')
-                        PsiElement(string_end)('"')
-            PsiElement(\n)('\n')
-          PsiElement(else)('else')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    ASSIGNMENT_WORD_RULE
-                      PsiElement(assignment_word)('SERVER_URL')
-                      PsiElement(=)('=')
-            PsiElement(\n)('\n')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      ASSIGNMENT_WORD_RULE
+                        PsiElement(assignment_word)('SERVER_URL')
+                        PsiElement(=)('=')
+                        STRING
+                          PsiElement(string_begin)('"')
+                          PsiElement($)('$')
+                          SHELL_PARAMETER_EXPANSION
+                            PsiElement({)('{')
+                            PsiElement(word)('TEAMCITY_SERVER')
+                            PsiElement(})('}')
+                          PsiElement(string_end)('"')
+              PsiElement(\n)('\n')
+          ELSE_CLAUSE
+            PsiElement(else)('else')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      ASSIGNMENT_WORD_RULE
+                        PsiElement(assignment_word)('SERVER_URL')
+                        PsiElement(=)('=')
+              PsiElement(\n)('\n')
           PsiElement(fi)('fi')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -437,38 +446,40 @@ BASH_FILE
                       PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
-          PsiElement(then)('then')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('echo')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(int)('1')
-            PsiElement(\n)('\n')
-          PsiElement(else)('else')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('echo')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(int)('2')
-            PsiElement(\n)('\n')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(int)('1')
+              PsiElement(\n)('\n')
+          ELSE_CLAUSE
+            PsiElement(else)('else')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(int)('2')
+              PsiElement(\n)('\n')
           PsiElement(fi)('fi')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -499,37 +510,39 @@ BASH_FILE
                       PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
-          PsiElement(then)('then')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiComment(Comment)('#  SERVER_URL="${TEAMCITY_SERVER}"')
-            PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('echo')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(int)('1')
-            PsiElement(\n)('\n')
-          PsiElement(else)('else')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    ASSIGNMENT_WORD_RULE
-                      PsiElement(assignment_word)('SERVER_URL')
-                      PsiElement(=)('=')
-            PsiElement(\n)('\n')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiComment(Comment)('#  SERVER_URL="${TEAMCITY_SERVER}"')
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(int)('1')
+              PsiElement(\n)('\n')
+          ELSE_CLAUSE
+            PsiElement(else)('else')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      ASSIGNMENT_WORD_RULE
+                        PsiElement(assignment_word)('SERVER_URL')
+                        PsiElement(=)('=')
+              PsiElement(\n)('\n')
           PsiElement(fi)('fi')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -650,22 +663,23 @@ BASH_FILE
                       PsiElement(EXPR_CONDITIONAL_RIGHT)(']')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
-          PsiElement(then)('then')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('echo')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(int)('1')
-            PsiElement(\n)('\n')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(int)('1')
+              PsiElement(\n)('\n')
           PsiElement(fi)('fi')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -722,14 +736,15 @@ BASH_FILE
             PsiWhiteSpace(' ')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
-          PsiElement(then)('then')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('echo')
-            PsiElement(\n)('\n')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('echo')
+              PsiElement(\n)('\n')
           PsiElement(fi)('fi')

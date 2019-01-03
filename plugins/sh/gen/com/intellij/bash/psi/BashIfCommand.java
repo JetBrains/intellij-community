@@ -7,22 +7,22 @@ import com.intellij.psi.PsiElement;
 
 public interface BashIfCommand extends BashCommand {
 
+  @Nullable
+  BashCompoundList getCompoundList();
+
   @NotNull
-  List<BashCompoundList> getCompoundListList();
+  List<BashElifClause> getElifClauseList();
 
   @Nullable
-  BashElifClause getElifClause();
+  BashElseClause getElseClause();
 
   @Nullable
-  PsiElement getElse();
+  BashThenClause getThenClause();
 
   @Nullable
   PsiElement getFi();
 
   @NotNull
   PsiElement getIf();
-
-  @Nullable
-  PsiElement getThen();
 
 }

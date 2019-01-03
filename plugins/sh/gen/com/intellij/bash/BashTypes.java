@@ -31,6 +31,7 @@ public interface BashTypes {
   IElementType CONDITIONAL_EXPRESSION = new BashCompositeElementType("CONDITIONAL_EXPRESSION");
   IElementType DO_BLOCK = new BashCompositeElementType("DO_BLOCK");
   IElementType ELIF_CLAUSE = new BashCompositeElementType("ELIF_CLAUSE");
+  IElementType ELSE_CLAUSE = new BashCompositeElementType("ELSE_CLAUSE");
   IElementType EQUALITY_EXPRESSION = new BashCompositeElementType("EQUALITY_EXPRESSION");
   IElementType EXPRESSION = new BashCompositeElementType("EXPRESSION");
   IElementType EXP_EXPRESSION = new BashCompositeElementType("EXP_EXPRESSION");
@@ -61,6 +62,7 @@ public interface BashTypes {
   IElementType SIMPLE_COMMAND_ELEMENT = new BashCompositeElementType("SIMPLE_COMMAND_ELEMENT");
   IElementType STRING = new BashCompositeElementType("STRING");
   IElementType SUBSHELL_COMMAND = new BashCompositeElementType("SUBSHELL_COMMAND");
+  IElementType THEN_CLAUSE = new BashCompositeElementType("THEN_CLAUSE");
   IElementType TIMESPEC = new BashCompositeElementType("TIMESPEC");
   IElementType TIME_OPT = new BashCompositeElementType("TIME_OPT");
   IElementType UNARY_EXPRESSION = new BashCompositeElementType("UNARY_EXPRESSION");
@@ -210,6 +212,9 @@ public interface BashTypes {
       else if (type == ELIF_CLAUSE) {
         return new BashElifClauseImpl(node);
       }
+      else if (type == ELSE_CLAUSE) {
+        return new BashElseClauseImpl(node);
+      }
       else if (type == EQUALITY_EXPRESSION) {
         return new BashEqualityExpressionImpl(node);
       }
@@ -296,6 +301,9 @@ public interface BashTypes {
       }
       else if (type == SUBSHELL_COMMAND) {
         return new BashSubshellCommandImpl(node);
+      }
+      else if (type == THEN_CLAUSE) {
+        return new BashThenClauseImpl(node);
       }
       else if (type == TIMESPEC) {
         return new BashTimespecImpl(node);

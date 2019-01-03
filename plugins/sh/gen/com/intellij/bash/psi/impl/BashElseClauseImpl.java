@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashElifClauseImpl extends BashCompositeElementImpl implements BashElifClause {
+public class BashElseClauseImpl extends BashCompositeElementImpl implements BashElseClause {
 
-  public BashElifClauseImpl(ASTNode node) {
+  public BashElseClauseImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitElifClause(this);
+    visitor.visitElseClause(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -32,15 +32,9 @@ public class BashElifClauseImpl extends BashCompositeElementImpl implements Bash
   }
 
   @Override
-  @Nullable
-  public BashThenClause getThenClause() {
-    return findChildByClass(BashThenClause.class);
-  }
-
-  @Override
   @NotNull
-  public PsiElement getElif() {
-    return findNotNullChildByType(ELIF);
+  public PsiElement getElse() {
+    return findNotNullChildByType(ELSE);
   }
 
 }

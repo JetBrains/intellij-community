@@ -5,15 +5,12 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashElifClause extends BashCompositeElement {
+public interface BashThenClause extends BashCompositeElement {
 
   @Nullable
   BashCompoundList getCompoundList();
 
-  @Nullable
-  BashThenClause getThenClause();
-
   @NotNull
-  PsiElement getElif();
+  PsiElement getThen();
 
 }

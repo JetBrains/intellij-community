@@ -26,21 +26,27 @@ public class BashIfCommandImpl extends BashCommandImpl implements BashIfCommand 
   }
 
   @Override
+  @Nullable
+  public BashCompoundList getCompoundList() {
+    return findChildByClass(BashCompoundList.class);
+  }
+
+  @Override
   @NotNull
-  public List<BashCompoundList> getCompoundListList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCompoundList.class);
+  public List<BashElifClause> getElifClauseList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashElifClause.class);
   }
 
   @Override
   @Nullable
-  public BashElifClause getElifClause() {
-    return findChildByClass(BashElifClause.class);
+  public BashElseClause getElseClause() {
+    return findChildByClass(BashElseClause.class);
   }
 
   @Override
   @Nullable
-  public PsiElement getElse() {
-    return findChildByType(ELSE);
+  public BashThenClause getThenClause() {
+    return findChildByClass(BashThenClause.class);
   }
 
   @Override
@@ -53,12 +59,6 @@ public class BashIfCommandImpl extends BashCommandImpl implements BashIfCommand 
   @NotNull
   public PsiElement getIf() {
     return findNotNullChildByType(IF);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getThen() {
-    return findChildByType(THEN);
   }
 
 }

@@ -73,7 +73,7 @@
   ]
 
   pin('.*list(?:_\d.*)?')=1
-  pin('.*_command')=1
+  pin('.*_(command|clause)')=1
   extends(".*command")=command
 
   extends("(comma|assignment|conditional|logical_or|logical_and|bitwise_or|bitwise_exclusive_or|bitwise_and|equality|comparison|bitwise_shift|add|mul|exp)_expression")=binary_expression
@@ -177,14 +177,14 @@ private argument_list ::= '(' ')'
 
 subshell_command ::=  '(' list ')' {pin=1}
 
-if_command ::= if compound_list then compound_list
-               (   fi
-                 | else compound_list fi
-                 | elif_clause fi) {pin(".*")="if|elif|then|else"}
+if_command ::= if compound_list then_clause
+               elif_clause*
+               else_clause?
+               fi
 
-elif_clause ::= elif compound_list then compound_list |
-                elif compound_list then compound_list else compound_list |
-                elif compound_list then compound_list elif_clause {pin(".*")="elif|then|else"}
+elif_clause ::= elif compound_list then_clause
+else_clause ::= else compound_list
+then_clause ::= then compound_list
 
 case_clause ::= pattern_list
 
