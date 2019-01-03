@@ -17,3 +17,7 @@ if [[ "$VERSION_ID" !=  16.04 ]]
 then
     dpkg --list | awk '{ print $2 }' | grep 'linux-image-.*-generic' | grep -v `uname -r` | xargs apt-get -y purge --auto-remove
 fi
+
+[ ! -d "$1" ]
+
+[ ! ! ! 1 == 1 ]

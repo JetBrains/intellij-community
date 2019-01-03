@@ -574,7 +574,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // cond_left [literal? <<condOp>> literal] cond_right
+  // cond_left (<<condOp>> | literal)* cond_right
   public static boolean conditional_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command")) return false;
     if (!nextTokenIs(b, "<conditional command>", EXPR_CONDITIONAL_LEFT, LEFT_DOUBLE_BRACKET)) return false;
@@ -588,30 +588,26 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // [literal? <<condOp>> literal]
+  // (<<condOp>> | literal)*
   private static boolean conditional_command_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_1")) return false;
-    conditional_command_1_0(b, l + 1);
+    while (true) {
+      int c = current_position_(b);
+      if (!conditional_command_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "conditional_command_1", c)) break;
+    }
     return true;
   }
 
-  // literal? <<condOp>> literal
+  // <<condOp>> | literal
   private static boolean conditional_command_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = conditional_command_1_0_0(b, l + 1);
-    r = r && condOp(b, l + 1);
-    r = r && literal(b, l + 1);
+    r = condOp(b, l + 1);
+    if (!r) r = literal(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // literal?
-  private static boolean conditional_command_1_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "conditional_command_1_0_0")) return false;
-    literal(b, l + 1);
-    return true;
   }
 
   /* ********************************************************** */

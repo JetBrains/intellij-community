@@ -126,7 +126,7 @@ private command_substitution ::= subshell_command
 shell_parameter_expansion ::= '{' literal [":" ['+'|'-'] literal] '}' // todo: simplify lexer for parameters
 bash_expansion ::=
 
-conditional_command ::= cond_left [literal? <<condOp>> literal] cond_right {pin=1}
+conditional_command ::= cond_left (<<condOp>> | literal)* cond_right {pin=1}
 private cond_right ::= EXPR_CONDITIONAL_RIGHT | ']]'
 private cond_left ::= EXPR_CONDITIONAL_LEFT | '[['
 

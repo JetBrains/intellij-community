@@ -69,3 +69,6 @@ if cat $0 > /dev/null || cat $0 > /dev/null
  echo
 fi
 
+[ ! ! !  1 == 1 ]
+
+[ ! -d "$1" ]

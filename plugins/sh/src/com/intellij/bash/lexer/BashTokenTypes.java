@@ -175,7 +175,7 @@ public interface BashTokenTypes extends BashTypes {
   IElementType COND_OP_EQ_EQ = new BashTokenType("cond_op ==");
   IElementType COND_OP_REGEX = new BashTokenType("cond_op =~");
   IElementType COND_OP_NOT = new BashTokenType("cond_op !");
-  TokenSet conditionalOperators = TokenSet.create(COND_OP, OR_OR, AND_AND, BANG, COND_OP_EQ_EQ, COND_OP_REGEX);
+  TokenSet conditionalOperators = TokenSet.create(COND_OP, OR_OR, AND_AND, BANG, COND_OP_EQ_EQ, COND_OP_REGEX, COND_OP_NOT);
 
   //redirects
 
