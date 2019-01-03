@@ -60,7 +60,7 @@ public interface BashTypes {
   IElementType SIMPLE_COMMAND = new BashCompositeElementType("SIMPLE_COMMAND");
   IElementType SIMPLE_COMMAND_ELEMENT = new BashCompositeElementType("SIMPLE_COMMAND_ELEMENT");
   IElementType STRING = new BashCompositeElementType("STRING");
-  IElementType SUBSHELL = new BashCompositeElementType("SUBSHELL");
+  IElementType SUBSHELL_COMMAND = new BashCompositeElementType("SUBSHELL_COMMAND");
   IElementType TIMESPEC = new BashCompositeElementType("TIMESPEC");
   IElementType TIME_OPT = new BashCompositeElementType("TIME_OPT");
   IElementType UNARY_EXPRESSION = new BashCompositeElementType("UNARY_EXPRESSION");
@@ -294,8 +294,8 @@ public interface BashTypes {
       else if (type == STRING) {
         return new BashStringImpl(node);
       }
-      else if (type == SUBSHELL) {
-        return new BashSubshellImpl(node);
+      else if (type == SUBSHELL_COMMAND) {
+        return new BashSubshellCommandImpl(node);
       }
       else if (type == TIMESPEC) {
         return new BashTimespecImpl(node);

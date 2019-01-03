@@ -45,8 +45,8 @@ public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl impleme
 
   @Override
   @Nullable
-  public BashSubshell getSubshell() {
-    return findChildByClass(BashSubshell.class);
+  public BashSubshellCommand getSubshellCommand() {
+    return findChildByClass(BashSubshellCommand.class);
   }
 
   @Override

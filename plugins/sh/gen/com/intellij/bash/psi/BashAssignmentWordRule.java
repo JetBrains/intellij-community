@@ -17,7 +17,7 @@ public interface BashAssignmentWordRule extends BashCompositeElement {
   BashString getString();
 
   @Nullable
-  BashSubshell getSubshell();
+  BashSubshellCommand getSubshellCommand();
 
   @Nullable
   PsiElement getDollar();

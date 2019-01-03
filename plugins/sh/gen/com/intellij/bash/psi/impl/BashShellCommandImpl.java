@@ -31,10 +31,4 @@ public class BashShellCommandImpl extends BashCommandImpl implements BashShellCo
     return findChildByClass(BashFunctionDef.class);
   }
 
-  @Override
-  @Nullable
-  public BashSubshell getSubshell() {
-    return findChildByClass(BashSubshell.class);
-  }
-
 }

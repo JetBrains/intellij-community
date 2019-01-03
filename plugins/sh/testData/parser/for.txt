@@ -122,7 +122,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             PsiElement($)('$')
-            SUBSHELL
+            SUBSHELL_COMMAND
               PsiElement(()('(')
               COMPOUND_LIST
                 PIPELINE_COMMAND

@@ -10,7 +10,4 @@ public interface BashShellCommand extends BashCommand {
   @Nullable
   BashFunctionDef getFunctionDef();
 
-  @Nullable
-  BashSubshell getSubshell();
-
 }

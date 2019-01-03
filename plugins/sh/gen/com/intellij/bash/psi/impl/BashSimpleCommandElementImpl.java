@@ -39,8 +39,8 @@ public class BashSimpleCommandElementImpl extends BashCompositeElementImpl imple
 
   @Override
   @Nullable
-  public BashConditionalCommand getConditionalCommand() {
-    return findChildByClass(BashConditionalCommand.class);
+  public BashCommand getCommand() {
+    return findChildByClass(BashCommand.class);
   }
 
   @Override
@@ -65,12 +65,6 @@ public class BashSimpleCommandElementImpl extends BashCompositeElementImpl imple
   @Nullable
   public BashString getString() {
     return findChildByClass(BashString.class);
-  }
-
-  @Override
-  @Nullable
-  public BashSubshell getSubshell() {
-    return findChildByClass(BashSubshell.class);
   }
 
   @Override

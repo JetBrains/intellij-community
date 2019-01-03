@@ -122,7 +122,7 @@ string ::= (string_begin (string_content|vars)* string_end) | STRING2
 
 private vars ::= variable | composed_var
 private composed_var ::= '$' (arithmetic_expansion|command_substitution|shell_parameter_expansion)
-private command_substitution ::= subshell
+private command_substitution ::= subshell_command
 shell_parameter_expansion ::= '{' literal [":" ['+'|'-'] literal] '}' // todo: simplify lexer for parameters
 bash_expansion ::=
 
@@ -148,7 +148,7 @@ shell_command ::=   for_command
                   | until_command
                   | select_command
                   | if_command
-                  | subshell
+                  | subshell_command
                   | block
                   | function_def
 
@@ -175,7 +175,7 @@ function_def ::=           word argument_list  newlines block
                 | function word argument_list? newlines block {pin(".*")="function|argument_list"}
 private argument_list ::= '(' ')'
 
-subshell ::=  '(' list ')' {pin=1}
+subshell_command ::=  '(' list ')' {pin=1}
 
 if_command ::= if compound_list then compound_list
                (   fi

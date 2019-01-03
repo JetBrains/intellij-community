@@ -39,8 +39,8 @@ public class BashStringImpl extends BashCompositeElementImpl implements BashStri
 
   @Override
   @NotNull
-  public List<BashSubshell> getSubshellList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashSubshell.class);
+  public List<BashSubshellCommand> getSubshellCommandList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashSubshellCommand.class);
   }
 
   @Override

@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashSubshellImpl extends BashCompositeElementImpl implements BashSubshell {
+public class BashSubshellCommandImpl extends BashCommandImpl implements BashSubshellCommand {
 
-  public BashSubshellImpl(ASTNode node) {
+  public BashSubshellCommandImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitSubshell(this);
+    visitor.visitSubshellCommand(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

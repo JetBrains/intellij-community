@@ -210,8 +210,8 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitSubshell(@NotNull BashSubshell o) {
-    visitCompositeElement(o);
+  public void visitSubshellCommand(@NotNull BashSubshellCommand o) {
+    visitCommand(o);
   }
 
   public void visitTimeOpt(@NotNull BashTimeOpt o) {

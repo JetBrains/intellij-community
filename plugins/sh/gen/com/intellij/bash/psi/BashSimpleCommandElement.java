@@ -14,7 +14,7 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
   BashAssignmentWordRule getAssignmentWordRule();
 
   @Nullable
-  BashConditionalCommand getConditionalCommand();
+  BashCommand getCommand();
 
   @Nullable
   BashHeredoc getHeredoc();
@@ -27,9 +27,6 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
 
   @Nullable
   BashString getString();
-
-  @Nullable
-  BashSubshell getSubshell();
 
   @Nullable
   PsiElement getDollar();

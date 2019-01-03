@@ -116,8 +116,8 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == STRING) {
       r = string(b, 0);
     }
-    else if (t == SUBSHELL) {
-      r = subshell(b, 0);
+    else if (t == SUBSHELL_COMMAND) {
+      r = subshell_command(b, 0);
     }
     else if (t == TIME_OPT) {
       r = time_opt(b, 0);
@@ -144,8 +144,8 @@ public class BashParser implements PsiParser, LightPsiParser {
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
     create_token_set_(BLOCK, CASE_COMMAND, COMMAND, CONDITIONAL_COMMAND,
       DO_BLOCK, FOR_COMMAND, IF_COMMAND, PIPELINE_COMMAND,
-      SELECT_COMMAND, SHELL_COMMAND, SIMPLE_COMMAND, UNTIL_COMMAND,
-      WHILE_COMMAND),
+      SELECT_COMMAND, SHELL_COMMAND, SIMPLE_COMMAND, SUBSHELL_COMMAND,
+      UNTIL_COMMAND, WHILE_COMMAND),
     create_token_set_(ADD_EXPRESSION, ASSIGNMENT_EXPRESSION, BITWISE_AND_EXPRESSION, BITWISE_EXCLUSIVE_OR_EXPRESSION,
       BITWISE_OR_EXPRESSION, BITWISE_SHIFT_EXPRESSION, COMMA_EXPRESSION, COMPARISON_EXPRESSION,
       CONDITIONAL_EXPRESSION, EQUALITY_EXPRESSION, EXPRESSION, EXP_EXPRESSION,
@@ -391,9 +391,9 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // subshell
+  // subshell_command
   static boolean command_substitution(PsiBuilder b, int l) {
-    return subshell(b, l + 1);
+    return subshell_command(b, l + 1);
   }
 
   /* ********************************************************** */
@@ -1738,7 +1738,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   //                   | until_command
   //                   | select_command
   //                   | if_command
-  //                   | subshell
+  //                   | subshell_command
   //                   | block
   //                   | function_def
   public static boolean shell_command(PsiBuilder b, int l) {
@@ -1751,7 +1751,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = until_command(b, l + 1);
     if (!r) r = select_command(b, l + 1);
     if (!r) r = if_command(b, l + 1);
-    if (!r) r = subshell(b, l + 1);
+    if (!r) r = subshell_command(b, l + 1);
     if (!r) r = block(b, l + 1);
     if (!r) r = function_def(b, l + 1);
     exit_section_(b, l, m, r, false, null);
@@ -1932,11 +1932,11 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // '(' list ')'
-  public static boolean subshell(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "subshell")) return false;
+  public static boolean subshell_command(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "subshell_command")) return false;
     if (!nextTokenIs(b, LEFT_PAREN)) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, SUBSHELL, null);
+    Marker m = enter_section_(b, l, _NONE_, SUBSHELL_COMMAND, null);
     r = consumeToken(b, LEFT_PAREN);
     p = r; // pin = 1
     r = r && report_error_(b, list(b, l + 1));
