@@ -223,8 +223,9 @@
     <stacktrace.fold substring="at java.util.stream.AbstractPipeline.wrapAndCopyInto("/>
     <stacktrace.fold substring="at java.util.stream.ReduceOps$"/>
 
-    <stacktrace.fold substring="at java.lang.reflect.Method.invoke("/>
-    <stacktrace.fold substring="at java.lang.reflect.Constructor.newInstance("/>
+    <stacktrace.fold substring="java.lang.reflect.Method.invoke("/>
+    <stacktrace.fold substring="java.lang.reflect.Constructor.newInstance("/>
+    <stacktrace.fold substring="at java.base/jdk.internal"/>
     <stacktrace.fold substring="at sun.reflect."/>
     <stacktrace.fold substring="at java.rmi."/>
     <stacktrace.fold substring="at sun.rmi."/>
