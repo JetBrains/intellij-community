@@ -34,7 +34,7 @@ public class NullityInferrerTest extends LightCodeInsightTestCase {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry);
-      PsiTestUtil.addProjectLibrary(module, "annotations",  IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("jetbrains-annotations"));
+      PsiTestUtil.addProjectLibrary(model, "annotations", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("jetbrains-annotations-java5"));
     }
   };
 
