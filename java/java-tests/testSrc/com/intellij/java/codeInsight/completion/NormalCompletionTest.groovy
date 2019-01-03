@@ -1892,4 +1892,6 @@ class Abc {
 
   void testNoSuggestionsAfterEnumConstant() { doAntiTest() }
 
+  void testPutCaretInsideParensInFixedPlusVarargOverloads() { doTest('\n') }
+
 }
