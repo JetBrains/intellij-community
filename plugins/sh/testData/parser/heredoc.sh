@@ -83,3 +83,9 @@ cat << 'Screw_you_Foo' | sudo -u foo tee -a /path/to/your/file
 This line will write to the file.
 ${THIS} will also write to the file, without the variable contents substituted.
 Screw_you_Foo
+
+if true ; then
+    cat <<- EOF > /tmp/yourfilehere
+    The leading tab is ignored.
+EOF
+fi

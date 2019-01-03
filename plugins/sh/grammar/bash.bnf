@@ -150,7 +150,7 @@ simple_command_element ::=  assignment_word_rule
                           | arithmetic_expansion
 heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? simple_command] newlines
             (HEREDOC_CONTENT | vars)*
-            (HEREDOC_MARKER_END | <<eof>>)
+            (HEREDOC_MARKER_END  | HEREDOC_MARKER_IGNORING_TABS_END | <<eof>>)
 arithmetic_expansion ::= '((' expression '))' {pin=1}
 assignment_word_rule ::= (assignment_word | word) '=' [literal | composed_var]
 

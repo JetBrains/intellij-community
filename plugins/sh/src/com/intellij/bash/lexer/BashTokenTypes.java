@@ -161,10 +161,7 @@ public interface BashTokenTypes extends BashTypes {
 //  IElementType STRING_CONTENT = new BashTokenType("string content");
 
   TokenSet stringLiterals = TokenSet.create(WORD, STRING2, INT, COLON);
-
-  IElementType HEREDOC_MARKER_IGNORING_TABS_END = new BashTokenType("heredoc end marker (ignoring tabs)");
   IElementType HEREDOC_LINE = new BashTokenType("heredoc line (temporary)");
-//  IElementType HEREDOC_CONTENT = new BashTokenType("here doc content");
 
   // test Operators
   IElementType COND_OP = new BashTokenType("cond_op");//all the test operators, e.g. -z, != ...
