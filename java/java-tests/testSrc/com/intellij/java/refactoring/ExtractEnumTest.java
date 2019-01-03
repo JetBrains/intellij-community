@@ -16,30 +16,27 @@
 
 package com.intellij.java.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.extractclass.ExtractClassProcessor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import junit.framework.Assert;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TreeSet;
 
-public class ExtractEnumTest extends MultiFileTestCase {
-
-  @NotNull
+public class ExtractEnumTest extends LightMultiFileTestCase {
   @Override
-  protected String getTestRoot() {
-    return "/refactoring/extractEnum/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/extractEnum/";
   }
-
+  
   public void testOneConstant() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true));
   }
@@ -151,8 +148,8 @@ public class ExtractEnumTest extends MultiFileTestCase {
   private void doTest(final String conflicts,
                       final boolean generateAccessors,
                       final RefactoringTestUtil.MemberDescriptor... memberDescriptors) {
-    doTest((rootDir, rootAfter) -> {
-      final PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
+    doTest(() -> {
+      final PsiClass aClass = myFixture.findClass("Test");
       assertNotNull("Class Test not found", aClass);
 
       final ArrayList<PsiField> fields = new ArrayList<>();

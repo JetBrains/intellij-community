@@ -5,6 +5,6 @@ class Test<G, R> {
   }
 
   void bar(R r){
-    foo(new Param<R>(r));
+    foo(new Param<>(r));
   }
 }

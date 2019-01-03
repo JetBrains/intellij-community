@@ -16,36 +16,22 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
 import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
-
-public class TypeCookTest extends MultiFileTestCase {
+public class TypeCookTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
-
-  @NotNull
-  @Override
-  public String getTestRoot() {
-    return "/refactoring/typeCook/";
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/typeCook/";
   }
 
   public void testT01() {
@@ -678,15 +664,13 @@ public class TypeCookTest extends MultiFileTestCase {
   }
 
   public void start(final boolean cookObjects) {
-    doTest((rootDir, rootAfter) -> this.performAction("Test", rootDir.getName(), cookObjects));
+    doTest(() -> this.performAction(cookObjects));
   }
 
-  private void performAction(String className, String rootDir, final boolean cookObjects) throws Exception {
-    PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(myProject));
-
-    assertNotNull("Class " + className + " not found", aClass);
-
-    SystemBuilder b = new SystemBuilder(myPsiManager.getProject(),
+  private void performAction(final boolean cookObjects) throws Exception {
+    PsiClass aClass = myFixture.findClass("Test");
+    
+    SystemBuilder b = new SystemBuilder(getProject(),
                                         new Settings() {
                                           @Override
                                           public boolean dropObsoleteCasts() {
@@ -747,36 +731,14 @@ public class TypeCookTest extends MultiFileTestCase {
     }
 
     String itemRepr = system != null ? system.dumpString() : commonSystem.dumpString();// d.resultString();
-    doStuff(rootDir, itemRepr, className + ".items");
+    myFixture.getTempDirFixture().createFile("Test.items", itemRepr);
     itemRepr = system != null ? system.dumpResult(binding) : commonSystem.dumpString(); //d.resultString();
-
-    doStuff(rootDir, itemRepr, className + ".1.items");
+    myFixture.getTempDirFixture().createFile("Test.1.items", itemRepr);
   }
 
-  private void doStuff(String rootDir, String itemRepr, String itemName) throws FileNotFoundException {
-    String patternName = getTestDataPath() + getTestRoot() + getTestName(true) + "/after/" + itemName;
-
-    File patternFile = new File(patternName);
-
-    if (!patternFile.exists()) {
-      try (PrintWriter writer = new PrintWriter(new FileOutputStream(patternFile))) {
-        writer.print(itemRepr);
-      }
-
-      System.err.println("Pattern not found, file " + patternName + " created.");
-
-      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(patternFile);
-    }
-
-    File graFile = new File(FileUtil.getTempDirectory() + File.separator + rootDir + File.separator + itemName);
-
-    try (PrintWriter writer = new PrintWriter(new FileOutputStream(graFile))) {
-      writer.print(itemRepr);
-    }
-
-
-
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(graFile);
-    FileDocumentManager.getInstance().saveAllDocuments();
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_6;
   }
 }

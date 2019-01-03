@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 /**
- * @author dsl
+ * Heavy weight: creates project for each test method. Consider using {@link LightMultiFileTestCase} instead
  */
 public abstract class MultiFileTestCase extends CodeInsightTestCase {
   protected boolean myDoCompare = true;

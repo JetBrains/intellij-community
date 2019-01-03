@@ -6,30 +6,29 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
-  @NotNull
   @Override
-  public String getTestRoot() {
-    return "/refactoring/migrateTypeSignature/";
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/refactoring/migrateTypeSignature/";
   }
 
   public void testExprAccess2Lvalue() {
     doTestFieldType("myForAccess", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("ClassParent", null));
+                    getElementFactory().createTypeFromText("ClassParent", null));
   }
 
   public void testExprAccess2Rvalue() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("ClassGrandChild", null));
+                    getElementFactory().createTypeFromText("ClassGrandChild", null));
   }
 
   public void testExprAccessParent2Lvalue() {
     doTestFieldType("myForSuperAccess", "Ession",
-                    myJavaFacade.getElementFactory().createTypeFromText("ClassParent", null));
+                    getElementFactory().createTypeFromText("ClassParent", null));
   }
 
   public void testExprAccessParent2Rvalue() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("ClassGrandChild", null));
+                    getElementFactory().createTypeFromText("ClassGrandChild", null));
   }
 
   public void testExprArrayAccessNegative() {
@@ -46,7 +45,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprCalcBooleanNumeric() {
     doTestFirstParamType("meth", "Expr",
-                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
+                         getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   public void testExprCalcBooleanReference() {
@@ -68,12 +67,12 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprCalcNumeric2String() {
     doTestFirstParamType("meth", "Expr",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                         getElementFactory().createTypeFromText("java.lang.String", null));
   }
 
   public void testExprCast2LvalueNeg() {
     doTestFirstParamType("meth", "Expr",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                         getElementFactory().createTypeFromText("java.lang.String", null));
   }
 
   public void testExprCast2LvaluePos() {
@@ -82,12 +81,12 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprConcatNumeric2Reference() {
     doTestFirstParamType("meth", "Expr",
-                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
+                         getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   public void testExprConcatNumeric2String() {
     doTestFirstParamType("meth", "Expr",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                         getElementFactory().createTypeFromText("java.lang.String", null));
   }
 
   public void testExprConcatString2Numeric() {
@@ -97,17 +96,17 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprConcatString2Reference() {
     doTestFirstParamType("meth", "Expr",
-                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
+                         getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   public void testExprInstanceofNeg() {
     doTestFirstParamType("meth", "Expr",
-                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null));
+                         getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null));
   }
 
   public void testExprInstanceofPos() {
     doTestFirstParamType("meth", "Expr",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.AbstractMap", null));
+                         getElementFactory().createTypeFromText("java.util.AbstractMap", null));
   }
 
   public void testExprLiteralBoolean() {
@@ -127,37 +126,37 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprLiteralClassExtends() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class<? extends java.util.Collection[]>", null));
+                    getElementFactory().createTypeFromText("java.lang.Class<? extends java.util.Collection[]>", null));
   }
 
   public void testExprLiteralClassPrimitive() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class<Integer>", null));
+                    getElementFactory().createTypeFromText("java.lang.Class<Integer>", null));
   }
 
   public void testExprLiteralClassPrimitiveArray() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class<int[]>", null));
+                    getElementFactory().createTypeFromText("java.lang.Class<int[]>", null));
   }
 
   public void testExprLiteralClassRaw() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class", null));
+                    getElementFactory().createTypeFromText("java.lang.Class", null));
   }
 
   public void testExprLiteralClassReference() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class<java.util.Set>", null));
+                    getElementFactory().createTypeFromText("java.lang.Class<java.util.Set>", null));
   }
 
   public void testExprLiteralClassReferenceArray() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class<java.util.Set[]>", null));
+                    getElementFactory().createTypeFromText("java.lang.Class<java.util.Set[]>", null));
   }
 
   public void testExprLiteralClassSuper() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class<? super java.util.AbstractSet[]>", null));
+                    getElementFactory().createTypeFromText("java.lang.Class<? super java.util.AbstractSet[]>", null));
   }
 
   public void testExprLiteralDouble() {
@@ -187,22 +186,22 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprLiteralString() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                    getElementFactory().createTypeFromText("java.lang.String", null));
   }
 
   public void testExprNewArrayArray2Lvalue() {
     doTestFirstParamType("meth", "Expr",
-                         myJavaFacade.getElementFactory().createTypeFromText("FaceParent", null).createArrayType());
+                         getElementFactory().createTypeFromText("FaceParent", null).createArrayType());
   }
 
   public void testExprNewArrayArray2Rvalue() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("ClassParent", null).createArrayType().createArrayType().createArrayType());
+                    getElementFactory().createTypeFromText("ClassParent", null).createArrayType().createArrayType().createArrayType());
   }
 
   public void testExprNewArrayGen2Rvalue() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<java.lang.Integer>", null).createArrayType());
+                    getElementFactory().createTypeFromText("java.util.Set<java.lang.Integer>", null).createArrayType());
   }
 
   public void testExprNewArrayPrimitive2Lvalue() {
@@ -216,47 +215,47 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprNewArrayReftype2Lvalue() {
     doTestFirstParamType("meth", "Expr",
-                         myJavaFacade.getElementFactory().createTypeFromText("FaceParent", null));
+                         getElementFactory().createTypeFromText("FaceParent", null));
   }
 
   public void testExprNewArrayReftype2Rvalue() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("ClassParent", null).createArrayType().createArrayType());
+                    getElementFactory().createTypeFromText("ClassParent", null).createArrayType().createArrayType());
   }
 
   public void testExprNewGen() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<Subject>", null));
+                    getElementFactory().createTypeFromText("java.util.Set<Subject>", null));
   }
 
   public void testExprNewGenExtends() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? extends Subject>", null));
+                    getElementFactory().createTypeFromText("java.util.Set<? extends Subject>", null));
   }
 
   public void testExprNewGenSuper() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? super Subject>", null));
+                    getElementFactory().createTypeFromText("java.util.Set<? super Subject>", null));
   }
 
   public void testExprNewReference() {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("Expr.Subject", null));
+                    getElementFactory().createTypeFromText("Expr.Subject", null));
   }
 
   public void testExprReturn2Lvalue() {
     doTestFirstParamType("meth", "Expr",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                         getElementFactory().createTypeFromText("java.lang.String", null));
   }
 
   public void testExprReturn2Rvalue() {
     doTestMethodType("meth", "Expr",
-                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                     getElementFactory().createTypeFromText("java.lang.String", null));
   }
 
   public void testExprTernary() {
     doTestFirstParamType("meth", "Expr",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                         getElementFactory().createTypeFromText("java.lang.String", null));
   }
 
   public void testOverridingDown() {
@@ -271,7 +270,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
     JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
     settings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS;
     doTestFirstParamType("meth", "Spec",
-                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null));
+                         getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null));
   }
 
   public void testSpecNotUsed() {
@@ -280,37 +279,37 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeArrayReftype2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("Subject", null).createArrayType());
+                         getElementFactory().createTypeFromText("Subject", null).createArrayType());
   }
 
   public void testTypeArrayReftype2Rvalue() {
     doTestFieldType("myField", "Type",
-                    myJavaFacade.getElementFactory().createTypeFromText("Subject", null).createArrayType().createArrayType());
+                    getElementFactory().createTypeFromText("Subject", null).createArrayType().createArrayType());
   }
 
   public void testTypeArrayRoots2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("Holder", null).createArrayType());
+                         getElementFactory().createTypeFromText("Holder", null).createArrayType());
   }
 
   public void testTypeArrayVararg2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("Subject", null)));
+                         new PsiEllipsisType(getElementFactory().createTypeFromText("Subject", null)));
   }
 
   public void testTypeArrayVararg2RvalueNeg() {
     doTestFieldType("myField", "Type",
-                    myJavaFacade.getElementFactory().createTypeFromText("Descendant", null).createArrayType());
+                    getElementFactory().createTypeFromText("Descendant", null).createArrayType());
   }
 
   public void testTypeArrayVararg2RvaluePos() {
     doTestFieldType("myField", "Type",
-                    myJavaFacade.getElementFactory().createTypeFromText("Subject", null).createArrayType());
+                    getElementFactory().createTypeFromText("Subject", null).createArrayType());
   }
 
   public void testTypeAutoboxBoolean2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Boolean", null));
+                         getElementFactory().createTypeFromText("java.lang.Boolean", null));
   }
 
   public void testTypeAutoboxBoolean2Rvalue() {
@@ -320,7 +319,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxByte2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Byte", null));
+                         getElementFactory().createTypeFromText("java.lang.Byte", null));
   }
 
   public void testTypeAutoboxByte2Rvalue() {
@@ -330,7 +329,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxChar2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Character", null));
+                         getElementFactory().createTypeFromText("java.lang.Character", null));
   }
 
   public void testTypeAutoboxChar2Rvalue() {
@@ -340,7 +339,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxDouble2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Double", null));
+                         getElementFactory().createTypeFromText("java.lang.Double", null));
   }
 
   public void testTypeAutoboxDouble2Rvalue() {
@@ -350,7 +349,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxFloat2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Float", null));
+                         getElementFactory().createTypeFromText("java.lang.Float", null));
   }
 
   public void testTypeAutoboxFloat2Rvalue() {
@@ -360,7 +359,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxInt2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null));
+                         getElementFactory().createTypeFromText("java.lang.Integer", null));
   }
 
   public void testTypeAutoboxInt2Rvalue() {
@@ -370,7 +369,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxLong2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Long", null));
+                         getElementFactory().createTypeFromText("java.lang.Long", null));
   }
 
   public void testTypeAutoboxLong2Rvalue() {
@@ -380,7 +379,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxShort2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Short", null));
+                         getElementFactory().createTypeFromText("java.lang.Short", null));
   }
 
   public void testTypeAutoboxShort2Rvalue() {
@@ -390,32 +389,32 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeGenAncestor2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<Subject>", null));
+                         getElementFactory().createTypeFromText("java.util.Set<Subject>", null));
   }
 
   public void testTypeGenAncestorWildcard2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? extends Subject>", null));
+                         getElementFactory().createTypeFromText("java.util.Set<? extends Subject>", null));
   }
 
   public void testTypeGenDescendant2Rvalue() {
     doTestFieldType("myField", "Type",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<Subject>", null));
+                    getElementFactory().createTypeFromText("java.util.Set<Subject>", null));
   }
 
   public void testTypeGenDescendantWildcard2Rvalue() {
     doTestFieldType("myField", "Type",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? super Subject>", null));
+                    getElementFactory().createTypeFromText("java.util.Set<? super Subject>", null));
   }
 
   public void testTypeGenRaw2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null));
+                         getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null));
   }
 
   public void testTypeGenRaw2Rvalue() {
     doTestFieldType("myField", "Type",
-                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null));
+                    getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null));
   }
 
   public void testTypePrimsubBoolean2Lvalue() {
@@ -476,42 +475,42 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeRefClassChild2Rvalue() {
     doTestFieldType("myField", "Type",
-                    myJavaFacade.getElementFactory().createTypeFromText("ClassChild", null));
+                    getElementFactory().createTypeFromText("ClassChild", null));
   }
 
   public void testTypeRefClassParent2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("ClassParent", null));
+                         getElementFactory().createTypeFromText("ClassParent", null));
   }
 
   public void testTypeRefClassParent2Rvalue() {
     doTestFieldType("myField", "Type",
-                    myJavaFacade.getElementFactory().createTypeFromText("ClassParent", null));
+                    getElementFactory().createTypeFromText("ClassParent", null));
   }
 
   public void testTypeRefFaceChild2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("FaceChild", null));
+                         getElementFactory().createTypeFromText("FaceChild", null));
   }
 
   public void testTypeRefFaceChild2Rvalue() {
     doTestFieldType("myField", "Type",
-                    myJavaFacade.getElementFactory().createTypeFromText("FaceChild", null));
+                    getElementFactory().createTypeFromText("FaceChild", null));
   }
 
   public void testTypeRefFaceParent2Lvalue() {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("FaceParent", null));
+                         getElementFactory().createTypeFromText("FaceParent", null));
   }
 
   public void testMigrateAnonymousClassTypeParameters() {
     doTestAnonymousClassMethod("invoke",
-                               myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                               getElementFactory().createTypeFromText("java.lang.String", null));
   }
 
   public void testMigrateAnonymousClassTypeParameters2() {
     doTestAnonymousClassMethod("invoke",
-                               myJavaFacade.getElementFactory().createTypeFromText("java.lang.Long", null));
+                               getElementFactory().createTypeFromText("java.lang.Long", null));
   }
 
   protected void doTestAnonymousClassMethod(@NotNull final String methodName,

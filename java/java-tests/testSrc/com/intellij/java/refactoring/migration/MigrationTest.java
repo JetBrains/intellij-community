@@ -16,17 +16,16 @@
 package com.intellij.java.refactoring.migration;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.migration.MigrationMap;
 import com.intellij.refactoring.migration.MigrationMapEntry;
 import com.intellij.refactoring.migration.MigrationProcessor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ThrowableRunnable;
 
 /**
  * @author dsl
  */
-public class MigrationTest extends MultiFileTestCase {
+public class MigrationTest extends LightMultiFileTestCase {
   public void testUnexistingClassInUnexistingPackage() {
     doTest(createAction(new MigrationMap(new MigrationMapEntry[]{
       new MigrationMapEntry("qqq.aaa.Yahoo", "java.lang.String", MigrationMapEntry.CLASS, false)
@@ -64,21 +63,12 @@ public class MigrationTest extends MultiFileTestCase {
     })));
   }
 
-  private MultiFileTestCase.PerformAction createAction(final MigrationMap migrationMap) {
-    return (rootDir, rootAfter) -> {
-      new MigrationProcessor(myProject, migrationMap).run();
-      FileDocumentManager.getInstance().saveAllDocuments();
-    };
-  }
-
-  @NotNull
-  @Override
-  protected String getTestRoot() {
-    return "/refactoring/migration/";
+  private ThrowableRunnable<Exception> createAction(final MigrationMap migrationMap) {
+    return () -> new MigrationProcessor(getProject(), migrationMap).run();
   }
 
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/migration/";
   }
 }

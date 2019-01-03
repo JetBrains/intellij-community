@@ -18,12 +18,11 @@ package com.intellij.java.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationProcessor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,16 +30,10 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class InheritanceToDelegationTest extends MultiFileTestCase {
+public class InheritanceToDelegationTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
-
-  @NotNull
-  @Override
-  protected String getTestRoot() {
-    return "/refactoring/inheritanceToDelegation/";
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/inheritanceToDelegation/";
   }
 
   public void testSimpleInsertion() {
@@ -135,14 +128,14 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
      doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
   }
 
-  private PerformAction createPerformAction(
+  private ThrowableRunnable<Exception> createPerformAction(
     final String className, final String fieldName, final String innerClassName,
     final String baseClassName, final int[] methodIndices, final String[] delegatedInterfaceNames,
     final boolean delegateOtherMembers, final boolean generateGetter) {
-    return (rootDir, rootAfter) -> {
-      PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(getProject()));
+    return () -> {
+      PsiClass aClass = myFixture.findClass(className);
       assertNotNull("Class " + className + " not found", aClass);
-      PsiClass baseClass = myJavaFacade.findClass(baseClassName, GlobalSearchScope.allScope(getProject()));
+      PsiClass baseClass = myFixture.findClass(baseClassName);
       assertNotNull("Base class " + baseClassName + " not found", baseClass);
       final PsiMethod[] methods = baseClass.getMethods();
       final PsiMethod[] delegatedMethods = new PsiMethod[methodIndices.length];
@@ -152,25 +145,25 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
       final PsiClass[] delegatedInterfaces = new PsiClass[delegatedInterfaceNames.length];
       for (int i = 0; i < delegatedInterfaceNames.length; i++) {
         String delegatedInterfaceName = delegatedInterfaceNames[i];
-        PsiClass anInterface = myJavaFacade.findClass(delegatedInterfaceName, GlobalSearchScope.allScope(getProject()));
+        PsiClass anInterface = myFixture.findClass(delegatedInterfaceName);
         assertNotNull(anInterface);
         delegatedInterfaces[i] = anInterface;
       }
       new InheritanceToDelegationProcessor(
-        myProject,
+        getProject(),
         aClass, baseClass, fieldName, innerClassName, delegatedInterfaces, delegatedMethods, delegateOtherMembers,
         generateGetter).run();
     };
   }
 
-  private PerformAction createPerformAction2(
+  private ThrowableRunnable<Exception> createPerformAction2(
     final String className, final String fieldName, final String innerClassName,
     final String baseClassName, final String[] methodNames, final String[] delegatedInterfaceNames,
     final boolean delegateOtherMembers, final boolean generateGetter) {
-    return (rootDir, rootAfter) -> {
-      PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(getProject()));
+    return () -> {
+      PsiClass aClass = myFixture.findClass(className);
       assertNotNull("Class " + className + " not found", aClass);
-      PsiClass baseClass = myJavaFacade.findClass(baseClassName, GlobalSearchScope.allScope(getProject()));
+      PsiClass baseClass = myFixture.findClass(baseClassName);
       assertNotNull("Base class " + baseClassName + " not found", baseClass);
       final PsiMethod[] delegatedMethods;
       final List<PsiMethod> methodsList = new ArrayList<>();
@@ -183,12 +176,12 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
       final PsiClass[] delegatedInterfaces = new PsiClass[delegatedInterfaceNames.length];
       for (int i = 0; i < delegatedInterfaceNames.length; i++) {
         String delegatedInterfaceName = delegatedInterfaceNames[i];
-        PsiClass anInterface = myJavaFacade.findClass(delegatedInterfaceName, GlobalSearchScope.allScope(getProject()));
+        PsiClass anInterface = myFixture.findClass(delegatedInterfaceName);
         assertNotNull(anInterface);
         delegatedInterfaces[i] = anInterface;
       }
       new InheritanceToDelegationProcessor(
-        myProject,
+        getProject(),
         aClass, baseClass, fieldName, innerClassName, delegatedInterfaces, delegatedMethods, delegateOtherMembers,
         generateGetter).run();
       //FileDocumentManager.getInstance().saveAllDocuments();

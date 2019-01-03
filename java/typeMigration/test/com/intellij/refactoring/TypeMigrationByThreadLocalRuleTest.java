@@ -1,38 +1,28 @@
 package com.intellij.refactoring;
 
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.IdeaTestUtil;
 
-public class TypeMigrationByThreadLocalRuleTest extends TypeMigrationTestBase{
-  @NotNull
+public class TypeMigrationByThreadLocalRuleTest extends TypeMigrationTestBase {
   @Override
-  protected String getTestRoot() {
-    return "/refactoring/typeMigrationByThreadLocal/";
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/refactoring/typeMigrationByThreadLocal/";
   }
 
 
   public void testDirectInt() {
-    doTestFieldType("i", myJavaFacade.getElementFactory().createTypeFromText("java.lang.ThreadLocal<java.lang.Integer>", null));
+    doTestFieldType("i", getElementFactory().createTypeFromText("java.lang.ThreadLocal<java.lang.Integer>", null));
   }
   
   public void testDirectByte() {
-    doTestFieldType("i", myJavaFacade.getElementFactory().createTypeFromText("java.lang.ThreadLocal<java.lang.Byte>", null));
+    doTestFieldType("i", getElementFactory().createTypeFromText("java.lang.ThreadLocal<java.lang.Byte>", null));
   }
 
   public void testDirectString() {
-    doTestFieldType("myS", myJavaFacade.getElementFactory().createTypeFromText("java.lang.ThreadLocal<java.lang.String>", null));
+    doTestFieldType("myS", getElementFactory().createTypeFromText("java.lang.ThreadLocal<java.lang.String>", null));
   }
 
   public void testLanguageLevel() {
-    final LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(getProject());
-    final LanguageLevel languageLevel = extension.getLanguageLevel();
-    try {
-      extension.setLanguageLevel(LanguageLevel.JDK_1_3);
-      doTestFieldType("i", myJavaFacade.getElementFactory().createTypeFromText("java.lang.ThreadLocal", null));
-    }
-    finally {
-      extension.setLanguageLevel(languageLevel);
-    }
+    IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_1_3, () -> doTestFieldType("i", getElementFactory().createTypeFromText("java.lang.ThreadLocal", null)));
   }
 }
