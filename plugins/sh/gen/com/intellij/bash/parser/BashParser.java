@@ -44,6 +44,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == COMMAND) {
       r = command(b, 0);
     }
+    else if (t == COMMAND_SUBSTITUTION_COMMAND) {
+      r = command_substitution_command(b, 0);
+    }
     else if (t == COMMANDS_LIST) {
       r = commands_list(b, 0);
     }
@@ -148,10 +151,10 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
-    create_token_set_(BLOCK, CASE_COMMAND, COMMAND, CONDITIONAL_COMMAND,
-      DO_BLOCK, FOR_COMMAND, IF_COMMAND, PIPELINE_COMMAND,
-      SELECT_COMMAND, SHELL_COMMAND, SIMPLE_COMMAND, SUBSHELL_COMMAND,
-      UNTIL_COMMAND, WHILE_COMMAND),
+    create_token_set_(BLOCK, CASE_COMMAND, COMMAND, COMMAND_SUBSTITUTION_COMMAND,
+      CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND, IF_COMMAND,
+      PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND, SIMPLE_COMMAND,
+      SUBSHELL_COMMAND, UNTIL_COMMAND, WHILE_COMMAND),
     create_token_set_(ADD_EXPRESSION, ASSIGNMENT_EXPRESSION, BITWISE_AND_EXPRESSION, BITWISE_EXCLUSIVE_OR_EXPRESSION,
       BITWISE_OR_EXPRESSION, BITWISE_SHIFT_EXPRESSION, COMMA_EXPRESSION, COMPARISON_EXPRESSION,
       CONDITIONAL_EXPRESSION, EQUALITY_EXPRESSION, EXPRESSION, EXP_EXPRESSION,
@@ -400,6 +403,21 @@ public class BashParser implements PsiParser, LightPsiParser {
   // subshell_command
   static boolean command_substitution(PsiBuilder b, int l) {
     return subshell_command(b, l + 1);
+  }
+
+  /* ********************************************************** */
+  // '`' list '`'
+  public static boolean command_substitution_command(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "command_substitution_command")) return false;
+    if (!nextTokenIs(b, BACKQUOTE)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, COMMAND_SUBSTITUTION_COMMAND, null);
+    r = consumeToken(b, BACKQUOTE);
+    p = r; // pin = 1
+    r = r && report_error_(b, list(b, l + 1));
+    r = p && consumeToken(b, BACKQUOTE) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -1816,7 +1834,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // assignment_word_rule | literal | redirection | composed_var | heredoc | conditional_command
+  // assignment_word_rule | literal | redirection | composed_var | heredoc | conditional_command | command_substitution_command
   public static boolean simple_command_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command_element")) return false;
     boolean r;
@@ -1827,6 +1845,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = composed_var(b, l + 1);
     if (!r) r = heredoc(b, l + 1);
     if (!r) r = conditional_command(b, l + 1);
+    if (!r) r = command_substitution_command(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

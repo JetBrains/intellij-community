@@ -16,3 +16,7 @@ echo pre{one,two,three}post
 echo pre{one, wo, three}post
 echo /usr/local/src/bash/{old,new,dist,bugs}
 echo root /usr/{ucb/{ex,edit},lib/{ex?.?*,how_ex}}
+
+echo `cat $0`
+echo `cat \`cat $0\``
+echo `cat `cat $0``

@@ -24,6 +24,7 @@ public interface BashTypes {
   IElementType CASE_COMMAND = new BashCompositeElementType("CASE_COMMAND");
   IElementType COMMAND = new BashCompositeElementType("COMMAND");
   IElementType COMMANDS_LIST = new BashCompositeElementType("COMMANDS_LIST");
+  IElementType COMMAND_SUBSTITUTION_COMMAND = new BashCompositeElementType("COMMAND_SUBSTITUTION_COMMAND");
   IElementType COMMA_EXPRESSION = new BashCompositeElementType("COMMA_EXPRESSION");
   IElementType COMPARISON_EXPRESSION = new BashCompositeElementType("COMPARISON_EXPRESSION");
   IElementType COMPOUND_LIST = new BashCompositeElementType("COMPOUND_LIST");
@@ -82,6 +83,7 @@ public interface BashTypes {
   IElementType ARITH_PLUS_PLUS = new BashTokenType("++");
   IElementType ASSIGNMENT_WORD = new BashTokenType("assignment_word");
   IElementType AT = new BashTokenType("@");
+  IElementType BACKQUOTE = new BashTokenType("`");
   IElementType BACKSLASH = new BashTokenType("\\\\");
   IElementType BANG = new BashTokenType("!");
   IElementType CASE = new BashTokenType("case");
@@ -190,6 +192,9 @@ public interface BashTypes {
       }
       else if (type == COMMANDS_LIST) {
         return new BashCommandsListImpl(node);
+      }
+      else if (type == COMMAND_SUBSTITUTION_COMMAND) {
+        return new BashCommandSubstitutionCommandImpl(node);
       }
       else if (type == COMMA_EXPRESSION) {
         return new BashCommaExpressionImpl(node);

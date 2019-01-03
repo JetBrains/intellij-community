@@ -26,6 +26,7 @@
     LEFT_SQUARE = '['
     RIGHT_SQUARE = ']'
     BANG = '!'
+    BACKQUOTE = '`'
 
     LEFT_DOUBLE_BRACKET = "[["
     RIGHT_DOUBLE_BRACKET = "]]"
@@ -122,9 +123,11 @@ string ::= (string_begin (string_content|vars)* string_end) | STRING2
 
 private vars ::= variable | composed_var
 private composed_var ::= '$' (arithmetic_expansion|command_substitution|shell_parameter_expansion)
-private command_substitution ::= subshell_command
+private command_substitution ::= subshell_command // todo: rethink naming with command_substitution_command
 shell_parameter_expansion ::= '{' literal [":" ['+'|'-'] literal] '}' // todo: simplify lexer for parameters
 bash_expansion ::=
+
+command_substitution_command ::= '`' list '`'
 
 conditional_command ::= cond_left (<<condOp>> | lit | '$' shell_parameter_expansion)* cond_right {pin(".*")=1}
 private cond_right ::= EXPR_CONDITIONAL_RIGHT | ']]'
@@ -134,7 +137,7 @@ private lit ::= literal | '(' lit ')' {pin(".*")=1}
 process_substitution ::= ('<' | '>') '(' compound_list ')' {pin=1}
 
 private literal ::= w | string | num
-simple_command_element ::= assignment_word_rule | literal | redirection | composed_var | heredoc | conditional_command
+simple_command_element ::= assignment_word_rule | literal | redirection | composed_var | heredoc | conditional_command | command_substitution_command
 heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START newlines HEREDOC_CONTENT HEREDOC_MARKER_END
 arithmetic_expansion ::= '((' expression '))' {pin=1}
 assignment_word_rule ::= (assignment_word | word) '=' [literal | composed_var]

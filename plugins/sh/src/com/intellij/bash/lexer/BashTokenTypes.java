@@ -162,8 +162,6 @@ public interface BashTokenTypes extends BashTypes {
   //mapped element type
 //  IElementType STRING_CONTENT = new BashTokenType("string content");
 
-  IElementType BACKQUOTE = new BashTokenType("backquote `");
-
   TokenSet stringLiterals = TokenSet.create(WORD, STRING2, INT, COLON);
 
   IElementType HEREDOC_MARKER_IGNORING_TABS_END = new BashTokenType("heredoc end marker (ignoring tabs)");
