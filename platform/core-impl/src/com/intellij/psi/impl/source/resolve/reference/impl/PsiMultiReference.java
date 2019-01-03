@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,14 +87,14 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     if (range != null) return range;
 
     final PsiReference chosenRef = chooseReference();
-    return getReferenceRange(chosenRef);
+    return getReferenceRange(chosenRef, myElement);
   }
 
   @Nullable
   private TextRange getRangeInElementIfSameForAll() {
     TextRange range = null;
     for (PsiReference reference : getReferences()) {
-      TextRange refRange = getReferenceRange(reference);
+      TextRange refRange = getReferenceRange(reference, myElement);
       if (range == null) {
         range = refRange;
       }
@@ -106,10 +105,11 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return range;
   }
 
-  private TextRange getReferenceRange(PsiReference reference) {
+  @NotNull
+  public static TextRange getReferenceRange(@NotNull PsiReference reference, @NotNull PsiElement inElement) {
     TextRange rangeInElement = reference.getRangeInElement();
     PsiElement element = reference.getElement();
-    while (element != myElement) {
+    while (element != inElement) {
       rangeInElement = rangeInElement.shiftRight(element.getStartOffsetInParent());
       element = element.getParent();
       if (element instanceof PsiFile) break;
