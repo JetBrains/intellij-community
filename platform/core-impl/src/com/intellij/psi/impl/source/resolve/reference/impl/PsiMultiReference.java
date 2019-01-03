@@ -108,13 +108,26 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   @NotNull
   public static TextRange getReferenceRange(@NotNull PsiReference reference, @NotNull PsiElement inElement) {
     TextRange rangeInElement = reference.getRangeInElement();
-    PsiElement element = reference.getElement();
+    PsiElement refElement = reference.getElement();
+    PsiElement element = refElement;
     while (element != inElement) {
-      rangeInElement = rangeInElement.shiftRight(element.getStartOffsetInParent());
+      int start = element.getStartOffsetInParent();
+      if (start > rangeInElement.getStartOffset()) {
+        throw new IllegalArgumentException("Inconsistent reference range in #" + inElement.getLanguage() + ":" +
+                                           "ref of " + reference.getClass() +
+                                           " on " + classAndRange(refElement) +
+                                           " with range " + reference.getRangeInElement() + ", " +
+                                           "requested range of " + classAndRange(inElement));
+      }
+      rangeInElement = rangeInElement.shiftRight(start);
       element = element.getParent();
       if (element instanceof PsiFile) break;
     }
     return rangeInElement;
+  }
+
+  private static String classAndRange(PsiElement psi) {
+    return psi.getClass() + "(" + psi.getTextRange() + ")";
   }
 
   @Override
