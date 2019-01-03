@@ -87,6 +87,9 @@ internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(di
   internal abstract class JobExpiration {
     protected abstract val job: Job
 
+    open val isExpired: Boolean
+      get() = job.isCancelled
+
     /** The caller must ensure the returned handle is properly disposed. */
     fun invokeOnExpiration(handler: CompletionHandler): DisposableHandle =
       job.invokeOnCompletion(handler)
@@ -129,7 +132,8 @@ internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(di
         disposable.cancelJobOnDisposal(job, weaklyReferencedJob = true)  // the job doesn't leak through Disposer
       }
     }
-    val isExpired: Boolean
+
+    override val isExpired: Boolean
       get() = job.isCancelled && disposable.isDisposed
 
     override fun equals(other: Any?): Boolean = other is ExpirableHandle && disposable === other.disposable
@@ -154,17 +158,17 @@ internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(di
   /** @see ExpirableContextConstraint */
   internal class ExpirableConstraintDispatcher(delegate: CoroutineDispatcher,
                                                constraint: ExpirableContextConstraint,
-                                               private val expirableHandle: ExpirableHandle) : ChainedConstraintDispatcher(delegate,
-                                                                                                                           constraint) {
+                                               private val jobExpiration: JobExpiration) : ChainedConstraintDispatcher(delegate,
+                                                                                                                       constraint) {
     override val constraint get() = super.constraint as ExpirableContextConstraint
 
     override fun isScheduleNeeded(context: CoroutineContext): Boolean =
-      !(expirableHandle.isExpired || constraint.isCorrectContext)
+      !(jobExpiration.isExpired || constraint.isCorrectContext)
 
     override fun doSchedule(context: CoroutineContext, retryDispatchRunnable: Runnable) {
       val runOnce = RunOnce()
 
-      val jobDisposableHandle = expirableHandle.invokeOnExpiration {
+      val jobDisposableHandle = jobExpiration.invokeOnExpiration {
         runOnce {
           if (!context[Job]!!.isCancelled) { // TODO[eldar] relying on the order of invocations of CompletionHandlers
             LOG.warn("Must have already been cancelled through the expirableHandle")
