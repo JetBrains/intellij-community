@@ -144,8 +144,10 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       println("\nObsolete classes:")
       println(obsoleteClasses.joinToString("\n"))
       println("\nObsolete class it is class for icons that cannot be found anymore. Possible reasons:")
-      println("1. Icons not located under resources root. Solution - move icons to resources root or fix existing root type (must be \"resources\")")
-      println("2. Icons were removed but not class. Solution - remove class.")
+      println("1. Icons not located under resources root.\n   Solution - move icons to resources root or fix existing root type (must be \"resources\")")
+      println("2. Icons were removed but not class.\n   Solution - remove class.")
+      println("3. Icons located under resources root named \"compatibilityResources\". \"compatibilityResources\" for icons that not used externally as icon class fields, " +
+              "but maybe referenced directly by path.\n   Solution - remove class or move icons to another resources root")
     }
   }
 
