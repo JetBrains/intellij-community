@@ -31,4 +31,16 @@ public class BashArithmeticExpansionImpl extends BashCompositeElementImpl implem
     return findChildByClass(BashExpression.class);
   }
 
+  @Override
+  @NotNull
+  public PsiElement getLeftDoubleParen() {
+    return findNotNullChildByType(LEFT_DOUBLE_PAREN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getRightDoubleParen() {
+    return findChildByType(RIGHT_DOUBLE_PAREN);
+  }
+
 }

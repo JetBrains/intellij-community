@@ -281,7 +281,7 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
     }
 
     <S_SUBSHELL, S_PARAM_EXPANSION> {
-        "(("                { if (yystate() == S_DOLLAR_PREFIXED) backToPreviousState(); goToState(S_ARITH); return EXPR_ARITH; }
+        "(("                { if (yystate() == S_DOLLAR_PREFIXED) backToPreviousState(); goToState(S_ARITH); return LEFT_DOUBLE_PAREN; }
         "("                 { if (yystate() == S_DOLLAR_PREFIXED) backToPreviousState(); stringParsingState().enterSubshell(); goToState(S_SUBSHELL); return LEFT_PAREN; }
     }
 
@@ -304,16 +304,16 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
 
 <S_ARITH, S_ARITH_SQUARE_MODE, S_ARITH_ARRAY_MODE> {
   "))"                          { if (openParenthesisCount() > 0) {
-                                    decOpenParenthesisCount();
-                                    yypushback(1);
+                                        decOpenParenthesisCount();
+                                        yypushback(1);
 
-                                    return RIGHT_PAREN;
-                                  } else {
-                                    backToPreviousState();
+                                        return RIGHT_PAREN;
+                                      } else {
+                                        backToPreviousState();
 
-                                    return _EXPR_ARITH;
-                                  }
-                                }
+                                        return RIGHT_DOUBLE_PAREN;
+                                      }
+                                    }
 
   "("                           { incOpenParenthesisCount(); return LEFT_PAREN; }
   ")"                           { decOpenParenthesisCount(); return RIGHT_PAREN; }

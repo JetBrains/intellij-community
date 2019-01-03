@@ -1875,7 +1875,7 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             // fall through
           case 286: break;
           case 103: 
-            { if (yystate() == S_DOLLAR_PREFIXED) backToPreviousState(); goToState(S_ARITH); return EXPR_ARITH;
+            { if (yystate() == S_DOLLAR_PREFIXED) backToPreviousState(); goToState(S_ARITH); return LEFT_DOUBLE_PAREN;
             } 
             // fall through
           case 287: break;
@@ -2001,15 +2001,15 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
           case 309: break;
           case 126: 
             { if (openParenthesisCount() > 0) {
-                                    decOpenParenthesisCount();
-                                    yypushback(1);
+                                        decOpenParenthesisCount();
+                                        yypushback(1);
 
-                                    return RIGHT_PAREN;
-                                  } else {
-                                    backToPreviousState();
+                                        return RIGHT_PAREN;
+                                      } else {
+                                        backToPreviousState();
 
-                                    return _EXPR_ARITH;
-                                  }
+                                        return RIGHT_DOUBLE_PAREN;
+                                      }
             } 
             // fall through
           case 310: break;

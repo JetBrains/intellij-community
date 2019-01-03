@@ -66,6 +66,9 @@
     ARITH_MINUS_MINUS = "--"
     ARITH_MINUS = "-"
 
+    LEFT_DOUBLE_PAREN = '(('
+    RIGHT_DOUBLE_PAREN = '))'
+
     REDIRECT_HERE_STRING = "<<<"
     REDIRECT_LESS_AMP = "<&"
     REDIRECT_GREATER_AMP = ">&"
@@ -137,7 +140,14 @@ private lit ::= literal | '(' lit ')' {pin(".*")=1}
 process_substitution ::= ('<' | '>') '(' compound_list ')' {pin=1}
 
 private literal ::= w | string | num
-simple_command_element ::= assignment_word_rule | literal | redirection | composed_var | heredoc | conditional_command | command_substitution_command
+simple_command_element ::=  assignment_word_rule
+                          | literal
+                          | redirection
+                          | composed_var
+                          | heredoc
+                          | conditional_command
+                          | command_substitution_command
+                          | arithmetic_expansion
 heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START newlines HEREDOC_CONTENT HEREDOC_MARKER_END
 arithmetic_expansion ::= '((' expression '))' {pin=1}
 assignment_word_rule ::= (assignment_word | word) '=' [literal | composed_var]

@@ -113,6 +113,7 @@ public interface BashTypes {
   IElementType INT = new BashTokenType("int");
   IElementType LEFT_CURLY = new BashTokenType("{");
   IElementType LEFT_DOUBLE_BRACKET = new BashTokenType("[[");
+  IElementType LEFT_DOUBLE_PAREN = new BashTokenType("((");
   IElementType LEFT_PAREN = new BashTokenType("(");
   IElementType LEFT_SQUARE = new BashTokenType("[");
   IElementType LESS_THAN = new BashTokenType("<");
@@ -130,6 +131,7 @@ public interface BashTypes {
   IElementType REDIRECT_LESS_GREATER = new BashTokenType("<>");
   IElementType RIGHT_CURLY = new BashTokenType("}");
   IElementType RIGHT_DOUBLE_BRACKET = new BashTokenType("]]");
+  IElementType RIGHT_DOUBLE_PAREN = new BashTokenType("))");
   IElementType RIGHT_PAREN = new BashTokenType(")");
   IElementType RIGHT_SQUARE = new BashTokenType("]");
   IElementType SELECT = new BashTokenType("select");

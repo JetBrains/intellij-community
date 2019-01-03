@@ -33,8 +33,7 @@ public interface BashTokenTypes extends BashTypes {
   IElementType LET = new BashTokenType("let");
 
   // arithmetic expressions
-  IElementType EXPR_ARITH = new BashTokenType("((");//))
-  IElementType _EXPR_ARITH = new BashTokenType("))");//]] after a $((
+
   IElementType EXPR_ARITH_SQUARE = new BashTokenType("[ for arithmetic");
   IElementType _EXPR_ARITH_SQUARE = new BashTokenType("] for arithmetic");
 
@@ -45,7 +44,7 @@ public interface BashTokenTypes extends BashTypes {
       IF, IN, SELECT, THEN, UNTIL, WHILE,
       TIME, LEFT_DOUBLE_BRACKET, RIGHT_DOUBLE_BRACKET,
       CASE_END, DOLLAR,
-      EXPR_ARITH, _EXPR_ARITH, EXPR_CONDITIONAL_LEFT, EXPR_CONDITIONAL_RIGHT);
+      LEFT_DOUBLE_PAREN, RIGHT_DOUBLE_PAREN, EXPR_CONDITIONAL_LEFT, EXPR_CONDITIONAL_RIGHT);
 
   TokenSet internalCommands = TokenSet.create(TRAP, LET);
 

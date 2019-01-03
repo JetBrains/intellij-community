@@ -191,12 +191,13 @@ public class BashParser implements PsiParser, LightPsiParser {
   // '((' expression '))'
   public static boolean arithmetic_expansion(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arithmetic_expansion")) return false;
+    if (!nextTokenIs(b, LEFT_DOUBLE_PAREN)) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, ARITHMETIC_EXPANSION, "<arithmetic expansion>");
-    r = consumeToken(b, "((");
+    Marker m = enter_section_(b, l, _NONE_, ARITHMETIC_EXPANSION, null);
+    r = consumeToken(b, LEFT_DOUBLE_PAREN);
     p = r; // pin = 1
     r = r && report_error_(b, expression(b, l + 1, -1));
-    r = p && consumeToken(b, "))") && r;
+    r = p && consumeToken(b, RIGHT_DOUBLE_PAREN) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -205,16 +206,17 @@ public class BashParser implements PsiParser, LightPsiParser {
   // '((' expression ';' expression ';' expression '))' [list_terminator newlines] any_block
   static boolean arithmetic_for(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arithmetic_for")) return false;
+    if (!nextTokenIs(b, LEFT_DOUBLE_PAREN)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, "((");
+    r = consumeToken(b, LEFT_DOUBLE_PAREN);
     p = r; // pin = 1
     r = r && report_error_(b, expression(b, l + 1, -1));
     r = p && report_error_(b, consumeToken(b, SEMI)) && r;
     r = p && report_error_(b, expression(b, l + 1, -1)) && r;
     r = p && report_error_(b, consumeToken(b, SEMI)) && r;
     r = p && report_error_(b, expression(b, l + 1, -1)) && r;
-    r = p && report_error_(b, consumeToken(b, "))")) && r;
+    r = p && report_error_(b, consumeToken(b, RIGHT_DOUBLE_PAREN)) && r;
     r = p && report_error_(b, arithmetic_for_7(b, l + 1)) && r;
     r = p && any_block(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
@@ -1851,7 +1853,14 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // assignment_word_rule | literal | redirection | composed_var | heredoc | conditional_command | command_substitution_command
+  // assignment_word_rule 
+  //                           | literal 
+  //                           | redirection 
+  //                           | composed_var 
+  //                           | heredoc 
+  //                           | conditional_command 
+  //                           | command_substitution_command
+  //                           | arithmetic_expansion
   public static boolean simple_command_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command_element")) return false;
     boolean r;
@@ -1863,6 +1872,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = heredoc(b, l + 1);
     if (!r) r = conditional_command(b, l + 1);
     if (!r) r = command_substitution_command(b, l + 1);
+    if (!r) r = arithmetic_expansion(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

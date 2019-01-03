@@ -26,3 +26,8 @@ echo ${ans}
 echo "${ls}"
 
 echo "$(( 3 * ( 2 + 1 ) ))"
+
+((1+1+1==v))
+(( 1+1+1==v )) && echo 2 >> /dev/null
+((1+1+1==v)) >> /dev/null
+echo 1 >> /dev/null

@@ -28,6 +28,12 @@ public interface BashForCommand extends BashCommand {
   @NotNull
   List<BashString> getStringList();
 
+  @Nullable
+  PsiElement getLeftDoubleParen();
+
+  @Nullable
+  PsiElement getRightDoubleParen();
+
   @NotNull
   PsiElement getFor();
 

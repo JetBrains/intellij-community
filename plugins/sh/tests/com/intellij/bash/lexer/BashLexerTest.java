@@ -105,82 +105,82 @@ public class BashLexerTest {
     testTokenization("$[1/${a}]", DOLLAR, EXPR_ARITH_SQUARE, BashTokenTypes.NUMBER, DIV, DOLLAR, LEFT_CURLY, WORD, RIGHT_CURLY, _EXPR_ARITH_SQUARE);
 
     //lexable, but bad syntax
-    testTokenization("$(([1]))", DOLLAR, EXPR_ARITH, LEFT_SQUARE, BashTokenTypes.NUMBER, RIGHT_SQUARE, _EXPR_ARITH);
+    testTokenization("$(([1]))", DOLLAR, LEFT_DOUBLE_PAREN, LEFT_SQUARE, BashTokenTypes.NUMBER, RIGHT_SQUARE, RIGHT_DOUBLE_PAREN);
   }
 
   @Test
   public void testArithmeticExpr() {
-    testTokenization("$((1))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((1))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((1,1))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, COMMA, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((1,1))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, COMMA, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((1/${a}))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, DIV, DOLLAR, LEFT_CURLY, WORD, RIGHT_CURLY, _EXPR_ARITH);
+    testTokenization("$((1/${a}))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, DIV, DOLLAR, LEFT_CURLY, WORD, RIGHT_CURLY, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a=1,1))", DOLLAR, EXPR_ARITH, ASSIGNMENT_WORD, EQ, BashTokenTypes.NUMBER, COMMA, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((a=1,1))", DOLLAR, LEFT_DOUBLE_PAREN, ASSIGNMENT_WORD, EQ, BashTokenTypes.NUMBER, COMMA, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((-1))", DOLLAR, EXPR_ARITH, ARITH_MINUS, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((-1))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_MINUS, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((--1))", DOLLAR, EXPR_ARITH, ARITH_MINUS, ARITH_MINUS, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((--1))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_MINUS, ARITH_MINUS, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((--a))", DOLLAR, EXPR_ARITH, ARITH_MINUS_MINUS, WORD, _EXPR_ARITH);
+    testTokenization("$((--a))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_MINUS_MINUS, WORD, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((- --a))", DOLLAR, EXPR_ARITH, ARITH_MINUS, WHITESPACE, ARITH_MINUS_MINUS, WORD, _EXPR_ARITH);
+    testTokenization("$((- --a))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_MINUS, WHITESPACE, ARITH_MINUS_MINUS, WORD, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((-1 -1))", DOLLAR, EXPR_ARITH, ARITH_MINUS, BashTokenTypes.NUMBER, WHITESPACE, ARITH_MINUS, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((-1 -1))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_MINUS, BashTokenTypes.NUMBER, WHITESPACE, ARITH_MINUS, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a & b))", DOLLAR, EXPR_ARITH, WORD, WHITESPACE, ARITH_BITWISE_AND, WHITESPACE, WORD, _EXPR_ARITH);
+    testTokenization("$((a & b))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, WHITESPACE, ARITH_BITWISE_AND, WHITESPACE, WORD, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a && b))", DOLLAR, EXPR_ARITH, WORD, WHITESPACE, AND_AND, WHITESPACE, WORD, _EXPR_ARITH);
+    testTokenization("$((a && b))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, WHITESPACE, AND_AND, WHITESPACE, WORD, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a || b))", DOLLAR, EXPR_ARITH, WORD, WHITESPACE, OR_OR, WHITESPACE, WORD, _EXPR_ARITH);
+    testTokenization("$((a || b))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, WHITESPACE, OR_OR, WHITESPACE, WORD, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((!a))", DOLLAR, EXPR_ARITH, ARITH_NEGATE, WORD, _EXPR_ARITH);
+    testTokenization("$((!a))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_NEGATE, WORD, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((~a))", DOLLAR, EXPR_ARITH, ARITH_BITWISE_NEGATE, WORD, _EXPR_ARITH);
+    testTokenization("$((~a))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_BITWISE_NEGATE, WORD, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a>>2))", DOLLAR, EXPR_ARITH, WORD, BashTokenTypes.SHIFT_RIGHT, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((a>>2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, BashTokenTypes.SHIFT_RIGHT, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a<<2))", DOLLAR, EXPR_ARITH, WORD, SHIFT_LEFT, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((a<<2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, SHIFT_LEFT, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a|2))", DOLLAR, EXPR_ARITH, WORD, PIPE, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((a|2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, PIPE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a&2))", DOLLAR, EXPR_ARITH, WORD, ARITH_BITWISE_AND, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((a&2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, ARITH_BITWISE_AND, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a^2))", DOLLAR, EXPR_ARITH, WORD, ARITH_BITWISE_XOR, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((a^2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, ARITH_BITWISE_XOR, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a%2))", DOLLAR, EXPR_ARITH, WORD, MOD, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((a%2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, MOD, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a-2))", DOLLAR, EXPR_ARITH, WORD, ARITH_MINUS, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((a-2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, ARITH_MINUS, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a--))", DOLLAR, EXPR_ARITH, WORD, ARITH_MINUS_MINUS, _EXPR_ARITH);
+    testTokenization("$((a--))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, ARITH_MINUS_MINUS, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((--a))", DOLLAR, EXPR_ARITH, ARITH_MINUS_MINUS, WORD, _EXPR_ARITH);
+    testTokenization("$((--a))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_MINUS_MINUS, WORD, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a,2))", DOLLAR, EXPR_ARITH, WORD, COMMA, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((a,2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, COMMA, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a>2))", DOLLAR, EXPR_ARITH, WORD, ARITH_GT, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((a>2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, ARITH_GT, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a > 2))", DOLLAR, EXPR_ARITH, WORD, WHITESPACE, ARITH_GT, WHITESPACE, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((a > 2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, WHITESPACE, ARITH_GT, WHITESPACE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a>=2))", DOLLAR, EXPR_ARITH, WORD, ARITH_GE, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((a>=2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, ARITH_GE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a<2))", DOLLAR, EXPR_ARITH, WORD, ARITH_LT, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((a<2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, ARITH_LT, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a<=2))", DOLLAR, EXPR_ARITH, WORD, ARITH_LE, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((a<=2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, ARITH_LE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((1+-45))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, ARITH_PLUS, ARITH_MINUS, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((1+-45))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_PLUS, ARITH_MINUS, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((1+(-45)))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, ARITH_PLUS, LEFT_PAREN, ARITH_MINUS, BashTokenTypes.NUMBER, RIGHT_PAREN, _EXPR_ARITH);
+    testTokenization("$((1+(-45)))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_PLUS, LEFT_PAREN, ARITH_MINUS, BashTokenTypes.NUMBER, RIGHT_PAREN, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((1+---45))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, ARITH_PLUS, ARITH_MINUS, ARITH_MINUS, ARITH_MINUS, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((1+---45))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_PLUS, ARITH_MINUS, ARITH_MINUS, ARITH_MINUS, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$(((1 << 10)))", DOLLAR, LEFT_PAREN, EXPR_ARITH, BashTokenTypes.NUMBER, WHITESPACE, SHIFT_LEFT, WHITESPACE, BashTokenTypes.NUMBER, _EXPR_ARITH, RIGHT_PAREN);
+    testTokenization("$(((1 << 10)))", DOLLAR, LEFT_PAREN, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, WHITESPACE, SHIFT_LEFT, WHITESPACE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN, RIGHT_PAREN);
 
-    testTokenization("$((1 < \"1\"))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, WHITESPACE, ARITH_LT, WHITESPACE, STRING_BEGIN, STRING_CONTENT, STRING_END, _EXPR_ARITH);
+    testTokenization("$((1 < \"1\"))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, WHITESPACE, ARITH_LT, WHITESPACE, STRING_BEGIN, STRING_CONTENT, STRING_END, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((((1))))", DOLLAR, LEFT_PAREN, EXPR_ARITH, LEFT_PAREN, BashTokenTypes.NUMBER, RIGHT_PAREN, _EXPR_ARITH, RIGHT_PAREN);
+    testTokenization("$((((1))))", DOLLAR, LEFT_PAREN, LEFT_DOUBLE_PAREN, LEFT_PAREN, BashTokenTypes.NUMBER, RIGHT_PAREN, RIGHT_DOUBLE_PAREN, RIGHT_PAREN);
 
-    testTokenization("$((10#$x/10))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, VARIABLE, DIV, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((10#$x/10))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, VARIABLE, DIV, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
   }
 
   @Ignore
@@ -250,7 +250,7 @@ public class BashLexerTest {
     testTokenization("\"$(echo && echo)\"", STRING_BEGIN, DOLLAR, LEFT_PAREN, WORD, WHITESPACE, AND_AND, WHITESPACE, WORD, RIGHT_PAREN, STRING_END);
     testTokenization("\"$(abc)\"", STRING_BEGIN, DOLLAR, LEFT_PAREN, WORD, RIGHT_PAREN, STRING_END);
     testTokenization("\"$(1)\"", STRING_BEGIN, DOLLAR, LEFT_PAREN, INT, RIGHT_PAREN, STRING_END);
-    testTokenization("\"$((1))\"", STRING_BEGIN, DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, _EXPR_ARITH, STRING_END);
+    testTokenization("\"$((1))\"", STRING_BEGIN, DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN, STRING_END);
 
     // "$("s/(/")" , the subshell command should be parsed as a word
     testTokenization("\"$(\"s/(/\")\"", STRING_BEGIN, DOLLAR, LEFT_PAREN, STRING_BEGIN, STRING_CONTENT, STRING_END, RIGHT_PAREN, STRING_END);
@@ -385,15 +385,15 @@ public class BashLexerTest {
         IF, WHITESPACE, EXPR_CONDITIONAL_LEFT, COND_OP, WHITESPACE, STRING_BEGIN, STRING_CONTENT, STRING_END, EXPR_CONDITIONAL_RIGHT, SEMI,
         WHITESPACE, THEN, WHITESPACE, WORD, SEMI, WHITESPACE, FI, SEMI);
 
-    testTokenization("$((1+2))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, ARITH_PLUS, BashTokenTypes.NUMBER, _EXPR_ARITH);
-    testTokenization("((i=$(echo 1)))", EXPR_ARITH, ASSIGNMENT_WORD, EQ, DOLLAR, LEFT_PAREN, WORD, WHITESPACE, INT, RIGHT_PAREN, _EXPR_ARITH);
+    testTokenization("$((1+2))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_PLUS, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("((i=$(echo 1)))", LEFT_DOUBLE_PAREN, ASSIGNMENT_WORD, EQ, DOLLAR, LEFT_PAREN, WORD, WHITESPACE, INT, RIGHT_PAREN, RIGHT_DOUBLE_PAREN);
     testTokenization("((i=$((1 + 9))))",
-        EXPR_ARITH, ASSIGNMENT_WORD, EQ, DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, WHITESPACE,
-        ARITH_PLUS, WHITESPACE, BashTokenTypes.NUMBER, _EXPR_ARITH, _EXPR_ARITH);
+        LEFT_DOUBLE_PAREN, ASSIGNMENT_WORD, EQ, DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, WHITESPACE,
+        ARITH_PLUS, WHITESPACE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN, RIGHT_DOUBLE_PAREN);
 
     testTokenization("((1 == 1 ? 0 : 0))",
-        EXPR_ARITH, BashTokenTypes.NUMBER, WHITESPACE, ARITH_EQ, WHITESPACE, BashTokenTypes.NUMBER, WHITESPACE, ARITH_QMARK,
-        WHITESPACE, BashTokenTypes.NUMBER, WHITESPACE, ARITH_COLON, WHITESPACE, BashTokenTypes.NUMBER, _EXPR_ARITH);
+        LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, WHITESPACE, ARITH_EQ, WHITESPACE, BashTokenTypes.NUMBER, WHITESPACE, ARITH_QMARK,
+        WHITESPACE, BashTokenTypes.NUMBER, WHITESPACE, ARITH_COLON, WHITESPACE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
     testTokenization("a=(\na #this is a comment\nb)", ASSIGNMENT_WORD, EQ, LEFT_PAREN, BashTokenTypes.LINEFEED, WORD, WHITESPACE, COMMENT, BashTokenTypes.LINEFEED, WORD, RIGHT_PAREN);
   }
@@ -403,7 +403,7 @@ public class BashLexerTest {
     testTokenization("$(echo \"$1\")",
         DOLLAR, LEFT_PAREN, WORD, WHITESPACE, STRING_BEGIN, VARIABLE, STRING_END, RIGHT_PAREN);
     testTokenization("$(($(echo \"$1\")))",
-        DOLLAR, EXPR_ARITH, DOLLAR, LEFT_PAREN, WORD, WHITESPACE, STRING_BEGIN, VARIABLE, STRING_END, RIGHT_PAREN, _EXPR_ARITH);
+        DOLLAR, LEFT_DOUBLE_PAREN, DOLLAR, LEFT_PAREN, WORD, WHITESPACE, STRING_BEGIN, VARIABLE, STRING_END, RIGHT_PAREN, RIGHT_DOUBLE_PAREN);
     testTokenization("`for d in`",
         BACKQUOTE, FOR, WHITESPACE, WORD, WHITESPACE, WORD, BACKQUOTE);
     testTokenization("[ \"`dd`\" ]",
@@ -413,10 +413,10 @@ public class BashLexerTest {
   @Test
   public void testNumber() {
     testTokenization("123", INT);
-    testTokenization("$((123))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((123))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
     testTokenization("123 456", INT, WHITESPACE, INT);
-    testTokenization("$((123 234))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, WHITESPACE, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((123 234))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, WHITESPACE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
   }
 
   @Test
@@ -743,16 +743,16 @@ public class BashLexerTest {
         WORD, WHITESPACE, COMMENT, BashTokenTypes.LINEFEED, FI);
 
     testTokenization("for ((a=1;;))",
-        FOR, WHITESPACE, EXPR_ARITH, ASSIGNMENT_WORD, EQ, BashTokenTypes.NUMBER, SEMI,
-        SEMI, _EXPR_ARITH);
+        FOR, WHITESPACE, LEFT_DOUBLE_PAREN, ASSIGNMENT_WORD, EQ, BashTokenTypes.NUMBER, SEMI,
+        SEMI, RIGHT_DOUBLE_PAREN);
 
     testTokenization("for ((a=1;a;))",
-        FOR, WHITESPACE, EXPR_ARITH, ASSIGNMENT_WORD, EQ, BashTokenTypes.NUMBER, SEMI,
-        WORD, SEMI, _EXPR_ARITH);
+        FOR, WHITESPACE, LEFT_DOUBLE_PAREN, ASSIGNMENT_WORD, EQ, BashTokenTypes.NUMBER, SEMI,
+        WORD, SEMI, RIGHT_DOUBLE_PAREN);
 
     testTokenization("for ((a=1;a<2;a=a+1))",
-        FOR, WHITESPACE, EXPR_ARITH, ASSIGNMENT_WORD, EQ, BashTokenTypes.NUMBER, SEMI,
-        WORD, ARITH_LT, BashTokenTypes.NUMBER, SEMI, ASSIGNMENT_WORD, EQ, WORD, ARITH_PLUS, BashTokenTypes.NUMBER, _EXPR_ARITH);
+        FOR, WHITESPACE, LEFT_DOUBLE_PAREN, ASSIGNMENT_WORD, EQ, BashTokenTypes.NUMBER, SEMI,
+        WORD, ARITH_LT, BashTokenTypes.NUMBER, SEMI, ASSIGNMENT_WORD, EQ, WORD, ARITH_PLUS, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
     testTokenization("$(read -p \"a\")",
         DOLLAR, LEFT_PAREN, WORD, WHITESPACE, WORD, WHITESPACE, STRING_BEGIN, STRING_CONTENT,
@@ -827,30 +827,30 @@ public class BashLexerTest {
 
   @Test
   public void testArithmeticLiterals() {
-    testTokenization("$((123))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((123))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((0x123))", DOLLAR, EXPR_ARITH, ARITH_HEX_NUMBER, _EXPR_ARITH);
-    testTokenization("$((0xA))", DOLLAR, EXPR_ARITH, ARITH_HEX_NUMBER, _EXPR_ARITH);
-    testTokenization("$((0xAf))", DOLLAR, EXPR_ARITH, ARITH_HEX_NUMBER, _EXPR_ARITH);
-    testTokenization("$((-0xAf))", DOLLAR, EXPR_ARITH, ARITH_MINUS, ARITH_HEX_NUMBER, _EXPR_ARITH);
-    testTokenization("$((--0xAf))", DOLLAR, EXPR_ARITH, ARITH_MINUS, ARITH_MINUS, ARITH_HEX_NUMBER, _EXPR_ARITH);
-    testTokenization("$((+0xAf))", DOLLAR, EXPR_ARITH, ARITH_PLUS, ARITH_HEX_NUMBER, _EXPR_ARITH);
+    testTokenization("$((0x123))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_HEX_NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((0xA))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_HEX_NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((0xAf))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_HEX_NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((-0xAf))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_MINUS, ARITH_HEX_NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((--0xAf))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_MINUS, ARITH_MINUS, ARITH_HEX_NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((+0xAf))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_PLUS, ARITH_HEX_NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((10#1))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, BashTokenTypes.NUMBER, _EXPR_ARITH);
-    testTokenization("$((10#100))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, BashTokenTypes.NUMBER, _EXPR_ARITH);
-    testTokenization("$((-10#100))", DOLLAR, EXPR_ARITH, ARITH_MINUS, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, BashTokenTypes.NUMBER, _EXPR_ARITH);
-    testTokenization("$((+10#100))", DOLLAR, EXPR_ARITH, ARITH_PLUS, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((10#1))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((10#100))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((-10#100))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_MINUS, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((+10#100))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_PLUS, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((0123))", DOLLAR, EXPR_ARITH, ARITH_OCTAL_NUMBER, _EXPR_ARITH);
-    testTokenization("$((-0123))", DOLLAR, EXPR_ARITH, ARITH_MINUS, ARITH_OCTAL_NUMBER, _EXPR_ARITH);
+    testTokenization("$((0123))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_OCTAL_NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((-0123))", DOLLAR, LEFT_DOUBLE_PAREN, ARITH_MINUS, ARITH_OCTAL_NUMBER, RIGHT_DOUBLE_PAREN);
 
     //also afe is not valid here we expect it to lex because we check the base in
     //an inspection
-    testTokenization("$((10#100afe))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, BashTokenTypes.NUMBER, WORD, _EXPR_ARITH);
+    testTokenization("$((10#100afe))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, BashTokenTypes.NUMBER, WORD, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((12#D))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, WORD, _EXPR_ARITH);
+    testTokenization("$((12#D))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, WORD, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((35#abcdefghijkl))", DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, WORD, _EXPR_ARITH);
+    testTokenization("$((35#abcdefghijkl))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_BASE_CHAR, WORD, RIGHT_DOUBLE_PAREN);
   }
 
 
@@ -871,7 +871,7 @@ public class BashLexerTest {
 
   @Test
   public void testIssue201() {
-    testTokenization("((!foo))", EXPR_ARITH, ARITH_NEGATE, WORD, _EXPR_ARITH);
+    testTokenization("((!foo))", LEFT_DOUBLE_PAREN, ARITH_NEGATE, WORD, RIGHT_DOUBLE_PAREN);
   }
 
   @Test
@@ -972,7 +972,7 @@ public class BashLexerTest {
             "$((a))\n" +
             "EOF2", LEFT_CURLY, BashTokenTypes.LINEFEED, HEREDOC_MARKER_TAG, HEREDOC_MARKER_START, WHITESPACE, HEREDOC_MARKER_TAG, HEREDOC_MARKER_START, BashTokenTypes.LINEFEED,
         HEREDOC_MARKER_END, BashTokenTypes.LINEFEED,
-        DOLLAR, EXPR_ARITH, WORD, _EXPR_ARITH, HEREDOC_CONTENT,
+        DOLLAR, LEFT_DOUBLE_PAREN, WORD, RIGHT_DOUBLE_PAREN, HEREDOC_CONTENT,
         HEREDOC_MARKER_END
     );
 
@@ -1012,12 +1012,12 @@ public class BashLexerTest {
 
   @Test
   public void testIssue199() {
-    testTokenization("$( ((count != 1)) && echo)", DOLLAR, LEFT_PAREN, WHITESPACE, EXPR_ARITH, WORD, WHITESPACE, ARITH_NE, WHITESPACE, BashTokenTypes.NUMBER, _EXPR_ARITH, WHITESPACE, AND_AND, WHITESPACE, WORD, RIGHT_PAREN);
-    testTokenization("$(((count != 1)) && echo)", DOLLAR, LEFT_PAREN, EXPR_ARITH, WORD, WHITESPACE, ARITH_NE, WHITESPACE, BashTokenTypes.NUMBER, _EXPR_ARITH, WHITESPACE, AND_AND, WHITESPACE, WORD, RIGHT_PAREN);
+    testTokenization("$( ((count != 1)) && echo)", DOLLAR, LEFT_PAREN, WHITESPACE, LEFT_DOUBLE_PAREN, WORD, WHITESPACE, ARITH_NE, WHITESPACE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN, WHITESPACE, AND_AND, WHITESPACE, WORD, RIGHT_PAREN);
+    testTokenization("$(((count != 1)) && echo)", DOLLAR, LEFT_PAREN, LEFT_DOUBLE_PAREN, WORD, WHITESPACE, ARITH_NE, WHITESPACE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN, WHITESPACE, AND_AND, WHITESPACE, WORD, RIGHT_PAREN);
     //limitation of the Bash lexer: no look-ahead to the end of an expression
     //Bash parses this (probably) as an arithmetic expression with a parenthesis inside
     //BashSupport doesn't
-    testTokenization("(((1==1)))", LEFT_PAREN, EXPR_ARITH, BashTokenTypes.NUMBER, ARITH_EQ, BashTokenTypes.NUMBER, _EXPR_ARITH, RIGHT_PAREN);
+    testTokenization("(((1==1)))", LEFT_PAREN, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_EQ, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN, RIGHT_PAREN);
 
     //the grammar is a bit complicated, the expression parsed beginning with $((( depends on the end of the expression
     //bash interprets the tokens $(((1+1)+1)) different than $(((1+1)) && echo)
@@ -1122,16 +1122,16 @@ public class BashLexerTest {
 
   @Test
   public void testIssue320() {
-    testTokenization("(( a[0] ))", EXPR_ARITH, WHITESPACE, ASSIGNMENT_WORD, LEFT_SQUARE, BashTokenTypes.NUMBER, RIGHT_SQUARE, WHITESPACE, _EXPR_ARITH);
-    testTokenization("(( A[0] ))", EXPR_ARITH, WHITESPACE, ASSIGNMENT_WORD, LEFT_SQUARE, BashTokenTypes.NUMBER, RIGHT_SQUARE, WHITESPACE, _EXPR_ARITH);
+    testTokenization("(( a[0] ))", LEFT_DOUBLE_PAREN, WHITESPACE, ASSIGNMENT_WORD, LEFT_SQUARE, BashTokenTypes.NUMBER, RIGHT_SQUARE, WHITESPACE, RIGHT_DOUBLE_PAREN);
+    testTokenization("(( A[0] ))", LEFT_DOUBLE_PAREN, WHITESPACE, ASSIGNMENT_WORD, LEFT_SQUARE, BashTokenTypes.NUMBER, RIGHT_SQUARE, WHITESPACE, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("(( a[0x0] ))", EXPR_ARITH, WHITESPACE, ASSIGNMENT_WORD, LEFT_SQUARE, ARITH_HEX_NUMBER, RIGHT_SQUARE, WHITESPACE, _EXPR_ARITH);
-    testTokenization("(( A[0x0] ))", EXPR_ARITH, WHITESPACE, ASSIGNMENT_WORD, LEFT_SQUARE, ARITH_HEX_NUMBER, RIGHT_SQUARE, WHITESPACE, _EXPR_ARITH);
+    testTokenization("(( a[0x0] ))", LEFT_DOUBLE_PAREN, WHITESPACE, ASSIGNMENT_WORD, LEFT_SQUARE, ARITH_HEX_NUMBER, RIGHT_SQUARE, WHITESPACE, RIGHT_DOUBLE_PAREN);
+    testTokenization("(( A[0x0] ))", LEFT_DOUBLE_PAREN, WHITESPACE, ASSIGNMENT_WORD, LEFT_SQUARE, ARITH_HEX_NUMBER, RIGHT_SQUARE, WHITESPACE, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("(( a[a[b]] ))", EXPR_ARITH, WHITESPACE, ASSIGNMENT_WORD, LEFT_SQUARE, ASSIGNMENT_WORD, LEFT_SQUARE, WORD, RIGHT_SQUARE, RIGHT_SQUARE, WHITESPACE, _EXPR_ARITH);
-    testTokenization("(( a[a[0]] ))", EXPR_ARITH, WHITESPACE, ASSIGNMENT_WORD, LEFT_SQUARE, ASSIGNMENT_WORD, LEFT_SQUARE, BashTokenTypes.NUMBER, RIGHT_SQUARE, RIGHT_SQUARE, WHITESPACE, _EXPR_ARITH);
+    testTokenization("(( a[a[b]] ))", LEFT_DOUBLE_PAREN, WHITESPACE, ASSIGNMENT_WORD, LEFT_SQUARE, ASSIGNMENT_WORD, LEFT_SQUARE, WORD, RIGHT_SQUARE, RIGHT_SQUARE, WHITESPACE, RIGHT_DOUBLE_PAREN);
+    testTokenization("(( a[a[0]] ))", LEFT_DOUBLE_PAREN, WHITESPACE, ASSIGNMENT_WORD, LEFT_SQUARE, ASSIGNMENT_WORD, LEFT_SQUARE, BashTokenTypes.NUMBER, RIGHT_SQUARE, RIGHT_SQUARE, WHITESPACE, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("(( A[A[0]] ))", EXPR_ARITH, WHITESPACE, ASSIGNMENT_WORD, LEFT_SQUARE, ASSIGNMENT_WORD, LEFT_SQUARE, BashTokenTypes.NUMBER, RIGHT_SQUARE, RIGHT_SQUARE, WHITESPACE, _EXPR_ARITH);
+    testTokenization("(( A[A[0]] ))", LEFT_DOUBLE_PAREN, WHITESPACE, ASSIGNMENT_WORD, LEFT_SQUARE, ASSIGNMENT_WORD, LEFT_SQUARE, BashTokenTypes.NUMBER, RIGHT_SQUARE, RIGHT_SQUARE, WHITESPACE, RIGHT_DOUBLE_PAREN);
   }
 
   @Test
@@ -1218,7 +1218,7 @@ public class BashLexerTest {
             ")\n" +
             "$1", LEFT_CURLY, BashTokenTypes.LINEFEED, HEREDOC_MARKER_TAG, HEREDOC_MARKER_START, WHITESPACE, HEREDOC_MARKER_TAG, HEREDOC_MARKER_START, BashTokenTypes.LINEFEED,
         HEREDOC_MARKER_END, BashTokenTypes.LINEFEED,
-        DOLLAR, EXPR_ARITH, BashTokenTypes.LINEFEED,
+        DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.LINEFEED,
         HEREDOC_MARKER_END, BashTokenTypes.LINEFEED,
         RIGHT_PAREN, BashTokenTypes.LINEFEED,
         VARIABLE
@@ -1265,7 +1265,7 @@ public class BashLexerTest {
 
     testTokenization("[[ $(< $1) ]]", LEFT_DOUBLE_BRACKET, DOLLAR, LEFT_PAREN, LESS_THAN, WHITESPACE, VARIABLE, RIGHT_PAREN, RIGHT_DOUBLE_BRACKET);
 
-    testTokenization("[[ $((1+1)) ]]", LEFT_DOUBLE_BRACKET, DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, ARITH_PLUS, BashTokenTypes.NUMBER, _EXPR_ARITH, RIGHT_DOUBLE_BRACKET);
+    testTokenization("[[ $((1+1)) ]]", LEFT_DOUBLE_BRACKET, DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_PLUS, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN, RIGHT_DOUBLE_BRACKET);
   }
 
   @Test
@@ -1307,7 +1307,7 @@ public class BashLexerTest {
     testTokenization("a <<< [$a]", WORD, WHITESPACE, REDIRECT_HERE_STRING, WHITESPACE, WORD, VARIABLE, WORD);
     testTokenization("a <<< [${a}]", WORD, WHITESPACE, REDIRECT_HERE_STRING, WHITESPACE, WORD, DOLLAR, LEFT_CURLY, WORD, RIGHT_CURLY, WORD);
     testTokenization("a <<< [$(a)]", WORD, WHITESPACE, REDIRECT_HERE_STRING, WHITESPACE, WORD, DOLLAR, LEFT_PAREN, WORD, RIGHT_PAREN, WORD);
-    testTokenization("a <<< [$((1))]", WORD, WHITESPACE, REDIRECT_HERE_STRING, WHITESPACE, WORD, DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, _EXPR_ARITH, WORD);
+    testTokenization("a <<< [$((1))]", WORD, WHITESPACE, REDIRECT_HERE_STRING, WHITESPACE, WORD, DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN, WORD);
 
     //comment after here string
     testTokenization("read <<< x\n#comment", WORD, WHITESPACE, REDIRECT_HERE_STRING, WHITESPACE, WORD, BashTokenTypes.LINEFEED, COMMENT);
@@ -1418,9 +1418,9 @@ public class BashLexerTest {
   @Test
   public void testIssue431() {
     //the problem with #398 was, that the lexer had a bad rule to leave unmatched characters and not return BAD_CHARACTER for all states at the end
-    testTokenization("$((x|=5))", DOLLAR, EXPR_ARITH, WORD, ARITH_ASS_BIT_OR, BashTokenTypes.NUMBER, _EXPR_ARITH);
-    testTokenization("$((x&=5))", DOLLAR, EXPR_ARITH, WORD, ARITH_ASS_BIT_AND, BashTokenTypes.NUMBER, _EXPR_ARITH);
-    testTokenization("$((x^=5))", DOLLAR, EXPR_ARITH, WORD, ARITH_ASS_BIT_XOR, BashTokenTypes.NUMBER, _EXPR_ARITH);
+    testTokenization("$((x|=5))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, ARITH_ASS_BIT_OR, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((x&=5))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, ARITH_ASS_BIT_AND, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((x^=5))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, ARITH_ASS_BIT_XOR, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
   }
 
   @Test
@@ -1430,7 +1430,7 @@ public class BashLexerTest {
     testTokenization("issues=($(x || x))", ASSIGNMENT_WORD, EQ, LEFT_PAREN, DOLLAR, LEFT_PAREN, WORD, WHITESPACE, OR_OR, WHITESPACE, WORD, RIGHT_PAREN, RIGHT_PAREN);
     testTokenization("issues=($(x && x))", ASSIGNMENT_WORD, EQ, LEFT_PAREN, DOLLAR, LEFT_PAREN, WORD, WHITESPACE, AND_AND, WHITESPACE, WORD, RIGHT_PAREN, RIGHT_PAREN);
 
-    testTokenization("issues=($((1+1)))", ASSIGNMENT_WORD, EQ, LEFT_PAREN, DOLLAR, EXPR_ARITH, BashTokenTypes.NUMBER, ARITH_PLUS, BashTokenTypes.NUMBER, _EXPR_ARITH, RIGHT_PAREN);
+    testTokenization("issues=($((1+1)))", ASSIGNMENT_WORD, EQ, LEFT_PAREN, DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_PLUS, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN, RIGHT_PAREN);
   }
 
   @Test
