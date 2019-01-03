@@ -45,19 +45,19 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testQualifierCastingBeforeLt() { doTest() }
   void testCastQualifierForPrivateFieldReference() { doTest() }
   void testOrAssignmentDfa() { doTest() }
-  void testAssignmentPreciseTypeDfa() { doTest() }
-  void testAssignmentTwicePreciseTypeDfa() { doTest() }
+  void testAssignmentPreciseTypeDfa() { doTestSecond() }
+  void testAssignmentTwicePreciseTypeDfa() { doTestSecond() }
   void testAssignmentParameterDfa() { doTest() }
   void testAssignmentNoPreciseTypeDfa() { doTest() }
   void testAssignmentPrimitiveLiteral() { doTest() }
-  void testDeclarationPreciseTypeDfa() { doTest() }
-  void testInstanceOfAssignmentDfa() { doTest() }
+  void testDeclarationPreciseTypeDfa() { doTestSecond() }
+  void testInstanceOfAssignmentDfa() { doTestSecond() }
   void testStreamDfa() { doTest() }
   void testStreamIncompleteDfa() { doTest() }
   void testOptionalDfa() { doTest() }
   void testFieldWithCastingCaret() { doTest() }
   void testCastWhenMethodComesFromDfaSuperType() { doTest() }
-  void testGenericTypeDfa() { doTest() }
+  void testGenericTypeDfa() { doTestSecond() }
   void testNarrowingReturnType() { doTest() }
   void testNarrowingReturnTypeInVoidContext() { doTest() }
   void testNoUnnecessaryCastDfa() { doTest() }
@@ -144,5 +144,12 @@ public class Main {
 }'''
 
     assert myFixture.complete(CompletionType.BASIC, 2).size() == 0
+  }
+
+  private void doTestSecond() {
+    configure()
+    assert myItems?.length == 0
+    myFixture.completeBasic()
+    checkResult()
   }
 }

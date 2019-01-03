@@ -350,7 +350,7 @@ public class JavaCompletionUtil {
           }
         }
 
-        return GuessManager.getInstance(project).getControlFlowExpressionTypeConjuncts(qualifier);
+        return GuessManager.getInstance(project).getControlFlowExpressionTypeConjuncts(qualifier, parameters.getInvocationCount() > 1);
       }
     }
     return Collections.emptyList();

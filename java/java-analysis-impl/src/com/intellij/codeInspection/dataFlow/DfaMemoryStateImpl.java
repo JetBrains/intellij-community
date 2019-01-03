@@ -243,8 +243,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     else if (DfaUtil.isComparedByEquals(value.getType()) && !DfaUtil.isComparedByEquals(var.getType())) {
       // Like Object x = "foo" or Object x = 5;
-      TypeConstraint typeConstraint = TypeConstraint.empty().withInstanceofValue(myFactory.createDfaType(value.getType()));
-      setVariableState(var, createVariableState(var).withFacts(getFactMap(value).with(DfaFactType.TYPE_CONSTRAINT, typeConstraint)));
+      setVariableTypeByAssignedValue(var, value, value.getType());
     }
     else {
       setVariableState(var, isNull(value) ? state.withFact(DfaFactType.NULLABILITY, DfaNullability.NULL) : state);
@@ -258,6 +257,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     updateEqClassesByState(var);
+  }
+
+  protected void setVariableTypeByAssignedValue(@NotNull DfaVariableValue var, @NotNull DfaValue value, @NotNull PsiType valueType) {
+    TypeConstraint typeConstraint = TypeConstraint.empty().withInstanceofValue(myFactory.createDfaType(valueType));
+    setVariableState(var, createVariableState(var).withFacts(getFactMap(value).with(DfaFactType.TYPE_CONSTRAINT, typeConstraint)));
   }
 
   private DfaValue handleStackValueOnVariableFlush(DfaValue value,
