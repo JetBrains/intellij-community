@@ -563,26 +563,37 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       PsiElement(word)('-v')
-              PsiErrorElement:'&', '&&', ';', <simple command element>, '=', '\n', '|' or '||' expected, got '`'
-                <empty list>
-  PsiWhiteSpace(' ')
-  PsiElement(backquote `)('`')
-  PsiElement(DUMMY_BLOCK)
-    PsiElement(word)('uname')
-    PsiWhiteSpace(' ')
-    PsiElement(word)('-r')
-    PsiElement(backquote `)('`')
-    PsiWhiteSpace(' ')
-    PsiElement(|)('|')
-    PsiWhiteSpace(' ')
-    PsiElement(word)('xargs')
-    PsiWhiteSpace(' ')
-    PsiElement(word)('apt-get')
-    PsiWhiteSpace(' ')
-    PsiElement(word)('-y')
-    PsiWhiteSpace(' ')
-    PsiElement(word)('purge')
-    PsiWhiteSpace(' ')
-    PsiElement(word)('--auto-remove')
-    PsiElement(\n)('\n')
-  PsiElement(fi)('fi')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      COMMAND_SUBSTITUTION_COMMAND
+                        PsiElement(`)('`')
+                        COMPOUND_LIST
+                          PIPELINE_COMMAND
+                            PIPELINE
+                              SIMPLE_COMMAND
+                                SIMPLE_COMMAND_ELEMENT
+                                  PsiElement(word)('uname')
+                                PsiWhiteSpace(' ')
+                                SIMPLE_COMMAND_ELEMENT
+                                  PsiElement(word)('-r')
+                        PsiElement(`)('`')
+                  PsiWhiteSpace(' ')
+                  PsiElement(|)('|')
+                  PsiWhiteSpace(' ')
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('xargs')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('apt-get')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('-y')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('purge')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('--auto-remove')
+              PsiElement(\n)('\n')
+          PsiElement(fi)('fi')

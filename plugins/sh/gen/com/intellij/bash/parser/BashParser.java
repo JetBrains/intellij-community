@@ -406,18 +406,35 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '`' list '`'
+  // !<<isModeOn "BACKQUOTE">> '`' <<withOn "BACKQUOTE" list?>> '`'
   public static boolean command_substitution_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "command_substitution_command")) return false;
-    if (!nextTokenIs(b, BACKQUOTE)) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, COMMAND_SUBSTITUTION_COMMAND, null);
-    r = consumeToken(b, BACKQUOTE);
-    p = r; // pin = 1
-    r = r && report_error_(b, list(b, l + 1));
+    Marker m = enter_section_(b, l, _NONE_, COMMAND_SUBSTITUTION_COMMAND, "<command substitution command>");
+    r = command_substitution_command_0(b, l + 1);
+    r = r && consumeToken(b, BACKQUOTE);
+    p = r; // pin = 2
+    r = r && report_error_(b, withOn(b, l + 1, "BACKQUOTE", command_substitution_command_2_1_parser_));
     r = p && consumeToken(b, BACKQUOTE) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // !<<isModeOn "BACKQUOTE">>
+  private static boolean command_substitution_command_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "command_substitution_command_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !isModeOn(b, l + 1, "BACKQUOTE");
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // list?
+  private static boolean command_substitution_command_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "command_substitution_command_2_1")) return false;
+    list(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */
@@ -2373,4 +2390,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
+  static final Parser command_substitution_command_2_1_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return command_substitution_command_2_1(b, l + 1);
+    }
+  };
 }

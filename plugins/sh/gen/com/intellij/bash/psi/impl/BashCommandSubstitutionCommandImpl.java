@@ -25,10 +25,4 @@ public class BashCommandSubstitutionCommandImpl extends BashCommandImpl implemen
     else super.accept(visitor);
   }
 
-  @Override
-  @Nullable
-  public BashCompoundList getCompoundList() {
-    return findChildByClass(BashCompoundList.class);
-  }
-
 }

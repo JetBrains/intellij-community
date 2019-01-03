@@ -23,6 +23,6 @@ public class BashParserTest extends ParsingTestCase {
   public void testHeredoc() { doTest(true); }
   public void testIf()      { doTest(true); }
   public void testConditional() { doTest(true); }
-  public void testBacktick(){ doTest(true); } // fixme
+  public void testBacktick(){ doTest(true); }
   public void testFunction(){ doTest(true); }
 }

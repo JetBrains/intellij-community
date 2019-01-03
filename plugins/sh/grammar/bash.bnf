@@ -127,7 +127,7 @@ private command_substitution ::= subshell_command // todo: rethink naming with c
 shell_parameter_expansion ::= '{' literal [":" ['+'|'-'] literal] '}' // todo: simplify lexer for parameters
 bash_expansion ::=
 
-command_substitution_command ::= '`' list '`'
+command_substitution_command ::= !<<isModeOn "BACKQUOTE">> '`' <<withOn "BACKQUOTE" list?>> '`' {pin=2}
 
 conditional_command ::= cond_left (<<condOp>> | lit | '$' shell_parameter_expansion)* cond_right {pin(".*")=1}
 private cond_right ::= EXPR_CONDITIONAL_RIGHT | ']]'
