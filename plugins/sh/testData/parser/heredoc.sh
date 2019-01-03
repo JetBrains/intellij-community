@@ -33,3 +33,17 @@ echo "127.0.0.1 $(hostname -s)" >> /etc/hosts;
 EOF
 
 chmod +x '/etc/add-localhost.sh'
+
+
+ACCOUNT=1000
+
+tee aa.prop <<EOF
+teamcity_agent_user="$((ACCOUNT+100))"
+teamcity_agent_user="$ACCOUNT"
+teamcity_agent_path="/opt/buildAgent"
+EOF
+# teamcity_agent_user="${ACCOUNT+100}" // todo: move me back when ready
+
+
+tee empty.prop <<EOF
+EOF

@@ -125,7 +125,7 @@ private num ::= number | int
 string ::= (string_begin (string_content|vars)* string_end) | STRING2
 
 private vars ::= variable | composed_var
-private composed_var ::= '$' (arithmetic_expansion|command_substitution|shell_parameter_expansion)
+private composed_var ::= '$' (arithmetic_expansion|command_substitution|shell_parameter_expansion) {pin=1}
 private command_substitution ::= subshell_command // todo: rethink naming with command_substitution_command
 shell_parameter_expansion ::= '{' literal [":" ['+'|'-'] literal] '}' // todo: simplify lexer for parameters
 bash_expansion ::=
@@ -148,7 +148,7 @@ simple_command_element ::=  assignment_word_rule
                           | conditional_command
                           | command_substitution_command
                           | arithmetic_expansion
-heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START newlines HEREDOC_CONTENT HEREDOC_MARKER_END
+heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START newlines (HEREDOC_CONTENT|vars)* HEREDOC_MARKER_END
 arithmetic_expansion ::= '((' expression '))' {pin=1}
 assignment_word_rule ::= (assignment_word | word) '=' [literal | composed_var]
 

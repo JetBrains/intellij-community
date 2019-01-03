@@ -554,12 +554,13 @@ public class BashParser implements PsiParser, LightPsiParser {
   static boolean composed_var(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "composed_var")) return false;
     if (!nextTokenIs(b, DOLLAR)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, DOLLAR);
+    p = r; // pin = 1
     r = r && composed_var_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // arithmetic_expansion|command_substitution|shell_parameter_expansion
@@ -873,7 +874,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // HEREDOC_MARKER_TAG HEREDOC_MARKER_START newlines HEREDOC_CONTENT HEREDOC_MARKER_END
+  // HEREDOC_MARKER_TAG HEREDOC_MARKER_START newlines (HEREDOC_CONTENT|vars)* HEREDOC_MARKER_END
   public static boolean heredoc(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc")) return false;
     if (!nextTokenIs(b, HEREDOC_MARKER_TAG)) return false;
@@ -881,8 +882,29 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeTokens(b, 0, HEREDOC_MARKER_TAG, HEREDOC_MARKER_START);
     r = r && newlines(b, l + 1);
-    r = r && consumeTokens(b, 0, HEREDOC_CONTENT, HEREDOC_MARKER_END);
+    r = r && heredoc_3(b, l + 1);
+    r = r && consumeToken(b, HEREDOC_MARKER_END);
     exit_section_(b, m, HEREDOC, r);
+    return r;
+  }
+
+  // (HEREDOC_CONTENT|vars)*
+  private static boolean heredoc_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc_3")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!heredoc_3_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "heredoc_3", c)) break;
+    }
+    return true;
+  }
+
+  // HEREDOC_CONTENT|vars
+  private static boolean heredoc_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc_3_0")) return false;
+    boolean r;
+    r = consumeToken(b, HEREDOC_CONTENT);
+    if (!r) r = vars(b, l + 1);
     return r;
   }
 

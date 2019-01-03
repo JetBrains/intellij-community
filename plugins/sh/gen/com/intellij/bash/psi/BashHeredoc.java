@@ -8,7 +8,13 @@ import com.intellij.psi.PsiElement;
 public interface BashHeredoc extends BashCompositeElement {
 
   @NotNull
-  PsiElement getHeredocContent();
+  List<BashArithmeticExpansion> getArithmeticExpansionList();
+
+  @NotNull
+  List<BashShellParameterExpansion> getShellParameterExpansionList();
+
+  @NotNull
+  List<BashSubshellCommand> getSubshellCommandList();
 
   @NotNull
   PsiElement getHeredocMarkerEnd();
