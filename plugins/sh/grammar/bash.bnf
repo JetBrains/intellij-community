@@ -148,7 +148,9 @@ simple_command_element ::=  assignment_word_rule
                           | conditional_command
                           | command_substitution_command
                           | arithmetic_expansion
-heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START newlines (HEREDOC_CONTENT|vars)* HEREDOC_MARKER_END
+heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? simple_command] newlines
+            (HEREDOC_CONTENT | vars)*
+            (HEREDOC_MARKER_END | <<eof>>)
 arithmetic_expansion ::= '((' expression '))' {pin=1}
 assignment_word_rule ::= (assignment_word | word) '=' [literal | composed_var]
 

@@ -1,0 +1,28 @@
+BASH_FILE
+  PsiComment(Shebang)('#!/usr/bin/env bash\n')
+  PsiElement(\n)('\n')
+  PsiWhiteSpace(' ')
+  PsiWhiteSpace(' ')
+  PsiWhiteSpace(' ')
+  PsiWhiteSpace(' ')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('cat')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            HEREDOC
+              PsiElement(HEREDOC_MARKER_TAG)('<<-')
+              PsiWhiteSpace(' ')
+              PsiElement(HEREDOC_MARKER_START)('EOF')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND
+                SIMPLE_COMMAND_ELEMENT
+                  REDIRECTION
+                    PsiElement(>)('>')
+                    PsiWhiteSpace(' ')
+                    PsiElement(word)('aa.ppp')
+              PsiElement(\n)('\n')
+              PsiElement(HEREDOC_CONTENT)('    The leading tab is ignored.\n    EOF\n\n# heredoc till the end of file')

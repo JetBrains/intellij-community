@@ -11,12 +11,12 @@ public interface BashHeredoc extends BashCompositeElement {
   List<BashArithmeticExpansion> getArithmeticExpansionList();
 
   @NotNull
+  List<BashCommand> getCommandList();
+
+  @NotNull
   List<BashShellParameterExpansion> getShellParameterExpansionList();
 
-  @NotNull
-  List<BashSubshellCommand> getSubshellCommandList();
-
-  @NotNull
+  @Nullable
   PsiElement getHeredocMarkerEnd();
 
   @NotNull
@@ -24,5 +24,8 @@ public interface BashHeredoc extends BashCompositeElement {
 
   @NotNull
   PsiElement getHeredocMarkerTag();
+
+  @Nullable
+  PsiElement getPipe();
 
 }

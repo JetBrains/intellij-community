@@ -874,37 +874,76 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // HEREDOC_MARKER_TAG HEREDOC_MARKER_START newlines (HEREDOC_CONTENT|vars)* HEREDOC_MARKER_END
+  // HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? simple_command] newlines 
+  //             (HEREDOC_CONTENT | vars)* 
+  //             (HEREDOC_MARKER_END | <<eof>>)
   public static boolean heredoc(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc")) return false;
     if (!nextTokenIs(b, HEREDOC_MARKER_TAG)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokens(b, 0, HEREDOC_MARKER_TAG, HEREDOC_MARKER_START);
+    r = r && heredoc_2(b, l + 1);
     r = r && newlines(b, l + 1);
-    r = r && heredoc_3(b, l + 1);
-    r = r && consumeToken(b, HEREDOC_MARKER_END);
+    r = r && heredoc_4(b, l + 1);
+    r = r && heredoc_5(b, l + 1);
     exit_section_(b, m, HEREDOC, r);
     return r;
   }
 
-  // (HEREDOC_CONTENT|vars)*
-  private static boolean heredoc_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "heredoc_3")) return false;
+  // ['|'? simple_command]
+  private static boolean heredoc_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc_2")) return false;
+    heredoc_2_0(b, l + 1);
+    return true;
+  }
+
+  // '|'? simple_command
+  private static boolean heredoc_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = heredoc_2_0_0(b, l + 1);
+    r = r && simple_command(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '|'?
+  private static boolean heredoc_2_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc_2_0_0")) return false;
+    consumeToken(b, PIPE);
+    return true;
+  }
+
+  // (HEREDOC_CONTENT | vars)*
+  private static boolean heredoc_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc_4")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!heredoc_3_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "heredoc_3", c)) break;
+      if (!heredoc_4_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "heredoc_4", c)) break;
     }
     return true;
   }
 
-  // HEREDOC_CONTENT|vars
-  private static boolean heredoc_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "heredoc_3_0")) return false;
+  // HEREDOC_CONTENT | vars
+  private static boolean heredoc_4_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc_4_0")) return false;
     boolean r;
     r = consumeToken(b, HEREDOC_CONTENT);
     if (!r) r = vars(b, l + 1);
+    return r;
+  }
+
+  // HEREDOC_MARKER_END | <<eof>>
+  private static boolean heredoc_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc_5")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HEREDOC_MARKER_END);
+    if (!r) r = eof(b, l + 1);
+    exit_section_(b, m, null, r);
     return r;
   }
 

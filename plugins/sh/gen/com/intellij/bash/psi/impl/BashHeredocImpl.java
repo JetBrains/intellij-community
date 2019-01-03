@@ -33,20 +33,20 @@ public class BashHeredocImpl extends BashCompositeElementImpl implements BashHer
 
   @Override
   @NotNull
+  public List<BashCommand> getCommandList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCommand.class);
+  }
+
+  @Override
+  @NotNull
   public List<BashShellParameterExpansion> getShellParameterExpansionList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashShellParameterExpansion.class);
   }
 
   @Override
-  @NotNull
-  public List<BashSubshellCommand> getSubshellCommandList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashSubshellCommand.class);
-  }
-
-  @Override
-  @NotNull
+  @Nullable
   public PsiElement getHeredocMarkerEnd() {
-    return findNotNullChildByType(HEREDOC_MARKER_END);
+    return findChildByType(HEREDOC_MARKER_END);
   }
 
   @Override
@@ -59,6 +59,12 @@ public class BashHeredocImpl extends BashCompositeElementImpl implements BashHer
   @NotNull
   public PsiElement getHeredocMarkerTag() {
     return findNotNullChildByType(HEREDOC_MARKER_TAG);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getPipe() {
+    return findChildByType(PIPE);
   }
 
 }
