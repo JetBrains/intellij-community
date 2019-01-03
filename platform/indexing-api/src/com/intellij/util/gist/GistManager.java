@@ -64,4 +64,9 @@ public abstract class GistManager {
                                                           @NotNull DataExternalizer<Data> externalizer,
                                                           @NotNull NullableFunction<PsiFile, Data> calcData);
 
+  /**
+   * Force all gists to be recalculated on the next request.
+   */
+  public abstract void invalidateData();
+
 }

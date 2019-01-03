@@ -85,6 +85,7 @@ public class GistManagerImpl extends GistManager {
     return myReindexCount.get();
   }
 
+  @Override
   public void invalidateData() {
     // Clear all cache at once to simplify and speedup this operation.
     // It can be made per-file if cache recalculation ever becomes an issue.

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,8 +80,13 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
       return;
     }
 
-    if (invalidateCachesInvalidatesVfs) FSRecords.invalidateCaches();
-    else FileBasedIndex.getInstance().invalidateCaches();
+    if (invalidateCachesInvalidatesVfs) {
+      FSRecords.invalidateCaches();
+    }
+    else {
+      FileBasedIndex.getInstance().invalidateCaches();
+      GistManager.getInstance().invalidateData();
+    }
 
     for (CachesInvalidator invalidater : CachesInvalidator.EP_NAME.getExtensions()) {
       invalidater.invalidateCaches();

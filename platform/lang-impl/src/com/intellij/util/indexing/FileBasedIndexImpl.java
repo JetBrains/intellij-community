@@ -298,7 +298,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   @Override
   public void requestReindex(@NotNull final VirtualFile file) {
-    ((GistManagerImpl)GistManager.getInstance()).invalidateData();
+    GistManager.getInstance().invalidateData();
     // todo: this is the same vfs event handling sequence that is produces after events of FileContentUtilCore.reparseFiles
     // but it is more costly than current code, see IDEA-192192
     //myChangedFilesCollector.invalidateIndicesRecursively(file, false);
