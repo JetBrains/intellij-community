@@ -11,13 +11,13 @@ public interface BashShellParameterExpansion extends BashCompositeElement {
   List<BashArithmeticExpansion> getArithmeticExpansionList();
 
   @NotNull
+  List<BashCommand> getCommandList();
+
+  @NotNull
   List<BashShellParameterExpansion> getShellParameterExpansionList();
 
   @NotNull
   List<BashString> getStringList();
-
-  @NotNull
-  List<BashSubshellCommand> getSubshellCommandList();
 
   @Nullable
   PsiElement getArithMinus();

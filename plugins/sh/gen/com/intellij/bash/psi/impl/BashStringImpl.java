@@ -33,14 +33,14 @@ public class BashStringImpl extends BashCompositeElementImpl implements BashStri
 
   @Override
   @NotNull
-  public List<BashShellParameterExpansion> getShellParameterExpansionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashShellParameterExpansion.class);
+  public List<BashCommand> getCommandList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCommand.class);
   }
 
   @Override
   @NotNull
-  public List<BashSubshellCommand> getSubshellCommandList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashSubshellCommand.class);
+  public List<BashShellParameterExpansion> getShellParameterExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashShellParameterExpansion.class);
   }
 
   @Override

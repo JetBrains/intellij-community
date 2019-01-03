@@ -11,10 +11,10 @@ public interface BashString extends BashCompositeElement {
   List<BashArithmeticExpansion> getArithmeticExpansionList();
 
   @NotNull
-  List<BashShellParameterExpansion> getShellParameterExpansionList();
+  List<BashCommand> getCommandList();
 
   @NotNull
-  List<BashSubshellCommand> getSubshellCommandList();
+  List<BashShellParameterExpansion> getShellParameterExpansionList();
 
   @Nullable
   PsiElement getString2();

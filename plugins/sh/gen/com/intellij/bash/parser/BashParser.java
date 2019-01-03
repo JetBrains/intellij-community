@@ -615,7 +615,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // cond_left (<<condOp>> | lit | '$' shell_parameter_expansion)* cond_right
+  // cond_left (<<condOp>> | lit | vars)* cond_right
   public static boolean conditional_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command")) return false;
     if (!nextTokenIs(b, "<conditional command>", EXPR_CONDITIONAL_LEFT, LEFT_DOUBLE_BRACKET)) return false;
@@ -629,7 +629,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // (<<condOp>> | lit | '$' shell_parameter_expansion)*
+  // (<<condOp>> | lit | vars)*
   private static boolean conditional_command_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_1")) return false;
     while (true) {
@@ -640,28 +640,16 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // <<condOp>> | lit | '$' shell_parameter_expansion
+  // <<condOp>> | lit | vars
   private static boolean conditional_command_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = condOp(b, l + 1);
     if (!r) r = lit(b, l + 1);
-    if (!r) r = conditional_command_1_0_2(b, l + 1);
+    if (!r) r = vars(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // '$' shell_parameter_expansion
-  private static boolean conditional_command_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "conditional_command_1_0_2")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, DOLLAR);
-    p = r; // pin = 1
-    r = r && shell_parameter_expansion(b, l + 1);
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
   }
 
   /* ********************************************************** */
@@ -2133,13 +2121,13 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // variable | composed_var
+  // variable | composed_var | command_substitution_command
   static boolean vars(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "vars")) return false;
-    if (!nextTokenIs(b, "", DOLLAR, VARIABLE)) return false;
     boolean r;
     r = consumeToken(b, VARIABLE);
     if (!r) r = composed_var(b, l + 1);
+    if (!r) r = command_substitution_command(b, l + 1);
     return r;
   }
 

@@ -51,12 +51,6 @@ public class BashCaseCommandImpl extends BashCommandImpl implements BashCaseComm
 
   @Override
   @Nullable
-  public BashSubshellCommand getSubshellCommand() {
-    return findChildByClass(BashSubshellCommand.class);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getDollar() {
     return findChildByType(DOLLAR);
   }

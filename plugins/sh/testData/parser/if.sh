@@ -48,3 +48,10 @@ if [[ "$VERSION_ID" !=  16.04 ]]
 then
     dpkg --list | awk '{ print $2 }' | grep 'linux-image-.*-generic' | grep -v `uname -r` | xargs apt-get -y purge --auto-remove
 fi
+
+if [ "10.12.6" = `defaults read loginwindow SystemVersionStampAsString` ]; then
+	curl https://bootstrap.pypa.io/get-pip.py | sudo python
+	sudo /usr/local/bin/pip install sh
+else
+  sudo easy_install sh
+fi

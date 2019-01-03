@@ -11,13 +11,13 @@ public interface BashLiteralExpression extends BashExpression {
   BashArithmeticExpansion getArithmeticExpansion();
 
   @Nullable
+  BashCommand getCommand();
+
+  @Nullable
   BashShellParameterExpansion getShellParameterExpansion();
 
   @Nullable
   BashString getString();
-
-  @Nullable
-  BashSubshellCommand getSubshellCommand();
 
   @Nullable
   PsiElement getDollar();

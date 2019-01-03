@@ -20,9 +20,6 @@ public interface BashCaseCommand extends BashCommand {
   BashString getString();
 
   @Nullable
-  BashSubshellCommand getSubshellCommand();
-
-  @Nullable
   PsiElement getDollar();
 
   @NotNull

@@ -33,6 +33,12 @@ public class BashPatternImpl extends BashCompositeElementImpl implements BashPat
 
   @Override
   @NotNull
+  public List<BashCommand> getCommandList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCommand.class);
+  }
+
+  @Override
+  @NotNull
   public List<BashShellParameterExpansion> getShellParameterExpansionList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashShellParameterExpansion.class);
   }
@@ -41,12 +47,6 @@ public class BashPatternImpl extends BashCompositeElementImpl implements BashPat
   @NotNull
   public List<BashString> getStringList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashString.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashSubshellCommand> getSubshellCommandList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashSubshellCommand.class);
   }
 
 }

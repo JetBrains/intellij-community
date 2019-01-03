@@ -33,6 +33,12 @@ public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl impleme
 
   @Override
   @Nullable
+  public BashCommand getCommand() {
+    return findChildByClass(BashCommand.class);
+  }
+
+  @Override
+  @Nullable
   public BashShellParameterExpansion getShellParameterExpansion() {
     return findChildByClass(BashShellParameterExpansion.class);
   }
@@ -41,12 +47,6 @@ public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl impleme
   @Nullable
   public BashString getString() {
     return findChildByClass(BashString.class);
-  }
-
-  @Override
-  @Nullable
-  public BashSubshellCommand getSubshellCommand() {
-    return findChildByClass(BashSubshellCommand.class);
   }
 
   @Override
