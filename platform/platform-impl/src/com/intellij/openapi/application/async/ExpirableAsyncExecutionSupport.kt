@@ -56,12 +56,12 @@ internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(di
 
   override fun createContinuationInterceptor(): ContinuationInterceptor {
     val delegateInterceptor = super.createContinuationInterceptor()
-    val jobExpiration = composeJobExpiration()
+    val jobExpiration = composeJobExpiration() ?: return delegateInterceptor
 
     return object : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
       /** Invoked once on each newly launched coroutine when dispatching it for the first time. */
       override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
-        jobExpiration?.cancelJobOnExpiration(continuation.context[Job]!!)
+        jobExpiration.cancelJobOnExpiration(continuation.context[Job]!!)
         return delegateInterceptor.interceptContinuation(continuation)
       }
     }
