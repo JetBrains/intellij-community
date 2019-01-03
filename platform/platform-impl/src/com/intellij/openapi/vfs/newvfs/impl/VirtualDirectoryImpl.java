@@ -214,7 +214,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @NotNull
   private VirtualFileSystemEntry[] getArraySafely() {
-    return myData.getFileChildren(myId, this);
+    if (myId < 0) throw new InvalidVirtualFileAccessException(this);
+    return myData.getFileChildren(this);
   }
 
   @NotNull
