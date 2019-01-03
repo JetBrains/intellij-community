@@ -27,8 +27,26 @@ public class BashShellParameterExpansionImpl extends BashCompositeElementImpl im
 
   @Override
   @NotNull
+  public List<BashArithmeticExpansion> getArithmeticExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashArithmeticExpansion.class);
+  }
+
+  @Override
+  @NotNull
+  public List<BashShellParameterExpansion> getShellParameterExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashShellParameterExpansion.class);
+  }
+
+  @Override
+  @NotNull
   public List<BashString> getStringList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashString.class);
+  }
+
+  @Override
+  @NotNull
+  public List<BashSubshellCommand> getSubshellCommandList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashSubshellCommand.class);
   }
 
   @Override

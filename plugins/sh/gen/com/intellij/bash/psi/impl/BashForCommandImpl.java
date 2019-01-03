@@ -26,9 +26,21 @@ public class BashForCommandImpl extends BashCommandImpl implements BashForComman
   }
 
   @Override
+  @NotNull
+  public List<BashArithmeticExpansion> getArithmeticExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashArithmeticExpansion.class);
+  }
+
+  @Override
   @Nullable
   public BashBlock getBlock() {
     return findChildByClass(BashBlock.class);
+  }
+
+  @Override
+  @NotNull
+  public List<BashCommand> getCommandList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCommand.class);
   }
 
   @Override
@@ -41,6 +53,12 @@ public class BashForCommandImpl extends BashCommandImpl implements BashForComman
   @Nullable
   public BashListTerminator getListTerminator() {
     return findChildByClass(BashListTerminator.class);
+  }
+
+  @Override
+  @NotNull
+  public List<BashShellParameterExpansion> getShellParameterExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashShellParameterExpansion.class);
   }
 
   @Override

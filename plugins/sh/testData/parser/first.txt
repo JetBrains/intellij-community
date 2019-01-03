@@ -395,7 +395,7 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             PsiElement(int)('10')
   PsiElement(<)('<')
-  PsiErrorElement:<string>, int, number, variable or word expected, got '&0'
+  PsiErrorElement:$, <string>, int, number, variable or word expected, got '&0'
     PsiElement(&[0-9] filedescriptor)('&0')
   PsiElement(DUMMY_BLOCK)
     PsiElement(\n)('\n')

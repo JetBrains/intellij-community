@@ -26,6 +26,12 @@ public class BashCaseCommandImpl extends BashCommandImpl implements BashCaseComm
   }
 
   @Override
+  @Nullable
+  public BashArithmeticExpansion getArithmeticExpansion() {
+    return findChildByClass(BashArithmeticExpansion.class);
+  }
+
+  @Override
   @NotNull
   public List<BashCaseClause> getCaseClauseList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCaseClause.class);
@@ -33,8 +39,26 @@ public class BashCaseCommandImpl extends BashCommandImpl implements BashCaseComm
 
   @Override
   @Nullable
+  public BashShellParameterExpansion getShellParameterExpansion() {
+    return findChildByClass(BashShellParameterExpansion.class);
+  }
+
+  @Override
+  @Nullable
   public BashString getString() {
     return findChildByClass(BashString.class);
+  }
+
+  @Override
+  @Nullable
+  public BashSubshellCommand getSubshellCommand() {
+    return findChildByClass(BashSubshellCommand.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getDollar() {
+    return findChildByType(DOLLAR);
   }
 
   @Override

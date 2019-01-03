@@ -7,11 +7,17 @@ import com.intellij.psi.PsiElement;
 
 public interface BashSelectCommand extends BashCommand {
 
-  @Nullable
-  BashBlock getBlock();
+  @NotNull
+  List<BashArithmeticExpansion> getArithmeticExpansionList();
+
+  @NotNull
+  List<BashCommand> getCommandList();
 
   @Nullable
   BashListTerminator getListTerminator();
+
+  @NotNull
+  List<BashShellParameterExpansion> getShellParameterExpansionList();
 
   @NotNull
   List<BashString> getStringList();

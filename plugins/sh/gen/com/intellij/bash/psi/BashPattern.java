@@ -8,6 +8,15 @@ import com.intellij.psi.PsiElement;
 public interface BashPattern extends BashCompositeElement {
 
   @NotNull
+  List<BashArithmeticExpansion> getArithmeticExpansionList();
+
+  @NotNull
+  List<BashShellParameterExpansion> getShellParameterExpansionList();
+
+  @NotNull
   List<BashString> getStringList();
+
+  @NotNull
+  List<BashSubshellCommand> getSubshellCommandList();
 
 }

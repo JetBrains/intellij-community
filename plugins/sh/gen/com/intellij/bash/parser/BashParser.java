@@ -2042,12 +2042,12 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | variable | string | num
+  // word | vars | string | num
   static boolean w(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "w")) return false;
     boolean r;
     r = consumeToken(b, WORD);
-    if (!r) r = consumeToken(b, VARIABLE);
+    if (!r) r = vars(b, l + 1);
     if (!r) r = string(b, l + 1);
     if (!r) r = num(b, l + 1);
     return r;

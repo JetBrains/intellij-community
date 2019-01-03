@@ -27,14 +27,38 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
 
   @Override
   @Nullable
+  public BashArithmeticExpansion getArithmeticExpansion() {
+    return findChildByClass(BashArithmeticExpansion.class);
+  }
+
+  @Override
+  @Nullable
+  public BashShellParameterExpansion getShellParameterExpansion() {
+    return findChildByClass(BashShellParameterExpansion.class);
+  }
+
+  @Override
+  @Nullable
   public BashString getString() {
     return findChildByClass(BashString.class);
   }
 
   @Override
   @Nullable
+  public BashSubshellCommand getSubshellCommand() {
+    return findChildByClass(BashSubshellCommand.class);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getArithMinus() {
     return findChildByType(ARITH_MINUS);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getDollar() {
+    return findChildByType(DOLLAR);
   }
 
   @Override

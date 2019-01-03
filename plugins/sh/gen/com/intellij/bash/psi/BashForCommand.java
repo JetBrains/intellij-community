@@ -7,14 +7,23 @@ import com.intellij.psi.PsiElement;
 
 public interface BashForCommand extends BashCommand {
 
+  @NotNull
+  List<BashArithmeticExpansion> getArithmeticExpansionList();
+
   @Nullable
   BashBlock getBlock();
+
+  @NotNull
+  List<BashCommand> getCommandList();
 
   @NotNull
   List<BashExpression> getExpressionList();
 
   @Nullable
   BashListTerminator getListTerminator();
+
+  @NotNull
+  List<BashShellParameterExpansion> getShellParameterExpansionList();
 
   @NotNull
   List<BashString> getStringList();

@@ -8,10 +8,22 @@ import com.intellij.psi.PsiElement;
 public interface BashRedirection extends BashCompositeElement {
 
   @Nullable
+  BashArithmeticExpansion getArithmeticExpansion();
+
+  @Nullable
+  BashShellParameterExpansion getShellParameterExpansion();
+
+  @Nullable
   BashString getString();
 
   @Nullable
+  BashSubshellCommand getSubshellCommand();
+
+  @Nullable
   PsiElement getArithMinus();
+
+  @Nullable
+  PsiElement getDollar();
 
   @Nullable
   PsiElement getGreaterThan();

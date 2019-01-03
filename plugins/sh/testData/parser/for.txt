@@ -107,55 +107,67 @@ BASH_FILE
       PIPELINE
         FOR_COMMAND
           PsiElement(for)('for')
-          PsiErrorElement:'((' or word expected, got 'file'
-            <empty list>
-  PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('file')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('in')
+          PsiWhiteSpace(' ')
+          PsiElement($)('$')
+          SUBSHELL_COMMAND
+            PsiElement(()('(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('ls')
+            PsiElement())(')')
+          LIST_TERMINATOR
+            PsiElement(\n)('\n')
+          DO_BLOCK
+            PsiElement(do)('do')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('\t')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('du')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(variable)('$file')
+              PsiElement(\n)('\n')
+            PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        SIMPLE_COMMAND
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement(word)('file')
+        FOR_COMMAND
+          PsiElement(for)('for')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement(word)('in')
+          PsiElement(word)('i')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
-            SUBSHELL_COMMAND
-              PsiElement(()('(')
-              COMPOUND_LIST
-                PIPELINE_COMMAND
-                  PIPELINE
-                    SIMPLE_COMMAND
-                      SIMPLE_COMMAND_ELEMENT
-                        PsiElement(word)('ls')
-              PsiElement())(')')
+          PsiElement(word)('in')
+          PsiErrorElement:$, <string>, int, number, variable or word expected, got '{'
+            <empty list>
+          PsiWhiteSpace(' ')
+          BLOCK
+            PsiElement({)('{')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('1..5')
+              PsiErrorElement:'&', '&&', '(', ';', <simple command element>, '=', '\n', '|' or '||' expected, got '}'
+                <empty list>
+            PsiElement(})('}')
   PsiElement(\n)('\n')
   PsiErrorElement:<pipeline command> or '\n' expected, got 'do'
     PsiElement(do)('do')
   PsiElement(DUMMY_BLOCK)
-    PsiElement(\n)('\n')
-    PsiWhiteSpace('\t')
-    PsiElement(word)('du')
-    PsiWhiteSpace(' ')
-    PsiElement(variable)('$file')
-    PsiElement(\n)('\n')
-    PsiElement(done)('done')
-    PsiElement(\n)('\n')
-    PsiElement(\n)('\n')
-    PsiElement(for)('for')
-    PsiWhiteSpace(' ')
-    PsiElement(word)('i')
-    PsiWhiteSpace(' ')
-    PsiElement(word)('in')
-  PsiElement(DUMMY_BLOCK)
-    PsiWhiteSpace(' ')
-    PsiElement({)('{')
-    PsiElement(word)('1..5')
-    PsiElement(})('}')
-    PsiElement(\n)('\n')
-    PsiElement(do)('do')
     PsiElement(\n)('\n')
     PsiWhiteSpace(' ')
     PsiWhiteSpace(' ')
@@ -165,24 +177,24 @@ BASH_FILE
     PsiElement(string_begin)('"')
     PsiElement(string_content)('Welcome ')
     PsiElement(variable)('$i')
-  PsiElement(DUMMY_BLOCK)
     PsiElement(string_content)(' times')
     PsiElement(string_end)('"')
     PsiElement(\n)('\n')
     PsiElement(done)('done')
     PsiElement(\n)('\n')
+  PsiElement(DUMMY_BLOCK)
     PsiElement(\n)('\n')
     PsiElement(word)('echo')
     PsiWhiteSpace(' ')
     PsiElement(string_begin)('"')
     PsiElement(string_content)('Bash version ')
     PsiElement($)('$')
-  PsiElement(DUMMY_BLOCK)
     PsiElement({)('{')
     PsiElement(word)('BASH_VERSION')
     PsiElement(})('}')
     PsiElement(string_content)('...')
     PsiElement(string_end)('"')
+  PsiElement(DUMMY_BLOCK)
     PsiElement(\n)('\n')
     PsiElement(for)('for')
     PsiWhiteSpace(' ')
@@ -191,12 +203,12 @@ BASH_FILE
     PsiElement(word)('in')
     PsiWhiteSpace(' ')
     PsiElement({)('{')
-  PsiElement(DUMMY_BLOCK)
     PsiElement(word)('0..10..2')
     PsiElement(})('}')
     PsiElement(\n)('\n')
     PsiElement(do)('do')
     PsiElement(\n)('\n')
+  PsiElement(DUMMY_BLOCK)
     PsiWhiteSpace(' ')
     PsiWhiteSpace(' ')
     PsiWhiteSpace(' ')
@@ -208,12 +220,12 @@ BASH_FILE
     PsiElement(string_content)('Welcome ')
     PsiElement(variable)('$i')
     PsiElement(string_content)(' times')
-  PsiElement(DUMMY_BLOCK)
     PsiElement(string_end)('"')
     PsiElement(\n)('\n')
     PsiElement(done)('done')
     PsiElement(\n)('\n')
     PsiElement(\n)('\n')
+  PsiElement(DUMMY_BLOCK)
     PsiElement(for)('for')
     PsiWhiteSpace(' ')
     PsiElement(word)('i')
@@ -222,7 +234,6 @@ BASH_FILE
     PsiWhiteSpace(' ')
     PsiElement($)('$')
     PsiElement(()('(')
-  PsiElement(DUMMY_BLOCK)
     PsiElement(word)('seq')
     PsiWhiteSpace(' ')
     PsiElement(int)('1')
@@ -231,6 +242,7 @@ BASH_FILE
     PsiWhiteSpace(' ')
     PsiElement(int)('20')
     PsiElement())(')')
+  PsiElement(DUMMY_BLOCK)
     PsiElement(\n)('\n')
     PsiElement(do)('do')
     PsiElement(\n)('\n')
@@ -240,9 +252,9 @@ BASH_FILE
     PsiElement(word)('echo')
     PsiWhiteSpace(' ')
     PsiElement(string_begin)('"')
-  PsiElement(string_content)('Welcome ')
-  PsiElement(variable)('$i')
-  PsiElement(string_content)(' times')
-  PsiElement(string_end)('"')
-  PsiElement(\n)('\n')
+    PsiElement(string_content)('Welcome ')
+    PsiElement(variable)('$i')
+    PsiElement(string_content)(' times')
+    PsiElement(string_end)('"')
+    PsiElement(\n)('\n')
   PsiElement(done)('done')

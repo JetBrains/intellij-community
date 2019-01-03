@@ -8,7 +8,19 @@ import com.intellij.psi.PsiElement;
 public interface BashLiteralExpression extends BashExpression {
 
   @Nullable
+  BashArithmeticExpansion getArithmeticExpansion();
+
+  @Nullable
+  BashShellParameterExpansion getShellParameterExpansion();
+
+  @Nullable
   BashString getString();
+
+  @Nullable
+  BashSubshellCommand getSubshellCommand();
+
+  @Nullable
+  PsiElement getDollar();
 
   @Nullable
   PsiElement getAssignmentWord();
