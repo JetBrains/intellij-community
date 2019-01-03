@@ -215,6 +215,7 @@ public class JavaCompletionUtil {
 
       @Override
       public <T> T getHint(@NotNull Key<T> hintKey) {
+        //noinspection unchecked
         return hintKey == NameHint.KEY || hintKey == ElementClassHint.KEY ? (T)this : null;
       }
     }
@@ -835,13 +836,10 @@ public class JavaCompletionUtil {
     }
 
     manager.commitDocument(document);
-    final PsiReference ref = file.findReferenceAt(offset);
+    PsiReference ref = file.findReferenceAt(offset);
     if (ref != null) {
-      PsiElement element = ref.getElement();
-      if (element != null) {
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-      }
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref.getElement());
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
     }
   }
 
