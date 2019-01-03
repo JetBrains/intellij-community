@@ -26,9 +26,9 @@ public class BashPipelineCommandImpl extends BashCommandImpl implements BashPipe
   }
 
   @Override
-  @NotNull
+  @Nullable
   public BashPipeline getPipeline() {
-    return findNotNullChildByClass(BashPipeline.class);
+    return findChildByClass(BashPipeline.class);
   }
 
   @Override

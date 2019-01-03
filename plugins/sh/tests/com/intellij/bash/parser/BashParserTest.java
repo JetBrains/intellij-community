@@ -25,4 +25,5 @@ public class BashParserTest extends ParsingTestCase {
   public void testConditional() { doTest(true); }
   public void testBacktick(){ doTest(true); }
   public void testFunction(){ doTest(true); }
+  public void testTrap()    { doTest(true); }
 }

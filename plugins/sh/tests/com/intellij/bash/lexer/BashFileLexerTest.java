@@ -29,5 +29,8 @@ public class BashFileLexerTest extends LexerTestCase {
   public void testFor()         { doFileTest("sh"); }
   public void testIf()          { doFileTest("sh"); }
   public void testHeredoc()     { doFileTest("sh"); }
+  public void testTrap()        { doFileTest("sh"); }
+  public void testTrap2()       { doFileTest("sh"); }
+  public void testLet()         { doFileTest("sh"); }
   public void testBinaryData()  { doFileTest("bash"); }
 }

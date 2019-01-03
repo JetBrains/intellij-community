@@ -234,6 +234,10 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitTrapCommand(@NotNull BashTrapCommand o) {
+    visitCommand(o);
+  }
+
   public void visitUnaryExpression(@NotNull BashUnaryExpression o) {
     visitExpression(o);
   }

@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface BashPipelineCommand extends BashCommand {
 
-  @NotNull
+  @Nullable
   BashPipeline getPipeline();
 
   @Nullable

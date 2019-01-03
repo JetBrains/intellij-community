@@ -230,11 +230,14 @@ commands_list ::= pipeline_command (
 pipeline_command ::=  '!'? pipeline
                     | timespec '!'? pipeline
                     | '!' timespec pipeline
+                    | trap_command
 
 pipeline ::= command ('|' newlines command)* {pin(".*")=1}
 
 time_opt ::= '-p'
 timespec ::= time time_opt?
+
+trap_command ::= trap literal*
 
 expression ::=
     comma_expression

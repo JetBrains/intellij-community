@@ -29,7 +29,6 @@ public interface BashTokenTypes extends BashTypes {
   IElementType IN = new BashTokenType("in");
 
   // something new, bash 4?
-  IElementType TRAP = new BashTokenType("trap");
   IElementType LET = new BashTokenType("let");
 
   // arithmetic expressions
