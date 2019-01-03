@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -26,6 +25,7 @@ import com.intellij.refactoring.rename.naming.AutomaticVariableRenamer;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NonNls;
@@ -335,7 +335,6 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     final PsiTypeParameterListOwner owner = typeParameter.getOwner();
     if (owner instanceof PsiClass) {
       final PsiClass ownerClass = ((PsiClass)owner);
-      final LocalSearchScope derivedScope = new LocalSearchScope(inheritingClass);
       final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(ownerClass, inheritingClass, PsiSubstitutor.EMPTY);
       if (substitutor == null) return;
       ownerClass.accept(new JavaRecursiveElementVisitor() {
@@ -378,15 +377,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
   private void addArgumentParameterLink(PsiElement arg, PsiExpressionList actualArgsList, PsiMethod method) {
     PsiParameter[] params = method.getParameterList().getParameters();
-    PsiExpression[] actualArgs = actualArgsList.getExpressions();
-    int argIndex = -1;
-    for (int i = 0; i < actualArgs.length; i++) {
-      PsiExpression actualArg = actualArgs[i];
-      if (actualArg.equals(arg)) {
-        argIndex = i;
-        break;
-      }
-    }
+    int argIndex = ArrayUtil.indexOf(actualArgsList.getExpressions(), arg);
 
     if (argIndex >= 0 && argIndex < params.length) {
       addLink(params[argIndex], arg);

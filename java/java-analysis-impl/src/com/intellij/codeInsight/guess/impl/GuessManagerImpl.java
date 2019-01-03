@@ -35,6 +35,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -262,15 +263,7 @@ public class GuessManagerImpl extends GuessManager {
         if (BitUtil.isSet(flags, CHECK_DOWN)) {
           if (ref.getParent() instanceof PsiExpressionList && ref.getParent().getParent() instanceof PsiMethodCallExpression) { //TODO : new
             PsiExpressionList list = (PsiExpressionList)ref.getParent();
-            PsiExpression[] args = list.getExpressions();
-            int argIndex = -1;
-            for (int j = 0; j < args.length; j++) {
-              PsiExpression arg = args[j];
-              if (arg.equals(ref)) {
-                argIndex = j;
-                break;
-              }
-            }
+            int argIndex = ArrayUtil.indexOf(list.getExpressions(), ref);
 
             PsiMethodCallExpression methodCall = (PsiMethodCallExpression)list.getParent();
             PsiMethod method = (PsiMethod)methodCall.getMethodExpression().resolve();
