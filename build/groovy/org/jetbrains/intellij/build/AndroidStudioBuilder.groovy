@@ -34,18 +34,9 @@ class AndroidStudioBuilder {
     BuildTasks.create(buildContext).compileProjectAndTests(["jps-builders"])
   }
 
-  void buildDistJars() {
-    BuildTasks.create(buildContext).buildDistributions()
-    layoutCoreArtifacts()
-  }
-
   void buildDistributions() {
     def tasks = BuildTasks.create(buildContext)
     tasks.buildDistributions()
     tasks.buildUpdaterJar()
-  }
-
-  void layoutCoreArtifacts() {
-    new IntelliJCoreArtifactsBuilder(buildContext).layoutIntelliJCore()
   }
 }
