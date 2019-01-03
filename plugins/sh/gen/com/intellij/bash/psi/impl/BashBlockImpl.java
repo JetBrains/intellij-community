@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashBlockImpl extends BashCompositeElementImpl implements BashBlock {
+public class BashBlockImpl extends BashCommandImpl implements BashBlock {
 
   public BashBlockImpl(ASTNode node) {
     super(node);
@@ -32,9 +32,9 @@ public class BashBlockImpl extends BashCompositeElementImpl implements BashBlock
   }
 
   @Override
-  @Nullable
+  @NotNull
   public PsiElement getLeftCurly() {
-    return findChildByType(LEFT_CURLY);
+    return findNotNullChildByType(LEFT_CURLY);
   }
 
   @Override

@@ -8,7 +8,7 @@ BASH_FILE
             PsiElement(()('(')
             PsiElement())(')')
             PsiWhiteSpace(' ')
-            GROUP_COMMAND
+            BLOCK
               PsiElement({)('{')
               COMPOUND_LIST
                 PsiElement(\n)('\n')
@@ -105,7 +105,7 @@ BASH_FILE
             PsiElement(()('(')
             PsiElement())(')')
             PsiWhiteSpace(' ')
-            GROUP_COMMAND
+            BLOCK
               PsiElement({)('{')
               COMPOUND_LIST
                 PsiElement(\n)('\n')
@@ -200,7 +200,7 @@ BASH_FILE
             PsiWhiteSpace(' ')
             PsiElement(word)('wait_file')
             PsiWhiteSpace(' ')
-            GROUP_COMMAND
+            BLOCK
               PsiElement({)('{')
               COMPOUND_LIST
                 PsiElement(\n)('\n')
@@ -300,7 +300,7 @@ BASH_FILE
             PsiWhiteSpace(' ')
             PsiElement())(')')
             PsiWhiteSpace(' ')
-            GROUP_COMMAND
+            BLOCK
               PsiElement({)('{')
               PsiWhiteSpace(' ')
               COMPOUND_LIST

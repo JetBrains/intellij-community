@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 public interface BashFunctionDef extends BashCompositeElement {
 
   @Nullable
-  BashGroupCommand getGroupCommand();
+  BashBlock getBlock();
 
   @Nullable
   PsiElement getLeftParen();

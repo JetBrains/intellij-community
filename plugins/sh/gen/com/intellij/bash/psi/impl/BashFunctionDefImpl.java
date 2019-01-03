@@ -27,8 +27,8 @@ public class BashFunctionDefImpl extends BashCompositeElementImpl implements Bas
 
   @Override
   @Nullable
-  public BashGroupCommand getGroupCommand() {
-    return findChildByClass(BashGroupCommand.class);
+  public BashBlock getBlock() {
+    return findChildByClass(BashBlock.class);
   }
 
   @Override

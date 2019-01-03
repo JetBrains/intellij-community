@@ -47,7 +47,7 @@ public class BashVisitor extends PsiElementVisitor {
   }
 
   public void visitBlock(@NotNull BashBlock o) {
-    visitCompositeElement(o);
+    visitCommand(o);
   }
 
   public void visitCaseClause(@NotNull BashCaseClause o) {
@@ -112,10 +112,6 @@ public class BashVisitor extends PsiElementVisitor {
 
   public void visitFunctionDef(@NotNull BashFunctionDef o) {
     visitCompositeElement(o);
-  }
-
-  public void visitGroupCommand(@NotNull BashGroupCommand o) {
-    visitCommand(o);
   }
 
   public void visitHeredoc(@NotNull BashHeredoc o) {

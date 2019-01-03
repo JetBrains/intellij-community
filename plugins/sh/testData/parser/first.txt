@@ -228,7 +228,7 @@ BASH_FILE
             PsiWhiteSpace(' ')
             PsiElement(word)('installJDK')
             PsiWhiteSpace(' ')
-            GROUP_COMMAND
+            BLOCK
               PsiElement({)('{')
               COMPOUND_LIST
                 PsiElement(\n)('\n')
