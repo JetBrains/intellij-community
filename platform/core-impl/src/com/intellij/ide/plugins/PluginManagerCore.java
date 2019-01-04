@@ -634,32 +634,28 @@ public class PluginManagerCore {
     }));
   }
 
-  // LoadingContext must be not null in all cases, the only exception - core environment,
-  // it is important because affects string interning
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptorFromDir(@NotNull File file,
                                                                 @NotNull String pathName,
                                                                 @Nullable File pluginPath,
-                                                                @Nullable LoadingContext loadingContext,
-                                                                boolean bundled,
-                                                                boolean essential) {
+                                                                @NotNull LoadingContext loadingContext) {
     File descriptorFile = new File(file, META_INF + pathName);
     if (!descriptorFile.exists()) {
       return null;
     }
 
     try {
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), loadingContext.isBundled);
       descriptor.loadFromFile(descriptorFile, loadingContext.getStringInterner());
       return descriptor;
     }
     catch (XmlSerializationException | JDOMException | IOException e) {
-      if (essential) ExceptionUtil.rethrow(e);
+      if (loadingContext.isEssential) ExceptionUtil.rethrow(e);
       getLogger().warn("Cannot load " + descriptorFile, e);
       prepareLoadingPluginsErrorMessage(Collections.singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
     }
     catch (Throwable e) {
-      if (essential) ExceptionUtil.rethrow(e);
+      if (loadingContext.isEssential) ExceptionUtil.rethrow(e);
       getLogger().warn("Cannot load " + descriptorFile, e);
     }
     return null;
@@ -767,7 +763,7 @@ public class PluginManagerCore {
 
     boolean isDirectory = file.isDirectory();
     if (isDirectory) {
-      descriptor = loadDescriptorFromDir(file, pathName, null, context, context.isBundled, context.isEssential);
+      descriptor = loadDescriptorFromDir(file, pathName, null, context);
       if (descriptor == null) {
         File libDir = new File(file, "lib");
         // don't check libDir.isDirectory() because no need - better to reduce fs calls
@@ -781,7 +777,7 @@ public class PluginManagerCore {
         List<File> pluginJarFiles = null;
         for (File f : files) {
           if (f.isDirectory()) {
-            IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromDir(f, pathName, file, context, context.isBundled, context.isEssential);
+            IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromDir(f, pathName, file, context);
             if (descriptor1 != null) {
               if (descriptor != null) {
                 getLogger().info("Cannot load " + file + " because two or more plugin.xml's detected");
@@ -1567,7 +1563,9 @@ public class PluginManagerCore {
   public static void registerExtensionPointAndExtensions(@NotNull File pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
     IdeaPluginDescriptorImpl descriptor;
     if (pluginRoot.isDirectory()) {
-      descriptor = loadDescriptorFromDir(pluginRoot, fileName, null, null, true, true);
+      try (LoadingContext context = new LoadingContext(null, true, true)) {
+        descriptor = loadDescriptorFromDir(pluginRoot, fileName, null, context);
+      }
     }
     else {
       descriptor = loadDescriptorFromJar(pluginRoot, fileName, true);
