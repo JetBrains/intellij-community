@@ -58,7 +58,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private final MessageBusConnection myConnection;
 
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<>();
-  private final boolean myDoLogCachesUpdate;
+  private final boolean LOG_CACHES_UPDATE = ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode();
   private Disposable myRootPointersDisposable = Disposer.newDisposable(); // accessed in EDT
 
   public ProjectRootManagerComponent(Project project, StartupManager startupManager) {
@@ -101,8 +101,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
         myFileTypesChanged.levelDown();
       }
     };
-
-    myDoLogCachesUpdate = ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   @Override
@@ -145,7 +143,9 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       return;
     }
 
-    if (myDoLogCachesUpdate) LOG.debug("refresh");
+    if (LOG_CACHES_UPDATE || LOG.isDebugEnabled()) {
+      LOG.debug("refresh");
+    }
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
     if (task != null) {
@@ -255,8 +255,12 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   protected void doSynchronizeRoots() {
     if (!myStartupActivityPerformed) return;
 
-    if (myDoLogCachesUpdate || LOG.isDebugEnabled()) LOG.debug(new Throwable("sync roots"));
-    else if (!ApplicationManager.getApplication().isUnitTestMode()) LOG.info("project roots have changed");
+    if (LOG_CACHES_UPDATE || LOG.isDebugEnabled()) {
+      LOG.debug(new Throwable("sync roots"));
+    }
+    else if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.info("project roots have changed");
+    }
 
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
@@ -329,13 +333,17 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
       if (myInsideRefresh == 0) {
         beforeRootsChange(false);
-        if (myDoLogCachesUpdate) LOG.debug(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
+        if (LOG_CACHES_UPDATE || LOG.isDebugEnabled()) {
+          LOG.debug(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
+        }
       }
       else if (!myPointerChangesDetected) {
         //this is the first pointer changing validity
         myPointerChangesDetected = true;
         myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, false));
-        if (myDoLogCachesUpdate) LOG.debug(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
+        if (LOG_CACHES_UPDATE || LOG.isDebugEnabled()) {
+          LOG.debug(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl() : ""));
+        }
       }
     }
 
