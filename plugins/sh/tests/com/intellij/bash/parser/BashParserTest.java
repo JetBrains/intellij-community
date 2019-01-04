@@ -28,4 +28,5 @@ public class BashParserTest extends ParsingTestCase {
   public void testFunction()      { doTest(true); }
   public void testTrap()          { doTest(true); }
   public void testMacports()      { doTest(true); }
+  public void testParams()        { doTest(true); }
 }

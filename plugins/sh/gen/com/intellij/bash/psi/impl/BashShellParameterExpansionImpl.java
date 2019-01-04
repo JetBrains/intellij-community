@@ -50,33 +50,15 @@ public class BashShellParameterExpansionImpl extends BashCompositeElementImpl im
   }
 
   @Override
-  @Nullable
-  public PsiElement getArithMinus() {
-    return findChildByType(ARITH_MINUS);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getArithPlus() {
-    return findChildByType(ARITH_PLUS);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getColon() {
-    return findChildByType(COLON);
-  }
-
-  @Override
   @NotNull
   public PsiElement getLeftCurly() {
     return findNotNullChildByType(LEFT_CURLY);
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getRightCurly() {
-    return findNotNullChildByType(RIGHT_CURLY);
+    return findChildByType(RIGHT_CURLY);
   }
 
 }
