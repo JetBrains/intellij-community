@@ -666,7 +666,7 @@ public class PluginManagerCore {
   }
 
   private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file, @NotNull String pathName, @SuppressWarnings("SameParameterValue") boolean bundled) {
-    try (LoadingContext context = new LoadingContext(null)) {
+    try (LoadingContext context = new LoadingContext(null, bundled, true)) {
       return loadDescriptorFromJar(file, pathName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context, null, bundled, true);
     }
   }
@@ -712,8 +712,8 @@ public class PluginManagerCore {
 
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull File file, @NotNull String fileName, boolean bundled, boolean essential) {
-    try (LoadingContext context = new LoadingContext(null)) {
-      return loadDescriptor(file, fileName, context, bundled, essential);
+    try (LoadingContext context = new LoadingContext(null, bundled, essential)) {
+      return loadDescriptor(file, fileName, context);
     }
   }
 
@@ -724,8 +724,13 @@ public class PluginManagerCore {
     @Nullable
     private final LoadDescriptorsContext myParentContext;
 
-    private LoadingContext(@Nullable LoadDescriptorsContext parentContext) {
+    boolean isBundled;
+    boolean isEssential;
+
+    LoadingContext(@Nullable LoadDescriptorsContext parentContext, boolean isBundled, boolean isEssential) {
       myParentContext = parentContext;
+      this.isBundled = isBundled;
+      this.isEssential = isEssential;
     }
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
@@ -757,14 +762,12 @@ public class PluginManagerCore {
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull File file,
                                                          @NotNull String pathName,
-                                                         @NotNull LoadingContext context,
-                                                         boolean bundled,
-                                                         boolean essential) {
+                                                         @NotNull LoadingContext context) {
     IdeaPluginDescriptorImpl descriptor = null;
 
     boolean isDirectory = file.isDirectory();
     if (isDirectory) {
-      descriptor = loadDescriptorFromDir(file, pathName, null, context, bundled, essential);
+      descriptor = loadDescriptorFromDir(file, pathName, null, context, context.isBundled, context.isEssential);
       if (descriptor == null) {
         File libDir = new File(file, "lib");
         // don't check libDir.isDirectory() because no need - better to reduce fs calls
@@ -778,7 +781,7 @@ public class PluginManagerCore {
         List<File> pluginJarFiles = null;
         for (File f : files) {
           if (f.isDirectory()) {
-            IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromDir(f, pathName, file, context, bundled, essential);
+            IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromDir(f, pathName, file, context, context.isBundled, context.isEssential);
             if (descriptor1 != null) {
               if (descriptor != null) {
                 getLogger().info("Cannot load " + file + " because two or more plugin.xml's detected");
@@ -803,7 +806,7 @@ public class PluginManagerCore {
         if (pluginJarFiles != null) {
           PluginXmlPathResolver pathResolver = new PluginXmlPathResolver(files);
           for (File jarFile : pluginJarFiles) {
-            descriptor = loadDescriptorFromJar(jarFile, pathName, pathResolver, context, file, bundled, essential);
+            descriptor = loadDescriptorFromJar(jarFile, pathName, pathResolver, context, file, context.isBundled, context.isEssential);
             if (descriptor != null) {
               break;
             }
@@ -812,7 +815,7 @@ public class PluginManagerCore {
       }
     }
     else if (StringUtilRt.endsWithIgnoreCase(file.getPath(), ".jar")) {
-      descriptor = loadDescriptorFromJar(file, pathName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context, null, bundled, essential);
+      descriptor = loadDescriptorFromJar(file, pathName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context, null, context.isBundled, context.isEssential);
     }
 
     if (descriptor == null) {
@@ -828,10 +831,10 @@ public class PluginManagerCore {
     resolveOptionalDescriptors(pathName, descriptor, (@SystemIndependent String optPathName) -> {
       IdeaPluginDescriptorImpl optionalDescriptor = null;
       if (context.myLastZipFileContainingDescriptor != null) { // try last file that had the descriptor that worked
-        optionalDescriptor = loadDescriptor(context.myLastZipFileContainingDescriptor, optPathName, context, bundled, essential);
+        optionalDescriptor = loadDescriptor(context.myLastZipFileContainingDescriptor, optPathName, context);
       }
       if (optionalDescriptor == null) {
-        optionalDescriptor = loadDescriptor(file, optPathName, context, bundled, essential);
+        optionalDescriptor = loadDescriptor(file, optPathName, context);
       }
       if (optionalDescriptor == null && (isDirectory || resolveDescriptorsInResources())) {
         // JDOMXIncluder can find included descriptor files via classloading in URLUtil.openResourceStream
@@ -839,7 +842,7 @@ public class PluginManagerCore {
         // Note that this code is meant for IDE development / testing purposes
         URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + optPathName);
         if (resource != null) {
-          optionalDescriptor = loadDescriptorFromResource(resource, optPathName, bundled, false);
+          optionalDescriptor = loadDescriptorFromResource(resource, optPathName, context.isBundled, false);
         }
       }
       return optionalDescriptor;
