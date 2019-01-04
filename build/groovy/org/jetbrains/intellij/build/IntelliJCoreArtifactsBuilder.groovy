@@ -71,6 +71,8 @@ class IntelliJCoreArtifactsBuilder {
       ant.mkdir(dir: coreArtifactDir)
 
       List<String> analysisModules = ANALYSIS_API_MODULES + ANALYSIS_IMPL_MODULES
+      List<String> versionedLibs = VERSIONED_LIBRARIES
+      List<String> unversionedLibs = UNVERSIONED_LIBRARIES
       new LayoutBuilder(buildContext, false).layout(coreArtifactDir) {
         jar("intellij-core.jar") {
           module("intellij.platform.util.rt")
@@ -81,13 +83,11 @@ class IntelliJCoreArtifactsBuilder {
           module("intellij.java.psi")
           module("intellij.java.psi.impl")
         }
-
         jar("intellij-core-analysis.jar") {
           analysisModules.each { module it }
         }
-
-        VERSIONED_LIBRARIES.each { projectLibrary(it) }
-        UNVERSIONED_LIBRARIES.each { projectLibrary(it, true) }
+        versionedLibs.each { projectLibrary(it) }
+        unversionedLibs.each { projectLibrary(it, true) }
       }
       ant.move(file: "$coreArtifactDir/annotations-java5.jar", tofile: "$coreArtifactDir/annotations.jar")
       buildContext.notifyArtifactBuilt(coreArtifactDir)
