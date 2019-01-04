@@ -28,25 +28,32 @@ class ImmutableElement extends Element {
     myAttributes = internAttributes(origin, interner);
 
     List<Content> origContent = origin.getContent();
-    List<Content> newContent = new ArrayList<Content>(origContent.size());
-    for (Content o : origContent) {
-      if (o instanceof Element) {
-        Element newElement = interner.internElement((Element)o);
-        newContent.add(newElement);
-      }
-      else if (o instanceof Text) {
-        Text newText = interner.internText((Text)o);
-        newContent.add(newText);
-      }
-      else if (o instanceof Comment) {
-        // ignore
-      }
-      else {
-        throw new RuntimeException(o.toString());
-      }
+    if (origContent.isEmpty()) {
+      myContent = EMPTY_CONTENT;
     }
+    else {
+      Content[] newContent = new Content[origContent.size()];
+      int index = 0;
+      for (Content o : origContent) {
+        if (o instanceof Element) {
+          Element newElement = interner.internElement((Element)o);
+          newContent[index++]= newElement;
+        }
+        else if (o instanceof Text) {
+          Text newText = interner.internText((Text)o);
+          newContent[index++]= newText;
+        }
+        else if (o instanceof Comment) {
+          // ignore
+        }
+        else {
+          throw new RuntimeException(o.toString());
+        }
+      }
 
-    myContent = newContent.isEmpty() ? EMPTY_CONTENT : newContent.toArray(EMPTY_CONTENT); // ContentList is final, can't subclass
+      // ContentList is final, can't subclass
+      myContent = index == newContent.length ? newContent : Arrays.copyOf(newContent, index);
+    }
 
     this.namespace = origin.getNamespace();
     for (Namespace addns : origin.getAdditionalNamespaces()) {
