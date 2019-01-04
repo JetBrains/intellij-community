@@ -3,9 +3,6 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.VetoSavingCommittingDocumentsAdapter</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.lifecycle.PeriodicalTasksCloser</implementation-class>
-    </component>
   </application-components>
   <project-components>
     <component>
