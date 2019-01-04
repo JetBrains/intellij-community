@@ -71,7 +71,7 @@ public class RedundantSuppressTest extends InspectionTestCase {
   }
 
   public void testModuleInfo() {
-    doTest("redundantSuppress/" + getTestName(true), myWrapper,"java 1.5",false);
+    doTest("redundantSuppress/" + getTestName(true), myWrapper, false);
   }
 
   public void testDefaultFile() {
@@ -83,7 +83,7 @@ public class RedundantSuppressTest extends InspectionTestCase {
   }
 
   public void testAnnotator() {
-    doTest("redundantSuppress/" + getTestName(true), myWrapper,"java 1.5",false);
+    doTest("redundantSuppress/" + getTestName(true), myWrapper, false);
   }
 
   public void testIgnoreUnused() {
@@ -112,6 +112,6 @@ public class RedundantSuppressTest extends InspectionTestCase {
   }
 
   private void doTest() {
-    doTest("redundantSuppress/" + getTestName(true), myWrapper,"java 1.5",true);
+    doTest("redundantSuppress/" + getTestName(true), myWrapper, true);
   }
 }

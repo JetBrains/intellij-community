@@ -4,16 +4,31 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class DeprecationInspectionTest extends InspectionTestCase {
+
+  private final DefaultLightProjectDescriptor myProjectDescriptor = new DefaultLightProjectDescriptor() {
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      super.configureModule(module, model, contentEntry);
+      model.getModuleExtension(JavaModuleExternalPaths.class)
+        .setExternalAnnotationUrls(new String[]{VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(getTestDataPath() + "/deprecation/" + getTestName(true) + "/extAnnotations"))});
+    }
+  };
+
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
@@ -69,20 +84,13 @@ public class DeprecationInspectionTest extends InspectionTestCase {
     doTest("deprecation/" + getTestName(true), tool);
   }
 
-  /**
-   * Sets up external deprecation annotations
-   * for the current test module.
-   */
-  private void configureExternalAnnotationsUrls(String... urls) {
-    ModuleRootModificationUtil.updateModel(myModule, (root) -> {
-      JavaModuleExternalPaths extension = root.getModuleExtension(JavaModuleExternalPaths.class);
-      extension.setExternalAnnotationUrls(urls);
-    });
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return myProjectDescriptor;
   }
 
   public void testExternallyDeprecatedDefaultConstructor() {
-    String url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(getTestDataPath()) + "/deprecation/externallyDeprecatedDefaultConstructor/extAnnotations");
-    configureExternalAnnotationsUrls(url);
     doTest();
   }
 }
