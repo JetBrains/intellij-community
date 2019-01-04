@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.impl.ClassVersionChecker
 import org.jetbrains.intellij.build.impl.LayoutBuilder
 
 /**
@@ -91,6 +92,8 @@ class IntelliJCoreArtifactsBuilder {
       }
       ant.move(file: "$coreArtifactDir/annotations-java5.jar", tofile: "$coreArtifactDir/annotations.jar")
       buildContext.notifyArtifactBuilt(coreArtifactDir)
+
+      new ClassVersionChecker(["": 52]).checkVersions(buildContext, new File(coreArtifactDir))
 
       def intellijCoreZip = "${buildContext.paths.artifacts}/intellij-core-${buildContext.buildNumber}.zip"
       ant.zip(destfile: intellijCoreZip) {
