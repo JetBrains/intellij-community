@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.CommonBundle;
@@ -59,7 +59,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class JarRepositoryManager {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.utils.library.RepositoryAttachHandler");
@@ -294,8 +293,8 @@ public class JarRepositoryManager {
   }
 
   @NotNull
-  public static Promise<Collection<String>> getAvailableVersions(Project project, RepositoryLibraryDescription libraryDescription) {
-    final List<RemoteRepositoryDescription> repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
+  public static Promise<Collection<String>> getAvailableVersions(@NotNull Project project, @NotNull RepositoryLibraryDescription libraryDescription) {
+    List<RemoteRepositoryDescription> repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
     return submitBackgroundJob(new VersionResolveJob(libraryDescription, repos));
   }
 
@@ -309,7 +308,7 @@ public class JarRepositoryManager {
       }
 
       @Override
-      protected ArtifactDependencyNode perform(ProgressIndicator progress, ArtifactRepositoryManager manager) throws Exception {
+      protected ArtifactDependencyNode perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
         return manager.collectDependencies(description.getGroupId(), description.getArtifactId(), version);
       }
 
@@ -419,7 +418,7 @@ public class JarRepositoryManager {
   }
 
   @Nullable
-  private static <T> T submitSyncJob(Function<? super ProgressIndicator, ? extends T> job) {
+  private static <T> T submitSyncJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
     try {
       ourTasksInProgress.incrementAndGet();
       ProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.defaultModalityState());
@@ -448,7 +447,8 @@ public class JarRepositoryManager {
     return result.get();
   }
 
-  private static <T> Promise<T> submitBackgroundJob(Function<? super ProgressIndicator, ? extends T> job) {
+  @NotNull
+  private static <T> Promise<T> submitBackgroundJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
     ModalityState startModality = ModalityState.defaultModalityState();
     AsyncPromise<T> promise = new AsyncPromise<>();
     JobExecutor.INSTANCE.submit(() -> {
@@ -458,7 +458,9 @@ public class JarRepositoryManager {
         T result = ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
         promise.setResult(result);
       }
-      catch (ProcessCanceledException ignored) { }
+      catch (ProcessCanceledException ignored) {
+        promise.cancel();
+      }
       catch (Throwable e) {
         LOG.info(e);
         promise.setError(e);
@@ -470,12 +472,15 @@ public class JarRepositoryManager {
     return promise;
   }
 
-  private static Collection<String> lookupVersionsImpl(String groupId, String artifactId, ArtifactRepositoryManager manager) throws Exception {
+  @NotNull
+  private static Collection<String> lookupVersionsImpl(String groupId, String artifactId, @NotNull ArtifactRepositoryManager manager) throws Exception {
     try {
-      final List<Version> result = manager.getAvailableVersions(groupId, artifactId, "[0,)", ArtifactKind.ARTIFACT);
-      return result.stream().sorted(Comparator.reverseOrder()).map(Version::toString).collect(
-        Collectors.toCollection(() -> new ArrayList<>(result.size()))
-      );
+      List<Version> versions = new ArrayList<>(manager.getAvailableVersions(groupId, artifactId, "[0,)", ArtifactKind.ARTIFACT));
+      ArrayList<String> strings = new ArrayList<>(versions.size());
+      for (int i = versions.size() - 1; i >= 0; i--) {
+        strings.add(versions.get(i).toString());
+      }
+      return strings;
     }
     catch (TransferCancelledException e) {
       throw new ProcessCanceledException(e);
@@ -528,7 +533,7 @@ public class JarRepositoryManager {
     }
 
     protected abstract String getProgressText();
-    protected abstract T perform(ProgressIndicator progress, ArtifactRepositoryManager manager) throws Exception;
+    protected abstract T perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception;
     protected abstract T getDefaultResult();
   }
 
@@ -600,7 +605,7 @@ public class JarRepositoryManager {
     }
 
     @Override
-    protected Collection<Artifact> perform(ProgressIndicator progress, ArtifactRepositoryManager manager) throws Exception {
+    protected Collection<Artifact> perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
       final String version = myDesc.getVersion();
       try {
         return manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), version, myKinds,
@@ -649,21 +654,22 @@ public class JarRepositoryManager {
 
   private static class VersionResolveJob extends AetherJob<Collection<String>> {
     @NotNull
-    private final RepositoryLibraryDescription myDesc;
+    private final RepositoryLibraryDescription myDescription;
 
     VersionResolveJob(@NotNull RepositoryLibraryDescription repositoryLibraryDescription, @NotNull List<RemoteRepositoryDescription> repositories) {
       super(repositories);
-      myDesc = repositoryLibraryDescription;
+
+      myDescription = repositoryLibraryDescription;
     }
 
     @Override
     protected String getProgressText() {
-      return "Loading " + myDesc.getDisplayName() + " versions";
+      return "Loading " + myDescription.getDisplayName() + " versions";
     }
 
     @Override
-    protected Collection<String> perform(ProgressIndicator progress, ArtifactRepositoryManager manager) throws Exception {
-      return lookupVersionsImpl(myDesc.getGroupId(), myDesc.getArtifactId(), manager);
+    protected Collection<String> perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
+      return lookupVersionsImpl(myDescription.getGroupId(), myDescription.getArtifactId(), manager);
     }
 
     @Override
