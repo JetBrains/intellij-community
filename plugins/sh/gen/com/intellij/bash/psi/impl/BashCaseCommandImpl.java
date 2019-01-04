@@ -56,6 +56,12 @@ public class BashCaseCommandImpl extends BashCommandImpl implements BashCaseComm
   }
 
   @Override
+  @Nullable
+  public PsiElement getFiledescriptor() {
+    return findChildByType(FILEDESCRIPTOR);
+  }
+
+  @Override
   @NotNull
   public PsiElement getCase() {
     return findNotNullChildByType(CASE);

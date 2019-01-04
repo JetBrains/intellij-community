@@ -165,10 +165,6 @@ public interface BashTokenTypes extends BashTypes {
   IElementType COND_OP_NOT = new BashTokenType("cond_op !");
   TokenSet conditionalOperators = TokenSet.create(COND_OP, OR_OR, AND_AND, BANG, COND_OP_EQ_EQ, COND_OP_REGEX, COND_OP_NOT);
 
-  //redirects
-
-  IElementType FILEDESCRIPTOR = new BashTokenType("&[0-9] filedescriptor");
-
   //Bash 4:
   IElementType REDIRECT_AMP_GREATER_GREATER = new BashTokenType("&>>");
   IElementType REDIRECT_AMP_GREATER = new BashTokenType("&>");

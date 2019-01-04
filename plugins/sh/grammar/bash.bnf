@@ -91,7 +91,8 @@ private file ::=
 private newlines ::= '\n'*
 private simple_list ::= (commands_list ['&' | ';' | newlines])*
 private word_list ::= w+
-private w ::= word | vars | string | num
+private w ::= word | vars | string | num | FILEDESCRIPTOR
+
 
 redirection ::=    '>' w
                 |  '<' w

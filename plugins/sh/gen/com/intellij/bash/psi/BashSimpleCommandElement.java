@@ -32,6 +32,9 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
   PsiElement getDollar();
 
   @Nullable
+  PsiElement getFiledescriptor();
+
+  @Nullable
   PsiElement getInt();
 
   @Nullable

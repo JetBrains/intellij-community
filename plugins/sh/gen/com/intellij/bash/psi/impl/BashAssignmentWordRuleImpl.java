@@ -63,6 +63,12 @@ public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl impleme
 
   @Override
   @Nullable
+  public PsiElement getFiledescriptor() {
+    return findChildByType(FILEDESCRIPTOR);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getAssignmentWord() {
     return findChildByType(ASSIGNMENT_WORD);
   }

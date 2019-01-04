@@ -22,6 +22,9 @@ public interface BashCaseCommand extends BashCommand {
   @Nullable
   PsiElement getDollar();
 
+  @Nullable
+  PsiElement getFiledescriptor();
+
   @NotNull
   PsiElement getCase();
 

@@ -23,6 +23,9 @@ public interface BashLiteralExpression extends BashExpression {
   PsiElement getDollar();
 
   @Nullable
+  PsiElement getFiledescriptor();
+
+  @Nullable
   PsiElement getAssignmentWord();
 
   @Nullable

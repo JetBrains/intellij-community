@@ -57,6 +57,12 @@ public class BashLiteralExpressionImpl extends BashExpressionImpl implements Bas
 
   @Override
   @Nullable
+  public PsiElement getFiledescriptor() {
+    return findChildByType(FILEDESCRIPTOR);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getAssignmentWord() {
     return findChildByType(ASSIGNMENT_WORD);
   }

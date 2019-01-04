@@ -2179,7 +2179,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | vars | string | num
+  // word | vars | string | num | FILEDESCRIPTOR
   static boolean w(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "w")) return false;
     boolean r;
@@ -2187,6 +2187,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = vars(b, l + 1);
     if (!r) r = string(b, l + 1);
     if (!r) r = num(b, l + 1);
+    if (!r) r = consumeToken(b, FILEDESCRIPTOR);
     return r;
   }
 

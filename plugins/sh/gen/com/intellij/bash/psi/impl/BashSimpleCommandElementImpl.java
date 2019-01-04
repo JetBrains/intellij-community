@@ -75,6 +75,12 @@ public class BashSimpleCommandElementImpl extends BashCompositeElementImpl imple
 
   @Override
   @Nullable
+  public PsiElement getFiledescriptor() {
+    return findChildByType(FILEDESCRIPTOR);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getInt() {
     return findChildByType(INT);
   }

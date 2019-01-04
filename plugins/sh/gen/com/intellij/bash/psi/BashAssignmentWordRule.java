@@ -26,6 +26,9 @@ public interface BashAssignmentWordRule extends BashCompositeElement {
   PsiElement getEq();
 
   @Nullable
+  PsiElement getFiledescriptor();
+
+  @Nullable
   PsiElement getAssignmentWord();
 
   @Nullable

@@ -11,3 +11,5 @@ curl -L https://github.com/macports/macports-base/releases/download/v$VER/$MACPO
 sudo installer -pkg $TMPDIR/$MACPORTS -target /
 sudo /opt/local/bin/port sync
 rm $TMPDIR/$MACPORTS
+
+MSG="$(alsactlrestore$CARD2>&1>/dev/null)"

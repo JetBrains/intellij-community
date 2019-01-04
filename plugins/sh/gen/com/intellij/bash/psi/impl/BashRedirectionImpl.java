@@ -63,6 +63,12 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
 
   @Override
   @Nullable
+  public PsiElement getFiledescriptor() {
+    return findChildByType(FILEDESCRIPTOR);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getGreaterThan() {
     return findChildByType(GREATER_THAN);
   }

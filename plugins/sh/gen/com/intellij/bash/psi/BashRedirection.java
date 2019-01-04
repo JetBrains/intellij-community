@@ -26,6 +26,9 @@ public interface BashRedirection extends BashCompositeElement {
   PsiElement getDollar();
 
   @Nullable
+  PsiElement getFiledescriptor();
+
+  @Nullable
   PsiElement getGreaterThan();
 
   @Nullable
