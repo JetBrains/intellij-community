@@ -347,6 +347,15 @@ class A {
     PsiTestUtil.checkStubsMatchText(file)
   }
 
+  void "test remove type argument list after space"() {
+    def file = myFixture.addFileToProject('a.java', 'class A { A <B>a; }')
+    WriteCommandAction.runWriteCommandAction(project) {
+      myFixture.findClass("A").fields[0].typeElement.innermostComponentReferenceElement.parameterList.delete()
+    }
+    PsiTestUtil.checkStubsMatchText(file)
+    PsiTestUtil.checkFileStructure(file)
+  }
+
   void "test add reference into broken extends list"() {
     def file = myFixture.addFileToProject('a.java', 'class A extends.ends Foo { int a; }')
     WriteCommandAction.runWriteCommandAction(project) {

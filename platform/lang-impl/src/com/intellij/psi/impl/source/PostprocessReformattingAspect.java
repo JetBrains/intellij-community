@@ -24,6 +24,7 @@ import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.pom.tree.events.TreeChangeEvent;
+import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -164,7 +165,9 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         for (final ASTNode node : changeSet.getChangedElements()) {
           final TreeChange treeChange = changeSet.getChangesByElement(node);
           for (final ASTNode affectedChild : treeChange.getAffectedChildren()) {
-            scheduleReparseIfNeeded(containingFile, affectedChild);
+            if (changeMightBreakPsiTextConsistency(treeChange, affectedChild)) {
+              containingFile.putUserData(REPARSE_PENDING, true);
+            }
 
             final ChangeInfo childChange = treeChange.getChangeByChild(affectedChild);
             switch (childChange.getChangeType()) {
@@ -191,14 +194,22 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         }
       }
 
-      private void scheduleReparseIfNeeded(PsiFile containingFile, ASTNode affectedChild) {
-        if (changeMightBreakPsiTextConsistency(affectedChild)) {
-          containingFile.putUserData(REPARSE_PENDING, true);
-        }
+      private boolean changeMightBreakPsiTextConsistency(TreeChange treeChange, ASTNode child) {
+        return TreeUtil.containsOuterLanguageElements(child) ||
+               isRightAfterErrorElement(child) ||
+               isBetweenWhitespaceAndEdge(child) && leavesEmptyRange(treeChange, child);
       }
 
-      private boolean changeMightBreakPsiTextConsistency(ASTNode node) {
-        return TreeUtil.containsOuterLanguageElements(node) || isRightAfterErrorElement(node);
+      private boolean leavesEmptyRange(TreeChange treeChange, ASTNode child) {
+        TreeElement newChild = ((ChangeInfoImpl)treeChange.getChangeByChild(child)).getNewChild();
+        return newChild == null || newChild.getTextLength() == 0;
+      }
+
+      private boolean isBetweenWhitespaceAndEdge(ASTNode deleted) {
+        ASTNode prev = deleted.getTreePrev();
+        ASTNode next = deleted.getTreeNext();
+        return next == null && prev instanceof PsiWhiteSpace ||
+               prev == null && next instanceof PsiWhiteSpace;
       }
 
       private boolean isRightAfterErrorElement(ASTNode _node) {
