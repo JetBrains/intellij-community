@@ -149,7 +149,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       return;
     }
 
-    if (LOG_CACHES_UPDATE) {
+    if (LOG_CACHES_UPDATE || LOG.isDebugEnabled()) {
       LOG.debug("refresh");
     }
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
@@ -369,7 +369,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
       if (myInsideRefresh == 0) {
         beforeRootsChange(false);
-        if (LOG_CACHES_UPDATE) {
+        if (LOG_CACHES_UPDATE || LOG.isDebugEnabled()) {
           LOG.debug(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
         }
       }
@@ -377,7 +377,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
         //this is the first pointer changing validity
         myPointerChangesDetected = true;
         myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, false));
-        if (LOG_CACHES_UPDATE) {
+        if (LOG_CACHES_UPDATE || LOG.isDebugEnabled()) {
           LOG.debug(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl() : ""));
         }
       }
