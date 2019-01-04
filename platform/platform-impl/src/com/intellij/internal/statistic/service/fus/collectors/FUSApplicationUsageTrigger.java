@@ -10,7 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 @State(name = "FUSApplicationUsageTrigger",
-  storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
+  storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
+)
 final public class FUSApplicationUsageTrigger extends AbstractUsageTrigger<ApplicationUsageTriggerCollector>
   implements PersistentStateComponent<AbstractUsageTrigger.State> {
 
