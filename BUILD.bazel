@@ -100,6 +100,7 @@ iml_project(
         "//tools/adt/idea/android-layout-inspector",
         "//tools/adt/idea/android-layout-inspector:android-layout-inspector-test",
         "//tools/adt/idea/android-plugin:intellij.android.plugin",
+        "//tools/adt/idea/android-runtime-pipeline:intellij.android.runtimePipeline",
         "//tools/adt/idea/android-test-framework:intellij.android.testFramework",
         "//tools/adt/idea/android-uitests:intellij.android.guiTests",
         "//tools/adt/idea/android:intellij.android.core",
