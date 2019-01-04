@@ -250,6 +250,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     PsiElement parent = position.getParent();
 
     if (new JavaKeywordCompletion(parameters, session).addWildcardExtendsSuper(result, position)) {
+      result.stopHere();
       return;
     }
 
