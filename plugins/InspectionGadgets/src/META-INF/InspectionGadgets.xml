@@ -875,8 +875,8 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.encapsulation.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.encapsulation.ProtectedInnerClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PublicField" bundle="com.siyeh.InspectionGadgetsBundle" key="public.field.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.encapsulation.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.encapsulation.PublicFieldInspection"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.encapsulation.issues" enabledByDefault="true"
+                     level="INFORMATION" implementationClass="com.siyeh.ig.encapsulation.PublicFieldInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PublicInnerClass" bundle="com.siyeh.InspectionGadgetsBundle" key="public.inner.class.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.encapsulation.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.encapsulation.PublicInnerClassInspection"/>
