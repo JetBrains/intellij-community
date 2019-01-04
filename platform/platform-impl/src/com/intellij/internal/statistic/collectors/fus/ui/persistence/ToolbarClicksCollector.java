@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.collectors.fus.ui.persistence;
 
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
-import com.intellij.internal.statistic.collectors.fus.ui.ToolbarClicksUsagesCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
@@ -25,11 +24,13 @@ import java.util.Map;
 @State(
   name = "ToolbarClicksCollector",
   storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
     @Storage(value = "statistics.toolbar.clicks.xml", roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
 public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarClicksCollector.ClicksState> {
+  private static final String GROUP_ID = "statistics.ui.toolbar.clicks";
+
   public final static class ClicksState {
     @Tag("counts")
     @MapAnnotation(surroundWithTag = false, keyAttributeName = "action", valueAttributeName = "count")
@@ -45,7 +46,6 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
 
   @Override
   public void loadState(@NotNull final ClicksState state) {
-    myState = state;
   }
 
   public static void record(@NotNull AnAction action, String place) {
@@ -74,14 +74,7 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
     ToolbarClicksCollector collector = getInstance();
     if (collector != null) {
       String key = ConvertUsagesUtil.escapeDescriptorName(actionId + "@" + place);
-      FeatureUsageLogger.INSTANCE.log(ToolbarClicksUsagesCollector.GROUP_ID, key, FUSUsageContext.OS_CONTEXT.getData());
-
-      ClicksState state = collector.getState();
-      if (state != null) {
-        final Integer count = state.myValues.get(key);
-        int value = count == null ? 1 : count + 1;
-        state.myValues.put(key, value);
-      }
+      FeatureUsageLogger.INSTANCE.log(GROUP_ID, key, FUSUsageContext.OS_CONTEXT.getData());
     }
   }
 
