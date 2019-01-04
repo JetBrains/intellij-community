@@ -38,6 +38,9 @@ public interface BashRedirection extends BashCompositeElement {
   PsiElement getRedirectGreaterBar();
 
   @Nullable
+  PsiElement getRedirectHereString();
+
+  @Nullable
   PsiElement getRedirectLessAmp();
 
   @Nullable

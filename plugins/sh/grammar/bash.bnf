@@ -100,7 +100,9 @@ redirection ::=    '>' w
                 |  '>>' w
                 |  num '>>' w
                 |  '<<' w
+                |  '<<<' w
                 |  num '<<' w
+                |  num '<<<' w
                 |  '<&' num
                 |  num '<&' num
                 |  '>&' num

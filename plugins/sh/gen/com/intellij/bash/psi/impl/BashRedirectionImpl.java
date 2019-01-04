@@ -87,6 +87,12 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
 
   @Override
   @Nullable
+  public PsiElement getRedirectHereString() {
+    return findChildByType(REDIRECT_HERE_STRING);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getRedirectLessAmp() {
     return findChildByType(REDIRECT_LESS_AMP);
   }
