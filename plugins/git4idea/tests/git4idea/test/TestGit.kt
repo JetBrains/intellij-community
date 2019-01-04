@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.test
 
 import com.intellij.openapi.diagnostic.Logger
@@ -28,6 +28,7 @@ class TestGitImpl : GitImpl() {
   @Volatile private var rebaseShouldFail: (GitRepository) -> Boolean = { false }
   @Volatile private var pushHandler: (GitRepository) -> GitCommandResult? = { null }
   @Volatile private var branchDeleteHandler: (GitRepository) -> GitCommandResult? = { null }
+  @Volatile private var checkoutNewBranchHandler: (GitRepository) -> GitCommandResult? = { null }
   @Volatile private var interactiveRebaseEditor: InteractiveRebaseEditor? = null
 
   class InteractiveRebaseEditor(val entriesEditor: ((String) -> String)?,
@@ -38,6 +39,10 @@ class TestGitImpl : GitImpl() {
                     vararg listeners: GitLineHandlerListener): GitCommandResult {
     pushListener?.invoke(repository)
     return pushHandler(repository) ?: super.push(repository, pushParams, *listeners)
+  }
+
+  override fun checkoutNewBranch(repository: GitRepository, branchName: String, listener: GitLineHandlerListener?): GitCommandResult {
+    return checkoutNewBranchHandler(repository) ?: super.checkoutNewBranch(repository, branchName, listener)
   }
 
   override fun branchDelete(repository: GitRepository,
@@ -123,6 +128,10 @@ class TestGitImpl : GitImpl() {
     pushHandler = handler
   }
 
+  fun onCheckoutNewBranch(handler: (GitRepository) -> GitCommandResult?) {
+    checkoutNewBranchHandler = handler
+  }
+
   fun onBranchDelete(handler: (GitRepository) -> GitCommandResult?) {
     branchDeleteHandler = handler
   }
@@ -134,6 +143,7 @@ class TestGitImpl : GitImpl() {
   fun reset() {
     rebaseShouldFail = { false }
     pushHandler = { null }
+    checkoutNewBranchHandler = { null }
     branchDeleteHandler = { null }
     interactiveRebaseEditor = null
     pushListener = null
