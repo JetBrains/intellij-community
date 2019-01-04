@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 @State(name = "FUSProjectUsageTrigger", storages = {
-  @Storage(value = StoragePathMacros.CACHE_FILE),
+  @Storage(value = StoragePathMacros.CACHE_FILE, deprecated = true),
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true),
 })
 final public class FUSProjectUsageTrigger extends AbstractUsageTrigger<ProjectUsageTriggerCollector> implements PersistentStateComponent<AbstractUsageTrigger.State> {
