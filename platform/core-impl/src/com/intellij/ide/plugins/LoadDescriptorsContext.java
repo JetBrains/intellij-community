@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.StringInterner;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ExecutorService;
@@ -13,7 +14,14 @@ final class LoadDescriptorsContext {
   private final PluginLoadProgressManager myPluginLoadProgressManager;
 
   // synchronization will ruin parallel loading, so, string pool is local per thread
-  private final ThreadLocal<StringInterner> myThreadLocalStringInterner = ThreadLocal.withInitial(() -> new StringInterner());
+  private final ThreadLocal<StringInterner> myThreadLocalStringInterner = ThreadLocal.withInitial(() -> new StringInterner() {
+    @NotNull
+    @Override
+    public String intern(@NotNull String name) {
+      // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
+      return name.length() < 64 ? super.intern(name) : name;
+    }
+  });
 
   LoadDescriptorsContext(@Nullable PluginLoadProgressManager pluginLoadProgressManager, boolean isParallel) {
     myPluginLoadProgressManager = pluginLoadProgressManager;

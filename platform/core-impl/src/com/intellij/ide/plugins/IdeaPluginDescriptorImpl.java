@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -144,18 +143,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     JDOMXIncluder.resolveNonXIncludeElement(element, url, ignoreMissingInclude, pathResolver);
     readExternal(element);
-  }
-
-  public void readExternal(@NotNull URL url) throws InvalidDataException, FileNotFoundException {
-    try {
-      readExternal(JDOMUtil.load(url), url, JDOMXIncluder.DEFAULT_PATH_RESOLVER);
-    }
-    catch (FileNotFoundException e) {
-      throw e;
-    }
-    catch (IOException | JDOMException e) {
-      throw new InvalidDataException(e);
-    }
   }
 
   public void loadFromFile(@NotNull File file, @Nullable StringInterner stringInterner) throws IOException, JDOMException {
