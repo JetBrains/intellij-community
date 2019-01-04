@@ -96,7 +96,7 @@ class CommunityLibraryLicenses {
                        license: "Apache 2.0", url: "https://github.com/JetBrains/intellij-deps-commons-imaging"),
     new LibraryLicense(name: "Apache Commons IO", libraryName: "commons-io", version: "2.6", license: "Apache 2.0",
                        url: "http://commons.apache.org/io/"),
-    new LibraryLicense(name: "Apache Commons Lang", libraryName: "commons-lang", version: "2.6", license: "Apache 2.0",
+    new LibraryLicense(name: "Apache Commons Lang", libraryName: "commons-lang2.6", version: "2.6", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "http://commons.apache.org/proper/commons-lang/"),
     new LibraryLicense(name: "Apache Commons Lang 3", libraryName: "commons-lang3-3.2.1.jar", version: "3.2.1", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "http://commons.apache.org/proper/commons-lang/"),
