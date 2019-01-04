@@ -322,7 +322,7 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
     }
   }
 
-  override fun doSave(saveSession: SaveExecutor, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
+  final override fun beforeSaveComponents(errors: MutableList<Throwable>) {
     try {
       saveProjectName()
     }
@@ -330,6 +330,10 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
       LOG.error("Unable to store project name", e)
     }
 
+    super.beforeSaveComponents(errors)
+  }
+
+  override fun doSave(saveSession: SaveExecutor, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
     beforeSave(readonlyFiles)
 
     super.doSave(saveSession, readonlyFiles, errors)
