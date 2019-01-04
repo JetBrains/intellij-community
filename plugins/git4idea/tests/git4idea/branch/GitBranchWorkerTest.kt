@@ -78,25 +78,20 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertSuccessfulNotification("Branch ${bcode("feature")} was created")
   }
 
-  fun `test create new branch with unmerged files in first repo should show notification`() {
-    unmergedFiles(first)
+  fun `test if create new branch fails with error in first repo, then notification should be shown`() {
+    git.onCheckoutNewBranch { if (it == first) GitCommandResult.error(UNKNOWN_ERROR_TEXT) else null}
 
-    var notificationShown = false
-    checkoutNewBranch("feature", object : TestUiHandler() {
-      override fun showUnmergedFilesNotification(operationName: String, repositories: Collection<GitRepository>) {
-        notificationShown = true
-      }
-    })
+    checkoutNewBranch("feature", TestUiHandler())
 
-    assertTrue("Unmerged files notification was not shown", notificationShown)
+    assertErrorNotification("Couldn't create new branch feature", "unknown error")
   }
 
-  fun `test create new branch with unmerged files in second repo should propose to rollback`() {
-    unmergedFiles(second)
+  fun `test if create new branch fails with error in second repo, then we should propose to rollback`() {
+    git.onCheckoutNewBranch { if (it == second) GitCommandResult.error(UNKNOWN_ERROR_TEXT) else null}
 
     var rollbackProposed = false
     checkoutNewBranch("feature", object : TestUiHandler() {
-      override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
+      override fun notifyErrorWithRollbackProposal(title: String, message: String, rollbackProposal: String): Boolean {
         rollbackProposed = true
         return false
       }
@@ -106,10 +101,10 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun `test rollback create new branch should delete branch`() {
-    unmergedFiles(second)
+    git.onCheckoutNewBranch { if (it == second) GitCommandResult.error(UNKNOWN_ERROR_TEXT) else null}
 
     checkoutNewBranch("feature", object : TestUiHandler() {
-      override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
+      override fun notifyErrorWithRollbackProposal(title: String, message: String, rollbackProposal: String): Boolean {
         return true
       }
     })
@@ -119,10 +114,10 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun `test deny rollback create new branch should leave new branch`() {
-    unmergedFiles(second)
+    git.onCheckoutNewBranch { if (it == second) GitCommandResult.error(UNKNOWN_ERROR_TEXT) else null}
 
     checkoutNewBranch("feature", object : TestUiHandler() {
-      override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
+      override fun notifyErrorWithRollbackProposal(title: String, message: String, rollbackProposal: String): Boolean {
         return false
       }
     })

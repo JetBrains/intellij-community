@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.test
 
 import com.intellij.openapi.diagnostic.Logger
@@ -42,6 +28,7 @@ class TestGitImpl : GitImpl() {
   @Volatile private var rebaseShouldFail: (GitRepository) -> Boolean = { false }
   @Volatile private var pushHandler: (GitRepository) -> GitCommandResult? = { null }
   @Volatile private var branchDeleteHandler: (GitRepository) -> GitCommandResult? = { null }
+  @Volatile private var checkoutNewBranchHandler: (GitRepository) -> GitCommandResult? = { null }
   @Volatile private var interactiveRebaseEditor: InteractiveRebaseEditor? = null
 
   class InteractiveRebaseEditor(val entriesEditor: ((String) -> String)?,
@@ -52,6 +39,10 @@ class TestGitImpl : GitImpl() {
                     vararg listeners: GitLineHandlerListener): GitCommandResult {
     pushListener?.invoke(repository)
     return pushHandler(repository) ?: super.push(repository, pushParams, *listeners)
+  }
+
+  override fun checkoutNewBranch(repository: GitRepository, branchName: String, listener: GitLineHandlerListener?): GitCommandResult {
+    return checkoutNewBranchHandler(repository) ?: super.checkoutNewBranch(repository, branchName, listener)
   }
 
   override fun branchDelete(repository: GitRepository,
@@ -137,6 +128,10 @@ class TestGitImpl : GitImpl() {
     pushHandler = handler
   }
 
+  fun onCheckoutNewBranch(handler: (GitRepository) -> GitCommandResult?) {
+    checkoutNewBranchHandler = handler
+  }
+
   fun onBranchDelete(handler: (GitRepository) -> GitCommandResult?) {
     branchDeleteHandler = handler
   }
@@ -148,6 +143,7 @@ class TestGitImpl : GitImpl() {
   fun reset() {
     rebaseShouldFail = { false }
     pushHandler = { null }
+    checkoutNewBranchHandler = { null }
     branchDeleteHandler = { null }
     interactiveRebaseEditor = null
     pushListener = null
