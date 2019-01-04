@@ -165,6 +165,9 @@ class JavaCompletionPolicy extends CompletionPolicy {
           return false; // no modifiers for local classes/variables
         }
       }
+      if (parent instanceof PsiSwitchLabelStatementBase && ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchBlock() == null) {
+        return false; // bad syntax
+      }
     }
     if (leaf.textMatches(PsiKeyword.TRUE) || leaf.textMatches(PsiKeyword.FALSE)) {
       return false; // boolean literal presence depends on expected types, which can be missing in red files
