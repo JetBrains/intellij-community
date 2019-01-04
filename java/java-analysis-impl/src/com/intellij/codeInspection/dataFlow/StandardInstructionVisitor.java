@@ -59,6 +59,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     if (dfaSource == dfaDest) {
       memState.push(dfaDest);
+      flushArrayOnUnknownAssignment(instruction, runner.getFactory(), dfaDest, memState);
       return nextInstruction(instruction, runner, memState);
     }
     if (!(dfaDest instanceof DfaVariableValue &&

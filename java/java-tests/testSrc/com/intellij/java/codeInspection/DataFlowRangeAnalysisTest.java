@@ -57,4 +57,5 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testBoxedRanges() { doTest(); }
   public void testLongRangeDiff() { doTest(); }
   public void testAlgebraic() { doTest(); }
+  public void testTwoArraysDiff() { doTest(); }
 }
