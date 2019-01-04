@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
-import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
-import com.intellij.internal.statistic.service.fus.FUStatisticsSettingsService;
-import com.intellij.internal.statistic.service.fus.beans.CollectorGroupDescriptor;
 import com.intellij.internal.statistic.service.fus.beans.FSContent;
 import com.intellij.internal.statistic.service.fus.beans.FSSession;
 import com.intellij.openapi.application.PathManager;
@@ -23,7 +20,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -46,29 +42,8 @@ public class FUStatisticsPersistence {
    * if FUStatisticsWhiteListGroupsService is OFFLINE the data will NOT collected.
    * Collected data are persisted in system cache. One file for one project session. The session is pair: project + IJ build number
    */
-  public static String persistProjectUsages(@NotNull Project project) {
+  public static void persistProjectUsages(@NotNull Project project) {
     recordProjectUsages(project);
-
-    final FUStatisticsSettingsService settingsService = FUStatisticsSettingsService.getInstance();
-    if (!settingsService.isTransmissionPermitted()) return null;
-    Set<String> groups = settingsService.getApprovedGroups();
-    if (groups.isEmpty() && !ApplicationManagerEx.getApplicationEx().isInternal()) return null;
-    FUStatisticsAggregator aggregator = FUStatisticsAggregator.create(false);
-    Map<CollectorGroupDescriptor, Set<UsageDescriptor>> usages = aggregator.getProjectUsages(project, groups);
-    if (usages.isEmpty()) return null;
-
-    FUSession fuSession = FUSession.create(project);
-
-    FSContent content = FSContent.create();
-    FUStatisticsAggregator.writeContent(content, fuSession, usages);
-
-    String gsonContent = content.asJsonString();
-
-    String fileName = getFileName(fuSession);
-    File directory = getStatisticsCacheDirectory();
-
-    persistToFile(gsonContent, new File(directory, "/" + fileName));
-    return fileName;
   }
 
   private static void recordProjectUsages(@NotNull Project project) {
@@ -134,20 +109,25 @@ public class FUStatisticsPersistence {
   }
 
   public static void clearLegacyStates() {
-    File legacyStateFile = getLegacyStateFile();
-    if (legacyStateFile.exists()) {
+    deleteCaches(getSentDataFile());
+    deleteCaches(getLegacyStateFile());
+    deleteCaches(getPersistenceStateFile());
+    deleteCaches(getStatisticsCacheDirectory());
+    deleteCaches(getStatisticsLegacyCacheDirectory());
+  }
+
+  private static void deleteCaches(@Nullable File dir) {
+    if (dir != null && dir.exists()) {
       try {
-        legacyStateFile.delete();
+        final boolean delete = FileUtil.delete(dir);
+        if (!delete) {
+          LOG.info("Failed deleting legacy caches");
+        }
       }
       catch (Exception e) {
         LOG.info(e);
       }
     }
-  }
-
-  @NotNull
-  private static String getFileName(@NotNull FUSession session) {
-    return session.hashCode() + "." + FILE_EXTENSION;
   }
 
   @Nullable
@@ -175,25 +155,6 @@ public class FUStatisticsPersistence {
     }
   }
 
-  public static void persistDataFromCollectors(@NotNull String content) {
-    persistToFile(content, getPersistenceStateFile());
-  }
-
-  public static void persistSentData(@NotNull String sentContent) {
-    persistToFile(sentContent, getSentDataFile());
-  }
-
-  public static boolean persistToFile(@NotNull String sentContent, File file) {
-    try {
-      FileUtil.writeToFile(file, sentContent);
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      return false;
-    }
-    return true;
-  }
-
   @NotNull
   public static File getPersistenceStateFile() {
     return getFileInStatisticsCacheDirectory(PERSISTENCE_STATE_FILE);
@@ -207,11 +168,6 @@ public class FUStatisticsPersistence {
   @NotNull
   private static File getFileInStatisticsCacheDirectory(@NotNull String fileName) {
     return new File(getStatisticsCacheDirectory(), "/" + fileName);
-  }
-
-  @NotNull
-  private static File getFileInLegacyStatisticsCacheDirectory(@NotNull String fileName) {
-    return new File(getStatisticsLegacyCacheDirectory(), "/" + fileName);
   }
 
   @NotNull
@@ -231,41 +187,6 @@ public class FUStatisticsPersistence {
 
   @Nullable
   private static String getStateContent(@NotNull String fileName) {
-    File statisticsCacheDir = getStatisticsCacheDirectory();
-    if (statisticsCacheDir != null) {
-      File stateFile = getFileInStatisticsCacheDirectory(fileName);
-      if (stateFile.exists()) {
-        try {
-          return FileUtil.loadFile(stateFile);
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
-      }
-    }
-    return getLegacyStateContent(fileName);
-  }
-
-  @Nullable
-  private static String getLegacyStateContent(@NotNull String fileName) {
-    File legacyCacheDirectory = getStatisticsLegacyCacheDirectory();
-    if (legacyCacheDirectory != null) {
-      // we changed statistics cache path
-      // from "../system/FUS_CACHE_PATH/fus-state.data" to "../config/FUS_CACHE_PATH/fus-state.data"
-      File legacyStateFile = getFileInLegacyStatisticsCacheDirectory(fileName);
-      if (legacyStateFile.exists()) {
-        try {
-          String legacyState = FileUtil.loadFile(legacyStateFile);  // load
-          if (persistToFile(legacyState, getFileInStatisticsCacheDirectory(fileName))
-              && legacyStateFile.delete()) {
-            return legacyState;
-          }
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
-      }
-    }
     return null;
   }
 
