@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.service.fus;
 
 import com.intellij.internal.statistic.connect.StatServiceException;
-import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
 import com.intellij.internal.statistic.service.ConfigurableStatisticsService;
 import com.intellij.internal.statistic.service.fus.beans.FSContent;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsAggregator;
@@ -63,8 +62,6 @@ public class FUStatisticsService extends ConfigurableStatisticsService<FUStatist
 
       FUStatisticsPersistence.clearSessionPersistence(System.currentTimeMillis());
       FUStatisticsPersistence.clearLegacyStates();
-      FUStatisticsPersistence.persistSentData(dataToSend);
-      FUStatisticsPersistence.persistDataFromCollectors(allDataFromCollectors.asJsonString());
 
       return dataToSend;
     }
