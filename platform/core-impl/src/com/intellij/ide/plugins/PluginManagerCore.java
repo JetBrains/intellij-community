@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
@@ -24,10 +23,10 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.StringInterner;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.*;
 import com.intellij.util.io.URLUtil;
@@ -54,7 +53,6 @@ import java.net.URLClassLoader;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -636,10 +634,13 @@ public class PluginManagerCore {
     }));
   }
 
+  // LoadingContext must be not null in all cases, the only exception - core environment,
+  // it is important because affects string interning
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptorFromDir(@NotNull File file,
                                                                 @NotNull String pathName,
                                                                 @Nullable File pluginPath,
+                                                                @Nullable LoadingContext loadingContext,
                                                                 boolean bundled,
                                                                 boolean essential) {
     File descriptorFile = new File(file, META_INF + pathName);
@@ -649,7 +650,7 @@ public class PluginManagerCore {
 
     try {
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
-      descriptor.loadFromFile(descriptorFile);
+      descriptor.loadFromFile(descriptorFile, loadingContext.getStringInterner());
       return descriptor;
     }
     catch (XmlSerializationException | JDOMException | IOException e) {
@@ -665,7 +666,7 @@ public class PluginManagerCore {
   }
 
   private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file, @NotNull String pathName, @SuppressWarnings("SameParameterValue") boolean bundled) {
-    try (LoadingContext context = new LoadingContext()) {
+    try (LoadingContext context = new LoadingContext(null)) {
       return loadDescriptorFromJar(file, pathName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context, null, bundled, true);
     }
   }
@@ -711,7 +712,7 @@ public class PluginManagerCore {
 
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull File file, @NotNull String fileName, boolean bundled, boolean essential) {
-    try (LoadingContext context = new LoadingContext()) {
+    try (LoadingContext context = new LoadingContext(null)) {
       return loadDescriptor(file, fileName, context, bundled, essential);
     }
   }
@@ -719,6 +720,13 @@ public class PluginManagerCore {
   private static class LoadingContext implements AutoCloseable {
     private final Map<File, ZipFile> myOpenedFiles = new THashMap<>();
     private File myLastZipFileContainingDescriptor;
+
+    @Nullable
+    private final LoadDescriptorsContext myParentContext;
+
+    private LoadingContext(@Nullable LoadDescriptorsContext parentContext) {
+      myParentContext = parentContext;
+    }
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     private ZipFile open(File file) throws IOException {
@@ -736,6 +744,14 @@ public class PluginManagerCore {
         catch (IOException ignore) { }
       }
     }
+
+    @Nullable
+    public StringInterner getStringInterner() {
+      if (myParentContext == null) {
+        return null;
+      }
+      return myParentContext.getStringInterner();
+    }
   }
 
   @Nullable
@@ -748,7 +764,7 @@ public class PluginManagerCore {
 
     boolean isDirectory = file.isDirectory();
     if (isDirectory) {
-      descriptor = loadDescriptorFromDir(file, pathName, null, bundled, essential);
+      descriptor = loadDescriptorFromDir(file, pathName, null, context, bundled, essential);
       if (descriptor == null) {
         File libDir = new File(file, "lib");
         // don't check libDir.isDirectory() because no need - better to reduce fs calls
@@ -762,7 +778,7 @@ public class PluginManagerCore {
         List<File> pluginJarFiles = null;
         for (File f : files) {
           if (f.isDirectory()) {
-            IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromDir(f, pathName, file, bundled, essential);
+            IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromDir(f, pathName, file, context, bundled, essential);
             if (descriptor1 != null) {
               if (descriptor != null) {
                 getLogger().info("Cannot load " + file + " because two or more plugin.xml's detected");
@@ -915,9 +931,8 @@ public class PluginManagerCore {
 
   private static void loadDescriptorsFromDir(@NotNull File dir,
                                              @NotNull List<IdeaPluginDescriptorImpl> result,
-                                             @Nullable PluginLoadProgressManager pluginLoadProgressManager,
                                              boolean bundled,
-                                             @Nullable ExecutorService executorService) throws ExecutionException, InterruptedException {
+                                             @NotNull LoadDescriptorsContext context) throws ExecutionException, InterruptedException {
     File[] files = dir.listFiles();
     if (files == null || files.length == 0) {
       return;
@@ -925,10 +940,10 @@ public class PluginManagerCore {
 
     Set<IdeaPluginDescriptorImpl> existingResults = ContainerUtil.newHashSet(result);
     List<Future<IdeaPluginDescriptorImpl>> tasks = new ArrayList<>(files.length);
-    boolean isParallel = files.length > 2 && executorService != null;
+    boolean isParallel = files.length > 2 && context.getExecutorService() != null;
     if (isParallel) {
       for (File file : files) {
-        tasks.add(executorService.submit(() -> loadDescriptor(file, PLUGIN_XML, bundled, false)));
+        tasks.add(context.getExecutorService().submit(() -> loadDescriptor(file, PLUGIN_XML, bundled, false)));
       }
     }
 
@@ -945,8 +960,8 @@ public class PluginManagerCore {
         continue;
       }
 
-      if (pluginLoadProgressManager != null) {
-        pluginLoadProgressManager.showProgress(descriptor);
+      if (context.getPluginLoadProgressManager() != null) {
+        context.getPluginLoadProgressManager().showProgress(descriptor);
       }
 
       int oldIndex = !existingResults.add(descriptor) ? result.indexOf(descriptor) : -1;
@@ -1055,14 +1070,13 @@ public class PluginManagerCore {
     List<IdeaPluginDescriptorImpl> descriptors = ContainerUtil.newSmartList();
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(loader, urlsFromClassPath);
-    loadDescriptorsFromClassPath(urlsFromClassPath, descriptors, null, null, platformPluginURL);
+    loadDescriptorsFromClassPath(urlsFromClassPath, descriptors, new LoadDescriptorsContext(null, false), platformPluginURL);
     return descriptors;
   }
 
   private static void loadDescriptorsFromClassPath(@NotNull LinkedHashMap<URL, String> urls,
                                                    @NotNull List<IdeaPluginDescriptorImpl> result,
-                                                   @Nullable PluginLoadProgressManager pluginLoadProgressManager,
-                                                   @Nullable ExecutorService executorService,
+                                                   @NotNull LoadDescriptorsContext context,
                                                    @Nullable URL platformPluginURL)
     throws ExecutionException, InterruptedException {
     if (urls.isEmpty()) {
@@ -1070,12 +1084,12 @@ public class PluginManagerCore {
     }
 
     List<Future<IdeaPluginDescriptorImpl>> tasks;
-    boolean isParallel = executorService != null;
+    boolean isParallel = context.getExecutorService() != null;
     if (isParallel) {
       tasks = new ArrayList<>(urls.size());
       for (Map.Entry<URL, String> entry : urls.entrySet()) {
         URL url = entry.getKey();
-        tasks.add(executorService.submit(() -> loadDescriptorFromResource(url, entry.getValue(), true, url.equals(platformPluginURL))));
+        tasks.add(context.getExecutorService().submit(() -> loadDescriptorFromResource(url, entry.getValue(), true, url.equals(platformPluginURL))));
       }
     }
     else {
@@ -1098,8 +1112,8 @@ public class PluginManagerCore {
       if (descriptor != null && found.add(descriptor)) {
         descriptor.setUseCoreClassLoader(true);
         result.add(descriptor);
-        if (pluginLoadProgressManager != null && !SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) {
-          pluginLoadProgressManager.showProgress(descriptor);
+        if (context.getPluginLoadProgressManager() != null && !SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) {
+          context.getPluginLoadProgressManager().showProgress(descriptor);
         }
       }
     }
@@ -1190,28 +1204,25 @@ public class PluginManagerCore {
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
 
     long start = System.currentTimeMillis();
-    int maxThreads = JobSchedulerImpl.getCPUCoresCount();
-    boolean isParallel = maxThreads > 1 && SystemProperties.getBooleanProperty("parallel.pluginDescriptors.loading", false);
-    ExecutorService executorService = isParallel ? AppExecutorUtil.createBoundedApplicationPoolExecutor("PluginManager Loader", maxThreads) : null;
-
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(PluginManagerCore.class.getClassLoader(), urlsFromClassPath);
 
     PluginLoadProgressManager pluginLoadProgressManager = progress == null ? null : new PluginLoadProgressManager(progress, urlsFromClassPath.size());
+    LoadDescriptorsContext context = new LoadDescriptorsContext(pluginLoadProgressManager, SystemProperties.getBooleanProperty("parallel.pluginDescriptors.loading", false));
     try {
-      loadDescriptorsFromDir(new File(PathManager.getPluginsPath()), result, pluginLoadProgressManager, false, executorService);
+      loadDescriptorsFromDir(new File(PathManager.getPluginsPath()), result, false, context);
       Application application = ApplicationManager.getApplication();
       if (application == null || !application.isUnitTestMode()) {
-        loadDescriptorsFromDir(new File(PathManager.getPreInstalledPluginsPath()), result, pluginLoadProgressManager, true, executorService);
+        loadDescriptorsFromDir(new File(PathManager.getPreInstalledPluginsPath()), result, true, context);
       }
 
       loadDescriptorsFromProperty(result);
-      loadDescriptorsFromClassPath(urlsFromClassPath, result, pluginLoadProgressManager, executorService, platformPluginURL);
+      loadDescriptorsFromClassPath(urlsFromClassPath, result, context, platformPluginURL);
 
       if (application != null && application.isUnitTestMode() && result.size() <= 1) {
         // We're running in unit test mode but the classpath doesn't contain any plugins; try to load bundled plugins anyway
         ourUnitTestWithBundledPlugins = true;
-        loadDescriptorsFromDir(new File(PathManager.getPreInstalledPluginsPath()), result, pluginLoadProgressManager, true, executorService);
+        loadDescriptorsFromDir(new File(PathManager.getPreInstalledPluginsPath()), result, true, context);
       }
     }
     catch (InterruptedException | ExecutionException e) {
@@ -1553,7 +1564,7 @@ public class PluginManagerCore {
   public static void registerExtensionPointAndExtensions(@NotNull File pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
     IdeaPluginDescriptorImpl descriptor;
     if (pluginRoot.isDirectory()) {
-      descriptor = loadDescriptorFromDir(pluginRoot, fileName, null, true, true);
+      descriptor = loadDescriptorFromDir(pluginRoot, fileName, null, null, true, true);
     }
     else {
       descriptor = loadDescriptorFromJar(pluginRoot, fileName, true);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.AbstractBundle;
@@ -23,6 +23,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.StringInterner;
 import com.intellij.util.xmlb.BeanBinding;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -142,7 +143,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     JDOMXIncluder.resolveNonXIncludeElement(element, url, ignoreMissingInclude, pathResolver);
-    readExternal(JDOMUtil.internElement(element));
+    readExternal(element);
   }
 
   public void readExternal(@NotNull URL url) throws InvalidDataException, FileNotFoundException {
@@ -157,8 +158,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
-  public void loadFromFile(@NotNull File file) throws IOException, JDOMException {
-    readExternal(JDOMUtil.load(file), file.toURI().toURL(), JDOMXIncluder.DEFAULT_PATH_RESOLVER);
+  public void loadFromFile(@NotNull File file, @Nullable StringInterner stringInterner) throws IOException, JDOMException {
+    readExternal(JDOMUtil.load(file, stringInterner), file.toURI().toURL(), JDOMXIncluder.DEFAULT_PATH_RESOLVER);
   }
 
   // used in upsource

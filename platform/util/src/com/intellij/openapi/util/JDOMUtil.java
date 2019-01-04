@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
@@ -213,11 +214,11 @@ public class JDOMUtil {
   }
 
   @NotNull
-  private static Element loadUsingStaX(@NotNull Reader reader) throws JDOMException, IOException {
+  private static Element loadUsingStaX(@NotNull Reader reader, @Nullable StringInterner stringInterner) throws JDOMException, IOException {
     try {
       XMLStreamReader xmlStreamReader = XML_INPUT_FACTORY.getValue().createXMLStreamReader(reader);
       try {
-        return SafeStAXStreamBuilder.build(xmlStreamReader, true);
+        return SafeStAXStreamBuilder.build(xmlStreamReader, true, stringInterner);
       }
       finally {
         xmlStreamReader.close();
@@ -265,7 +266,12 @@ public class JDOMUtil {
 
   @NotNull
   public static Element load(@NotNull File file) throws JDOMException, IOException {
-    return loadUsingStaX(new BufferedReader(new InputStreamReader(new FileInputStream(file), CharsetToolkit.UTF8_CHARSET)));
+    return load(file, null);
+  }
+
+  @NotNull
+  public static Element load(@NotNull File file, @Nullable StringInterner stringInterner) throws JDOMException, IOException {
+    return loadUsingStaX(new BufferedReader(new InputStreamReader(new FileInputStream(file), CharsetToolkit.UTF8_CHARSET)), stringInterner);
   }
 
   /**
@@ -281,7 +287,7 @@ public class JDOMUtil {
 
   @Contract("null -> null; !null -> !null")
   public static Element load(Reader reader) throws JDOMException, IOException {
-    return reader == null ? null : loadUsingStaX(reader);
+    return reader == null ? null : loadUsingStaX(reader, null);
   }
 
   @Contract("null -> null; !null -> !null")
@@ -289,7 +295,7 @@ public class JDOMUtil {
     if (stream == null) {
       return null;
     }
-    return loadUsingStaX(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
+    return loadUsingStaX(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET), null);
   }
 
   @NotNull
