@@ -1366,7 +1366,7 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             // fall through
           case 200: break;
           case 17: 
-            { if (yystate() == S_DOLLAR_PREFIXED) backToPreviousState(); goToState(S_ARITH_SQUARE_MODE); return EXPR_ARITH_SQUARE;
+            { if (yystate() == S_DOLLAR_PREFIXED) backToPreviousState(); goToState(S_ARITH_SQUARE_MODE); return ARITH_SQUARE_LEFT;
             } 
             // fall through
           case 201: break;
@@ -1528,12 +1528,12 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             // fall through
           case 231: break;
           case 48: 
-            { backToPreviousState(); return _EXPR_ARITH_SQUARE;
+            { backToPreviousState(); return ARITH_SQUARE_RIGHT;
             } 
             // fall through
           case 232: break;
           case 49: 
-            { return EXPR_ARITH_SQUARE;
+            { return ARITH_SQUARE_LEFT;
             } 
             // fall through
           case 233: break;

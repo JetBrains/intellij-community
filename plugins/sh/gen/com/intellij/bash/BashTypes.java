@@ -46,6 +46,7 @@ public interface BashTypes {
   IElementType LOGICAL_BITWISE_NEGATION_EXPRESSION = new BashCompositeElementType("LOGICAL_BITWISE_NEGATION_EXPRESSION");
   IElementType LOGICAL_OR_EXPRESSION = new BashCompositeElementType("LOGICAL_OR_EXPRESSION");
   IElementType MUL_EXPRESSION = new BashCompositeElementType("MUL_EXPRESSION");
+  IElementType OLD_ARITHMETIC_EXPANSION = new BashCompositeElementType("OLD_ARITHMETIC_EXPANSION");
   IElementType PARENTHESES_EXPRESSION = new BashCompositeElementType("PARENTHESES_EXPRESSION");
   IElementType PATTERN = new BashCompositeElementType("PATTERN");
   IElementType PATTERN_LIST = new BashCompositeElementType("PATTERN_LIST");
@@ -82,6 +83,8 @@ public interface BashTypes {
   IElementType ARITH_MINUS_MINUS = new BashTokenType("--");
   IElementType ARITH_PLUS = new BashTokenType("+");
   IElementType ARITH_PLUS_PLUS = new BashTokenType("++");
+  IElementType ARITH_SQUARE_LEFT = new BashTokenType("ARITH_SQUARE_LEFT");
+  IElementType ARITH_SQUARE_RIGHT = new BashTokenType("ARITH_SQUARE_RIGHT");
   IElementType ASSIGNMENT_WORD = new BashTokenType("assignment_word");
   IElementType AT = new BashTokenType("@");
   IElementType BACKQUOTE = new BashTokenType("`");
@@ -260,6 +263,9 @@ public interface BashTypes {
       }
       else if (type == MUL_EXPRESSION) {
         return new BashMulExpressionImpl(node);
+      }
+      else if (type == OLD_ARITHMETIC_EXPANSION) {
+        return new BashOldArithmeticExpansionImpl(node);
       }
       else if (type == PARENTHESES_EXPRESSION) {
         return new BashParenthesesExpressionImpl(node);

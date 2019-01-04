@@ -154,6 +154,10 @@ public class BashVisitor extends PsiElementVisitor {
     visitBinaryExpression(o);
   }
 
+  public void visitOldArithmeticExpansion(@NotNull BashOldArithmeticExpansion o) {
+    visitArithmeticExpansion(o);
+  }
+
   public void visitParenthesesExpression(@NotNull BashParenthesesExpression o) {
     visitExpression(o);
   }

@@ -286,7 +286,7 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
     }
 
     <S_SUBSHELL> {
-        "["                 { if (yystate() == S_DOLLAR_PREFIXED) backToPreviousState(); goToState(S_ARITH_SQUARE_MODE); return EXPR_ARITH_SQUARE; }
+        "["                 { if (yystate() == S_DOLLAR_PREFIXED) backToPreviousState(); goToState(S_ARITH_SQUARE_MODE); return ARITH_SQUARE_LEFT; }
     }
 }
 
@@ -463,9 +463,8 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
 }
 
 <S_ARITH_SQUARE_MODE> {
-  "["                           { return EXPR_ARITH_SQUARE; }
-
-  "]"                           { backToPreviousState(); return _EXPR_ARITH_SQUARE; }
+  "["                           { return ARITH_SQUARE_LEFT; }
+  "]"                           { backToPreviousState(); return ARITH_SQUARE_RIGHT; }
 }
 
 <S_ARITH_ARRAY_MODE> {

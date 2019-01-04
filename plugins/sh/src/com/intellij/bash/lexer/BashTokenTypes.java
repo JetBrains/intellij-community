@@ -31,11 +31,6 @@ public interface BashTokenTypes extends BashTypes {
   // something new, bash 4?
   IElementType LET = new BashTokenType("let");
 
-  // arithmetic expressions
-
-  IElementType EXPR_ARITH_SQUARE = new BashTokenType("[ for arithmetic");
-  IElementType _EXPR_ARITH_SQUARE = new BashTokenType("] for arithmetic");
-
   //conditional expressions
 
   TokenSet keywords = TokenSet.create(BANG, CASE, DO, DONE,

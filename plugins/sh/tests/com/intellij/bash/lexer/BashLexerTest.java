@@ -98,11 +98,11 @@ public class BashLexerTest {
 
   @Test
   public void testSquareBracketArithmeticExpr() {
-    testTokenization("$[1]", DOLLAR, EXPR_ARITH_SQUARE, BashTokenTypes.NUMBER, _EXPR_ARITH_SQUARE);
+    testTokenization("$[1]", DOLLAR, ARITH_SQUARE_LEFT, BashTokenTypes.NUMBER, ARITH_SQUARE_RIGHT);
 
-    testTokenization("$[1 ]", DOLLAR, EXPR_ARITH_SQUARE, BashTokenTypes.NUMBER, WHITESPACE, _EXPR_ARITH_SQUARE);
+    testTokenization("$[1 ]", DOLLAR, ARITH_SQUARE_LEFT, BashTokenTypes.NUMBER, WHITESPACE, ARITH_SQUARE_RIGHT);
 
-    testTokenization("$[1/${a}]", DOLLAR, EXPR_ARITH_SQUARE, BashTokenTypes.NUMBER, DIV, DOLLAR, LEFT_CURLY, WORD, RIGHT_CURLY, _EXPR_ARITH_SQUARE);
+    testTokenization("$[1/${a}]", DOLLAR, ARITH_SQUARE_LEFT, BashTokenTypes.NUMBER, DIV, DOLLAR, LEFT_CURLY, WORD, RIGHT_CURLY, ARITH_SQUARE_RIGHT);
 
     //lexable, but bad syntax
     testTokenization("$(([1]))", DOLLAR, LEFT_DOUBLE_PAREN, LEFT_SQUARE, BashTokenTypes.NUMBER, RIGHT_SQUARE, RIGHT_DOUBLE_PAREN);
@@ -822,7 +822,7 @@ public class BashLexerTest {
 
     testTokenization("${#a[1]}", DOLLAR, LEFT_CURLY, PARAM_EXPANSION_OP_HASH, WORD, LEFT_SQUARE, BashTokenTypes.NUMBER, RIGHT_SQUARE, RIGHT_CURLY);
 
-    testTokenization("${a-`$[1]`}", DOLLAR, LEFT_CURLY, WORD, PARAM_EXPANSION_OP_MINUS, BACKQUOTE, DOLLAR, EXPR_ARITH_SQUARE, BashTokenTypes.NUMBER, _EXPR_ARITH_SQUARE, BACKQUOTE, RIGHT_CURLY);
+    testTokenization("${a-`$[1]`}", DOLLAR, LEFT_CURLY, WORD, PARAM_EXPANSION_OP_MINUS, BACKQUOTE, DOLLAR, ARITH_SQUARE_LEFT, BashTokenTypes.NUMBER, ARITH_SQUARE_RIGHT, BACKQUOTE, RIGHT_CURLY);
   }
 
   @Test
@@ -983,7 +983,7 @@ public class BashLexerTest {
             "$[a]\n" +
             "EOF2", LEFT_CURLY, BashTokenTypes.LINEFEED, HEREDOC_MARKER_TAG, HEREDOC_MARKER_START, WHITESPACE, HEREDOC_MARKER_TAG, HEREDOC_MARKER_START, BashTokenTypes.LINEFEED,
         HEREDOC_MARKER_END, BashTokenTypes.LINEFEED,
-        DOLLAR, EXPR_ARITH_SQUARE, WORD, _EXPR_ARITH_SQUARE, HEREDOC_CONTENT,
+        DOLLAR, ARITH_SQUARE_LEFT, WORD, ARITH_SQUARE_RIGHT, HEREDOC_CONTENT,
         HEREDOC_MARKER_END
     );
   }

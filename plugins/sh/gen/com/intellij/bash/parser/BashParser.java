@@ -83,6 +83,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == LIST_TERMINATOR) {
       r = list_terminator(b, 0);
     }
+    else if (t == OLD_ARITHMETIC_EXPANSION) {
+      r = old_arithmetic_expansion(b, 0);
+    }
     else if (t == PATTERN) {
       r = pattern(b, 0);
     }
@@ -154,6 +157,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
+    create_token_set_(ARITHMETIC_EXPANSION, OLD_ARITHMETIC_EXPANSION),
     create_token_set_(BLOCK, CASE_COMMAND, COMMAND, COMMAND_SUBSTITUTION_COMMAND,
       CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND, IF_COMMAND,
       PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND, SIMPLE_COMMAND,
@@ -550,7 +554,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '$' (arithmetic_expansion|command_substitution|shell_parameter_expansion)
+  // '$' (arithmetic_expansion | old_arithmetic_expansion | command_substitution | shell_parameter_expansion)
   static boolean composed_var(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "composed_var")) return false;
     if (!nextTokenIs(b, DOLLAR)) return false;
@@ -563,11 +567,12 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // arithmetic_expansion|command_substitution|shell_parameter_expansion
+  // arithmetic_expansion | old_arithmetic_expansion | command_substitution | shell_parameter_expansion
   private static boolean composed_var_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "composed_var_1")) return false;
     boolean r;
     r = arithmetic_expansion(b, l + 1);
+    if (!r) r = old_arithmetic_expansion(b, l + 1);
     if (!r) r = command_substitution(b, l + 1);
     if (!r) r = shell_parameter_expansion(b, l + 1);
     return r;
@@ -1082,6 +1087,21 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, NUMBER);
     if (!r) r = consumeToken(b, INT);
     return r;
+  }
+
+  /* ********************************************************** */
+  // ARITH_SQUARE_LEFT expression ARITH_SQUARE_RIGHT
+  public static boolean old_arithmetic_expansion(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "old_arithmetic_expansion")) return false;
+    if (!nextTokenIs(b, ARITH_SQUARE_LEFT)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, OLD_ARITHMETIC_EXPANSION, null);
+    r = consumeToken(b, ARITH_SQUARE_LEFT);
+    p = r; // pin = 1
+    r = r && report_error_(b, expression(b, l + 1, -1));
+    r = p && consumeToken(b, ARITH_SQUARE_RIGHT) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
