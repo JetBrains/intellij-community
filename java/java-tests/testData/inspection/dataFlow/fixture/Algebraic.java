@@ -115,4 +115,10 @@ public class Algebraic {
       if (x - y < y && (x == y || x < y)) {}
     }
   }
+
+  void mixedTypes(int len, long len2, int max) {
+    if (len > 0 && len + len2 > max) {
+      System.out.println();
+    }
+  }
 }

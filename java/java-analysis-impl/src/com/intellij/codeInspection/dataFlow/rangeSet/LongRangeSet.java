@@ -1210,7 +1210,7 @@ public abstract class LongRangeSet {
     private static LongRangeSet plus(long from1, long to1, long from2, long to2, boolean isLong) {
       long len1 = to1 - from1; // may overflow
       long len2 = to2 - from2; // may overflow
-      if ((len1 < 0 || len2 < 0) && len1 + len2 + 1 >= 0) { // total length more than 2^32
+      if ((len1 < 0 && len2 < 0) || ((len1 < 0 || len2 < 0) && len1 + len2 + 1 >= 0)) { // total length more than 2^64
         return isLong ? LONG_RANGE : INT_RANGE;
       }
       long from = from1 + from2;

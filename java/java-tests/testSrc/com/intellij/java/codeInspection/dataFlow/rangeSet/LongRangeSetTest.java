@@ -490,6 +490,7 @@ public class LongRangeSetTest {
     assertEquals(intDomain, range(20, 30).unite(range(40, 50)).plus(intDomain, false));
     assertEquals(intDomain, range(Integer.MIN_VALUE, 2).plus(range(-2, Integer.MAX_VALUE), false));
     assertEquals(all(), range(Long.MIN_VALUE, 2).plus(range(-2, Long.MAX_VALUE), true));
+    assertEquals(all(), range(-100, Long.MAX_VALUE).plus(all(), true));
   }
   
   @Test
