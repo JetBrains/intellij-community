@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import org.jdom.*;
@@ -86,25 +86,15 @@ final class SafeStAXStreamBuilder {
     while (state != END_DOCUMENT) {
       switch (state) {
         case START_DOCUMENT:
-          break;
-
+        case SPACE:
+        case CHARACTERS:
+        case COMMENT:
+        case PROCESSING_INSTRUCTION:
         case DTD:
           break;
 
         case START_ELEMENT:
           rootElement = processElementFragment(stream, isIgnoreBoundaryWhitespace);
-          break;
-
-        case END_ELEMENT:
-          throw new JDOMException("Unexpected XMLStream event at Document level: END_ELEMENT");
-        case ENTITY_REFERENCE:
-          throw new JDOMException("Unexpected XMLStream event at Document level: ENTITY_REFERENCE");
-        case CDATA:
-          throw new JDOMException("Unexpected XMLStream event at Document level: CDATA");
-        case SPACE:
-        case CHARACTERS:
-        case COMMENT:
-        case PROCESSING_INSTRUCTION:
           break;
 
         default:
