@@ -663,7 +663,7 @@ public class PluginManagerCore {
 
   private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file, @NotNull String pathName, @SuppressWarnings("SameParameterValue") boolean bundled) {
     try (LoadingContext context = new LoadingContext(null, bundled, true)) {
-      return loadDescriptorFromJar(file, pathName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context, null, bundled, true);
+      return loadDescriptorFromJar(file, pathName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context, null);
     }
   }
 
@@ -672,9 +672,7 @@ public class PluginManagerCore {
                                                                 @NotNull String fileName,
                                                                 @NotNull JDOMXIncluder.PathResolver pathResolver,
                                                                 @NotNull LoadingContext context,
-                                                                @Nullable File pluginPath,
-                                                                boolean bundled,
-                                                                boolean essential) {
+                                                                @Nullable File pluginPath) {
     try {
       String entryName = META_INF + fileName;
       URL jarURL = URLUtil.getJarEntryURL(file, FileUtil.toCanonicalPath(entryName, '/'));
@@ -682,19 +680,19 @@ public class PluginManagerCore {
       ZipFile zipFile = context.open(file);
       ZipEntry entry = zipFile.getEntry(entryName);
       if (entry != null) {
-        IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
+        IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), context.isBundled);
         descriptor.readExternal(JDOMUtil.load(zipFile.getInputStream(entry)), jarURL, pathResolver);
         context.myLastZipFileContainingDescriptor = file;
         return descriptor;
       }
     }
     catch (XmlSerializationException | InvalidDataException e) {
-      if (essential) ExceptionUtil.rethrow(e);
+      if (context.isEssential) ExceptionUtil.rethrow(e);
       getLogger().info("Cannot load " + file + "!/META-INF/" + fileName, e);
       prepareLoadingPluginsErrorMessage(Collections.singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
     }
     catch (Throwable e) {
-      if (essential) ExceptionUtil.rethrow(e);
+      if (context.isEssential) ExceptionUtil.rethrow(e);
       getLogger().info("Cannot load " + file + "!/META-INF/" + fileName, e);
     }
 
@@ -802,7 +800,7 @@ public class PluginManagerCore {
         if (pluginJarFiles != null) {
           PluginXmlPathResolver pathResolver = new PluginXmlPathResolver(files);
           for (File jarFile : pluginJarFiles) {
-            descriptor = loadDescriptorFromJar(jarFile, pathName, pathResolver, context, file, context.isBundled, context.isEssential);
+            descriptor = loadDescriptorFromJar(jarFile, pathName, pathResolver, context, file);
             if (descriptor != null) {
               break;
             }
@@ -811,7 +809,7 @@ public class PluginManagerCore {
       }
     }
     else if (StringUtilRt.endsWithIgnoreCase(file.getPath(), ".jar")) {
-      descriptor = loadDescriptorFromJar(file, pathName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context, null, context.isBundled, context.isEssential);
+      descriptor = loadDescriptorFromJar(file, pathName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context, null);
     }
 
     if (descriptor == null) {
