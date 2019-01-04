@@ -15,8 +15,8 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -44,7 +44,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import com.intellij.openapi.util.Pair as JBPair
 
-internal val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
+internal val LOG = logger<ComponentStoreImpl>()
 
 internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
   val w1 = if (o1.deprecated) 1 else 0
@@ -136,9 +136,9 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     beforeSaveComponents(errors)
 
-    val externalizationSession = if (components.isEmpty()) null else SaveSessionProducerManager()
-    if (externalizationSession != null) {
-      saveComponents(isForce, externalizationSession, errors)
+    val saveSessionProducerManager = if (components.isEmpty()) null else SaveSessionProducerManager()
+    if (saveSessionProducerManager != null) {
+      saveComponents(isForce, saveSessionProducerManager, errors)
     }
 
     afterSaveComponents(errors)
@@ -150,8 +150,8 @@ abstract class ComponentStoreImpl : IComponentStore {
       errors.add(e)
     }
 
-    if (externalizationSession != null) {
-      doSave(externalizationSession, readonlyFiles, errors)
+    if (saveSessionProducerManager != null) {
+      doSave(saveSessionProducerManager, readonlyFiles, errors)
     }
 
     CompoundRuntimeException.throwIfNotEmpty(errors)
@@ -618,24 +618,24 @@ interface SaveExecutor {
 }
 
 private class SaveSessionProducerManager : SaveExecutor {
-  private val sessions = LinkedHashMap<StateStorage, StateStorage.SaveSessionProducer>()
+  private val producers = LinkedHashMap<StateStorage, StateStorage.SaveSessionProducer>()
 
   fun getProducer(storage: StateStorage): StateStorage.SaveSessionProducer? {
-    var session = sessions.get(storage)
-    if (session == null) {
-      session = storage.createSaveSessionProducer() ?: return null
-      sessions.put(storage, session)
+    var producer = producers.get(storage)
+    if (producer == null) {
+      producer = storage.createSaveSessionProducer() ?: return null
+      producers.put(storage, producer)
     }
-    return session
+    return producer
   }
 
   override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>): Boolean {
-    if (sessions.isEmpty()) {
+    if (producers.isEmpty()) {
       return false
     }
 
     var changed = false
-    for (session in sessions.values) {
+    for (session in producers.values) {
       val saveSession = session.createSaveSession() ?: continue
       executeSave(saveSession, readonlyFiles, errors)
       changed = true
