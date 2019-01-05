@@ -9,6 +9,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -33,8 +34,8 @@ import java.util.List;
  */
 public class GetterFieldProcessor extends AbstractFieldProcessor {
 
-  public GetterFieldProcessor() {
-    super(PsiMethod.class, Getter.class);
+  public GetterFieldProcessor(@NotNull ConfigDiscovery configDiscovery) {
+    super(configDiscovery, PsiMethod.class, Getter.class);
   }
 
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {

@@ -9,6 +9,7 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -25,8 +26,8 @@ import java.util.Collections;
  */
 public class CleanupProcessor extends AbstractProcessor {
 
-  public CleanupProcessor() {
-    super(PsiElement.class, Cleanup.class);
+  public CleanupProcessor(@NotNull ConfigDiscovery configDiscovery) {
+    super(configDiscovery, PsiElement.class, Cleanup.class);
   }
 
   @NotNull

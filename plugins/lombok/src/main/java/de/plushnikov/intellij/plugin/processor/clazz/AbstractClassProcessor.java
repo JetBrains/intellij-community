@@ -40,9 +40,10 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractClassProcessor extends AbstractProcessor implements ClassProcessor {
 
-  protected AbstractClassProcessor(@NotNull Class<? extends PsiElement> supportedClass,
+  protected AbstractClassProcessor(@NotNull ConfigDiscovery configDiscovery,
+                                   @NotNull Class<? extends PsiElement> supportedClass,
                                    @NotNull Class<? extends Annotation> supportedAnnotationClass) {
-    super(supportedClass, supportedAnnotationClass);
+    super(configDiscovery, supportedClass, supportedAnnotationClass);
   }
 
   @NotNull
@@ -141,7 +142,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   }
 
   boolean shouldGenerateNoArgsConstructor(@NotNull PsiClass psiClass, @NotNull AbstractConstructorClassProcessor argsConstructorProcessor) {
-    boolean result = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE, psiClass);
+    boolean result = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE, psiClass);
     if (result) {
       result = !PsiClassUtil.hasSuperClass(psiClass);
     }

@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -26,8 +27,8 @@ import java.util.List;
  */
 public class SetterFieldProcessor extends AbstractFieldProcessor {
 
-  public SetterFieldProcessor() {
-    super(PsiMethod.class, Setter.class);
+  public SetterFieldProcessor(@NotNull ConfigDiscovery configDiscovery) {
+    super(configDiscovery, PsiMethod.class, Setter.class);
   }
 
   @Override

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
@@ -38,8 +39,10 @@ public class BuilderProcessor extends AbstractClassProcessor {
   private final BuilderHandler builderHandler;
   private final AllArgsConstructorProcessor allArgsConstructorProcessor;
 
-  public BuilderProcessor(@NotNull AllArgsConstructorProcessor allArgsConstructorProcessor, @NotNull BuilderHandler builderHandler) {
-    super(PsiMethod.class, Builder.class);
+  public BuilderProcessor(@NotNull ConfigDiscovery configDiscovery,
+                          @NotNull AllArgsConstructorProcessor allArgsConstructorProcessor,
+                          @NotNull BuilderHandler builderHandler) {
+    super(configDiscovery, PsiMethod.class, Builder.class);
     this.builderHandler = builderHandler;
     this.allArgsConstructorProcessor = allArgsConstructorProcessor;
   }

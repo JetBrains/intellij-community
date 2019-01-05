@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightReferenceListBuilder;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.util.PsiTypesUtil;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
@@ -43,8 +44,10 @@ import java.util.stream.Collectors;
 public abstract class AbstractConstructorClassProcessor extends AbstractClassProcessor {
   private static final String BUILDER_DEFAULT_ANNOTATION = Builder.Default.class.getName().replace("$", ".");
 
-  AbstractConstructorClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
-    super(supportedClass, supportedAnnotationClass);
+  AbstractConstructorClassProcessor(@NotNull ConfigDiscovery configDiscovery,
+                                    @NotNull Class<? extends Annotation> supportedAnnotationClass,
+                                    @NotNull Class<? extends PsiElement> supportedClass) {
+    super(configDiscovery, supportedClass, supportedAnnotationClass);
   }
 
   @Override

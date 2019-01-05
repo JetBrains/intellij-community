@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
@@ -30,12 +31,15 @@ import java.util.regex.Pattern;
  */
 public abstract class AbstractFieldProcessor extends AbstractProcessor implements FieldProcessor {
 
-  AbstractFieldProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass) {
-    super(supportedClass, supportedAnnotationClass);
+  AbstractFieldProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull Class<? extends PsiElement> supportedClass,
+                         @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+    super(configDiscovery, supportedClass, supportedAnnotationClass);
   }
 
-  AbstractFieldProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass, Class<? extends Annotation> equivalentAnnotationClass) {
-    super(supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
+  AbstractFieldProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull Class<? extends PsiElement> supportedClass,
+                         @NotNull Class<? extends Annotation> supportedAnnotationClass,
+                         @NotNull Class<? extends Annotation> equivalentAnnotationClass) {
+    super(configDiscovery, supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
   }
 
   @NotNull

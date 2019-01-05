@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -41,9 +42,11 @@ public class DataProcessor extends AbstractClassProcessor {
   private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor;
   private final NoArgsConstructorProcessor noArgsConstructorProcessor;
 
-  public DataProcessor(GetterProcessor getterProcessor, SetterProcessor setterProcessor, EqualsAndHashCodeProcessor equalsAndHashCodeProcessor,
-                       ToStringProcessor toStringProcessor, RequiredArgsConstructorProcessor requiredArgsConstructorProcessor, NoArgsConstructorProcessor noArgsConstructorProcessor) {
-    super(PsiMethod.class, Data.class);
+  public DataProcessor(@NotNull ConfigDiscovery configDiscovery,
+                       @NotNull GetterProcessor getterProcessor, @NotNull SetterProcessor setterProcessor,
+                       @NotNull EqualsAndHashCodeProcessor equalsAndHashCodeProcessor, @NotNull ToStringProcessor toStringProcessor,
+                       @NotNull RequiredArgsConstructorProcessor requiredArgsConstructorProcessor, @NotNull NoArgsConstructorProcessor noArgsConstructorProcessor) {
+    super(configDiscovery, PsiMethod.class, Data.class);
     this.getterProcessor = getterProcessor;
     this.setterProcessor = setterProcessor;
     this.equalsAndHashCodeProcessor = equalsAndHashCodeProcessor;

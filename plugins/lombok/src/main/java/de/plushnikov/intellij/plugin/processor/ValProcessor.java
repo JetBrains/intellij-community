@@ -10,6 +10,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import lombok.val;
@@ -26,8 +27,8 @@ public class ValProcessor extends AbstractProcessor {
   private static final String LOMBOK_VAR_EXPERIMENTAL_FQN = "lombok.experimental.var";
 
   @SuppressWarnings("deprecation")
-  public ValProcessor() {
-    super(PsiElement.class, val.class, lombok.experimental.var.class, lombok.var.class);
+  public ValProcessor(@NotNull ConfigDiscovery configDiscovery) {
+    super(configDiscovery, PsiElement.class, val.class, lombok.experimental.var.class, lombok.var.class);
   }
 
   public static boolean isVal(@NotNull PsiLocalVariable psiLocalVariable) {

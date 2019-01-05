@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -38,9 +39,9 @@ public class ToStringProcessor extends AbstractClassProcessor {
 
   private final EqualsAndHashCodeToStringHandler handler;
 
-  public ToStringProcessor() {
-    super(PsiMethod.class, ToString.class);
-    handler = new EqualsAndHashCodeToStringHandler();
+  public ToStringProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull EqualsAndHashCodeToStringHandler equalsAndHashCodeToStringHandler) {
+    super(configDiscovery, PsiMethod.class, ToString.class);
+    handler = equalsAndHashCodeToStringHandler;
   }
 
   @Override

@@ -5,6 +5,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
@@ -27,12 +28,17 @@ import java.util.List;
  */
 public abstract class AbstractMethodProcessor extends AbstractProcessor implements MethodProcessor {
 
-  AbstractMethodProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass) {
-    super(supportedClass, supportedAnnotationClass);
+  AbstractMethodProcessor(@NotNull ConfigDiscovery configDiscovery,
+                          @NotNull Class<? extends PsiElement> supportedClass,
+                          @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+    super(configDiscovery, supportedClass, supportedAnnotationClass);
   }
 
-  AbstractMethodProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass, Class<? extends Annotation> equivalentAnnotationClass) {
-    super(supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
+  AbstractMethodProcessor(@NotNull ConfigDiscovery configDiscovery,
+                          @NotNull Class<? extends PsiElement> supportedClass,
+                          @NotNull Class<? extends Annotation> supportedAnnotationClass,
+                          @NotNull Class<? extends Annotation> equivalentAnnotationClass) {
+    super(configDiscovery, supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
   }
 
   @NotNull

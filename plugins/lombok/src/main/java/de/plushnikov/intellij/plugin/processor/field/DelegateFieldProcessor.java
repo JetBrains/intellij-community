@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
@@ -22,9 +23,9 @@ import java.util.List;
 public class DelegateFieldProcessor extends AbstractFieldProcessor {
   private final DelegateHandler delegateHandler;
 
-  @SuppressWarnings({"deprecation", "unchecked"})
-  public DelegateFieldProcessor(@NotNull DelegateHandler delegateHandler) {
-    super(PsiMethod.class, Delegate.class, lombok.experimental.Delegate.class);
+  @SuppressWarnings({"deprecation"})
+  public DelegateFieldProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull DelegateHandler delegateHandler) {
+    super(configDiscovery, PsiMethod.class, Delegate.class, lombok.experimental.Delegate.class);
     this.delegateHandler = delegateHandler;
   }
 

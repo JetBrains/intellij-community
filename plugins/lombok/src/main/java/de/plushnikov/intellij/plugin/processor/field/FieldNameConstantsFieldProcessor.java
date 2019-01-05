@@ -1,15 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
@@ -34,8 +25,8 @@ public class FieldNameConstantsFieldProcessor extends AbstractFieldProcessor {
 
   private static final String CONFIG_DEFAULT = " CONFIG DEFAULT ";
 
-  public FieldNameConstantsFieldProcessor() {
-    super(PsiField.class, FieldNameConstants.class);
+  public FieldNameConstantsFieldProcessor(@NotNull ConfigDiscovery configDiscovery) {
+    super(configDiscovery, PsiField.class, FieldNameConstants.class);
   }
 
   @Override
@@ -96,7 +87,6 @@ public class FieldNameConstantsFieldProcessor extends AbstractFieldProcessor {
     String prefix = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "prefix");
     String suffix = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "suffix");
 
-    final ConfigDiscovery configDiscovery = ConfigDiscovery.getInstance();
     if (CONFIG_DEFAULT.equals(prefix)) {
       prefix = configDiscovery.getStringLombokConfigProperty(ConfigKey.FIELD_NAME_CONSTANTS_PREFIX, psiClass);
     }

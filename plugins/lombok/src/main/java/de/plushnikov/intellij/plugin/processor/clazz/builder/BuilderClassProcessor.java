@@ -4,6 +4,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
@@ -24,8 +25,8 @@ public class BuilderClassProcessor extends AbstractClassProcessor {
 
   private final BuilderHandler builderHandler;
 
-  public BuilderClassProcessor(@NotNull BuilderHandler builderHandler) {
-    super(PsiClass.class, Builder.class);
+  public BuilderClassProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull BuilderHandler builderHandler) {
+    super(configDiscovery, PsiClass.class, Builder.class);
     this.builderHandler = builderHandler;
   }
 

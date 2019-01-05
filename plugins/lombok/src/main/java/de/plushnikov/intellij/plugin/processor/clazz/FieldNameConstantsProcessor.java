@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -31,8 +32,8 @@ public class FieldNameConstantsProcessor extends AbstractClassProcessor {
 
   private final FieldNameConstantsFieldProcessor fieldProcessor;
 
-  public FieldNameConstantsProcessor(FieldNameConstantsFieldProcessor fieldProcessor) {
-    super(PsiField.class, FieldNameConstants.class);
+  public FieldNameConstantsProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull FieldNameConstantsFieldProcessor fieldProcessor) {
+    super(configDiscovery, PsiField.class, FieldNameConstants.class);
     this.fieldProcessor = fieldProcessor;
   }
 

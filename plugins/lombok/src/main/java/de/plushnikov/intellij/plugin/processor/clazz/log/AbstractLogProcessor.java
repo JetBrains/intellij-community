@@ -3,16 +3,7 @@ package de.plushnikov.intellij.plugin.processor.clazz.log;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -38,8 +29,10 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   private final String loggerInitializer;
   private final String loggerCategory;
 
-  AbstractLogProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull String loggerType, @NotNull String loggerInitializer, @NotNull String loggerCategory) {
-    super(PsiField.class, supportedAnnotationClass);
+  AbstractLogProcessor(@NotNull ConfigDiscovery configDiscovery,
+                       @NotNull Class<? extends Annotation> supportedAnnotationClass,
+                       @NotNull String loggerType, @NotNull String loggerInitializer, @NotNull String loggerCategory) {
+    super(configDiscovery, PsiField.class, supportedAnnotationClass);
     this.loggerType = loggerType;
     this.loggerInitializer = loggerInitializer;
     this.loggerCategory = loggerCategory;

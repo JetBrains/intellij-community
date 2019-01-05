@@ -19,7 +19,6 @@ import java.util.Set;
 public class ValueModifierProcessor implements ModifierProcessor {
 
   @Override
-  @SuppressWarnings("unchecked")
   public boolean isSupported(@NotNull PsiModifierList modifierList) {
 
     final PsiElement modifierListParent = modifierList.getParent();

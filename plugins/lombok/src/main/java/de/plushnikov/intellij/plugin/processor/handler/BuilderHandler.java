@@ -49,7 +49,6 @@ public class BuilderHandler {
   private static final String TO_BUILDER_METHOD_NAME = "toBuilder";
   private static final String TO_BUILDER_ANNOTATION_KEY = "toBuilder";
 
-  @SuppressWarnings("deprecation")
   private static final Collection<String> INVALID_ON_BUILDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
     Getter.class.getSimpleName(), Setter.class.getSimpleName(), Wither.class.getSimpleName(), ToString.class.getSimpleName(), EqualsAndHashCode.class.getSimpleName(),
     RequiredArgsConstructor.class.getSimpleName(), AllArgsConstructor.class.getSimpleName(), NoArgsConstructor.class.getSimpleName(),
@@ -58,7 +57,7 @@ public class BuilderHandler {
   private final ToStringProcessor toStringProcessor;
   private final NoArgsConstructorProcessor noArgsConstructorProcessor;
 
-  public BuilderHandler(ToStringProcessor toStringProcessor, NoArgsConstructorProcessor noArgsConstructorProcessor) {
+  public BuilderHandler(@NotNull ToStringProcessor toStringProcessor, @NotNull NoArgsConstructorProcessor noArgsConstructorProcessor) {
     this.toStringProcessor = toStringProcessor;
     this.noArgsConstructorProcessor = noArgsConstructorProcessor;
   }

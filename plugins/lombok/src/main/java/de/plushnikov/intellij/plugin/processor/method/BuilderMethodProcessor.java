@@ -5,6 +5,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
@@ -24,8 +25,8 @@ public class BuilderMethodProcessor extends AbstractMethodProcessor {
 
   private final BuilderHandler builderHandler;
 
-  public BuilderMethodProcessor(@NotNull BuilderHandler builderHandler) {
-    super(PsiMethod.class, Builder.class);
+  public BuilderMethodProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull BuilderHandler builderHandler) {
+    super(configDiscovery, PsiMethod.class, Builder.class);
     this.builderHandler = builderHandler;
   }
 

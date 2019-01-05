@@ -45,9 +45,9 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   private final EqualsAndHashCodeToStringHandler handler;
 
-  public EqualsAndHashCodeProcessor() {
-    super(PsiMethod.class, EqualsAndHashCode.class);
-    handler = new EqualsAndHashCodeToStringHandler();
+  public EqualsAndHashCodeProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull EqualsAndHashCodeToStringHandler equalsAndHashCodeToStringHandler) {
+    super(configDiscovery, PsiMethod.class, EqualsAndHashCode.class);
+    handler = equalsAndHashCodeToStringHandler;
   }
 
   @Override
@@ -87,7 +87,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private void validateCallSuperParam(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder, LocalQuickFix... quickFixes) {
     final Boolean declaredBooleanAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "callSuper");
     if (null == declaredBooleanAnnotationValue) {
-      final String configProperty = ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.EQUALSANDHASHCODE_CALL_SUPER, psiClass);
+      final String configProperty = configDiscovery.getStringLombokConfigProperty(ConfigKey.EQUALSANDHASHCODE_CALL_SUPER, psiClass);
       if (!"CALL".equalsIgnoreCase(configProperty) && !"SKIP".equalsIgnoreCase(configProperty) && PsiClassUtil.hasSuperClass(psiClass) && !hasOneOfMethodsDefined(psiClass)) {
         builder.addWarning("Generating equals/hashCode implementation but without a call to superclass, " +
             "even though this class does not extend java.lang.Object. If this is intentional, add '(callSuper=false)' to your type.",
@@ -331,7 +331,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     final boolean result;
     final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "callSuper");
     if (null == declaredAnnotationValue) {
-      final String configProperty = ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.EQUALSANDHASHCODE_CALL_SUPER, psiClass);
+      final String configProperty = configDiscovery.getStringLombokConfigProperty(ConfigKey.EQUALSANDHASHCODE_CALL_SUPER, psiClass);
       result = PsiClassUtil.hasSuperClass(psiClass) && "CALL".equalsIgnoreCase(configProperty);
     } else {
       result = declaredAnnotationValue;
