@@ -1,4 +1,4 @@
-Shebang ('#!/bin/sh\n')
+shebang ('#!/bin/sh\n')
 \n ('\n')
 word ('cat')
 WHITE_SPACE (' ')

@@ -22,7 +22,6 @@ public interface BashTokenTypes extends BashTypes {
 
   // comments
   IElementType COMMENT = new BashTokenType("Comment");
-  IElementType SHEBANG = new BashTokenType("Shebang");
 
   TokenSet commentTokens = TokenSet.create(COMMENT, SHEBANG);
 

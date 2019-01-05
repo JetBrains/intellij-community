@@ -1,5 +1,5 @@
 BASH_FILE
-  PsiComment(Shebang)('#!/usr/bin/env bash\n')
+  PsiComment(shebang)('#!/usr/bin/env bash\n')
   PsiElement(\n)('\n')
   PsiWhiteSpace(' ')
   PsiWhiteSpace(' ')

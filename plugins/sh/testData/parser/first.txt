@@ -1,5 +1,5 @@
 BASH_FILE
-  PsiComment(Shebang)('#!/bin/bash\n')
+  PsiComment(shebang)('#!/bin/bash\n')
   PsiElement(\n)('\n')
   PsiComment(Comment)('# Simple line count example, using bash')
   PsiElement(\n)('\n')

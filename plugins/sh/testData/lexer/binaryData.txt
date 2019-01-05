@@ -1,4 +1,4 @@
-Shebang ('#!/bin/bash\n')
+shebang ('#!/bin/bash\n')
 word ('exit')
 WHITE_SPACE (' ')
 int ('0')

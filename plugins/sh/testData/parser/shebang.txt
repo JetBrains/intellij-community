@@ -1,2 +1,2 @@
 BASH_FILE
-  PsiComment(Shebang)('#!/bin/bash')
+  PsiComment(shebang)('#!/bin/bash')

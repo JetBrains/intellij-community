@@ -1,4 +1,4 @@
-Shebang ('#!/bin/bash\n')
+shebang ('#!/bin/bash\n')
 \n ('\n')
 Comment ('# Simple line count example, using bash')
 \n ('\n')

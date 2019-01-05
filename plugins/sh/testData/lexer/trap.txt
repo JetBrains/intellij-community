@@ -1,4 +1,4 @@
-Shebang ('#!/bin/bash\n')
+shebang ('#!/bin/bash\n')
 assignment_word ('count')
 = ('=')
 int ('0')

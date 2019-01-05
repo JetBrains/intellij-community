@@ -1,4 +1,4 @@
-Shebang ('#!/bin/bash\n')
+shebang ('#!/bin/bash\n')
 \n ('\n')
 for ('for')
 WHITE_SPACE (' ')
