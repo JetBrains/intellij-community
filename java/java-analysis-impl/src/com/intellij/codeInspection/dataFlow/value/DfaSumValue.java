@@ -19,15 +19,15 @@ public class DfaSumValue extends DfaValue {
   private final @NotNull DfaVariableValue myLeft;
   private final @NotNull DfaValue myRight;
   private final boolean myLong;
-  private final boolean myNegation;
+  private final boolean mySubtraction;
 
-  private DfaSumValue(@NotNull DfaVariableValue left, @NotNull DfaValue right, boolean isLong, boolean negation) {
+  private DfaSumValue(@NotNull DfaVariableValue left, @NotNull DfaValue right, boolean isLong, boolean subtraction) {
     super(left.getFactory());
-    assert (right instanceof DfaConstValue && !negation) || right instanceof DfaVariableValue;
+    assert (right instanceof DfaConstValue && !subtraction) || right instanceof DfaVariableValue;
     myLeft = left;
     myRight = right;
     myLong = isLong;
-    myNegation = negation;
+    mySubtraction = subtraction;
   }
 
   @NotNull
@@ -46,8 +46,8 @@ public class DfaSumValue extends DfaValue {
     return myLong ? PsiType.LONG : PsiType.INT;
   }
 
-  public boolean isNegation() {
-    return myNegation;
+  public boolean isSubtraction() {
+    return mySubtraction;
   }
 
   @Override
@@ -58,14 +58,14 @@ public class DfaSumValue extends DfaValue {
         (Long)((DfaConstValue)myRight).getValue() < 0) {
       delimiter = "";
     } else {
-      delimiter = myNegation ? "-" : "+";
+      delimiter = mySubtraction ? "-" : "+";
     }
     return myLeft + delimiter + myRight;
   }
 
   @NotNull
   public IElementType getTokenType() {
-    return isNegation() ? JavaTokenType.MINUS : JavaTokenType.PLUS;
+    return isSubtraction() ? JavaTokenType.MINUS : JavaTokenType.PLUS;
   }
 
   public static class Factory {
@@ -76,7 +76,7 @@ public class DfaSumValue extends DfaValue {
       myFactory = factory;
     }
 
-    public DfaValue create(DfaValue left, DfaValue right, DfaMemoryState state, boolean isLong, boolean negation) {
+    public DfaValue create(DfaValue left, DfaValue right, DfaMemoryState state, boolean isLong, boolean subtraction) {
       DfaConstValue leftConst = state.getConstantValue(left);
       if (leftConst != null) {
         left = leftConst;
@@ -85,24 +85,24 @@ public class DfaSumValue extends DfaValue {
       if (rightConst != null) {
         right = rightConst;
       }
-      if (negation && state.areEqual(left, right)) {
+      if (subtraction && state.areEqual(left, right)) {
         return myFactory.getInt(0);
       }
-      if (left instanceof DfaConstValue && (right instanceof DfaVariableValue || right instanceof DfaSumValue) && !negation) {
+      if (left instanceof DfaConstValue && (right instanceof DfaVariableValue || right instanceof DfaSumValue) && !subtraction) {
         return create(right, left, state, isLong, false);
       }
       if (left instanceof DfaVariableValue) {
         if (right instanceof DfaVariableValue) {
-          if (!negation && right.getID() > left.getID()) {
+          if (!subtraction && right.getID() > left.getID()) {
             return doCreate((DfaVariableValue)right, left, isLong, false);
           }
-          return doCreate((DfaVariableValue)left, right, isLong, negation);
+          return doCreate((DfaVariableValue)left, right, isLong, subtraction);
         }
         if (right instanceof DfaConstValue) {
           Long value = ObjectUtils.tryCast(((DfaConstValue)right).getValue(), Long.class);
           if (value != null) {
             if (value == 0) return left;
-            if (negation && (isLong || value != Integer.MIN_VALUE)) {
+            if (subtraction && (isLong || value != Integer.MIN_VALUE)) {
               right = myFactory.getConstFactory().createFromValue(-value, PsiType.LONG);
             }
             return doCreate((DfaVariableValue)left, right, isLong, false);
@@ -116,7 +116,7 @@ public class DfaSumValue extends DfaValue {
             Long value1 = ObjectUtils.tryCast(((DfaConstValue)sumValue.getRight()).getValue(), Long.class);
             Long value2 = ObjectUtils.tryCast(((DfaConstValue)right).getValue(), Long.class);
             if (value1 != null && value2 != null) {
-              if (negation) {
+              if (subtraction) {
                 value2 = -value2;
               }
               long res = value1 + value2;
@@ -125,7 +125,7 @@ public class DfaSumValue extends DfaValue {
             }
           }
         }
-        if (negation && !sumValue.isNegation()) {
+        if (subtraction && !sumValue.isSubtraction()) {
           // a+b-a => b; a+b-b => a 
           if (state.areEqual(right, sumValue.getLeft())) {
             return sumValue.getRight();
@@ -138,18 +138,18 @@ public class DfaSumValue extends DfaValue {
       LongRangeSet leftRange = state.getValueFact(left, DfaFactType.RANGE);
       LongRangeSet rightRange = state.getValueFact(right, DfaFactType.RANGE);
       if (leftRange != null && rightRange != null) {
-        LongRangeSet result = leftRange.binOpFromToken(negation ? JavaTokenType.MINUS : JavaTokenType.PLUS, rightRange, isLong);
+        LongRangeSet result = leftRange.binOpFromToken(subtraction ? JavaTokenType.MINUS : JavaTokenType.PLUS, rightRange, isLong);
         return myFactory.getFactValue(DfaFactType.RANGE, result);
       }
       return DfaUnknownValue.getInstance();
     }
 
     @NotNull
-    private DfaSumValue doCreate(DfaVariableValue left, DfaValue right, boolean isLong, boolean negation) {
-      long hash = ((isLong ? 1L : 0L) << 63) | ((long)left.getID() << 32) | ((negation ? 1L : 0L) << 31) | right.getID();
+    private DfaSumValue doCreate(DfaVariableValue left, DfaValue right, boolean isLong, boolean subtraction) {
+      long hash = ((isLong ? 1L : 0L) << 63) | ((long)left.getID() << 32) | ((subtraction ? 1L : 0L) << 31) | right.getID();
       DfaSumValue value = myValues.get(hash);
       if (value == null) {
-        value = new DfaSumValue(left, right, isLong, negation);
+        value = new DfaSumValue(left, right, isLong, subtraction);
         myValues.put(hash, value);
       }
       return value;

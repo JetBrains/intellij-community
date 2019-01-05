@@ -725,10 +725,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       LongRangeSet leftRange = getValueFact(left, DfaFactType.RANGE);
       LongRangeSet rightRange = getValueFact(right, DfaFactType.RANGE);
       if (leftRange == null || rightRange == null) return true;
-      LongRangeSet result = sum.isNegation() ? leftRange.minus(rightRange, isLong) : leftRange.plus(rightRange, isLong);
+      LongRangeSet result = sum.isSubtraction() ? leftRange.minus(rightRange, isLong) : leftRange.plus(rightRange, isLong);
       if (!result.intersects(appliedRange)) return false;
-      LongRangeSet leftConstraint = sum.isNegation() ? rightRange.plus(appliedRange, isLong) : appliedRange.minus(rightRange, isLong);
-      LongRangeSet rightConstraint = sum.isNegation() ? leftRange.minus(appliedRange, isLong) : appliedRange.minus(leftRange, isLong);
+      LongRangeSet leftConstraint = sum.isSubtraction() ? rightRange.plus(appliedRange, isLong) : appliedRange.minus(rightRange, isLong);
+      LongRangeSet rightConstraint = sum.isSubtraction() ? leftRange.minus(appliedRange, isLong) : appliedRange.minus(leftRange, isLong);
       return applyFact(left, DfaFactType.RANGE, leftConstraint) && applyFact(right, DfaFactType.RANGE, rightConstraint);
     }
     if (value instanceof DfaVariableValue) {
@@ -765,7 +765,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value1 instanceof DfaSumValue && value2 instanceof DfaSumValue) {
       DfaSumValue sum1 = (DfaSumValue)value1;
       DfaSumValue sum2 = (DfaSumValue)value2;
-      return sum1.isNegation() == sum2.isNegation() &&
+      return sum1.isSubtraction() == sum2.isSubtraction() &&
              areEqual(sum1.getLeft(), sum2.getLeft()) &&
              areEqual(sum1.getRight(), sum2.getRight());
     }
@@ -895,11 +895,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (leftRange == null || rightRange == null) return true;
       boolean isLong = PsiType.LONG.equals(sum.getType());
       LongRangeSet rightNegated = rightRange.negate(isLong);
-      LongRangeSet rightCorrected = sum.isNegation() ? rightNegated : rightRange;
+      LongRangeSet rightCorrected = sum.isSubtraction() ? rightNegated : rightRange;
 
       LongRangeSet resultRange = getValueFact(right, DfaFactType.RANGE);
       RelationType correctedRelation = correctRelation(type, leftRange, rightCorrected, resultRange, isLong);
-      if (sum.isNegation()) {
+      if (sum.isSubtraction()) {
         if (resultRange != null) {
           long min = resultRange.min();
           long max = resultRange.max();
@@ -924,15 +924,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (right instanceof DfaVariableValue) {
         // a+b (rel) c && a == c => b (rel) 0 
         if (areEqual(sum.getLeft(), right)) {
-          RelationType finalRelation = sum.isNegation() ? correctedRelation.getFlipped() : correctedRelation;
+          RelationType finalRelation = sum.isSubtraction() ? correctedRelation.getFlipped() : correctedRelation;
           if (!applyCondition(myFactory.createCondition(sum.getRight(), finalRelation, myFactory.getInt(0)))) return false;
         }
         // a+b (rel) c && b == c => a (rel) 0 
-        if (!sum.isNegation() && areEqual(sum.getRight(), right)) {
+        if (!sum.isSubtraction() && areEqual(sum.getRight(), right)) {
           if (!applyCondition(myFactory.createCondition(sum.getLeft(), correctedRelation, myFactory.getInt(0)))) return false;
         }
 
-        if (!leftRange.subtractionMayOverflow(sum.isNegation() ? rightRange : rightNegated, isLong)) {
+        if (!leftRange.subtractionMayOverflow(sum.isSubtraction() ? rightRange : rightNegated, isLong)) {
           // a-positiveNumber >= b => a > b
           if (rightCorrected.max() < 0 && RelationType.GE.isSubRelation(type)) {
             if (!applyLessThanRelation(right, sum.getLeft())) return false;
@@ -1250,7 +1250,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (left == null || right == null) return null;
     boolean isLong = PsiType.LONG.equals(sum.getType());
     LongRangeSet result = left.binOpFromToken(sum.getTokenType(), right, isLong);
-    if (result != null && sum.isNegation()) {
+    if (result != null && sum.isSubtraction()) {
       RelationType rel = getRelation(sum.getLeft(), sum.getRight());
       if (rel == RelationType.NE) {
         return result.without(0);
