@@ -12,9 +12,9 @@ public abstract class AbstractLombokConfigSystemTestCase extends AbstractLombokP
     final String subPath = fullFileName.substring(0, fullFileName.lastIndexOf('/'));
     final String fileName = fullFileName.substring(fullFileName.lastIndexOf('/') + 1);
 
-    myFixture.copyFileToProject(getBasePath() + "/" + subPath + "/lombok.config", "lombok.config");
+    myFixture.copyFileToProject(getBasePath() + "/" + subPath + "/before/lombok.config", subPath + "/before/lombok.config");
 
-    doTest(fullFileName, subPath + "/after/" + fileName);
+    doTest(subPath + "/before/" + fileName, subPath + "/after/" + fileName);
   }
 
   protected void doTest(final String beforeFileName, final String afterFileName) {
