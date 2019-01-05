@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
@@ -15,6 +14,7 @@ import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -215,11 +215,11 @@ public class JDOMUtil {
   }
 
   @NotNull
-  private static Element loadUsingStaX(@NotNull Reader reader, @Nullable StringInterner stringInterner) throws JDOMException, IOException {
+  private static Element loadUsingStaX(@NotNull Reader reader, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
     try {
       XMLStreamReader xmlStreamReader = XML_INPUT_FACTORY.getValue().createXMLStreamReader(reader);
       try {
-        return SafeStAXStreamBuilder.build(xmlStreamReader, true, stringInterner);
+        return SafeStAXStreamBuilder.build(xmlStreamReader, true, factory == null ? SafeStAXStreamBuilder.FACTORY : factory);
       }
       finally {
         xmlStreamReader.close();
@@ -271,12 +271,12 @@ public class JDOMUtil {
   }
 
   /**
-   * Consider using some threshold in StringInterner - CDATA is not interned at all,
-   * but maybe some long text for Text node doesn't make sense to intern too.
+   * Internal use only.
    */
+  @ApiStatus.Experimental
   @NotNull
-  public static Element load(@NotNull File file, @Nullable StringInterner stringInterner) throws JDOMException, IOException {
-    return loadUsingStaX(new BufferedReader(new InputStreamReader(new FileInputStream(file), CharsetToolkit.UTF8_CHARSET)), stringInterner);
+  public static Element load(@NotNull File file, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
+    return loadUsingStaX(new BufferedReader(new InputStreamReader(new FileInputStream(file), CharsetToolkit.UTF8_CHARSET)), factory);
   }
 
   /**
@@ -301,12 +301,12 @@ public class JDOMUtil {
   }
 
   /**
-   * Consider using some threshold in StringInterner - CDATA is not interned at all,
-   * but maybe some long text for Text node doesn't make sense to intern too.
+   * Internal use only.
    */
+  @ApiStatus.Experimental
   @NotNull
-  public static Element load(@NotNull InputStream stream, @Nullable StringInterner stringInterner) throws JDOMException, IOException {
-    return loadUsingStaX(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET), stringInterner);
+  public static Element load(@NotNull InputStream stream, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
+    return loadUsingStaX(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET), factory);
   }
 
   @NotNull

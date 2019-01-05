@@ -26,7 +26,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.StringInterner;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.*;
 import com.intellij.util.io.URLUtil;
@@ -646,7 +645,7 @@ public class PluginManagerCore {
 
     try {
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), loadingContext.isBundled);
-      descriptor.loadFromFile(descriptorFile, loadingContext.getStringInterner());
+      descriptor.loadFromFile(descriptorFile, loadingContext.getXmlFactory());
       return descriptor;
     }
     catch (XmlSerializationException | JDOMException | IOException e) {
@@ -681,7 +680,7 @@ public class PluginManagerCore {
       ZipEntry entry = zipFile.getEntry(entryName);
       if (entry != null) {
         IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), context.isBundled);
-        descriptor.readExternal(JDOMUtil.load(zipFile.getInputStream(entry), context.getStringInterner()), jarURL, pathResolver);
+        descriptor.readExternal(JDOMUtil.load(zipFile.getInputStream(entry), context.getXmlFactory()), jarURL, pathResolver);
         context.myLastZipFileContainingDescriptor = file;
         return descriptor;
       }
@@ -745,11 +744,11 @@ public class PluginManagerCore {
     }
 
     @Nullable
-    public StringInterner getStringInterner() {
+    public SafeJdomFactory getXmlFactory() {
       if (myParentContext == null) {
         return null;
       }
-      return myParentContext.getStringInterner();
+      return myParentContext.getXmlFactory();
     }
   }
 
@@ -1205,8 +1204,7 @@ public class PluginManagerCore {
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(PluginManagerCore.class.getClassLoader(), urlsFromClassPath);
 
     PluginLoadProgressManager pluginLoadProgressManager = progress == null ? null : new PluginLoadProgressManager(progress, urlsFromClassPath.size());
-    LoadDescriptorsContext context = new LoadDescriptorsContext(pluginLoadProgressManager, SystemProperties.getBooleanProperty("parallel.pluginDescriptors.loading", true));
-    try {
+    try (LoadDescriptorsContext context = new LoadDescriptorsContext(pluginLoadProgressManager, SystemProperties.getBooleanProperty("parallel.pluginDescriptors.loading", true))) {
       loadDescriptorsFromDir(new File(PathManager.getPluginsPath()), result, false, context);
       Application application = ApplicationManager.getApplication();
       if (application == null || !application.isUnitTestMode()) {

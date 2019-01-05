@@ -13,17 +13,13 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.StringInterner;
 import com.intellij.util.xmlb.BeanBinding;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -145,8 +141,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     readExternal(element);
   }
 
-  public void loadFromFile(@NotNull File file, @Nullable StringInterner stringInterner) throws IOException, JDOMException {
-    readExternal(JDOMUtil.load(file, stringInterner), file.toURI().toURL(), JDOMXIncluder.DEFAULT_PATH_RESOLVER);
+  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory) throws IOException, JDOMException {
+    readExternal(JDOMUtil.load(file, factory), file.toURI().toURL(), JDOMXIncluder.DEFAULT_PATH_RESOLVER);
   }
 
   // used in upsource

@@ -1,10 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
-import com.intellij.util.containers.StringInterner;
 import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -13,16 +11,16 @@ import static javax.xml.stream.XMLStreamConstants.*;
 
 // DTD, COMMENT and PROCESSING_INSTRUCTION wi
 final class SafeStAXStreamBuilder {
-  private static final JDOMFactory factory = new DefaultJDOMFactory();
+  static final SafeJdomFactory FACTORY = new SafeJdomFactory.BaseSafeJdomFactory();
 
-  static Document buildDocument(@NotNull XMLStreamReader stream, boolean isIgnoreBoundaryWhitespace) throws JDOMException, XMLStreamException {
+  static Document buildDocument(@NotNull XMLStreamReader stream, @SuppressWarnings("SameParameterValue") boolean isIgnoreBoundaryWhitespace) throws JDOMException, XMLStreamException {
     int state = stream.getEventType();
 
     if (START_DOCUMENT != state) {
       throw new JDOMException("JDOM requires that XMLStreamReaders are at their beginning when being processed.");
     }
 
-    final Document document = factory.document(null);
+    final Document document = new Document();
 
     while (state != END_DOCUMENT) {
       switch (state) {
@@ -35,22 +33,15 @@ final class SafeStAXStreamBuilder {
           break;
 
         case DTD:
+        case COMMENT:
+        case PROCESSING_INSTRUCTION:
+        case SPACE:
           break;
 
         case START_ELEMENT:
-          document.setRootElement(processElementFragment(stream, isIgnoreBoundaryWhitespace, factory));
+          document.setRootElement(processElementFragment(stream, isIgnoreBoundaryWhitespace, FACTORY));
           break;
 
-        case END_ELEMENT:
-          throw new JDOMException("Unexpected XMLStream event at Document level: END_ELEMENT");
-        case ENTITY_REFERENCE:
-          throw new JDOMException("Unexpected XMLStream event at Document level: ENTITY_REFERENCE");
-        case CDATA:
-          throw new JDOMException("Unexpected XMLStream event at Document level: CDATA");
-        case SPACE:
-          // Can happen when XMLInputFactory2.P_REPORT_PROLOG_WHITESPACE is set to true
-          document.addContent(factory.text(stream.getText()));
-          break;
         case CHARACTERS:
           final String badTxt = stream.getText();
           if (!Verifier.isAllXMLWhitespace(badTxt)) {
@@ -59,12 +50,8 @@ final class SafeStAXStreamBuilder {
           // otherwise ignore the chars.
           break;
 
-        case COMMENT:
-        case PROCESSING_INSTRUCTION:
-          break;
-
         default:
-          throw new JDOMException("Unexpected XMLStream event " + state);
+          throw new JDOMException("Unexpected XMLStream event at Document level:" + state);
       }
 
       if (stream.hasNext()) {
@@ -77,14 +64,12 @@ final class SafeStAXStreamBuilder {
     return document;
   }
 
-  static Element build(@NotNull XMLStreamReader stream, boolean isIgnoreBoundaryWhitespace, @Nullable StringInterner stringInterner) throws JDOMException, XMLStreamException {
+  static Element build(@NotNull XMLStreamReader stream, @SuppressWarnings("SameParameterValue") boolean isIgnoreBoundaryWhitespace, @NotNull SafeJdomFactory factory) throws JDOMException, XMLStreamException {
     int state = stream.getEventType();
 
     if (START_DOCUMENT != state) {
       throw new JDOMException("JDOM requires that XMLStreamReaders are at their beginning when being processed");
     }
-
-    JDOMFactory factory = stringInterner == null ? SafeStAXStreamBuilder.factory : new JdomInternFactory(stringInterner);
 
     Element rootElement = null;
     while (state != END_DOCUMENT) {
@@ -120,7 +105,7 @@ final class SafeStAXStreamBuilder {
     return rootElement;
   }
 
-  private static Element processElementFragment(@NotNull XMLStreamReader reader, boolean isIgnoreBoundaryWhitespace, @NotNull JDOMFactory factory) throws XMLStreamException, JDOMException {
+  private static Element processElementFragment(@NotNull XMLStreamReader reader, boolean isIgnoreBoundaryWhitespace, @NotNull SafeJdomFactory factory) throws XMLStreamException, JDOMException {
     if (reader.getEventType() != START_ELEMENT) {
       throw new JDOMException("JDOM requires that the XMLStreamReader is at the START_ELEMENT state when retrieving an Element Fragment.");
     }
@@ -146,19 +131,16 @@ final class SafeStAXStreamBuilder {
 
         case SPACE:
           if (!isIgnoreBoundaryWhitespace) {
-            current.addContent(factory.text(reader.getText()));
+            current.addContent(factory.text(reader.getText(), current));
           }
 
         case CHARACTERS:
           if (!isIgnoreBoundaryWhitespace || !reader.isWhiteSpace()) {
-            current.addContent(factory.text(reader.getText()));
+            current.addContent(factory.text(reader.getText(), current));
           }
           break;
 
         case ENTITY_REFERENCE:
-          current.addContent(factory.entityRef(reader.getLocalName()));
-          break;
-
         case COMMENT:
         case PROCESSING_INSTRUCTION:
           break;
@@ -172,12 +154,12 @@ final class SafeStAXStreamBuilder {
   }
 
   @NotNull
-  private static Element processElement(@NotNull XMLStreamReader reader, @NotNull JDOMFactory factory) {
+  private static Element processElement(@NotNull XMLStreamReader reader, @NotNull SafeJdomFactory factory) {
     final Element element = factory.element(reader.getLocalName(), Namespace.getNamespace(reader.getPrefix(), reader.getNamespaceURI()));
 
     // Handle attributes
     for (int i = 0, len = reader.getAttributeCount(); i < len; i++) {
-      factory.setAttribute(element, factory.attribute(
+      element.setAttribute(factory.attribute(
         reader.getAttributeLocalName(i),
         reader.getAttributeValue(i),
         AttributeType.getAttributeType(reader.getAttributeType(i)),
