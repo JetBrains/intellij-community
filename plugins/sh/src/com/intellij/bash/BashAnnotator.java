@@ -3,21 +3,21 @@ package com.intellij.bash;
 import com.intellij.bash.psi.BashHeredoc;
 import com.intellij.bash.psi.BashString;
 import com.intellij.bash.psi.BashVariable;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.bash.BashSyntaxHighlighter.STRING;
-import static com.intellij.bash.BashSyntaxHighlighter.VAR_USE;
+import static com.intellij.bash.BashSyntaxHighlighter.*;
 
 public class BashAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement o, @NotNull AnnotationHolder holder) {
     if (o instanceof BashString) {
-      holder.createInfoAnnotation(o, null).setTextAttributes(STRING);
+      mark(o, holder, STRING);
       highlightVariables(o, holder);
     }
     else if (o instanceof BashHeredoc) {
@@ -25,9 +25,11 @@ public class BashAnnotator implements Annotator {
     }
   }
 
-  private void annotateHeredoc(BashHeredoc o, AnnotationHolder holder) {
-    Annotation annotation = holder.createInfoAnnotation(o, null);
-    annotation.setTextAttributes(BashSyntaxHighlighter.HERE_DOC);
+  private void annotateHeredoc(@NotNull BashHeredoc o, @NotNull AnnotationHolder holder) {
+    mark(o, holder, HERE_DOC);
+    mark(o.getHeredocMarkerStart(), holder, HERE_DOC_START);
+    mark(o.getHeredocMarkerEnd(), holder, HERE_DOC_END);
+
     highlightVariables(o, holder);
   }
 
@@ -36,10 +38,14 @@ public class BashAnnotator implements Annotator {
       @Override
       public void visitElement(PsiElement element) {
         if (element instanceof BashVariable) {
-          holder.createInfoAnnotation(element, null).setTextAttributes(VAR_USE);
+          mark(element, holder, VAR_USE);
         }
         super.visitElement(element);
       }
     }.visitElement(container);
+  }
+
+  private static void mark(@Nullable PsiElement o, @NotNull AnnotationHolder holder, @NotNull TextAttributesKey key) {
+    if (o != null) holder.createInfoAnnotation(o, null).setTextAttributes(key);
   }
 }
