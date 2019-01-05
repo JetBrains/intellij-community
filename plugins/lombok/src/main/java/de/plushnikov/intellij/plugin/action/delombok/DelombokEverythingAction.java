@@ -28,56 +28,47 @@ import de.plushnikov.intellij.plugin.processor.field.FieldNameConstantsFieldProc
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
-import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
-import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
 import de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor;
 
-public class DelombokEverythingAction extends BaseDelombokAction {
+import static de.plushnikov.intellij.plugin.util.ExtensionsUtil.findExtension;
 
-  public DelombokEverythingAction() {
-    super(createHandler());
-  }
+public class DelombokEverythingAction extends AbstractDelombokAction {
 
-  private static BaseDelombokHandler createHandler() {
-    final GetterFieldProcessor getterFieldProcessor = new GetterFieldProcessor();
-    final GetterProcessor getterProcessor = new GetterProcessor(getterFieldProcessor);
+  protected DelombokHandler createHandler() {
+    return new DelombokHandler(true,
+      findExtension(RequiredArgsConstructorProcessor.class),
+      findExtension(AllArgsConstructorProcessor.class),
+      findExtension(NoArgsConstructorProcessor.class),
 
-    final SetterFieldProcessor setterFieldProcessor = new SetterFieldProcessor();
-    final SetterProcessor setterProcessor = new SetterProcessor(setterFieldProcessor);
+      findExtension(DataProcessor.class),
+      findExtension(GetterProcessor.class),
+      findExtension(ValueProcessor.class),
+      findExtension(WitherProcessor.class),
+      findExtension(SetterProcessor.class),
+      findExtension(EqualsAndHashCodeProcessor.class),
+      findExtension(ToStringProcessor.class),
 
-    final EqualsAndHashCodeProcessor equalsAndHashCodeProcessor = new EqualsAndHashCodeProcessor();
-    final ToStringProcessor toStringProcessor = new ToStringProcessor();
+      findExtension(CommonsLogProcessor.class), findExtension(JBossLogProcessor.class), findExtension(Log4jProcessor.class),
+      findExtension(Log4j2Processor.class), findExtension(LogProcessor.class), findExtension(Slf4jProcessor.class),
+      findExtension(XSlf4jProcessor.class), findExtension(FloggerProcessor.class),
 
-    final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor = new RequiredArgsConstructorProcessor();
-    final AllArgsConstructorProcessor allArgsConstructorProcessor = new AllArgsConstructorProcessor();
-    final NoArgsConstructorProcessor noArgsConstructorProcessor = new NoArgsConstructorProcessor();
+      findExtension(GetterFieldProcessor.class),
+      findExtension(SetterFieldProcessor.class),
+      findExtension(WitherFieldProcessor.class),
+      findExtension(DelegateFieldProcessor.class),
+      findExtension(DelegateMethodProcessor.class),
 
-    final DelegateHandler delegateHandler = new DelegateHandler();
-    final BuilderHandler builderHandler = new BuilderHandler(toStringProcessor, noArgsConstructorProcessor);
+      findExtension(FieldNameConstantsFieldProcessor.class),
+      findExtension(FieldNameConstantsProcessor.class),
 
-    final FieldNameConstantsFieldProcessor fieldNameConstantsFieldProcessor = new FieldNameConstantsFieldProcessor();
-
-    return new BaseDelombokHandler(true,
-      requiredArgsConstructorProcessor, allArgsConstructorProcessor, noArgsConstructorProcessor,
-      new DataProcessor(getterProcessor, setterProcessor, equalsAndHashCodeProcessor, toStringProcessor, requiredArgsConstructorProcessor, noArgsConstructorProcessor),
-      getterProcessor, new ValueProcessor(getterProcessor, equalsAndHashCodeProcessor, toStringProcessor, allArgsConstructorProcessor, noArgsConstructorProcessor),
-      new WitherProcessor(new WitherFieldProcessor(requiredArgsConstructorProcessor)),
-      setterProcessor, equalsAndHashCodeProcessor, toStringProcessor,
-      new CommonsLogProcessor(), new JBossLogProcessor(), new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor(), new FloggerProcessor(),
-      getterFieldProcessor, setterFieldProcessor,
-      new WitherFieldProcessor(requiredArgsConstructorProcessor),
-      new DelegateFieldProcessor(delegateHandler),
-      new DelegateMethodProcessor(delegateHandler),
-
-      fieldNameConstantsFieldProcessor,
-      new FieldNameConstantsProcessor(fieldNameConstantsFieldProcessor),
-
-      new BuilderPreDefinedInnerClassFieldProcessor(builderHandler),
-      new BuilderPreDefinedInnerClassMethodProcessor(builderHandler),
-      new BuilderClassProcessor(builderHandler), new BuilderClassMethodProcessor(builderHandler),
-      new BuilderMethodProcessor(builderHandler), new BuilderProcessor(allArgsConstructorProcessor, builderHandler));
+      findExtension(BuilderPreDefinedInnerClassFieldProcessor.class),
+      findExtension(BuilderPreDefinedInnerClassMethodProcessor.class),
+      findExtension(BuilderClassProcessor.class),
+      findExtension(BuilderClassMethodProcessor.class),
+      findExtension(BuilderMethodProcessor.class),
+      findExtension(BuilderProcessor.class));
   }
 
 }

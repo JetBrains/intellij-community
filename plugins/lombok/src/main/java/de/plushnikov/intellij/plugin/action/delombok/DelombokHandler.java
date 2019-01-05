@@ -18,15 +18,15 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-public class BaseDelombokHandler {
+public class DelombokHandler {
   private final boolean processInnerClasses;
   private final Collection<AbstractProcessor> lombokProcessors;
 
-  protected BaseDelombokHandler(AbstractProcessor... lombokProcessors) {
+  protected DelombokHandler(AbstractProcessor... lombokProcessors) {
     this(false, lombokProcessors);
   }
 
-  protected BaseDelombokHandler(boolean processInnerClasses, AbstractProcessor... lombokProcessors) {
+  protected DelombokHandler(boolean processInnerClasses, AbstractProcessor... lombokProcessors) {
     this.processInnerClasses = processInnerClasses;
     this.lombokProcessors = Arrays.asList(lombokProcessors);
   }

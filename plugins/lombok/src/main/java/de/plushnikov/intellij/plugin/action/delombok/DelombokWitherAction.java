@@ -1,12 +1,16 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
 import de.plushnikov.intellij.plugin.processor.clazz.WitherProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
+import org.jetbrains.annotations.NotNull;
 
-public class DelombokWitherAction extends BaseDelombokAction {
-  public DelombokWitherAction() {
-    super(new BaseDelombokHandler(new WitherProcessor(new WitherFieldProcessor(new RequiredArgsConstructorProcessor())),
-      new WitherFieldProcessor(new RequiredArgsConstructorProcessor())));
+import static de.plushnikov.intellij.plugin.util.ExtensionsUtil.findExtension;
+
+public class DelombokWitherAction extends AbstractDelombokAction {
+  @NotNull
+  protected DelombokHandler createHandler() {
+    return new DelombokHandler(
+      findExtension(WitherProcessor.class),
+      findExtension(WitherFieldProcessor.class));
   }
 }

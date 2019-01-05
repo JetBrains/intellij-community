@@ -20,13 +20,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static de.plushnikov.intellij.plugin.util.ExtensionsUtil.findExtension;
+
 public class LombokLoggerHandler extends BaseLombokHandler {
 
   protected void processClass(@NotNull PsiClass psiClass) {
     final Collection<AbstractLogProcessor> logProcessors = Arrays.asList(
-      new CommonsLogProcessor(), new JBossLogProcessor(),
-      new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(),
-      new Slf4jProcessor(), new XSlf4jProcessor(), new FloggerProcessor());
+      findExtension(CommonsLogProcessor.class), findExtension(JBossLogProcessor.class),
+      findExtension(Log4jProcessor.class), findExtension(Log4j2Processor.class), findExtension(LogProcessor.class),
+      findExtension(Slf4jProcessor.class), findExtension(XSlf4jProcessor.class), findExtension(FloggerProcessor.class));
 
     final String lombokLoggerName = AbstractLogProcessor.getLoggerName(psiClass);
     final boolean lombokLoggerIsStatic = AbstractLogProcessor.isLoggerStatic(psiClass);

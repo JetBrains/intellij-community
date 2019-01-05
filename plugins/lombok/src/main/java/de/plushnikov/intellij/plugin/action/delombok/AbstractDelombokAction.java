@@ -29,12 +29,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public abstract class BaseDelombokAction extends AnAction {
-  private final BaseDelombokHandler myHandler;
+public abstract class AbstractDelombokAction extends AnAction {
+  private final DelombokHandler myHandler;
 
-  protected BaseDelombokAction(BaseDelombokHandler handler) {
-    myHandler = handler;
+  protected AbstractDelombokAction() {
+    myHandler = createHandler();
   }
+
+  protected abstract DelombokHandler createHandler();
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
@@ -122,7 +124,7 @@ public abstract class BaseDelombokAction extends AnAction {
     }, getCommandName(), null);
   }
 
-  private BaseDelombokHandler getHandler() {
+  private DelombokHandler getHandler() {
     return myHandler;
   }
 

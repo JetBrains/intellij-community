@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.processor.Processor;
@@ -23,7 +24,7 @@ public class LombokInspection extends AbstractBaseJavaLocalInspectionTool {
   private final ValProcessor valProcessor;
 
   public LombokInspection() {
-    valProcessor = new ValProcessor();
+    valProcessor = ServiceManager.getService(ValProcessor.class);
   }
 
   @NotNull

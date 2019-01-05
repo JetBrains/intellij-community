@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.provider;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -41,13 +42,14 @@ import java.util.Set;
 public class LombokAugmentProvider extends PsiAugmentProvider {
   private static final Logger log = Logger.getInstance(LombokAugmentProvider.class.getName());
 
-  private final ValProcessor valProcessor = new ValProcessor();
+  private final ValProcessor valProcessor;
   private final Collection<ModifierProcessor> modifierProcessors;
 
   public LombokAugmentProvider() {
     log.debug("LombokAugmentProvider created");
 
-    modifierProcessors = Arrays.asList(getModifierProcessors());
+    modifierProcessors = getModifierProcessors();
+    valProcessor = ServiceManager.getService(ValProcessor.class);
   }
 
   @NotNull
@@ -111,8 +113,8 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     return null != cachedValue ? cachedValue : emptyResult;
   }
 
-  private ModifierProcessor[] getModifierProcessors() {
-    return LombokProcessorExtensionPoint.EP_NAME_MODIFIER_PROCESSOR.getExtensions();
+  private List<ModifierProcessor> getModifierProcessors() {
+    return Arrays.asList(LombokProcessorExtensionPoint.EP_NAME_MODIFIER_PROCESSOR.getExtensions());
   }
 
   private static class FieldLombokCachedValueProvider<Psi extends PsiElement> extends LombokCachedValueProvider<Psi> {

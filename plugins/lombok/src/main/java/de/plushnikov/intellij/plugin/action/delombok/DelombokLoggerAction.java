@@ -8,11 +8,16 @@ import de.plushnikov.intellij.plugin.processor.clazz.log.Log4jProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.LogProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Slf4jProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.XSlf4jProcessor;
+import org.jetbrains.annotations.NotNull;
 
-public class DelombokLoggerAction extends BaseDelombokAction {
-  public DelombokLoggerAction() {
-    super(new BaseDelombokHandler(new CommonsLogProcessor(), new JBossLogProcessor(),
-      new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(),
-      new Slf4jProcessor(), new XSlf4jProcessor(), new FloggerProcessor()));
+import static de.plushnikov.intellij.plugin.util.ExtensionsUtil.findExtension;
+
+public class DelombokLoggerAction extends AbstractDelombokAction {
+  @NotNull
+  protected DelombokHandler createHandler() {
+    return new DelombokHandler(
+      findExtension(CommonsLogProcessor.class), findExtension(JBossLogProcessor.class),
+      findExtension(Log4jProcessor.class), findExtension(Log4j2Processor.class), findExtension(LogProcessor.class),
+      findExtension(Slf4jProcessor.class), findExtension(XSlf4jProcessor.class), findExtension(FloggerProcessor.class));
   }
 }
