@@ -95,25 +95,26 @@ public class AccessorsInfo {
     final String[] prefixes;
 
     if (null != psiClass) {
+      final ConfigDiscovery configDiscovery = ConfigDiscovery.getInstance();
       if (null == fluentDeclaredValue) {
-        isFluent = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.ACCESSORS_FLUENT, psiClass);
+        isFluent = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.ACCESSORS_FLUENT, psiClass);
       } else {
         isFluent = fluentDeclaredValue;
       }
 
       if (null == chainDeclaredValue) {
-        isChained = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.ACCESSORS_CHAIN, psiClass);
+        isChained = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.ACCESSORS_CHAIN, psiClass);
       } else {
         isChained = chainDeclaredValue;
       }
 
       if (prefixDeclared.isEmpty()) {
-        prefixes = ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.ACCESSORS_PREFIX, psiClass);
+        prefixes = configDiscovery.getMultipleValueLombokConfigProperty(ConfigKey.ACCESSORS_PREFIX, psiClass);
       } else {
         prefixes = prefixDeclared.toArray(new String[0]);
       }
 
-      doNotUseIsPrefix = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.GETTER_NO_IS_PREFIX, psiClass);
+      doNotUseIsPrefix = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.GETTER_NO_IS_PREFIX, psiClass);
 
     } else {
       isFluent = null == fluentDeclaredValue ? false : fluentDeclaredValue;
@@ -149,17 +150,17 @@ public class AccessorsInfo {
     return prefixes;
   }
 
-  public boolean prefixDefinedAndStartsWith(String fieldName) {
+  public boolean isPrefixUnDefinedOrNotStartsWith(String fieldName) {
     if (prefixes.length == 0) {
-      return true;
+      return false;
     }
 
     for (String prefix : prefixes) {
       if (canPrefixApply(fieldName, prefix)) {
-        return true;
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   public String removePrefix(String fieldName) {
@@ -181,7 +182,7 @@ public class AccessorsInfo {
     if (name == null || name.isEmpty()) {
       return name;
     }
-    char chars[] = name.toCharArray();
+    char[] chars = name.toCharArray();
     chars[0] = Character.toLowerCase(chars[0]);
     return new String(chars);
   }

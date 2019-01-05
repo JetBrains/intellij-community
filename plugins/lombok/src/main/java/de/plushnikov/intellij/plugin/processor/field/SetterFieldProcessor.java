@@ -1,16 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -103,7 +94,7 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
 
   private boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result = true;
-    if (!AccessorsInfo.build(psiField).prefixDefinedAndStartsWith(psiField.getName())) {
+    if (AccessorsInfo.build(psiField).isPrefixUnDefinedOrNotStartsWith(psiField.getName())) {
       builder.addWarning("Not generating setter for this field: It does not fit your @Accessors prefix list.");
       result = false;
     }

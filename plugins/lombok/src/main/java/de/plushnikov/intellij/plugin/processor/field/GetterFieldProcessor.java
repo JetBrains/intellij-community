@@ -109,7 +109,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
 
   private boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result = true;
-    if (!AccessorsInfo.build(psiField).prefixDefinedAndStartsWith(psiField.getName())) {
+    if (AccessorsInfo.build(psiField).isPrefixUnDefinedOrNotStartsWith(psiField.getName())) {
       builder.addWarning("Not generating getter for this field: It does not fit your @Accessors prefix list.");
       result = false;
     }
