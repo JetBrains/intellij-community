@@ -21,7 +21,7 @@ file="foo"
 echo "Message" | tail 24
 echo "Message" | tail 25
 echo "Message" | tail -n 25
-#echo $Message | mail -s "disk report `date`" anny
+echo $Message | mail -s "disk report `date`" anny
 
 function installJDK {
     local FILE=$1

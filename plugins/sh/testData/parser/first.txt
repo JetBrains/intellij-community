@@ -216,7 +216,43 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             PsiElement(int)('25')
   PsiElement(\n)('\n')
-  PsiComment(Comment)('#echo $Message | mail -s "disk report `date`" anny')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            VARIABLE
+              PsiElement(var)('$Message')
+        PsiWhiteSpace(' ')
+        PsiElement(|)('|')
+        PsiWhiteSpace(' ')
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('mail')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('-s')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(string_begin)('"')
+              PsiElement(string_content)('disk report ')
+              COMMAND_SUBSTITUTION_COMMAND
+                PsiElement(`)('`')
+                COMPOUND_LIST
+                  PIPELINE_COMMAND
+                    PIPELINE
+                      SIMPLE_COMMAND
+                        SIMPLE_COMMAND_ELEMENT
+                          PsiElement(word)('date')
+                PsiElement(`)('`')
+              PsiElement(string_end)('"')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('anny')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
