@@ -2098,7 +2098,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (string_begin (string_content|vars)* string_end) | STRING2
+  // (string_begin (string_content | vars)* string_end) | STRING2
   public static boolean string(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string")) return false;
     if (!nextTokenIs(b, "<string>", STRING2, STRING_BEGIN)) return false;
@@ -2110,19 +2110,20 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // string_begin (string_content|vars)* string_end
+  // string_begin (string_content | vars)* string_end
   private static boolean string_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, STRING_BEGIN);
-    r = r && string_0_1(b, l + 1);
-    r = r && consumeToken(b, STRING_END);
-    exit_section_(b, m, null, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, string_0_1(b, l + 1));
+    r = p && consumeToken(b, STRING_END) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
-  // (string_content|vars)*
+  // (string_content | vars)*
   private static boolean string_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string_0_1")) return false;
     while (true) {
@@ -2133,7 +2134,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // string_content|vars
+  // string_content | vars
   private static boolean string_0_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string_0_1_0")) return false;
     boolean r;
