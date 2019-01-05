@@ -51,6 +51,12 @@ public class BashLiteralExpressionImpl extends BashExpressionImpl implements Bas
 
   @Override
   @Nullable
+  public BashVariable getVariable() {
+    return findChildByClass(BashVariable.class);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getDollar() {
     return findChildByType(DOLLAR);
   }
@@ -77,12 +83,6 @@ public class BashLiteralExpressionImpl extends BashExpressionImpl implements Bas
   @Nullable
   public PsiElement getNumber() {
     return findChildByType(NUMBER);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getVariable() {
-    return findChildByType(VARIABLE);
   }
 
   @Override

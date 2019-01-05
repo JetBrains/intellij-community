@@ -20,6 +20,9 @@ public interface BashShellParameterExpansion extends BashCompositeElement {
   List<BashString> getStringList();
 
   @NotNull
+  List<BashVariable> getVariableList();
+
+  @NotNull
   PsiElement getLeftCurly();
 
   @Nullable

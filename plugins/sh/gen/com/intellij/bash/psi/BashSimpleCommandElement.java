@@ -29,6 +29,9 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
   BashString getString();
 
   @Nullable
+  BashVariable getVariable();
+
+  @Nullable
   PsiElement getDollar();
 
   @Nullable
@@ -39,9 +42,6 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
 
   @Nullable
   PsiElement getNumber();
-
-  @Nullable
-  PsiElement getVariable();
 
   @Nullable
   PsiElement getWord();

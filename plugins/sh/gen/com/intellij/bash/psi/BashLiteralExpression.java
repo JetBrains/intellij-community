@@ -20,6 +20,9 @@ public interface BashLiteralExpression extends BashExpression {
   BashString getString();
 
   @Nullable
+  BashVariable getVariable();
+
+  @Nullable
   PsiElement getDollar();
 
   @Nullable
@@ -33,9 +36,6 @@ public interface BashLiteralExpression extends BashExpression {
 
   @Nullable
   PsiElement getNumber();
-
-  @Nullable
-  PsiElement getVariable();
 
   @Nullable
   PsiElement getWord();

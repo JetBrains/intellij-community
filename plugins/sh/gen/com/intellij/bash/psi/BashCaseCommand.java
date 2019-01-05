@@ -20,6 +20,9 @@ public interface BashCaseCommand extends BashCommand {
   BashString getString();
 
   @Nullable
+  BashVariable getVariable();
+
+  @Nullable
   PsiElement getDollar();
 
   @Nullable
@@ -36,9 +39,6 @@ public interface BashCaseCommand extends BashCommand {
 
   @Nullable
   PsiElement getNumber();
-
-  @Nullable
-  PsiElement getVariable();
 
   @Nullable
   PsiElement getWord();

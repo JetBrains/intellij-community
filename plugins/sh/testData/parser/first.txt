@@ -246,7 +246,8 @@ BASH_FILE
                         ASSIGNMENT_WORD_RULE
                           PsiElement(assignment_word)('FILE')
                           PsiElement(=)('=')
-                          PsiElement(variable)('$1')
+                          VARIABLE
+                            PsiElement(var)('$1')
                 PsiElement(\n)('\n')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
@@ -262,7 +263,8 @@ BASH_FILE
                         ASSIGNMENT_WORD_RULE
                           PsiElement(assignment_word)('DIR')
                           PsiElement(=)('=')
-                          PsiElement(variable)('$2')
+                          VARIABLE
+                            PsiElement(var)('$2')
                 PsiElement(\n)('\n')
                 PsiElement(\n)('\n')
                 PsiWhiteSpace(' ')
@@ -279,7 +281,8 @@ BASH_FILE
                         PsiElement(word)('-p')
                       PsiWhiteSpace(' ')
                       SIMPLE_COMMAND_ELEMENT
-                        PsiElement(variable)('$DIR')
+                        VARIABLE
+                          PsiElement(var)('$DIR')
                 PsiElement(\n)('\n')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
@@ -295,7 +298,8 @@ BASH_FILE
                         PsiElement(word)('-xzf')
                       PsiWhiteSpace(' ')
                       SIMPLE_COMMAND_ELEMENT
-                        PsiElement(variable)('$FILE')
+                        VARIABLE
+                          PsiElement(var)('$FILE')
                       PsiWhiteSpace(' ')
                       SIMPLE_COMMAND_ELEMENT
                         ASSIGNMENT_WORD_RULE
@@ -307,7 +311,8 @@ BASH_FILE
                         PsiElement(word)('-C')
                       PsiWhiteSpace(' ')
                       SIMPLE_COMMAND_ELEMENT
-                        PsiElement(variable)('$DIR')
+                        VARIABLE
+                          PsiElement(var)('$DIR')
                 PsiElement(\n)('\n')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
@@ -320,7 +325,8 @@ BASH_FILE
                         PsiElement(word)('rm')
                       PsiWhiteSpace(' ')
                       SIMPLE_COMMAND_ELEMENT
-                        PsiElement(variable)('$FILE')
+                        VARIABLE
+                          PsiElement(var)('$FILE')
                 PsiElement(\n)('\n')
               PsiElement(})('}')
   PsiElement(\n)('\n')
@@ -412,7 +418,8 @@ BASH_FILE
             REDIRECTION
               PsiElement(<)('<')
               PsiWhiteSpace(' ')
-              PsiElement(variable)('$1')
+              VARIABLE
+                PsiElement(var)('$1')
   PsiElement(\n)('\n')
   PsiComment(Comment)('# remember the name of the input file')
   PsiElement(\n)('\n')
@@ -424,7 +431,8 @@ BASH_FILE
             ASSIGNMENT_WORD_RULE
               PsiElement(assignment_word)('in')
               PsiElement(=)('=')
-              PsiElement(variable)('$1')
+              VARIABLE
+                PsiElement(var)('$1')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   PsiComment(Comment)('# init')

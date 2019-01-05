@@ -49,4 +49,10 @@ public class BashPatternImpl extends BashCompositeElementImpl implements BashPat
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashString.class);
   }
 
+  @Override
+  @NotNull
+  public List<BashVariable> getVariableList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashVariable.class);
+  }
+
 }

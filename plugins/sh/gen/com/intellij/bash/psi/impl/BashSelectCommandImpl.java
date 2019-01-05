@@ -56,6 +56,12 @@ public class BashSelectCommandImpl extends BashCommandImpl implements BashSelect
   }
 
   @Override
+  @NotNull
+  public List<BashVariable> getVariableList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashVariable.class);
+  }
+
+  @Override
   @Nullable
   public PsiElement getSemi() {
     return findChildByType(SEMI);

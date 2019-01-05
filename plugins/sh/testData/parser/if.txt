@@ -16,7 +16,8 @@ BASH_FILE
                       PsiWhiteSpace(' ')
                       PsiElement(cond_op ==)('==')
                       PsiWhiteSpace(' ')
-                      PsiElement(variable)('$a')
+                      VARIABLE
+                        PsiElement(var)('$a')
                       PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
@@ -332,7 +333,8 @@ BASH_FILE
                       PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
                       STRING
                         PsiElement(string_begin)('"')
-                        PsiElement(variable)('$PACKER_BUILD_NAME')
+                        VARIABLE
+                          PsiElement(var)('$PACKER_BUILD_NAME')
                         PsiElement(string_end)('"')
                       PsiWhiteSpace(' ')
                       PsiElement(cond_op ==)('==')
@@ -509,7 +511,8 @@ BASH_FILE
                       PsiElement([[)('[[ ')
                       STRING
                         PsiElement(string_begin)('"')
-                        PsiElement(variable)('$VERSION_ID')
+                        VARIABLE
+                          PsiElement(var)('$VERSION_ID')
                         PsiElement(string_end)('"')
                       PsiWhiteSpace(' ')
                       PsiElement(cond_op)('!=')

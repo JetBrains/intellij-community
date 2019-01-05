@@ -78,7 +78,8 @@ BASH_FILE
                           REDIRECTION
                             PsiElement(<<<)('<<<')
                             PsiWhiteSpace(' ')
-                            PsiElement(variable)('$MACPORTS')
+                            VARIABLE
+                              PsiElement(var)('$MACPORTS')
                 PsiElement(`)('`')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -95,21 +96,25 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('https://github.com/macports/macports-base/releases/download/v')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement(variable)('$VER')
+            VARIABLE
+              PsiElement(var)('$VER')
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('/')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement(variable)('$MACPORTS')
+            VARIABLE
+              PsiElement(var)('$MACPORTS')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('-o')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement(variable)('$TMPDIR')
+            VARIABLE
+              PsiElement(var)('$TMPDIR')
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('/')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement(variable)('$MACPORTS')
+            VARIABLE
+              PsiElement(var)('$MACPORTS')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -125,11 +130,13 @@ BASH_FILE
             PsiElement(word)('-pkg')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement(variable)('$TMPDIR')
+            VARIABLE
+              PsiElement(var)('$TMPDIR')
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('/')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement(variable)('$MACPORTS')
+            VARIABLE
+              PsiElement(var)('$MACPORTS')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('-target')
@@ -158,11 +165,13 @@ BASH_FILE
             PsiElement(word)('rm')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement(variable)('$TMPDIR')
+            VARIABLE
+              PsiElement(var)('$TMPDIR')
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('/')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement(variable)('$MACPORTS')
+            VARIABLE
+              PsiElement(var)('$MACPORTS')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -185,7 +194,8 @@ BASH_FILE
                           SIMPLE_COMMAND_ELEMENT
                             PsiElement(word)('alsactlrestore')
                           SIMPLE_COMMAND_ELEMENT
-                            PsiElement(variable)('$CARD2')
+                            VARIABLE
+                              PsiElement(var)('$CARD2')
                           SIMPLE_COMMAND_ELEMENT
                             REDIRECTION
                               PsiElement(>)('>')

@@ -74,6 +74,7 @@ public interface BashTypes {
   IElementType TRAP_COMMAND = new BashCompositeElementType("TRAP_COMMAND");
   IElementType UNARY_EXPRESSION = new BashCompositeElementType("UNARY_EXPRESSION");
   IElementType UNTIL_COMMAND = new BashCompositeElementType("UNTIL_COMMAND");
+  IElementType VARIABLE = new BashCompositeElementType("VARIABLE");
   IElementType WHILE_COMMAND = new BashCompositeElementType("WHILE_COMMAND");
 
   IElementType ADD_EQ = new BashTokenType("+=");
@@ -157,7 +158,7 @@ public interface BashTypes {
   IElementType TIME = new BashTokenType("time");
   IElementType TRAP = new BashTokenType("trap");
   IElementType UNTIL = new BashTokenType("until");
-  IElementType VARIABLE = new BashTokenType("variable");
+  IElementType VAR = new BashTokenType("var");
   IElementType WHILE = new BashTokenType("while");
   IElementType WORD = new BashTokenType("word");
 
@@ -352,6 +353,9 @@ public interface BashTypes {
       }
       else if (type == UNTIL_COMMAND) {
         return new BashUntilCommandImpl(node);
+      }
+      else if (type == VARIABLE) {
+        return new BashVariableImpl(node);
       }
       else if (type == WHILE_COMMAND) {
         return new BashWhileCommandImpl(node);

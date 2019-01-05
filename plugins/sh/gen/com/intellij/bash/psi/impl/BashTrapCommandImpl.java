@@ -51,6 +51,12 @@ public class BashTrapCommandImpl extends BashCommandImpl implements BashTrapComm
 
   @Override
   @NotNull
+  public List<BashVariable> getVariableList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashVariable.class);
+  }
+
+  @Override
+  @NotNull
   public PsiElement getTrap() {
     return findNotNullChildByType(TRAP);
   }

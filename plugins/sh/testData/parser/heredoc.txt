@@ -169,7 +169,8 @@ BASH_FILE
                     PsiElement(number)('100')
                 PsiElement()))('))')
               PsiElement(HEREDOC_CONTENT)('"\nteamcity_agent_user="')
-              PsiElement(variable)('$ACCOUNT')
+              VARIABLE
+                PsiElement(var)('$ACCOUNT')
               PsiElement(HEREDOC_CONTENT)('"\nteamcity_agent_path="/opt/buildAgent"\n')
               PsiElement(HEREDOC_MARKER_END)('EOF')
   PsiElement(\n)('\n')

@@ -25,3 +25,5 @@ echo 1
 
 echo "" >> AGENT_CONFIG_FILE
 echo "" >> ${AGENT_CONFIG_FILE}
+
+echo "${SHA256MAP[$VERSION]} /tmp/$FILE" | sha256sum -c -

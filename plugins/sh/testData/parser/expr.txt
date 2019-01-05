@@ -79,11 +79,14 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             STRING
               PsiElement(string_begin)('"')
-              PsiElement(variable)('$x')
+              VARIABLE
+                PsiElement(var)('$x')
               PsiElement(string_content)(' + ')
-              PsiElement(variable)('$y')
+              VARIABLE
+                PsiElement(var)('$y')
               PsiElement(string_content)(' = ')
-              PsiElement(variable)('$ans')
+              VARIABLE
+                PsiElement(var)('$ans')
               PsiElement(string_end)('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')

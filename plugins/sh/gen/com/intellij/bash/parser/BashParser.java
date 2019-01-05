@@ -149,6 +149,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == UNTIL_COMMAND) {
       r = until_command(b, 0);
     }
+    else if (t == VARIABLE) {
+      r = variable(b, 0);
+    }
     else if (t == WHILE_COMMAND) {
       r = while_command(b, 0);
     }
@@ -2244,11 +2247,23 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // var
+  public static boolean variable(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "variable")) return false;
+    if (!nextTokenIs(b, VAR)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, VAR);
+    exit_section_(b, m, VARIABLE, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // variable | composed_var | command_substitution_command
   static boolean vars(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "vars")) return false;
     boolean r;
-    r = consumeToken(b, VARIABLE);
+    r = variable(b, l + 1);
     if (!r) r = composed_var(b, l + 1);
     if (!r) r = command_substitution_command(b, l + 1);
     return r;

@@ -19,7 +19,8 @@ BASH_FILE
         CASE_COMMAND
           PsiElement(case)('case')
           PsiWhiteSpace(' ')
-          PsiElement(variable)('$space')
+          VARIABLE
+            PsiElement(var)('$space')
           PsiWhiteSpace(' ')
           PsiElement(word)('in')
           CASE_CLAUSE
@@ -67,7 +68,8 @@ BASH_FILE
                           STRING
                             PsiElement(string_begin)('"')
                             PsiElement(string_content)('Start thinking about cleaning out some stuff.  There's a partition that is ')
-                            PsiElement(variable)('$space')
+                            VARIABLE
+                              PsiElement(var)('$space')
                             PsiElement(string_content)(' % full.')
                             PsiElement(string_end)('"')
                 PsiElement(\n)('\n')
@@ -94,7 +96,8 @@ BASH_FILE
                           STRING
                             PsiElement(string_begin)('"')
                             PsiElement(string_content)('Better hurry with that new disk...  One partition is ')
-                            PsiElement(variable)('$space')
+                            VARIABLE
+                              PsiElement(var)('$space')
                             PsiElement(string_content)(' % full.')
                             PsiElement(string_end)('"')
                 PsiElement(\n)('\n')
@@ -121,7 +124,8 @@ BASH_FILE
                           STRING
                             PsiElement(string_begin)('"')
                             PsiElement(string_content)('I'm drowning here!  There's a partition at ')
-                            PsiElement(variable)('$space')
+                            VARIABLE
+                              PsiElement(var)('$space')
                             PsiElement(string_content)(' %!')
                             PsiElement(string_end)('"')
                 PsiElement(\n)('\n')

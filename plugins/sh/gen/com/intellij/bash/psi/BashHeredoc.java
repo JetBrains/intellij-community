@@ -16,6 +16,9 @@ public interface BashHeredoc extends BashCompositeElement {
   @NotNull
   List<BashShellParameterExpansion> getShellParameterExpansionList();
 
+  @NotNull
+  List<BashVariable> getVariableList();
+
   @Nullable
   PsiElement getHeredocMarkerEnd();
 

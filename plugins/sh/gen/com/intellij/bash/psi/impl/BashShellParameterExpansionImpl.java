@@ -51,6 +51,12 @@ public class BashShellParameterExpansionImpl extends BashCompositeElementImpl im
 
   @Override
   @NotNull
+  public List<BashVariable> getVariableList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashVariable.class);
+  }
+
+  @Override
+  @NotNull
   public PsiElement getLeftCurly() {
     return findNotNullChildByType(LEFT_CURLY);
   }

@@ -20,6 +20,9 @@ public interface BashRedirection extends BashCompositeElement {
   BashString getString();
 
   @Nullable
+  BashVariable getVariable();
+
+  @Nullable
   PsiElement getArithMinus();
 
   @Nullable
@@ -60,9 +63,6 @@ public interface BashRedirection extends BashCompositeElement {
 
   @Nullable
   PsiElement getNumber();
-
-  @Nullable
-  PsiElement getVariable();
 
   @Nullable
   PsiElement getWord();

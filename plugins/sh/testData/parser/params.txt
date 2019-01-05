@@ -503,7 +503,8 @@ BASH_FILE
                 PsiElement(Parameter expansion operator '^^')('^^')
                 PsiElement(})('}')
               PsiElement(string_content)('_HOME=')
-              PsiElement(variable)('$DIR')
+              VARIABLE
+                PsiElement(var)('$DIR')
               PsiElement(string_end)('"')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -511,7 +512,8 @@ BASH_FILE
               PsiElement(>)('>')
               PsiElement(word)('/etc/profile.d/')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement(variable)('$NAME')
+            VARIABLE
+              PsiElement(var)('$NAME')
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('.sh')
   PsiElement(\n)('\n')
@@ -528,7 +530,8 @@ BASH_FILE
                 PsiElement(()('(')
                 ARRAY_ASSIGNMENT
                   LITERAL_EXPRESSION
-                    PsiElement(variable)('$HOMEBREW_PACKAGES')
+                    VARIABLE
+                      PsiElement(var)('$HOMEBREW_PACKAGES')
                 PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -566,7 +569,8 @@ BASH_FILE
                       PsiElement(word)('install')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
-                      PsiElement(variable)('$PKG')
+                      VARIABLE
+                        PsiElement(var)('$PKG')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -662,7 +666,8 @@ BASH_FILE
               STRING
                 PsiElement(string_begin)('"')
                 PsiElement(string_content)('--install /usr/bin/java java ')
-                PsiElement(variable)('$JAVA_HOME')
+                VARIABLE
+                  PsiElement(var)('$JAVA_HOME')
                 PsiElement(string_content)('/bin/java 100')
                 PsiElement(string_end)('"')
   PsiElement(\n)('\n')
@@ -705,15 +710,20 @@ BASH_FILE
                         PsiElement(=)('=')
                         STRING
                           PsiElement(string_begin)('"')
-                          PsiElement(variable)('$ARGS')
+                          VARIABLE
+                            PsiElement(var)('$ARGS')
                           PsiElement(string_content)(' --slave /usr/bin/')
-                          PsiElement(variable)('$i')
+                          VARIABLE
+                            PsiElement(var)('$i')
                           PsiElement(string_content)(' ')
-                          PsiElement(variable)('$i')
+                          VARIABLE
+                            PsiElement(var)('$i')
                           PsiElement(string_content)(' ')
-                          PsiElement(variable)('$JAVA_HOME')
+                          VARIABLE
+                            PsiElement(var)('$JAVA_HOME')
                           PsiElement(string_content)('/bin/')
-                          PsiElement(variable)('$i')
+                          VARIABLE
+                            PsiElement(var)('$i')
                           PsiElement(string_end)('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
@@ -790,7 +800,8 @@ BASH_FILE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement(variable)('$A')
+            VARIABLE
+              PsiElement(var)('$A')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -916,11 +927,13 @@ BASH_FILE
                 PsiElement({)('{')
                 PsiElement(word)('SHA256MAP')
                 PsiElement([)('[')
-                PsiElement(variable)('$VERSION')
+                VARIABLE
+                  PsiElement(var)('$VERSION')
                 PsiElement(])(']')
                 PsiElement(})('}')
               PsiElement(string_content)(' /tmp/')
-              PsiElement(variable)('$FILE')
+              VARIABLE
+                PsiElement(var)('$FILE')
               PsiElement(string_end)('"')
         PsiWhiteSpace(' ')
         PsiElement(|)('|')

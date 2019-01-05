@@ -187,7 +187,7 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
             }
 
             return yystate() == X_HEREDOC && heredocState().isExpectingEvaluatingHeredoc() && !"$".equals(yytext().toString())
-                ? VARIABLE
+                ? VAR
                 : HEREDOC_LINE;
     }
 
@@ -261,7 +261,7 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
 }
 
 <X_HERE_STRING> {
-    {Variable}              { if (!isInHereStringContent()) enterHereStringContent(); return VARIABLE; }
+    {Variable}              { if (!isInHereStringContent()) enterHereStringContent(); return VAR; }
 
     "("                     { return LEFT_PAREN; }
     ")"                     { yypushback(1); backToPreviousState(); }
@@ -787,7 +787,7 @@ goToState(X_STRINGMODE); return STRING_BEGIN; }
     ">>"                          { return SHIFT_RIGHT; }
 
     <X_STRINGMODE> {
-        {Variable}                { return VARIABLE; }
+        {Variable}                { return VAR; }
     }
 
     "$["                          { yypushback(1); goToState(S_ARITH_SQUARE_MODE); return DOLLAR; }

@@ -44,6 +44,12 @@ public class BashHeredocImpl extends BashCompositeElementImpl implements BashHer
   }
 
   @Override
+  @NotNull
+  public List<BashVariable> getVariableList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashVariable.class);
+  }
+
+  @Override
   @Nullable
   public PsiElement getHeredocMarkerEnd() {
     return findChildByType(HEREDOC_MARKER_END);

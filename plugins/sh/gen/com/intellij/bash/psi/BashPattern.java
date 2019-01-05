@@ -19,4 +19,7 @@ public interface BashPattern extends BashCompositeElement {
   @NotNull
   List<BashString> getStringList();
 
+  @NotNull
+  List<BashVariable> getVariableList();
+
 }

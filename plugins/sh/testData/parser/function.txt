@@ -26,7 +26,8 @@ BASH_FILE
                           PsiElement(=)('=')
                           STRING
                             PsiElement(string_begin)('"')
-                            PsiElement(variable)('$1')
+                            VARIABLE
+                              PsiElement(var)('$1')
                             PsiElement(string_end)('"')
                 PsiElement(\n)('\n')
                 PsiWhiteSpace(' ')
@@ -68,7 +69,8 @@ BASH_FILE
                               SIMPLE_COMMAND_ELEMENT
                                 STRING
                                   PsiElement(string_begin)('"')
-                                  PsiElement(variable)('$file')
+                                  VARIABLE
+                                    PsiElement(var)('$file')
                                   PsiElement(string_end)('"')
                         PsiWhiteSpace(' ')
                         PsiElement(;)(';')
@@ -123,7 +125,8 @@ BASH_FILE
                           PsiElement(=)('=')
                           STRING
                             PsiElement(string_begin)('"')
-                            PsiElement(variable)('$1')
+                            VARIABLE
+                              PsiElement(var)('$1')
                             PsiElement(string_end)('"')
                 PsiElement(\n)('\n')
                 PsiWhiteSpace(' ')
@@ -165,7 +168,8 @@ BASH_FILE
                               SIMPLE_COMMAND_ELEMENT
                                 STRING
                                   PsiElement(string_begin)('"')
-                                  PsiElement(variable)('$file')
+                                  VARIABLE
+                                    PsiElement(var)('$file')
                                   PsiElement(string_end)('"')
                         PsiWhiteSpace(' ')
                         PsiElement(;)(';')
@@ -218,7 +222,8 @@ BASH_FILE
                           PsiElement(=)('=')
                           STRING
                             PsiElement(string_begin)('"')
-                            PsiElement(variable)('$1')
+                            VARIABLE
+                              PsiElement(var)('$1')
                             PsiElement(string_end)('"')
                 PsiElement(\n)('\n')
                 PsiWhiteSpace(' ')
@@ -260,7 +265,8 @@ BASH_FILE
                               SIMPLE_COMMAND_ELEMENT
                                 STRING
                                   PsiElement(string_begin)('"')
-                                  PsiElement(variable)('$file')
+                                  VARIABLE
+                                    PsiElement(var)('$file')
                                   PsiElement(string_end)('"')
                         PsiWhiteSpace(' ')
                         PsiElement(;)(';')

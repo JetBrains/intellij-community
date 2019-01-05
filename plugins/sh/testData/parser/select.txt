@@ -64,7 +64,8 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             STRING
               PsiElement(string_begin)('"')
-              PsiElement(variable)('$QUIT')
+              VARIABLE
+                PsiElement(var)('$QUIT')
               PsiElement(string_end)('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -93,7 +94,8 @@ BASH_FILE
                   CASE_COMMAND
                     PsiElement(case)('case')
                     PsiWhiteSpace(' ')
-                    PsiElement(variable)('$FILENAME')
+                    VARIABLE
+                      PsiElement(var)('$FILENAME')
                     PsiWhiteSpace(' ')
                     PsiElement(word)('in')
                     CASE_CLAUSE
@@ -110,7 +112,8 @@ BASH_FILE
                         PATTERN
                           STRING
                             PsiElement(string_begin)('"')
-                            PsiElement(variable)('$QUIT')
+                            VARIABLE
+                              PsiElement(var)('$QUIT')
                             PsiElement(string_end)('"')
                         PsiElement())(')')
                         COMPOUND_LIST
@@ -200,9 +203,11 @@ BASH_FILE
                                   STRING
                                     PsiElement(string_begin)('"')
                                     PsiElement(string_content)('You picked ')
-                                    PsiElement(variable)('$FILENAME')
+                                    VARIABLE
+                                      PsiElement(var)('$FILENAME')
                                     PsiElement(string_content)(' (')
-                                    PsiElement(variable)('$REPLY')
+                                    VARIABLE
+                                      PsiElement(var)('$REPLY')
                                     PsiElement(string_content)(')')
                                     PsiElement(string_end)('"')
                           PsiElement(\n)('\n')
@@ -228,7 +233,8 @@ BASH_FILE
                                 SIMPLE_COMMAND_ELEMENT
                                   STRING
                                     PsiElement(string_begin)('"')
-                                    PsiElement(variable)('$FILENAME')
+                                    VARIABLE
+                                      PsiElement(var)('$FILENAME')
                                     PsiElement(string_end)('"')
                           PsiElement(\n)('\n')
                     PsiWhiteSpace(' ')
@@ -259,5 +265,6 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             STRING
               PsiElement(string_begin)('"')
-              PsiElement(variable)('$QUIT')
+              VARIABLE
+                PsiElement(var)('$QUIT')
               PsiElement(string_end)('"')

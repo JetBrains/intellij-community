@@ -1797,7 +1797,7 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             // fall through
           case 273: break;
           case 90: 
-            { return VARIABLE;
+            { return VAR;
             } 
             // fall through
           case 274: break;
@@ -2151,13 +2151,13 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             }
 
             return yystate() == X_HEREDOC && heredocState().isExpectingEvaluatingHeredoc() && !"$".equals(yytext().toString())
-                ? VARIABLE
+                ? VAR
                 : HEREDOC_LINE;
             } 
             // fall through
           case 333: break;
           case 150: 
-            { if (!isInHereStringContent()) enterHereStringContent(); return VARIABLE;
+            { if (!isInHereStringContent()) enterHereStringContent(); return VAR;
             } 
             // fall through
           case 334: break;

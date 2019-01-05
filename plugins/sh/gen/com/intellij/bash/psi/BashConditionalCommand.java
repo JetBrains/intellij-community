@@ -19,6 +19,9 @@ public interface BashConditionalCommand extends BashCommand {
   @NotNull
   List<BashString> getStringList();
 
+  @NotNull
+  List<BashVariable> getVariableList();
+
   @Nullable
   PsiElement getExprConditionalLeft();
 

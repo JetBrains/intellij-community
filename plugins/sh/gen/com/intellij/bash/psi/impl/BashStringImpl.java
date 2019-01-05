@@ -44,6 +44,12 @@ public class BashStringImpl extends BashCompositeElementImpl implements BashStri
   }
 
   @Override
+  @NotNull
+  public List<BashVariable> getVariableList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashVariable.class);
+  }
+
+  @Override
   @Nullable
   public PsiElement getString2() {
     return findChildByType(STRING2);

@@ -21,7 +21,8 @@ BASH_FILE
             PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement(variable)('$0')
+            VARIABLE
+              PsiElement(var)('$0')
           SIMPLE_COMMAND_ELEMENT
             COMMAND_SUBSTITUTION_COMMAND
               PsiElement(`)('`')

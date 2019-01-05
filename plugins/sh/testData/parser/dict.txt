@@ -366,13 +366,15 @@ BASH_FILE
                     SIMPLE_COMMAND_ELEMENT
                       PsiElement(word)('http://repo.labs.intellij.net/download/oracle/')
                     SIMPLE_COMMAND_ELEMENT
-                      PsiElement(variable)('$FILE')
+                      VARIABLE
+                        PsiElement(var)('$FILE')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       PsiElement(word)('-O')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
-                      PsiElement(variable)('$FILE')
+                      VARIABLE
+                        PsiElement(var)('$FILE')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
   PsiElement(\n)('\n')

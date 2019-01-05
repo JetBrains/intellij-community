@@ -50,6 +50,12 @@ public class BashConditionalCommandImpl extends BashCommandImpl implements BashC
   }
 
   @Override
+  @NotNull
+  public List<BashVariable> getVariableList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashVariable.class);
+  }
+
+  @Override
   @Nullable
   public PsiElement getExprConditionalLeft() {
     return findChildByType(EXPR_CONDITIONAL_LEFT);

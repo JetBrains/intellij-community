@@ -58,7 +58,8 @@ BASH_FILE
       PsiWhiteSpace(' ')
       STRING
         PsiElement(string_begin)('"')
-        PsiElement(variable)('$avr')
+        VARIABLE
+          PsiElement(var)('$avr')
         PsiElement(string_end)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST

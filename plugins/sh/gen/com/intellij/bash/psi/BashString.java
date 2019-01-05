@@ -16,6 +16,9 @@ public interface BashString extends BashCompositeElement {
   @NotNull
   List<BashShellParameterExpansion> getShellParameterExpansionList();
 
+  @NotNull
+  List<BashVariable> getVariableList();
+
   @Nullable
   PsiElement getString2();
 

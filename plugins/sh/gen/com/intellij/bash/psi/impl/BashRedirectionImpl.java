@@ -51,6 +51,12 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
 
   @Override
   @Nullable
+  public BashVariable getVariable() {
+    return findChildByClass(BashVariable.class);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getArithMinus() {
     return findChildByType(ARITH_MINUS);
   }
@@ -131,12 +137,6 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
   @Nullable
   public PsiElement getNumber() {
     return findChildByType(NUMBER);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getVariable() {
-    return findChildByType(VARIABLE);
   }
 
   @Override

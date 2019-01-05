@@ -57,6 +57,12 @@ public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl impleme
 
   @Override
   @Nullable
+  public BashVariable getVariable() {
+    return findChildByClass(BashVariable.class);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getDollar() {
     return findChildByType(DOLLAR);
   }
@@ -89,12 +95,6 @@ public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl impleme
   @Nullable
   public PsiElement getNumber() {
     return findChildByType(NUMBER);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getVariable() {
-    return findChildByType(VARIABLE);
   }
 
 }

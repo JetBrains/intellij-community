@@ -93,7 +93,7 @@ public class BashSyntaxHighlighter extends SyntaxHighlighterBase {
 
     fillMap(attributes1, STRING2, BashTokenTypes.STRING2);
 
-    fillMap(attributes1, VAR_USE, BashTokenTypes.VARIABLE);
+    fillMap(attributes1, VAR_USE, BashTokenTypes.VAR);
 
     fillMap(attributes1, parenthesisSet, PAREN);
     fillMap(attributes1, bracesSet, BRACE);

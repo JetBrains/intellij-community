@@ -20,6 +20,9 @@ public interface BashTrapCommand extends BashCommand {
   List<BashString> getStringList();
 
   @NotNull
+  List<BashVariable> getVariableList();
+
+  @NotNull
   PsiElement getTrap();
 
 }

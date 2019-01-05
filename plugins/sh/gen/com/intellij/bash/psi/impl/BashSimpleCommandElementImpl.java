@@ -69,6 +69,12 @@ public class BashSimpleCommandElementImpl extends BashCompositeElementImpl imple
 
   @Override
   @Nullable
+  public BashVariable getVariable() {
+    return findChildByClass(BashVariable.class);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getDollar() {
     return findChildByType(DOLLAR);
   }
@@ -89,12 +95,6 @@ public class BashSimpleCommandElementImpl extends BashCompositeElementImpl imple
   @Nullable
   public PsiElement getNumber() {
     return findChildByType(NUMBER);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getVariable() {
-    return findChildByType(VARIABLE);
   }
 
   @Override

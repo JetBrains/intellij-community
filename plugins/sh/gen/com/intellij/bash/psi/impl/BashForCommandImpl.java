@@ -68,6 +68,12 @@ public class BashForCommandImpl extends BashCommandImpl implements BashForComman
   }
 
   @Override
+  @NotNull
+  public List<BashVariable> getVariableList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashVariable.class);
+  }
+
+  @Override
   @Nullable
   public PsiElement getLeftDoubleParen() {
     return findChildByType(LEFT_DOUBLE_PAREN);
