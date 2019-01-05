@@ -18,6 +18,9 @@ class TerminalTabCloseListener(content: Content,
     if (modal || ApplicationManager.getApplication().isDisposeInProgress) {
       return true
     }
+    if (!TerminalView.getWidgetByContent(content).isSessionRunning) {
+      return true
+    }
     val proxy = NopProcessHandler().apply { startNotify() }
     // don't show 'disconnect' button
     proxy.putUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY, true)
