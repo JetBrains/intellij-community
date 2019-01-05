@@ -276,7 +276,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '(' array_assignment* ')'
+  // '(' (<<backslash>> | array_assignment)* ')'
   public static boolean assignment_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_list")) return false;
     if (!nextTokenIs(b, LEFT_PAREN)) return false;
@@ -290,15 +290,26 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // array_assignment*
+  // (<<backslash>> | array_assignment)*
   private static boolean assignment_list_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_list_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!array_assignment(b, l + 1)) break;
+      if (!assignment_list_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "assignment_list_1", c)) break;
     }
     return true;
+  }
+
+  // <<backslash>> | array_assignment
+  private static boolean assignment_list_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_list_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = backslash(b, l + 1);
+    if (!r) r = array_assignment(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */

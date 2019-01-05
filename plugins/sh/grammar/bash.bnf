@@ -153,7 +153,7 @@ simple_command_element ::=  assignment_word_rule
                           | command_substitution_command
                           | arithmetic_expansion
 
-assignment_list ::= '(' array_assignment* ')'
+assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
 array_assignment ::= newlines '='? expression newlines
 
 heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? simple_command] newlines

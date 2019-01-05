@@ -277,9 +277,7 @@ BASH_FILE
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
-                ARRAY_ASSIGNMENT
-                  LITERAL_EXPRESSION
-                    PsiElement(word)('\\n')
+                PsiElement(word)('\\n')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
@@ -293,9 +291,7 @@ BASH_FILE
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
-                ARRAY_ASSIGNMENT
-                  LITERAL_EXPRESSION
-                    PsiElement(word)('\\n')
+                PsiElement(word)('\\n')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
@@ -307,9 +303,7 @@ BASH_FILE
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
-                ARRAY_ASSIGNMENT
-                  LITERAL_EXPRESSION
-                    PsiElement(word)('\\n')
+                PsiElement(word)('\\n')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
@@ -320,9 +314,7 @@ BASH_FILE
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
-                ARRAY_ASSIGNMENT
-                  LITERAL_EXPRESSION
-                    PsiElement(word)('\\n')
+                PsiElement(word)('\\n')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
@@ -331,9 +323,7 @@ BASH_FILE
                   LITERAL_EXPRESSION
                     PsiElement(word)('jdk-1.4.2.19-linux_i586.bin')
                 PsiWhiteSpace(' ')
-                ARRAY_ASSIGNMENT
-                  LITERAL_EXPRESSION
-                    PsiElement(word)('\\n')
+                PsiElement(word)('\\n')
                 PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST

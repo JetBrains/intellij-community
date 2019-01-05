@@ -821,19 +821,18 @@ BASH_FILE
               ASSIGNMENT_LIST
                 PsiElement(()('(')
                 PsiWhiteSpace(' ')
+                PsiElement(word)('\\n')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
                 ARRAY_ASSIGNMENT
                   ASSIGNMENT_EXPRESSION
-                    INDEX_EXPRESSION
-                      LITERAL_EXPRESSION
-                        PsiElement(word)('\\n')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
+                    ARRAY_EXPRESSION
                       PsiElement([)('[')
                       LITERAL_EXPRESSION
                         STRING
@@ -848,19 +847,18 @@ BASH_FILE
                         PsiElement(string_content)('3784cfc4670f0d4c5482604c7c513beb1a92b005f569df9bf100e8bef6610f2e')
                         PsiElement(string_end)('"')
                 PsiWhiteSpace(' ')
+                PsiElement(word)('\\n')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
                 ARRAY_ASSIGNMENT
                   ASSIGNMENT_EXPRESSION
-                    INDEX_EXPRESSION
-                      LITERAL_EXPRESSION
-                        PsiElement(word)('\\n')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
+                    ARRAY_EXPRESSION
                       PsiElement([)('[')
                       LITERAL_EXPRESSION
                         STRING
@@ -875,19 +873,18 @@ BASH_FILE
                         PsiElement(string_content)('39362fb9bfb341fcc802e55e8ea59f4664ca58fd821ce956d48e1aa4fb3d2dec')
                         PsiElement(string_end)('"')
                 PsiWhiteSpace(' ')
+                PsiElement(word)('\\n')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
+                PsiWhiteSpace(' ')
                 ARRAY_ASSIGNMENT
                   ASSIGNMENT_EXPRESSION
-                    INDEX_EXPRESSION
-                      LITERAL_EXPRESSION
-                        PsiElement(word)('\\n')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
+                    ARRAY_EXPRESSION
                       PsiElement([)('[')
                       LITERAL_EXPRESSION
                         STRING
