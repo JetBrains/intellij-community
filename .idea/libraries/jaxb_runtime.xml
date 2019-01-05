@@ -2,7 +2,7 @@
   <library name="jaxb-runtime" type="repository">
     <properties maven-id="org.glassfish.jaxb:jaxb-runtime:2.3.1">
       <exclude>
-        <dependency maven-id="javax.activation-api" />
+        <dependency maven-id="javax.activation:javax.activation-api" />
         <dependency maven-id="javax.xml.bind:jaxb-api" />
       </exclude>
     </properties>
