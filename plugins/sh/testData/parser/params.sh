@@ -74,6 +74,10 @@ JDK_VER=${JDK_VER:-8.181}
 
 DISTRIB_MAJOR=${DISTRIB_RELEASE%.*}
 
+A=(1 2 3  )
+
+echo $A
+
 
 // array
 declare -A SHA256MAP=( \

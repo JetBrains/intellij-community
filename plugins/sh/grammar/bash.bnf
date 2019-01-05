@@ -151,12 +151,16 @@ simple_command_element ::=  assignment_word_rule
                           | conditional_command
                           | command_substitution_command
                           | arithmetic_expansion
+
+assignment_list ::= '(' array_assignment* ')'
+array_assignment ::= '='? expression
+
 heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? simple_command] newlines
             (HEREDOC_CONTENT | vars)*
             (HEREDOC_MARKER_END  | HEREDOC_MARKER_IGNORING_TABS_END | <<eof>>)
 arithmetic_expansion ::= '((' expression '))' {pin=1}
 old_arithmetic_expansion ::= ARITH_SQUARE_LEFT expression ARITH_SQUARE_RIGHT {pin=1 extends=arithmetic_expansion}
-assignment_word_rule ::= (assignment_word | word) '=' [literal | composed_var]
+assignment_word_rule ::= (assignment_word | word) '=' [literal | composed_var | assignment_list] {pin=2}
 
 redirection_list ::= redirection redirection*
 simple_command ::= simple_command_element+
@@ -264,6 +268,8 @@ expression ::=
   | unary_expression
   | pre_expression
   | post_expression
+  | index_expression
+  | array_expression
   | literal_expression
   | parentheses_expression
 
@@ -287,6 +293,8 @@ logical_bitwise_negation_expression ::= ('!' | '~') expression
 unary_expression ::= ('-' | '+') expression
 pre_expression ::= ('--' | '++') expression
 post_expression ::= expression ('--' | '++')
+index_expression ::= expression '[' expression ']'
+array_expression ::= '[' expression ']'
 parentheses_expression ::= '(' expression ')' {pin=1}
 
 literal_expression ::= literal | assignment_word

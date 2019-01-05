@@ -11,6 +11,9 @@ public interface BashAssignmentWordRule extends BashCompositeElement {
   BashArithmeticExpansion getArithmeticExpansion();
 
   @Nullable
+  BashAssignmentList getAssignmentList();
+
+  @Nullable
   BashCommand getCommand();
 
   @Nullable

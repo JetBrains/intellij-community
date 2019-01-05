@@ -12,7 +12,10 @@ public interface BashTypes {
 
   IElementType ADD_EXPRESSION = new BashCompositeElementType("ADD_EXPRESSION");
   IElementType ARITHMETIC_EXPANSION = new BashCompositeElementType("ARITHMETIC_EXPANSION");
+  IElementType ARRAY_ASSIGNMENT = new BashCompositeElementType("ARRAY_ASSIGNMENT");
+  IElementType ARRAY_EXPRESSION = new BashCompositeElementType("ARRAY_EXPRESSION");
   IElementType ASSIGNMENT_EXPRESSION = new BashCompositeElementType("ASSIGNMENT_EXPRESSION");
+  IElementType ASSIGNMENT_LIST = new BashCompositeElementType("ASSIGNMENT_LIST");
   IElementType ASSIGNMENT_WORD_RULE = new BashCompositeElementType("ASSIGNMENT_WORD_RULE");
   IElementType BASH_EXPANSION = new BashCompositeElementType("BASH_EXPANSION");
   IElementType BITWISE_AND_EXPRESSION = new BashCompositeElementType("BITWISE_AND_EXPRESSION");
@@ -40,6 +43,7 @@ public interface BashTypes {
   IElementType FUNCTION_DEF = new BashCompositeElementType("FUNCTION_DEF");
   IElementType HEREDOC = new BashCompositeElementType("HEREDOC");
   IElementType IF_COMMAND = new BashCompositeElementType("IF_COMMAND");
+  IElementType INDEX_EXPRESSION = new BashCompositeElementType("INDEX_EXPRESSION");
   IElementType LIST_TERMINATOR = new BashCompositeElementType("LIST_TERMINATOR");
   IElementType LITERAL_EXPRESSION = new BashCompositeElementType("LITERAL_EXPRESSION");
   IElementType LOGICAL_AND_EXPRESSION = new BashCompositeElementType("LOGICAL_AND_EXPRESSION");
@@ -166,8 +170,17 @@ public interface BashTypes {
       else if (type == ARITHMETIC_EXPANSION) {
         return new BashArithmeticExpansionImpl(node);
       }
+      else if (type == ARRAY_ASSIGNMENT) {
+        return new BashArrayAssignmentImpl(node);
+      }
+      else if (type == ARRAY_EXPRESSION) {
+        return new BashArrayExpressionImpl(node);
+      }
       else if (type == ASSIGNMENT_EXPRESSION) {
         return new BashAssignmentExpressionImpl(node);
+      }
+      else if (type == ASSIGNMENT_LIST) {
+        return new BashAssignmentListImpl(node);
       }
       else if (type == ASSIGNMENT_WORD_RULE) {
         return new BashAssignmentWordRuleImpl(node);
@@ -246,6 +259,9 @@ public interface BashTypes {
       }
       else if (type == IF_COMMAND) {
         return new BashIfCommandImpl(node);
+      }
+      else if (type == INDEX_EXPRESSION) {
+        return new BashIndexExpressionImpl(node);
       }
       else if (type == LIST_TERMINATOR) {
         return new BashListTerminatorImpl(node);

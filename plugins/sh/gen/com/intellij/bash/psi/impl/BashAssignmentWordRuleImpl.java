@@ -33,6 +33,12 @@ public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl impleme
 
   @Override
   @Nullable
+  public BashAssignmentList getAssignmentList() {
+    return findChildByClass(BashAssignmentList.class);
+  }
+
+  @Override
+  @Nullable
   public BashCommand getCommand() {
     return findChildByClass(BashCommand.class);
   }

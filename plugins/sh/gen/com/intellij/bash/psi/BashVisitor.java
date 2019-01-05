@@ -14,8 +14,20 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitArrayAssignment(@NotNull BashArrayAssignment o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitArrayExpression(@NotNull BashArrayExpression o) {
+    visitExpression(o);
+  }
+
   public void visitAssignmentExpression(@NotNull BashAssignmentExpression o) {
     visitBinaryExpression(o);
+  }
+
+  public void visitAssignmentList(@NotNull BashAssignmentList o) {
+    visitCompositeElement(o);
   }
 
   public void visitAssignmentWordRule(@NotNull BashAssignmentWordRule o) {
@@ -128,6 +140,10 @@ public class BashVisitor extends PsiElementVisitor {
 
   public void visitIfCommand(@NotNull BashIfCommand o) {
     visitCommand(o);
+  }
+
+  public void visitIndexExpression(@NotNull BashIndexExpression o) {
+    visitExpression(o);
   }
 
   public void visitListTerminator(@NotNull BashListTerminator o) {

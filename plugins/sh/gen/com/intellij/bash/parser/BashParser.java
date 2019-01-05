@@ -26,6 +26,12 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (t == ARITHMETIC_EXPANSION) {
       r = arithmetic_expansion(b, 0);
     }
+    else if (t == ARRAY_ASSIGNMENT) {
+      r = array_assignment(b, 0);
+    }
+    else if (t == ASSIGNMENT_LIST) {
+      r = assignment_list(b, 0);
+    }
     else if (t == ASSIGNMENT_WORD_RULE) {
       r = assignment_word_rule(b, 0);
     }
@@ -162,12 +168,12 @@ public class BashParser implements PsiParser, LightPsiParser {
       CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND, IF_COMMAND,
       PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND, SIMPLE_COMMAND,
       SUBSHELL_COMMAND, TRAP_COMMAND, UNTIL_COMMAND, WHILE_COMMAND),
-    create_token_set_(ADD_EXPRESSION, ASSIGNMENT_EXPRESSION, BITWISE_AND_EXPRESSION, BITWISE_EXCLUSIVE_OR_EXPRESSION,
-      BITWISE_OR_EXPRESSION, BITWISE_SHIFT_EXPRESSION, COMMA_EXPRESSION, COMPARISON_EXPRESSION,
-      CONDITIONAL_EXPRESSION, EQUALITY_EXPRESSION, EXPRESSION, EXP_EXPRESSION,
-      LITERAL_EXPRESSION, LOGICAL_AND_EXPRESSION, LOGICAL_BITWISE_NEGATION_EXPRESSION, LOGICAL_OR_EXPRESSION,
-      MUL_EXPRESSION, PARENTHESES_EXPRESSION, POST_EXPRESSION, PRE_EXPRESSION,
-      UNARY_EXPRESSION),
+    create_token_set_(ADD_EXPRESSION, ARRAY_EXPRESSION, ASSIGNMENT_EXPRESSION, BITWISE_AND_EXPRESSION,
+      BITWISE_EXCLUSIVE_OR_EXPRESSION, BITWISE_OR_EXPRESSION, BITWISE_SHIFT_EXPRESSION, COMMA_EXPRESSION,
+      COMPARISON_EXPRESSION, CONDITIONAL_EXPRESSION, EQUALITY_EXPRESSION, EXPRESSION,
+      EXP_EXPRESSION, INDEX_EXPRESSION, LITERAL_EXPRESSION, LOGICAL_AND_EXPRESSION,
+      LOGICAL_BITWISE_NEGATION_EXPRESSION, LOGICAL_OR_EXPRESSION, MUL_EXPRESSION, PARENTHESES_EXPRESSION,
+      POST_EXPRESSION, PRE_EXPRESSION, UNARY_EXPRESSION),
   };
 
   /* ********************************************************** */
@@ -249,17 +255,63 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (assignment_word | word) '=' [literal | composed_var]
+  // '='? expression
+  public static boolean array_assignment(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_assignment")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, ARRAY_ASSIGNMENT, "<array assignment>");
+    r = array_assignment_0(b, l + 1);
+    r = r && expression(b, l + 1, -1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // '='?
+  private static boolean array_assignment_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_assignment_0")) return false;
+    consumeToken(b, EQ);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // '(' array_assignment* ')'
+  public static boolean assignment_list(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_list")) return false;
+    if (!nextTokenIs(b, LEFT_PAREN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, ASSIGNMENT_LIST, null);
+    r = consumeToken(b, LEFT_PAREN);
+    p = r; // pin = 1
+    r = r && report_error_(b, assignment_list_1(b, l + 1));
+    r = p && consumeToken(b, RIGHT_PAREN) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // array_assignment*
+  private static boolean assignment_list_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_list_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!array_assignment(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "assignment_list_1", c)) break;
+    }
+    return true;
+  }
+
+  /* ********************************************************** */
+  // (assignment_word | word) '=' [literal | composed_var | assignment_list]
   public static boolean assignment_word_rule(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_word_rule")) return false;
     if (!nextTokenIs(b, "<assignment word rule>", ASSIGNMENT_WORD, WORD)) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, ASSIGNMENT_WORD_RULE, "<assignment word rule>");
     r = assignment_word_rule_0(b, l + 1);
     r = r && consumeToken(b, EQ);
+    p = r; // pin = 2
     r = r && assignment_word_rule_2(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // assignment_word | word
@@ -271,19 +323,20 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [literal | composed_var]
+  // [literal | composed_var | assignment_list]
   private static boolean assignment_word_rule_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_word_rule_2")) return false;
     assignment_word_rule_2_0(b, l + 1);
     return true;
   }
 
-  // literal | composed_var
+  // literal | composed_var | assignment_list
   private static boolean assignment_word_rule_2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_word_rule_2_0")) return false;
     boolean r;
     r = literal(b, l + 1);
     if (!r) r = composed_var(b, l + 1);
+    if (!r) r = assignment_list(b, l + 1);
     return r;
   }
 
@@ -2241,8 +2294,10 @@ public class BashParser implements PsiParser, LightPsiParser {
   // 15: PREFIX(unary_expression)
   // 16: PREFIX(pre_expression)
   // 17: POSTFIX(post_expression)
-  // 18: ATOM(literal_expression)
-  // 19: ATOM(parentheses_expression)
+  // 18: BINARY(index_expression)
+  // 19: PREFIX(array_expression)
+  // 20: ATOM(literal_expression)
+  // 21: ATOM(parentheses_expression)
   public static boolean expression(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expression")) return false;
     addVariant(b, "<expression>");
@@ -2251,6 +2306,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = logical_bitwise_negation_expression(b, l + 1);
     if (!r) r = unary_expression(b, l + 1);
     if (!r) r = pre_expression(b, l + 1);
+    if (!r) r = array_expression(b, l + 1);
     if (!r) r = literal_expression(b, l + 1);
     if (!r) r = parentheses_expression(b, l + 1);
     p = r;
@@ -2324,6 +2380,11 @@ public class BashParser implements PsiParser, LightPsiParser {
       else if (g < 17 && post_expression_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, POST_EXPRESSION, r, true, null);
+      }
+      else if (g < 18 && consumeTokenSmart(b, LEFT_SQUARE)) {
+        r = report_error_(b, expression(b, l, 18));
+        r = consumeToken(b, RIGHT_SQUARE) && r;
+        exit_section_(b, l, m, INDEX_EXPRESSION, r, true, null);
       }
       else {
         exit_section_(b, l, m, null, false, false, null);
@@ -2499,6 +2560,19 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeTokenSmart(b, ARITH_PLUS_PLUS);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  public static boolean array_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_expression")) return false;
+    if (!nextTokenIsSmart(b, LEFT_SQUARE)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeTokenSmart(b, LEFT_SQUARE);
+    p = r;
+    r = p && expression(b, l, 19);
+    r = p && report_error_(b, consumeToken(b, RIGHT_SQUARE)) && r;
+    exit_section_(b, l, m, ARRAY_EXPRESSION, r, p, null);
+    return r || p;
   }
 
   // literal | assignment_word
