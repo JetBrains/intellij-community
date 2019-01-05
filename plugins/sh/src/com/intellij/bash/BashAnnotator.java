@@ -1,7 +1,9 @@
 package com.intellij.bash;
 
+import com.intellij.bash.psi.BashHeredoc;
 import com.intellij.bash.psi.BashString;
 import com.intellij.bash.psi.BashVariable;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
@@ -18,6 +20,15 @@ public class BashAnnotator implements Annotator {
       holder.createInfoAnnotation(o, null).setTextAttributes(STRING);
       highlightVariables(o, holder);
     }
+    else if (o instanceof BashHeredoc) {
+      annotateHeredoc((BashHeredoc) o, holder);
+    }
+  }
+
+  private void annotateHeredoc(BashHeredoc o, AnnotationHolder holder) {
+    Annotation annotation = holder.createInfoAnnotation(o, null);
+    annotation.setTextAttributes(BashSyntaxHighlighter.HERE_DOC);
+    highlightVariables(o, holder);
   }
 
   private void highlightVariables(@NotNull PsiElement container, @NotNull AnnotationHolder holder) {
