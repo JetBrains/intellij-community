@@ -301,4 +301,14 @@ public class GitHistoryUtils {
     }
     return rc;
   }
+
+  /**
+   * @deprecated use {@link GitHistoryUtils#collectCommitsMetadata(Project, VirtualFile, String...)} instead.
+   */
+  @Deprecated
+  public static List<? extends VcsCommitMetadata> readLastCommits(@NotNull Project project,
+                                                                  @NotNull VirtualFile root,
+                                                                  @NotNull String... hashes) throws VcsException {
+    return collectCommitsMetadata(project, root, hashes);
+  }
 }
