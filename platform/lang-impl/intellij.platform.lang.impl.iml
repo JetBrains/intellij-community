@@ -36,6 +36,17 @@
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="library" exported="" name="commons-lang3" level="project" />
-    <orderEntry type="library" name="commons-lang2.6" level="project" />
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="commons-lang2" type="repository">
+        <properties maven-id="commons-lang:commons-lang:2.6" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/commons-lang/commons-lang/2.6/commons-lang-2.6.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/commons-lang/commons-lang/2.6/commons-lang-2.6-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>
