@@ -255,20 +255,22 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '='? expression
+  // newlines '='? expression newlines
   public static boolean array_assignment(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "array_assignment")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, ARRAY_ASSIGNMENT, "<array assignment>");
-    r = array_assignment_0(b, l + 1);
+    r = newlines(b, l + 1);
+    r = r && array_assignment_1(b, l + 1);
     r = r && expression(b, l + 1, -1);
+    r = r && newlines(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
   // '='?
-  private static boolean array_assignment_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "array_assignment_0")) return false;
+  private static boolean array_assignment_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_assignment_1")) return false;
     consumeToken(b, EQ);
     return true;
   }
@@ -1952,7 +1954,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' (param_body | '[' param_body ']' )*'}'
+  // '{' (param_body | '[' param_body ']')*'}'
   public static boolean shell_parameter_expansion(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "shell_parameter_expansion")) return false;
     if (!nextTokenIs(b, LEFT_CURLY)) return false;
@@ -1966,7 +1968,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // (param_body | '[' param_body ']' )*
+  // (param_body | '[' param_body ']')*
   private static boolean shell_parameter_expansion_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "shell_parameter_expansion_1")) return false;
     while (true) {
