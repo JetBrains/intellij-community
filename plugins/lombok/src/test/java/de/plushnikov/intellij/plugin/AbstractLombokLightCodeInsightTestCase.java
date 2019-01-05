@@ -26,7 +26,6 @@ import java.util.regex.Pattern;
 
 public abstract class AbstractLombokLightCodeInsightTestCase extends LightCodeInsightFixtureTestCase {
   private static final String LOMBOK_SRC_PATH = "./generated/src/lombok";
-  private static final String HRISEY_SRC_PATH = "./generated/src/hrisey";
 
   @Override
   protected String getTestDataPath() {
@@ -57,11 +56,10 @@ public abstract class AbstractLombokLightCodeInsightTestCase extends LightCodeIn
   @Override
   public void setUp() throws Exception {
     VfsRootAccess.allowRootAccess(new File(getTestDataPath(), getBasePath()).getCanonicalPath(),
-      new File(LOMBOK_SRC_PATH).getCanonicalPath(), new File(HRISEY_SRC_PATH).getCanonicalPath());
+      new File(LOMBOK_SRC_PATH).getCanonicalPath());
 
     super.setUp();
     loadFilesFrom(LOMBOK_SRC_PATH);
-    loadFilesFrom(HRISEY_SRC_PATH);
   }
 
   private void loadFilesFrom(final String srcPath) {
