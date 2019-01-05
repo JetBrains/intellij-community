@@ -1,0 +1,42 @@
+<?xml version='1.0'?>
+<list>
+    <option name="BASH.FUNCTION_CALL">
+        <value>
+            <option name="FOREGROUND" value="c57633"/>
+            <option name="FONT_TYPE" value="2"/>
+        </value>
+    </option>
+    <option name="BASH.FUNCTION_DEF_NAME">
+        <value>
+            <option name="FOREGROUND" value="c57633"/>
+            <option name="FONT_TYPE" value="1"/>
+        </value>
+    </option>
+    <option name="BASH.HERE_DOC">
+        <value>
+            <option name="BACKGROUND" value="e7ffb3"/>
+        </value>
+    </option>
+    <option name="BASH.INTERNAL_COMMAND">
+        <value>
+            <option name="FOREGROUND" value="b0c95"/>
+        </value>
+    </option>
+    <option name="BASH.REDIRECTION">
+        <value>
+            <option name="FOREGROUND" value="5a5a5a"/>
+            <option name="FONT_TYPE" value="2"/>
+            <option name="EFFECT_TYPE" value="1"/>
+        </value>
+    </option>
+    <option name="BASH.SHEBANG">
+        <value>
+            <option name="FONT_TYPE" value="1"/>
+        </value>
+    </option>
+    <option name="BASH.BINARY_DATA">
+        <value>
+            <option name="BACKGROUND" value="cfe7ff"/>
+        </value>
+    </option>
+</list>

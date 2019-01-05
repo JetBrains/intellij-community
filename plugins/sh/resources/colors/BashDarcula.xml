@@ -1,0 +1,45 @@
+<?xml version='1.0'?>
+<list>
+    <option name="BASH.EXTERNAL_COMMAND">
+        <value>
+            <option name="FOREGROUND" value="c57633"/>
+            <option name="FONT_TYPE" value="2"/>
+        </value>
+    </option>
+    <option name="BASH.FUNCTION_CALL">
+        <value>
+            <option name="FONT_TYPE" value="2"/>
+        </value>
+    </option>
+    <option name="BASH.HERE_DOC">
+        <value>
+            <option name="BACKGROUND" value="5a5a5a"/>
+            <option name="FONT_TYPE" value="2"/>
+        </value>
+    </option>
+    <option name="BASH.HERE_DOC_END">
+        <value>
+            <option name="FONT_TYPE" value="1"/>
+        </value>
+    </option>
+    <option name="BASH.HERE_DOC_START">
+        <value>
+            <option name="FONT_TYPE" value="1"/>
+        </value>
+    </option>
+    <option name="BASH.REDIRECTION">
+        <value>
+            <option name="FONT_TYPE" value="2"/>
+        </value>
+    </option>
+    <option name="BASH.SHEBANG">
+        <value>
+            <option name="FONT_TYPE" value="1"/>
+        </value>
+    </option>
+    <option name="BASH.BINARY_DATA">
+        <value>
+            <option name="BACKGROUND" value="cfe7ff"/>
+        </value>
+    </option>
+</list>
