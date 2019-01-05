@@ -53,7 +53,6 @@ public interface BashTypes {
   IElementType OLD_ARITHMETIC_EXPANSION = new BashCompositeElementType("OLD_ARITHMETIC_EXPANSION");
   IElementType PARENTHESES_EXPRESSION = new BashCompositeElementType("PARENTHESES_EXPRESSION");
   IElementType PATTERN = new BashCompositeElementType("PATTERN");
-  IElementType PATTERN_LIST = new BashCompositeElementType("PATTERN_LIST");
   IElementType PIPELINE = new BashCompositeElementType("PIPELINE");
   IElementType PIPELINE_COMMAND = new BashCompositeElementType("PIPELINE_COMMAND");
   IElementType POST_EXPRESSION = new BashCompositeElementType("POST_EXPRESSION");
@@ -290,9 +289,6 @@ public interface BashTypes {
       }
       else if (type == PATTERN) {
         return new BashPatternImpl(node);
-      }
-      else if (type == PATTERN_LIST) {
-        return new BashPatternListImpl(node);
       }
       else if (type == PIPELINE) {
         return new BashPipelineImpl(node);

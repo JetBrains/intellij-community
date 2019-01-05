@@ -7,7 +7,16 @@ import com.intellij.psi.PsiElement;
 
 public interface BashCaseClause extends BashCompositeElement {
 
+  @Nullable
+  BashCompoundList getCompoundList();
+
   @NotNull
-  BashPatternList getPatternList();
+  BashPattern getPattern();
+
+  @Nullable
+  PsiElement getLeftParen();
+
+  @Nullable
+  PsiElement getRightParen();
 
 }

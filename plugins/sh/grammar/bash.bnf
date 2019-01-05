@@ -212,16 +212,10 @@ elif_clause ::= elif compound_list then_clause
 else_clause ::= else compound_list
 then_clause ::= then compound_list
 
-case_clause ::= pattern_list
-
-pattern_list ::=   newlines pattern ')' compound_list
-                 | newlines pattern ')' newlines
-                 | newlines '(' pattern ')' compound_list
-                 | newlines '(' pattern ')' newlines {pin=0}
-
 private case_clause_list ::= (case_clause ';;')+
+case_clause ::= newlines '('? pattern ')' (list|newlines) {pin=3}
 
-pattern ::=  w ('|' w)* {pin('.*')=1}
+pattern ::= w ('|' w)* {pin('.*')=1}
 
 compound_list ::= newlines pipeline_command_list end_of_list  newlines {pin=2}
 list ::=          newlines pipeline_command_list end_of_list? newlines {pin=2 elementType=compound_list}

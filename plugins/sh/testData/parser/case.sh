@@ -17,3 +17,8 @@ case $space in
   Message="I seem to be running with an nonexistent amount of disk space..."
   ;;
 esac
+
+case "$TARGET_CARD" in
+    "" | all) TARGET_CARD=all;
+    log_action_begin_msg "Setting up ALSA" ;;
+esac

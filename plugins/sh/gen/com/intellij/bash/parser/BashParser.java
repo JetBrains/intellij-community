@@ -95,9 +95,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == PATTERN) {
       r = pattern(b, 0);
     }
-    else if (t == PATTERN_LIST) {
-      r = pattern_list(b, 0);
-    }
     else if (t == PIPELINE) {
       r = pipeline(b, 0);
     }
@@ -379,13 +376,34 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // pattern_list
+  // newlines '('? pattern ')' (list|newlines)
   public static boolean case_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_clause")) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, CASE_CLAUSE, "<case clause>");
-    r = pattern_list(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    r = newlines(b, l + 1);
+    r = r && case_clause_1(b, l + 1);
+    r = r && pattern(b, l + 1);
+    p = r; // pin = 3
+    r = r && report_error_(b, consumeToken(b, RIGHT_PAREN));
+    r = p && case_clause_4(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // '('?
+  private static boolean case_clause_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_clause_1")) return false;
+    consumeToken(b, LEFT_PAREN);
+    return true;
+  }
+
+  // list|newlines
+  private static boolean case_clause_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_clause_4")) return false;
+    boolean r;
+    r = list(b, l + 1);
+    if (!r) r = newlines(b, l + 1);
     return r;
   }
 
@@ -1219,77 +1237,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = r && w(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
-  }
-
-  /* ********************************************************** */
-  // newlines pattern ')' compound_list
-  //                  | newlines pattern ')' newlines
-  //                  | newlines '(' pattern ')' compound_list
-  //                  | newlines '(' pattern ')' newlines
-  public static boolean pattern_list(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pattern_list")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, PATTERN_LIST, "<pattern list>");
-    r = pattern_list_0(b, l + 1);
-    if (!r) r = pattern_list_1(b, l + 1);
-    if (!r) r = pattern_list_2(b, l + 1);
-    if (!r) r = pattern_list_3(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // newlines pattern ')' compound_list
-  private static boolean pattern_list_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pattern_list_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = newlines(b, l + 1);
-    r = r && pattern(b, l + 1);
-    r = r && consumeToken(b, RIGHT_PAREN);
-    r = r && compound_list(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // newlines pattern ')' newlines
-  private static boolean pattern_list_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pattern_list_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = newlines(b, l + 1);
-    r = r && pattern(b, l + 1);
-    r = r && consumeToken(b, RIGHT_PAREN);
-    r = r && newlines(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // newlines '(' pattern ')' compound_list
-  private static boolean pattern_list_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pattern_list_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = newlines(b, l + 1);
-    r = r && consumeToken(b, LEFT_PAREN);
-    r = r && pattern(b, l + 1);
-    r = r && consumeToken(b, RIGHT_PAREN);
-    r = r && compound_list(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // newlines '(' pattern ')' newlines
-  private static boolean pattern_list_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pattern_list_3")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = newlines(b, l + 1);
-    r = r && consumeToken(b, LEFT_PAREN);
-    r = r && pattern(b, l + 1);
-    r = r && consumeToken(b, RIGHT_PAREN);
-    r = r && newlines(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */

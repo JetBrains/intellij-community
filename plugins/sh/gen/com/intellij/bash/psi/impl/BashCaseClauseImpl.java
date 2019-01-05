@@ -26,9 +26,27 @@ public class BashCaseClauseImpl extends BashCompositeElementImpl implements Bash
   }
 
   @Override
+  @Nullable
+  public BashCompoundList getCompoundList() {
+    return findChildByClass(BashCompoundList.class);
+  }
+
+  @Override
   @NotNull
-  public BashPatternList getPatternList() {
-    return findNotNullChildByClass(BashPatternList.class);
+  public BashPattern getPattern() {
+    return findNotNullChildByClass(BashPattern.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getLeftParen() {
+    return findChildByType(LEFT_PAREN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getRightParen() {
+    return findChildByType(RIGHT_PAREN);
   }
 
 }
