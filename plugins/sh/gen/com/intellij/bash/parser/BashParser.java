@@ -1158,6 +1158,18 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // literal | <<paramExpansionOp>>
+  static boolean param_body(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "param_body")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = literal(b, l + 1);
+    if (!r) r = paramExpansionOp(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // w ('|' w)*
   public static boolean pattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pattern")) return false;
@@ -1940,7 +1952,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' (literal | <<paramExpansionOp>> | '[' <<paramExpansionOp>> ']')*'}'
+  // '{' (param_body | '[' param_body ']' )*'}'
   public static boolean shell_parameter_expansion(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "shell_parameter_expansion")) return false;
     if (!nextTokenIs(b, LEFT_CURLY)) return false;
@@ -1954,7 +1966,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // (literal | <<paramExpansionOp>> | '[' <<paramExpansionOp>> ']')*
+  // (param_body | '[' param_body ']' )*
   private static boolean shell_parameter_expansion_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "shell_parameter_expansion_1")) return false;
     while (true) {
@@ -1965,25 +1977,24 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // literal | <<paramExpansionOp>> | '[' <<paramExpansionOp>> ']'
+  // param_body | '[' param_body ']'
   private static boolean shell_parameter_expansion_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "shell_parameter_expansion_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = literal(b, l + 1);
-    if (!r) r = paramExpansionOp(b, l + 1);
-    if (!r) r = shell_parameter_expansion_1_0_2(b, l + 1);
+    r = param_body(b, l + 1);
+    if (!r) r = shell_parameter_expansion_1_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // '[' <<paramExpansionOp>> ']'
-  private static boolean shell_parameter_expansion_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "shell_parameter_expansion_1_0_2")) return false;
+  // '[' param_body ']'
+  private static boolean shell_parameter_expansion_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shell_parameter_expansion_1_0_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, LEFT_SQUARE);
-    r = r && paramExpansionOp(b, l + 1);
+    r = r && param_body(b, l + 1);
     r = r && consumeToken(b, RIGHT_SQUARE);
     exit_section_(b, m, null, r);
     return r;

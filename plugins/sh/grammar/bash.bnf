@@ -130,7 +130,8 @@ string ::= (string_begin (string_content|vars)* string_end) | STRING2
 private vars ::= variable | composed_var | command_substitution_command
 private composed_var ::= '$' (arithmetic_expansion | old_arithmetic_expansion | command_substitution | shell_parameter_expansion) {pin=1}
 private command_substitution ::= subshell_command // todo: rethink naming with command_substitution_command
-shell_parameter_expansion ::= '{' (literal | <<paramExpansionOp>> | '[' <<paramExpansionOp>> ']')*'}' {pin=1} // todo: simplify lexer for parameters
+shell_parameter_expansion ::= '{' (param_body | '[' param_body ']')*'}' {pin=1} // todo: simplify lexer for parameters
+private param_body ::= literal | <<paramExpansionOp>>
 bash_expansion ::=
 
 command_substitution_command ::= !<<isModeOn "BACKQUOTE">> '`' <<withOn "BACKQUOTE" list?>> '`' {pin=2}
