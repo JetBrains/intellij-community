@@ -11,12 +11,12 @@ public interface BashComparisonExpression extends BashBinaryExpression {
   PsiElement getArithGe();
 
   @Nullable
+  PsiElement getArithGt();
+
+  @Nullable
   PsiElement getArithLe();
 
   @Nullable
-  PsiElement getGreaterThan();
-
-  @Nullable
-  PsiElement getLessThan();
+  PsiElement getArithLt();
 
 }

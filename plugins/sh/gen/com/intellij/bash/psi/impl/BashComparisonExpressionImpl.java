@@ -33,20 +33,20 @@ public class BashComparisonExpressionImpl extends BashBinaryExpressionImpl imple
 
   @Override
   @Nullable
+  public PsiElement getArithGt() {
+    return findChildByType(ARITH_GT);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getArithLe() {
     return findChildByType(ARITH_LE);
   }
 
   @Override
   @Nullable
-  public PsiElement getGreaterThan() {
-    return findChildByType(GREATER_THAN);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getLessThan() {
-    return findChildByType(LESS_THAN);
+  public PsiElement getArithLt() {
+    return findChildByType(ARITH_LT);
   }
 
 }

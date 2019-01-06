@@ -15,6 +15,18 @@ do
 	du $file
 done
 
+for (( val=1; $val < $len ; ))
+do
+  echo 1
+done
+
+for (( ;  ; ))
+do
+      break;
+done
+
+// todo: fix me
+
 for i in {1..5}
 do
    echo "Welcome $i times"

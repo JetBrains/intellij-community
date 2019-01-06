@@ -216,7 +216,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '((' expression ';' expression ';' expression '))' [list_terminator newlines] any_block
+  // '((' expression? ';' expression? ';' expression? '))' [list_terminator newlines] any_block
   static boolean arithmetic_for(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arithmetic_for")) return false;
     if (!nextTokenIs(b, LEFT_DOUBLE_PAREN)) return false;
@@ -224,16 +224,37 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, LEFT_DOUBLE_PAREN);
     p = r; // pin = 1
-    r = r && report_error_(b, expression(b, l + 1, -1));
+    r = r && report_error_(b, arithmetic_for_1(b, l + 1));
     r = p && report_error_(b, consumeToken(b, SEMI)) && r;
-    r = p && report_error_(b, expression(b, l + 1, -1)) && r;
+    r = p && report_error_(b, arithmetic_for_3(b, l + 1)) && r;
     r = p && report_error_(b, consumeToken(b, SEMI)) && r;
-    r = p && report_error_(b, expression(b, l + 1, -1)) && r;
+    r = p && report_error_(b, arithmetic_for_5(b, l + 1)) && r;
     r = p && report_error_(b, consumeToken(b, RIGHT_DOUBLE_PAREN)) && r;
     r = p && report_error_(b, arithmetic_for_7(b, l + 1)) && r;
     r = p && any_block(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // expression?
+  private static boolean arithmetic_for_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_1")) return false;
+    expression(b, l + 1, -1);
+    return true;
+  }
+
+  // expression?
+  private static boolean arithmetic_for_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_3")) return false;
+    expression(b, l + 1, -1);
+    return true;
+  }
+
+  // expression?
+  private static boolean arithmetic_for_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_5")) return false;
+    expression(b, l + 1, -1);
+    return true;
   }
 
   // [list_terminator newlines]
@@ -2481,15 +2502,15 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '<=' | '>=' | '<' | '>'
+  // '<=' | '>=' | ARITH_LT | ARITH_GT
   private static boolean comparison_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "comparison_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, ARITH_LE);
     if (!r) r = consumeTokenSmart(b, ARITH_GE);
-    if (!r) r = consumeTokenSmart(b, LESS_THAN);
-    if (!r) r = consumeTokenSmart(b, GREATER_THAN);
+    if (!r) r = consumeTokenSmart(b, ARITH_LT);
+    if (!r) r = consumeTokenSmart(b, ARITH_GT);
     exit_section_(b, m, null, r);
     return r;
   }
