@@ -13,6 +13,9 @@ public interface BashHeredoc extends BashCompositeElement {
   @NotNull
   List<BashCommand> getCommandList();
 
+  @Nullable
+  BashPipeline getPipeline();
+
   @NotNull
   List<BashShellParameterExpansion> getShellParameterExpansionList();
 

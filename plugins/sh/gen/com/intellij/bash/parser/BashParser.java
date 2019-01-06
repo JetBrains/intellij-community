@@ -996,7 +996,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? simple_command] newlines
+  // HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? pipeline] newlines
   //             (HEREDOC_CONTENT | vars)*
   //             (HEREDOC_MARKER_END  | HEREDOC_MARKER_IGNORING_TABS_END | <<eof>>)
   public static boolean heredoc(PsiBuilder b, int l) {
@@ -1013,20 +1013,20 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ['|'? simple_command]
+  // ['|'? pipeline]
   private static boolean heredoc_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_2")) return false;
     heredoc_2_0(b, l + 1);
     return true;
   }
 
-  // '|'? simple_command
+  // '|'? pipeline
   private static boolean heredoc_2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = heredoc_2_0_0(b, l + 1);
-    r = r && simple_command(b, l + 1);
+    r = r && pipeline(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }

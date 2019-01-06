@@ -38,6 +38,12 @@ public class BashHeredocImpl extends BashCompositeElementImpl implements BashHer
   }
 
   @Override
+  @Nullable
+  public BashPipeline getPipeline() {
+    return findChildByClass(BashPipeline.class);
+  }
+
+  @Override
   @NotNull
   public List<BashShellParameterExpansion> getShellParameterExpansionList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashShellParameterExpansion.class);

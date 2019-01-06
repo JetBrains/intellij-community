@@ -89,3 +89,8 @@ if true ; then
     The leading tab is ignored.
 EOF
 fi
+
+cat << EOF | fmt | mail -s "Warning: $account Exceeds Quota" $account
+Your disk usage is ${usage}MB but you have only been allocated
+${MAXDISKUSAGE}MB.
+EOF
