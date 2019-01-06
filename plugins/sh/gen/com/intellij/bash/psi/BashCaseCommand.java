@@ -41,10 +41,16 @@ public interface BashCaseCommand extends BashCommand {
   PsiElement getEsac();
 
   @Nullable
+  PsiElement getHex();
+
+  @Nullable
   PsiElement getInt();
 
   @Nullable
   PsiElement getNumber();
+
+  @Nullable
+  PsiElement getOctal();
 
   @Nullable
   PsiElement getWord();

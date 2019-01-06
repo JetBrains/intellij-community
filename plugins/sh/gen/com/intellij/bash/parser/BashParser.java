@@ -1229,13 +1229,14 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // number | int
+  // number | int | hex | octal
   static boolean num(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "num")) return false;
-    if (!nextTokenIs(b, "", INT, NUMBER)) return false;
     boolean r;
     r = consumeToken(b, NUMBER);
     if (!r) r = consumeToken(b, INT);
+    if (!r) r = consumeToken(b, HEX);
+    if (!r) r = consumeToken(b, OCTAL);
     return r;
   }
 

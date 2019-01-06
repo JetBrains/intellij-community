@@ -87,6 +87,12 @@ public class BashLiteralExpressionImpl extends BashExpressionImpl implements Bas
 
   @Override
   @Nullable
+  public PsiElement getHex() {
+    return findChildByType(HEX);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getInt() {
     return findChildByType(INT);
   }
@@ -95,6 +101,12 @@ public class BashLiteralExpressionImpl extends BashExpressionImpl implements Bas
   @Nullable
   public PsiElement getNumber() {
     return findChildByType(NUMBER);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getOctal() {
+    return findChildByType(OCTAL);
   }
 
   @Override

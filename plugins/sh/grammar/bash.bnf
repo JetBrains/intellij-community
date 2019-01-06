@@ -125,7 +125,7 @@ redirection ::=    '>' w
                 |  '>|' w
                 |  num '>|' w
 
-private num ::= number | int
+private num ::= number | int | hex | octal
 string ::= (string_begin (string_content | vars)* string_end) | STRING2 {
   pin(".*")=1
   methods=[getReferences]

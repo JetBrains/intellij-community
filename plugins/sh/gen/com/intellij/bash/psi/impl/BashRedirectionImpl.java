@@ -141,6 +141,12 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
 
   @Override
   @Nullable
+  public PsiElement getHex() {
+    return findChildByType(HEX);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getInt() {
     return findChildByType(INT);
   }
@@ -149,6 +155,12 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
   @Nullable
   public PsiElement getNumber() {
     return findChildByType(NUMBER);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getOctal() {
+    return findChildByType(OCTAL);
   }
 
   @Override

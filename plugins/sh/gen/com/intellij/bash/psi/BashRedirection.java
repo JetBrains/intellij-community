@@ -65,10 +65,16 @@ public interface BashRedirection extends BashCompositeElement {
   PsiElement getShiftRight();
 
   @Nullable
+  PsiElement getHex();
+
+  @Nullable
   PsiElement getInt();
 
   @Nullable
   PsiElement getNumber();
+
+  @Nullable
+  PsiElement getOctal();
 
   @Nullable
   PsiElement getWord();

@@ -472,8 +472,8 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
 }
 
 <S_ARITH, S_ARITH_SQUARE_MODE, S_ARITH_ARRAY_MODE> {
-  {HexIntegerLiteral}           { return ARITH_HEX_NUMBER; }
-  {OctalIntegerLiteral}         { return ARITH_OCTAL_NUMBER; }
+  {HexIntegerLiteral}           { return HEX; }
+  {OctalIntegerLiteral}         { return OCTAL; }
   {IntegerLiteral}              { return NUMBER; }
 
   ">"                           { return ARITH_GT; }

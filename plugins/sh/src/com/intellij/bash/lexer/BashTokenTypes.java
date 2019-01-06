@@ -101,13 +101,9 @@ public interface BashTokenTypes extends BashTypes {
       ARITH_ASS_MINUS, ARITH_ASS_SHIFT_LEFT, ARITH_ASS_SHIFT_RIGHT,
       ARITH_ASS_BIT_AND, ARITH_ASS_BIT_OR, ARITH_ASS_BIT_XOR);
 
-  //arithmetic literals
-  IElementType ARITH_HEX_NUMBER = new BashTokenType("0x hex literal");
-  IElementType ARITH_OCTAL_NUMBER = new BashTokenType("octal literal");
-
   IElementType ARITH_BASE_CHAR = new BashTokenType("arithmetic base char (#)");
 
-  TokenSet arithLiterals = TokenSet.create(NUMBER, ARITH_OCTAL_NUMBER, ARITH_HEX_NUMBER);
+  TokenSet arithLiterals = TokenSet.create(NUMBER, OCTAL, HEX);
 
   //builtin command
   IElementType COMMAND_TOKEN = new BashTokenType("command");//!=

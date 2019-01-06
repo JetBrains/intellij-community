@@ -38,10 +38,16 @@ public interface BashLiteralExpression extends BashExpression {
   PsiElement getAssignmentWord();
 
   @Nullable
+  PsiElement getHex();
+
+  @Nullable
   PsiElement getInt();
 
   @Nullable
   PsiElement getNumber();
+
+  @Nullable
+  PsiElement getOctal();
 
   @Nullable
   PsiElement getWord();

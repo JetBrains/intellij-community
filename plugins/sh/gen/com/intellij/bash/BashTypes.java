@@ -119,6 +119,7 @@ public interface BashTypes {
   IElementType HEREDOC_MARKER_IGNORING_TABS_END = new BashTokenType("HEREDOC_MARKER_IGNORING_TABS_END");
   IElementType HEREDOC_MARKER_START = new BashTokenType("HEREDOC_MARKER_START");
   IElementType HEREDOC_MARKER_TAG = new BashTokenType("HEREDOC_MARKER_TAG");
+  IElementType HEX = new BashTokenType("hex");
   IElementType IF = new BashTokenType("if");
   IElementType INT = new BashTokenType("int");
   IElementType LEFT_CURLY = new BashTokenType("{");
@@ -131,6 +132,7 @@ public interface BashTypes {
   IElementType MOD = new BashTokenType("%");
   IElementType MULT = new BashTokenType("*");
   IElementType NUMBER = new BashTokenType("number");
+  IElementType OCTAL = new BashTokenType("octal");
   IElementType OR_OR = new BashTokenType("||");
   IElementType PIPE = new BashTokenType("|");
   IElementType PIPE_AMP = new BashTokenType("|&");

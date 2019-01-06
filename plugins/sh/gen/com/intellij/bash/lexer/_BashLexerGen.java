@@ -1995,7 +1995,7 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             // fall through
           case 308: break;
           case 125: 
-            { return ARITH_OCTAL_NUMBER;
+            { return OCTAL;
             } 
             // fall through
           case 309: break;
@@ -2245,7 +2245,7 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             // fall through
           case 347: break;
           case 164: 
-            { return ARITH_HEX_NUMBER;
+            { return HEX;
             } 
             // fall through
           case 348: break;

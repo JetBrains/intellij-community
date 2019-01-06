@@ -99,6 +99,12 @@ public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl impleme
 
   @Override
   @Nullable
+  public PsiElement getHex() {
+    return findChildByType(HEX);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getInt() {
     return findChildByType(INT);
   }
@@ -107,6 +113,12 @@ public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl impleme
   @Nullable
   public PsiElement getNumber() {
     return findChildByType(NUMBER);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getOctal() {
+    return findChildByType(OCTAL);
   }
 
 }

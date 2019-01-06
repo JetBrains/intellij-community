@@ -44,10 +44,16 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
   PsiElement getFiledescriptor();
 
   @Nullable
+  PsiElement getHex();
+
+  @Nullable
   PsiElement getInt();
 
   @Nullable
   PsiElement getNumber();
+
+  @Nullable
+  PsiElement getOctal();
 
   @Nullable
   PsiElement getWord();

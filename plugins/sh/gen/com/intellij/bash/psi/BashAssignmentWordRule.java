@@ -44,9 +44,15 @@ public interface BashAssignmentWordRule extends BashCompositeElement {
   PsiElement getAssignmentWord();
 
   @Nullable
+  PsiElement getHex();
+
+  @Nullable
   PsiElement getInt();
 
   @Nullable
   PsiElement getNumber();
+
+  @Nullable
+  PsiElement getOctal();
 
 }
