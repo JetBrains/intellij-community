@@ -212,7 +212,7 @@ elif_clause ::= elif compound_list then_clause
 else_clause ::= else compound_list
 then_clause ::= then compound_list
 
-private case_clause_list ::= (case_clause ';;')+
+private case_clause_list ::= case_clause (';;' (case_clause | &(esac|newlines)))+ {pin(".*")=1}
 case_clause ::= newlines '('? pattern ')' (list|newlines) {pin=3}
 
 pattern ::= w ('|' w)* {pin('.*')=1}

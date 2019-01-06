@@ -408,31 +408,73 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (case_clause ';;')+
+  // case_clause (';;' (case_clause | &(esac|newlines)))+
   static boolean case_clause_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_clause_list")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = case_clause(b, l + 1);
+    p = r; // pin = 1
+    r = r && case_clause_list_1(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // (';;' (case_clause | &(esac|newlines)))+
+  private static boolean case_clause_list_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_clause_list_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = case_clause_list_0(b, l + 1);
+    r = case_clause_list_1_0(b, l + 1);
     while (r) {
       int c = current_position_(b);
-      if (!case_clause_list_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "case_clause_list", c)) break;
+      if (!case_clause_list_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "case_clause_list_1", c)) break;
     }
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // case_clause ';;'
-  private static boolean case_clause_list_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_clause_list_0")) return false;
+  // ';;' (case_clause | &(esac|newlines))
+  private static boolean case_clause_list_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_clause_list_1_0")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
-    r = case_clause(b, l + 1);
+    r = consumeToken(b, CASE_END);
     p = r; // pin = 1
-    r = r && consumeToken(b, CASE_END);
+    r = r && case_clause_list_1_0_1(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // case_clause | &(esac|newlines)
+  private static boolean case_clause_list_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_clause_list_1_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = case_clause(b, l + 1);
+    if (!r) r = case_clause_list_1_0_1_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // &(esac|newlines)
+  private static boolean case_clause_list_1_0_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_clause_list_1_0_1_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = case_clause_list_1_0_1_1_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // esac|newlines
+  private static boolean case_clause_list_1_0_1_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_clause_list_1_0_1_1_0")) return false;
+    boolean r;
+    r = consumeToken(b, ESAC);
+    if (!r) r = newlines(b, l + 1);
+    return r;
   }
 
   /* ********************************************************** */
