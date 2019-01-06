@@ -1,9 +1,11 @@
 package com.intellij.bash.parser;
 
+import com.intellij.bash.BashTypes;
 import com.intellij.bash.lexer.BashTokenTypes;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.tree.IElementType;
 import gnu.trove.TObjectLongHashMap;
 
 public class BashParserUtil extends GeneratedParserUtilBase {
@@ -72,5 +74,16 @@ public class BashParserUtil extends GeneratedParserUtilBase {
 
   public static boolean backslash(PsiBuilder builder_, @SuppressWarnings("UnusedParameters") int level) {
     return consumeTokenFast(builder_, "\\\n");
+  }
+
+  public static boolean keywordsRemapped(PsiBuilder builder_, int level) {
+    if (isModeOff(builder_, level, "REMAP_KEYWORDS")) return false;
+    IElementType type = builder_.getTokenType();
+    if (BashTokenTypes.identifierKeywords.contains(type)) {
+      builder_.remapCurrentToken(BashTypes.WORD);
+      builder_.advanceLexer();
+      return true;
+    }
+    return false;
   }
 }

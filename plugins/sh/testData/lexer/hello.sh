@@ -26,3 +26,8 @@ exec /usr/bin/sftp -C $account@$host
 for name in $(find . -type f -size +0c ! -name '*[0-9]*' \
      ! -name '\.*' ! -name '*conf' -maxdepth 1 -print | sed 's/^\.\///')
 do
+ echo 1
+done
+
+echo \(analyzed $(wc -l < $stats) netstat log entries for calculations\)
+exit 0

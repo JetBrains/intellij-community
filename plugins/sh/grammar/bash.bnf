@@ -152,6 +152,7 @@ simple_command_element ::=  assignment_word_rule
                           | conditional_command
                           | command_substitution_command
                           | arithmetic_expansion
+                          | <<keywordsRemapped>>
 
 assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
 array_assignment ::= newlines '='? expression newlines
@@ -164,7 +165,7 @@ old_arithmetic_expansion ::= ARITH_SQUARE_LEFT expression ARITH_SQUARE_RIGHT {pi
 assignment_word_rule ::= (assignment_word | word | variable) '=' [literal | composed_var | assignment_list] {pin=2}
 
 redirection_list ::= redirection redirection*
-simple_command ::= simple_command_element+
+simple_command ::= simple_command_element <<enterMode "REMAP_KEYWORDS">> simple_command_element* <<exitMode "REMAP_KEYWORDS">> {pin=1}
 command ::= shell_command redirection_list? | simple_command
 
 shell_command ::=   for_command

@@ -2006,19 +2006,29 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // simple_command_element+
+  // simple_command_element <<enterMode "REMAP_KEYWORDS">> simple_command_element* <<exitMode "REMAP_KEYWORDS">>
   public static boolean simple_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command")) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, SIMPLE_COMMAND, "<simple command>");
     r = simple_command_element(b, l + 1);
-    while (r) {
+    p = r; // pin = 1
+    r = r && report_error_(b, enterMode(b, l + 1, "REMAP_KEYWORDS"));
+    r = p && report_error_(b, simple_command_2(b, l + 1)) && r;
+    r = p && exitMode(b, l + 1, "REMAP_KEYWORDS") && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // simple_command_element*
+  private static boolean simple_command_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "simple_command_2")) return false;
+    while (true) {
       int c = current_position_(b);
       if (!simple_command_element(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "simple_command", c)) break;
+      if (!empty_element_parsed_guard_(b, "simple_command_2", c)) break;
     }
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    return true;
   }
 
   /* ********************************************************** */
@@ -2030,6 +2040,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   //                           | conditional_command
   //                           | command_substitution_command
   //                           | arithmetic_expansion
+  //                           | <<keywordsRemapped>>
   public static boolean simple_command_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command_element")) return false;
     boolean r;
@@ -2042,6 +2053,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = conditional_command(b, l + 1);
     if (!r) r = command_substitution_command(b, l + 1);
     if (!r) r = arithmetic_expansion(b, l + 1);
+    if (!r) r = keywordsRemapped(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
