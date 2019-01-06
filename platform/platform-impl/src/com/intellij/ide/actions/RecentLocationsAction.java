@@ -8,7 +8,10 @@ package com.intellij.ide.actions;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -26,8 +29,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -609,8 +610,17 @@ public class RecentLocationsAction extends DumbAwareAction {
 
   private static void setHighlighting(@NotNull Project project, @NotNull EditorEx editor, @NotNull PlaceInfo placeInfo) {
     VirtualFile file = placeInfo.getFile();
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
-    SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, null);
+
+    Language language = LanguageUtil.getFileLanguage(file);
+    if (ScratchFileService.isInScratchRoot(file)) {
+      language = ScratchFileService.getInstance().getScratchesMapping().getMappings().get(file);
+    }
+
+    if (language == null) {
+      return;
+    }
+
+    SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, null);
 
     EditorColorsScheme colorsScheme = RecentLocationManager.getInstance(project).getColorScheme(placeInfo);
     if (colorsScheme == null) {
@@ -620,7 +630,7 @@ public class RecentLocationsAction extends DumbAwareAction {
     EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(syntaxHighlighter, colorsScheme);
 
     LexerPosition lexerPosition = RecentLocationManager.getInstance(project).getLexerPosition(placeInfo);
-    if (syntaxHighlighter != null && lexerPosition != null) {
+    if (lexerPosition != null) {
       Lexer lexer = syntaxHighlighter.getHighlightingLexer();
       lexer.start(editor.getDocument().getText());
       lexer.restore(lexerPosition);
