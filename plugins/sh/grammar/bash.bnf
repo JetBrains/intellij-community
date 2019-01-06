@@ -176,7 +176,7 @@ simple_command ::= simple_command_element <<enterMode "REMAP_KEYWORDS">> simple_
 }
 command ::= shell_command redirection_list? | simple_command {recoverWhile=command_recover}
 
-private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_GT | ARITH_LT | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | STRING2 | assignment_word | case | do | done | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
+private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_GT | ARITH_LT | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | STRING2 | assignment_word | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
 
 shell_command ::=   for_command
                   | case_command
@@ -186,7 +186,7 @@ shell_command ::=   for_command
                   | if_command
                   | subshell_command
                   | block
-                  | function_def
+                  | function_def {recoverWhile=command_recover}
 
 while_command ::= while compound_list do_block
 until_command ::= until compound_list do_block
@@ -200,8 +200,10 @@ private arithmetic_for ::= '((' expression? ';' expression? ';' expression? '))'
 private in_clause ::= "in" word_list list_terminator newlines {pin=1}
 
 private any_block ::= block | do_block
-do_block ::= do  compound_list done {pin(".*")=1 extends=block}
+do_block ::= do  compound_list done {pin(".*")=1 extends=block /*recoverWhile=do_block_recover*/}
 block    ::= '{' compound_list '}'  {pin(".*")=1 extends=command}
+
+private do_block_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>&' | '>' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '~' | assignment_word | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
 
 select_command ::= select w (';'? newlines any_block | newlines in_clause any_block)
 
@@ -227,11 +229,15 @@ case_clause ::= newlines '('? pattern ')' (list|newlines) {pin=3}
 
 pattern ::= w ('|' w)* {pin('.*')=1}
 
-compound_list ::= newlines pipeline_command_list end_of_list  newlines {pin=2}
-list ::=          newlines pipeline_command_list end_of_list? newlines {pin=2 elementType=compound_list}
+compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1}
+list ::=          (nl pipeline_command_list | pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
+private nl ::= '\n'+
 private end_of_list ::= '\n' | ';' | '&'
 
-private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {pin=1} // todo with pin
+private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {
+  pin=1
+  recoverWhile=command_recover
+} // todo with pin
 private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' |  '\n') newlines
 
 list_terminator ::= '\n' | ';'

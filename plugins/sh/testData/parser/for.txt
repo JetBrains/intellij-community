@@ -233,6 +233,56 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
+        FOR_COMMAND
+          PsiElement(for)('for')
+          PsiWhiteSpace(' ')
+          PsiElement((()('((')
+          PsiWhiteSpace(' ')
+          PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          PsiElement()))('))')
+          LIST_TERMINATOR
+            PsiElement(\n)('\n')
+          DO_BLOCK
+            PsiElement(do)('do')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiErrorElement:<pipeline command> expected, got 'done'
+                PsiElement(done)('done')
+              PsiElement(\n)('\n')
+              PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FOR_COMMAND
+          PsiElement(for)('for')
+          PsiWhiteSpace(' ')
+          PsiElement((()('((')
+          PsiWhiteSpace(' ')
+          PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          PsiElement()))('))')
+          LIST_TERMINATOR
+            PsiElement(\n)('\n')
+          BLOCK
+            PsiElement({)('{')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiErrorElement:<pipeline command> or '\n' expected, got '}'
+                <empty list>
+            PsiElement(})('}')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
         SIMPLE_COMMAND
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('//')
@@ -267,7 +317,7 @@ BASH_FILE
                   SIMPLE_COMMAND
                     SIMPLE_COMMAND_ELEMENT
                       PsiElement(word)('1..5')
-              PsiErrorElement:'&', '&&', ';', '\n', '|' or '||' expected, got '}'
+              PsiErrorElement:'&', ';' or '\n' expected, got '}'
                 <empty list>
             PsiElement(})('}')
   PsiElement(\n)('\n')

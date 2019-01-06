@@ -25,6 +25,15 @@ do
       break;
 done
 
+for (( ;  ; ))
+do
+done
+
+for (( ;  ; ))
+{
+}
+
+
 // todo: fix me
 
 for i in {1..5}
