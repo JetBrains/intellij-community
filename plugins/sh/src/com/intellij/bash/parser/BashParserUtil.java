@@ -29,26 +29,11 @@ public class BashParserUtil extends GeneratedParserUtilBase {
     return withImpl(builder_, level_, mode, true, parser, parser);
   }
 
-  public static boolean withOnLevel(PsiBuilder builder_, int level_, String mode, Parser parser) {
-    return withImplLevel(builder_, level_, mode, true, parser, parser);
-  }
-
   public static boolean withCleared(PsiBuilder builder_, int level_, String mode, Parser whenOn, Parser whenOff) {
     return withImpl(builder_, level_, mode, false, whenOn, whenOff);
   }
 
   private static boolean withImpl(PsiBuilder builder_, int level_, String mode, boolean onOff, Parser whenOn, Parser whenOff) {
-    TObjectLongHashMap<String> map = getParsingModes(builder_);
-    long prev = map.get(mode);
-    boolean change = ((prev & 1) == 0) == onOff;
-    if (change) map.put(mode, prev << 1 | (onOff ? 1 : 0));
-    boolean result = (change ? whenOn : whenOff).parse(builder_, level_);
-    if (change) map.put(mode, prev);
-    return result;
-  }
-
-  private static boolean withImplLevel(PsiBuilder builder_, int level_, String mode, boolean onOff, Parser whenOn, Parser whenOff) {
-    mode = mode + "_" + level_;
     TObjectLongHashMap<String> map = getParsingModes(builder_);
     long prev = map.get(mode);
     boolean change = ((prev & 1) == 0) == onOff;
