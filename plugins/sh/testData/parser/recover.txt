@@ -1,0 +1,117 @@
+BASH_FILE
+  PsiComment(shebang)('#!/bin/bash\n')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('for')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement($)('$')
+            OLD_ARITHMETIC_EXPANSION
+              PsiElement(ARITH_SQUARE_LEFT)('[')
+              PsiWhiteSpace(' ')
+              ADD_EXPRESSION
+                LITERAL_EXPRESSION
+                  PsiElement(hex)('0x888')
+                PsiWhiteSpace(' ')
+                PsiElement(-)('-')
+                UNARY_EXPRESSION
+                  PsiElement(-)('-')
+                  UNARY_EXPRESSION
+                    PsiElement(-)('-')
+                    UNARY_EXPRESSION
+                      PsiElement(-)('-')
+                      UNARY_EXPRESSION
+                        PsiElement(-)('-')
+                        UNARY_EXPRESSION
+                          PsiElement(-)('-')
+                          PsiWhiteSpace(' ')
+                          LITERAL_EXPRESSION
+                            PsiElement(octal)('007')
+              PsiWhiteSpace(' ')
+              PsiElement(ARITH_SQUARE_RIGHT)(']')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('0z999')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('s-fsf+')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('asd')
+          PsiWhiteSpace(' ')
+          PsiElement(>)('>')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiErrorElement:'!', $, <string>, '@', FILEDESCRIPTOR, '`', hex, int, number, octal, var or word expected, got '>'
+            PsiElement(>)('>')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('fsdf')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(>)('>')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('dddasd')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<)('<')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('adasd')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(int)('234')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('-')
+    PsiElement(;)(';')
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('-')

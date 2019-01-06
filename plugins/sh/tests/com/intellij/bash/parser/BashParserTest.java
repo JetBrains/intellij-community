@@ -30,4 +30,5 @@ public class BashParserTest extends ParsingTestCase {
   public void testMacports()      { doTest(true); }
   public void testParams()        { doTest(true); }
   public void testDict()          { doTest(true); }
+  public void testRecover()       { doTest(true); }
 }

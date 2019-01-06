@@ -267,7 +267,7 @@ BASH_FILE
                   SIMPLE_COMMAND
                     SIMPLE_COMMAND_ELEMENT
                       PsiElement(word)('1..5')
-              PsiErrorElement:'&', '&&', '(', ';', <simple command element>, '=', '\n', '|' or '||' expected, got '}'
+              PsiErrorElement:'&', '&&', ';', '\n', '|' or '||' expected, got '}'
                 <empty list>
             PsiElement(})('}')
   PsiElement(\n)('\n')

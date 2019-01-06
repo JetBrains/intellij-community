@@ -813,7 +813,7 @@ BASH_FILE
                 PsiElement(string_content)('current_line.txt')
                 PsiElement(string_end)('"')
   PsiElement(\n)('\n')
-  PsiErrorElement:<pipeline command> or '\n' expected, got 'let'
+  PsiErrorElement:<pipeline command> expected, got 'let'
     PsiElement(let)('let')
   PsiWhiteSpace(' ')
   PsiElement(assignment_word)('count')
