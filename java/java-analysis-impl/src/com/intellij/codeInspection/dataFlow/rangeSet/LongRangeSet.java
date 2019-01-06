@@ -184,6 +184,9 @@ public abstract class LongRangeSet {
     if (token.equals(JavaTokenType.DIV)) {
       return div(right, isLong);
     }
+    if (token.equals(JavaTokenType.LTLT)) {
+      return shiftLeft(right, isLong);
+    }
     if (token.equals(JavaTokenType.GTGT)) {
       return shiftRight(right, isLong);
     }
@@ -369,6 +372,25 @@ public abstract class LongRangeSet {
     LongRangeSet positive = intersect(range(0, maxValue(isLong)));
     return positive.shrPositive(min, max, isLong)
                    .unite(point(-1).minus(point(-1).minus(negative, isLong).shrPositive(min, max, isLong), isLong));
+  }
+
+  /**
+   * Returns a range which represents all the possible values after applying {@code x << y} operation for
+   * all {@code x} from this set and for all {@code y} from the shiftSize set. The resulting set may contain
+   * some more values.
+   *
+   * @param shiftSize set of possible shift sizes (number of bits to shift to the left)
+   * @param isLong whether the operation is performed on long type (if false, the int type is assumed).
+   * @return a new range
+   */
+  @NotNull
+  public LongRangeSet shiftLeft(LongRangeSet shiftSize, boolean isLong) {
+    if (isEmpty() || shiftSize.isEmpty()) return empty();
+    if (shiftSize instanceof Point) {
+      long shift = ((Point)shiftSize).myValue & ((isLong ? Long.SIZE : Integer.SIZE)-1);
+      return point(1 << shift).mul(this, isLong);
+    }
+    return isLong ? Range.LONG_RANGE : Range.INT_RANGE;
   }
 
   /**

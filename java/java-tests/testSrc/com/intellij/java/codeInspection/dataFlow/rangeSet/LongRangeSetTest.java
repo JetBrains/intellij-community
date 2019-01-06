@@ -433,6 +433,17 @@ public class LongRangeSetTest {
   }
 
   @Test
+  public void testShl() {
+    assertEquals(empty(), empty().shiftLeft(all(), true));
+    assertEquals(empty(), all().shiftLeft(empty(), true));
+    assertEquals(all(), all().shiftLeft(all(), true));
+    checkShl(point(1), point(3), false, "{8}");
+    checkShl(range(0, 10), point(3), false, "{0..80}");
+    checkShl(range(0, 15), point(28), false, "{Integer.MIN_VALUE..Integer.MAX_VALUE}");
+    checkShl(range(0, 15), point(28), true, "{0..4026531840}");
+  }
+
+  @Test
   public void testUShr() {
     assertEquals(empty(), empty().unsignedShiftRight(all(), true));
     assertEquals(empty(), all().unsignedShiftRight(empty(), true));
@@ -547,6 +558,11 @@ public class LongRangeSetTest {
   void checkShr(LongRangeSet arg, LongRangeSet shiftSize, boolean isLong, String expected) {
     LongRangeSet result = arg.shiftRight(shiftSize, isLong);
     checkBinOp(arg, shiftSize, result, x -> true, (a, b) -> isLong ? a >> b : ((int)a >> (int)b), expected, ">>");
+  }
+
+  void checkShl(LongRangeSet arg, LongRangeSet shiftSize, boolean isLong, String expected) {
+    LongRangeSet result = arg.shiftLeft(shiftSize, isLong);
+    checkBinOp(arg, shiftSize, result, x -> true, (a, b) -> isLong ? a << b : ((int)a << (int)b), expected, "<<");
   }
 
   void checkUShr(LongRangeSet arg, LongRangeSet shiftSize, boolean isLong, String expected) {
