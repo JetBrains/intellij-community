@@ -2310,29 +2310,38 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // simple_command_element <<enterMode "REMAP_KEYWORDS">> simple_command_element* <<exitMode "REMAP_KEYWORDS">>
+  // simple_command_element (simple_command_element|<<keywordsRemapped>>)*
   public static boolean simple_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, SIMPLE_COMMAND, "<simple command>");
     r = simple_command_element(b, l + 1);
     p = r; // pin = 1
-    r = r && report_error_(b, enterMode(b, l + 1, "REMAP_KEYWORDS"));
-    r = p && report_error_(b, simple_command_2(b, l + 1)) && r;
-    r = p && exitMode(b, l + 1, "REMAP_KEYWORDS") && r;
+    r = r && simple_command_1(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // simple_command_element*
-  private static boolean simple_command_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "simple_command_2")) return false;
+  // (simple_command_element|<<keywordsRemapped>>)*
+  private static boolean simple_command_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "simple_command_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!simple_command_element(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "simple_command_2", c)) break;
+      if (!simple_command_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "simple_command_1", c)) break;
     }
     return true;
+  }
+
+  // simple_command_element|<<keywordsRemapped>>
+  private static boolean simple_command_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "simple_command_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = simple_command_element(b, l + 1);
+    if (!r) r = keywordsRemapped(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2344,7 +2353,6 @@ public class BashParser implements PsiParser, LightPsiParser {
   //                           | conditional_command
   //                           | command_substitution_command
   //                           | arithmetic_expansion
-  //                           | <<keywordsRemapped>>
   public static boolean simple_command_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command_element")) return false;
     boolean r;
@@ -2357,7 +2365,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = conditional_command(b, l + 1);
     if (!r) r = command_substitution_command(b, l + 1);
     if (!r) r = arithmetic_expansion(b, l + 1);
-    if (!r) r = keywordsRemapped(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
