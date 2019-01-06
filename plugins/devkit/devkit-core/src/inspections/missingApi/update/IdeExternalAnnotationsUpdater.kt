@@ -2,7 +2,10 @@
 package org.jetbrains.idea.devkit.inspections.missingApi.update
 
 import com.intellij.codeInspection.ex.modifyAndCommitProjectProfile
-import com.intellij.notification.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
@@ -37,7 +40,7 @@ class IdeExternalAnnotationsUpdater {
   companion object {
     private val LOG = Logger.getInstance(IdeExternalAnnotationsUpdater::class.java)
 
-    private const val NOTIFICATION_GROUP_DISPLAY_ID = "IntelliJ API Annotations"
+    private val NOTIFICATION_GROUP = NotificationGroup.balloonGroup("IntelliJ API Annotations")
 
     private val UPDATE_RETRY_TIMEOUT = Duration.of(10, ChronoUnit.MINUTES)
 
@@ -125,9 +128,7 @@ class IdeExternalAnnotationsUpdater {
 
 
   private fun showUpdateAnnotationsNotification(project: Project, ideaJdk: Sdk, buildNumber: BuildNumber) {
-    val notificationGroup = NotificationGroup(NOTIFICATION_GROUP_DISPLAY_ID, NotificationDisplayType.STICKY_BALLOON, true)
-
-    val notification = notificationGroup.createNotification(
+    val notification = NOTIFICATION_GROUP.createNotification(
       DevKitBundle.message("intellij.api.annotations.update.title", buildNumber),
       DevKitBundle.message("intellij.api.annotations.update.confirmation.content", buildNumber),
       NotificationType.INFORMATION,
@@ -179,7 +180,7 @@ class IdeExternalAnnotationsUpdater {
     } else {
       DevKitBundle.message("intellij.api.annotations.update.successfully.updated.but.not.latest.version", buildNumber, annotationsBuild)
     }
-    NotificationGroup.balloonGroup(NOTIFICATION_GROUP_DISPLAY_ID)
+    NOTIFICATION_GROUP
       .createNotification(
         DevKitBundle.message("intellij.api.annotations.update.title", buildNumber),
         updateMessage,
@@ -197,7 +198,7 @@ class IdeExternalAnnotationsUpdater {
     val message = DevKitBundle.message("intellij.api.annotations.update.failed", throwable.message)
     LOG.warn(message, throwable)
 
-    NotificationGroup.balloonGroup(NOTIFICATION_GROUP_DISPLAY_ID)
+    NOTIFICATION_GROUP
       .createNotification(
         DevKitBundle.message("intellij.api.annotations.update.title", buildNumber),
         message,
