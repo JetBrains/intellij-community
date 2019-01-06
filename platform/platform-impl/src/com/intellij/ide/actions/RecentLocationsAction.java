@@ -284,7 +284,7 @@ public class RecentLocationsAction extends DumbAwareAction {
       String breadcrumb = getBreadcrumbs(project, value.getInfo());
       EditorEx editor = value.getEditor();
 
-      return breadcrumb + " " + editor.getDocument().getText();
+      return breadcrumb + " " + value.getInfo().getFile().getName() + " " + editor.getDocument().getText();
     };
   }
 
@@ -301,7 +301,9 @@ public class RecentLocationsAction extends DumbAwareAction {
       return info.getFile().getName();
     }
 
-    return StringUtil.join(ContainerUtil.map(crumbs, crumb -> crumb.getText()), " > ");
+    String breadcrumbsText = StringUtil.join(ContainerUtil.map(crumbs, crumb -> crumb.getText()), " > ");
+
+    return StringUtil.shortenTextWithEllipsis(breadcrumbsText, 50, 0);
   }
 
   private static List<PlaceInfo> getPlaces(@NotNull Project project, boolean showChanged) {
@@ -517,17 +519,16 @@ public class RecentLocationsAction extends DumbAwareAction {
         clearSelectionInEditor(smallEditor);
       }
 
-      JComponent title;
-      JComponent titledSeparator = new TitledSeparator();
-      SimpleColoredComponent breadcrumbTextComponent = new SimpleColoredComponent();
-      title = JBUI.Panels.simplePanel().addToLeft(breadcrumbTextComponent).addToCenter(titledSeparator);
-
       String breadcrumb = getBreadcrumbs(myProject, placeInfo);
-      breadcrumbTextComponent.append(breadcrumb);
-      Iterable<TextRange> breadCrumbRanges = mySpeedSearch.matchingFragments(breadcrumb);
-      if (breadCrumbRanges != null) {
-        SpeedSearchUtil.applySpeedSearchHighlighting(list, breadcrumbTextComponent, true, selected);
-      }
+      SimpleColoredComponent breadcrumbTextComponent = createBreadcrumbsComponent(list, breadcrumb, selected);
+      SimpleColoredComponent fileNameComponent = createFileNameComponent(list, placeInfo, breadcrumb, selected);
+
+      JComponent titledSeparator = new TitledSeparator();
+      JComponent title = JBUI.Panels
+        .simplePanel()
+        .addToLeft(breadcrumbTextComponent)
+        .addToCenter(titledSeparator)
+        .addToRight(fileNameComponent);
 
       JComponent editorComponent = smallEditor.getComponent();
 
@@ -542,6 +543,36 @@ public class RecentLocationsAction extends DumbAwareAction {
                        selected ? BACKGROUND_COLOR : UIUtil.getEditorPaneBackground());
 
       return editorPanel;
+    }
+
+    @NotNull
+    public SimpleColoredComponent createBreadcrumbsComponent(@NotNull JList<? extends RecentLocationItem> list,
+                                                             @NotNull String breadcrumb,
+                                                             boolean selected) {
+      SimpleColoredComponent breadcrumbTextComponent = new SimpleColoredComponent();
+      breadcrumbTextComponent.append(breadcrumb);
+      Iterable<TextRange> breadCrumbRanges = mySpeedSearch.matchingFragments(breadcrumb);
+      if (breadCrumbRanges != null) {
+        SpeedSearchUtil.applySpeedSearchHighlighting(list, breadcrumbTextComponent, true, selected);
+      }
+
+      return breadcrumbTextComponent;
+    }
+
+    @NotNull
+    public SimpleColoredComponent createFileNameComponent(@NotNull JList<? extends RecentLocationItem> list,
+                                                          @NotNull PlaceInfo placeInfo, @NotNull String breadcrumb, boolean selected) {
+      SimpleColoredComponent fileNameComponent = new SimpleColoredComponent();
+      if (!StringUtil.equals(breadcrumb, placeInfo.getFile().getName())) {
+        fileNameComponent.append(placeInfo.getFile().getName());
+        fileNameComponent.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 2));
+        Iterable<TextRange> fileNameRanges = mySpeedSearch.matchingFragments(placeInfo.getFile().getName());
+        if (fileNameRanges != null) {
+          SpeedSearchUtil.applySpeedSearchHighlighting(list, fileNameComponent, true, selected);
+        }
+      }
+
+      return fileNameComponent;
     }
 
     private static void updateBackground(@NotNull EditorEx smallEditor,
