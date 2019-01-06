@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -8,8 +8,9 @@ package com.intellij.ide.actions;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -18,13 +19,17 @@ import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -326,12 +331,7 @@ public class RecentLocationsAction extends DumbAwareAction {
     List<RecentLocationItem> caretsList = ContainerUtil.newArrayList();
 
     for (PlaceInfo placeInfo : topElements) {
-      RangeMarker rangeMarker = RecentLocationManager.getInstance(project).getRangeMarker(placeInfo);
-      if (rangeMarker == null) {
-        continue;
-      }
-
-      EditorEx editor = createEditor(project, placeInfo.getFile(), rangeMarker);
+      EditorEx editor = createEditor(project, placeInfo);
       if (editor == null) {
         continue;
       }
@@ -343,7 +343,11 @@ public class RecentLocationsAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static EditorEx createEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull RangeMarker rangeMarker) {
+  private static EditorEx createEditor(@NotNull Project project, @NotNull PlaceInfo placeInfo) {
+    RangeMarker rangeMarker = RecentLocationManager.getInstance(project).getRangeMarker(placeInfo);
+    if (rangeMarker == null) {
+      return null;
+    }
     Document document = rangeMarker.getDocument();
     int offset = rangeMarker.getStartOffset();
 
@@ -361,14 +365,15 @@ public class RecentLocationsAction extends DumbAwareAction {
 
     text = stringBuilder.toString();
 
-    int newLinesBefore = StringUtil.countNewLines(text) - StringUtil.countNewLines(StringUtil.trimLeading(text));
-    text = StringUtil.trim(text);
+    int newLinesBefore = StringUtil.countNewLines(text) - StringUtil.countNewLines(StringUtil.trimLeading(text, '\n'));
+    text = StringUtil.trimLeading(text, '\n');
+    text = StringUtil.trimTrailing(text, '\n');
 
     if (StringUtil.isEmpty(text)) {
       return null;
     }
 
-    EditorEx smallEditor = createEditor(project, text, document.getLineNumber(offset) + skipBeforeLines + newLinesBefore, file);
+    EditorEx smallEditor = createEditor(project, text, document.getLineNumber(offset) + skipBeforeLines + newLinesBefore, placeInfo);
     smallEditor.getGutterComponentEx().setPaintBackground(false);
 
     return smallEditor;
@@ -560,23 +565,38 @@ public class RecentLocationsAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static EditorEx createEditor(@NotNull Project project, @NotNull String text, int startLineNumber, @NotNull VirtualFile file) {
+  private static EditorEx createEditor(@NotNull Project project, @NotNull String text, int startLineNumber, @NotNull PlaceInfo placeInfo) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument(text);
     EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument, project);
     editor.getGutterComponentEx().setLineNumberConvertor(index -> index + startLineNumber);
     fillEditorSettings(editor.getSettings());
-    setHighlighting(editor, file);
+    setHighlighting(project, editor, placeInfo);
 
     return editor;
   }
 
-  private static void setHighlighting(@NotNull EditorEx editor, @NotNull VirtualFile file) {
-    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
-    if (fileType == UnknownFileType.INSTANCE) {
-      return;
+  private static void setHighlighting(@NotNull Project project, @NotNull EditorEx editor, @NotNull PlaceInfo placeInfo) {
+    VirtualFile file = placeInfo.getFile();
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+    SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, null);
+
+    EditorColorsScheme colorsScheme = RecentLocationManager.getInstance(project).getColorScheme(placeInfo);
+    if (colorsScheme == null) {
+      colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     }
-    editor.setHighlighter(HighlighterFactory.createHighlighter(fileType, EditorColorsManager.getInstance().getGlobalScheme(), null));
+
+    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(syntaxHighlighter, colorsScheme);
+
+    LexerPosition lexerPosition = RecentLocationManager.getInstance(project).getLexerPosition(placeInfo);
+    if (syntaxHighlighter != null && lexerPosition != null) {
+      Lexer lexer = syntaxHighlighter.getHighlightingLexer();
+      lexer.start(editor.getDocument().getText());
+      lexer.restore(lexerPosition);
+    }
+
+    editor.setHighlighter(highlighter);
+    editor.setColorsScheme(colorsScheme);
   }
 
   private static void fillEditorSettings(@NotNull EditorSettings settings) {

@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
+import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
@@ -15,11 +17,15 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -130,7 +136,16 @@ public class RecentLocationManager implements ProjectComponent {
     PlaceInfoPersistentItem item = myItems.get(changePlace);
     RangeMarker rangeMarker = item != null ? item.getRangeMarker() : document.createRangeMarker(getLinesRange(document, line));
 
-    myItems.put(changePlace, new PlaceInfoPersistentItem(result, rangeMarker));
+    VirtualFile file = changePlace.getFile();
+    SyntaxHighlighter syntaxHighlighter =
+      SyntaxHighlighterFactory.getSyntaxHighlighter(FileTypeManager.getInstance().getFileTypeByFile(file), myProject, file);
+
+    LexerPosition position = null;
+    if (syntaxHighlighter != null) {
+      position = syntaxHighlighter.getHighlightingLexer().getCurrentPosition();
+    }
+
+    myItems.put(changePlace, new PlaceInfoPersistentItem(result, rangeMarker, position, editor.getColorsScheme()));
   }
 
   @Nullable
@@ -225,13 +240,42 @@ public class RecentLocationManager implements ProjectComponent {
     return item.getRangeMarker();
   }
 
+  @Nullable
+  LexerPosition getLexerPosition(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo) {
+    PlaceInfoPersistentItem item = myItems.get(placeInfo);
+    if (item == null) {
+      return null;
+    }
+    return item.getPosition();
+  }
+
+  @Nullable
+  EditorColorsScheme getColorScheme(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo) {
+    PlaceInfoPersistentItem item = myItems.get(placeInfo);
+    if (item == null) {
+      return null;
+    }
+    return item.getScheme();
+  }
+
   private static class PlaceInfoPersistentItem {
     private final Collection<Iterable<? extends Crumb>> myResult;
     @NotNull private final RangeMarker myRangeMarker;
+    @Nullable private final LexerPosition myPosition;
+    private EditorColorsScheme myScheme;
 
-    PlaceInfoPersistentItem(@NotNull Collection<Iterable<? extends Crumb>> crumbs, @NotNull RangeMarker rangeMarker) {
+    PlaceInfoPersistentItem(@NotNull Collection<Iterable<? extends Crumb>> crumbs,
+                            @NotNull RangeMarker rangeMarker,
+                            @Nullable LexerPosition position,
+                            @NotNull EditorColorsScheme scheme) {
       myResult = crumbs;
       myRangeMarker = rangeMarker;
+      myPosition = position;
+      myScheme = scheme;
+    }
+
+    private EditorColorsScheme getScheme() {
+      return myScheme;
     }
 
     @NotNull
@@ -242,6 +286,11 @@ public class RecentLocationManager implements ProjectComponent {
     @NotNull
     private RangeMarker getRangeMarker() {
       return myRangeMarker;
+    }
+
+    @Nullable
+    private LexerPosition getPosition() {
+      return myPosition;
     }
   }
 
