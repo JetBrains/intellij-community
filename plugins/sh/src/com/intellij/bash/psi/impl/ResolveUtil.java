@@ -29,7 +29,9 @@ public abstract class ResolveUtil {
                                         @NotNull PsiElement place) {
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
-      if (run instanceof BashCompositeElement && !run.processDeclarations(processor, substitutor, null, place)) return false;
+      if (run instanceof BashCompositeElement && !run.processDeclarations(processor, substitutor, null, place)) {
+        return false;
+      }
       run = run.getPrevSibling();
     }
     return true;

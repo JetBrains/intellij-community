@@ -35,7 +35,7 @@ public class BashParserUtil extends GeneratedParserUtilBase {
     TObjectLongHashMap<String> map = getParsingModes(builder_);
     long prev = map.get(mode);
     boolean change = ((prev & 1) == 0) == onOff;
-    if (change) map.put(mode, prev << 1 | (onOff? 1 : 0));
+    if (change) map.put(mode, prev << 1 | (onOff ? 1 : 0));
     boolean result = (change ? whenOn : whenOff).parse(builder_, level_);
     if (change) map.put(mode, prev);
     return result;
@@ -50,9 +50,15 @@ public class BashParserUtil extends GeneratedParserUtilBase {
   public static boolean exitMode(PsiBuilder builder_, @SuppressWarnings("UnusedParameters") int level, String mode) {
     TObjectLongHashMap<String> flags = getParsingModes(builder_);
     long count = flags.get(mode);
-    if (count == 1) flags.remove(mode);
-    else if (count > 1) flags.put(mode, count -1);
-    else builder_.error("Could not exit inactive '" + mode + "' mode at offset " + builder_.getCurrentOffset());
+    if (count == 1) {
+      flags.remove(mode);
+    }
+    else if (count > 1) {
+      flags.put(mode, count - 1);
+    }
+    else {
+      builder_.error("Could not exit inactive '" + mode + "' mode at offset " + builder_.getCurrentOffset());
+    }
     return true;
   }
 
