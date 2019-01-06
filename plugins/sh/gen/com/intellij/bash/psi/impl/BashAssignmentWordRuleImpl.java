@@ -56,9 +56,9 @@ public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl impleme
   }
 
   @Override
-  @Nullable
-  public BashVariable getVariable() {
-    return findChildByClass(BashVariable.class);
+  @NotNull
+  public List<BashVariable> getVariableList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashVariable.class);
   }
 
   @Override

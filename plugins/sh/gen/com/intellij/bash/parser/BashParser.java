@@ -313,10 +313,9 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (assignment_word | word) '=' [literal | composed_var | assignment_list]
+  // (assignment_word | word | variable) '=' [literal | composed_var | assignment_list]
   public static boolean assignment_word_rule(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_word_rule")) return false;
-    if (!nextTokenIs(b, "<assignment word rule>", ASSIGNMENT_WORD, WORD)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, ASSIGNMENT_WORD_RULE, "<assignment word rule>");
     r = assignment_word_rule_0(b, l + 1);
@@ -327,12 +326,13 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // assignment_word | word
+  // assignment_word | word | variable
   private static boolean assignment_word_rule_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_word_rule_0")) return false;
     boolean r;
     r = consumeToken(b, ASSIGNMENT_WORD);
     if (!r) r = consumeToken(b, WORD);
+    if (!r) r = variable(b, l + 1);
     return r;
   }
 

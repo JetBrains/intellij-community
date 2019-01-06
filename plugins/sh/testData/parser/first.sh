@@ -47,6 +47,8 @@ in=$1
 
 exec /usr/bin/sftp -C $account@$host
 
+eval $1=$answer
+
 # init
 file="current_line.txt"
 let count=0
