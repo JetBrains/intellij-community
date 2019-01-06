@@ -245,14 +245,18 @@ public class RecentLocationsAction extends DumbAwareAction {
                                            @NotNull ListWithFilter listWithFilter,
                                            @NotNull AnActionEvent e,
                                            boolean changed) {
-    CheckboxAction action = new RecentLocationsCheckboxAction(project, listWithFilter);
-    action.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta S" : "control S"), listWithFilter);
+    CheckboxAction action = new RecentLocationsCheckboxAction(project);
+    CustomShortcutSet set = CustomShortcutSet.fromString(SystemInfo.isMac ? "meta L" : "control L");
+    action.registerCustomShortcutSet(set, listWithFilter);
+    action.getTemplatePresentation()
+      .setText(IdeBundle.message("title.popup.recent.locations.text", KeymapUtil.getShortcutsText(set.getShortcuts())));
 
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, e.getDataContext());
     JComponent checkbox = action.createCustomComponent(action.getTemplatePresentation());
     action.getTemplatePresentation().putClientProperty(COMPONENT_KEY, checkbox);
     action.setSelected(event, changed);
     checkbox.setBorder(BorderFactory.createEmptyBorder());
+
     return checkbox;
   }
 
@@ -652,15 +656,11 @@ public class RecentLocationsAction extends DumbAwareAction {
   private static class RecentLocationsCheckboxAction extends CheckboxAction {
     @NotNull private final Project myProject;
 
-    private RecentLocationsCheckboxAction(@NotNull Project project, @NotNull ListWithFilter listWithFilter) {
+    private RecentLocationsCheckboxAction(@NotNull Project project) {
       myProject = project;
-
-      CustomShortcutSet set = CustomShortcutSet.fromString(SystemInfo.isMac ? "meta S" : "control S");
-      registerCustomShortcutSet(set, listWithFilter);
 
       Presentation presentation = getTemplatePresentation();
       presentation.setIcon(AllIcons.Actions.Diff);
-      presentation.setText(IdeBundle.message("title.popup.recent.locations.text", KeymapUtil.getShortcutsText(set.getShortcuts())));
     }
 
     @Override
