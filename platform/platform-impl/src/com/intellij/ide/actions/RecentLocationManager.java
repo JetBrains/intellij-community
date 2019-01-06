@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
+import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -142,7 +144,11 @@ public class RecentLocationManager implements ProjectComponent {
 
     LexerPosition position = null;
     if (syntaxHighlighter != null) {
-      position = syntaxHighlighter.getHighlightingLexer().getCurrentPosition();
+      Lexer lexer = syntaxHighlighter.getHighlightingLexer();
+      if (StringUtil.isEmpty(lexer.getBufferSequence())) {
+        lexer.start(editor.getDocument().getCharsSequence());
+      }
+      position = lexer.getCurrentPosition();
     }
 
     myItems.put(changePlace, new PlaceInfoPersistentItem(result, rangeMarker, position, editor.getColorsScheme()));

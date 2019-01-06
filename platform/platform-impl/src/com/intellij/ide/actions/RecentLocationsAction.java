@@ -334,13 +334,15 @@ public class RecentLocationsAction extends DumbAwareAction {
       return ContainerUtil.emptyList();
     }
 
-    List<PlaceInfo> topElements = places.subList(0, Math.min(places.size(), RecentLocationManager.LIST_SIZE));
     List<RecentLocationItem> caretsList = ContainerUtil.newArrayList();
-
-    for (PlaceInfo placeInfo : topElements) {
+    for (PlaceInfo placeInfo : places) {
       EditorEx editor = createEditor(project, placeInfo);
       if (editor == null) {
         continue;
+      }
+
+      if (caretsList.size() > RecentLocationManager.LIST_SIZE - 1) {
+        break;
       }
 
       caretsList.add(new RecentLocationItem(placeInfo, editor));
