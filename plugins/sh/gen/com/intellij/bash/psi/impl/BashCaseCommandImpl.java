@@ -63,6 +63,12 @@ public class BashCaseCommandImpl extends BashCommandImpl implements BashCaseComm
 
   @Override
   @Nullable
+  public PsiElement getBang() {
+    return findChildByType(BANG);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getDollar() {
     return findChildByType(DOLLAR);
   }

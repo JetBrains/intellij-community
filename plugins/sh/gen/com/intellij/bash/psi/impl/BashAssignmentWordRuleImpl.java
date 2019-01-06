@@ -69,6 +69,12 @@ public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl impleme
 
   @Override
   @Nullable
+  public PsiElement getBang() {
+    return findChildByType(BANG);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getDollar() {
     return findChildByType(DOLLAR);
   }

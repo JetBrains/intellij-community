@@ -63,6 +63,12 @@ public class BashLiteralExpressionImpl extends BashExpressionImpl implements Bas
 
   @Override
   @Nullable
+  public PsiElement getBang() {
+    return findChildByType(BANG);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getDollar() {
     return findChildByType(DOLLAR);
   }

@@ -22,3 +22,7 @@ echo `cat \`cat $0\``
 echo `cat `cat $0``
 
 exec /usr/bin/sftp -C $account@$host
+
+for name in $(find . -type f -size +0c ! -name '*[0-9]*' \
+     ! -name '\.*' ! -name '*conf' -maxdepth 1 -print | sed 's/^\.\///')
+do

@@ -49,6 +49,16 @@ exec /usr/bin/sftp -C $account@$host
 
 eval $1=$answer
 
+$(find . -type f -size +0c ! -name '*[0-9]*' \
+     ! -name '\.*' ! -name '*conf' -maxdepth 1 -print | sed 's/^\.\///')
+
+
+for name in $(find . -type f -size +0c ! -name '*[0-9]*' \
+     ! -name '\.*' ! -name '*conf' -maxdepth 1 -print | sed 's/^\.\///')
+do
+  echo 1
+done
+
 # init
 file="current_line.txt"
 let count=0
