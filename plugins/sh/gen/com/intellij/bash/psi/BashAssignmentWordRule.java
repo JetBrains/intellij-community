@@ -26,6 +26,9 @@ public interface BashAssignmentWordRule extends BashCompositeElement {
   BashVariable getVariable();
 
   @Nullable
+  PsiElement getAt();
+
+  @Nullable
   PsiElement getDollar();
 
   @NotNull

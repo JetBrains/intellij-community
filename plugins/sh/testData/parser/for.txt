@@ -153,7 +153,7 @@ BASH_FILE
           PsiElement(word)('i')
           PsiWhiteSpace(' ')
           PsiElement(word)('in')
-          PsiErrorElement:$, <string>, FILEDESCRIPTOR, '`', int, number, var or word expected, got '{'
+          PsiErrorElement:$, <string>, '@', FILEDESCRIPTOR, '`', int, number, var or word expected, got '{'
             <empty list>
           PsiWhiteSpace(' ')
           BLOCK

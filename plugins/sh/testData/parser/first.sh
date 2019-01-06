@@ -45,10 +45,11 @@ exec < $1
 # remember the name of the input file
 in=$1
 
+exec /usr/bin/sftp -C $account@$host
+
 # init
 file="current_line.txt"
 let count=0
-
 
 
 

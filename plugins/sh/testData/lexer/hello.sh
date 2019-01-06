@@ -20,3 +20,5 @@ echo root /usr/{ucb/{ex,edit},lib/{ex?.?*,how_ex}}
 echo `cat $0`
 echo `cat \`cat $0\``
 echo `cat `cat $0``
+
+exec /usr/bin/sftp -C $account@$host

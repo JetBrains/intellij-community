@@ -26,6 +26,9 @@ public interface BashRedirection extends BashCompositeElement {
   PsiElement getArithMinus();
 
   @Nullable
+  PsiElement getAt();
+
+  @Nullable
   PsiElement getDollar();
 
   @Nullable

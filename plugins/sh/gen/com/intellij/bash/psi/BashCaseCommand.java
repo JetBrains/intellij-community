@@ -23,6 +23,9 @@ public interface BashCaseCommand extends BashCommand {
   BashVariable getVariable();
 
   @Nullable
+  PsiElement getAt();
+
+  @Nullable
   PsiElement getDollar();
 
   @Nullable

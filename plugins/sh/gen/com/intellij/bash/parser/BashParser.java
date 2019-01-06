@@ -2259,15 +2259,18 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | vars | string | num | FILEDESCRIPTOR
+  // word | '@' | vars | string | num | FILEDESCRIPTOR
   static boolean w(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "w")) return false;
     boolean r;
+    Marker m = enter_section_(b);
     r = consumeToken(b, WORD);
+    if (!r) r = consumeToken(b, AT);
     if (!r) r = vars(b, l + 1);
     if (!r) r = string(b, l + 1);
     if (!r) r = num(b, l + 1);
     if (!r) r = consumeToken(b, FILEDESCRIPTOR);
+    exit_section_(b, m, null, r);
     return r;
   }
 
