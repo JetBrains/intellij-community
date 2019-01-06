@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
+import com.intellij.psi.PsiReference;
 
 public class BashStringImpl extends BashCompositeElementImpl implements BashString {
 
@@ -65,6 +66,11 @@ public class BashStringImpl extends BashCompositeElementImpl implements BashStri
   @Nullable
   public PsiElement getStringEnd() {
     return findChildByType(STRING_END);
+  }
+
+  @NotNull
+  public PsiReference[] getReferences() {
+    return BashPsiImplUtil.getReferences(this);
   }
 
 }

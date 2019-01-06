@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
+import com.intellij.psi.PsiReference;
 
 public class BashSimpleCommandImpl extends BashCommandImpl implements BashSimpleCommand {
 
@@ -29,6 +30,11 @@ public class BashSimpleCommandImpl extends BashCommandImpl implements BashSimple
   @NotNull
   public List<BashSimpleCommandElement> getSimpleCommandElementList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashSimpleCommandElement.class);
+  }
+
+  @NotNull
+  public PsiReference[] getReferences() {
+    return BashPsiImplUtil.getReferences(this);
   }
 
 }

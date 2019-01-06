@@ -17,6 +17,8 @@
   psiPackage="com.intellij.bash.psi"
   psiImplPackage="com.intellij.bash.psi.impl"
 
+  psiImplUtilClass="com.intellij.bash.psi.impl.BashPsiImplUtil"
+
   tokens = [
     DOLLAR = '$'
     LEFT_PAREN = '('
@@ -124,7 +126,10 @@ redirection ::=    '>' w
                 |  num '>|' w
 
 private num ::= number | int
-string ::= (string_begin (string_content | vars)* string_end) | STRING2 {pin(".*")=1}
+string ::= (string_begin (string_content | vars)* string_end) | STRING2 {
+  pin(".*")=1
+  methods=[getReferences]
+}
 
 variable ::= var
 private vars ::= variable | composed_var | command_substitution_command
@@ -165,7 +170,10 @@ old_arithmetic_expansion ::= ARITH_SQUARE_LEFT expression ARITH_SQUARE_RIGHT {pi
 assignment_word_rule ::= (assignment_word | word | variable) '=' [literal | composed_var | assignment_list] {pin=2}
 
 redirection_list ::= redirection redirection*
-simple_command ::= simple_command_element <<enterMode "REMAP_KEYWORDS">> simple_command_element* <<exitMode "REMAP_KEYWORDS">> {pin=1}
+simple_command ::= simple_command_element <<enterMode "REMAP_KEYWORDS">> simple_command_element* <<exitMode "REMAP_KEYWORDS">> {
+  pin=1
+  methods=[getReferences]
+}
 command ::= shell_command redirection_list? | simple_command
 
 shell_command ::=   for_command

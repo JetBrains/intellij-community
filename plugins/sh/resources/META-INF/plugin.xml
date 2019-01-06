@@ -15,5 +15,7 @@
     <additionalTextAttributes scheme="Default" file="colors/BashDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colors/BashDarcula.xml"/>
 
+    <psi.referenceContributor implementation="com.intellij.bash.BashUrlReferenceContributor"/>
+
   </extensions>
 </idea-plugin>
