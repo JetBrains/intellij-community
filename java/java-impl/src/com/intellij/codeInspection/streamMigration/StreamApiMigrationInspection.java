@@ -834,7 +834,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     boolean breaksMe(PsiBreakStatement statement) {
-      return statement.findExitedStatement() == mySource.getMainStatement();
+      return statement.findExitedElement() == mySource.getMainStatement();
     }
   }
 
@@ -1295,7 +1295,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
 
     @Override
     StreamEx<PsiExpression> expressions() {
-      return StreamEx.of(myInitializer, myExpression);
+      return StreamEx.of(myInitializer, myExpression, myCondition).nonNull();
     }
 
     @Override
