@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashAssignmentWordRule extends BashCompositeElement {
+public interface BashAssignmentWordRule extends BashSimpleCommand {
 
   @Nullable
   BashArithmeticExpansion getArithmeticExpansion();
@@ -15,9 +15,6 @@ public interface BashAssignmentWordRule extends BashCompositeElement {
 
   @Nullable
   BashBashExpansion getBashExpansion();
-
-  @Nullable
-  BashCommand getCommand();
 
   @Nullable
   BashShellParameterExpansion getShellParameterExpansion();

@@ -11,9 +11,6 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
   BashArithmeticExpansion getArithmeticExpansion();
 
   @Nullable
-  BashAssignmentWordRule getAssignmentWordRule();
-
-  @Nullable
   BashBashExpansion getBashExpansion();
 
   @Nullable

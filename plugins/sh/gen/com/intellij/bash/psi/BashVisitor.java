@@ -31,7 +31,7 @@ public class BashVisitor extends PsiElementVisitor {
   }
 
   public void visitAssignmentWordRule(@NotNull BashAssignmentWordRule o) {
-    visitCompositeElement(o);
+    visitSimpleCommand(o);
   }
 
   public void visitBashExpansion(@NotNull BashBashExpansion o) {

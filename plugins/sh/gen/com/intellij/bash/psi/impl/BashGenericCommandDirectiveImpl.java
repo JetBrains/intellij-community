@@ -33,12 +33,6 @@ public class BashGenericCommandDirectiveImpl extends BashSimpleCommandImpl imple
 
   @Override
   @Nullable
-  public BashAssignmentWordRule getAssignmentWordRule() {
-    return findChildByClass(BashAssignmentWordRule.class);
-  }
-
-  @Override
-  @Nullable
   public BashBashExpansion getBashExpansion() {
     return findChildByClass(BashBashExpansion.class);
   }

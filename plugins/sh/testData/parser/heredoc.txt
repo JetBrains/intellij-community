@@ -134,11 +134,10 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          ASSIGNMENT_WORD_RULE
-            PsiElement(assignment_word)('ACCOUNT')
-            PsiElement(=)('=')
-            PsiElement(int)('1000')
+        ASSIGNMENT_WORD_RULE
+          PsiElement(assignment_word)('ACCOUNT')
+          PsiElement(=)('=')
+          PsiElement(int)('1000')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST

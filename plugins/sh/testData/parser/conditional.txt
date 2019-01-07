@@ -382,18 +382,17 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  GENERIC_COMMAND_DIRECTIVE
-                    ASSIGNMENT_WORD_RULE
-                      PsiElement(assignment_word)('SERVER_URL')
-                      PsiElement(=)('=')
-                      STRING
-                        PsiElement(string_begin)('"')
-                        PsiElement($)('$')
-                        SHELL_PARAMETER_EXPANSION
-                          PsiElement({)('{')
-                          PsiElement(word)('TEAMCITY_SERVER')
-                          PsiElement(})('}')
-                        PsiElement(string_end)('"')
+                  ASSIGNMENT_WORD_RULE
+                    PsiElement(assignment_word)('SERVER_URL')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(string_begin)('"')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('TEAMCITY_SERVER')
+                        PsiElement(})('}')
+                      PsiElement(string_end)('"')
               PsiElement(\n)('\n')
           ELSE_CLAUSE
             PsiElement(else)('else')
@@ -403,10 +402,9 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  GENERIC_COMMAND_DIRECTIVE
-                    ASSIGNMENT_WORD_RULE
-                      PsiElement(assignment_word)('SERVER_URL')
-                      PsiElement(=)('=')
+                  ASSIGNMENT_WORD_RULE
+                    PsiElement(assignment_word)('SERVER_URL')
+                    PsiElement(=)('=')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
   PsiElement(\n)('\n')
@@ -520,10 +518,9 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  GENERIC_COMMAND_DIRECTIVE
-                    ASSIGNMENT_WORD_RULE
-                      PsiElement(assignment_word)('SERVER_URL')
-                      PsiElement(=)('=')
+                  ASSIGNMENT_WORD_RULE
+                    PsiElement(assignment_word)('SERVER_URL')
+                    PsiElement(=)('=')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
   PsiElement(\n)('\n')

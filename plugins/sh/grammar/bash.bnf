@@ -167,7 +167,7 @@ heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? pipeline] newlines
             (HEREDOC_MARKER_END  | HEREDOC_MARKER_IGNORING_TABS_END | <<eof>>)
 arithmetic_expansion ::= '((' expression '))' {pin=1}
 old_arithmetic_expansion ::= ARITH_SQUARE_LEFT expression ARITH_SQUARE_RIGHT {pin=1 extends=arithmetic_expansion}
-assignment_word_rule ::= (assignment_word | word | variable) '=' [literal | composed_var | assignment_list] {pin=2}
+assignment_word_rule ::= (assignment_word | word | variable) '=' [literal | composed_var | assignment_list] {pin=2 extends=simple_command}
 
 redirection_list ::= redirection redirection*
 simple_command ::= generic_command_directive (simple_command_element | <<keywordsRemapped>>)* {

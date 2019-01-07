@@ -11,9 +11,6 @@ public interface BashGenericCommandDirective extends BashSimpleCommand {
   BashArithmeticExpansion getArithmeticExpansion();
 
   @Nullable
-  BashAssignmentWordRule getAssignmentWordRule();
-
-  @Nullable
   BashBashExpansion getBashExpansion();
 
   @Nullable

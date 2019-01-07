@@ -356,10 +356,9 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  GENERIC_COMMAND_DIRECTIVE
-                    ASSIGNMENT_WORD_RULE
-                      PsiElement(assignment_word)('SERVER_URL')
-                      PsiElement(=)('=')
+                  ASSIGNMENT_WORD_RULE
+                    PsiElement(assignment_word)('SERVER_URL')
+                    PsiElement(=)('=')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
   PsiElement(\n)('\n')

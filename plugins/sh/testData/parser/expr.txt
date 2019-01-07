@@ -29,42 +29,39 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          ASSIGNMENT_WORD_RULE
-            PsiElement(assignment_word)('x')
-            PsiElement(=)('=')
-            PsiElement(int)('5')
+        ASSIGNMENT_WORD_RULE
+          PsiElement(assignment_word)('x')
+          PsiElement(=)('=')
+          PsiElement(int)('5')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          ASSIGNMENT_WORD_RULE
-            PsiElement(assignment_word)('y')
-            PsiElement(=)('=')
-            PsiElement(int)('10')
+        ASSIGNMENT_WORD_RULE
+          PsiElement(assignment_word)('y')
+          PsiElement(=)('=')
+          PsiElement(int)('10')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          ASSIGNMENT_WORD_RULE
-            PsiElement(assignment_word)('ans')
-            PsiElement(=)('=')
-            PsiElement($)('$')
-            ARITHMETIC_EXPANSION
-              PsiElement((()('((')
+        ASSIGNMENT_WORD_RULE
+          PsiElement(assignment_word)('ans')
+          PsiElement(=)('=')
+          PsiElement($)('$')
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            PsiWhiteSpace(' ')
+            ADD_EXPRESSION
+              LITERAL_EXPRESSION
+                PsiElement(word)('x')
               PsiWhiteSpace(' ')
-              ADD_EXPRESSION
-                LITERAL_EXPRESSION
-                  PsiElement(word)('x')
-                PsiWhiteSpace(' ')
-                PsiElement(+)('+')
-                PsiWhiteSpace(' ')
-                LITERAL_EXPRESSION
-                  PsiElement(word)('y')
+              PsiElement(+)('+')
               PsiWhiteSpace(' ')
-              PsiElement()))('))')
+              LITERAL_EXPRESSION
+                PsiElement(word)('y')
+            PsiWhiteSpace(' ')
+            PsiElement()))('))')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -117,26 +114,24 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          ASSIGNMENT_WORD_RULE
-            PsiElement(assignment_word)('v')
-            PsiElement(=)('=')
-            PsiElement($)('$')
-            ARITHMETIC_EXPANSION
-              PsiElement((()('((')
-              LITERAL_EXPRESSION
-                PsiElement(number)('1')
-              PsiElement()))('))')
+        ASSIGNMENT_WORD_RULE
+          PsiElement(assignment_word)('v')
+          PsiElement(=)('=')
+          PsiElement($)('$')
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            LITERAL_EXPRESSION
+              PsiElement(number)('1')
+            PsiElement()))('))')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          ASSIGNMENT_WORD_RULE
-            PsiElement(assignment_word)('name')
-            PsiElement(=)('=')
-            PsiElement(word)('[value]')
+        ASSIGNMENT_WORD_RULE
+          PsiElement(assignment_word)('name')
+          PsiElement(=)('=')
+          PsiElement(word)('[value]')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST

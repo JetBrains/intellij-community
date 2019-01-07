@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl implements BashAssignmentWordRule {
+public class BashAssignmentWordRuleImpl extends BashSimpleCommandImpl implements BashAssignmentWordRule {
 
   public BashAssignmentWordRuleImpl(ASTNode node) {
     super(node);
@@ -41,12 +41,6 @@ public class BashAssignmentWordRuleImpl extends BashCompositeElementImpl impleme
   @Nullable
   public BashBashExpansion getBashExpansion() {
     return findChildByClass(BashBashExpansion.class);
-  }
-
-  @Override
-  @Nullable
-  public BashCommand getCommand() {
-    return findChildByClass(BashCommand.class);
   }
 
   @Override
