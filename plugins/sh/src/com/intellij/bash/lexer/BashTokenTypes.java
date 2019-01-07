@@ -39,7 +39,7 @@ public interface BashTokenTypes extends BashTypes {
       TIME
   );
 
-  TokenSet keywords = TokenSet.andSet(HUMAN_READABLE_KEYWORDS, TokenSet.create(
+  TokenSet keywords = TokenSet.orSet(HUMAN_READABLE_KEYWORDS, TokenSet.create(
       BANG,
       LEFT_DOUBLE_BRACKET, RIGHT_DOUBLE_BRACKET,
       CASE_END,
