@@ -61,7 +61,7 @@ public class PermanentInstallationID {
 
     // for Windows attempt to use PermanentUserId, so that DotNet products and IDEA would use the same ID.
     if (SystemInfo.isWindows) {
-      installationId = getIdSynchronizedWithDotNetProducts(prefs, "PermanentUserId", installationId);
+      installationId = syncWithSharedFile("PermanentUserId", installationId, prefs, INSTALLATION_ID_KEY);
     }
 
     // make sure values in older location and in the new location are the same
@@ -73,31 +73,34 @@ public class PermanentInstallationID {
   }
 
   @NotNull
-  public static String getIdSynchronizedWithDotNetProducts(@NotNull Preferences prefs, @NotNull String idFileName, @NotNull String id) {
+  public static String syncWithSharedFile(@NotNull String fileName,
+                                          @NotNull String data,
+                                          @NotNull Preferences prefs,
+                                          @NotNull String prefsKey) {
     final String appdata = System.getenv("APPDATA");
     if (appdata != null) {
       final File dir = new File(appdata, "JetBrains");
       if (dir.exists() || dir.mkdirs()) {
-        final File permanentIdFile = new File(dir, idFileName);
+        final File file = new File(dir, fileName);
         try {
           String fromFile = "";
-          if (permanentIdFile.exists()) {
-            fromFile = loadFromFile(permanentIdFile).trim();
+          if (file.exists()) {
+            fromFile = loadFromFile(file).trim();
           }
           if (!fromFile.isEmpty()) {
-            if (!fromFile.equals(id)) {
-              id = fromFile;
-              prefs.put(INSTALLATION_ID_KEY, id);
+            if (!fromFile.equals(data)) {
+              data = fromFile;
+              prefs.put(prefsKey, data);
             }
           }
           else {
-            writeToFile(permanentIdFile, id);
+            writeToFile(file, data);
           }
         }
         catch (IOException ignored) { }
       }
     }
-    return id;
+    return data;
   }
 
   @NotNull
