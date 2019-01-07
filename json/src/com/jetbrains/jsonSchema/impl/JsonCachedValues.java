@@ -12,6 +12,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -58,8 +60,7 @@ public class JsonCachedValues {
     }
 
     PsiFile psiFile = resolveFile(file, project);
-    return !(psiFile instanceof JsonFile) ? null : CachedValueProviderOnPsiFile
-      .getOrCompute(psiFile, JsonCachedValues::fetchSchemaUrl, SCHEMA_URL_KEY);
+    return !(psiFile instanceof JsonFile) ? null : getOrCompute(psiFile, JsonCachedValues::fetchSchemaUrl, SCHEMA_URL_KEY);
   }
 
   private static PsiFile resolveFile(@NotNull VirtualFile file,
@@ -98,18 +99,18 @@ public class JsonCachedValues {
                                       @NotNull Key<CachedValue<T>> cacheKey) {
     final PsiFile psiFile = resolveFile(schemaFile, project);
     if (!(psiFile instanceof JsonFile)) return null;
-    return CachedValueProviderOnPsiFile.getOrCompute(psiFile, eval, cacheKey);
+    return getOrCompute(psiFile, eval, cacheKey);
   }
 
   static final String ID_PATHS_CACHE_KEY = "JsonSchemaIdToPointerCache";
   private static final Key<CachedValue<Map<String, String>>> SCHEMA_ID_PATHS_CACHE_KEY = Key.create(ID_PATHS_CACHE_KEY);
   public static Collection<String> getAllIdsInFile(PsiFile psiFile) {
-    final Map<String, String> map = CachedValueProviderOnPsiFile.getOrCompute(psiFile, JsonCachedValues::computeIdsMap, SCHEMA_ID_PATHS_CACHE_KEY);
+    Map<String, String> map = getOrCompute(psiFile, JsonCachedValues::computeIdsMap, SCHEMA_ID_PATHS_CACHE_KEY);
     return map == null ? ContainerUtil.emptyList() : map.keySet();
   }
   @Nullable
   public static String resolveId(PsiFile psiFile, String id) {
-    final Map<String, String> map = CachedValueProviderOnPsiFile.getOrCompute(psiFile, JsonCachedValues::computeIdsMap, SCHEMA_ID_PATHS_CACHE_KEY);
+    Map<String, String> map = getOrCompute(psiFile, JsonCachedValues::computeIdsMap, SCHEMA_ID_PATHS_CACHE_KEY);
     return map == null ? null : map.get(id);
   }
 
@@ -198,5 +199,12 @@ public class JsonCachedValues {
     }
 
     return ContainerUtil.emptyList();
+  }
+
+  @Nullable
+  private static <T> T getOrCompute(@NotNull PsiFile psiFile,
+                                    @NotNull Function<? super PsiFile, ? extends T> eval,
+                                    @NotNull Key<CachedValue<T>> key) {
+    return CachedValuesManager.getCachedValue(psiFile, key, () -> CachedValueProvider.Result.create(eval.fun(psiFile), psiFile));
   }
 }
