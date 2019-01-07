@@ -112,7 +112,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                   for (int i = 0; i < derived.length && !found[0]; i++) {
                     if (scope == null || !scope.contains(derived[i])) {
                       final PsiParameter[] parameters = derived[i].getParameterList().getParameters();
-                      if (parameters.length < idx) continue;
+                      if (idx >= parameters.length) continue;
                       PsiParameter psiParameter = parameters[idx];
                       ReferencesSearch.search(psiParameter, helper.getUseScope(psiParameter), false)
                                       .forEach(new PsiReferenceProcessorAdapter(
