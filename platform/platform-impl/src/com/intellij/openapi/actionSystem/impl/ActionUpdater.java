@@ -196,29 +196,7 @@ class ActionUpdater {
     }
 
     List<AnAction> children = getGroupChildren(group, strategy);
-    List<List<AnAction>> expansions = ContainerUtil.map(children, child -> expandIfCheap(child, hideDisabled, strategy));
-    expandMoreExpensiveActions(children, expansions, hideDisabled, strategy);
-    return ContainerUtil.concat(expansions);
-  }
-
-  /**
-   * We try to update as many actions as possible first and cache their presentation so that even if we're interrupted by timeout,
-   * we show them all correctly
-   */
-  @Nullable
-  private List<AnAction> expandIfCheap(AnAction action, boolean hideDisabled, UpdateStrategy strategy) {
-    return strategy == myCheapStrategy ? null : ProgressIndicatorUtils.withTimeout(1, () -> expandGroupChild(action, hideDisabled, strategy));
-  }
-
-  private void expandMoreExpensiveActions(List<AnAction> children,
-                                          List<List<AnAction>> expansions,
-                                          boolean hideDisabled,
-                                          UpdateStrategy strategy) {
-    for (int i = 0; i < children.size(); i++) {
-      if (expansions.get(i) == null) {
-        expansions.set(i, expandGroupChild(children.get(i), hideDisabled, strategy));
-      }
-    }
+    return ContainerUtil.concat(children, child -> expandGroupChild(child, hideDisabled, strategy));
   }
 
   private List<AnAction> getGroupChildren(ActionGroup group, UpdateStrategy strategy) {
