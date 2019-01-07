@@ -43,8 +43,8 @@ public class BashCompletionContributor extends CompletionContributor implements 
     GeneratedParserUtilBase.CompletionState state = new GeneratedParserUtilBase.CompletionState(completionOffset) {
       @Override
       public String convertItem(Object o) {
-        if (o instanceof IElementType && BashLexer.keywords.contains((IElementType) o)) return o.toString();
-        return o instanceof String ? (String) o : null;
+        if (o instanceof IElementType && BashLexer.HUMAN_READABLE_KEYWORDS.contains((IElementType) o)) return o.toString();
+        return null;
       }
     };
     file.putUserData(GeneratedParserUtilBase.COMPLETION_STATE_KEY, state);

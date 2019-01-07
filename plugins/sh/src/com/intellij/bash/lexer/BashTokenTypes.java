@@ -32,12 +32,20 @@ public interface BashTokenTypes extends BashTypes {
 
   //conditional expressions
 
-  TokenSet keywords = TokenSet.create(BANG, CASE, DO, DONE,
+  TokenSet HUMAN_READABLE_KEYWORDS = TokenSet.create(
+      CASE, DO, DONE,
       ELIF, ELSE, ESAC, FI, FOR, FUNCTION,
       IF, IN, SELECT, THEN, UNTIL, WHILE,
-      TIME, LEFT_DOUBLE_BRACKET, RIGHT_DOUBLE_BRACKET,
-      CASE_END, DOLLAR,
-      LEFT_DOUBLE_PAREN, RIGHT_DOUBLE_PAREN, EXPR_CONDITIONAL_LEFT, EXPR_CONDITIONAL_RIGHT);
+      TIME
+  );
+
+  TokenSet keywords = TokenSet.andSet(HUMAN_READABLE_KEYWORDS, TokenSet.create(
+      BANG,
+      LEFT_DOUBLE_BRACKET, RIGHT_DOUBLE_BRACKET,
+      CASE_END,
+      DOLLAR,
+      LEFT_DOUBLE_PAREN, RIGHT_DOUBLE_PAREN, EXPR_CONDITIONAL_LEFT, EXPR_CONDITIONAL_RIGHT
+  ));
 
   TokenSet internalCommands = TokenSet.create(TRAP, LET);
 
