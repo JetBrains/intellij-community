@@ -29,6 +29,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -125,8 +126,9 @@ public class ExpectedTypesProvider {
                                                     final boolean voidable, boolean usedAfter) {
     if (expr == null) return ExpectedTypeInfo.EMPTY_ARRAY;
     PsiElement parent = expr.getParent();
-    if (expr instanceof PsiFunctionalExpression && parent instanceof PsiExpressionStatement && !(parent.getParent() instanceof PsiSwitchLabeledRuleStatement)) {
-      final Collection<? extends PsiType> types = FunctionalInterfaceSuggester.suggestFunctionalInterfaces((PsiFunctionalExpression)expr);
+    PsiFunctionalExpression functionalExpression = extractFunctionalExpression(expr);
+    if (functionalExpression != null) {
+      final Collection<? extends PsiType> types = FunctionalInterfaceSuggester.suggestFunctionalInterfaces(functionalExpression);
       if (types.isEmpty()) {
         return ExpectedTypeInfo.EMPTY_ARRAY;
       }
@@ -146,6 +148,20 @@ public class ExpectedTypesProvider {
     return visitor.getResult();
   }
 
+  private static PsiFunctionalExpression extractFunctionalExpression(PsiExpression expr) {
+    PsiElement parent = expr.getParent();
+    if (expr instanceof PsiFunctionalExpression && parent instanceof PsiExpressionStatement && !(parent.getParent() instanceof PsiSwitchLabeledRuleStatement)) {
+      return (PsiFunctionalExpression)expr;
+    }
+    parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class);
+    if (parent instanceof PsiAssignmentExpression &&
+        parent.getParent() instanceof PsiExpressionStatement &&
+        PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getLExpression(), expr, false)) {
+      return ObjectUtils.tryCast(((PsiAssignmentExpression)parent).getRExpression(), PsiFunctionalExpression.class);
+    }
+    return null;
+  }
+  
   @NotNull
   public static PsiType[] processExpectedTypes(@NotNull ExpectedTypeInfo[] infos,
                                                @NotNull PsiTypeVisitor<? extends PsiType> visitor, @NotNull Project project) {
