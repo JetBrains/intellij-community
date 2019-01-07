@@ -8,17 +8,21 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Methods in this class are used to equip long background processes which take read actions with a special listener
+ * Most methods in this class are used to equip long background processes which take read actions with a special listener
  * that fires when a write action is about to begin, and cancels corresponding progress indicators to avoid blocking the UI.
  * These processes should be ready to get {@link ProcessCanceledException} at any moment.
  * Processes may want to react on cancellation event by restarting the activity, see
@@ -239,5 +243,21 @@ public class ProgressIndicatorUtils {
       throw new IllegalStateException("Mustn't be called from EDT");
     }
     application.invokeAndWait(EmptyRunnable.INSTANCE, ModalityState.any());
+  }
+
+  @Nullable
+  public static <T> T withTimeout(long timeoutMs, Computable<T> computable) {
+    ProgressManager.checkCanceled();
+    ProgressIndicatorBase progress = new ProgressIndicatorBase();
+    ScheduledFuture<?> cancelProgress = AppExecutorUtil.getAppScheduledExecutorService().schedule(progress::cancel, timeoutMs, TimeUnit.MILLISECONDS);
+    try {
+      return ProgressManager.getInstance().runProcess(computable, progress);
+    }
+    catch (ProcessCanceledException e) {
+      return null;
+    }
+    finally {
+      cancelProgress.cancel(false);
+    }
   }
 }
