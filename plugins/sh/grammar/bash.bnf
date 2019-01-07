@@ -61,8 +61,6 @@
 
     ARITH_LE = '<='
     ARITH_GE = '>='
-    ARITH_GT = 'arith >'
-    ARITH_LT = 'arith <'
     ARITH_PLUS_PLUS = "++"
     ARITH_PLUS = "+"
     ARITH_MINUS_MINUS = "--"
@@ -177,7 +175,7 @@ simple_command ::= generic_command (simple_command_element | <<keywordsRemapped>
 generic_command ::= simple_command_element_inner {extends=simple_command}
 command ::= shell_command redirection_list? | simple_command {recoverWhile=command_recover}
 
-private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_GT | ARITH_LT | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | STRING2 | assignment_word | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
+private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | STRING2 | assignment_word | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
 
 shell_command ::=   for_command
                   | case_command
@@ -293,7 +291,7 @@ bitwise_or_expression ::= expression '|' expression
 bitwise_exclusive_or_expression ::= expression '^' expression
 bitwise_and_expression ::= expression '&' expression
 equality_expression ::= expression ('==' | '!=') expression
-comparison_expression ::= expression ('<=' | '>=' | ARITH_LT | ARITH_GT) expression
+comparison_expression ::= expression ('<=' | '>=' | '<' | '>') expression
 bitwise_shift_expression ::= expression ('<<' | '>>') expression
 add_expression ::= expression ('+' | '-') expression
 mul_expression ::= expression ('*' | '/' | '%') expression

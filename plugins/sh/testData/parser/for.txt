@@ -164,7 +164,7 @@ BASH_FILE
               VARIABLE
                 PsiElement(var)('$val')
             PsiWhiteSpace(' ')
-            PsiElement(arith <)('<')
+            PsiElement(<)('<')
             PsiWhiteSpace(' ')
             LITERAL_EXPRESSION
               VARIABLE

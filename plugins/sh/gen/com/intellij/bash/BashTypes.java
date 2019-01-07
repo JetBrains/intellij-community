@@ -81,9 +81,7 @@ public interface BashTypes {
   IElementType AMP = new BashTokenType("&");
   IElementType AND_AND = new BashTokenType("&&");
   IElementType ARITH_GE = new BashTokenType(">=");
-  IElementType ARITH_GT = new BashTokenType("arith >");
   IElementType ARITH_LE = new BashTokenType("<=");
-  IElementType ARITH_LT = new BashTokenType("arith <");
   IElementType ARITH_MINUS = new BashTokenType("-");
   IElementType ARITH_MINUS_MINUS = new BashTokenType("--");
   IElementType ARITH_PLUS = new BashTokenType("+");

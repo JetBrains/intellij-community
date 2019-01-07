@@ -427,7 +427,7 @@ BASH_FILE
                 LITERAL_EXPRESSION
                   PsiElement(number)('1')
                 PsiWhiteSpace(' ')
-                PsiElement(arith <)('<')
+                PsiElement(<)('<')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
                   PsiElement(number)('1')
@@ -449,7 +449,7 @@ BASH_FILE
                 LITERAL_EXPRESSION
                   PsiElement(number)('1')
                 PsiWhiteSpace(' ')
-                PsiElement(arith >)('>')
+                PsiElement(>)('>')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
                   PsiElement(number)('1')
@@ -621,7 +621,7 @@ BASH_FILE
                 LITERAL_EXPRESSION
                   PsiElement(number)('1')
                 PsiWhiteSpace(' ')
-                PsiElement(arith <)('<')
+                PsiElement(<)('<')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
                   PsiElement(number)('1')
@@ -644,7 +644,7 @@ BASH_FILE
                 LITERAL_EXPRESSION
                   PsiElement(number)('1')
                 PsiWhiteSpace(' ')
-                PsiElement(arith <)('<')
+                PsiElement(<)('<')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
                   PsiElement(number)('1')

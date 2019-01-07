@@ -70,8 +70,7 @@ public interface BashTokenTypes extends BashTypes {
   TokenSet arithmeticProduct = TokenSet.create(MULT, DIV, MOD);
 
   //arithmetic operators: comparision
-
-  TokenSet arithmeticCmpOp = TokenSet.create(ARITH_LE, ARITH_GE, ARITH_LT, ARITH_GT);
+  TokenSet arithmeticCmpOp = TokenSet.create(ARITH_LE, ARITH_GE, LESS_THAN, GREATER_THAN);
 
   IElementType ARITH_EQ = new BashTokenType("arith ==");//==
   IElementType ARITH_NE = new BashTokenType("!=");//!=

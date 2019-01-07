@@ -476,8 +476,8 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
   {OctalIntegerLiteral}         { return OCTAL; }
   {IntegerLiteral}              { return NUMBER; }
 
-  ">"                           { return ARITH_GT; }
-  "<"                           { return ARITH_LT; }
+  ">"                           { return GREATER_THAN; }
+  "<"                           { return LESS_THAN; }
   ">="                          { return ARITH_GE; }
   "<="                          { return ARITH_LE; }
   "!="                          { return ARITH_NE; }
