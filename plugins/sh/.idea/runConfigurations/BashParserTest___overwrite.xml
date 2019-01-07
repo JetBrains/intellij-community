@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="BashParserTest / overwrite" type="JUnit" factoryName="JUnit">
+    <module name="intellij-bash.test" />
+    <option name="PACKAGE_NAME" value="com.intellij.bash.parser" />
+    <option name="MAIN_CLASS_NAME" value="com.intellij.bash.parser.BashParserTest" />
+    <option name="METHOD_NAME" value="" />
+    <option name="TEST_OBJECT" value="class" />
+    <option name="VM_PARAMETERS" value="-ea -Didea.tests.overwrite.data=true" />
+    <option name="PARAMETERS" value="" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
