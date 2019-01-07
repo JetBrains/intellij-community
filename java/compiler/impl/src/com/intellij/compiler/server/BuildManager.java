@@ -1960,6 +1960,7 @@ public class BuildManager implements Disposable {
     @Override
     public void cancel(RequestFuture<T> future) {
       myMessageDispatcher.cancelSession(future.getRequestID());
+      notifySessionTerminationIfNeeded(future.getRequestID(), null);
     }
   }
 }
