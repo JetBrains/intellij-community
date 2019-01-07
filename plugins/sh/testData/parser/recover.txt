@@ -63,7 +63,7 @@ BASH_FILE
           PsiElement(>)('>')
           PsiWhiteSpace(' ')
           PsiWhiteSpace(' ')
-          PsiErrorElement:'!', $, <string>, '@', FILEDESCRIPTOR, '`', hex, int, number, octal, var, word or '{' expected, got '>'
+          PsiErrorElement:'!', $, <string>, '@', '`', file descriptor, hex, int, number, octal, var, word or '{' expected, got '>'
             PsiElement(>)('>')
   COMMANDS_LIST
     PIPELINE_COMMAND

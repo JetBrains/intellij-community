@@ -74,6 +74,8 @@
     REDIRECT_GREATER_AMP = ">&"
     REDIRECT_LESS_GREATER = "<>"
     REDIRECT_GREATER_BAR = ">|"
+
+    FILEDESCRIPTOR='file descriptor'
   ]
 
   pin('.*list(?:_\d.*)?')=1
@@ -91,7 +93,7 @@ private file ::=
 private newlines ::= '\n'*
 private simple_list ::= (commands_list ['&' | ';' | newlines])*
 private word_list ::= w+
-private w ::= word | '@' | '!' | vars | string | num | bash_expansion | FILEDESCRIPTOR
+private w ::= word | '@' | '!' | vars | string | num | bash_expansion | 'file descriptor'
 
 redirection ::=    '>' w
                 |  '<' w

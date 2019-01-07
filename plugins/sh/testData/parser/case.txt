@@ -572,7 +572,7 @@ BASH_FILE
                               SIMPLE_COMMAND_ELEMENT
                                 REDIRECTION
                                   PsiElement(>)('>')
-                                  PsiElement(FILEDESCRIPTOR)('&2')
+                                  PsiElement(file descriptor)('&2')
                         PsiElement(;)(';')
                         PsiWhiteSpace(' ')
                         PIPELINE_COMMAND

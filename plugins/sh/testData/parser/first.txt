@@ -435,7 +435,7 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
               PsiElement(<)('<')
-              PsiElement(FILEDESCRIPTOR)('&0')
+              PsiElement(file descriptor)('&0')
   PsiElement(\n)('\n')
   PsiComment(Comment)('# stdin replaced with a file supplied as a first argument')
   PsiElement(\n)('\n')

@@ -194,7 +194,7 @@ BASH_FILE
                         SIMPLE_COMMAND_ELEMENT
                           REDIRECTION
                             PsiElement(>)('>')
-                            PsiElement(FILEDESCRIPTOR)('&1')
+                            PsiElement(file descriptor)('&1')
                         SIMPLE_COMMAND_ELEMENT
                           REDIRECTION
                             PsiElement(>)('>')

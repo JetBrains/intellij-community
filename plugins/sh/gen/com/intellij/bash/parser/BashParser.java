@@ -2526,7 +2526,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | '@' | '!' | vars | string | num | bash_expansion | FILEDESCRIPTOR
+  // word | '@' | '!' | vars | string | num | bash_expansion | 'file descriptor'
   static boolean w(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "w")) return false;
     boolean r;
