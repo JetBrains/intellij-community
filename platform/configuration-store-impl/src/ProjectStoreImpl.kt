@@ -322,7 +322,7 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
     }
   }
 
-  final override fun beforeSaveComponents(errors: MutableList<Throwable>) {
+  override fun beforeSaveComponents(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>) {
     try {
       saveProjectName()
     }
@@ -330,12 +330,10 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
       LOG.error("Unable to store project name", e)
     }
 
-    super.beforeSaveComponents(errors)
+    super.beforeSaveComponents(errors, readonlyFiles)
   }
 
   override fun doSave(saveSession: SaveExecutor, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
-    beforeSave(readonlyFiles)
-
     super.doSave(saveSession, readonlyFiles, errors)
 
     val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
@@ -369,9 +367,6 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
       throw IComponentStore.SaveCancelledException()
     }
   }
-
-  protected open fun beforeSave(readonlyFiles: MutableList<SaveSessionAndFile>) {
-  }
 }
 
 private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles: List<VirtualFile>) {
@@ -387,8 +382,8 @@ private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles:
 private fun getFilesList(readonlyFiles: List<SaveSessionAndFile>) = readonlyFiles.mapSmart { it.file }
 
 private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
-  override fun beforeSave(readonlyFiles: MutableList<SaveSessionAndFile>) {
-    super.beforeSave(readonlyFiles)
+  override fun beforeSaveComponents(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>) {
+    super.beforeSaveComponents(errors, readonlyFiles)
 
     for (module in (ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY)) {
       module.stateStore.save(readonlyFiles)

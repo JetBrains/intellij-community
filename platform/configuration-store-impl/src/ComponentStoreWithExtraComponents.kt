@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.openapi.components.SettingsSavingComponent
+import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.project.isDirectoryBased
 
@@ -17,7 +18,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     super.initComponent(component, isService)
   }
 
-  override fun beforeSaveComponents(errors: MutableList<Throwable>) {
+  override fun beforeSaveComponents(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>) {
     // component state uses scheme manager in an ipr project, so, we must save it before
     val isIprProject = project?.let { !it.isDirectoryBased } ?: false
     if (isIprProject) {

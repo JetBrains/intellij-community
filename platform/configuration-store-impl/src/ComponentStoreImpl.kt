@@ -134,7 +134,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   final override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
     val errors: MutableList<Throwable> = SmartList<Throwable>()
 
-    beforeSaveComponents(errors)
+    beforeSaveComponents(errors, readonlyFiles)
 
     val saveSessionProducerManager = if (components.isEmpty()) null else SaveSessionProducerManager()
     if (saveSessionProducerManager != null) {
@@ -155,7 +155,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 
-  protected open fun beforeSaveComponents(errors: MutableList<Throwable>) {
+  protected open fun beforeSaveComponents(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>) {
   }
 
   protected open fun afterSaveComponents(errors: MutableList<Throwable>, isForce: Boolean) {
