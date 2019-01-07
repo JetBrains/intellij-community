@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint
 
 import com.intellij.openapi.actionSystem.DataContext
@@ -19,7 +19,7 @@ interface ImplementationViewSession {
   val text: String?
   val editor: Editor?
 
-  fun createSessionForLookupElement(lookupItemObject: Any?, isSearchDeep: Boolean): PsiImplementationViewSession?
+  fun createSessionForLookupElement(lookupItemObject: Any?, isSearchDeep: Boolean): ImplementationViewSession?
 
   fun searchImplementationsInBackground(indicator: ProgressIndicator,
                                         isSearchDeep: Boolean,
