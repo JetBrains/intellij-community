@@ -201,10 +201,8 @@ private arithmetic_for ::= '((' expression? ';' expression? ';' expression? '))'
 private in_clause ::= "in" word_list list_terminator newlines {pin=1}
 
 private any_block ::= block | do_block
-do_block ::= do  compound_list done {pin(".*")=1 extends=block /*recoverWhile=do_block_recover*/}
+do_block ::= do  compound_list done {pin(".*")=1 extends=block}
 block    ::= '{' compound_list '}'  {pin(".*")=1 extends=command}
-
-private do_block_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>&' | '>' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '~' | assignment_word | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
 
 select_command ::= select w (';'? newlines any_block | newlines in_clause any_block)
 
