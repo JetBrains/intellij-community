@@ -476,10 +476,10 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
   {OctalIntegerLiteral}         { return OCTAL; }
   {IntegerLiteral}              { return NUMBER; }
 
-  ">"                           { return GREATER_THAN; }
-  "<"                           { return LESS_THAN; }
-  ">="                          { return ARITH_GE; }
-  "<="                          { return ARITH_LE; }
+  ">"                           { return GT; }
+  "<"                           { return LT; }
+  ">="                          { return GE; }
+  "<="                          { return LE; }
   "!="                          { return ARITH_NE; }
 
   "<<"                          { return SHIFT_LEFT; }
@@ -782,8 +782,8 @@ goToState(X_STRINGMODE); return STRING_BEGIN; }
         goToState(X_HEREDOC_MARKER);
         return HEREDOC_MARKER_TAG;
     }
-    ">"                           { return GREATER_THAN; }
-    "<"                           { return LESS_THAN; }
+    ">"                           { return GT; }
+    "<"                           { return LT; }
     ">>"                          { return SHIFT_RIGHT; }
 
     <X_STRINGMODE> {

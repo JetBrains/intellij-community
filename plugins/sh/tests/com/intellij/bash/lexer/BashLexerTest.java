@@ -158,15 +158,15 @@ public class BashLexerTest {
 
     testTokenization("$((a,2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, COMMA, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a>2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, GREATER_THAN, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((a>2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, GT, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a > 2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, WHITESPACE, GREATER_THAN, WHITESPACE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((a > 2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, WHITESPACE, GT, WHITESPACE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a>=2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, ARITH_GE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((a>=2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, GE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a<2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, LESS_THAN, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((a<2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, LT, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
-    testTokenization("$((a<=2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, ARITH_LE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((a<=2))", DOLLAR, LEFT_DOUBLE_PAREN, WORD, LE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
     testTokenization("$((1+-45))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_PLUS, ARITH_MINUS, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
@@ -176,7 +176,7 @@ public class BashLexerTest {
 
     testTokenization("$(((1 << 10)))", DOLLAR, LEFT_PAREN, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, WHITESPACE, SHIFT_LEFT, WHITESPACE, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN, RIGHT_PAREN);
 
-    testTokenization("$((1 < \"1\"))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, WHITESPACE, LESS_THAN, WHITESPACE, STRING_BEGIN, STRING_CONTENT, STRING_END, RIGHT_DOUBLE_PAREN);
+    testTokenization("$((1 < \"1\"))", DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, WHITESPACE, LT, WHITESPACE, STRING_BEGIN, STRING_CONTENT, STRING_END, RIGHT_DOUBLE_PAREN);
 
     testTokenization("$((((1))))", DOLLAR, LEFT_PAREN, LEFT_DOUBLE_PAREN, LEFT_PAREN, BashTokenTypes.NUMBER, RIGHT_PAREN, RIGHT_DOUBLE_PAREN, RIGHT_PAREN);
 
@@ -447,29 +447,29 @@ public class BashLexerTest {
 
   @Test
   public void testRedirect1() {
-    testTokenization(">&2", GREATER_THAN, FILEDESCRIPTOR);
-    testTokenization("<&1", LESS_THAN, FILEDESCRIPTOR);
+    testTokenization(">&2", GT, FILEDESCRIPTOR);
+    testTokenization("<&1", LT, FILEDESCRIPTOR);
     testTokenization("<<", HEREDOC_MARKER_TAG);
     testTokenization("<<<", REDIRECT_HERE_STRING);
     testTokenization("<<-", HEREDOC_MARKER_TAG);
     testTokenization("<>", REDIRECT_LESS_GREATER);
     testTokenization(">|", REDIRECT_GREATER_BAR);
-    testTokenization(">1", GREATER_THAN, INT);
-    testTokenization("> 1", GREATER_THAN, WHITESPACE, INT);
-    testTokenization(">&1", GREATER_THAN, FILEDESCRIPTOR);
+    testTokenization(">1", GT, INT);
+    testTokenization("> 1", GT, WHITESPACE, INT);
+    testTokenization(">&1", GT, FILEDESCRIPTOR);
 
-    testTokenization("<&-", LESS_THAN, FILEDESCRIPTOR);
-    testTokenization(">&-", GREATER_THAN, FILEDESCRIPTOR);
-    testTokenization("1>&-", INT, GREATER_THAN, FILEDESCRIPTOR);
-    testTokenization("1>&-", INT, GREATER_THAN, FILEDESCRIPTOR);
+    testTokenization("<&-", LT, FILEDESCRIPTOR);
+    testTokenization(">&-", GT, FILEDESCRIPTOR);
+    testTokenization("1>&-", INT, GT, FILEDESCRIPTOR);
+    testTokenization("1>&-", INT, GT, FILEDESCRIPTOR);
 
-    testTokenization("3>&9", INT, GREATER_THAN, FILEDESCRIPTOR);
-    testTokenization("3>&10", INT, GREATER_THAN, FILEDESCRIPTOR);
-    testTokenization("10>&10", INT, GREATER_THAN, FILEDESCRIPTOR);
+    testTokenization("3>&9", INT, GT, FILEDESCRIPTOR);
+    testTokenization("3>&10", INT, GT, FILEDESCRIPTOR);
+    testTokenization("10>&10", INT, GT, FILEDESCRIPTOR);
     testTokenization("10>&a123", INT, REDIRECT_GREATER_AMP, WORD);
     testTokenization("10>& a123", INT, REDIRECT_GREATER_AMP, WHITESPACE, WORD);
 
-    testTokenization("$(a >&1)", DOLLAR, LEFT_PAREN, WORD, WHITESPACE, GREATER_THAN, FILEDESCRIPTOR, RIGHT_PAREN);
+    testTokenization("$(a >&1)", DOLLAR, LEFT_PAREN, WORD, WHITESPACE, GT, FILEDESCRIPTOR, RIGHT_PAREN);
   }
 
   @Test
@@ -551,7 +551,7 @@ public class BashLexerTest {
 
   @Test
   public void testWeirdStuff1() {
-    testTokenization(": > a", WORD, WHITESPACE, GREATER_THAN, WHITESPACE, WORD);
+    testTokenization(": > a", WORD, WHITESPACE, GT, WHITESPACE, WORD);
     testTokenization("^", WORD);
     testTokenization("$!", VAR);
     testTokenization("!", BANG);
@@ -752,7 +752,7 @@ public class BashLexerTest {
 
     testTokenization("for ((a=1;a<2;a=a+1))",
         FOR, WHITESPACE, LEFT_DOUBLE_PAREN, ASSIGNMENT_WORD, EQ, BashTokenTypes.NUMBER, SEMI,
-        WORD, LESS_THAN, BashTokenTypes.NUMBER, SEMI, ASSIGNMENT_WORD, EQ, WORD, ARITH_PLUS, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
+        WORD, LT, BashTokenTypes.NUMBER, SEMI, ASSIGNMENT_WORD, EQ, WORD, ARITH_PLUS, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN);
 
     testTokenization("$(read -p \"a\")",
         DOLLAR, LEFT_PAREN, WORD, WHITESPACE, WORD, WHITESPACE, STRING_BEGIN, STRING_CONTENT,
@@ -767,7 +767,7 @@ public class BashLexerTest {
 
     //new &> redirect token
     testTokenization(BashVersion.V4, "a &> out", WORD, WHITESPACE, REDIRECT_AMP_GREATER, WHITESPACE, WORD);
-    testTokenization(BashVersion.V3, "a &> out", WORD, WHITESPACE, AMP, GREATER_THAN, WHITESPACE, WORD);
+    testTokenization(BashVersion.V3, "a &> out", WORD, WHITESPACE, AMP, GT, WHITESPACE, WORD);
 
     //new |& redirect token
     testTokenization(BashVersion.V4, "a |& b", WORD, WHITESPACE, PIPE_AMP, WHITESPACE, WORD);
@@ -792,7 +792,7 @@ public class BashLexerTest {
 
     //${a$(a > b)}
     testTokenization("${a$(a > b)}", DOLLAR, LEFT_CURLY, WORD,
-        DOLLAR, LEFT_PAREN, WORD, WHITESPACE, GREATER_THAN, WHITESPACE, WORD, RIGHT_PAREN, RIGHT_CURLY);
+        DOLLAR, LEFT_PAREN, WORD, WHITESPACE, GT, WHITESPACE, WORD, RIGHT_PAREN, RIGHT_CURLY);
 
     //DIR=${$(a $(b)/..)}
     testTokenization("DIR=${$(a $(b)/..)}", ASSIGNMENT_WORD, EQ, DOLLAR, LEFT_CURLY,
@@ -1254,8 +1254,8 @@ public class BashLexerTest {
 
   @Test
   public void testIssue376() {
-    testTokenization("$(echo 2>&1)", DOLLAR, LEFT_PAREN, WORD, WHITESPACE, INT, GREATER_THAN, FILEDESCRIPTOR, RIGHT_PAREN);
-    testTokenization("[[ $(echo 2>&1) ]]", LEFT_DOUBLE_BRACKET, DOLLAR, LEFT_PAREN, WORD, WHITESPACE, INT, GREATER_THAN, FILEDESCRIPTOR, RIGHT_PAREN, RIGHT_DOUBLE_BRACKET);
+    testTokenization("$(echo 2>&1)", DOLLAR, LEFT_PAREN, WORD, WHITESPACE, INT, GT, FILEDESCRIPTOR, RIGHT_PAREN);
+    testTokenization("[[ $(echo 2>&1) ]]", LEFT_DOUBLE_BRACKET, DOLLAR, LEFT_PAREN, WORD, WHITESPACE, INT, GT, FILEDESCRIPTOR, RIGHT_PAREN, RIGHT_DOUBLE_BRACKET);
   }
 
   @Test
@@ -1263,7 +1263,7 @@ public class BashLexerTest {
     //invalid command semantic, but lexing needs to work
     testTokenization("[ (echo a) ]", EXPR_CONDITIONAL_LEFT, LEFT_PAREN, WORD, WHITESPACE, WORD, RIGHT_PAREN, EXPR_CONDITIONAL_RIGHT);
 
-    testTokenization("[[ $(< $1) ]]", LEFT_DOUBLE_BRACKET, DOLLAR, LEFT_PAREN, LESS_THAN, WHITESPACE, VAR, RIGHT_PAREN, RIGHT_DOUBLE_BRACKET);
+    testTokenization("[[ $(< $1) ]]", LEFT_DOUBLE_BRACKET, DOLLAR, LEFT_PAREN, LT, WHITESPACE, VAR, RIGHT_PAREN, RIGHT_DOUBLE_BRACKET);
 
     testTokenization("[[ $((1+1)) ]]", LEFT_DOUBLE_BRACKET, DOLLAR, LEFT_DOUBLE_PAREN, BashTokenTypes.NUMBER, ARITH_PLUS, BashTokenTypes.NUMBER, RIGHT_DOUBLE_PAREN, RIGHT_DOUBLE_BRACKET);
   }
@@ -1327,9 +1327,9 @@ public class BashLexerTest {
     testTokenization("mysql <<<'abc';exit", WORD, WHITESPACE, REDIRECT_HERE_STRING, STRING2, SEMI, WORD);
 
     testTokenization("grep x <<< 'X' >/dev/null && echo 'Found' || echo 'Not found'",
-        WORD, WHITESPACE, WORD, WHITESPACE, REDIRECT_HERE_STRING, WHITESPACE, STRING2, WHITESPACE, GREATER_THAN, WORD, WHITESPACE, AND_AND, WHITESPACE, WORD, WHITESPACE, STRING2, WHITESPACE, OR_OR, WHITESPACE, WORD, WHITESPACE, STRING2);
+        WORD, WHITESPACE, WORD, WHITESPACE, REDIRECT_HERE_STRING, WHITESPACE, STRING2, WHITESPACE, GT, WORD, WHITESPACE, AND_AND, WHITESPACE, WORD, WHITESPACE, STRING2, WHITESPACE, OR_OR, WHITESPACE, WORD, WHITESPACE, STRING2);
     testTokenization("grep x <<<$var >/dev/null && echo 'Found' || echo 'Not found'",
-        WORD, WHITESPACE, WORD, WHITESPACE, REDIRECT_HERE_STRING, VAR, WHITESPACE, GREATER_THAN, WORD, WHITESPACE, AND_AND, WHITESPACE, WORD, WHITESPACE, STRING2, WHITESPACE, OR_OR, WHITESPACE, WORD, WHITESPACE, STRING2);
+        WORD, WHITESPACE, WORD, WHITESPACE, REDIRECT_HERE_STRING, VAR, WHITESPACE, GT, WORD, WHITESPACE, AND_AND, WHITESPACE, WORD, WHITESPACE, STRING2, WHITESPACE, OR_OR, WHITESPACE, WORD, WHITESPACE, STRING2);
 
     //invalid syntax
     testTokenization("a <<< (a)", WORD, WHITESPACE, REDIRECT_HERE_STRING, WHITESPACE, LEFT_PAREN, WORD, RIGHT_PAREN);
@@ -1342,7 +1342,7 @@ public class BashLexerTest {
     testTokenization("ανάπτυξη λογισμικού", WORD, WHITESPACE, WORD);
     testTokenization("פיתוח תוכנה", WORD, WHITESPACE, WORD);
 
-    testTokenization("разработка программного обеспечения 2>&1", WORD, WHITESPACE, WORD, WHITESPACE, WORD, WHITESPACE, INT, GREATER_THAN, FILEDESCRIPTOR);
+    testTokenization("разработка программного обеспечения 2>&1", WORD, WHITESPACE, WORD, WHITESPACE, WORD, WHITESPACE, INT, GT, FILEDESCRIPTOR);
 
     testTokenization("α=1", ASSIGNMENT_WORD, EQ, INT);
     testTokenization("export α=1", WORD, WHITESPACE, ASSIGNMENT_WORD, EQ, INT);
@@ -1441,7 +1441,7 @@ public class BashLexerTest {
   @Test
   public void testIssue401() {
     //less-than should be replaced with a better token in the lexer
-    testTokenization("\"${A%<}\"", STRING_BEGIN, DOLLAR, LEFT_CURLY, WORD, PARAM_EXPANSION_OP_PERCENT, LESS_THAN, RIGHT_CURLY, STRING_END);
+    testTokenization("\"${A%<}\"", STRING_BEGIN, DOLLAR, LEFT_CURLY, WORD, PARAM_EXPANSION_OP_PERCENT, LT, RIGHT_CURLY, STRING_END);
   }
 
   @Test
@@ -1490,13 +1490,13 @@ public class BashLexerTest {
   @Test
   public void testIssue505() {
     testTokenization("x<<<${2}", WORD, REDIRECT_HERE_STRING, DOLLAR, LEFT_CURLY, WORD, RIGHT_CURLY);
-    testTokenization("x<<<${2}>/dev/null", WORD, REDIRECT_HERE_STRING, DOLLAR, LEFT_CURLY, WORD, RIGHT_CURLY, GREATER_THAN, WORD);
+    testTokenization("x<<<${2}>/dev/null", WORD, REDIRECT_HERE_STRING, DOLLAR, LEFT_CURLY, WORD, RIGHT_CURLY, GT, WORD);
 
     testTokenization("foo() {\nif ! grep $1 <<< ${2} > /dev/null; then echo Boom; fi\n}",
         WORD, LEFT_PAREN, RIGHT_PAREN, WHITESPACE, LEFT_CURLY,
         BashTokenTypes.LINEFEED, IF, WHITESPACE, BANG, WHITESPACE, WORD, WHITESPACE, VAR, WHITESPACE,
         REDIRECT_HERE_STRING, WHITESPACE, DOLLAR, LEFT_CURLY, WORD, RIGHT_CURLY, WHITESPACE,
-        GREATER_THAN, WHITESPACE, WORD, SEMI, WHITESPACE,
+        GT, WHITESPACE, WORD, SEMI, WHITESPACE,
         THEN, WHITESPACE, WORD, WHITESPACE, WORD, SEMI, WHITESPACE, FI, BashTokenTypes.LINEFEED, RIGHT_CURLY);
   }
 

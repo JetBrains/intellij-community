@@ -70,7 +70,7 @@ public interface BashTokenTypes extends BashTypes {
   TokenSet arithmeticProduct = TokenSet.create(MULT, DIV, MOD);
 
   //arithmetic operators: comparision
-  TokenSet arithmeticCmpOp = TokenSet.create(ARITH_LE, ARITH_GE, LESS_THAN, GREATER_THAN);
+  TokenSet arithmeticCmpOp = TokenSet.create(LE, GE, LT, GT);
 
   IElementType ARITH_EQ = new BashTokenType("arith ==");//==
   IElementType ARITH_NE = new BashTokenType("!=");//!=
@@ -164,7 +164,7 @@ public interface BashTokenTypes extends BashTypes {
   IElementType REDIRECT_AMP_GREATER = new BashTokenType("&>");
 
   //this must NOT include PIPE_AMP because it's a command separator and not a real redirect token
-  TokenSet redirectionSet = TokenSet.create(GREATER_THAN, LESS_THAN, SHIFT_RIGHT,
+  TokenSet redirectionSet = TokenSet.create(GT, LT, SHIFT_RIGHT,
       REDIRECT_HERE_STRING, REDIRECT_LESS_GREATER,
       REDIRECT_GREATER_BAR, REDIRECT_GREATER_AMP, REDIRECT_AMP_GREATER, REDIRECT_LESS_AMP, REDIRECT_AMP_GREATER_GREATER,
       HEREDOC_MARKER_TAG);

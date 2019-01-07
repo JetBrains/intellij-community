@@ -33,8 +33,8 @@ public class BashProcessSubstitutionImpl extends BashCompositeElementImpl implem
 
   @Override
   @Nullable
-  public PsiElement getGreaterThan() {
-    return findChildByType(GREATER_THAN);
+  public PsiElement getGt() {
+    return findChildByType(GT);
   }
 
   @Override
@@ -45,8 +45,8 @@ public class BashProcessSubstitutionImpl extends BashCompositeElementImpl implem
 
   @Override
   @Nullable
-  public PsiElement getLessThan() {
-    return findChildByType(LESS_THAN);
+  public PsiElement getLt() {
+    return findChildByType(LT);
   }
 
   @Override

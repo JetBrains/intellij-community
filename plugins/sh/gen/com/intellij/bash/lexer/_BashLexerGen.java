@@ -1391,12 +1391,12 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             // fall through
           case 203: break;
           case 22: 
-            { return GREATER_THAN;
+            { return GT;
             } 
             // fall through
           case 204: break;
           case 23: 
-            { return LESS_THAN;
+            { return LT;
             } 
             // fall through
           case 205: break;
@@ -2024,12 +2024,12 @@ goToState(X_STRINGMODE); return STRING_BEGIN;
             // fall through
           case 310: break;
           case 129: 
-            { return ARITH_GE;
+            { return GE;
             } 
             // fall through
           case 311: break;
           case 130: 
-            { return ARITH_LE;
+            { return LE;
             } 
             // fall through
           case 312: break;

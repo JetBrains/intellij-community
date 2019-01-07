@@ -27,26 +27,26 @@ public class BashComparisonExpressionImpl extends BashBinaryExpressionImpl imple
 
   @Override
   @Nullable
-  public PsiElement getArithGe() {
-    return findChildByType(ARITH_GE);
+  public PsiElement getGe() {
+    return findChildByType(GE);
   }
 
   @Override
   @Nullable
-  public PsiElement getArithLe() {
-    return findChildByType(ARITH_LE);
+  public PsiElement getGt() {
+    return findChildByType(GT);
   }
 
   @Override
   @Nullable
-  public PsiElement getGreaterThan() {
-    return findChildByType(GREATER_THAN);
+  public PsiElement getLe() {
+    return findChildByType(LE);
   }
 
   @Override
   @Nullable
-  public PsiElement getLessThan() {
-    return findChildByType(LESS_THAN);
+  public PsiElement getLt() {
+    return findChildByType(LT);
   }
 
 }

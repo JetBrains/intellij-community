@@ -80,8 +80,6 @@ public interface BashTypes {
   IElementType ADD_EQ = new BashTokenType("+=");
   IElementType AMP = new BashTokenType("&");
   IElementType AND_AND = new BashTokenType("&&");
-  IElementType ARITH_GE = new BashTokenType(">=");
-  IElementType ARITH_LE = new BashTokenType("<=");
   IElementType ARITH_MINUS = new BashTokenType("-");
   IElementType ARITH_MINUS_MINUS = new BashTokenType("--");
   IElementType ARITH_PLUS = new BashTokenType("+");
@@ -112,7 +110,8 @@ public interface BashTypes {
   IElementType FILEDESCRIPTOR = new BashTokenType("FILEDESCRIPTOR");
   IElementType FOR = new BashTokenType("for");
   IElementType FUNCTION = new BashTokenType("function");
-  IElementType GREATER_THAN = new BashTokenType(">");
+  IElementType GE = new BashTokenType(">=");
+  IElementType GT = new BashTokenType(">");
   IElementType HEREDOC_CONTENT = new BashTokenType("HEREDOC_CONTENT");
   IElementType HEREDOC_MARKER_END = new BashTokenType("HEREDOC_MARKER_END");
   IElementType HEREDOC_MARKER_IGNORING_TABS_END = new BashTokenType("HEREDOC_MARKER_IGNORING_TABS_END");
@@ -121,13 +120,14 @@ public interface BashTypes {
   IElementType HEX = new BashTokenType("hex");
   IElementType IF = new BashTokenType("if");
   IElementType INT = new BashTokenType("int");
+  IElementType LE = new BashTokenType("<=");
   IElementType LEFT_CURLY = new BashTokenType("{");
   IElementType LEFT_DOUBLE_BRACKET = new BashTokenType("[[");
   IElementType LEFT_DOUBLE_PAREN = new BashTokenType("((");
   IElementType LEFT_PAREN = new BashTokenType("(");
   IElementType LEFT_SQUARE = new BashTokenType("[");
-  IElementType LESS_THAN = new BashTokenType("<");
   IElementType LINEFEED = new BashTokenType("\\n");
+  IElementType LT = new BashTokenType("<");
   IElementType MOD = new BashTokenType("%");
   IElementType MULT = new BashTokenType("*");
   IElementType NUMBER = new BashTokenType("number");

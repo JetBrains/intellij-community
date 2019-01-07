@@ -634,17 +634,17 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, SEMI);
     if (!r) r = consumeToken(b, CASE_END);
     if (!r) r = consumeToken(b, REDIRECT_LESS_AMP);
-    if (!r) r = consumeToken(b, LESS_THAN);
+    if (!r) r = consumeToken(b, LT);
     if (!r) r = consumeToken(b, SHIFT_LEFT);
     if (!r) r = consumeToken(b, "<<-");
     if (!r) r = consumeToken(b, REDIRECT_HERE_STRING);
     if (!r) r = consumeToken(b, "<<=");
-    if (!r) r = consumeToken(b, ARITH_LE);
+    if (!r) r = consumeToken(b, LE);
     if (!r) r = consumeToken(b, REDIRECT_LESS_GREATER);
     if (!r) r = consumeToken(b, EQ);
     if (!r) r = consumeToken(b, "==");
     if (!r) r = consumeToken(b, REDIRECT_GREATER_AMP);
-    if (!r) r = consumeToken(b, ARITH_GE);
+    if (!r) r = consumeToken(b, GE);
     if (!r) r = consumeToken(b, SHIFT_RIGHT);
     if (!r) r = consumeToken(b, ">>=");
     if (!r) r = consumeToken(b, REDIRECT_GREATER_BAR);
@@ -1688,7 +1688,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   // ('<' | '>') '(' compound_list ')'
   public static boolean process_substitution(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "process_substitution")) return false;
-    if (!nextTokenIs(b, "<process substitution>", GREATER_THAN, LESS_THAN)) return false;
+    if (!nextTokenIs(b, "<process substitution>", GT, LT)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, PROCESS_SUBSTITUTION, "<process substitution>");
     r = process_substitution_0(b, l + 1);
@@ -1705,8 +1705,8 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "process_substitution_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, LESS_THAN);
-    if (!r) r = consumeToken(b, GREATER_THAN);
+    r = consumeToken(b, LT);
+    if (!r) r = consumeToken(b, GT);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -1783,7 +1783,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "redirection_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, GREATER_THAN);
+    r = consumeToken(b, GT);
     r = r && w(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -1794,7 +1794,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "redirection_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, LESS_THAN);
+    r = consumeToken(b, LT);
     r = r && w(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -1806,7 +1806,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = num(b, l + 1);
-    r = r && consumeToken(b, GREATER_THAN);
+    r = r && consumeToken(b, GT);
     r = r && w(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -1818,7 +1818,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = num(b, l + 1);
-    r = r && consumeToken(b, LESS_THAN);
+    r = r && consumeToken(b, LT);
     r = r && w(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -2742,10 +2742,10 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "comparison_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, ARITH_LE);
-    if (!r) r = consumeTokenSmart(b, ARITH_GE);
-    if (!r) r = consumeTokenSmart(b, LESS_THAN);
-    if (!r) r = consumeTokenSmart(b, GREATER_THAN);
+    r = consumeTokenSmart(b, LE);
+    if (!r) r = consumeTokenSmart(b, GE);
+    if (!r) r = consumeTokenSmart(b, LT);
+    if (!r) r = consumeTokenSmart(b, GT);
     exit_section_(b, m, null, r);
     return r;
   }

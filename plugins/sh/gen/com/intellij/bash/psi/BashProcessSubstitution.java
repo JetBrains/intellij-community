@@ -11,13 +11,13 @@ public interface BashProcessSubstitution extends BashCompositeElement {
   BashCompoundList getCompoundList();
 
   @Nullable
-  PsiElement getGreaterThan();
+  PsiElement getGt();
 
   @Nullable
   PsiElement getLeftParen();
 
   @Nullable
-  PsiElement getLessThan();
+  PsiElement getLt();
 
   @Nullable
   PsiElement getRightParen();

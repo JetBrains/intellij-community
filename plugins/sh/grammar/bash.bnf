@@ -42,8 +42,8 @@
     ADD_EQ = '+='
     SEMI = ';'
     SHIFT_RIGHT = '>>'
-    LESS_THAN = '<'
-    GREATER_THAN = '>'
+    LT = '<'
+    GT = '>'
     PIPE = '|'
     PIPE_AMP = '|&' //bash 4 only, equivalent to 2>&1 |
     AND_AND = '&&'
@@ -59,8 +59,8 @@
     LINEFEED = '\n'
     CASE_END = ';;'
 
-    ARITH_LE = '<='
-    ARITH_GE = '>='
+    LE = '<='
+    GE = '>='
     ARITH_PLUS_PLUS = "++"
     ARITH_PLUS = "+"
     ARITH_MINUS_MINUS = "--"

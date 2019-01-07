@@ -8,15 +8,15 @@ import com.intellij.psi.PsiElement;
 public interface BashComparisonExpression extends BashBinaryExpression {
 
   @Nullable
-  PsiElement getArithGe();
+  PsiElement getGe();
 
   @Nullable
-  PsiElement getArithLe();
+  PsiElement getGt();
 
   @Nullable
-  PsiElement getGreaterThan();
+  PsiElement getLe();
 
   @Nullable
-  PsiElement getLessThan();
+  PsiElement getLt();
 
 }

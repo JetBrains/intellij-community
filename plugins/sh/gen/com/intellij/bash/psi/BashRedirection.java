@@ -41,10 +41,10 @@ public interface BashRedirection extends BashCompositeElement {
   PsiElement getFiledescriptor();
 
   @Nullable
-  PsiElement getGreaterThan();
+  PsiElement getGt();
 
   @Nullable
-  PsiElement getLessThan();
+  PsiElement getLt();
 
   @Nullable
   PsiElement getRedirectGreaterAmp();
