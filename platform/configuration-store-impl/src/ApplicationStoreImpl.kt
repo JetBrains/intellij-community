@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -32,7 +32,9 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
     storageManager.addMacro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve("app.xml").systemIndependentPath)
   }
 
-  override fun saveAdditionalComponents(isForce: Boolean) {
+  override fun afterSaveComponents(errors: MutableList<Throwable>, isForce: Boolean) {
+    super.afterSaveComponents(errors, isForce)
+
     // here, because no Project (and so, ProjectStoreImpl) on Welcome Screen
     service<DefaultProjectExportableAndSaveTrigger>().save(isForce)
   }

@@ -141,10 +141,8 @@ abstract class ComponentStoreImpl : IComponentStore {
       saveComponents(isForce, saveSessionProducerManager, errors)
     }
 
-    afterSaveComponents(errors)
-
     try {
-      saveAdditionalComponents(isForce)
+      afterSaveComponents(errors, isForce)
     }
     catch (e: Throwable) {
       errors.add(e)
@@ -157,13 +155,10 @@ abstract class ComponentStoreImpl : IComponentStore {
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 
-  protected open fun saveAdditionalComponents(isForce: Boolean) {
-  }
-
   protected open fun beforeSaveComponents(errors: MutableList<Throwable>) {
   }
 
-  protected open fun afterSaveComponents(errors: MutableList<Throwable>) {
+  protected open fun afterSaveComponents(errors: MutableList<Throwable>, isForce: Boolean) {
   }
 
   private fun saveComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>): MutableList<Throwable>? {

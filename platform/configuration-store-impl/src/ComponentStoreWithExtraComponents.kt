@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.openapi.components.SettingsSavingComponent
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.project.isDirectoryBased
 
 abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
@@ -31,12 +32,14 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     }
   }
 
-  final override fun afterSaveComponents(errors: MutableList<Throwable>) {
+  override fun afterSaveComponents(errors: MutableList<Throwable>, isForce: Boolean) {
     val isIprProject = project?.let { !it.isDirectoryBased } ?: false
     for (settingsSavingComponent in settingsSavingComponents) {
       if (!isIprProject || settingsSavingComponent !is SchemeManagerFactoryBase) {
         try {
           settingsSavingComponent.save()
+        }
+        catch (ignore: ProcessCanceledException) {
         }
         catch (e: Throwable) {
           errors.add(e)
