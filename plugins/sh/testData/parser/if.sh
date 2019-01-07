@@ -55,3 +55,6 @@ if [ "10.12.6" = `defaults read loginwindow SystemVersionStampAsString` ]; then
 else
   sudo easy_install sh
 fi
+
+echo [ foo[1] ]
+echo [foo[1]]
