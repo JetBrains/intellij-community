@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
@@ -18,6 +19,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import org.intellij.lang.annotations.Language
+import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -91,6 +93,10 @@ internal class ProjectStoreTest {
   }
 
   @Test fun saveProjectName() {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      assumeTrue("Normal OS is required", !SystemInfo.isWindows)
+    }
+
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
       it.path
