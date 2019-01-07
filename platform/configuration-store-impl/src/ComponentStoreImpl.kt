@@ -132,9 +132,11 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   final override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
     val errors: MutableList<Throwable> = SmartList<Throwable>()
+    doSave(errors, readonlyFiles, isForce)
+    CompoundRuntimeException.throwIfNotEmpty(errors)
+  }
 
-    beforeSaveComponents(errors, readonlyFiles)
-
+  internal open fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
     val saveSessionProducerManager = if (components.isEmpty()) null else createSaveSessionProducerManager()
     if (saveSessionProducerManager != null) {
       saveComponents(isForce, saveSessionProducerManager, errors)
@@ -147,14 +149,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       errors.add(e)
     }
 
-    if (saveSessionProducerManager != null) {
-      saveSessionProducerManager.save(readonlyFiles, errors)
-    }
-
-    CompoundRuntimeException.throwIfNotEmpty(errors)
-  }
-
-  protected open fun beforeSaveComponents(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>) {
+    saveSessionProducerManager?.save(readonlyFiles, errors)
   }
 
   protected open fun afterSaveComponents(errors: MutableList<Throwable>, isForce: Boolean) {
@@ -168,7 +163,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     var timeLog: StringBuilder? = null
 
     // well, strictly speaking each component saving takes some time, but +/- several seconds doesn't matter
-    val nowInSeconds: Int = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
+    val nowInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
     for (name in names) {
       val start = System.currentTimeMillis()
       try {

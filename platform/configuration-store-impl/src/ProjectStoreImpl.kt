@@ -13,6 +13,7 @@ import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ex.ProjectNameProvider
@@ -317,7 +318,7 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
     }
   }
 
-  override fun beforeSaveComponents(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>) {
+  override fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
     try {
       saveProjectName()
     }
@@ -325,19 +326,21 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
       LOG.error("Unable to store project name", e)
     }
 
-    super.beforeSaveComponents(errors, readonlyFiles)
+    super.doSave(errors, readonlyFiles, isForce)
   }
 
   final override fun createSaveSessionProducerManager() = ProjectSaveSessionProducerManager(project)
 }
 
 private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
-  override fun beforeSaveComponents(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>) {
-    super.beforeSaveComponents(errors, readonlyFiles)
-
+  override fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+    // save modules before project
     for (module in (ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY)) {
-      module.stateStore.save(readonlyFiles)
+      val moduleStore = ModuleServiceManager.getService(module, IComponentStore::class.java) as ComponentStoreImpl
+      moduleStore.doSave(errors, readonlyFiles, isForce)
     }
+
+    super.doSave(errors, readonlyFiles, isForce)
   }
 }
 
