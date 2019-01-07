@@ -8,16 +8,12 @@ package com.intellij.ide.actions;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
@@ -72,7 +68,7 @@ import java.util.*;
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.COMPONENT_KEY;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
-public class RecentLocationsAction extends DumbAwareAction {
+public class RecentLocationsAction extends AnAction {
   private static final JBColor BACKGROUND_COLOR = JBColor.namedColor("Table.lightSelectionBackground", new JBColor(0xE9EEF5, 0x464A4D));
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
@@ -617,11 +613,7 @@ public class RecentLocationsAction extends DumbAwareAction {
   private static void setHighlighting(@NotNull Project project, @NotNull EditorEx editor, @NotNull PlaceInfo placeInfo) {
     VirtualFile file = placeInfo.getFile();
 
-    Language language = LanguageUtil.getFileLanguage(file);
-    if (ScratchFileService.isInScratchRoot(file)) {
-      language = ScratchFileService.getInstance().getScratchesMapping().getMappings().get(file);
-    }
-
+    Language language = LanguageUtil.getLanguageForPsi(project, file);
     if (language == null) {
       return;
     }
