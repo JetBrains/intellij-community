@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -89,7 +89,6 @@ public class DaemonListeners implements Disposable {
   private final UndoManager myUndoManager;
   private final ProjectLevelVcsManager myProjectLevelVcsManager;
   private final VcsDirtyScopeManager myVcsDirtyScopeManager;
-  private final FileStatusManager myFileStatusManager;
   private final TooltipController myTooltipController;
   private final ErrorStripeUpdateManager myErrorStripeUpdateManager;
 
@@ -121,7 +120,6 @@ public class DaemonListeners implements Disposable {
                          @NotNull UndoManager undoManager,
                          @NotNull ProjectLevelVcsManager projectLevelVcsManager,
                          @NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
-                         @NotNull FileStatusManager fileStatusManager,
                          @NotNull ErrorStripeUpdateManager stripeUpdateManager) {
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
@@ -130,7 +128,6 @@ public class DaemonListeners implements Disposable {
     myUndoManager = undoManager;
     myProjectLevelVcsManager = projectLevelVcsManager;
     myVcsDirtyScopeManager = vcsDirtyScopeManager;
-    myFileStatusManager = fileStatusManager;
     myTooltipController = tooltipController;
     myErrorStripeUpdateManager = stripeUpdateManager;
 
@@ -409,7 +406,8 @@ public class DaemonListeners implements Disposable {
     CHANGED, UNCHANGED, NOT_SURE
   }
 
-  private Result vcsThinksItChanged(VirtualFile virtualFile) {
+  @NotNull
+  private Result vcsThinksItChanged(@NotNull VirtualFile virtualFile) {
     AbstractVcs activeVcs = myProjectLevelVcsManager.getVcsFor(virtualFile);
     if (activeVcs == null) return Result.NOT_SURE;
 
@@ -417,7 +415,7 @@ public class DaemonListeners implements Disposable {
     boolean vcsIsThinking = !myVcsDirtyScopeManager.whatFilesDirty(Collections.singletonList(path)).isEmpty();
     if (vcsIsThinking) return Result.NOT_SURE; // do not modify file which is in the process of updating
 
-    FileStatus status = myFileStatusManager.getStatus(virtualFile);
+    FileStatus status = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
     if (status == FileStatus.UNKNOWN) return Result.NOT_SURE;
     return status == FileStatus.MODIFIED || status == FileStatus.ADDED ? Result.CHANGED : Result.UNCHANGED;
   }
