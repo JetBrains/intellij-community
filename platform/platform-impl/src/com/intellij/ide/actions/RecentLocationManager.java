@@ -45,12 +45,8 @@ import java.util.List;
 import java.util.Map;
 
 public class RecentLocationManager implements ProjectComponent {
-  private static final int BEFORE_AFTER_LINES_COUNT = Registry.intValue("recent.locations.lines.before.and.after", 2);
-  static final int LIST_SIZE = Registry.intValue("recent.locations.list.size", 10);
-  @NotNull
-  private final Project myProject;
-  @NotNull
-  private final Map<IdeDocumentHistoryImpl.PlaceInfo, PlaceInfoPersistentItem> myItems = new RecentLocationFixedSizeHashMap();
+  @NotNull private final Project myProject;
+  @NotNull private final Map<IdeDocumentHistoryImpl.PlaceInfo, PlaceInfoPersistentItem> myItems = new RecentLocationFixedSizeHashMap();
 
   @NotNull
   public static RecentLocationManager getInstance(@NotNull Project project) {
@@ -204,11 +200,12 @@ public class RecentLocationManager implements ProjectComponent {
       return Pair.create(0, 0);
     }
 
-    int before = Math.min(BEFORE_AFTER_LINES_COUNT, line);
-    int after = Math.min(BEFORE_AFTER_LINES_COUNT, lineCount - line - 1);
+    int beforeAfterLinesCount = Registry.intValue("recent.locations.lines.before.and.after", 2);
+    int before = Math.min(beforeAfterLinesCount, line);
+    int after = Math.min(beforeAfterLinesCount, lineCount - line - 1);
 
-    int linesBefore = before + BEFORE_AFTER_LINES_COUNT - after;
-    int linesAfter = after + BEFORE_AFTER_LINES_COUNT - before;
+    int linesBefore = before + beforeAfterLinesCount - after;
+    int linesAfter = after + beforeAfterLinesCount - before;
 
     int start = Math.max(line - linesBefore, 0);
     int end = Math.min(line + linesAfter, lineCount - 1);
@@ -304,7 +301,7 @@ public class RecentLocationManager implements ProjectComponent {
   private static class RecentLocationFixedSizeHashMap extends LinkedHashMap<IdeDocumentHistoryImpl.PlaceInfo, PlaceInfoPersistentItem> {
     @Override
     protected boolean removeEldestEntry(Map.Entry<IdeDocumentHistoryImpl.PlaceInfo, PlaceInfoPersistentItem> eldest) {
-      return size() >= LIST_SIZE;
+      return size() >= Registry.intValue("recent.locations.list.size", 10);
     }
   }
 }

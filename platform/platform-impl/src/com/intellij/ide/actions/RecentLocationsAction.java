@@ -39,6 +39,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -70,9 +71,11 @@ import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPE
 
 public class RecentLocationsAction extends AnAction {
   private static final JBColor BACKGROUND_COLOR = JBColor.namedColor("Table.lightSelectionBackground", new JBColor(0xE9EEF5, 0x464A4D));
+  private static final Color TITLE_FOREGROUND_COLOR = UIUtil.getLabelForeground().darker();
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
   private static final String NOT_SIGNIFICANT_LINE_REGEXP = "[^A-Za-z0-9]*";
+  private static final int DEFAULT_POPUP_HEIGHT = JBUI.scale(700);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -129,7 +132,7 @@ public class RecentLocationsAction extends AnAction {
       .setMovable(true)
       .setShowBorder(false)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
-      .setMinSize(new Dimension(JBUI.scale(500), JBUI.scale(100)))
+      .setMinSize(new Dimension(DEFAULT_POPUP_HEIGHT, JBUI.scale(100)))
       .createPopup();
 
     project.getMessageBus().connect(popup).subscribe(ShowRecentChangedLocationListener.TOPIC, new ShowRecentChangedLocationListener() {
@@ -152,12 +155,12 @@ public class RecentLocationsAction extends AnAction {
 
     initSearchActions(project, list, popup, navigationRef);
 
-    popup.setSize(new Dimension(JBUI.scale(500), JBUI.scale(mainPanel.getPreferredSize().height)));
+    popup.setSize(new Dimension(DEFAULT_POPUP_HEIGHT, JBUI.scale(mainPanel.getPreferredSize().height)));
 
-    showPopup(project, e, popup);
+    showPopup(project, popup);
   }
 
-  private static void showPopup(@NotNull Project project, @NotNull AnActionEvent e, @NotNull JBPopup popup) {
+  private static void showPopup(@NotNull Project project, @NotNull JBPopup popup) {
     Point savedLocation = DimensionService.getInstance().getLocation(LOCATION_SETTINGS_KEY, project);
     Window recentFocusedWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
     if (savedLocation != null && recentFocusedWindow != null) {
@@ -337,7 +340,7 @@ public class RecentLocationsAction extends AnAction {
         continue;
       }
 
-      if (caretsList.size() > RecentLocationManager.LIST_SIZE - 1) {
+      if (caretsList.size() > Registry.intValue("recent.locations.list.size", 10) - 1) {
         break;
       }
 
@@ -523,8 +526,16 @@ public class RecentLocationsAction extends AnAction {
       }
 
       String breadcrumb = getBreadcrumbs(myProject, placeInfo);
-      SimpleColoredComponent breadcrumbTextComponent = createBreadcrumbsComponent(list, breadcrumb, selected);
-      SimpleColoredComponent fileNameComponent = createFileNameComponent(list, placeInfo, breadcrumb, selected);
+      JComponent breadcrumbTextComponent;
+      JComponent fileNameComponent;
+      if (Registry.is("recent.locations.show.breadcrumbs", true)) {
+        breadcrumbTextComponent = createBreadcrumbsComponent(list, breadcrumb, selected);
+        fileNameComponent = createFileNameComponent(list, placeInfo, breadcrumb, selected);
+      }
+      else {
+        breadcrumbTextComponent = new JPanel();
+        fileNameComponent = new JPanel();
+      }
 
       JComponent titledSeparator = new TitledSeparator();
       JComponent title = JBUI.Panels
@@ -553,6 +564,7 @@ public class RecentLocationsAction extends AnAction {
                                                              @NotNull String breadcrumb,
                                                              boolean selected) {
       SimpleColoredComponent breadcrumbTextComponent = new SimpleColoredComponent();
+      breadcrumbTextComponent.setForeground(TITLE_FOREGROUND_COLOR);
       breadcrumbTextComponent.append(breadcrumb);
       Iterable<TextRange> breadCrumbRanges = mySpeedSearch.matchingFragments(breadcrumb);
       if (breadCrumbRanges != null) {
@@ -566,6 +578,7 @@ public class RecentLocationsAction extends AnAction {
     public SimpleColoredComponent createFileNameComponent(@NotNull JList<? extends RecentLocationItem> list,
                                                           @NotNull PlaceInfo placeInfo, @NotNull String breadcrumb, boolean selected) {
       SimpleColoredComponent fileNameComponent = new SimpleColoredComponent();
+      fileNameComponent.setForeground(TITLE_FOREGROUND_COLOR);
       if (!StringUtil.equals(breadcrumb, placeInfo.getFile().getName())) {
         fileNameComponent.append(placeInfo.getFile().getName());
         fileNameComponent.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 2));
@@ -581,7 +594,8 @@ public class RecentLocationsAction extends AnAction {
     private static void updateBackground(@NotNull EditorEx smallEditor,
                                          @NotNull JComponent title,
                                          @NotNull JComponent titledSeparator,
-                                         @NotNull SimpleColoredComponent breadcrumbTextComponent, Color background) {
+                                         @NotNull JComponent breadcrumbTextComponent,
+                                         @NotNull Color background) {
       title.setBackground(background);
       smallEditor.setBackgroundColor(background);
       titledSeparator.setBackground(background);
