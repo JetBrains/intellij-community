@@ -5,7 +5,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('tee')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -25,7 +25,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('mkdir')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -47,7 +47,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('tee')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -75,7 +75,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('systemctl')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -85,7 +85,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('systemctl')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -99,7 +99,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('tee')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -119,7 +119,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('chmod')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -134,7 +134,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('ACCOUNT')
             PsiElement(=)('=')
@@ -145,7 +145,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('tee')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -181,7 +181,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('tee')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -201,7 +201,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -211,7 +211,7 @@ BASH_FILE
               PsiElement(HEREDOC_MARKER_START)('EOF')
               PsiWhiteSpace(' ')
               PIPELINE
-                GENERIC_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
                   REDIRECTION
                     PsiElement(>)('>')
                     PsiWhiteSpace(' ')
@@ -233,7 +233,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -243,7 +243,7 @@ BASH_FILE
               PsiElement(HEREDOC_MARKER_START)('FOE')
               PsiWhiteSpace(' ')
               PIPELINE
-                GENERIC_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
                   REDIRECTION
                     PsiElement(>>)('>>')
                     PsiWhiteSpace(' ')
@@ -265,7 +265,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -275,7 +275,7 @@ BASH_FILE
               PsiElement(HEREDOC_MARKER_START)(''END_OF_FILE'')
               PsiWhiteSpace(' ')
               PIPELINE
-                GENERIC_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
                   REDIRECTION
                     PsiElement(>)('>')
                     PsiWhiteSpace(' ')
@@ -291,7 +291,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -301,7 +301,7 @@ BASH_FILE
               PsiElement(HEREDOC_MARKER_START)(''eof'')
               PsiWhiteSpace(' ')
               PIPELINE
-                GENERIC_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
                   REDIRECTION
                     PsiElement(>>)('>>')
                     PsiWhiteSpace(' ')
@@ -317,7 +317,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -330,7 +330,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE
                 SIMPLE_COMMAND
-                  GENERIC_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
                     PsiElement(word)('sudo')
                   PsiWhiteSpace(' ')
                   SIMPLE_COMMAND_ELEMENT
@@ -355,7 +355,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -368,7 +368,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE
                 SIMPLE_COMMAND
-                  GENERIC_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
                     PsiElement(word)('sudo')
                   PsiWhiteSpace(' ')
                   SIMPLE_COMMAND_ELEMENT
@@ -399,7 +399,7 @@ BASH_FILE
           COMPOUND_LIST
             PIPELINE_COMMAND
               PIPELINE
-                GENERIC_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
                   PsiElement(word)('true')
             PsiWhiteSpace(' ')
             PsiElement(;)(';')
@@ -415,7 +415,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    GENERIC_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
                       PsiElement(word)('cat')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -425,7 +425,7 @@ BASH_FILE
                         PsiElement(HEREDOC_MARKER_START)('EOF')
                         PsiWhiteSpace(' ')
                         PIPELINE
-                          GENERIC_COMMAND
+                          GENERIC_COMMAND_DIRECTIVE
                             REDIRECTION
                               PsiElement(>)('>')
                               PsiWhiteSpace(' ')
@@ -441,7 +441,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -453,13 +453,13 @@ BASH_FILE
               PsiElement(|)('|')
               PsiWhiteSpace(' ')
               PIPELINE
-                GENERIC_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
                   PsiElement(word)('fmt')
                 PsiWhiteSpace(' ')
                 PsiElement(|)('|')
                 PsiWhiteSpace(' ')
                 SIMPLE_COMMAND
-                  GENERIC_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
                     PsiElement(word)('mail')
                   PsiWhiteSpace(' ')
                   SIMPLE_COMMAND_ELEMENT

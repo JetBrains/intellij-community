@@ -45,7 +45,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('avr')
             PsiElement(=)('=')

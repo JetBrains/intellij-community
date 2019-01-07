@@ -3,7 +3,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -12,7 +12,7 @@ BASH_FILE
               COMPOUND_LIST
                 PIPELINE_COMMAND
                   PIPELINE
-                    GENERIC_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
                       PsiElement(word)('cat')
               PsiWhiteSpace(' ')
               PsiElement(`)('`')

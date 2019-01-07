@@ -6,7 +6,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -43,13 +43,13 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement(word)('0z999')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement(word)('s-fsf+')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -57,7 +57,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement(word)('asd')
           PsiWhiteSpace(' ')
           PsiElement(>)('>')
@@ -68,7 +68,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement(word)('fsdf')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -76,7 +76,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           REDIRECTION
             PsiElement(>)('>')
             PsiWhiteSpace(' ')
@@ -87,7 +87,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           REDIRECTION
             PsiElement(<)('<')
             PsiWhiteSpace(' ')
@@ -98,7 +98,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(int)('234')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -106,5 +106,5 @@ BASH_FILE
     PsiElement(;)(';')
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement(word)('-')

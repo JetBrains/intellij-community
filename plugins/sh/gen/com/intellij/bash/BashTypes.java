@@ -41,10 +41,11 @@ public interface BashTypes {
   IElementType EXP_EXPRESSION = new BashCompositeElementType("EXP_EXPRESSION");
   IElementType FOR_COMMAND = new BashCompositeElementType("FOR_COMMAND");
   IElementType FUNCTION_DEF = new BashCompositeElementType("FUNCTION_DEF");
-  IElementType GENERIC_COMMAND = new BashCompositeElementType("GENERIC_COMMAND");
+  IElementType GENERIC_COMMAND_DIRECTIVE = new BashCompositeElementType("GENERIC_COMMAND_DIRECTIVE");
   IElementType HEREDOC = new BashCompositeElementType("HEREDOC");
   IElementType IF_COMMAND = new BashCompositeElementType("IF_COMMAND");
   IElementType INCLUDE_COMMAND = new BashCompositeElementType("INCLUDE_COMMAND");
+  IElementType INCLUDE_DIRECTIVE = new BashCompositeElementType("INCLUDE_DIRECTIVE");
   IElementType INDEX_EXPRESSION = new BashCompositeElementType("INDEX_EXPRESSION");
   IElementType LIST_TERMINATOR = new BashCompositeElementType("LIST_TERMINATOR");
   IElementType LITERAL_EXPRESSION = new BashCompositeElementType("LITERAL_EXPRESSION");
@@ -256,8 +257,8 @@ public interface BashTypes {
       else if (type == FUNCTION_DEF) {
         return new BashFunctionDefImpl(node);
       }
-      else if (type == GENERIC_COMMAND) {
-        return new BashGenericCommandImpl(node);
+      else if (type == GENERIC_COMMAND_DIRECTIVE) {
+        return new BashGenericCommandDirectiveImpl(node);
       }
       else if (type == HEREDOC) {
         return new BashHeredocImpl(node);
@@ -267,6 +268,9 @@ public interface BashTypes {
       }
       else if (type == INCLUDE_COMMAND) {
         return new BashIncludeCommandImpl(node);
+      }
+      else if (type == INCLUDE_DIRECTIVE) {
+        return new BashIncludeDirectiveImpl(node);
       }
       else if (type == INDEX_EXPRESSION) {
         return new BashIndexExpressionImpl(node);

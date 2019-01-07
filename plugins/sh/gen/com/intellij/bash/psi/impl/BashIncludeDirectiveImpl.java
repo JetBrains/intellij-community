@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashIncludeCommandImpl extends BashCommandImpl implements BashIncludeCommand {
+public class BashIncludeDirectiveImpl extends BashGenericCommandDirectiveImpl implements BashIncludeDirective {
 
-  public BashIncludeCommandImpl(ASTNode node) {
+  public BashIncludeDirectiveImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitIncludeCommand(this);
+    visitor.visitIncludeDirective(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -27,14 +27,8 @@ public class BashIncludeCommandImpl extends BashCommandImpl implements BashInclu
 
   @Override
   @NotNull
-  public BashIncludeDirective getIncludeDirective() {
-    return findNotNullChildByClass(BashIncludeDirective.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashSimpleCommandElement> getSimpleCommandElementList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashSimpleCommandElement.class);
+  public PsiElement getWord() {
+    return findNotNullChildByType(WORD);
   }
 
 }

@@ -2,7 +2,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('file')
             PsiElement(=)('=')
@@ -33,7 +33,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  GENERIC_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
                     ASSIGNMENT_WORD_RULE
                       PsiElement(assignment_word)('Message')
                       PsiElement(=)('=')
@@ -56,7 +56,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  GENERIC_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
                     ASSIGNMENT_WORD_RULE
                       PsiElement(assignment_word)('Message')
                       PsiElement(=)('=')
@@ -82,7 +82,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  GENERIC_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
                     ASSIGNMENT_WORD_RULE
                       PsiElement(assignment_word)('Message')
                       PsiElement(=)('=')
@@ -108,7 +108,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  GENERIC_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
                     ASSIGNMENT_WORD_RULE
                       PsiElement(assignment_word)('Message')
                       PsiElement(=)('=')
@@ -134,7 +134,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  GENERIC_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
                     ASSIGNMENT_WORD_RULE
                       PsiElement(assignment_word)('Message')
                       PsiElement(=)('=')
@@ -182,7 +182,7 @@ BASH_FILE
             COMPOUND_LIST
               PIPELINE_COMMAND
                 PIPELINE
-                  GENERIC_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
                     ASSIGNMENT_WORD_RULE
                       PsiElement(assignment_word)('TARGET_CARD')
                       PsiElement(=)('=')
@@ -196,7 +196,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    GENERIC_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
                       PsiElement(word)('log_action_begin_msg')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -252,7 +252,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            GENERIC_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
                               ASSIGNMENT_WORD_RULE
                                 PsiElement(assignment_word)('month')
                                 PsiElement(=)('=')
@@ -276,7 +276,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            GENERIC_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
                               ASSIGNMENT_WORD_RULE
                                 PsiElement(assignment_word)('month')
                                 PsiElement(=)('=')
@@ -303,7 +303,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            GENERIC_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
                               ASSIGNMENT_WORD_RULE
                                 PsiElement(assignment_word)('month')
                                 PsiElement(=)('=')
@@ -327,7 +327,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            GENERIC_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
                               ASSIGNMENT_WORD_RULE
                                 PsiElement(assignment_word)('month')
                                 PsiElement(=)('=')
@@ -354,7 +354,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            GENERIC_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
                               ASSIGNMENT_WORD_RULE
                                 PsiElement(assignment_word)('month')
                                 PsiElement(=)('=')
@@ -378,7 +378,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            GENERIC_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
                               ASSIGNMENT_WORD_RULE
                                 PsiElement(assignment_word)('month')
                                 PsiElement(=)('=')
@@ -405,7 +405,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            GENERIC_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
                               ASSIGNMENT_WORD_RULE
                                 PsiElement(assignment_word)('month')
                                 PsiElement(=)('=')
@@ -429,7 +429,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            GENERIC_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
                               ASSIGNMENT_WORD_RULE
                                 PsiElement(assignment_word)('month')
                                 PsiElement(=)('=')
@@ -456,7 +456,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            GENERIC_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
                               ASSIGNMENT_WORD_RULE
                                 PsiElement(assignment_word)('month')
                                 PsiElement(=)('=')
@@ -479,7 +479,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            GENERIC_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
                               ASSIGNMENT_WORD_RULE
                                 PsiElement(assignment_word)('month')
                                 PsiElement(=)('=')
@@ -505,7 +505,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            GENERIC_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
                               ASSIGNMENT_WORD_RULE
                                 PsiElement(assignment_word)('month')
                                 PsiElement(=)('=')
@@ -528,7 +528,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            GENERIC_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
                               ASSIGNMENT_WORD_RULE
                                 PsiElement(assignment_word)('month')
                                 PsiElement(=)('=')
@@ -556,7 +556,7 @@ BASH_FILE
                         PIPELINE_COMMAND
                           PIPELINE
                             SIMPLE_COMMAND
-                              GENERIC_COMMAND
+                              GENERIC_COMMAND_DIRECTIVE
                                 PsiElement(word)('echo')
                               PsiWhiteSpace(' ')
                               SIMPLE_COMMAND_ELEMENT
@@ -578,7 +578,7 @@ BASH_FILE
                         PIPELINE_COMMAND
                           PIPELINE
                             SIMPLE_COMMAND
-                              GENERIC_COMMAND
+                              GENERIC_COMMAND_DIRECTIVE
                                 PsiElement(word)('exit')
                               PsiWhiteSpace(' ')
                               SIMPLE_COMMAND_ELEMENT
@@ -594,7 +594,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    GENERIC_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
                       PsiElement(word)('return')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT

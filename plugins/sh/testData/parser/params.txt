@@ -2,7 +2,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -14,7 +14,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -29,7 +29,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -41,7 +41,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -53,7 +53,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -65,7 +65,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -77,7 +77,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -88,7 +88,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -100,7 +100,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -112,7 +112,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -124,7 +124,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -136,7 +136,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -148,7 +148,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -160,7 +160,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -173,7 +173,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -185,7 +185,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -197,7 +197,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -209,7 +209,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -222,7 +222,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -237,7 +237,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -249,7 +249,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -263,7 +263,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -275,7 +275,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -288,7 +288,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -300,7 +300,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -314,7 +314,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -329,7 +329,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -341,7 +341,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
@@ -357,7 +357,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('NEW_USERNAME')
             PsiElement(=)('=')
@@ -373,7 +373,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('REPOSITORY')
             PsiElement(=)('=')
@@ -396,7 +396,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('local')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -420,7 +420,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('OLD_USERNAME')
             PsiElement(=)('=')
@@ -436,7 +436,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('DISTRIB_MAJOR')
             PsiElement(=)('=')
@@ -457,7 +457,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -489,7 +489,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('HOMEBREW_PACKAGES')
             PsiElement(=)('=')
@@ -529,7 +529,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    GENERIC_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
                       PsiElement(word)('/usr/local/bin/brew')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -546,7 +546,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('local')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -602,7 +602,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    GENERIC_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
                       PsiElement(word)('wget')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -625,7 +625,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('ARGS')
             PsiElement(=)('=')
@@ -669,7 +669,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  GENERIC_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
                     ASSIGNMENT_WORD_RULE
                       PsiElement(assignment_word)('ARGS')
                       PsiElement(=)('=')
@@ -697,7 +697,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('JDK_VER')
             PsiElement(=)('=')
@@ -715,7 +715,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('DISTRIB_MAJOR')
             PsiElement(=)('=')
@@ -732,7 +732,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('A')
             PsiElement(=)('=')
@@ -758,7 +758,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -771,7 +771,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('//')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -781,7 +781,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('declare')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -878,7 +878,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -901,7 +901,7 @@ BASH_FILE
         PsiElement(|)('|')
         PsiWhiteSpace(' ')
         SIMPLE_COMMAND
-          GENERIC_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('sha256sum')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT

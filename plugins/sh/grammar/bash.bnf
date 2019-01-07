@@ -170,13 +170,16 @@ old_arithmetic_expansion ::= ARITH_SQUARE_LEFT expression ARITH_SQUARE_RIGHT {pi
 assignment_word_rule ::= (assignment_word | word | variable) '=' [literal | composed_var | assignment_list] {pin=2}
 
 redirection_list ::= redirection redirection*
-simple_command ::= generic_command (simple_command_element | <<keywordsRemapped>>)* {
+simple_command ::= generic_command_directive (simple_command_element | <<keywordsRemapped>>)* {
   pin=1
   methods=[getReferences]
 }
-generic_command ::= simple_command_element_inner {extends=simple_command}
+
+generic_command_directive ::= simple_command_element_inner {extends=simple_command}
 command ::= shell_command redirection_list? | include_command | simple_command {recoverWhile=command_recover}
-include_command ::= &('source' | '.') word (simple_command_element | <<keywordsRemapped>>)*
+
+include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)*
+include_directive ::= &('source' | '.') word {extends=generic_command_directive}
 
 private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | STRING2 | assignment_word | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
 

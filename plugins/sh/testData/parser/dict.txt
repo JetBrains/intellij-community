@@ -2,7 +2,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           ARITHMETIC_EXPANSION
             PsiElement((()('((')
@@ -20,7 +20,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           ARITHMETIC_EXPANSION
             PsiElement((()('((')
@@ -37,7 +37,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('A')
             PsiElement(=)('=')
@@ -59,7 +59,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('A')
             PsiElement(=)('=')
@@ -109,7 +109,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('A')
             PsiElement(=)('=')
@@ -150,7 +150,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('A')
             PsiElement(=)('=')
@@ -173,7 +173,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('A')
             PsiElement(=)('=')
@@ -198,7 +198,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('A')
             PsiElement(=)('=')
@@ -249,7 +249,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           ASSIGNMENT_WORD_RULE
             PsiElement(assignment_word)('distrs')
             PsiElement(=)('=')
@@ -348,7 +348,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    GENERIC_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
                       PsiElement(word)('wget')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT

@@ -134,7 +134,7 @@ public class BashVisitor extends PsiElementVisitor {
     visitCommand(o);
   }
 
-  public void visitGenericCommand(@NotNull BashGenericCommand o) {
+  public void visitGenericCommandDirective(@NotNull BashGenericCommandDirective o) {
     visitSimpleCommand(o);
   }
 
@@ -148,6 +148,10 @@ public class BashVisitor extends PsiElementVisitor {
 
   public void visitIncludeCommand(@NotNull BashIncludeCommand o) {
     visitCommand(o);
+  }
+
+  public void visitIncludeDirective(@NotNull BashIncludeDirective o) {
+    visitGenericCommandDirective(o);
   }
 
   public void visitIndexExpression(@NotNull BashIndexExpression o) {

@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashGenericCommandImpl extends BashSimpleCommandImpl implements BashGenericCommand {
+public class BashGenericCommandDirectiveImpl extends BashSimpleCommandImpl implements BashGenericCommandDirective {
 
-  public BashGenericCommandImpl(ASTNode node) {
+  public BashGenericCommandDirectiveImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitGenericCommand(this);
+    visitor.visitGenericCommandDirective(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

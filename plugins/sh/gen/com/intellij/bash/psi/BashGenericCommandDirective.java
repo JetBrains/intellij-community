@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashGenericCommand extends BashSimpleCommand {
+public interface BashGenericCommandDirective extends BashSimpleCommand {
 
   @Nullable
   BashArithmeticExpansion getArithmeticExpansion();

@@ -80,8 +80,8 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == FUNCTION_DEF) {
       r = function_def(b, 0);
     }
-    else if (t == GENERIC_COMMAND) {
-      r = generic_command(b, 0);
+    else if (t == GENERIC_COMMAND_DIRECTIVE) {
+      r = generic_command_directive(b, 0);
     }
     else if (t == HEREDOC) {
       r = heredoc(b, 0);
@@ -91,6 +91,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     }
     else if (t == INCLUDE_COMMAND) {
       r = include_command(b, 0);
+    }
+    else if (t == INCLUDE_DIRECTIVE) {
+      r = include_directive(b, 0);
     }
     else if (t == LIST_TERMINATOR) {
       r = list_terminator(b, 0);
@@ -172,9 +175,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     create_token_set_(ARITHMETIC_EXPANSION, OLD_ARITHMETIC_EXPANSION),
     create_token_set_(BLOCK, CASE_COMMAND, COMMAND, COMMAND_SUBSTITUTION_COMMAND,
       CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND, FUNCTION_DEF,
-      GENERIC_COMMAND, IF_COMMAND, INCLUDE_COMMAND, PIPELINE_COMMAND,
-      SELECT_COMMAND, SHELL_COMMAND, SIMPLE_COMMAND, SUBSHELL_COMMAND,
-      TRAP_COMMAND, UNTIL_COMMAND, WHILE_COMMAND),
+      GENERIC_COMMAND_DIRECTIVE, IF_COMMAND, INCLUDE_COMMAND, INCLUDE_DIRECTIVE,
+      PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND, SIMPLE_COMMAND,
+      SUBSHELL_COMMAND, TRAP_COMMAND, UNTIL_COMMAND, WHILE_COMMAND),
     create_token_set_(ADD_EXPRESSION, ARRAY_EXPRESSION, ASSIGNMENT_EXPRESSION, BITWISE_AND_EXPRESSION,
       BITWISE_EXCLUSIVE_OR_EXPRESSION, BITWISE_OR_EXPRESSION, BITWISE_SHIFT_EXPRESSION, COMMA_EXPRESSION,
       COMPARISON_EXPRESSION, CONDITIONAL_EXPRESSION, EQUALITY_EXPRESSION, EXPRESSION,
@@ -1189,10 +1192,10 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // simple_command_element_inner
-  public static boolean generic_command(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "generic_command")) return false;
+  public static boolean generic_command_directive(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "generic_command_directive")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, GENERIC_COMMAND, "<generic command>");
+    Marker m = enter_section_(b, l, _COLLAPSE_, GENERIC_COMMAND_DIRECTIVE, "<generic command directive>");
     r = simple_command_element_inner(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -1328,58 +1331,69 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // &('source' | '.') word (simple_command_element | <<keywordsRemapped>>)*
+  // include_directive (simple_command_element | <<keywordsRemapped>>)*
   public static boolean include_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "include_command")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _COLLAPSE_, INCLUDE_COMMAND, "<include command>");
-    r = include_command_0(b, l + 1);
+    r = include_directive(b, l + 1);
     p = r; // pin = 1
-    r = r && report_error_(b, consumeToken(b, WORD));
-    r = p && include_command_2(b, l + 1) && r;
+    r = r && include_command_1(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // &('source' | '.')
-  private static boolean include_command_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "include_command_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _AND_);
-    r = include_command_0_0(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // 'source' | '.'
-  private static boolean include_command_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "include_command_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, "source");
-    if (!r) r = consumeToken(b, ".");
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
   // (simple_command_element | <<keywordsRemapped>>)*
-  private static boolean include_command_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "include_command_2")) return false;
+  private static boolean include_command_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "include_command_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!include_command_2_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "include_command_2", c)) break;
+      if (!include_command_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "include_command_1", c)) break;
     }
     return true;
   }
 
   // simple_command_element | <<keywordsRemapped>>
-  private static boolean include_command_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "include_command_2_0")) return false;
+  private static boolean include_command_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "include_command_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = simple_command_element(b, l + 1);
     if (!r) r = keywordsRemapped(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // &('source' | '.') word
+  public static boolean include_directive(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "include_directive")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, INCLUDE_DIRECTIVE, "<include directive>");
+    r = include_directive_0(b, l + 1);
+    r = r && consumeToken(b, WORD);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // &('source' | '.')
+  private static boolean include_directive_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "include_directive_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = include_directive_0_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // 'source' | '.'
+  private static boolean include_directive_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "include_directive_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, "source");
+    if (!r) r = consumeToken(b, ".");
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2306,12 +2320,12 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // generic_command (simple_command_element | <<keywordsRemapped>>)*
+  // generic_command_directive (simple_command_element | <<keywordsRemapped>>)*
   public static boolean simple_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _COLLAPSE_, SIMPLE_COMMAND, "<simple command>");
-    r = generic_command(b, l + 1);
+    r = generic_command_directive(b, l + 1);
     p = r; // pin = 1
     r = r && simple_command_1(b, l + 1);
     exit_section_(b, l, m, r, p, null);

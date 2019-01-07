@@ -5,12 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashIncludeCommand extends BashCommand {
+public interface BashIncludeDirective extends BashGenericCommandDirective {
 
   @NotNull
-  BashIncludeDirective getIncludeDirective();
-
-  @NotNull
-  List<BashSimpleCommandElement> getSimpleCommandElementList();
+  PsiElement getWord();
 
 }
