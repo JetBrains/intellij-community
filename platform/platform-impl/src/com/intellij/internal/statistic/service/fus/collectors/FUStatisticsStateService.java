@@ -21,6 +21,7 @@ public class FUStatisticsStateService implements UsagesCollectorConsumer {
 
   public static void clearLegacyCaches() {
     FUStatisticsPersistence.clearLegacyStates();
+    LegacyApplicationUsageTriggers.cleanup();
   }
 
   // some FeatureUsagesCollector can implement markup interface FUStatisticsDifferenceSender.
