@@ -1,9 +1,6 @@
 package com.intellij.bash;
 
-import com.intellij.bash.psi.BashHeredoc;
-import com.intellij.bash.psi.BashSimpleCommandElement;
-import com.intellij.bash.psi.BashString;
-import com.intellij.bash.psi.BashVariable;
+import com.intellij.bash.psi.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -26,6 +23,9 @@ public class BashAnnotator implements Annotator {
     }
     else if (o instanceof BashHeredoc) {
       annotateHeredoc((BashHeredoc) o, holder);
+    }
+    else if (o instanceof BashGenericCommandDirective) {
+      mark(o, holder, EXTERNAL_COMMAND);
     }
 
     ASTNode node = o.getNode();

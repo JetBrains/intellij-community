@@ -1,5 +1,10 @@
 <?xml version='1.0'?>
 <list>
+    <option name="BASH.EXTERNAL_COMMAND">
+        <value>
+            <option name="FOREGROUND" value="0073bf"/>
+        </value>
+    </option>
     <option name="BASH.FUNCTION_CALL">
         <value>
             <option name="FOREGROUND" value="c57633"/>
