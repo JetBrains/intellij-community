@@ -212,6 +212,8 @@
 
     <projectService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.LegacyApplicationUsageTriggers"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.LegacyApplicationUsageTriggers$LegacyUsageTrigger"/>
 
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector"/>
