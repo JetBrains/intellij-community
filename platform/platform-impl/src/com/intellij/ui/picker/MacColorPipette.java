@@ -193,7 +193,8 @@ public class MacColorPipette extends ColorPipetteBase {
   }
 
   @Nullable
-  static BufferedImage captureScreen(@Nullable Window belowWindow, @NotNull Rectangle rect) {
+  // Android Studio: Make this function public temporarily. Bug: b/122454785
+  public static BufferedImage captureScreen(@Nullable Window belowWindow, @NotNull Rectangle rect) {
     ID pool = Foundation.invoke("NSAutoreleasePool", "new");
     try {
       ID windowId = belowWindow != null ? MacUtil.findWindowFromJavaWindow(belowWindow) : null;
