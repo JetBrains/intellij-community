@@ -1,12 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.ProjectTopics;
 import com.intellij.application.options.PathMacrosCollector;
-import com.intellij.configurationStore.StateStorageBase;
-import com.intellij.configurationStore.StateStorageManager;
-import com.intellij.configurationStore.StateStorageManagerKt;
-import com.intellij.configurationStore.StorageUtilKt;
+import com.intellij.configurationStore.*;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;

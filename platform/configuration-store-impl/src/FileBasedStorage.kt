@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.notification.Notification
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.debugOrInfoIfTestMode
@@ -269,7 +268,7 @@ private fun doWrite(requestor: Any, file: VirtualFile, dataWriterOrByteArray: An
       is DataWriter -> dataWriterOrByteArray.toBufferExposingByteArray(lineSeparator)
       else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
     }
-    throw ReadOnlyModificationException(file, object : StateStorage.SaveSession {
+    throw ReadOnlyModificationException(file, object : SaveSession {
       override fun save() {
         doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
       }
@@ -318,7 +317,7 @@ private fun deleteFile(file: Path, requestor: Any, virtualFile: VirtualFile?) {
       deleteFile(requestor, virtualFile)
     }
     else {
-      throw ReadOnlyModificationException(virtualFile, object : StateStorage.SaveSession {
+      throw ReadOnlyModificationException(virtualFile, object : SaveSession {
         override fun save() {
           deleteFile(requestor, virtualFile)
         }
@@ -331,4 +330,4 @@ internal fun deleteFile(requestor: Any, virtualFile: VirtualFile) {
   runUndoTransparentWriteAction { virtualFile.delete(requestor) }
 }
 
-internal class ReadOnlyModificationException(val file: VirtualFile, val session: StateStorage.SaveSession?) : RuntimeException("File is read-only: $file")
+internal class ReadOnlyModificationException(val file: VirtualFile, val session: SaveSession?) : RuntimeException("File is read-only: $file")

@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.config;
 
+import com.intellij.configurationStore.SaveSession;
+import com.intellij.configurationStore.SaveSessionProducer;
 import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.JDOMUtil;
@@ -29,7 +30,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Set;
 
-final class ClasspathSaveSession implements StateStorage.SaveSessionProducer, StateStorage.SaveSession, SafeWriteRequestor {
+final class ClasspathSaveSession implements SaveSessionProducer, SaveSession, SafeWriteRequestor {
   private final Map<String, Element> modifiedContent = new THashMap<>();
   private final Set<String> deletedContent = new THashSet<>();
 
@@ -86,7 +87,7 @@ final class ClasspathSaveSession implements StateStorage.SaveSessionProducer, St
 
   @Nullable
   @Override
-  public StateStorage.SaveSession createSaveSession() {
+  public SaveSession createSaveSession() {
     return modifiedContent.isEmpty() && deletedContent.isEmpty() ? null : this;
   }
 

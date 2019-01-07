@@ -4,7 +4,6 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -85,9 +84,9 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     storageDataRef.set(loadState(element))
   }
 
-  override fun createSaveSessionProducer(): StateStorage.SaveSessionProducer? = if (checkIsSavingDisabled()) null else createSaveSession(getStorageData())
+  override fun createSaveSessionProducer() = if (checkIsSavingDisabled()) null else createSaveSession(getStorageData())
 
-  protected abstract fun createSaveSession(states: StateMap): StateStorage.SaveSessionProducer
+  protected abstract fun createSaveSession(states: StateMap): SaveSessionProducer
 
   override fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<in String>) {
     val oldData = storageDataRef.get()

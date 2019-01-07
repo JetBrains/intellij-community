@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -612,9 +611,9 @@ interface SaveExecutor {
 }
 
 private class SaveSessionProducerManager : SaveExecutor {
-  private val producers = LinkedHashMap<StateStorage, StateStorage.SaveSessionProducer>()
+  private val producers = LinkedHashMap<StateStorage, SaveSessionProducer>()
 
-  fun getProducer(storage: StateStorage): StateStorage.SaveSessionProducer? {
+  fun getProducer(storage: StateStorage): SaveSessionProducer? {
     var producer = producers.get(storage)
     if (producer == null) {
       producer = storage.createSaveSessionProducer() ?: return null
@@ -630,8 +629,7 @@ private class SaveSessionProducerManager : SaveExecutor {
 
     var changed = false
     for (session in producers.values) {
-      val saveSession = session.createSaveSession() ?: continue
-      executeSave(saveSession, readonlyFiles, errors)
+      executeSave(session.createSaveSession() ?: continue, readonlyFiles, errors)
       changed = true
     }
     return changed
