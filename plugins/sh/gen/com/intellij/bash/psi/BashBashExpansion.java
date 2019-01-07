@@ -7,4 +7,13 @@ import com.intellij.psi.PsiElement;
 
 public interface BashBashExpansion extends BashCompositeElement {
 
+  @NotNull
+  List<BashBashExpansion> getBashExpansionList();
+
+  @NotNull
+  PsiElement getLeftCurly();
+
+  @NotNull
+  PsiElement getRightCurly();
+
 }

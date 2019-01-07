@@ -32,6 +32,12 @@ public class BashForCommandImpl extends BashCommandImpl implements BashForComman
   }
 
   @Override
+  @NotNull
+  public List<BashBashExpansion> getBashExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashBashExpansion.class);
+  }
+
+  @Override
   @Nullable
   public BashBlock getBlock() {
     return findChildByClass(BashBlock.class);

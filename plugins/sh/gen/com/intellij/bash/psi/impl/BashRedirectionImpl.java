@@ -33,6 +33,12 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
 
   @Override
   @Nullable
+  public BashBashExpansion getBashExpansion() {
+    return findChildByClass(BashBashExpansion.class);
+  }
+
+  @Override
+  @Nullable
   public BashCommand getCommand() {
     return findChildByClass(BashCommand.class);
   }

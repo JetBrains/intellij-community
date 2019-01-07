@@ -11,6 +11,9 @@ public interface BashRedirection extends BashCompositeElement {
   BashArithmeticExpansion getArithmeticExpansion();
 
   @Nullable
+  BashBashExpansion getBashExpansion();
+
+  @Nullable
   BashCommand getCommand();
 
   @Nullable

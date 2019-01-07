@@ -375,10 +375,37 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // '{' (word | bash_expansion)* '}'
   public static boolean bash_expansion(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "bash_expansion")) return false;
+    if (!nextTokenIs(b, LEFT_CURLY)) return false;
+    boolean r;
     Marker m = enter_section_(b);
-    exit_section_(b, m, BASH_EXPANSION, true);
+    r = consumeToken(b, LEFT_CURLY);
+    r = r && bash_expansion_1(b, l + 1);
+    r = r && consumeToken(b, RIGHT_CURLY);
+    exit_section_(b, m, BASH_EXPANSION, r);
+    return r;
+  }
+
+  // (word | bash_expansion)*
+  private static boolean bash_expansion_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "bash_expansion_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!bash_expansion_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "bash_expansion_1", c)) break;
+    }
     return true;
+  }
+
+  // word | bash_expansion
+  private static boolean bash_expansion_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "bash_expansion_1_0")) return false;
+    boolean r;
+    r = consumeToken(b, WORD);
+    if (!r) r = bash_expansion(b, l + 1);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2582,7 +2609,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | '@' | '!' | vars | string | num | FILEDESCRIPTOR
+  // word | '@' | '!' | vars | string | num | bash_expansion | FILEDESCRIPTOR
   static boolean w(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "w")) return false;
     boolean r;
@@ -2593,6 +2620,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = vars(b, l + 1);
     if (!r) r = string(b, l + 1);
     if (!r) r = num(b, l + 1);
+    if (!r) r = bash_expansion(b, l + 1);
     if (!r) r = consumeToken(b, FILEDESCRIPTOR);
     exit_section_(b, m, null, r);
     return r;

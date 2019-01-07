@@ -25,4 +25,22 @@ public class BashBashExpansionImpl extends BashCompositeElementImpl implements B
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public List<BashBashExpansion> getBashExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashBashExpansion.class);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getLeftCurly() {
+    return findNotNullChildByType(LEFT_CURLY);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getRightCurly() {
+    return findNotNullChildByType(RIGHT_CURLY);
+  }
+
 }

@@ -10,6 +10,9 @@ public interface BashCaseCommand extends BashCommand {
   @Nullable
   BashArithmeticExpansion getArithmeticExpansion();
 
+  @Nullable
+  BashBashExpansion getBashExpansion();
+
   @NotNull
   List<BashCaseClause> getCaseClauseList();
 

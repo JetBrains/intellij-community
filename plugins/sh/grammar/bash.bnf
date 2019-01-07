@@ -93,7 +93,7 @@ private file ::=
 private newlines ::= '\n'*
 private simple_list ::= (commands_list ['&' | ';' | newlines])*
 private word_list ::= w+
-private w ::= word | '@' | '!' | vars | string | num | FILEDESCRIPTOR
+private w ::= word | '@' | '!' | vars | string | num | bash_expansion | FILEDESCRIPTOR
 
 redirection ::=    '>' w
                 |  '<' w
@@ -137,7 +137,7 @@ private composed_var ::= '$' (arithmetic_expansion | old_arithmetic_expansion | 
 private command_substitution ::= subshell_command // todo: rethink naming with command_substitution_command
 shell_parameter_expansion ::= '{' (param_body | '[' param_body ']')*'}' {pin=1} // todo: simplify lexer for parameters
 private param_body ::= literal | <<paramExpansionOp>>
-bash_expansion ::=
+bash_expansion ::= '{' (word | bash_expansion)* '}'
 
 command_substitution_command ::= !<<isModeOn "BACKQUOTE">> '`' <<withOn "BACKQUOTE" list?>> '`' {pin=2}
 

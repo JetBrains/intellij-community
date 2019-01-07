@@ -39,6 +39,12 @@ public class BashSimpleCommandElementImpl extends BashCompositeElementImpl imple
 
   @Override
   @Nullable
+  public BashBashExpansion getBashExpansion() {
+    return findChildByClass(BashBashExpansion.class);
+  }
+
+  @Override
+  @Nullable
   public BashCommand getCommand() {
     return findChildByClass(BashCommand.class);
   }

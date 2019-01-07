@@ -32,6 +32,12 @@ public class BashCaseCommandImpl extends BashCommandImpl implements BashCaseComm
   }
 
   @Override
+  @Nullable
+  public BashBashExpansion getBashExpansion() {
+    return findChildByClass(BashBashExpansion.class);
+  }
+
+  @Override
   @NotNull
   public List<BashCaseClause> getCaseClauseList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCaseClause.class);

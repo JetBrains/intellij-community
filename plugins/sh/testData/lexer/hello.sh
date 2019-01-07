@@ -31,3 +31,7 @@ done
 
 echo \(analyzed $(wc -l < $stats) netstat log entries for calculations\)
 exit 0
+
+echo {ex,edit}
+echo {{}}
+chown root /usr/{ucb/{ex,edit},lib/{ex?.?*,how_ex}}

@@ -33,6 +33,12 @@ public class BashSelectCommandImpl extends BashCommandImpl implements BashSelect
 
   @Override
   @NotNull
+  public List<BashBashExpansion> getBashExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashBashExpansion.class);
+  }
+
+  @Override
+  @NotNull
   public List<BashCommand> getCommandList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCommand.class);
   }

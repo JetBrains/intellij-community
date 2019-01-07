@@ -10,6 +10,9 @@ public interface BashForCommand extends BashCommand {
   @NotNull
   List<BashArithmeticExpansion> getArithmeticExpansionList();
 
+  @NotNull
+  List<BashBashExpansion> getBashExpansionList();
+
   @Nullable
   BashBlock getBlock();
 

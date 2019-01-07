@@ -64,6 +64,11 @@ echo \(analyzed $(wc -l < $stats) netstat log entries for calculations\)
 echo analyzed for calculations
 echo analyzed for done do while calculations
 
+echo {ex,edit}
+echo {{}}
+find "$DIR" -name "*~" -exec rm -f {} \;
+chown root /usr/{ucb/{ex,edit},lib/{ex?.?*,how_ex}}
+
 # init
 file="current_line.txt"
 let count=0

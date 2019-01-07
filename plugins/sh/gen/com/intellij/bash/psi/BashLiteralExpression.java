@@ -11,6 +11,9 @@ public interface BashLiteralExpression extends BashExpression {
   BashArithmeticExpansion getArithmeticExpansion();
 
   @Nullable
+  BashBashExpansion getBashExpansion();
+
+  @Nullable
   BashCommand getCommand();
 
   @Nullable

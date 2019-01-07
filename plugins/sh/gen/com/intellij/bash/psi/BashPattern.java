@@ -11,6 +11,9 @@ public interface BashPattern extends BashCompositeElement {
   List<BashArithmeticExpansion> getArithmeticExpansionList();
 
   @NotNull
+  List<BashBashExpansion> getBashExpansionList();
+
+  @NotNull
   List<BashCommand> getCommandList();
 
   @NotNull

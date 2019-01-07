@@ -11,6 +11,9 @@ public interface BashSelectCommand extends BashCommand {
   List<BashArithmeticExpansion> getArithmeticExpansionList();
 
   @NotNull
+  List<BashBashExpansion> getBashExpansionList();
+
+  @NotNull
   List<BashCommand> getCommandList();
 
   @Nullable
