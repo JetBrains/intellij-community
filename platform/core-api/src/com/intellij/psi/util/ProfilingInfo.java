@@ -17,8 +17,10 @@ public class ProfilingInfo {
     myOrigin = origin;
   }
 
-  public void valueDisposed() {
-    myDisposedTimeStamp = currentTime();
+  public synchronized void valueDisposed() {
+    if (myDisposedTimeStamp != 0) {
+      myDisposedTimeStamp = currentTime();
+    }
   }
 
   public void valueUsed() {

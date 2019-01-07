@@ -52,7 +52,7 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
     CachedValue<T> value = dataHolder.getUserData(key);
     if (value instanceof CachedValueBase && ((CachedValueBase)value).isFromMyProject(myProject)) {
       //noinspection unchecked
-      CachedValueBase.Data<T> data = ((CachedValueBase<T>)value).getUpToDateOrNull(false);
+      CachedValueBase.Data<T> data = ((CachedValueBase<T>)value).getUpToDateOrNull();
       if (data != null) {
         return data.getValue();
       }

@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.CachedValueProfiler;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ProfilingInfo;
@@ -99,19 +101,16 @@ public abstract class CachedValueBase<T> {
   }
 
   public boolean hasUpToDateValue() {
-    return getUpToDateOrNull(false) != null;
+    return getUpToDateOrNull() != null;
   }
 
   @Nullable
-  final Data<T> getUpToDateOrNull(boolean dispose) {
+  final Data<T> getUpToDateOrNull() {
     Data<T> data = getRawData();
 
     if (data != null) {
       if (isUpToDate(data)) {
         return data;
-      }
-      if (dispose && data.myValue instanceof Disposable && compareAndClearData(data)) {
-        Disposer.dispose((Disposable)data.myValue);
       }
       if (data instanceof ProfilingData) {
         ((ProfilingData<T>)data).myProfilingInfo.valueDisposed();
@@ -196,7 +195,7 @@ public abstract class CachedValueBase<T> {
 
   public abstract boolean isFromMyProject(Project project);
 
-  protected static class Data<T> implements Disposable {
+  protected static class Data<T> {
     private final T myValue;
     private final Object[] myDependencies;
     private final long[] myTimeStamps;
@@ -205,13 +204,6 @@ public abstract class CachedValueBase<T> {
       myValue = value;
       myDependencies = dependencies;
       myTimeStamps = timeStamps;
-    }
-
-    @Override
-    public void dispose() {
-      if (myValue instanceof Disposable) {
-        Disposer.dispose((Disposable)myValue);
-      }
     }
 
     public T getValue() {
@@ -239,7 +231,7 @@ public abstract class CachedValueBase<T> {
 
   @Nullable
   protected <P> T getValueWithLock(P param) {
-    Data<T> data = getUpToDateOrNull(true);
+    Data<T> data = getUpToDateOrNull();
     if (data != null) {
       return data.getValue();
     }
