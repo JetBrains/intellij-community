@@ -135,7 +135,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     beforeSaveComponents(errors, readonlyFiles)
 
-    val saveSessionProducerManager = if (components.isEmpty()) null else SaveSessionProducerManager()
+    val saveSessionProducerManager = if (components.isEmpty()) null else createSaveSessionProducerManager()
     if (saveSessionProducerManager != null) {
       saveComponents(isForce, saveSessionProducerManager, errors)
     }
@@ -148,7 +148,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     if (saveSessionProducerManager != null) {
-      doSave(saveSessionProducerManager, readonlyFiles, errors)
+      saveSessionProducerManager.save(readonlyFiles, errors)
     }
 
     CompoundRuntimeException.throwIfNotEmpty(errors)
@@ -224,7 +224,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   override fun saveApplicationComponent(component: PersistentStateComponent<*>) {
     val stateSpec = StoreUtil.getStateSpec(component)
     LOG.info("saveApplicationComponent is called for ${stateSpec.name}")
-    val externalizationSession = SaveSessionProducerManager()
+    val externalizationSession = createSaveSessionProducerManager()
     commitComponent(externalizationSession, ComponentInfoImpl(component, stateSpec), null)
     val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(stateSpec.storages).path)).toAbsolutePath().toString()
     runUndoTransparentWriteAction {
@@ -243,6 +243,8 @@ abstract class ComponentStoreImpl : IComponentStore {
       CompoundRuntimeException.throwIfNotEmpty(errors)
     }
   }
+
+  internal open fun createSaveSessionProducerManager() = SaveSessionProducerManager()
 
   private fun commitComponent(session: SaveSessionProducerManager, info: ComponentInfo, componentName: String?) {
     val component = info.component
@@ -278,10 +280,6 @@ abstract class ComponentStoreImpl : IComponentStore {
 
       session.getProducer(storage)?.setState(component, effectiveComponentName, if (storageSpec.deprecated || resolution == Resolution.CLEAR) null else state)
     }
-  }
-
-  protected open fun doSave(saveSession: SaveExecutor, readonlyFiles: MutableList<SaveSessionAndFile> = arrayListOf(), errors: MutableList<Throwable>) {
-    saveSession.save(readonlyFiles, errors)
   }
 
   private fun initJdomExternalizable(@Suppress("DEPRECATION") component: JDOMExternalizable, componentName: String): String? {
@@ -601,37 +599,4 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
     LOG.debug("Reporting unknown path macros $macros in component $componentName")
     doNotify(macros, project, Collections.singletonMap(substitutor, store))
   }, project.disposed)
-}
-
-interface SaveExecutor {
-  /**
-   * @return was something really saved
-   */
-  fun save(readonlyFiles: MutableList<SaveSessionAndFile> = SmartList(), errors: MutableList<Throwable>): Boolean
-}
-
-private class SaveSessionProducerManager : SaveExecutor {
-  private val producers = LinkedHashMap<StateStorage, SaveSessionProducer>()
-
-  fun getProducer(storage: StateStorage): SaveSessionProducer? {
-    var producer = producers.get(storage)
-    if (producer == null) {
-      producer = storage.createSaveSessionProducer() ?: return null
-      producers.put(storage, producer)
-    }
-    return producer
-  }
-
-  override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>): Boolean {
-    if (producers.isEmpty()) {
-      return false
-    }
-
-    var changed = false
-    for (session in producers.values) {
-      executeSave(session.createSaveSession() ?: continue, readonlyFiles, errors)
-      changed = true
-    }
-    return changed
-  }
 }

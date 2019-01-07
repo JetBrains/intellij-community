@@ -887,7 +887,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   public static class UnableToSaveProjectNotification extends Notification {
     private Project myProject;
-    public List<VirtualFile> myFiles;
+
+    private List<VirtualFile> myFiles;
+
+    public void setFiles(@NotNull List<VirtualFile> files) {
+      myFiles = files;
+    }
 
     public UnableToSaveProjectNotification(@NotNull final Project project, @NotNull List<VirtualFile> readOnlyFiles) {
       super("Project Settings", "Could not save project", "Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +

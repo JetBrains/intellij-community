@@ -3,8 +3,6 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
-import com.intellij.notification.Notifications
-import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runReadAction
@@ -20,7 +18,6 @@ import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ex.ProjectNameProvider
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
 import com.intellij.openapi.project.impl.ProjectStoreClassProvider
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -33,9 +30,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.containers.computeIfAny
 import com.intellij.util.containers.isNullOrEmpty
-import com.intellij.util.containers.mapSmart
 import com.intellij.util.io.*
-import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.text.nullize
 import java.nio.file.AccessDeniedException
 import java.nio.file.Path
@@ -333,51 +328,8 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
     super.beforeSaveComponents(errors, readonlyFiles)
   }
 
-  override fun doSave(saveSession: SaveExecutor, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
-    super.doSave(saveSession, readonlyFiles, errors)
-
-    val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
-    if (readonlyFiles.isEmpty()) {
-      notifications.forEach { it.expire() }
-      return
-    }
-
-    if (!notifications.isEmpty()) {
-      throw IComponentStore.SaveCancelledException()
-    }
-
-    val status = runReadAction { ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(getFilesList(readonlyFiles)) }
-    if (status.hasReadonlyFiles()) {
-      dropUnableToSaveProjectNotification(project, status.readonlyFiles.toList())
-      throw IComponentStore.SaveCancelledException()
-    }
-
-    val oldList = readonlyFiles.toTypedArray()
-    readonlyFiles.clear()
-    for (entry in oldList) {
-      executeSave(entry.session, readonlyFiles, errors)
-    }
-
-    CompoundRuntimeException.throwIfNotEmpty(errors)
-
-    if (!readonlyFiles.isEmpty()) {
-      dropUnableToSaveProjectNotification(project, getFilesList(readonlyFiles))
-      throw IComponentStore.SaveCancelledException()
-    }
-  }
+  final override fun createSaveSessionProducerManager() = ProjectSaveSessionProducerManager(project)
 }
-
-private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles: List<VirtualFile>) {
-  val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
-  if (notifications.isEmpty()) {
-    Notifications.Bus.notify(UnableToSaveProjectNotification(project, readOnlyFiles), project)
-  }
-  else {
-    notifications[0].myFiles = readOnlyFiles
-  }
-}
-
-private fun getFilesList(readonlyFiles: List<SaveSessionAndFile>) = readonlyFiles.mapSmart { it.file }
 
 private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
   override fun beforeSaveComponents(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>) {
