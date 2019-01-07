@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
@@ -116,7 +116,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
     private val newLiveStates = THashMap<String, Element>()
 
-    override fun createSaveSession(): XmlElementStorageSaveSession<T>? = if (copiedStates == null || storage.checkIsSavingDisabled()) null else this
+    override fun createSaveSession() = if (copiedStates == null || storage.checkIsSavingDisabled()) null else this
 
     override fun setSerializedState(componentName: String, element: Element?) {
       val normalized = element?.normalizeRootName()

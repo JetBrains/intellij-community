@@ -283,7 +283,6 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   protected open fun doSave(saveSession: SaveExecutor, readonlyFiles: MutableList<SaveSessionAndFile> = arrayListOf(), errors: MutableList<Throwable>) {
     saveSession.save(readonlyFiles, errors)
-    return
   }
 
   private fun initJdomExternalizable(@Suppress("DEPRECATION") component: JDOMExternalizable, componentName: String): String? {

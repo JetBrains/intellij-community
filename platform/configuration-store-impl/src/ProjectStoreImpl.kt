@@ -338,9 +338,7 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
 
     val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
     if (readonlyFiles.isEmpty()) {
-      for (notification in notifications) {
-        notification.expire()
-      }
+      notifications.forEach { it.expire() }
       return
     }
 
