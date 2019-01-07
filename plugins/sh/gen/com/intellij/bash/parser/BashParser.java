@@ -567,9 +567,9 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // shell_command redirection_list? 
-  //           | include_command 
-  //           | assignment_command 
+  // shell_command redirection_list?
+  //           | include_command
+  //           | assignment_command
   //           | simple_command
   public static boolean command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "command")) return false;
@@ -1792,327 +1792,21 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '>' w
-  //                 |  '<' w
-  //                 |  num '>' w
-  //                 |  num '<' w
-  //                 |  '>>' w
-  //                 |  num '>>' w
-  //                 |  '<<' w
-  //                 |  '<<<' w
-  //                 |  num '<<' w
-  //                 |  num '<<<' w
-  //                 |  '<&' num
-  //                 |  num '<&' num
-  //                 |  '>&' num
-  //                 |  num '>&' num
-  //                 |  '<&' w
-  //                 |  num '<&' w
-  //                 |  '>&' w
-  //                 |  num '>&' w
-  //                 |  '<<-' w
-  //                 |  num '<<-' w
-  //                 |  '>&' '-'
-  //                 |  num '>&' '-'
-  //                 |  '<&' '-'
-  //                 |  num '<&' '-'
-  //                 |  '&>' w
-  //                 |  num '<>' w
-  //                 |  '<>' w
-  //                 |  '>|' w
-  //                 |  num '>|' w
+  // redirection_inner | '&>' w |  num redirection_inner
   public static boolean redirection(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, REDIRECTION, "<redirection>");
-    r = redirection_0(b, l + 1);
+    r = redirection_inner(b, l + 1);
     if (!r) r = redirection_1(b, l + 1);
     if (!r) r = redirection_2(b, l + 1);
-    if (!r) r = redirection_3(b, l + 1);
-    if (!r) r = redirection_4(b, l + 1);
-    if (!r) r = redirection_5(b, l + 1);
-    if (!r) r = redirection_6(b, l + 1);
-    if (!r) r = redirection_7(b, l + 1);
-    if (!r) r = redirection_8(b, l + 1);
-    if (!r) r = redirection_9(b, l + 1);
-    if (!r) r = redirection_10(b, l + 1);
-    if (!r) r = redirection_11(b, l + 1);
-    if (!r) r = redirection_12(b, l + 1);
-    if (!r) r = redirection_13(b, l + 1);
-    if (!r) r = redirection_14(b, l + 1);
-    if (!r) r = redirection_15(b, l + 1);
-    if (!r) r = redirection_16(b, l + 1);
-    if (!r) r = redirection_17(b, l + 1);
-    if (!r) r = redirection_18(b, l + 1);
-    if (!r) r = redirection_19(b, l + 1);
-    if (!r) r = parseTokens(b, 0, REDIRECT_GREATER_AMP, ARITH_MINUS);
-    if (!r) r = redirection_21(b, l + 1);
-    if (!r) r = parseTokens(b, 0, REDIRECT_LESS_AMP, ARITH_MINUS);
-    if (!r) r = redirection_23(b, l + 1);
-    if (!r) r = redirection_24(b, l + 1);
-    if (!r) r = redirection_25(b, l + 1);
-    if (!r) r = redirection_26(b, l + 1);
-    if (!r) r = redirection_27(b, l + 1);
-    if (!r) r = redirection_28(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // '>' w
-  private static boolean redirection_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, GT);
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '<' w
+  // '&>' w
   private static boolean redirection_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LT);
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // num '>' w
-  private static boolean redirection_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = num(b, l + 1);
-    r = r && consumeToken(b, GT);
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // num '<' w
-  private static boolean redirection_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_3")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = num(b, l + 1);
-    r = r && consumeToken(b, LT);
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '>>' w
-  private static boolean redirection_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_4")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, SHIFT_RIGHT);
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // num '>>' w
-  private static boolean redirection_5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_5")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = num(b, l + 1);
-    r = r && consumeToken(b, SHIFT_RIGHT);
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '<<' w
-  private static boolean redirection_6(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_6")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, SHIFT_LEFT);
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '<<<' w
-  private static boolean redirection_7(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_7")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, REDIRECT_HERE_STRING);
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // num '<<' w
-  private static boolean redirection_8(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_8")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = num(b, l + 1);
-    r = r && consumeToken(b, SHIFT_LEFT);
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // num '<<<' w
-  private static boolean redirection_9(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_9")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = num(b, l + 1);
-    r = r && consumeToken(b, REDIRECT_HERE_STRING);
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '<&' num
-  private static boolean redirection_10(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_10")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, REDIRECT_LESS_AMP);
-    r = r && num(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // num '<&' num
-  private static boolean redirection_11(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_11")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = num(b, l + 1);
-    r = r && consumeToken(b, REDIRECT_LESS_AMP);
-    r = r && num(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '>&' num
-  private static boolean redirection_12(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_12")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, REDIRECT_GREATER_AMP);
-    r = r && num(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // num '>&' num
-  private static boolean redirection_13(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_13")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = num(b, l + 1);
-    r = r && consumeToken(b, REDIRECT_GREATER_AMP);
-    r = r && num(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '<&' w
-  private static boolean redirection_14(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_14")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, REDIRECT_LESS_AMP);
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // num '<&' w
-  private static boolean redirection_15(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_15")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = num(b, l + 1);
-    r = r && consumeToken(b, REDIRECT_LESS_AMP);
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '>&' w
-  private static boolean redirection_16(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_16")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, REDIRECT_GREATER_AMP);
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // num '>&' w
-  private static boolean redirection_17(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_17")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = num(b, l + 1);
-    r = r && consumeToken(b, REDIRECT_GREATER_AMP);
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '<<-' w
-  private static boolean redirection_18(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_18")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, "<<-");
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // num '<<-' w
-  private static boolean redirection_19(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_19")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = num(b, l + 1);
-    r = r && consumeToken(b, "<<-");
-    r = r && w(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // num '>&' '-'
-  private static boolean redirection_21(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_21")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = num(b, l + 1);
-    r = r && consumeTokens(b, 0, REDIRECT_GREATER_AMP, ARITH_MINUS);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // num '<&' '-'
-  private static boolean redirection_23(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_23")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = num(b, l + 1);
-    r = r && consumeTokens(b, 0, REDIRECT_LESS_AMP, ARITH_MINUS);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '&>' w
-  private static boolean redirection_24(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_24")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, "&>");
@@ -2121,48 +1815,89 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // num '<>' w
-  private static boolean redirection_25(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_25")) return false;
+  // num redirection_inner
+  private static boolean redirection_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "redirection_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = num(b, l + 1);
-    r = r && consumeToken(b, REDIRECT_LESS_GREATER);
-    r = r && w(b, l + 1);
+    r = r && redirection_inner(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // '<>' w
-  private static boolean redirection_26(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_26")) return false;
+  /* ********************************************************** */
+  // ('<&' | '>&') (num | '-') 
+  //                             | ('>' | '<' | '>>' | '<<' | '<<<' | '<&' | '>&' | '<<-' | '<>' | '>|') w
+  static boolean redirection_inner(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "redirection_inner")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, REDIRECT_LESS_GREATER);
-    r = r && w(b, l + 1);
+    r = redirection_inner_0(b, l + 1);
+    if (!r) r = redirection_inner_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // '>|' w
-  private static boolean redirection_27(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_27")) return false;
+  // ('<&' | '>&') (num | '-')
+  private static boolean redirection_inner_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "redirection_inner_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, REDIRECT_GREATER_BAR);
-    r = r && w(b, l + 1);
+    r = redirection_inner_0_0(b, l + 1);
+    r = r && redirection_inner_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // num '>|' w
-  private static boolean redirection_28(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_28")) return false;
+  // '<&' | '>&'
+  private static boolean redirection_inner_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "redirection_inner_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, REDIRECT_LESS_AMP);
+    if (!r) r = consumeToken(b, REDIRECT_GREATER_AMP);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // num | '-'
+  private static boolean redirection_inner_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "redirection_inner_0_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = num(b, l + 1);
-    r = r && consumeToken(b, REDIRECT_GREATER_BAR);
+    if (!r) r = consumeToken(b, ARITH_MINUS);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // ('>' | '<' | '>>' | '<<' | '<<<' | '<&' | '>&' | '<<-' | '<>' | '>|') w
+  private static boolean redirection_inner_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "redirection_inner_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = redirection_inner_1_0(b, l + 1);
     r = r && w(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '>' | '<' | '>>' | '<<' | '<<<' | '<&' | '>&' | '<<-' | '<>' | '>|'
+  private static boolean redirection_inner_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "redirection_inner_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, GT);
+    if (!r) r = consumeToken(b, LT);
+    if (!r) r = consumeToken(b, SHIFT_RIGHT);
+    if (!r) r = consumeToken(b, SHIFT_LEFT);
+    if (!r) r = consumeToken(b, REDIRECT_HERE_STRING);
+    if (!r) r = consumeToken(b, REDIRECT_LESS_AMP);
+    if (!r) r = consumeToken(b, REDIRECT_GREATER_AMP);
+    if (!r) r = consumeToken(b, "<<-");
+    if (!r) r = consumeToken(b, REDIRECT_LESS_GREATER);
+    if (!r) r = consumeToken(b, REDIRECT_GREATER_BAR);
     exit_section_(b, m, null, r);
     return r;
   }

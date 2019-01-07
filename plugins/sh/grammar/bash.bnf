@@ -95,35 +95,9 @@ private simple_list ::= (commands_list ['&' | ';' | newlines])*
 private word_list ::= w+
 private w ::= word | '@' | '!' | vars | string | num | bash_expansion | 'file descriptor'
 
-redirection ::=    '>' w
-                |  '<' w
-                |  num '>' w
-                |  num '<' w
-                |  '>>' w
-                |  num '>>' w
-                |  '<<' w
-                |  '<<<' w
-                |  num '<<' w
-                |  num '<<<' w
-                |  '<&' num
-                |  num '<&' num
-                |  '>&' num
-                |  num '>&' num
-                |  '<&' w
-                |  num '<&' w
-                |  '>&' w
-                |  num '>&' w
-                |  '<<-' w
-                |  num '<<-' w
-                |  '>&' '-'
-                |  num '>&' '-'
-                |  '<&' '-'
-                |  num '<&' '-'
-                |  '&>' w
-                |  num '<>' w
-                |  '<>' w
-                |  '>|' w
-                |  num '>|' w
+redirection ::= redirection_inner | '&>' w | num redirection_inner
+private redirection_inner ::= ('<&' | '>&') (num | '-')
+                            | ('>' | '<' | '>>' | '<<' | '<<<' | '<&' | '>&' | '<<-' | '<>' | '>|') w
 
 private num ::= number | int | hex | octal
 string ::= (string_begin (string_content | vars)* string_end) | STRING2 {

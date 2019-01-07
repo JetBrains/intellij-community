@@ -147,30 +147,6 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
 
   @Override
   @Nullable
-  public PsiElement getHex() {
-    return findChildByType(HEX);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getInt() {
-    return findChildByType(INT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getNumber() {
-    return findChildByType(NUMBER);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getOctal() {
-    return findChildByType(OCTAL);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getWord() {
     return findChildByType(WORD);
   }
