@@ -17,5 +17,6 @@
 
     <psi.referenceContributor implementation="com.intellij.bash.BashUrlReferenceContributor"/>
 
+    <completion.contributor language="Bash" implementationClass="com.intellij.bash.psi.BashCompletionContributor"/>
   </extensions>
 </idea-plugin>
