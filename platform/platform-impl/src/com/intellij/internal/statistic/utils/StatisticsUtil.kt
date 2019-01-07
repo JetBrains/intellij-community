@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.*
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -23,7 +24,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 fun getProjectId(project: Project): String {
-  return project.getProjectCacheFileName().hashCode().toString()
+  return EventLogConfiguration.anonymize(project.getProjectCacheFileName())
 }
 
 fun createData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
