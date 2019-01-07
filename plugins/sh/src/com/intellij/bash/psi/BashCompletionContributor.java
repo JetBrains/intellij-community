@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -26,7 +27,7 @@ public class BashCompletionContributor extends CompletionContributor implements 
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
         for (String keywords : suggestKeywords(parameters.getPosition())) {
-          result.addElement(LookupElementBuilder.create(keywords).bold());
+          result.addElement(LookupElementBuilder.create(keywords).bold().withInsertHandler(AddSpaceInsertHandler.INSTANCE));
         }
       }
     });
@@ -43,8 +44,13 @@ public class BashCompletionContributor extends CompletionContributor implements 
     GeneratedParserUtilBase.CompletionState state = new GeneratedParserUtilBase.CompletionState(completionOffset) {
       @Override
       public String convertItem(Object o) {
-        if (o instanceof IElementType && BashLexer.HUMAN_READABLE_KEYWORDS.contains((IElementType) o)) return o.toString();
-        return null;
+        if (o instanceof IElementType[] && ((IElementType[]) o).length > 0) return kw2str(((IElementType[]) o)[0]);
+        return o instanceof IElementType ? kw2str(((IElementType) o)) : null;
+      }
+
+      @Nullable
+      private String kw2str(IElementType o) {
+        return BashLexer.HUMAN_READABLE_KEYWORDS.contains(o) ? o.toString() : null;
       }
     };
     file.putUserData(GeneratedParserUtilBase.COMPLETION_STATE_KEY, state);
