@@ -23,7 +23,9 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
 import java.util.function.LongBinaryOperator;
@@ -200,6 +202,83 @@ public class LongRangeSetTest {
     assertEquals(point(99), rangeSet.intersect(point(99)));
     assertTrue(rangeSet.intersect(point(100)).isEmpty());
     assertEquals("{0..99, 501..1000}", rangeSet.intersect(indexRange()).toString());
+  }
+
+  @Test
+  public void testUnite() {
+    assertEquals("{1}", point(1).unite(empty()).toString());
+    assertEquals("{1}", empty().unite(point(1)).toString());
+    assertEquals("{1}", point(1).unite(point(1)).toString());
+    assertEquals("{1, 2}", point(2).unite(point(1)).toString());
+    assertEquals("{1, 2}", point(1).unite(point(2)).toString());
+    assertEquals("{1, 3}", point(1).unite(point(3)).toString());
+    assertEquals("{1, 3}", point(3).unite(point(1)).toString());
+    LongRangeSet twoTen = range(2, 10);
+    assertEquals("{0, 2..10}", point(0).unite(twoTen).toString());
+    assertEquals("{1..10}", point(1).unite(twoTen).toString());
+    assertEquals("{2..10}", point(2).unite(twoTen).toString());
+    assertEquals("{2..11}", point(11).unite(twoTen).toString());
+    assertEquals("{2..10, 12}", point(12).unite(twoTen).toString());
+    assertEquals("{2..10, 12}", point(12).unite(twoTen).toString());
+    LongRangeSet set = range(10, 20).unite(range(30, 40)).unite(range(42, 50));
+    assertEquals("{10..20, 30..40, 42..50}", set.toString());
+    assertEquals("{8, 10..20, 30..40, 42..50}", set.unite(point(8)).toString());
+    assertEquals("{9..20, 30..40, 42..50}", set.unite(point(9)).toString());
+    assertEquals("{10..21, 30..40, 42..50}", set.unite(point(21)).toString());
+    assertEquals("{10..20, 22, 30..40, 42..50}", set.unite(point(22)).toString());
+    assertEquals("{10..20, 29..40, 42..50}", set.unite(point(29)).toString());
+    assertEquals("{10..20, 30..50}", set.unite(point(41)).toString());
+    assertEquals("{10..20, 30..40, 42..51}", set.unite(point(51)).toString());
+    assertEquals("{10..20, 30..40, 42..50, 52}", set.unite(point(52)).toString());
+    assertEquals("{10..40}", range(20, 30).unite(range(10, 40)).toString());
+    assertEquals("{10..40}", range(10, 40).unite(range(20, 30)).toString());
+    assertEquals("{10..30}", range(10, 20).unite(range(20, 30)).toString());
+    assertEquals("{10..30}", range(20, 30).unite(range(10, 20)).toString());
+    assertEquals("{10..30}", range(10, 19).unite(range(20, 30)).toString());
+    assertEquals("{10..30}", range(20, 30).unite(range(10, 19)).toString());
+    assertEquals("{10..18, 20..30}", range(20, 30).unite(range(10, 18)).toString());
+    assertEquals("{10..18, 20..30}", range(10, 18).unite(range(20, 30)).toString());
+
+    assertEquals("{-4..8, 10..20, 30..40, 42..50}", range(-4, 8).unite(set).toString());
+    assertEquals("{-4..20, 30..40, 42..50}", range(-4, 9).unite(set).toString());
+    assertEquals("{-4..50}", range(-4, 41).unite(set).toString());
+    assertEquals("{-4..51}", range(-4, 51).unite(set).toString());
+    assertEquals("{10..20, 30..40, 42..60}", range(51, 60).unite(set).toString());
+    assertEquals("{10..20, 30..40, 42..50, 52..60}", range(52, 60).unite(set).toString());
+    assertEquals("{10..20, 30..40, 42..50}", range(12, 14).unite(set).toString());
+    assertEquals("{10..40, 42..50}", range(12, 34).unite(set).toString());
+    assertEquals("{10..50}", range(10, 41).unite(set).toString());
+    assertEquals("{10..50}", range(12, 41).unite(set).toString());
+    assertEquals("{10..50}", range(20, 41).unite(set).toString());
+    assertEquals("{10..50}", range(21, 41).unite(set).toString());
+    assertEquals("{10..20, 22..50}", range(22, 41).unite(set).toString());
+    assertEquals("{10..50}", range(12, 42).unite(set).toString());
+    assertEquals("{10..50}", range(10, 50).unite(set).toString());
+  }
+
+  @Test
+  public void testUniteRandomized() {
+    Random r = new Random(1);
+
+    for (int i = 0; i < 100; i++) {
+      List<LongRangeSet> intervals = new ArrayList<>();
+      for (int j = 0; j < 20; j++) {
+        int from = r.nextInt(100);
+        intervals.add(range(from, from + r.nextInt(25)));
+      }
+      String start = "i=" + i + ":" + intervals;
+      LongRangeSet union = empty();
+      for (LongRangeSet interval : intervals) {
+        union = union.unite(interval);
+      }
+      while (intervals.size() > 1) {
+        LongRangeSet set1 = intervals.remove(r.nextInt(intervals.size()));
+        LongRangeSet set2 = intervals.remove(r.nextInt(intervals.size()));
+        LongRangeSet result = set1.unite(set2);
+        intervals.add(result);
+      }
+      assertEquals(start, union, intervals.get(0));
+    }
   }
 
   @Test

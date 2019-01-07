@@ -77,12 +77,7 @@ public abstract class LongRangeSet {
    * @param other other set to merge with
    * @return a new set
    */
-  public LongRangeSet unite(LongRangeSet other) {
-    if(other.isEmpty() || other == this) return this;
-    if(other.contains(this)) return other;
-    // TODO: optimize
-    return Range.LONG_RANGE.subtract(Range.LONG_RANGE.subtract(this).intersect(Range.LONG_RANGE.subtract(other)));
-  }
+  public abstract LongRangeSet unite(LongRangeSet other);
 
   /**
    * @return a minimal value contained in the set
@@ -264,13 +259,13 @@ public abstract class LongRangeSet {
     if (right.length > 6) {
       right = splitAtZero(new long[]{right[0], right[right.length - 1]});
     }
-    LongRangeSet result = all();
+    LongRangeSet result = empty();
     for (int i = 0; i < left.length; i += 2) {
       for (int j = 0; j < right.length; j += 2) {
-        result = result.subtract(bitwiseAnd(left[i], left[i + 1], right[j], right[j + 1]));
+        result = result.unite(bitwiseAnd(left[i], left[i + 1], right[j], right[j + 1]));
       }
     }
-    return all().subtract(result);
+    return result;
   }
   
   abstract public LongRangeSet mul(LongRangeSet multiplier, boolean isLong);
@@ -880,6 +875,61 @@ public abstract class LongRangeSet {
     }
 
     @Override
+    public LongRangeSet unite(LongRangeSet other) {
+      if (other.isEmpty() || other == this) return this;
+      if (other.contains(myValue)) return other;
+      if (other instanceof Point) {
+        long value1 = Math.min(myValue, ((Point)other).myValue);
+        long value2 = Math.max(myValue, ((Point)other).myValue);
+        return value1 + 1 == value2
+               ? range(value1, value2)
+               : new RangeSet(new long[]{value1, value1, value2, value2});
+      }
+      if (other instanceof Range) {
+        if (myValue < other.min()) {
+          return myValue + 1 == other.min()
+                 ? range(myValue, other.max())
+                 : new RangeSet(new long[]{myValue, myValue, other.min(), other.max()});
+        }
+        else {
+          return myValue - 1 == other.max()
+                 ? range(other.min(), myValue)
+                 : new RangeSet(new long[]{other.min(), other.max(), myValue, myValue});
+        }
+      }
+      long[] longs = other.asRanges();
+      int pos = -Arrays.binarySearch(longs, myValue) - 1;
+      assert pos >= 0 && pos % 2 == 0;
+      boolean touchLeft = pos > 0 && longs[pos - 1] + 1 == myValue;
+      boolean touchRight = pos < longs.length - 1 && myValue + 1 == longs[pos];
+      long[] result;
+      if (touchLeft) {
+        if (touchRight) {
+          result = new long[longs.length - 2];
+          System.arraycopy(longs, 0, result, 0, pos - 1);
+          System.arraycopy(longs, pos + 1, result, pos - 1, longs.length - pos - 1);
+        }
+        else {
+          result = longs.clone();
+          result[pos - 1] = myValue;
+        }
+      }
+      else {
+        if (touchRight) {
+          result = longs.clone();
+          result[pos] = myValue;
+        }
+        else {
+          result = new long[longs.length + 2];
+          System.arraycopy(longs, 0, result, 0, pos);
+          result[pos] = result[pos + 1] = myValue;
+          System.arraycopy(longs, pos, result, pos + 2, longs.length - pos);
+        }
+      }
+      return fromRanges(result, result.length);
+    }
+
+    @Override
     public boolean intersects(LongRangeSet other) {
       return other.contains(myValue);
     }
@@ -1107,6 +1157,57 @@ public abstract class LongRangeSet {
         index += res.length;
       }
       return fromRanges(result, index);
+    }
+
+    @Override
+    public LongRangeSet unite(LongRangeSet other) {
+      if (other.isEmpty() || other == this) return this;
+      if (other instanceof Point) {
+        return other.unite(this);
+      }
+      if (other instanceof Range) {
+        if (other.intersects(this) ||
+            (other.max() < min() && other.max() + 1 == min()) ||
+            (other.min() > max() && max() + 1 == other.min())) {
+          return range(Math.min(min(), other.min()), Math.max(max(), other.max()));
+        }
+        if (other.max() < min()) {
+          return new RangeSet(new long[]{other.min(), other.max(), min(), max()});
+        }
+        return new RangeSet(new long[]{min(), max(), other.min(), other.max()});
+      }
+      long[] longs = other.asRanges();
+      int minIndex = Arrays.binarySearch(longs, min());
+      if (minIndex < 0) {
+        minIndex = -minIndex - 1;
+        if (minIndex % 2 == 0 && minIndex > 0 && longs[minIndex - 1] + 1 == min()) {
+          minIndex--;
+        }
+      }
+      else if (minIndex % 2 == 0) {
+        minIndex++;
+      }
+      int maxIndex = Arrays.binarySearch(longs, max());
+      if (maxIndex < 0) {
+        maxIndex = -maxIndex - 1;
+        if (maxIndex % 2 == 0 && maxIndex < longs.length && max() + 1 == longs[maxIndex]) {
+          maxIndex++;
+        }
+      }
+      else if (maxIndex % 2 == 0) {
+        maxIndex++;
+      }
+      long[] result = new long[longs.length + 2];
+      System.arraycopy(longs, 0, result, 0, minIndex);
+      int pos = minIndex;
+      if (minIndex % 2 == 0) {
+        result[pos++] = min();
+      }
+      if (maxIndex % 2 == 0) {
+        result[pos++] = max();
+      }
+      System.arraycopy(longs, maxIndex, result, pos, longs.length - maxIndex);
+      return fromRanges(result, longs.length + pos - maxIndex);
     }
 
     @Override
@@ -1348,6 +1449,21 @@ public abstract class LongRangeSet {
         return other.intersect(this);
       }
       return subtract(all().subtract(other));
+    }
+
+    @Override
+    public LongRangeSet unite(LongRangeSet other) {
+      if (!(other instanceof RangeSet)) {
+        return other.unite(this);
+      }
+      if(other == this) return this;
+      if(other.contains(this)) return other;
+      if(this.contains(other)) return this;
+      LongRangeSet result = other;
+      for(int i=0; i<myRanges.length; i+=2) {
+        result = range(myRanges[i], myRanges[i+1]).unite(result);
+      }
+      return result;
     }
 
     @Override
