@@ -44,6 +44,7 @@ public interface BashTypes {
   IElementType GENERIC_COMMAND = new BashCompositeElementType("GENERIC_COMMAND");
   IElementType HEREDOC = new BashCompositeElementType("HEREDOC");
   IElementType IF_COMMAND = new BashCompositeElementType("IF_COMMAND");
+  IElementType INCLUDE_COMMAND = new BashCompositeElementType("INCLUDE_COMMAND");
   IElementType INDEX_EXPRESSION = new BashCompositeElementType("INDEX_EXPRESSION");
   IElementType LIST_TERMINATOR = new BashCompositeElementType("LIST_TERMINATOR");
   IElementType LITERAL_EXPRESSION = new BashCompositeElementType("LITERAL_EXPRESSION");
@@ -263,6 +264,9 @@ public interface BashTypes {
       }
       else if (type == IF_COMMAND) {
         return new BashIfCommandImpl(node);
+      }
+      else if (type == INCLUDE_COMMAND) {
+        return new BashIncludeCommandImpl(node);
       }
       else if (type == INDEX_EXPRESSION) {
         return new BashIndexExpressionImpl(node);

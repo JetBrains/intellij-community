@@ -69,6 +69,12 @@ echo {{}}
 find "$DIR" -name "*~" -exec rm -f {} \;
 chown root /usr/{ucb/{ex,edit},lib/{ex?.?*,how_ex}}
 
+. ./movecach.sh
+source ./foo.sh
+
+. movecach.sh
+source foo.sh
+
 # init
 file="current_line.txt"
 let count=0

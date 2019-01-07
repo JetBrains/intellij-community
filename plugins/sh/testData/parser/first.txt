@@ -888,6 +888,44 @@ BASH_FILE
               PsiElement(})('}')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        INCLUDE_COMMAND
+          PsiElement(word)('.')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('./movecach.sh')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        INCLUDE_COMMAND
+          PsiElement(word)('source')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('./foo.sh')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        INCLUDE_COMMAND
+          PsiElement(word)('.')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('movecach.sh')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        INCLUDE_COMMAND
+          PsiElement(word)('source')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('foo.sh')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
   PsiComment(Comment)('# init')
   PsiElement(\n)('\n')
   COMMANDS_LIST

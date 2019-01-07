@@ -89,6 +89,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == IF_COMMAND) {
       r = if_command(b, 0);
     }
+    else if (t == INCLUDE_COMMAND) {
+      r = include_command(b, 0);
+    }
     else if (t == LIST_TERMINATOR) {
       r = list_terminator(b, 0);
     }
@@ -169,9 +172,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     create_token_set_(ARITHMETIC_EXPANSION, OLD_ARITHMETIC_EXPANSION),
     create_token_set_(BLOCK, CASE_COMMAND, COMMAND, COMMAND_SUBSTITUTION_COMMAND,
       CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND, FUNCTION_DEF,
-      GENERIC_COMMAND, IF_COMMAND, PIPELINE_COMMAND, SELECT_COMMAND,
-      SHELL_COMMAND, SIMPLE_COMMAND, SUBSHELL_COMMAND, TRAP_COMMAND,
-      UNTIL_COMMAND, WHILE_COMMAND),
+      GENERIC_COMMAND, IF_COMMAND, INCLUDE_COMMAND, PIPELINE_COMMAND,
+      SELECT_COMMAND, SHELL_COMMAND, SIMPLE_COMMAND, SUBSHELL_COMMAND,
+      TRAP_COMMAND, UNTIL_COMMAND, WHILE_COMMAND),
     create_token_set_(ADD_EXPRESSION, ARRAY_EXPRESSION, ASSIGNMENT_EXPRESSION, BITWISE_AND_EXPRESSION,
       BITWISE_EXCLUSIVE_OR_EXPRESSION, BITWISE_OR_EXPRESSION, BITWISE_SHIFT_EXPRESSION, COMMA_EXPRESSION,
       COMPARISON_EXPRESSION, CONDITIONAL_EXPRESSION, EQUALITY_EXPRESSION, EXPRESSION,
@@ -560,12 +563,13 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // shell_command redirection_list? | simple_command
+  // shell_command redirection_list? | include_command | simple_command
   public static boolean command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "command")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, COMMAND, "<command>");
     r = command_0(b, l + 1);
+    if (!r) r = include_command(b, l + 1);
     if (!r) r = simple_command(b, l + 1);
     exit_section_(b, l, m, r, false, command_recover_parser_);
     return r;
@@ -1321,6 +1325,63 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = p && newlines(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // &('source' | '.') word (simple_command_element | <<keywordsRemapped>>)*
+  public static boolean include_command(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "include_command")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _COLLAPSE_, INCLUDE_COMMAND, "<include command>");
+    r = include_command_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, consumeToken(b, WORD));
+    r = p && include_command_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // &('source' | '.')
+  private static boolean include_command_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "include_command_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = include_command_0_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // 'source' | '.'
+  private static boolean include_command_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "include_command_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, "source");
+    if (!r) r = consumeToken(b, ".");
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (simple_command_element | <<keywordsRemapped>>)*
+  private static boolean include_command_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "include_command_2")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!include_command_2_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "include_command_2", c)) break;
+    }
+    return true;
+  }
+
+  // simple_command_element | <<keywordsRemapped>>
+  private static boolean include_command_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "include_command_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = simple_command_element(b, l + 1);
+    if (!r) r = keywordsRemapped(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */

@@ -175,7 +175,8 @@ simple_command ::= generic_command (simple_command_element | <<keywordsRemapped>
   methods=[getReferences]
 }
 generic_command ::= simple_command_element_inner {extends=simple_command}
-command ::= shell_command redirection_list? | simple_command {recoverWhile=command_recover}
+command ::= shell_command redirection_list? | include_command | simple_command {recoverWhile=command_recover}
+include_command ::= &('source' | '.') word (simple_command_element | <<keywordsRemapped>>)*
 
 private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | STRING2 | assignment_word | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
 

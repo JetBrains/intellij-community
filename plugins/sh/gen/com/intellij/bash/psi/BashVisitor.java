@@ -146,6 +146,10 @@ public class BashVisitor extends PsiElementVisitor {
     visitCommand(o);
   }
 
+  public void visitIncludeCommand(@NotNull BashIncludeCommand o) {
+    visitCommand(o);
+  }
+
   public void visitIndexExpression(@NotNull BashIndexExpression o) {
     visitExpression(o);
   }
