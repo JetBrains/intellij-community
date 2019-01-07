@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -87,7 +87,8 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   private void updateElementImplementations(final Object lookupItemObject, ImplementationViewSession session) {
-    ImplementationViewSession newSession = session.createSessionForLookupElement(lookupItemObject, isSearchDeep());
+    ImplementationViewSession newSession = session.getFactory().createSessionForLookupElement(session.getProject(),
+                                                                                              session.getEditor(), session.getFile(), lookupItemObject, isSearchDeep());
     if (newSession != null) {
       showImplementations(newSession, false, false);
     }

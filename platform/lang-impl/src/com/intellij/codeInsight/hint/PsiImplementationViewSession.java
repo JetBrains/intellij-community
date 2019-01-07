@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -53,6 +53,12 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
   }
 
   @NotNull
+  @Override
+  public ImplementationViewSessionFactory getFactory() {
+    return ImplementationViewSessionFactory.EP_NAME.findExtensionOrFail(PsiImplementationSessionViewFactory.class);
+  }
+
+  @NotNull
   public Project getProject() {
     return myProject;
   }
@@ -81,25 +87,6 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
   @Nullable
   public PsiFile getFile() {
     return myFile;
-  }
-
-  @Override
-  public PsiImplementationViewSession createSessionForLookupElement(Object lookupItemObject, boolean isSearchDeep) {
-    final PsiElement element = lookupItemObject instanceof PsiElement
-                               ? (PsiElement)lookupItemObject
-                               : DocumentationManager.getInstance(myProject).getElementFromLookup(myEditor, myFile);
-    PsiElement[] impls = {};
-    String text = "";
-    if (element != null) {
-      // if (element instanceof PsiPackage) return;
-      PsiFile containingFile = element.getContainingFile();
-      if (containingFile == null || !containingFile.getViewProvider().isPhysical()) return null;
-
-      impls = getSelfAndImplementations(myEditor, element, PsiImplementationViewSession.createImplementationsSearcher(isSearchDeep));
-      text = SymbolPresentationUtil.getSymbolPresentableText(element);
-    }
-
-    return new PsiImplementationViewSession(myProject, element, impls, text, myEditor, myFile);
   }
 
   @Override
