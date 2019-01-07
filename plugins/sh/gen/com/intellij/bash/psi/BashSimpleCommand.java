@@ -9,6 +9,9 @@ import com.intellij.psi.PsiReference;
 public interface BashSimpleCommand extends BashCommand {
 
   @NotNull
+  BashCommand getCommand();
+
+  @NotNull
   List<BashSimpleCommandElement> getSimpleCommandElementList();
 
   @NotNull

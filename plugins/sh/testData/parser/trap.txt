@@ -45,12 +45,11 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        SIMPLE_COMMAND
-          SIMPLE_COMMAND_ELEMENT
-            ASSIGNMENT_WORD_RULE
-              PsiElement(assignment_word)('avr')
-              PsiElement(=)('=')
-              PsiElement(int)('1')
+        GENERIC_COMMAND
+          ASSIGNMENT_WORD_RULE
+            PsiElement(assignment_word)('avr')
+            PsiElement(=)('=')
+            PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     TRAP_COMMAND

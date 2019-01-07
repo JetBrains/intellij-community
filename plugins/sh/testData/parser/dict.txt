@@ -2,130 +2,85 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        SIMPLE_COMMAND
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
-            ARITHMETIC_EXPANSION
-              PsiElement((()('((')
-              PsiWhiteSpace(' ')
-              INDEX_EXPRESSION
-                LITERAL_EXPRESSION
-                  PsiElement(number)('1')
-                PsiElement([)('[')
-                LITERAL_EXPRESSION
-                  PsiElement(number)('1')
-                PsiElement(])(']')
-              PsiWhiteSpace(' ')
-              PsiElement()))('))')
+        GENERIC_COMMAND
+          PsiElement($)('$')
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            PsiWhiteSpace(' ')
+            INDEX_EXPRESSION
+              LITERAL_EXPRESSION
+                PsiElement(number)('1')
+              PsiElement([)('[')
+              LITERAL_EXPRESSION
+                PsiElement(number)('1')
+              PsiElement(])(']')
+            PsiWhiteSpace(' ')
+            PsiElement()))('))')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        SIMPLE_COMMAND
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
-            ARITHMETIC_EXPANSION
-              PsiElement((()('((')
-              PsiWhiteSpace(' ')
-              ARRAY_EXPRESSION
-                PsiElement([)('[')
+        GENERIC_COMMAND
+          PsiElement($)('$')
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            PsiWhiteSpace(' ')
+            ARRAY_EXPRESSION
+              PsiElement([)('[')
+              LITERAL_EXPRESSION
+                PsiElement(number)('1')
+              PsiElement(])(']')
+            PsiWhiteSpace(' ')
+            PsiElement()))('))')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND
+          ASSIGNMENT_WORD_RULE
+            PsiElement(assignment_word)('A')
+            PsiElement(=)('=')
+            ASSIGNMENT_LIST
+              PsiElement(()('(')
+              ARRAY_ASSIGNMENT
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
-                PsiElement(])(']')
+                  PsiElement(word)('1')
               PsiWhiteSpace(' ')
-              PsiElement()))('))')
-  PsiElement(\n)('\n')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        SIMPLE_COMMAND
-          SIMPLE_COMMAND_ELEMENT
-            ASSIGNMENT_WORD_RULE
-              PsiElement(assignment_word)('A')
-              PsiElement(=)('=')
-              ASSIGNMENT_LIST
-                PsiElement(()('(')
-                ARRAY_ASSIGNMENT
-                  LITERAL_EXPRESSION
-                    PsiElement(word)('1')
-                PsiWhiteSpace(' ')
-                ARRAY_ASSIGNMENT
-                  LITERAL_EXPRESSION
-                    PsiElement(word)('2')
-                PsiWhiteSpace(' ')
-                ARRAY_ASSIGNMENT
-                  LITERAL_EXPRESSION
-                    PsiElement(word)('3')
-                PsiElement())(')')
+              ARRAY_ASSIGNMENT
+                LITERAL_EXPRESSION
+                  PsiElement(word)('2')
+              PsiWhiteSpace(' ')
+              ARRAY_ASSIGNMENT
+                LITERAL_EXPRESSION
+                  PsiElement(word)('3')
+              PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        SIMPLE_COMMAND
-          SIMPLE_COMMAND_ELEMENT
-            ASSIGNMENT_WORD_RULE
-              PsiElement(assignment_word)('A')
-              PsiElement(=)('=')
-              ASSIGNMENT_LIST
-                PsiElement(()('(')
-                ARRAY_ASSIGNMENT
+        GENERIC_COMMAND
+          ASSIGNMENT_WORD_RULE
+            PsiElement(assignment_word)('A')
+            PsiElement(=)('=')
+            ASSIGNMENT_LIST
+              PsiElement(()('(')
+              ARRAY_ASSIGNMENT
+                ASSIGNMENT_EXPRESSION
                   ASSIGNMENT_EXPRESSION
                     ASSIGNMENT_EXPRESSION
-                      ASSIGNMENT_EXPRESSION
-                        ARRAY_EXPRESSION
-                          PsiElement([)('[')
-                          LITERAL_EXPRESSION
-                            STRING
-                              PsiElement(string_begin)('"')
-                              PsiElement(string_content)('a')
-                              PsiElement(string_end)('"')
-                          PsiElement(])(']')
-                        PsiElement(=)('=')
-                        INDEX_EXPRESSION
-                          LITERAL_EXPRESSION
-                            PsiElement(word)('1')
-                          PsiWhiteSpace(' ')
-                          PsiElement([)('[')
-                          LITERAL_EXPRESSION
-                            STRING
-                              PsiElement(string_begin)('"')
-                              PsiElement(string_content)('aa')
-                              PsiElement(string_end)('"')
-                          PsiElement(])(']')
-                      PsiElement(=)('=')
-                      INDEX_EXPRESSION
-                        LITERAL_EXPRESSION
-                          PsiElement(word)('2')
-                        PsiWhiteSpace(' ')
+                      ARRAY_EXPRESSION
                         PsiElement([)('[')
                         LITERAL_EXPRESSION
                           STRING
                             PsiElement(string_begin)('"')
-                            PsiElement(string_content)('2')
+                            PsiElement(string_content)('a')
                             PsiElement(string_end)('"')
                         PsiElement(])(']')
-                    PsiElement(=)('=')
-                    LITERAL_EXPRESSION
-                      PsiElement(word)('3')
-                PsiElement())(')')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        SIMPLE_COMMAND
-          SIMPLE_COMMAND_ELEMENT
-            ASSIGNMENT_WORD_RULE
-              PsiElement(assignment_word)('A')
-              PsiElement(=)('=')
-              ASSIGNMENT_LIST
-                PsiElement(()('(')
-                ARRAY_ASSIGNMENT
-                  ASSIGNMENT_EXPRESSION
-                    ASSIGNMENT_EXPRESSION
+                      PsiElement(=)('=')
                       INDEX_EXPRESSION
                         LITERAL_EXPRESSION
-                          PsiElement(word)('1**1')
+                          PsiElement(word)('1')
                         PsiWhiteSpace(' ')
                         PsiElement([)('[')
                         LITERAL_EXPRESSION
@@ -134,197 +89,233 @@ BASH_FILE
                             PsiElement(string_content)('aa')
                             PsiElement(string_end)('"')
                         PsiElement(])(']')
-                      PsiElement(=)('=')
-                      INDEX_EXPRESSION
-                        LITERAL_EXPRESSION
-                          PsiElement(word)('2')
-                        PsiWhiteSpace(' ')
-                        PsiElement([)('[')
-                        LITERAL_EXPRESSION
-                          STRING
-                            PsiElement(string_begin)('"')
-                            PsiElement(string_content)('2')
-                            PsiElement(string_end)('"')
-                        PsiElement(])(']')
                     PsiElement(=)('=')
-                    LITERAL_EXPRESSION
-                      PsiElement(word)('3')
-                PsiElement())(')')
-  PsiElement(\n)('\n')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        SIMPLE_COMMAND
-          SIMPLE_COMMAND_ELEMENT
-            ASSIGNMENT_WORD_RULE
-              PsiElement(assignment_word)('A')
-              PsiElement(=)('=')
-              ASSIGNMENT_LIST
-                PsiElement(()('(')
-                ARRAY_ASSIGNMENT
-                  ASSIGNMENT_EXPRESSION
-                    ARRAY_EXPRESSION
-                      PsiElement([)('[')
+                    INDEX_EXPRESSION
                       LITERAL_EXPRESSION
-                        PsiElement(number)('1')
-                      PsiElement(])(']')
-                    PsiElement(=)('=')
-                    LITERAL_EXPRESSION
-                      PsiElement(word)('2')
-                PsiElement())(')')
-  PsiElement(\n)('\n')
-  PsiElement(\n)('\n')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        SIMPLE_COMMAND
-          SIMPLE_COMMAND_ELEMENT
-            ASSIGNMENT_WORD_RULE
-              PsiElement(assignment_word)('A')
-              PsiElement(=)('=')
-              ASSIGNMENT_LIST
-                PsiElement(()('(')
-                ARRAY_ASSIGNMENT
-                  ASSIGNMENT_EXPRESSION
-                    ARRAY_EXPRESSION
+                        PsiElement(word)('2')
+                      PsiWhiteSpace(' ')
                       PsiElement([)('[')
                       LITERAL_EXPRESSION
                         STRING
                           PsiElement(string_begin)('"')
-                          PsiElement(string_content)('a')
+                          PsiElement(string_content)('2')
+                          PsiElement(string_end)('"')
+                      PsiElement(])(']')
+                  PsiElement(=)('=')
+                  LITERAL_EXPRESSION
+                    PsiElement(word)('3')
+              PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND
+          ASSIGNMENT_WORD_RULE
+            PsiElement(assignment_word)('A')
+            PsiElement(=)('=')
+            ASSIGNMENT_LIST
+              PsiElement(()('(')
+              ARRAY_ASSIGNMENT
+                ASSIGNMENT_EXPRESSION
+                  ASSIGNMENT_EXPRESSION
+                    INDEX_EXPRESSION
+                      LITERAL_EXPRESSION
+                        PsiElement(word)('1**1')
+                      PsiWhiteSpace(' ')
+                      PsiElement([)('[')
+                      LITERAL_EXPRESSION
+                        STRING
+                          PsiElement(string_begin)('"')
+                          PsiElement(string_content)('aa')
                           PsiElement(string_end)('"')
                       PsiElement(])(']')
                     PsiElement(=)('=')
-                    LITERAL_EXPRESSION
-                      PsiElement(word)('1')
-                PsiElement())(')')
+                    INDEX_EXPRESSION
+                      LITERAL_EXPRESSION
+                        PsiElement(word)('2')
+                      PsiWhiteSpace(' ')
+                      PsiElement([)('[')
+                      LITERAL_EXPRESSION
+                        STRING
+                          PsiElement(string_begin)('"')
+                          PsiElement(string_content)('2')
+                          PsiElement(string_end)('"')
+                      PsiElement(])(']')
+                  PsiElement(=)('=')
+                  LITERAL_EXPRESSION
+                    PsiElement(word)('3')
+              PsiElement())(')')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        SIMPLE_COMMAND
-          SIMPLE_COMMAND_ELEMENT
-            ASSIGNMENT_WORD_RULE
-              PsiElement(assignment_word)('A')
-              PsiElement(=)('=')
-              ASSIGNMENT_LIST
-                PsiElement(()('(')
-                ARRAY_ASSIGNMENT
+        GENERIC_COMMAND
+          ASSIGNMENT_WORD_RULE
+            PsiElement(assignment_word)('A')
+            PsiElement(=)('=')
+            ASSIGNMENT_LIST
+              PsiElement(()('(')
+              ARRAY_ASSIGNMENT
+                ASSIGNMENT_EXPRESSION
+                  ARRAY_EXPRESSION
+                    PsiElement([)('[')
+                    LITERAL_EXPRESSION
+                      PsiElement(number)('1')
+                    PsiElement(])(']')
+                  PsiElement(=)('=')
+                  LITERAL_EXPRESSION
+                    PsiElement(word)('2')
+              PsiElement())(')')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND
+          ASSIGNMENT_WORD_RULE
+            PsiElement(assignment_word)('A')
+            PsiElement(=)('=')
+            ASSIGNMENT_LIST
+              PsiElement(()('(')
+              ARRAY_ASSIGNMENT
+                ASSIGNMENT_EXPRESSION
+                  ARRAY_EXPRESSION
+                    PsiElement([)('[')
+                    LITERAL_EXPRESSION
+                      STRING
+                        PsiElement(string_begin)('"')
+                        PsiElement(string_content)('a')
+                        PsiElement(string_end)('"')
+                    PsiElement(])(']')
+                  PsiElement(=)('=')
+                  LITERAL_EXPRESSION
+                    PsiElement(word)('1')
+              PsiElement())(')')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND
+          ASSIGNMENT_WORD_RULE
+            PsiElement(assignment_word)('A')
+            PsiElement(=)('=')
+            ASSIGNMENT_LIST
+              PsiElement(()('(')
+              ARRAY_ASSIGNMENT
+                ASSIGNMENT_EXPRESSION
                   ASSIGNMENT_EXPRESSION
                     ASSIGNMENT_EXPRESSION
-                      ASSIGNMENT_EXPRESSION
-                        ARRAY_EXPRESSION
-                          PsiElement([)('[')
-                          LITERAL_EXPRESSION
-                            STRING
-                              PsiElement(string_begin)('"')
-                              PsiElement(string_content)('a')
-                              PsiElement(string_end)('"')
-                          PsiElement(])(']')
-                        PsiElement(=)('=')
-                        INDEX_EXPRESSION
-                          LITERAL_EXPRESSION
-                            PsiElement(word)('1')
-                          PsiWhiteSpace(' ')
-                          PsiElement([)('[')
-                          LITERAL_EXPRESSION
-                            STRING
-                              PsiElement(string_begin)('"')
-                              PsiElement(string_content)('aa')
-                              PsiElement(string_end)('"')
-                          PsiElement(])(']')
+                      ARRAY_EXPRESSION
+                        PsiElement([)('[')
+                        LITERAL_EXPRESSION
+                          STRING
+                            PsiElement(string_begin)('"')
+                            PsiElement(string_content)('a')
+                            PsiElement(string_end)('"')
+                        PsiElement(])(']')
                       PsiElement(=)('=')
                       INDEX_EXPRESSION
                         LITERAL_EXPRESSION
-                          PsiElement(word)('2')
+                          PsiElement(word)('1')
                         PsiWhiteSpace(' ')
                         PsiElement([)('[')
                         LITERAL_EXPRESSION
                           STRING
                             PsiElement(string_begin)('"')
-                            PsiElement(string_content)('2')
+                            PsiElement(string_content)('aa')
                             PsiElement(string_end)('"')
                         PsiElement(])(']')
                     PsiElement(=)('=')
-                    LITERAL_EXPRESSION
-                      PsiElement(word)('3')
-                PsiElement())(')')
+                    INDEX_EXPRESSION
+                      LITERAL_EXPRESSION
+                        PsiElement(word)('2')
+                      PsiWhiteSpace(' ')
+                      PsiElement([)('[')
+                      LITERAL_EXPRESSION
+                        STRING
+                          PsiElement(string_begin)('"')
+                          PsiElement(string_content)('2')
+                          PsiElement(string_end)('"')
+                      PsiElement(])(']')
+                  PsiElement(=)('=')
+                  LITERAL_EXPRESSION
+                    PsiElement(word)('3')
+              PsiElement())(')')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        SIMPLE_COMMAND
-          SIMPLE_COMMAND_ELEMENT
-            ASSIGNMENT_WORD_RULE
-              PsiElement(assignment_word)('distrs')
-              PsiElement(=)('=')
-              ASSIGNMENT_LIST
-                PsiElement(()('(')
-                ARRAY_ASSIGNMENT
-                  PsiElement(\n)('\n')
-                  PsiWhiteSpace(' ')
-                  PsiWhiteSpace(' ')
-                  PsiWhiteSpace(' ')
-                  PsiWhiteSpace(' ')
-                  LITERAL_EXPRESSION
-                    PsiElement(word)('jdk-6.45-linux_i586.bin')
+        GENERIC_COMMAND
+          ASSIGNMENT_WORD_RULE
+            PsiElement(assignment_word)('distrs')
+            PsiElement(=)('=')
+            ASSIGNMENT_LIST
+              PsiElement(()('(')
+              ARRAY_ASSIGNMENT
+                PsiElement(\n)('\n')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
                 PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('\\n')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                ARRAY_ASSIGNMENT
-                  LITERAL_EXPRESSION
-                    PsiElement(word)('jdk-6.45-linux_x64.bin')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('\\n')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                ARRAY_ASSIGNMENT
-                  LITERAL_EXPRESSION
-                    PsiElement(word)('jdk-5.0.22-linux_x64.bin')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('\\n')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                ARRAY_ASSIGNMENT
-                  LITERAL_EXPRESSION
-                    PsiElement(word)('jdk-5.0.22-linux_i586.bin')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('\\n')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                PsiWhiteSpace(' ')
-                ARRAY_ASSIGNMENT
-                  LITERAL_EXPRESSION
-                    PsiElement(word)('jdk-1.4.2.19-linux_i586.bin')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('\\n')
-                PsiElement())(')')
+                LITERAL_EXPRESSION
+                  PsiElement(word)('jdk-6.45-linux_i586.bin')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('\\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              ARRAY_ASSIGNMENT
+                LITERAL_EXPRESSION
+                  PsiElement(word)('jdk-6.45-linux_x64.bin')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('\\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              ARRAY_ASSIGNMENT
+                LITERAL_EXPRESSION
+                  PsiElement(word)('jdk-5.0.22-linux_x64.bin')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('\\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              ARRAY_ASSIGNMENT
+                LITERAL_EXPRESSION
+                  PsiElement(word)('jdk-5.0.22-linux_i586.bin')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('\\n')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              ARRAY_ASSIGNMENT
+                LITERAL_EXPRESSION
+                  PsiElement(word)('jdk-1.4.2.19-linux_i586.bin')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('\\n')
+              PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -357,7 +348,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    SIMPLE_COMMAND_ELEMENT
+                    GENERIC_COMMAND
                       PsiElement(word)('wget')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT

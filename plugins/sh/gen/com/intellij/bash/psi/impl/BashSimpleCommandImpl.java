@@ -28,6 +28,12 @@ public class BashSimpleCommandImpl extends BashCommandImpl implements BashSimple
 
   @Override
   @NotNull
+  public BashCommand getCommand() {
+    return findNotNullChildByClass(BashCommand.class);
+  }
+
+  @Override
+  @NotNull
   public List<BashSimpleCommandElement> getSimpleCommandElementList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashSimpleCommandElement.class);
   }

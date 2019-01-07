@@ -41,6 +41,7 @@ public interface BashTypes {
   IElementType EXP_EXPRESSION = new BashCompositeElementType("EXP_EXPRESSION");
   IElementType FOR_COMMAND = new BashCompositeElementType("FOR_COMMAND");
   IElementType FUNCTION_DEF = new BashCompositeElementType("FUNCTION_DEF");
+  IElementType GENERIC_COMMAND = new BashCompositeElementType("GENERIC_COMMAND");
   IElementType HEREDOC = new BashCompositeElementType("HEREDOC");
   IElementType IF_COMMAND = new BashCompositeElementType("IF_COMMAND");
   IElementType INDEX_EXPRESSION = new BashCompositeElementType("INDEX_EXPRESSION");
@@ -255,6 +256,9 @@ public interface BashTypes {
       }
       else if (type == FUNCTION_DEF) {
         return new BashFunctionDefImpl(node);
+      }
+      else if (type == GENERIC_COMMAND) {
+        return new BashGenericCommandImpl(node);
       }
       else if (type == HEREDOC) {
         return new BashHeredocImpl(node);

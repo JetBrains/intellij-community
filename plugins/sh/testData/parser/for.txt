@@ -32,7 +32,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    SIMPLE_COMMAND_ELEMENT
+                    GENERIC_COMMAND
                       PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -89,7 +89,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    SIMPLE_COMMAND_ELEMENT
+                    GENERIC_COMMAND
                       PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -120,9 +120,8 @@ BASH_FILE
             COMPOUND_LIST
               PIPELINE_COMMAND
                 PIPELINE
-                  SIMPLE_COMMAND
-                    SIMPLE_COMMAND_ELEMENT
-                      PsiElement(word)('ls')
+                  GENERIC_COMMAND
+                    PsiElement(word)('ls')
             PsiElement())(')')
           LIST_TERMINATOR
             PsiElement(\n)('\n')
@@ -134,7 +133,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    SIMPLE_COMMAND_ELEMENT
+                    GENERIC_COMMAND
                       PsiElement(word)('du')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -185,7 +184,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    SIMPLE_COMMAND_ELEMENT
+                    GENERIC_COMMAND
                       PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -222,9 +221,8 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  SIMPLE_COMMAND
-                    SIMPLE_COMMAND_ELEMENT
-                      PsiElement(word)('break')
+                  GENERIC_COMMAND
+                    PsiElement(word)('break')
               PsiElement(;)(';')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
@@ -284,7 +282,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          SIMPLE_COMMAND_ELEMENT
+          GENERIC_COMMAND
             PsiElement(word)('//')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -323,7 +321,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    SIMPLE_COMMAND_ELEMENT
+                    GENERIC_COMMAND
                       PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -342,7 +340,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
-          SIMPLE_COMMAND_ELEMENT
+          GENERIC_COMMAND
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -385,7 +383,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    SIMPLE_COMMAND_ELEMENT
+                    GENERIC_COMMAND
                       PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -417,7 +415,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    SIMPLE_COMMAND_ELEMENT
+                    GENERIC_COMMAND
                       PsiElement(word)('seq')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -441,7 +439,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
-                    SIMPLE_COMMAND_ELEMENT
+                    GENERIC_COMMAND
                       PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT

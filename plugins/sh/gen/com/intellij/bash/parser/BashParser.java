@@ -80,6 +80,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == FUNCTION_DEF) {
       r = function_def(b, 0);
     }
+    else if (t == GENERIC_COMMAND) {
+      r = generic_command(b, 0);
+    }
     else if (t == HEREDOC) {
       r = heredoc(b, 0);
     }
@@ -165,9 +168,10 @@ public class BashParser implements PsiParser, LightPsiParser {
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
     create_token_set_(ARITHMETIC_EXPANSION, OLD_ARITHMETIC_EXPANSION),
     create_token_set_(BLOCK, CASE_COMMAND, COMMAND, COMMAND_SUBSTITUTION_COMMAND,
-      CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND, IF_COMMAND,
-      PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND, SIMPLE_COMMAND,
-      SUBSHELL_COMMAND, TRAP_COMMAND, UNTIL_COMMAND, WHILE_COMMAND),
+      CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND, GENERIC_COMMAND,
+      IF_COMMAND, PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND,
+      SIMPLE_COMMAND, SUBSHELL_COMMAND, TRAP_COMMAND, UNTIL_COMMAND,
+      WHILE_COMMAND),
     create_token_set_(ADD_EXPRESSION, ARRAY_EXPRESSION, ASSIGNMENT_EXPRESSION, BITWISE_AND_EXPRESSION,
       BITWISE_EXCLUSIVE_OR_EXPRESSION, BITWISE_OR_EXPRESSION, BITWISE_SHIFT_EXPRESSION, COMMA_EXPRESSION,
       COMPARISON_EXPRESSION, CONDITIONAL_EXPRESSION, EQUALITY_EXPRESSION, EXPRESSION,
@@ -1287,6 +1291,17 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // simple_command_element_inner
+  public static boolean generic_command(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "generic_command")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _COLLAPSE_, GENERIC_COMMAND, "<generic command>");
+    r = simple_command_element_inner(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
   // HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? pipeline] newlines
   //             (HEREDOC_CONTENT | vars)*
   //             (HEREDOC_MARKER_END  | HEREDOC_MARKER_IGNORING_TABS_END | <<eof>>)
@@ -2337,19 +2352,19 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // simple_command_element (simple_command_element|<<keywordsRemapped>>)*
+  // generic_command (simple_command_element | <<keywordsRemapped>>)*
   public static boolean simple_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command")) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, SIMPLE_COMMAND, "<simple command>");
-    r = simple_command_element(b, l + 1);
+    Marker m = enter_section_(b, l, _COLLAPSE_, SIMPLE_COMMAND, "<simple command>");
+    r = generic_command(b, l + 1);
     p = r; // pin = 1
     r = r && simple_command_1(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // (simple_command_element|<<keywordsRemapped>>)*
+  // (simple_command_element | <<keywordsRemapped>>)*
   private static boolean simple_command_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command_1")) return false;
     while (true) {
@@ -2360,7 +2375,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // simple_command_element|<<keywordsRemapped>>
+  // simple_command_element | <<keywordsRemapped>>
   private static boolean simple_command_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command_1_0")) return false;
     boolean r;
@@ -2368,6 +2383,17 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = simple_command_element(b, l + 1);
     if (!r) r = keywordsRemapped(b, l + 1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // simple_command_element_inner
+  public static boolean simple_command_element(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "simple_command_element")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, SIMPLE_COMMAND_ELEMENT, "<simple command element>");
+    r = simple_command_element_inner(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -2380,10 +2406,9 @@ public class BashParser implements PsiParser, LightPsiParser {
   //                           | conditional_command
   //                           | command_substitution_command
   //                           | arithmetic_expansion
-  public static boolean simple_command_element(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "simple_command_element")) return false;
+  static boolean simple_command_element_inner(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "simple_command_element_inner")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, SIMPLE_COMMAND_ELEMENT, "<simple command element>");
     r = assignment_word_rule(b, l + 1);
     if (!r) r = literal(b, l + 1);
     if (!r) r = redirection(b, l + 1);
@@ -2392,7 +2417,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = conditional_command(b, l + 1);
     if (!r) r = command_substitution_command(b, l + 1);
     if (!r) r = arithmetic_expansion(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
     return r;
   }
 

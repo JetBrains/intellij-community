@@ -149,14 +149,15 @@ private lit ::= literal | '(' lit ')' {pin(".*")=1}
 process_substitution ::= ('<' | '>') '(' compound_list ')' {pin=1}
 
 private literal ::= w | string | num
-simple_command_element ::=  assignment_word_rule
-                          | literal
-                          | redirection
-                          | composed_var
-                          | heredoc
-                          | conditional_command
-                          | command_substitution_command
-                          | arithmetic_expansion
+simple_command_element ::= simple_command_element_inner
+private simple_command_element_inner ::=  assignment_word_rule
+                                        | literal
+                                        | redirection
+                                        | composed_var
+                                        | heredoc
+                                        | conditional_command
+                                        | command_substitution_command
+                                        | arithmetic_expansion
 
 assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
 array_assignment ::= newlines '='? expression newlines
@@ -169,10 +170,11 @@ old_arithmetic_expansion ::= ARITH_SQUARE_LEFT expression ARITH_SQUARE_RIGHT {pi
 assignment_word_rule ::= (assignment_word | word | variable) '=' [literal | composed_var | assignment_list] {pin=2}
 
 redirection_list ::= redirection redirection*
-simple_command ::= simple_command_element (simple_command_element|<<keywordsRemapped>>)* {
+simple_command ::= generic_command (simple_command_element | <<keywordsRemapped>>)* {
   pin=1
   methods=[getReferences]
 }
+generic_command ::= simple_command_element_inner {extends=simple_command}
 command ::= shell_command redirection_list? | simple_command {recoverWhile=command_recover}
 
 private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_GT | ARITH_LT | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | STRING2 | assignment_word | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
