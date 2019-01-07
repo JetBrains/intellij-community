@@ -535,19 +535,6 @@ abstract class ComponentStoreImpl : IComponentStore {
   override fun toString() = storageManager.componentManager.toString()
 }
 
-internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
-  try {
-    session.save()
-  }
-  catch (e: ReadOnlyModificationException) {
-    LOG.warn(e)
-    readonlyFiles.add(SaveSessionAndFile(e.session ?: session, e.file))
-  }
-  catch (e: Exception) {
-    errors.add(e)
-  }
-}
-
 private fun findNonDeprecated(storages: Array<Storage>) = storages.firstOrNull { !it.deprecated } ?: throw AssertionError(
   "All storages are deprecated")
 

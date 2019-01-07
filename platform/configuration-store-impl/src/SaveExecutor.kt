@@ -38,3 +38,16 @@ internal open class SaveSessionProducerManager : SaveExecutor {
     return isChanged
   }
 }
+
+internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
+  try {
+    session.save()
+  }
+  catch (e: ReadOnlyModificationException) {
+    LOG.warn(e)
+    readonlyFiles.add(SaveSessionAndFile(e.session ?: session, e.file))
+  }
+  catch (e: Exception) {
+    errors.add(e)
+  }
+}
