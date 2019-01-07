@@ -22,16 +22,16 @@ public class BashVisitor extends PsiElementVisitor {
     visitExpression(o);
   }
 
+  public void visitAssignmentCommand(@NotNull BashAssignmentCommand o) {
+    visitCommand(o);
+  }
+
   public void visitAssignmentExpression(@NotNull BashAssignmentExpression o) {
     visitBinaryExpression(o);
   }
 
   public void visitAssignmentList(@NotNull BashAssignmentList o) {
     visitCompositeElement(o);
-  }
-
-  public void visitAssignmentWordRule(@NotNull BashAssignmentWordRule o) {
-    visitSimpleCommand(o);
   }
 
   public void visitBashExpansion(@NotNull BashBashExpansion o) {

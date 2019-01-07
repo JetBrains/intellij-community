@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashAssignmentWordRuleImpl extends BashSimpleCommandImpl implements BashAssignmentWordRule {
+public class BashAssignmentCommandImpl extends BashCommandImpl implements BashAssignmentCommand {
 
-  public BashAssignmentWordRuleImpl(ASTNode node) {
+  public BashAssignmentCommandImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitAssignmentWordRule(this);
+    visitor.visitAssignmentCommand(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

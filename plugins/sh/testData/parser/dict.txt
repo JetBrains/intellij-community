@@ -37,7 +37,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('A')
           PsiElement(=)('=')
           ASSIGNMENT_LIST
@@ -58,7 +58,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('A')
           PsiElement(=)('=')
           ASSIGNMENT_LIST
@@ -107,7 +107,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('A')
           PsiElement(=)('=')
           ASSIGNMENT_LIST
@@ -147,7 +147,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('A')
           PsiElement(=)('=')
           ASSIGNMENT_LIST
@@ -169,7 +169,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('A')
           PsiElement(=)('=')
           ASSIGNMENT_LIST
@@ -193,7 +193,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('A')
           PsiElement(=)('=')
           ASSIGNMENT_LIST
@@ -243,7 +243,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('distrs')
           PsiElement(=)('=')
           ASSIGNMENT_LIST

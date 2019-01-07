@@ -20,7 +20,7 @@ BASH_FILE
                       PsiElement(word)('local')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
-                      ASSIGNMENT_WORD_RULE
+                      ASSIGNMENT_COMMAND
                         PsiElement(assignment_word)('file')
                         PsiElement(=)('=')
                         STRING
@@ -118,7 +118,7 @@ BASH_FILE
                       PsiElement(word)('local')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
-                      ASSIGNMENT_WORD_RULE
+                      ASSIGNMENT_COMMAND
                         PsiElement(assignment_word)('file')
                         PsiElement(=)('=')
                         STRING
@@ -214,7 +214,7 @@ BASH_FILE
                       PsiElement(word)('local')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
-                      ASSIGNMENT_WORD_RULE
+                      ASSIGNMENT_COMMAND
                         PsiElement(assignment_word)('file')
                         PsiElement(=)('=')
                         STRING

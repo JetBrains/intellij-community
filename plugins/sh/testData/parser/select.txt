@@ -31,7 +31,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('PS3')
           PsiElement(=)('=')
           STRING
@@ -42,7 +42,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('QUIT')
           PsiElement(=)('=')
           STRING

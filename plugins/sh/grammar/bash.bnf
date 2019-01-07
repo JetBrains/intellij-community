@@ -150,7 +150,7 @@ process_substitution ::= ('<' | '>') '(' compound_list ')' {pin=1}
 
 private literal ::= w | string | num
 simple_command_element ::= simple_command_element_inner
-private simple_command_element_inner ::=  assignment_word_rule
+private simple_command_element_inner ::=  assignment_command
                                         | literal
                                         | redirection
                                         | composed_var
@@ -167,16 +167,19 @@ heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? pipeline] newlines
             (HEREDOC_MARKER_END  | HEREDOC_MARKER_IGNORING_TABS_END | <<eof>>)
 arithmetic_expansion ::= '((' expression '))' {pin=1}
 old_arithmetic_expansion ::= ARITH_SQUARE_LEFT expression ARITH_SQUARE_RIGHT {pin=1 extends=arithmetic_expansion}
-assignment_word_rule ::= (assignment_word | word | variable) '=' [literal | composed_var | assignment_list] {pin=2 extends=simple_command}
+assignment_command ::= (assignment_word | word | variable) '=' [literal | composed_var | assignment_list] {pin=2}
 
 redirection_list ::= redirection redirection*
 simple_command ::= generic_command_directive (simple_command_element | <<keywordsRemapped>>)* {
   pin=1
   methods=[getReferences]
 }
-
 generic_command_directive ::= simple_command_element_inner {extends=simple_command}
-command ::= shell_command redirection_list? | include_command | simple_command {recoverWhile=command_recover}
+
+command ::= shell_command redirection_list?
+          | include_command
+          | assignment_command
+          | simple_command {recoverWhile=command_recover}
 
 include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)*
 include_directive ::= &('source' | '.') word {extends=generic_command_directive}

@@ -29,7 +29,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('x')
           PsiElement(=)('=')
           PsiElement(int)('5')
@@ -37,7 +37,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('y')
           PsiElement(=)('=')
           PsiElement(int)('10')
@@ -45,7 +45,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('ans')
           PsiElement(=)('=')
           PsiElement($)('$')
@@ -114,7 +114,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('v')
           PsiElement(=)('=')
           PsiElement($)('$')
@@ -128,7 +128,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('name')
           PsiElement(=)('=')
           PsiElement(word)('[value]')

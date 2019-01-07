@@ -2,7 +2,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('file')
           PsiElement(=)('=')
           STRING
@@ -32,7 +32,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  ASSIGNMENT_WORD_RULE
+                  ASSIGNMENT_COMMAND
                     PsiElement(assignment_word)('Message')
                     PsiElement(=)('=')
                     STRING
@@ -54,7 +54,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  ASSIGNMENT_WORD_RULE
+                  ASSIGNMENT_COMMAND
                     PsiElement(assignment_word)('Message')
                     PsiElement(=)('=')
                     STRING
@@ -79,7 +79,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  ASSIGNMENT_WORD_RULE
+                  ASSIGNMENT_COMMAND
                     PsiElement(assignment_word)('Message')
                     PsiElement(=)('=')
                     STRING
@@ -104,7 +104,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  ASSIGNMENT_WORD_RULE
+                  ASSIGNMENT_COMMAND
                     PsiElement(assignment_word)('Message')
                     PsiElement(=)('=')
                     STRING
@@ -129,7 +129,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
-                  ASSIGNMENT_WORD_RULE
+                  ASSIGNMENT_COMMAND
                     PsiElement(assignment_word)('Message')
                     PsiElement(=)('=')
                     STRING
@@ -176,7 +176,7 @@ BASH_FILE
             COMPOUND_LIST
               PIPELINE_COMMAND
                 PIPELINE
-                  ASSIGNMENT_WORD_RULE
+                  ASSIGNMENT_COMMAND
                     PsiElement(assignment_word)('TARGET_CARD')
                     PsiElement(=)('=')
                     PsiElement(word)('all')
@@ -245,7 +245,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            ASSIGNMENT_WORD_RULE
+                            ASSIGNMENT_COMMAND
                               PsiElement(assignment_word)('month')
                               PsiElement(=)('=')
                               STRING
@@ -268,7 +268,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            ASSIGNMENT_WORD_RULE
+                            ASSIGNMENT_COMMAND
                               PsiElement(assignment_word)('month')
                               PsiElement(=)('=')
                               STRING
@@ -294,7 +294,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            ASSIGNMENT_WORD_RULE
+                            ASSIGNMENT_COMMAND
                               PsiElement(assignment_word)('month')
                               PsiElement(=)('=')
                               STRING
@@ -317,7 +317,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            ASSIGNMENT_WORD_RULE
+                            ASSIGNMENT_COMMAND
                               PsiElement(assignment_word)('month')
                               PsiElement(=)('=')
                               STRING
@@ -343,7 +343,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            ASSIGNMENT_WORD_RULE
+                            ASSIGNMENT_COMMAND
                               PsiElement(assignment_word)('month')
                               PsiElement(=)('=')
                               STRING
@@ -366,7 +366,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            ASSIGNMENT_WORD_RULE
+                            ASSIGNMENT_COMMAND
                               PsiElement(assignment_word)('month')
                               PsiElement(=)('=')
                               STRING
@@ -392,7 +392,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            ASSIGNMENT_WORD_RULE
+                            ASSIGNMENT_COMMAND
                               PsiElement(assignment_word)('month')
                               PsiElement(=)('=')
                               STRING
@@ -415,7 +415,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            ASSIGNMENT_WORD_RULE
+                            ASSIGNMENT_COMMAND
                               PsiElement(assignment_word)('month')
                               PsiElement(=)('=')
                               STRING
@@ -441,7 +441,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            ASSIGNMENT_WORD_RULE
+                            ASSIGNMENT_COMMAND
                               PsiElement(assignment_word)('month')
                               PsiElement(=)('=')
                               STRING
@@ -463,7 +463,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            ASSIGNMENT_WORD_RULE
+                            ASSIGNMENT_COMMAND
                               PsiElement(assignment_word)('month')
                               PsiElement(=)('=')
                               STRING
@@ -488,7 +488,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            ASSIGNMENT_WORD_RULE
+                            ASSIGNMENT_COMMAND
                               PsiElement(assignment_word)('month')
                               PsiElement(=)('=')
                               STRING
@@ -510,7 +510,7 @@ BASH_FILE
                       COMPOUND_LIST
                         PIPELINE_COMMAND
                           PIPELINE
-                            ASSIGNMENT_WORD_RULE
+                            ASSIGNMENT_COMMAND
                               PsiElement(assignment_word)('month')
                               PsiElement(=)('=')
                               STRING

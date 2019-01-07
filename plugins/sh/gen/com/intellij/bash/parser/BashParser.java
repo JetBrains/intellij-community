@@ -29,11 +29,11 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == ARRAY_ASSIGNMENT) {
       r = array_assignment(b, 0);
     }
+    else if (t == ASSIGNMENT_COMMAND) {
+      r = assignment_command(b, 0);
+    }
     else if (t == ASSIGNMENT_LIST) {
       r = assignment_list(b, 0);
-    }
-    else if (t == ASSIGNMENT_WORD_RULE) {
-      r = assignment_word_rule(b, 0);
     }
     else if (t == BASH_EXPANSION) {
       r = bash_expansion(b, 0);
@@ -173,7 +173,7 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
     create_token_set_(ARITHMETIC_EXPANSION, OLD_ARITHMETIC_EXPANSION),
-    create_token_set_(ASSIGNMENT_WORD_RULE, BLOCK, CASE_COMMAND, COMMAND,
+    create_token_set_(ASSIGNMENT_COMMAND, BLOCK, CASE_COMMAND, COMMAND,
       COMMAND_SUBSTITUTION_COMMAND, CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND,
       FUNCTION_DEF, GENERIC_COMMAND_DIRECTIVE, IF_COMMAND, INCLUDE_COMMAND,
       INCLUDE_DIRECTIVE, PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND,
@@ -308,6 +308,47 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // (assignment_word | word | variable) '=' [literal | composed_var | assignment_list]
+  public static boolean assignment_command(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_command")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, ASSIGNMENT_COMMAND, "<assignment command>");
+    r = assignment_command_0(b, l + 1);
+    r = r && consumeToken(b, EQ);
+    p = r; // pin = 2
+    r = r && assignment_command_2(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // assignment_word | word | variable
+  private static boolean assignment_command_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_command_0")) return false;
+    boolean r;
+    r = consumeToken(b, ASSIGNMENT_WORD);
+    if (!r) r = consumeToken(b, WORD);
+    if (!r) r = variable(b, l + 1);
+    return r;
+  }
+
+  // [literal | composed_var | assignment_list]
+  private static boolean assignment_command_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_command_2")) return false;
+    assignment_command_2_0(b, l + 1);
+    return true;
+  }
+
+  // literal | composed_var | assignment_list
+  private static boolean assignment_command_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_command_2_0")) return false;
+    boolean r;
+    r = literal(b, l + 1);
+    if (!r) r = composed_var(b, l + 1);
+    if (!r) r = assignment_list(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
   // '(' (<<backslash>> | array_assignment)* ')'
   public static boolean assignment_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_list")) return false;
@@ -341,47 +382,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = backslash(b, l + 1);
     if (!r) r = array_assignment(b, l + 1);
     exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // (assignment_word | word | variable) '=' [literal | composed_var | assignment_list]
-  public static boolean assignment_word_rule(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "assignment_word_rule")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, ASSIGNMENT_WORD_RULE, "<assignment word rule>");
-    r = assignment_word_rule_0(b, l + 1);
-    r = r && consumeToken(b, EQ);
-    p = r; // pin = 2
-    r = r && assignment_word_rule_2(b, l + 1);
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // assignment_word | word | variable
-  private static boolean assignment_word_rule_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "assignment_word_rule_0")) return false;
-    boolean r;
-    r = consumeToken(b, ASSIGNMENT_WORD);
-    if (!r) r = consumeToken(b, WORD);
-    if (!r) r = variable(b, l + 1);
-    return r;
-  }
-
-  // [literal | composed_var | assignment_list]
-  private static boolean assignment_word_rule_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "assignment_word_rule_2")) return false;
-    assignment_word_rule_2_0(b, l + 1);
-    return true;
-  }
-
-  // literal | composed_var | assignment_list
-  private static boolean assignment_word_rule_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "assignment_word_rule_2_0")) return false;
-    boolean r;
-    r = literal(b, l + 1);
-    if (!r) r = composed_var(b, l + 1);
-    if (!r) r = assignment_list(b, l + 1);
     return r;
   }
 
@@ -567,13 +567,17 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // shell_command redirection_list? | include_command | simple_command
+  // shell_command redirection_list? 
+  //           | include_command 
+  //           | assignment_command 
+  //           | simple_command
   public static boolean command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "command")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, COMMAND, "<command>");
     r = command_0(b, l + 1);
     if (!r) r = include_command(b, l + 1);
+    if (!r) r = assignment_command(b, l + 1);
     if (!r) r = simple_command(b, l + 1);
     exit_section_(b, l, m, r, false, command_recover_parser_);
     return r;
@@ -2367,7 +2371,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // assignment_word_rule
+  // assignment_command
   //                                         | literal
   //                                         | redirection
   //                                         | composed_var
@@ -2378,7 +2382,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   static boolean simple_command_element_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command_element_inner")) return false;
     boolean r;
-    r = assignment_word_rule(b, l + 1);
+    r = assignment_command(b, l + 1);
     if (!r) r = literal(b, l + 1);
     if (!r) r = redirection(b, l + 1);
     if (!r) r = composed_var(b, l + 1);

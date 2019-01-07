@@ -14,9 +14,9 @@ public interface BashTypes {
   IElementType ARITHMETIC_EXPANSION = new BashCompositeElementType("ARITHMETIC_EXPANSION");
   IElementType ARRAY_ASSIGNMENT = new BashCompositeElementType("ARRAY_ASSIGNMENT");
   IElementType ARRAY_EXPRESSION = new BashCompositeElementType("ARRAY_EXPRESSION");
+  IElementType ASSIGNMENT_COMMAND = new BashCompositeElementType("ASSIGNMENT_COMMAND");
   IElementType ASSIGNMENT_EXPRESSION = new BashCompositeElementType("ASSIGNMENT_EXPRESSION");
   IElementType ASSIGNMENT_LIST = new BashCompositeElementType("ASSIGNMENT_LIST");
-  IElementType ASSIGNMENT_WORD_RULE = new BashCompositeElementType("ASSIGNMENT_WORD_RULE");
   IElementType BASH_EXPANSION = new BashCompositeElementType("BASH_EXPANSION");
   IElementType BITWISE_AND_EXPRESSION = new BashCompositeElementType("BITWISE_AND_EXPRESSION");
   IElementType BITWISE_EXCLUSIVE_OR_EXPRESSION = new BashCompositeElementType("BITWISE_EXCLUSIVE_OR_EXPRESSION");
@@ -179,14 +179,14 @@ public interface BashTypes {
       else if (type == ARRAY_EXPRESSION) {
         return new BashArrayExpressionImpl(node);
       }
+      else if (type == ASSIGNMENT_COMMAND) {
+        return new BashAssignmentCommandImpl(node);
+      }
       else if (type == ASSIGNMENT_EXPRESSION) {
         return new BashAssignmentExpressionImpl(node);
       }
       else if (type == ASSIGNMENT_LIST) {
         return new BashAssignmentListImpl(node);
-      }
-      else if (type == ASSIGNMENT_WORD_RULE) {
-        return new BashAssignmentWordRuleImpl(node);
       }
       else if (type == BASH_EXPANSION) {
         return new BashBashExpansionImpl(node);

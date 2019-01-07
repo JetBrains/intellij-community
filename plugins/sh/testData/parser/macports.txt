@@ -51,7 +51,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('VER')
           PsiElement(=)('=')
           COMMAND_SUBSTITUTION_COMMAND
@@ -172,7 +172,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_WORD_RULE
+        ASSIGNMENT_COMMAND
           PsiElement(assignment_word)('MSG')
           PsiElement(=)('=')
           STRING
