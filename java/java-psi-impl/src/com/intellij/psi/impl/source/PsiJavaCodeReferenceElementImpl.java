@@ -171,7 +171,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
     if (isCodeFragmentType(i)) {
       PsiJavaCodeReferenceCodeFragment fragment = (PsiJavaCodeReferenceCodeFragment)treeParent.getPsi();
-      return fragment.isClassesAccepted() ? Kind.CLASS_FQ_OR_PACKAGE_NAME_KIND : Kind.PACKAGE_NAME_KIND;
+      return fragment.isClassesAccepted() ? Kind.CLASS_OR_PACKAGE_NAME_KIND : Kind.PACKAGE_NAME_KIND;
     }
 
     diagnoseUnknownParent();
