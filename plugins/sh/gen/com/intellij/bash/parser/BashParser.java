@@ -168,10 +168,10 @@ public class BashParser implements PsiParser, LightPsiParser {
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
     create_token_set_(ARITHMETIC_EXPANSION, OLD_ARITHMETIC_EXPANSION),
     create_token_set_(BLOCK, CASE_COMMAND, COMMAND, COMMAND_SUBSTITUTION_COMMAND,
-      CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND, GENERIC_COMMAND,
-      IF_COMMAND, PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND,
-      SIMPLE_COMMAND, SUBSHELL_COMMAND, TRAP_COMMAND, UNTIL_COMMAND,
-      WHILE_COMMAND),
+      CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND, FUNCTION_DEF,
+      GENERIC_COMMAND, IF_COMMAND, PIPELINE_COMMAND, SELECT_COMMAND,
+      SHELL_COMMAND, SIMPLE_COMMAND, SUBSHELL_COMMAND, TRAP_COMMAND,
+      UNTIL_COMMAND, WHILE_COMMAND),
     create_token_set_(ADD_EXPRESSION, ARRAY_EXPRESSION, ASSIGNMENT_EXPRESSION, BITWISE_AND_EXPRESSION,
       BITWISE_EXCLUSIVE_OR_EXPRESSION, BITWISE_OR_EXPRESSION, BITWISE_SHIFT_EXPRESSION, COMMA_EXPRESSION,
       COMPARISON_EXPRESSION, CONDITIONAL_EXPRESSION, EQUALITY_EXPRESSION, EXPRESSION,
@@ -2399,13 +2399,13 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // assignment_word_rule
-  //                           | literal
-  //                           | redirection
-  //                           | composed_var
-  //                           | heredoc
-  //                           | conditional_command
-  //                           | command_substitution_command
-  //                           | arithmetic_expansion
+  //                                         | literal
+  //                                         | redirection
+  //                                         | composed_var
+  //                                         | heredoc
+  //                                         | conditional_command
+  //                                         | command_substitution_command
+  //                                         | arithmetic_expansion
   static boolean simple_command_element_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command_element_inner")) return false;
     boolean r;

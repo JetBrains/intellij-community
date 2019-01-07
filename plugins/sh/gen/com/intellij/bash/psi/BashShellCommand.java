@@ -7,7 +7,4 @@ import com.intellij.psi.PsiElement;
 
 public interface BashShellCommand extends BashCommand {
 
-  @Nullable
-  BashFunctionDef getFunctionDef();
-
 }

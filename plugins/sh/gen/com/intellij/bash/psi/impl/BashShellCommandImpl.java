@@ -25,10 +25,4 @@ public class BashShellCommandImpl extends BashCommandImpl implements BashShellCo
     else super.accept(visitor);
   }
 
-  @Override
-  @Nullable
-  public BashFunctionDef getFunctionDef() {
-    return findChildByClass(BashFunctionDef.class);
-  }
-
 }

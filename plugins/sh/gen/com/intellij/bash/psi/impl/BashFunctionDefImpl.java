@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashFunctionDefImpl extends BashCompositeElementImpl implements BashFunctionDef {
+public class BashFunctionDefImpl extends BashCommandImpl implements BashFunctionDef {
 
   public BashFunctionDefImpl(ASTNode node) {
     super(node);

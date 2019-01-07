@@ -211,7 +211,7 @@ select_command ::= select w (';'? newlines any_block | newlines in_clause any_bl
 case_command ::= case w newlines "in" (case_clause_list newlines) esac {pin(".*")=1}
 
 function_def ::=           word argument_list  newlines block
-                | function word argument_list? newlines block {pin(".*")="function|argument_list"}
+                | function word argument_list? newlines block {pin(".*")="function|argument_list" extends=command}
 private argument_list ::= '(' ')'
 
 subshell_command ::=  '(' list ')' {pin=1}
