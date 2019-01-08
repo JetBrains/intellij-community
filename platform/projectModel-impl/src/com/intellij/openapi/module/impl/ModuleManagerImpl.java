@@ -109,6 +109,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   protected void cleanCachedStuff() {
     myCachedModuleComparator = null;
     myCachedSortedModules = null;
+    myCachedModuleProductionGraph = null;
+    myCachedModuleTestGraph = null;
   }
 
   @Override
@@ -543,6 +545,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   private volatile Module[] myCachedSortedModules;
+  private volatile Graph<Module> myCachedModuleProductionGraph;
+  private volatile Graph<Module> myCachedModuleTestGraph;
 
   @Override
   @NotNull
@@ -587,7 +591,18 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   public Graph<Module> moduleGraph(boolean includeTests) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return myModuleModel.moduleGraph(includeTests);
+
+    Graph<Module> graph = includeTests ? myCachedModuleTestGraph : myCachedModuleProductionGraph;
+    if (graph != null) return graph;
+    
+    graph = myModuleModel.moduleGraph(includeTests);
+    if (includeTests) {
+      myCachedModuleTestGraph = graph;
+    } else {
+      myCachedModuleProductionGraph = graph;
+    }
+
+    return graph;
   }
 
   @Override
