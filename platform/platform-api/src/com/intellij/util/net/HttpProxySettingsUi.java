@@ -163,7 +163,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   }
 
   private boolean canEnableConnectionCheck() {
-    return !myNoProxyRb.isSelected();
+    return true;
   }
 
   @Override
