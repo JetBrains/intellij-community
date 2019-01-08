@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -91,6 +91,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final ChangesListView myView;
+  @Nullable private ChangesViewCommitPanel myCommitPanel;
   private final VcsConfiguration myVcsConfiguration;
   private JPanel myProgressLabel;
 
@@ -198,7 +199,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     };
     contentPanel.addToCenter(changesPanel);
     if (isNonModalCommit()) {
-      contentPanel.addToBottom(new ChangesViewCommitPanel(myProject));
+      myCommitPanel = new ChangesViewCommitPanel(myProject, myView);
+      contentPanel.addToBottom(myCommitPanel);
     }
 
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
@@ -224,7 +226,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return panel;
   }
 
-  private static void registerShortcuts(@NotNull JComponent component) {
+  private void registerShortcuts(@NotNull JComponent component) {
     registerWithShortcutSet("ChangesView.Refresh", CommonShortcuts.getRerun(), component);
     registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), component);
     registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), component);
@@ -232,6 +234,10 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     registerWithShortcutSet("ChangesView.SetDefault",
                             new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK | ctrlMask())), component);
     registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), component);
+
+    if (myCommitPanel != null) {
+      myCommitPanel.setupShortcuts(component);
+    }
   }
 
   @NotNull
