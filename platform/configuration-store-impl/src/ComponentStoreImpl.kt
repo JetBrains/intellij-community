@@ -138,14 +138,6 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   internal open fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
     val saveSessionProducerManager = createSaveSessionManagerAndSaveComponents(isForce, errors)
-
-    try {
-      afterSaveComponents(errors, isForce)
-    }
-    catch (e: Throwable) {
-      errors.add(e)
-    }
-
     saveSessionProducerManager.save(readonlyFiles, errors)
   }
 
@@ -153,9 +145,6 @@ abstract class ComponentStoreImpl : IComponentStore {
     val saveSessionProducerManager = createSaveSessionProducerManager()
     saveComponents(isForce, saveSessionProducerManager, errors)
     return saveSessionProducerManager
-  }
-
-  protected open fun afterSaveComponents(errors: MutableList<Throwable>, isForce: Boolean) {
   }
 
   private fun saveComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {

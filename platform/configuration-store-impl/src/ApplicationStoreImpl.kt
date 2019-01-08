@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.util.io.systemIndependentPath
@@ -14,7 +15,7 @@ import org.jetbrains.jps.model.serialization.JpsGlobalLoader
 
 private class ApplicationPathMacroManager : PathMacroManager(null)
 
-const val APP_CONFIG: String = "\$APP_CONFIG$"
+const val APP_CONFIG = "\$APP_CONFIG$"
 private const val FILE_STORAGE_DIR = "options"
 private const val DEFAULT_STORAGE_SPEC = "${PathManager.DEFAULT_OPTIONS_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}"
 
@@ -32,11 +33,11 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
     storageManager.addMacro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve("app.xml").systemIndependentPath)
   }
 
-  override fun afterSaveComponents(errors: MutableList<Throwable>, isForce: Boolean) {
-    super.afterSaveComponents(errors, isForce)
+  override fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+    super.doSave(errors, readonlyFiles, isForce)
 
     // here, because no Project (and so, ProjectStoreImpl) on Welcome Screen
-    service<DefaultProjectExportableAndSaveTrigger>().save(isForce)
+    serviceIfCreated<DefaultProjectExportableAndSaveTrigger>()?.save(isForce)
   }
 
   override fun toString() = "app"
@@ -45,11 +46,19 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
 class ApplicationStorageManager(application: Application?, pathMacroManager: PathMacroManager? = null)
   : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
 
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? =
-    if (component is NamedJDOMExternalizable) "${component.externalFileName}${FileStorageCoreUtil.DEFAULT_EXT}" else DEFAULT_STORAGE_SPEC
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
+    return when (component) {
+      is NamedJDOMExternalizable -> "${component.externalFileName}${FileStorageCoreUtil.DEFAULT_EXT}"
+      else -> DEFAULT_STORAGE_SPEC
+    }
+  }
 
-  override fun getMacroSubstitutor(fileSpec: String): PathMacroSubstitutor? =
-    if (fileSpec == JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME) null else super.getMacroSubstitutor(fileSpec)
+  override fun getMacroSubstitutor(fileSpec: String): PathMacroSubstitutor? {
+    return when (fileSpec) {
+      JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME -> null
+      else -> super.getMacroSubstitutor(fileSpec)
+    }
+  }
 
   override val isUseXmlProlog: Boolean
     get() = false
@@ -66,7 +75,7 @@ class ApplicationStorageManager(application: Application?, pathMacroManager: Pat
     }
   }
 
-  override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
+  override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
 
-  override fun expandMacros(path: String): String = if (path[0] == '$') super.expandMacros(path) else "${expandMacro(APP_CONFIG)}/$path"
+  override fun expandMacros(path: String) = if (path[0] == '$') super.expandMacros(path) else "${expandMacro(APP_CONFIG)}/$path"
 }
