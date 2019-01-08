@@ -75,8 +75,7 @@ class PluginProjectWithIdeaJdkDescriptor : LightProjectDescriptor() {
   }
 
   private fun SdkModificator.addIdeaJarContainingClassToClassPath(clazz: Class<*>) {
-    val jarFile = File(FileUtil.toSystemIndependentName(
-      PathManager.getJarPathForClass(clazz)!!))
+    val jarFile = File(FileUtil.toSystemIndependentName(PathManager.getJarPathForClass(clazz)!!))
     val virtualFile = VfsUtil.findFileByIoFile(jarFile, true)
     addRoot(virtualFile!!, OrderRootType.CLASSES)
   }
