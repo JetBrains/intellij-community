@@ -43,6 +43,7 @@ java_test(
     ],
     tags = [
         "no_test_mac",  # TODO: we run out of file handles on Mac, double-check whether 'sysctl kern.maxfiles' is sane
+        "no_windows",
     ],
     deps = [
         "build-scripts-deps/commons-compress-1.10.jar",
