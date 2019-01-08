@@ -18,5 +18,6 @@
     <psi.referenceContributor implementation="com.intellij.bash.BashUrlReferenceContributor"/>
 
     <completion.contributor language="Bash" implementationClass="com.intellij.bash.psi.BashCompletionContributor"/>
+    <lang.braceMatcher language="Bash" implementationClass="com.intellij.bash.BashBraceMatcher"/>
   </extensions>
 </idea-plugin>
