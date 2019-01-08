@@ -137,10 +137,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   internal open fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
-    val saveSessionProducerManager = if (components.isEmpty()) null else createSaveSessionProducerManager()
-    if (saveSessionProducerManager != null) {
-      saveComponents(isForce, saveSessionProducerManager, errors)
-    }
+    val saveSessionProducerManager = createSaveSessionManagerAndSaveComponents(isForce, errors)
 
     try {
       afterSaveComponents(errors, isForce)
@@ -149,13 +146,23 @@ abstract class ComponentStoreImpl : IComponentStore {
       errors.add(e)
     }
 
-    saveSessionProducerManager?.save(readonlyFiles, errors)
+    saveSessionProducerManager.save(readonlyFiles, errors)
+  }
+
+  internal fun createSaveSessionManagerAndSaveComponents(isForce: Boolean, errors: MutableList<Throwable>): SaveSessionProducerManager {
+    val saveSessionProducerManager = createSaveSessionProducerManager()
+    saveComponents(isForce, saveSessionProducerManager, errors)
+    return saveSessionProducerManager
   }
 
   protected open fun afterSaveComponents(errors: MutableList<Throwable>, isForce: Boolean) {
   }
 
-  private fun saveComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>): MutableList<Throwable>? {
+  private fun saveComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
+    if (components.isEmpty()) {
+      return
+    }
+
     val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
 
     val names = ArrayUtilRt.toStringArray(components.keys)
@@ -212,7 +219,6 @@ abstract class ComponentStoreImpl : IComponentStore {
     if (timeLog != null) {
       LOG.info(timeLog.toString())
     }
-    return errors
   }
 
   @TestOnly

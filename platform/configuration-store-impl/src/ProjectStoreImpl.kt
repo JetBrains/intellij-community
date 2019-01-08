@@ -335,9 +335,23 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
 private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
   override fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
     // save modules before project
-    for (module in (ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY)) {
-      val moduleStore = ModuleServiceManager.getService(module, IComponentStore::class.java) as ComponentStoreImpl
-      moduleStore.doSave(errors, readonlyFiles, isForce)
+
+    val modules = ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY
+    if (!modules.isEmpty()) {
+      // do no create with capacity because very rarely a lot of modules will be modified
+      val saveSessions: MutableList<SaveSession> = SmartList<SaveSession>()
+      // commit components
+      for (module in modules) {
+        val moduleStore = ModuleServiceManager.getService(module, IComponentStore::class.java) as ComponentStoreImpl
+        moduleStore.createSaveSessionManagerAndSaveComponents(isForce, errors).processSaveSessions {
+          saveSessions.add(it)
+        }
+      }
+
+      // flush on disk
+      for (saveSession in saveSessions) {
+        executeSave(saveSession, readonlyFiles, errors)
+      }
     }
 
     super.doSave(errors, readonlyFiles, isForce)

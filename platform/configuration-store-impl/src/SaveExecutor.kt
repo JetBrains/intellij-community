@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.SmartList
 import java.util.*
 
@@ -25,17 +26,23 @@ internal open class SaveSessionProducerManager : SaveExecutor {
     return producer
   }
 
-  override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>): Boolean {
+  inline fun processSaveSessions(processor: (SaveSession) -> Unit): Boolean {
     if (producers.isEmpty()) {
       return false
     }
 
     var isChanged = false
     for (session in producers.values) {
-      executeSave(session.createSaveSession() ?: continue, readonlyFiles, errors)
+      processor(session.createSaveSession() ?: continue)
       isChanged = true
     }
     return isChanged
+  }
+
+  override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>): Boolean {
+    return processSaveSessions {
+      executeSave(it, readonlyFiles, errors)
+    }
   }
 }
 
@@ -46,6 +53,9 @@ internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<SaveSe
   catch (e: ReadOnlyModificationException) {
     LOG.warn(e)
     readonlyFiles.add(SaveSessionAndFile(e.session ?: session, e.file))
+  }
+  catch (e: ProcessCanceledException) {
+    throw e
   }
   catch (e: Exception) {
     errors.add(e)
