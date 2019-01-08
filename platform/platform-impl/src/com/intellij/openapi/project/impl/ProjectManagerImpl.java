@@ -639,11 +639,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return true;
   }
 
-  // saveApp is ignored if saveProject is false
+  // isSaveApp is ignored if saveProject is false
   @SuppressWarnings("TestOnlyProblems")
   private boolean closeProject(@NotNull final Project project,
                                final boolean saveProject,
-                               final boolean saveApp,
+                               final boolean isSaveApp,
                                final boolean dispose,
                                boolean checkCanClose) {
     Application app = ApplicationManager.getApplication();
@@ -681,7 +681,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       if (saveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
         StoreUtil.saveProject(project, true);
-        if (saveApp) {
+        if (isSaveApp) {
           app.saveSettings(true);
         }
       }

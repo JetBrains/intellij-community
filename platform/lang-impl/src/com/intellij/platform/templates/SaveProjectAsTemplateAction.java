@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.CommonBundle;
@@ -13,13 +13,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -123,12 +123,7 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     final Map<String, String> parameters = computeParameters(project, replaceParameters);
     indicator.setText("Saving project...");
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (project instanceof ProjectEx) {
-        (((ProjectEx)project)).save(true);
-      }
-      else {
-        project.save();
-      }
+      StoreUtil.saveProject(project, true);
     });
     indicator.setText("Processing project files...");
     ZipOutputStream stream = null;

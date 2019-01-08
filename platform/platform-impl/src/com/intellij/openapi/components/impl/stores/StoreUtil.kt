@@ -117,8 +117,8 @@ fun saveProjectsAndApp(isForceSavingAllSettings: Boolean) {
   LOG.info("saveProjectsAndApp took $duration ms")
 }
 
-fun saveProject(project: Project, isForce: Boolean) {
-  if (isForce && project is ProjectEx) {
+fun saveProject(project: Project, isForceSavingAllSettings: Boolean) {
+  if (isForceSavingAllSettings && project is ProjectEx) {
     project.save(true)
   }
   else {
