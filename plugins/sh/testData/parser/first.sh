@@ -32,6 +32,13 @@ function installJDK {
     rm $FILE
 }
 
+name='name'
+
+dir=$name.git $(( 1+2 ))
+dir3=$name.git$(( 1+2 ))
+
+echo $dir
+echo $dir3
 
 echo "Hello "*" World"
 echo `hello` world

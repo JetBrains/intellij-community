@@ -27,56 +27,14 @@ public class BashAssignmentCommandImpl extends BashCommandImpl implements BashAs
 
   @Override
   @Nullable
-  public BashArithmeticExpansion getArithmeticExpansion() {
-    return findChildByClass(BashArithmeticExpansion.class);
-  }
-
-  @Override
-  @Nullable
   public BashAssignmentList getAssignmentList() {
     return findChildByClass(BashAssignmentList.class);
   }
 
   @Override
   @Nullable
-  public BashBashExpansion getBashExpansion() {
-    return findChildByClass(BashBashExpansion.class);
-  }
-
-  @Override
-  @Nullable
-  public BashShellParameterExpansion getShellParameterExpansion() {
-    return findChildByClass(BashShellParameterExpansion.class);
-  }
-
-  @Override
-  @Nullable
-  public BashString getString() {
-    return findChildByClass(BashString.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashVariable> getVariableList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashVariable.class);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getAt() {
-    return findChildByType(AT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getBang() {
-    return findChildByType(BANG);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getDollar() {
-    return findChildByType(DOLLAR);
+  public BashVariable getVariable() {
+    return findChildByClass(BashVariable.class);
   }
 
   @Override
@@ -87,38 +45,14 @@ public class BashAssignmentCommandImpl extends BashCommandImpl implements BashAs
 
   @Override
   @Nullable
-  public PsiElement getFiledescriptor() {
-    return findChildByType(FILEDESCRIPTOR);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getAssignmentWord() {
     return findChildByType(ASSIGNMENT_WORD);
   }
 
   @Override
   @Nullable
-  public PsiElement getHex() {
-    return findChildByType(HEX);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getInt() {
-    return findChildByType(INT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getNumber() {
-    return findChildByType(NUMBER);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getOctal() {
-    return findChildByType(OCTAL);
+  public PsiElement getWord() {
+    return findChildByType(WORD);
   }
 
 }

@@ -1,6 +1,7 @@
 package com.intellij.bash.parser;
 
 import com.intellij.bash.BashTypes;
+import com.intellij.bash.lexer.BashLexer;
 import com.intellij.bash.lexer.BashTokenTypes;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
@@ -74,6 +75,16 @@ public class BashParserUtil extends GeneratedParserUtilBase {
 
   public static boolean backslash(PsiBuilder builder_, @SuppressWarnings("UnusedParameters") int level) {
     return consumeTokenFast(builder_, "\\\n");
+  }
+
+  public static boolean parseUntilSpace(PsiBuilder builder_, @SuppressWarnings("UnusedParameters") int level, Parser parser) {
+    PsiBuilder.Marker mark = builder_.mark();
+    while (true) {
+      if (!parser.parse(builder_, level) || BashLexer.whitespaceTokens.contains(builder_.rawLookup(0)) || builder_.eof()) {
+        mark.drop();
+        return true;
+      }
+    }
   }
 
   public static boolean keywordsRemapped(PsiBuilder builder_, @SuppressWarnings("UnusedParameters") int level) {

@@ -8,51 +8,18 @@ import com.intellij.psi.PsiElement;
 public interface BashAssignmentCommand extends BashCommand {
 
   @Nullable
-  BashArithmeticExpansion getArithmeticExpansion();
-
-  @Nullable
   BashAssignmentList getAssignmentList();
 
   @Nullable
-  BashBashExpansion getBashExpansion();
-
-  @Nullable
-  BashShellParameterExpansion getShellParameterExpansion();
-
-  @Nullable
-  BashString getString();
-
-  @NotNull
-  List<BashVariable> getVariableList();
-
-  @Nullable
-  PsiElement getAt();
-
-  @Nullable
-  PsiElement getBang();
-
-  @Nullable
-  PsiElement getDollar();
+  BashVariable getVariable();
 
   @NotNull
   PsiElement getEq();
 
   @Nullable
-  PsiElement getFiledescriptor();
-
-  @Nullable
   PsiElement getAssignmentWord();
 
   @Nullable
-  PsiElement getHex();
-
-  @Nullable
-  PsiElement getInt();
-
-  @Nullable
-  PsiElement getNumber();
-
-  @Nullable
-  PsiElement getOctal();
+  PsiElement getWord();
 
 }

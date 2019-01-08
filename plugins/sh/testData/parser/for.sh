@@ -34,6 +34,12 @@ for (( ;  ; ))
 }
 
 
+for name in idea-ultimate idea-community idea-contrib idea-community-android idea-community-android-tools idea-cidr idea-appcode-testdata idea-gemsData; do
+	dir=$name.git
+	echo "$name.git = $name.git" >> $GIT_DIR/map
+done
+
+
 // todo: fix me
 
 for i in {1..5}

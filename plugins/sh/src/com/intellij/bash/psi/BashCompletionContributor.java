@@ -29,6 +29,7 @@ public class BashCompletionContributor extends CompletionContributor implements 
         for (String keywords : suggestKeywords(parameters.getPosition())) {
           result.addElement(LookupElementBuilder.create(keywords).bold().withInsertHandler(AddSpaceInsertHandler.INSTANCE));
         }
+        result.stopHere();
       }
     });
   }

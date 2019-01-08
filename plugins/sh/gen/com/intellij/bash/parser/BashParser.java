@@ -308,7 +308,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (assignment_word | word | variable) '=' [literal | composed_var | assignment_list]
+  // (assignment_word | word | variable) '=' [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
   public static boolean assignment_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_command")) return false;
     boolean r, p;
@@ -331,20 +331,30 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [literal | composed_var | assignment_list]
+  // [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
   private static boolean assignment_command_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_command_2")) return false;
     assignment_command_2_0(b, l + 1);
     return true;
   }
 
-  // literal | composed_var | assignment_list
+  // assignment_list | <<parseUntilSpace (literal | composed_var)>>
   private static boolean assignment_command_2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_command_2_0")) return false;
     boolean r;
+    Marker m = enter_section_(b);
+    r = assignment_list(b, l + 1);
+    if (!r) r = parseUntilSpace(b, l + 1, assignment_command_2_0_1_0_parser_);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // literal | composed_var
+  private static boolean assignment_command_2_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_command_2_0_1_0")) return false;
+    boolean r;
     r = literal(b, l + 1);
     if (!r) r = composed_var(b, l + 1);
-    if (!r) r = assignment_list(b, l + 1);
     return r;
   }
 
@@ -1792,7 +1802,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // redirection_inner | '&>' w |  num redirection_inner
+  // redirection_inner | '&>' w | num redirection_inner
   public static boolean redirection(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection")) return false;
     boolean r;
@@ -1827,7 +1837,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ('<&' | '>&') (num | '-') 
+  // ('<&' | '>&') (num | '-')
   //                             | ('>' | '<' | '>>' | '<<' | '<<<' | '<&' | '>&' | '<<-' | '<>' | '>|') w
   static boolean redirection_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner")) return false;
@@ -2716,6 +2726,11 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
+  static final Parser assignment_command_2_0_1_0_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return assignment_command_2_0_1_0(b, l + 1);
+    }
+  };
   static final Parser command_recover_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return command_recover(b, l + 1);
