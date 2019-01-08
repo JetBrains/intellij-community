@@ -39,10 +39,12 @@ class JavaUCallExpression(
   override val classReference: UReferenceExpression?
     get() = null
 
-  override val valueArgumentCount: Int by lz { psi.argumentList.expressions.size }
+  override val valueArgumentCount: Int
+    get() = psi.argumentList.expressionCount
 
-  override val valueArguments: List<UExpression> =
+  override val valueArguments: List<UExpression> by lz {
     PsiArrayToUElementListMappingView(psi.argumentList.expressions) { JavaConverter.convertOrEmpty(it, this@JavaUCallExpression) }
+  }
 
   override fun getArgumentForParameter(i: Int): UExpression? {
     val resolved = multiResolve().mapNotNull { it.element as? PsiMethod }
