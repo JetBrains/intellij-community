@@ -81,7 +81,7 @@ public class ModulesConfigurationTest extends PlatformTestCase {
 
   private static void closeProject(Project project, boolean isSave) {
     if (isSave) {
-      StoreUtil.saveStateStore(project, true);
+      StoreUtil.saveSettings(project, true);
     }
     ((ProjectManagerImpl)ProjectManager.getInstance()).forceCloseProject(project, true);
   }

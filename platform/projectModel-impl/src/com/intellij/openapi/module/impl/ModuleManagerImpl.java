@@ -3,6 +3,7 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -593,7 +594,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     Graph<Module> graph = includeTests ? myCachedModuleTestGraph : myCachedModuleProductionGraph;
     if (graph != null) return graph;
-    
+
     graph = myModuleModel.moduleGraph(includeTests);
     if (includeTests) {
       myCachedModuleTestGraph = graph;
@@ -1112,7 +1113,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
           List<VirtualFilePointer> contentRoots = ContainerUtil.map(ModuleRootManager.getInstance(module).getContentRootUrls(), url -> pointerManager.create(url, this, null));
           UnloadedModuleDescriptionImpl unloadedModuleDescription = new UnloadedModuleDescriptionImpl(modulePath, description.getDependencyModuleNames(), contentRoots);
           // we need to save module configuration before unloading, otherwise its settings will be lost
-          ServiceKt.saveComponentManager(module);
+          StateStorageManagerKt.saveComponentManager(module);
           model.disposeModule(module);
           myUnloadedModules.put(name, unloadedModuleDescription);
         }

@@ -2,9 +2,9 @@
 package com.intellij.roots;
 
 import com.intellij.ProjectTopics;
+import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -398,7 +398,7 @@ public class RootsChangedTest extends ModuleTestCase {
 
   public void testShelveChangesMustNotLeadToRootsChangedEvent() {
     // create .idea
-    ServiceKt.saveComponentManager(getProject());
+    StateStorageManagerKt.saveComponentManager(getProject());
     VirtualFile shelf = createChildDirectory(getProject().getProjectFile().getParent(), "shelf");
 
     myModuleRootListener.reset();

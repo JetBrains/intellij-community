@@ -27,7 +27,7 @@ import kotlinx.coroutines.runBlocking
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
 
 @JvmOverloads
-fun saveStateStore(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
+fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
   val currentThread = Thread.currentThread()
   ShutDownTracker.getInstance().registerStopperThread(currentThread)
   try {
@@ -46,22 +46,21 @@ fun saveStateStore(componentManager: ComponentManager, isForceSavingAllSettings:
       LOG.warn("Save settings failed", e)
     }
 
-    val messagePostfix = " Please restart " + ApplicationNamesInfo.getInstance().fullProductName + "</p>" +
-                         if (ApplicationManagerEx.getApplicationEx().isInternal) "<p>" + StringUtil.getThrowableText(e) + "</p>" else ""
+    val messagePostfix = "Please restart ${ApplicationNamesInfo.getInstance().fullProductName}</p>" +
+                         (if (ApplicationManagerEx.getApplicationEx().isInternal) "<p>" + StringUtil.getThrowableText(e) + "</p>" else "")
 
     val pluginId = IdeErrorsDialog.findPluginId(e)
-    if (pluginId == null) {
-      Notification("Settings Error", "Unable to save settings",
-                   "<p>Failed to save settings.$messagePostfix",
-                   NotificationType.ERROR).notify(componentManager as? Project)
+    val notification = if (pluginId == null) {
+      Notification("Settings Error", "Unable to save settings", "<p>Failed to save settings. $messagePostfix",
+                   NotificationType.ERROR)
     }
     else {
       PluginManagerCore.disablePlugin(pluginId.idString)
-
       Notification("Settings Error", "Unable to save plugin settings",
-                   "<p>The plugin <i>$pluginId</i> failed to save settings and has been disabled.$messagePostfix",
-                   NotificationType.ERROR).notify(componentManager as? Project)
+                   "<p>The plugin <i>$pluginId</i> failed to save settings and has been disabled. $messagePostfix",
+                   NotificationType.ERROR)
     }
+    notification.notify(componentManager as? Project)
   }
   finally {
     ShutDownTracker.getInstance().unregisterStopperThread(currentThread)

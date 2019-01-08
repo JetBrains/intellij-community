@@ -8,7 +8,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.ServiceManagerImpl
-import com.intellij.openapi.components.impl.stores.saveStateStore
+import com.intellij.openapi.components.impl.stores.saveSettings
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -95,7 +95,7 @@ internal class DoNotSaveDefaultsTest {
       System.setProperty("store.save.use.modificationCount", "false")
       app.isSaveAllowed = true
       runInEdtAndWait {
-        saveStateStore(componentManager)
+        saveSettings(componentManager)
       }
     }
     finally {

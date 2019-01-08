@@ -4,7 +4,6 @@ package com.intellij.openapi.components
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.runBlocking
 
 inline fun <reified T : Any> service(): T = ServiceManager.getService(T::class.java)
 
@@ -19,13 +18,6 @@ val ComponentManager.stateStore: IComponentStore
     val key: Any = if (this is Project) IComponentStore::class.java else IComponentStore::class.java.name
     return picoContainer.getComponentInstance(key) as IComponentStore
   }
-
-@JvmOverloads
-fun saveComponentManager(componentManager: ComponentManager, isForce: Boolean = false) {
-  runBlocking {
-    componentManager.stateStore.save(isForceSavingAllSettings = isForce)
-  }
-}
 
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 fun <T> ComponentManager.getComponents(baseClass: Class<T>): List<T> =

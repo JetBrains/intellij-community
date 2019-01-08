@@ -342,7 +342,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
 
     try {
-      StoreUtil.saveStateStore(this, isForceSavingAllSettings);
+      StoreUtil.saveSettings(this, isForceSavingAllSettings);
     }
     finally {
       mySavingInProgress.set(false);

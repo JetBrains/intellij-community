@@ -600,7 +600,7 @@ public class PlatformTestUtil {
 
   public static void saveProject(@NotNull Project project, boolean isForce) {
     ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
-    StoreUtil.saveStateStore(project, isForce);
+    StoreUtil.saveSettings(project, isForce);
   }
 
   static void waitForAllBackgroundActivityToCalmDown() {

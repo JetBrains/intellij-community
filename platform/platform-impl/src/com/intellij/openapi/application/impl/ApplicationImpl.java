@@ -1438,7 +1438,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
     try {
-      StoreUtil.saveStateStore(this, isForceSavingAllSettings);
+      StoreUtil.saveSettings(this, isForceSavingAllSettings);
     }
     finally {
       mySaveSettingsIsInProgress.set(false);
