@@ -185,7 +185,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   private LanguageLevel getClassesLanguageLevel(VirtualFile virtualFile) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
-    final VirtualFile folder = virtualFile.getParent();
+    VirtualFile folder = virtualFile.isDirectory() ? virtualFile : virtualFile.getParent();
     if (sourceRoot != null && sourceRoot.isDirectory() && folder != null) {
       String relativePath = VfsUtilCore.getRelativePath(folder, sourceRoot, '/');
       if (relativePath == null) {
