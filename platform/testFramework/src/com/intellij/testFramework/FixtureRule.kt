@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -24,6 +24,7 @@ import com.intellij.project.stateStore
 import com.intellij.util.SmartList
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.systemIndependentPath
+import kotlinx.coroutines.runBlocking
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -307,7 +308,9 @@ fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreator: ((Vi
 }
 
 fun ComponentManager.saveStore() {
-  stateStore.save(SmartList(), true)
+  runBlocking {
+    stateStore.save(SmartList(), true)
+  }
 }
 
 class DisposableRule : ExternalResource() {

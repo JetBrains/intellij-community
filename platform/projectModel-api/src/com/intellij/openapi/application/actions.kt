@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.command.CommandProcessor
@@ -20,7 +20,9 @@ inline fun <T> runUndoTransparentWriteAction(crossinline runnable: () -> T): T {
   return result as T
 }
 
-inline fun <T> runReadAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runReadAction(Computable { runnable() })
+inline fun <T> runReadAction(crossinline runnable: () -> T): T {
+  return ApplicationManager.getApplication().runReadAction(Computable { runnable() })
+}
 
 /**
  * @exclude Internal use only

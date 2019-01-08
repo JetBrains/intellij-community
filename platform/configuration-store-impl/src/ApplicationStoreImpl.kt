@@ -33,11 +33,20 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
     storageManager.addMacro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve("app.xml").systemIndependentPath)
   }
 
-  override fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
     super.doSave(errors, readonlyFiles, isForce)
 
+    // todo can we store it in parallel to regular saving?
     // here, because no Project (and so, ProjectStoreImpl) on Welcome Screen
     serviceIfCreated<DefaultProjectExportableAndSaveTrigger>()?.save(isForce)
+  }
+
+  override fun createSaveSessionProducerManager(): SaveSessionProducerManager {
+    return object : SaveSessionProducerManager() {
+      override suspend fun save(readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>): Boolean {
+        return super.save(readonlyFiles, errors)
+      }
+    }
   }
 
   override fun toString() = "app"

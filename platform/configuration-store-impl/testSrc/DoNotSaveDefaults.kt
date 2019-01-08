@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ide.util.PropertiesComponent
@@ -8,7 +8,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.ServiceManagerImpl
-import com.intellij.openapi.components.impl.stores.StoreUtil
+import com.intellij.openapi.components.impl.stores.saveStateStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -95,7 +95,7 @@ internal class DoNotSaveDefaultsTest {
       System.setProperty("store.save.use.modificationCount", "false")
       app.isSaveAllowed = true
       runInEdtAndWait {
-        StoreUtil.save(componentManager.stateStore, null)
+        saveStateStore(componentManager.stateStore, project = null)
       }
     }
     finally {

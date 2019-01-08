@@ -1,8 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
@@ -15,6 +14,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ModuleTestCase
+import com.intellij.testFramework.saveStore
 import java.io.File
 import java.util.*
 
@@ -77,7 +77,7 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
     }, "a")
   }
 
-  fun `test unload module if loaded module transitively depends on it via previosly unloaded module`() {
+  fun `test unload module if loaded module transitively depends on it via previously unloaded module`() {
     val a = createModule("a")
     val b = createModule("b")
     ModuleRootModificationUtil.addDependency(a, b)
@@ -114,7 +114,7 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
       }
       setup(ModuleManager.getInstance(project).modules.associateBy { it.name })
       modules.forEach {
-        it.stateStore.save(mutableListOf())
+        it.saveStore()
       }
     }
     finally {
@@ -127,7 +127,7 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
   private fun reloadProjectWithNewModules(moduleFiles: List<File>) {
     val moduleManager = ModuleManagerImpl.getInstanceImpl(myProject)
     val modulePaths = LinkedHashSet<ModulePath>()
-    moduleManager.modules.forEach { it.stateStore.save(mutableListOf()) }
+    moduleManager.modules.forEach { it.saveStore() }
     moduleManager.modules.mapTo(modulePaths) { ModulePath(it.moduleFilePath, null) }
     moduleManager.unloadedModuleDescriptions.mapTo(modulePaths) { (it as UnloadedModuleDescriptionImpl).modulePath }
     moduleFiles.mapTo(modulePaths) { ModulePath(FileUtil.toSystemIndependentName(it.absolutePath), null) }

@@ -14,7 +14,7 @@ import com.intellij.util.containers.mapSmart
 import com.intellij.util.lang.CompoundRuntimeException
 
 internal class ProjectSaveSessionProducerManager(private val project: Project) : SaveSessionProducerManager() {
-  override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>): Boolean {
+  override suspend fun save(readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>): Boolean {
     val isChanged = super.save(readonlyFiles, errors)
 
     val notifications = getUnableToSaveNotifications()

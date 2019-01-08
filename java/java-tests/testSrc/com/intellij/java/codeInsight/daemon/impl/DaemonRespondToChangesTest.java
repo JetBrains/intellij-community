@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.application.UtilKt;
@@ -1227,7 +1227,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       backspace();
     }).usesAllCPUCores().assertTiming();
   }
-                                                                                 
+
   public void testExpressionListsWithManyStringLiteralsHighlightingPerformance() {
     String listBody = StringUtil.join(Collections.nCopies(2000, "\"foo\""), ",\n");
     String text = "class S { " +
@@ -1356,14 +1356,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testApplyErrorInTheMiddle() {
-    String text = "class <caret>X { ";
+    StringBuilder text = new StringBuilder("class <caret>X { ");
     for (int i = 0; i < 100; i++) {
-      text += "\n    {\n" +
-              "//    String x = \"<zzzzzzzzzz/>\";\n" +
-              "    }";
+      text.append("\n    {\n" + "//    String x = \"<zzzzzzzzzz/>\";\n" + "    }");
     }
-    text += "\n}";
-    configureByText(StdFileTypes.JAVA, text);
+    text.append("\n}");
+    configureByText(StdFileTypes.JAVA, text.toString());
 
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);

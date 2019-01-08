@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.statistics.eventLog
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
-import com.intellij.openapi.components.impl.stores.StoreUtil
+import com.intellij.openapi.components.impl.stores.getStateSpec
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.xmlb.annotations.Attribute
@@ -37,7 +37,7 @@ class FeatureUsageSettingsEventsTest {
   @Test
   fun recordAllDefaultApplicationComponent() {
     val component = TestComponent()
-    val spec = StoreUtil.getStateSpec(component)
+    val spec = getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logConfigurationState(spec.name, component.state, null)
     assertDefaultState(printer, false, false)
@@ -46,7 +46,7 @@ class FeatureUsageSettingsEventsTest {
   @Test
   fun recordDefaultApplicationComponent() {
     val component = TestComponent()
-    val spec = StoreUtil.getStateSpec(component)
+    val spec = getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logDefaultConfigurationState(spec.name, ComponentState::class.java, null)
     assertDefaultState(printer, false, false)
@@ -55,7 +55,7 @@ class FeatureUsageSettingsEventsTest {
   @Test
   fun recordAllDefaultComponent() {
     val component = TestComponent()
-    val spec = StoreUtil.getStateSpec(component)
+    val spec = getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logConfigurationState(spec.name, component.state, projectRule.project)
     assertDefaultState(printer, true, false)
@@ -64,7 +64,7 @@ class FeatureUsageSettingsEventsTest {
   @Test
   fun recordDefaultComponent() {
     val component = TestComponent()
-    val spec = StoreUtil.getStateSpec(component)
+    val spec = getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logDefaultConfigurationState(spec.name, ComponentState::class.java, projectRule.project)
     assertDefaultState(printer, true, false)
@@ -74,7 +74,7 @@ class FeatureUsageSettingsEventsTest {
   fun recordDefaultMultiComponent() {
     val component = TestComponent()
     component.loadState(MultiComponentState())
-    val spec = StoreUtil.getStateSpec(component)
+    val spec = getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logDefaultConfigurationState(spec.name, MultiComponentState::class.java, projectRule.project)
 
@@ -88,7 +88,7 @@ class FeatureUsageSettingsEventsTest {
   @Test
   fun recordComponentForDefaultProject() {
     val component = TestComponent()
-    val spec = StoreUtil.getStateSpec(component)
+    val spec = getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logConfigurationState(spec.name, component.state, ProjectManager.getInstance().defaultProject)
     assertDefaultState(printer, false, true)
@@ -98,7 +98,7 @@ class FeatureUsageSettingsEventsTest {
   fun recordNotDefaultApplicationComponent() {
     val component = TestComponent()
     component.loadState(ComponentState(bool = true))
-    val spec = StoreUtil.getStateSpec(component)
+    val spec = getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logConfigurationState(spec.name, component.state, null)
     assertNotDefaultState(printer, false, false)
@@ -108,7 +108,7 @@ class FeatureUsageSettingsEventsTest {
   fun recordNotDefaultComponent() {
     val component = TestComponent()
     component.loadState(ComponentState(bool = true))
-    val spec = StoreUtil.getStateSpec(component)
+    val spec = getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logConfigurationState(spec.name, component.state, projectRule.project)
     assertNotDefaultState(printer, true, false)
@@ -118,7 +118,7 @@ class FeatureUsageSettingsEventsTest {
   fun recordPartiallyNotDefaultMultiComponent() {
     val component = TestComponent()
     component.loadState(MultiComponentState(bool = true, secondBool = true))
-    val spec = StoreUtil.getStateSpec(component)
+    val spec = getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logConfigurationState(spec.name, component.state, projectRule.project)
 
@@ -133,7 +133,7 @@ class FeatureUsageSettingsEventsTest {
   fun recordNotDefaultMultiComponent() {
     val component = TestComponent()
     component.loadState(MultiComponentState(bool = true, secondBool = false))
-    val spec = StoreUtil.getStateSpec(component)
+    val spec = getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logConfigurationState(spec.name, component.state, projectRule.project)
 

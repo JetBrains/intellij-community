@@ -11,7 +11,7 @@ interface SaveExecutor {
   /**
    * @return was something really saved
    */
-  fun save(readonlyFiles: MutableList<SaveSessionAndFile> = SmartList(), errors: MutableList<Throwable>): Boolean
+  suspend fun save(readonlyFiles: MutableList<SaveSessionAndFile> = SmartList(), errors: MutableList<Throwable>): Boolean
 }
 
 internal open class SaveSessionProducerManager : SaveExecutor {
@@ -39,7 +39,7 @@ internal open class SaveSessionProducerManager : SaveExecutor {
     return isChanged
   }
 
-  override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>): Boolean {
+  override suspend fun save(readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>): Boolean {
     return processSaveSessions {
       executeSave(it, readonlyFiles, errors)
     }

@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -21,7 +22,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
 
 /**
  * @author dsl
@@ -77,7 +76,7 @@ public class RootsChangedTest extends ModuleTestCase {
     VfsTestUtil.deleteFile(vDir1);
     assertEventsCount(1);
     assertEmpty(ModuleRootManager.getInstance(moduleA).getContentRoots());
- 
+
     File dir2 = new File(root, "dir2");
     assertTrue(dir2.mkdirs());
     VirtualFile vDir2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir2);
@@ -91,7 +90,7 @@ public class RootsChangedTest extends ModuleTestCase {
     rename(vDir2, "dir2");
     assertNoEvents();
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
- 
+
     // and event if it is moved, it's still a root
     File subdir = new File(root, "subdir");
     assertTrue(subdir.mkdirs());
@@ -398,7 +397,8 @@ public class RootsChangedTest extends ModuleTestCase {
   }
 
   public void testShelveChangesMustNotLeadToRootsChangedEvent() {
-    ProjectKt.getStateStore(getProject()).save(Collections.emptyList(), false); // create .idea
+    // create .idea
+    ServiceKt.saveComponentManager(getProject());
     VirtualFile shelf = createChildDirectory(getProject().getProjectFile().getParent(), "shelf");
 
     myModuleRootListener.reset();

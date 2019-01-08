@@ -33,6 +33,8 @@ import com.intellij.util.containers.computeIfAny
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
 import com.intellij.util.text.nullize
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.nio.file.AccessDeniedException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -318,24 +320,29 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
     }
   }
 
-  override fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
-    try {
-      saveProjectName()
-    }
-    catch (e: Throwable) {
-      LOG.error("Unable to store project name", e)
-    }
+  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+    coroutineScope {
+      launch {
+        try {
+          saveProjectName()
+        }
+        catch (e: Throwable) {
+          LOG.error("Unable to store project name", e)
+        }
+      }
 
-    super.doSave(errors, readonlyFiles, isForce)
+      launch {
+        super.doSave(errors, readonlyFiles, isForce)
+      }
+    }
   }
 
   final override fun createSaveSessionProducerManager() = ProjectSaveSessionProducerManager(project)
 }
 
 private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
-  override fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
     // save modules before project
-
     val modules = ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY
     if (!modules.isEmpty()) {
       // do no create with capacity because very rarely a lot of modules will be modified

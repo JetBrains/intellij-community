@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.WriteAction;
@@ -80,9 +80,9 @@ public class ModulesConfigurationTest extends PlatformTestCase {
     return Pair.create(projectDir, moduleFile);
   }
 
-  private static void closeProject(Project project, boolean save) {
-    if (save) {
-      StoreUtil.save(ServiceKt.getStateStore(project), project, true);
+  private static void closeProject(Project project, boolean isSave) {
+    if (isSave) {
+      StoreUtil.saveStateStore(ServiceKt.getStateStore(project), project, true);
     }
     ((ProjectManagerImpl)ProjectManager.getInstance()).forceCloseProject(project, true);
   }

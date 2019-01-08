@@ -3,7 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.StoreUtil
+import com.intellij.openapi.components.impl.stores.saveProject
 import com.intellij.openapi.project.Project
 import org.jdom.Element
 import java.io.Writer
@@ -106,6 +106,6 @@ internal class DefaultProjectExportableAndSaveTrigger {
 
   fun save(isForceSavingAllSettings: Boolean) {
     // we must trigger save
-    StoreUtil.saveProject(project ?: return, isForceSavingAllSettings)
+    saveProject(project ?: return, isForceSavingAllSettings)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.externalDependencies.DependencyOnPlugin
@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.getDirectoryTree
 import com.intellij.util.io.systemIndependentPath
@@ -93,11 +92,14 @@ internal class DefaultProjectStoreTest {
     }
   }
 
-  @Test fun `new project from default - directory-based storage`() {
+  @Test
+  fun `new project from default - directory-based storage`() {
     val defaultProject = ProjectManager.getInstance().defaultProject
     val defaultTestComponent = TestComponent()
-    defaultTestComponent.loadState(
-      JDOMUtil.load("""<component><main name="$TEST_COMPONENT_NAME"/><sub name="foo" /><sub name="bar" /></component>"""))
+    defaultTestComponent.loadState(JDOMUtil.load("""
+      <component>
+        <main name="$TEST_COMPONENT_NAME"/><sub name="foo" /><sub name="bar" />
+      </component>""".trimIndent()))
     val stateStore = defaultProject.stateStore as ComponentStoreImpl
     stateStore.initComponent(defaultTestComponent, true)
     try {
@@ -112,7 +114,7 @@ internal class DefaultProjectStoreTest {
       // clear state
       defaultTestComponent.loadState(Element("empty"))
       runInEdtAndWait {
-        stateStore.save(SmartList())
+        defaultProject.saveStore()
       }
       stateStore.removeComponent(TEST_COMPONENT_NAME)
     }

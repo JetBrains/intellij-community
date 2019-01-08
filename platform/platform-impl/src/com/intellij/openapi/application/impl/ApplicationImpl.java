@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
@@ -1438,7 +1438,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
     try {
-      StoreUtil.save(ServiceKt.getStateStore(this), null, isForce);
+      StoreUtil.saveStateStore(ServiceKt.getStateStore(this), null, isForce);
     }
     finally {
       mySaveSettingsIsInProgress.set(false);

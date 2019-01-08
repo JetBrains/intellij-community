@@ -10,10 +10,7 @@ import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.ComponentManagerImpl
-import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
-import com.intellij.openapi.components.impl.stores.StoreUtil
-import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
+import com.intellij.openapi.components.impl.stores.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -35,6 +32,7 @@ import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
+import kotlinx.coroutines.runBlocking
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -92,7 +90,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     try {
       @Suppress("DEPRECATION")
       if (component is PersistentStateComponent<*>) {
-        componentName = initPersistenceStateComponent(component, StoreUtil.getStateSpec(component), isService)
+        componentName = initPersistenceStateComponent(component, getStateSpec(component), isService)
       }
       else if (component is JDOMExternalizable) {
         componentName = ComponentManagerImpl.getComponentName(component)
@@ -130,13 +128,13 @@ abstract class ComponentStoreImpl : IComponentStore {
     return componentName
   }
 
-  final override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
-    val errors: MutableList<Throwable> = SmartList<Throwable>()
+  final override suspend fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+    val errors = SmartList<Throwable>()
     doSave(errors, readonlyFiles, isForce)
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 
-  internal open fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+  internal open suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
     val saveSessionProducerManager = createSaveSessionManagerAndSaveComponents(isForce, errors)
     saveSessionProducerManager.save(readonlyFiles, errors)
   }
@@ -212,7 +210,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   @TestOnly
   override fun saveApplicationComponent(component: PersistentStateComponent<*>) {
-    val stateSpec = StoreUtil.getStateSpec(component)
+    val stateSpec = getStateSpec(component)
     LOG.info("saveApplicationComponent is called for ${stateSpec.name}")
     val externalizationSession = createSaveSessionProducerManager()
     commitComponent(externalizationSession, ComponentInfoImpl(component, stateSpec), null)
@@ -222,9 +220,11 @@ abstract class ComponentStoreImpl : IComponentStore {
       val newDisposable = Disposer.newDisposable()
       try {
         VfsRootAccess.allowRootAccess(newDisposable, absolutePath)
-        val isSomethingChanged = externalizationSession.save(errors = errors)
-        if (!isSomethingChanged) {
-          LOG.info("saveApplicationComponent is called for ${stateSpec.name} but nothing to save")
+        runBlocking {
+          val isSomethingChanged = externalizationSession.save(errors = errors)
+          if (!isSomethingChanged) {
+            LOG.info("saveApplicationComponent is called for ${stateSpec.name} but nothing to save")
+          }
         }
       }
       finally {
@@ -431,7 +431,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   private fun isNotReloadable(name: String): Boolean {
     val component = components.get(name)?.component ?: return false
-    return component !is PersistentStateComponent<*> || !StoreUtil.getStateSpec(component).reloadable
+    return component !is PersistentStateComponent<*> || !getStateSpec(component).reloadable
   }
 
   fun getNotReloadableComponents(componentNames: Collection<String>): Collection<String> {
@@ -454,7 +454,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   final override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
-    val stateSpec = StoreUtil.getStateSpecOrError(componentClass)
+    val stateSpec = getStateSpecOrError(componentClass)
     val info = components.get(stateSpec.name) ?: return
     (info.component as? PersistentStateComponent<*>)?.let {
       initComponent(info, emptySet(), true)

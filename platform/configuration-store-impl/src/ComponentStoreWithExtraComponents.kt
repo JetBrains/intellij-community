@@ -17,7 +17,8 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     super.initComponent(component, isService)
   }
 
-  override fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+    // mist be saved sequentially - not in parallel to components (component state uses scheme manager in an ipr project, so, we must save it before)
     for (settingsSavingComponent in settingsSavingComponents) {
       runAndCollectException(errors) {
         settingsSavingComponent.save()
