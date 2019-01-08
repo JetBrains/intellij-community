@@ -70,7 +70,8 @@ class PluginProjectWithIdeaJdkDescriptor : LightProjectDescriptor() {
     for (javaRoot in javaJdk.rootProvider.getFiles(OrderRootType.CLASSES)) {
       addRoot(javaRoot, OrderRootType.CLASSES)
     }
-    sdkAdditionalData = Sandbox("", javaJdk, ideaSdk)
+    val sandboxHome = FileUtil.join(FileUtil.getTempDirectory(), "plugins-sandbox")
+    sdkAdditionalData = Sandbox(sandboxHome, javaJdk, ideaSdk)
     versionString = javaJdk.versionString
   }
 
