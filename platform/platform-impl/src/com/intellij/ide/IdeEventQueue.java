@@ -80,7 +80,7 @@ public class IdeEventQueue extends EventQueue {
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.runnables");
   // Android Studio: We added this to measure the performance of the event queue.
   public static final int EVENT_TIMING_INTERVAL = 1;
-  private static boolean MEASURING_EVENT_LATENCIES = !Boolean.getBoolean("disable.event.measurement");
+  private static boolean MEASURING_EVENT_LATENCIES = false;
   private static TransactionGuardImpl ourTransactionGuard;
 
   /**
