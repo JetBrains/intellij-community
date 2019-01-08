@@ -1431,14 +1431,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void saveSettings(boolean isForce) {
+  public void saveSettings(boolean isForceSavingAllSettings) {
     if (!mySaveAllowed || !mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       return;
     }
 
     HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
     try {
-      StoreUtil.saveStateStore(ServiceKt.getStateStore(this), null, isForce);
+      StoreUtil.saveStateStore(this, isForceSavingAllSettings);
     }
     finally {
       mySaveSettingsIsInProgress.set(false);

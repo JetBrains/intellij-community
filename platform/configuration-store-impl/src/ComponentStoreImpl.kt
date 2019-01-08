@@ -128,10 +128,10 @@ abstract class ComponentStoreImpl : IComponentStore {
     return componentName
   }
 
-  final override suspend fun save(isForce: Boolean) {
+  final override suspend fun save(isForceSavingAllSettings: Boolean) {
     val errors = SmartList<Throwable>()
     val readonlyFiles = SmartList<SaveSessionAndFile>()
-    doSave(errors, readonlyFiles, isForce)
+    doSave(errors, readonlyFiles, isForceSavingAllSettings)
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 

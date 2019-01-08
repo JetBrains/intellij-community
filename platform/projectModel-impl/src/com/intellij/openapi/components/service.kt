@@ -21,9 +21,9 @@ val ComponentManager.stateStore: IComponentStore
   }
 
 @JvmOverloads
-fun saveComponentManager(module: ComponentManager, isForce: Boolean = false) {
+fun saveComponentManager(componentManager: ComponentManager, isForce: Boolean = false) {
   runBlocking {
-    module.stateStore.save(isForce = isForce)
+    componentManager.stateStore.save(isForceSavingAllSettings = isForce)
   }
 }
 

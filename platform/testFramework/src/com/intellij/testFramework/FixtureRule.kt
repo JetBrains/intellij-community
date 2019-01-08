@@ -308,7 +308,7 @@ fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreator: ((Vi
 
 fun ComponentManager.saveStore() {
   runBlocking {
-    stateStore.save(isForce = true)
+    stateStore.save(isForceSavingAllSettings = true)
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
@@ -88,6 +88,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   @Override
   protected void setHelpTooltip(JButton helpButton) {
+    //noinspection SpellCheckingInspection
     if (Registry.is("ide.helptooltip.enabled")) {
       new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
     }

@@ -9,7 +9,10 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ExtensionAreas;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -319,7 +322,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @Override
-  public void save(boolean isForce) {
+  public void save(boolean isForceSavingAllSettings) {
     if (!ApplicationManagerEx.getApplicationEx().isSaveAllowed()) {
       // no need to save
       return;
@@ -339,7 +342,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
 
     try {
-      StoreUtil.saveStateStore(ServiceKt.getStateStore(this), this, isForce);
+      StoreUtil.saveStateStore(this, isForceSavingAllSettings);
     }
     finally {
       mySavingInProgress.set(false);

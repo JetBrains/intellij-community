@@ -95,7 +95,7 @@ internal class DoNotSaveDefaultsTest {
       System.setProperty("store.save.use.modificationCount", "false")
       app.isSaveAllowed = true
       runInEdtAndWait {
-        saveStateStore(componentManager.stateStore, project = null)
+        saveStateStore(componentManager)
       }
     }
     finally {

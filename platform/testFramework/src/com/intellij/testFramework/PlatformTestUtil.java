@@ -21,7 +21,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -601,7 +600,7 @@ public class PlatformTestUtil {
 
   public static void saveProject(@NotNull Project project, boolean isForce) {
     ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
-    StoreUtil.saveStateStore(ServiceKt.getStateStore(project), project, isForce);
+    StoreUtil.saveStateStore(project, isForce);
   }
 
   static void waitForAllBackgroundActivityToCalmDown() {

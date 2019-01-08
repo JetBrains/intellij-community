@@ -3,7 +3,6 @@ package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier;
 import com.intellij.openapi.project.Project;
@@ -82,7 +81,7 @@ public class ModulesConfigurationTest extends PlatformTestCase {
 
   private static void closeProject(Project project, boolean isSave) {
     if (isSave) {
-      StoreUtil.saveStateStore(ServiceKt.getStateStore(project), project, true);
+      StoreUtil.saveStateStore(project, true);
     }
     ((ProjectManagerImpl)ProjectManager.getInstance()).forceCloseProject(project, true);
   }

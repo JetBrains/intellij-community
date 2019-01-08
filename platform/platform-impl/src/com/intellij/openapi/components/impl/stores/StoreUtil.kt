@@ -10,8 +10,10 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -25,12 +27,12 @@ import kotlinx.coroutines.runBlocking
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
 
 @JvmOverloads
-fun saveStateStore(stateStore: IComponentStore, project: Project?, isForceSavingAllSettings: Boolean = false) {
+fun saveStateStore(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
   val currentThread = Thread.currentThread()
   ShutDownTracker.getInstance().registerStopperThread(currentThread)
   try {
     runBlocking {
-      stateStore.save(isForceSavingAllSettings)
+      componentManager.stateStore.save(isForceSavingAllSettings = isForceSavingAllSettings)
     }
   }
   catch (e: IComponentStore.SaveCancelledException) {
@@ -51,14 +53,14 @@ fun saveStateStore(stateStore: IComponentStore, project: Project?, isForceSaving
     if (pluginId == null) {
       Notification("Settings Error", "Unable to save settings",
                    "<p>Failed to save settings.$messagePostfix",
-                   NotificationType.ERROR).notify(project)
+                   NotificationType.ERROR).notify(componentManager as? Project)
     }
     else {
       PluginManagerCore.disablePlugin(pluginId.idString)
 
       Notification("Settings Error", "Unable to save plugin settings",
                    "<p>The plugin <i>$pluginId</i> failed to save settings and has been disabled.$messagePostfix",
-                   NotificationType.ERROR).notify(project)
+                   NotificationType.ERROR).notify(componentManager as? Project)
     }
   }
   finally {
@@ -99,7 +101,7 @@ fun saveDocumentsAndProjectsAndApp(isForceSavingAllSettings: Boolean) {
 /**
  * @param isForceSavingAllSettings Whether to force save non-roamable component configuration.
  */
-fun saveProjectsAndApp(isForceSavingAllSettings: Boolean) {
+internal fun saveProjectsAndApp(isForceSavingAllSettings: Boolean) {
   val start = System.currentTimeMillis()
   ApplicationManager.getApplication().saveSettings(isForceSavingAllSettings)
 
