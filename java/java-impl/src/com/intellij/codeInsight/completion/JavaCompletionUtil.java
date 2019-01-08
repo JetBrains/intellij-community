@@ -440,7 +440,7 @@ public class JavaCompletionUtil {
       public void renderElement(LookupElementPresentation presentation) {
         super.renderElement(presentation);
 
-        presentation.setItemText("((" + castTypeItem.getType().getPresentableText() + ")...)." + presentation.getItemText());
+        presentation.appendTailText(" on " + castTypeItem.getType().getPresentableText(), true);
       }
     };
   }

@@ -74,7 +74,7 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'methodFromX', 'methodFromX2', 'methodFromY', 'methodFromY2'
 
-    assert LookupElementPresentation.renderElement(myItems[0]).itemText == '((X)...).methodFromX'
+    assert LookupElementPresentation.renderElement(myItems[0]).tailText == '() on X'
   }
 
   void testCastTwice() {
@@ -107,7 +107,8 @@ public class FooImpl extends Foo {
   
   void testCastQualifierInstanceofedTwice() {
     configureByTestName()
-    myFixture.assertPreferredCompletionItems 0, 'foo', 'boo', 'moo'
+    myFixture.assertPreferredCompletionItems 0, 'boo', 'foo', 'moo'
+    myFixture.lookup.currentItem = myFixture.lookupElements[1]
     myFixture.type('\n')
     checkResultByFile(getTestName(false) + "_after.java")
   }
