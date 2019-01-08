@@ -46,6 +46,11 @@ public class DfaSumValue extends DfaValue {
     return myLong ? PsiType.LONG : PsiType.INT;
   }
 
+  @Override
+  public boolean dependsOn(DfaVariableValue other) {
+    return myLeft.dependsOn(other) || myRight.dependsOn(other);
+  }
+
   public boolean isSubtraction() {
     return mySubtraction;
   }

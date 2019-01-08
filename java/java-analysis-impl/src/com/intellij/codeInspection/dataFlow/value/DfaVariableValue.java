@@ -116,6 +116,11 @@ public final class DfaVariableValue extends DfaValue {
     return myFactory.createCondition(this, DfaRelationValue.RelationType.EQ, myFactory.getBoolean(false));
   }
 
+  @Override
+  public boolean dependsOn(DfaVariableValue other) {
+    return other == this || (myQualifier != null && myQualifier.dependsOn(other));
+  }
+
   /**
    * @return list of all variables created within the same factory which are directly or indirectly qualified by this variable.
    */

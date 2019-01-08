@@ -267,18 +267,18 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private DfaValue handleStackValueOnVariableFlush(DfaValue value,
                                                    DfaVariableValue flushed,
                                                    DfaVariableValue replacement) {
-    if (value instanceof DfaVariableValue && (value == flushed || flushed.getDependentVariables().contains(value))) {
-      if (replacement != null) {
-        DfaVariableValue target = replaceQualifier((DfaVariableValue)value, flushed, replacement);
-        if (target != value) return target;
+    if (value.dependsOn(flushed)) {
+      if (value instanceof DfaVariableValue) {
+        if (replacement != null) {
+          DfaVariableValue target = replaceQualifier((DfaVariableValue)value, flushed, replacement);
+          if (target != value) return target;
+        }
+        DfaNullability dfaNullability = isNotNull(value) ? DfaNullability.NOT_NULL : getValueFact(value, DfaFactType.NULLABILITY);
+        if (dfaNullability == null) {
+          dfaNullability = DfaNullability.fromNullability(((DfaVariableValue)value).getInherentNullability());
+        }
+        return myFactory.withFact(myFactory.createTypeValue(value.getType(), Nullability.UNKNOWN), DfaFactType.NULLABILITY, dfaNullability);
       }
-      DfaNullability dfaNullability = isNotNull(value) ? DfaNullability.NOT_NULL : getValueFact(value, DfaFactType.NULLABILITY);
-      if (dfaNullability == null) {
-        dfaNullability = DfaNullability.fromNullability(((DfaVariableValue)value).getInherentNullability());
-      }
-      return myFactory.withFact(myFactory.createTypeValue(value.getType(), Nullability.UNKNOWN), DfaFactType.NULLABILITY, dfaNullability);
-    }
-    if (value instanceof DfaSumValue && (((DfaSumValue)value).getLeft() == flushed || ((DfaSumValue)value).getRight() == flushed)) {
       return myFactory.getFactValue(DfaFactType.RANGE, getValueFact(value, DfaFactType.RANGE));
     }
     return value;
