@@ -4,11 +4,9 @@ package org.jetbrains.idea.devkit.inspections.missingApi
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.openapi.roots.JavaModuleExternalPaths
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.TestDataPath
-import com.intellij.testFramework.disableAllTools
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase
 import org.jetbrains.idea.devkit.inspections.missingApi.project.PluginProjectWithIdeaJdkDescriptor
@@ -20,6 +18,8 @@ import org.jetbrains.idea.devkit.inspections.missingApi.project.PluginProjectWit
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/missingApi")
 abstract class MissingRecentApiInspectionTestBase : PluginModuleTestCase() {
 
+  private var inspection = MissingRecentApiInspection()
+
   override fun setUp() {
     super.setUp()
     configureInspection()
@@ -29,13 +29,12 @@ abstract class MissingRecentApiInspectionTestBase : PluginModuleTestCase() {
   }
 
   private fun configureInspection() {
-    val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
-    profile.disableAllTools()
-    myFixture.enableInspections(MissingRecentApiInspection())
+    myFixture.enableInspections(inspection)
   }
 
   override fun tearDown() {
     try {
+      myFixture.disableInspections(inspection)
       //Dispose IDEA module or JDK and all attached roots.
       PluginProjectWithIdeaLibraryDescriptor.disposeIdeaLibrary(project)
       PluginProjectWithIdeaJdkDescriptor.disposeIdeaJdk()
