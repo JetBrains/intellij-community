@@ -51,7 +51,7 @@ public class DfaValueFactory {
     myRelationFactory = new DfaRelationValue.Factory(this);
     myExpressionFactory = new DfaExpressionFactory(this);
     myFactFactory = new DfaFactMapValue.Factory(this);
-    mySumFactory = new DfaSumValue.Factory(this);
+    myBinOpFactory = new DfaBinOpValue.Factory(this);
   }
 
   public boolean canTrustFieldInitializer(PsiField field) {
@@ -241,7 +241,7 @@ public class DfaValueFactory {
   private final DfaVariableValue.Factory myVarFactory;
   private final DfaConstValue.Factory myConstFactory;
   private final DfaBoxedValue.Factory myBoxedFactory;
-  private final DfaSumValue.Factory mySumFactory;
+  private final DfaBinOpValue.Factory myBinOpFactory;
   private final DfaRelationValue.Factory myRelationFactory;
   private final DfaExpressionFactory myExpressionFactory;
   private final DfaFactMapValue.Factory myFactFactory;
@@ -274,8 +274,8 @@ public class DfaValueFactory {
   public DfaExpressionFactory getExpressionFactory() { return myExpressionFactory;}
 
   @NotNull
-  public DfaSumValue.Factory getSumFactory() {
-    return mySumFactory;
+  public DfaBinOpValue.Factory getBinOpFactory() {
+    return myBinOpFactory;
   }
 
   @NotNull

@@ -151,12 +151,12 @@ public abstract class DfaFactType<T> extends Key<T> {
       if(value instanceof DfaVariableValue) {
         return calcFromVariable((DfaVariableValue)value);
       }
-      if(value instanceof DfaSumValue) {
-        DfaSumValue sum = (DfaSumValue)value;
-        LongRangeSet left = fromDfaValue(sum.getLeft());
-        LongRangeSet right = fromDfaValue(sum.getRight());
+      if(value instanceof DfaBinOpValue) {
+        DfaBinOpValue binOp = (DfaBinOpValue)value;
+        LongRangeSet left = fromDfaValue(binOp.getLeft());
+        LongRangeSet right = fromDfaValue(binOp.getRight());
         if (left != null && right != null) {
-          return left.binOpFromToken(sum.getTokenType(), right, PsiType.LONG.equals(sum.getType()));
+          return left.binOpFromToken(binOp.getTokenType(), right, PsiType.LONG.equals(binOp.getType()));
         }
       }
       return LongRangeSet.fromDfaValue(value);

@@ -713,8 +713,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaFactMapValue) {
       return ((DfaFactMapValue)value).getFacts().intersect(factType, factValue) != null;
     }
-    if (value instanceof DfaSumValue && factType == DfaFactType.RANGE && factValue != null) {
-      DfaSumValue sum = (DfaSumValue)value;
+    if (value instanceof DfaBinOpValue && factType == DfaFactType.RANGE && factValue != null) {
+      DfaBinOpValue sum = (DfaBinOpValue)value;
       boolean isLong = PsiType.LONG.equals(sum.getType());
       LongRangeSet appliedRange = (LongRangeSet)factValue;
       if (!isLong) {
@@ -725,10 +725,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       LongRangeSet leftRange = getValueFact(left, DfaFactType.RANGE);
       LongRangeSet rightRange = getValueFact(right, DfaFactType.RANGE);
       if (leftRange == null || rightRange == null) return true;
-      LongRangeSet result = sum.isSubtraction() ? leftRange.minus(rightRange, isLong) : leftRange.plus(rightRange, isLong);
+      LongRangeSet result = Objects.requireNonNull(leftRange.binOpFromToken(sum.getTokenType(), rightRange, isLong));
       if (!result.intersects(appliedRange)) return false;
-      LongRangeSet leftConstraint = sum.isSubtraction() ? rightRange.plus(appliedRange, isLong) : appliedRange.minus(rightRange, isLong);
-      LongRangeSet rightConstraint = sum.isSubtraction() ? leftRange.minus(appliedRange, isLong) : appliedRange.minus(leftRange, isLong);
+      boolean subtraction = sum.getOperation() == DfaBinOpValue.BinOp.MINUS;
+      LongRangeSet leftConstraint = subtraction ? rightRange.plus(appliedRange, isLong) : appliedRange.minus(rightRange, isLong);
+      LongRangeSet rightConstraint = subtraction ? leftRange.minus(appliedRange, isLong) : appliedRange.minus(leftRange, isLong);
       return applyFact(left, DfaFactType.RANGE, leftConstraint) && applyFact(right, DfaFactType.RANGE, rightConstraint);
     }
     if (value instanceof DfaVariableValue) {
@@ -762,12 +763,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public boolean areEqual(@NotNull DfaValue value1, @NotNull DfaValue value2) {
-    if (value1 instanceof DfaSumValue && value2 instanceof DfaSumValue) {
-      DfaSumValue sum1 = (DfaSumValue)value1;
-      DfaSumValue sum2 = (DfaSumValue)value2;
-      return sum1.isSubtraction() == sum2.isSubtraction() &&
-             areEqual(sum1.getLeft(), sum2.getLeft()) &&
-             areEqual(sum1.getRight(), sum2.getRight());
+    if (value1 instanceof DfaBinOpValue && value2 instanceof DfaBinOpValue) {
+      DfaBinOpValue binOp1 = (DfaBinOpValue)value1;
+      DfaBinOpValue binOp2 = (DfaBinOpValue)value2;
+      return binOp1.getOperation() == binOp2.getOperation() &&
+             areEqual(binOp1.getLeft(), binOp2.getLeft()) &&
+             areEqual(binOp1.getRight(), binOp2.getRight());
     }
     if (!(value1 instanceof DfaConstValue) && !(value1 instanceof DfaVariableValue)) return false;
     if (!(value2 instanceof DfaConstValue) && !(value2 instanceof DfaVariableValue)) return false;
@@ -824,7 +825,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           !applyFact(dfaRight, DfaFactType.RANGE, left.fromRelation(relationType.getFlipped()))) {
         return false;
       }
-      if (!applySumRelations(dfaLeft, relationType, dfaRight)) return false;
+      if (!applyBinOpRelations(dfaLeft, relationType, dfaRight)) return false;
     }
 
     if (dfaRight instanceof DfaFactMapValue) {
@@ -886,20 +887,21 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return applyEquivalenceRelation(relationType, dfaLeft, dfaRight);
   }
 
-  private boolean applySumRelations(DfaValue left, RelationType type, DfaValue right) {
+  private boolean applyBinOpRelations(DfaValue left, RelationType type, DfaValue right) {
     if (type != RelationType.LT && type != RelationType.GT && type != RelationType.NE && type != RelationType.EQ) return true;
-    if (left instanceof DfaSumValue) {
-      DfaSumValue sum = (DfaSumValue)left;
+    if (left instanceof DfaBinOpValue) {
+      DfaBinOpValue sum = (DfaBinOpValue)left;
+      DfaBinOpValue.BinOp op = sum.getOperation();
       LongRangeSet leftRange = getValueFact(sum.getLeft(), DfaFactType.RANGE);
       LongRangeSet rightRange = getValueFact(sum.getRight(), DfaFactType.RANGE);
       if (leftRange == null || rightRange == null) return true;
       boolean isLong = PsiType.LONG.equals(sum.getType());
       LongRangeSet rightNegated = rightRange.negate(isLong);
-      LongRangeSet rightCorrected = sum.isSubtraction() ? rightNegated : rightRange;
+      LongRangeSet rightCorrected = op == DfaBinOpValue.BinOp.MINUS ? rightNegated : rightRange;
 
       LongRangeSet resultRange = getValueFact(right, DfaFactType.RANGE);
       RelationType correctedRelation = correctRelation(type, leftRange, rightCorrected, resultRange, isLong);
-      if (sum.isSubtraction()) {
+      if (op == DfaBinOpValue.BinOp.MINUS) {
         if (resultRange != null) {
           long min = resultRange.min();
           long max = resultRange.max();
@@ -924,15 +926,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (right instanceof DfaVariableValue) {
         // a+b (rel) c && a == c => b (rel) 0 
         if (areEqual(sum.getLeft(), right)) {
-          RelationType finalRelation = sum.isSubtraction() ? correctedRelation.getFlipped() : correctedRelation;
+          RelationType finalRelation = op == DfaBinOpValue.BinOp.MINUS ? correctedRelation.getFlipped() : correctedRelation;
           if (!applyCondition(myFactory.createCondition(sum.getRight(), finalRelation, myFactory.getInt(0)))) return false;
         }
         // a+b (rel) c && b == c => a (rel) 0 
-        if (!sum.isSubtraction() && areEqual(sum.getRight(), right)) {
+        if (op == DfaBinOpValue.BinOp.PLUS && areEqual(sum.getRight(), right)) {
           if (!applyCondition(myFactory.createCondition(sum.getLeft(), correctedRelation, myFactory.getInt(0)))) return false;
         }
 
-        if (!leftRange.subtractionMayOverflow(sum.isSubtraction() ? rightRange : rightNegated, isLong)) {
+        if (!leftRange.subtractionMayOverflow(op == DfaBinOpValue.BinOp.MINUS ? rightRange : rightNegated, isLong)) {
           // a-positiveNumber >= b => a > b
           if (rightCorrected.max() < 0 && RelationType.GE.isSubRelation(type)) {
             if (!applyLessThanRelation(right, sum.getLeft())) return false;
@@ -1225,9 +1227,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   @Nullable
   public <T> T getValueFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType) {
-    if (value instanceof DfaSumValue && factType == DfaFactType.RANGE) {
+    if (value instanceof DfaBinOpValue && factType == DfaFactType.RANGE) {
       //noinspection unchecked
-      return (T)getSumRange((DfaSumValue)value);
+      return (T)getBinOpRange((DfaBinOpValue)value);
     }
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
@@ -1244,14 +1246,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Nullable
-  public LongRangeSet getSumRange(DfaSumValue sum) {
-    LongRangeSet left = getValueFact(sum.getLeft(), DfaFactType.RANGE);
-    LongRangeSet right = getValueFact(sum.getRight(), DfaFactType.RANGE);
+  public LongRangeSet getBinOpRange(DfaBinOpValue binOp) {
+    LongRangeSet left = getValueFact(binOp.getLeft(), DfaFactType.RANGE);
+    LongRangeSet right = getValueFact(binOp.getRight(), DfaFactType.RANGE);
     if (left == null || right == null) return null;
-    boolean isLong = PsiType.LONG.equals(sum.getType());
-    LongRangeSet result = left.binOpFromToken(sum.getTokenType(), right, isLong);
-    if (result != null && sum.isSubtraction()) {
-      RelationType rel = getRelation(sum.getLeft(), sum.getRight());
+    boolean isLong = PsiType.LONG.equals(binOp.getType());
+    LongRangeSet result = left.binOpFromToken(binOp.getTokenType(), right, isLong);
+    if (result != null && binOp.getOperation() == DfaBinOpValue.BinOp.MINUS) {
+      RelationType rel = getRelation(binOp.getLeft(), binOp.getRight());
       if (rel == RelationType.NE) {
         return result.without(0);
       }

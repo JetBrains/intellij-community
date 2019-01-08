@@ -657,18 +657,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     PsiType type = instruction.getResultType();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
       boolean isLong = PsiType.LONG.equals(type);
-      if (JavaTokenType.PLUS.equals(opSign) || JavaTokenType.MINUS.equals(opSign)) {
-        result = runner.getFactory().getSumFactory().create(dfaLeft, dfaRight, memState, isLong, JavaTokenType.MINUS.equals(opSign));
-      } else {
-        LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
-        LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
-        if (left != null && right != null) {
-          LongRangeSet resultRange = left.binOpFromToken(opSign, right, isLong);
-          if (resultRange != null) {
-            result = runner.getFactory().getFactValue(DfaFactType.RANGE, resultRange);
-          }
-        }
-      }
+      result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
     }
     if (result == DfaUnknownValue.getInstance() && JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
       result = runner.getFactory().createTypeValue(type, Nullability.NOT_NULL);
