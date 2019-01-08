@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.statistics.eventLog
 
+import com.intellij.configurationStore.getStateSpec
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
-import com.intellij.openapi.components.impl.stores.getStateSpec
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.xmlb.annotations.Attribute

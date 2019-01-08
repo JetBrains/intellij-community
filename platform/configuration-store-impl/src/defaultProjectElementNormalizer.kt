@@ -5,7 +5,6 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.ServiceManagerImpl
-import com.intellij.openapi.components.impl.stores.getStateSpec
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.project.Project

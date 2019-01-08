@@ -18,7 +18,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ServiceManagerImpl
-import com.intellij.openapi.components.impl.stores.getStateSpec
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.options.SchemeManagerFactory

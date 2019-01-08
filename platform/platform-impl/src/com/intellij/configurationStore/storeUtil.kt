@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("StoreUtil")
 
-package com.intellij.openapi.components.impl.stores
+package com.intellij.configurationStore
 
 import com.intellij.diagnostic.IdeErrorsDialog
 import com.intellij.ide.plugins.PluginManagerCore
@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager

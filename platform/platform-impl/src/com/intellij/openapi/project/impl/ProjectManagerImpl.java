@@ -2,6 +2,7 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StorageUtilKt;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.featureStatistics.fusCollectors.ProjectLifecycleUsageTriggerCollector;
@@ -20,7 +21,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
