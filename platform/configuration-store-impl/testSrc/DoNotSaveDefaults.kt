@@ -8,7 +8,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.ServiceManagerImpl
-import com.intellij.openapi.components.impl.stores.saveSettings
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -21,6 +20,7 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.io.getDirectoryTree
 import com.intellij.util.io.move
+import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -90,17 +90,14 @@ internal class DoNotSaveDefaultsTest {
     propertyComponent.unsetValue("ts.lib.d.ts.version")
     propertyComponent.unsetValue("nodejs_interpreter_path.stuck_in_default_project")
 
-    val app = ApplicationManager.getApplication() as ApplicationImpl
     try {
       System.setProperty("store.save.use.modificationCount", "false")
-      app.isSaveAllowed = true
       runInEdtAndWait {
-        saveSettings(componentManager)
+        runBlocking { componentManager.stateStore.save() }
       }
     }
     finally {
       System.setProperty("store.save.use.modificationCount", useModCountOldValue ?: "false")
-      app.isSaveAllowed = false
     }
 
     if (componentManager is Project) {

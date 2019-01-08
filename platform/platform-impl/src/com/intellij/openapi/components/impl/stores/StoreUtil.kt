@@ -26,6 +26,9 @@ import kotlinx.coroutines.runBlocking
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
 
+/**
+ * Consider to not use this method in tests, for tests direct saving of state store is ok.
+ */
 @JvmOverloads
 fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
   val currentThread = Thread.currentThread()
