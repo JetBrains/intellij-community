@@ -50,10 +50,11 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     boolean isContextMenu = event != null && event.isFromContextMenu();
     final String place = event != null ? event.getPlace() : "";
 
-    String key = toReportedId(actionId, context);
+    final boolean isDevelopedByJB = isDevelopedByJetBrains(context);
+    String key = toReportedId(actionId, isDevelopedByJB);
     final Map<String, Object> data = ContainerUtil.newHashMap(FUSUsageContext.OS_CONTEXT.getData());
     data.put("context_menu", isContextMenu);
-    if (isContextMenu) {
+    if (isContextMenu && isDevelopedByJB) {
       data.put("place", place);
     }
 
@@ -75,12 +76,12 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   }
 
   @NotNull
-  private static String toReportedId(@NotNull String actionId, @NotNull Class context) {
-    final String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
-    if (!isDevelopedByJetBrains(context)) {
+  private static String toReportedId(@NotNull String actionId, boolean isDevelopedByJB) {
+    if (!isDevelopedByJB) {
       return DEFAULT_ID;
     }
 
+    final String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
     for (Map.Entry<String, String> prefix : ourPrefixesBlackList.entrySet()) {
       if (key.startsWith(prefix.getKey())) {
         return prefix.getValue();

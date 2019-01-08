@@ -49,11 +49,11 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
   }
 
   public static void record(@NotNull AnAction action, String place) {
-    record(toRecordedId(action), place);
+    record(toRecordedId(action, place));
   }
 
   @NotNull
-  private static String toRecordedId(@NotNull AnAction action) {
+  private static String toRecordedId(@NotNull AnAction action, String place) {
     final PluginType type = StatisticsUtilKt.getPluginType(action.getClass());
     if (!type.isDevelopedByJetBrains()) {
       return type.name();
@@ -67,13 +67,13 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
         id = action.getClass().getName();
       }
     }
-    return id;
+    return id + "@" + place;
   }
 
-  public static void record(String actionId, String place) {
+  public static void record(String actionId) {
     ToolbarClicksCollector collector = getInstance();
     if (collector != null) {
-      String key = ConvertUsagesUtil.escapeDescriptorName(actionId + "@" + place);
+      String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
       FeatureUsageLogger.INSTANCE.log(ToolbarClicksUsagesCollector.GROUP_ID, key, FUSUsageContext.OS_CONTEXT.getData());
 
       ClicksState state = collector.getState();
