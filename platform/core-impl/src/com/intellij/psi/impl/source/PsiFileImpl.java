@@ -186,6 +186,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @NotNull
   private FileElement loadTreeElement() {
     assertReadAccessAllowed();
+
+    if (myPossiblyInvalidated) {
+      PsiUtilCore.ensureValid(this); // for invalidation trace diagnostics
+    }
+
     final FileViewProvider viewProvider = getViewProvider();
     if (viewProvider.isPhysical()) {
       final VirtualFile vFile = viewProvider.getVirtualFile();
