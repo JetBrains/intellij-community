@@ -12,7 +12,6 @@ import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.SmartList
 import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -42,7 +41,7 @@ internal class ComponentStoreModificationTrackerTest {
   }
 
   @Test
-  fun `modification tracker`() {
+  fun `modification tracker`() = runBlocking<Unit> {
     @State(name = "modificationTrackerA", storages = [(Storage("a.xml"))])
     open class A : PersistentStateComponent<TestState>, SimpleModificationTracker() {
       var options = TestState()
@@ -103,7 +102,7 @@ internal class ComponentStoreModificationTrackerTest {
   }
 
   @Test
-  fun persistentStateComponentWithModificationTracker() {
+  fun persistentStateComponentWithModificationTracker() = runBlocking<Unit> {
     @State(name = "TestPersistentStateComponentWithModificationTracker", storages = [(Storage("b.xml"))])
     open class A : PersistentStateComponentWithModificationTracker<TestState> {
       var modificationCount = AtomicLong(0)
@@ -166,10 +165,8 @@ internal class ComponentStoreModificationTrackerTest {
     </application>""".trimIndent())
   }
 
-  private fun saveStore() {
-    runBlocking {
-      componentStore.save(SmartList())
-    }
+  private suspend fun saveStore() {
+    componentStore.save()
   }
 }
 

@@ -20,18 +20,17 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.SmartList
 import kotlinx.coroutines.runBlocking
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
 
 @JvmOverloads
-fun saveStateStore(stateStore: IComponentStore, project: Project?, isForce: Boolean = false) {
+fun saveStateStore(stateStore: IComponentStore, project: Project?, isForceSavingAllSettings: Boolean = false) {
   val currentThread = Thread.currentThread()
   ShutDownTracker.getInstance().registerStopperThread(currentThread)
   try {
     runBlocking {
-      stateStore.save(SmartList(), isForce)
+      stateStore.save(isForceSavingAllSettings)
     }
   }
   catch (e: IComponentStore.SaveCancelledException) {
@@ -72,8 +71,8 @@ fun <T> getStateSpec(persistentStateComponent: PersistentStateComponent<T>): Sta
 }
 
 fun getStateSpecOrError(componentClass: Class<out PersistentStateComponent<*>>): State {
-  return getStateSpec(componentClass) ?: throw PluginManagerCore.createPluginException("No @State annotation found in $componentClass",
-                                                                                       null, componentClass)
+  return getStateSpec(componentClass)
+         ?: throw PluginManagerCore.createPluginException("No @State annotation found in $componentClass", null, componentClass)
 }
 
 fun getStateSpec(originalClass: Class<*>): State? {

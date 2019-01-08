@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.project.stateStore
-import com.intellij.util.SmartList
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.runBlocking
@@ -309,7 +308,7 @@ fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreator: ((Vi
 
 fun ComponentManager.saveStore() {
   runBlocking {
-    stateStore.save(SmartList(), true)
+    stateStore.save(isForce = true)
   }
 }
 

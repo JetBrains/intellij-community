@@ -4,7 +4,6 @@ package com.intellij.openapi.components
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.project.Project
-import com.intellij.util.SmartList
 import kotlinx.coroutines.runBlocking
 
 inline fun <reified T : Any> service(): T = ServiceManager.getService(T::class.java)
@@ -24,7 +23,7 @@ val ComponentManager.stateStore: IComponentStore
 @JvmOverloads
 fun saveComponentManager(module: ComponentManager, isForce: Boolean = false) {
   runBlocking {
-    module.stateStore.save(SmartList(), isForce = isForce)
+    module.stateStore.save(isForce = isForce)
   }
 }
 
