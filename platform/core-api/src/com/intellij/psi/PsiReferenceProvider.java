@@ -16,6 +16,8 @@
 
 package com.intellij.psi;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,6 +44,14 @@ public abstract class PsiReferenceProvider {
   }
   public boolean acceptsTarget(@NotNull PsiElement target) {
     return true;
+  }
+
+  /**
+   * @deprecated to attract attention and motivate to fix tests which fail these checks
+   */
+  @Deprecated
+  public static void disableTargetChecks(@NotNull Disposable parentDisposable) {
+    Registry.get("ide.check.reference.provider.target").setValue(false, parentDisposable);
   }
 
 }
