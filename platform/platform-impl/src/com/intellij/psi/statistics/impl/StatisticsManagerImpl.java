@@ -5,7 +5,8 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PathManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -16,11 +17,12 @@ import com.intellij.util.ScrambledInputStream;
 import com.intellij.util.ScrambledOutputStream;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -28,8 +30,6 @@ import java.util.Set;
 public class StatisticsManagerImpl extends StatisticsManager {
   private static final int UNIT_COUNT = 997;
   private static final Object LOCK = new Object();
-
-  @NonNls private static final String STORE_PATH = PathManager.getSystemPath() + File.separator + "stat";
 
   private final List<SoftReference<StatisticsUnit>> myUnits = ContainerUtil.newArrayList(Collections.nCopies(UNIT_COUNT, null));
   private final Set<StatisticsUnit> myModifiedUnits = new THashSet<>();
@@ -139,8 +139,8 @@ public class StatisticsManagerImpl extends StatisticsManager {
   private static StatisticsUnit loadUnit(int unitNumber) {
     StatisticsUnit unit = new StatisticsUnit(unitNumber);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      String path = getPathToUnit(unitNumber);
-      try (InputStream in = new ScrambledInputStream(new BufferedInputStream(new FileInputStream(path)))) {
+      Path path = getPathToUnit(unitNumber);
+      try (InputStream in = new ScrambledInputStream(new BufferedInputStream(Files.newInputStream(path)))) {
         unit.read(in);
       }
       catch (IOException | WrongFormatException ignored) {
@@ -150,10 +150,13 @@ public class StatisticsManagerImpl extends StatisticsManager {
   }
 
   private void saveUnit(int unitNumber) {
-    if (!createStoreFolder()) return;
+    if (!createStoreFolder()) {
+      return;
+    }
+
     StatisticsUnit unit = getUnit(unitNumber);
-    String path = getPathToUnit(unitNumber);
-    try (OutputStream out = new ScrambledOutputStream(new BufferedOutputStream(new FileOutputStream(path)))) {
+    Path path = getPathToUnit(unitNumber);
+    try (OutputStream out = new ScrambledOutputStream(new BufferedOutputStream(Files.newOutputStream(path)))) {
       unit.write(out);
     }
     catch (IOException e) {
@@ -169,24 +172,31 @@ public class StatisticsManagerImpl extends StatisticsManager {
     return Math.abs(key1.hashCode() % UNIT_COUNT);
   }
 
-  private static boolean createStoreFolder(){
-    File homeFile = new File(STORE_PATH);
-    if (!homeFile.exists()){
-      if (!homeFile.mkdirs()){
-        Messages.showMessageDialog(
-          IdeBundle.message("error.saving.statistic.failed.to.create.folder", STORE_PATH),
-          CommonBundle.getErrorTitle(),
-          Messages.getErrorIcon()
-        );
-        return false;
-      }
+  private static boolean createStoreFolder() {
+    Path storeDir = getStoreDir();
+    try {
+      Files.createDirectories(storeDir);
+    }
+    catch (IOException e) {
+      Logger.getInstance(StatisticsManager.class).error(e);
+      Messages.showMessageDialog(
+        IdeBundle.message("error.saving.statistic.failed.to.create.folder", storeDir.toString()),
+        CommonBundle.getErrorTitle(),
+        Messages.getErrorIcon()
+      );
+      return false;
     }
     return true;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String getPathToUnit(int unitNumber) {
-    return STORE_PATH + File.separator + "unit." + unitNumber;
+  @NotNull
+  private static Path getPathToUnit(int unitNumber) {
+    return getStoreDir().resolve("unit." + unitNumber);
+  }
+
+  private static Path getStoreDir() {
+    return PathManagerEx.getAppSystemDir().resolve("stat");
   }
 
   @TestOnly
