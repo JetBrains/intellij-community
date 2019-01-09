@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("Duplicates")
 
 package com.intellij.configurationStore
@@ -389,7 +389,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
 
       // determine if we need to pad the output (padding is only need in trim or normalizing mode)
       if (previous != null && (format.textMode == Format.TextMode.NORMALIZE || format.textMode == Format.TextMode.TRIM)) {
-        if (endsWithWhite(previous) || startsWithWhite(next!!)) {
+        if (endsWithWhite(previous) || startsWithWhite(next)) {
           out.write(' '.toInt())
         }
       }
