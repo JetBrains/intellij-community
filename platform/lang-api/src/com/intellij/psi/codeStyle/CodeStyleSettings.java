@@ -800,6 +800,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     myVersion = getVersion(element);
     notifySettingsBeforeLoading();
     DefaultJDOMExternalizer.readExternal(this, element);
+
     if (LAYOUT_STATIC_IMPORTS_SEPARATELY) {
       // add <all other static imports> entry if there is none
       boolean found = false;
@@ -1426,7 +1427,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     ReflectionUtil.copyFields(getClass().getFields(), defaults, this, new DifferenceFilter<CodeStyleSettings>(this, defaults){
       @Override
       public boolean isAccept(@NotNull Field field) {
-        return field.getAnnotation(Deprecated.class) != null;
+        return field.getAnnotation(Deprecated.class) != null && !"RIGHT_MARGIN".equals(field.getName());
       }
     });
     IMPORT_LAYOUT_TABLE.copyFrom(defaults.IMPORT_LAYOUT_TABLE);
