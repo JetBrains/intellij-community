@@ -70,7 +70,9 @@ public class Java12SwitchExpressionSanityTest extends LightCodeInsightFixtureTes
           protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
             return super.shouldSkipByFamilyName(familyName)
                    //IDEA-205122
-                   || CommonQuickFixBundle.message("fix.unwrap", PsiKeyword.SWITCH).equals(familyName);
+                   || CommonQuickFixBundle.message("fix.unwrap", PsiKeyword.SWITCH).equals(familyName)
+                   //IDEA-205137
+                   || "Replace Switch with If".equals(familyName);
           }
         });
 
