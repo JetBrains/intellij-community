@@ -101,14 +101,7 @@ public class SpellCheckerManager implements Disposable {
           spellChecker.removeDictionary(dictionary);
         }
         else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
-          final Class<? extends BundledDictionaryProvider> loaderClass = provider.getClass();
-          final InputStream stream = loaderClass.getResourceAsStream(dictionary);
-          if (stream != null) {
-            spellChecker.loadDictionary(new StreamLoader(stream, dictionary));
-          }
-          else {
-            LOG.warn("Couldn't load dictionary '" + dictionary + "' with loader '" + loaderClass + "'");
-          }
+          loadBundledDictionary(provider, dictionary);
         }
       }
     }
@@ -161,14 +154,7 @@ public class SpellCheckerManager implements Disposable {
     for (BundledDictionaryProvider provider : BundledDictionaryProvider.EP_NAME.getExtensionList()) {
       for (String dictionary : provider.getBundledDictionaries()) {
         if (settings == null || !settings.getBundledDisabledDictionariesPaths().contains(dictionary)) {
-          final Class<? extends BundledDictionaryProvider> loaderClass = provider.getClass();
-          final InputStream stream = loaderClass.getResourceAsStream(dictionary);
-          if (stream != null) {
-            spellChecker.loadDictionary(new StreamLoader(stream, dictionary));
-          }
-          else {
-            LOG.warn("Couldn't load dictionary '" + dictionary + "' with loader '" + loaderClass + "'");
-          }
+          loadBundledDictionary(provider, dictionary);
         }
       }
     }
@@ -199,15 +185,28 @@ public class SpellCheckerManager implements Disposable {
     spellChecker.addModifiableDictionary(myProjectDictionary);
   }
 
-  private void loadDictionary(String path) {
-    final CustomDictionaryProvider dictionaryProvider = findApplicable(path);
+  private void loadDictionary(@NotNull String path) {
+    CustomDictionaryProvider dictionaryProvider = findApplicable(path);
     if (dictionaryProvider != null) {
       final Dictionary dictionary = dictionaryProvider.get(path);
-      if(dictionary != null) {
+      if (dictionary != null) {
         spellChecker.addDictionary(dictionary);
       }
     }
-    else spellChecker.loadDictionary(new FileLoader(path));
+    else {
+      spellChecker.loadDictionary(new FileLoader(path));
+    }
+  }
+
+  private void loadBundledDictionary(@NotNull BundledDictionaryProvider provider, @NotNull String dictionary) {
+    Class<? extends BundledDictionaryProvider> loaderClass = provider.getClass();
+    InputStream stream = loaderClass.getResourceAsStream(dictionary);
+    if (stream != null) {
+      spellChecker.loadDictionary(new StreamLoader(stream, dictionary));
+    }
+    else {
+      LOG.warn("Couldn't load dictionary '" + dictionary + "' with loader '" + loaderClass + "'");
+    }
   }
 
   public boolean hasProblem(@NotNull String word) {
