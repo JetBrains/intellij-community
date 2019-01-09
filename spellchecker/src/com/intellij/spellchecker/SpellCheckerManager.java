@@ -200,6 +200,7 @@ public class SpellCheckerManager implements Disposable {
 
   private void loadBundledDictionary(@NotNull BundledDictionaryProvider provider, @NotNull String dictionary) {
     Class<? extends BundledDictionaryProvider> loaderClass = provider.getClass();
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") //closed in StreamLoader
     InputStream stream = loaderClass.getResourceAsStream(dictionary);
     if (stream != null) {
       spellChecker.loadDictionary(new StreamLoader(stream, dictionary));
@@ -372,6 +373,8 @@ public class SpellCheckerManager implements Disposable {
   public enum DictionaryLevel {
     APP("application-level"), PROJECT("project-level"), NOT_SPECIFIED("not specified");
     private final String myName;
+
+    @SuppressWarnings("ConstantConditions")
     private final static Map<String, DictionaryLevel> DICTIONARY_LEVELS =
       Maps.uniqueIndex(EnumSet.allOf(DictionaryLevel.class), DictionaryLevel::getName);
 
