@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -61,8 +59,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
@@ -960,7 +958,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           final String path = component.getPath();
           final ModuleBuilder builder = new ModuleBuilder() {
             @Override
-            public void setupRootModel(final ModifiableRootModel modifiableRootModel) {
+            public void setupRootModel(@NotNull final ModifiableRootModel modifiableRootModel) {
               if (rootModel.isSdkInherited()) {
                 modifiableRootModel.inheritSdk();
               }

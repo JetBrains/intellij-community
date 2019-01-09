@@ -65,15 +65,10 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   private final ArchivedProjectTemplate myTemplate;
   private boolean myProjectMode;
 
-  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType moduleType, List<WizardInputField> additionalFields) {
+  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType moduleType, @NotNull List<WizardInputField> additionalFields) {
     myTemplate = template;
     myType = moduleType;
     myAdditionalFields = additionalFields;
-  }
-
-  @Override
-  public void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException {
-
   }
 
   @Override
@@ -88,6 +83,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return builder.createFinishingSteps(wizardContext, modulesProvider);
   }
 
+  @NotNull
   @Override
   protected List<WizardInputField> getAdditionalFields() {
     return myAdditionalFields;
@@ -189,12 +185,13 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     model.commit();
   }
 
-  private static void applyProjectDefaults(Project project) {
+  private static void applyProjectDefaults(@NotNull Project project) {
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     String charset = EncodingProjectManager.getInstance(defaultProject).getDefaultCharsetName();
     EncodingProjectManager.getInstance(project).setDefaultCharsetName(charset);
   }
 
+  @Nullable
   private WizardInputField getBasePackageField() {
     for (WizardInputField field : getAdditionalFields()) {
       if (ProjectTemplateParameterFactory.IJ_BASE_PACKAGE.equals(field.getId())) {
