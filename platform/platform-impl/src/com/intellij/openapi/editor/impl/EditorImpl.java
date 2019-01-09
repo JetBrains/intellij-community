@@ -986,6 +986,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     isReleased = true;
     mySizeAdjustmentStrategy.cancelAllRequests();
+    cancelAutoResetForMouseSelectionState();
 
     myFoldingModel.dispose();
     mySoftWrapModel.release();
