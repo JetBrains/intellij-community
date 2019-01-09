@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.plugins
 
+import com.intellij.psi.PsiReferenceProvider
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -23,6 +24,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 class MavenParameterFixedValueTest extends LightCodeInsightFixtureTestCase {
 
   void testCompletion() {
+    PsiReferenceProvider.disableTargetChecks(getTestRootDisposable())
     myFixture.configureByText("pom.xml", """
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
