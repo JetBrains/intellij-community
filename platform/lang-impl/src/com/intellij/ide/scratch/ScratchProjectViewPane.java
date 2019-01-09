@@ -101,6 +101,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   private static void registerUpdaters(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onUpdate) {
+    String scratchPath = FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(PathManager.getScratchPath()));
     project.getMessageBus().connect(disposable).subscribe(VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
@@ -109,8 +110,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
           VirtualFile parent = file == null ? null : file.getParent();
           if (parent == null) return false;
           return ScratchUtil.isScratch(parent) ||
-                 file.isDirectory() && parent.equals(
-                   LocalFileSystem.getInstance().findFileByPath(PathManager.getScratchPath()));
+                 file.isDirectory() && parent.getPath().startsWith(scratchPath);
         }) != null;
         if (update) {
           onUpdate.run();
