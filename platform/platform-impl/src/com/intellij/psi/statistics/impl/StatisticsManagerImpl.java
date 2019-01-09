@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.statistics.impl;
 
 import com.intellij.CommonBundle;
@@ -15,14 +15,15 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.ScrambledInputStream;
 import com.intellij.util.ScrambledOutputStream;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class StatisticsManagerImpl extends StatisticsManager {
   private static final int UNIT_COUNT = 997;
@@ -31,7 +32,7 @@ public class StatisticsManagerImpl extends StatisticsManager {
   @NonNls private static final String STORE_PATH = PathManager.getSystemPath() + File.separator + "stat";
 
   private final List<SoftReference<StatisticsUnit>> myUnits = ContainerUtil.newArrayList(Collections.nCopies(UNIT_COUNT, null));
-  private final HashSet<StatisticsUnit> myModifiedUnits = new HashSet<>();
+  private final Set<StatisticsUnit> myModifiedUnits = new THashSet<>();
   private boolean myTestingStatistics;
 
   @Override
@@ -112,7 +113,7 @@ public class StatisticsManagerImpl extends StatisticsManager {
   @Override
   public void save() {
     synchronized (LOCK) {
-      if (!ApplicationManager.getApplication().isUnitTestMode()){
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().assertIsDispatchThread();
         for (StatisticsUnit unit : myModifiedUnits) {
           saveUnit(unit.getNumber());
@@ -122,38 +123,40 @@ public class StatisticsManagerImpl extends StatisticsManager {
     }
   }
 
+  @NotNull
   private StatisticsUnit getUnit(int unitNumber) {
     StatisticsUnit unit = SoftReference.dereference(myUnits.get(unitNumber));
-    if (unit != null) return unit;
-    unit = loadUnit(unitNumber);
-    if (unit == null){
-      unit = new StatisticsUnit(unitNumber);
+    if (unit != null) {
+      return unit;
     }
+
+    unit = loadUnit(unitNumber);
     myUnits.set(unitNumber, new SoftReference<>(unit));
     return unit;
   }
 
+  @NotNull
   private static StatisticsUnit loadUnit(int unitNumber) {
     StatisticsUnit unit = new StatisticsUnit(unitNumber);
-    if (!ApplicationManager.getApplication().isUnitTestMode()){
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
       String path = getPathToUnit(unitNumber);
       try (InputStream in = new ScrambledInputStream(new BufferedInputStream(new FileInputStream(path)))) {
         unit.read(in);
       }
-      catch(IOException | WrongFormatException ignored){
+      catch (IOException | WrongFormatException ignored) {
       }
     }
     return unit;
   }
 
-  private void saveUnit(int unitNumber){
+  private void saveUnit(int unitNumber) {
     if (!createStoreFolder()) return;
     StatisticsUnit unit = getUnit(unitNumber);
     String path = getPathToUnit(unitNumber);
     try (OutputStream out = new ScrambledOutputStream(new BufferedOutputStream(new FileOutputStream(path)))) {
       unit.write(out);
     }
-    catch(IOException e){
+    catch (IOException e) {
       Messages.showMessageDialog(
         IdeBundle.message("error.saving.statistics", e.getLocalizedMessage()),
         CommonBundle.getErrorTitle(),
@@ -199,5 +202,4 @@ public class StatisticsManagerImpl extends StatisticsManager {
       }
     });
   }
-
 }

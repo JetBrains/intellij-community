@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -199,15 +199,14 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   @NotNull
   protected List<T> buildExtensions(@NotNull Set<String> keys) {
     synchronized (lock) {
-      List<T> result = null;
-      result = buildExtensionsFromExplicitRegistration(result, key -> keys.contains(key));
-
+      List<T> result = buildExtensionsFromExplicitRegistration(null, key -> keys.contains(key));
       result = buildExtensionsFromExtensionPoint(result, bean -> keys.contains(bean.getKey()));
-      return result == null ? Collections.emptyList() : result;
+      return ContainerUtil.notNullize(result);
     }
   }
 
-  protected List<T> buildExtensionsFromExplicitRegistration(List<T> result, Condition<String> isMyBean) {
+  @Nullable
+  protected List<T> buildExtensionsFromExplicitRegistration(@Nullable List<T> result, Condition<String> isMyBean) {
     for (Map.Entry<String, List<T>> entry : myExplicitExtensions.entrySet()) {
       String key = entry.getKey();
       if (isMyBean.value(key)) {

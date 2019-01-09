@@ -320,20 +320,18 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
     }
   }
 
-  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
-    coroutineScope {
-      launch {
-        try {
-          saveProjectName()
-        }
-        catch (e: Throwable) {
-          LOG.error("Unable to store project name", e)
-        }
+  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) = coroutineScope<Unit> {
+    launch {
+      try {
+        saveProjectName()
       }
+      catch (e: Throwable) {
+        LOG.error("Unable to store project name", e)
+      }
+    }
 
-      launch {
-        super.doSave(errors, readonlyFiles, isForce)
-      }
+    launch {
+      super.doSave(errors, readonlyFiles, isForce)
     }
   }
 
