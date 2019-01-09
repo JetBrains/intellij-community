@@ -27,7 +27,7 @@ public class DfaBinOpValue extends DfaValue {
 
   private DfaBinOpValue(@NotNull DfaVariableValue left, @NotNull DfaValue right, boolean isLong, BinOp op) {
     super(left.getFactory());
-    assert (right instanceof DfaConstValue && op == BinOp.PLUS) || right instanceof DfaVariableValue;
+    assert (right instanceof DfaConstValue && op != BinOp.MINUS) || (right instanceof DfaVariableValue && op != BinOp.REM);
     myLeft = left;
     myRight = right;
     myLong = isLong;
@@ -115,6 +115,18 @@ public class DfaBinOpValue extends DfaValue {
       if (op == BinOp.MINUS && state.areEqual(left, right)) {
         return myFactory.getInt(0);
       }
+      if (op == BinOp.REM) {
+        if (left instanceof DfaVariableValue && right instanceof DfaConstValue) {
+          Object value = ((DfaConstValue)right).getValue();
+          if (value instanceof Long) {
+            long divisor = ((Long)value).longValue();
+            if (divisor > 1 && divisor <= Long.SIZE) {
+              return doCreate((DfaVariableValue)left, right, isLong, op);
+            }
+          }
+        }
+        return null;
+      }
       if (left instanceof DfaConstValue && (right instanceof DfaVariableValue || right instanceof DfaBinOpValue) && op == BinOp.PLUS) {
         return doCreate(right, left, state, isLong, op);
       }
@@ -174,7 +186,7 @@ public class DfaBinOpValue extends DfaValue {
   }
   
   public enum BinOp {
-    PLUS("+", JavaTokenType.PLUS), MINUS("-", JavaTokenType.MINUS);
+    PLUS("+", JavaTokenType.PLUS), MINUS("-", JavaTokenType.MINUS), REM("%", JavaTokenType.PERC);
 
     private final String mySign;
     private final IElementType myTokenType;
@@ -192,6 +204,7 @@ public class DfaBinOpValue extends DfaValue {
     public static BinOp fromTokenType(IElementType tokenType) {
       if (PLUS.getTokenType() == tokenType) return PLUS;
       if (MINUS.getTokenType() == tokenType) return MINUS;
+      if (REM.getTokenType() == tokenType) return REM;
       return null;
     }
 

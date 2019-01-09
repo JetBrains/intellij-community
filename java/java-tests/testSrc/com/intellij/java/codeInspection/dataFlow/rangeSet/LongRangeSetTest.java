@@ -734,6 +734,15 @@ public class LongRangeSetTest {
     assertEquals("{0..19}: <0, 1, 3, 5, 7, 9> mod 10", modRange(0, 11, 5, 0b1).unite(modRange(11, 20, 2, 0b10)).toString());
     assertEquals("{0..100}", modRange(0, 100, 2, 0b1).unite(point(1)).toString());
   }
+  
+  @Test
+  public void testFromRemainder() {
+    assertEquals("{-9223372036854775805..9223372036854775805}: <0> mod 5", fromRemainder(5, point(0)).toString());
+    assertEquals("{1..Long.MAX_VALUE-1}: <1> mod 5", fromRemainder(5, point(1)).toString());
+    assertEquals("{1..Long.MAX_VALUE}: <1, 2, 3, 4> mod 5", fromRemainder(5, range(1, 4)).toString());
+    assertEquals("{Long.MIN_VALUE..-3}: <2> mod 5", fromRemainder(5, point(-3)).toString());
+    assertEquals("{Long.MIN_VALUE..Long.MAX_VALUE}: <1, 2, 3, 4> mod 5", fromRemainder(5, range(1, 4).unite(range(-4, -1))).toString());
+  }
 
   void checkAdd(LongRangeSet addend1, LongRangeSet addend2, boolean isLong, String expected) {
     LongRangeSet result = addend1.plus(addend2, isLong);

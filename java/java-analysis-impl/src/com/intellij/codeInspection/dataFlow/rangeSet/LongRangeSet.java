@@ -802,6 +802,30 @@ public abstract class LongRangeSet {
     }
   }
 
+  /**
+   * Creates a LongRangeSet of values {@code x} for which {@code remainders.contains(x % mod)}.
+   * May include more values as well.
+   * 
+   * @param mod a divisor
+   * @param remainders set of allowed remainders
+   * @return set of values which may produce supplied remainders when divided by mod.
+   */
+  public static LongRangeSet fromRemainder(long mod, LongRangeSet remainders) {
+    if (remainders.isEmpty()) return empty();
+    long min = remainders.min() > 0 ? 1 : Long.MIN_VALUE;  
+    long max = remainders.max() < 0 ? -1 : Long.MAX_VALUE;
+    if (mod > 1 && mod <= Long.SIZE) {
+      long bits = remainders.contains(0) ? 1 : 0;      
+      for(int rem = 1; rem < mod; rem++) {
+        if (remainders.contains(rem) || remainders.contains(rem - mod)) {
+          bits |= 1L << rem;
+        }
+      }
+      return modRange(min, max, mod, bits);
+    }
+    return range(min, max);
+  }
+
   static final class Empty extends LongRangeSet {
     static final LongRangeSet EMPTY = new Empty();
 

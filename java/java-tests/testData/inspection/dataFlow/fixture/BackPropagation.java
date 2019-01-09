@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class Algebraic {
+public class BackPropagation {
   void testOverflowDetection(int[] arr1, int[] arr2, int offset) {
     int l1 = arr1.length;
     int l2 = arr2.length;

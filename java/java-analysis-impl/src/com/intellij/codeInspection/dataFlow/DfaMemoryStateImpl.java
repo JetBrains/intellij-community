@@ -714,23 +714,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return ((DfaFactMapValue)value).getFacts().intersect(factType, factValue) != null;
     }
     if (value instanceof DfaBinOpValue && factType == DfaFactType.RANGE && factValue != null) {
-      DfaBinOpValue sum = (DfaBinOpValue)value;
-      boolean isLong = PsiType.LONG.equals(sum.getType());
-      LongRangeSet appliedRange = (LongRangeSet)factValue;
-      if (!isLong) {
-        appliedRange = appliedRange.intersect(LongRangeSet.fromType(PsiType.INT));
-      }
-      DfaVariableValue left = sum.getLeft();
-      DfaValue right = sum.getRight();
-      LongRangeSet leftRange = getValueFact(left, DfaFactType.RANGE);
-      LongRangeSet rightRange = getValueFact(right, DfaFactType.RANGE);
-      if (leftRange == null || rightRange == null) return true;
-      LongRangeSet result = Objects.requireNonNull(leftRange.binOpFromToken(sum.getTokenType(), rightRange, isLong));
-      if (!result.intersects(appliedRange)) return false;
-      boolean subtraction = sum.getOperation() == DfaBinOpValue.BinOp.MINUS;
-      LongRangeSet leftConstraint = subtraction ? rightRange.plus(appliedRange, isLong) : appliedRange.minus(rightRange, isLong);
-      LongRangeSet rightConstraint = subtraction ? leftRange.minus(appliedRange, isLong) : appliedRange.minus(leftRange, isLong);
-      return applyFact(left, DfaFactType.RANGE, leftConstraint) && applyFact(right, DfaFactType.RANGE, rightConstraint);
+      return propagateRangeBack((LongRangeSet)factValue, (DfaBinOpValue)value);
     }
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
@@ -744,6 +728,36 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     return true;
+  }
+
+  private boolean propagateRangeBack(@NotNull LongRangeSet factValue, @NotNull DfaBinOpValue binOp) {
+    boolean isLong = PsiType.LONG.equals(binOp.getType());
+    LongRangeSet appliedRange = isLong ? factValue : factValue.intersect(LongRangeSet.fromType(PsiType.INT));
+    DfaVariableValue left = binOp.getLeft();
+    DfaValue right = binOp.getRight();
+    LongRangeSet leftRange = getValueFact(left, DfaFactType.RANGE);
+    LongRangeSet rightRange = getValueFact(right, DfaFactType.RANGE);
+    if (leftRange == null || rightRange == null) return true;
+    LongRangeSet result = Objects.requireNonNull(leftRange.binOpFromToken(binOp.getTokenType(), rightRange, isLong));
+    if (!result.intersects(appliedRange)) return false;
+    LongRangeSet leftConstraint = LongRangeSet.all();
+    LongRangeSet rightConstraint = LongRangeSet.all();
+    switch (binOp.getOperation()) {
+      case PLUS:
+        leftConstraint = appliedRange.minus(rightRange, isLong);
+        rightConstraint = appliedRange.minus(leftRange, isLong);
+        break;
+      case MINUS:
+        leftConstraint = rightRange.plus(appliedRange, isLong);
+        rightConstraint = leftRange.minus(appliedRange, isLong);
+        break;
+      case REM:
+        if (rightRange.min() == rightRange.max()) {
+          leftConstraint = LongRangeSet.fromRemainder(rightRange.min(), appliedRange.intersect(result));
+        }
+        break;
+    }
+    return applyFact(left, DfaFactType.RANGE, leftConstraint) && applyFact(right, DfaFactType.RANGE, rightConstraint);
   }
 
   @Override
@@ -892,6 +906,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (left instanceof DfaBinOpValue) {
       DfaBinOpValue sum = (DfaBinOpValue)left;
       DfaBinOpValue.BinOp op = sum.getOperation();
+      if (op != DfaBinOpValue.BinOp.PLUS && op != DfaBinOpValue.BinOp.MINUS) return true;
       LongRangeSet leftRange = getValueFact(sum.getLeft(), DfaFactType.RANGE);
       LongRangeSet rightRange = getValueFact(sum.getRight(), DfaFactType.RANGE);
       if (leftRange == null || rightRange == null) return true;
@@ -1299,6 +1314,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return state.myFactMap;
       }
       value = resolveVariableValue((DfaVariableValue)value);
+    }
+    if (value instanceof DfaBinOpValue) {
+      return DfaFactMap.EMPTY.with(DfaFactType.RANGE, getValueFact(value, DfaFactType.RANGE));
     }
     return DfaFactMap.fromDfaValue(value);
   }
