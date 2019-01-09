@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -193,6 +194,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     String charset = EncodingProjectManager.getInstance(defaultProject).getDefaultCharsetName();
     EncodingProjectManager.getInstance(project).setDefaultCharsetName(charset);
+
+    RunManagerImpl.getInstanceImpl(defaultProject).copyTemplatesToProjectFromTemplate(project);
   }
 
   @Nullable

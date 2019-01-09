@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.ProjectTopics
@@ -41,25 +41,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.swing.Icon
-import kotlin.collections.Collection
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.MutableList
-import kotlin.collections.MutableMap
-import kotlin.collections.any
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.collections.count
-import kotlin.collections.emptyList
-import kotlin.collections.firstOrNull
-import kotlin.collections.forEach
-import kotlin.collections.get
-import kotlin.collections.getOrPut
-import kotlin.collections.iterator
-import kotlin.collections.listOf
-import kotlin.collections.mapNotNull
-import kotlin.collections.toList
-import kotlin.collections.toMutableList
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
@@ -296,9 +279,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettingsImpl {
-    for (provider in RUN_CONFIGURATION_TEMPLATE_PROVIDER_EP.getExtensions(project)) {
-      provider.getRunConfigurationTemplate(factory, this)?.let {
-        return it
+    if (!project.isDefault) {
+      for (provider in RUN_CONFIGURATION_TEMPLATE_PROVIDER_EP.getExtensions(project)) {
+        provider.getRunConfigurationTemplate(factory, this)?.let {
+          return it
+        }
       }
     }
 
@@ -1076,6 +1061,12 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       throw IllegalStateException("test only")
     }
     return templateIdToConfiguration
+  }
+
+  fun copyTemplatesToProjectFromTemplate(project: Project) {
+    val otherRunManager = RunManagerImpl.getInstanceImpl(project)
+    workspaceSchemeManagerProvider.copyIfNotExists(otherRunManager.workspaceSchemeManagerProvider)
+    otherRunManager.workspaceSchemeManager.reload()
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
@@ -113,6 +113,19 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
       }
       for (name in names) {
         nameToData.get(name)?.let { state.addContent(JDOMUtil.load(it.inputStream())) }
+      }
+    }
+  }
+
+  // copy not existent data from this provider to specified
+  fun copyIfNotExists(provider: SchemeManagerIprProvider) {
+    lock.read {
+      provider.lock.write {
+        for (key in nameToData.keys) {
+          if (!provider.nameToData.containsKey(key)) {
+            provider.nameToData.put(key, nameToData.get(key)!!)
+          }
+        }
       }
     }
   }
