@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.DataManager;
@@ -136,7 +136,7 @@ final class BreadcrumbsConfigurable extends CompositeConfigurable<BreadcrumbsCon
   @Override
   protected List<BreadcrumbsProviderConfigurable> createConfigurables() {
     final List<BreadcrumbsProviderConfigurable> configurables = newSmartList();
-    for (final BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensions()) {
+    for (final BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensionList()) {
       for (final Language language : provider.getLanguages()) {
         configurables.add(new BreadcrumbsProviderConfigurable(provider, language));
       }

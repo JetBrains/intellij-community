@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.ide.CommonActionsManager;
@@ -94,8 +94,6 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   private final java.util.List<LogCommand> myLog = Collections.synchronizedList(new ArrayList<>(1024));
   private volatile int myCommandsProcessedCount;
-
-  private final AntMessageCustomizer[] myMessageCustomizers = AntMessageCustomizer.EP_NAME.getExtensions();
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Runnable myFlushLogRunnable = () -> {
@@ -400,7 +398,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private AntMessage getCustomizedMessage(final String text, @AntMessage.Priority int priority) {
     AntMessage customizedMessage = null;
 
-    for (AntMessageCustomizer customizer : myMessageCustomizers) {
+    for (AntMessageCustomizer customizer : AntMessageCustomizer.EP_NAME.getExtensionList()) {
       customizedMessage = customizer.createCustomizedMessage(text, priority);
       if (customizedMessage != null) {
         break;
