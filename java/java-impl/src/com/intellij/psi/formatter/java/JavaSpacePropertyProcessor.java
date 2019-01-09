@@ -223,7 +223,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.LBRACE || isEndOfLineCommentAfterLBrace(myChild1)) {
       if (aClass.isEnum()) {
-        createSpacingForEnumBraces();
+        createSpacingForEnumBraces(true);
       }
       else if (myRole2 == ChildRole.RBRACE && mySettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE) {
         int spaces = mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
@@ -245,7 +245,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
     }
     else if (myRole2 == ChildRole.RBRACE && aClass.isEnum()) {
-      createSpacingForEnumBraces();
+      createSpacingForEnumBraces(false);
     }
     else if (myRole1 == ChildRole.COMMA && aClass.isEnum() && isJavadocHoldingEnumConstant(myChild2)) {
       createParenthSpace(true, true);
@@ -274,7 +274,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
-  private void createSpacingForEnumBraces() {
+  private void createSpacingForEnumBraces(boolean isLbrace) {
     // Ignore comments in front of enum for dependent spacing
     PsiElement first = myParent.getFirstChild();
     while (first instanceof PsiDocComment || first instanceof PsiWhiteSpace) {
@@ -282,8 +282,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     int spaces = myJavaSettings.SPACE_INSIDE_ONE_LINE_ENUM_BRACES ? 1 : 0;
     TextRange textRange = new TextRange(first.getTextOffset(), myParent.getTextRange().getEndOffset());
-    myResult = Spacing.createDependentLFSpacing(spaces, spaces, textRange, mySettings.KEEP_LINE_BREAKS,
-                                                mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+    int blankLinesCount = isLbrace ? mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS : mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE;
+    myResult = Spacing.createDependentLFSpacing(spaces, spaces, textRange, mySettings.KEEP_LINE_BREAKS, blankLinesCount);
   }
 
   private static boolean isJavadocHoldingEnumConstant(@NotNull ASTNode node) {
