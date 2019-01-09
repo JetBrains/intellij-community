@@ -254,7 +254,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       applyCondition(dfaEqual);
 
       if (value instanceof DfaVariableValue) {
-        setVariableState(var, new DfaVariableState(filterFactsOnAssignment(var, getVariableState((DfaVariableValue)value).myFactMap)));
+        DfaVariableState targetState = getVariableState((DfaVariableValue)value);
+        setVariableState(var, targetState.withFacts(filterFactsOnAssignment(var, targetState.myFactMap)));
       }
     }
 
