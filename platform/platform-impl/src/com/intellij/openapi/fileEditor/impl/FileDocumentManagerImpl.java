@@ -261,10 +261,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   private void saveAllDocumentsLater() {
     // later because some document might have been blocked by PSI right now
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (ApplicationManager.getApplication().isDisposed()) {
-        return;
-      }
+    TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
       final Document[] unsavedDocuments = getUnsavedDocuments();
       for (Document document : unsavedDocuments) {
         VirtualFile file = getFile(document);
