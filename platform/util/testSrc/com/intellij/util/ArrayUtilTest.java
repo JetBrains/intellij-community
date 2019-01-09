@@ -15,10 +15,16 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
+
+import static com.intellij.util.ArrayUtil.splitBytes;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 /**
  * @author Sergey.Malenkov
@@ -55,6 +61,23 @@ public class ArrayUtilTest extends TestCase {
 
     array = ArrayUtil.insert(array, 1, 4);
     assertEqualsArray(array, 3, 4, 1, 2);
+  }
+
+  public void testSplitBytes() {
+    assertSplitBytes(asList("", "Q", "Q"), "abQabQ", "ab");
+    assertSplitBytes(asList("X", "Y"), "XabYab", "ab");
+    assertSplitBytes(singletonList(""), "ab", "ab");
+    assertSplitBytes(asList("Qa", "Z"), "QaabZ", "ab");
+    assertSplitBytes(asList("Qab", "YZ"), "QabababcYZ", "ababc");
+  }
+
+  @SuppressWarnings("SSBasedInspection")
+  private static void assertSplitBytes(@NotNull List<String> expectedSplits, @NotNull String arrayToSplit, @NotNull String separator) {
+    List<byte[]> actualSplit = splitBytes(arrayToSplit.getBytes(), separator.getBytes());
+    List<byte[]> expectedSplit = ContainerUtil.map(expectedSplits, String::getBytes);
+    if (!expectedSplit.equals(actualSplit)) {
+      assertEquals(expectedSplits, ContainerUtil.map(actualSplit, String::new));
+    }
   }
 
   private static void assertEqualsArray(int[] actual, int... expected) {

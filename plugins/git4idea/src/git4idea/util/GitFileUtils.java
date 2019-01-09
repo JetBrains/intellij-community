@@ -24,10 +24,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
-import git4idea.commands.Git;
-import git4idea.commands.GitBinaryHandler;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
+import git4idea.commands.*;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -201,19 +198,21 @@ public class GitFileUtils {
   public static byte[] getFileContent(Project project, VirtualFile root, String revisionOrBranch, String relativePath) throws VcsException {
     GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.CAT_FILE);
     h.setSilent(true);
-    if (CAT_FILE_SUPPORTS_TEXTCONV.existsIn(project) &&
-        Registry.is("git.read.content.with.textconv")) {
-      h.addParameters("--textconv");
-    }
-    else if (CAT_FILE_SUPPORTS_FILTERS.existsIn(project) &&
-             Registry.is("git.read.content.with.filters")) {
-      h.addParameters("--filters");
-    }
-    else {
-      h.addParameters("-p");
-    }
+    addTextConvParameters(project, h, true);
     h.addParameters(revisionOrBranch + ":" + relativePath);
     return h.run();
+  }
+
+  public static void addTextConvParameters(@NotNull Project project, @NotNull GitBinaryHandler handler, boolean addp) {
+    if (CAT_FILE_SUPPORTS_TEXTCONV.existsIn(project) && Registry.is("git.read.content.with.textconv")) {
+      handler.addParameters("--textconv");
+    }
+    else if (CAT_FILE_SUPPORTS_FILTERS.existsIn(project) && Registry.is("git.read.content.with.filters")) {
+      handler.addParameters("--filters");
+    }
+    else if (addp) {
+      handler.addParameters("-p");
+    }
   }
 
   public static String stripFileProtocolPrefix(String path) {

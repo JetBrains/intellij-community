@@ -195,7 +195,8 @@ class GitPartialCommitTest : GitSingleRepoTest() {
   }
 
   private fun assertChanges(changes: ChangesBuilder.() -> Unit): List<Change> {
-    return changeListManager.assertChanges(changes)
+    updateChangeListManager()
+    return assertChanges(changeListManager.allChanges, changes)
   }
 
   private fun assertCommittedContent(fileName: String, expectedContent: String, useFilters: Boolean = false) {

@@ -44,6 +44,9 @@ public class GitContentRevision implements ByteBackedContentRevision {
     myCharset = charset;
   }
 
+  @Nullable
+  public Charset getCharset() {return myCharset;}
+
   @Override
   @Nullable
   public String getContent() throws VcsException {
