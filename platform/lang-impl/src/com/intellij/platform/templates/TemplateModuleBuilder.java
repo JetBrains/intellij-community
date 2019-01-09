@@ -52,6 +52,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.zip.ZipInputStream;
 
@@ -59,6 +60,7 @@ import java.util.zip.ZipInputStream;
 * @author Dmitry Avdeev
 */
 public class TemplateModuleBuilder extends ModuleBuilder {
+  private final static Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);
 
   private final ModuleType myType;
   private final List<WizardInputField> myAdditionalFields;
@@ -160,12 +162,13 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return module;
   }
 
-  private void fixModuleName(Module module) {
+  private void fixModuleName(@NotNull Module module) {
     for (RunConfiguration configuration : RunManager.getInstance(module.getProject()).getAllConfigurationsList()) {
       if (configuration instanceof ModuleBasedConfiguration) {
         ((ModuleBasedConfiguration)configuration).getConfigurationModule().setModule(module);
       }
     }
+
     ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     for (WizardInputField field : myAdditionalFields) {
       ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(field.getId());
@@ -182,6 +185,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         factory.applyResult(value, model);
       }
     }
+
     model.commit();
   }
 
@@ -288,13 +292,13 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         }
       });
 
-      if(pI != null) {
+      if (pI != null) {
         pI.setText("Refreshing...");
       }
 
       String iml = ContainerUtil.find(ObjectUtils.chooseNotNull(dir.list(), ArrayUtilRt.EMPTY_STRING_ARRAY), s -> s.endsWith(".iml"));
       if (isModuleMode) {
-        File from = new File(path, iml);
+        File from = new File(path, Objects.requireNonNull(iml));
         File to = new File(getModuleFilePath());
         if (!from.renameTo(to)) {
           throw new IOException("Can't rename " + from + " to " + to);
@@ -318,7 +322,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  private static String getPathFragment(String value) {
+  @NotNull
+  private static String getPathFragment(@NotNull String value) {
     return "/" + value.replace('.', '/') + "/";
   }
 
@@ -406,6 +411,4 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     };
     return ProgressManager.getInstance().run(task);
   }
-
-  private final static Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);
 }
