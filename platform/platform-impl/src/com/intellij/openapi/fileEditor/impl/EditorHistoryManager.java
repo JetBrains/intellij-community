@@ -24,7 +24,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -215,7 +214,9 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @TestOnly
+  /**
+   * For internal or test-only usage.
+   */
   public synchronized void removeAllFiles() {
     for (HistoryEntry entry : myEntriesList) {
       entry.destroy();
@@ -306,7 +307,6 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   @Override
   public synchronized void loadState(@NotNull Element state) {
     // each HistoryEntry contains myDisposable that must be disposed to dispose corresponding virtual file pointer
-    //noinspection TestOnlyProblems
     removeAllFiles();
 
     // backward compatibility - previously entry maybe duplicated
@@ -351,10 +351,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
 
   @Override
   public synchronized void dispose() {
-    for (HistoryEntry entry : myEntriesList) {
-      entry.destroy();
-    }
-    myEntriesList.clear();
+    removeAllFiles();
   }
 
   /**
