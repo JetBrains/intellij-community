@@ -1,12 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -66,7 +68,9 @@ public class Java12SwitchExpressionSanityTest extends LightCodeInsightFixtureTes
         InvokeIntentionAroundSwitch anyIntentionInSwitchRange = new InvokeIntentionAroundSwitch(file, new JavaIntentionPolicy() {
           @Override
           protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
-            return super.shouldSkipByFamilyName(familyName);
+            return super.shouldSkipByFamilyName(familyName)
+                   //IDEA-205122
+                   || CommonQuickFixBundle.message("fix.unwrap", PsiKeyword.SWITCH).equals(familyName);
           }
         });
 
