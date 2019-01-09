@@ -17,14 +17,17 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.CheckBox;
@@ -236,6 +239,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     switchStatementText.append('}');
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(ifStatement.getProject());
     final PsiElementFactory factory = psiFacade.getElementFactory();
+    PsiSwitchStatement replacement;
     if (breaksNeedRelabeled) {
       final StringBuilder out = new StringBuilder();
       if (!(breakTarget instanceof PsiLabeledStatement)) {
@@ -244,11 +248,17 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       termReplace(breakTarget, statementToReplace, switchStatementText, out);
       final String newStatementText = out.toString();
       final PsiStatement newStatement = factory.createStatementFromText(newStatementText, ifStatement);
-      breakTarget.replace(newStatement);
+      replacement = (PsiSwitchStatement)breakTarget.replace(newStatement);
     }
     else {
       final PsiStatement newStatement = factory.createStatementFromText(switchStatementText.toString(), ifStatement);
-      statementToReplace.replace(newStatement);
+      replacement = (PsiSwitchStatement)statementToReplace.replace(newStatement);
+    }
+    if (PsiUtil.getLanguageLevel(replacement).isAtLeast(LanguageLevel.JDK_12_PREVIEW)) {
+      EnhancedSwitchMigrationInspection.SwitchReplacer replacer = EnhancedSwitchMigrationInspection.findSwitchReplacer(replacement);
+      if (replacer != null) {
+        replacer.replace(replacement);
+      }
     }
   }
 

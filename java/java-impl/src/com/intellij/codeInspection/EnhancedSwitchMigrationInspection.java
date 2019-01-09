@@ -31,7 +31,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchStatement(PsiSwitchStatement statement) {
-        SwitchReplacer replacer = getSwitchReplacer(statement);
+        SwitchReplacer replacer = findSwitchReplacer(statement);
         if (replacer == null) return;
         PsiElement switchKeyword = statement.getFirstChild();
         holder.registerProblem(switchKeyword, InspectionsBundle.message(
@@ -109,8 +109,12 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     return tryCast(declaredElements[0], PsiLocalVariable.class);
   }
 
+  /**
+   * Before using this method make sure you are using correct version of Java.
+   *
+   */
   @Nullable
-  private static SwitchReplacer getSwitchReplacer(PsiSwitchStatement switchStatement) {
+  public static SwitchReplacer findSwitchReplacer(PsiSwitchStatement switchStatement) {
     PsiExpression expression = switchStatement.getExpression();
     if (expression == null) return null;
     PsiCodeBlock body = switchStatement.getBody();
@@ -215,7 +219,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     }
   }
 
-  private interface SwitchReplacer {
+  public interface SwitchReplacer {
     void replace(@NotNull PsiStatement switchStatement);
 
     ReplacementType getType();
@@ -252,7 +256,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiSwitchStatement statement = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiSwitchStatement.class);
       if (statement == null) return;
-      SwitchReplacer replacer = getSwitchReplacer(statement);
+      SwitchReplacer replacer = findSwitchReplacer(statement);
       if (replacer == null) return;
       replacer.replace(statement);
     }
@@ -309,7 +313,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
    */
 
   @Nullable
-  public static SwitchReplacer inspectReturningSwitch(@NotNull PsiStatement statement,
+  private static SwitchReplacer inspectReturningSwitch(@NotNull PsiStatement statement,
                                                @NotNull PsiExpression expressionBeingSwitched,
                                                @NotNull List<? extends OldSwitchStatementBranch> branches,
                                                boolean isExhaustive) {
@@ -405,7 +409,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
    * }
    */
   @Nullable
-  public static SwitchReplacer inspectVariableAssigningSwitch(@NotNull PsiStatement statement,
+  private static SwitchReplacer inspectVariableAssigningSwitch(@NotNull PsiStatement statement,
                                                               @NotNull PsiExpression expressionBeingSwitched,
                                                               @NotNull List<? extends OldSwitchStatementBranch> branches,
                                                               boolean isExhaustive) {
@@ -476,7 +480,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
    * Suggest replacement with enhanced switch statement
    */
   @Nullable
-  public static SwitchReplacer inspectReplacementWithStatement(@NotNull PsiStatement statement,
+  private static SwitchReplacer inspectReplacementWithStatement(@NotNull PsiStatement statement,
                                                               @NotNull PsiExpression expressionBeingSwitched,
                                                               @NotNull List<? extends OldSwitchStatementBranch> branches,
                                                               boolean isExhaustive) {
