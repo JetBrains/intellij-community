@@ -77,6 +77,24 @@ public class GitHistoryUtils {
   }
 
   /**
+   * Collect commit information in a form of {@link TimedVcsCommit} (containing hash, parents and commit time)
+   * in the repository using `git log` command.
+   *
+   * @param project    context project
+   * @param root       git repository root
+   * @param parameters additional parameters for `git log` command
+   * @throws VcsException if there is a problem with running git
+   */
+  @SuppressWarnings("unused")
+  public static List<? extends TimedVcsCommit> collectTimedCommits(@NotNull Project project,
+                                                                   @NotNull VirtualFile root,
+                                                                   @NotNull String... parameters) throws VcsException {
+    List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
+    loadTimedCommits(project, root, commits::add, parameters);
+    return commits;
+  }
+
+  /**
    * Collect commit information in a form of {@link VcsCommitMetadata} (containing commit details, but no changes)
    * for the specified hashes or references.
    *
@@ -280,7 +298,7 @@ public class GitHistoryUtils {
   }
 
   /**
-   * @deprecated To remove in IDEA 17
+   * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)}
    */
   @Deprecated
   @SuppressWarnings("unused")
@@ -292,7 +310,7 @@ public class GitHistoryUtils {
   }
 
   /**
-   * @deprecated To remove in IDEA 17
+   * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)}
    */
   @Deprecated
   @NotNull
