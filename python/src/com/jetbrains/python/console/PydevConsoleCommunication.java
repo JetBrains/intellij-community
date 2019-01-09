@@ -551,7 +551,9 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   public XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
       try {
-        List<DebugValue> ret = getPythonConsoleBackendClient().getVariable(GetVariableCommand.composeName(var));
+        final String name = var.getOffset() == 0 ? GetVariableCommand.composeName(var)
+                                                 : var.getOffset() + "\t" + GetVariableCommand.composeName(var);
+        List<DebugValue> ret = getPythonConsoleBackendClient().getVariable(name);
         return parseVars(ret, var, this);
       }
       catch (CommunicationClosedException | PyConsoleProcessFinishedException e) {
