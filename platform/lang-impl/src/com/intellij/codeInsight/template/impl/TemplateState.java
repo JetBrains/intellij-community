@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -98,7 +99,9 @@ public class TemplateState implements Disposable {
     myEditorDocumentListener = new DocumentListener() {
       @Override
       public void beforeDocumentChange(@NotNull DocumentEvent e) {
-        myDocumentChanged = true;
+        if (CommandProcessor.getInstance().getCurrentCommand() != null) {
+          myDocumentChanged = true;
+        }
       }
     };
     myLookupListener = new LookupListener() {
