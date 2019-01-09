@@ -20,6 +20,7 @@ public interface TaskExecutionSettings {
 
   void setExecutionName(@Nullable String executionName);
 
+  @Nullable
   ProjectSystemId getExternalSystemId();
 
   void setExternalSystemId(@NotNull ProjectSystemId projectSystemId);

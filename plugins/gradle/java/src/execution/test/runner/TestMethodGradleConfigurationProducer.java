@@ -26,7 +26,7 @@ import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil;
 
 import java.util.List;
 
-import static com.intellij.openapi.externalSystem.service.ExternalSystemTaskExecutionSettingsUtilKt.isSameSettings;
+import static com.intellij.openapi.externalSystem.service.ExternalSystemTaskExecutionSettingsUtil.isSameSettings;
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
 

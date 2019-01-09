@@ -84,6 +84,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
   }
 
   @Override
+  @NotNull
   public ProjectSystemId getExternalSystemId() {
     return new ProjectSystemId(myExternalSystemIdString);
   }

@@ -39,14 +39,12 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.execution.TaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.serialization.service.execution.ExternalSystemTaskExecutionSettingsState;
-import com.intellij.openapi.externalSystem.service.ExternalSystemTaskExecutionSettingsUtilKt;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -82,10 +80,10 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DEBUG_FORK_SOCKET_PARAM;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DEBUG_SETUP_PREFIX;
+import static com.intellij.openapi.externalSystem.service.ExternalSystemTaskExecutionSettingsUtil.getAllTaskNames;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
 
@@ -298,7 +296,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
                                    : StringUtil.isNotEmpty(myConfiguration.getName())
                                      ? myConfiguration.getName() : AbstractExternalSystemTaskConfigurationType.generateName(
                                      myProject, mySettings.getExternalSystemId(), mySettings.getExternalProjectPath(),
-                                     ExternalSystemTaskExecutionSettingsUtilKt.getAllTaskNames(mySettings),
+                                     getAllTaskNames(mySettings),
                                      mySettings.getExecutionName(), ": ", "");
 
       final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(task, executionName);

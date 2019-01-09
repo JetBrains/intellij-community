@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.service.ExternalSystemTaskExecutionSettingsUtilKt;
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -24,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+
+import static com.intellij.openapi.externalSystem.service.ExternalSystemTaskExecutionSettingsUtil.getAllTaskNames;
 
 /**
  * Basic run configuration type for external system tasks.
@@ -106,7 +107,7 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     return generateName(
       project, settings.getExternalSystemId(),
       settings.getExternalProjectPath(),
-      ExternalSystemTaskExecutionSettingsUtilKt.getAllTaskNames(settings),
+      getAllTaskNames(settings),
       settings.getExecutionName()
     );
   }

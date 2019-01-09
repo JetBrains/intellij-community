@@ -29,7 +29,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.intellij.openapi.externalSystem.service.ExternalSystemTaskExecutionSettingsUtilKt.isSameSettings;
+import static com.intellij.openapi.externalSystem.service.ExternalSystemTaskExecutionSettingsUtil.isSameSettings;
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
 
