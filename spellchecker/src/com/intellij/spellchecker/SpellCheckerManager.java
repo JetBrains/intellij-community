@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker;
 
 import com.google.common.collect.Maps;
@@ -227,28 +227,37 @@ public class SpellCheckerManager implements Disposable {
     final String transformed = spellChecker.getTransformation().transform(word);
     final EditableDictionary dictionary = DictionaryLevel.PROJECT == dictionaryLevel ? myProjectDictionary : myAppDictionary;
     if (transformed != null) {
-      if(file != null) {
+      if (file != null) {
         WriteCommandAction.writeCommandAction(project)
           .run(() -> UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(file) {
             @Override
             public void undo() {
-              dictionary.removeFromDictionary(transformed);
-              myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
-              restartInspections();
+              removeWordFromDictionary(dictionary, transformed);
             }
 
             @Override
             public void redo() {
-              dictionary.addToDictionary(transformed);
-              myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
-              restartInspections();
+              addWordToDictionary(dictionary, transformed);
             }
           }));
       }
-      dictionary.addToDictionary(transformed);
-      myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
-      restartInspections();
+      addWordToDictionary(dictionary, transformed);
     }
+  }
+
+  private void addWordToDictionary(@NotNull EditableDictionary dictionary, @NotNull String word) {
+    dictionary.addToDictionary(word);
+    fireDictionaryChanged(dictionary);
+  }
+
+  private void removeWordFromDictionary(@NotNull EditableDictionary dictionary, String transformed) {
+    dictionary.removeFromDictionary(transformed);
+    fireDictionaryChanged(dictionary);
+  }
+
+  private void fireDictionaryChanged(@NotNull EditableDictionary dictionary) {
+    myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
+    restartInspections();
   }
 
   public void updateUserDictionary(@NotNull Collection<String> words) {
