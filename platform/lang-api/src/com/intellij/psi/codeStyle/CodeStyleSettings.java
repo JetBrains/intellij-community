@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.configurationStore.UnknownElementCollector;
@@ -478,6 +478,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    * @deprecated Use get/setRightMargin() methods instead.
    */
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
+  @Deprecated
   public int RIGHT_MARGIN = 120;
   /**
    * <b>Do not use this field directly since it doesn't reflect a setting for a specific language which may

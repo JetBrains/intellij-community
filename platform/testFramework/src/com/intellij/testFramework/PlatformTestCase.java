@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
@@ -113,6 +113,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
   private SdkLeakTracker myOldSdks;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
+  @Nullable
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
 
 
@@ -209,8 +210,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     setUpProject();
 
-    myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(
-      () -> isStressTest() || ApplicationManager.getApplication() == null || ApplicationManager.getApplication() instanceof MockApplication ? null : CodeStyle.getDefaultSettings());
+    boolean isTrackCodeStyleChanges = !(isStressTest() ||
+                                        ApplicationManager.getApplication() == null ||
+                                        ApplicationManager.getApplication() instanceof MockApplication);
+
+    myCodeStyleSettingsTracker = isTrackCodeStyleChanges ? new CodeStyleSettingsTracker(() -> CodeStyle.getDefaultSettings()) : null;
     ourTestCase = this;
     if (myProject != null) {
       ProjectManagerEx.getInstanceEx().openTestProject(myProject);
@@ -517,7 +521,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       })
       .append(() -> disposeProject())
       .append(() -> UIUtil.dispatchAllInvocationEvents())
-      .append(() -> myCodeStyleSettingsTracker.checkForSettingsDamage())
+      .append(() -> {
+        if (myCodeStyleSettingsTracker != null) {
+          myCodeStyleSettingsTracker.checkForSettingsDamage();
+        }
+      })
       .append(() -> {
         if (project != null) {
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
