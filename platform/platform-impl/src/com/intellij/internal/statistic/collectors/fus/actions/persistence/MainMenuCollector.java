@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
-import com.intellij.internal.statistic.collectors.fus.actions.MainMenuUsagesCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
@@ -23,8 +22,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -34,11 +33,12 @@ import java.util.stream.Collectors;
 @State(
   name = "MainMenuCollector",
   storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
     @Storage(value = "statistics.main_menu.xml", roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
 public class MainMenuCollector implements PersistentStateComponent<MainMenuCollector.State> {
+  private static final String GROUP_ID = "statistics.actions.main.menu.v2";
   private static final String GENERATED_ON_RUNTIME_ITEM = "generated.on.runtime";
 
   private State myState = new State();
@@ -50,7 +50,6 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
 
   @Override
   public void loadState(@NotNull State state) {
-    myState = state;
   }
 
   public void record(@NotNull AnAction action) {
@@ -72,11 +71,7 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
 
       if (!StringUtil.isEmpty(path)) {
         String key = ConvertUsagesUtil.escapeDescriptorName(path);
-        FeatureUsageLogger.INSTANCE.log(MainMenuUsagesCollector.GROUP_ID, key, FUSUsageContext.OS_CONTEXT.getData());
-
-        final Integer count = myState.myValues.get(key);
-        int value = count == null ? 1 : count + 1;
-        myState.myValues.put(key, value);
+        FeatureUsageLogger.INSTANCE.log(GROUP_ID, key, FUSUsageContext.OS_CONTEXT.getData());
       }
     }
     catch (Exception ignore) {

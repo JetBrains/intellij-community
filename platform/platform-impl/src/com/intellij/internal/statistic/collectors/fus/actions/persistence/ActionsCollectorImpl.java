@@ -26,7 +26,9 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-@State(name = "ActionsCollector", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
+@State(name = "ActionsCollector", storages = @Storage(
+  value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
+)
 public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
   private static final String DEFAULT_ID = "third.party.plugin.action";
 
@@ -44,9 +46,6 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   public void record(@Nullable String actionId, @NotNull Class context, @Nullable AnActionEvent event) {
     if (actionId == null) return;
 
-    State state = getState();
-    if (state == null) return;
-
     boolean isContextMenu = event != null && event.isFromContextMenu();
     final String place = event != null ? event.getPlace() : "";
 
@@ -63,16 +62,6 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
       data.put("input_event", inputEvent);
     }
     FeatureUsageLogger.INSTANCE.log("actions.v2", key, data);
-
-    Integer count = state.myValues.get(key);
-    int value = count == null ? 1 : count + 1;
-    state.myValues.put(key, value);
-    if (isContextMenu) {
-      key = "[" + place + "] " + key;
-      count = state.myContextMenuValues.get(key);
-      value = count == null ? 1 : count + 1;
-      state.myContextMenuValues.put(key, value);
-    }
   }
 
   @NotNull
@@ -101,6 +90,5 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
 
   @Override
   public void loadState(@NotNull State state) {
-    myState = state;
   }
 }
