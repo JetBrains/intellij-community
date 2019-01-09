@@ -1927,7 +1927,7 @@
             "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/paint-order",
             "support": {
               "chrome": {
-                "version_added": null
+                "version_added": true
               },
               "chrome_android": {
                 "version_added": null
@@ -1939,32 +1939,32 @@
                 "version_added": null
               },
               "firefox": {
-                "version_added": null
+                "version_added": true
               },
               "firefox_android": {
                 "version_added": null
               },
               "ie": {
-                "version_added": null
+                "version_added": false
               },
               "opera": {
-                "version_added": null
+                "version_added": true
               },
               "opera_android": {
-                "version_added": null
+                "version_added": false
               },
               "safari": {
-                "version_added": null
+                "version_added": true
               },
               "safari_ios": {
-                "version_added": null
+                "version_added": false
               },
               "webview_android": {
-                "version_added": null
+                "version_added": false
               }
             },
             "status": {
-              "experimental": true,
+              "experimental": false,
               "standard_track": true,
               "deprecated": false
             }

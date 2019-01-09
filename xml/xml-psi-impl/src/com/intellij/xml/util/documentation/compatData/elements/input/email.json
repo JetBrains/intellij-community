@@ -41,6 +41,7 @@
                 "version_added": "3.1",
                 "notes": [
                   "Doesn't do validation, but instead offers a custom 'email' keyboard, which is designed to make entering email addresses easier.",
+                  "The custom 'email' keyboard does not provide a comma key, so users cannot enter multiple email addresses.",
                   "Automatically applies a default style of <code>opacity: 0.4</code> to disable textual <code>&lt;input&gt;</code> elements, including those of type 'email'. Other major browsers don't currently share this particular default style."
                 ]
               },

@@ -50,6 +50,7 @@
         },
         "dx": {
           "__compat": {
+            "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/dx",
             "support": {
               "chrome": {
                 "version_added": true
@@ -97,6 +98,7 @@
         },
         "dy": {
           "__compat": {
+            "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/dy",
             "support": {
               "chrome": {
                 "version_added": true
@@ -144,6 +146,7 @@
         },
         "lengthAdjust": {
           "__compat": {
+            "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/lengthAdjust",
             "support": {
               "chrome": {
                 "version_added": true
@@ -191,6 +194,7 @@
         },
         "rotate": {
           "__compat": {
+            "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/rotate",
             "support": {
               "chrome": {
                 "version_added": true
@@ -238,6 +242,7 @@
         },
         "textLength": {
           "__compat": {
+            "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/textLength",
             "support": {
               "chrome": {
                 "version_added": true
@@ -258,7 +263,7 @@
                 "version_added": true
               },
               "ie": {
-                "version_added": true
+                "version_added": "11"
               },
               "opera": {
                 "version_added": true
@@ -285,6 +290,7 @@
         },
         "x": {
           "__compat": {
+            "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/x",
             "support": {
               "chrome": {
                 "version_added": true
@@ -332,6 +338,7 @@
         },
         "y": {
           "__compat": {
+            "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/y",
             "support": {
               "chrome": {
                 "version_added": true

@@ -545,7 +545,7 @@
                   "version_added": "16"
                 },
                 "edge_mobile": {
-                  "version_added": "16"
+                  "version_added": false
                 },
                 "firefox": [
                   {

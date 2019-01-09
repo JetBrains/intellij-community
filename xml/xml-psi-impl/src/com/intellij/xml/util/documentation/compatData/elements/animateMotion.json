@@ -33,10 +33,10 @@
               "version_added": null
             },
             "safari": {
-              "version_added": null
+              "version_added": true
             },
             "safari_ios": {
-              "version_added": null
+              "version_added": true
             },
             "webview_android": {
               "version_added": null
