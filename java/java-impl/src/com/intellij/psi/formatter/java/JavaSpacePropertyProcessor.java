@@ -277,7 +277,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private void createSpacingForEnumBraces() {
     // Ignore comments in front of enum for dependent spacing
     PsiElement first = myParent.getFirstChild();
-    while (first instanceof PsiDocComment) {
+    while (first instanceof PsiDocComment || first instanceof PsiWhiteSpace) {
       first = first.getNextSibling();
     }
     int spaces = myJavaSettings.SPACE_INSIDE_ONE_LINE_ENUM_BRACES ? 1 : 0;
