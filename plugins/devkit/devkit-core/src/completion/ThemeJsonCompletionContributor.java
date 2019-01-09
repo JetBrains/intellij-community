@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.completion;
 
 import com.google.common.collect.Lists;
@@ -116,12 +116,17 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
 
   private static LookupElement createLookupElement(@NotNull String key, boolean shouldSurroundWithQuotes) {
     return LookupElementBuilder.create(key)
-      .withPresentableText("\"" + key + "\"").withInsertHandler(new MyInsertHandler(shouldSurroundWithQuotes));
+      .withPresentableText("\"" + key + "\"")
+      .withInsertHandler(shouldSurroundWithQuotes ? MyInsertHandler.SURROUND_WITH_QUOTES : MyInsertHandler.INSTANCE);
   }
 
 
   //TODO insert ': ' if necessary
   private static class MyInsertHandler implements InsertHandler<LookupElement> {
+
+    private static final MyInsertHandler INSTANCE = new MyInsertHandler(false);
+    private static final MyInsertHandler SURROUND_WITH_QUOTES = new MyInsertHandler(true);
+
     private final boolean mySurroundWithQuotes;
 
     private MyInsertHandler(boolean surroundWithQuotes) {
