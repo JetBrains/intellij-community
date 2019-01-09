@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.missingApi
 
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
@@ -10,9 +11,9 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
+import org.jetbrains.idea.devkit.util.PsiUtil
 
 /**
  * Inspection that warns plugin authors if they use IntelliJ Platform's APIs that aren't available
@@ -29,14 +30,17 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil
  * containing external annotations [org.jetbrains.annotations.ApiStatus.AvailableSince]
  * where APIs' introduction versions are specified.
  */
-class MissingRecentApiInspection : DevKitInspectionBase() {
+class MissingRecentApiInspection : AbstractBaseJavaLocalInspectionTool() {
 
   companion object {
     val INSPECTION_SHORT_NAME = InspectionProfileEntry.getShortName(MissingRecentApiInspection::class.simpleName!!)
   }
 
-  override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    val module = ModuleUtil.findModuleForFile(holder.file) ?: return PsiElementVisitor.EMPTY_VISITOR
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    if (PsiUtil.isIdeaProject(holder.project)) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    val module = ModuleUtil.findModuleForPsiElement(holder.file) ?: return PsiElementVisitor.EMPTY_VISITOR
     val targetedSinceUntilRanges = getTargetedSinceUntilRanges(module)
     if (targetedSinceUntilRanges.isEmpty()) {
       return PsiElementVisitor.EMPTY_VISITOR
