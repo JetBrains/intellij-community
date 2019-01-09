@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.application.options.CodeStyle;
@@ -39,9 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.templates.github.ZipUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.exception.VelocityException;
 import org.jdom.JDOMException;
@@ -175,13 +173,18 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     for (WizardInputField field : myAdditionalFields) {
       ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(field.getId());
-      factory.applyResult(field.getValue(), model);
+      if (factory != null) {
+        factory.applyResult(field.getValue(), model);
+      }
     }
+
     applyProjectDefaults(module.getProject());
-    for (ProjectTemplateParameterFactory factory : ProjectTemplateParameterFactory.EP_NAME.getExtensions()) {
+
+    for (ProjectTemplateParameterFactory factory : ProjectTemplateParameterFactory.EP_NAME.getExtensionList()) {
       String value = factory.getImmediateValue();
-      if (value != null)
+      if (value != null) {
         factory.applyResult(value, model);
+      }
     }
     model.commit();
   }
@@ -203,7 +206,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   private void unzip(final @Nullable String projectName,
                      String path,
-                     final boolean moduleMode,
+                     final boolean isModuleMode,
                      @Nullable ProgressIndicator pI,
                      boolean reportFailuresWithDialog) {
     final WizardInputField basePackage = getBasePackageField();
@@ -263,7 +266,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         @Override
         public Void consume(@NotNull ZipInputStream stream) throws IOException {
           ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, stream, path1 -> {
-            if (moduleMode && path1.contains(Project.DIRECTORY_STORE_FOLDER)) {
+            if (isModuleMode && path1.contains(Project.DIRECTORY_STORE_FOLDER)) {
               return null;
             }
             if (basePackage != null) {
@@ -284,7 +287,6 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           }, true);
 
           myTemplate.handleUnzippedDirectories(dir, filesToRefresh);
-
           return null;
         }
       });
@@ -293,8 +295,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         pI.setText("Refreshing...");
       }
 
-      String iml = ContainerUtil.find(dir.list(), s -> s.endsWith(".iml"));
-      if (moduleMode) {
+      String iml = ContainerUtil.find(ObjectUtils.chooseNotNull(dir.list(), ArrayUtilRt.EMPTY_STRING_ARRAY), s -> s.endsWith(".iml"));
+      if (isModuleMode) {
         File from = new File(path, iml);
         File to = new File(getModuleFilePath());
         if (!from.renameTo(to)) {
