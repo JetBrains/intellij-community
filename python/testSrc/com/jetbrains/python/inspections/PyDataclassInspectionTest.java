@@ -167,6 +167,15 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-33445
+  public void testDontConsiderUnresolvedFieldsAsInitOnly() {
+    doTestByText("class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "a = A()\n" +
+                 "b = a.b");
+  }
+
   // PY-27398
   public void testUselessInitVar() {
     doTest();

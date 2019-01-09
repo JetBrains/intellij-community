@@ -214,13 +214,9 @@ class PyDataclassInspection : PyInspection() {
 
       if (node != null && node.isQualified) {
         val cls = getInstancePyClass(node.qualifier) ?: return
+        val resolved = node.getReference(resolveContext).multiResolve(false)
 
-        if (node
-            .getReference(resolveContext)
-            .multiResolve(false)
-            .asSequence()
-            .map { it.element }
-            .all { it is PyTargetExpression && isInitVar(it) }) {
+        if (resolved.isNotEmpty() && resolved.asSequence().map { it.element }.all { it is PyTargetExpression && isInitVar(it) }) {
           registerProblem(node.lastChild,
                           "'${cls.name}' object could have no attribute '${node.name}' because it is declared as init-only",
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
