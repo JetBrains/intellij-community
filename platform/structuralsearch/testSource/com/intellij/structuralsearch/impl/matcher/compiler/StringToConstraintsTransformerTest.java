@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -309,13 +310,13 @@ public class StringToConstraintsTransformerTest {
     assertEquals("java.lang.String[][]", constraint.getNameOfExprType());
   }
 
-  private void expectException(String criteria, String exceptionMessage) {
+  private void expectException(@NotNull String criteria, @NotNull String exceptionMessage) {
     thrown.expect(MalformedPatternException.class);
     thrown.expectMessage(equalTo(exceptionMessage));
     test(criteria);
   }
 
-  private void test(String criteria) {
+  private void test(@NotNull String criteria) {
     StringToConstraintsTransformer.transformCriteria(criteria, myOptions);
   }
 }
