@@ -1042,7 +1042,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollPane.setRowHeaderView(myGutterComponent);
 
     myEditorComponent.setTransferHandler(new MyTransferHandler());
-    myEditorComponent.setAutoscrolls(true);
+    myEditorComponent.setAutoscrolls(false); // we have our own auto-scrolling code
 
     if (mayShowToolbar()) {
       JLayeredPane layeredPane = new JBLayeredPane() {
