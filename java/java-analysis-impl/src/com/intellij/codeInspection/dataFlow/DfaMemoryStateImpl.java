@@ -231,7 +231,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     DfaVariableState state = getVariableState(var).withValue(value);
     if (value instanceof DfaFactMapValue) {
-      DfaFactMap facts = ((DfaFactMapValue)value).getFacts();
+      DfaFactMap facts = filterFactsOnAssignment(var, ((DfaFactMapValue)value).getFacts());
       setVariableState(var, state.withFacts(facts));
       SpecialFieldValue specialFieldValue = facts.get(DfaFactType.SPECIAL_FIELD_VALUE);
       if (specialFieldValue != null) {
@@ -243,7 +243,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     else if (DfaUtil.isComparedByEquals(value.getType()) && !DfaUtil.isComparedByEquals(var.getType())) {
       // Like Object x = "foo" or Object x = 5;
-      setVariableTypeByAssignedValue(var, value, value.getType());
+      TypeConstraint typeConstraint = TypeConstraint.empty().withInstanceofValue(myFactory.createDfaType(value.getType()));
+      DfaFactMap facts = filterFactsOnAssignment(var, getFactMap(value).with(DfaFactType.TYPE_CONSTRAINT, typeConstraint));
+      setVariableState(var, createVariableState(var).withFacts(facts));
     }
     else {
       setVariableState(var, isNull(value) ? state.withFact(DfaFactType.NULLABILITY, DfaNullability.NULL) : state);
@@ -252,16 +254,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       applyCondition(dfaEqual);
 
       if (value instanceof DfaVariableValue) {
-        setVariableState(var, getVariableState((DfaVariableValue)value));
+        setVariableState(var, new DfaVariableState(filterFactsOnAssignment(var, getVariableState((DfaVariableValue)value).myFactMap)));
       }
     }
 
     updateEqClassesByState(var);
   }
 
-  protected void setVariableTypeByAssignedValue(@NotNull DfaVariableValue var, @NotNull DfaValue value, @NotNull PsiType valueType) {
-    TypeConstraint typeConstraint = TypeConstraint.empty().withInstanceofValue(myFactory.createDfaType(valueType));
-    setVariableState(var, createVariableState(var).withFacts(getFactMap(value).with(DfaFactType.TYPE_CONSTRAINT, typeConstraint)));
+  protected DfaFactMap filterFactsOnAssignment(DfaVariableValue var, @NotNull DfaFactMap facts) {
+    return facts;
   }
 
   private DfaValue handleStackValueOnVariableFlush(DfaValue value,

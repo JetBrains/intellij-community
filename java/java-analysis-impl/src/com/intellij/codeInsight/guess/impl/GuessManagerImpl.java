@@ -21,7 +21,6 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaInstanceofValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -156,16 +155,7 @@ public class GuessManagerImpl extends GuessManager {
       @NotNull
       @Override
       protected DfaMemoryState createMemoryState() {
-        return new ExpressionTypeMemoryState(getFactory()) {
-          @Override
-          protected void setVariableTypeByAssignedValue(@NotNull DfaVariableValue var,
-                                                        @NotNull DfaValue value,
-                                                        @NotNull PsiType valueType) {
-            if (honorAssignments) {
-              super.setVariableTypeByAssignedValue(var, value, valueType);
-            }
-          }
-        };
+        return new ExpressionTypeMemoryState(getFactory(), honorAssignments);
       }
     };
 
@@ -376,14 +366,7 @@ public class GuessManagerImpl extends GuessManager {
   @NotNull
   private static GuessTypeVisitor tryGuessingTypeWithoutDfa(PsiExpression place, boolean honorAssignments) {
     List<PsiElement> exprsAndVars = getPotentiallyAffectingElements(place);
-    GuessTypeVisitor visitor = new GuessTypeVisitor(place) {
-      @Override
-      protected void handleAssignment(@Nullable PsiExpression expression) {
-        if (honorAssignments) {
-          super.handleAssignment(expression);
-        }
-      }
-    };
+    GuessTypeVisitor visitor = new GuessTypeVisitor(place, honorAssignments);
     for (PsiElement e : exprsAndVars) {
       e.accept(visitor);
       if (e == place || visitor.isDfaNeeded()) {
@@ -430,13 +413,15 @@ public class GuessManagerImpl extends GuessManager {
     PsiType mySpecificType;
     private boolean myNeedDfa;
     private boolean myDeclared;
+    private final boolean myHonorAssignments;
 
-    GuessTypeVisitor(@NotNull PsiExpression place) {
+    GuessTypeVisitor(@NotNull PsiExpression place, boolean honorAssignments) {
       myPlace = place;
+      myHonorAssignments = honorAssignments;
     }
 
     protected void handleAssignment(@Nullable PsiExpression expression) {
-      if (expression == null) return;
+      if (!myHonorAssignments || expression == null) return;
       PsiType type = expression.getType();
       if (type instanceof PsiPrimitiveType) {
         type = ((PsiPrimitiveType)type).getBoxedType(expression);
