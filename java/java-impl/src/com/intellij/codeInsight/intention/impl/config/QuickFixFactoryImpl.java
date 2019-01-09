@@ -25,12 +25,10 @@ import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -777,25 +775,19 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     final Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
-    final long stamp = document.getModificationStamp();
-    DumbService.getInstance(file.getProject()).smartInvokeLater(() -> {
-      if (project.isDisposed() || document.getModificationStamp() != stamp) return;
-      //no need to optimize imports on the fly during undo/redo
-      final UndoManager undoManager = UndoManager.getInstance(project);
-      if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-      String beforeText = file.getText();
-      final long oldStamp = document.getModificationStamp();
-      DocumentUtil.writeInRunUndoTransparentAction(() -> JavaCodeStyleManager.getInstance(project).optimizeImports(file));
-      if (oldStamp != document.getModificationStamp()) {
-        String afterText = file.getText();
-        if (Comparing.strEqual(beforeText, afterText)) {
-          LOG.error("Import optimizer hasn't optimized any imports",
-                    new Throwable(file.getViewProvider().getVirtualFile().getPath()),
-                    AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile()));
-        }
+
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    String beforeText = file.getText();
+    long oldStamp = document.getModificationStamp();
+    DocumentUtil.writeInRunUndoTransparentAction(() -> JavaCodeStyleManager.getInstance(project).optimizeImports(file));
+    if (oldStamp != document.getModificationStamp()) {
+      String afterText = file.getText();
+      if (Comparing.strEqual(beforeText, afterText)) {
+        LOG.error("Import optimizer hasn't optimized any imports",
+                  new Throwable(file.getViewProvider().getVirtualFile().getPath()),
+                  AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile()));
       }
-    });
+    }
   }
 
   @NotNull
