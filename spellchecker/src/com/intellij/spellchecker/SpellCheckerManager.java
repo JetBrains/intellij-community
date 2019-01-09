@@ -258,6 +258,7 @@ public class SpellCheckerManager implements Disposable {
   private void fireDictionaryChanged(@NotNull EditableDictionary dictionary) {
     myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
     restartInspections();
+    project.save();
   }
 
   public void updateUserDictionary(@NotNull Collection<String> words) {
