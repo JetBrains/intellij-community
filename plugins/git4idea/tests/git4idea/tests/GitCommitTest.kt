@@ -838,7 +838,8 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
   }
 
   private fun assertChanges(changes: ChangesBuilder.() -> Unit): List<Change> {
-    return changeListManager.assertChanges(changes)
+    updateChangeListManager()
+    return assertChanges(changeListManager.allChanges, changes)
   }
 
   private class MyExplicitMovementProvider : GitCheckinExplicitMovementProvider() {

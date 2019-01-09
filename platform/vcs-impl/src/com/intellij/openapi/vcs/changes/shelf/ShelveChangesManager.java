@@ -37,6 +37,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -65,8 +66,7 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameForUnshelve;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
-import static com.intellij.util.ObjectUtils.assertNotNull;
-import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.util.ObjectUtils.*;
 import static com.intellij.util.containers.ContainerUtil.*;
 
 @State(name = "ShelveChangesManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
@@ -77,6 +77,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   @NonNls private static final String DEFAULT_PATCH_NAME = "shelved";
 
   @NotNull private final PathMacroManager myPathMacroSubstitutor;
+  @NotNull private final ProjectLevelVcsManager myProjectLevelVcsManager;
   @NotNull private SchemeManager<ShelvedChangeList> mySchemeManager;
 
   private ScheduledFuture<?> myCleaningFuture;
@@ -152,6 +153,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(project);
     mySchemeManager =
       createShelveSchemeManager(project, vcsConfiguration.USE_CUSTOM_SHELF_PATH ? vcsConfiguration.CUSTOM_SHELF_PATH : null);
+    myProjectLevelVcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
     myCleaningFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> cleanDeletedOlderOneWeek(), 1, 1, TimeUnit.DAYS);
     Disposer.register(project, new Disposable() {
@@ -421,7 +423,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
       progressIndicator.setText(VcsBundle.message("shelve.changes.progress.title"));
     }
     File schemePatchDir = generateUniqueSchemePatchDir(commitMessage, true);
-    final List<Change> textChanges = new ArrayList<>();
+    List<Change> textChanges = new ArrayList<>();
     final List<ShelvedBinaryFile> binaryFiles = new ArrayList<>();
     for (Change change : changes) {
       if (ChangesUtil.getFilePath(change).isDirectory()) {
@@ -434,6 +436,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
         textChanges.add(change);
       }
     }
+
+    textChanges = preloadBaseRevisions(textChanges);
 
     final ShelvedChangeList changeList;
     try {
@@ -462,6 +466,45 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     }
 
     return changeList;
+  }
+
+  @NotNull
+  private List<Change> preloadBaseRevisions(@NotNull Collection<Change> textChanges) {
+    Collection<Change> skippedChanges = newHashSet();
+
+    MultiMap<VcsRoot, Change> changesGroupedByRoot = MultiMap.create();
+    for (Change change : textChanges) {
+      ContentRevision beforeRevision = change.getBeforeRevision();
+      if (beforeRevision != null) {
+        FilePath file = beforeRevision.getFile();
+        VcsRoot vcsRoot = myProjectLevelVcsManager.getVcsRootObjectFor(file);
+        if (vcsRoot == null || vcsRoot.getVcs() == null || vcsRoot.getPath() == null) {
+          LOG.error(file + " is not under VCS");
+          skippedChanges.add(change);
+        }
+        else {
+          changesGroupedByRoot.putValue(vcsRoot, change);
+        }
+      }
+      else {
+        skippedChanges.add(change);
+      }
+    }
+
+    MultiMap<VcsRoot, Change> preloadedChanges = MultiMap.create();
+    for (VcsRoot vcsRoot : changesGroupedByRoot.keySet()) {
+      AbstractVcs vcs = notNull(vcsRoot.getVcs());
+      if (vcs.getDiffProvider() != null && vcs.getDiffProvider().supportsBaseRevisionPreloading()) {
+        preloadedChanges.put(vcsRoot, vcs.getDiffProvider().preloadBaseRevisions(notNull(vcsRoot.getPath()),
+                                                                                 changesGroupedByRoot.get(vcsRoot)));
+      }
+      else {
+        preloadedChanges.put(vcsRoot, changesGroupedByRoot.get(vcsRoot));
+      }
+    }
+    List<Change> changes = newArrayList(skippedChanges);
+    changes.addAll(preloadedChanges.values());
+    return changes;
   }
 
   private void rollbackChangesAfterShelve(@NotNull Collection<? extends Change> changes) {

@@ -3,10 +3,12 @@ package git4idea.diff;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffMixin;
@@ -25,9 +27,11 @@ import git4idea.GitVcs;
 import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
+import git4idea.stash.GitRevisionContentPreLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -182,5 +186,16 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
   public VcsRevisionNumber getLatestCommittedRevision(VirtualFile vcsRoot) {
     // todo
     return null;
+  }
+
+  @NotNull
+  @Override
+  public Collection<Change> preloadBaseRevisions(@NotNull VirtualFile root, @NotNull Collection<Change> revisions) {
+    return new GitRevisionContentPreLoader(myProject).preload(root, revisions);
+  }
+
+  @Override
+  public boolean supportsBaseRevisionPreloading() {
+    return Registry.is("git.shelve.batch.optimize");
   }
 }

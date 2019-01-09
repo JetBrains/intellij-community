@@ -91,7 +91,7 @@ public class GitIndexUtil {
 
   @NotNull
   public static List<StagedFileOrDirectory> listTree(@NotNull GitRepository repository,
-                                                     @NotNull Collection<FilePath> filePath,
+                                                     @NotNull Collection<FilePath> filePaths,
                                                      @NotNull VcsRevisionNumber revision) throws VcsException {
     List<StagedFileOrDirectory> result = new ArrayList<>();
     VirtualFile root = repository.getRoot();
@@ -99,7 +99,7 @@ public class GitIndexUtil {
     GitLineHandler h = new GitLineHandler(repository.getProject(), root, GitCommand.LS_TREE);
     h.addParameters(revision.asString());
     h.endOptions();
-    h.addRelativePaths(filePath);
+    h.addRelativePaths(filePaths);
 
     h.addLineListener(new GitLineHandlerListener() {
       @Override

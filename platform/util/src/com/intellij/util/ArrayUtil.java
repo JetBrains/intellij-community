@@ -10,10 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.Array;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Author: msk
@@ -984,5 +981,51 @@ public class ArrayUtil extends ArrayUtilRt {
     }
 
     return o == newSize ? r : Arrays.copyOf(r, o);
+  }
+
+  @Contract(pure = true)
+  @NotNull
+  public static List<byte[]> splitBytes(byte[] array, byte[] separator) {
+    if (separator.length == 0) {
+      return Collections.singletonList(array);
+    }
+
+    List<byte[]> result = new ArrayList<byte[]>();
+    int pos = 0;
+    while (true) {
+      int index = indexOf(array, separator, pos);
+      if (index == -1) break;
+      int nextPos = index + separator.length;
+      byte[] split = Arrays.copyOfRange(array, pos, index);
+      result.add(split);
+      pos = nextPos;
+    }
+
+    if (pos < array.length) {
+      result.add(Arrays.copyOfRange(array, pos, array.length));
+    }
+    return result;
+  }
+
+  public static int indexOf(@NotNull byte[] array, @NotNull byte[] pattern, int startIndex) {
+    for (int i = startIndex; i <= array.length - pattern.length; i++) {
+      if (startsWith(array, pattern, i)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  @Contract(pure = true)
+  public static boolean startsWith(@NotNull byte[] array, @NotNull byte[] prefix, int startIndex) {
+    if (startIndex < 0 || startIndex >= array.length) {
+      throw new IllegalArgumentException("Index is out of bounds: " + startIndex + ", length: " + array.length);
+    }
+    if (array.length - startIndex < prefix.length) return false;
+
+    for (int i = 0; i < prefix.length; i++) {
+      if (array[i + startIndex] != prefix[i]) return false;
+    }
+    return true;
   }
 }
