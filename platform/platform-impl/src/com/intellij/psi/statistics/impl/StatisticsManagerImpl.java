@@ -154,7 +154,11 @@ public class StatisticsManagerImpl extends StatisticsManager {
       return;
     }
 
-    StatisticsUnit unit = getUnit(unitNumber);
+    StatisticsUnit unit = SoftReference.dereference(myUnits.get(unitNumber));
+    if (unit == null) {
+      return;
+    }
+
     Path path = getPathToUnit(unitNumber);
     try (OutputStream out = new ScrambledOutputStream(new BufferedOutputStream(Files.newOutputStream(path)))) {
       unit.write(out);
