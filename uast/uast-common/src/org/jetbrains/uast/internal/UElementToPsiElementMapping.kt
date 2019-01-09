@@ -9,28 +9,26 @@ class UElementToPsiElementMapping(val baseMapping: Map<Class<out UElement>, Clas
 
   constructor(vararg mapping: Pair<Class<out UElement>, ClassSet>) : this(mapOf(*mapping))
 
-  private val internalMapping = ConcurrentHashMap<Class<out UElement>, List<ClassSet>>()
+  private val internalMapping = ConcurrentHashMap<Class<out UElement>, ClassSet>()
 
-  private operator fun get(uCls: Class<out UElement>): List<ClassSet> {
+  operator fun get(uCls: Class<out UElement>): ClassSet {
     internalMapping[uCls]?.let { return it }
 
-    var result = mutableListOf<ClassSet>()
+    val applicableClassSets = mutableListOf<ClassSet>()
 
     for ((key, set) in baseMapping.entries) {
-      if (uCls.isAssignableFrom(key)) result.add(set)
+      if (uCls.isAssignableFrom(key)) applicableClassSets.add(set)
     }
 
-    if (result.size > MERGING_CLASS_SET_LIMIT) {
-      result = mutableListOf(ClassSet(*result.flatMap { it.initialClasses.toList() }.toTypedArray()))
-    }
-
+    val result = mergeClassSets(applicableClassSets)
     internalMapping[uCls] = result
     return result
   }
 
-  fun canConvert(psiCls: Class<out PsiElement>, targets: List<Class<out UElement>>): Boolean {
+
+  fun canConvert(psiCls: Class<out PsiElement>, targets: Array<out Class<out UElement>>): Boolean {
     for (target in targets) {
-      if (this[target].any { it.contains(psiCls) })
+      if (this[target].contains(psiCls))
         return true
     }
     return false
@@ -39,17 +37,30 @@ class UElementToPsiElementMapping(val baseMapping: Map<Class<out UElement>, Clas
 
 }
 
-private const val MERGING_CLASS_SET_LIMIT = 5
+private const val SIMPLE_CLASS_SET_LIMIT = 5
+
+private fun mergeClassSets(result: List<ClassSet>) = result.singleOrNull() ?: ClassSet(
+  *result.flatMap { it.initialClasses.asIterable() }.toTypedArray())
 
 class ClassSet(vararg val initialClasses: Class<*>) {
 
-  private val internalMapping = ConcurrentHashMap<Class<*>, Boolean>().apply {
-    for (initialClass in initialClasses) {
-      this[initialClass] = true
-    }
+  private val isSimple = initialClasses.size <= SIMPLE_CLASS_SET_LIMIT
+
+  private lateinit var internalMapping: ConcurrentHashMap<Class<*>, Boolean>
+
+  init {
+    if (!isSimple)
+      internalMapping = ConcurrentHashMap<Class<*>, Boolean>().apply {
+        for (initialClass in initialClasses) {
+          this[initialClass] = true
+        }
+      }
   }
 
+
   fun contains(cls: Class<*>): Boolean =
-    internalMapping[cls] ?: initialClasses.any { it.isAssignableFrom(cls) }.also { internalMapping[cls] = it }
+    if (isSimple) anyAssignable(cls) else internalMapping[cls] ?: anyAssignable(cls).also { internalMapping[cls] = it }
+
+  private fun anyAssignable(cls: Class<*>): Boolean = initialClasses.any { it.isAssignableFrom(cls) }
 
 }

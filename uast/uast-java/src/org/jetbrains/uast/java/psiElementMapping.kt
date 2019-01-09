@@ -1,15 +1,30 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.java
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.ClassSet
 import org.jetbrains.uast.internal.UElementToPsiElementMapping
 
+private val checkCanConvert = Registry.`is`("uast.java.use.psi.type.precheck")
 
-internal fun canConvert(psiCls: Class<out PsiElement>, targets: List<Class<out UElement>>) =
-  conversionMapping.canConvert(psiCls, targets)
+internal fun canConvert(psiCls: Class<out PsiElement>, targets: Array<out Class<out UElement>>): Boolean {
+  if (!checkCanConvert) return true
+
+  if (targets.size == 1) {
+    // checking the most popular cases before looking up in hashtable
+    when (targets.single()) {
+      UElement::class.java -> uElementClassSet.contains(psiCls)
+      ULiteralExpression::class.java -> uLiteralClassSet.contains(psiCls)
+      UCallExpression::class.java -> uCallClassSet.contains(psiCls)
+    }
+  }
+
+
+  return conversionMapping.canConvert(psiCls, targets)
+}
 
 private val conversionMapping = UElementToPsiElementMapping(
   UClass::class.java to ClassSet(PsiClass::class.java),
@@ -83,3 +98,9 @@ private val conversionMapping = UElementToPsiElementMapping(
   UExpression::class.java to ClassSet(PsiExpressionStatement::class.java),
   USwitchClauseExpression::class.java to ClassSet(PsiSwitchLabelStatementBase::class.java)
 )
+
+val uElementClassSet = ClassSet(*conversionMapping.baseMapping.flatMap { it.value.initialClasses.asIterable() }.toTypedArray())
+
+val uLiteralClassSet: ClassSet = conversionMapping[ULiteralExpression::class.java]
+
+val uCallClassSet: ClassSet = conversionMapping[UCallExpression::class.java]

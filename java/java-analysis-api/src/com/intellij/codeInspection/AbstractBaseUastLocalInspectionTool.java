@@ -11,23 +11,20 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-import java.util.Arrays;
-import java.util.List;
-
 public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectionTool {
 
   private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION =
     Conditions.and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class),
                    Conditions.notInstanceOf(PsiTypeParameter.class));
 
-  private final List<Class<? extends UElement>> myUElementsTypesHint;
+  private final Class<? extends UElement>[] myUElementsTypesHint;
 
   protected AbstractBaseUastLocalInspectionTool() {
-    myUElementsTypesHint = Arrays.asList(UFile.class, UClass.class, UMethod.class, UField.class);
+    this(UFile.class, UClass.class, UMethod.class, UField.class);
   }
 
   protected AbstractBaseUastLocalInspectionTool(Class<? extends UElement>... uElementsTypesHint) {
-    myUElementsTypesHint = Arrays.asList(uElementsTypesHint);
+    myUElementsTypesHint = uElementsTypesHint;
   }
 
   /**

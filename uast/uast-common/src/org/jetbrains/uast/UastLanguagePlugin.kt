@@ -106,7 +106,7 @@ interface UastLanguagePlugin {
   fun isExpressionValueUsed(element: UExpression): Boolean
 
   @JvmDefault
-  fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: List<Class<out T>>): T? =
+  fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: Array<out Class<out T>>): T? =
     when {
       requiredTypes.isEmpty() -> convertElementWithParent(element, null)
       requiredTypes.size == 1 -> convertElementWithParent(element, requiredTypes.single())
@@ -116,7 +116,7 @@ interface UastLanguagePlugin {
 
 
   @JvmDefault
-  fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: List<Class<out T>>): Sequence<T> =
+  fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> =
     sequenceOf(convertElementWithParent(element, requiredTypes)).filterNotNull()
 
 }

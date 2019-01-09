@@ -18,7 +18,6 @@ package org.jetbrains.uast.java
 
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.util.PsiTreeUtil
@@ -28,8 +27,6 @@ import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
 
 class JavaUastLanguagePlugin : UastLanguagePlugin {
-
-  private val checkCanConvert = Registry.`is`("uast.java.use.psi.type.precheck")
 
   override val priority: Int = 0
 
@@ -99,20 +96,19 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun <T : UElement> convertElement(element: PsiElement, parent: UElement?, requiredTypes: List<Class<out T>>): T? {
+  fun <T : UElement> convertElement(element: PsiElement, parent: UElement?, requiredTypes: Array<out Class<out T>>): T? {
     val nonEmptyRequiredTypes = requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)
-    if (checkCanConvert && !canConvert(element.javaClass, nonEmptyRequiredTypes)) return null
-
+    if (!canConvert(element.javaClass, requiredTypes)) return null
     return (convertDeclaration(element, parent, nonEmptyRequiredTypes)
             ?: JavaConverter.convertPsiElement(element, parent, nonEmptyRequiredTypes)) as? T
   }
 
-  override fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: List<Class<out T>>): T? {
+  override fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: Array<out Class<out T>>): T? {
     return convertElement(element, null, requiredTypes)
   }
 
-  override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: List<Class<out T>>) = when (element) {
-    is `PsiMethodCallExpression` ->
+  override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>) = when (element) {
+    is PsiMethodCallExpression ->
       JavaConverter.psiMethodCallConversionAlternatives(element,
                                                         null,
                                                         requiredTypes.nonEmptyOr(DEFAULT_EXPRESSION_TYPES_LIST)) as Sequence<T>
@@ -121,7 +117,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
 
   private fun convertDeclaration(element: PsiElement,
                                  givenParent: UElement?,
-                                 requiredType: List<Class<out UElement>>): UElement? {
+                                 requiredType: Array<out Class<out UElement>>): UElement? {
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UElement): () -> UElement? {
       return fun(): UElement? {
         return ctor(element as P, givenParent)
@@ -155,15 +151,15 @@ internal inline fun <reified ActualT : UElement> Class<*>?.el(f: () -> UElement?
   return if (this == null || isAssignableFrom(ActualT::class.java)) f() else null
 }
 
-internal inline fun <reified ActualT : UElement> List<Class<out UElement>>.el(f: () -> UElement?): UElement? {
+internal inline fun <reified ActualT : UElement> Array<out Class<out UElement>>.el(f: () -> UElement?): UElement? {
   return if (isAssignableFrom(ActualT::class.java)) f() else null
 }
 
-internal inline fun <reified ActualT : UElement> List<Class<out UElement>>.expr(f: () -> UExpression?): UExpression? {
+internal inline fun <reified ActualT : UElement> Array<out Class<out UElement>>.expr(f: () -> UExpression?): UExpression? {
   return if (isAssignableFrom(ActualT::class.java)) f() else null
 }
 
-internal fun List<Class<out UElement>>.isAssignableFrom(cls: Class<*>) = any { it.isAssignableFrom(cls) }
+internal fun Array<out Class<out UElement>>.isAssignableFrom(cls: Class<*>) = any { it.isAssignableFrom(cls) }
 
 internal object JavaConverter {
 
@@ -181,7 +177,7 @@ internal object JavaConverter {
 
   internal fun convertPsiElement(el: PsiElement,
                                  givenParent: UElement?,
-                                 requiredType: List<Class<out UElement>> = DEFAULT_TYPES_LIST): UElement? {
+                                 requiredType: Array<out Class<out UElement>> = DEFAULT_TYPES_LIST): UElement? {
 
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UElement): () -> UElement? {
       return fun(): UElement? {
@@ -214,7 +210,7 @@ internal object JavaConverter {
 
   internal fun convertReference(reference: PsiJavaCodeReferenceElement,
                                 givenParent: UElement?,
-                                requiredType: List<Class<out UElement>> = DEFAULT_TYPES_LIST): UExpression? {
+                                requiredType: Array<out Class<out UElement>> = DEFAULT_TYPES_LIST): UExpression? {
     return with(requiredType) {
       if (reference.isQualified) {
         expr<UQualifiedReferenceExpression> { JavaUQualifiedReferenceExpression(reference, givenParent) }
@@ -228,7 +224,7 @@ internal object JavaConverter {
 
   internal fun convertExpression(el: PsiExpression,
                                  givenParent: UElement?,
-                                 requiredType: List<Class<out UElement>> = DEFAULT_EXPRESSION_TYPES_LIST): UExpression? {
+                                 requiredType: Array<out Class<out UElement>> = DEFAULT_EXPRESSION_TYPES_LIST): UExpression? {
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
       return fun(): UExpression? {
         return ctor(el as P, givenParent)
@@ -271,7 +267,7 @@ internal object JavaConverter {
 
   internal fun psiMethodCallConversionAlternatives(element: PsiMethodCallExpression,
                                                    givenParent: UElement?,
-                                                   requiredTypes: List<Class<out UElement>>): Sequence<UExpression> {
+                                                   requiredTypes: Array<out Class<out UElement>>): Sequence<UExpression> {
     if (element.methodExpression.qualifierExpression == null) {
       return sequenceOf(requiredTypes.expr<UCallExpression> { JavaUCallExpression(element, givenParent) }).filterNotNull()
     }
@@ -293,7 +289,7 @@ internal object JavaConverter {
 
   internal fun convertStatement(el: PsiStatement,
                                 givenParent: UElement?,
-                                requiredType: List<Class<out UElement>> = DEFAULT_EXPRESSION_TYPES_LIST): UExpression? {
+                                requiredType: Array<out Class<out UElement>> = DEFAULT_EXPRESSION_TYPES_LIST): UExpression? {
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
       return fun(): UExpression? {
         return ctor(el as P, givenParent)
@@ -373,8 +369,9 @@ internal object JavaConverter {
   }
 }
 
-private fun expressionTypes(requiredType: Class<out UElement>?) = requiredType?.let { listOf(it) } ?: DEFAULT_EXPRESSION_TYPES_LIST
+private fun expressionTypes(requiredType: Class<out UElement>?) = requiredType?.let { arrayOf(it) } ?: DEFAULT_EXPRESSION_TYPES_LIST
 
-private fun elementTypes(requiredType: Class<out UElement>?) = requiredType?.let { listOf(it) } ?: DEFAULT_TYPES_LIST
+private fun elementTypes(requiredType: Class<out UElement>?) = requiredType?.let { arrayOf(it) } ?: DEFAULT_TYPES_LIST
 
-private fun <T : UElement> List<Class<out T>>.nonEmptyOr(default: List<Class<out UElement>>) = takeIf { it.isNotEmpty() } ?: default
+private fun <T : UElement> Array<out Class<out T>>.nonEmptyOr(default: Array<out Class<out UElement>>) = takeIf { it.isNotEmpty() }
+                                                                                                         ?: default

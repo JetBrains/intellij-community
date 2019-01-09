@@ -11,7 +11,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 open class UastHintedVisitorAdapter(private val plugin: UastLanguagePlugin,
                                     private val visitor: AbstractUastNonRecursiveVisitor,
                                     private val directOnly: Boolean,
-                                    private val uElementTypesHint: List<Class<out UElement>>
+                                    private val uElementTypesHint: Array<Class<out UElement>>
 ) : PsiElementVisitor() {
 
   override fun visitElement(element: PsiElement) {
@@ -27,7 +27,7 @@ open class UastHintedVisitorAdapter(private val plugin: UastLanguagePlugin,
     @JvmOverloads
     fun create(language: Language,
                visitor: AbstractUastNonRecursiveVisitor,
-               uElementTypesHint: List<Class<out UElement>>,
+               uElementTypesHint: Array<Class<out UElement>>,
                directOnly: Boolean = true): PsiElementVisitor {
       val uastLanguagePlugin = UastLanguagePlugin.byLanguage(language) ?: return EMPTY_VISITOR
       return UastHintedVisitorAdapter(uastLanguagePlugin, visitor, directOnly, uElementTypesHint)
