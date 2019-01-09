@@ -148,11 +148,22 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
       VcsBaseContentProvider provider = findProviderFor(file);
       return provider == null ? null : provider.getBaseRevision(file);
     }
-    final Change change = ChangeListManager.getInstance(myProject).getChange(file);
-    if (change == null) return null;
-    final ContentRevision beforeRevision = change.getBeforeRevision();
-    if (beforeRevision == null) return null;
-    return new BaseContentImpl(beforeRevision);
+
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+
+    Change change = changeListManager.getChange(file);
+    if (change != null) {
+      ContentRevision beforeRevision = change.getBeforeRevision();
+      return beforeRevision == null ? null : new BaseContentImpl(beforeRevision);
+    }
+
+    FileStatus status = changeListManager.getStatus(file);
+    if (status == FileStatus.HIJACKED) {
+      VcsCurrentRevisionProxy beforeRevision = VcsCurrentRevisionProxy.create(file, myProject);
+      return beforeRevision == null ? null : new BaseContentImpl(beforeRevision);
+    }
+
+    return null;
   }
 
   @Nullable
