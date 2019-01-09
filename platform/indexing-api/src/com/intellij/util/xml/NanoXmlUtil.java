@@ -153,10 +153,11 @@ public class NanoXmlUtil {
     return result.toString();
   }
 
+  @Deprecated
   public static abstract class IXMLBuilderAdapter implements NanoXmlBuilder {
   }
 
-  public static class BaseXmlBuilder extends IXMLBuilderAdapter {
+  public static class BaseXmlBuilder implements NanoXmlBuilder {
     private final Stack<String> myLocation = new Stack<>();
 
     @Override

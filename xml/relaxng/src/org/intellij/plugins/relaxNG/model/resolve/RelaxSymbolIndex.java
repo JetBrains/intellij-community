@@ -92,7 +92,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
           CharSequence inputDataContentAsText = inputData.getContentAsText();
           if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return Collections.emptyMap();
           NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlBuilder() {
-            NanoXmlUtil.IXMLBuilderAdapter attributeHandler;
+            NanoXmlBuilder attributeHandler;
             int depth;
 
             @Override
@@ -107,7 +107,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
               attributeHandler = null;
               if (depth == 1 && ApplicationLoader.RNG_NAMESPACE.equals(nsURI)) {
                 if ("define".equals(name)) {
-                  attributeHandler = new NanoXmlUtil.IXMLBuilderAdapter() {
+                  attributeHandler = new NanoXmlBuilder() {
                     @Override
                     public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) {
                       if ("name".equals(key) && (nsURI == null || nsURI.length() == 0) && value != null) {
