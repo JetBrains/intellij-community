@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -96,8 +96,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     }
   }
 
-  private static List<LookupElement> getRootTagsVariants(final XmlTag tag, final List<LookupElement> elements) {
-
+  private static void getRootTagsVariants(final XmlTag tag, final List<LookupElement> elements) {
     elements.add(LookupElementBuilder.create("?xml version=\"1.0\" encoding=\"\" ?>").withPresentableText("<?xml version=\"1.0\" encoding=\"\" ?>").withInsertHandler(
       new InsertHandler<LookupElement>() {
         @Override
@@ -148,6 +147,5 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
         }
       }, scope);
     }
-    return elements;
   }
 }

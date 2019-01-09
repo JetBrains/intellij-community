@@ -65,6 +65,7 @@
     <orderEntry type="module" module-name="intellij.maven.server.m3.common" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.maven.errorProne.compiler" scope="RUNTIME" />
+    <orderEntry type="library" name="NanoXML" level="project" />
   </component>
   <component name="copyright">
     <Base>

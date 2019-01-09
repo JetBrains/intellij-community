@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.xml;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -31,6 +17,7 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import net.n3.nanoxml.StdXMLReader;
 import org.jetbrains.annotations.NotNull;
@@ -106,13 +93,15 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   @Override
   public Map<Key, String> map(@NotNull FileContent inputData) {
     CharSequence text = inputData.getContentAsText();
-    if(CharArrayUtil.indexOf(text, HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD, 0) == -1) {
+    if (CharArrayUtil.indexOf(text, HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD, 0) == -1) {
       return Collections.emptyMap();
     }
+
     MyIXMLBuilderAdapter builder = parse(text, false);
-    if (builder == null) return Collections.emptyMap();
-    HashMap<Key, String> map = builder.myMap;
-    if (builder.accepted) map.put(MARKER_KEY, "");
+    Map<Key, String> map = builder.myMap;
+    if (builder.accepted) {
+      map.put(MARKER_KEY, "");
+    }
     return map;
   }
 
@@ -207,7 +196,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     }
   }
 
-  private static class MyIXMLBuilderAdapter extends NanoXmlUtil.IXMLBuilderAdapter {
+  private static class MyIXMLBuilderAdapter implements NanoXmlBuilder {
 
     boolean accepted;
     boolean insideEntry;
@@ -235,9 +224,10 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     }
 
     @Override
-    public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type)
-      throws Exception {
-      if (insideEntry && "key".equals(key)) this.key = value;
+    public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) {
+      if (insideEntry && "key".equals(key)) {
+        this.key = value;
+      }
     }
 
     @Override

@@ -34,6 +34,7 @@ import com.intellij.util.io.EnumDataDescriptor;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.*;
@@ -76,8 +77,8 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
                 if (CharArrayUtil.indexOf(inputDataContentAsText, XsltSupport.XSLT_NS, 0) == -1) {
                   return Collections.emptyMap();
                 }
-                final HashMap<String, Kind> map = new HashMap<>();
-                NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
+                final Map<String, Kind> map = new HashMap<>();
+                NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlBuilder() {
                     NanoXmlUtil.IXMLBuilderAdapter attributeHandler;
                     int depth;
 
@@ -89,7 +90,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
                     }
 
                     @Override
-                    public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
+                    public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) {
                         attributeHandler = null;
                         if (depth == 1 && XsltSupport.XSLT_NS.equals(nsURI)) {
                             if ("template".equals(name)) {
@@ -104,7 +105,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
                     }
 
                     @Override
-                    public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
+                    public void endElement(String name, String nsPrefix, String nsURI) {
                         attributeHandler = null;
                         depth--;
                     }
@@ -160,7 +161,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         public XsltElement wrap(XmlTag tag) {
             final Class<? extends XsltElement> clazz;
             if (myClazz != null) {
-                if (!name().toLowerCase().equals(tag.getLocalName())) {
+                if (!name().toLowerCase(Locale.ENGLISH).equals(tag.getLocalName())) {
                     return null;
                 }
                 clazz = myClazz;
@@ -176,16 +177,16 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
     }
 
     private static class MyAttributeHandler extends NanoXmlUtil.IXMLBuilderAdapter {
-        private final HashMap<String, Kind> myMap;
+        private final Map<String, Kind> myMap;
         private final Kind myKind;
 
-        MyAttributeHandler(HashMap<String, Kind> map, Kind k) {
+        MyAttributeHandler(Map<String, Kind> map, Kind k) {
             myMap = map;
             myKind = k;
         }
 
         @Override
-        public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
+        public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) {
             if (key.equals("name") && (nsURI == null || nsURI.length() == 0) && value != null) {
                 if (myMap.put(value, myKind) != null) {
                     myMap.put(value, Kind.ANYTHING);

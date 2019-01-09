@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.xml" />
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="library" name="NanoXML" level="project" />
   </component>
 </module>
