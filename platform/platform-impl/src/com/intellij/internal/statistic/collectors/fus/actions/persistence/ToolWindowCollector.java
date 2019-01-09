@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.facet.ui.FacetDependentToolWindow;
+import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
@@ -30,7 +31,7 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
 @State(
   name = "ToolWindowsCollector",
   storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED)
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
   }
 )
 public class ToolWindowCollector implements PersistentStateComponent<ToolWindowCollector.State> {
@@ -74,6 +75,10 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
         ourToolwindowWhitelist.add(extension.id);
       }
     }
+
+    // initialize outdated collectors to clean up previously cached values
+    ShortcutsCollector.getInstance();
+    OutdatedToolWindowCollector.getInstance();
   }
 
   public void recordActivation(String toolWindowId) {
@@ -87,15 +92,10 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
 
   private void record(@Nullable String toolWindowId, @NotNull String source) {
     if (toolWindowId == null) return;
-    State state = getState();
-    if (state == null) return;
 
     final boolean isWhitelisted = ourToolwindowWhitelist.contains(toolWindowId) || isDevelopedByJetBrains(toolWindowId);
     final String key = escapeDescriptorName(isWhitelisted ? toolWindowId + " by " + source : UNKNOWN + source);
     FeatureUsageLogger.INSTANCE.log("toolwindow.v2", key, FUSUsageContext.OS_CONTEXT.getData());
-    final Integer count = state.myValues.get(key);
-    int value = count == null ? 1 : count + 1;
-    state.myValues.put(key, value);
   }
 
   public static boolean isDevelopedByJetBrains(@NotNull String toolWindowId) {
@@ -124,12 +124,34 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
 
   @Override
   public void loadState(@NotNull State state) {
-    myState = state;
   }
 
   public final static class State {
     @Tag("counts")
     @MapAnnotation(surroundWithTag = false, keyAttributeName = "toolWindow", valueAttributeName = "count")
     public Map<String, Integer> myValues = new HashMap<>();
+  }
+
+  @com.intellij.openapi.components.State(
+    name = "ToolWindowCollector",
+    storages = {
+      @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
+    }
+  )
+  public static class OutdatedToolWindowCollector implements PersistentStateComponent<ToolWindowCollector.State> {
+
+    public static OutdatedToolWindowCollector getInstance() {
+      return ServiceManager.getService(OutdatedToolWindowCollector.class);
+    }
+
+    @Nullable
+    @Override
+    public ToolWindowCollector.State getState() {
+      return new State();
+    }
+
+    @Override
+    public void loadState(@NotNull ToolWindowCollector.State state) {
+    }
   }
 }
