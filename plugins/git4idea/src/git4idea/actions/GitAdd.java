@@ -122,8 +122,7 @@ public class GitAdd extends ScheduleForAdditionAction {
   }
 
   private static boolean isStatusForAddition(FileStatus status) {
-    return status == FileStatus.UNKNOWN ||
-           status == FileStatus.MODIFIED ||
+    return status == FileStatus.MODIFIED ||
            status == FileStatus.MERGED_WITH_CONFLICTS ||
            status == FileStatus.ADDED ||
            status == FileStatus.DELETED;
