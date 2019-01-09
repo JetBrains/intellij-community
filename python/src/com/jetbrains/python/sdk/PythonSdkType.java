@@ -702,9 +702,8 @@ public final class PythonSdkType extends SdkType {
 
   public static boolean isStdLib(@NotNull VirtualFile vFile, @Nullable Sdk pythonSdk) {
     if (pythonSdk != null) {
-      VirtualFile originFile = ObjectUtils.notNull(vFile.getCanonicalFile(), vFile);
-      
-      String originPath = originFile.getPath();
+      @Nullable VirtualFile originFile = vFile;
+      @NotNull String originPath = vFile.getPath();
       boolean checkOnRemoteFS = false; 
       // All binary skeletons are collected under the same root regardless of their original location.
       // Because of that we need to use paths to the corresponding binary modules recorded in their headers.
@@ -723,6 +722,10 @@ public final class PythonSdkType extends SdkType {
           originFile = VfsUtil.findFileByIoFile(new File(binaryPath), true);
         }
         originPath = binaryPath;
+      }
+      if (originFile != null) {
+        originFile = ObjectUtils.notNull(originFile.getCanonicalFile(), originFile);
+        originPath = originFile.getPath();
       }
       
       final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
@@ -766,20 +769,27 @@ public final class PythonSdkType extends SdkType {
                                                          @NotNull VirtualFile libDir,
                                                          @NotNull Sdk sdk, 
                                                          boolean checkOnRemoteFS) {
-    String libDirPath = libDir.getPath();
+    final VirtualFile originLibDir;
+    final String originLibDirPath;
     if (checkOnRemoteFS) {
-      libDirPath = mapToRemote(libDirPath, sdk);
+      originLibDir = libDir;
+      originLibDirPath = mapToRemote(originLibDir.getPath(), sdk);
+    }
+    else {
+      // Normalize the path to the lib directory on local FS
+      originLibDir = ObjectUtils.notNull(libDir.getCanonicalFile(), libDir);
+      originLibDirPath = originLibDir.getPath();
     }
 
     // This check is more brittle and thus used as a fallback measure
     if (checkOnRemoteFS || file == null) {
-      final String normalizedLidDirPath = FileUtil.toSystemIndependentName(libDirPath);
+      final String normalizedLidDirPath = FileUtil.toSystemIndependentName(originLibDirPath);
       final String sitePackagesPath = normalizedLidDirPath + "/" + PyNames.SITE_PACKAGES;
       final String normalizedPath = FileUtil.toSystemIndependentName(path);
       return FileUtil.startsWith(normalizedPath, normalizedLidDirPath) && !FileUtil.startsWith(normalizedPath, sitePackagesPath);
     }
-    else if (VfsUtilCore.isAncestor(libDir, file, false)) {
-      final VirtualFile sitePackagesDir = libDir.findChild(PyNames.SITE_PACKAGES);
+    else if (VfsUtilCore.isAncestor(originLibDir, file, false)) {
+      final VirtualFile sitePackagesDir = originLibDir.findChild(PyNames.SITE_PACKAGES);
       return sitePackagesDir == null || !VfsUtilCore.isAncestor(sitePackagesDir, file, false);
     }
     return false;
