@@ -338,7 +338,7 @@ object GuiTestLocalLauncher {
   }
 
   private fun substituteAllMacro(classpath: MutableSet<File>): MutableSet<File> {
-    val macroList = listOf("\$MAVEN_REPOSITORY\$", "\$KOTLIN_BUNDLED\$")
+    val macroList = listOf("\$MAVEN_REPOSITORY\$")
     val macroMap = mutableMapOf<String, String>()
     macroList.forEach { macroMap[it] = resolveMacro(classpath, it) }
     val mutableClasspath = mutableListOf<File>()
