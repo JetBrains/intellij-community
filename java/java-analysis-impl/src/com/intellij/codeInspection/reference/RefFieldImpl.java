@@ -80,7 +80,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
       setUsedForReading(true);
     }
     
-    setUsedQualifiedOutsidePackageFlag(refFrom, expressionFrom);
+    setForbidProtectedAccess(refFrom, expressionFrom);
     getRefManager().fireNodeMarkedReferenced(this, refFrom, referencedFromClassInitializer, forReading, forWriting, expressionFrom == null ? null : expressionFrom.getSourcePsi());
   }
 
