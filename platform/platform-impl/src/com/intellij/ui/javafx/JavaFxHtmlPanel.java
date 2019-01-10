@@ -31,8 +31,9 @@ public class JavaFxHtmlPanel implements Disposable {
   @Nullable protected WebView myWebView;
 
   public JavaFxHtmlPanel() {
+    Color background = JBColor.background();
     myPanelWrapper = new JPanel(new BorderLayout());
-    myPanelWrapper.setBackground(JBColor.background());
+    myPanelWrapper.setBackground(background);
 
     ApplicationManager.getApplication().invokeLater(() -> runFX(() -> PlatformImpl.startup(() -> {
       myWebView = new WebView();
@@ -42,7 +43,8 @@ public class JavaFxHtmlPanel implements Disposable {
       final WebEngine engine = myWebView.getEngine();
       registerListeners(engine);
 
-      final Scene scene = new Scene(myWebView);
+      javafx.scene.paint.Color fxColor = toFxColor(background);
+      final Scene scene = new Scene(myWebView, fxColor);
 
       ApplicationManager.getApplication().invokeLater(() -> runFX(() -> {
         myPanel = new JFXPanelWrapper();
@@ -59,6 +61,22 @@ public class JavaFxHtmlPanel implements Disposable {
         myPanelWrapper.repaint();
       }));
     })));
+  }
+
+  @NotNull
+  public static javafx.scene.paint.Color toFxColor(Color background) {
+    double r = background.getRed() / 255.0;
+    double g = background.getGreen() / 255.0;
+    double b = background.getBlue() / 255.0;
+    double a = background.getAlpha() / 255.0;
+    return javafx.scene.paint.Color.color(r, g, b, a);
+  }
+
+  public void setBackground(Color background) {
+    myPanelWrapper.setBackground(background);
+    ApplicationManager.getApplication().invokeLater(() -> runFX(() -> {
+      myPanel.getScene().setFill(toFxColor(background));
+    }));
   }
 
   protected void registerListeners(@NotNull WebEngine engine) {
