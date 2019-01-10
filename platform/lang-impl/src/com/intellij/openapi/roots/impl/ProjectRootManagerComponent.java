@@ -201,30 +201,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
     final String projectFilePath = myProject.getProjectFilePath();
     final File dotIdea = projectFilePath == null ? null : new File(projectFilePath).getParentFile().getAbsoluteFile();
-    if (dotIdea != null && dotIdea.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
-      // add all subdirectories except "shelf"
-      boolean foundShelf = false;
-      File[] children = dotIdea.listFiles();
-      if (children != null) {
-        for (File child : children) {
-          if (child.isDirectory()) {
-            if (isDirVcsIgnored(child)) {
-              foundShelf = true;
-            }
-            else {
-              recursiveDirs.add(child.getPath());
-            }
-          }
-        }
-      }
-
-      if (!foundShelf) {
-        // optimization: if the "shelf" is not under .idea, we can monitor .idea recursively instead of all its children except shelf
-        recursiveDirs.clear();
-        recursiveDirs.add(dotIdea.getPath());
-      }
-    }
-    else {
+    if (dotIdea == null || !dotIdea.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
       files.add(projectFilePath);
       // may be not existing yet
       ContainerUtil.addIfNotNull(files, ProjectKt.getStateStore(myProject).getWorkspaceFilePath());
