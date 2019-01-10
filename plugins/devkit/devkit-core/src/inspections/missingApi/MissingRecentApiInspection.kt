@@ -52,6 +52,7 @@ class MissingRecentApiInspection : AbstractBaseJavaLocalInspectionTool() {
     return DevkitActionsUtil.getCandidatePluginModules(module)
       .mapNotNull { PluginModuleType.getPluginXml(it) }
       .mapNotNull { getSinceUntilRange(it) }
+      .filterNot { it.sinceBuild == null }
   }
 
   private fun getSinceUntilRange(pluginXml: XmlFile): SinceUntilRange? {
