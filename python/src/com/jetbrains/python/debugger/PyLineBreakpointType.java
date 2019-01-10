@@ -52,9 +52,8 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
                                                                                      PyTokenTypes.SINGLE_QUOTED_UNICODE,
                                                                                      PyTokenTypes.DOCSTRING);
 
-
-  private final static Class[] UNSTOPPABLE_ELEMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
-
+  @SuppressWarnings("unchecked")
+  private final static Class<? extends PsiElement>[] UNSTOPPABLE_ELEMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
 
   public PyLineBreakpointType() {
     super(ID, NAME, new PyDebuggerEditorsProvider());
@@ -92,7 +91,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     return UNSTOPPABLE_ELEMENT_TYPES;
   }
 
-  protected Class[] getUnstoppableElements() {
+  protected Class<? extends PsiElement>[] getUnstoppableElements() {
     return UNSTOPPABLE_ELEMENTS;
   }
 
@@ -112,7 +111,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
                                      @NotNull VirtualFile file,
                                      int line,
                                      Document document,
-                                     Class[] unstoppablePsiElements,
+                                     Class<? extends PsiElement>[] unstoppablePsiElements,
                                      Set<IElementType> unstoppableElementTypes,
                                      Ref<? super Boolean> stoppable) {
     if (!isSkeleton(project, file)) {
@@ -120,7 +119,6 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
         if (PsiTreeUtil.getNonStrictParentOfType(psiElement, unstoppablePsiElements) != null) return true;
         if (psiElement.getNode() != null && unstoppableElementTypes.contains(psiElement.getNode().getElementType())) return true;
         if (isPsiElementStoppable(psiElement)) {
-          // Python debugger seems to be able to stop on pretty much everything
           stoppable.set(true);
         }
         return false;
