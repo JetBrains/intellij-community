@@ -33,7 +33,6 @@ public class JFXPanelWrapper extends JFXPanel {
 
   @Override
   public void addNotify() {
-    super.addNotify();
     // todo: remove it when IDEA finally switches to JFX10
     if (myScaleFactorAccessor.isAvailable()) {
       if (UIUtil.isJreHiDPIEnabled()) {
@@ -52,5 +51,7 @@ public class JFXPanelWrapper extends JFXPanel {
         }
       }
     }
+    // change scale factor before component will be resized in super
+    super.addNotify();
   }
 }
