@@ -5,7 +5,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.psi.PsiKeyword;
 import com.siyeh.ipp.IPPTestCase;
 
-public class ReplaceSwitchWithIflIntentionTest extends IPPTestCase {
+public class ReplaceSwitchWithIfIntentionTest extends IPPTestCase {
 
   public void testReplaceInt() {
     doTest();
