@@ -375,7 +375,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (parent instanceof PsiConditionalExpression) {
       return PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), expression, false);
     }
-    return false;
+    return PsiUtil.isAccessedForWriting(expression);
   }
 
   private void reportConstantReferenceValue(ProblemReporter reporter, PsiExpression ref, ConstantResult constant) {
@@ -702,26 +702,16 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
              (!(psiAnchor instanceof PsiExpression) || PsiImplUtil.getSwitchLabel((PsiExpression)psiAnchor) == null) &&
              !isFlagCheck(psiAnchor)) {
       boolean evaluatesToTrue = trueSet.contains(instruction);
-      final PsiElement parent = psiAnchor.getParent();
-      if (parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getLExpression() == psiAnchor) {
-        reporter.registerProblem(
-          psiAnchor,
-          InspectionsBundle.message("dataflow.message.pointless.assignment.expression", Boolean.toString(evaluatesToTrue)),
-          createConditionalAssignmentFixes(evaluatesToTrue, (PsiAssignmentExpression)parent, reporter.isOnTheFly())
-        );
+      TextRange range =
+        instruction instanceof ExpressionPushingInstruction ? ((ExpressionPushingInstruction)instruction).getExpressionRange() : null;
+      if (range != null) {
+        // report rare cases like a == b == c where "a == b" part is constant
+        String message = InspectionsBundle.message("dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+        reporter.registerProblem(psiAnchor, range, message);
+        // do not add to reported anchors if only part of expression was reported
       }
-      else {
-        TextRange range =
-          instruction instanceof ExpressionPushingInstruction ? ((ExpressionPushingInstruction)instruction).getExpressionRange() : null;
-        if (range != null) {
-          // report rare cases like a == b == c where "a == b" part is constant
-          String message = InspectionsBundle.message("dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
-          reporter.registerProblem(psiAnchor, range, message);
-          // do not add to reported anchors if only part of expression was reported
-        }
-        else if (!(psiAnchor instanceof PsiMethodReferenceExpression)) {
-          reportConstantBoolean(reporter, psiAnchor, evaluatesToTrue);
-        }
+      else if (!(psiAnchor instanceof PsiMethodReferenceExpression)) {
+        reportConstantBoolean(reporter, psiAnchor, evaluatesToTrue);
       }
     }
   }
@@ -733,6 +723,17 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (psiAnchor == null || shouldBeSuppressed(psiAnchor)) return;
     boolean isAssertion = isAssertionEffectively(psiAnchor, evaluatesToTrue);
     if (DONT_REPORT_TRUE_ASSERT_STATEMENTS && isAssertion) return;
+
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent());
+    if (parent instanceof PsiAssignmentExpression &&
+        PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getLExpression(), psiAnchor, false)) {
+      reporter.registerProblem(
+        psiAnchor,
+        InspectionsBundle.message("dataflow.message.pointless.assignment.expression", Boolean.toString(evaluatesToTrue)),
+        createConditionalAssignmentFixes(evaluatesToTrue, (PsiAssignmentExpression)parent, reporter.isOnTheFly())
+      );
+      return;
+    }
 
     List<LocalQuickFix> fixes = new ArrayList<>();
     if (!isCoveredBySurroundingFix(psiAnchor, evaluatesToTrue)) {

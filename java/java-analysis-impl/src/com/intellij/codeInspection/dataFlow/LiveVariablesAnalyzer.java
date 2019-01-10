@@ -188,7 +188,7 @@ public class LiveVariablesAnalyzer {
       if (instruction instanceof FinishElementInstruction) {
         BitSet currentlyLive = liveVars.get(instruction);
         if (currentlyLive == null) {
-          return new BitSet(); // an instruction unreachable from the end?
+          currentlyLive = new BitSet();
         }
         int index = 0;
         while (true) {
@@ -231,7 +231,7 @@ public class LiveVariablesAnalyzer {
       queue.addLast(new InstructionState(i, new BitSet()));
     }
 
-    int limit = myForwardMap.size() * 20;
+    int limit = myForwardMap.size() * 100;
     Set<InstructionState> processed = ContainerUtil.newHashSet();
     while (!queue.isEmpty()) {
       int steps = processed.size();

@@ -1571,6 +1571,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         addInstruction(new PushInstruction(myFactory.getBoolean(!and), expression));
         addInstruction(new GotoInstruction(endOffset));
         nextOffset.setOffset(getInstructionCount());
+        addInstruction(new FinishElementInstruction(null));
       }
     }
     endOffset.setOffset(getInstructionCount());
