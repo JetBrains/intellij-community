@@ -74,6 +74,7 @@ class PostHighlightingVisitor {
           if (!myFile.isValid() || !myFile.isWritable()) return;
           IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true);
           if (optimizeImportsFix.isAvailable(myProject, null, myFile)) {
+            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
             optimizeImportsFix.invoke(myProject, null, myFile);
           }
         });

@@ -776,7 +776,6 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
     String beforeText = file.getText();
     long oldStamp = document.getModificationStamp();
     DocumentUtil.writeInRunUndoTransparentAction(() -> JavaCodeStyleManager.getInstance(project).optimizeImports(file));
