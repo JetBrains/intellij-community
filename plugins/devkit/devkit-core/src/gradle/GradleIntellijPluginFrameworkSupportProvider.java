@@ -166,9 +166,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
       VirtualFile pluginXml = metaInf.createChildData(this, "plugin.xml");
       FileTemplateManager templateManager = FileTemplateManager.getInstance(project);
       FileTemplate template = templateManager.getJ2eeTemplate("gradleBasedPlugin.xml");
-      if (template == null) {
-        return false;
-      }
+
       Map<String, String> attributes = new HashMap<>();
       String groupId = projectId.getGroupId();
       String artifactId = projectId.getArtifactId();
