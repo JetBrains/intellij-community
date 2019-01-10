@@ -340,7 +340,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
         PsiElement start = PsiTreeUtil.skipWhitespacesForward(codeBlock.getFirstBodyElement());
         PsiElement end = PsiTreeUtil.skipWhitespacesBackward(codeBlock.getLastBodyElement());
-        if (start != null && end != null) {
+        if (start != null && end != null && start != codeBlock.getRBrace()) {
           for (PsiElement child = start; child != null; child = child.getNextSibling()) {
             out.append(commentTracker.text(child));
             if (child == end) break;
