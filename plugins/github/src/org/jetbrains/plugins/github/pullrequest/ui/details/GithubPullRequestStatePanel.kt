@@ -71,8 +71,8 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
   }
 
   var state: GithubPullRequestStatePanel.State? by equalVetoingObservable<GithubPullRequestStatePanel.State?>(null) {
-    updateText(state)
-    updateActions(state)
+    updateText(it)
+    updateActions(it)
   }
 
   private fun updateText(state: GithubPullRequestStatePanel.State?) {
