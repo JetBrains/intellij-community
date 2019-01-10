@@ -22,10 +22,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.util.containers.ContainerUtil
-import git4idea.GitUtil
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.checkin.GitCheckinExplicitMovementProvider
 import git4idea.config.GitVersion
@@ -834,44 +830,6 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
   private fun generateCaseRename(from: String, to: String) {
     tac(from)
     git("mv -f $from $to")
-  }
-
-  private fun commit(changes: Collection<Change>) {
-    val exceptions = vcs.checkinEnvironment!!.commit(ArrayList(changes), "comment")
-    assertNoExceptions(exceptions)
-    updateChangeListManager()
-  }
-
-  private fun assertNoChanges() {
-    val changes = changeListManager.getChangesIn(projectRoot)
-    assertTrue("We expected no changes but found these: " + GitUtil.getLogString(projectPath, changes), changes.isEmpty())
-  }
-
-  private fun assertNoExceptions(exceptions: List<VcsException>?) {
-    val ex = ContainerUtil.getFirstItem(exceptions)
-    if (ex != null) {
-      LOG.error(ex)
-      fail("Exception during executing the commit: " + ex.message)
-    }
-  }
-
-  private fun assertChanges(changes: ChangesBuilder.() -> Unit) : List<Change> {
-    val cb = ChangesBuilder()
-    cb.changes()
-
-    updateChangeListManager()
-    val vcsChanges = changeListManager.allChanges
-    val allChanges = mutableListOf<Change>()
-    val actualChanges = HashSet(vcsChanges)
-
-    for (change in cb.changes) {
-      val found = actualChanges.find(change.matcher)
-      assertNotNull("The change [$change] not found\n$vcsChanges", found)
-      actualChanges.remove(found)
-      allChanges.add(found!!)
-    }
-    assertTrue(actualChanges.isEmpty())
-    return allChanges
   }
 
   private class MyExplicitMovementProvider : GitCheckinExplicitMovementProvider() {
