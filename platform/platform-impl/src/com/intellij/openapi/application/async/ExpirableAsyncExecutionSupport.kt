@@ -50,9 +50,9 @@ import kotlin.coroutines.CoroutineContext
  *
  * @author eldar
  */
-internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(dispatcher: CoroutineDispatcher,
+internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(dispatchers: Array<CoroutineDispatcher>,
                                                                               private val expirableHandles: Set<JobExpiration>)
-  : BaseAsyncExecutionSupport<E>(dispatcher) {
+  : BaseAsyncExecutionSupport<E>(dispatchers) {
 
   override fun createContinuationInterceptor(): ContinuationInterceptor {
     val delegateInterceptor = super.createContinuationInterceptor()
@@ -64,6 +64,8 @@ internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(di
         jobExpiration.cancelJobOnExpiration(continuation.context[Job]!!)
         return delegateInterceptor.interceptContinuation(continuation)
       }
+
+      override fun toString(): String = delegateInterceptor.toString()
     }
   }
 
@@ -94,13 +96,6 @@ internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(di
     fun invokeOnExpiration(handler: CompletionHandler): DisposableHandle =
       job.invokeOnCompletion(handler)
 
-    fun cancelJobOnExpiration(job: Job) {
-      invokeOnExpiration {
-        job.cancel()
-      }.also { handle ->
-        job.invokeOnCompletion { handle.dispose() }
-      }
-    }
   }
 
   internal class SimpleJobExpiration(override val job: Job) : JobExpiration()
@@ -140,32 +135,31 @@ internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(di
     override fun hashCode(): Int = System.identityHashCode(disposable)
   }
 
-  protected abstract fun cloneWith(dispatcher: CoroutineDispatcher, expirableHandles: Set<JobExpiration>): E
-  override fun cloneWith(dispatcher: CoroutineDispatcher): E = cloneWith(dispatcher, expirableHandles)
+  protected abstract fun cloneWith(dispatchers: Array<CoroutineDispatcher>, expirableHandles: Set<JobExpiration>): E
+  override fun cloneWith(dispatchers: Array<CoroutineDispatcher>): E = cloneWith(dispatchers, expirableHandles)
 
   override fun withConstraint(constraint: ExpirableContextConstraint, parentDisposable: Disposable): E {
     val expirableHandle = ExpirableHandle(parentDisposable)
-    return cloneWith(ExpirableConstraintDispatcher(dispatcher, constraint, expirableHandle),
+    return cloneWith(dispatchers + ExpirableConstraintDispatcher(constraint, expirableHandle),
                      expirableHandles + expirableHandle)
   }
 
   override fun expireWith(parentDisposable: Disposable): E {
     val expirableHandle = ExpirableHandle(parentDisposable)
     @Suppress("UNCHECKED_CAST")
-    return if (expirableHandle in expirableHandles) this as E else cloneWith(dispatcher, expirableHandles + expirableHandle)
+    return if (expirableHandle in expirableHandles) this as E else cloneWith(dispatchers, expirableHandles + expirableHandle)
   }
 
   /** @see ExpirableContextConstraint */
-  internal class ExpirableConstraintDispatcher(delegate: CoroutineDispatcher,
-                                               constraint: ExpirableContextConstraint,
-                                               private val jobExpiration: JobExpiration) : ChainedConstraintDispatcher(delegate,
-                                                                                                                       constraint) {
+  internal inner class ExpirableConstraintDispatcher(constraint: ExpirableContextConstraint,
+                                                     private val jobExpiration: JobExpiration) : ConstraintDispatcher(constraint) {
     override val constraint get() = super.constraint as ExpirableContextConstraint
 
-    override fun isScheduleNeeded(context: CoroutineContext): Boolean =
+    @Suppress("EXPERIMENTAL_OVERRIDE")
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
       !(jobExpiration.isExpired || constraint.isCorrectContext)
 
-    override fun doSchedule(context: CoroutineContext, retryDispatchRunnable: Runnable) {
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
       val runOnce = RunOnce()
 
       val jobDisposableHandle = jobExpiration.invokeOnExpiration {
@@ -175,14 +169,14 @@ internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(di
             context.cancel()
           }
           // Implementation of a completion handler must be fast and lock-free.
-          fallbackDispatch(context, retryDispatchRunnable)  // invokeLater, basically
+          fallbackDispatcher.dispatch(context, block)  // invokeLater, basically
         }
       }
       if (runOnce.isActive) {
         constraint.scheduleExpirable(Runnable {
           runOnce {
             jobDisposableHandle.dispose()
-            retryDispatchRunnable.run()
+            block.run()
           }
         })
       }
@@ -195,6 +189,14 @@ internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(di
       private val hasNotRunYet = AtomicBoolean(true)
       override operator fun invoke(block: () -> Unit) {
         if (hasNotRunYet.compareAndSet(true, false)) block()
+      }
+    }
+
+    fun JobExpiration.cancelJobOnExpiration(job: Job) {
+      invokeOnExpiration {
+        job.cancel()
+      }.also { handle ->
+        job.invokeOnCompletion { handle.dispose() }
       }
     }
 

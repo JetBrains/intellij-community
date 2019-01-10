@@ -15,30 +15,30 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Runnable
-import kotlin.coroutines.CoroutineContext
 
 /**
  * @author peter
  * @author eldar
  */
 internal class AppUIExecutorImpl private constructor(private val myModality: ModalityState,
-                                                     dispatcher: CoroutineDispatcher,
+                                                     dispatchers: Array<CoroutineDispatcher>,
                                                      expirableHandles: Set<JobExpiration>)
-  : ExpirableAsyncExecutionSupport<AppUIExecutorEx>(dispatcher, expirableHandles), AppUIExecutorEx {
+  : ExpirableAsyncExecutionSupport<AppUIExecutorEx>(dispatchers, expirableHandles), AppUIExecutorEx {
 
-  constructor(modality: ModalityState) : this(modality, /* fallback */ object : CoroutineDispatcher() {
-    // TODO[eldar] please don't @Suppress("EXPERIMENTAL_OVERRIDE") until we understand the implications and resolve the cause
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
-      !ApplicationManager.getApplication().isDispatchThread || ModalityState.current().dominates(modality)
+  override fun composeDispatchers() = dispatchers.singleOrNull() ?: RescheduleAttemptLimitAwareDispatcher(dispatchers)
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) =
-      ApplicationManager.getApplication().invokeLater(block, modality)
+  constructor(modality: ModalityState) : this(modality, arrayOf(/* fallback */ SimpleConstraintDispatcher(object : SimpleContextConstraint {
+    override val isCorrectContext: Boolean
+      get() = ApplicationManager.getApplication().isDispatchThread || ModalityState.current().dominates(modality)
+
+    override fun schedule(runnable: Runnable): Unit =
+      ApplicationManager.getApplication().invokeLater(runnable, modality)
 
     override fun toString() = "onUiThread($modality)"
-  }, emptySet<JobExpiration>())
+  })), emptySet<JobExpiration>())
 
-  override fun cloneWith(dispatcher: CoroutineDispatcher, expirableHandles: Set<JobExpiration>): AppUIExecutorEx =
-    AppUIExecutorImpl(myModality, dispatcher, expirableHandles)
+  override fun cloneWith(dispatchers: Array<CoroutineDispatcher>, expirableHandles: Set<JobExpiration>): AppUIExecutorEx =
+    AppUIExecutorImpl(myModality, dispatchers, expirableHandles)
 
   override fun later(): AppUIExecutor {
     val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else null
