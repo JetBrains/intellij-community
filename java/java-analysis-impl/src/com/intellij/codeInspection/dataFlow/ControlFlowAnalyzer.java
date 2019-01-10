@@ -1315,19 +1315,19 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     PsiType type = expression.getType();
     if (op == JavaTokenType.ANDAND) {
-      generateAndOrExpression(expression, operands, type, true, true);
+      generateShortCircuitAndOr(expression, operands, type, true);
     }
     else if (op == JavaTokenType.OROR) {
-      generateAndOrExpression(expression, operands, type, false, true);
+      generateShortCircuitAndOr(expression, operands, type, false);
     }
     else if (op == JavaTokenType.XOR && PsiType.BOOLEAN.equals(type)) {
       generateXorExpression(expression, operands, type, false);
     }
     else if (op == JavaTokenType.AND && PsiType.BOOLEAN.equals(type)) {
-      generateAndOrExpression(expression, operands, type, true, false);
+      generateAndOr(operands, type, true);
     }
     else if (op == JavaTokenType.OR && PsiType.BOOLEAN.equals(type)) {
-      generateAndOrExpression(expression, operands, type, false, false);
+      generateAndOr(operands, type, false);
     }
     else if (isBinaryDivision(op) && operands.length == 2 &&
              type != null && PsiType.LONG.isAssignableFrom(type)) {
@@ -1516,32 +1516,36 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     overPushSuccess.setOffset(pushSuccess.getIndex() + 1);
   }
 
-  private void generateAndOrExpression(PsiExpression expression,
-                                       PsiExpression[] operands,
-                                       final PsiType exprType,
-                                       boolean and,
-                                       boolean shortCircuit) {
+  private void generateAndOr(PsiExpression[] operands, PsiType exprType, boolean and) {
     for (int i = 0; i < operands.length; i++) {
       PsiExpression operand = operands[i];
       operand.accept(this);
       generateBoxingUnboxingInstructionFor(operand, exprType);
-      if (!shortCircuit) {
-        if (i > 0) {
-          combineStackBooleans(and, operand);
-        }
-        continue;
+      if (i > 0) {
+        combineStackBooleans(and, operand);
       }
+    }
+  }
+
+  private void generateShortCircuitAndOr(PsiExpression expression, PsiExpression[] operands, PsiType exprType, boolean and) {
+    ControlFlow.DeferredOffset endOffset = new ControlFlow.DeferredOffset();
+    for (int i = 0; i < operands.length; i++) {
+      PsiExpression operand = operands[i];
+      operand.accept(this);
+      generateBoxingUnboxingInstructionFor(operand, exprType);
 
       PsiExpression nextOperand = i == operands.length - 1 ? null : operands[i + 1];
       if (nextOperand != null) {
-        addInstruction(new ConditionalGotoInstruction(getStartOffset(nextOperand), !and, operand));
+        ControlFlow.DeferredOffset nextOffset = new ControlFlow.DeferredOffset();
+        addInstruction(new ConditionalGotoInstruction(nextOffset, !and, operand));
         addInstruction(new PushInstruction(myFactory.getBoolean(!and), expression));
-        addInstruction(new GotoInstruction(getEndOffset(operands[operands.length - 1])));
+        addInstruction(new GotoInstruction(endOffset));
+        nextOffset.setOffset(getInstructionCount());
+        addInstruction(new FinishElementInstruction(null));
       }
     }
-    if (shortCircuit) {
-      addInstruction(new ResultOfInstruction(expression));
-    }
+    endOffset.setOffset(getInstructionCount());
+    addInstruction(new ResultOfInstruction(expression));
   }
 
   @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
