@@ -17,21 +17,21 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.function.Supplier;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
@@ -341,7 +341,7 @@ public class PersistentFsTest extends PlatformTestCase {
       }
 
       private void log(String msg, @NotNull List<? extends VFileEvent> events) {
-        List<String> names = events.stream().map(e -> e.getClass().getSimpleName() + "->" + PathUtil.getFileName(e.getPath())).collect(Collectors.toList());
+        List<String> names = ContainerUtil.map(events, e -> e.getClass().getSimpleName() + "->" + PathUtil.getFileName(e.getPath()));
         log.append(msg).append(names).append("\n");
       }
 
@@ -484,4 +484,59 @@ public class PersistentFsTest extends PlatformTestCase {
     );
   }
 
+  public void testProcess100kOfEvents() throws IOException {
+    int bucketSize = 50000;
+    int eventSize = 2;
+    int bucketMask = (int) Math.pow(10, (int) Math.log10(bucketSize) + 1);
+    int eventMask = (int) Math.pow(10, (int) Math.log10(eventSize) + 1);
+    StringBuilder expected = new StringBuilder(bucketSize * eventSize * 100);
+    StringBuilder buffer = new StringBuilder(eventSize * 100).append('[');
+    LocalFileSystem fs = LocalFileSystem.getInstance();
+    File root = createTempDir("100k_test", false);
+
+    for (int i = 0; i < bucketSize; i++) {
+      String bucketIndex = String.valueOf(bucketMask + i).substring(1);
+      File directory = FileUtil.createTempDirectory(root, "dir-" + bucketIndex, "");
+      File mainJar = FileUtil.createTempFile(directory, "z_main_" + bucketIndex,".jar", true);
+
+      buffer.append("VFilePropertyChangeEvent->").append(mainJar.getName());
+
+      for (int j = 1; j < eventSize; j++) {
+        File file = FileUtil.createTempFile(directory, "file_" + bucketIndex + "_" + String.valueOf(eventMask + j).substring(1), ".jar", true);
+
+        buffer.append(", VFileContentChangeEvent->").append(file.getName());
+      }
+
+      expected.append("Before:").append(buffer).append("]\nAfter:").append(buffer).append("]\n");
+      buffer.setLength(0);
+
+      buffer.append("[VFileContentChangeEvent->").append(mainJar.getName()).append(", ");
+    }
+
+    buffer.setLength(buffer.length() - 2);
+
+    expected.append("Before:").append(buffer).append("]\nAfter:").append(buffer).append("]\n");
+
+    int i = 0;
+    VFileEvent[] events = new VFileEvent[bucketSize * eventSize + bucketSize];
+    VirtualDirectoryImpl vRoot = (VirtualDirectoryImpl) fs.refreshAndFindFileByIoFile(root);
+    VirtualFile[] vDirs = vRoot.getChildren();
+
+    Arrays.sort(vDirs, Comparator.comparing(VirtualFile::getName));
+
+    for (VirtualFile dir : vDirs) {
+      VirtualFile[] vFiles = ((VirtualDirectoryImpl) dir).getChildren();
+
+      Arrays.sort(vFiles, Comparator.comparing(VirtualFile::getName));
+
+      VirtualFile mainJar = vFiles[vFiles.length - 1];
+      events[i++] = new VFilePropertyChangeEvent(null, mainJar, VirtualFile.PROP_SYMLINK_TARGET, null, mainJar.getPath(), false);
+
+      for (VirtualFile vFile : vFiles) {
+        events[i++] = new VFileContentChangeEvent(null, vFile, 0, 1000, false);
+      }
+    }
+
+    checkEvents(expected.toString(), events);
+  }
 }

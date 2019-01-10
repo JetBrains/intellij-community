@@ -29,15 +29,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
+import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,12 +43,15 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author max
  */
 public class PersistentFSImpl extends PersistentFS implements BaseComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
+  private static final int INITIAL_SIZE = 1 << 10;
 
   private final Map<String, VirtualFileSystemEntry> myRoots =
     ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), FileUtil.PATH_HASHING_STRATEGY);
@@ -685,160 +684,154 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   // returns index after the last grouped event.
   private static int groupByPath(@NotNull List<? extends VFileEvent> inEvents,
                                  int startIndex,
-                                 @NotNull Set<? super String> files,
-                                 @NotNull Set<? super String> middleDirs) {
+                                 @NotNull GroupPool pool,
+                                 @NotNull Set<String> files,
+                                 @NotNull Set<Group> groups) {
     // store all paths from all events (including all parents)
     // check the each new event's path against this set and if it's there, this event is conflicting
 
-    int i;
-    for (i = startIndex; i < inEvents.size(); i++) {
+    int i = startIndex;
+    for (; i < inEvents.size(); i++) {
       VFileEvent event = inEvents.get(i);
+
       String path = event.getPath();
-      if (checkIfConflictingEvent(path, files, middleDirs)) {
+
+      if (!files.add(path) || pool.contains(path)) {
+        // conflicting event found for (non-strict) descendant, stop
         break;
+      }
+
+      if (event instanceof VFileCreateEvent) {
+        VFileCreateEvent create = (VFileCreateEvent) event;
+        Group group = pool.get((VirtualDirectoryImpl) create.getParent());
+        if (checkIfConflictingEvent(group, pool, files, groups)) {
+          break;
+        }
+        groups.add(group);
+        group.setCreate(i);
+      }
+      else if (event instanceof VFileDeleteEvent) {
+        VFileDeleteEvent delete = (VFileDeleteEvent) event;
+        Group group = pool.get((VirtualDirectoryImpl) delete.getFile().getParent());
+        if (checkIfConflictingEvent(group, pool, files, groups)) {
+          break;
+        }
+        groups.add(group);
+        group.setDelete(i);
+      }
+      else if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME)) {
+        VFilePropertyChangeEvent change = (VFilePropertyChangeEvent) event;
+        Group group = pool.get((VirtualDirectoryImpl) change.getFile().getParent());
+        String newName = (String) change.getNewValue();
+        String newPath = group.directory == null ? newName : group.directory.getPath() + '/' + newName;
+        if (!FileUtil.PATH_HASHING_STRATEGY.equals(newName, (String) change.getOldValue()) && (!files.add(newPath) || pool.contains(newPath) || checkIfConflictingEvent(group, pool, files, groups))) {
+          break;
+        }
+        groups.add(group);
+        pool.root.setOther(i);
       }
       // some synthetic events really are composite events, e.g. VFileMoveEvent = VFileDeleteEvent+VFileCreateEvent, so both paths should be checked for conflicts
-      String path2 = null;
-      if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME)) {
-        VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
-        VirtualFile parent = pce.getFile().getParent();
-        String newName = (String)pce.getNewValue();
-        path2 = parent == null ? newName : parent.getPath()+"/"+newName;
-      }
       else if (event instanceof VFileCopyEvent) {
-        path2 = ((VFileCopyEvent)event).getFile().getPath();
+        VFileCopyEvent copy = (VFileCopyEvent) event;
+        Group newGroup = pool.get((VirtualDirectoryImpl) copy.getNewParent());
+        Group oldGroup = pool.get((VirtualDirectoryImpl) copy.getFile().getParent());
+        String oldPath = copy.getFile().getPath();
+        if (!FileUtil.PATH_HASHING_STRATEGY.equals(path, oldPath) && (!files.add(oldPath) || pool.contains(oldPath) || checkIfConflictingEvent(newGroup, pool, files, groups) || checkIfConflictingEvent(oldGroup, pool, files, groups))) {
+          break;
+        }
+        groups.add(newGroup);
+        groups.add(oldGroup);
+        pool.root.setOther(i);
       }
       else if (event instanceof VFileMoveEvent) {
-        VFileMoveEvent vme = (VFileMoveEvent)event;
-        String newName = vme.getFile().getName();
-        path2 = vme.getNewParent().getPath() + "/" + newName;
+        VFileMoveEvent move = (VFileMoveEvent) event;
+        Group newGroup = pool.get((VirtualDirectoryImpl) move.getNewParent());
+        Group oldGroup = pool.get((VirtualDirectoryImpl) move.getOldParent());
+        String newName = move.getFile().getName();
+        String newPath = move.getNewParent().getPath() + '/' + newName;
+        if (!FileUtil.PATH_HASHING_STRATEGY.equals(path, newPath) && (!files.add(newPath) || pool.contains(newPath) || checkIfConflictingEvent(newGroup, pool, files, groups) || checkIfConflictingEvent(oldGroup, pool, files, groups))) {
+          break;
+        }
+        groups.add(newGroup);
+        groups.add(oldGroup);
+        pool.root.setOther(i);
       }
-      if (path2 != null && !FileUtil.PATH_HASHING_STRATEGY.equals(path2, path) && checkIfConflictingEvent(path2, files, middleDirs)) {
-        break;
+      else {
+        VirtualFile file = event.getFile();
+        Group group = file == null ? pool.root : pool.get((VirtualDirectoryImpl) file.getParent());
+        if (checkIfConflictingEvent(group, pool, files, groups)) {
+          break;
+        }
+        groups.add(group);
+        pool.root.setOther(i);
       }
     }
 
     return i;
   }
 
-  private static boolean checkIfConflictingEvent(@NotNull String path, @NotNull Set<? super String> files, @NotNull Set<? super String> middleDirs) {
-    if (!files.add(path) || middleDirs.contains(path)) {
-      // conflicting event found for (non-strict) descendant, stop
-      return true;
-    }
-    int li = path.length();
-    while (true) {
-      int liPrev = path.lastIndexOf('/', li-1);
-      if (liPrev == -1) break;
-      String parentDir = path.substring(0, liPrev);
-      if (files.contains(parentDir)) {
+  private static boolean checkIfConflictingEvent(@NotNull Group group,
+                                                 @NotNull GroupPool pool,
+                                                 @NotNull Set<String> files,
+                                                 @NotNull Set<Group> groups) {
+    while (group.directory != null) {
+      if (files.contains(group.directory.getPath())) {
         // conflicting event found for ancestor, stop
         return true;
       }
-      if (!middleDirs.add(parentDir)) break;  // all parents up already stored, stop
-      li = liPrev;
+      group = pool.get(group.directory.getParent());
+      if (!groups.add(group)) break;  // all parents up already stored, stop
     }
 
     return false;
   }
 
-  // finds a group of non-conflicting events, validate them.
-  // "outApplyEvents" will contain handlers for applying the grouped events
-  // "outValidatedEvents" will contain events for which VFileEvent.isValid() is true
-  // return index after the last processed event
-  private int groupAndValidate(@NotNull List<? extends VFileEvent> events,
-                               int startIndex,
-                               @NotNull List<? super Runnable> outApplyEvents,
-                               @NotNull List<? super VFileEvent> outValidatedEvents,
-                               @NotNull Set<? super String> files,
-                               @NotNull Set<? super String> middleDirs) {
-    int endIndex = groupByPath(events, startIndex, files, middleDirs);
-    assert endIndex > startIndex : events.get(startIndex) +"; files: "+files+"; middleDirs: "+middleDirs;
-    // since all events in the group events[startIndex..endIndex) are mutually non-conflicting, we can re-arrange creations/deletions together
-    groupCreations(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
-    groupDeletions(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
-    groupOthers(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
-
-    return endIndex;
-  }
-
   // find all VFileCreateEvent events in [start..end)
   // group them by parent directory, validate in bulk for each directory, and return "applyCreations()" runnable
   private void groupCreations(@NotNull List<? extends VFileEvent> events,
-                              int start,
-                              int end,
+                              @NotNull Set<Group> groups,
                               @NotNull List<? super VFileEvent> outValidated,
                               @NotNull List<? super Runnable> outApplyEvents) {
-    MultiMap<VirtualDirectoryImpl, VFileCreateEvent> grouped = null;
 
-    for (int i = start; i < end; i++) {
-      VFileEvent e = events.get(i);
-      if (!(e instanceof VFileCreateEvent)) continue;
-      VFileCreateEvent event = (VFileCreateEvent)e;
-      VirtualDirectoryImpl parent = (VirtualDirectoryImpl)event.getParent();
-      if (grouped == null) {
-        grouped = new MultiMap<VirtualDirectoryImpl, VFileCreateEvent>(){
-          @NotNull
-          @Override
-          protected Map<VirtualDirectoryImpl, Collection<VFileCreateEvent>> createMap() {
-            return new THashMap<>(end-start);
-          }
-        };
-      }
-      grouped.putValue(parent, event);
-    }
-    if (grouped != null) {
-      // since the VCreateEvent.isValid() is extremely expensive, combine all creation events for the directory together
-      // and use VirtualDirectoryImpl.validateChildrenToCreate() optimised for bulk validation
-      boolean hasValidEvents = false;
-      for (Map.Entry<VirtualDirectoryImpl, Collection<VFileCreateEvent>> entry : grouped.entrySet()) {
-        VirtualDirectoryImpl directory = entry.getKey();
-        List<VFileCreateEvent> createEvents = (List<VFileCreateEvent>)entry.getValue();
-        directory.validateChildrenToCreate(createEvents);
-        hasValidEvents |= !createEvents.isEmpty();
+    Map<VirtualDirectoryImpl, List<VFileCreateEvent>> finalGrouped = new HashMap<>();
+
+    groups.stream().filter(Group::hasCreations).forEach(group -> {
+      VirtualDirectoryImpl directory = group.directory;
+      List<VFileCreateEvent> createEvents = group.creations(events).collect(Collectors.toList());
+      directory.validateChildrenToCreate(createEvents);
+      if (!createEvents.isEmpty()) {
         outValidated.addAll(createEvents);
+        finalGrouped.put(directory,createEvents);
       }
+    });
 
-      if (hasValidEvents) {
-        MultiMap<VirtualDirectoryImpl, VFileCreateEvent> finalGrouped = grouped;
-        outApplyEvents.add((Runnable)() -> {
-          applyCreations(finalGrouped);
-          incStructuralModificationCount();
-        });
-      }
+    if (!finalGrouped.isEmpty()) {
+      outApplyEvents.add((Runnable)() -> {
+        applyCreations(finalGrouped);
+        incStructuralModificationCount();
+      });
     }
   }
 
   // find all VFileDeleteEvent events in [start..end)
   // group them by parent directory (can be null), filter out files which parent dir is to be deleted too, and return "applyDeletions()" runnable
   private void groupDeletions(@NotNull List<? extends VFileEvent> events,
-                              int start,
-                              int end,
+                              @NotNull Set<Group> groups,
                               @NotNull List<? super VFileEvent> outValidated,
                               @NotNull List<? super Runnable> outApplyEvents) {
-    MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> grouped = null;
-    boolean hasValidEvents = false;
-    for (int i = start; i < end; i++) {
-      VFileEvent event = events.get(i);
-      if (!(event instanceof VFileDeleteEvent) || !event.isValid()) continue;
-      VFileDeleteEvent de = (VFileDeleteEvent)event;
-      @Nullable VirtualDirectoryImpl parent = (VirtualDirectoryImpl)de.getFile().getParent();
-      if (grouped == null) {
-        grouped = new MultiMap<VirtualDirectoryImpl, VFileDeleteEvent>(){
-          @NotNull
-          @Override
-          protected Map<VirtualDirectoryImpl, Collection<VFileDeleteEvent>> createMap() {
-            return new HashMap<>(end-start); // can be null keys
-          }
-        };
-      }
-      grouped.putValue(parent, de);
-      outValidated.add(event);
-      hasValidEvents = true;
-    }
 
-    if (hasValidEvents) {
-      MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> finalGrouped = grouped;
+    Map<VirtualDirectoryImpl, List<VFileDeleteEvent>> finalGrouped = new HashMap<>();
+
+    groups.stream().filter(Group::hasDeletions).forEach(group -> {
+      VirtualDirectoryImpl directory = group.directory;
+      List<VFileDeleteEvent> deleteEvents = group.deletions(events).filter(e -> e.isValid()).collect(Collectors.toList());
+      if (!deleteEvents.isEmpty()) {
+        outValidated.addAll(deleteEvents);
+        finalGrouped.put(directory, deleteEvents);
+      }
+    });
+
+    if (!finalGrouped.isEmpty()) {
       outApplyEvents.add((Runnable)() -> {
         clearIdCache();
         applyDeletions(finalGrouped);
@@ -850,16 +843,13 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   // find events other than VFileCreateEvent or VFileDeleteEvent in [start..end)
   // validate and return "applyEvent()" runnable for each event because it's assumed there won't be too many of them
   private void groupOthers(@NotNull List<? extends VFileEvent> events,
-                           int start,
-                           int end,
+                           @NotNull RootGroup root,
                            @NotNull List<? super VFileEvent> outValidated,
                            @NotNull List<? super Runnable> outApplyEvents) {
-    for (int i = start; i < end; i++) {
-      VFileEvent event = events.get(i);
-      if (event instanceof VFileCreateEvent || event instanceof VFileDeleteEvent || !event.isValid()) continue;
-      outValidated.add(event);
-      outApplyEvents.add((Runnable)() -> applyEvent(event));
-    }
+    root.others(events).filter(e -> e.isValid()).forEach(e -> {
+      outValidated.add(e);
+      outApplyEvents.add((Runnable)() -> applyEvent(e));
+    });
   }
 
   @Override
@@ -867,15 +857,29 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     int startIndex = 0;
-    List<Runnable> applyEvents = new ArrayList<>(events.size());
-    Set<String> files = new THashSet<>(events.size(), FileUtil.PATH_HASHING_STRATEGY);
-    Set<String> middleDirs = new THashSet<>(events.size(), FileUtil.PATH_HASHING_STRATEGY);
+    List<Runnable> applyEvents = new ArrayList<>(INITIAL_SIZE);
+
+    Set<String> files = new THashSet<>(INITIAL_SIZE, FileUtil.PATH_HASHING_STRATEGY);
+    Set<Group> groups = new THashSet<>(INITIAL_SIZE);
+    GroupPool pool = new GroupPool();
+
     while (startIndex != events.size()) {
       applyEvents.clear();
-      List<VFileEvent> validated = new ArrayList<>(events.size() - startIndex);
       files.clear();
-      middleDirs.clear();
-      startIndex = groupAndValidate(events, startIndex, applyEvents, validated, files, middleDirs);
+      groups.clear();
+      groups.add(pool.root);
+      pool.reset(startIndex);
+
+      int endIndex = groupByPath(events, startIndex, pool, files, groups);
+      assert endIndex > startIndex : events.get(startIndex) + "; files: " + files + "; groups: " + groups;
+      List<VFileEvent> validated = new ArrayList<>(endIndex - startIndex);
+
+      // since all events in the group events[startIndex..endIndex) are mutually non-conflicting, we can re-arrange creations/deletions together
+      groupCreations(events, groups, validated, applyEvents);
+      groupDeletions(events, groups, validated, applyEvents);
+      groupOthers(events, pool.root, validated, applyEvents);
+
+      startIndex = endIndex;
 
       if (!validated.isEmpty()) {
         List<VFileEvent> toSend = Collections.unmodifiableList(validated);
@@ -889,8 +893,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   }
 
   // remove children from specified directories using VirtualDirectoryImpl.removeChildren() optimised for bulk removals
-  private void applyDeletions(@NotNull MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> deletions) {
-    for (Map.Entry<VirtualDirectoryImpl, Collection<VFileDeleteEvent>> entry : deletions.entrySet()) {
+  private void applyDeletions(@NotNull Map<VirtualDirectoryImpl, List<VFileDeleteEvent>> deletions) {
+    for (Map.Entry<VirtualDirectoryImpl, List<VFileDeleteEvent>> entry : deletions.entrySet()) {
       VirtualDirectoryImpl parent = entry.getKey();
       Collection<VFileDeleteEvent> deleteEvents = entry.getValue();
       // no valid containing directory, apply events the old way - one by one
@@ -922,8 +926,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   }
 
   // add children to specified directories using VirtualDirectoryImpl.createAndAddChildren() optimised for bulk additions
-  private void applyCreations(@NotNull MultiMap<VirtualDirectoryImpl, VFileCreateEvent> creations) {
-    for (Map.Entry<VirtualDirectoryImpl, Collection<VFileCreateEvent>> entry : creations.entrySet()) {
+  private void applyCreations(@NotNull Map<VirtualDirectoryImpl, List<VFileCreateEvent>> creations) {
+    for (Map.Entry<VirtualDirectoryImpl, List<VFileCreateEvent>> entry : creations.entrySet()) {
       VirtualDirectoryImpl parent = entry.getKey();
       Collection<VFileCreateEvent> createEvents = entry.getValue();
       int parentId = getFileId(parent);
@@ -1399,10 +1403,147 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     while (true) {
       int i = pathBeforeSlash.indexOf("..", start);
       if (i == -1) break;
-      if (i != 0 && pathBeforeSlash.charAt(i-1) == '/') return false; // /..
-      if (i < pathBeforeSlash.length() - 2 && pathBeforeSlash.charAt(i+2) == '/') return false; // ../
-      start = i+1;
+      if ((i == 0 || pathBeforeSlash.charAt(i - 1) == '/')
+          && (i == pathBeforeSlash.length() - 2 || pathBeforeSlash.charAt(i + 2) == '/')) return false; // directories ..abc or abc.. should be allowed
+      start = i + 1;
     }
     return true;
+  }
+
+  private static class GroupPool {
+    private final RootGroup root = new RootGroup(this);
+    private final TIntObjectHashMap<Group> pool = new TIntObjectHashMap<>(INITIAL_SIZE);
+    private final Set<String> paths = new THashSet<>(INITIAL_SIZE, FileUtil.PATH_HASHING_STRATEGY);
+    private int offset;
+
+    @NotNull
+    public Group get(VirtualDirectoryImpl directory) {
+      if (directory == null) {
+        return root;
+      }
+
+      boolean isDirty = paths.add(directory.getPath());
+      Group result = pool.get(directory.hashCode());
+
+      if (result == null) {
+        pool.put(directory.hashCode(), result = new Group(this, directory));
+      } else if (isDirty) {
+        if (result.directory != directory) {
+          result.directory = directory;
+        }
+        if (result.creations != null) result.creations.clear();
+        if (result.deletions != null) result.deletions.clear();
+      }
+
+      return result;
+    }
+
+    public boolean contains(String path) {
+      return paths.contains(path);
+    }
+
+    public void reset(int offset) {
+      this.paths.clear();
+      this.offset = offset;
+      if (root.creations != null) root.creations.clear();
+      if (root.deletions != null) root.deletions.clear();
+      if (root.others != null) root.others.clear();
+    }
+  }
+
+  private static class RootGroup extends Group {
+    private BitSet others;
+
+    private RootGroup(GroupPool parent) {
+      super(parent, null);
+    }
+
+    public void setOther(int index) {
+      if (others == null) {
+        others = new BitSet();
+      }
+
+      others.set(index - parent.offset);
+    }
+
+    public Stream<VFileEvent> others(List<? extends VFileEvent> events) {
+      if (others == null || others.isEmpty()) {
+        return Stream.empty();
+      }
+
+      return others.stream().map(i -> i + parent.offset).mapToObj(i -> events.get(i));
+    }
+
+    @Override
+    public int hashCode() {
+      return RootGroup.class.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "/";
+    }
+  }
+
+  private static class Group {
+    GroupPool parent;
+    private VirtualDirectoryImpl directory;
+    BitSet creations;
+    BitSet deletions;
+
+    Group(@NotNull GroupPool parent, VirtualDirectoryImpl directory) {
+      this.parent = parent;
+      this.directory = directory;
+    }
+
+    public void setCreate(int index) {
+      if (creations == null) {
+        creations = new BitSet();
+      }
+
+      creations.set(index - parent.offset);
+    }
+
+    public void setDelete(int index) {
+      if (deletions == null) {
+        deletions = new BitSet();
+      }
+
+      deletions.set(index - parent.offset);
+    }
+
+    public boolean hasCreations() {
+      return creations != null && !creations.isEmpty();
+    }
+
+    public boolean hasDeletions() {
+      return deletions != null && !deletions.isEmpty();
+    }
+
+    public Stream<VFileCreateEvent> creations(List<? extends VFileEvent> events) {
+      if (creations == null || creations.isEmpty()) {
+        return Stream.empty();
+      }
+
+      return creations.stream().map(i -> i + parent.offset).mapToObj(i -> (VFileCreateEvent) events.get(i));
+    }
+
+    public Stream<VFileDeleteEvent> deletions(List<? extends VFileEvent> events) {
+      if (deletions == null || deletions.isEmpty()) {
+        return Stream.empty();
+      }
+
+      return deletions.stream().map(i -> i + parent.offset).mapToObj(i -> (VFileDeleteEvent) events.get(i));
+    }
+
+    @Override
+    public int hashCode() {
+      return directory.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(directory);
+    }
   }
 }
