@@ -14,14 +14,12 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import static com.intellij.util.ArrayUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.concat;
@@ -138,12 +136,5 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction impl
       presentation.setEnabled(!ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning());
       presentation.setVisible(true);
     }
-  }
-
-  @NotNull
-  protected static FilePath[] getAllContentRoots(@NotNull VcsContext context) {
-    return Stream.of(ProjectLevelVcsManager.getInstance(context.getProject()).getAllVersionedRoots())
-      .map(VcsUtil::getFilePath)
-      .toArray(FilePath[]::new);
   }
 }
