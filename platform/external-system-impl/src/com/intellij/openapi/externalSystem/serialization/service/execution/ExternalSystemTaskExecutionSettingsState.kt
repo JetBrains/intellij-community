@@ -2,8 +2,6 @@
 package com.intellij.openapi.externalSystem.serialization.service.execution
 
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
-import com.intellij.openapi.externalSystem.model.execution.TaskSettings
-import com.intellij.openapi.externalSystem.model.execution.TaskSettingsImpl
 import com.intellij.util.containers.ContainerUtilRt
 import com.intellij.util.xmlb.annotations.Tag
 
@@ -60,27 +58,12 @@ class ExternalSystemTaskExecutionSettingsState(
   companion object {
     const val TAG_NAME = "ExternalSystemSettings"
 
-    private fun ExternalSystemTaskExecutionSettings.getTailTask(): TaskSettings? {
-      repairSettingsIfNeeded()
-      if (rawTailTaskArguments.isEmpty()) return null
-      val tailTaskName = taskNames.lastOrNull() ?: return null
-      return TaskSettingsImpl(tailTaskName, rawTailTaskArguments)
-    }
-
     @JvmStatic
     fun valueOf(settings: ExternalSystemTaskExecutionSettings): ExternalSystemTaskExecutionSettingsState {
-      val tailTask = settings.getTailTask()
-      val tasksSettings = ArrayList<TaskSettings>()
-      if (tailTask != null) tasksSettings.add(tailTask)
-      tasksSettings.addAll(settings.rawTasksSettings)
-      val tasksSettingStates = tasksSettings.map(TaskSettingsState.Companion::valueOf)
-      val taskNames = when (tailTask) {
-        null -> settings.taskNames
-        else -> settings.taskNames.dropLast(1)
-      }
+      val tasksSettingStates = settings.tasksSettings.map(TaskSettingsState.Companion::valueOf)
       return ExternalSystemTaskExecutionSettingsState(
         tasksSettings = tasksSettingStates.toMutableList(),
-        taskNames = taskNames.toMutableList(),
+        taskNames = ArrayList(),
         taskDescriptions = settings.taskDescriptions,
         executionName = settings.executionName,
         externalSystemIdString = settings.externalSystemIdString,

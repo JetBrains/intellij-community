@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
+import com.intellij.openapi.externalSystem.model.execution.TaskSettings;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
@@ -58,12 +59,26 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
                                        @NotNull ExternalSystemTaskExecutionSettings settings,
                                        @Nullable String jvmAgentSetup) throws IllegalArgumentException {
     super(settings.getExternalSystemId(), ExternalSystemTaskType.EXECUTE_TASK, project, settings.getExternalProjectPath());
-    myTasksToExecute = ContainerUtilRt.newArrayList(settings.getTaskNames());
+    myTasksToExecute = getTaskNames(settings);
     myVmOptions = settings.getVmOptions();
-    myArguments = settings.getScriptParameters();
+    myArguments = getScriptParameters(settings);
     myPassParentEnvs = settings.isPassParentEnvs();
     myEnv = settings.getEnv();
     myJvmAgentSetup = jvmAgentSetup;
+  }
+
+  private static List<String> getTaskNames(ExternalSystemTaskExecutionSettings settings) {
+    List<String> taskNames = ContainerUtil.copyList(settings.getTaskNames());
+    List<TaskSettings> taskSettings = settings.getTasksSettings();
+    return taskSettings.size() == taskNames.size() ? ContainerUtilRt.newArrayList(taskNames) : Collections.emptyList();
+  }
+
+  private static String getScriptParameters(ExternalSystemTaskExecutionSettings settings) {
+    List<String> taskNames = ContainerUtil.copyList(settings.getTaskNames());
+    List<TaskSettings> taskSettings = settings.getTasksSettings();
+    String scriptParameters = settings.getScriptParameters();
+    String commandLine = settings.toCommandLine();
+    return taskSettings.size() == taskNames.size() ? scriptParameters : commandLine;
   }
 
   /**

@@ -2,8 +2,8 @@
 package com.intellij.openapi.externalSystem.model.execution;
 
 import com.intellij.execution.configurations.ParametersList;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.util.ViewableList;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,17 +22,11 @@ import java.util.*;
  */
 public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecutionSettings {
 
-  static Logger LOG = Logger.getInstance(ExternalSystemTaskExecutionSettings.class);
-
   @NotNull @NonNls public static final Key<ParametersList> JVM_AGENT_SETUP_KEY = Key.create("jvmAgentSetup");
 
   @NotNull private List<TaskSettings> myTasksSettings = ContainerUtilRt.newArrayList();
-  @NotNull private List<String> myTaskNames = ContainerUtilRt.newArrayList();
   @NotNull private List<String> myTaskDescriptions = ContainerUtilRt.newArrayList();
   @NotNull private Set<String> myUnorderedParameters = ContainerUtilRt.newLinkedHashSet();
-
-  // needed for supporting old api
-  @NotNull private List<String> myTailTaskArguments = ContainerUtilRt.newArrayList();
 
   @Nullable private String myExecutionName;
   private String myExternalSystemIdString;
@@ -59,10 +53,8 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
     myScriptParameters = source.myScriptParameters;
 
     myTasksSettings = ContainerUtil.copyList(source.myTasksSettings);
-    myTaskNames = ContainerUtil.copyList(source.myTaskNames);
     myTaskDescriptions = ContainerUtil.copyList(source.myTaskDescriptions);
     myUnorderedParameters = ContainerUtil.newLinkedHashSet(source.myUnorderedParameters);
-    myTailTaskArguments = ContainerUtil.copyList(source.myTailTaskArguments);
 
     myEnv = source.myEnv.isEmpty() ? Collections.emptyMap() : new THashMap<>(source.myEnv);
     myPassParentEnvs = source.myPassParentEnvs;
@@ -120,8 +112,6 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
 
   @Override
   public void addTaskSettings(@NotNull TaskSettings taskSettings) {
-    repairSettingsIfNeeded();
-    if (tryToAddTaskSettingsIntoOldModel(taskSettings)) return;
     myTasksSettings.add(taskSettings);
   }
 
@@ -133,35 +123,11 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
   @Override
   @NotNull
   public @Unmodifiable List<TaskSettings> getTasksSettings() {
-    List<TaskSettings> tasksSettings = ContainerUtilRt.newArrayList();
-    Iterator<String> taskNameIt = myTaskNames.iterator();
-    Iterator<String> descriptionIt = myTaskDescriptions.iterator();
-    while (taskNameIt.hasNext() && descriptionIt.hasNext()) {
-      String name = taskNameIt.next();
-      String description = descriptionIt.next();
-      tasksSettings.add(new TaskSettingsImpl(name, description));
-    }
-    if (descriptionIt.hasNext()) {
-      String formatLine = "inconsistent settings: descriptions.size [%d] > tasks.size [%d]";
-      LOG.warn(String.format(formatLine, myTaskDescriptions.size(), myTaskNames.size()));
-    }
-    while (taskNameIt.hasNext()) {
-      String name = taskNameIt.next();
-      tasksSettings.add(new TaskSettingsImpl(name));
-    }
-    if (!tasksSettings.isEmpty()) {
-      TaskSettings settings = tasksSettings.remove(tasksSettings.size() - 1);
-      String name = settings.getName();
-      String description = settings.getDescription();
-      tasksSettings.add(new TaskSettingsImpl(name, myTailTaskArguments, description));
-    }
-    tasksSettings.addAll(myTasksSettings);
-    return ContainerUtil.immutableList(tasksSettings);
+    return ContainerUtil.immutableList(myTasksSettings);
   }
 
   @Override
   public void resetTaskSettings() {
-    myTaskNames = ContainerUtilRt.newArrayList();
     myTasksSettings = ContainerUtilRt.newArrayList();
     myTaskDescriptions = ContainerUtilRt.newArrayList();
   }
@@ -170,7 +136,6 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
   public void resetUnorderedParameters() {
     myScriptParameters = "";
     myUnorderedParameters = ContainerUtilRt.newHashSet();
-    myTailTaskArguments = ContainerUtilRt.newArrayList();
   }
 
   @Override
@@ -189,42 +154,8 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
     return Collections.unmodifiableSet(ContainerUtil.newLinkedHashSet(parameters));
   }
 
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  // Needed for supporting old usages of {@link ExternalSystemTaskExecutionSettings#getTaskNames}
-  private boolean tryToAddTaskSettingsIntoOldModel(TaskSettings taskSettings) {
-    String name = taskSettings.getName();
-    String description = taskSettings.getDescription();
-    List<String> arguments = taskSettings.getArguments();
-    if (description != null) return false;
-    if (!myTasksSettings.isEmpty()) return false;
-    if (!myTailTaskArguments.isEmpty()) return false;
-    myTailTaskArguments = arguments;
-    myTaskNames.add(name);
-    return true;
-  }
-
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  public void repairSettingsIfNeeded() {
-    boolean hasOldStructures = !myTaskNames.isEmpty() ||
-                               !myTaskDescriptions.isEmpty();
-    boolean hasNewStructures = !myTasksSettings.isEmpty();
-    if (!hasOldStructures || !hasNewStructures) return;
-    myTasksSettings = ContainerUtilRt.newArrayList(getTasksSettings());
-    myTaskNames = ContainerUtilRt.newArrayList();
-    myTaskDescriptions = ContainerUtilRt.newArrayList();
-    myTailTaskArguments = ContainerUtilRt.newArrayList();
-  }
-
-
   // Raw getters are deprecated because they are not part of the public API.
   // These is a part of a specific implementation.
-
-  @Deprecated
-  public List<String> getRawTailTaskArguments() {
-    return ContainerUtil.immutableList(myTailTaskArguments);
-  }
 
   @Deprecated
   public String getRawScriptParameters() {
@@ -236,17 +167,11 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
     return Collections.unmodifiableSet(myUnorderedParameters);
   }
 
-  @Deprecated
-  public List<TaskSettings> getRawTasksSettings() {
-    return ContainerUtil.immutableList(myTasksSettings);
-  }
-
   /**
    * Deprecated, instead use the {@link ExternalSystemTaskExecutionSettings#getUnorderedParameters}
    */
   @Deprecated
   public String getScriptParameters() {
-    repairSettingsIfNeeded();
     StringJoiner joiner = new StringJoiner(" ");
     addScriptParameters(joiner);
     return StringUtil.nullize(joiner.toString());
@@ -270,8 +195,34 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
   @Deprecated
   @NotNull
   public List<String> getTaskNames() {
-    repairSettingsIfNeeded();
-    return myTaskNames;
+    return new ViewableList<String>() {
+      @Override
+      public int getSize() {
+        return getTasksSettingsWithTailTask().size();
+      }
+
+      @Override
+      public void add(int index, String element) {
+        TaskSettings settings = new TaskSettingsImpl(element);
+        getTasksSettingsWithTailTask().add(index, settings);
+      }
+
+      @Override
+      public String set(int index, String element) {
+        TaskSettings settings = new TaskSettingsImpl(element);
+        return getTasksSettingsWithTailTask().set(index, settings).getName();
+      }
+
+      @Override
+      public String removeAt(int index) {
+        return getTasksSettingsWithTailTask().remove(index).getName();
+      }
+
+      @Override
+      public String get(int index) {
+        return getTasksSettingsWithTailTask().get(index).getName();
+      }
+    };
   }
 
   /**
@@ -280,7 +231,10 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
    */
   @Deprecated
   public void setTaskNames(@NotNull List<String> taskNames) {
-    myTaskNames = taskNames;
+    resetTaskSettings();
+    for (String taskName : taskNames) {
+      addTaskSettings(new TaskSettingsImpl(taskName));
+    }
   }
 
   /**
@@ -290,7 +244,6 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
   @Deprecated
   @NotNull
   public List<String> getTaskDescriptions() {
-    repairSettingsIfNeeded();
     return myTaskDescriptions;
   }
 
@@ -324,9 +277,45 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
     myPassParentEnvs = passParentEnvs;
   }
 
+  private int getTailTaskIndex() {
+    for (int i = 0; i < myTasksSettings.size(); ++i) {
+      TaskSettings settings = myTasksSettings.get(i);
+      if (!settings.getArguments().isEmpty()) {
+        return i;
+      }
+    }
+    return myTasksSettings.size() - 1;
+  }
+
+  @Nullable
+  private TaskSettings getTailTaskSettings() {
+    int tailTaskIndex = getTailTaskIndex();
+    if (tailTaskIndex < 0) return null;
+    return myTasksSettings.get(tailTaskIndex);
+  }
+
+  private List<TaskSettings> getTasksSettingsAfterTailTask() {
+    int tailTaskIndex = getTailTaskIndex();
+    return myTasksSettings.subList(tailTaskIndex + 1, myTasksSettings.size());
+  }
+
+  private List<TaskSettings> getTasksSettingsWithTailTask() {
+    int tailTaskIndex = getTailTaskIndex();
+    return myTasksSettings.subList(0, tailTaskIndex + 1);
+  }
+
+  private void addTaskNames(StringJoiner joiner) {
+    for (String name : getTaskNames()) {
+      joiner.add(name);
+    }
+  }
+
   private void addScriptParameters(StringJoiner joiner) {
-    addAll(joiner, myTailTaskArguments);
-    for (TaskSettings settings : myTasksSettings) {
+    TaskSettings tailTaskSettings = getTailTaskSettings();
+    if (tailTaskSettings != null) {
+      addAll(joiner, tailTaskSettings.getArguments());
+    }
+    for (TaskSettings settings : getTasksSettingsAfterTailTask()) {
       joiner.add(settings.getName());
       addAll(joiner, settings.getArguments());
     }
@@ -335,7 +324,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable, TaskExecu
   }
 
   private void addCommandLineArguments(StringJoiner joiner) {
-    addAll(joiner, myTaskNames);
+    addTaskNames(joiner);
     addScriptParameters(joiner);
   }
 

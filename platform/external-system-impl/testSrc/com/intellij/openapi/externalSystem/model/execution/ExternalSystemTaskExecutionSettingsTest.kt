@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.model.execution
 
 import com.intellij.openapi.externalSystem.serialization.service.execution.ExternalSystemTaskExecutionSettingsState
 import com.intellij.openapi.externalSystem.service.isSameSettings
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.xmlb.XmlSerializer
@@ -25,7 +26,6 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
     assertEquals(settings1, settings2)
     assertEquals(settings1.hashCode(), settings2.hashCode())
     assertTrue(settings1.isSameSettings(settings2))
-
   }
 
   fun `test setting leaking`() {
@@ -110,8 +110,8 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
       addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
       addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"TestCase\"")))
     }.run {
-      assertEquals(emptyList<String>(), taskNames)
-      assertEquals(":module:build -x test :module:cleanTest :module:test --tests \"TestCase\"", scriptParameters)
+      assertEquals(listOf(":module:build"), taskNames)
+      assertEquals("-x test :module:cleanTest :module:test --tests \"TestCase\"", scriptParameters)
     }
     ExternalSystemTaskExecutionSettings().apply {
       addTaskSettings(TaskSettingsImpl(":cleanTest"))
@@ -120,8 +120,8 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
       addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"Test\"")))
       addUnorderedParameter("--continue")
     }.run {
-      assertEquals(emptyList<String>(), taskNames)
-      assertEquals(":cleanTest :test --tests \"Test\" :module:cleanTest :module:test --tests \"Test\" --continue", scriptParameters)
+      assertEquals(listOf(":cleanTest", ":test"), taskNames)
+      assertEquals("--tests \"Test\" :module:cleanTest :module:test --tests \"Test\" --continue", scriptParameters)
     }
     ExternalSystemTaskExecutionSettings().apply {
       addTaskSettings(TaskSettingsImpl(":cleanTest"))
@@ -130,8 +130,8 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
       addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"Test4\"", "--tests \"Test5\"")))
       addUnorderedParameter("--continue")
     }.run {
-      assertEquals(emptyList<String>(), taskNames)
-      assertEquals(":cleanTest :test --tests \"Test1\" --tests \"Test2\" --tests \"Test3\" " +
+      assertEquals(listOf(":cleanTest", ":test"), taskNames)
+      assertEquals("--tests \"Test1\" --tests \"Test2\" --tests \"Test3\" " +
                    ":module:cleanTest :module:test --tests \"Test4\" --tests \"Test5\" " +
                    "--continue", scriptParameters)
     }
@@ -275,6 +275,261 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
           <list />
         </option>
         <option name="taskNames">
+          <list />
+        </option>
+        <option name="tasksSettings">
+          <list>
+            <TaskSettings>
+              <option name="arguments">
+                <list />
+              </option>
+              <option name="description" />
+              <option name="name" value=":module:cleanTest" />
+            </TaskSettings>
+            <TaskSettings>
+              <option name="arguments">
+                <list />
+              </option>
+              <option name="description" />
+              <option name="name" value=":module:test" />
+            </TaskSettings>
+          </list>
+        </option>
+        <option name="unorderedArguments">
+          <set />
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+    """.trimIndent()) {
+      val taskNames = taskNames
+      taskNames.add(":module:cleanTest")
+      taskNames.add(":module:test")
+      scriptParameters = "--tests \"TestCase\" --continue"
+    }
+    assertExternalSystemTaskExecutionSettings("""
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" />
+        <option name="externalSystemIdString" />
+        <option name="scriptParameters" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list />
+        </option>
+        <option name="tasksSettings">
+          <list>
+            <TaskSettings>
+              <option name="arguments">
+                <list />
+              </option>
+              <option name="description" />
+              <option name="name" value=":module:cleanTest" />
+            </TaskSettings>
+            <TaskSettings>
+              <option name="arguments">
+                <list>
+                  <option value="--tests &quot;TestCase&quot;" />
+                </list>
+              </option>
+              <option name="description" />
+              <option name="name" value=":module:test" />
+            </TaskSettings>
+          </list>
+        </option>
+        <option name="unorderedArguments">
+          <set>
+            <option value="--continue" />
+          </set>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+    """.trimIndent()) {
+      addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
+      addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"TestCase\"")))
+      addUnorderedParameter("--continue")
+    }
+    assertExternalSystemTaskExecutionSettings("""
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" />
+        <option name="externalSystemIdString" />
+        <option name="scriptParameters" value="--tests &quot;TestCase&quot; --continue" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list />
+        </option>
+        <option name="tasksSettings">
+          <list>
+            <TaskSettings>
+              <option name="arguments">
+                <list />
+              </option>
+              <option name="description" />
+              <option name="name" value=":module:cleanTest" />
+            </TaskSettings>
+            <TaskSettings>
+              <option name="arguments">
+                <list />
+              </option>
+              <option name="description" />
+              <option name="name" value=":module:test" />
+            </TaskSettings>
+          </list>
+        </option>
+        <option name="unorderedArguments">
+          <set />
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+    """.trimIndent()) {
+      addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
+      addTaskSettings(TaskSettingsImpl(":module:test"))
+      scriptParameters = "--tests \"TestCase\" --continue"
+    }
+  }
+
+  fun `test settings deserialization from xml`() {
+    assertEqualsExternalSystemTaskExecutionSettings("""
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" />
+        <option name="externalSystemIdString" />
+        <option name="scriptParameters" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list />
+        </option>
+        <option name="tasksSettings">
+          <list>
+            <TaskSettings>
+              <option name="arguments">
+                <list />
+              </option>
+              <option name="description" />
+              <option name="name" value=":cleanTest" />
+            </TaskSettings>
+            <TaskSettings>
+              <option name="arguments">
+                <list>
+                  <option value="--tests &quot;Test&quot;" />
+                </list>
+              </option>
+              <option name="description" />
+              <option name="name" value=":test" />
+            </TaskSettings>
+            <TaskSettings>
+              <option name="arguments">
+                <list />
+              </option>
+              <option name="description" />
+              <option name="name" value=":module:cleanTest" />
+            </TaskSettings>
+            <TaskSettings>
+              <option name="arguments">
+                <list>
+                  <option value="--tests &quot;Test&quot;" />
+                </list>
+              </option>
+              <option name="description" />
+              <option name="name" value=":module:test" />
+            </TaskSettings>
+          </list>
+        </option>
+        <option name="unorderedArguments">
+          <set>
+            <option value="--continue" />
+          </set>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+    """.trimIndent()) {
+      addTaskSettings(TaskSettingsImpl(":cleanTest"))
+      addTaskSettings(TaskSettingsImpl(":test", listOf("--tests \"Test\"")))
+      addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
+      addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"Test\"")))
+      addUnorderedParameter("--continue")
+    }
+    assertEqualsExternalSystemTaskExecutionSettings("""
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" />
+        <option name="externalSystemIdString" />
+        <option name="scriptParameters" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list />
+        </option>
+        <option name="tasksSettings">
+          <list>
+            <TaskSettings>
+              <option name="arguments">
+                <list />
+              </option>
+              <option name="description" />
+              <option name="name" value=":cleanTest" />
+            </TaskSettings>
+            <TaskSettings>
+              <option name="arguments">
+                <list>
+                  <option value="--tests &quot;Test1&quot;" />
+                  <option value="--tests &quot;Test2&quot;" />
+                  <option value="--tests &quot;Test3&quot;" />
+                </list>
+              </option>
+              <option name="description" />
+              <option name="name" value=":test" />
+            </TaskSettings>
+            <TaskSettings>
+              <option name="arguments">
+                <list />
+              </option>
+              <option name="description" />
+              <option name="name" value=":module:cleanTest" />
+            </TaskSettings>
+            <TaskSettings>
+              <option name="arguments">
+                <list>
+                  <option value="--tests &quot;Test4&quot;" />
+                  <option value="--tests &quot;Test5&quot;" />
+                </list>
+              </option>
+              <option name="description" />
+              <option name="name" value=":module:test" />
+            </TaskSettings>
+          </list>
+        </option>
+        <option name="unorderedArguments">
+          <set>
+            <option value="--continue" />
+          </set>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+    """.trimIndent()) {
+      addTaskSettings(TaskSettingsImpl(":cleanTest"))
+      addTaskSettings(TaskSettingsImpl(":test", listOf("--tests \"Test1\"", "--tests \"Test2\"", "--tests \"Test3\"")))
+      addTaskSettings(TaskSettingsImpl(":module:cleanTest"))
+      addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"Test4\"", "--tests \"Test5\"")))
+      addUnorderedParameter("--continue")
+    }
+    assertEqualsExternalSystemTaskExecutionSettings("""
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" />
+        <option name="externalSystemIdString" />
+        <option name="scriptParameters" value="--tests &quot;TestCase&quot; --continue" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
           <list>
             <option value=":module:cleanTest" />
             <option value=":module:test" />
@@ -294,7 +549,7 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
       taskNames.add(":module:test")
       scriptParameters = "--tests \"TestCase\" --continue"
     }
-    assertExternalSystemTaskExecutionSettings("""
+    assertEqualsExternalSystemTaskExecutionSettings("""
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" />
@@ -333,7 +588,7 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
       addTaskSettings(TaskSettingsImpl(":module:test", listOf("--tests \"TestCase\"")))
       addUnorderedParameter("--continue")
     }
-    assertExternalSystemTaskExecutionSettings("""
+    assertEqualsExternalSystemTaskExecutionSettings("""
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" />
@@ -361,6 +616,16 @@ class ExternalSystemTaskExecutionSettingsTest : UsefulTestCase() {
       addTaskSettings(TaskSettingsImpl(":module:test"))
       scriptParameters = "--tests \"TestCase\" --continue"
     }
+  }
+
+  private fun assertEqualsExternalSystemTaskExecutionSettings(xml: String, configuration: ExternalSystemTaskExecutionSettings.() -> Unit) {
+    val settings = ExternalSystemTaskExecutionSettings().apply(configuration)
+    val element = JDOMUtil.load(xml)
+    val restoredSettingsState = XmlSerializer.deserialize(element, ExternalSystemTaskExecutionSettingsState::class.java)
+    val restoredSettings = restoredSettingsState.toTaskExecutionSettings()
+    assertEquals(settings.toString(), restoredSettings.toString())
+    assertEquals(settings, restoredSettings)
+    assertTrue(settings.isSameSettings(restoredSettings))
   }
 
   private fun assertExternalSystemTaskExecutionSettings(xml: String, configuration: ExternalSystemTaskExecutionSettings.() -> Unit) {
