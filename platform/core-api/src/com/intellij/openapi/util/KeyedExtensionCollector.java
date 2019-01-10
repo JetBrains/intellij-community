@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -90,8 +90,9 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     Extensions.getRootArea().addAvailabilityListener(epName, myExtensionPointAvailabilityListener);
   }
 
-  public KeyedExtensionCollector(@NonNls @NotNull String epName, Disposable parentDisposable) {
+  public KeyedExtensionCollector(@NonNls @NotNull String epName, @Nullable Disposable parentDisposable) {
     this(epName);
+    if (parentDisposable == null) return;
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {

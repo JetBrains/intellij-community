@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
  */
 package com.intellij.lang;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,6 +21,7 @@ import java.util.Set;
 import static com.intellij.lang.LanguageUtil.matchingMetaLanguages;
 
 public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
+
   private final T myDefaultImplementation;
   private final /* non static!!! */ Key<T> IN_LANGUAGE_CACHE;
 
@@ -28,9 +30,13 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   }
 
   public LanguageExtension(@NonNls final String epName, @Nullable final T defaultImplementation) {
-    super(epName);
+    this(epName, defaultImplementation, null);
+  }
+
+  public LanguageExtension(@NonNls String epName, @Nullable T defaultImplementation, @Nullable Disposable parentDisposable) {
+    super(epName, parentDisposable);
     myDefaultImplementation = defaultImplementation;
-    IN_LANGUAGE_CACHE = Key.create("EXTENSIONS_IN_LANGUAGE_"+epName);
+    IN_LANGUAGE_CACHE = Key.create("EXTENSIONS_IN_LANGUAGE_" + epName);
   }
 
   @NotNull
