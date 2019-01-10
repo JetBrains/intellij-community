@@ -9,7 +9,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
- * A computation (typically an anonymous class) to used in {@link CachedValue} to cache some computation result.
+ * A computation (typically a lambda) used by {@link CachedValue} to calculate a result and cache it.
+ * The provider should not have side effects and shouldn't depend on variables that change during CachedValue lifetime. See
+ * {@link CachedValue} documentation for examples.<p></p>
  * @param <T> the type of the cached value
  */
 @FunctionalInterface
