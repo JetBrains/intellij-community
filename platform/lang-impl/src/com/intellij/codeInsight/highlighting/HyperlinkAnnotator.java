@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.paths.WebReference;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,14 +20,19 @@ import org.jetbrains.annotations.NotNull;
 
 public class HyperlinkAnnotator implements Annotator {
 
-  private static final String ourMessage = getMessage();
+  private static final Key<String> messageKey = Key.create("hyperlink.message");
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     for (PsiReference reference : element.getReferences()) {
       if (reference instanceof WebReference) {
-        Annotation annotation =
-          holder.createInfoAnnotation(reference.getRangeInElement().shiftRight(element.getTextRange().getStartOffset()), ourMessage);
+        String message = holder.getCurrentAnnotationSession().getUserData(messageKey);
+        if (message == null) {
+          message = getMessage();
+          holder.getCurrentAnnotationSession().putUserData(messageKey, message);
+        }
+        TextRange range = reference.getRangeInElement().shiftRight(element.getTextRange().getStartOffset());
+        Annotation annotation = holder.createInfoAnnotation(range, message);
         annotation.setTextAttributes(CodeInsightColors.INACTIVE_HYPERLINK_ATTRIBUTES);
       }
     }
