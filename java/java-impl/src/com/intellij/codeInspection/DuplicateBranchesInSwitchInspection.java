@@ -1,10 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.guess.impl.ExpressionTypeMemoryState;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -441,21 +439,14 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     int hash() {
       int hash = myStatements.length;
       for (PsiStatement statement : myStatements) {
-        hash = hash * 31 + hash(statement, 2); // Don't want to hash the whole PSI tree because it might be quite slow
+        hash = hash * 31 + hashElement(statement, 2); // Don't want to hash the whole PSI tree because it might be quite slow
       }
       return hash;
     }
 
-    private static int hash(PsiElement element, int depth) {
-      if (element instanceof PsiNewExpression) {
-        // This probably should be done in EXPRESSION_HASHING_STRATEGY, but it might affect completion in a flaky way
-        PsiJavaCodeReferenceElement reference = ((PsiNewExpression)element).getClassOrAnonymousClassReference();
-        if (reference != null) {
-          return Objects.hashCode(reference.getReferenceName()) * 31 + JavaElementType.NEW_EXPRESSION.getIndex();
-        }
-      }
+    private static int hashElement(PsiElement element, int depth) {
       if (element instanceof PsiExpression) {
-        return ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.computeHashCode((PsiExpression)element);
+        return hashExpression((PsiExpression)element);
       }
       IElementType type = PsiUtilCore.getElementType(element);
       int hash = type != null ? type.hashCode() : 0;
@@ -466,7 +457,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
               child instanceof PsiJavaToken) { // significant tokens are taken into account by getElementType()
             continue;
           }
-          hash = hash * 31 + hash(child, depth - 1);
+          hash = hash * 31 + hashElement(child, depth - 1);
           count++;
         }
         if (count != 0) {
@@ -474,6 +465,39 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
         }
       }
       return hash;
+    }
+
+    private static int hashExpression(@Nullable PsiExpression expression) {
+      if (expression == null) {
+        return 0;
+      }
+      if (expression instanceof PsiParenthesizedExpression) {
+        return hashExpression(((PsiParenthesizedExpression)expression).getExpression());
+      }
+
+      short index = expression.getNode().getElementType().getIndex();
+      if (expression instanceof PsiReferenceExpression) {
+        return hashReference((PsiReferenceExpression)expression, index);
+      }
+      if (expression instanceof PsiMethodCallExpression) {
+        return hashReference(((PsiMethodCallExpression)expression).getMethodExpression(), index);
+      }
+      if (expression instanceof PsiNewExpression) {
+        PsiJavaCodeReferenceElement reference = ((PsiNewExpression)expression).getClassOrAnonymousClassReference();
+        if (reference != null) {
+          return hashReference(reference, index);
+        }
+      }
+      if (expression instanceof PsiAssignmentExpression) {
+        PsiExpression lExpression = ((PsiAssignmentExpression)expression).getLExpression();
+        PsiExpression rExpression = ((PsiAssignmentExpression)expression).getRExpression();
+        return ((hashExpression(lExpression) * 31) + hashExpression(rExpression)) * 31 + index;
+      }
+      return index;
+    }
+
+    private static int hashReference(@NotNull PsiJavaCodeReferenceElement reference, short index) {
+      return Objects.hashCode(reference.getReferenceName()) * 31 + index;
     }
 
     boolean isDefault() {
@@ -584,6 +608,11 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
         }
       }
       return false;
+    }
+
+    @Override
+    public String toString() {
+      return getSwitchLabelText();
     }
   }
 
