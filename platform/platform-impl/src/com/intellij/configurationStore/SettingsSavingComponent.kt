@@ -4,3 +4,12 @@ package com.intellij.configurationStore
 interface SettingsSavingComponent {
   suspend fun save()
 }
+
+interface SettingsSavingComponentJavaAdapter : SettingsSavingComponent {
+  @JvmDefault
+  override  suspend fun save() {
+    doSave()
+  }
+
+  fun doSave()
+}

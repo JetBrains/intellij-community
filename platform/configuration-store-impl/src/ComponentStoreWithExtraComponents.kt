@@ -5,23 +5,41 @@ import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
+  @Suppress("DEPRECATION")
   private val settingsSavingComponents = ContainerUtil.createLockFreeCopyOnWriteList<SettingsSavingComponent>()
+  private val asyncSettingsSavingComponents = ContainerUtil.createLockFreeCopyOnWriteList<com.intellij.configurationStore.SettingsSavingComponent>()
 
   override fun initComponent(component: Any, isService: Boolean) {
-    if (component is SettingsSavingComponent) {
+    @Suppress("DEPRECATION")
+    if (component is com.intellij.configurationStore.SettingsSavingComponent) {
+      asyncSettingsSavingComponents.add(component)
+    }
+    else if (component is SettingsSavingComponent) {
       settingsSavingComponents.add(component)
     }
 
     super.initComponent(component, isService)
   }
 
-  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
-    // mist be saved sequentially - not in parallel to components (component state uses scheme manager in an ipr project, so, we must save it before)
-    for (settingsSavingComponent in settingsSavingComponents) {
-      runAndCollectException(errors) {
-        settingsSavingComponent.save()
+  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) = coroutineScope {
+    launch {
+      // mist be saved sequentially - not in parallel to components (component state uses scheme manager in an ipr project, so, we must save it before)
+      for (settingsSavingComponent in settingsSavingComponents) {
+        runAndCollectException(errors) {
+          settingsSavingComponent.save()
+        }
+      }
+    }
+
+    launch {
+      for (settingsSavingComponent in asyncSettingsSavingComponents) {
+        runAndCollectException(errors) {
+          settingsSavingComponent.save()
+        }
       }
     }
 

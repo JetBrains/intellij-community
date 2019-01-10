@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManagerEx;
 import com.intellij.openapi.components.*;
@@ -52,7 +53,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
  * @author Vladislav.Soroka
  */
 @State(name = "ExternalProjectsData", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class ExternalProjectsDataStorage implements SettingsSavingComponent, PersistentStateComponent<ExternalProjectsDataStorage.State> {
+public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaAdapter, PersistentStateComponent<ExternalProjectsDataStorage.State> {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsDataStorage.class);
 
   private static final String STORAGE_VERSION = ExternalProjectsDataStorage.class.getSimpleName() + ".2";
@@ -146,8 +147,10 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   }
 
   @Override
-  public synchronized void save() {
-    if (!changed.compareAndSet(true, false)) return;
+  public synchronized void doSave() {
+    if (!changed.compareAndSet(true, false)) {
+      return;
+    }
 
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new MySaveTask(myProject, myExternalRootProjects.values()), 0);
@@ -156,7 +159,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   @TestOnly
   public synchronized void saveAndWait() throws Exception {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode(), "This method is available for tests only");
-    save();
+    doSave();
     myAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.nio.file.Paths
 
-const val ROOT_CONFIG: String = "\$ROOT_CONFIG$"
+const val ROOT_CONFIG = "\$ROOT_CONFIG$"
 
 sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingComponent {
   private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, Scheme>>()
@@ -145,6 +145,6 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   @TestOnly
   class TestSchemeManagerFactory(private val basePath: Path) : SchemeManagerFactoryBase() {
-    override fun pathToFile(path: String): Path = basePath.resolve(path)!!
+    override fun pathToFile(path: String) = basePath.resolve(path)!!
   }
 }

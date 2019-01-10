@@ -22,14 +22,17 @@ import java.io.BufferedOutputStream
 import java.io.IOException
 import java.nio.file.Path
 import java.util.Collections
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.collections.ArrayList
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
   private val units = ArrayList(Collections.nCopies<SoftReference<StatisticsUnit>>(UNIT_COUNT, null))
   private val modifiedUnits = THashSet<StatisticsUnit>()
   private var testingStatistics = false
 
-  private val lock = Any()
+  private val lock = ReentrantReadWriteLock()
 
   override fun getUseCount(info: StatisticsInfo): Int {
     if (info === StatisticsInfo.EMPTY) {
@@ -46,9 +49,8 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
   private fun doGetUseCount(info: StatisticsInfo): Int {
     val key = info.context
     val unitNumber = getUnitNumber(key)
-    synchronized(lock) {
-      val unit = getUnit(unitNumber)
-      return unit.getData(key, info.value)
+    return lock.read {
+      getUnit(unitNumber).getData(key, info.value)
     }
   }
 
@@ -65,9 +67,9 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
   private fun doGetRecency(info: StatisticsInfo): Int {
     val key1 = info.context
     val unitNumber = getUnitNumber(key1)
-    synchronized(lock) {
+    return lock.read {
       val unit = getUnit(unitNumber)
-      return unit.getRecency(key1, info.value)
+      unit.getRecency(key1, info.value)
     }
   }
 
@@ -87,7 +89,7 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
   private fun doIncUseCount(info: StatisticsInfo) {
     val key1 = info.context
     val unitNumber = getUnitNumber(key1)
-    synchronized(lock) {
+    lock.write {
       val unit = getUnit(unitNumber)
       unit.incData(key1, info.value)
       modifiedUnits.add(unit)
@@ -95,15 +97,13 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
   }
 
   override fun getAllValues(context: String): Array<StatisticsInfo> {
-    return synchronized(lock) {
-      getUnit(getUnitNumber(context)).getKeys2(context)
-    }
+    return lock.read { getUnit(getUnitNumber(context)).getKeys2(context) }
       .map { StatisticsInfo(context, it) }
       .toTypedArray()
   }
 
   override suspend fun save() {
-    synchronized(lock) {
+    lock.write {
       if (!ApplicationManager.getApplication().isUnitTestMode) {
         for (unit in modifiedUnits) {
           saveUnit(unit.number)
@@ -142,7 +142,7 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
   fun enableStatistics(parentDisposable: Disposable) {
     testingStatistics = true
     Disposer.register(parentDisposable, Disposable {
-      synchronized(lock) {
+      lock.write {
         units.fill(null)
       }
       testingStatistics = false

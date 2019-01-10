@@ -10,7 +10,9 @@ import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.ComponentManagerImpl
-import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
+import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -81,9 +83,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   abstract override val storageManager: StateStorageManager
 
-  internal fun getComponents(): Map<String, ComponentInfo> {
-    return components
-  }
+  internal fun getComponents(): Map<String, ComponentInfo> = components
 
   override fun initComponent(component: Any, isService: Boolean) {
     var componentName = ""
@@ -94,7 +94,6 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
       else if (component is JDOMExternalizable) {
         componentName = ComponentManagerImpl.getComponentName(component)
-        @Suppress("DEPRECATION")
         initJdomExternalizable(component, componentName)
       }
     }
@@ -103,7 +102,6 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
     catch (e: Exception) {
       LOG.error(PluginManagerCore.createPluginException("Cannot init $componentName component state", e, component.javaClass))
-      return
     }
   }
 
