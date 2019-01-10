@@ -378,17 +378,18 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     @Override
-    public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
-      final VirtualFile file = event.getFile();
+    public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
+      VirtualFile file = event.getFile();
       if (isEventIgnored(event)) {
         return;
       }
-      if (!myChangeListManager.isIgnoredFile(file)) {
-        addFileToDelete(file);
-        return;
+      // files are checked for being ignored, directories are handled recursively
+      if (!file.isDirectory()) {
+        if (!myChangeListManager.isIgnoredFile(file)) {
+          addFileToDelete(file);
+        }
       }
-      // files are ignored, directories are handled recursively
-      if (event.getFile().isDirectory()) {
+      else {
         final List<VirtualFile> list = new LinkedList<>();
         VcsUtil.collectFiles(file, list, true, isDirectoryVersioningSupported());
         for (VirtualFile child : list) {
