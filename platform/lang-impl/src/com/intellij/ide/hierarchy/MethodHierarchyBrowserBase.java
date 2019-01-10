@@ -83,6 +83,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
   protected void prependActions(@NotNull DefaultActionGroup actionGroup) {
     actionGroup.add(new AlphaSortAction());
     actionGroup.add(new ShowImplementationsOnlyAction());
+    actionGroup.add(new ChangeScopeAction());
   }
 
   @Override
