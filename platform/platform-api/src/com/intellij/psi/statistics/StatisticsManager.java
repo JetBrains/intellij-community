@@ -2,14 +2,13 @@
 package com.intellij.psi.statistics;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class StatisticsManager implements SettingsSavingComponent {
+public abstract class StatisticsManager {
   /**
    * The number of last entries stored for each context in {@link #getUseCount(StatisticsInfo)}.
    * If more entries are used over time, use count will be 0 for the most ancient entries.

@@ -1,219 +1,179 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.psi.statistics.impl;
+package com.intellij.psi.statistics.impl
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.statistics.StatisticsInfo;
-import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.reference.SoftReference;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.ScrambledInputStream;
-import com.intellij.util.ScrambledOutputStream;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.CommonBundle
+import com.intellij.configurationStore.SettingsSavingComponent
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
+import com.intellij.psi.statistics.StatisticsInfo
+import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.reference.SoftReference
+import com.intellij.util.ScrambledInputStream
+import com.intellij.util.ScrambledOutputStream
+import com.intellij.util.io.inputStream
+import com.intellij.util.io.outputStream
+import gnu.trove.THashSet
+import org.jetbrains.annotations.TestOnly
+import java.io.BufferedOutputStream
+import java.io.IOException
+import java.nio.file.Path
+import java.util.Collections
+import kotlin.collections.ArrayList
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
+  private val units = ArrayList(Collections.nCopies<SoftReference<StatisticsUnit>>(UNIT_COUNT, null))
+  private val modifiedUnits = THashSet<StatisticsUnit>()
+  private var testingStatistics = false
 
-public class StatisticsManagerImpl extends StatisticsManager {
-  private static final int UNIT_COUNT = 997;
-  private static final Object LOCK = new Object();
+  private val lock = Any()
 
-  private final List<SoftReference<StatisticsUnit>> myUnits = ContainerUtil.newArrayList(Collections.nCopies(UNIT_COUNT, null));
-  private final Set<StatisticsUnit> myModifiedUnits = new THashSet<>();
-  private boolean myTestingStatistics;
-
-  @Override
-  public int getUseCount(@NotNull final StatisticsInfo info) {
-    if (info == StatisticsInfo.EMPTY) return 0;
-
-    int useCount = 0;
-
-    for (StatisticsInfo conjunct : info.getConjuncts()) {
-      useCount = Math.max(doGetUseCount(conjunct), useCount);
+  override fun getUseCount(info: StatisticsInfo): Int {
+    if (info === StatisticsInfo.EMPTY) {
+      return 0
     }
 
-    return useCount;
+    var useCount = 0
+    for (conjunct in info.conjuncts) {
+      useCount = Math.max(doGetUseCount(conjunct), useCount)
+    }
+    return useCount
   }
 
-  private int doGetUseCount(StatisticsInfo info) {
-    String key1 = info.getContext();
-    int unitNumber = getUnitNumber(key1);
-    synchronized (LOCK) {
-      StatisticsUnit unit = getUnit(unitNumber);
-      return unit.getData(key1, info.getValue());
+  private fun doGetUseCount(info: StatisticsInfo): Int {
+    val key = info.context
+    val unitNumber = getUnitNumber(key)
+    synchronized(lock) {
+      val unit = getUnit(unitNumber)
+      return unit.getData(key, info.value)
     }
   }
 
-  @Override
-  public int getLastUseRecency(@NotNull StatisticsInfo info) {
-    if (info == StatisticsInfo.EMPTY) return 0;
+  override fun getLastUseRecency(info: StatisticsInfo): Int {
+    if (info === StatisticsInfo.EMPTY) return 0
 
-    int recency = Integer.MAX_VALUE;
-    for (StatisticsInfo conjunct : info.getConjuncts()) {
-      recency = Math.min(doGetRecency(conjunct), recency);
+    var recency = Integer.MAX_VALUE
+    for (conjunct in info.conjuncts) {
+      recency = Math.min(doGetRecency(conjunct), recency)
     }
-    return recency;
+    return recency
   }
 
-  private int doGetRecency(StatisticsInfo info) {
-    String key1 = info.getContext();
-    int unitNumber = getUnitNumber(key1);
-    synchronized (LOCK) {
-      StatisticsUnit unit = getUnit(unitNumber);
-      return unit.getRecency(key1, info.getValue());
-    }
-  }
-
-  @Override
-  public void incUseCount(@NotNull final StatisticsInfo info) {
-    if (info == StatisticsInfo.EMPTY) return;
-    if (ApplicationManager.getApplication().isUnitTestMode() && !myTestingStatistics) {
-      return;
-    }
-
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    for (StatisticsInfo conjunct : info.getConjuncts()) {
-      doIncUseCount(conjunct);
+  private fun doGetRecency(info: StatisticsInfo): Int {
+    val key1 = info.context
+    val unitNumber = getUnitNumber(key1)
+    synchronized(lock) {
+      val unit = getUnit(unitNumber)
+      return unit.getRecency(key1, info.value)
     }
   }
 
-  private void doIncUseCount(StatisticsInfo info) {
-    final String key1 = info.getContext();
-    int unitNumber = getUnitNumber(key1);
-    synchronized (LOCK) {
-      StatisticsUnit unit = getUnit(unitNumber);
-      unit.incData(key1, info.getValue());
-      myModifiedUnits.add(unit);
+  override fun incUseCount(info: StatisticsInfo) {
+    if (info === StatisticsInfo.EMPTY) return
+    if (ApplicationManager.getApplication().isUnitTestMode && !testingStatistics) {
+      return
+    }
+
+    ApplicationManager.getApplication().assertIsDispatchThread()
+
+    for (conjunct in info.conjuncts) {
+      doIncUseCount(conjunct)
     }
   }
 
-  @Override
-  public StatisticsInfo[] getAllValues(final String context) {
-    final String[] strings;
-    synchronized (LOCK) {
-      strings = getUnit(getUnitNumber(context)).getKeys2(context);
+  private fun doIncUseCount(info: StatisticsInfo) {
+    val key1 = info.context
+    val unitNumber = getUnitNumber(key1)
+    synchronized(lock) {
+      val unit = getUnit(unitNumber)
+      unit.incData(key1, info.value)
+      modifiedUnits.add(unit)
     }
-    return ContainerUtil.map2Array(strings, StatisticsInfo.class, (NotNullFunction<String, StatisticsInfo>)s -> new StatisticsInfo(context, s));
   }
 
-  @Override
-  public void save() {
-    synchronized (LOCK) {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-        for (StatisticsUnit unit : myModifiedUnits) {
-          saveUnit(unit.getNumber());
+  override fun getAllValues(context: String): Array<StatisticsInfo> {
+    return synchronized(lock) {
+      getUnit(getUnitNumber(context)).getKeys2(context)
+    }
+      .map { StatisticsInfo(context, it) }
+      .toTypedArray()
+  }
+
+  override suspend fun save() {
+    synchronized(lock) {
+      if (!ApplicationManager.getApplication().isUnitTestMode) {
+        for (unit in modifiedUnits) {
+          saveUnit(unit.number)
         }
       }
-      myModifiedUnits.clear();
+      modifiedUnits.clear()
     }
   }
 
-  @NotNull
-  private StatisticsUnit getUnit(int unitNumber) {
-    StatisticsUnit unit = SoftReference.dereference(myUnits.get(unitNumber));
-    if (unit != null) {
-      return unit;
-    }
-
-    unit = loadUnit(unitNumber);
-    myUnits.set(unitNumber, new SoftReference<>(unit));
-    return unit;
-  }
-
-  @NotNull
-  private static StatisticsUnit loadUnit(int unitNumber) {
-    StatisticsUnit unit = new StatisticsUnit(unitNumber);
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      Path path = getPathToUnit(unitNumber);
-      try (InputStream in = new ScrambledInputStream(new BufferedInputStream(Files.newInputStream(path)))) {
-        unit.read(in);
-      }
-      catch (IOException | WrongFormatException ignored) {
-      }
-    }
-    return unit;
-  }
-
-  private void saveUnit(int unitNumber) {
-    if (!createStoreFolder()) {
-      return;
-    }
-
-    StatisticsUnit unit = SoftReference.dereference(myUnits.get(unitNumber));
+  private fun getUnit(unitNumber: Int): StatisticsUnit {
+    var unit = SoftReference.dereference(units[unitNumber])
     if (unit == null) {
-      return;
+      unit = loadUnit(unitNumber)
+      units[unitNumber] = SoftReference(unit)
     }
-
-    Path path = getPathToUnit(unitNumber);
-    try (OutputStream out = new ScrambledOutputStream(new BufferedOutputStream(Files.newOutputStream(path)))) {
-      unit.write(out);
-    }
-    catch (IOException e) {
-      Messages.showMessageDialog(
-        IdeBundle.message("error.saving.statistics", e.getLocalizedMessage()),
-        CommonBundle.getErrorTitle(),
-        Messages.getErrorIcon()
-      );
-    }
+    return unit
   }
 
-  private static int getUnitNumber(String key1) {
-    return Math.abs(key1.hashCode() % UNIT_COUNT);
-  }
-
-  private static boolean createStoreFolder() {
-    Path storeDir = getStoreDir();
+  private fun saveUnit(unitNumber: Int) {
+    val unit = SoftReference.dereference(units[unitNumber]) ?: return
     try {
-      Files.createDirectories(storeDir);
+      ScrambledOutputStream(BufferedOutputStream(getPathToUnit(unitNumber).outputStream())).use {
+        out -> unit.write(out)
+      }
     }
-    catch (IOException e) {
-      Logger.getInstance(StatisticsManager.class).error(e);
+    catch (e: IOException) {
       Messages.showMessageDialog(
-        IdeBundle.message("error.saving.statistic.failed.to.create.folder", storeDir.toString()),
+        IdeBundle.message("error.saving.statistics", e.localizedMessage),
         CommonBundle.getErrorTitle(),
         Messages.getErrorIcon()
-      );
-      return false;
+      )
     }
-    return true;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  @NotNull
-  private static Path getPathToUnit(int unitNumber) {
-    return getStoreDir().resolve("unit." + unitNumber);
-  }
-
-  private static Path getStoreDir() {
-    return PathManagerEx.getAppSystemDir().resolve("stat");
   }
 
   @TestOnly
-  public void enableStatistics(@NotNull Disposable parentDisposable) {
-    myTestingStatistics = true;
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        synchronized (LOCK) {
-          Collections.fill(myUnits, null);
-        }
-        myTestingStatistics = false;
+  fun enableStatistics(parentDisposable: Disposable) {
+    testingStatistics = true
+    Disposer.register(parentDisposable, Disposable {
+      synchronized(lock) {
+        units.fill(null)
       }
-    });
+      testingStatistics = false
+    })
   }
 }
+
+private const val UNIT_COUNT = 997
+
+private fun loadUnit(unitNumber: Int): StatisticsUnit {
+  val unit = StatisticsUnit(unitNumber)
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    return unit
+  }
+
+  val path = getPathToUnit(unitNumber)
+  try {
+    ScrambledInputStream(path.inputStream().buffered()).use {
+      unit.read(it)
+    }
+  }
+  catch (ignored: IOException) {
+  }
+  catch (ignored: WrongFormatException) {
+  }
+  return unit
+}
+
+private fun getUnitNumber(key1: String) = Math.abs(key1.hashCode() % UNIT_COUNT)
+
+private fun getPathToUnit(unitNumber: Int) = storeDir.resolve("unit.$unitNumber")
+
+private val storeDir: Path
+  get() = appSystemDir.resolve("stat")
