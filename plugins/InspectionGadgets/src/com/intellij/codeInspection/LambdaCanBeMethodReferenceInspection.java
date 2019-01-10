@@ -593,7 +593,9 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiLambdaExpression) {
-        element = LambdaUtil.extractSingleExpressionFromBody(((PsiLambdaExpression)element).getBody());
+        MethodReferenceCandidate methodReferenceCandidate = extractMethodReferenceCandidateExpression(((PsiLambdaExpression)element).getBody());
+        if (methodReferenceCandidate == null) return;
+        element = methodReferenceCandidate.myExpression;
       }
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
       if (lambdaExpression == null) return;
