@@ -16,7 +16,7 @@
 package com.intellij.troubleshooting.ui;
 
 
-import com.intellij.ide.GeneralTroubleInfoCollector;
+import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -43,7 +43,7 @@ public class CollectTroubleshootingInformationDialog extends DialogWrapper {
   public CollectTroubleshootingInformationDialog(@NotNull Project project) {
     super(project);
     setTitle("Collect Troubleshooting Information");
-    GeneralTroubleInfoCollector generalInfoCollector = new GeneralTroubleInfoCollector();
+    CompositeGeneralTroubleInfoCollector generalInfoCollector = new CompositeGeneralTroubleInfoCollector();
     troubleTypeBox.addItem(generalInfoCollector);
     TroubleInfoCollector[] extensions = TroubleInfoCollector.EP_SETTINGS.getExtensions();
     for(TroubleInfoCollector troubleInfoCollector : extensions){
