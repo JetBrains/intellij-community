@@ -43,14 +43,15 @@ import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.validation.CompatibilityVisitor;
 import com.jetbrains.python.validation.UnsupportedFeaturesUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * User: catherine
@@ -71,14 +72,20 @@ public class PyCompatibilityInspection extends PyInspection {
   public static final List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
 
   @NotNull
-  public static final List<String> SUPPORTED_LEVELS = ContainerUtil.map(LanguageLevel.SUPPORTED_LEVELS, LanguageLevel::toString);
+  public static final List<LanguageLevel> SUPPORTED_LEVELS = StreamEx
+    .of(LanguageLevel.values())
+    .filter(v -> v.isPython2() && v.isAtLeast(LanguageLevel.PYTHON26) || v.isAtLeast(LanguageLevel.PYTHON34))
+    .toImmutableList();
+
+  @NotNull
+  private static final List<String> SUPPORTED_IN_SETTINGS = ContainerUtil.map(SUPPORTED_LEVELS, LanguageLevel::toString);
 
   // Legacy DefaultJDOMExternalizer requires public fields for proper serialization
   public JDOMExternalizableStringList ourVersions = new JDOMExternalizableStringList();
 
   public PyCompatibilityInspection () {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ourVersions.addAll(SUPPORTED_LEVELS);
+      ourVersions.addAll(SUPPORTED_IN_SETTINGS);
     }
     else {
       ourVersions.addAll(ContainerUtil.map(DEFAULT_PYTHON_VERSIONS, LanguageLevel::toString));
@@ -101,7 +108,7 @@ public class PyCompatibilityInspection extends PyInspection {
     List<LanguageLevel> result = new ArrayList<>();
 
     for (String version : ourVersions) {
-      if (SUPPORTED_LEVELS.contains(version)) {
+      if (SUPPORTED_IN_SETTINGS.contains(version)) {
         LanguageLevel level = LanguageLevel.fromPythonVersion(version);
         result.add(level);
       }
@@ -119,8 +126,8 @@ public class PyCompatibilityInspection extends PyInspection {
   @Override
   public JComponent createOptionsPanel() {
     final ElementsChooser<String> chooser = new ElementsChooser<>(true);
-    chooser.setElements(SUPPORTED_LEVELS, false);
-    chooser.markElements(ContainerUtil.filter(ourVersions, SUPPORTED_LEVELS::contains));
+    chooser.setElements(SUPPORTED_IN_SETTINGS, false);
+    chooser.markElements(ContainerUtil.filter(ourVersions, SUPPORTED_IN_SETTINGS::contains));
     chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
       @Override
       public void elementMarkChanged(String element, boolean isMarked) {
