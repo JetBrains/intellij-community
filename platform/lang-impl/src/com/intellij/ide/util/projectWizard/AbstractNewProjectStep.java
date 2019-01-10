@@ -44,11 +44,16 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
   protected AbstractNewProjectStep(@NotNull Customization<T> customization) {
     super(null, true);
     myCustomization = customization;
+    updateActions();
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
+    updateActions();
+  }
+
+  protected void updateActions() {
     removeAll();
     AbstractCallback<T> callback = myCustomization.createCallback();
     ProjectSpecificAction projectSpecificAction = myCustomization.createProjectSpecificAction(callback);
