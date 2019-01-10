@@ -59,7 +59,8 @@ public class BashDocumentationProvider extends AbstractDocumentationProvider {
     return contextElement;
   }
 
-  private String fetchInfo(String commandName) throws ExecutionException {
+  private String fetchInfo(@Nullable String commandName) throws ExecutionException {
+    if (commandName == null) return null;
     String manExecutable = myManExecutable.getValue();
     if (manExecutable == null) return "Can't find info in your $PATH";
 
