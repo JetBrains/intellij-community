@@ -11,12 +11,20 @@ import org.jetbrains.annotations.Nullable;
 public enum ExternalUpdateManager {
   TOOLBOX("Toolbox"),
   SNAP("Snap"),
-  UNKNOWN(System.getProperty("ide.no.platform.update"));
+  UNKNOWN(null);
 
   public final String toolName;
 
   ExternalUpdateManager(String name) {
-    toolName = "true".equalsIgnoreCase(name) ? "(unknown)" : name;
+    if (name != null) {
+      toolName = name;
+    }
+    else {
+      // historically, TB used 'ide.no.platform.update=true' to disable platform updates;
+      // an absence of its signature path means an abuse of the property by some external entity
+      name = System.getProperty("ide.no.platform.update");
+      toolName = "true".equalsIgnoreCase(name) ? "(unknown)" : name;
+    }
   }
 
   /**
