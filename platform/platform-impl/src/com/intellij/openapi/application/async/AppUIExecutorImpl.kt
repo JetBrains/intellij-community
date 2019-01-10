@@ -20,7 +20,7 @@ import kotlinx.coroutines.Runnable
  * @author peter
  * @author eldar
  */
-internal class AppUIExecutorImpl private constructor(private val myModality: ModalityState,
+internal class AppUIExecutorImpl private constructor(private val modality: ModalityState,
                                                      dispatchers: Array<CoroutineDispatcher>,
                                                      expirableHandles: Set<Expiration>)
   : ExpirableAsyncExecutionSupport<AppUIExecutorEx>(dispatchers, expirableHandles), AppUIExecutorEx {
@@ -42,25 +42,27 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
   })), emptySet<Expiration>())
 
   override fun cloneWith(dispatchers: Array<CoroutineDispatcher>, expirationSet: Set<Expiration>): AppUIExecutorEx =
-    AppUIExecutorImpl(myModality, dispatchers, expirationSet)
+    AppUIExecutorImpl(modality, dispatchers, expirationSet)
 
   override fun later(): AppUIExecutor {
-    val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else null
+    val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else -1
     return withConstraint(object : SimpleContextConstraint {
       @Volatile
-      var usedOnce: Boolean = false
+      var usedOnce = false
 
       override val isCorrectContext: Boolean
-        get() = if (edtEventCount == null)
-          ApplicationManager.getApplication().isDispatchThread
-        else
-          edtEventCount != IdeEventQueue.getInstance().eventCount || usedOnce
+        get() {
+          return when (edtEventCount) {
+            -1 -> ApplicationManager.getApplication().isDispatchThread
+            else -> usedOnce || edtEventCount != IdeEventQueue.getInstance().eventCount
+          }
+        }
 
       override fun schedule(runnable: Runnable) {
         ApplicationManager.getApplication().invokeLater({
                                                           usedOnce = true
                                                           runnable.run()
-                                                        }, myModality)
+                                                        }, modality)
       }
 
       override fun toString() = "later"
@@ -73,7 +75,7 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
         get() = !PsiDocumentManager.getInstance(project).hasUncommitedDocuments()
 
       override fun scheduleExpirable(runnable: Runnable) {
-        PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, myModality)
+        PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, modality)
       }
 
       override fun toString() = "withDocumentsCommitted"
