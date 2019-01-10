@@ -261,7 +261,11 @@
     <!--cached value profiler-->
     <fileTypeFactory implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileTypeFactory"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileEditorProvider"/>
+
     <codeInsight.lineMarkerProvider language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ApplyThemeLineMarkerProvider"/>
+    <spellchecker.support language="JSON"
+                          order="first"
+                          implementationClass="org.jetbrains.idea.devkit.themes.ThemeSpellcheckingStrategy"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>

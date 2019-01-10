@@ -51,7 +51,7 @@ public class ThemeColorAnnotator implements Annotator {
     return LineMarkerSettings.getSettings().isEnabled(ColorLineMarkerProvider.INSTANCE);
   }
 
-  private static boolean isTargetElement(@NotNull PsiElement element) {
+  static boolean isTargetElement(@NotNull PsiElement element) {
     if (!(element instanceof JsonStringLiteral)) return false;
     if (!ThemeJsonSchemaProviderFactory.isAllowedFileName(element.getContainingFile().getName())) return false;
 
