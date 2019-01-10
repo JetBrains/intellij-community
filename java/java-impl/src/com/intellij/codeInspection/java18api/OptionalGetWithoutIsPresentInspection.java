@@ -59,7 +59,8 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
             return !PsiTreeUtil.processElements(context, e -> {
               if (e == qualifier || !(e instanceof PsiMethodCallExpression)) return true;
               PsiMethodCallExpression call = (PsiMethodCallExpression)e;
-              if (!"isPresent".equals(call.getMethodExpression().getReferenceName()) || !call.getArgumentList().isEmpty()) return true;
+              String name = call.getMethodExpression().getReferenceName();
+              if ((!"isPresent".equals(name) && !"isEmpty".equals(name)) || !call.getArgumentList().isEmpty()) return true;
               PsiExpression isPresentQualifier = call.getMethodExpression().getQualifierExpression();
               return isPresentQualifier == null || !PsiEquivalenceUtil.areElementsEquivalent(qualifier, isPresentQualifier);
             });
