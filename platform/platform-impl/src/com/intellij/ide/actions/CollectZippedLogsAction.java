@@ -53,13 +53,13 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
           }
         );
       }
-      final StringBuilder settings = collectInfoFromExtensions(project);
+      final StringBuilder troubleshooting = collectInfoFromExtensions(project);
       final File zippedLogsFile =
         ProgressManager.getInstance().run(new Task.WithResult<File, IOException>(project, "Collecting Log Files", false) {
           @Override
           protected File compute(@NotNull ProgressIndicator indicator) throws IOException {
             indicator.setIndeterminate(true);
-            return createZip(settings);
+            return createZip(troubleshooting);
           }
         });
       if (ShowFilePathAction.isSupported()) {
@@ -75,15 +75,15 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static File createZip(@Nullable StringBuilder settings) throws IOException {
+  private static File createZip(@Nullable StringBuilder troubleshooting) throws IOException {
     String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName().toLowerCase(Locale.US);
     File zippedLogsFile = FileUtil.createTempFile(productName + "-logs-" + getDate(), ".zip");
 
     try (Compressor zip = new Compressor.Zip(zippedLogsFile)) {
       zip.addDirectory(new File(PathManager.getLogPath()));
 
-      if (settings != null) {
-        zip.addFile("settings.txt", settings.toString().getBytes(StandardCharsets.UTF_8));
+      if (troubleshooting != null) {
+        zip.addFile("troubleshooting.txt", troubleshooting.toString().getBytes(StandardCharsets.UTF_8));
       }
 
       for (File javaErrorLog : getJavaErrorLogs()) {
