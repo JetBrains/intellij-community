@@ -246,7 +246,7 @@ public class ProgressIndicatorUtils {
   }
 
   @Nullable
-  public static <T> T withTimeout(long timeoutMs, Computable<T> computable) {
+  public static <T> T withTimeout(long timeoutMs, @NotNull Computable<T> computable) {
     ProgressManager.checkCanceled();
     ProgressIndicatorBase progress = new ProgressIndicatorBase();
     ScheduledFuture<?> cancelProgress = AppExecutorUtil.getAppScheduledExecutorService().schedule(progress::cancel, timeoutMs, TimeUnit.MILLISECONDS);
