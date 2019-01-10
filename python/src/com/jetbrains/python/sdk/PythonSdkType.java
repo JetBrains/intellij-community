@@ -874,6 +874,11 @@ public final class PythonSdkType extends SdkType {
     return false;
   }
 
+  public static boolean isRunAsRootViaSudo(Sdk sdk) {
+    SdkAdditionalData data = sdk.getSdkAdditionalData();
+    return data instanceof PyRemoteSdkAdditionalDataBase && ((PyRemoteSdkAdditionalDataBase)data).isRunAsRootViaSudo();
+  }
+
   public static boolean hasInvalidRemoteCredentials(Sdk sdk) {
     if (PySdkUtil.isRemote(sdk)) {
       final Ref<Boolean> result = Ref.create(false);

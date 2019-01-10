@@ -157,6 +157,16 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
     myRemoteSdkProperties.setValid(valid);
   }
 
+  @Override
+  public boolean isRunAsRootViaSudo() {
+    return myRemoteSdkProperties.isRunAsRootViaSudo();
+  }
+
+  @Override
+  public void setRunAsRootViaSudo(boolean runAsRootViaSudo) {
+    myRemoteSdkProperties.setRunAsRootViaSudo(runAsRootViaSudo);
+  }
+
   public static boolean isRemoteSdk(@Nullable String path) {
     if (path != null) {
       for (CredentialsType type : CredentialsManager.getInstance().getAllTypes()) {
@@ -239,6 +249,8 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
            ", myInterpreterPath='" +
            getInterpreterPath() +
            '\'' +
+           ", isRunAsRootViaSudo=" +
+           isRunAsRootViaSudo() +
            ", myHelpersPath='" +
            getHelpersPath() +
            '\'' +

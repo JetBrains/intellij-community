@@ -24,8 +24,4 @@ public interface PyRemoteSdkAdditionalDataBase extends RemoteSdkAdditionalData<P
   String getVersionString();
 
   void setVersionString(String versionString);
-
-  boolean isRunAsRootViaSudo();
-
-  void setRunAsRootViaSudo(boolean runAsRootViaSudo);
 }
