@@ -127,6 +127,7 @@ class CommunityRepositoryModules {
     plugin("intellij.tasks.core") {
       directoryName = "tasks"
       withModule("intellij.tasks")
+      withModule("intellij.tasks.compatibility")
       withModule("intellij.tasks.jira")
       withOptionalModule("intellij.tasks.java")
       doNotCreateSeparateJarForLocalizableResources()
