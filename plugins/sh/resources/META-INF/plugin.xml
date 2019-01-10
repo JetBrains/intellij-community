@@ -19,5 +19,6 @@
 
     <completion.contributor language="Bash" implementationClass="com.intellij.bash.psi.BashCompletionContributor"/>
     <lang.braceMatcher language="Bash" implementationClass="com.intellij.bash.BashBraceMatcher"/>
+    <lang.documentationProvider language="Bash" implementationClass="com.intellij.bash.BashDocumentationProvider"/>
   </extensions>
 </idea-plugin>
