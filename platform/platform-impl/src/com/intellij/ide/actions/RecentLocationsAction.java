@@ -644,8 +644,13 @@ public class RecentLocationsAction extends AnAction {
     LexerPosition lexerPosition = RecentLocationManager.getInstance(project).getLexerPosition(placeInfo);
     if (lexerPosition != null) {
       Lexer lexer = syntaxHighlighter.getHighlightingLexer();
-      lexer.start(editor.getDocument().getText());
-      lexer.restore(lexerPosition);
+      try {
+        lexer.start(editor.getDocument().getText());
+        lexer.restore(lexerPosition);
+      }
+      catch (Exception e) {
+        //Sometimes CCE appears, ignore.
+      }
     }
 
     editor.setHighlighter(highlighter);
