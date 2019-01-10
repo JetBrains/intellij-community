@@ -91,7 +91,6 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       return;
     }
     CommentTracker commentTracker = new CommentTracker();
-    commentTracker.markUnchanged(switchExpression);
     final boolean isSwitchOnString = switchExpressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
     boolean useEquals = isSwitchOnString;
     if (!useEquals) {
@@ -114,8 +113,11 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     final boolean hadSideEffects;
     final String expressionText;
     final Project project = switchStatement.getProject();
-    if (allBranches.stream().mapToInt(br -> br.getCaseValues().size()).sum() > 1 &&
-        RemoveUnusedVariableUtil.checkSideEffects(switchExpression, null, new ArrayList<>())) {
+    int totalCases = allBranches.stream().mapToInt(br -> br.getCaseValues().size()).sum();
+    if (totalCases > 0) {
+      commentTracker.markUnchanged(switchExpression);
+    }
+    if (totalCases > 1 && RemoveUnusedVariableUtil.checkSideEffects(switchExpression, null, new ArrayList<>())) {
       hadSideEffects = true;
 
       final String variableName = new VariableNameGenerator(switchExpression, VariableKind.LOCAL_VARIABLE)
