@@ -49,7 +49,6 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
             handleCallExpression(holder, (UCallExpression)parent);
           }
         }
-        //TODO all the cases are covered?
 
         return true;
       }
