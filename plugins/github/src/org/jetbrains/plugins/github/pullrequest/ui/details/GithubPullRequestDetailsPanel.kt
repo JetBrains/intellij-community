@@ -62,7 +62,6 @@ internal class GithubPullRequestDetailsPanel(private val sharedProjectSettings: 
         GithubPullRequestStatePanel.State.create(accountDetails, repoDetails, it, stateService.isBusy(it.number),
                                                  sharedProjectSettings.pullRequestMergeForbidden)
       }
-      this@GithubPullRequestDetailsPanel.isVisible = details != null
     }
 
   init {
@@ -107,8 +106,8 @@ internal class GithubPullRequestDetailsPanel(private val sharedProjectSettings: 
 
   override fun getEmptyText() = emptyText
 
-  override fun paintChildren(g: Graphics) {
-    super.paintChildren(g)
+  override fun paintComponent(g: Graphics?) {
+    super.paintComponent(g)
     emptyText.paint(this, g)
   }
 
