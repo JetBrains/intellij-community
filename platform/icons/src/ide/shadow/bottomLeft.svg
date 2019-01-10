@@ -8,7 +8,7 @@
       <feColorMatrix in="shadowBlurOuter1" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.3 0"/>
     </filter>
   </defs>
-  <g fill="none" fill-rule="evenodd" transform="translate(10 -13)">
+  <g fill="none" fill-rule="evenodd" transform="translate(10 -12)">
     <use fill="#000" filter="url(#bottom-left-a)" xlink:href="#bottom-left-b"/>
     <use fill="#FFF" fill-opacity="0" xlink:href="#bottom-left-b"/>
   </g>
