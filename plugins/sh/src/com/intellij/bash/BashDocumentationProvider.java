@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BashDocumentationProvider extends AbstractDocumentationProvider {
   private static final int TIMEOUT_IN_MILLISECONDS = 3 * 1000;
@@ -43,12 +44,7 @@ public class BashDocumentationProvider extends AbstractDocumentationProvider {
   public String generateDoc(PsiElement o, PsiElement originalElement) {
     if (o instanceof LeafPsiElement && ((LeafPsiElement) o).getElementType() == BashTypes.WORD) {
       if (!(o.getParent() instanceof BashGenericCommandDirective)) return null;
-      try {
-        return wrapIntoHtml(fetchInfo(o.getText()));
-      }
-      catch (ExecutionException e) {
-        LOG.warn(e);
-      }
+      return wrapIntoHtml(fetchInfo(o.getText()));
     }
     return null;
   }
@@ -59,14 +55,24 @@ public class BashDocumentationProvider extends AbstractDocumentationProvider {
     return contextElement;
   }
 
-  private String fetchInfo(@Nullable String commandName) throws ExecutionException {
+  private final ConcurrentHashMap<String, String> myManCache = new ConcurrentHashMap<>();
+
+  private String fetchInfo(@Nullable String commandName) {
     if (commandName == null) return null;
     String manExecutable = myManExecutable.getValue();
     if (manExecutable == null) return "Can't find info in your $PATH";
 
-    GeneralCommandLine commandLine = new GeneralCommandLine(manExecutable).withParameters(commandName);
-    ProcessOutput output = ExecUtil.execAndGetOutput(commandLine, TIMEOUT_IN_MILLISECONDS);
-    return output.getExitCode() != 0 ? output.getStderr() : output.getStdout();
+    return myManCache.computeIfAbsent(commandName, s -> {
+      try {
+        GeneralCommandLine commandLine = new GeneralCommandLine(manExecutable).withParameters(commandName);
+        ProcessOutput output = ExecUtil.execAndGetOutput(commandLine, TIMEOUT_IN_MILLISECONDS);
+        return output.getExitCode() != 0 ? output.getStderr() : output.getStdout();
+      }
+      catch (ExecutionException e) {
+        LOG.warn(e);
+        return null;
+      }
+    });
   }
 
   @Nullable
