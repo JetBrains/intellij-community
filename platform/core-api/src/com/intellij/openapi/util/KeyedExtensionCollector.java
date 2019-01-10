@@ -90,8 +90,9 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     Extensions.getRootArea().addAvailabilityListener(epName, myExtensionPointAvailabilityListener);
   }
 
-  public KeyedExtensionCollector(@NonNls @NotNull String epName, @NotNull Disposable parentDisposable) {
+  public KeyedExtensionCollector(@NonNls @NotNull String epName, @Nullable Disposable parentDisposable) {
     this(epName);
+    if (parentDisposable == null) return;
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
