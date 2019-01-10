@@ -44,7 +44,7 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
   @Override
   public void visitXmlTag(XmlTag tag) {
     final XmlElementArrangementEntry entry = createNewEntry(
-      tag.getTextRange(), XML_TAG, null, null, true);
+      tag.getTextRange(), XML_TAG, tag.getName(), tag.getNamespace(), true);
     processEntry(entry, tag);
   }
 
