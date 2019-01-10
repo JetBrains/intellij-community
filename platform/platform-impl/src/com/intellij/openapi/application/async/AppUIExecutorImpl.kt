@@ -22,7 +22,7 @@ import kotlinx.coroutines.Runnable
  */
 internal class AppUIExecutorImpl private constructor(private val myModality: ModalityState,
                                                      dispatchers: Array<CoroutineDispatcher>,
-                                                     expirableHandles: Set<JobExpiration>)
+                                                     expirableHandles: Set<Expiration>)
   : ExpirableAsyncExecutionSupport<AppUIExecutorEx>(dispatchers, expirableHandles), AppUIExecutorEx {
 
   override fun composeDispatchers() = dispatchers.singleOrNull() ?: RescheduleAttemptLimitAwareDispatcher(dispatchers)
@@ -35,10 +35,10 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
       ApplicationManager.getApplication().invokeLater(runnable, modality)
 
     override fun toString() = "onUiThread($modality)"
-  })), emptySet<JobExpiration>())
+  })), emptySet<Expiration>())
 
-  override fun cloneWith(dispatchers: Array<CoroutineDispatcher>, expirableHandles: Set<JobExpiration>): AppUIExecutorEx =
-    AppUIExecutorImpl(myModality, dispatchers, expirableHandles)
+  override fun cloneWith(dispatchers: Array<CoroutineDispatcher>, expirationSet: Set<Expiration>): AppUIExecutorEx =
+    AppUIExecutorImpl(myModality, dispatchers, expirationSet)
 
   override fun later(): AppUIExecutor {
     val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else null
