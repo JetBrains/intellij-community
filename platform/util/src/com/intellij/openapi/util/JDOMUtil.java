@@ -780,8 +780,7 @@ public class JDOMUtil {
    *   <component load="true" isDefault="true" name="comp2"/>
    * </app>}</pre>
    * <p>
-   * there will be created just one XmlText("\n  ") instead of three for whitespaces between tags,
-   * one Attribute("load=true") instead of two equivalent for each component tag etc.
+   * only one Attribute("load=true") will be created instead of two equivalent for each component tag, etc.
    *
    * <p><h3>Intended usage:</h3>
    * - When you need to keep some part of JDOM tree in memory, use this method before save the element to some collection,
