@@ -5,7 +5,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.codeStyle.arrangement.DefaultArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.Stack;
@@ -13,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.XML_ATTRIBUTE;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.XML_TAG;
@@ -34,10 +37,13 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
 
   @Override
   public void visitXmlFile(XmlFile file) {
-    final XmlTag tag = file.getRootTag();
+    XmlDocument document = file.getDocument();
+    List<XmlTag> tags = PsiTreeUtil.getChildrenOfTypeAsList(document, XmlTag.class);
 
-    if (tag != null) {
-      tag.accept(this);
+    for (XmlTag tag : tags) {
+      if (tag != null) {
+        tag.accept(this);
+      }
     }
   }
 
