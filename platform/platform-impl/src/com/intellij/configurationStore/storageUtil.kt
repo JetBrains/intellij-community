@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.notification.NotificationType
@@ -128,13 +128,15 @@ fun getOrCreateVirtualFile(requestor: Any?, file: Path): VirtualFile {
   parentFile.createDirectories()
 
   // need refresh if the directory has just been created
-  val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.systemIndependentPath) ?: throw IOException(
-    ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
+  val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.systemIndependentPath)
+                          ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
 
   if (ApplicationManager.getApplication().isWriteAccessAllowed) {
     return parentVirtualFile.createChildData(requestor, file.fileName.toString())
   }
-  return runUndoTransparentWriteAction { parentVirtualFile.createChildData(requestor, file.fileName.toString()) }
+  else {
+    return runUndoTransparentWriteAction { parentVirtualFile.createChildData(requestor, file.fileName.toString()) }
+  }
 }
 
 @Throws(IOException::class)

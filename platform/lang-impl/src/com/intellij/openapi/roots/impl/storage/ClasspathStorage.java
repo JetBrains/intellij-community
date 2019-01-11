@@ -193,6 +193,11 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     getStorageDataRef().set(false);
   }
 
+  @Override
+  public boolean isUseVfsForWrite() {
+    return true;
+  }
+
   @Nullable
   public static ClasspathStorageProvider getProvider(@NotNull String type) {
     if (type.equals(ClassPathStorageUtil.DEFAULT_STORAGE)) {

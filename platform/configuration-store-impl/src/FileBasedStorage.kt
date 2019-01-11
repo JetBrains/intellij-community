@@ -55,7 +55,7 @@ open class FileBasedStorage(file: Path,
   }
 
   protected open val isUseXmlProlog = false
-  protected open val isUseVfsForWrite = true
+  override val isUseVfsForWrite = true
 
   private val isUseUnixLineSeparator: Boolean
     // only ApplicationStore doesn't use xml prolog
@@ -73,7 +73,6 @@ open class FileBasedStorage(file: Path,
 
   protected open class FileSaveSession(storageData: StateMap, storage: FileBasedStorage) :
     XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {
-
     override fun save() {
       if (storage.blockSavingTheContent) {
         LOG.info("Save blocked for ${storage.fileSpec}")

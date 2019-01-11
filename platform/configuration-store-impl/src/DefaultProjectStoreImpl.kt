@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.project.Project
 import org.jdom.Element
 import java.io.Writer
@@ -81,14 +82,14 @@ class DefaultProjectStoreImpl(override val project: Project, private val pathMac
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
   }
 
-  override fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean = false
+  override fun isUseLoadedStateAsExisting(storage: StateStorage) = false
 
   // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
   fun getStateCopy(): Element? = storage.loadLocalData()
 
-  override fun getPathMacroManagerForDefaults(): PathMacroManager = pathMacroManager
+  override fun getPathMacroManagerForDefaults() = pathMacroManager
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<FileStorageAnnotation> = listOf(PROJECT_FILE_STORAGE_ANNOTATION)
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation) = listOf(PROJECT_FILE_STORAGE_ANNOTATION)
 
   override fun setPath(path: String) {
   }
@@ -103,8 +104,8 @@ internal class DefaultProjectExportableAndSaveTrigger {
   @Volatile
   var project: Project? = null
 
-  fun save(isForceSavingAllSettings: Boolean) {
-    // we must trigger save
-    saveProject(project ?: return, isForceSavingAllSettings)
+  suspend fun save(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean) {
+    val project = project ?: return
+    (project.stateStore as ComponentStoreImpl).doSave(errors, readonlyFiles, isForceSavingAllSettings)
   }
 }

@@ -11,6 +11,8 @@ import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.util.io.systemIndependentPath
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader
 
 private class ApplicationPathMacroManager : PathMacroManager(null)
@@ -33,12 +35,18 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
     storageManager.addMacro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve("app.xml").systemIndependentPath)
   }
 
-  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
-    super.doSave(errors, readonlyFiles, isForce)
-
-    // todo can we store it in parallel to regular saving?
-    // here, because no Project (and so, ProjectStoreImpl) on Welcome Screen
-    serviceIfCreated<DefaultProjectExportableAndSaveTrigger>()?.save(isForce)
+  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean) {
+    val saveSessionManager = saveSettingsSavingComponentsAndCommitComponents(errors, isForceSavingAllSettings)
+    // todo can we store default project in parallel to regular saving? for now only flush on disk is async, but not component committing
+    coroutineScope {
+      launch {
+        saveSessionManager.save(readonlyFiles, errors)
+      }
+      launch {
+        // here, because no Project (and so, ProjectStoreImpl) on Welcome Screen
+        serviceIfCreated<DefaultProjectExportableAndSaveTrigger>()?.save(errors, readonlyFiles, isForceSavingAllSettings)
+      }
+    }
   }
 
   override fun createSaveSessionProducerManager(): SaveSessionProducerManager {

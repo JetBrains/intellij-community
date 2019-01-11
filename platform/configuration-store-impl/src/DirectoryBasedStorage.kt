@@ -77,6 +77,9 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
 open class DirectoryBasedStorage(private val dir: Path,
                                  @Suppress("DEPRECATION") splitter: StateSplitter,
                                  pathMacroSubstitutor: PathMacroSubstitutor? = null) : DirectoryBasedStorageBase(splitter, pathMacroSubstitutor) {
+  override val isUseVfsForWrite: Boolean
+    get() = true
+
   @Volatile
   private var cachedVirtualFile: VirtualFile? = null
 

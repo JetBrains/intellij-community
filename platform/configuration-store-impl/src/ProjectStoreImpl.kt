@@ -3,7 +3,9 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
@@ -35,6 +37,7 @@ import com.intellij.util.io.*
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.file.AccessDeniedException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -320,18 +323,19 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
     }
   }
 
-  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) = coroutineScope<Unit> {
-    launch {
-      try {
-        saveProjectName()
+  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean) = coroutineScope<Unit> {
+    coroutineScope {
+      launch {
+        try {
+          saveProjectName()
+        }
+        catch (e: Throwable) {
+          LOG.error("Unable to store project name", e)
+        }
       }
-      catch (e: Throwable) {
-        LOG.error("Unable to store project name", e)
+      launch {
+        super.doSave(errors, readonlyFiles, isForceSavingAllSettings)
       }
-    }
-
-    launch {
-      super.doSave(errors, readonlyFiles, isForce)
     }
   }
 
@@ -339,27 +343,35 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
 }
 
 private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
-  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean) {
     // save modules before project
-    val modules = ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY
-    if (!modules.isEmpty()) {
+    saveModules(ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY, errors, readonlyFiles, isForceSavingAllSettings)
+
+    super.doSave(errors, readonlyFiles, isForceSavingAllSettings)
+  }
+
+  private suspend fun saveModules(modules: Array<Module>, errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+    if (modules.isEmpty()) {
+      return
+    }
+
+    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       // do no create with capacity because very rarely a lot of modules will be modified
       val saveSessions: MutableList<SaveSession> = SmartList<SaveSession>()
       // commit components
       for (module in modules) {
         val moduleStore = ModuleServiceManager.getService(module, IComponentStore::class.java) as ComponentStoreImpl
-        moduleStore.createSaveSessionManagerAndSaveComponents(isForce, errors).processSaveSessions {
-          saveSessions.add(it)
+        // collectSaveSessions is very cheap, so, do it in EDT
+        moduleStore.createSaveSessionManagerAndSaveComponents(isForce, errors).collectSaveSessions(saveSessions)
+      }
+
+      if (!saveSessions.isEmpty()) {
+        ApplicationManager.getApplication().runWriteAction {
+          // flush on disk
+          saveSessions(saveSessions, readonlyFiles, errors)
         }
       }
-
-      // flush on disk
-      for (saveSession in saveSessions) {
-        executeSave(saveSession, readonlyFiles, errors)
-      }
     }
-
-    super.doSave(errors, readonlyFiles, isForce)
   }
 }
 

@@ -4,6 +4,8 @@ package com.intellij.openapi.components
 import com.intellij.configurationStore.SaveSessionProducer
 
 interface StateStorage {
+  val isUseVfsForWrite: Boolean
+
   /**
    * You can call this method only once.
    * If state exists and not archived - not-null result.
@@ -23,5 +25,4 @@ interface StateStorage {
   fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): StateStorageChooserEx.Resolution {
     return StateStorageChooserEx.Resolution.DO
   }
-
 }

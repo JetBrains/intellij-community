@@ -4,7 +4,9 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationsManager
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.*
@@ -35,7 +37,9 @@ import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jdom.Element
+import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Paths
@@ -133,17 +137,21 @@ abstract class ComponentStoreImpl : IComponentStore {
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 
-  internal open suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
-    val saveSessionProducerManager = createSaveSessionManagerAndSaveComponents(isForce, errors)
+  internal open suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean) {
+    val saveSessionProducerManager = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      createSaveSessionManagerAndSaveComponents(isForceSavingAllSettings, errors)
+    }
     saveSessionProducerManager.save(readonlyFiles, errors)
   }
 
+  @CalledInAwt
   internal fun createSaveSessionManagerAndSaveComponents(isForce: Boolean, errors: MutableList<Throwable>): SaveSessionProducerManager {
     val saveSessionProducerManager = createSaveSessionProducerManager()
     saveComponents(isForce, saveSessionProducerManager, errors)
     return saveSessionProducerManager
   }
 
+  @CalledInAwt
   private fun saveComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
     if (components.isEmpty()) {
       return
