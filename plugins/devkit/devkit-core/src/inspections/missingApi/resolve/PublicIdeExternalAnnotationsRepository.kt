@@ -31,21 +31,22 @@ class PublicIdeExternalAnnotationsRepository(private val project: Project) : Ide
       SNAPSHOTS_REPO_URL
     )
 
-    val PRODUCT_CODE_GROUP_ID_AND_ARTIFACT_ID = listOf(
-      Triple("IU", "com.jetbrains.intellij.idea", "ideaIU")
-    )
+    private val allProductCodes = listOf("IU", "IC", "RM", "PY", "PC", "PE", "PS", "WS", "OC", "CL", "DB", "RD", "GO", "MPS", "AI")
 
-    fun getGroupId(productCode: String): String? =
-      PRODUCT_CODE_GROUP_ID_AND_ARTIFACT_ID.find { it.first == productCode }?.second
+    private val ideaIUAnnotationsCoordinates = "com.jetbrains.intellij.idea" to "ideaIU"
 
-    fun getArtifactId(productCode: String): String? =
-      PRODUCT_CODE_GROUP_ID_AND_ARTIFACT_ID.find { it.first == productCode }?.third
+    //Currently, for any IDE download ideaIU's annotations.
+    private val productCodeToAnnotationsCoordinates = allProductCodes.associate {
+      it to ideaIUAnnotationsCoordinates
+    }
+
+    fun hasAnnotationsForProduct(productCode: String): Boolean =
+      productCode in productCodeToAnnotationsCoordinates
   }
 
   override fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IdeExternalAnnotations? {
     val productCode = ideBuildNumber.productCode.takeIf { it.isNotEmpty() } ?: "IU"
-    val groupId = getGroupId(productCode) ?: return null
-    val artifactId = getArtifactId(productCode) ?: return null
+    val (groupId, artifactId) = productCodeToAnnotationsCoordinates[productCode] ?: return null
 
     val lastReleaseVersion = "${ideBuildNumber.baselineVersion}.999999"
     val lastReleaseAnnotations = tryDownload(groupId, artifactId, lastReleaseVersion, listOf(RELEASES_REPO_DESCRIPTION))
