@@ -17,7 +17,7 @@ public interface RemoteConnector {
   @NotNull
   RemoteConnectionType getType();
 
-  void produceRemoteCredentials(Consumer<RemoteCredentials> remoteCredentialsConsumer);
+  void produceRemoteCredentials(Consumer<? super RemoteCredentials> remoteCredentialsConsumer);
 
   /**
    * Used to select different credentials. This method should be fast.
