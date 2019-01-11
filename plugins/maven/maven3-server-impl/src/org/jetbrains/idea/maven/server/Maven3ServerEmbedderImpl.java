@@ -732,7 +732,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
         exceptions.add(problem.getException());
       }
       else {
-        // maven does not set exceptions in case of problem
+        // sometimes maven 3 does not set exception into problem, but our underlying code requre it
         if (problem.getSeverity() == ModelProblem.Severity.ERROR || problem.getSeverity() == ModelProblem.Severity.FATAL) {
           exceptions.add(new Exception(problem.getMessage()));
         }
