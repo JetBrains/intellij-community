@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -105,13 +104,15 @@ public abstract class EditorActionHandler {
     }
   }
 
-  private void ensureInjectionUpToDate(@NotNull Caret hostCaret, @Nullable DataContext context) {
+  static boolean ensureInjectionUpToDate(@NotNull Caret hostCaret) {
     Editor editor = hostCaret.getEditor();
     Project project = editor.getProject();
-    if (myWorksInInjected && context != null && project != null &&
+    if (project != null &&
         InjectedLanguageManager.getInstance(project).mightHaveInjectedFragmentAtOffset(editor.getDocument(), hostCaret.getOffset())) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      return true;
     }
+    return false;
   }
 
   /**
@@ -203,14 +204,14 @@ public abstract class EditorActionHandler {
     }
     if (contextCaret == null && runForAllCarets()) {
       hostEditor.getCaretModel().runForEachCaret(caret -> {
-        ensureInjectionUpToDate(caret, dataContext);
+        if (myWorksInInjected) ensureInjectionUpToDate(caret);
         doIfEnabled(caret, dataContext,
                     (caret1, dc) -> doExecute(caret1.getEditor(), caret1, dc));
       });
     }
     else {
       if (contextCaret == null) {
-        ensureInjectionUpToDate(hostEditor.getCaretModel().getCurrentCaret(), dataContext);
+        if (myWorksInInjected) ensureInjectionUpToDate(hostEditor.getCaretModel().getCurrentCaret());
         doIfEnabled(hostEditor.getCaretModel().getCurrentCaret(), dataContext,
                     (caret, dc) -> doExecute(caret.getEditor(), null, dc));
       }
