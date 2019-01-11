@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -21,6 +7,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TooltipEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
@@ -28,7 +15,9 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.util.BooleanFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -67,6 +56,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   private JComponent myFocusRequestor;
 
   private boolean myForceHideShadow = false;
+  @Nullable private BooleanFunction<KeyEvent> myKeyHandler;
 
   public LightweightHint(@NotNull final JComponent component) {
     myComponent = component;
@@ -107,6 +97,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   public void setResizable(final boolean b) {
     myResizable = b;
+  }
+
+  public void setKeyHandler(@NotNull BooleanFunction<KeyEvent> keyHandler) {
+    myKeyHandler = keyHandler;
   }
 
   protected boolean canAutoHideOn(TooltipEvent event) {
@@ -215,7 +209,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         actualComponent.validate();
       }
 
-      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(actualComponent, myFocusRequestor)
+      ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(actualComponent, myFocusRequestor)
         .setRequestFocus(myFocusRequestor != null || hintHint.isRequestFocus())
         .setFocusable(myFocusRequestor != null || hintHint.isRequestFocus())
         .setResizable(myResizable)
@@ -229,8 +223,13 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           onPopupCancel();
           return true;
         })
-        .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)
-        .createPopup();
+        .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen);
+
+      if (myKeyHandler != null) {
+        builder.setKeyEventHandler(myKeyHandler);
+      }
+
+      myPopup = builder.createPopup();
 
       beforeShow();
       myPopup.show(new RelativePoint(myParentComponent, new Point(actualPoint.x, actualPoint.y)));
