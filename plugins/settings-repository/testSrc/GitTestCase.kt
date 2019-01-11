@@ -54,7 +54,7 @@ internal abstract class GitTestCase : IcsTestCase() {
 
   class FileInfo(val name: String, val data: ByteArray)
 
-  protected fun addAndCommit(path: String): FileInfo {
+  protected suspend fun addAndCommit(path: String): FileInfo {
     val data = """<file path="$path" />""".toByteArray()
     provider.write(path, data)
     repositoryManager.commit()
@@ -95,7 +95,7 @@ internal abstract class GitTestCase : IcsTestCase() {
     icsManager.sync(syncType)
   }
 
-  protected fun createLocalAndRemoteRepositories(remoteBranchName: String? = null, initialCommit: Boolean = false) {
+  protected suspend fun createLocalAndRemoteRepositories(remoteBranchName: String? = null, initialCommit: Boolean = false) {
     createRemoteRepository(remoteBranchName, true)
     configureLocalRepository(remoteBranchName)
     if (initialCommit) {

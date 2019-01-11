@@ -61,7 +61,9 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
   private val commitAlarm = SingleAlarm(Runnable {
     runBackgroundableTask(icsMessage("task.commit.title")) { indicator ->
       LOG.runAndLogException {
-        repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
+        runBlocking {
+          repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
+        }
       }
     }
   }, settings.commitDelay)

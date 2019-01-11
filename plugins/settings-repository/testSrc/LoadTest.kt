@@ -86,7 +86,7 @@ class LoadTest : IcsTestCase() {
     val remoteRepository = tempDirManager.createRepository()
     remoteRepository
       .add("$dirName/Mac OS X from RubyMine.xml", remoteScheme.serialize()!!.toByteArray())
-      .commit("")
+      .commit("add")
 
     remoteRepository.useAsReadOnlySource {
       val schemeManager = createSchemeManager(dirName)
@@ -97,7 +97,7 @@ class LoadTest : IcsTestCase() {
 
       remoteRepository
         .delete("$dirName/Mac OS X from RubyMine.xml")
-        .commit("")
+        .commit("delete")
 
       icsManager.sync(SyncType.MERGE)
       assertThat(schemeManager.allSchemes).containsOnly(localScheme)

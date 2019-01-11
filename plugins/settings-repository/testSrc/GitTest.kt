@@ -105,29 +105,33 @@ internal class GitTest : GitTestCase() {
     assertThat(repositoryManager.getUpstream()).isEqualTo(url)
   }
 
-  @Test fun pullToRepositoryWithoutCommits() {
+  @Test
+  fun pullToRepositoryWithoutCommits() = runBlocking {
     doPullToRepositoryWithoutCommits(null)
   }
 
-  @Test fun pullToRepositoryWithoutCommitsAndCustomRemoteBranchName() {
+  @Test
+  fun pullToRepositoryWithoutCommitsAndCustomRemoteBranchName() = runBlocking {
     doPullToRepositoryWithoutCommits("customRemoteBranchName")
   }
 
-  private fun doPullToRepositoryWithoutCommits(remoteBranchName: String?) {
+  private suspend fun doPullToRepositoryWithoutCommits(remoteBranchName: String?) {
     createLocalAndRemoteRepositories(remoteBranchName)
     repositoryManager.pull()
     compareFiles(repository.workTreePath, remoteRepository.workTreePath)
   }
 
-  @Test fun pullToRepositoryWithCommits() {
+  @Test
+  fun pullToRepositoryWithCommits() = runBlocking {
     doPullToRepositoryWithCommits(null)
   }
 
-  @Test fun pullToRepositoryWithCommitsAndCustomRemoteBranchName() {
+  @Test
+  fun pullToRepositoryWithCommitsAndCustomRemoteBranchName() = runBlocking {
     doPullToRepositoryWithCommits("customRemoteBranchName")
   }
 
-  private fun doPullToRepositoryWithCommits(remoteBranchName: String?) {
+  private suspend fun doPullToRepositoryWithCommits(remoteBranchName: String?) {
     createLocalAndRemoteRepositories(remoteBranchName)
     val file = addAndCommit("local.xml")
 

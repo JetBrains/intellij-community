@@ -25,7 +25,7 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
   @Volatile var writeAndDeleteProhibited = false
     private set
 
-  private suspend fun runSyncTask(onAppExit: Boolean, project: Project?, task: (indicator: ProgressIndicator) -> Unit) {
+  private suspend fun runSyncTask(onAppExit: Boolean, project: Project?, task: suspend (indicator: ProgressIndicator) -> Unit) {
     icsManager.runInAutoCommitDisabledMode {
       if (!onAppExit) {
         ApplicationManager.getApplication()!!.saveSettings()
@@ -33,7 +33,11 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
 
       try {
         writeAndDeleteProhibited = true
-        runModalTask(icsMessage("task.sync.title"), project = project, task = task)
+        runModalTask(icsMessage("task.sync.title"), project = project, task = {
+          runBlocking {
+            task(it)
+          }
+        })
       }
       finally {
         writeAndDeleteProhibited = false
@@ -55,7 +59,7 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
 
       val repositoryManager = icsManager.repositoryManager
 
-      fun updateRepository() {
+      suspend fun updateRepository() {
         when (syncType) {
           SyncType.MERGE -> {
             updateResult = repositoryManager.pull(indicator)
