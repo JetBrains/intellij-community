@@ -12,7 +12,7 @@ import java.util.Collections;
 public class ClsElementWritingAccessProvider extends WritingAccessProvider {
   @NotNull
   @Override
-  public Collection<VirtualFile> requestWriting(@NotNull Collection<VirtualFile> files) {
+  public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
     return Collections.emptyList();
   }
 

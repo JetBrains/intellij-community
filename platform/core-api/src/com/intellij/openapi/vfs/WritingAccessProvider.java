@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -20,17 +19,17 @@ public abstract class WritingAccessProvider {
    * @return set of files that cannot be accessed
    */
   @NotNull
-  public Collection<VirtualFile> requestWriting(@NotNull Collection<VirtualFile> files) {
+  public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
     //noinspection deprecation
     return requestWriting(files.toArray(VirtualFile.EMPTY_ARRAY));
   }
 
   /**
-   * @deprecated Use {@link #requestWriting(List)}
+   * @deprecated Use {@link #requestWriting(Collection)}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
-  public Collection<VirtualFile> requestWriting(VirtualFile... files) {
+  public Collection<VirtualFile> requestWriting(@NotNull VirtualFile... files) {
     throw new AbstractMethodError("requestWriting(List<VirtualFile>) not implemented");
   }
 
@@ -43,7 +42,7 @@ public abstract class WritingAccessProvider {
     return project == null || project.isDefault() ? new WritingAccessProvider[0] : EP_NAME.getExtensions(project);
   }
 
-  public static boolean isPotentiallyWritable(VirtualFile file, @Nullable Project project) {
+  public static boolean isPotentiallyWritable(@NotNull VirtualFile file, @Nullable Project project) {
     WritingAccessProvider[] providers = getProvidersForProject(project);
     for (WritingAccessProvider provider : providers) {
       if (!provider.isPotentiallyWritable(file)) {

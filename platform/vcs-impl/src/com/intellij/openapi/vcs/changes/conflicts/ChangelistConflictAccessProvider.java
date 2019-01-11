@@ -29,7 +29,7 @@ public class ChangelistConflictAccessProvider extends WritingAccessProvider {
 
   @NotNull
   @Override
-  public Collection<VirtualFile> requestWriting(@NotNull Collection<VirtualFile> files) {
+  public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
     ChangelistConflictTracker.Options options = myManager.getConflictTracker().getOptions();
     if (!options.SHOW_DIALOG) {
       return Collections.emptyList();
