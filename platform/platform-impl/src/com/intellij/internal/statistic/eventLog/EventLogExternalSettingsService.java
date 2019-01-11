@@ -58,6 +58,11 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
     return new LogEventCompositeFilter(new LogEventWhitelistFilter(whitelist), LogEventSnapshotBuildFilter.INSTANCE);
   }
 
+  @Override
+  public boolean isInternal() {
+    return false;
+  }
+
   @NotNull
   private Set<String> getWhitelistedGroups() {
     final String approvedGroupsServiceUrl = getSettingValue(APPROVED_GROUPS_SERVICE);

@@ -80,6 +80,11 @@ public class SendEventLogAction extends AnAction {
     public LogEventFilter getEventFilter() {
       return LogEventTrueFilter.INSTANCE;
     }
+
+    @Override
+    public boolean isInternal() {
+      return true;
+    }
   }
 
   private static class EventLogTestResultDecorator implements EventLogResultDecorator {
@@ -97,7 +102,7 @@ public class SendEventLogAction extends AnAction {
         myFailed.add(request);
       }
       else {
-        myFailed.add(new LogEventRecordRequest("INVALID", "INVALID", ContainerUtil.emptyList()));
+        myFailed.add(new LogEventRecordRequest("INVALID", "INVALID", ContainerUtil.emptyList(), true));
       }
     }
 

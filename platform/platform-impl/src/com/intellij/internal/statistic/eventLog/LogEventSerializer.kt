@@ -23,8 +23,12 @@ object LogEventSerializer {
    */
   fun toString(request: LogEventRecordRequest): String {
     val obj = JsonObject()
+    obj.addProperty("recorder", request.recorder)
     obj.addProperty("product", request.product)
-    obj.addProperty("user", request.user)
+    obj.addProperty("device", request.device)
+    if (request.internal) {
+      obj.addProperty("internal", request.internal)
+    }
 
     val records = JsonArray()
     for (record in request.records) {
