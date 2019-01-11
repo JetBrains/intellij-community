@@ -122,4 +122,10 @@ public class JBLoadingPanel extends JPanel {
   public Dimension getPreferredSize() {
     return getContentPanel().getPreferredSize();
   }
+
+  @Override
+  public void setBounds(int x, int y, int width, int height) {
+    super.setBounds(x, y, width, height);
+    myDecorator.getComponent().setBounds(x, y, width, height);
+  }
 }
