@@ -39,7 +39,7 @@
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" scope="RUNTIME" />
     <orderEntry type="library" name="imgscalr" level="project" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
-    <orderEntry type="library" exported="" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" exported="" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="RUNTIME" />
     <orderEntry type="library" name="imageio-tiff" level="project" />
