@@ -91,7 +91,7 @@ class StudioTests(unittest.TestCase):
     for abi in ["x86", "arm64-v8a", "armeabi-v7a"]:
       required += [
           "plugins/android/resources/simpleperf/%s/simpleperf" % abi,
-          "plugins/android/resources/perfd/%s/perfd" % abi,
+          "plugins/android/resources/transport/%s/transport" % abi,
           "plugins/android/resources/perfa/%s/libperfa.so" % abi,
       ]
 
