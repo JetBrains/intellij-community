@@ -13,14 +13,17 @@ import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import kotlin.jvm.functions.Function1;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtil;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
@@ -179,7 +182,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     final ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
     final Function1<PsiClass, String> createFilter = (psiClass) ->
       GradleExecutionSettingsUtil.createTestFilterFrom(psiClass, /*hasSuffix=*/true);
-    if (!applyTestConfiguration(project, settings, containingClasses, createFilter)) {
+    if (!applyTestConfiguration(settings, project, containingClasses, createFilter)) {
       return false;
     }
     configuration.setName(StringUtil.join(containingClasses, aClass -> aClass.getName(), "|"));

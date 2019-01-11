@@ -148,7 +148,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     final ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
     final Function1<PsiClass, String> createFilter = (psiClass) ->
       createTestFilter(context.getLocation(), psiClass, psiMethod);
-    if (!applyTestConfiguration(project, settings, containingClasses, createFilter)) {
+    if (!applyTestConfiguration(settings, project, containingClasses, createFilter)) {
       return false;
     }
 

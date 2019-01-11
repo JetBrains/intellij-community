@@ -25,6 +25,7 @@ import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
 
 /**
@@ -66,7 +67,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
       resolvedTests.add(psiClass.getName() + "," + (method == null ? "" : method));
       return GradleExecutionSettingsUtil.createTestFilterFrom(psiClass, /*hasSuffix=*/true);
     };
-    if (!applyTestConfiguration(project, settings, tests, findPsiClass, createFilter)) {
+    if (!applyTestConfiguration(settings, project, tests, findPsiClass, createFilter)) {
       return false;
     }
 
