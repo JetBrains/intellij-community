@@ -316,12 +316,7 @@ internal class ApplicationStoreTest {
     }
 
     private fun getMap(roamingType: RoamingType): MutableMap<String, String> {
-      var map = data[roamingType]
-      if (map == null) {
-        map = THashMap<String, String>()
-        data.put(roamingType, map)
-      }
-      return map
+      return data.getOrPut(roamingType) { THashMap<String, String>() }
     }
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
@@ -336,7 +331,7 @@ internal class ApplicationStoreTest {
     }
   }
 
-  private class MyComponentStore(testAppConfigPath: String) : ComponentStoreImpl() {
+  private class MyComponentStore(testAppConfigPath: String) : ChildlessComponentStore() {
     override val storageManager = ApplicationStorageManager(ApplicationManager.getApplication())
 
     init {

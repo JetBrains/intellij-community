@@ -170,7 +170,7 @@ internal class ComponentStoreModificationTrackerTest {
   }
 }
 
-private class MyComponentStore(testAppConfigPath: Path) : ComponentStoreImpl() {
+private class MyComponentStore(testAppConfigPath: Path) : ChildlessComponentStore() {
   private class MyStorageManager(private val rootDir: Path) : StateStorageManagerImpl("application") {
     override val isUseXmlProlog = false
 

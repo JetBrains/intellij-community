@@ -137,12 +137,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 
-  internal open suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean) {
-    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-      createSaveSessionManagerAndSaveComponents(isForceSavingAllSettings, errors)
-    }
-      .save(readonlyFiles, errors)
-  }
+  internal abstract suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean)
 
   @CalledInAwt
   internal fun createSaveSessionManagerAndSaveComponents(isForce: Boolean, errors: MutableList<Throwable>): SaveSessionProducerManager {
@@ -583,4 +578,15 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
     LOG.debug("Reporting unknown path macros $macros in component $componentName")
     doNotify(macros, project, Collections.singletonMap(substitutor, store))
   }, project.disposed)
+}
+
+// to make sure that ApplicationStore or ProjectStore will not call incomplete doSave implementation
+// (because these stores combine several calls for better control/async instead of simple sequential delegation)
+abstract class ChildlessComponentStore : ComponentStoreImpl() {
+  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean) {
+    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      createSaveSessionManagerAndSaveComponents(isForceSavingAllSettings, errors)
+    }
+      .save(readonlyFiles, errors)
+  }
 }
