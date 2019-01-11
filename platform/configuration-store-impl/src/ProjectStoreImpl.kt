@@ -89,7 +89,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
   }
 
   final override fun loadProjectFromTemplate(defaultProject: Project) {
-    defaultProject.save()
+    runBlocking { defaultProject.stateStore.save() }
 
     val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy() ?: return
     LOG.runAndLogException {

@@ -1,13 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.UiTestRule
 import com.intellij.ui.changeLafIfNeed
 import com.intellij.ui.layout.migLayout.patched.*
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.*
 import org.junit.Assume.assumeTrue
 import org.junit.rules.TestName
@@ -28,6 +32,10 @@ class UiDslTest {
 
     @JvmField
     @ClassRule
+    val appRule = ProjectRule()
+
+    @JvmField
+    @ClassRule
     val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout"))
 
     init {
@@ -44,7 +52,7 @@ class UiDslTest {
   val testName = TestName()
 
   @Before
-  fun beforeMethod() {
+  fun beforeMethod() = runBlocking {
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       // let's for now to see how it is going on macOS
       assumeTrue("macOS or Windows 10 are required", SystemInfo.isMacOSHighSierra /* || SystemInfo.isWin10OrNewer */)
@@ -117,11 +125,13 @@ class UiDslTest {
   }
 
   private fun doTest(panelCreator: () -> JPanel) {
-    invokeAndWaitIfNeed {
-      val panel = panelCreator()
-      // otherwise rectangles are not set
-      (panel.layout as MigLayout).isDebugEnabled = true
-      uiRule.validate(panel, testName, lafName)
+    runBlocking {
+      withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        val panel = panelCreator()
+        // otherwise rectangles are not set
+        (panel.layout as MigLayout).isDebugEnabled = true
+        uiRule.validate(panel, testName, lafName)
+      }
     }
   }
 }
