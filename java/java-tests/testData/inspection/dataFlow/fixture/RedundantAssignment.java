@@ -40,7 +40,15 @@ public class RedundantAssignment {
       <warning descr="Variable is already assigned to this value">a</warning> = b;
     }
   }
-
+  
+  void testOneMinusOne(int a) {
+    int b = 0;
+    if(a < 1 && a > -1) {
+      <warning descr="Variable is already assigned to this value">b</warning> = a;
+    }
+    System.out.println(b);
+  }
+  
   class X {
     int a;
     int b;
