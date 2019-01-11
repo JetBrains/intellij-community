@@ -1,10 +1,12 @@
 package com.intellij.bash;
 
+import com.intellij.bash.lexer.BashTokenTypes;
 import com.intellij.bash.psi.BashGenericCommandDirective;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -13,6 +15,7 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,16 +45,24 @@ public class BashDocumentationProvider extends AbstractDocumentationProvider {
 
   @Override
   public String generateDoc(PsiElement o, PsiElement originalElement) {
-    if (o instanceof LeafPsiElement && ((LeafPsiElement) o).getElementType() == BashTypes.WORD) {
-      if (!(o.getParent() instanceof BashGenericCommandDirective)) return null;
-      return wrapIntoHtml(fetchInfo(o.getText()));
-    }
-    return null;
+    return wordWithDocumentation(o) ? wrapIntoHtml(fetchInfo(o.getText())) : null;
+  }
+
+  private boolean wordWithDocumentation(@Nullable PsiElement o) {
+    return o instanceof LeafPsiElement
+        && ((LeafPsiElement) o).getElementType() == BashTypes.WORD
+        && (o.getParent() instanceof BashGenericCommandDirective);
   }
 
   @Nullable
   @Override
   public PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement) {
+    ASTNode node = contextElement == null ? null : contextElement.getNode();
+    if (node == null || (PsiImplUtil.isWhitespaceOrComment(node) || node.getElementType() == BashTokenTypes.LINEFEED)) {
+      int offset = editor.getCaretModel().getPrimaryCaret().getOffset();
+      PsiElement at = offset > 0 ? file.findElementAt(offset - 1) : null;
+      if (wordWithDocumentation(at)) return at;
+    }
     return contextElement;
   }
 
