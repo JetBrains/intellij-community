@@ -112,6 +112,8 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
         }
         if (message.type == MessageType.RESTART_IDE) {
           restartIde(ide = getIdeFromMethod(method), runIde = ::runIde)
+          //we're removing config/options/recentProjects.xml to avoid auto-opening of the previous project
+          deleteRecentProjectsSettings()
           sendRunTestCommand(method, testName)
         }
         if (message.type == MessageType.RESTART_IDE_AFTER_TEST) {
