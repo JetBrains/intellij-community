@@ -339,14 +339,15 @@ public class DfaValueFactory {
 
     FieldChecker(PsiElement context) {
       PsiMethod method = context instanceof PsiClass ? null : PsiTreeUtil.getParentOfType(context, PsiMethod.class);
-      myClass = method != null ? method.getContainingClass() : context instanceof PsiClass ? (PsiClass)context : null;
+      PsiClass contextClass = method != null ? method.getContainingClass() : context instanceof PsiClass ? (PsiClass)context : null;
+      myClass = contextClass;
       if (method == null || myClass == null) {
         myTrustDirectFieldInitializers = myTrustFieldInitializersInConstructors = myCanInstantiateItself = false;
         return;
       }
       // Indirect instantiation via other class is still possible, but hopefully unlikely
-      ClassInitializationInfo info = CachedValuesManager.getCachedValue(myClass, () -> CachedValueProvider.Result
-        .create(new ClassInitializationInfo(myClass), PsiModificationTracker.MODIFICATION_COUNT));
+      ClassInitializationInfo info = CachedValuesManager.getCachedValue(contextClass, () -> CachedValueProvider.Result
+        .create(new ClassInitializationInfo(contextClass), PsiModificationTracker.MODIFICATION_COUNT));
       myCanInstantiateItself = info.myCanInstantiateItself;
       if (method.hasModifierProperty(PsiModifier.STATIC) || method.isConstructor()) {
         myTrustDirectFieldInitializers = true;
