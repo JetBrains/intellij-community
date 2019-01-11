@@ -17,7 +17,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/plugins/xslt-debugger/engine/impl/lib:saxon",
         "//tools/idea/plugins/xslt-debugger/engine/impl/lib:saxon9he",
-        "//tools/idea/plugins/xslt-debugger/engine/impl/lib:serializer",
-        "//tools/idea/plugins/xslt-debugger/engine/impl/lib:xalan",
+        "//prebuilts/tools/common/m2/repository/xalan/serializer/2.7.2:jar",
+        "//prebuilts/tools/common/m2/repository/xalan/xalan/2.7.2:jar",
     ],
 )

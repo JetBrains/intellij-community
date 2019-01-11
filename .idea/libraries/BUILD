@@ -668,13 +668,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/com/miglayout/miglayout-core/5.1:jar",
-        "//prebuilts/tools/common/m2/repository/com/miglayout/miglayout-swing/5.1:jar",
+        "//prebuilts/tools/common/m2/repository/com/miglayout/miglayout-core/5.2:jar",
+        "//prebuilts/tools/common/m2/repository/com/miglayout/miglayout-swing/5.2:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/com/miglayout/miglayout-core/5.1:jar",
-        "//prebuilts/tools/common/m2/repository/com/miglayout/miglayout-swing/5.1:jar",
+        "//prebuilts/tools/common/m2/repository/com/miglayout/miglayout-core/5.2:jar",
+        "//prebuilts/tools/common/m2/repository/com/miglayout/miglayout-swing/5.2:jar",
     ],
 )
 

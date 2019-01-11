@@ -12,7 +12,6 @@ iml_module(
     test_runtime_deps = [
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
         "//tools/idea/images:intellij.platform.images",
-        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
     ],
     test_srcs = ["tests"],
     test_tags = ["manual"],
@@ -27,7 +26,6 @@ iml_module(
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
-        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
     ],
     # do not sort: must match IML order
@@ -43,5 +41,6 @@ iml_module(
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/.idea/libraries:jediterm-pty",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
+        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl[module, test]",
     ],
 )
