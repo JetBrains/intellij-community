@@ -673,14 +673,9 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
               executionResults.add(new MavenExecutionResult(null, null, exceptions));
               continue;
             }
-            //List<Exception> exceptions = new ArrayList<Exception>();
             loadExtensions(project, exceptions);
 
-            //Artifact projectArtifact = project.getArtifact();
-            //Map managedVersions = project.getManagedVersionMap();
-            //ArtifactMetadataSource metadataSource = getComponent(ArtifactMetadataSource.class);
             project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
-            //
 
             if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
               addMvn2CompatResults(project, exceptions, listeners, myLocalRepository, executionResults);
