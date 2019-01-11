@@ -51,18 +51,10 @@ import kotlin.coroutines.CoroutineContext
  * @author eldar
  */
 abstract class BaseAsyncExecutionSupport<E : AsyncExecution<E>>(protected val dispatchers: Array<CoroutineDispatcher>) : AsyncExecution<E> {
-  init {
-    require(dispatchers.isNotEmpty())
-  }
-  /** A CoroutineDispatcher that must dispatch a runnable fast, without running it now. For example, invokeLater. */
-  protected val fallbackDispatcher: CoroutineDispatcher get() = dispatchers.first()
-
   private val myCoroutineDispatchingContext: CoroutineContext by lazy {
-    val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
-      fallbackDispatcher.processUncaughtException(context, throwable)
-    }
     val continuationInterceptor = createContinuationInterceptor()
     val coroutineName = CoroutineName("${javaClass.simpleName}($continuationInterceptor)")
+    val exceptionHandler = CoroutineExceptionHandler { _, throwable -> processUncaughtException(throwable) }
     exceptionHandler + coroutineName + continuationInterceptor
   }
 
@@ -111,14 +103,8 @@ abstract class BaseAsyncExecutionSupport<E : AsyncExecution<E>>(protected val di
   companion object {
     internal val LOG = Logger.getInstance("#com.intellij.openapi.application.impl.AsyncExecutionSupport")
 
-    internal fun CoroutineDispatcher.processUncaughtException(context: CoroutineContext, throwable: Throwable) {
-      try {
-        PluginManager.processException(throwable)  // throws AssertionError in unit testing mode
-      }
-      catch (e: Throwable) {
-        // rethrow on EDT outside the Coroutines machinery
-        dispatch(context, Runnable { throw e })
-      }
+    internal fun processUncaughtException(throwable: Throwable) {
+      PluginManager.processException(throwable)
     }
   }
 }

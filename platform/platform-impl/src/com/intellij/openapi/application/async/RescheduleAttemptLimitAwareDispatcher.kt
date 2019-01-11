@@ -9,10 +9,9 @@ import kotlin.coroutines.CoroutineContext
 
 // must be the ContinuationInterceptor in order to work properly
 internal class RescheduleAttemptLimitAwareDispatcher(dispatchers: Array<CoroutineDispatcher>,
+                                                     private val dispatchLater: (Runnable) -> Unit,
                                                      private val myLimit: Int = 3000)
   : BaseAsyncExecutionSupport.CompositeDispatcher(dispatchers) {
-  private val fallbackDispatcher: CoroutineDispatcher get() = dispatchers.first()
-
   private var myAttemptCount: Int = 0
 
   private val myLogLimit: Int = 30
@@ -30,13 +29,17 @@ internal class RescheduleAttemptLimitAwareDispatcher(dispatchers: Array<Coroutin
       super.dispatch(context, block)
     }
     else BaseAsyncExecutionSupport.run {
-      processUncaughtException(context, TooManyRescheduleAttemptsException(myLastDispatchers))
-      context.cancel()
+      try {
+        processUncaughtException(TooManyRescheduleAttemptsException(myLastDispatchers))
+      }
+      finally {
+        context.cancel()
 
-      // The continuation block MUST be invoked at some point in order to give the coroutine a chance
-      // to handle the cancellation exception and exit gracefully.
-      // At this point we can only provide a guarantee to resume it on EDT with a proper modality state.
-      fallbackDispatcher.dispatch(context, block)
+        // The continuation block MUST be invoked at some point in order to give the coroutine a chance
+        // to handle the cancellation exception and exit gracefully.
+        // At this point we can only provide a guarantee to resume it on EDT with a proper modality state.
+        dispatchLater(block)
+      }
     }
   }
 

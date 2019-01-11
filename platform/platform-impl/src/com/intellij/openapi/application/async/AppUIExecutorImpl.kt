@@ -25,7 +25,10 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
                                                      expirableHandles: Set<Expiration>)
   : ExpirableAsyncExecutionSupport<AppUIExecutorEx>(dispatchers, expirableHandles), AppUIExecutorEx {
 
-  override fun composeDispatchers() = dispatchers.singleOrNull() ?: RescheduleAttemptLimitAwareDispatcher(dispatchers)
+  override fun composeDispatchers() = dispatchers.singleOrNull() ?: RescheduleAttemptLimitAwareDispatcher(dispatchers, ::dispatchLater)
+
+  override fun dispatchLater(block: Runnable) =
+    ApplicationManager.getApplication().invokeLater(block, myModality)
 
   constructor(modality: ModalityState) : this(modality, arrayOf(/* fallback */ SimpleConstraintDispatcher(object : SimpleContextConstraint {
     override val isCorrectContext: Boolean

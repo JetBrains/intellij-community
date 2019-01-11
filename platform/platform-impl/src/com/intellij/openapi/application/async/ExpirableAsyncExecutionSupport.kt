@@ -54,6 +54,9 @@ internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(di
                                                                               private val expirationSet: Set<Expiration>)
   : BaseAsyncExecutionSupport<E>(dispatchers) {
 
+  /** Must schedule the runnable and return immediately. */
+  protected abstract fun dispatchLater(block: Runnable)
+
   override fun createContinuationInterceptor(): ContinuationInterceptor {
     val delegateInterceptor = super.createContinuationInterceptor()
     val expiration = composeExpiration() ?: return delegateInterceptor
@@ -168,7 +171,7 @@ internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(di
             context.cancel()
           }
           // Implementation of a completion handler must be fast and lock-free.
-          fallbackDispatcher.dispatch(context, block)  // invokeLater, basically
+          dispatchLater(block)  // invokeLater, basically
         }
       }
       if (runOnce.isActive) {
