@@ -346,30 +346,6 @@ public abstract class LongRangeSet {
   }
 
   /**
-   * Returns a range which represents all the possible values after applying {@code x >> y} operation for
-   * all {@code x} from this set and for all {@code y} from the shiftSize set. The resulting set may contain
-   * some more values.
-   *
-   * @param shiftSize set of possible shift sizes (number of bits to shift to the right)
-   * @param isLong whether the operation is performed on long type (if false, the int type is assumed).
-   * @return a new range
-   */
-  @NotNull
-  public LongRangeSet shiftRight(LongRangeSet shiftSize, boolean isLong) {
-    if (isEmpty() || shiftSize.isEmpty()) return empty();
-    int maxShift = (isLong ? Long.SIZE : Integer.SIZE) - 1;
-    if (shiftSize.min() < 0 || shiftSize.max() > maxShift) {
-      shiftSize = shiftSize.bitwiseAnd(point(maxShift));
-    }
-    long min = shiftSize.min();
-    long max = shiftSize.max();
-    LongRangeSet negative = intersect(range(minValue(isLong), -1));
-    LongRangeSet positive = intersect(range(0, maxValue(isLong)));
-    return positive.shrPositive(min, max, isLong)
-                   .unite(point(-1).minus(point(-1).minus(negative, isLong).shrPositive(min, max, isLong), isLong));
-  }
-
-  /**
    * Returns a range which represents all the possible values after applying {@code x << y} operation for
    * all {@code x} from this set and for all {@code y} from the shiftSize set. The resulting set may contain
    * some more values.
@@ -389,6 +365,20 @@ public abstract class LongRangeSet {
   }
 
   /**
+   * Returns a range which represents all the possible values after applying {@code x >> y} operation for
+   * all {@code x} from this set and for all {@code y} from the shiftSize set. The resulting set may contain
+   * some more values.
+   *
+   * @param shiftSize set of possible shift sizes (number of bits to shift to the right)
+   * @param isLong whether the operation is performed on long type (if false, the int type is assumed).
+   * @return a new range
+   */
+  @NotNull
+  public LongRangeSet shiftRight(LongRangeSet shiftSize, boolean isLong) {
+    return doShiftRight(shiftSize, isLong, false);
+  }
+
+  /**
    * Returns a range which represents all the possible values after applying {@code x >>> y} operation for
    * all {@code x} from this set and for all {@code y} from the shiftSize set. The resulting set may contain
    * some more values.
@@ -399,6 +389,10 @@ public abstract class LongRangeSet {
    */
   @NotNull
   public LongRangeSet unsignedShiftRight(LongRangeSet shiftSize, boolean isLong) {
+    return doShiftRight(shiftSize, isLong, true);
+  }
+
+  private LongRangeSet doShiftRight(LongRangeSet shiftSize, boolean isLong, boolean unsigned) {
     if (isEmpty() || shiftSize.isEmpty()) return empty();
     int maxShift = (isLong ? Long.SIZE : Integer.SIZE) - 1;
     if (shiftSize.min() < 0 || shiftSize.max() > maxShift) {
@@ -408,15 +402,22 @@ public abstract class LongRangeSet {
     long max = shiftSize.max();
     LongRangeSet negative = intersect(range(minValue(isLong), -1));
     LongRangeSet positive = intersect(range(0, maxValue(isLong)));
-    LongRangeSet result = positive.shrPositive(min, max, isLong);
-    if (min == 0) {
-      result = result.unite(negative);
-      if (max == 0) return result;
-      min++;
+    LongRangeSet positiveResult = positive.shrPositive(min, max, isLong);
+    LongRangeSet negativeResult;
+    LongRangeSet negativeComplement = point(-1).minus(negative, isLong); // -1-negative
+    if (unsigned) {
+      if (min == 0) {
+        positiveResult = positiveResult.unite(negative);
+        if (max == 0) return positiveResult;
+        min++;
+      }
+      // for x < 0, y > 0, x >>> y = (MAX_VALUE - ((-1-x) >> 1)) >> (y-1)
+      negativeResult = point(maxValue(isLong)).minus(negativeComplement.shrPositive(1, 1, isLong), isLong)
+        .shrPositive(min - 1, max - 1, isLong);
+    } else {
+      negativeResult = point(-1).minus(negativeComplement.shrPositive(min, max, isLong), isLong);
     }
-    // for x < 0, y > 0, x >>> y = (MAX_VALUE - ((-1-x) >> 1)) >> (y-1)
-    return result.unite(point(maxValue(isLong)).minus(point(-1).minus(negative, isLong).shrPositive(1, 1, isLong), isLong)
-                                               .shrPositive(min - 1, max - 1, isLong));
+    return positiveResult.unite(negativeResult);
   }
 
   private LongRangeSet shrPositive(long min, long max, boolean isLong) {
