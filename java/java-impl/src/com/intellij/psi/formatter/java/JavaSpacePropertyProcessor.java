@@ -157,7 +157,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private void init(ASTNode child) {
     if (child == null) return;
     ASTNode treePrev = child.getTreePrev();
-    while (treePrev != null && (treePrev.getElementType() == TokenType.WHITE_SPACE || treePrev.getTextLength() == 0)) {
+    while (treePrev != null && FormatterUtil.containsWhiteSpacesOnly(treePrev)) {
       treePrev = treePrev.getTreePrev();
     }
     if (treePrev == null) {
@@ -1237,15 +1237,15 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myType2 == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
       createSpaceProperty(false, true, 0);
     }
-    else if ((myType1 == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || myType1 == JavaDocElementType.DOC_TAG_VALUE_ELEMENT) &&
-             (myType2 == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || myType2 == JavaDocElementType.DOC_TAG_VALUE_ELEMENT)) {
-      createSpaceInCode(true);
-    }
     else if (myRole1 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
     }
     else if (myRole2 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
+    }
+    else if ((myType1 == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || myType1 == JavaDocElementType.DOC_TAG_VALUE_ELEMENT) &&
+             (myType2 == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || myType2 == JavaDocElementType.DOC_TAG_VALUE_ELEMENT)) {
+      createSpaceInCode(true);
     }
   }
 
