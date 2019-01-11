@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.CredentialAttributes
@@ -13,7 +13,8 @@ internal abstract class BaseKeePassCredentialStore : CredentialStore {
   protected abstract val db: KeePassDatabase
 
   override fun get(attributes: CredentialAttributes): Credentials? {
-    val entry = db.rootGroup.getGroup(ROOT_GROUP_NAME)?.getEntry(attributes.serviceName, attributes.userName) ?: return null
+    val group = db.rootGroup.getGroup(ROOT_GROUP_NAME) ?: return null
+    val entry = group.getEntry(attributes.serviceName, attributes.userName) ?: return null
     return Credentials(attributes.userName ?: entry.userName, entry.password?.get())
   }
 
@@ -27,9 +28,11 @@ internal abstract class BaseKeePassCredentialStore : CredentialStore {
       val userName = attributes.userName ?: credentials.userName
       var entry = group.getEntry(attributes.serviceName, if (attributes.serviceName == SERVICE_NAME_PREFIX) userName else null)
       if (entry == null) {
-        entry = group.getOrCreateEntry(attributes.serviceName, userName)
+        entry = group.createEntry(attributes.serviceName, userName)
       }
-      entry.userName = userName
+      else {
+        entry.userName = userName
+      }
       entry.password = if (attributes.isPasswordMemoryOnly || credentials.password == null) null else db.protectValue(credentials.password!!)
     }
 
