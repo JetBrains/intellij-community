@@ -18,6 +18,8 @@ import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeUtil.*;
+
 /**
  * An immutable set of long values optimized for small number of ranges.
  *
@@ -506,7 +508,7 @@ public abstract class LongRangeSet {
     int i = 0;
     while (i < Long.SIZE && bits[i] != ThreeState.UNSURE) {
       if (bits[i] == ThreeState.YES) {
-        from |= (1L << (Long.SIZE - 1 - i));
+        from = setBit(from, Long.SIZE - 1 - i);
       }
       i++;
     }
@@ -514,7 +516,7 @@ public abstract class LongRangeSet {
     int j = Long.SIZE - 1;
     while(j > i && bits[j] != ThreeState.UNSURE) {
       if (bits[j] == ThreeState.NO) {
-        to &= ~(1L << Long.SIZE - 1 - j);
+        to = clearBit(to, Long.SIZE - 1 - j);
       }
       j--;
     }
@@ -525,8 +527,8 @@ public abstract class LongRangeSet {
     for (int rem = 0; rem < Long.SIZE; rem++) {
       for (int pos = 0; pos < 6; pos++) {
         ThreeState bit = bits[Long.SIZE - pos - 1];
-        if (bit == ThreeState.fromBoolean(((rem >>> pos) & 1) == 0)) {
-          modBits &= ~(1L << rem);
+        if (bit == ThreeState.fromBoolean(!isSet(rem, pos))) {
+          modBits = clearBit(modBits, rem);
           break;
         }
       }
@@ -556,9 +558,9 @@ public abstract class LongRangeSet {
       }
       if (fromBit == 64) break;
       bits[fromBit] = ThreeState.YES;
-      long clearMask = ~(1L << (Long.SIZE - 1 - fromBit));
-      from &= clearMask;
-      to &= clearMask;
+      int bitNumber = Long.SIZE - 1 - fromBit;
+      from = clearBit(from, bitNumber);
+      to = clearBit(to, bitNumber);
     }
     return bits;
   }
@@ -659,41 +661,46 @@ public abstract class LongRangeSet {
     if (mod <= 0) throw new IllegalArgumentException();
     if (bits == 0) return empty();
     if (mod == 1 || mod > Long.SIZE) return range(from, to);
+    int intMod = (int)mod;
+    int halfMod = intMod / 2;
     // Try to reduce mod if bits are symmetrical
-    if (mod % 2 == 0 && (bits & ((1L << mod / 2) - 1)) == (bits >>> (mod / 2))) {
-      return modRange(from, to, mod / 2, bits >>> (mod / 2));
+    if (intMod % 2 == 0) {
+      long rightHalf = extractBits(bits, 0, halfMod);
+      long leftHalf = extractBits(bits, halfMod, halfMod);
+      if (rightHalf == leftHalf) {
+        return modRange(from, to, halfMod, leftHalf);
+      }
     }
     // Adjust from/to: they should point to minimal/maximal value which is actually allowed by mod bits
-    byte byteMod = (byte)mod;
-    long rotatedFrom = ModRange.rotateBits(bits, byteMod, ModRange.getBit(from, byteMod));
+    long rotatedFrom = rotateRemainders(bits, intMod, remainder(from, intMod));
     from += Long.numberOfTrailingZeros(rotatedFrom);
-    int toBit = (ModRange.getBit(to, byteMod) + 1) % byteMod;
-    long rotatedTo = ModRange.rotateBits(bits, byteMod, toBit);
-    to -= byteMod - (Long.SIZE - Long.numberOfLeadingZeros(rotatedTo));
+    int toBit = (remainder(to, intMod) + 1) % intMod;
+    long rotatedTo = rotateRemainders(bits, intMod, toBit);
+    to -= intMod - (Long.SIZE - Long.numberOfLeadingZeros(rotatedTo));
 
     if (from > to) return empty();
     if (from == to) return new Point(from);
     // Try to reduce mod if the range is too small 
     long length = to - from;
-    if (length > 0 && length <= byteMod / 2) {
-      for (byte newMod = (byte)length; newMod <= byteMod / 2; newMod++) {
-        if (byteMod % newMod == 0) {
+    if (length > 0 && length <= intMod / 2) {
+      for (int newMod = (int)length; newMod <= intMod / 2; newMod++) {
+        if (intMod % newMod == 0) {
           long newBits = 0;
           for (long i = from; i <= to; i++) {
-            if ((bits & (1L << ModRange.getBit(i, byteMod))) != 0) {
-              newBits |= 1L << ModRange.getBit(i, newMod);
+            if (isSet(bits, remainder(i, intMod))) {
+              newBits = setBit(newBits, remainder(i, newMod));
             }
           }
-          byteMod = newMod;
+          intMod = newMod;
           bits = newBits;
           if (bits == 0) return empty();
           break;
         }
       }
     }
-    if (Long.bitCount(bits) == byteMod) return range(from, to);
+    if (Long.bitCount(bits) == intMod) return range(from, to);
 
-    ModRange range = new ModRange(from, to, byteMod, bits);
+    ModRange range = new ModRange(from, to, intMod, bits);
     LongRangeSet fullRange = range(from, to);
     return range.contains(fullRange) ? fullRange : range;
   }
@@ -818,7 +825,7 @@ public abstract class LongRangeSet {
       long bits = remainders.contains(0) ? 1 : 0;      
       for(int rem = 1; rem < mod; rem++) {
         if (remainders.contains(rem) || remainders.contains(rem - mod)) {
-          bits |= 1L << rem;
+          bits = setBit(bits, rem);
         }
       }
       return modRange(min, max, mod, bits);
@@ -1518,10 +1525,10 @@ public abstract class LongRangeSet {
   }
 
   static final class ModRange extends Range {
-    private final byte myMod;
+    private final int myMod;
     private final long myBits;
 
-    ModRange(long from, long to, byte mod, long bits) {
+    ModRange(long from, long to, int mod, long bits) {
       super(from, to);
       assert mod > 1 && mod <= Long.SIZE;
       this.myMod = mod;
@@ -1532,7 +1539,7 @@ public abstract class LongRangeSet {
 
     @Override
     public boolean contains(long value) {
-      return super.contains(value) && (myBits & (1L << getBit(value, myMod))) != 0;
+      return super.contains(value) && isSet(myBits, remainder(value, myMod));
     }
 
     @Override
@@ -1540,7 +1547,7 @@ public abstract class LongRangeSet {
       LongRangeSet intersection = super.intersect(other);
       if (intersection instanceof Range || intersection instanceof Point) {
         long bits = myBits;
-        byte mod = myMod;
+        int mod = myMod;
         if (other instanceof ModRange) {
           ModRange modRange = (ModRange)other;
           int lcm = lcm(modRange.myMod);
@@ -1564,9 +1571,9 @@ public abstract class LongRangeSet {
             if (newMod % myMod == 0) {
               long bits = widenBits(newMod);
               for (long pos = min; pos <= max; pos++) {
-                long mask = 1L << getBit(pos, newMod);
-                if ((bits & mask) != 0 && !intersection.contains(pos)) {
-                  bits &= ~mask;
+                int bit = remainder(pos, newMod);
+                if (isSet(bits, bit) && !intersection.contains(pos)) {
+                  bits = clearBit(bits, bit);
                 }
               }
               return modRange(min, max, newMod, bits);
@@ -1650,8 +1657,8 @@ public abstract class LongRangeSet {
       if (set instanceof Range && (other instanceof Point || other instanceof ModRange && ((ModRange)other).myMod == myMod &&
                                                              Long.bitCount(((ModRange)other).myBits) == 1)) {
         if (Integer.bitCount(myMod) == 1 || !subtractionMayOverflow(other.negate(isLong), isLong)) {
-          int bit = other instanceof Point ? getBit(((Point)other).myValue, myMod) : Long.numberOfTrailingZeros(((ModRange)other).myBits);
-          long bits = rotateBits(myBits, myMod, myMod - bit);
+          int bit = other instanceof Point ? remainder(((Point)other).myValue, myMod) : Long.numberOfTrailingZeros(((ModRange)other).myBits);
+          long bits = rotateRemainders(myBits, myMod, myMod - bit);
           return modRange(set.min(), set.max(), myMod, bits);
         }
       }
@@ -1662,15 +1669,16 @@ public abstract class LongRangeSet {
     @Override
     public LongRangeSet mod(LongRangeSet divisor) {
       if (divisor instanceof Point) {
-        long divisorValue = ((Point)divisor).myValue;
-        if (divisorValue > 1 && divisorValue <= Long.SIZE) {
-          int lcm = lcm((byte)divisorValue);
+        if (((Point)divisor).myValue > 1 && ((Point)divisor).myValue <= Long.SIZE) {
+          int divisorValue = (int)((Point)divisor).myValue;
+          int lcm = lcm(divisorValue);
           if (lcm <= Long.SIZE) {
             long from = Math.min(0, Math.max(myFrom, -divisorValue + 1));
             long to = Math.max(0, Math.min(myTo, divisorValue - 1));
             long possibleMods = widenBits(lcm);
             while (Long.SIZE - Long.numberOfLeadingZeros(possibleMods) > divisorValue) {
-              possibleMods = (possibleMods >>> divisorValue) | (possibleMods & ((1L << divisorValue) - 1));
+              possibleMods = extractBits(possibleMods, divisorValue, Long.SIZE) | 
+                             extractBits(possibleMods, 0, divisorValue);
             }
             return modRange(from, to, divisorValue, possibleMods);
           }
@@ -1712,8 +1720,8 @@ public abstract class LongRangeSet {
       if (from < myFrom || to > myTo) return false;
       if (to == from) return contains(from);
       if (to - from < 0 || to - from >= myMod) return false;
-      int fromBit = getBit(from, myMod);
-      int toBit = getBit(to, myMod);
+      int fromBit = remainder(from, myMod);
+      int toBit = remainder(to, myMod);
       if (fromBit < toBit) {
         return Long.numberOfTrailingZeros(~(myBits >>> fromBit)) > toBit - fromBit;
       }
@@ -1725,7 +1733,7 @@ public abstract class LongRangeSet {
       assert targetMod <= Long.SIZE && targetMod % myMod == 0;
       long result = myBits;
       for (int shift = targetMod - myMod; shift > 0; shift -= myMod) {
-        result |= myBits << (shift);
+        result |= myBits << shift;
       }
       return result;
     }
@@ -1734,26 +1742,8 @@ public abstract class LongRangeSet {
       return -1L >>> (Long.SIZE - myMod);
     }
 
-    private int lcm(byte otherMod) {
+    private int lcm(int otherMod) {
       return myMod * otherMod / gcd(myMod, otherMod);
-    }
-
-    private static int gcd(int x, int y) {
-      while (x != 0) {
-        int z = x;
-        x = y % z;
-        y = z;
-      }
-      return y;
-    }
-
-    static int getBit(long value, byte mod) {
-      value = value % mod;
-      return (int)(value < 0 ? value + mod : value);
-    }
-
-    static long rotateBits(long bits, byte mod, int amount) {
-      return (bits >>> amount) | ((bits & ((1L << amount) - 1)) << (mod - amount));
     }
   }
 
