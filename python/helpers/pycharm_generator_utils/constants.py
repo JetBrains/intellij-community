@@ -224,7 +224,7 @@ SIMPLE_VALUE_RE = re.compile(
 
 ###########################   parsing   ###########################################################
 if version[0] < 3:
-    from pycharm_generator_utils.pyparsing import *
+    from pycharm_generator_utils.pyparsing_py2 import *
 else:
     #noinspection PyUnresolvedReferences
     from pycharm_generator_utils.pyparsing_py3 import *
