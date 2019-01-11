@@ -220,8 +220,9 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   private void updateDefaultInterpreter(Module module) {
     final Sdk sdk = module == null ? null : ModuleRootManager.getInstance(module).getSdk();
-    String projectSdkName = sdk == null ? "none" : sdk.getName();
-    myInterpreterComboBox.setRenderer(new PySdkListCellRenderer(null,"Project Default (" + projectSdkName + ")"));
+    myInterpreterComboBox.setRenderer(
+      sdk == null ? new PySdkListCellRenderer(null) : new PySdkListCellRenderer(null, "Project Default (" + sdk.getName() + ")", sdk)
+    );
   }
 
   public void updateSdkList(boolean preserveSelection, PyConfigurableInterpreterList myInterpreterList) {
