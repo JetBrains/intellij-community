@@ -371,6 +371,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doImportProjects(Collections.singletonList(myProjectPom), false);
   }
 
+  protected void importProjectWithErrors(@NotNull @Language(value = "XML", prefix = "<project>", suffix = "</project>") String xml) {
+    createProjectPom(xml);
+    importProjectWithErrors();
+  }
+
   protected void importProjectWithProfiles(String... profiles) {
     doImportProjects(Collections.singletonList(myProjectPom), true, profiles);
   }

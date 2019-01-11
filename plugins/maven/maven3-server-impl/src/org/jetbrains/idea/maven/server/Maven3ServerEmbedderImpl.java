@@ -666,17 +666,14 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
           for (ProjectBuildingResult buildingResult : buildingResults) {
             MavenProject project = buildingResult.getProject();
 
+            //todo Exceptions should be replaced with MavenProjectProblem
+            List<Exception> exceptions = extractExceptions(buildingResult);
+
             if (project == null) {
-              List<Exception> exceptions = new ArrayList<Exception>();
-              for (ModelProblem problem : buildingResult.getProblems()) {
-                exceptions.add(problem.getException());
-              }
-              MavenExecutionResult mavenExecutionResult = new MavenExecutionResult(buildingResult.getPomFile(), exceptions);
-              executionResults.add(mavenExecutionResult);
+              executionResults.add(new MavenExecutionResult(null, null, exceptions));
               continue;
             }
-
-            List<Exception> exceptions = new ArrayList<Exception>();
+            //List<Exception> exceptions = new ArrayList<Exception>();
             loadExtensions(project, exceptions);
 
             //Artifact projectArtifact = project.getArtifact();
@@ -713,7 +710,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
               }));
               for (Dependency dependency : dependencies) {
                 final Artifact artifact = winnerDependencyMap.get(dependency);
-                if(artifact != null) {
+                if (artifact != null) {
                   artifacts.add(artifact);
                   resolveAsModule(artifact);
                 }
@@ -732,6 +729,23 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
     return executionResults;
   }
+
+  private List<Exception> extractExceptions(ProjectBuildingResult buildingResult) {
+    List<Exception> exceptions = new ArrayList<Exception>();
+    for (ModelProblem problem : buildingResult.getProblems()) {
+      if (problem.getException() != null) {
+        exceptions.add(problem.getException());
+      }
+      else {
+        // maven does not set exceptions in case of problem
+        if (problem.getSeverity() == ModelProblem.Severity.ERROR || problem.getSeverity() == ModelProblem.Severity.FATAL) {
+          exceptions.add(new Exception(problem.getMessage()));
+        }
+      }
+    }
+    return exceptions;
+  }
+
 
   private boolean resolveAsModule(Artifact a) {
     MavenWorkspaceMap map = myWorkspaceMap;
