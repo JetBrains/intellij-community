@@ -28,7 +28,7 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
     """.trimIndent())
 
     checkDescription(variants, "env", "Environment variables")
-    checkDescription(variants, "isAllowRunningInParallel", "Allow running in parallel")
+    checkDescription(variants, "isAllowRunningInParallel", "Allow parallel run")
     checkDescription(variants, "isShowConsoleOnStdErr", "Show console when a message is printed to standard error stream")
     checkDescription(variants, "isShowConsoleOnStdOut", "Show console when a message is printed to standard output stream")
   }
@@ -44,7 +44,7 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
     configurations (array)
     """.trimIndent())
   }
-  
+
   private fun checkDescription(variants: List<LookupElement>, name: String, expectedDescription: String) {
     val variant = variants.first { it.lookupString == name }
     val presentation = LookupElementPresentation()

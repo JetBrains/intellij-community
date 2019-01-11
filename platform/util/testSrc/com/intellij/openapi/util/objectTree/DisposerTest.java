@@ -24,6 +24,7 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.openapi.util.Disposer.newDisposable;
@@ -90,17 +91,21 @@ public class DisposerTest extends TestCase {
 
     Disposer.dispose(myRoot);
 
-    List<MyDisposable> expected = new ArrayList<>();
-    expected.add(myFolder2);
-    expected.add(myLeaf1);
-    expected.add(myFolder1);
-    expected.add(myRoot);
+    assertEquals(Arrays.asList(myFolder2, myLeaf1, myFolder1, myRoot), myDisposedObjects);
+  }
 
-    assertEquals(expected, myDisposedObjects);
+  public void testDisposalOrderNestedDispose() {
+    Disposer.register(myRoot, myFolder2);
+    //noinspection SSBasedInspection
+    Disposer.register(myRoot, () -> Disposer.dispose(myFolder2));
+
+    Disposer.dispose(myRoot);
+
+    assertEquals(Arrays.asList(myFolder2, myRoot), myDisposedObjects);
   }
 
   public void testDirectCallOfDisposable() {
-    SelDisposable selfDisposable = new SelDisposable("root");
+    SelDisposable selfDisposable = new SelDisposable("selfDisposable");
     Disposer.register(myRoot, selfDisposable);
     Disposer.register(selfDisposable, myFolder1);
     Disposer.register(myFolder1, myFolder2);
@@ -119,17 +124,6 @@ public class DisposerTest extends TestCase {
     SelDisposable selfDisposable = new SelDisposable("root");
     //noinspection SSBasedInspection
     selfDisposable.dispose();
-  }
-
-  public void testDisposeAndReplace() {
-    Disposer.register(myRoot, myFolder1);
-
-    Disposer.disposeChildAndReplace(myFolder1, myFolder2);
-    assertDisposed(myFolder1);
-
-    Disposer.dispose(myRoot);
-    assertDisposed(myRoot);
-    assertDisposed(myFolder2);
   }
 
   public void testPostponedParentRegistration() {
@@ -212,10 +206,8 @@ public class DisposerTest extends TestCase {
     assertEquals(toString(expected), toString(myDisposeActions));
   }
 
-
   private void assertDisposed(MyDisposable disposable) {
     assertTrue(disposable.isDisposed());
-    assertFalse(disposable.toString(), Disposer.getTree().containsKey(disposable));
 
     Disposer.getTree().assertNoReferenceKeptInTree(disposable);
   }
@@ -239,6 +231,7 @@ public class DisposerTest extends TestCase {
       return myDisposed;
     }
 
+    @Override
     public String toString() {
       return myName;
     }

@@ -15,9 +15,9 @@
  */
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -37,7 +37,7 @@ public class FilterCopyHandler extends FileCopyingHandler {
 
   @Override
   public void copyFile(@NotNull File from, @NotNull File to, @NotNull CompileContext context) throws IOException {
-    FileUtil.copyContent(from, to);
+    FSOperations.copy(from, to);
   }
 
   @Override

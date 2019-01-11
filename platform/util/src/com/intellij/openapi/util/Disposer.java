@@ -129,10 +129,6 @@ public class Disposer {
     ourTree.executeAll(disposable, ourDisposeAction, processUnregistered);
   }
 
-  public static void disposeChildAndReplace(@NotNull Disposable toDispose, @NotNull Disposable toReplace) {
-    ourTree.executeChildAndReplace(toDispose, toReplace, ourDisposeAction);
-  }
-
   @NotNull
   public static ObjectTree<Disposable> getTree() {
     return ourTree;

@@ -73,6 +73,9 @@ public abstract class LogPipe extends LogPipeBase {
         catch (IOException e) {
           myLoggingHandler.println(e.toString());
         }
+        finally {
+          getLogListener().close();
+        }
       }
     }.start();
   }

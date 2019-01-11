@@ -318,7 +318,7 @@ public class SvnUtil {
                                                                                        @NotNull Collection<? extends T> items,
                                                                                        @NotNull final Convertor<? super T, ? extends FilePath> converter) {
     return ContainerUtil.groupBy(items, item -> {
-      RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(converter.convert(item).getIOFile());
+      RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(converter.convert(item));
 
       return path == null ? UNKNOWN_REPOSITORY_AND_FORMAT : Pair.create(path.getRepositoryUrl(), path.getFormat());
     });

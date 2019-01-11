@@ -26,6 +26,8 @@ import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Iterator;
 
 /**
@@ -72,6 +74,10 @@ public class ImageInfoReader {
   @Nullable
   private static Info read(@NotNull Object input, @Nullable String inputName) {
     try (ImageInputStream iis = ImageIO.createImageInputStream(input)) {
+      if (isAppleOptimizedPNG(iis)) {
+        // They are not supported by PNGImageReader
+        return null;
+      }
       Iterator<ImageReader> it = ImageIO.getImageReaders(iis);
       ImageReader reader = it.hasNext() ? it.next() : null;
       if (reader != null) {
@@ -123,4 +129,18 @@ public class ImageInfoReader {
     }
   }
 
+  private static final byte[] APPLE_PNG_SIGNATURE = {-119, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 4, 67, 103, 66, 73};
+
+  private static boolean isAppleOptimizedPNG(@NotNull ImageInputStream iis) throws IOException {
+    try {
+      byte[] signature = new byte[APPLE_PNG_SIGNATURE.length];
+      if (iis.read(signature) != APPLE_PNG_SIGNATURE.length) {
+        return false;
+      }
+      return Arrays.equals(signature, APPLE_PNG_SIGNATURE);
+    }
+    finally {
+      iis.seek(0);
+    }
+  }
 }

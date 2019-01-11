@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
  * Implementations of this extension point can tell IDE whether some particular file is a test file.
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * properly check if they are included in built-in search scopes, etc.
  *
  * @see FileIndex#isInTestSourceContent(VirtualFile)
+ * @see JpsModuleSourceRootType#isForTests()
  * @since 2016.3
  * @author zolotov
  */

@@ -36,17 +36,16 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -229,8 +228,12 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
       Set<Module> modules = new LinkedHashSet<>();  // Android Studio: moved out for use at end of method
       try {
         File argsFile = FileUtil.createTempFile("javadoc_args", null);
+        Charset cs = CharsetToolkit.getPlatformCharset();
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter(argsFile))) {
+        try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(argsFile), cs))) {
+/* Android Studio: See Change Ic0e27ac6 / commit 85eff73
+          Set<Module> modules = new LinkedHashSet<>();
+Android Studio: See Change Ic0e27ac6 / commit 85eff73 */
           Set<VirtualFile> sources = new HashSet<>();
           Runnable r = () -> myGenerationOptions.accept(new MyContentIterator(myProject, modules, sources));
           String title = JavadocBundle.message("javadoc.generate.sources.progress");
@@ -298,9 +301,10 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
           }
         }
 
-        myArgFileFilter.setPath(argsFile.getPath());
+        myArgFileFilter.setPath(argsFile.getPath(), cs);
         parameters.add("@" + argsFile.getPath());
         OSProcessHandler.deleteFileOnTermination(cmdLine, argsFile);
+        cmdLine.setCharset(cs);
       }
       catch (IOException e) {
         throw new CantRunException(JavadocBundle.message("javadoc.generate.temp.file.error"), e);

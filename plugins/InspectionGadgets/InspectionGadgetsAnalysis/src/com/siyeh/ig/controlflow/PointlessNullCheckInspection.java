@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,15 +27,13 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveRedundantPolyadicOperandFix;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.SideEffectChecker;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -163,7 +162,15 @@ public class PointlessNullCheckInspection extends BaseInspection {
       if (qualifier != null && SideEffectChecker.mayHaveSideEffects(qualifier)) return null;
       PsiMethod method = call.resolveMethod();
       if (method == null) return null;
-      List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, call);
+      List<? extends MethodContract> contracts;
+      if (MethodUtils.isEquals(method)) {
+        // Contracts for equals are tuned for some classes to (this == arg#0) -> true; () -> false
+        // so let's rewrite this to (null == arg#0) -> false which is more relevant to this inspection
+        ValueConstraint[] nullArg = {ValueConstraint.NULL_VALUE};
+        contracts = Collections.singletonList(new StandardMethodContract(nullArg, ContractReturnValue.returnFalse()));
+      } else {
+        contracts = JavaMethodContractUtil.getMethodCallContracts(method, call);
+      }
       if (contracts.isEmpty()) return null;
       MethodContract contract = tryCast(contracts.get(0), StandardMethodContract.class);
       if (contract == null || !contract.getReturnValue().equals(ContractReturnValue.returnFalse())) return null;

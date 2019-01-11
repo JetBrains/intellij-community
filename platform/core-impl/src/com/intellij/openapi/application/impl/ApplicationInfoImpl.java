@@ -41,6 +41,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myFullVersionFormat;
   private String myBuildNumber;
   private String myApiVersion;
+  private String myVersionSuffix;
   private String myCompanyName = "JetBrains s.r.o.";
   private String myCopyrightStart = "2000";
   private String myShortCompanyName;
@@ -294,8 +295,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     else {
       result = StringUtil.notNullize(myMajorVersion, "0") + '.' + StringUtil.notNullize(myMinorVersion, "0");
     }
+/* Android Studio: removed by Change I2708044e / commit e1454d7
     // In Android Studio we don't want the EAP suffix in version names
-    //if (isEAP()) result += " EAP";
+    if (!StringUtil.isEmpty(myVersionSuffix)) {
+      result += " " + myVersionSuffix;
+    }
+Android Studio: removed by Change I2708044e / commit e1454d7 */
     return result;
   }
 
@@ -671,6 +676,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myFullVersionFormat = versionElement.getAttributeValue(ATTRIBUTE_FULL);
       myCodeName = versionElement.getAttributeValue(ATTRIBUTE_CODENAME);
       myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
+      myVersionSuffix = versionElement.getAttributeValue("suffix");
+      if (myVersionSuffix == null && myEAP) {
+        myVersionSuffix = "EAP";
+      }
     }
 
     Element companyElement = getChild(parentNode, ELEMENT_COMPANY);

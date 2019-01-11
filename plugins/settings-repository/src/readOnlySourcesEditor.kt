@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.progress.runModalTask
-import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.dialog
@@ -21,7 +20,7 @@ import com.intellij.util.ui.table.TableModelEditor
 import gnu.trove.THashSet
 import org.jetbrains.settingsRepository.git.asProgressMonitor
 import org.jetbrains.settingsRepository.git.cloneBare
-import javax.swing.JTextField
+import kotlin.properties.Delegates.notNull
 
 private val COLUMNS = arrayOf(object : TableModelEditor.EditableColumnInfo<ReadonlySource, Boolean>() {
   override fun getColumnClass() = Boolean::class.java
@@ -47,12 +46,10 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
     override fun getItemClass() = ReadonlySource::class.java
 
     override fun edit(item: ReadonlySource, mutator: Function<ReadonlySource, ReadonlySource>, isAdd: Boolean) {
-      val urlField = TextFieldWithBrowseButton(JTextField(20))
-      urlField.addBrowseFolderListener(TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()))
-
+      var urlField: TextFieldWithBrowseButton by notNull()
       val panel = panel {
         row("URL:") {
-          urlField()
+          urlField = textFieldWithBrowseButton("Choose Local Git Repository", fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
         }
       }
 

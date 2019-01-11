@@ -15,8 +15,10 @@
  */
 package org.jetbrains.plugins.terminal;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -63,6 +65,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final String ZDOTDIR = "ZDOTDIR";
   private static final String XDG_CONFIG_HOME = "XDG_CONFIG_HOME";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
+  private static final String LOGIN_SHELL = "LOGIN_SHELL";
+  private static final ImmutableList<String> LOGIN_CLI_OPTIONS = ImmutableList.of("--login", "-l");
+  private static final String LOGIN_CLI_OPTION = LOGIN_CLI_OPTIONS.get(0);
 
   private final Charset myDefaultCharset;
 
@@ -125,7 +130,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
                                                                    : ContainerUtil.canonicalStrategy());
 
-    if (TerminalOptionsProvider.Companion.getInstance().passParentEnvs()) {
+    EnvironmentVariablesData envData = TerminalOptionsProvider.getInstance().getEnvData();
+    if (envData.isPassParentEnvs()) {
       envs.putAll(System.getenv());
     }
 
@@ -139,7 +145,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
-    for (Map.Entry<String, String> env : TerminalOptionsProvider.Companion.getInstance().getUserSpecifiedEnvs().entrySet()) {
+    for (Map.Entry<String, String> env : envData.getEnvs().entrySet()) {
       envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
     }
     return envs;
@@ -173,10 +179,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     try {
-      TerminalUsageTriggerCollector.Companion.trigger(myProject, "local.exec", FUSUsageContext.create(
+      TerminalUsageTriggerCollector.trigger(myProject, "local.exec", FUSUsageContext.create(
         FUSUsageContext.getOSNameContextData(),
         SystemInfo.getOsNameAndVersion(),
-        TerminalUsageTriggerCollector.Companion.getShellNameForStat(command[0]))
+        TerminalUsageTriggerCollector.getShellNameForStat(command[0]))
       );
       String workingDir = getWorkingDirectory(directory);
       long startNano = System.nanoTime();
@@ -195,7 +201,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Nullable
   private String getWorkingDirectory(@Nullable String directory) {
     if (directory != null) return directory;
-    return TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory();
+    return TerminalProjectOptionsProvider.getInstance(myProject).getStartingDirectory();
   }
 
   @Override
@@ -231,11 +237,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
     String shellPath = getShellPath();
 
-    return getCommand(shellPath, envs, TerminalOptionsProvider.Companion.getInstance().shellIntegration());
+    return getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration());
   }
 
   private static String getShellPath() {
-    return TerminalOptionsProvider.Companion.getInstance().getShellPath();
+    return TerminalOptionsProvider.getInstance().getShellPath();
   }
 
   @NotNull
@@ -249,14 +255,23 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       if (shellName != null) {
         command.remove(0);
 
+        if (!loginOrInteractive(command)) {
+          if (hasLoginArgument(shellName) && SystemInfo.isMac) {
+            command.add(LOGIN_CLI_OPTION);
+          }
+          command.add("-i");
+        }
+
         List<String> result = Lists.newArrayList(shellCommand);
 
         String rcFilePath = findRCFile(shellName);
 
-        if (rcFilePath != null &&
-            shellIntegration) {
+        if (rcFilePath != null && shellIntegration) {
           if (shellName.equals("bash") || (SystemInfo.isMac && shellName.equals("sh"))) {
             addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
+            // remove --login to enable --rcfile sourcing
+            boolean loginShell = command.removeAll(LOGIN_CLI_OPTIONS);
+            setLoginShellEnv(envs, loginShell);
           }
           else if (shellName.equals("zsh")) {
             String zdotdir = EnvironmentUtil.getEnvironmentMap().get(ZDOTDIR);
@@ -283,16 +298,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
           }
         }
 
-        if (!loginOrInteractive(command)) {
-          if (hasLoginArgument(shellName) && SystemInfo.isMac) {
-            result.add("--login");
-          }
-          result.add("-i");
-        }
-
-        if (isLogin(command)) {
-          envs.put("LOGIN_SHELL", "1");
-        }
+        setLoginShellEnv(envs, isLogin(command));
 
         result.addAll(command);
         return ArrayUtil.toStringArray(result);
@@ -303,6 +309,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     else {
       return new String[]{shellPath};
+    }
+  }
+
+  private static void setLoginShellEnv(@NotNull Map<String, String> envs, boolean loginShell) {
+    if (loginShell) {
+      envs.put(LOGIN_SHELL, "1");
     }
   }
 
@@ -326,8 +338,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return command.contains("-i") || isLogin(command);
   }
 
-  private static boolean isLogin(List<String> command) {
-    return command.contains("--login") || command.contains("-l");
+  private static boolean isLogin(@NotNull List<String> command) {
+    return command.stream().anyMatch(s -> LOGIN_CLI_OPTIONS.contains(s));
   }
 
   private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {

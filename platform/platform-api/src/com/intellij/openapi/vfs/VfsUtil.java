@@ -202,6 +202,14 @@ public class VfsUtil extends VfsUtilCore {
     return virtualFile;
   }
 
+  @Nullable
+  public static VirtualFile refreshAndFindChild(@NotNull VirtualFile directory, @NotNull String name) {
+    if (directory instanceof NewVirtualFile) {
+      return ((NewVirtualFile)directory).refreshAndFindChild(name);
+    }
+    return findFileByIoFile(new File(virtualToIoFile(directory), name), true);
+  }
+
   /**
    * @return correct URL, must be used only for external communication
    */

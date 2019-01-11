@@ -64,32 +64,40 @@ class CompilationContextImpl implements CompilationContext {
 
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
-    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, SystemProperties.getJavaHome())
-
+    def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "", "JDK_18_x64"))
+    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, gradleJdk)
     def kotlinHome
     if (options.kotlinPlugin == null) {
-      if (!options.isInDevelopmentMode) {
-        setupCompilationDependencies(gradle)
-      }
-      else {
-        gradle.run('Setting up Kotlin plugin', 'setupKotlinPlugin')
-      }
+    if (!options.isInDevelopmentMode) {
+      setupCompilationDependencies(gradle, options)
+    }
+    else {
+      gradle.run('Setting up Kotlin plugin', 'setupKotlinPlugin')
+    }
       kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
     } else {
       kotlinHome = toCanonicalPath("$communityHome/${options.kotlinPlugin}")
     }
 
     projectHome = toCanonicalPath(projectHome)
-    def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
-    gradle = new GradleRunner(dependenciesProjectDir, messages, jdk8Home)
+    def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "${jdkDir(projectHome, options)}/1.8", "JDK_18_x64"))
+/* Android Studio: removed by Change I1dba4249 / commit 8f836c4
+    def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
+Android Studio: removed by Change I1dba4249 / commit 8f836c4 */
 
-    def model = loadProject(projectHome, jdk8Home, kotlinHome, messages, ant)
+    def model = loadProject(projectHome, jdk8Home, kotlinHome, messages, options, ant)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
     def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdk8Home, kotlinHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
     messages.debugLogPath = "$context.paths.buildOutputRoot/log/debug.log"
     return context
+  }
+
+  private static String jdkDir(String projectHome, BuildOptions options) {
+    options.jdksTargetDir?.with {
+      new File(it).exists() ? it : null
+    } ?: "$projectHome/build/jdk"
   }
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
@@ -136,7 +144,12 @@ class CompilationContextImpl implements CompilationContext {
                                       paths.kotlinHome, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
   }
 
-  private static JpsModel loadProject(String projectHome, String jdkHome, String kotlinHome, BuildMessages messages, AntBuilder ant) {
+  private static JpsModel loadProject(String projectHome,
+                                      String jdkHome,
+                                      String kotlinHome,
+                                      BuildMessages messages,
+                                      BuildOptions options,
+                                      AntBuilder ant) {
     //we need to add Kotlin JPS plugin to classpath before loading the project to ensure that Kotlin settings will be properly loaded
     ensureKotlinJpsPluginIsAddedToClassPath(kotlinHome, ant, messages)
 
@@ -145,7 +158,7 @@ class CompilationContextImpl implements CompilationContext {
     pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinHome/kotlinc")
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtil.toSystemIndependentName(new File(projectHome, "../../prebuilts/tools/common/m2/repository").absolutePath))
 
-    JdkUtils.defineJdk(model.global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "$projectHome/build/jdk/1.6", "JDK_16_x64"))
+    JdkUtils.defineJdk(model.global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "${jdkDir(projectHome, options)}/1.6", "JDK_16_x64"))
     JdkUtils.defineJdk(model.global, "1.8", jdkHome)
 
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
@@ -155,10 +168,12 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   static boolean dependenciesInstalled
-  static void setupCompilationDependencies(GradleRunner gradle) {
+  static void setupCompilationDependencies(GradleRunner gradle, BuildOptions options) {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
-      gradle.run('Setting up compilation dependencies', 'setupJdks', 'setupKotlinPlugin')
+      String[] args = ['setupJdks', 'setupKotlinPlugin']
+      if (options.jdksTargetDir != null) args += "-D$BuildOptions.JDKS_TARGET_DIR_OPTION=$options.jdksTargetDir".toString()
+      gradle.run('Setting up compilation dependencies', args)
     }
   }
 

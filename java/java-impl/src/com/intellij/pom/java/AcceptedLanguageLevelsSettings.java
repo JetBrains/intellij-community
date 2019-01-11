@@ -89,6 +89,8 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   public static boolean isLanguageLevelAccepted(LanguageLevel languageLevel) {
     //allow custom features to appear in EAP
     if (ApplicationManager.getApplication().isEAP()) return true;
+    //allow tests run
+    if (ApplicationManager.getApplication().isUnitTestMode()) return true;
     // language levels up to HIGHEST are officially supported
     return LanguageLevel.HIGHEST.compareTo(languageLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
   }

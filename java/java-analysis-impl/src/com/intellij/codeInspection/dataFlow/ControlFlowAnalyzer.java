@@ -47,6 +47,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     CallMatcher.staticCall(JAVA_UTIL_ARRAYS, "asList"),
     CallMatcher.staticCall(JAVA_UTIL_LIST, "of"));
   static final int MAX_UNROLL_SIZE = 3;
+  private static final int MAX_ARRAY_INDEX_FOR_INITIALIZER = 32;
   private final PsiElement myCodeFragment;
   private final boolean myIgnoreAssertions;
   private final boolean myInlining;
@@ -1249,13 +1250,18 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new AssignInstruction(originalExpression, arrayWriteTarget));
       int index = 0;
       for (PsiExpression initializer : initializers) {
-        DfaValue target = Objects.requireNonNull(expressionFactory.getArrayElementValue(arrayWriteTarget, index++));
-        addInstruction(new PushInstruction(target, null, true));
+        if (index < MAX_ARRAY_INDEX_FOR_INITIALIZER) {
+          DfaValue target = Objects.requireNonNull(expressionFactory.getArrayElementValue(arrayWriteTarget, index));
+          addInstruction(new PushInstruction(target, null, true));
+        }
         initializer.accept(this);
         if (componentType != null) {
           generateBoxingUnboxingInstructionFor(initializer, componentType);
         }
-        addInstruction(new AssignInstruction(initializer, null));
+        if (index < MAX_ARRAY_INDEX_FOR_INITIALIZER) {
+          addInstruction(new AssignInstruction(initializer, null));
+        }
+        index++;
         addInstruction(new PopInstruction());
       }
     }

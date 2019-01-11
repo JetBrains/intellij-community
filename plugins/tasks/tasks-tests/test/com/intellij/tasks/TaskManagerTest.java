@@ -21,6 +21,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationsAdapter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.tasks.actions.TaskSearchSupport;
 import com.intellij.tasks.impl.LocalTaskImpl;
@@ -205,5 +206,17 @@ public class TaskManagerTest extends TaskManagerTestCase {
     myTaskManager.loadState(config);
     assertEquals("${id}", myTaskManager.getState().branchNameFormat);
     assertEquals("${id} ${summary}", myTaskManager.getState().changelistNameFormat);
+  }
+
+  public void testPasswordMigration() {
+    TestRepository repository = new TestRepository();
+    repository.setUrl("http://server");
+    repository.setUsername("me");
+    String password = "foo";
+    repository.setEncodedPassword(PasswordUtil.encodePassword(password));
+    repository.setRepositoryType(new TestRepositoryType());
+    repository.initializeRepository();
+    assertEquals(password, repository.getPassword());
+    assertNull(repository.getEncodedPassword());
   }
 }

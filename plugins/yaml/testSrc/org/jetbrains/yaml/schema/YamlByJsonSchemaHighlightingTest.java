@@ -682,6 +682,13 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                    "  IsDev: !Equals [!Ref AccountType, dev]");
   }
 
+  public void testGitlabSchema() throws Exception {
+    @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/gitlab-ci.schema.json"));
+    doTest(schema, "a:\n" +
+                   "  extends: .b\n" +
+                   "  script: echo");
+  }
+
   @Language("JSON")
   private static final String SCHEMA_FOR_REFS  = "{\n" +
                                                  "  \"type\": \"object\",\n" +

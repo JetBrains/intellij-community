@@ -673,17 +673,28 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
     }
 
+    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(task.project);
+
     DiffLog diffLog;
     try (
       BlockSupportImpl.ReparseResult result =
         BlockSupportImpl.reparse(file, oldFileNode, changedPsiRange, newDocumentText, task.indicator, task.myLastCommittedText)) {
       diffLog = result.log;
 
-      PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(task.project);
 
       List<BooleanRunnable> injectedRunnables =
         documentManager.reparseChangedInjectedFragments(document, file, changedPsiRange, task.indicator, result.oldRoot, result.newRoot);
       outReparseInjectedProcessors.addAll(injectedRunnables);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      return () -> {
+        documentManager.forceReload(file.getViewProvider().getVirtualFile(), file.getViewProvider());
+        return true;
+      };
     }
 
     return () -> {

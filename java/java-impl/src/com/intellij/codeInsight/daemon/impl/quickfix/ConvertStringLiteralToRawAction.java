@@ -2,12 +2,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
@@ -32,8 +32,7 @@ public class ConvertStringLiteralToRawAction implements IntentionAction, LowPrio
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    if (PsiUtil.isJavaToken(element, JavaTokenType.STRING_LITERAL) && 
-        PsiUtil.getLanguageLevel(file) == LanguageLevel.JDK_12_PREVIEW) {
+    if (PsiUtil.isJavaToken(element, JavaTokenType.STRING_LITERAL) && HighlightUtil.Feature.RAW_LITERALS.isAvailable(file)) {
       PsiElement parent = element.getParent();
       if (parent instanceof PsiLiteralExpressionImpl) {
         String text = ((PsiLiteralExpressionImpl)parent).getInnerText();

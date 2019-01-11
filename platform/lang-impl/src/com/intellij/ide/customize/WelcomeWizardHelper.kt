@@ -11,7 +11,6 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.lang.Language
 import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 
 class WelcomeWizardHelper : BaseComponent {
   override fun initComponent() {
@@ -44,12 +43,14 @@ class WelcomeWizardHelper : BaseComponent {
       UISettings.instance.editorTabPlacement = it
     }
     WelcomeWizardUtil.getAppearanceFontSize()?.let {
-      UISettings.instance.overrideLafFonts = true
-      UISettings.instance.fontSize = it
+      val settings = UISettings.instance.state
+      settings.overrideLafFonts = true
+      UISettings.instance.state.fontSize = it
     }
     WelcomeWizardUtil.getAppearanceFontFace()?.let {
-      UISettings.instance.overrideLafFonts = true
-      UISettings.instance.fontFace = it
+      val settings = UISettings.instance.state
+      settings.overrideLafFonts = true
+      settings.fontFace = it
     }
     LafManager.getInstance().updateUI()
   }

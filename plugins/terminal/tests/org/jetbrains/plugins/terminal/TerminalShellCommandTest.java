@@ -19,6 +19,7 @@ import com.google.common.collect.Maps;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,10 +38,12 @@ public class TerminalShellCommandTest extends TestCase {
 
   public void testAddInteractiveOrLogin() {
     if (SystemInfo.isLinux) {
-      contains("bash someargs", Maps.newHashMap(), "-i", "someargs", "bash");
+      contains("bash someargs", true, Maps.newHashMap(), "-i", "someargs", "bash");
+      contains("bash someargs", false, Maps.newHashMap(), "-i", "someargs", "bash");
     }
     else if (SystemInfo.isMac) {
-      contains("bash someargs", Maps.newHashMap(), "--login", "someargs", "bash");
+      contains("bash someargs", true, Maps.newHashMap(), "someargs", "bash");
+      contains("bash someargs", false, Maps.newHashMap(), "--login", "someargs", "bash");
     }
   }
 
@@ -66,10 +69,8 @@ public class TerminalShellCommandTest extends TestCase {
       LocalTerminalDirectRunner.getCommand(path, envs, true)));
   }
 
-  private static void contains(String path, Map<String, String> envs, String... item) {
-    List<String> result = Arrays.asList(
-      LocalTerminalDirectRunner.getCommand(path, envs, true));
-
+  private static void contains(@NotNull String shellPath, boolean shellIntegration, Map<String, String> envs, String... item) {
+    List<String> result = Arrays.asList(LocalTerminalDirectRunner.getCommand(shellPath, envs, shellIntegration));
     for (String i : item) {
       assertTrue(i + " isn't in " + StringUtil.join(result, " "), result.contains(i));
     }

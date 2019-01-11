@@ -5,7 +5,6 @@ package com.intellij.codeInsight.documentation;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -210,10 +209,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
         JBPopup hint = getDocInfoHint();
         if (hint != null) {
-          if (action instanceof ShowQuickDocInfoAction) {
-            ((AbstractPopup)hint).focusPreferredComponent();
-            return;
-          }
           if (action instanceof HintManagerImpl.ActionToIgnore) return;
           if (action instanceof ScrollingUtil.ScrollingAction) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
@@ -485,7 +480,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
     else if (prevHint != null && prevHint.isVisible() && prevHint instanceof AbstractPopup) {
       DocumentationComponent component = (DocumentationComponent)((AbstractPopup)prevHint).getComponent();
-      cancelAndFetchDocInfo(component, new MyCollector(myProject, element, originalElement, null));
+      ActionCallback result = cancelAndFetchDocInfo(component, new MyCollector(myProject, element, originalElement, null));
+      if (requestFocus) {
+        result.doWhenDone(() -> {
+          JBPopup hint = getDocInfoHint();
+          if (hint != null) ((AbstractPopup)hint).focusPreferredComponent();
+        });
+      }
     }
     else {
       showInPopup(element, requestFocus, updateProcessor, originalElement, closeCallback);
@@ -713,9 +714,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return doFetchDocInfo(component, new MyCollector(myProject, element, null, null));
   }
 
-  private void cancelAndFetchDocInfo(@NotNull DocumentationComponent component, @NotNull DocumentationCollector provider) {
+  private ActionCallback cancelAndFetchDocInfo(@NotNull DocumentationComponent component, @NotNull DocumentationCollector provider) {
     myUpdateDocAlarm.cancelAllRequests();
-    doFetchDocInfo(component, provider);
+    return doFetchDocInfo(component, provider);
   }
 
   private ActionCallback doFetchDocInfo(@NotNull DocumentationComponent component,

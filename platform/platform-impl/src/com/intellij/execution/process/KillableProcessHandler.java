@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.remote.RemoteProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -155,7 +156,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    */
   @ApiStatus.Experimental
   public void setShouldKillProcessSoftlyWithWinP(boolean shouldKillProcessSoftlyWithWinP) {
-    myShouldKillProcessSoftlyWithWinP = shouldKillProcessSoftlyWithWinP;
+    myShouldKillProcessSoftlyWithWinP = shouldKillProcessSoftlyWithWinP && !Registry.is("disable.winp");
   }
 
   protected boolean destroyProcessGracefully() {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -21,11 +19,15 @@ public class JDomSerializationUtil {
   @Nullable
   public static Element findComponent(@Nullable Element root, @NonNls String componentName) {
     for (Element element : JDOMUtil.getChildren(root, COMPONENT_ELEMENT)) {
-      if (componentName.equals(element.getAttributeValue(NAME_ATTRIBUTE))) {
+      if (isComponent(componentName, element)) {
         return element;
       }
     }
     return null;
+  }
+
+  public static boolean isComponent(@NotNull String componentName, @NotNull Element element) {
+    return componentName.equals(element.getAttributeValue(NAME_ATTRIBUTE));
   }
 
   public static Element createComponentElement(final String componentName) {

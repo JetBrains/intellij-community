@@ -21,20 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 internal const val DB_FILE_NAME = "c.kdbx"
 
-@Suppress("FunctionName")
-internal fun KeePassCredentialStore(newDb: Map<CredentialAttributes, Credentials>): KeePassCredentialStore {
-  val keepassDb = KeePassDatabase()
-  val group = keepassDb.rootGroup.getOrCreateGroup(ROOT_GROUP_NAME)
-  for ((attributes, credentials) in newDb) {
-    val entry = keepassDb.createEntry(attributes.serviceName)
-    entry.userName = credentials.userName
-    entry.password = credentials.password?.let { keepassDb.protectValue(it) }
-    group.addEntry(entry)
-  }
-  val baseDir = getDefaultKeePassBaseDirectory()
-  return KeePassCredentialStore(baseDir.resolve(DB_FILE_NAME), MasterKeyFileStorage(baseDir.resolve(MASTER_KEY_FILE_NAME)), keepassDb)
-}
-
 internal fun getDefaultKeePassBaseDirectory() = Paths.get(PathManager.getConfigPath())
 
 internal fun getDefaultMasterPasswordFile() = getDefaultKeePassBaseDirectory().resolve(MASTER_KEY_FILE_NAME)
@@ -42,9 +28,7 @@ internal fun getDefaultMasterPasswordFile() = getDefaultKeePassBaseDirectory().r
 /**
  * preloadedMasterKey [MasterKey.value] will be cleared
  */
-internal class KeePassCredentialStore constructor(internal val dbFile: Path,
-                                                  private val masterKeyStorage: MasterKeyFileStorage,
-                                                  preloadedDb: KeePassDatabase? = null) : BaseKeePassCredentialStore() {
+internal class KeePassCredentialStore constructor(internal val dbFile: Path, private val masterKeyStorage: MasterKeyFileStorage, preloadedDb: KeePassDatabase? = null) : BaseKeePassCredentialStore() {
   constructor(dbFile: Path, masterKeyFile: Path) : this(dbFile, MasterKeyFileStorage(masterKeyFile), null)
 
   private val isNeedToSave: AtomicBoolean

@@ -43,4 +43,8 @@ public class PointlessNullCheck {
         // argument side effect
         if(obj != null && check2(new PointlessNullCheck(), obj)) System.out.println(1);
     }
+
+    void testEquals(String str) {
+        if (<warning descr="Unnecessary 'null' check before 'equals()' call">str != null</warning> && "foo".equals(str)) {}
+    }
 }

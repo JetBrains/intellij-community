@@ -38,7 +38,7 @@
     <g fill="rgb(236,236,236)" font-family="sans-serif" stroke="rgb(236,236,236)">
       <rect x="0" width="480" height="320" y="0" clip-path="url(#0)" stroke="none"/>
     </g>
-    <g font-size="10px" transform="translate(103,248)" fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-family="sans-serif" stroke="rgb(120,120,120)" font-weight="bold">
+    <g font-size="10px" transform="translate(103,244)" fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-family="sans-serif" stroke="rgb(120,120,120)" font-weight="bold">
       <text x="0" xml:space="preserve" y="10" clip-path="url(#1)" stroke="none">At least OracleJRE 9 or OpenJRE 11 is required to import dump</text>
     </g>
     <g fill="rgb(236,236,236)" font-family="sans-serif" transform="translate(95,214)" stroke="rgb(236,236,236)">
@@ -50,7 +50,7 @@
     <g fill="rgb(236,236,236)" font-family="sans-serif" transform="translate(0,176)" stroke="rgb(236,236,236)">
       <rect x="0" width="480" height="26" y="0" clip-path="url(#4)" stroke="none"/>
     </g>
-    <g font-size="10px" transform="translate(103,152)" fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-family="sans-serif" stroke="rgb(120,120,120)" font-weight="bold">
+    <g font-size="10px" transform="translate(103,148)" fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-family="sans-serif" stroke="rgb(120,120,120)" font-weight="bold">
       <text x="0" xml:space="preserve" y="10" clip-path="url(#5)" stroke="none">Don't add output format (collapsed is used) or output file options</text>
     </g>
     <g fill="rgb(236,236,236)" font-family="sans-serif" transform="translate(95,118)" stroke="rgb(236,236,236)">
@@ -59,7 +59,7 @@
     <g font-family="sans-serif" font-weight="bold" transform="translate(0,124)">
       <text x="0" xml:space="preserve" y="12" clip-path="url(#6)" stroke="none">Agent options:</text>
     </g>
-    <g font-size="10px" transform="translate(103,102)" fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-family="sans-serif" stroke="rgb(120,120,120)" font-weight="bold">
+    <g font-size="10px" transform="translate(103,98)" fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-family="sans-serif" stroke="rgb(120,120,120)" font-weight="bold">
       <text x="0" xml:space="preserve" y="10" clip-path="url(#7)" stroke="none">If field is empty bundled agent will be used</text>
     </g>
     <g fill="rgb(236,236,236)" font-family="sans-serif" transform="translate(95,68)" stroke="rgb(236,236,236)">

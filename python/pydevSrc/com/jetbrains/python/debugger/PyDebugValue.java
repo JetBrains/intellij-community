@@ -325,7 +325,7 @@ public class PyDebugValue extends XNamedValue {
       XValue value = childrenList.getValue(i);
       if (value instanceof PyDebugValue) {
         PyDebugValue debugValue = (PyDebugValue)value;
-        if (debugValue.getLoadValuePolicy() == ValuesPolicy.ASYNC || debugValue.isNumericContainer()) {
+        if (debugValue.getLoadValuePolicy() == ValuesPolicy.ASYNC) {
           variables.add(new PyFrameAccessor.PyAsyncValue<>(debugValue, debugValue.createDebugValueCallback()));
         }
       }

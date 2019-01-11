@@ -32,6 +32,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
@@ -43,10 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * @author Dennis.Ushakov
@@ -206,59 +204,63 @@ public final class PyExtractSuperclassHelper {
    */
   @Nullable
   private static PsiDirectory createDirectories(Project project, String target) throws IOException {
-    String the_rest = null;
-    VirtualFile the_root = null;
-    PsiDirectory ret = null;
+    String relativePath = null;
+    VirtualFile closestRoot = null;
 
     // NOTE: we don't canonicalize target; must be ok in reasonable cases, and is far easier in unit test mode
     target = FileUtil.toSystemIndependentName(target);
-    for (VirtualFile file : ProjectRootManager.getInstance(project).getContentRoots()) {
-      final String root_path = file.getPath();
-      if (target.startsWith(root_path)) {
-        the_rest = target.substring(root_path.length());
-        the_root = file;
+    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+    final List<VirtualFile> allRoots = new ArrayList<>();
+    ContainerUtil.addAll(allRoots, projectRootManager.getContentRoots());
+    ContainerUtil.addAll(allRoots, projectRootManager.getContentSourceRoots());
+    // Check deepest roots first
+    allRoots.sort(Comparator.comparingInt((VirtualFile vf) -> vf.getPath().length()).reversed());
+    for (VirtualFile file : allRoots) {
+      final String rootPath = file.getPath();
+      if (target.startsWith(rootPath)) {
+        relativePath = target.substring(rootPath.length());
+        closestRoot = file;
         break;
       }
     }
-    if (the_root == null) {
+    if (closestRoot == null) {
       throw new IOException("Can't find '" + target + "' among roots");
     }
-    if (the_rest != null) {
-      final LocalFileSystem lfs = LocalFileSystem.getInstance();
-      final PsiManager psi_mgr = PsiManager.getInstance(project);
-      String[] dirs = the_rest.split("/");
-      int i = 0;
-      if ("".equals(dirs[0])) i = 1;
-      while (i < dirs.length) {
-        VirtualFile subdir = the_root.findChild(dirs[i]);
-        if (subdir != null) {
-          if (!subdir.isDirectory()) {
-            throw new IOException("Expected dir, but got non-dir: " + subdir.getPath());
-          }
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final String[] dirs = relativePath.split("/");
+    int i = 0;
+    if (dirs[0].isEmpty()) i = 1;
+    VirtualFile resultDir = closestRoot; 
+    while (i < dirs.length) {
+      VirtualFile subdir = resultDir.findChild(dirs[i]);
+      if (subdir != null) {
+        if (!subdir.isDirectory()) {
+          throw new IOException("Expected resultDir, but got non-resultDir: " + subdir.getPath());
         }
-        else {
-          subdir = the_root.createChildDirectory(lfs, dirs[i]);
-        }
-        VirtualFile init_vfile = subdir.findChild(PyNames.INIT_DOT_PY);
-        if (init_vfile == null) init_vfile = subdir.createChildData(lfs, PyNames.INIT_DOT_PY);
-        /*
-        // here we could add an __all__ clause to the __init__.py.
-        // * there's no point to do so; we import the class directly;
-        // * we can't do this consistently since __init__.py may already exist and be nontrivial.
-        if (i == dirs.length - 1) {
-          PsiFile init_file = psi_mgr.findFile(init_vfile);
-          LOG.assertTrue(init_file != null);
-          final PyElementGenerator gen = PyElementGenerator.getInstance(project);
-          final PyStatement statement = gen.createFromText(LanguageLevel.getDefault(), PyStatement.class, PyNames.ALL + " = [\"" + lastName + "\"]");
-          init_file.add(statement);
-        }
-        */
-        the_root = subdir;
-        i += 1;
       }
-      ret = psi_mgr.findDirectory(the_root);
+      else {
+        subdir = resultDir.createChildDirectory(lfs, dirs[i]);
+      }
+      if (subdir.findChild(PyNames.INIT_DOT_PY) == null) {
+        subdir.createChildData(lfs, PyNames.INIT_DOT_PY);
+      }
+      /*
+      // here we could add an __all__ clause to the __init__.py.
+      // * there's no point to do so; we import the class directly;
+      // * we can't do this consistently since __init__.py may already exist and be nontrivial.
+      if (i == dirs.length - 1) {
+        PsiFile init_file = psiManager.findFile(initVFile);
+        LOG.assertTrue(init_file != null);
+        final PyElementGenerator gen = PyElementGenerator.getInstance(project);
+        final PyStatement statement = gen.createFromText(LanguageLevel.getDefault(), PyStatement.class, PyNames.ALL + " = [\"" + lastName + "\"]");
+        init_file.add(statement);
+      }
+      */
+      resultDir = subdir;
+      i += 1;
     }
-    return ret;
+    return psiManager.findDirectory(resultDir);
   }
 
   public static String getRefactoringId() {

@@ -146,7 +146,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
   @Override
   public void apply() {
     initComponent();
-    UISettings settings = UISettings.getInstance();
+    UISettings settingsManager = UISettings.getInstance();
+    UISettingsState settings = settingsManager.getState();
     int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.getFontSize());
     int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settings.getPresentationModeFontSize());
     boolean update = false;
@@ -165,8 +166,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
       shouldUpdateUI = true;
     }
 
-    if (myComponent.myAntialiasingInIDE.getSelectedItem() != settings.getIdeAAType()) {
-      settings.setIdeAAType((AntialiasingType)myComponent.myAntialiasingInIDE.getSelectedItem());
+    if (myComponent.myAntialiasingInIDE.getSelectedItem() != settingsManager.getIdeAAType()) {
+      settingsManager.setIdeAAType((AntialiasingType)myComponent.myAntialiasingInIDE.getSelectedItem());
       for (Window w : Window.getWindows()) {
         for (JComponent c : UIUtil.uiTraverser(w).filter(JComponent.class)) {
           GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent());
@@ -175,8 +176,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
       shouldUpdateUI = true;
     }
 
-    if (myComponent.myAntialiasingInEditor.getSelectedItem() != settings.getEditorAAType()) {
-      settings.setEditorAAType((AntialiasingType)myComponent.myAntialiasingInEditor.getSelectedItem());
+    if (myComponent.myAntialiasingInEditor.getSelectedItem() != settingsManager.getEditorAAType()) {
+      settingsManager.setEditorAAType((AntialiasingType)myComponent.myAntialiasingInEditor.getSelectedItem());
       shouldUpdateUI = true;
     }
 
@@ -201,7 +202,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     settings.setMoveMouseOnDefaultButton(myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected());
     settings.setHideNavigationOnFocusLoss(myComponent.myHideNavigationPopupsCheckBox.isSelected());
     settings.setDndWithPressedAltOnly(myComponent.myAltDNDCheckBox.isSelected());
-    settings.setLanguageFlags(myComponent.myShowFlagsForLanguagesCheckBox.isSelected());  // Android Studio: added by Change I18c5f540 / commit 5ad4b9b
 
     update |= settings.getDisableMnemonics() != myComponent.myDisableMnemonics.isSelected();
     settings.setDisableMnemonics(myComponent.myDisableMnemonics.isSelected());
@@ -295,7 +295,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     }
 
     if (update) {
-      settings.fireUISettingsChanged();
+      settingsManager.fireUISettingsChanged();
     }
     myComponent.updateCombo();
 
@@ -329,7 +329,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
   @Override
   public void reset() {
     initComponent();
-    UISettings settings = UISettings.getInstance();
+    UISettings settingsManager = UISettings.getInstance();
+    UISettingsState settings = settingsManager.getState();
 
     if (settings.getOverrideLafFonts()) {
       myComponent.myFontCombo.setFontName(settings.getFontFace());
@@ -340,8 +341,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     //myComponent.myAntialiasingCheckBox.setSelected(settings.ANTIALIASING_IN_IDE);
     //myComponent.myLCDRenderingScopeCombo.setSelectedItem(settings.LCD_RENDERING_SCOPE);
 
-    myComponent.myAntialiasingInIDE.setSelectedItem(settings.getIdeAAType());
-    myComponent.myAntialiasingInEditor.setSelectedItem(settings.getEditorAAType());
+    myComponent.myAntialiasingInIDE.setSelectedItem(settingsManager.getIdeAAType());
+    myComponent.myAntialiasingInEditor.setSelectedItem(settingsManager.getEditorAAType());
 
     myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.getFontSize()));
     myComponent.myPresentationModeFontSize.setSelectedItem(Integer.toString(settings.getPresentationModeFontSize()));
@@ -357,7 +358,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.getMoveMouseOnDefaultButton());
     myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.getHideNavigationOnFocusLoss());
     myComponent.myAltDNDCheckBox.setSelected(settings.getDndWithPressedAltOnly());
-    myComponent.myShowFlagsForLanguagesCheckBox.setSelected(settings.getLanguageFlags());  // Android Studio: added by Change I18c5f540 / commit 5ad4b9b
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
     myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
     myComponent.myOverrideLAFFonts.setSelected(settings.getOverrideLafFonts());
@@ -414,14 +414,15 @@ public class AppearanceConfigurable implements SearchableConfigurable {
   @Override
   public boolean isModified() {
     initComponent();
-    UISettings settings = UISettings.getInstance();
+    UISettings settingsManager = UISettings.getInstance();
+    UISettingsState settings = settingsManager.getState();
 
     boolean isModified = false;
     isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.getFontFace()) && myComponent.myOverrideLAFFonts.isSelected();
     isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.getFontSize()));
 
-    isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settings.getIdeAAType();
-    isModified |= myComponent.myAntialiasingInEditor.getSelectedItem() != settings.getEditorAAType();
+    isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settingsManager.getIdeAAType();
+    isModified |= myComponent.myAntialiasingInEditor.getSelectedItem() != settingsManager.getEditorAAType();
 
     isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.getAnimateWindows();
     isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.getShowToolWindowsNumbers();
@@ -452,7 +453,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.getMoveMouseOnDefaultButton();
     isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.getHideNavigationOnFocusLoss();
     isModified |= myComponent.myAltDNDCheckBox.isSelected() != settings.getDndWithPressedAltOnly();
-    isModified |= myComponent.myShowFlagsForLanguagesCheckBox.isSelected() != settings.getLanguageFlags();  // Android Studio: added by Change I18c5f540 / commit 5ad4b9b
     isModified |= !Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), LafManager.getInstance().getCurrentLookAndFeel());
     isModified |= isModified(myComponent.myDarkWindowHeaders, Registry.is("ide.mac.allowDarkWindowDecorations"));
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
@@ -510,7 +510,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JCheckBox myDisableMnemonicInControlsCheckBox;
     private JCheckBox myHideNavigationPopupsCheckBox;
     private JCheckBox myAltDNDCheckBox;
-    private JCheckBox myShowFlagsForLanguagesCheckBox;  // Android Studio: added by Change I18c5f540 / commit 5ad4b9b
     private JCheckBox myAllowMergeButtons;
     private JBCheckBox myUseSmallLabelsOnTabs;
     private JBCheckBox myWidescreenLayoutCheckBox;

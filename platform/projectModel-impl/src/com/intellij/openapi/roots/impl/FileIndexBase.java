@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
  * @author nik
@@ -63,6 +64,11 @@ public abstract class FileIndexBase implements FileIndex {
   @Override
   public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator processor) {
     return iterateContentUnderDirectory(dir, processor, null);
+  }
+
+  protected boolean isTestSourcesRoot(DirectoryInfo info) {
+    JpsModuleSourceRootType<?> rootType = myDirectoryIndex.getSourceRootType(info);
+    return rootType != null && rootType.isForTests();
   }
 
   private static boolean iterateContentUnderDirectoryWithFilter(@NotNull VirtualFile dir,

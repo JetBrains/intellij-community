@@ -13,10 +13,12 @@ class TerminalUsageTriggerCollector : ProjectUsageTriggerCollector() {
   override fun getGroupId(): String = "statistics.terminalShell"
 
   companion object {
+    @JvmStatic
     fun trigger(project: Project, featureId: String, context: FUSUsageContext) {
       FUSProjectUsageTrigger.getInstance(project).trigger(TerminalUsageTriggerCollector::class.java, featureId, context)
     }
 
+    @JvmStatic
     fun getShellNameForStat(shellName: String?): String {
       if (shellName == null) return "unspecified"
       var name = shellName.trimStart()

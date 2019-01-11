@@ -42,7 +42,9 @@ public class GrAnnotationCollector {
     for (GrAnnotation annotation : rawAnnotations) {
       final PsiAnnotation annotationCollector = findAnnotationCollector(annotation);
       if (annotationCollector != null) {
-        collectAnnotations(result, annotation, annotationCollector);
+        if (!collectCompileDynamic(result, annotation)) {
+          collectAnnotations(result, annotation, annotationCollector);
+        }
       }
       else if (!collectHardcoded(result, annotation)) {
         result.add(annotation);
@@ -217,7 +219,11 @@ public class GrAnnotationCollector {
       GrImmutableUtils.collectImmutableAnnotations(alias, list);
       return true;
     }
-    else if (GROOVY_TRANSFORM_COMPILE_DYNAMIC.equals(fqn)) {
+    return collectCompileDynamic(list, alias);
+  }
+
+  private static boolean collectCompileDynamic(@NotNull List<GrAnnotation> list, @NotNull GrAnnotation alias) {
+    if (GROOVY_TRANSFORM_COMPILE_DYNAMIC.equals(alias.getQualifiedName())) {
       PsiAnnotationOwner owner = alias.getOwner();
       if (owner != null) {
         GrLightAnnotation annotation = new GrLightAnnotation(

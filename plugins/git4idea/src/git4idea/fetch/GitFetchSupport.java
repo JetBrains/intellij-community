@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * High-level API to execute the {@code git fetch} command.
@@ -35,19 +34,19 @@ public interface GitFetchSupport {
    * The latter is identified by {@link #getDefaultRemoteToFetch}.
    */
   @NotNull
-  GitFetchResult fetch(@NotNull Collection<GitRepository> repositories);
+  GitFetchResult fetchDefaultRemote(@NotNull Collection<GitRepository> repositories);
+
+  /**
+   * For each given repository, fetches all its remotes.
+   */
+  @NotNull
+  GitFetchResult fetchAllRemotes(@NotNull Collection<GitRepository> repositories);
 
   /**
    * Fetches the given remote.
    */
   @NotNull
   GitFetchResult fetch(@NotNull GitRepository repository, @NotNull GitRemote remote);
-
-  /**
-   * Fetches all specified remotes in the repository.
-   */
-  @NotNull
-  GitFetchResult fetch(@NotNull GitRepository repository, @NotNull List<GitRemote> remotes);
 
   /**
    * Returns the default remote to fetch from, or null if there are no remotes in the repository,

@@ -9,7 +9,7 @@ object EditorConfigPresentationUtil {
   @JvmStatic
   fun getFileName(file: EditorConfigPsiFile, withFolder: Boolean): String {
     val settings = UISettings.instanceOrNull
-    val settingsAwareFlag = settings?.showDirectoryForNonUniqueFilenames?.and(withFolder) ?: withFolder
+    val settingsAwareFlag = settings?.state?.showDirectoryForNonUniqueFilenames?.and(withFolder) ?: withFolder
     return if (settingsAwareFlag) "${file.parent?.name}/${file.name}" else file.name
   }
 

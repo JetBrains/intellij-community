@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer;
 
 import com.intellij.notification.NotificationType;
@@ -26,7 +27,7 @@ import java.util.Collections;
 
 @State(
   name = "BuiltInServerOptions",
-  storages = @Storage("other.xml")
+  storages = @Storage(Storage.NOT_ROAMABLE_FILE)
 )
 public class BuiltInServerOptions implements PersistentStateComponent<BuiltInServerOptions>, Getter<BuiltInServerOptions> {
   public static final int DEFAULT_PORT = 63342;

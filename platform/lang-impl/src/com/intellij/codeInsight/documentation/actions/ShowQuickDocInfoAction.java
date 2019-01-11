@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -49,7 +50,9 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
     return new CodeInsightActionHandler() {
       @Override
       public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-        DocumentationManager.getInstance(project).showJavaDocInfo(editor, file, LookupManager.getActiveLookup(editor) == null);
+        DocumentationManager documentationManager = DocumentationManager.getInstance(project);
+        JBPopup hint = documentationManager.getDocInfoHint();
+        documentationManager.showJavaDocInfo(editor, file, hint != null || LookupManager.getActiveLookup(editor) == null);
       }
 
       @Override
@@ -109,7 +112,14 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
     }
     else if (project != null && element != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE);
-      CommandProcessor.getInstance().executeCommand(project, () -> DocumentationManager.getInstance(project).showJavaDocInfo(element, null), getCommandName(), null);
+      CommandProcessor.getInstance().executeCommand(project,
+                                                    () -> {
+                                                      DocumentationManager documentationManager = DocumentationManager.getInstance(project);
+                                                      JBPopup hint = documentationManager.getDocInfoHint();
+                                                      documentationManager.showJavaDocInfo(element, null, hint != null, null);
+                                                    },
+                                                    getCommandName(),
+                                                    null);
     }
   }
 }

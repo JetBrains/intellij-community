@@ -114,7 +114,7 @@ public class DivideByZeroInspection extends BaseInspection {
     final Object value = ConstantExpressionUtil.computeCastTo(expression, PsiType.DOUBLE);
     if (value instanceof Double) {
       final double constantValue = ((Double)value).doubleValue();
-      if (constantValue == 0.0) return true;
+      return constantValue == 0.0;
     }
     LongRangeSet range = CommonDataflow.getExpressionFact(expression, DfaFactType.RANGE);
     return ZERO_RANGE.equals(range);

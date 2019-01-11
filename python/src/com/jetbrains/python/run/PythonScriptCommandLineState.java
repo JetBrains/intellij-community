@@ -279,9 +279,16 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
     sb.append("runfile('").append(escape(scriptPath)).append("'");
 
-    String scriptParameters = myConfig.getScriptParameters();
-    if (!scriptParameters.isEmpty()) {
-      sb.append(", args='").append(escape(scriptParameters)).append("'");
+    final String[] scriptParameters = ParametersList.parse(myConfig.getScriptParameters());
+    if (scriptParameters.length != 0) {
+      sb.append(", args=[");
+      for (int i = 0; i < scriptParameters.length; i++) {
+        if (i != 0) {
+          sb.append(", ");
+        }
+        sb.append("'").append(escape(scriptParameters[i])).append("'");
+      }
+      sb.append("]");
     }
 
     if (!workingDir.isEmpty()) {

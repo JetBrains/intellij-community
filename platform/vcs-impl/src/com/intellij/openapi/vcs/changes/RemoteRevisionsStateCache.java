@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -21,6 +7,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -65,7 +52,9 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
   }
 
   @Override
-  public boolean isUpToDate(final Change change) {
+  public boolean isUpToDate(@NotNull Change change, @NotNull AbstractVcs vcs) {
+    if (!isSupportedFor(vcs)) return true;
+
     final List<File> files = ChangesUtil.getIoFilesFromChanges(Collections.singletonList(change));
     synchronized (myLock) {
       for (File file : files) {
@@ -78,24 +67,28 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
   }
 
   @Override
-  public void plus(final Pair<String, AbstractVcs> pair) {
-    final VirtualFile root = getRootForPath(pair.getFirst());
+  public void changeUpdated(@NotNull String path, @NotNull AbstractVcs vcs) {
+    if (!isSupportedFor(vcs)) return;
+
+    final VirtualFile root = getRootForPath(path);
     if (root == null) return;
     synchronized (myLock) {
-      myQueries.putValue(new VcsRoot(pair.getSecond(), root), pair.getFirst());
+      myQueries.putValue(new VcsRoot(vcs, root), path);
     }
   }
 
   @Override
-  public void minus(Pair<String, AbstractVcs> pair) {
-    final VirtualFile root = getRootForPath(pair.getFirst());
+  public void changeRemoved(@NotNull String path, @NotNull AbstractVcs vcs) {
+    if (!isSupportedFor(vcs)) return;
+
+    final VirtualFile root = getRootForPath(path);
     if (root == null) return;
     synchronized (myLock) {
-      final VcsRoot key = new VcsRoot(pair.getSecond(), root);
+      final VcsRoot key = new VcsRoot(vcs, root);
       if (myQueries.containsKey(key)) {
-        myQueries.remove(key, pair.getFirst());
+        myQueries.remove(key, path);
       }
-      myChanged.remove(pair.getFirst());
+      myChanged.remove(path);
     }
   }
 
@@ -177,5 +170,9 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     }
 
     return true;
+  }
+
+  private static boolean isSupportedFor(@NotNull AbstractVcs vcs) {
+    return vcs.getTreeDiffProvider() != null;
   }
 }

@@ -54,7 +54,7 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
 
   @Override
   public boolean isTestSource() {
-    return getRootType().equals(JavaSourceRootType.TEST_SOURCE) || getRootType().equals(JavaResourceRootType.TEST_RESOURCE);
+    return getRootType().isForTests();
   }
 
   @NotNull

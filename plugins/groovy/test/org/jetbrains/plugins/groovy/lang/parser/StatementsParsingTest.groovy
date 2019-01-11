@@ -227,6 +227,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testLoop$while7() throws Throwable { doTest() }
 
+  void testLoop$whileEmptyBody() { doTest() }
+
   void testLoop$dowhile0() { doTest() }
 
   void testLoop$dowhile1() { doTest() }
@@ -284,7 +286,7 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testSwitch$identifierWithin() { doTest() }
 
   void testSyn$syn1() throws Throwable { doTest() }
-  
+
   void testSyn$newLineBeforeBlock() { doTest() }
 
   void testTop_methods$method1() throws Throwable { doTest() }

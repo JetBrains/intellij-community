@@ -23,7 +23,7 @@
         <path d="M0 0 L0 15 L142 15 L142 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="6">
-        <path d="M0 1 L0 18 L165 18 L165 1 Z"/>
+        <path d="M0 1 L0 18 L180 18 L180 1 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="7">
         <path d="M0 0 L0 15 L145 15 L145 0 Z"/>
@@ -48,10 +48,10 @@
       <text x="0" xml:space="preserve" y="12" clip-path="url(#5)" stroke="none">Android module name:</text>
     </g>
     <g fill="rgb(60,63,65)" font-weight="bold" font-family="sans-serif" transform="translate(148,-1)" stroke="rgb(60,63,65)">
-      <rect x="0" width="165" height="18" y="0" clip-path="url(#6)" stroke="none"/>
-      <rect x="0" width="165" height="18" y="0" clip-path="url(#6)" stroke="none"/>
+      <rect x="0" width="180" height="18" y="0" clip-path="url(#6)" stroke="none"/>
+      <rect x="0" width="180" height="18" y="0" clip-path="url(#6)" stroke="none"/>
       <image x="0" y="0" clip-path="url(#6)" width="19" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/checkBox.svg" height="19" preserveAspectRatio="none"/>
-      <text fill="rgb(187,187,187)" x="23" xml:space="preserve" y="14" clip-path="url(#6)" stroke="none">Android module name:</text>
+      <text fill="rgb(187,187,187)" x="23" xml:space="preserve" y="14" clip-path="url(#6)" stroke="none">FooBar module name foo</text>
     </g>
     <g fill="rgb(187,187,187)" font-weight="bold" font-family="sans-serif" stroke="rgb(187,187,187)">
       <text x="0" xml:space="preserve" y="12" clip-path="url(#7)" stroke="none">Create Android module</text>

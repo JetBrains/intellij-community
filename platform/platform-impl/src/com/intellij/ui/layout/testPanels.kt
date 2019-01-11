@@ -12,7 +12,7 @@ import javax.swing.*
 
 fun labelRowShouldNotGrow(): JPanel {
   return panel {
-    row("Create Android module") { CheckBox("Android module name:")() }
+    row("Create Android module") { CheckBox("FooBar module name foo")() }
     row("Android module name:") { JTextField("input")() }
   }
 }
@@ -242,6 +242,43 @@ fun titledRows(): JPanel {
       row("JRE home:") {
         textFieldWithBrowseButton("", comment = "At least OracleJRE 9 or OpenJRE 11 is required to import dump")
       }
+    }
+  }
+}
+
+fun spannedCheckbox(): JPanel {
+  return panel {
+    buttonGroup {
+      row {
+        RadioButton("In KeePass")()
+        row("Database:") {
+          // comment can lead to broken layout, so, test it
+          JTextField("test")(comment = "Stored using weak encryption. It is recommended to store on encrypted volume for additional security.")
+        }
+
+        row {
+          cell {
+            checkBox("Protect master password using PGP key")
+            val comboBox = ComboBox(arrayOf("Foo", "Bar"))
+            comboBox.isVisible = false
+            comboBox(growPolicy = GrowPolicy.MEDIUM_TEXT)
+          }
+        }
+      }
+
+      row {
+        RadioButton("Do not save, forget passwords after restart")()
+      }
+    }
+  }
+}
+
+// titledRows is not enough to test because component align depends on comment components, so, pure titledRow must be tested
+fun titledRow(): JPanel {
+  return panel {
+    titledRow("Remote settings") {
+      row("Default notebook name:") { JTextField("")() }
+      row("Spark version:") { JTextField("")() }
     }
   }
 }

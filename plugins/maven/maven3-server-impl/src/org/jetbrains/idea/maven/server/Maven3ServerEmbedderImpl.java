@@ -1234,14 +1234,22 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
 
       final org.eclipse.aether.impl.ArtifactResolver artifactResolver = getComponent(org.eclipse.aether.impl.ArtifactResolver.class);
-      final MyLoggerFactory loggerFactory = new MyLoggerFactory();
-      if (artifactResolver instanceof DefaultArtifactResolver) {
-        ((DefaultArtifactResolver)artifactResolver).setLoggerFactory(loggerFactory);
-      }
-
       final org.eclipse.aether.RepositorySystem repositorySystem = getComponent(org.eclipse.aether.RepositorySystem.class);
-      if (repositorySystem instanceof DefaultRepositorySystem) {
-        ((DefaultRepositorySystem)repositorySystem).setLoggerFactory(loggerFactory);
+
+      // Don't try calling setLoggerFactory() removed by MRESOLVER-36 when Maven 3.6.0+ is used.
+      // For more information and link to the MRESOLVER-36 see IDEA-201282.
+      if (VersionComparatorUtil.compare(mavenVersion, "3.6.0") < 0) {
+        final MyLoggerFactory loggerFactory = new MyLoggerFactory();
+
+        if (artifactResolver instanceof DefaultArtifactResolver) {
+          ((DefaultArtifactResolver)artifactResolver).setLoggerFactory(loggerFactory);
+        }
+
+        if (repositorySystem instanceof DefaultRepositorySystem) {
+          ((DefaultRepositorySystem)repositorySystem).setLoggerFactory(loggerFactory);
+        }
+      } else {
+        myConsoleWrapper.warn("Maven 3.6+ logging is not wrapped.");
       }
 
       // do not use request.getRemoteRepositories() here,
