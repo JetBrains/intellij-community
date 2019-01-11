@@ -32,7 +32,7 @@ public class CodeStyleStatusBarWidgetProvider implements StatusBarWidgetProvider
   }
 
   @NotNull
-  public static DumbAwareAction createDefaultIndentConfigureEvent(@NotNull PsiFile psiFile) {
+  public static DumbAwareAction createDefaultIndentConfigureAction(@NotNull PsiFile psiFile) {
     return DumbAwareAction.create(
       ApplicationBundle.message("code.style.widget.configure.indents", psiFile.getLanguage().getDisplayName()),
       event -> {

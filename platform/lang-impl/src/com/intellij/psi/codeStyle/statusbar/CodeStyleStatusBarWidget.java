@@ -154,7 +154,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     if (uiContributor == null ||
         (uiContributor instanceof IndentStatusBarUIContributor) &&
         ((IndentStatusBarUIContributor)uiContributor).isShowFileIndentOptionsEnabled()) {
-      allActions.add(CodeStyleStatusBarWidgetProvider.createDefaultIndentConfigureEvent(psiFile));
+      allActions.add(CodeStyleStatusBarWidgetProvider.createDefaultIndentConfigureAction(psiFile));
     }
     if (uiContributor != null) {
       AnAction disabledAction = uiContributor.createDisableAction(psiFile.getProject());
