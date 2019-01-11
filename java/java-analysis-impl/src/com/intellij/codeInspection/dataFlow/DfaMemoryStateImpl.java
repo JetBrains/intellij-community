@@ -601,15 +601,25 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Nullable
   @Contract("null -> null")
   public DfaConstValue getConstantValue(@Nullable DfaValue value) {
+    return getConstantValue(value, true);
+  }
+
+  private DfaConstValue getConstantValue(@Nullable DfaValue value, boolean unbox) {
     if (value instanceof DfaConstValue) {
       return (DfaConstValue)value;
     }
     if (value instanceof DfaVariableValue) {
-      if (TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
+      if (unbox && TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
         value = SpecialField.UNBOX.createValue(myFactory, value);
       }
       EqClass ec = getEqClass(value);
-      return ec == null ? null : ec.findConstant();
+      DfaConstValue constValue = ec == null ? null : ec.findConstant();
+      if (constValue != null) return constValue;
+      DfaVariableState state = getExistingVariableState((DfaVariableValue)value);
+      LongRangeSet range = state != null ? state.getFact(DfaFactType.RANGE) : null;
+      if (range != null && !range.isEmpty() && range.min() == range.max()) {
+        return myFactory.getConstFactory().createFromValue(range.min(), PsiType.LONG);
+      }
     }
     return null;
   }
@@ -789,6 +799,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!(value1 instanceof DfaConstValue) && !(value1 instanceof DfaVariableValue)) return false;
     if (!(value2 instanceof DfaConstValue) && !(value2 instanceof DfaVariableValue)) return false;
     if (value1 == value2) return true;
+    DfaConstValue const1 = getConstantValue(value1, false);
+    if (const1 != null && const1 == getConstantValue(value2, false)) return true;
     int index1 = getEqClassIndex(value1);
     int index2 = getEqClassIndex(value2);
     return index1 != -1 && index1 == index2;
@@ -1026,6 +1038,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!isNegated && type != RelationType.EQ) {
       return true;
     }
+    if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaConstValue) {
+      LongRangeSet leftRange = getValueFact(dfaLeft, DfaFactType.RANGE);
+      LongRangeSet rightRange = getValueFact(dfaRight, DfaFactType.RANGE);
+      if (leftRange != null && rightRange != null) {
+        LongRangeSet appliedRange = rightRange.fromRelation(type);
+        if (appliedRange != null) {
+          if (!applyRangeToRelatedValues(dfaLeft, appliedRange)) return false;
+          if (appliedRange.contains(leftRange)) return true;
+        }
+      }
+    }
 
     if (dfaLeft == dfaRight) {
       return !isNegated || (dfaLeft instanceof DfaVariableValue && ((DfaVariableValue)dfaLeft).containsCalls());
@@ -1056,6 +1079,36 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return false;
     }
     return applyUnboxedRelation(dfaLeft, dfaRight, isNegated);
+  }
+
+  private boolean applyRangeToRelatedValues(DfaValue value, LongRangeSet appliedRange) {
+    EqClass eqClass = getEqClass(value);
+    if (eqClass != null) {
+      if (!applyRelationRangeToClass(eqClass, appliedRange, RelationType.EQ)) return false;
+      for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs()) {
+        if (pair.isOrdered()) {
+          if (pair.getFirst() == eqClass) {
+            if (!applyRelationRangeToClass(pair.getSecond(), appliedRange, RelationType.GT)) return false;
+          } else if(pair.getSecond() == eqClass) {
+            if (!applyRelationRangeToClass(pair.getFirst(), appliedRange, RelationType.LT)) return false;
+          }
+        } else if(appliedRange.min() == appliedRange.max()) {
+          EqClass other = pair.getFirst() == eqClass ? pair.getSecond() : pair.getSecond() == eqClass ? pair.getFirst() : null;
+          if (other != null) {
+            if (!applyRelationRangeToClass(other, appliedRange, RelationType.NE)) return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  private boolean applyRelationRangeToClass(EqClass eqClass, LongRangeSet range, RelationType relationType) {
+    LongRangeSet appliedRange = range.fromRelation(relationType);
+    for (DfaVariableValue var : eqClass.getVariables(false)) {
+      if (!applyFact(var, DfaFactType.RANGE, appliedRange)) return false;
+    }
+    return true;
   }
 
   private Couple<DfaValue> getSpecialEquivalencePair(DfaVariableValue left, DfaValue right) {
@@ -1113,11 +1166,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     // DfaConstValue || DfaVariableValue
     Integer c1Index = getOrCreateEqClassIndex(dfaLeft);
     Integer c2Index = getOrCreateEqClassIndex(dfaRight);
-    if (c1Index == null || c2Index == null) {
-      return true;
-    }
+    if (c1Index == null || c2Index == null) return true;
+    if (c1Index.equals(c2Index)) return !isNegated;
 
-    RelationType constantRelation = getConstantRelation(c1Index, c2Index);
+    RelationType constantRelation = getConstantRelation(dfaLeft, dfaRight);
     if (constantRelation != null) {
       return (constantRelation == RelationType.EQ) != isNegated;
     }
@@ -1163,11 +1215,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     // DfaConstValue || DfaVariableValue
     Integer c1Index = getOrCreateEqClassIndex(dfaLeft);
     Integer c2Index = getOrCreateEqClassIndex(dfaRight);
-    if (c1Index == null || c2Index == null) {
-      return true;
-    }
+    if (c1Index == null || c2Index == null) return true;
+    if (c1Index.equals(c2Index)) return false;
 
-    RelationType constantRelation = getConstantRelation(c1Index, c2Index);
+    RelationType constantRelation = getConstantRelation(dfaLeft, dfaRight);
     if (constantRelation != null) {
       return constantRelation == RelationType.LT;
     }
@@ -1204,13 +1255,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Nullable
-  private RelationType getConstantRelation(int i1, int i2) {
-    if (i1 == i2) return RelationType.EQ;
-    EqClass ec1 = myEqClasses.get(i1);
-    EqClass ec2 = myEqClasses.get(i2);
-    if (ec1 == null || ec2 == null) return null;
-    DfaConstValue const1 = ec1.findConstant();
-    DfaConstValue const2 = ec2.findConstant();
+  private RelationType getConstantRelation(DfaValue val1, DfaValue val2) {
+    DfaConstValue const1 = getConstantValue(val1, false);
+    DfaConstValue const2 = getConstantValue(val2, false);
     if (const1 == null || const2 == null) return null;
     Number value1 = ObjectUtils.tryCast(const1.getValue(), Number.class);
     Number value2 = ObjectUtils.tryCast(const2.getValue(), Number.class);
