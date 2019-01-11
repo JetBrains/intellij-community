@@ -37,7 +37,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     boolean isSelected,
     boolean cellHasFocus) {
     final Component listCellRendererComponent = super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
-    customizeCellRenderer(value, index, isSelected, cellHasFocus);
+    customizeCellRenderer(value, isSelected);
     return listCellRendererComponent;
   }
 
@@ -46,12 +46,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     return myText;
   }
 
-  protected void customizeCellRenderer(
-    Object value,
-    int index,
-    boolean selected,
-    boolean hasFocus
-  ) {
+  private void customizeCellRenderer(Object value, boolean selected) {
     myText = "";
     if (value instanceof PsiElement) {
       PsiElement element = (PsiElement)value;
