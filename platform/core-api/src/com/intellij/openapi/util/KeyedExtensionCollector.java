@@ -138,7 +138,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   /**
-   * @see #findSingle
+   * @see #findSingle(Object)
    */
   @NotNull
   public List<T> forKey(@NotNull KeyT key) {
