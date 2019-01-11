@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.jna.DisposableMemory
+import com.intellij.util.text.nullize
 import com.sun.jna.Library
 import com.sun.jna.Native
 import com.sun.jna.Pointer
@@ -45,9 +46,10 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     return CompletableFuture.supplyAsync(Supplier {
+      val userName = attributes.userName.nullize()
       checkError("secret_password_lookup_sync") { errorRef ->
         val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
-        if (attributes.userName == null) {
+        if (userName == null) {
           library.secret_password_lookup_sync(scheme, null, errorRef, serviceAttributeNamePointer, serviceNamePointer, null)?.let {
             // Secret Service doesn't allow to get attributes, so, we store joined data
             return@Supplier splitData(it)
@@ -56,7 +58,7 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
         else {
           library.secret_password_lookup_sync(scheme, null, errorRef,
                                               serviceAttributeNamePointer, serviceNamePointer,
-                                              accountAttributeNamePointer, stringPointer(attributes.userName!!.toByteArray()),
+                                              accountAttributeNamePointer, stringPointer(userName.toByteArray()),
                                               null)?.let {
             return@Supplier splitData(it)
           }
@@ -68,7 +70,7 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
-    val accountName = attributes.userName ?: credentials?.userName
+    val accountName = attributes.userName.nullize() ?: credentials?.userName
     if (credentials.isEmpty()) {
       checkError("secret_password_store_sync") { errorRef ->
         if (accountName == null) {
