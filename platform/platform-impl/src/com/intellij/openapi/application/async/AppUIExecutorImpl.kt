@@ -32,10 +32,11 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
 
   constructor(modality: ModalityState) : this(modality, arrayOf(/* fallback */ SimpleConstraintDispatcher(object : SimpleContextConstraint {
     override val isCorrectContext: Boolean
-      get() = ApplicationManager.getApplication().isDispatchThread || ModalityState.current().dominates(modality)
+      get() = ApplicationManager.getApplication().isDispatchThread && !ModalityState.current().dominates(modality)
 
-    override fun schedule(runnable: Runnable): Unit =
+    override fun schedule(runnable: Runnable) {
       ApplicationManager.getApplication().invokeLater(runnable, modality)
+    }
 
     override fun toString() = "onUiThread($modality)"
   })), emptySet<Expiration>())
