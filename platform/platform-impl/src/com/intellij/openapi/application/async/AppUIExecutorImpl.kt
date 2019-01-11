@@ -28,7 +28,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   override fun composeDispatchers() = dispatchers.singleOrNull() ?: RescheduleAttemptLimitAwareDispatcher(dispatchers, ::dispatchLater)
 
   override fun dispatchLater(block: Runnable) =
-    ApplicationManager.getApplication().invokeLater(block, myModality)
+    ApplicationManager.getApplication().invokeLater(block, modality)
 
   constructor(modality: ModalityState) : this(modality, arrayOf(/* fallback */ SimpleConstraintDispatcher(object : SimpleContextConstraint {
     override val isCorrectContext: Boolean
