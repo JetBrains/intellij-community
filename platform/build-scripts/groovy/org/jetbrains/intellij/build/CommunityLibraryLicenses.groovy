@@ -513,7 +513,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("intellij-test-discovery"),
     jetbrainsLibrary("JPS"),
     jetbrainsLibrary("kotlin-reflect"),
-    jetbrainsLibrary("KotlinJavaRuntime"),
+    jetbrainsLibrary("kotlin-stdlib-jdk8"),
     jetbrainsLibrary("KotlinScriptRuntime"),
     jetbrainsLibrary("kotlin-test"),
     jetbrainsLibrary("kotlinx-coroutines-core"),

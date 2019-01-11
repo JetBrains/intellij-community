@@ -27,7 +27,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="library" name="JSch" level="project" />
-    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Log4J" level="project" />
     <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />

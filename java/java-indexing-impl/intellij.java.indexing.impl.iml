@@ -15,6 +15,6 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.java.indexing" exported="" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
   </component>
 </module>
