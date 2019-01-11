@@ -24,7 +24,7 @@
     <orderEntry type="module" module-name="intellij.java.debugger.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.execution" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="RUNTIME" />
-    <orderEntry type="library" name="KotlinTest" level="project" />
+    <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
   </component>
   <component name="copyright">
