@@ -339,18 +339,15 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
     }
 
     val size = if (imageFile.toFile().exists()) imageSize(imageFile) else null
-    val comment: String
-    when {
-      size != null -> comment = " // ${size.width}x${size.height}"
-      image.phantom -> comment = ""
-      else -> error("Can't get icon size: $imageFile")
+    if (size != null) {
+      append(answer, "/**", level)
+      append(answer, " * ${size.width}x${size.height}", level)
+      append(answer, " */", level)
     }
-
+    else if (!image.phantom) error("Can't get icon size: $imageFile")
     val method = if (customLoad) "load" else "IconLoader.getIcon"
     val relativePath = rootPrefix + FileUtilRt.toSystemIndependentName(sourceRootFile.relativize(imageFile).toString())
-    append(answer,
-           "public static final Icon $iconName = $method(\"$relativePath\");$comment",
-           level)
+    append(answer, "public static final Icon $iconName = $method(\"$relativePath\");", level)
   }
 
   private fun append(answer: StringBuilder, text: String, level: Int) {

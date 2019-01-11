@@ -14,5 +14,8 @@ public final class RestIcons {
     return IconLoader.getIcon(path, RestIcons.class);
   }
 
-  public static final Icon Rst = load("/icons/com/jetbrains/rest/rst.png"); // 16x16
+  /**
+   * 16x16
+   */
+  public static final Icon Rst = load("/icons/com/jetbrains/rest/rst.png");
 }

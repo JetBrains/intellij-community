@@ -21,15 +21,42 @@ public final class TasksCoreIcons {
     return IconLoader.getIcon(path, clazz);
   }
 
-  public static final Icon Asana = load("/icons/asana.svg"); // 16x16
-  public static final Icon Assembla = load("/icons/assembla.svg"); // 16x16
-  public static final Icon Bugzilla = load("/icons/bugzilla.svg"); // 16x16
-  public static final Icon Clock = load("/icons/clock.svg"); // 13x13
-  public static final Icon Fogbugz = load("/icons/fogbugz.svg"); // 16x16
-  public static final Icon Gitlab = load("/icons/gitlab.svg"); // 16x16
-  public static final Icon Jira = load("/icons/jira.svg"); // 16x16
-  public static final Icon Lighthouse = load("/icons/lighthouse.svg"); // 16x16
-  public static final Icon Mantis = load("/icons/mantis.svg"); // 16x16
+  /**
+   * 16x16
+   */
+  public static final Icon Asana = load("/icons/asana.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Assembla = load("/icons/assembla.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Bugzilla = load("/icons/bugzilla.svg");
+  /**
+   * 13x13
+   */
+  public static final Icon Clock = load("/icons/clock.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Fogbugz = load("/icons/fogbugz.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Gitlab = load("/icons/gitlab.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Jira = load("/icons/jira.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Lighthouse = load("/icons/lighthouse.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Mantis = load("/icons/mantis.svg");
 
   public final static class Pivotal {
 
@@ -54,15 +81,42 @@ public final class TasksCoreIcons {
     public static final Icon Release = load("/icons/pivotal/release.png");
 
   }
-  public static final Icon Pivotal = load("/icons/pivotal.svg"); // 16x16
-  public static final Icon Redmine = load("/icons/redmine.svg"); // 16x16
-  public static final Icon SavedContext = load("/icons/savedContext.svg"); // 16x16
-  public static final Icon Sprintly = load("/icons/sprintly.svg"); // 16x16
-  public static final Icon StartTimer = load("/icons/startTimer.svg"); // 16x16
-  public static final Icon StopTimer = load("/icons/stopTimer.svg"); // 16x16
-  public static final Icon Trac = load("/icons/trac.svg"); // 16x16
-  public static final Icon Trello = load("/icons/trello.svg"); // 16x16
-  public static final Icon Youtrack = load("/icons/youtrack.svg"); // 16x16
+  /**
+   * 16x16
+   */
+  public static final Icon Pivotal = load("/icons/pivotal.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Redmine = load("/icons/redmine.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon SavedContext = load("/icons/savedContext.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Sprintly = load("/icons/sprintly.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon StartTimer = load("/icons/startTimer.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon StopTimer = load("/icons/stopTimer.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Trac = load("/icons/trac.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Trello = load("/icons/trello.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Youtrack = load("/icons/youtrack.svg");
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Resume */
   @SuppressWarnings("unused")

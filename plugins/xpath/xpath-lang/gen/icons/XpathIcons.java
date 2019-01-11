@@ -14,13 +14,40 @@ public final class XpathIcons {
     return IconLoader.getIcon(path, XpathIcons.class);
   }
 
-  public static final Icon Association = load("/icons/association.svg"); // 16x16
-  public static final Icon Association_small = load("/icons/association_small.svg"); // 16x16
-  public static final Icon Function = load("/icons/function.svg"); // 16x16
-  public static final Icon Namespace = load("/icons/namespace.svg"); // 16x16
-  public static final Icon Template = load("/icons/template.svg"); // 16x16
-  public static final Icon Xml = load("/icons/xml.png"); // 16x16
-  public static final Icon Xpath = load("/icons/xpath.svg"); // 16x16
-  public static final Icon Xslt_filetype_overlay = load("/icons/xslt-filetype-overlay.svg"); // 16x16
-  public static final Icon Xslt = load("/icons/xslt.svg"); // 16x16
+  /**
+   * 16x16
+   */
+  public static final Icon Association = load("/icons/association.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Association_small = load("/icons/association_small.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Function = load("/icons/function.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Namespace = load("/icons/namespace.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Template = load("/icons/template.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Xml = load("/icons/xml.png");
+  /**
+   * 16x16
+   */
+  public static final Icon Xpath = load("/icons/xpath.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Xslt_filetype_overlay = load("/icons/xslt-filetype-overlay.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Xslt = load("/icons/xslt.svg");
 }
