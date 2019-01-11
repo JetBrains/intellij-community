@@ -211,6 +211,24 @@ class XmlRearrangerTest extends AbstractRearrangerTest {
     )
   }
 
+  void testTagAndAttrSorting() throws Exception {
+    doTest(
+      initial: '''\
+<root beta="">
+  <meta></meta>
+  <title></title>
+</root>
+''',
+      expected: '''\
+<root beta="">
+  <title></title>
+  <meta></meta>
+</root>
+''',
+      rules: [ruleWithOrder(BY_NAME, nameRule("title"))]
+    )
+  }
+
   @NotNull
   private static StdArrangementMatchRule namespaceRule(@NotNull String filter) {
     return new StdArrangementMatchRule(new StdArrangementEntryMatcher(
