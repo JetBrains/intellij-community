@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.configurationStore.UnknownElementCollector;
@@ -478,7 +478,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    * @deprecated Use get/setRightMargin() methods instead.
    */
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
-  @Deprecated
   public int RIGHT_MARGIN = 120;
   /**
    * <b>Do not use this field directly since it doesn't reflect a setting for a specific language which may
@@ -800,7 +799,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     myVersion = getVersion(element);
     notifySettingsBeforeLoading();
     DefaultJDOMExternalizer.readExternal(this, element);
-
     if (LAYOUT_STATIC_IMPORTS_SEPARATELY) {
       // add <all other static imports> entry if there is none
       boolean found = false;
@@ -1427,7 +1425,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     ReflectionUtil.copyFields(getClass().getFields(), defaults, this, new DifferenceFilter<CodeStyleSettings>(this, defaults){
       @Override
       public boolean isAccept(@NotNull Field field) {
-        return field.getAnnotation(Deprecated.class) != null && !"RIGHT_MARGIN".equals(field.getName());
+        return field.getAnnotation(Deprecated.class) != null;
       }
     });
     IMPORT_LAYOUT_TABLE.copyFrom(defaults.IMPORT_LAYOUT_TABLE);
