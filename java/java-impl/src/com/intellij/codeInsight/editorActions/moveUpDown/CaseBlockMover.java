@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
@@ -24,8 +23,9 @@ public class CaseBlockMover extends LineMover {
     if (!(file instanceof PsiJavaFile)) return false;
     if (!super.checkAvailable(editor, file, info, down)) return false;
 
-    int startOffset = editor.logicalPositionToOffset(new LogicalPosition(info.toMove.startLine, 0));
-    int endOffset = editor.logicalPositionToOffset(new LogicalPosition(info.toMove.endLine, 0));
+    final Document document = editor.getDocument();
+    int startOffset = document.getLineStartOffset(info.toMove.startLine);
+    int endOffset = document.getLineEndOffset(info.toMove.endLine);
     List<PsiSwitchLabelStatement> statements = new SmartList<>();
     for (PsiElement element : CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset)) {
       if (element instanceof PsiSwitchLabelStatement) {
@@ -43,7 +43,7 @@ public class CaseBlockMover extends LineMover {
     PsiElement lastToMove = PsiTreeUtil.skipWhitespacesBackward(nextCaseBlockStart);
     assert lastToMove != null;
 
-    LineRange range = createRange(editor.getDocument(), firstToMove, lastToMove);
+    LineRange range = createRange(document, firstToMove, lastToMove);
     if (range == null) return info.prohibitMove();
     info.toMove = range;
 
@@ -63,7 +63,7 @@ public class CaseBlockMover extends LineMover {
       if (firstToMove2 == null) return info.prohibitMove();
       firstToMove2 = getThisCaseBlockStart((PsiSwitchLabelStatement)firstToMove2);
     }
-    LineRange range2 = createRange(editor.getDocument(), firstToMove2, lastToMove2);
+    LineRange range2 = createRange(document, firstToMove2, lastToMove2);
     if (range2 == null) return info.prohibitMove();
     info.toMove2 = range2;
     return true;
