@@ -330,26 +330,31 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           final PsiExpression argument = arguments[0];
           final PsiType type = argument.getType();
           final String argumentText = tracker.textWithComments(argument);
-          if (result.length() != 0) {
-            addNewlineIfNeeded(argument, true, result, commentsBefore);
+          boolean needConvertToString = result.length() == 0;
+          if (needConvertToString) {
+            PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(methodCallExpression);
+            if (nextCall != null && "append".equals(nextCall.getMethodExpression().getReferenceName())) {
+              PsiExpression[] args = nextCall.getArgumentList().getExpressions();
+              needConvertToString = args.length != 1 || !TypeUtils.isJavaLangString(args[0].getType());
+            }
+          }
+          addNewlineIfNeeded(argument, result.length() > 0, result, commentsBefore);
+          if (!needConvertToString) {
             if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE ||
                 (type instanceof PsiPrimitiveType && ParenthesesUtils.getPrecedence(argument) == ParenthesesUtils.ADDITIVE_PRECEDENCE)) {
               result.append('(').append(argumentText).append(')');
             }
+            else if (type instanceof PsiArrayType) {
+              result.append("String.valueOf(").append(argumentText).append(')');
+            }
             else {
-              if (type instanceof PsiArrayType) {
-                result.append("String.valueOf(").append(argumentText).append(")");
+              if (result.length() > 0 && StringUtil.startsWithChar(argumentText, '+')) {
+                result.append(' ');
               }
-              else {
-                if (StringUtil.startsWithChar(argumentText, '+')) {
-                  result.append(' ');
-                }
-                result.append(argumentText);
-              }
+              result.append(argumentText);
             }
           }
           else {
-            addNewlineIfNeeded(argumentList, false, result, commentsBefore);
             if (type instanceof PsiPrimitiveType) {
               if (argument instanceof PsiLiteralExpression) {
                 final PsiLiteralExpression literalExpression = (PsiLiteralExpression)argument;
@@ -369,18 +374,14 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
                 result.append("String.valueOf(").append(argumentText).append(")");
               }
             }
+            else if (ParenthesesUtils.getPrecedence(argument) >= ParenthesesUtils.ADDITIVE_PRECEDENCE) {
+              result.append('(').append(argumentText).append(')');
+            }
+            else if (type != null && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+              result.append("String.valueOf(").append(argumentText).append(")");
+            }
             else {
-              if (ParenthesesUtils.getPrecedence(argument) >= ParenthesesUtils.ADDITIVE_PRECEDENCE) {
-                result.append('(').append(argumentText).append(')');
-              }
-              else {
-                if (type != null && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-                  result.append("String.valueOf(").append(argumentText).append(")");
-                }
-                else {
-                  result.append(argumentText);
-                }
-              }
+              result.append(argumentText);
             }
           }
         }
