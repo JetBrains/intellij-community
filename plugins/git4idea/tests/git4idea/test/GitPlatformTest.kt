@@ -43,7 +43,6 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.test.GitPlatformTest.ConfigScope.GLOBAL
 import git4idea.test.GitPlatformTest.ConfigScope.SYSTEM
 import java.io.File
-import java.util.*
 
 abstract class GitPlatformTest : VcsPlatformTest() {
 
@@ -235,30 +234,6 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected fun `assert commit dialog was shown`() {
     assertTrue("Commit dialog was not shown", vcsHelper.commitDialogWasShown())
-  }
-
-  protected fun assertNoChanges() {
-    val changes = changeListManager.getChangesIn(projectRoot)
-    assertTrue("We expected no changes but found these: " + GitUtil.getLogString(projectPath, changes), changes.isEmpty())
-  }
-
-  protected fun assertChanges(changes: ChangesBuilder.() -> Unit): List<Change> {
-    val cb = ChangesBuilder()
-    cb.changes()
-
-    updateChangeListManager()
-    val vcsChanges = changeListManager.allChanges
-    val allChanges = mutableListOf<Change>()
-    val actualChanges = HashSet(vcsChanges)
-
-    for (change in cb.changes) {
-      val found = actualChanges.find(change.matcher)
-      assertNotNull("The change [$change] not found\n$vcsChanges", found)
-      actualChanges.remove(found)
-      allChanges.add(found!!)
-    }
-    assertTrue(actualChanges.isEmpty())
-    return allChanges
   }
 
   protected data class ReposTrinity(val projectRepo: GitRepository, val parent: File, val bro: File)
