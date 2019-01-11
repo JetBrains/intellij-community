@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.completion;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.idea.devkit.themes.ThemeJsonCompletionContributor;
 
 import java.awt.*;
 import java.util.Set;

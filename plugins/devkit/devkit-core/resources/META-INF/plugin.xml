@@ -68,7 +68,6 @@
                                 implementationClass="org.jetbrains.idea.devkit.references.extensions.ExtensionPointDocumentationProvider"/>
 
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor" language="XML" />
-    <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ThemeJsonCompletionContributor" language="JSON" />
 
     <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity" applyToDialects="false"
                      groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
@@ -262,7 +261,9 @@
     <fileTypeFactory implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileTypeFactory"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileEditorProvider"/>
 
+    <!-- themes -->
     <codeInsight.lineMarkerProvider language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ApplyThemeLineMarkerProvider"/>
+    <completion.contributor implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonCompletionContributor" language="JSON" />
     <spellchecker.support language="JSON"
                           order="first"
                           implementationClass="org.jetbrains.idea.devkit.themes.ThemeSpellcheckingStrategy"/>
