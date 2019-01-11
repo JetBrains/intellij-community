@@ -125,7 +125,7 @@ public class PathUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link  com.intellij.openapi.vfs.VfsUtil#getLocalFile(com.intellij.openapi.vfs.VirtualFile)} instead (to be removed in IDEA 2019) */
+  /** @deprecated use {@link com.intellij.openapi.vfs.VfsUtil#getLocalFile(VirtualFile)} instead (to be removed in IDEA 2019) */
   @Deprecated
   @NotNull
   public static VirtualFile getLocalFile(@NotNull VirtualFile file) {
