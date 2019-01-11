@@ -1,5 +1,5 @@
 
-                                 Apache Ant
+                                 A     N     T
  
 
   What is it? 
@@ -52,13 +52,10 @@
   Documentation
   -------------
 
-  Documentation is available in HTML format, in the manual/ directory.
+  Documentation is available in HTML format, in the docs/ directory.
   For information about building and installing Ant, see
-  manual/install.html
-  The manual for the latest release of Ant is available online at
-  <https://ant.apache.org/manual/index.html>.
-  The latest version of the manual is available online at
-  <https://rawgit.com/apache/ant/master/manual/index.html>.
+  docs/manual/index.html
+
 
   Licensing
   ---------

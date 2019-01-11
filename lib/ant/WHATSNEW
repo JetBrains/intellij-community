@@ -1,4 +1,4 @@
-Changes from Ant 1.10.4 TO Ant 1.10.5
+Changes from Ant 1.9.12 TO Ant 1.9.13
 =====================================
 
 Fixed bugs:
@@ -15,12 +15,7 @@ Fixed bugs:
    root.
    Bugzilla Report 62502
 
-Other changes:
---------------
- * Java task now accepts a "sourcefile" attribute to allow single file
-   source program execution, a feature that is introduced in Java 11.
-
-Changes from Ant 1.10.3 TO Ant 1.10.4
+Changes from Ant 1.9.11 TO Ant 1.9.12
 =====================================
 
 Changes that could break older environments:
@@ -50,15 +45,6 @@ Fixed bugs:
  * The junit task when used with includeantruntime="no" was incorrectly
    printing a warning about multiple versions of ant detected in path
 
- * <cab> died with a NullPointerException since Ant 1.10.2.
-   Bugzilla Report 62335
-
- * The <depend> task would fail with 
-   "java.lang.ClassFormatError: Invalid Constant Pool entry Type 19" while
-   parsing a module-info.class. The task is compatible with
-   Java bytecode version 53 now.
-   Bug reported by Simon IJskes https://issues.apache.org/jira/browse/NETBEANS-781
-
  * Default and SecureInputHandler will now raise an error when then
    end of the input stream (usually System.in or System.console) are
    reached before a valid input has been read.
@@ -69,9 +55,6 @@ Fixed bugs:
 
 Other changes:
 --------------
-
- * AntAssert is deprecated, assertThat from JUnit 4.4+, Hamcrest matchers and/or
-   ExpectedException rule provide equivalent functionality
 
  * PumpStreamHandler now explicitly verifies the streams for output
    and error are not null and will throw an exception if they
@@ -85,11 +68,6 @@ Other changes:
    availableProcessors, freeMemory, maxMemory and totalMemory methods
    of the Java Runtime class.
 
- * linecontains filter now has a new "matchAny" attribute which when
-   set to "true" allows any (instead of all) of the user-specified
-   strings to be present in the line.
-   Bugzilla Report 62313
-
  * <resourcelist> has a new basedir attribute that can be used to
    resolve relative names and provides a root for the FileResources
    generated.
@@ -100,15 +78,7 @@ Other changes:
    can be used to specify the file's encoding.
    Bugzilla Report 62379
 
- * New file selectors, posixGroup and posixPermissions, are available.
-   The new selectors and related ownedBy selector have "followSymlinks"
-   attribute that defaults to "true" for consistency.
-   Bugzilla Report 22370
-
- * The junitlauncher task now has a "printSummary" attribute which when
-   set to "true" will print the test execution summary to System.out.
-
-Changes from Ant 1.10.2 TO Ant 1.10.3
+Changes from Ant 1.9.10 TO Ant 1.9.11
 =====================================
 
 Changes that could break older environments:
@@ -120,22 +90,11 @@ Changes that could break older environments:
    and no longer throws an exception.
    ant-dev list https://www.mail-archive.com/dev@ant.apache.org/msg46634.html
 
- * Reverted the signature change of various clone method
-   implementation in Ant's data-types introduced with 1.10.2 as they
-   broke subclasses of said data-types which tried to override clone.
-
 Fixed bugs:
 -----------
 
- * Fixed NullPointerException in ChainedMapper
-   Bugzilla Report 62086
-
  * Fixed NullPointerException when a mappedresource is used in pathconvert
    Bugzilla Report 62076
-
- * Fixed an issue where a string, when used as a resource collection, within
-   tokens, would be replaced by property values
-   Bugzilla Report 62147
 
  * Added a workaround for a bug in the jarsigner tool to <verifyjar>
    which requires the -storepass command line argument when verifying
@@ -150,47 +109,15 @@ Fixed bugs:
 Other changes:
 --------------
 
- * Allow Saxon to be used for junitreport XSL transformation
-   Github Pull Request #57
-
  * when running on Java 11+ rmic will fail early if iiop or idl are
    requested. Java11 removes support for CORBA and the switches have
    been removed from the rmic tool.
 
- * A new junitlauncher task which support JUnit 5 test framework.
-   Bugzilla Report 61796
-
-Changes from Ant 1.10.1 TO Ant 1.10.2
-=====================================
-
-Changes that could break older environments:
--------------------------------------------
-
- * updated the dependency of BCEL to 6.2.
-   Bugzilla Report 61196
-
- * delete task previously would silently accept wildcard (*)
-   value for the "file" attribute. That's no longer the case
-   and an exception could get thrown by the underlying filesystem
-   for such use. Usage like:
-
-   <delete file="/foo/bar/*.something"/>
-
-   should instead be changed to use resource collections like:
-
-   <delete>
-   	 <fileset dir="/foo/bar/" includes="*.something"/>
-   </delete>
-
- * Commons Net 3.6 is binary-code, but not source compatible;
-   see change list of Commons Net 3.0 for details
+Changes from Ant 1.9.9 TO Ant 1.9.10
+====================================
 
  * The Log4jListener is marked as deprecated as the required log4j library
    (in version 1.x) is not maintained any more.
-
- * Image task is marked as deprecated as the required JAI library is not
-   maintained any more and internal APIs that JAI depended on are no longer
-   available in Java 9.
 
 Fixed bugs:
 -----------
@@ -198,9 +125,6 @@ Fixed bugs:
  * <genkey>'s <dname> child now skips <param>s that lack a key or
    value.
    Bugzilla Report 60767
-
- * bootstrapping Ant on Windows failed
-   Bugzilla Report 61027
 
  * Fixed the issue where the SCP based tasks would try to change
    the permissions on the parent directory of a transferred file,
@@ -211,11 +135,6 @@ Fixed bugs:
    up being corrupted if the target of the copy happened to be
    the same source file (symlinked back to itself).
    Bugzilla Report 60644
-
- * Fixed the issue where symlink creation with "overwrite=false",
-   on existing symlink whose target was a directory, would end
-   up creating a new symlink under the target directory.
-   Bugzilla Report 58683
 
  * Improvement to the Zip task for reduced memory usage in certain
    cases. Thanks to Glen Lewis for reporting the issue and
@@ -238,22 +157,8 @@ Other changes:
    values always get quoted.
    Github Pull Request #32
 
- * Added <encoding> attributes to various script related tasks and a
-   compiled attribute to scriptdef.
-   Github Pull Request #30
-
- * Added support for jarsigner's -tsadigestalg to <signjar>.
-   Bugzilla Report 60665
-
  * added "regexp" attribute to <linecontainsregexp>
    Bugzilla Report 60968
-
- * reduced GC pressure by replacing all usage of FileInputStream and
-   FileOutputStream.
-
- * Task can now also use attribute setters that expect a
-   java.nio.file.Path argument.
-   Bugzilla Report 61042
 
  * added a new magic property ant.tstamp.now that can be used to
    override the current time/date used by <tstamp>.
@@ -284,21 +189,20 @@ Other changes:
 
  * Updated Maven Ant Tasks, Jakarta Regexp and JUnit 4 to the latest
    stable version (2.1.3, 1.4, and 4.12 respectively); updated
-   JRuby to the latest Java 5 compatible version (1.6.8); added
-   resolve target for AntUnit to facilitate updates.
+   Java Mail API, JRuby and Jython to the latest Java 5 compatible
+   version (1.5.6, 1.6.8 and 2.5.3, respectively); added resolve targets
+   for Ivy and AntUnit to facilitate releases and updates, respectively.
    Github Pull Request #50
 
- * Updated Java Mail API, Jython, Rhino and Commons Net to the latest
-   stable version (1.6.0, 2.7.0, 1.7.7.2 and 3.6, respectively).
-   Github Pull Request #53
+* Updated Commons Net to the latest Java 5 compatible version (2.2).
 
-Changes from Ant 1.10.0 TO Ant 1.10.1
-=====================================
+Changes from Ant 1.9.8 TO Ant 1.9.9
+===================================
 
 Fixed bugs:
 -----------
 
- * Ant 1.10.0 made Path#systemClasspath final which broke the Eclipse
+ * Ant 1.9.8 made Path#systemClasspath final which broke the Eclipse
    integration.
    Bugzilla Report 60582
 
@@ -308,35 +212,16 @@ Fixed bugs:
    newlines present in command line arguments.
    Bugzilla Report 60562
 
-Other changes:
---------------
-
- * new tasks <xz> and <unxz> and resource <xzresource> for XZ
-   compression. Also the compression attribute of <tar>/<untar> now
-   accepts "xz" as valid value.
-   The tasks and type are contained in the new ant-xz.jar and require
-   the library XZ for Java to be on the CLASSPATH.
-   Bugzilla Report 60350
-
-Changes from Ant 1.9.7 TO Ant 1.10.0
-====================================
+Changes from Ant 1.9.7 TO Ant 1.9.8
+===================================
 
 Changes that could break older environments:
 -------------------------------------------
-
- * Ant 1.10.x requires Java8 or newer at compile or build time.
-   The 1.9.x series wil stay compatible with Java5.
-
- * The <apt> task has been removed since apt itself has been removed
-   with Java8.
 
  * <fileset>/<zipfileset>/<tarfileset> exhibited undefined
    behavior when both the dir and file attribute have been used on the
    same instance. This will now cause the build to fail.
    Bugzilla Report 59402
-
- * <native2ascii> will default to the builtin implementation on Java8
-   as well (sun isn't available for Java9+ anyway).
 
  * The ant.java.version property will now hold the value "9" rather
    than "1.9" if running on Java 9.
@@ -344,9 +229,6 @@ Changes that could break older environments:
  * <rmic> will no longer allow the -Xnew option (or xmic compiler) to
    be used when running on Java 9 since this option has been removed.
    Bugzilla Report 59906
-
- * <javah> will default to the "forking" implementation on Java8
-   as well.
 
 Fixed bugs:
 -----------
@@ -395,11 +277,6 @@ Fixed bugs:
 Other changes:
 --------------
 
- * New file selectors <executable>, <symlink> and <ownedBy>.
-
- * New task <setpermissions> that provides the ability to set POSIX
-   compatible permssions via NIO's PosixFilePermission
-
  * <junit> now initializes the cause of the AssertionFailedError when
    converting from AssertionError.
    Bugzilla Report 58982
@@ -436,9 +313,6 @@ Other changes:
 
  * it is now possible to use references to Ant types and classloaders
    built around Ant <path>s as values for TraX factory attributes.
-
- * AntClassLoader and its subclasses register themselves as parallel
-   capable.
 
  * <junitreport> now enables the feature
    http://www.oracle.com/xml/jaxp/properties/enableExtensionFunctions
