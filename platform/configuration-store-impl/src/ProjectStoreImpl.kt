@@ -6,7 +6,6 @@ import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.async.coroutineDispatchingContext
-import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -37,6 +36,7 @@ import com.intellij.util.io.*
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.nio.file.AccessDeniedException
 import java.nio.file.Path
@@ -119,7 +119,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
   }
 
   // used in upsource
-  protected fun setPath(filePath: String, refreshVfs: Boolean) {
+  protected suspend fun setPath(filePath: String, isRefreshVfs: Boolean) {
     val storageManager = storageManager
     val fs = LocalFileSystem.getInstance()
     if (filePath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
@@ -130,8 +130,8 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       val workspacePath = composeFileBasedProjectWorkSpacePath(filePath)
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath)
 
-      if (refreshVfs) {
-        invokeAndWaitIfNeed {
+      if (isRefreshVfs) {
+        withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
           VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath))
         }
       }
@@ -154,8 +154,10 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
         isOptimiseTestLoadSpeed = !Paths.get(filePath).exists()
       }
 
-      if (refreshVfs) {
-        invokeAndWaitIfNeed { VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByPath(configDir)) }
+      if (isRefreshVfs) {
+        withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+          VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByPath(configDir))
+        }
       }
     }
 
@@ -261,7 +263,9 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
   override val storageManager = ProjectStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), project)
 
   override fun setPath(path: String) {
-    setPath(path, true)
+    runBlocking {
+      setPath(path, true)
+    }
   }
 
   override fun getProjectName(): String {
