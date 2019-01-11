@@ -25,15 +25,12 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,9 +66,6 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
   private final Divider myFirstDivider;
   private final Divider myLastDivider;
-
-  // Android Studio: Add divider resize listener to Splitter. See IDEA-204927
-  private final EventDispatcher<ComponentListener> myDividerDispatcher = EventDispatcher.create(ComponentListener.class);
 
   @Nullable private JComponent myFirstComponent;
   @Nullable private JComponent myInnerComponent;
@@ -543,15 +537,6 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     return myMinSize;
   }
 
-  // Android Studio: Add divider resize listener to Splitter. See IDEA-204927
-  public void addDividerResizeListener(@NotNull ComponentListener listener) {
-    myDividerDispatcher.addListener(listener);
-  }
-
-  public void removeDividerResizeListener(@NotNull ComponentListener listener) {
-    myDividerDispatcher.removeListener(listener);
-  }
-
   @Override
   public void dispose() {
     myLastComponent = null;
@@ -876,12 +861,6 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
           if (isInside(e.getPoint()) && myGlassPane != null) {
             myGlassPane.setCursor(getResizeCursor(), myListener);
           }
-
-          // Android Studio: Add divider resize listener to Splitter. See IDEA-204927
-          if (myDragging) {
-            myDividerDispatcher.getMulticaster().componentResized(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
-          }
-
           myWasPressedOnMe = false;
           myDragging = false;
           myPoint = null;
