@@ -13,7 +13,10 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileEvent
+import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFileManager
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -26,9 +29,9 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   private val sourceFolders = PathPrefixTreeMapImpl<SourceFolderModel>()
   private val sourceFoldersByModule = THashMap<String, ModuleModel>()
 
-  override fun addSourceFolder(module: Module, url: String, type: JpsModuleSourceRootType<*>) {
+  override fun addSourceFolder(module: Module, url: String, type: JpsModuleSourceRootType<*>, packagePrefix: String) {
     synchronized(mutex) {
-      sourceFolders[url] = SourceFolderModel(module, url, type, "")
+      sourceFolders[url] = SourceFolderModel(module, url, type, packagePrefix)
       val moduleModel = sourceFoldersByModule.getOrPut(module.name) {
         ModuleModel(module).also {
           Disposer.register(module, it)

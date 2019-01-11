@@ -16,7 +16,10 @@ public interface SourceFolderManager {
 
   void setSourceFolderPackagePrefix(@NotNull String url, @NotNull String packagePrefix);
 
-  void addSourceFolder(@NotNull Module module, @NotNull String url, @NotNull JpsModuleSourceRootType<?> type);
+  void addSourceFolder(@NotNull Module module,
+                       @NotNull String url,
+                       @NotNull JpsModuleSourceRootType<?> type,
+                       @NotNull String packagePrefix);
 
   void removeSourceFolders(@NotNull Module module);
 }
