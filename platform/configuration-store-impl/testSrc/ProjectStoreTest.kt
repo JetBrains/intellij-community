@@ -78,11 +78,11 @@ internal class ProjectStoreTest {
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
 
       testComponent.state!!.value = "s".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
-      project.saveStore()
+      project.stateStore.save()
 
       // we should save twice (first call - virtual file size is not yet set)
       testComponent.state!!.value = "b".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
-      project.saveStore()
+      project.stateStore.save()
     }
   }
 
@@ -110,7 +110,7 @@ internal class ProjectStoreTest {
       val newName = "Foo"
       val oldName = project.name
       (project as ProjectImpl).setProjectName(newName)
-      project.saveStore()
+      project.stateStore.save()
       assertThat(store.nameFile).hasContent(newName)
 
       project.setProjectName("clear-read-only")
@@ -119,7 +119,7 @@ internal class ProjectStoreTest {
       val handler = ReadonlyStatusHandler.getInstance(project) as ReadonlyStatusHandlerImpl
       try {
         handler.setClearReadOnlyInTests(true)
-        project.saveStore()
+        project.stateStore.save()
       }
       finally {
         handler.setClearReadOnlyInTests(false)
@@ -127,7 +127,7 @@ internal class ProjectStoreTest {
       assertThat(store.nameFile).hasContent("clear-read-only")
 
       project.setProjectName(oldName)
-      project.saveStore()
+      project.stateStore.save()
       assertThat(store.nameFile).doesNotExist()
     }
   }
@@ -143,30 +143,30 @@ internal class ProjectStoreTest {
       val store = project.stateStore
       assertThat(store.nameFile).hasContent(name)
 
-      project.saveStore()
+      project.stateStore.save()
       assertThat(store.nameFile).hasContent(name)
 
       (project as ProjectImpl).setProjectName(name)
-      project.saveStore()
+      project.stateStore.save()
       assertThat(store.nameFile).hasContent(name)
 
       project.setProjectName("foo")
-      project.saveStore()
+      project.stateStore.save()
       assertThat(store.nameFile).hasContent("foo")
 
       project.setProjectName(name)
-      project.saveStore()
+      project.stateStore.save()
       assertThat(store.nameFile).doesNotExist()
     }
   }
 
-  private fun test(project: Project): TestComponent {
+  private suspend fun test(project: Project): TestComponent {
     val testComponent = TestComponent()
     project.stateStore.initComponent(testComponent, true)
     assertThat(testComponent.state).isEqualTo(TestState("customValue"))
 
     testComponent.state!!.value = "foo"
-    project.saveStore()
+    project.stateStore.save()
 
     val file = Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_FILE))
     assertThat(file).isRegularFile()

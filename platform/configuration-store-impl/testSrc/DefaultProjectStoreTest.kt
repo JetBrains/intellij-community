@@ -55,7 +55,9 @@ internal class DefaultProjectStoreTest {
 
   private val requiredPlugins = listOf<ProjectExternalDependency>(DependencyOnPlugin("fake", "0", "1"))
 
-  private val ruleChain = RuleChain(
+  @JvmField
+  @Rule
+  val ruleChain = RuleChain(
     tempDirManager,
     WrapRule {
       val app = ApplicationManagerEx.getApplicationEx()
@@ -77,8 +79,6 @@ internal class DefaultProjectStoreTest {
       }
     }
   )
-
-  @Rule fun getChain() = ruleChain
 
   @Test
   fun `new project from default - file-based storage`() = runBlocking {
@@ -115,9 +115,7 @@ internal class DefaultProjectStoreTest {
     finally {
       // clear state
       defaultTestComponent.loadState(Element("empty"))
-      runInEdtAndWait {
-        defaultProject.saveStore()
-      }
+      defaultProject.stateStore.save()
       stateStore.removeComponent(TEST_COMPONENT_NAME)
     }
   }

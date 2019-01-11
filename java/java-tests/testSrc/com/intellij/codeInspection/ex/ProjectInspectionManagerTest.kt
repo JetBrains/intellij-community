@@ -57,7 +57,7 @@ class ProjectInspectionManagerTest {
 
       val inspectionDir = Paths.get(project.stateStore.projectConfigDir, "inspectionProfiles")
       val file = inspectionDir.resolve("profiles_settings.xml")
-      project.saveStore()
+      project.stateStore.save()
       assertThat(file).exists()
       val doNotUseProjectProfileData = """
       <component name="InspectionProjectProfileManager">
@@ -97,7 +97,7 @@ class ProjectInspectionManagerTest {
 
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
-      project.saveStore()
+      project.stateStore.save()
 
       assertThat(profileFile).doesNotExist()
     }
@@ -118,7 +118,7 @@ class ProjectInspectionManagerTest {
       assertThat(currentProfile.isProjectLevel).isTrue()
       currentProfile.setToolEnabled("Convert2Diamond", false)
 
-      project.saveStore()
+      project.stateStore.save()
 
       val inspectionDir = Paths.get(project.stateStore.projectConfigDir, "inspectionProfiles")
       val file = inspectionDir.resolve("profiles_settings.xml")

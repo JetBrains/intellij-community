@@ -10,9 +10,7 @@ import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
-import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -327,12 +325,6 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreat
     else {
       project.use(task)
     }
-  }
-}
-
-fun ComponentManager.saveStore() {
-  runBlocking {
-    stateStore.save(isForceSavingAllSettings = true)
   }
 }
 
