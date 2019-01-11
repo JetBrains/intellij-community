@@ -28,9 +28,39 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
 
-  // PY-7420
+  // PY-7420, PY-16419, PY-26417
   public void testWithSuppressedExceptions() {
-    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
+    doTest();
+  }
+
+  // PY-7420, PY-16419, PY-26417
+  public void testWithNotSuppressedExceptions() {
+    doTestByText(
+      "class C(object):\n" +
+      "    def __enter__(self):\n" +
+      "        return self\n" +
+      "\n" +
+      "    def __exit__(self, exc, value, traceback):\n" +
+      "        return False\n" +
+      "\n" +
+      "def f1():\n" +
+      "    with C():\n" +
+      "        raise Exception()\n" +
+      "    print(1) #pass\n" +
+      "\n" +
+      "def g2():\n" +
+      "    raise Exception()\n" +
+      "\n" +
+      "def f2():\n" +
+      "    with C():\n" +
+      "        return g2()\n" +
+      "    <warning descr=\"This code is unreachable\">print(1) #pass</warning>\n" +
+      "\n" +
+      "def f3():\n" +
+      "    with C():\n" +
+      "        g2()\n" +
+      "    print(1) #pass"
+    );
   }
 
   // PY-25974
