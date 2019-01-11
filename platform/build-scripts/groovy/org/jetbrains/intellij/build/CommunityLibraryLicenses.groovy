@@ -147,7 +147,9 @@ class CommunityLibraryLicenses {
                        licenseUrl: "https://github.com/dart-lang/vm_service_drivers/blob/master/LICENSE",
                        url: "https://github.com/dart-lang/vm_service_drivers"),
     new LibraryLicense(name: "data-binding", libraryName: "data-binding.jar", license: "Apache 2.0", url: "http://source.android.com/"),
-
+    new LibraryLicense(name: "debugger-memory-agent", libraryName: "debugger-memory-agent.jar", license: "Apache 2.0",
+                       url: "https://github.com/JetBrains/debugger-memory-agent",
+                       licenseUrl: "https://github.com/JetBrains/debugger-memory-agent/blob/master/LICENSE"),
     new LibraryLicense(name: "delight-rhino-sandbox", libraryName: "delight-rhino-sandbox", version: "0.0.9", license: "Apache 2.0",
                        url: "https://github.com/javadelight/delight-rhino-sandbox",
                        licenseUrl: "https://github.com/javadelight/delight-rhino-sandbox/blob/master/LICENSE.TXT"),
