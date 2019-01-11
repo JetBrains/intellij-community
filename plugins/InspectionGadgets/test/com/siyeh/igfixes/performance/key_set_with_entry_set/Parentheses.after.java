@@ -4,8 +4,7 @@ import java.util.Map;
 abstract class B {
   {
     Map sortMap = null;
-    for (Object entry : (sortMap.entry<caret>Set())) {
-      Object o = ((Map.Entry) entry).getValue();
+    for (Object o : (sortMap.value<caret>s())) {
     }
   }
 }
