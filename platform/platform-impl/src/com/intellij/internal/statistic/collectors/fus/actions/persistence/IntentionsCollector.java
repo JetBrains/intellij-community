@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
@@ -30,7 +31,7 @@ import java.util.Map;
   value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
 )
 public class IntentionsCollector implements PersistentStateComponent<IntentionsCollector.State> {
-  private static final String GROUP_ID = "statistics.actions.intentions";
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("statistics.actions.intentions", 1);
   private State myState = new State();
 
   @Nullable
@@ -49,7 +50,7 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
     String id = getIntentionId(action);
 
     String key = language.getID() + " " + id;
-    FeatureUsageLogger.INSTANCE.log(GROUP_ID, key, FUSUsageContext.OS_CONTEXT.getData());
+    FeatureUsageLogger.INSTANCE.log(GROUP, key, FUSUsageContext.OS_CONTEXT.getData());
   }
 
   @NotNull

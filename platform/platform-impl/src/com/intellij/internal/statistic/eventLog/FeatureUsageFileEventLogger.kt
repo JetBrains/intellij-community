@@ -20,15 +20,15 @@ open class FeatureUsageFileEventLogger(private val sessionId: String,
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
 
-  override fun log(recorderId: String, action: String, isState: Boolean) {
-    log(recorderId, action, Collections.emptyMap(), isState)
+  override fun log(group: FeatureUsageGroup, action: String, isState: Boolean) {
+    log(group, action, Collections.emptyMap(), isState)
   }
 
-  override fun log(recorderId: String, action: String, data: Map<String, Any>, isState: Boolean) {
+  override fun log(group: FeatureUsageGroup, action: String, data: Map<String, Any>, isState: Boolean) {
     val eventTime = System.currentTimeMillis()
     myLogExecutor.execute(Runnable {
       val creationTime = System.currentTimeMillis()
-      val event = newLogEvent(sessionId, build, bucket, eventTime, recorderId, recorderVersion, action, isState)
+      val event = newLogEvent(sessionId, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion, action, isState)
       for (datum in data) {
         event.event.addData(datum.key, datum.value)
       }

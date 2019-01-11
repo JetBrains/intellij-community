@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.ui.persistence;
 
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
@@ -29,7 +30,7 @@ import java.util.Map;
   }
 )
 public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarClicksCollector.ClicksState> {
-  private static final String GROUP_ID = "statistics.ui.toolbar.clicks";
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("statistics.ui.toolbar.clicks", 1);
 
   public final static class ClicksState {
     @Tag("counts")
@@ -74,7 +75,7 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
     ToolbarClicksCollector collector = getInstance();
     if (collector != null) {
       String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
-      FeatureUsageLogger.INSTANCE.log(GROUP_ID, key, FUSUsageContext.OS_CONTEXT.getData());
+      FeatureUsageLogger.INSTANCE.log(GROUP, key, FUSUsageContext.OS_CONTEXT.getData());
     }
   }
 

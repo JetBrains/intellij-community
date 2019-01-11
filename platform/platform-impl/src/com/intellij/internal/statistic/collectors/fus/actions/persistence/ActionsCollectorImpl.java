@@ -5,6 +5,7 @@ import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
+import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
@@ -30,6 +31,7 @@ import java.util.Map;
   value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
 )
 public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("actions.v2", 1);
   private static final String DEFAULT_ID = "third.party.plugin.action";
 
   private static final HashMap<String, String> ourPrefixesBlackList = new HashMap<>();
@@ -61,7 +63,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     if (StringUtil.isNotEmpty(inputEvent)) {
       data.put("input_event", inputEvent);
     }
-    FeatureUsageLogger.INSTANCE.log("actions.v2", key, data);
+    FeatureUsageLogger.INSTANCE.log(GROUP, key, data);
   }
 
   @NotNull

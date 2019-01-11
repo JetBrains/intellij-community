@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.statistic.eventLog
 
+import com.intellij.internal.statistic.eventLog.FeatureUsageGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger
 import com.intellij.internal.statistic.utils.getProjectId
 import com.intellij.openapi.components.State
@@ -12,7 +13,7 @@ import org.jdom.Element
 import java.util.*
 
 private val LOG = Logger.getInstance("com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter")
-private const val RECORDER_ID = "settings"
+private val GROUP = FeatureUsageGroup("settings", 1)
 
 object FeatureUsageSettingsEvents {
   val printer = FeatureUsageSettingsEventPrinter()
@@ -76,13 +77,13 @@ open class FeatureUsageSettingsEventPrinter {
             content["project"] = hash
           }
         }
-        logConfig(RECORDER_ID, componentName, content)
+        logConfig(GROUP, componentName, content)
       }
     }
   }
 
-  protected open fun logConfig(groupId: String, eventId: String, data: Map<String, Any>) {
-    FeatureUsageLogger.logState(groupId, eventId, data)
+  protected open fun logConfig(group: FeatureUsageGroup, eventId: String, data: Map<String, Any>) {
+    FeatureUsageLogger.logState(group, eventId, data)
   }
 
   internal fun toHash(project: Project?): String? {

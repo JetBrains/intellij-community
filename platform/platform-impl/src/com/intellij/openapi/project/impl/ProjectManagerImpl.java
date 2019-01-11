@@ -5,6 +5,7 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
+import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
 import com.intellij.featureStatistics.fusCollectors.ProjectLifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.ProjectUtil;
@@ -779,7 +780,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     FUSProjectUsageTrigger.getInstance(project).trigger(ProjectLifecycleUsageTriggerCollector.class, "project.opened");
-    FeatureUsageLogger.INSTANCE.log("lifecycle", "project.opened");
+    FeatureUsageLogger.INSTANCE.log(AppLifecycleUsageTriggerCollector.LIFECYCLE, "project.opened");
 
     myBusPublisher.projectOpened(project);
     // https://jetbrains.slack.com/archives/C5E8K7FL4/p1495015043685628
@@ -799,7 +800,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.debug("projectClosed");
     }
 
-    FeatureUsageLogger.INSTANCE.log("lifecycle", "project.closed");
+    FeatureUsageLogger.INSTANCE.log(AppLifecycleUsageTriggerCollector.LIFECYCLE, "project.closed");
 
     myBusPublisher.projectClosed(project);
     // see "why is called after message bus" in the fireProjectOpened

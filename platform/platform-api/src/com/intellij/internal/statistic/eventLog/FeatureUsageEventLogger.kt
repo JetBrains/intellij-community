@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.openapi.diagnostic.Logger
-
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
 import java.io.File
@@ -13,9 +12,9 @@ private val EP_NAME = ExtensionPointName.create<FeatureUsageEventLoggerProvider>
 
 interface FeatureUsageEventLogger {
 
-  fun log(recorderId: String, action: String, isState: Boolean)
+  fun log(group: FeatureUsageGroup, action: String, isState: Boolean)
 
-  fun log(recorderId: String, action: String, data: Map<String, Any>, isState: Boolean)
+  fun log(group: FeatureUsageGroup, action: String, data: Map<String, Any>, isState: Boolean)
 
   fun getLogFiles(): List<File>
 
@@ -40,10 +39,10 @@ class FeatureUsageEmptyEventLoggerProvider : FeatureUsageEventLoggerProvider {
 
 class FeatureUsageEmptyEventLogger : FeatureUsageEventLogger {
 
-  override fun log(recorderId: String, action: String, isState: Boolean) {
+  override fun log(group: FeatureUsageGroup, action: String, isState: Boolean) {
   }
 
-  override fun log(recorderId: String, action: String, data: Map<String, Any>, isState: Boolean) {
+  override fun log(group: FeatureUsageGroup, action: String, data: Map<String, Any>, isState: Boolean) {
   }
 
   override fun getLogFiles(): List<File> {
@@ -64,3 +63,5 @@ fun getLoggerProvider(): FeatureUsageEventLoggerProvider {
   }
   return FeatureUsageEmptyEventLoggerProvider()
 }
+
+class FeatureUsageGroup(val id: String, val version: Int)

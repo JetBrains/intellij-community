@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
   }
 )
 public class MainMenuCollector implements PersistentStateComponent<MainMenuCollector.State> {
-  private static final String GROUP_ID = "statistics.actions.main.menu.v2";
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("statistics.actions.main.menu.v2", 1);
   private static final String GENERATED_ON_RUNTIME_ITEM = "generated.on.runtime";
 
   private State myState = new State();
@@ -71,7 +72,7 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
 
       if (!StringUtil.isEmpty(path)) {
         String key = ConvertUsagesUtil.escapeDescriptorName(path);
-        FeatureUsageLogger.INSTANCE.log(GROUP_ID, key, FUSUsageContext.OS_CONTEXT.getData());
+        FeatureUsageLogger.INSTANCE.log(GROUP, key, FUSUsageContext.OS_CONTEXT.getData());
       }
     }
     catch (Exception ignore) {

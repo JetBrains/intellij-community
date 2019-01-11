@@ -8,6 +8,11 @@ import com.intellij.util.lang.JavaVersion
 import java.util.concurrent.TimeUnit
 
 class SystemStateMonitor : FeatureUsageStateEventTracker {
+  private val OS_NAME = FeatureUsageGroup("system.os.name", 1)
+  private val OS_VERSION = FeatureUsageGroup("system.os.version", 1)
+  private val JVM_VENDOR = FeatureUsageGroup("system.jvm.vendor", 1)
+  private val JVM_VERSION = FeatureUsageGroup("system.jvm.version", 1)
+
   private val INITIAL_DELAY = 0
   private val PERIOD_DELAY = 24 * 60
 
@@ -23,11 +28,11 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
   }
 
   private fun logSystemEvent() {
-    FeatureUsageLogger.logState("system.os.name", getOSName())
-    FeatureUsageLogger.logState("system.os.version", getOSVersion())
+    FeatureUsageLogger.logState(OS_NAME, getOSName())
+    FeatureUsageLogger.logState(OS_VERSION, getOSVersion())
 
-    FeatureUsageLogger.logState("system.jvm.vendor", System.getProperty("java.vendor", "Unknown"))
-    FeatureUsageLogger.logState("system.jvm.version", "1." + JavaVersion.current().feature)
+    FeatureUsageLogger.logState(JVM_VENDOR, System.getProperty("java.vendor", "Unknown"))
+    FeatureUsageLogger.logState(JVM_VERSION, "1." + JavaVersion.current().feature)
   }
 
   private fun getOSName() : String {

@@ -47,6 +47,7 @@ object LogEventSerializer {
    */
   fun toJson(event: LogEvent): JsonObject {
     val obj = JsonObject()
+    obj.addProperty("recorder_version", event.recorderVersion)
     obj.addProperty("session", event.session)
     obj.addProperty("build", event.build)
     obj.addProperty("bucket", event.bucket)
@@ -93,6 +94,7 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent> {
   @Throws(JsonParseException::class)
   override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): LogEvent {
     val obj = json.asJsonObject
+    val recorderVersion = obj["recorder_version"].asString
     val session = obj["session"].asString
     val build = obj["build"].asString
     val bucket = obj["bucket"].asString
@@ -116,7 +118,7 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent> {
         }
       }
     }
-    return newLogEvent(session, build, bucket, time, groupId, groupVersion, action)
+    return newLogEvent(session, build, bucket, time, groupId, groupVersion, recorderVersion, action)
   }
 
   fun createAction(obj: JsonObject): LogEventAction {

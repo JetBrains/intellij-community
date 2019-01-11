@@ -10,7 +10,7 @@ class FeatureUsageFileEventLoggerProvider : FeatureUsageEventLoggerProvider {
   override fun createLogger(): FeatureUsageEventLogger {
     val config = EventLogConfiguration
     val bucket = config.bucket.toString()
-    val logger = FeatureUsageFileEventLogger(config.sessionId, config.build, bucket, "10", FeatureUsageLogEventWriter())
+    val logger = FeatureUsageFileEventLogger(config.sessionId, config.build, bucket, "1", FeatureUsageLogEventWriter())
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
   }

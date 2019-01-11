@@ -3,6 +3,7 @@ package com.intellij.configurationStore.statistics.eventLog
 
 import com.intellij.configurationStore.getStateSpec
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter
+import com.intellij.internal.statistic.eventLog.FeatureUsageGroup
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.project.ProjectManager
@@ -155,7 +156,8 @@ class FeatureUsageSettingsEventsTest {
                                     value: Any,
                                     withProject: Boolean,
                                     defaultProject: Boolean) {
-    assertEquals("settings", event.group)
+    assertEquals("settings", event.group.id)
+    assertTrue(event.group.version > 0)
     assertEquals("MyTestComponent", event.id)
 
     var size = 3
@@ -184,7 +186,8 @@ class FeatureUsageSettingsEventsTest {
                                  value: Any,
                                  withProject: Boolean,
                                  defaultProject: Boolean) {
-    assertEquals("settings", event.group)
+    assertEquals("settings", event.group.id)
+    assertTrue(event.group.version > 0)
     assertEquals("MyTestComponent", event.id)
 
     var size = 2
@@ -205,8 +208,8 @@ class FeatureUsageSettingsEventsTest {
   private class TestFeatureUsageSettingsEventsPrinter : FeatureUsageSettingsEventPrinter() {
     val result: MutableList<LoggedComponentStateEvents> = ArrayList()
 
-    override fun logConfig(groupId: String, eventId: String, data: Map<String, Any>) {
-      result.add(LoggedComponentStateEvents(groupId, eventId, data))
+    override fun logConfig(group: FeatureUsageGroup, eventId: String, data: Map<String, Any>) {
+      result.add(LoggedComponentStateEvents(group, eventId, data))
     }
 
     fun getOptionByName(name: String): LoggedComponentStateEvents {
@@ -219,7 +222,7 @@ class FeatureUsageSettingsEventsTest {
     }
   }
 
-  private class LoggedComponentStateEvents(val group: String, val id: String, val data: Map<String, Any>)
+  private class LoggedComponentStateEvents(val group: FeatureUsageGroup, val id: String, val data: Map<String, Any>)
 
   @State(name = "MyTestComponent", reportStatistic = true)
   private class TestComponent : PersistentStateComponent<ComponentState> {

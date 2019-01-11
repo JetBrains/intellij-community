@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.utils.isDevelopedByJetBrains
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.util.containers.ContainerUtil
 
-private const val DIALOGS_ID = "ui.dialogs"
+private val DIALOGS = FeatureUsageGroup("ui.dialogs", 1)
 private const val DIALOGS_DEFAULT = "dialog.third.party.plugin"
 
 class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
@@ -45,7 +45,7 @@ class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
   override fun logShowDialog(name: String, context: Class<*>) {
     if (FeatureUsageLogger.isEnabled()) {
       val report = toReport(context, name, DIALOGS_DEFAULT)
-      FeatureUsageLogger.log(DIALOGS_ID, report, SHOW_DIALOG_DATA)
+      FeatureUsageLogger.log(DIALOGS, report, SHOW_DIALOG_DATA)
     }
   }
 
@@ -53,13 +53,13 @@ class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
     if (FeatureUsageLogger.isEnabled()) {
       val report = toReport(context, name, DIALOGS_DEFAULT)
       if (exitCode == DialogWrapper.OK_EXIT_CODE) {
-        FeatureUsageLogger.log(DIALOGS_ID, report, CLOSE_OK_DIALOG_DATA)
+        FeatureUsageLogger.log(DIALOGS, report, CLOSE_OK_DIALOG_DATA)
       }
       else if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
-        FeatureUsageLogger.log(DIALOGS_ID, report, CLOSE_CANCEL_DIALOG_DATA)
+        FeatureUsageLogger.log(DIALOGS, report, CLOSE_CANCEL_DIALOG_DATA)
       }
       else {
-        FeatureUsageLogger.log(DIALOGS_ID, report, CLOSE_CUSTOM_DIALOG_DATA)
+        FeatureUsageLogger.log(DIALOGS, report, CLOSE_CUSTOM_DIALOG_DATA)
       }
     }
   }

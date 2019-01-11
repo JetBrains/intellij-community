@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.facet.ui.FacetDependentToolWindow;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
+import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
@@ -35,6 +36,7 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
   }
 )
 public class ToolWindowCollector implements PersistentStateComponent<ToolWindowCollector.State> {
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("toolwindow.v2", 1);
   private static final String UNKNOWN = "unknown_by_";
 
   public static ToolWindowCollector getInstance() {
@@ -95,7 +97,7 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
 
     final boolean isWhitelisted = ourToolwindowWhitelist.contains(toolWindowId) || isDevelopedByJetBrains(toolWindowId);
     final String key = escapeDescriptorName(isWhitelisted ? toolWindowId + " by " + source : UNKNOWN + source);
-    FeatureUsageLogger.INSTANCE.log("toolwindow.v2", key, FUSUsageContext.OS_CONTEXT.getData());
+    FeatureUsageLogger.INSTANCE.log(GROUP, key, FUSUsageContext.OS_CONTEXT.getData());
   }
 
   public static boolean isDevelopedByJetBrains(@NotNull String toolWindowId) {

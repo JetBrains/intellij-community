@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
@@ -33,7 +34,7 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
                       @Nullable FUSUsageContext context) {
     FeatureUsagesCollector collector = findCollector(fusClass);
     if (collector != null) {
-      doTrigger(collector.getGroupId(), feature, context);
+      doTrigger(collector.getGroupId(), collector.getVersion(), feature, context);
     } else {
       LOG.warn("Cannot find collector `" + fusClass + "`. Make sure it's registered");
     }
@@ -43,10 +44,10 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
 
   protected abstract Map<String, Object> createEventLogData(@Nullable FUSUsageContext context);
 
-  protected void doTrigger(@NotNull String usageCollectorId,
+  protected void doTrigger(@NotNull String usageCollectorId, int collectorVersion,
                            @NotNull String feature,
                            @Nullable FUSUsageContext context) {
-    FeatureUsageLogger.INSTANCE.log(usageCollectorId, feature, createEventLogData(context));
+    FeatureUsageLogger.INSTANCE.log(new FeatureUsageGroup(usageCollectorId, collectorVersion), feature, createEventLogData(context));
 
     SessionInfo sessionInfo = getOrCreateSessionInfo();
     UsagesCollectorInfo collectorInfo = sessionInfo.getUsageCollectorInfo(usageCollectorId);

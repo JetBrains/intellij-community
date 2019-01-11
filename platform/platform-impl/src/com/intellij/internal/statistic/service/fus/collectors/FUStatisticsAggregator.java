@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.beans.CollectorGroupDescriptor;
 import com.intellij.internal.statistic.service.fus.beans.FSContent;
@@ -89,10 +90,12 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
                              boolean isStateCollector) {
     if (!usagesCollector.isValid()) return;
     if (approvedGroups.contains(usagesCollector.getGroupId())) {
-      addUsageDescriptors(project, usagesCollector.getGroupId(), context, usageDescriptors, usagesProducer, isStateCollector);
+      addUsageDescriptors(project, usagesCollector.getGroupId(), usagesCollector.getVersion(),
+                          context, usageDescriptors, usagesProducer, isStateCollector);
     }
     else if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-      addUsageDescriptors(project, createDebugModeId(usagesCollector.getGroupId()), context, usageDescriptors, usagesProducer, isStateCollector);
+      addUsageDescriptors(project, createDebugModeId(usagesCollector.getGroupId()), usagesCollector.getVersion(),
+                          context, usageDescriptors, usagesProducer, isStateCollector);
     }
   }
 
@@ -101,7 +104,7 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
     return "internal." + groupId;
   }
 
-  private void addUsageDescriptors(@Nullable Project project, @NotNull String groupDescriptor,
+  private void addUsageDescriptors(@Nullable Project project, @NotNull String groupDescriptor, int groupVersion,
                                    @Nullable FUSUsageContext context,
                                    @NotNull Map<CollectorGroupDescriptor, Set<UsageDescriptor>> allUsageDescriptors,
                                    @NotNull Factory<Set<UsageDescriptor>> usagesProducer, boolean isStateCollector) {
@@ -109,7 +112,7 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
     usages = usages.stream().filter(descriptor -> descriptor.getValue() > 0).collect(Collectors.toSet());
     if (!usages.isEmpty()) {
       if (isStateCollector && myLogDescriptors) {
-        logUsagesAsStateEvents(project, groupDescriptor, context, usages);
+        logUsagesAsStateEvents(project, groupDescriptor, groupVersion, context, usages);
       }
       CollectorGroupDescriptor collectorGroupDescriptor = CollectorGroupDescriptor.create(groupDescriptor, context);
       allUsageDescriptors.merge(collectorGroupDescriptor, usages, ContainerUtil::union);
@@ -121,13 +124,13 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
   }
 
   private static void logUsagesAsStateEvents(@Nullable Project project, @NotNull String groupDescriptor,
-                                             @Nullable FUSUsageContext context,
+                                             int groupVersion, @Nullable FUSUsageContext context,
                                              @NotNull Set<UsageDescriptor> usages) {
     final FeatureUsageLogger logger = FeatureUsageLogger.INSTANCE;
     final Map<String, ?> groupData = StatisticsUtilKt.createData(project, context);
     for (UsageDescriptor usage : usages) {
       final Map<String, Object> eventData = StatisticsUtilKt.mergeWithEventData(groupData, usage.getContext(), usage.getValue());
-      logger.logState(groupDescriptor, usage.getKey(), eventData);
+      logger.logState(new FeatureUsageGroup(groupDescriptor, groupVersion), usage.getKey(), eventData);
     }
   }
 
