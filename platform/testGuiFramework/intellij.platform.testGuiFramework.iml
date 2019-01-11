@@ -26,6 +26,6 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" scope="TEST" />
     <orderEntry type="library" name="jediterm-pty" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang" exported="" />
-    <orderEntry type="library" name="KotlinTest" level="project" />
+    <orderEntry type="library" name="kotlin-test" level="project" />
   </component>
 </module>

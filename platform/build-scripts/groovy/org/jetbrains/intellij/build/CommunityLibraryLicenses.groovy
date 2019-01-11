@@ -514,7 +514,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("JPS"),
     jetbrainsLibrary("KotlinJavaRuntime"),
     jetbrainsLibrary("KotlinScriptRuntime"),
-    jetbrainsLibrary("KotlinTest"),
+    jetbrainsLibrary("kotlin-test"),
     jetbrainsLibrary("kotlinx-coroutines-core"),
     jetbrainsLibrary("kotlinx-coroutines-jdk8"),
     jetbrainsLibrary("Maven Embedder"),
