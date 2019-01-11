@@ -1475,7 +1475,22 @@ public final class UiDefaultsHardcodedKeys {
     "WelcomeScreen.groupIconBorderColor",
     "WelcomeScreen.headerBackground",
     "WelcomeScreen.headerForeground",
-    "WelcomeScreen.separatorColor"
+    "WelcomeScreen.separatorColor",
+    "ToggleButton.borderColor",
+    "ToggleButton.buttonColor",
+    "ToggleButton.on.background",
+    "ToggleButton.on.foreground",
+    "ToggleButton.off.background",
+    "ToggleButton.off.foreground",
+    "Notification.linkForeground",
+    "HeaderColor.active",
+    "ToolTip.Actions.background",
+    "SpeedSearch.borderColor",
+    "SpeedSearch.foreground",
+    "SpeedSearch.background",
+    "SpeedSearch.errorForeground",
+    "DebuggerTabs.active.background",
+    "ToolTip.Actions.infoForeground"
   );
 
   public static final Set<String> ALL_KEYS = ContainerUtil.unmodifiableOrEmptySet(ContainerUtil.union(UI_DEFAULTS_KEYS, NAMED_COLORS));
