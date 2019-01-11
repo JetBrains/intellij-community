@@ -61,29 +61,7 @@ public class PermanentInstallationID {
 
     // for Windows attempt to use PermanentUserId, so that DotNet products and IDEA would use the same ID.
     if (SystemInfo.isWindows) {
-      final String appdata = System.getenv("APPDATA");
-      if (appdata != null) {
-        final File dir = new File(appdata, "JetBrains");
-        if (dir.exists() || dir.mkdirs()) {
-          final File permanentIdFile = new File(dir, "PermanentUserId");
-          try {
-            String fromFile = "";
-            if (permanentIdFile.exists()) {
-              fromFile = loadFromFile(permanentIdFile).trim();
-            }
-            if (!fromFile.isEmpty()) {
-              if (!fromFile.equals(installationId)) {
-                installationId = fromFile;
-                prefs.put(INSTALLATION_ID_KEY, installationId);
-              }
-            }
-            else {
-              writeToFile(permanentIdFile, installationId);
-            }
-          }
-          catch (IOException ignored) { }
-        }
-      }
+      installationId = syncWithSharedFile("PermanentUserId", installationId, prefs, INSTALLATION_ID_KEY);
     }
 
     // make sure values in older location and in the new location are the same
@@ -91,6 +69,37 @@ public class PermanentInstallationID {
       oldPrefs.put(OLD_USER_ON_MACHINE_ID_KEY, installationId);
     }
 
+    return installationId;
+  }
+
+  @NotNull
+  public static String syncWithSharedFile(@NotNull String fileName,
+                                          @NotNull String installationId,
+                                          @NotNull Preferences prefs,
+                                          @NotNull String prefsKey) {
+    final String appdata = System.getenv("APPDATA");
+    if (appdata != null) {
+      final File dir = new File(appdata, "JetBrains");
+      if (dir.exists() || dir.mkdirs()) {
+        final File permanentIdFile = new File(dir, fileName);
+        try {
+          String fromFile = "";
+          if (permanentIdFile.exists()) {
+            fromFile = loadFromFile(permanentIdFile).trim();
+          }
+          if (!fromFile.isEmpty()) {
+            if (!fromFile.equals(installationId)) {
+              installationId = fromFile;
+              prefs.put(prefsKey, installationId);
+            }
+          }
+          else {
+            writeToFile(permanentIdFile, installationId);
+          }
+        }
+        catch (IOException ignored) { }
+      }
+    }
     return installationId;
   }
 
