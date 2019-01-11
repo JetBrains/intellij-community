@@ -968,6 +968,7 @@ public final class UiDefaultsHardcodedKeys {
     "ToolTip.foreground",
     "ToolTip.foregroundInactive",
     "ToolTip.hideAccelerator",
+    "ToolTip.Actions.grayForeground",
     "ToolTipManager.enableToolTipMode",
     "ToolTipUI",
     "ToolWindow.Header.background",
