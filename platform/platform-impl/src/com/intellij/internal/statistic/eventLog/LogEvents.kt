@@ -14,7 +14,7 @@ fun newLogEvent(session: String,
                 time: Long,
                 recorderId: String,
                 recorderVersion: String,
-                event: LogEventBaseAction): LogEvent {
+                event: LogEventAction): LogEvent {
   return LogEvent(session, build, bucket, time, recorderId, recorderVersion, event)
 }
 
@@ -26,7 +26,7 @@ fun newLogEvent(session: String,
                 recorderVersion: String,
                 type: String,
                 isState: Boolean = false): LogEvent {
-  val event: LogEventBaseAction = if (isState) LogStateEventAction(escape(type)) else LogEventAction(escape(type))
+  val event = LogEventAction(escape(type), isState, 1)
   return LogEvent(session, build, bucket, time, recorderId, recorderVersion, event)
 }
 
@@ -36,13 +36,13 @@ open class LogEvent(session: String,
                     eventTime: Long,
                     recorderId: String,
                     recorderVersion: String,
-                    action: LogEventBaseAction) {
+                    action: LogEventAction) {
   val session: String = escape(session)
   val build: String = escape(build)
   val bucket: String = escape(bucket)
   val time: Long = eventTime
   val group: LogEventRecorder = LogEventRecorder(escape(recorderId), escape(recorderVersion))
-  val event: LogEventBaseAction = action
+  val event: LogEventAction = action
 
   fun shouldMerge(next: LogEvent): Boolean {
     if (session != next.session) return false
@@ -102,54 +102,20 @@ class LogEventRecorder(val id: String, val version: String) {
   }
 }
 
-class LogStateEventAction(id: String) : LogEventBaseAction(id) {
-  override fun increment() {
-  }
+class LogEventAction(val id: String, var state: Boolean = false, var count: Int = 1) {
+  var data: MutableMap<String, Any> = Collections.emptyMap()
 
-  override fun shouldMerge(next: LogEventBaseAction): Boolean {
-    return false
-  }
-}
-
-class LogEventAction(id: String, var count: Int = 1) : LogEventBaseAction(id) {
-  override fun increment() {
+  fun increment() {
     count++
   }
 
-  override fun isEventGroup(): Boolean {
+  fun isEventGroup(): Boolean {
     return count > 1
   }
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-    if (!super.equals(other)) return false
+  fun shouldMerge(next: LogEventAction): Boolean {
+    if (state || next.state) return false
 
-    other as LogEventAction
-
-    if (count != other.count) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    var result = super.hashCode()
-    result = 31 * result + count
-    return result
-  }
-}
-
-open class LogEventBaseAction(val id: String) {
-  var data: MutableMap<String, Any> = Collections.emptyMap()
-
-  open fun increment() {
-  }
-
-  open fun isEventGroup(): Boolean {
-    return false
-  }
-
-  open fun shouldMerge(next: LogEventBaseAction): Boolean {
     if (id != next.id) return false
     if (data != next.data) return false
     return true
@@ -168,15 +134,19 @@ open class LogEventBaseAction(val id: String) {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as LogEventBaseAction
+    other as LogEventAction
 
     if (id != other.id) return false
+    if (count != other.count) return false
     if (data != other.data) return false
     return true
   }
 
   override fun hashCode(): Int {
-    return 31 * id.hashCode() + data.hashCode()
+    var result = id.hashCode()
+    result = 31 * result + count
+    result = 31 * result + data.hashCode()
+    return result
   }
 }
 

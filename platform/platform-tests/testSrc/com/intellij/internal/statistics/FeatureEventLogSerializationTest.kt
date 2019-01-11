@@ -572,6 +572,11 @@ class FeatureEventLogSerializationTest {
 
     assertTrue(json.get("event").isJsonObject)
     assertTrue(json.getAsJsonObject("event").get("id").isJsonPrimitive)
+    assertEquals(isState, json.getAsJsonObject("event").has("state"))
+    if (isState) {
+      assertTrue(json.getAsJsonObject("event").get("state").asBoolean)
+    }
+
     assertEquals(!isState, json.getAsJsonObject("event").has("count"))
     if (!isState) {
       assertTrue(json.getAsJsonObject("event").get("count").asJsonPrimitive.isNumber)

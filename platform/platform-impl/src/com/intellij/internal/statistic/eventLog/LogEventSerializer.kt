@@ -57,7 +57,10 @@ object LogEventSerializer {
     group.addProperty("version", event.group.version)
 
     val action = JsonObject()
-    if (event.event is LogEventAction) {
+    if (event.event.state) {
+      action.addProperty("state", event.event.state)
+    }
+    else {
       action.addProperty("count", event.event.count)
     }
     action.add("data", gson.toJsonTree(event.event.data))
@@ -116,14 +119,15 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent> {
     return newLogEvent(session, build, bucket, time, groupId, groupVersion, action)
   }
 
-  fun createAction(obj: JsonObject): LogEventBaseAction {
+  fun createAction(obj: JsonObject): LogEventAction {
     val id = obj.get("id").asString
+    val isState = obj.has("state") && obj.get("state").asBoolean
     if (obj.has("count")) {
       val count = obj.get("count").asJsonPrimitive
       if (count.isNumber) {
-        return LogEventAction(id, count.asInt)
+        return LogEventAction(id, state = isState, count = count.asInt)
       }
     }
-    return LogStateEventAction(id)
+    return LogEventAction(id, state = isState)
   }
 }
