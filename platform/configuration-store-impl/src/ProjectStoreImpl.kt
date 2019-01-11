@@ -338,7 +338,7 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
         }
       }
       launch {
-        super.doSave(errors, readonlyFiles, isForceSavingAllSettings)
+        saveSettingsSavingComponentsAndCommitComponents(errors, isForceSavingAllSettings).save(readonlyFiles, errors)
       }
     }
   }

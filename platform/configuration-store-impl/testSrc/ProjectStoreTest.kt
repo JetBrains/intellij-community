@@ -18,6 +18,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
+import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
@@ -57,7 +58,8 @@ internal class ProjectStoreTest {
 
   data class TestState(var value: String = "default")
 
-  @Test fun directoryBasedStorage() {
+  @Test
+  fun directoryBasedStorage() = runBlocking {
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
       it.path
@@ -84,7 +86,8 @@ internal class ProjectStoreTest {
     }
   }
 
-  @Test fun fileBasedStorage() {
+  @Test
+  fun fileBasedStorage() = runBlocking {
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
       test(project)
 
@@ -92,7 +95,8 @@ internal class ProjectStoreTest {
     }
   }
 
-  @Test fun saveProjectName() {
+  @Test
+  fun saveProjectName() = runBlocking {
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       assumeTrue("Normal OS is required", !SystemInfo.isWindows)
     }
@@ -128,7 +132,8 @@ internal class ProjectStoreTest {
     }
   }
 
-  @Test fun `saved project name must be not removed just on open`() {
+  @Test
+  fun `saved project name must be not removed just on open`() = runBlocking {
     val name = "saved project name must be not removed just on open"
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)

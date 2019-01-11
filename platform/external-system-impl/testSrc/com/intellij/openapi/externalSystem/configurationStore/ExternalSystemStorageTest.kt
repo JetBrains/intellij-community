@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.ESCAPED_MODULE_DIR
@@ -18,6 +18,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.delete
 import com.intellij.util.io.parentSystemIndependentPath
 import com.intellij.util.io.systemIndependentPath
+import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -40,7 +41,7 @@ class ExternalSystemStorageTest {
   val ruleChain = RuleChain(tempDirManager, EdtRule())
 
   @Test
-  fun `must be empty if external system storage`() {
+  fun `must be empty if external system storage`() = runBlocking {
     createProjectAndUseInLoadComponentStateMode(tempDirManager, directoryBased = true) { project ->
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(true)
 

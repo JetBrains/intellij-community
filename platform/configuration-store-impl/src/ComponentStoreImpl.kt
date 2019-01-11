@@ -138,10 +138,10 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   internal open suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean) {
-    val saveSessionProducerManager = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       createSaveSessionManagerAndSaveComponents(isForceSavingAllSettings, errors)
     }
-    saveSessionProducerManager.save(readonlyFiles, errors)
+      .save(readonlyFiles, errors)
   }
 
   @CalledInAwt

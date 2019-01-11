@@ -20,6 +20,7 @@ import com.intellij.util.io.getDirectoryTree
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
 import com.intellij.util.loadElement
+import kotlinx.coroutines.runBlocking
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
@@ -79,7 +80,8 @@ internal class DefaultProjectStoreTest {
 
   @Rule fun getChain() = ruleChain
 
-  @Test fun `new project from default - file-based storage`() {
+  @Test
+  fun `new project from default - file-based storage`() = runBlocking {
     val externalDependenciesManager = ProjectManager.getInstance().defaultProject.service<ExternalDependenciesManager>()
     externalDependenciesManager.allDependencies = requiredPlugins
     try {
@@ -93,7 +95,7 @@ internal class DefaultProjectStoreTest {
   }
 
   @Test
-  fun `new project from default - directory-based storage`() {
+  fun `new project from default - directory-based storage`() = runBlocking {
     val defaultProject = ProjectManager.getInstance().defaultProject
     val defaultTestComponent = TestComponent()
     defaultTestComponent.loadState(JDOMUtil.load("""
@@ -120,7 +122,8 @@ internal class DefaultProjectStoreTest {
     }
   }
 
-  @Test fun `new project from default - remove workspace component configuration`() {
+  @Test
+  fun `new project from default - remove workspace component configuration`() {
     val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
     val element = loadElement(testData.resolve("testData1.xml"))
 

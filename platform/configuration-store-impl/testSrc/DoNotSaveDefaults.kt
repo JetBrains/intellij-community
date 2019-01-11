@@ -56,7 +56,7 @@ internal class DoNotSaveDefaultsTest {
   }
 
   @Test
-  fun testProject() {
+  fun testProject() = runBlocking {
     createOrLoadProject(tempDir, directoryBased = false) { project ->
       doTest(project as ProjectImpl)
     }
