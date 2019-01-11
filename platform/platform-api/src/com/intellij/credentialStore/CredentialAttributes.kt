@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.ide.passwordSafe.PasswordSafe
@@ -16,7 +16,10 @@ fun generateServiceName(subsystem: String, key: String): String = "$SERVICE_NAME
 /**
  * requestor is deprecated. Never use it in new code.
  */
-data class CredentialAttributes @JvmOverloads constructor(val serviceName: String, val userName: String? = null, val requestor: Class<*>? = null, val isPasswordMemoryOnly: Boolean = false)
+data class CredentialAttributes @JvmOverloads constructor(val serviceName: String,
+                                                          val userName: String? = null,
+                                                          val requestor: Class<*>? = null,
+                                                          val isPasswordMemoryOnly: Boolean = false)
 
 fun CredentialAttributes.toPasswordStoreable(): CredentialAttributes = if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
 
