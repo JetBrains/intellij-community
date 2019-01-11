@@ -73,7 +73,16 @@ public abstract class InstancesViewBase extends JBPanel implements Disposable {
 
     @Override
     public void sessionPaused() {
-      ApplicationManager.getApplication().invokeLater(() -> getInstancesTree().rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES, myTreeState));
+      ApplicationManager.getApplication().invokeLater(() -> {
+        XDebuggerTreeState state = myTreeState;
+        InstancesTree tree = getInstancesTree();
+        if (state == null) {
+          tree.rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES);
+        }
+        else {
+          tree.rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES, state);
+        }
+      });
     }
   }
 
