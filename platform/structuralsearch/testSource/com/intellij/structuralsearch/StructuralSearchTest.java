@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -2329,6 +2329,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern6 = "('_Parameter+) -> System.out.println()";
     assertEquals("should find lambdas with at least one parameter and matching body", 0, findMatchesCount(source, pattern6));
 
+    String typePattern = "'_X:[exprtype( Runnable )]";
+    assertEquals("should find Runnable lambda's", 2, findMatchesCount(source, typePattern));
+
     String source2 = "import java.util.function.Function;\n" +
                      "public class Test {\n" +
                      "   public static void main(String[] args) {\n" +
@@ -2398,6 +2401,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String pattern4 = "@AA A::new";
     assertEquals("should find annotated method references", 1, findMatchesCount(source, pattern4));
+
+    String pattern5 = "'_X:[exprtype( Runnable )]";
+    assertEquals("should find Runnable method references", 4, findMatchesCount(source, pattern5));
   }
 
   public void testNoUnexpectedException() {
