@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -28,7 +27,7 @@ import kotlinx.coroutines.runBlocking
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
 
 /**
- * Consider to not use this method in tests, for tests direct saving of state store is ok.
+ * Do not use this method in tests, instead directly save using state store.
  */
 @JvmOverloads
 fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
@@ -39,7 +38,7 @@ fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: B
       componentManager.stateStore.save(isForceSavingAllSettings = isForceSavingAllSettings)
     }
   }
-  catch (e: IComponentStore.SaveCancelledException) {
+  catch (e: UnresolvedReadOnlyFilesException) {
     LOG.info(e)
   }
   catch (e: Throwable) {

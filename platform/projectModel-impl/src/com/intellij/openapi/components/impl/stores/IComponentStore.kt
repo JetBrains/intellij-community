@@ -24,8 +24,6 @@ interface IComponentStore {
 
   fun isReloadPossible(componentNames: Set<String>): Boolean
 
-  class SaveCancelledException : RuntimeException()
-
   suspend fun save(isForceSavingAllSettings: Boolean = false)
 
   @TestOnly

@@ -13,7 +13,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -32,7 +31,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.isNullOrEmpty
-import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
@@ -131,16 +129,24 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   final override suspend fun save(isForceSavingAllSettings: Boolean) {
-    val errors = SmartList<Throwable>()
-    val readonlyFiles = SmartList<SaveSessionAndFile>()
-    doSave(errors, readonlyFiles, isForceSavingAllSettings)
-    CompoundRuntimeException.throwIfNotEmpty(errors)
+    val result = SaveResult()
+    doSave(result, isForceSavingAllSettings)
+    result.throwIfErrored()
   }
 
-  internal abstract suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean)
+  internal abstract suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean)
+
+  internal suspend fun createSaveSessionManagerAndSaveComponents(saveResult: SaveResult, isForceSavingAllSettings: Boolean): SaveSessionProducerManager {
+    return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      val errors = SmartList<Throwable>()
+      val manager = doCreateSaveSessionManagerAndSaveComponents(isForceSavingAllSettings, errors)
+      saveResult.addErrors(errors)
+      manager
+    }
+  }
 
   @CalledInAwt
-  internal fun createSaveSessionManagerAndSaveComponents(isForce: Boolean, errors: MutableList<Throwable>): SaveSessionProducerManager {
+  internal fun doCreateSaveSessionManagerAndSaveComponents(isForce: Boolean, errors: MutableList<Throwable>): SaveSessionProducerManager {
     val saveSessionProducerManager = createSaveSessionProducerManager()
     saveComponents(isForce, saveSessionProducerManager, errors)
     return saveSessionProducerManager
@@ -218,12 +224,12 @@ abstract class ComponentStoreImpl : IComponentStore {
     commitComponent(externalizationSession, ComponentInfoImpl(component, stateSpec), null)
     val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(stateSpec.storages).path)).toAbsolutePath().toString()
     runUndoTransparentWriteAction {
-      val errors: MutableList<Throwable> = SmartList<Throwable>()
+      val saveResult = SaveResult()
       val newDisposable = Disposer.newDisposable()
       try {
         VfsRootAccess.allowRootAccess(newDisposable, absolutePath)
         runBlocking {
-          val isSomethingChanged = externalizationSession.save(errors = errors)
+          val isSomethingChanged = externalizationSession.save().isChanged
           if (!isSomethingChanged) {
             LOG.info("saveApplicationComponent is called for ${stateSpec.name} but nothing to save")
           }
@@ -232,7 +238,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       finally {
         Disposer.dispose(newDisposable)
       }
-      CompoundRuntimeException.throwIfNotEmpty(errors)
+      saveResult.throwIfErrored()
     }
   }
 
@@ -583,10 +589,9 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
 // to make sure that ApplicationStore or ProjectStore will not call incomplete doSave implementation
 // (because these stores combine several calls for better control/async instead of simple sequential delegation)
 abstract class ChildlessComponentStore : ComponentStoreImpl() {
-  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean) {
-    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-      createSaveSessionManagerAndSaveComponents(isForceSavingAllSettings, errors)
-    }
-      .save(readonlyFiles, errors)
+  override suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean) {
+    createSaveSessionManagerAndSaveComponents(result, isForceSavingAllSettings)
+      .save()
+      .appendTo(result)
   }
 }

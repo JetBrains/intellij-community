@@ -3,52 +3,74 @@ package com.intellij.configurationStore
 
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.async.coroutineDispatchingContext
+import com.intellij.openapi.application.async.inUndoTransparentAction
+import com.intellij.openapi.application.async.inWriteAction
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.SmartList
 import com.intellij.util.containers.mapSmart
-import com.intellij.util.lang.CompoundRuntimeException
+import kotlinx.coroutines.withContext
 
 internal class ProjectSaveSessionProducerManager(private val project: Project) : SaveSessionProducerManager() {
-  override suspend fun save(readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>): Boolean {
-    val isChanged = super.save(readonlyFiles, errors)
+  suspend fun saveWithAdditionalSaveSessions(extraSessions: List<SaveSession>): SaveResult {
+    val saveSessions = SmartList<SaveSession>()
+    collectSaveSessions(saveSessions)
+    if (saveSessions.isEmpty() && extraSessions.isEmpty()) {
+      return SaveResult.EMPTY
+    }
 
+    val saveResult = withContext(AppUIExecutor.onUiThread().inUndoTransparentAction().inWriteAction().coroutineDispatchingContext()) {
+      val r = SaveResult()
+      saveSessions(extraSessions, r)
+      saveSessions(saveSessions, r)
+      r
+    }
+    validate(saveResult)
+    return saveResult
+  }
+
+  private suspend fun validate(saveResult: SaveResult) {
     val notifications = getUnableToSaveNotifications()
+    val readonlyFiles = saveResult.readonlyFiles
     if (readonlyFiles.isEmpty()) {
       notifications.forEach { it.expire() }
-      return isChanged
+      return
     }
 
     if (!notifications.isEmpty()) {
-      throw IComponentStore.SaveCancelledException()
+      throw UnresolvedReadOnlyFilesException(readonlyFiles.mapSmart { it.file })
     }
 
-    val status = runReadAction {
+    val status = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(getFilesList(readonlyFiles))
     }
+
     if (status.hasReadonlyFiles()) {
-      dropUnableToSaveProjectNotification(project, status.readonlyFiles.toList())
-      throw IComponentStore.SaveCancelledException()
+      val unresolvedReadOnlyFiles = status.readonlyFiles.toList()
+      dropUnableToSaveProjectNotification(project, unresolvedReadOnlyFiles)
+      saveResult.addError(UnresolvedReadOnlyFilesException(unresolvedReadOnlyFiles))
+      return
     }
 
     val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
-    for (entry in oldList) {
-      executeSave(entry.session, readonlyFiles, errors)
-    }
-
-    CompoundRuntimeException.throwIfNotEmpty(errors)
+    withContext(AppUIExecutor.onUiThread().inUndoTransparentAction().inWriteAction().coroutineDispatchingContext()) {
+      val r = SaveResult()
+      for (entry in oldList) {
+        executeSave(entry.session, r)
+      }
+      r
+    }.appendTo(saveResult)
 
     if (!readonlyFiles.isEmpty()) {
       dropUnableToSaveProjectNotification(project, getFilesList(readonlyFiles))
-      throw IComponentStore.SaveCancelledException()
+      saveResult.addError(UnresolvedReadOnlyFilesException(readonlyFiles.mapSmart { it.file }))
     }
-
-    return isChanged
   }
 
   private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles: List<VirtualFile>) {

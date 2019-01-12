@@ -12,11 +12,11 @@ import com.intellij.util.SmartList
 import kotlinx.coroutines.withContext
 import java.util.*
 
-interface SaveExecutor {
+internal interface SaveExecutor {
   /**
    * @return was something really saved
    */
-  suspend fun save(readonlyFiles: MutableList<SaveSessionAndFile> = SmartList(), errors: MutableList<Throwable>): Boolean
+  suspend fun save(): SaveResult
 }
 
 internal open class SaveSessionProducerManager : SaveExecutor {
@@ -56,44 +56,48 @@ internal open class SaveSessionProducerManager : SaveExecutor {
     }
   }
 
-  override suspend fun save(readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>): Boolean {
+  override suspend fun save(): SaveResult {
     val saveSessions = SmartList<SaveSession>()
     collectSaveSessions(saveSessions)
     if (saveSessions.isEmpty()) {
-      return false
+      return SaveResult.EMPTY
     }
 
-    val task = { saveSessions(saveSessions, readonlyFiles, errors) }
+    val task = {
+      val result = SaveResult()
+      saveSessions(saveSessions, result)
+      result
+    }
+
     if (isVfsRequired) {
-      withContext(AppUIExecutor.onUiThread().inUndoTransparentAction().inWriteAction().coroutineDispatchingContext()) {
+      return withContext(AppUIExecutor.onUiThread().inUndoTransparentAction().inWriteAction().coroutineDispatchingContext()) {
         task()
       }
     }
     else {
-      task()
+      return task()
     }
-    return true
   }
 }
 
-internal fun saveSessions(saveSessions: MutableList<SaveSession>, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
+internal fun saveSessions(saveSessions: List<SaveSession>, result: SaveResult) {
   for (saveSession in saveSessions) {
-    executeSave(saveSession, readonlyFiles, errors)
+    executeSave(saveSession, result)
   }
 }
 
-internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
+internal fun executeSave(session: SaveSession, result: SaveResult) {
   try {
     session.save()
   }
   catch (e: ReadOnlyModificationException) {
     LOG.warn(e)
-    readonlyFiles.add(SaveSessionAndFile(e.session ?: session, e.file))
+    result.addReadOnlyFile(SaveSessionAndFile(e.session ?: session, e.file))
   }
   catch (e: ProcessCanceledException) {
     throw e
   }
   catch (e: Exception) {
-    errors.add(e)
+    result.addError(e)
   }
 }

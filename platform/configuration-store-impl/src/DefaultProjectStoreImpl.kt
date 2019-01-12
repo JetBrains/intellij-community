@@ -3,7 +3,6 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.project.Project
 import org.jdom.Element
 import java.io.Writer
@@ -104,8 +103,10 @@ internal class DefaultProjectExportableAndSaveTrigger {
   @Volatile
   var project: Project? = null
 
-  suspend fun save(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean) {
-    val project = project ?: return
-    (project.stateStore as ComponentStoreImpl).doSave(errors, readonlyFiles, isForceSavingAllSettings)
+  suspend fun save(isForceSavingAllSettings: Boolean): SaveResult {
+    val project = project ?: return SaveResult.EMPTY
+    val result = SaveResult()
+    (project.stateStore as ComponentStoreImpl).doSave(result, isForceSavingAllSettings)
+    return result
   }
 }

@@ -6,13 +6,10 @@ import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.async.coroutineDispatchingContext
-import com.intellij.openapi.application.async.inUndoTransparentAction
-import com.intellij.openapi.application.async.inWriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -329,7 +326,7 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
     }
   }
 
-  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean) = coroutineScope<Unit> {
+  final override suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean) {
     coroutineScope {
       launch {
         try {
@@ -340,43 +337,42 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
         }
       }
       launch {
-        saveSettingsSavingComponentsAndCommitComponents(errors, isForceSavingAllSettings).save(readonlyFiles, errors)
+        // save modules before project
+        val errors = SmartList<Throwable>()
+        val moduleSaveSessions = saveModules(errors, isForceSavingAllSettings)
+        result.addErrors(errors)
+
+        (saveSettingsSavingComponentsAndCommitComponents(result, isForceSavingAllSettings) as ProjectSaveSessionProducerManager)
+          .saveWithAdditionalSaveSessions(moduleSaveSessions)
+          .appendTo(result)
       }
     }
+  }
+
+  protected open suspend fun saveModules(errors: MutableList<Throwable>, isForceSavingAllSettings: Boolean): List<SaveSession> {
+    return emptyList()
   }
 
   final override fun createSaveSessionProducerManager() = ProjectSaveSessionProducerManager(project)
 }
 
 private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
-  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean) {
-    // save modules before project
-    saveModules(ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY, errors, readonlyFiles, isForceSavingAllSettings)
-
-    super.doSave(errors, readonlyFiles, isForceSavingAllSettings)
-  }
-
-  private suspend fun saveModules(modules: Array<Module>, errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+  override suspend fun saveModules(errors: MutableList<Throwable>, isForceSavingAllSettings: Boolean): List<SaveSession> {
+    val modules = ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY
     if (modules.isEmpty()) {
-      return
+      return emptyList()
     }
 
-    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+    return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       // do no create with capacity because very rarely a lot of modules will be modified
       val saveSessions: MutableList<SaveSession> = SmartList<SaveSession>()
       // commit components
       for (module in modules) {
         val moduleStore = ModuleServiceManager.getService(module, IComponentStore::class.java) as ComponentStoreImpl
         // collectSaveSessions is very cheap, so, do it in EDT
-        moduleStore.createSaveSessionManagerAndSaveComponents(isForce, errors).collectSaveSessions(saveSessions)
+        moduleStore.doCreateSaveSessionManagerAndSaveComponents(isForceSavingAllSettings, errors).collectSaveSessions(saveSessions)
       }
-
-      if (!saveSessions.isEmpty()) {
-        withContext(AppUIExecutor.onUiThread().inUndoTransparentAction().inWriteAction().coroutineDispatchingContext()) {
-          // flush on disk
-          saveSessions(saveSessions, readonlyFiles, errors)
-        }
-      }
+      saveSessions
     }
   }
 }

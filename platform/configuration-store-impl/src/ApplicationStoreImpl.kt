@@ -7,7 +7,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
-import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.util.io.systemIndependentPath
@@ -35,24 +34,19 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
     storageManager.addMacro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve("app.xml").systemIndependentPath)
   }
 
-  override suspend fun doSave(errors: MutableList<Throwable>, readonlyFiles: MutableList<SaveSessionAndFile>, isForceSavingAllSettings: Boolean) {
-    val saveSessionManager = saveSettingsSavingComponentsAndCommitComponents(errors, isForceSavingAllSettings)
+  override suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean) {
+    val saveSessionManager = saveSettingsSavingComponentsAndCommitComponents(result, isForceSavingAllSettings)
     // todo can we store default project in parallel to regular saving? for now only flush on disk is async, but not component committing
     coroutineScope {
       launch {
-        saveSessionManager.save(readonlyFiles, errors)
+        saveSessionManager.save().appendTo(result)
       }
       launch {
         // here, because no Project (and so, ProjectStoreImpl) on Welcome Screen
-        serviceIfCreated<DefaultProjectExportableAndSaveTrigger>()?.save(errors, readonlyFiles, isForceSavingAllSettings)
-      }
-    }
-  }
-
-  override fun createSaveSessionProducerManager(): SaveSessionProducerManager {
-    return object : SaveSessionProducerManager() {
-      override suspend fun save(readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>): Boolean {
-        return super.save(readonlyFiles, errors)
+        val r = serviceIfCreated<DefaultProjectExportableAndSaveTrigger>()?.save(isForceSavingAllSettings) ?: return@launch
+        // ignore
+        r.isChanged = false
+        r.appendTo(result)
       }
     }
   }

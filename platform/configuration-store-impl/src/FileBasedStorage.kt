@@ -319,7 +319,8 @@ private fun deleteFile(file: Path, requestor: Any, virtualFile: VirtualFile?) {
     else {
       throw ReadOnlyModificationException(virtualFile, object : SaveSession {
         override fun save() {
-          deleteFile(requestor, virtualFile)
+          // caller must wraps into undo transparent and write action
+          virtualFile.delete(requestor)
         }
       })
     }
