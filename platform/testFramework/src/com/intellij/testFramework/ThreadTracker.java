@@ -154,7 +154,7 @@ public class ThreadTracker {
           //if (thread.isAlive()) {
           //  System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
           //}
-          while (System.currentTimeMillis() < start + 5_000) {
+          while (System.currentTimeMillis() < start + 10_000) {
             UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
             // afters some time the submitted task can finish and the thread become idle pool
             if (shouldIgnore(thread, thread.getStackTrace())) break;
