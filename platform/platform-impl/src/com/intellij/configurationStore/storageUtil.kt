@@ -116,7 +116,7 @@ private fun collect(componentManager: ComponentManager,
   substitutorToStore.put(substitutor, store)
 }
 
-fun getOrCreateVirtualFile(requestor: Any?, file: Path): VirtualFile {
+fun getOrCreateVirtualFile(file: Path, requestor: Any?): VirtualFile {
   val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)
   if (virtualFile != null) {
     return virtualFile

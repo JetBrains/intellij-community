@@ -101,7 +101,7 @@ final class ClasspathSaveSession implements SaveSessionProducer, SaveSession, Sa
     ThrowableRunnable<IOException> runnable = () -> {
       for (String key : modifiedContent.keySet()) {
         Element content = modifiedContent.get(key);
-        VirtualFile virtualFile = StorageUtilKt.getOrCreateVirtualFile(this, Paths.get(fileSet.getParent(key) + '/' + key));
+        VirtualFile virtualFile = StorageUtilKt.getOrCreateVirtualFile(Paths.get(fileSet.getParent(key) + '/' + key), this);
         try (Writer writer = new OutputStreamWriter(virtualFile.getOutputStream(this), StandardCharsets.UTF_8)) {
           EclipseJDOMUtil.output(content, writer, module.getProject());
         }

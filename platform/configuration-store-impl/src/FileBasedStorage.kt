@@ -44,7 +44,8 @@ open class FileBasedStorage(file: Path,
   protected var lineSeparator: LineSeparator? = null
   protected var blockSavingTheContent = false
 
-  @Volatile var file = file
+  @Volatile
+  var file = file
     private set
 
   init {
@@ -99,7 +100,10 @@ open class FileBasedStorage(file: Path,
         deleteFile(storage.file, this, virtualFile)
         storage.cachedVirtualFile = null
       }
-      else if (!isUseVfs) {
+      else if (isUseVfs) {
+        storage.cachedVirtualFile = writeFile(storage.file, this, virtualFile, dataWriter, lineSeparator, storage.isUseXmlProlog)
+      }
+      else {
         val file = storage.file
         LOG.debugOrInfoIfTestMode { "Save $file" }
         try {
@@ -108,9 +112,6 @@ open class FileBasedStorage(file: Path,
         catch (e: Throwable) {
           throw RuntimeException("Cannot write ${file}", e)
         }
-      }
-      else {
-        storage.cachedVirtualFile = writeFile(storage.file, this, virtualFile, dataWriter, lineSeparator, storage.isUseXmlProlog)
       }
     }
   }
@@ -216,7 +217,7 @@ internal fun writeFile(file: Path?,
                        lineSeparator: LineSeparator,
                        prependXmlProlog: Boolean): VirtualFile {
   val result = if (file != null && (virtualFile == null || !virtualFile.isValid)) {
-    getOrCreateVirtualFile(requestor, file)
+    getOrCreateVirtualFile(file, requestor)
   }
   else {
     virtualFile!!
