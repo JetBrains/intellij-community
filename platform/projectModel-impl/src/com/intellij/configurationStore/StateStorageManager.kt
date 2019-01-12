@@ -39,7 +39,8 @@ interface StorageCreator {
 }
 
 /**
- * Low-level method to save component manager state store. Intended for Java clients only.
+ * Low-level method to save component manager state store. Use it with care and only if you understand what are you doing.
+ * Intended for Java clients only. Do not use in Kotlin.
  */
 @JvmOverloads
 fun saveComponentManager(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {

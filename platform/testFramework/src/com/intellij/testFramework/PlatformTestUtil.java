@@ -598,9 +598,9 @@ public class PlatformTestUtil {
     saveProject(project, false);
   }
 
-  public static void saveProject(@NotNull Project project, boolean isForce) {
+  public static void saveProject(@NotNull Project project, boolean isForceSavingAllSettings) {
     ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
-    StateStorageManagerKt.saveComponentManager(project, isForce);
+    StateStorageManagerKt.saveComponentManager(project, isForceSavingAllSettings);
   }
 
   static void waitForAllBackgroundActivityToCalmDown() {

@@ -1,20 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.updater;
 
+import com.intellij.application.Topics;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.FrameStateListener;
-import com.intellij.ide.FrameStateManager;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticRecorder;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsStateService;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -41,8 +43,6 @@ public class StatisticsJobsScheduler implements BaseComponent {
   public static final int PERSIST_SESSIONS_INITIAL_DELAY_IN_MIN = 30;
   public static final int PERSIST_SESSIONS_DELAY_IN_MIN = 12 * 60;
 
-  private final FrameStateManager myFrameStateManager;
-
   private static final Map<Project, Future> myPersistStatisticsSessionsMap = Collections.synchronizedMap(new HashMap<>());
 
   @Override
@@ -53,9 +53,8 @@ public class StatisticsJobsScheduler implements BaseComponent {
     runStatisticsSessionsPersistence();
   }
 
-  public StatisticsJobsScheduler(@NotNull FrameStateManager frameStateManager) {
+  public StatisticsJobsScheduler() {
     NotificationsConfigurationImpl.remove("SendUsagesStatistics");
-    myFrameStateManager = frameStateManager;
   }
 
   private static boolean isEmpty(Window window) {
@@ -69,15 +68,16 @@ public class StatisticsJobsScheduler implements BaseComponent {
     return false;
   }
 
-  private void runStatisticsService() {
+  private static void runStatisticsService() {
     if (StatisticsUploadAssistant.isShouldShowNotification()) {
-      myFrameStateManager.addListener(new FrameStateListener() {
+      Disposable disposable = Disposer.newDisposable();
+      Topics.subscribe(FrameStateListener.TOPIC, disposable, new FrameStateListener() {
         @Override
         public void onFrameActivated() {
           if (isEmpty(((WindowManagerEx)WindowManager.getInstance()).getMostRecentFocusedWindow())) {
             final StatisticsService statisticsService = StatisticsUploadAssistant.getApprovedGroupsStatisticsService();
             ApplicationManager.getApplication().invokeLater(() -> StatisticsNotificationManager.showNotification(statisticsService));
-            myFrameStateManager.removeListener(this);
+            Disposer.dispose(disposable);
           }
         }
       });
