@@ -122,9 +122,7 @@ fun getOrCreateVirtualFile(file: Path, requestor: Any?): VirtualFile {
     return virtualFile
   }
 
-  val absoluteFile = file.toAbsolutePath()
-
-  val parentFile = absoluteFile.parent
+  val parentFile = file.parent
   parentFile.createDirectories()
 
   // need refresh if the directory has just been created
