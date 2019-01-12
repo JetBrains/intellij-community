@@ -3,6 +3,8 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.async.coroutineDispatchingContext
+import com.intellij.openapi.application.async.inUndoTransparentAction
+import com.intellij.openapi.application.async.inWriteAction
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -63,7 +65,7 @@ internal open class SaveSessionProducerManager : SaveExecutor {
 
     val task = { saveSessions(saveSessions, readonlyFiles, errors) }
     if (isVfsRequired) {
-      withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      withContext(AppUIExecutor.onUiThread().inUndoTransparentAction().inWriteAction().coroutineDispatchingContext()) {
         task()
       }
     }

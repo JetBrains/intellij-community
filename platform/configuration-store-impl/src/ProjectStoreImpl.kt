@@ -6,6 +6,8 @@ import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.async.coroutineDispatchingContext
+import com.intellij.openapi.application.async.inUndoTransparentAction
+import com.intellij.openapi.application.async.inWriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -370,7 +372,7 @@ private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: Pa
       }
 
       if (!saveSessions.isEmpty()) {
-        ApplicationManager.getApplication().runWriteAction {
+        withContext(AppUIExecutor.onUiThread().inUndoTransparentAction().inWriteAction().coroutineDispatchingContext()) {
           // flush on disk
           saveSessions(saveSessions, readonlyFiles, errors)
         }
