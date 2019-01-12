@@ -7,7 +7,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.mapSmart
@@ -54,17 +54,16 @@ internal class ProjectSaveSessionProducerManager(private val project: Project) :
   private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles: List<VirtualFile>) {
     val notifications = getUnableToSaveNotifications()
     if (notifications.isEmpty()) {
-      Notifications.Bus.notify(
-        ProjectManagerImpl.UnableToSaveProjectNotification(project, readOnlyFiles), project)
+      Notifications.Bus.notify(UnableToSaveProjectNotification(project, readOnlyFiles), project)
     }
     else {
       notifications[0].setFiles(readOnlyFiles)
     }
   }
 
-  private fun getUnableToSaveNotifications(): Array<out ProjectManagerImpl.UnableToSaveProjectNotification> {
+  private fun getUnableToSaveNotifications(): Array<out UnableToSaveProjectNotification> {
     return NotificationsManager.getNotificationsManager()
-      .getNotificationsOfType(ProjectManagerImpl.UnableToSaveProjectNotification::class.java, project)
+      .getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
   }
 }
 
