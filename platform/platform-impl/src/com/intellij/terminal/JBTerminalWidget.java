@@ -296,7 +296,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
   private static final class JBTerminalWidgetDisposableWrapper extends DisposableWrapper<JBTerminalWidget> {
     private final JBTerminalWidget myObject;
 
-    public JBTerminalWidgetDisposableWrapper(JBTerminalWidget object, Disposable parent) {
+    private JBTerminalWidgetDisposableWrapper(JBTerminalWidget object, Disposable parent) {
       super(object, parent);
       myObject = object;
     }
@@ -312,7 +312,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
 
     @NotNull
     @Override
-    protected JBTerminalWidgetDisposableWrapper createNewWrapper(@NotNull Disposable parent, JBTerminalWidget object) {
+    protected JBTerminalWidgetDisposableWrapper createNewWrapper(JBTerminalWidget object, @NotNull Disposable parent) {
       return new JBTerminalWidgetDisposableWrapper(object, parent);
     }
   }
