@@ -5,21 +5,14 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.vcsUtil.VcsUtil
-import java.util.stream.Collectors.toList
-import java.util.stream.Stream
+import com.intellij.vcsUtil.VcsUtil.getFilePath
 
 open class CommonCheckinProjectAction : AbstractCommonCheckinAction() {
-  override fun getRoots(context: VcsContext): Array<FilePath> {
-    val manager = ProjectLevelVcsManager.getInstance(context.project!!)
-
-    return Stream.of(*manager.allActiveVcss)
-      .filter { vcs -> vcs.checkinEnvironment != null }
-      .flatMap { vcs -> Stream.of(*manager.getRootsUnderVcs(vcs)) }
-      .map { VcsUtil.getFilePath(it) }
-      .collect(toList())
+  override fun getRoots(dataContext: VcsContext): Array<FilePath> =
+    ProjectLevelVcsManager.getInstance(dataContext.project!!).allVcsRoots
+      .filter { it.vcs!!.checkinEnvironment != null }
+      .map { getFilePath(it.path!!) }
       .toTypedArray()
-  }
 
   override fun approximatelyHasRoots(dataContext: VcsContext): Boolean = true
 
