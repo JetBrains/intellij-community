@@ -16,49 +16,46 @@ import java.util.List;
 public class FrameStateManagerImpl extends FrameStateManager {
   private final List<FrameStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private final BusyObject.Impl myActive;
+  private final BusyObject.Impl myActive = new BusyObject.Impl() {
+    @Override
+    public boolean isReady() {
+      return ApplicationManager.getApplication().isActive();
+    }
+  };
 
   public FrameStateManagerImpl() {
-    myActive = new BusyObject.Impl() {
-      @Override
-      public boolean isReady() {
-        return ApplicationManager.getApplication().isActive();
-      }
-    };
+    ApplicationManager.getApplication().getMessageBus().connect()
+      .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
+        private final FrameStateListener myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(FrameStateListener.TOPIC);
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
-      @Override
-      public void applicationActivated(@NotNull IdeFrame ideFrame) {
-        System.setProperty("com.jetbrains.suppressWindowRaise", "false");
-        myActive.onReady();
-        fireActivationEvent();
-      }
-
-      @Override
-      public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
-        System.setProperty("com.jetbrains.suppressWindowRaise", "true");
-        if (!ApplicationManager.getApplication().isDisposed()) {
-          fireDeactivationEvent();
+        @Override
+        public void applicationActivated(@NotNull IdeFrame ideFrame) {
+          System.setProperty("com.jetbrains.suppressWindowRaise", "false");
+          myActive.onReady();
+          myPublisher.onFrameActivated();
+          for (FrameStateListener listener : myListeners) {
+            listener.onFrameActivated();
+          }
         }
-      }
-    });
+
+        @Override
+        public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
+          System.setProperty("com.jetbrains.suppressWindowRaise", "true");
+          if (ApplicationManager.getApplication().isDisposed()) {
+            return;
+          }
+
+          myPublisher.onFrameDeactivated();
+          for (FrameStateListener listener : myListeners) {
+            listener.onFrameDeactivated();
+          }
+        }
+      });
   }
 
   @Override
   public ActionCallback getApplicationActive() {
     return myActive.getReady(this);
-  }
-
-  private void fireDeactivationEvent() {
-    for (FrameStateListener listener : myListeners) {
-      listener.onFrameDeactivated();
-    }
-  }
-
-  private void fireActivationEvent() {
-    for (FrameStateListener listener : myListeners) {
-      listener.onFrameActivated();
-    }
   }
 
   @Override
@@ -68,11 +65,11 @@ public class FrameStateManagerImpl extends FrameStateManager {
 
   @Override
   public void addListener(@NotNull final FrameStateListener listener, @Nullable Disposable disposable) {
-    if (disposable != null) {
-      ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(FrameStateListener.TOPIC, listener);
+    if (disposable == null) {
+      myListeners.add(listener);
     }
     else {
-      myListeners.add(listener);
+      ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(FrameStateListener.TOPIC, listener);
     }
   }
 
