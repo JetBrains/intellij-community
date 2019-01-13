@@ -138,7 +138,11 @@ abstract class ComponentStoreImpl : IComponentStore {
   internal abstract suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean)
 
   internal suspend fun createSaveSessionManagerAndSaveComponents(saveResult: SaveResult, isForceSavingAllSettings: Boolean): SaveSessionProducerManager {
-    return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+    val uiExecutor = AppUIExecutor.onUiThread()
+    storageManager.componentManager?.let {
+      uiExecutor.inTransaction(it)
+    }
+    return withContext(uiExecutor.coroutineDispatchingContext()) {
       // todo should we call stopThreadPrioritizing? for some reasons stopThreadPrioritizing was not called by old code in ApplicationImpl/ProjectImpl save
       // probably because stopThreadPrioritizing is called on start write action (see ApplicationImpl.stopThreadPrioritizing)
       HeavyProcessLatch.INSTANCE.prioritizeUiActivity()

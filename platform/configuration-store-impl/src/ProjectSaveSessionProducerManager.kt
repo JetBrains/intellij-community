@@ -24,7 +24,7 @@ internal class ProjectSaveSessionProducerManager(private val project: Project) :
       return SaveResult.EMPTY
     }
 
-    val saveResult = withContext(AppUIExecutor.onUiThread().inUndoTransparentAction().inWriteAction().coroutineDispatchingContext()) {
+    val saveResult = withContext(AppUIExecutor.onUiThread().inTransaction(project).inUndoTransparentAction().inWriteAction().coroutineDispatchingContext()) {
       val r = SaveResult()
       saveSessions(extraSessions, r)
       saveSessions(saveSessions, r)

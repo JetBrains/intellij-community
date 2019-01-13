@@ -77,9 +77,7 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
             }
           }
           else {
-            submitTransaction {
-              doSaveDocumentsAndProjectsAndAppInEdt()
-            }
+            doSaveDocumentsAndProjectsAndAppInEdt()
           }
         }
 
@@ -179,13 +177,8 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
 
   override fun refreshOpenFiles() {
     val files = ArrayList<VirtualFile>()
-
     for (project in ProjectManager.getInstance().openProjects) {
-      for (file in FileEditorManager.getInstance(project).selectedFiles) {
-        if (file is NewVirtualFile) {
-          files.add(file)
-        }
-      }
+      FileEditorManager.getInstance(project).selectedFiles.filterTo(files) { it is NewVirtualFile }
     }
 
     if (!files.isEmpty()) {

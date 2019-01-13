@@ -363,7 +363,7 @@ private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: Pa
       return emptyList()
     }
 
-    return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+    return withContext(AppUIExecutor.onUiThread().inTransaction(project).coroutineDispatchingContext()) {
       // do no create with capacity because very rarely a lot of modules will be modified
       val saveSessions: MutableList<SaveSession> = SmartList<SaveSession>()
       // commit components
