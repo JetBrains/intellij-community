@@ -143,4 +143,11 @@ public abstract class AbstractCodeStylePropertyMapper {
   protected boolean useDeclaredFields() {
     return false;
   }
+
+  @NotNull
+  public abstract String getLanguageDomainId();
+
+  public boolean containsProperty(@NotNull String name) {
+    return getAccessorMap().containsKey(name);
+  }
 }

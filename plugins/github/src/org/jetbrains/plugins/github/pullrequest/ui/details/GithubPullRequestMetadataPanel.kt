@@ -14,7 +14,6 @@ import org.jetbrains.plugins.github.api.data.GithubIssueLabel
 import org.jetbrains.plugins.github.api.data.GithubPullRequest
 import org.jetbrains.plugins.github.api.data.GithubUser
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import org.jetbrains.plugins.github.pullrequest.ui.WrapLayout
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
@@ -89,8 +88,8 @@ internal class GithubPullRequestMetadataPanel(private val iconsProvider: Caching
     }
     val panel = NonOpaquePanel(WrapLayout(FlowLayout.LEADING, 0, 0))
 
-    var list: List<T>? by equalVetoingObservable<List<T>?>(null) { it ->
-      label.text = it?.let { if (it.isEmpty()) emptyText else notEmptyText }
+    var list: List<T>? by equalVetoingObservable<List<T>?>(null) {
+      label.text = it?.let { text -> if (text.isEmpty()) emptyText else notEmptyText }
       label.isVisible = it != null
 
       panel.removeAll()

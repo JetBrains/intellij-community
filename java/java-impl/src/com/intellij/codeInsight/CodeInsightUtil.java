@@ -396,6 +396,10 @@ public class CodeInsightUtil {
     return inheritor -> {
       ProgressManager.checkCanceled();
 
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Processing inheritor " + inheritor.getQualifiedName());
+      }
+
       if (!resolveHelper.isAccessible(inheritor, context, null)) {
         return true;
       }
@@ -416,6 +420,9 @@ public class CodeInsightUtil {
                                    : factory.createType(inheritor, typeArgs.toArray(PsiType.EMPTY_ARRAY));
       PsiType toAdd = PsiTypesUtil.createArrayType(inheritorType, arrayDim);
       if (baseType.isAssignableFrom(toAdd)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Inheritor type " + toAdd.getCanonicalText());
+        }
         result.consume(toAdd);
       }
 

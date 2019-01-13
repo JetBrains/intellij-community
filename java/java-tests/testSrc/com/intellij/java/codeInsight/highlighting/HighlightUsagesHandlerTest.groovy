@@ -20,7 +20,9 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -104,6 +106,15 @@ class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase {
     ctrlShiftF7()
     assertRangeText 'switch', 'break'
     checkUnselect()
+  }
+
+  void testBreakInSwitchExpr() {
+    IdeaTestUtil.withLevel myModule, LanguageLevel.JDK_12_PREVIEW, {
+      configureFile()
+      ctrlShiftF7()
+      assertRangeText 'switch', 'break', 'break'
+      checkUnselect()
+    }
   }
 
   void testBreakInDoWhile() {

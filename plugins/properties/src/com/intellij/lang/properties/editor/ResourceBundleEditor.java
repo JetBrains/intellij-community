@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.properties.editor;
 
@@ -82,8 +82,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ResourceBundleEditor extends UserDataHolderBase implements DocumentsEditor {
@@ -194,7 +194,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     TreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
     if (children.length != 0) {
       TreeElement child = children[0];
-      IProperty property = ((ResourceBundlePropertyStructureViewElement)child).getProperty();
+      IProperty property = ((PropertyStructureViewElement)child).getProperty();
       if (property != null) {
         String propName = property.getUnescapedKey();
         setState(new ResourceBundleEditorState(propName));
@@ -294,8 +294,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
     while (!toCheck.isEmpty()) {
       TreeElement element = toCheck.pop();
-      PsiElement value = element instanceof ResourceBundlePropertyStructureViewElement
-                     ? ((ResourceBundlePropertyStructureViewElement)element).getPsiElement()
+      PsiElement value = element instanceof PropertyStructureViewElement
+                     ? ((PropertyStructureViewElement)element).getPsiElement()
                      : null;
       final IProperty property = PropertiesImplUtil.getProperty(value);
       if (property != null && propertyName.equals(property.getUnescapedKey())) {
@@ -411,7 +411,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         @Override
         public void keyTyped(KeyEvent e) {
           if (editor.isViewer()) {
-            editor.setViewer( ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(propertiesFile.getVirtualFile()).hasReadonlyFiles());
+            editor.setViewer(ReadonlyStatusHandler.getInstance(myProject)
+                               .ensureFilesWritable(Collections.singletonList(propertiesFile.getVirtualFile())).hasReadonlyFiles());
           }
         }
       });
@@ -592,8 +593,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       .filterMap(AbstractTreeNode::getValue)
       .filter(ResourceBundleEditorViewElement.class)
       .first();
-    return first instanceof ResourceBundlePropertyStructureViewElement ?
-           ((ResourceBundlePropertyStructureViewElement)first).getProperty() : null;
+    return first instanceof PropertyStructureViewElement ?
+           ((PropertyStructureViewElement)first).getProperty() : null;
   }
 
   @NotNull

@@ -10,14 +10,14 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.BooleanFunction;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Function;
+
+import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addIfDiffers;
 
 class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
   @NotNull
@@ -112,22 +112,9 @@ class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
     return set;
   }
 
-  private static <T> void addBoolIfDiffers(Set<UsageDescriptor> set,
-                                           T settingsBean, T defaultSettingsBean, BooleanFunction<T> valueFunction, String featureId) {
-    boolean value = valueFunction.fun(settingsBean);
-    boolean defaultValue = valueFunction.fun(defaultSettingsBean);
-    if (value != defaultValue) {
-      set.add(new UsageDescriptor(defaultValue ? "no" + StringUtil.capitalize(featureId) : featureId, 1));
-    }
-  }
-
-  private static <T> void addIfDiffers(Set<UsageDescriptor> set,
-                                       T settingsBean, T defaultSettingsBean, Function<T, Object> valueFunction, String featureIdPrefix) {
-    Object value = valueFunction.apply(settingsBean);
-    Object defaultValue = valueFunction.apply(defaultSettingsBean);
-    if (!Comparing.equal(value, defaultValue)) {
-      set.add(new UsageDescriptor(featureIdPrefix + "." + value, 1));
-    }
+  private static <T> void addBoolIfDiffers(Set<UsageDescriptor> set, T settingsBean, T defaultSettingsBean,
+                                           Function1<T, Boolean> valueFunction, String featureId) {
+    addIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, (it) -> it ? featureId : "no" + StringUtil.capitalize(featureId));
   }
 
   public static class ProjectUsages extends ProjectUsagesCollector {

@@ -60,7 +60,6 @@ import com.intellij.configurationStore.BaseXmlOutputter;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.*;
 
-import javax.annotation.Generated;
 import javax.xml.transform.Result;
 import java.io.*;
 import java.util.ArrayList;
@@ -115,7 +114,7 @@ import java.util.List;
  * @author Bradley S. Huffman
  * @version $Revision: 1.112 $, $Date: 2004/09/01 06:08:18 $
  */
-@Generated("fork from JDOM")
+@SuppressWarnings("ALL")
 public class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
 
   private static final String CVS_ID =

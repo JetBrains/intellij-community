@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -28,6 +27,7 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.*
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 
@@ -69,8 +69,9 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       if (index.isIndexed(root) && (dataPack.isFull || filePath.isDirectory)) {
         val visiblePack = filterWithIndex(dataPack, sortType, filters)
         LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
-        checkNotEmpty(dataPack, visiblePack, true)
-        return Pair.create(visiblePack, commitCount)
+        if (checkNotEmpty(dataPack, visiblePack, true)) {
+          return Pair(visiblePack, commitCount)
+        }
       }
 
       if (filePath.isDirectory) {
@@ -84,7 +85,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
             LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
                       " for computing history for $filePath with history provider")
             checkNotEmpty(dataPack, visiblePack, false)
-            Pair.create(visiblePack, commitCount)
+            Pair(visiblePack, commitCount)
           }
           catch (e: VcsException) {
             LOG.error(e)
@@ -97,14 +98,17 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
     }
 
-    private fun checkNotEmpty(dataPack: DataPack, visiblePack: VisiblePack, withIndex: Boolean) {
+    private fun checkNotEmpty(dataPack: DataPack, visiblePack: VisiblePack, withIndex: Boolean): Boolean {
       if (!dataPack.isFull) {
         LOG.debug("Data pack is not full while computing file history for $filePath\n" +
                   "Found ${visiblePack.visibleGraph.visibleCommitCount} commits")
+        return true
       }
       else if (visiblePack.visibleGraph.visibleCommitCount == 0) {
         LOG.warn("Empty file history from ${if (withIndex) "index" else "provider"} for $filePath")
+        return false
       }
+      return true
     }
 
     @Throws(VcsException::class)
@@ -138,9 +142,8 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       }
 
       val refs = getFilteredRefs(dataPack)
-      val providers = ContainerUtil.newHashMap(Pair.create<VirtualFile, VcsLogProvider>(root, logProviders[root]))
 
-      val fakeDataPack = DataPack.build(commits, refs, providers, storage, false)
+      val fakeDataPack = DataPack.build(commits, refs, mapOf(root to logProviders[root]), storage, false)
       val visibleGraph = vcsLogFilterer.createVisibleGraph(fakeDataPack, sortType, null,
                                                            null/*no need to filter here, since we do not have any extra commits in this pack*/)
       return FileHistoryVisiblePack(fakeDataPack, visibleGraph, false, filters, pathsMap)
@@ -194,7 +197,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     }
 
     private fun getHead(pack: DataPack): Hash? {
-      return VcsLogUtil.findBranch(pack.refsModel, root, "HEAD")?.commitHash
+      return pack.refsModel.findBranch("HEAD", root)?.commitHash
     }
   }
 

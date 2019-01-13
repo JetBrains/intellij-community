@@ -142,9 +142,9 @@ public abstract class VcsLogUserFilterTest {
   }
 
   private void checkTurkishAndEnglishLocales(@NotNull VcsUser user,
-                                             @NotNull Collection<VcsUser> synonymUsers,
+                                             @NotNull Collection<? extends VcsUser> synonymUsers,
                                              @NotNull MultiMap<VcsUser, String> commits,
-                                             @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder builder)
+                                             @NotNull List<? extends VcsCommitMetadata> metadata, @NotNull StringBuilder builder)
     throws VcsException {
     Set<String> expectedCommits = ContainerUtil.newHashSet(commits.get(user));
     for (VcsUser synonym : synonymUsers) {
@@ -184,9 +184,9 @@ public abstract class VcsLogUserFilterTest {
   }
 
   private void checkFilterForUser(@NotNull VcsUser user,
-                                  @NotNull Set<VcsUser> allUsers,
+                                  @NotNull Set<? extends VcsUser> allUsers,
                                   @NotNull Collection<String> expectedHashes,
-                                  @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder)
+                                  @NotNull List<? extends VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder)
     throws VcsException {
     VcsLogUserFilter userFilter = VcsLogFilterObject.fromUser(user, allUsers);
     checkFilter(userFilter, user.toString(), expectedHashes, metadata, errorMessageBuilder);
@@ -195,7 +195,7 @@ public abstract class VcsLogUserFilterTest {
   private void checkFilter(VcsLogUserFilter userFilter,
                            String filterDescription,
                            @NotNull Collection<String> expectedHashes,
-                           @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder) throws VcsException {
+                           @NotNull List<? extends VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder) throws VcsException {
     // filter by vcs
     List<String> actualHashes = getFilteredHashes(userFilter);
 
@@ -222,7 +222,7 @@ public abstract class VcsLogUserFilterTest {
   }
 
   @NotNull
-  private static List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter, @NotNull List<VcsCommitMetadata> metadata) {
+  private static List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter, @NotNull List<? extends VcsCommitMetadata> metadata) {
     return ContainerUtil.map(ContainerUtil.filter(metadata, filter::matches), metadata1 -> metadata1.getId().asString());
   }
 
@@ -255,7 +255,7 @@ public abstract class VcsLogUserFilterTest {
   }
 
   @NotNull
-  private MultiMap<VcsUser, String> generateHistory(@NotNull List<VcsUser> users) throws IOException {
+  private MultiMap<VcsUser, String> generateHistory(@NotNull List<? extends VcsUser> users) throws IOException {
     MultiMap<VcsUser, String> commits = MultiMap.createLinked();
 
     for (VcsUser user : users) {

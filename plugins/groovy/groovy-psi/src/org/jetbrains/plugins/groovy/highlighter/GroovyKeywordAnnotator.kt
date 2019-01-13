@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.highlighter
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
@@ -21,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
  *
  * This annotator clears text attributes for elements which are not really keywords.
  */
-class GroovyKeywordAnnotator : Annotator, DumbAware {
+class GroovyKeywordAnnotator : Annotator {
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     if (shouldBeErased(element)) {

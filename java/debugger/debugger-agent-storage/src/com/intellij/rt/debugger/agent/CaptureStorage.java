@@ -42,7 +42,7 @@ public class CaptureStorage {
       }
       CapturedStack stack = createCapturedStack(exception, CURRENT_STACKS.get().peekLast());
       processQueue();
-      WeakKey keyRef = new WeakKey(key, stack, KEY_REFERENCE_QUEUE);
+      WeakKey keyRef = new WeakKey(key, KEY_REFERENCE_QUEUE);
       STORAGE.put(keyRef, stack);
     }
     catch (Exception e) {
@@ -93,7 +93,7 @@ public class CaptureStorage {
   private static void processQueue() {
     WeakKey key;
     while ((key = (WeakKey)KEY_REFERENCE_QUEUE.poll()) != null) {
-      STORAGE.remove(key, key.myValue);
+      STORAGE.remove(key);
     }
   }
 
@@ -119,13 +119,11 @@ public class CaptureStorage {
 
   private static class WeakKey extends WeakReference {
     private final int myHash;
-    private final CapturedStack myValue;
 
-    WeakKey(Object key, CapturedStack value, ReferenceQueue q) {
+    WeakKey(Object key, ReferenceQueue q) {
       //noinspection unchecked
       super(key, q);
       myHash = System.identityHashCode(key);
-      myValue = value;
     }
 
     @Override

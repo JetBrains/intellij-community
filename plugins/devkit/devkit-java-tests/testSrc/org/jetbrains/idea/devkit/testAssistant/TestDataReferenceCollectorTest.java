@@ -20,6 +20,7 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 import java.util.List;
@@ -66,7 +67,7 @@ public class TestDataReferenceCollectorTest extends LightCodeInsightFixtureTestC
     for (PsiClass aClass : classes) {
       if (aClass.getName().equals("ATest")) {
         final PsiMethod theMethod = aClass.getMethods()[0];
-        return new TestDataReferenceCollector("", theMethod.getName().substring(4)).collectTestDataReferences(theMethod);
+        return ContainerUtil.map(new TestDataReferenceCollector("", theMethod.getName().substring(4)).collectTestDataReferences(theMethod), f -> f.getPath());
       }
     }
     throw new RuntimeException("Couldn't find class ATest in test data file");

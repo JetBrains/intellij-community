@@ -53,19 +53,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="JAXB">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../lib/jaxb-api.jar!/" />
-          <root url="jar://$MODULE_DIR$/../../../lib/jaxb-impl.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/../../../lib/src/jaxb-api-src.zip!/" />
-          <root url="jar://$MODULE_DIR$/../../../lib/src/jaxb-impl.src.zip!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/nexus-indexer-1.2.3.jar!/" />
@@ -74,16 +61,6 @@
         <SOURCES>
           <root url="jar://$MODULE_DIR$/lib-src/nexus-indexer-1.2.3-sources.jar!/" />
         </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="javax-activation" type="repository">
-        <properties include-transitive-deps="false" maven-id="javax.activation:activation:1.1" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/javax/activation/activation/1.1/activation-1.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="library" name="commons-logging" level="project" />

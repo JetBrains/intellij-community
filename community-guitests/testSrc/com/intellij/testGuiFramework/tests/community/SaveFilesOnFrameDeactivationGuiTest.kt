@@ -48,8 +48,8 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
     ideFrame1.switchFrameTo()
     //check ideFrame2 content
     val fileSystemText = waitFileToBeSynced(textToWrite, filePath)
-    ideFrame1.closeProject(false)
-    ideFrame2.closeProject(false)
+    ideFrame1.closeProjectAndWaitWelcomeFrame(false)
+    ideFrame2.closeProjectAndWaitWelcomeFrame(false)
 
     assertEquals(textToWrite, fileSystemText)
   }
@@ -70,7 +70,7 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
     process.destroyForcibly()
 
     val fileSystemText = waitFileToBeSynced(textToWrite, filePath)
-    ideFrame.closeProject(false)
+    ideFrame.closeProjectAndWaitWelcomeFrame(false)
     assertEquals(textToWrite, fileSystemText)
   }
 
@@ -94,7 +94,7 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
     dialog(if (SystemInfo.isMac()) "Preferences" else "Settings") {
       button("Cancel").click()
     }
-    ideFrame.closeProject(false)
+    ideFrame.closeProjectAndWaitWelcomeFrame(false)
     assertEquals(originalTextFromEditor, fileSystemText)
   }
 

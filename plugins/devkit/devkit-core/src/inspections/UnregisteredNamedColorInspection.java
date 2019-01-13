@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -49,7 +49,6 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
             handleCallExpression(holder, (UCallExpression)parent);
           }
         }
-        //TODO all the cases are covered?
 
         return true;
       }
@@ -134,6 +133,12 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
     if (!(initializer instanceof PsiMethodCallExpression)) return null;
 
     return new LocalQuickFix() {
+
+      @Override
+      public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+        return hardcodedKeysClass;
+      }
+
       @Nls(capitalization = Nls.Capitalization.Sentence)
       @NotNull
       @Override

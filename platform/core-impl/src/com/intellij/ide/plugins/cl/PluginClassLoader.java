@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
@@ -166,8 +166,7 @@ public class PluginClassLoader extends UrlClassLoader {
     // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
     //We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
     return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") ||
-                                               className.startsWith("kotlin.reflect.") ||
-                                               className.startsWith("kotlin.jvm.internal.") ||
+                                               (className.startsWith("kotlin.reflect.") && className.indexOf('.', 15 /* "kotlin.reflect".length */) < 0) ||
                                                KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
   }
 

@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -21,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -44,7 +46,7 @@ public class ReachingDefinitionsCollector {
                                                                     @NotNull final GrControlFlowOwner flowOwner,
                                                                     @NotNull final Instruction[] flow) {
 
-    final DefinitionMap dfaResult = inferDfaResult(flow);
+    final DefinitionMap dfaResult = inferDfaResult(flowOwner, flow);
 
     final LinkedHashSet<Integer> fragmentInstructions = getFragmentInstructions(first, last, flow);
     final int[] postorder = reversedPostOrder(flow);
@@ -128,11 +130,13 @@ public class ReachingDefinitionsCollector {
     return !PsiImplUtilKt.isDeclaredIn(variable, flowOwner);
   }
 
-  private static DefinitionMap inferDfaResult(Instruction[] flow) {
-    final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
+  @NotNull
+  private static DefinitionMap inferDfaResult(@NotNull GrControlFlowOwner owner, @NotNull Instruction[] flow) {
+    TObjectIntHashMap<String> varIndexes = UtilKt.getVarIndexes(owner);
+    final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow, varIndexes);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
-    return postprocess(engine.performForceDFA(), flow, dfaInstance);
+    return postprocess(engine.performForceDFA(), flow, varIndexes);
   }
 
   private static void addClosureUsages(final Map<String, VariableInfo> imap,
@@ -429,14 +433,14 @@ public class ReachingDefinitionsCollector {
   @NotNull
   private static DefinitionMap postprocess(@NotNull final List<DefinitionMap> dfaResult,
                                            @NotNull Instruction[] flow,
-                                           @NotNull ReachingDefinitionsDfaInstance dfaInstance) {
+                                           @NotNull TObjectIntHashMap<String> varIndexes) {
     DefinitionMap result = new DefinitionMap();
     for (int i = 0; i < flow.length; i++) {
       Instruction insn = flow[i];
       if (insn instanceof ReadWriteVariableInstruction) {
         ReadWriteVariableInstruction rwInsn = (ReadWriteVariableInstruction)insn;
         if (!rwInsn.isWrite()) {
-          int idx = dfaInstance.getVarIndex(rwInsn.getVariableName());
+          int idx = varIndexes.get(rwInsn.getVariableName());
           result.copyFrom(dfaResult.get(i), idx, i);
         }
       }

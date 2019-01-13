@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ex.StdJobDescriptors;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -31,8 +32,8 @@ import org.jetbrains.annotations.NotNull;
  * and allows to enqueue external usage processing.
  *
  * @author anna
- * @see GlobalInspectionTool#runInspection
- * @see GlobalInspectionTool#queryExternalUsagesRequests
+ * @see GlobalInspectionTool#runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)
+ * @see GlobalInspectionTool#queryExternalUsagesRequests(InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)
  * @since 6.0
  */
 public interface GlobalInspectionContext extends UserDataHolder {

@@ -19,7 +19,7 @@ public class FUSession {
   }
 
   public static FUSession create(@NotNull Project project) {
-    return new FUSession(ProjectUtil.getProjectCacheFileName(project, false, "." ));
+    return new FUSession(ProjectUtil.getProjectCacheFileName(project));
   }
 
   public FUSession(@NotNull String id) {

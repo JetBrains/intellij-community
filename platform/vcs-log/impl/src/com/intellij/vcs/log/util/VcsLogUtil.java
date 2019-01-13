@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -36,14 +37,15 @@ public class VcsLogUtil {
   public static final int MAX_SELECTED_COMMITS = 1000;
   public static final int FULL_HASH_LENGTH = 40;
   public static final int SHORT_HASH_LENGTH = 8;
+  public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,40}");
 
   @NotNull
-  public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
+  public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
     return groupByRoot(refs, VcsRef::getRoot);
   }
 
   @NotNull
-  private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> items, @NotNull Function<T, VirtualFile> rootGetter) {
+  private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<? extends T> items, @NotNull Function<? super T, ? extends VirtualFile> rootGetter) {
     Map<VirtualFile, Set<T>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
     for (T item : items) {
       VirtualFile root = rootGetter.fun(item);
@@ -62,7 +64,7 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  private static Set<VirtualFile> collectRoots(@NotNull Collection<FilePath> files, @NotNull Set<VirtualFile> roots) {
+  private static Set<VirtualFile> collectRoots(@NotNull Collection<? extends FilePath> files, @NotNull Set<? extends VirtualFile> roots) {
     Set<VirtualFile> selectedRoots = new HashSet<>();
 
     List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getPath));
@@ -239,7 +241,12 @@ public class VcsLogUtil {
 
   @NotNull
   public static String getShortHash(@NotNull String hashString) {
-    return hashString.substring(0, Math.min(SHORT_HASH_LENGTH, hashString.length()));
+    return getShortHash(hashString, SHORT_HASH_LENGTH);
+  }
+
+  @NotNull
+  public static String getShortHash(@NotNull String hashString, int shortHashLength) {
+    return hashString.substring(0, Math.min(shortHashLength, hashString.length()));
   }
 
   @Nullable

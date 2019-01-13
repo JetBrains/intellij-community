@@ -51,6 +51,7 @@ public class DfaValueFactory {
     myRelationFactory = new DfaRelationValue.Factory(this);
     myExpressionFactory = new DfaExpressionFactory(this);
     myFactFactory = new DfaFactMapValue.Factory(this);
+    myBinOpFactory = new DfaBinOpValue.Factory(this);
   }
 
   public boolean canTrustFieldInitializer(PsiField field) {
@@ -240,6 +241,7 @@ public class DfaValueFactory {
   private final DfaVariableValue.Factory myVarFactory;
   private final DfaConstValue.Factory myConstFactory;
   private final DfaBoxedValue.Factory myBoxedFactory;
+  private final DfaBinOpValue.Factory myBinOpFactory;
   private final DfaRelationValue.Factory myRelationFactory;
   private final DfaExpressionFactory myExpressionFactory;
   private final DfaFactMapValue.Factory myFactFactory;
@@ -270,6 +272,11 @@ public class DfaValueFactory {
 
   @NotNull
   public DfaExpressionFactory getExpressionFactory() { return myExpressionFactory;}
+
+  @NotNull
+  public DfaBinOpValue.Factory getBinOpFactory() {
+    return myBinOpFactory;
+  }
 
   @NotNull
   public DfaValue createCommonValue(@NotNull PsiExpression[] expressions, PsiType targetType) {
@@ -332,14 +339,15 @@ public class DfaValueFactory {
 
     FieldChecker(PsiElement context) {
       PsiMethod method = context instanceof PsiClass ? null : PsiTreeUtil.getParentOfType(context, PsiMethod.class);
-      myClass = method != null ? method.getContainingClass() : context instanceof PsiClass ? (PsiClass)context : null;
+      PsiClass contextClass = method != null ? method.getContainingClass() : context instanceof PsiClass ? (PsiClass)context : null;
+      myClass = contextClass;
       if (method == null || myClass == null) {
         myTrustDirectFieldInitializers = myTrustFieldInitializersInConstructors = myCanInstantiateItself = false;
         return;
       }
       // Indirect instantiation via other class is still possible, but hopefully unlikely
-      ClassInitializationInfo info = CachedValuesManager.getCachedValue(myClass, () -> CachedValueProvider.Result
-        .create(new ClassInitializationInfo(myClass), PsiModificationTracker.MODIFICATION_COUNT));
+      ClassInitializationInfo info = CachedValuesManager.getCachedValue(contextClass, () -> CachedValueProvider.Result
+        .create(new ClassInitializationInfo(contextClass), PsiModificationTracker.MODIFICATION_COUNT));
       myCanInstantiateItself = info.myCanInstantiateItself;
       if (method.hasModifierProperty(PsiModifier.STATIC) || method.isConstructor()) {
         myTrustDirectFieldInitializers = true;

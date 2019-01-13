@@ -194,7 +194,7 @@ public class ConfigImportHelper {
   }
 
   private static boolean isValidConfigDir(File candidate) {
-    return new File(candidate, OPTIONS_XML).isFile();
+    return new File(candidate, OPTIONS_XML).isFile() || new File(candidate, "options/ide.general.xml").isFile();
   }
 
   @Nullable

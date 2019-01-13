@@ -528,12 +528,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
-        return myHelper.isSkipResultsWithOneUsage();
+        return FindSettings.getInstance().isSkipResultsWithOneUsage();
       }
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myHelper.setSkipResultsWithOneUsage(state);
+        FindSettings.getInstance().setSkipResultsWithOneUsage(state);
       }
 
       @Override
@@ -550,19 +550,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
-        return myHelper.isUseSeparateView();
+        return FindSettings.getInstance().isShowResultsInSeparateView();
       }
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myHelper.setUseSeparateView(state);
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        super.update(e);
-        e.getPresentation().setEnabled(myHelper.getModel().isOpenInNewTabEnabled());
-        e.getPresentation().setVisible(true);
+        FindSettings.getInstance().setShowResultsInSeparateView(state);
       }
     });
     tabResultsContextGroup.setPopup(true);
@@ -772,7 +765,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
       String title = getTitle(file);
       myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selection.size()));
-      FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, FindSettings.getInstance().isShowResultsInSeparateView(), myHelper.getModel().clone());
+      FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
       myUsagePreviewPanel.updateLayout(selection);
       if (myUsagePreviewPanel.getCannotPreviewMessage(selection) == null && title != null) {
         myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(title, false, new JBInsets(8, 0, 0, 0)).setShowLine(false));
@@ -1208,16 +1201,14 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     final AtomicInteger resultsCount = new AtomicInteger();
     final AtomicInteger resultsFilesCount = new AtomicInteger();
-    FindSettings findSettings = FindSettings.getInstance();
-    FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, findSettings.isShowResultsInSeparateView(), findModel);
+    FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, findModel);
 
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
       @Override
       public Continuation performInReadAction(@NotNull ProgressIndicator indicator) {
-        final boolean showPanelIfOnlyOneUsage = !findSettings.isSkipResultsWithOneUsage();
 
         final FindUsagesProcessPresentation processPresentation =
-          FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, myUsageViewPresentation);
+          FindInProjectUtil.setupProcessPresentation(myProject, myUsageViewPresentation);
         ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
         ThreadLocal<Usage> recentUsageRef = new ThreadLocal<>();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.notification.Notification
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.debugOrInfoIfTestMode
@@ -45,7 +44,8 @@ open class FileBasedStorage(file: Path,
   protected var lineSeparator: LineSeparator? = null
   protected var blockSavingTheContent = false
 
-  @Volatile var file = file
+  @Volatile
+  var file = file
     private set
 
   init {
@@ -56,7 +56,7 @@ open class FileBasedStorage(file: Path,
   }
 
   protected open val isUseXmlProlog = false
-  protected open val isUseVfsForWrite = true
+  override val isUseVfsForWrite = true
 
   private val isUseUnixLineSeparator: Boolean
     // only ApplicationStore doesn't use xml prolog
@@ -74,7 +74,6 @@ open class FileBasedStorage(file: Path,
 
   protected open class FileSaveSession(storageData: StateMap, storage: FileBasedStorage) :
     XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {
-
     override fun save() {
       if (storage.blockSavingTheContent) {
         LOG.info("Save blocked for ${storage.fileSpec}")
@@ -101,7 +100,10 @@ open class FileBasedStorage(file: Path,
         deleteFile(storage.file, this, virtualFile)
         storage.cachedVirtualFile = null
       }
-      else if (!isUseVfs) {
+      else if (isUseVfs) {
+        storage.cachedVirtualFile = writeFile(storage.file, this, virtualFile, dataWriter, lineSeparator, storage.isUseXmlProlog)
+      }
+      else {
         val file = storage.file
         LOG.debugOrInfoIfTestMode { "Save $file" }
         try {
@@ -110,9 +112,6 @@ open class FileBasedStorage(file: Path,
         catch (e: Throwable) {
           throw RuntimeException("Cannot write ${file}", e)
         }
-      }
-      else {
-        storage.cachedVirtualFile = writeFile(storage.file, this, virtualFile, dataWriter, lineSeparator, storage.isUseXmlProlog)
       }
     }
   }
@@ -218,7 +217,7 @@ internal fun writeFile(file: Path?,
                        lineSeparator: LineSeparator,
                        prependXmlProlog: Boolean): VirtualFile {
   val result = if (file != null && (virtualFile == null || !virtualFile.isValid)) {
-    getOrCreateVirtualFile(requestor, file)
+    getOrCreateVirtualFile(file, requestor)
   }
   else {
     virtualFile!!
@@ -269,7 +268,7 @@ private fun doWrite(requestor: Any, file: VirtualFile, dataWriterOrByteArray: An
       is DataWriter -> dataWriterOrByteArray.toBufferExposingByteArray(lineSeparator)
       else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
     }
-    throw ReadOnlyModificationException(file, object : StateStorage.SaveSession {
+    throw ReadOnlyModificationException(file, object : SaveSession {
       override fun save() {
         doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
       }
@@ -318,9 +317,10 @@ private fun deleteFile(file: Path, requestor: Any, virtualFile: VirtualFile?) {
       deleteFile(requestor, virtualFile)
     }
     else {
-      throw ReadOnlyModificationException(virtualFile, object : StateStorage.SaveSession {
+      throw ReadOnlyModificationException(virtualFile, object : SaveSession {
         override fun save() {
-          deleteFile(requestor, virtualFile)
+          // caller must wraps into undo transparent and write action
+          virtualFile.delete(requestor)
         }
       })
     }
@@ -331,4 +331,4 @@ internal fun deleteFile(requestor: Any, virtualFile: VirtualFile) {
   runUndoTransparentWriteAction { virtualFile.delete(requestor) }
 }
 
-internal class ReadOnlyModificationException(val file: VirtualFile, val session: StateStorage.SaveSession?) : RuntimeException("File is read-only: $file")
+internal class ReadOnlyModificationException(val file: VirtualFile, val session: SaveSession?) : RuntimeException("File is read-only: $file")

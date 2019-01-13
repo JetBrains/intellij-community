@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -261,7 +261,8 @@ idea.fatal.error.notification=disabled
     def productLayout = buildContext.productProperties.productLayout
     def moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
     compileModules(moduleNames + (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) +
-                   productLayout.mainModules, buildContext.productProperties.modulesToCompileTests)
+                   productLayout.mainModules + buildContext.productProperties.mavenArtifacts.additionalModules,
+                   buildContext.productProperties.modulesToCompileTests)
 
     def pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>();
     for (PluginLayout plugin  : DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish)) {
@@ -390,7 +391,12 @@ idea.fatal.error.notification=disabled
         if (paths.size() == 3) {
           buildContext.executeStep("Build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
             def crossPlatformBuilder = new CrossPlatformDistributionBuilder(buildContext)
-            crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2])
+            def monsterZip = crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2], ".portable")
+
+            Map<String, Integer> checkerConfig = buildContext.productProperties.versionCheckerConfig
+            if (checkerConfig != null) {
+              new ClassVersionChecker(checkerConfig).checkVersions(buildContext, new File(monsterZip))
+            }
           }
         }
         else {

@@ -1,5 +1,10 @@
+; Installation pages headers
+LangString choose_install_location  ${LANG_ENGLISH} "  Choose Install Location"
+LangString choose_start_menu_folder ${LANG_ENGLISH} "  Choose Start Menu Folder"
+LangString installing_product ${LANG_ENGLISH} "  Installing"
+
 ; Installation Options page
-LangString installation_options ${LANG_ENGLISH} "Installation Options"
+LangString installation_options ${LANG_ENGLISH} "  Installation Options"
 LangString installation_options_prompt ${LANG_ENGLISH} "Configure your ${MUI_PRODUCT} installation"
 LangString create_desktop_shortcut ${LANG_ENGLISH} "Create Desktop Shortcut"
 LangString create_quick_launch_shortcut ${LANG_ENGLISH} "Create Quick Launch Shortcut"

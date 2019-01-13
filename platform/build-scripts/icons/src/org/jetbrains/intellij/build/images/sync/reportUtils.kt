@@ -61,22 +61,27 @@ internal fun findCommitsToSync(context: Context) {
   }
 }
 
-internal fun Map<File, Collection<CommitInfo>>.description() = entries.joinToString { entry ->
+private fun Map<File, Collection<CommitInfo>>.commitMessage() = "Synchronization of changed icons from ${entries.joinToString { entry ->
   "${getOriginUrl(entry.key)}: ${entry.value.joinToString { it.hash }}"
-}
+}}"
 
-private fun Map<File, Collection<CommitInfo>>.commitMessage() = "Synchronization of changed icons from ${description()}"
-
-private fun withTmpBranch(repos: Collection<File>, action: (String) -> Review?): Review? {
+private fun withTmpBranch(repos: Collection<File>, master: String, action: (String) -> Review?): Review? {
   val branch = "icons-sync/${UUID.randomUUID()}"
   return try {
     action(branch)
   }
   catch (e: Throwable) {
-    repos.forEach {
+    repos.parallelStream().forEach {
       deleteBranch(it, branch)
     }
     throw e
+  }
+  finally {
+    repos.parallelStream().forEach {
+      callSafely {
+        checkout(it, master)
+      }
+    }
   }
 }
 
@@ -91,7 +96,8 @@ private fun createReviewForDev(context: Context, user: String, email: String): R
     context.byDesigners.clear()
     return null
   }
-  return withTmpBranch(repos) { branch ->
+  val master = repos.parallelStream().map(::head).collect(Collectors.toSet()).single()
+  return withTmpBranch(repos, master) { branch ->
     val commitsForReview = commitAndPush(branch, user, email, context.iconsCommitsToSync.commitMessage(), repos)
     val projectId = UPSOURCE_DEV_PROJECT_ID
     if (projectId.isNullOrEmpty()) {
@@ -99,8 +105,7 @@ private fun createReviewForDev(context: Context, user: String, email: String): R
       PlainOldReview(branch, projectId)
     }
     else {
-      val head = repos.parallelStream().map(::head).collect(Collectors.toSet()).single()
-      val review = createReview(projectId, branch, head, commitsForReview)
+      val review = createReview(projectId, branch, master, commitsForReview)
       try {
         addReviewer(projectId, review, triggeredBy() ?: DEFAULT_INVESTIGATOR)
         postVerificationResultToReview(review)
@@ -140,30 +145,31 @@ private fun postVerificationResultToReview(review: Review) {
 
 private fun createReviewForIcons(context: Context, user: String, email: String): Collection<Review> {
   if (context.devCommitsToSync.isEmpty()) return emptyList()
-  if (gitStage(context.iconsRepo).isEmpty()) {
-    log("Nothing to commit")
-    context.byDev.clear()
-    return emptyList()
-  }
   val repos = listOf(context.iconsRepo)
-  val head = head(context.iconsRepo)
+  val master = head(context.iconsRepo)
   return context.devCommitsToSync.values.flatten()
     .groupBy(CommitInfo::committerEmail)
-    .entries.parallelStream()
-    .map {
-      val (committer, commits) = it
-      withTmpBranch(repos) { branch ->
-        commits.forEach { commit ->
-          val change = context.byCommit[commit.hash] ?: error("Unable to find changes for commit ${commit.hash} by $committer")
-          log("[$committer] syncing ${commit.hash} in ${context.iconsRepoName}")
-          syncIconsRepo(context, change)
-        }
+    .entries.map {
+    val (committer, commits) = it
+    withTmpBranch(repos, master) { branch ->
+      commits.forEach { commit ->
+        val change = context.byCommit[commit.hash] ?: error("Unable to find changes for commit ${commit.hash} by $committer")
+        log("[$committer] syncing ${commit.hash} in ${context.iconsRepoName}")
+        syncIconsRepo(context, change)
+      }
+      if (gitStage(context.iconsRepo).isEmpty()) {
+        log("Nothing to commit")
+        context.byDev.clear()
+        null
+      }
+      else {
         val commitsForReview = commitAndPush(branch, user, email, commits.groupBy(CommitInfo::repo).commitMessage(), repos)
-        val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, head, commitsForReview)
+        val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, master, commitsForReview)
         addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, committer)
         review
       }
-    }.filter(Objects::nonNull).map { it as Review }.toList()
+    }
+  }.filter(Objects::nonNull).map { it as Review }.toList()
 }
 
 internal fun createReviews(context: Context) = callSafely {
@@ -179,38 +185,61 @@ internal fun createReviews(context: Context) = callSafely {
 
 internal fun assignInvestigation(context: Context): Investigator? =
   callSafely {
-    val (investigator, commits) = if (context.iconsSyncRequired()) {
-      context.devCommitsToSync.flatMap { it.value }.maxBy(CommitInfo::timestamp)?.let {
-        log("Assigning investigation to ${it.committerEmail} as author of latest change ${it.hash}")
-        it.committerEmail
+    var (investigator, commits) = if (context.iconsSyncRequired()) {
+      context.devCommitsToSync.flatMap { it.value }.maxBy(CommitInfo::timestamp)?.let { latest ->
+        log("Assigning investigation to ${latest.committerEmail} as author of latest change ${latest.hash}")
+        latest.committerEmail
       } to context.devCommitsToSync
     }
     else triggeredBy() to context.iconsCommitsToSync
+    var reviews = emptyList<String>()
     if (commits.isEmpty()) {
-      log("No commits, no investigation")
-      return@callSafely null
+      if (context.commitsAlreadyInReview.isEmpty()) {
+        log("No commits, no investigation")
+        return@callSafely null
+      }
+      context.commitsAlreadyInReview.keys.maxBy(CommitInfo::timestamp)?.let { latest ->
+        val review = context.commitsAlreadyInReview[latest]!!
+        log("Assigning investigation to ${latest.committerEmail} as author of latest change ${latest.hash} under review $review")
+        investigator = latest.committerEmail
+        commits = context.commitsAlreadyInReview.keys
+          .filter { context.commitsAlreadyInReview[it] == review }
+          .groupBy(CommitInfo::repo)
+        reviews += review
+      }
     }
-    assignInvestigation(Investigator(investigator ?: DEFAULT_INVESTIGATOR, commits), context)
+    if (context.iconsSyncRequired() && context.iconsReviews().isNotEmpty()) {
+      reviews += context.iconsReviews().map(Review::url)
+    }
+    if (context.devReviews().isNotEmpty()) {
+      reviews += context.devReviews().map(Review::url)
+    }
+    assignInvestigation(Investigator(investigator ?: DEFAULT_INVESTIGATOR, commits), context, reviews)
   }
 
 private fun findCommitsByRepo(context: Context, projectId: String?, root: File, changes: Changes,
                               resolveGitObject: (String) -> GitObject
 ): Map<File, Collection<CommitInfo>> {
-  var alreadyInReview = emptyList<String>()
+  var changesAlreadyInReview = emptyList<String>()
   var commits = findCommits(context, root, changes)
   if (commits.isEmpty()) return emptyMap()
-  val titles = if (!projectId.isNullOrEmpty()) getOpenIconsReviewTitles(projectId!!) else emptyList()
+  val reviewTitles = if (!projectId.isNullOrEmpty()) {
+    getOpenIconsReviewTitles(projectId)
+  }
+  else emptyMap()
   val before = commits.size
-  commits = commits.filterNot { entry ->
+  commits = commits.filter { entry ->
     val (commit, change) = entry
-    val skip = titles.any {
-      it.contains(commit.hash)
-    }
-    if (skip) alreadyInReview += change
-    skip
+    reviewTitles.entries.firstOrNull {
+      // review with commit
+      it.value.contains(commit.hash)
+    }?.also {
+      changesAlreadyInReview += change
+      context.commitsAlreadyInReview += commit to it.key
+    } == null
   }
   log("$projectId: ${before - commits.size} commits already in review")
-  alreadyInReview
+  changesAlreadyInReview
     .map { resolveGitObject(it) }
     .groupBy({ it.repo }, { it.path })
     .forEach {
@@ -272,22 +301,6 @@ internal fun sendNotification(investigator: Investigator?, context: Context) {
 
 private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
 
-internal fun Context.report(slack: Boolean = false): String {
-  val iconsSync = if (iconsSyncRequired() && iconsReviews().isNotEmpty()) {
-    "To sync $iconsRepoName see ${iconsReviews().joinToString {
-      if (slack) slackLink(it.id, it.url) else it.url
-    }}" + if (slack) "\n" else ""
-  }
-  else ""
-  val devSync = if (devReviews().isNotEmpty()) {
-    "To sync $devRepoName see ${devReviews().joinToString {
-      if (slack) slackLink(it.id, it.url) else it.url
-    }}" + if (slack) "\n" else ""
-  }
-  else ""
-  return iconsSync + devSync
-}
-
 private fun notifySlackChannel(investigator: Investigator?, context: Context) {
   val investigation = when {
     investigator == null -> ""
@@ -295,10 +308,8 @@ private fun notifySlackChannel(investigator: Investigator?, context: Context) {
     else -> "Unable to assign investigation to ${investigator.email}\n"
   }
   val reaction = if (context.isFail()) ":scream:" else ":white_check_mark:"
-  val build = "See " + slackLink("build log", thisBuildReportableLink())
-  val text = "*${context.devRepoName}* $reaction\n" + investigation + context.report(slack = true) + build
+  val build = "See <${thisBuildReportableLink()}|build log>"
+  val text = "*${context.devRepoName}* $reaction\n" + investigation + build
   val response = post(CHANNEL_WEB_HOOK, """{ "text": "$text" }""")
   if (response != "ok") error("$CHANNEL_WEB_HOOK responded with $response")
 }
-
-private fun slackLink(name: String, link: String) = if (link == name) link else "<$link|$name>"

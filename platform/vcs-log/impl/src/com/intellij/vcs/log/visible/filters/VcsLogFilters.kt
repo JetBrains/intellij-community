@@ -105,7 +105,7 @@ object VcsLogFilterObject {
   fun fromHash(text: String): VcsLogHashFilter? {
     val hashes = mutableListOf<String>()
     for (word in StringUtil.split(text, " ")) {
-      if (!word.matches("[a-fA-F0-9]{7,}".toRegex())) {
+      if (!VcsLogUtil.HASH_REGEX.matcher(word).matches()) {
         return null
       }
       hashes.add(word)

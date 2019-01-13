@@ -16,6 +16,29 @@ public class SwitchStatementWithConfusingDeclaration
         }
     }
 
+    void nonBreak() {
+        switch (0) {
+            case 1:
+                boolean <warning descr="Local variable 'b' declared in one 'switch' branch and used in another">b</warning> = false;
+                return;
+            default:
+                b = true;
+                System.out.println(b);
+                return;
+        }
+    }
+
+    void fallthrough() {
+        switch (0) {
+            case 1:
+                boolean <warning descr="Local variable 'b' declared in one 'switch' branch and used in another">b</warning> = false;
+            default:
+                b = true;
+                System.out.println(b);
+                throw null;
+        }
+    }
+
     enum E {FOO, BAR, BAZ}
 
     public int test(E e) {

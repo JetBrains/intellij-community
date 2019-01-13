@@ -155,7 +155,6 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
   protected fun refreshCLM() {
     dirtyScopeManager.markEverythingDirty()
-    clm.scheduleUpdate()
     clm.waitUntilRefreshed()
     UIUtil.dispatchAllInvocationEvents() // ensure `fileStatusesChanged` events are fired
   }

@@ -36,5 +36,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="ini4j" level="project" />
     <orderEntry type="library" name="OroMatcher" level="project" />
+    <orderEntry type="library" name="jaxb-api" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
   </component>
 </module>

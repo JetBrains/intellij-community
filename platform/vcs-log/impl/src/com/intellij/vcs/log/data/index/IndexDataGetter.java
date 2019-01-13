@@ -178,12 +178,12 @@ public class IndexDataGetter {
   }
 
   @NotNull
-  private TIntHashSet filterUsers(@NotNull Set<VcsUser> users) {
+  private TIntHashSet filterUsers(@NotNull Set<? extends VcsUser> users) {
     return executeAndCatch(() -> myIndexStorage.users.getCommitsForUsers(users), new TIntHashSet());
   }
 
   @NotNull
-  private TIntHashSet filterPaths(@NotNull Collection<FilePath> paths) {
+  private TIntHashSet filterPaths(@NotNull Collection<? extends FilePath> paths) {
     return executeAndCatch(() -> {
       TIntHashSet result = new TIntHashSet();
       for (FilePath path : paths) {
@@ -235,7 +235,7 @@ public class IndexDataGetter {
   }
 
   @NotNull
-  private <T> TIntHashSet filter(@NotNull PersistentMap<Integer, T> map, @NotNull Condition<T> condition) {
+  private <T> TIntHashSet filter(@NotNull PersistentMap<Integer, T> map, @NotNull Condition<? super T> condition) {
     TIntHashSet result = new TIntHashSet();
     return executeAndCatch(() -> {
       myIndexStorage.commits.process(commit -> {
@@ -303,13 +303,18 @@ public class IndexDataGetter {
   }
 
   @Nullable
-  public Couple<FilePath> findRename(int parent, int child, @NotNull BooleanFunction<Couple<FilePath>> accept) {
+  public Couple<FilePath> findRename(int parent, int child, @NotNull BooleanFunction<? super Couple<FilePath>> accept) {
     return executeAndCatch(() -> myIndexStorage.paths.iterateRenames(parent, child, accept));
   }
 
   @NotNull
   public FileNamesData createFileNamesData(@NotNull FilePath path) {
-    return new FileNamesData(path) {
+    return createFileNamesData(Collections.singletonList(path));
+  }
+
+  @NotNull
+  public FileNamesData createFileNamesData(@NotNull Collection<FilePath> paths) {
+    return new FileNamesData(paths) {
       @NotNull
       @Override
       public TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
@@ -328,6 +333,11 @@ public class IndexDataGetter {
   // Util
   //
 
+  @NotNull
+  public VcsLogStorage getLogStorage() {
+    return myLogStorage;
+  }
+
   @Nullable
   private <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable) {
     return executeAndCatch(computable, null);
@@ -335,7 +345,7 @@ public class IndexDataGetter {
 
   @Contract("_, !null -> !null")
   @Nullable
-  private <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable, @Nullable T defaultValue) {
+  private <T> T executeAndCatch(@NotNull Throwable2Computable<? extends T, IOException, StorageException> computable, @Nullable T defaultValue) {
     try {
       return computable.compute();
     }

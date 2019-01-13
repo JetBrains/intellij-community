@@ -81,7 +81,7 @@ public class SwitchStatementWithConfusingDeclarationInspection extends BaseInspe
             }
           }
         }
-        else if (child instanceof PsiBreakStatement) {
+        else if (child instanceof PsiSwitchLabelStatementBase) {
           variablesInPreviousBranches.addAll(variablesInCurrentBranch);
           variablesInCurrentBranch.clear();
         }

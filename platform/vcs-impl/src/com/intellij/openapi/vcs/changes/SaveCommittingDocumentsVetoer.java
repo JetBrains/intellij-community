@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.ui.CommitHelper;
+import com.intellij.openapi.vcs.changes.ui.AbstractCommitter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -35,7 +35,7 @@ public class SaveCommittingDocumentsVetoer extends FileDocumentSynchronizationVe
 
   @Override
   public boolean maySaveDocument(@NotNull Document document, boolean isSaveExplicit) {
-    final Object beingCommitted = document.getUserData(CommitHelper.DOCUMENT_BEING_COMMITTED_KEY);
+    final Object beingCommitted = document.getUserData(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY);
     if (beingCommitted == VetoSavingCommittingDocumentsAdapter.SAVE_DENIED) {
       return false;
     }

@@ -9,6 +9,6 @@ class C {
     };
 
     {
-        a.f<ref>oo();
+        a.f<caret>oo();
     }
 }

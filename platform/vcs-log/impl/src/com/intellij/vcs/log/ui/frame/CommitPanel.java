@@ -109,7 +109,7 @@ public class CommitPanel extends JBPanel {
     myContainingBranchesPanel.setBranches(branches);
   }
 
-  public void setRefs(@NotNull Collection<VcsRef> refs) {
+  public void setRefs(@NotNull Collection<? extends VcsRef> refs) {
     List<VcsRef> references = sortRefs(refs);
     myBranchesPanel.setReferences(ContainerUtil.filter(references, ref -> ref.getType().isBranch()));
     myTagsPanel.setReferences(ContainerUtil.filter(references, ref -> !ref.getType().isBranch()));
@@ -143,7 +143,7 @@ public class CommitPanel extends JBPanel {
   }
 
   @NotNull
-  private List<VcsRef> sortRefs(@NotNull Collection<VcsRef> refs) {
+  private List<VcsRef> sortRefs(@NotNull Collection<? extends VcsRef> refs) {
     VcsRef ref = ContainerUtil.getFirstItem(refs);
     if (ref == null) return ContainerUtil.emptyList();
     return ContainerUtil.sorted(refs, myLogData.getLogProvider(ref.getRoot()).getReferenceManager().getLabelsOrderComparator());

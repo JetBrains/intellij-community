@@ -49,7 +49,7 @@ public class AddList implements ChangeListCommand {
   }
 
   @Override
-  public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
+  public void doNotify(final EventDispatcher<? extends ChangeListListener> dispatcher) {
     if (myWasListCreated) {
       dispatcher.getMulticaster().changeListAdded(myNewListCopy);
     }

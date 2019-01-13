@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -53,7 +52,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
@@ -114,8 +112,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
                                 @NotNull DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings,
                                 @NotNull EditorTracker editorTracker,
                                 @NotNull PsiDocumentManager psiDocumentManager,
-                                @NotNull final NamedScopeManager namedScopeManager,
-                                @NotNull final DependencyValidationManager dependencyValidationManager) {
+                                // DependencyValidationManagerImpl adds scope listener, so, we need to force service creation
+                                @SuppressWarnings("unused") @NotNull DependencyValidationManager dependencyValidationManager) {
     myProject = project;
     mySettings = daemonCodeAnalyzerSettings;
     myEditorTracker = editorTracker;
@@ -911,8 +909,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     // Editors in modal context
-    List<Editor> editors = getActiveEditors();
-
+    List<Editor> editors = myEditorTracker.getActiveEditors();
     Collection<FileEditor> activeTextEditors = new THashSet<>(editors.size());
     for (Editor editor : editors) {
       if (editor.isDisposed()) continue;
@@ -945,11 +942,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       result.add(fileEditor);
     }
     return result;
-  }
-
-  @NotNull
-  private List<Editor> getActiveEditors() {
-    return myEditorTracker.getActiveEditors();
   }
 
   @TestOnly

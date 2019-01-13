@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -355,9 +354,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     ShowHistoryAction() {
       super((mySearchMode ? "Search" : "Replace") + " History",
             (mySearchMode ? "Search" : "Replace") + " history",
-            myHelper.getShowHistoryIcon());
-
-      registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, myTextArea);
+            AllIcons.Actions.SearchWithHistory);
+      registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ShowSearchHistory"), myTextArea);
     }
 
     @Override
@@ -388,7 +386,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
   private class ClearAction extends DumbAwareAction {
     ClearAction() {
-      super(null, null, myHelper.getClearIcon());
+      super(null, null, AllIcons.Actions.Close);
+      getTemplatePresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
     }
 
     @Override
@@ -402,6 +401,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     NewLineAction() {
       super(null, "New line (" + KeymapUtil.getKeystrokeText(NEW_LINE_KEYSTROKE) + ")",
             AllIcons.Actions.SearchNewLine);
+      getTemplatePresentation().setHoveredIcon(AllIcons.Actions.SearchNewLineHover);
     }
 
     @Override
@@ -427,12 +427,6 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     abstract String getIconsPanelConstraints();
 
     abstract Border getIconsPanelBorder(int rows);
-
-    abstract Icon getShowHistoryIcon();
-
-    Icon getClearIcon() {
-      return AllIcons.Actions.Close;
-    }
 
     abstract void paint(Graphics2D g);
   }
@@ -470,11 +464,6 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     @Override
     Border getIconsPanelBorder(int rows) {
       return JBUI.Borders.emptyBottom(rows == 2 ? 3 : 0);
-    }
-
-    @Override
-    Icon getShowHistoryIcon() {
-      return AllIcons.Actions.SearchWithHistory;
     }
 
     @Override
@@ -517,11 +506,6 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     @Override
     Border getIconsPanelBorder(int rows) {
       return JBUI.Borders.empty();
-    }
-
-    @Override
-    Icon getShowHistoryIcon() {
-      return AllIcons.Actions.SearchWithHistory;
     }
 
     @Override

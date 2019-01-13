@@ -40,7 +40,7 @@ class ActionTracker {
       }
 
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         myActionsHappened = true;
       }
     });

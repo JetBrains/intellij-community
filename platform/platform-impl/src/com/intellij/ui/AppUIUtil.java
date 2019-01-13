@@ -31,6 +31,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +111,7 @@ public class AppUIUtil {
       URL url = AppUIUtil.class.getResource(svgIconUrl);
       try {
         return
-          SVGLoader.load(url, AppUIUtil.class.getResourceAsStream(svgIconUrl), JBUI.pixScale(window) * size, JBUI.pixScale(window) * size);
+          SVGLoader.load(url, AppUIUtil.class.getResourceAsStream(svgIconUrl), ScaleContext.create(window), size, size);
       }
       catch (IOException e) {
         LOG.info("Cannot load svg application icon from " + svgIconUrl, e);

@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.ExpectedTypeInfoImpl;
-import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
@@ -122,8 +119,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           if (filter != null) {
             final List<ExpectedTypeInfo> infos = Arrays.asList(getExpectedTypes(parameters));
             for (LookupElement item : completeReference(element, reference, filter, true, false, parameters, result.getPrefixMatcher())) {
-              if (item.getObject() instanceof PsiClass) {
-                if (!inRefList) {
+              Object o = item.getObject();
+              if (o instanceof PsiClass ||
+                  CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION &&
+                  JavaConstructorCallElement.isConstructorCallPlace(element) && o instanceof PsiMethod && ((PsiMethod)o).isConstructor()) {
+                if (!inRefList && o instanceof PsiClass) {
                   item = LookupElementDecorator.withInsertHandler(item, ConstructorInsertHandler.SMART_INSTANCE);
                 }
                 result.addElement(decorate(item, infos));

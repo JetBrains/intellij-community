@@ -42,11 +42,23 @@ internal class Investigator(val email: String = DEFAULT_INVESTIGATOR,
                             val commits: Map<File, Collection<CommitInfo>> = emptyMap(),
                             var isAssigned: Boolean = false)
 
-internal fun assignInvestigation(investigator: Investigator, context: Context): Investigator {
-  val report = context.report().let { if (it.isNotEmpty()) "$it, " else it }
+internal fun assignInvestigation(investigator: Investigator, context: Context, reviews: List<String>): Investigator {
+  val report = with(context) {
+    val commits = if (investigator.commits.isNotEmpty()) {
+      "You changed icons in ${investigator.commits.entries.joinToString(";") { entry ->
+        val (repo, commits) = entry
+        "${commits.joinToString { it.hash }} in ${getOriginUrl(repo)}"
+      }} which need to be synchronised."
+    }
+    else ""
+    val reviewsReport = if (reviews.isNotEmpty()) "Please review and cherry-pick ${reviews.joinToString()}." else ""
+    sequenceOf(commits, reviewsReport)
+      .filter(String::isNotEmpty)
+      .joinToString(" ")
+  }
   assignInvestigation(investigator, report)
   if (!investigator.isAssigned) {
-    var nextAttempts = listOf(teamCityEmail(investigator.email), investigator.email.toLowerCase())
+    var nextAttempts = guessEmail(investigator.email)
     if (!isInvestigationAssigned()) nextAttempts += DEFAULT_INVESTIGATOR
     nextAttempts.forEach {
       if (it != investigator.email) {
@@ -75,9 +87,9 @@ private fun assignInvestigation(investigator: Investigator, report: String) {
       investigator.isAssigned = true
       return
     }
-    val text = report + (if (investigator.commits.isNotEmpty()) "commits: ${investigator.commits.description()}," else "") +
-               " build: ${thisBuildReportableLink()}," +
-               " see also: https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
+    val text = (if (report.isNotEmpty()) "$report " else report) +
+               "Build: ${thisBuildReportableLink()}, " +
+               "see also: https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform, https://jetbrains.team/blog/1yjtD11nVsDA"
     teamCityPost("investigations", """
       <investigation state="TAKEN">
           <assignee id="$id"/>
@@ -98,11 +110,6 @@ private fun assignInvestigation(investigator: Investigator, report: String) {
   catch (e: Exception) {
     log("Unable to assign investigation to ${investigator.email}, ${e.message}")
   }
-}
-
-private fun teamCityEmail(email: String): String {
-  val (username, domain) = email.split("@")
-  return username.splitNotBlank(".").joinToString(".", transform = String::capitalize) + "@$domain"
 }
 
 internal fun thisBuildReportableLink() =

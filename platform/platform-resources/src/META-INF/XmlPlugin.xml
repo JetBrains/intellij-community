@@ -102,6 +102,7 @@
     <extensionPoint name="xml.undefinedElementFixProvider" interface="com.intellij.xml.XmlUndefinedElementFixProvider"/>
 
     <extensionPoint name="html.codestyle.panel" interface="com.intellij.application.options.HtmlCodeStylePanelExtension"/>
+    <extensionPoint name="html.scriptDocumentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider"/>
   </extensionPoints>
 
   <project-components>
@@ -378,7 +379,7 @@
 
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.XmlMover" id="xml" order="before line"/>
 
-    <moveLeftRightHandler language="XML" 
+    <moveLeftRightHandler language="XML"
                           implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.XmlMoveLeftRightHandler"/>
 
     <applicationService serviceInterface="com.intellij.ide.browsers.WebBrowserService"

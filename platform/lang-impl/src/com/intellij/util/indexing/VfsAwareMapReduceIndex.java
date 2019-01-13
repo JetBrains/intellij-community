@@ -188,7 +188,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   }
 
   @Override
-  public boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException {
+  public boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException {
     final Lock lock = getReadLock();
     lock.lock();
     try {

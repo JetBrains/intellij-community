@@ -8,11 +8,8 @@ import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonFinish
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonNext
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateFromArchetype
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateJsModule
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateJvmModule
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateProjectFromTemplate
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkKotlinDsl
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.comboProjectStructure
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupAndroid
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupApplicationForge
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupClouds
@@ -34,15 +31,12 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupSpring
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupSpringInitializr
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupStaticWeb
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppDeprecated
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppExperimental
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressLoadingTemplates
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textArtifactId
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textBasePackage
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textGroupId
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textProjectLocation
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textProjectName
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textRootModuleName
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.exception.ComponentLookupException
@@ -177,7 +171,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     override fun toString() = title
   }
 
-  class LibraryOrFramework(vararg val mainPath: String) : Serializable{
+  class LibraryOrFramework(vararg val mainPath: String) : Serializable {
 
     override fun equals(other: Any?): Boolean {
       if (other == null) return false
@@ -203,7 +197,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
 val GuiTestCase.newProjectDialogModel by NewProjectDialogModel
 
 fun NewProjectDialogModel.connectDialog(): JDialogFixture =
-  testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true)
+  step("search New Project dialog") { testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true) }
 
 typealias LibrariesSet = Set<NewProjectDialogModel.LibraryOrFramework>
 
@@ -225,7 +219,7 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
     fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
       selectProjectGroup(NewProjectDialogModel.Groups.Java)
-      if(projectSdk.isNotEmpty()) selectSdk(projectSdk)
+      if (projectSdk.isNotEmpty()) selectSdk(projectSdk)
       if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       else {
         button(buttonNext).click()
@@ -243,20 +237,20 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
       typeProjectNameAndLocation(projectPath)
       if (template.isNotEmpty() && basePackage.isNotEmpty()) {
         // base package is set only for Command Line app template
-        logUIStep("Set Base package to `$basePackage`")
-        textfield(textBasePackage).click()
-        shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
-        typeText(basePackage)
+        step("set 'Base package' to '$basePackage'") {
+          textfield(textBasePackage).click()
+          shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
+          typeText(basePackage)
+        }
       }
-      logUIStep("Close New Project dialog with Finish")
-      button(buttonFinish).click()
-      logUIStep("Wait when downloading dialog disappears")
-      checkDownloadingDialog()
+      step("close New Project dialog with Finish") {
+        button(buttonFinish).click()
+      }
+      step("wait when downloading dialog disappears") {
+        checkDownloadingDialog()
+      }
     }
-    ideFrame {
-      this.waitForBackgroundTasksToFinish()
-      waitAMoment()
-    }
+    waitAMoment()
   }
 }
 
@@ -269,29 +263,36 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
  * @param locationOnScreen - function calculated 1 coordinate of locationOnScreen property of a moving component
  * */
 fun JDialogFixture.waitForPageTransitionFinished(locationOnScreen: JDialogFixture.() -> Point) {
-  var previousCoord = locationOnScreen()
-  robot().waitForIdle()
-  GuiTestUtilKt.waitUntil("Wait when coordinates stop changing") {
-    val currentCoord = locationOnScreen()
-    val result = previousCoord == currentCoord
-    previousCoord = currentCoord
-    result
+  step("wait for page transition") {
+    var previousCoord = locationOnScreen()
+    robot().waitForIdle()
+    GuiTestUtilKt.waitUntil("wait when coordinates stop changing") {
+      val currentCoord = locationOnScreen()
+      val result = previousCoord == currentCoord
+      previousCoord = currentCoord
+      result
+    }
+    robot().waitForIdle()
+    logInfo("page transition finished")
   }
-  robot().waitForIdle()
 }
 
-fun NewProjectDialogModel.typeGroupAndArtifact(group: String, artifact: String){
-  with(guiTestCase){
-    with(connectDialog()){
-      waitForPageTransitionFinished {
-        textfield(textGroupId).target().locationOnScreen
+fun NewProjectDialogModel.typeGroupAndArtifact(group: String, artifact: String) {
+  with(guiTestCase) {
+    step("set group and artifact for gradle/maven project") {
+      with(connectDialog()) {
+        waitForPageTransitionFinished {
+          textfield(textGroupId).target().locationOnScreen
+        }
+        step("fill GroupId with `$group`") {
+          textfield(textGroupId).click()
+          typeText(group)
+        }
+        step("fill ArtifactId with `$artifact`") {
+          textfield(textArtifactId).click()
+          typeText(artifact)
+        }
       }
-      logUIStep("Fill GroupId with `$group`")
-      textfield(textGroupId).click()
-      typeText(group)
-      logUIStep("Fill ArtifactId with `$artifact`")
-      textfield(textArtifactId).click()
-      typeText(artifact)
     }
   }
 }
@@ -302,88 +303,106 @@ fun NewProjectDialogModel.createGradleProject(
   projectSdk: String
 ) {
   with(guiTestCase) {
-    fileSystemUtils.assertProjectPathExists(projectPath)
-    with(connectDialog()) {
-      selectProjectGroup(NewProjectDialogModel.Groups.Gradle)
-      if(projectSdk.isNotEmpty()) selectSdk(projectSdk)
-      setCheckboxValue(checkKotlinDsl, gradleOptions.useKotlinDsl)
-      if (gradleOptions.framework.isNotEmpty()) {
-        checkboxTree(gradleOptions.framework).check()
-        if (gradleOptions.isJavaShouldNotBeChecked)
-          checkboxTree(NewProjectDialogModel.Constants.libJava).uncheck()
+    step("create gradle-based project") {
+      fileSystemUtils.assertProjectPathExists(projectPath)
+      with(connectDialog()) {
+        selectProjectGroup(NewProjectDialogModel.Groups.Gradle)
+        if (projectSdk.isNotEmpty()) selectSdk(projectSdk)
+        step("set '$checkKotlinDsl' to '${gradleOptions.useKotlinDsl}'") {
+          setCheckboxValue(checkKotlinDsl, gradleOptions.useKotlinDsl)
+        }
+        step("select framework '${gradleOptions.framework}'") {
+          if (gradleOptions.framework.isNotEmpty()) {
+            checkboxTree(gradleOptions.framework).check()
+            if (gradleOptions.isJavaShouldNotBeChecked)
+              checkboxTree(NewProjectDialogModel.Constants.libJava).uncheck()
+          }
+        }
+        button(buttonNext).click()
+        typeGroupAndArtifact(gradleOptions.group, gradleOptions.artifact)
+        button(buttonNext).click()
+        step("set gradle options") {
+          waitForPageTransitionFinished {
+            checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title).target().locationOnScreen
+          }
+          val useAutoImport = checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title)
+          if (useAutoImport.isSelected != gradleOptions.useAutoImport) {
+            step("change `${NewProjectDialogModel.GradleOptions.UseAutoImport.title}` option") {
+              useAutoImport.click()
+            }
+          }
+          val gradleModuleGroup = radioButton(gradleOptions.groupModules.title)
+          if (gradleModuleGroup.isSelected().not()) {
+            step("select ${gradleModuleGroup.text()}") {
+              gradleModuleGroup.click()
+              robot().waitForIdle()
+              val groupAgain = radioButton(gradleOptions.groupModules.title)
+              assert(groupAgain.isSelected()) { "'${groupAgain.text()}' is not selected" }
+            }
+          }
+          val useSeparateModules = checkbox(NewProjectDialogModel.GradleOptions.SeparateModules.title)
+          if (useSeparateModules.isSelected != gradleOptions.useSeparateModules) {
+            step("change `${NewProjectDialogModel.GradleOptions.SeparateModules.title}` option") {
+              useSeparateModules.click()
+            }
+          }
+        }
+        button(buttonNext).click()
+        typeProjectNameAndLocation(projectPath)
+        step("close New Project dialog with Finish") {
+          button(buttonFinish).click()
+        }
       }
-      button(buttonNext).click()
-      typeGroupAndArtifact(gradleOptions.group, gradleOptions.artifact)
-      button(buttonNext).click()
-      waitForPageTransitionFinished {
-        checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title).target().locationOnScreen
-      }
-      val useAutoImport = checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title)
-      if (useAutoImport.isSelected != gradleOptions.useAutoImport) {
-        logUIStep("Change `${NewProjectDialogModel.GradleOptions.UseAutoImport.title}` option")
-        useAutoImport.click()
-      }
-      val gradleModuleGroup = radioButton(gradleOptions.groupModules.title)
-      if (gradleModuleGroup.isSelected().not()) {
-        logUIStep("Going to click ${gradleModuleGroup.text()}")
-        gradleModuleGroup.click()
-        robot().waitForIdle()
-        val groupAgain = radioButton(gradleOptions.groupModules.title)
-        assert(groupAgain.isSelected()) { "'${groupAgain.text()}' is not selected"}
-      }
-      val useSeparateModules = checkbox(NewProjectDialogModel.GradleOptions.SeparateModules.title)
-      if (useSeparateModules.isSelected != gradleOptions.useSeparateModules) {
-        logUIStep("Change `${NewProjectDialogModel.GradleOptions.SeparateModules.title}` option")
-        useSeparateModules.click()
-      }
-      button(buttonNext).click()
-      typeProjectNameAndLocation(projectPath)
-      logUIStep("Close New Project dialog with Finish")
-      button(buttonFinish).click()
     }
   }
 }
 
-fun NewProjectDialogModel.typeProjectNameAndLocation(projectPath: String){
-  with(guiTestCase){
-    with(connectDialog()){
+fun NewProjectDialogModel.typeProjectNameAndLocation(projectPath: String) {
+  with(guiTestCase) {
+    with(connectDialog()) {
       waitForPageTransitionFinished {
         textfield(textProjectLocation).target().locationOnScreen
       }
-      logUIStep("Fill Project location with `$projectPath`")
-      textfield(textProjectLocation).click()
-      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
-      typeText(projectPath)
+      step("fill Project location with `$projectPath`") {
+        textfield(textProjectLocation).click()
+        shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
+        typeText(projectPath)
+      }
       val projectName = projectPath.split(slash).last()
       if (projectName != textfield(textProjectName).text()) {
-        logUIStep("Fill Project name with `$projectName`")
-        textfield(textProjectName).click()
-        shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
-        typeText(projectName)
+        step("fill Project name with `$projectName`") {
+          textfield(textProjectName).click()
+          shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
+          typeText(projectName)
+        }
       }
     }
   }
 }
 
-fun NewProjectDialogModel.createMavenProject(projectPath: String, mavenOptions: NewProjectDialogModel.MavenProjectOptions, projectSdk: String) {
+fun NewProjectDialogModel.createMavenProject(projectPath: String,
+                                             mavenOptions: NewProjectDialogModel.MavenProjectOptions,
+                                             projectSdk: String) {
   with(guiTestCase) {
     fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
       selectProjectGroup(NewProjectDialogModel.Groups.Maven)
       Pause.pause(2000L)
-      if(projectSdk.isNotEmpty()) selectSdk(projectSdk)
+      if (projectSdk.isNotEmpty()) selectSdk(projectSdk)
       if (mavenOptions.useArchetype) {
-        logUIStep("Set `$checkCreateFromArchetype` checkbox")
-        val archetypeCheckbox = checkbox(checkCreateFromArchetype)
-        archetypeCheckbox.isSelected = true
-        Pause.pause(1000L)
-        if (!archetypeCheckbox.isSelected) {
-          logUIStep("Checkbox `$checkCreateFromArchetype` not selected, so next attempt")
-          archetypeCheckbox.click()
+        step("Set `$checkCreateFromArchetype` checkbox") {
+          val archetypeCheckbox = checkbox(checkCreateFromArchetype)
+          archetypeCheckbox.isSelected = true
+          Pause.pause(1000L)
+          if (!archetypeCheckbox.isSelected) {
+            step("Checkbox `$checkCreateFromArchetype` not selected, so next attempt") {
+              archetypeCheckbox.click()
+            }
+          }
         }
-
-        logUIStep("Select the archetype `${mavenOptions.archetypeVersion}` in the group `$mavenOptions.archetypeGroup`")
-        jTree(mavenOptions.archetypeGroup, mavenOptions.archetypeVersion).clickPath()
+        step("Select the archetype `${mavenOptions.archetypeVersion}` in the group `$mavenOptions.archetypeGroup`") {
+          jTree(mavenOptions.archetypeGroup, mavenOptions.archetypeVersion).clickPath()
+        }
 
       }
       button(buttonNext).click()
@@ -396,8 +415,9 @@ fun NewProjectDialogModel.createMavenProject(projectPath: String, mavenOptions: 
       }
       typeProjectNameAndLocation(projectPath)
 
-      logUIStep("Close New Project dialog with Finish")
-      button(buttonFinish).click()
+      step("close New Project dialog with Finish") {
+        button(buttonFinish).click()
+      }
     }
   }
 }
@@ -407,63 +427,16 @@ fun NewProjectDialogModel.createKotlinProject(projectPath: String, framework: St
     with(connectDialog()) {
       selectProjectGroup(NewProjectDialogModel.Groups.Kotlin)
 
-      logUIStep("Select `$framework`")
-      jList(framework).clickItem(framework)
+      step("select `$framework`") {
+        jList(framework).clickItem(framework)
+      }
       button(buttonNext).click()
 
       typeProjectNameAndLocation(projectPath)
 
-      logUIStep("Close New Project dialog with Finish")
-      button(buttonFinish).click()
-    }
-  }
-}
-
-fun NewProjectDialogModel.createKotlinMPProjectDeprecated(
-  projectPath: String,
-  moduleName: String,
-  mppProjectStructure: NewProjectDialogModel.MppProjectStructure,
-  isJvmIncluded: Boolean = true,
-  isJsIncluded: Boolean = true,
-  kotlinPluginVersion: String
-) {
-  with(guiTestCase) {
-    with(connectDialog()) {
-      selectProjectGroup(NewProjectDialogModel.Groups.Kotlin)
-      logUIStep("Select `$itemKotlinMppDeprecated` kind of project")
-      if (kotlinPluginVersion >= "1.3")
-        jList(itemKotlinMppDeprecated).clickItem(itemKotlinMppDeprecated)
-      else
-        jList(itemKotlinMppExperimental).clickItem(itemKotlinMppExperimental)
-      button(buttonNext).click()
-      val cmb = combobox(comboProjectStructure)
-      logUIStep("Select MP project hierarchy kind: `$mppProjectStructure`")
-      if (cmb.selectedItem() != mppProjectStructure.toString()) {
-        cmb
-          .expand()
-          .selectItem(mppProjectStructure.toString())
-        logInfo("Combobox `$comboProjectStructure`: current selected item is `${cmb.selectedItem()}` ")
+      step("close New Project dialog with Finish") {
+        button(buttonFinish).click()
       }
-
-      logUIStep("Type root module name `$moduleName`")
-      textfield(textRootModuleName).click()
-      shortcut(Modifier.CONTROL + Key.A, Modifier.META + Key.A)
-      typeText(moduleName)
-      if (!isJvmIncluded) {
-        logUIStep("No need JVM module, uncheck `$checkCreateJvmModule`")
-        checkbox(checkCreateJvmModule).click()
-      }
-      if (!isJsIncluded) {
-        logUIStep("No need JS module, uncheck `$checkCreateJsModule`")
-        checkbox(checkCreateJsModule).click()
-      }
-      button(buttonNext).click()
-      button(buttonNext).click()
-      logUIStep("Type $textProjectLocation `$projectPath`")
-      textfield(textProjectLocation).click()
-      shortcut(Modifier.CONTROL + Key.A, Modifier.META + Key.A)
-      typeText(projectPath)
-      button(buttonFinish).click()
     }
   }
 }
@@ -476,18 +449,20 @@ fun NewProjectDialogModel.createKotlinMPProject(
   with(guiTestCase) {
     with(connectDialog()) {
       selectProjectGroup(NewProjectDialogModel.Groups.Kotlin)
-      logUIStep("Select `$templateName` kind of project")
-      jList(templateName).clickItem(templateName)
+      step("select `$templateName` kind of project") {
+        jList(templateName).clickItem(templateName)
+      }
       button(buttonNext).click()
       val gradleJvm = "Gradle JVM:"
       waitForPageTransitionFinished {
         combobox(gradleJvm).target().locationOnScreen
       }
-      if(projectSdk.isNotEmpty()) selectSdk(projectSdk, gradleJvm)
+      if (projectSdk.isNotEmpty()) selectSdk(projectSdk, gradleJvm)
       button(buttonNext).click()
       typeProjectNameAndLocation(projectPath)
-      logUIStep("Close New Project dialog with Finish")
-      button(buttonFinish).click()
+      step("close New Project dialog with Finish") {
+        button(buttonFinish).click()
+      }
     }
   }
 }
@@ -499,10 +474,11 @@ fun NewProjectDialogModel.setCheckboxValue(name: String, value: Boolean) {
       val maxAttempts = 3
       val check = checkbox(name)
       while (check.isSelected != value && attempts <= maxAttempts) {
-        logUIStep("setCheckboxValue #${attempts + 1}: ${check.target().text} = ${check.isSelected}, expected value = $value")
-        check.click()
-        Pause.pause(500L)
-        attempts++
+        step("setCheckboxValue #${attempts + 1}: ${check.target().text} = ${check.isSelected}, expected value = $value") {
+          check.click()
+          Pause.pause(500L)
+          attempts++
+        }
       }
     }
   }
@@ -518,9 +494,10 @@ fun NewProjectDialogModel.assertGroupPresent(group: NewProjectDialogModel.Groups
     with(connectDialog()) {
       // Group `Java` always exists
       val list: JListFixture = jList(groupJava, timeout = Timeouts.seconds05)
-      logTestStep("Check ${group} is present in the New Project dialog")
-      assert(list.contents().contains(group.toString())) {
-        "${group} group is absent (may be plugin not installed or Community edition runs instead of Ultimate)"
+      step("check '${group}' group is present in the New Project dialog") {
+        assert(list.contents().contains(group.toString())) {
+          "${group} group is absent (may be plugin not installed or Community edition runs instead of Ultimate)"
+        }
       }
     }
   }
@@ -534,9 +511,9 @@ fun NewProjectDialogModel.assertGroupPresent(group: NewProjectDialogModel.Groups
  * @param libs - set of additional libraries/frameworks that should be checked
  * */
 fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Groups,
-                                                        projectPath: String,
-                                                        projectSdk: String,
-                                                        libs: LibrariesSet) {
+                                               projectPath: String,
+                                               projectSdk: String,
+                                               libs: LibrariesSet) {
   with(guiTestCase) {
     fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
@@ -544,10 +521,12 @@ fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Grou
       if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       button(buttonNext).click()
       typeProjectNameAndLocation(projectPath)
-      logUIStep("Close New Project dialog with Finish")
-      button(buttonFinish).click()
-      logUIStep("Wait when downloading dialog disappears")
-      checkDownloadingDialog()
+      step("close New Project dialog with Finish") {
+        button(buttonFinish).click()
+      }
+      step("wait when downloading dialog disappears") {
+        checkDownloadingDialog()
+      }
     }
     ideFrame {
       this.waitForBackgroundTasksToFinish()
@@ -557,7 +536,7 @@ fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Grou
 }
 
 fun NewProjectDialogModel.createGroovyProject(projectPath: String, projectSdk: String, libs: LibrariesSet) {
-  createProjectInGroup(NewProjectDialogModel.Groups.Groovy, projectPath, projectSdk,  libs)
+  createProjectInGroup(NewProjectDialogModel.Groups.Groovy, projectPath, projectSdk, libs)
 }
 
 fun NewProjectDialogModel.createGriffonProject(projectPath: String, projectSdk: String, libs: LibrariesSet) {
@@ -576,36 +555,39 @@ fun NewProjectDialogModel.setLibrariesAndFrameworks(libs: LibrariesSet) {
   if (libs.isSetEmpty()) return
   with(connectDialog()) {
     for (lib in libs) {
-      guiTestCase.logUIStep("Include `${lib.mainPath.joinToString()}` to the project")
-      checkboxTree(
-        pathStrings = *lib.mainPath,
-        predicate = Predicate.withVersion
-      ).check()
+      step("include `${lib.mainPath.joinToString()}` to the project") {
+        checkboxTree(
+          pathStrings = *lib.mainPath,
+          predicate = Predicate.withVersion
+        ).check()
+      }
     }
   }
 }
 
 fun NewProjectDialogModel.selectProjectGroup(group: NewProjectDialogModel.Groups) {
   with(connectDialog()) {
-    val list: JListFixture = jList(groupJava)
-    assertGroupPresent(group)
-    list.clickItem(group.toString())
-
+    step("select '$group' project group") {
+      val list: JListFixture = jList(groupJava)
+      assertGroupPresent(group)
+      step("click '$group'") { list.clickItem(group.toString()) }
+    }
     waitLoadingTemplates()
   }
 }
 
 fun NewProjectDialogModel.selectSdk(sdk: String, sdkField: String = "Project SDK:") {
   with(guiTestCase) {
-    logUIStep("Going to select $sdk as a project SDK")
-    with(connectDialog()) {
-      val sdkCombo = combobox(sdkField)
-      val selectedItem = sdkCombo.listItems().firstOrNull { it.startsWith(sdk) }
-      if (selectedItem != null)
-        sdkCombo.selectItem(selectedItem)
-      else
-        throw IllegalStateException(
-          "Required SDK $sdk is absent in the \"$sdkField\" list. Found following values: ${sdkCombo.listItems()}")
+    step("select '$sdk' as a project SDK") {
+      with(connectDialog()) {
+        val sdkCombo = combobox(sdkField)
+        val selectedItem = sdkCombo.listItems().firstOrNull { it.startsWith(sdk) }
+        if (selectedItem != null)
+          sdkCombo.selectItem(selectedItem)
+        else
+          throw IllegalStateException(
+            "Required SDK '$sdk' is absent in the \"$sdkField\" list. Found following values: ${sdkCombo.listItems()}")
+      }
     }
   }
 }
@@ -628,12 +610,14 @@ fun NewProjectDialogModel.checkDownloadingDialog() {
       null
     }
     if (dialog != null) {
-      guiTestCase.logInfo("NewProjectDialogModel.checkDownloadingDialog: Found dialog: ${dialog.target().title}")
-      try {
-        dialog.button("Try again", timeout = Timeouts.noTimeout).click()
-        guiTestCase.logInfo("NewProjectDialogModel.checkDownloadingDialog: button try again was found and clicked")
-      }
-      catch (ignore: ComponentLookupException) {
+      step("found dialog: ${dialog.target().title}") {
+        try {
+          step("close dialog with button 'Try again'") {
+            dialog.button("Try again", timeout = Timeouts.noTimeout).click()
+          }
+        }
+        catch (ignore: ComponentLookupException) {
+        }
       }
     }
     dialog == null

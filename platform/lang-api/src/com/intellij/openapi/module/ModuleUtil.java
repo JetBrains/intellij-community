@@ -30,15 +30,12 @@ import java.util.Collection;
 
 public class ModuleUtil extends ModuleUtilCore {
   private static final ParameterizedCachedValueProvider<MultiMap<ModuleType<?>,Module>,Project> MODULE_BY_TYPE_VALUE_PROVIDER =
-    new ParameterizedCachedValueProvider<MultiMap<ModuleType<?>, Module>, Project>() {
-      @Override
-      public CachedValueProvider.Result<MultiMap<ModuleType<?>, Module>> compute(Project param) {
-        MultiMap<ModuleType<?>, Module> map = new MultiMap<>();
-        for (Module module : ModuleManager.getInstance(param).getModules()) {
-          map.putValue(ModuleType.get(module), module);
-        }
-        return CachedValueProvider.Result.createSingleDependency(map, ProjectRootManager.getInstance(param));
+    param -> {
+      MultiMap<ModuleType<?>, Module> map = new MultiMap<>();
+      for (Module module : ModuleManager.getInstance(param).getModules()) {
+        map.putValue(ModuleType.get(module), module);
       }
+      return CachedValueProvider.Result.createSingleDependency(map, ProjectRootManager.getInstance(param));
     };
   private static final ParameterizedCachedValueProvider<Boolean, Project> HAS_TEST_ROOTS_PROVIDER = project -> {
     boolean hasTestRoots =

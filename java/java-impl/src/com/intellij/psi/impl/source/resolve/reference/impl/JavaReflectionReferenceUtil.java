@@ -38,7 +38,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -307,7 +310,7 @@ public class JavaReflectionReferenceUtil {
   private static PsiExpression getAssignedExpression(@NotNull PsiMember maybeContainsAssignment, @NotNull PsiField field) {
     final PsiAssignmentExpression assignment = SyntaxTraverser.psiTraverser(maybeContainsAssignment)
       .filter(PsiAssignmentExpression.class)
-      .find(expression -> VariableAccessUtils.evaluatesToVariable(expression.getLExpression(), field));
+      .find(expression -> ExpressionUtils.isReferenceTo(expression.getLExpression(), field));
     return assignment != null ? assignment.getRExpression() : null;
   }
 

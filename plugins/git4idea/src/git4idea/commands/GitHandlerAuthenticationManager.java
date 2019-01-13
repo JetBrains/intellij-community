@@ -77,7 +77,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject,
                                                                          myHandler.getUrls(),
                                                                          authenticationGate,
-                                                                         myHandler.isIgnoreAuthenticationRequest());
+                                                                         myHandler.getIgnoreAuthenticationMode());
     myHttpHandler = service.registerHandler(httpAuthenticator, myProject);
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getXmlRcpPort();
@@ -133,7 +133,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_VAR, "ssh");
     GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
-    GitSSHGUIHandler guiHandler = new GitSSHGUIHandler(myProject, authenticationGate, myHandler.isIgnoreAuthenticationRequest());
+    GitSSHGUIHandler guiHandler = new GitSSHGUIHandler(myProject, authenticationGate, myHandler.getIgnoreAuthenticationMode());
     mySshHandler = ssh.registerHandler(guiHandler, myProject);
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_HANDLER_ENV, mySshHandler.toString());
     int port = ssh.getXmlRcpPort();
@@ -171,10 +171,8 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
     boolean doNotRememberPasswords = myHandler.getUrls().size() > 1;
     GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
-    GitNativeSshGuiAuthenticator authenticator = new GitNativeSshGuiAuthenticator(myProject,
-                                                                                  authenticationGate,
-                                                                                  myHandler.isIgnoreAuthenticationRequest(),
-                                                                                  doNotRememberPasswords);
+    GitNativeSshGuiAuthenticator authenticator =
+      new GitNativeSshGuiAuthenticator(myProject, authenticationGate, myHandler.getIgnoreAuthenticationMode(), doNotRememberPasswords);
 
     myNativeSshHandler = service.registerHandler(authenticator, myProject);
     int port = service.getXmlRcpPort();

@@ -92,13 +92,13 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     LOG.assertTrue(block != null);
     ControlFlow controlFlow = buildControlFlow(block);
     ifStatement = setupBranches(ifStatement, controlFlow);
+    
+    if (!ifStatement.isValid()) return;
 
     PsiExpression condition = Objects.requireNonNull(ifStatement.getCondition());
-    if (condition != null) {
-      final CommentTracker tracker = new CommentTracker();
-      final String negatedCondition = BoolUtils.getNegatedExpressionText(condition, tracker);
-      tracker.replaceAndRestoreComments(condition, negatedCondition);
-    }
+    final CommentTracker tracker = new CommentTracker();
+    final String negatedCondition = BoolUtils.getNegatedExpressionText(condition, tracker);
+    tracker.replaceAndRestoreComments(condition, negatedCondition);
 
     formatIf(ifStatement);
   }

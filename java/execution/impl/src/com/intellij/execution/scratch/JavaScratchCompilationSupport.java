@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
@@ -148,12 +149,13 @@ public class JavaScratchCompilationSupport implements CompileTask {
       options.add("-g"); // always compile with debug info
       final JavaSdkVersion sdkVersion = JavaSdk.getInstance().getVersion(targetSdk);
       if (sdkVersion != null) {
-        final String langLevel = JpsJavaSdkType.complianceOption(sdkVersion.getMaxLanguageLevel().toJavaVersion());
+        final LanguageLevel level = sdkVersion.getMaxLanguageLevel();
+        final String langLevel = JpsJavaSdkType.complianceOption(level.toJavaVersion());
         options.add("-source");
         options.add(langLevel);
         options.add("-target");
         options.add(langLevel);
-        if (sdkVersion.isAtLeast(JavaSdkVersion.JDK_11)) {
+        if (level.isPreview()) {
           options.add("--enable-preview");
         }
       }

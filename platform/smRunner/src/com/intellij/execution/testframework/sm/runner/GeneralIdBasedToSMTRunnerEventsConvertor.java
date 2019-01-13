@@ -52,6 +52,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
   @Override
   public void onFinishTesting() {
+    fireOnBeforeTestingFinished(myTestsRootProxy);
     LOG.debug("onFinishTesting");
     // has been already invoked!
     // We don't know whether process was destroyed by user

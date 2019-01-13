@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -105,13 +105,13 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(createdNonProject[0], true);
     typeAndCheck(copiedNonProject[0], true);
 
-    typeAndCheck(nonProjectFile, false); // original is still locked 
+    typeAndCheck(nonProjectFile, false); // original is still locked
   }
 
   public void testAccessToProjectSystemFiles() {
     PlatformTestUtil.saveProject(getProject(), true);
     VirtualFile fileUnderProjectDir = createFileExternally(new File(getProject().getBasePath()));
-    
+
     assertFalse(ProjectFileIndex.SERVICE.getInstance(getProject()).isInContent(fileUnderProjectDir));
 
     typeAndCheck(getProject().getProjectFile(), true);
@@ -137,7 +137,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     PlatformTestUtil.saveProject(getProject());
 
     VirtualFile fileUnderNonProjectModuleDir = createFileExternally(new File(PathUtil.getParentPath(moduleWithoutContentRoot.getModuleFilePath())));
-    
+
     assertFalse(ProjectFileIndex.SERVICE.getInstance(getProject()).isInContent(fileUnderNonProjectModuleDir));
 
     typeAndCheck(moduleWithoutContentRoot.getModuleFile(), true);
@@ -168,7 +168,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     File subDir = new File(dir, "subdir");
     assertTrue(subDir.mkdirs());
     VirtualFile nonProjectFileDirSubdir1 = createFileExternally(subDir);
-    
+
     VirtualFile nonProjectFileDir2 = createNonProjectFile();
 
     typeAndCheck(nonProjectFileDir11, false);
@@ -176,15 +176,15 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFileDir2, false);
 
     typeAndCheck(nonProjectFileDir11, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK_DIR, true);
-    
+
     // affects other files in dir
     typeAndCheck(nonProjectFileDir12, true);
     typeAndCheck(nonProjectFileDirSubdir1, true);
-    
+
     // doesn't affect files in other dirs
     typeAndCheck(nonProjectFileDir2, false);
   }
-  
+
   public void testAllowEditingInAllFiles() throws Exception {
     VirtualFile nonProjectFile1 = createNonProjectFile();
     VirtualFile nonProjectFile2 = createNonProjectFile();
@@ -211,8 +211,8 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
     typeAndCheck(nonProjectFile1, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK, false);
     assertSameElements(requested, nonProjectFile1);
-    
-    typeAndCheck(nonProjectFile1, false); // leave file locked if other provides denied access 
+
+    typeAndCheck(nonProjectFile1, false); // leave file locked if other provides denied access
     requested.clear();
 
     typeAndCheck(nonProjectFile2, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK, true);
@@ -225,18 +225,18 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
     registerWriteAccessProvider(nonProjectFile1);
 
-    typeAndCheck(nonProjectFile1, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK_ALL, 
-                 false); // can't write since denied by another write-access provider  
+    typeAndCheck(nonProjectFile1, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK_ALL,
+                 false); // can't write since denied by another write-access provider
     typeAndCheck(nonProjectFile2, true);
   }
-  
+
   public void testCheckingExtensionsForWritableFiles() throws Exception {
     VirtualFile nonProjectFile1 = createNonProjectFile();
     VirtualFile nonProjectFile2 = createNonProjectFile();
 
     typeAndCheck(nonProjectFile1, false);
     typeAndCheck(nonProjectFile2, false);
-    
+
     List<VirtualFile> allowed = new ArrayList<>();
     registerAccessCheckExtension(allowed, Collections.emptyList());
 
@@ -256,14 +256,14 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile1, false);
     typeAndCheck(nonProjectFile2, false);
   }
-  
+
   public void testCheckingExtensionsForNonWritableFiles() {
     VirtualFile nonProjectFile1 = createProjectFile();
     VirtualFile nonProjectFile2 = createProjectFile();
 
     typeAndCheck(nonProjectFile1, true);
     typeAndCheck(nonProjectFile2, true);
-    
+
     List<VirtualFile> denied = new ArrayList<>();
     registerAccessCheckExtension(Collections.emptyList(), denied);
 
@@ -286,12 +286,12 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
   public void testEditingRecentFilesRegardlessExtensions() {
     NonProjectFileWritingAccessProvider.enableChecksInTests(true, getProject());
-    
+
     VirtualFile nonProjectFile = createProjectFile();
 
     List<VirtualFile> denied = new ArrayList<>();
     registerAccessCheckExtension(Collections.emptyList(), denied);
-    
+
     denied.add(nonProjectFile);
     typeAndCheck(nonProjectFile, false);
 
@@ -307,16 +307,11 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), WritingAccessProvider.EP_NAME, new WritingAccessProvider() {
       @NotNull
       @Override
-      public Collection<VirtualFile> requestWriting(VirtualFile... files) {
-        Collections.addAll(requested, files);
+      public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
+        requested.addAll(files);
         HashSet<VirtualFile> denied = new HashSet<>(Arrays.asList(filesToDeny));
-        denied.retainAll(Arrays.asList(files));
+        denied.retainAll(files);
         return denied;
-      }
-
-      @Override
-      public boolean isPotentiallyWritable(@NotNull VirtualFile file) {
-        return true;
       }
     }, getProject());
     return requested;
@@ -347,10 +342,10 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   private VirtualFile createNonProjectFile() throws IOException {
     return createFileExternally(FileUtil.createTempDirectory("tmp", null));
   }
-  
+
   @NotNull
   private VirtualFile createFileExternally(File dir) {
-    VirtualFile result = null;
+    VirtualFile result;
     try {
       result = WriteAction.computeAndWait(() -> {
         // create externally, since files created via VFS are marked for editing automatically

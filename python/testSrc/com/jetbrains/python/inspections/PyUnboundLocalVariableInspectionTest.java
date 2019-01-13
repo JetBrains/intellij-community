@@ -225,6 +225,24 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-31834
+  public void testTargetIsTypeHintNotDefinition() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("a: int\n" +
+                         "print(<warning descr=\"Name 'a' can be not defined\">a</warning>)")
+    );
+  }
+
+  // PY-31834
+  public void testTargetWithoutAssignedValueButInitialized() {
+    doTestByText("for var in range(10):\n" +
+                 "    print(var)\n" +
+                 "\n" +
+                 "with undefined as val:\n" +
+                 "    print(val)");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

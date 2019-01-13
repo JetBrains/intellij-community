@@ -75,7 +75,8 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     }
 
     final int offset = myEditor.getCaretModel().getOffset();
-    PsiElement[] elements = PsiFileBreadcrumbsCollector.getLinePsiElements(offset,
+    PsiElement[] elements = PsiFileBreadcrumbsCollector.getLinePsiElements(myEditor,
+                                                                           offset,
                                                                            myFile.getVirtualFile(),
                                                                            myProject, myInfoProvider);
 

@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.impl.matcher.compiler.StringToConstraintsTransformer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;

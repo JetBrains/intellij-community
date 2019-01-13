@@ -41,7 +41,7 @@ public abstract class CodeSmellDetector {
    * @since 5.1
    */
   @NotNull
-  public abstract List<CodeSmellInfo> findCodeSmells(@NotNull List<VirtualFile> files) throws ProcessCanceledException;
+  public abstract List<CodeSmellInfo> findCodeSmells(@NotNull List<? extends VirtualFile> files) throws ProcessCanceledException;
 
   /**
    * Shows the specified list of problems found during pre-checkin code analysis in a Messages pane.

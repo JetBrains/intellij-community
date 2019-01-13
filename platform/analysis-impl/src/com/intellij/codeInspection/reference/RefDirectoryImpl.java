@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
-  private RefModule myRefModule;
+  private final RefModule myRefModule;
   protected RefDirectoryImpl(PsiDirectory psiElement, RefManager refManager) {
     super(psiElement.getName(), psiElement, refManager);
     final PsiDirectory parentDirectory = psiElement.getParentDirectory();
@@ -34,15 +34,21 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
       final RefElementImpl refElement = (RefElementImpl)refManager.getReference(parentDirectory);
       if (refElement != null) {
         refElement.add(this);
+        myRefModule = null;
         return;
       }
     }
     myRefModule = refManager.getRefModule(ModuleUtilCore.findModuleForPsiElement(psiElement));
+  }
+
+
+  @Override
+  protected void initialize() {
     if (myRefModule != null) {
       ((RefModuleImpl)myRefModule).add(this);
       return;
     }
-    ((RefProjectImpl)refManager.getRefProject()).add(this);
+    ((RefProjectImpl)myManager.getRefProject()).add(this);
   }
 
   @Override
@@ -67,9 +73,6 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
     return myRefModule;
   }
 
-  @Override
-  protected void initialize() {
-  }
 
   @NotNull
   @Override

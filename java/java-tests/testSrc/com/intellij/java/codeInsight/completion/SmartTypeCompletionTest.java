@@ -1315,4 +1315,18 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     configureByTestName();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "this");
   }
+
+  public void testLog4jLevel() {
+    myFixture.addClass("package org.apache.log4j; " +
+                       "public class Category { " +
+                       "  public void log(Priority priority, Object message); " +
+                       "}" +
+                       "public class Priority { " +
+                       "  final static public Priority FATAL;" + //deprecated
+                       "}" +
+                       "public class Level extends Priority { " +
+                       "  final static public Level FATAL;" +
+                       "}");
+    doTest('\n');
+  }
 }

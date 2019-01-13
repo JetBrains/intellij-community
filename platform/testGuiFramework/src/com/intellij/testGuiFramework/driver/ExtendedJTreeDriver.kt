@@ -8,6 +8,7 @@ import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
+import com.intellij.testGuiFramework.util.step
 import com.intellij.ui.treeStructure.SimpleTree
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.tree.TreeUtil
@@ -46,14 +47,16 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
                 button: MouseButton = MouseButton.LEFT_BUTTON,
                 times: Int = 1,
                 attempts: Int = DEFAULT_FIND_PATH_ATTEMPTS) {
-    val pathInfo = tree.scrollToPath(treePath)
-    robot.click(tree, pathInfo.clickPoint, button, times)
-    //check that path is selected or click it again
-    if (!tree.checkPathIsSelected(treePath)) {
-      if (attempts == 0)
-        throw ExtendedJTreeException("Unable to click path in $DEFAULT_FIND_PATH_ATTEMPTS " +
-                                     "attempts due to it high mutability. Maybe this path is loading async.")
-      clickPath(tree, treePath, button, times, attempts - 1)
+    step("click path '${treePath.path.joinToString()}' in tree") {
+      val pathInfo = tree.scrollToPath(treePath)
+      robot.click(tree, pathInfo.clickPoint, button, times)
+      //check that path is selected or click it again
+      if (!tree.checkPathIsSelected(treePath)) {
+        if (attempts == 0)
+          throw ExtendedJTreeException("Unable to click path in $DEFAULT_FIND_PATH_ATTEMPTS " +
+                                       "attempts due to it high mutability. Maybe this path is loading async.")
+        clickPath(tree, treePath, button, times, attempts - 1)
+      }
     }
   }
 

@@ -51,7 +51,7 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
   }
 
   @Override
-  public void apply(@NotNull List<FilePatch> remaining,
+  public void apply(@NotNull List<? extends FilePatch> remaining,
                     @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
@@ -65,8 +65,8 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
     }
   }
 
-  private void removeAppliedAndSaveRemainedIfNeeded(@NotNull List<FilePatch> remaining,
-                                                    @NotNull Collection<PatchApplier> appliers,
+  private void removeAppliedAndSaveRemainedIfNeeded(@NotNull List<? extends FilePatch> remaining,
+                                                    @NotNull Collection<? extends PatchApplier> appliers,
                                                     @NotNull CommitContext commitContext) {
     ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(myProject);
     if (!shelveChangesManager.isRemoveFilesFromShelf()) return;

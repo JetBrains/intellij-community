@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -30,6 +31,7 @@ import java.util.Set;
  * @author peter
  */
 class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
+  private static final Logger LOG = Logger.getInstance(LimitedAccessibleClassPreprocessor.class);
   private final PsiElement myContext;
   private final CompletionParameters myParameters;
   private final boolean myFilterByScope;
@@ -76,9 +78,13 @@ class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
     assert psiClass != null;
     if (AllClassesGetter.isAcceptableInContext(myContext, psiClass, myFilterByScope, myPkgContext)) {
       String qName = psiClass.getQualifiedName();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Processing class " + qName);
+      }
       if (qName != null && qName.startsWith(myPackagePrefix) && myQNames.add(qName)) {
         myConsumer.consume(psiClass);
         if (++myCount > myLimit) {
+          LOG.debug("Limit reached");
           return false;
         }
       }

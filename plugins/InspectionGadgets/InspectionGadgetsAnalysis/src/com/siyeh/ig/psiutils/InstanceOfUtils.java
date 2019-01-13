@@ -15,11 +15,19 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.dataFlow.ContractValue;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.OptionalInt;
 
 public class InstanceOfUtils {
 
@@ -67,6 +75,11 @@ public class InstanceOfUtils {
           return null;
         }
       }
+      else if (sibling instanceof PsiExpressionStatement) {
+        PsiMethodCallExpression call =
+          ObjectUtils.tryCast(((PsiExpressionStatement)sibling).getExpression(), PsiMethodCallExpression.class);
+        if (isInstanceOfAssertionCall(checker, call)) return null;
+      }
       sibling = PsiTreeUtil.getPrevSiblingOfType(sibling, PsiStatement.class);
     }
     checker.negate = false;
@@ -84,6 +97,28 @@ public class InstanceOfUtils {
       return null;
     }
     return checker.getConflictingInstanceof();
+  }
+
+  private static boolean isInstanceOfAssertionCall(InstanceofChecker checker, PsiMethodCallExpression call) {
+    if (call == null) return false;
+    List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
+    if (contracts.isEmpty()) return false;
+    MethodContract contract = contracts.get(0);
+    if (!contract.getReturnValue().isFail()) return false;
+    ContractValue condition = ContainerUtil.getOnlyItem(contract.getConditions());
+    if (condition == null) return false;
+    checker.negate = true;
+    OptionalInt argNum = condition.getArgumentComparedTo(ContractValue.booleanValue(true), true);
+    if (!argNum.isPresent()) {
+      checker.negate = false;
+      argNum = condition.getArgumentComparedTo(ContractValue.booleanValue(false), true);
+    }
+    if (!argNum.isPresent()) return false;
+    int index = argNum.getAsInt();
+    PsiExpression[] args = call.getArgumentList().getExpressions();
+    if (index >= args.length) return false;
+    checker.checkExpression(args[index]);
+    return checker.hasAgreeingInstanceof();
   }
 
   public static boolean hasAgreeingInstanceof(

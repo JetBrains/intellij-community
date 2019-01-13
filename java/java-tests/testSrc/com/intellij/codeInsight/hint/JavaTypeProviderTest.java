@@ -32,7 +32,7 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "<table>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>Optional&lt;String&gt;</td></tr>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Optional:</td><td>present Optional</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Value:</td><td>present Optional</td></tr>" +
            "</table>");
   }
 

@@ -66,8 +66,8 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   @NotNull
   private static List<Change> getChangesForSelectedFiles(@NotNull Project project,
                                                          @NotNull VirtualFile[] selectedFiles,
-                                                         @NotNull List<VirtualFile> unversionedFiles,
-                                                         @NotNull List<VirtualFile> changedFiles) {
+                                                         @NotNull List<? super VirtualFile> unversionedFiles,
+                                                         @NotNull List<? super VirtualFile> changedFiles) {
     List<Change> changes = new ArrayList<>();
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 
@@ -99,8 +99,8 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
 
   private static void addAllChangesUnderPath(@NotNull ChangeListManager changeListManager,
                                              @NotNull FilePath file,
-                                             @NotNull List<Change> changes,
-                                             @NotNull List<VirtualFile> changedFiles) {
+                                             @NotNull List<? super Change> changes,
+                                             @NotNull List<? super VirtualFile> changedFiles) {
     for (Change change : changeListManager.getChangesIn(file)) {
       changes.add(change);
 
@@ -148,8 +148,8 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   }
 
   public static boolean askAndMove(@NotNull Project project,
-                                   @NotNull Collection<Change> changes,
-                                   @NotNull List<VirtualFile> unversionedFiles) {
+                                   @NotNull Collection<? extends Change> changes,
+                                   @NotNull List<? extends VirtualFile> unversionedFiles) {
     if (changes.isEmpty() && unversionedFiles.isEmpty()) return false;
 
     LocalChangeList targetList = askTargetList(project, changes);
@@ -167,7 +167,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   }
 
   @Nullable
-  private static LocalChangeList askTargetList(@NotNull Project project, @NotNull Collection<Change> changes) {
+  private static LocalChangeList askTargetList(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
     ChangeListManagerImpl listManager = ChangeListManagerImpl.getInstanceImpl(project);
     List<LocalChangeList> nonAffectedLists = getNonAffectedLists(listManager.getChangeListsCopy(), changes);
     List<LocalChangeList> suggestedLists = nonAffectedLists.isEmpty()
@@ -193,7 +193,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   }
 
   @NotNull
-  private static List<LocalChangeList> getNonAffectedLists(@NotNull List<LocalChangeList> lists, @NotNull Collection<Change> changes) {
+  private static List<LocalChangeList> getNonAffectedLists(@NotNull List<? extends LocalChangeList> lists, @NotNull Collection<? extends Change> changes) {
     final Set<Change> changesSet = ContainerUtil.newHashSet(changes);
 
     return ContainerUtil.findAll(lists, list -> !ContainerUtil.intersects(changesSet, list.getChanges()));

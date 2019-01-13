@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.diagnostic.IdeErrorsDialog
@@ -160,7 +160,7 @@ object UpdateChecker {
     try {
       var updateUrl = Urls.newFromEncoded(updateUrl)
       if (updateUrl.scheme != URLUtil.FILE_PROTOCOL) {
-        updateUrl = prepareUpdateCheckArgs(updateUrl, settings.packageManagerName)
+        updateUrl = prepareUpdateCheckArgs(updateUrl)
       }
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
 
@@ -464,12 +464,12 @@ object UpdateChecker {
     ourAdditionalRequestOptions[name] = value
   }
 
-  private fun prepareUpdateCheckArgs(url: Url, packageManagerName: String?): Url {
+  private fun prepareUpdateCheckArgs(url: Url): Url {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
     addUpdateRequestParameter("uid", PermanentInstallationID.get())
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
-    if (packageManagerName != null) {
-      addUpdateRequestParameter("manager", packageManagerName)
+    if (ExternalUpdateManager.ACTUAL != null) {
+      addUpdateRequestParameter("manager", ExternalUpdateManager.ACTUAL.toolName)
     }
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")

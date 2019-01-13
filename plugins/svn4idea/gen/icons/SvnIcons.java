@@ -18,20 +18,62 @@ public final class SvnIcons {
     return IconLoader.getIcon(path, clazz);
   }
 
-  public static final Icon Common = load("/icons/Common.svg"); // 16x16
-  public static final Icon Conflictc = load("/icons/conflictc.svg"); // 16x16
-  public static final Icon Conflictcp = load("/icons/conflictcp.svg"); // 16x16
-  public static final Icon Conflictct = load("/icons/conflictct.svg"); // 16x16
-  public static final Icon Conflictctp = load("/icons/conflictctp.svg"); // 16x16
-  public static final Icon Conflictp = load("/icons/conflictp.svg"); // 16x16
-  public static final Icon Conflictt = load("/icons/conflictt.svg"); // 16x16
-  public static final Icon Conflicttp = load("/icons/conflicttp.svg"); // 16x16
-  public static final Icon Integrated = load("/icons/Integrated.svg"); // 16x16
-  public static final Icon MarkAsMerged = load("/icons/MarkAsMerged.svg"); // 16x16
-  public static final Icon MarkAsNotMerged = load("/icons/MarkAsNotMerged.svg"); // 16x16
-  public static final Icon Notintegrated = load("/icons/Notintegrated.svg"); // 16x16
-  public static final Icon PreviewDetailsLeft = load("/icons/previewDetailsLeft.svg"); // 16x16
-  public static final Icon UndoIntegrateToBranch = load("/icons/UndoIntegrateToBranch.svg"); // 16x16
+  /**
+   * 16x16
+   */
+  public static final Icon Common = load("/icons/Common.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Conflictc = load("/icons/conflictc.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Conflictcp = load("/icons/conflictcp.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Conflictct = load("/icons/conflictct.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Conflictctp = load("/icons/conflictctp.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Conflictp = load("/icons/conflictp.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Conflictt = load("/icons/conflictt.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Conflicttp = load("/icons/conflicttp.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Integrated = load("/icons/Integrated.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon MarkAsMerged = load("/icons/MarkAsMerged.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon MarkAsNotMerged = load("/icons/MarkAsNotMerged.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Notintegrated = load("/icons/Notintegrated.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon PreviewDetailsLeft = load("/icons/previewDetailsLeft.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon UndoIntegrateToBranch = load("/icons/UndoIntegrateToBranch.svg");
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Unknown */
   @SuppressWarnings("unused")

@@ -191,26 +191,6 @@ public class FindUIHelper implements Disposable {
     findSettings.setFileMask(myModel.getFileFilter());
   }
 
-  boolean isUseSeparateView() {
-    return FindSettings.getInstance().isShowResultsInSeparateView();
-  }
-
-  boolean isSkipResultsWithOneUsage() {
-    return FindSettings.getInstance().isSkipResultsWithOneUsage();
-  }
-
-  void setUseSeparateView(boolean separateView) {
-    if (!myModel.isOpenInNewTabEnabled()) throw new IllegalStateException("'Open in new Tab' is not enabled");
-    myModel.setOpenInNewTab(separateView);
-    FindSettings.getInstance().setShowResultsInSeparateView(separateView);
-  }
-
-  void setSkipResultsWithOneUsage(boolean skip) {
-    if (!isReplaceState()) {
-      FindSettings.getInstance().setSkipResultsWithOneUsage(skip);
-    }
-  }
-
   String getTitle() {
     if (myModel.isReplaceState()){
       return myModel.isMultipleFiles()

@@ -42,10 +42,11 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     final RelativePoint point = editor != null ? popupFactory.guessBestPopupLocation(editor) :
                                 popupFactory.guessBestPopupLocation(dataContext);
 
-    List<String> fileNames = findTestDataFiles(dataContext);
+    List<TestDataFile> fileNames = findTestDataFiles(dataContext);
     if (fileNames == null || fileNames.isEmpty()) {
-      String testData = guessTestData(dataContext);
-      if (testData == null) {
+      PsiMethod method = findTargetMethod(dataContext);
+      fileNames = method == null ? null : TestDataGuessByExistingFilesUtil.guessTestDataName(method);
+      if (fileNames == null) {
         Notification notification = new Notification(
           "testdata",
           "Found no test data files",
@@ -54,14 +55,13 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
         Notifications.Bus.notify(notification, project);
         return;
       }
-      fileNames = Collections.singletonList(testData);
     }
 
     TestDataNavigationHandler.navigate(point, fileNames, project);
   }
 
   @Nullable
-  static List<String> findTestDataFiles(@NotNull DataContext context) {
+  static List<TestDataFile> findTestDataFiles(@NotNull DataContext context) {
     final PsiMethod method = findTargetMethod(context);
     if (method == null) {
       PsiClass parametrizedTestClass = findParametrizedClass(context);
@@ -125,10 +125,5 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     }
 
     return null;
-  }
-
-  private static String guessTestData(DataContext context) {
-    PsiMethod method = findTargetMethod(context);
-    return method == null ? null : TestDataGuessByExistingFilesUtil.guessTestDataName(method);
   }
 }

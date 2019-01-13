@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ide.util.PropertiesComponent
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.ServiceManagerImpl
-import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -21,6 +20,7 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.io.getDirectoryTree
 import com.intellij.util.io.move
+import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -56,7 +56,7 @@ internal class DoNotSaveDefaultsTest {
   }
 
   @Test
-  fun testProject() {
+  fun testProject() = runBlocking {
     createOrLoadProject(tempDir, directoryBased = false) { project ->
       doTest(project as ProjectImpl)
     }
@@ -89,18 +89,16 @@ internal class DoNotSaveDefaultsTest {
     propertyComponent.unsetValue("CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2")
     propertyComponent.unsetValue("ts.lib.d.ts.version")
     propertyComponent.unsetValue("nodejs_interpreter_path.stuck_in_default_project")
+    propertyComponent.unsetValue("tasks.pass.word.conversion.enforced")
 
-    val app = ApplicationManager.getApplication() as ApplicationImpl
     try {
       System.setProperty("store.save.use.modificationCount", "false")
-      app.isSaveAllowed = true
       runInEdtAndWait {
-        StoreUtil.save(componentManager.stateStore, null)
+        runBlocking { componentManager.stateStore.save() }
       }
     }
     finally {
       System.setProperty("store.save.use.modificationCount", useModCountOldValue ?: "false")
-      app.isSaveAllowed = false
     }
 
     if (componentManager is Project) {

@@ -5,6 +5,6 @@ class Test {
         return null;
     }
     void foo () {
-        <ref>asList(new int[0]);
+        <caret>asList(new int[0]);
     }
 }

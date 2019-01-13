@@ -72,26 +72,27 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         int offset = editor.getCaretModel().getOffset();
         final List<TemplateImpl> availableTemplates = TemplateManagerImpl.listApplicableTemplates(file, offset, false);
         final Map<TemplateImpl, String> templates = filterTemplatesByPrefix(availableTemplates, editor, offset, false, false);
+        boolean isAutopopup = parameters.getInvocationCount() == 0;
         if (showAllTemplates()) {
           final AtomicBoolean templatesShown = new AtomicBoolean(false);
           final CompletionResultSet finalResult = result;
           if (Registry.is("ide.completion.show.live.templates.on.top")) {
-            ensureTemplatesShown(templatesShown, templates, finalResult);
+            ensureTemplatesShown(templatesShown, templates, finalResult, isAutopopup);
           }
 
           result.runRemainingContributors(parameters, completionResult -> {
             finalResult.passResult(completionResult);
             if (completionResult.isStartMatch()) {
-              ensureTemplatesShown(templatesShown, templates, finalResult);
+              ensureTemplatesShown(templatesShown, templates, finalResult, isAutopopup);
             }
           });
 
-          ensureTemplatesShown(templatesShown, templates, result);
+          ensureTemplatesShown(templatesShown, templates, result, isAutopopup);
           showCustomLiveTemplates(parameters, result);
           return;
         }
 
-        if (parameters.getInvocationCount() > 0) return; //only in autopopups for now
+        if (!isAutopopup) return;
 
         // custom templates should handle this situation by itself (return true from hasCompletionItems() and provide lookup element)
         // regular templates won't be shown in this case
@@ -133,7 +134,10 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
     return shouldShowAllTemplates();
   }
 
-  private static void ensureTemplatesShown(AtomicBoolean templatesShown, Map<TemplateImpl, String> templates, CompletionResultSet result) {
+  private static void ensureTemplatesShown(AtomicBoolean templatesShown,
+                                           Map<TemplateImpl, String> templates,
+                                           CompletionResultSet result,
+                                           boolean isAutopopup) {
     if (!templatesShown.getAndSet(true)) {
       result.restartCompletionOnPrefixChange(StandardPatterns.string().with(new PatternCondition<String>("type after non-identifier") {
         @Override
@@ -143,6 +147,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
       }));
       for (final Map.Entry<TemplateImpl, String> entry : templates.entrySet()) {
         ProgressManager.checkCanceled();
+        if (isAutopopup && entry.getKey().getShortcutChar() == TemplateSettings.NONE_CHAR) continue;
         result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(StringUtil.notNullize(entry.getValue())))
           .addElement(new LiveTemplateLookupElementImpl(entry.getKey(), false));
       }

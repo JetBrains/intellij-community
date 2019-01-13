@@ -38,6 +38,8 @@ class DuplicateBranchesInSwitchTest : LightCodeInsightFixtureTestCase() {
   fun testUnaryMinusInReturn() = doTest()
   fun testMethodCallInReturn() = doTest()
   fun testManySimilarBranches() = doTest()
+  fun testParentheses() = doTest()
+  fun testAssignment() = doTest()
 
   private fun doTest() {
     myFixture.testHighlighting("${getTestName(false)}.java")

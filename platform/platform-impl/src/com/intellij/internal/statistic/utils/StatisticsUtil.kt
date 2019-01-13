@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -22,7 +23,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 fun getProjectId(project: Project): String {
-  return project.getProjectCacheFileName(false, ".").hashCode().toString()
+  return project.getProjectCacheFileName().hashCode().toString()
 }
 
 fun createData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
@@ -145,6 +146,21 @@ private fun humanize(number: Int): String {
   val ks = if (k > 0) "${k}K" else ""
   val rs = if (r > 0) "${r}" else ""
   return ms + ks + rs
+}
+
+fun <T> addIfDiffers(set: MutableSet<in UsageDescriptor>, settingsBean: T, defaultSettingsBean: T,
+                     valueFunction: (T) -> Any, featureIdPrefix: String) {
+  addIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, { "$featureIdPrefix.$it" })
+}
+
+fun <T, V> addIfDiffers(set: MutableSet<in UsageDescriptor>, settingsBean: T, defaultSettingsBean: T,
+                        valueFunction: (T) -> V,
+                        featureIdFunction: (V) -> String) {
+  val value = valueFunction(settingsBean)
+  val defaultValue = valueFunction(defaultSettingsBean)
+  if (!Comparing.equal(value, defaultValue)) {
+    set.add(UsageDescriptor(featureIdFunction(value), 1))
+  }
 }
 
 fun toUsageDescriptors(result: ObjectIntHashMap<String>): Set<UsageDescriptor> {

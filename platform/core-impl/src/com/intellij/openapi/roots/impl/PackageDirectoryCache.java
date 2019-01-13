@@ -144,6 +144,7 @@ public class PackageDirectoryCache {
       protected MultiMap<String, VirtualFile> compute() {
         MultiMap<String, VirtualFile> result = MultiMap.createLinked();
         for (VirtualFile directory : myPackageDirectories) {
+          ProgressManager.checkCanceled();
           for (VirtualFile child : directory.getChildren()) {
             String childName = child.getName();
             String packageName = myQname.isEmpty() ? childName : myQname + "." + childName;

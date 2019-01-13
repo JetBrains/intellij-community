@@ -37,7 +37,7 @@ public class GraphStrUtils {
   public static final Comparator<GraphElement> GRAPH_ELEMENT_COMPARATOR =
     new GraphElementComparatorByLayoutIndex(nodeIndex -> 0);
 
-  public static <CommitId> String commitsInfoToStr(PermanentCommitsInfo<CommitId> commitsInfo, int size, Function<CommitId, String> toStr) {
+  public static <CommitId> String commitsInfoToStr(PermanentCommitsInfo<CommitId> commitsInfo, int size, Function<? super CommitId, String> toStr) {
     StringBuilder s = new StringBuilder();
     for (int i = 0; i < size; i++) {
       if (i != 0) s.append("\n");

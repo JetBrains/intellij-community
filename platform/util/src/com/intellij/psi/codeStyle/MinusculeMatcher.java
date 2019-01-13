@@ -384,8 +384,9 @@ public class MinusculeMatcher implements Matcher {
     int i = 1;
     boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
     while (nameIndex + i < name.length() && patternIndex + i < myPattern.length) {
-      if (!charEquals(myPattern[patternIndex + i], patternIndex + i, name.charAt(nameIndex + i), ignoreCase)) {
-        if (Character.isDigit(myPattern[patternIndex + i]) && Character.isDigit(myPattern[patternIndex + i - 1])) {
+      char nameChar = name.charAt(nameIndex + i);
+      if (!charEquals(myPattern[patternIndex + i], patternIndex + i, nameChar, ignoreCase)) {
+        if (isSkippingDigitBetweenPatternDigits(patternIndex + i, nameChar)) {
           return 0;
         }
         break;
@@ -397,6 +398,10 @@ public class MinusculeMatcher implements Matcher {
       i++;
     }
     return i;
+  }
+
+  private boolean isSkippingDigitBetweenPatternDigits(int patternIndex, char nameChar) {
+    return Character.isDigit(myPattern[patternIndex]) && Character.isDigit(myPattern[patternIndex - 1]) && Character.isDigit(nameChar);
   }
 
   // we've found the longest fragment matching pattern and name

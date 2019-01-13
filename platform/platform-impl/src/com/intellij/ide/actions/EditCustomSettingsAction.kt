@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorTextField
 import com.intellij.util.LineSeparator
 import java.io.File
@@ -65,7 +66,10 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
       val vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
       if (vFile != null) {
         vFile.refresh(false, false)
-        PsiNavigationSupport.getInstance().createNavigatable(project, vFile, vFile.length.toInt()).navigate(true)
+        val psiFile = PsiManager.getInstance(project).findFile(vFile)
+        if (psiFile != null) {
+          PsiNavigationSupport.getInstance().createNavigatable(project, vFile, psiFile.textLength).navigate(true)
+        }
       }
     }
     else if (frame != null) {

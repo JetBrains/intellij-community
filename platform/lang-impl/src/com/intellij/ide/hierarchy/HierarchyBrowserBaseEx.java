@@ -636,7 +636,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       if (provider != null) {
         HierarchyBrowserBaseEx newBrowser = (HierarchyBrowserBaseEx)BrowseHierarchyActionBase.createAndAddToPanel(
           selectedElement.getProject(), provider, selectedElement);
-        ApplicationManager.getApplication().invokeLater(() -> newBrowser.changeView(correctViewType(browser, currentViewType)));
+        ApplicationManager.getApplication().invokeLater(() -> newBrowser.changeView(correctViewType(browser, currentViewType)), __ -> newBrowser.isDisposed());
       }
     }
 
@@ -750,8 +750,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       HierarchyBrowserManager.getSettings(myProject).SCOPE = scopeType;
 
       // invokeLater is called to update state of button before long tree building operation
-      // scope is kept per type so other builders doesn't need to be refreshed
-      ApplicationManager.getApplication().invokeLater(() -> doRefresh(true));
+      // scope is kept per type so other builders don't need to be refreshed
+      ApplicationManager.getApplication().invokeLater(() -> doRefresh(true), __ -> isDisposed());
     }
 
     @NotNull

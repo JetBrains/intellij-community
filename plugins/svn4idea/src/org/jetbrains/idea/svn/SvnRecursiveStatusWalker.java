@@ -120,7 +120,7 @@ public class SvnRecursiveStatusWalker {
   private void handleStatusException(@NotNull MyItem item, @NotNull SvnBindException e) throws SvnBindException {
     if (e.contains(ErrorCode.WC_NOT_WORKING_COPY) || e.contains(ErrorCode.WC_NOT_FILE) || e.contains(ErrorCode.WC_PATH_NOT_FOUND)) {
       final VirtualFile virtualFile = item.getPath().getVirtualFile();
-      if (virtualFile != null && !isIgnoredByVcs(virtualFile)) {
+      if (virtualFile != null && !isIgnoredByVcs(virtualFile) && !myChangeListManager.isVcsIgnoredFile(virtualFile)) {
         // self is unversioned
         myReceiver.processUnversioned(virtualFile);
 

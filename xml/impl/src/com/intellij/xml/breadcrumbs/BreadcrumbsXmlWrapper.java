@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
+import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.ui.UISettings;
@@ -30,6 +31,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Gray;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -84,6 +86,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private final FileBreadcrumbsCollector myBreadcrumbsCollector;
 
   public static final Key<BreadcrumbsXmlWrapper> BREADCRUMBS_COMPONENT_KEY = new Key<>("BREADCRUMBS_KEY");
+  private static final Iterable<? extends Crumb> EMPTY_BREADCRUMBS = ContainerUtil.emptyIterable();
 
   public BreadcrumbsXmlWrapper(@NotNull final Editor editor) {
     myEditor = editor;
@@ -119,7 +122,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
     editor.getCaretModel().addCaretListener(caretListener, this);
 
-    myBreadcrumbsCollector = findBreadcrumbsCollector();
+    myBreadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myFile);
     if (myFile != null) {
       myBreadcrumbsCollector.watchForChanges(myFile, editor, this, () -> queueUpdate());
     }
@@ -175,17 +178,6 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     queueUpdate();
   }
 
-  private FileBreadcrumbsCollector findBreadcrumbsCollector() {
-    if (myFile != null) {
-      for (FileBreadcrumbsCollector extension : FileBreadcrumbsCollector.EP_NAME.getExtensions(myProject)) {
-        if (extension.handlesFile(myFile)) {
-          return extension;
-        }
-      }
-    }
-    return new PsiFileBreadcrumbsCollector(myProject);
-  }
-
   private void updateCrumbs() {
     if (myEditor == null || myFile == null || myEditor.isDisposed()) return;
 
@@ -196,14 +188,12 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     ProgressIndicator progress = new ProgressIndicatorBase();
     myAsyncUpdateProgress = progress;
 
-    myBreadcrumbsCollector.updateCrumbs(myFile, myEditor, myAsyncUpdateProgress, (crumbs) -> {
+    myBreadcrumbsCollector.updateCrumbs(myFile, myEditor, myEditor.getCaretModel().getOffset(), myAsyncUpdateProgress, (crumbs) -> {
       if (!progress.isCanceled() && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
-        breadcrumbs.setFont(getNewFont(myEditor));
         if (!breadcrumbs.isShowing() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-          breadcrumbs.setCrumbs(null);
-          notifyListeners(null);
-          return;
+          crumbs = EMPTY_BREADCRUMBS;
         }
+        breadcrumbs.setFont(getNewFont(myEditor));
         breadcrumbs.setCrumbs(crumbs);
         notifyListeners(crumbs);
       }
@@ -224,7 +214,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     myBreadcrumbListeners.remove(listener);
   }
 
-  private void notifyListeners(Iterable<? extends Crumb> breadcrumbs) {
+  private void notifyListeners(@NotNull Iterable<? extends Crumb> breadcrumbs) {
     for (BreadcrumbListener listener : myBreadcrumbListeners) {
       listener.breadcrumbsChanged(breadcrumbs);
     }
@@ -285,8 +275,8 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, null);
     }
     myEditor = null;
-    breadcrumbs.setCrumbs(null);
-    notifyListeners(null);
+    breadcrumbs.setCrumbs(EMPTY_BREADCRUMBS);
+    notifyListeners(EMPTY_BREADCRUMBS);
   }
 
   private void updateEditorFont(PropertyChangeEvent event) {

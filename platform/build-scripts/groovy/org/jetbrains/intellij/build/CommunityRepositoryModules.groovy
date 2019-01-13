@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -127,6 +127,7 @@ class CommunityRepositoryModules {
     plugin("intellij.tasks.core") {
       directoryName = "tasks"
       withModule("intellij.tasks")
+      withModule("intellij.tasks.compatibility")
       withModule("intellij.tasks.jira")
       withOptionalModule("intellij.tasks.java")
       doNotCreateSeparateJarForLocalizableResources()
@@ -159,8 +160,6 @@ class CommunityRepositoryModules {
       withResource("maven3-server-impl/lib/maven3", "lib/maven3")
       withResource("maven3-server-common/lib", "lib/maven3-server-lib")
       withResource("maven2-server-impl/lib/maven2", "lib/maven2")
-      withModuleLibrary("JAXB", "intellij.maven.server.m2.impl", "maven2-server-lib")
-      withModuleLibrary("javax-activation", "intellij.maven.server.m2.impl", "maven2-server-lib")
       [
         "archetype-common-2.0-alpha-4-SNAPSHOT.jar",
         "commons-beanutils.jar",
@@ -219,12 +218,11 @@ class CommunityRepositoryModules {
     plugin("intellij.cucumber.java") {
       withModule("intellij.cucumber.jvmFormatter")
       withModule("intellij.cucumber.jvmFormatter3")
-      withResource("../../community/lib/cucumber-core-1.2.4.jar", "lib")
-      withResource("../../community/lib/gherkin-2.12.2.jar", "lib")
+      withModule("intellij.cucumber.jvmFormatter4")
+      withProjectLibrary("cucumber-core")
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.cucumber.groovy") {
-      withResource("../../community/lib/cucumber-core-1.2.4.jar", "lib")//todo[nik] fix dependencies instead
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.java.decompiler") {

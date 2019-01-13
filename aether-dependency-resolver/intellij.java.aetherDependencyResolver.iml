@@ -119,17 +119,19 @@
     <orderEntry type="library" name="maven-model" level="project" />
     <orderEntry type="module-library">
       <library name="org.apache.maven:maven-artifact" type="repository">
-        <properties maven-id="org.apache.maven:maven-artifact:3.3.9" />
+        <properties maven-id="org.apache.maven:maven-artifact:3.3.9">
+          <exclude>
+            <dependency maven-id="org.apache:commons-lang3" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.3.9/maven-artifact-3.3.9.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.0.22/plexus-utils-3.0.22.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.4/commons-lang3-3.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.3.9/maven-artifact-3.3.9-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.0.22/plexus-utils-3.0.22-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.4/commons-lang3-3.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -149,17 +151,19 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.apache.maven:maven-builder-support" type="repository">
-        <properties maven-id="org.apache.maven:maven-builder-support:3.3.9" />
+        <properties maven-id="org.apache.maven:maven-builder-support:3.3.9">
+          <exclude>
+            <dependency maven-id="org.apache:commons-lang3" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/3.3.9/maven-builder-support-3.3.9.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.0.22/plexus-utils-3.0.22.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.4/commons-lang3-3.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/3.3.9/maven-builder-support-3.3.9-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.0.22/plexus-utils-3.0.22-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.4/commons-lang3-3.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -187,5 +191,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="commons-lang3" level="project" />
   </component>
 </module>

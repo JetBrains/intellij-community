@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.project.Project
 import org.jdom.Element
 import java.io.Writer
@@ -51,7 +50,7 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
 }
 
 // cannot be `internal`, used in Upsource
-class DefaultProjectStoreImpl(override val project: Project, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+class DefaultProjectStoreImpl(override val project: Project, private val pathMacroManager: PathMacroManager) : ChildlessComponentStore() {
   // see note about default state in project store
   override val loadPolicy: StateLoadPolicy
     get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
@@ -61,8 +60,6 @@ class DefaultProjectStoreImpl(override val project: Project, private val pathMac
   init {
     service<DefaultProjectExportableAndSaveTrigger>().project = project
   }
-
-
 
   override val storageManager: StateStorageManager = object : StateStorageManager {
     override val componentManager: ComponentManager?
@@ -84,14 +81,14 @@ class DefaultProjectStoreImpl(override val project: Project, private val pathMac
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
   }
 
-  override fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean = false
+  override fun isUseLoadedStateAsExisting(storage: StateStorage) = false
 
   // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
   fun getStateCopy(): Element? = storage.loadLocalData()
 
-  override fun getPathMacroManagerForDefaults(): PathMacroManager = pathMacroManager
+  override fun getPathMacroManagerForDefaults() = pathMacroManager
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<FileStorageAnnotation> = listOf(PROJECT_FILE_STORAGE_ANNOTATION)
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation) = listOf(PROJECT_FILE_STORAGE_ANNOTATION)
 
   override fun setPath(path: String) {
   }
@@ -102,11 +99,14 @@ class DefaultProjectStoreImpl(override val project: Project, private val pathMac
 // ExportSettingsAction checks only "State" annotation presence, but doesn't require PersistentStateComponent implementation, so, we can just specify annotation
 @State(name = "ProjectManager", storages = [(Storage(FILE_SPEC))])
 internal class DefaultProjectExportableAndSaveTrigger {
+  @Suppress("StatefulEp")
   @Volatile
   var project: Project? = null
 
-  fun save(isForceSavingAllSettings: Boolean) {
-    // we must trigger save
-    StoreUtil.saveProject(project ?: return, isForceSavingAllSettings)
+  suspend fun save(isForceSavingAllSettings: Boolean): SaveResult {
+    val project = project ?: return SaveResult.EMPTY
+    val result = SaveResult()
+    (project.stateStore as ComponentStoreImpl).doSave(result, isForceSavingAllSettings)
+    return result
   }
 }

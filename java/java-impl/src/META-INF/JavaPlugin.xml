@@ -22,6 +22,10 @@
     <component>
       <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
+      <implementation-class>com.intellij.openapi.projectRoots.impl.JavaSdkImpl</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -37,6 +41,9 @@
     </component>
     <component>
       <implementation-class>com.intellij.lang.java.JavaModuleRenameListener</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationSearcher</implementation-class>
     </component>
   </project-components>
 
@@ -94,6 +101,8 @@
     <extensionPoint qualifiedName="com.intellij.debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
     <extensionPoint qualifiedName="com.intellij.externalAnnotationsArtifactsResolver"
                     interface="com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver"/>
+    <extensionPoint qualifiedName="com.intellij.java.externalAnnotation.locationProvider"
+                    interface="com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -497,6 +506,7 @@
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.DeclarationMover" id="declaration" order="before xml"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.StatementMover" id="statement" order="before declaration"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.CaseBlockMover" id="caseBlock" order="before statement"/>
+    <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.CatchBlockMover" id="catchBlock" order="before statement"/>
     <regExpModifierProvider language="JAVA" implementationClass="com.intellij.codeInsight.JavaRegExpModifierProvider" />
     <colorProvider implementation="com.intellij.codeInsight.daemon.impl.JavaColorProvider" />
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider"/>
@@ -964,6 +974,11 @@
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.enhancedSwitch.SwitchLabeledRuleCanBeCodeBlockInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantOperationOnEmptyContainer"
+                     key="inspection.redundant.operation.on.empty.container.display.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.redundancy.RedundantOperationOnEmptyContainerInspection" />
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"/>

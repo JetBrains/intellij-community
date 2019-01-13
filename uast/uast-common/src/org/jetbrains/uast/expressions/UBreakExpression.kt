@@ -39,3 +39,24 @@ interface UBreakExpression : UJumpExpression {
 
   override fun asRenderString(): String = label?.let { "break@$it" } ?: "break"
 }
+
+interface UBreakWithValueExpression : UBreakExpression {
+
+  val valueExpression: UExpression?
+
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitBreakExpression(this)) return
+    annotations.acceptList(visitor)
+    valueExpression?.accept(visitor)
+    visitor.afterVisitBreakExpression(this)
+  }
+
+  override fun asLogString(): String = log("label = $label, hasValue = ${valueExpression != null}")
+
+  override fun asRenderString(): String = buildString {
+    append("break")
+    label?.let { append("@$it") }
+    valueExpression?.let { append(" ${it.asRenderString()}") }
+  }
+
+}

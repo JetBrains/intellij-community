@@ -16,6 +16,6 @@ public class MyClass
   {
     String[] myArray = new String[] { "a", "b", "c" };
 
-    proc<ref>ess(myArray);  // Ctr-Left-Click on "process" takes me to the wrong method!!!
+    proc<caret>ess(myArray);  // Ctr-Left-Click on "process" takes me to the wrong method!!!
   }
 }

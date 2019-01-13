@@ -862,4 +862,15 @@ public class EditorActionUtil {
       foldingModel.runBatchFoldingOperation(() -> region.setExpanded(true));
     }
   }
+
+  public static void moveCaret(@NotNull Caret caret, int offset, boolean withSelection) {
+    if (withSelection) {
+      caret.setSelection(caret.getLeadSelectionOffset(), offset);
+    }
+    else {
+      caret.removeSelection();
+    }
+    caret.moveToOffset(offset);
+    EditorModificationUtil.scrollToCaret(caret.getEditor());
+  }
 }

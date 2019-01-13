@@ -52,7 +52,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.BooleanValueHolder;
 import com.intellij.util.CachedValueImpl;
 import com.intellij.util.containers.ContainerUtil;
@@ -561,12 +560,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
 
       DataNodeCheckedTreeNode[] unprocessedNodes = myTree.getSelectedNodes(
-        DataNodeCheckedTreeNode.class, new Tree.NodeFilter<DataNodeCheckedTreeNode>() {
-          @Override
-          public boolean accept(DataNodeCheckedTreeNode node) {
-            return myDependencyAwareDataKeys.contains(node.myDataNode.getKey()) && checked != node.isChecked();
-          }
-        });
+        DataNodeCheckedTreeNode.class, node -> myDependencyAwareDataKeys.contains(node.myDataNode.getKey()) && checked != node.isChecked());
 
       boolean isCheckCompleted = unprocessedNodes.length == 0 && myDependencyAwareDataKeys.contains(myDataNode.getKey());
 
@@ -785,12 +779,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     SelectRequiredButton() {
       super("Select Required", "select modules depended on currently selected modules", AllIcons.Actions.IntentionBulb);
 
-      addCustomUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          return selectionState.getValue().isRequiredSelectionEnabled;
-        }
-      });
+      addCustomUpdater(e -> selectionState.getValue().isRequiredSelectionEnabled);
     }
 
     @Override

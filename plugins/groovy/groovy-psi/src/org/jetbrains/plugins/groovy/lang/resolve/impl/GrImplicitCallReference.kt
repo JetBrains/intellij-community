@@ -29,26 +29,5 @@ class GrImplicitCallReference(element: GrMethodCall) : GroovyMethodCallReference
 
   override val arguments: Arguments? get() = element.getArguments()
 
-  override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
-    val place = element
-
-    val receiver = receiver ?: return emptyList()
-    val state = ResolveState.initial()
-
-    val methodProcessor = MethodProcessor(methodName, place, arguments, PsiType.EMPTY_ARRAY)
-    receiver.processReceiverType(methodProcessor, state, place)
-    methodProcessor.applicableCandidates?.let {
-      return it
-    }
-
-    val propertyProcessor = GroovyRValueProcessor(methodName, place, resolveKinds(true))
-    receiver.processReceiverType(propertyProcessor, state, place)
-    val properties = propertyProcessor.results
-    if (properties.size == 1) {
-      return properties
-    }
-
-    val methods = filterBySignature(filterByArgumentsCount(methodProcessor.allCandidates, arguments))
-    return methods + properties
-  }
+  override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> = resolveImpl2(incomplete)
 }

@@ -307,7 +307,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
 
     @Override
-    protected void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList) {
+    protected void onDetailsLoaded(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
       myChangesBrowser.setSelectedDetails(detailsList);
     }
 

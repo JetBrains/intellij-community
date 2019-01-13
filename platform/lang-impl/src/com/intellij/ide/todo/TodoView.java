@@ -67,9 +67,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
     state.current.isAutoScrollToSource = true;
 
-    TodoConfiguration.getInstance().addPropertyChangeListener(new MyPropertyChangeListener(), this);
-
     MessageBusConnection connection = project.getMessageBus().connect(this);
+    connection.subscribe(TodoConfiguration.PROPERTY_CHANGE, new MyPropertyChangeListener());
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
   }

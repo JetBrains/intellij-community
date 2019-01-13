@@ -56,12 +56,9 @@ public class SemServiceImpl extends SemService{
   public SemServiceImpl(Project project, PsiManager psiManager) {
     myProject = project;
     final MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
-      @Override
-      public void modificationCountChanged() {
-        if (!isInsideAtomicChange()) {
-          clearCache();
-        }
+    connection.subscribe(PsiModificationTracker.TOPIC, () -> {
+      if (!isInsideAtomicChange()) {
+        clearCache();
       }
     });
 

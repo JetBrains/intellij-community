@@ -1,9 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="22" height="22" viewBox="0 0 22 22">
   <defs>
-    <linearGradient id="radio-c" x1="50%" x2="50%" y1="0%" y2="100%">
-      <stop offset="0%" stop-opacity=".23"/>
-      <stop offset="100%" stop-opacity=".24"/>
-    </linearGradient>
     <circle id="radio-a" cx="11" cy="11" r="8"/>
     <filter id="radio-b" width="115.6%" height="115.6%" x="-7.8%" y="-7.8%" filterUnits="objectBoundingBox">
       <feGaussianBlur in="SourceAlpha" result="shadowBlurInner1" stdDeviation="1"/>
@@ -23,6 +19,6 @@
   <g fill="none" fill-rule="evenodd">
     <use fill="#FFF" xlink:href="#radio-a"/>
     <use fill="#000" filter="url(#radio-b)" xlink:href="#radio-a"/>
-    <circle cx="11" cy="11" r="7.75" stroke="url(#radio-c)"  stroke-width=".5"/>
+    <path fill="#000" fill-opacity=".23" d="M11,19 C6.581722,19 3,15.418278 3,11 C3,6.581722 6.581722,3 11,3 C15.418278,3 19,6.581722 19,11 C19,15.418278 15.418278,19 11,19 Z M11,18 C14.8659932,18 18,14.8659932 18,11 C18,7.13400675 14.8659932,4 11,4 C7.13400675,4 4,7.13400675 4,11 C4,14.8659932 7.13400675,18 11,18 Z"/>
   </g>
 </svg>

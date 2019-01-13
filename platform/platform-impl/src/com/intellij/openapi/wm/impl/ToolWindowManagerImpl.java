@@ -134,7 +134,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     busConnection.subscribe(ToolWindowManagerListener.TOPIC, myDispatcher.getMulticaster());
     busConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         if (myCurrentState != KeyState.hold) {
           resetHoldState();
         }
@@ -316,7 +316,16 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         }
       }
     }
-    return baseModifiers;
+    return getModifiersVKs(baseModifiers); // We should filter out 'mixed' mask like InputEvent.META_MASK | InputEvent.META_DOWN_MASK
+  }
+
+  @JdkConstants.InputEventMask
+  private static int getModifiersVKs(int mask) {
+    int vks = 0;
+    for (int modifier : new int[]{InputEvent.SHIFT_MASK, InputEvent.CTRL_MASK, InputEvent.META_MASK, InputEvent.ALT_MASK}) {
+      if ((mask & modifier) > 0) vks |= modifier;
+    }
+    return vks;
   }
 
   private void resetHoldState() {
@@ -1717,6 +1726,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     Element element = new Element("state");
 
     // Save frame's bounds
+    // [tav] Where we load these bounds? Should we just remove this code? (because we load frame bounds in WindowManagerImpl.allocateFrame)
+    // Anyway, we should save bounds in device space to preserve backward compatibility with the IDE-managed HiDPI mode (see JBUI.ScaleType).
+    // However, I won't change thise code because I can't even test it.
     final Rectangle frameBounds = myFrame.getBounds();
     final Element frameElement = new Element(FRAME_ELEMENT);
     element.addContent(frameElement);

@@ -105,7 +105,7 @@ object GithubUtil {
   object Delegates {
     inline fun <T> equalVetoingObservable(initialValue: T, crossinline onChange: (newValue: T) -> Unit) =
       object : ObservableProperty<T>(initialValue) {
-        override fun beforeChange(property: KProperty<*>, oldValue: T, newValue: T) = oldValue != newValue
+        override fun beforeChange(property: KProperty<*>, oldValue: T, newValue: T) = newValue == null || oldValue != newValue
         override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T) = onChange(newValue)
       }
   }

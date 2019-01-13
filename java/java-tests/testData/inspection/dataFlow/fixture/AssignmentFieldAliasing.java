@@ -18,7 +18,8 @@ class App {
 
   void testThreeClasses(Node x, Node y, Node z) {
     if (x.a == y && x.b == z && x == y.b && x == z.a && x == z) {
-      assert <warning descr="Condition 'x == x.a' is always 'true'">x == x.a</warning>;
+      // TODO: support this (currently z.a is flushed by LVA)
+      assert x == x.a;
       assert <warning descr="Condition 'x == x.b' is always 'true'">x == x.b</warning>;
     }
   }

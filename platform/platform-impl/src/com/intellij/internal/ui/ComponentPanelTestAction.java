@@ -79,7 +79,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private static final HashSet<String> ALLOWED_VALUES = new HashSet<>(Arrays.asList("one", "two", "three", "four", "five", "six",
               "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "abracadabra"));
 
-    private static final String STRING_VALUES[] = { "One", "Two", "Three", "Four", "Five", "Six" };
+    private static final String[] STRING_VALUES = { "One", "Two", "Three", "Four", "Five", "Six" };
 
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
@@ -104,6 +104,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane.addTab("Component Grid", createComponentGridPanel());
       pane.addTab("Progress Grid", createProgressGridPanel());
       pane.addTab("Validators", createValidatorsPanel());
+      pane.addTab("Multilines", createMultilinePanel());
 
       pane.addChangeListener(e -> {
         if (pane.getSelectedIndex() == 2) {
@@ -148,20 +149,33 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             System.out.println("Text1 link clicked. Desc = " + e.getDescription());
           }
-        }).withValidator(v -> {
+        }).withValidator(() -> {
           String tt = text1.getText();
           if (StringUtil.isNotEmpty(tt)) {
             try {
               Integer.parseInt(tt);
-              v.updateInfo(null);
+              return null;
             }
             catch (NumberFormatException nex) {
-              v.updateInfo(new ValidationInfo("Warning, expecting a number.<br/>Visit the <a href=\"#link.one\">information link</a>" +
-                                              "<br/>Or <a href=\"#link.two\">another link</a>", text1).asWarning());
+              return new ValidationInfo("Warning, expecting a number.<br/>Visit the <a href=\"#link.one\">information link</a>" +
+                                              "<br/>Or <a href=\"#link.two\">another link</a>", text1).asWarning();
             }
           }
           else {
-            v.updateInfo(null);
+            return null;
+          }
+        }).withFocusValidator(() -> {
+          String tt = text1.getText();
+          if (StringUtil.isNotEmpty(tt)) {
+            try {
+              int i = Integer.parseInt(tt);
+              return i == 555 ? new ValidationInfo("Wrong number", text1).asWarning() : null;
+            }
+            catch (NumberFormatException nex) {
+              return new ValidationInfo("Warning, expecting a number.", text1).asWarning();
+            }
+          } else {
+            return null;
           }
         }).installOn(text1);
 
@@ -179,11 +193,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             System.out.println("Text2 link clicked. Desc = " + e.getDescription());
           }
-        }).withValidator(v -> {
+        }).withValidator(() -> {
           String tt = text2.getText();
-          v.updateInfo(
-            StringUtil.isEmpty(tt) || tt.length() < 5 ? new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols.<br/>Please <a href=\"#check.rules\">check rules.</a>",
-                                                                           text2) : null);
+          return StringUtil.isEmpty(tt) || tt.length() < 5 ?
+            new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols.<br/>Please <a href=\"#check.rules\">check rules.</a>", text2) : null;
         }).andStartOnFocusLost().installOn(text2);
 
       gc.gridy++;
@@ -345,10 +358,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JPanel p2 = UI.PanelFactory.grid().
         add(UI.PanelFactory.panel(new JCheckBox("Checkbox 1")).withComment("Comment 1").moveCommentRight()).
         add(UI.PanelFactory.panel(new JCheckBox("Checkbox 2")).withComment("Comment 2")).
-        add(UI.PanelFactory.panel(new JCheckBox("Checkbox 3")).withTooltip("Checkbox tooltip")).
+        add(UI.PanelFactory.panel(new JCheckBox("<html>Multiline<br/>Checkbox 3</html>")).withTooltip("Checkbox tooltip")).
 
         add(UI.PanelFactory.panel(rb1).withComment("Comment 1").moveCommentRight()).
-        add(UI.PanelFactory.panel(rb2).withComment("Comment 2")).
+        add(UI.PanelFactory.panel(rb2).withComment("Comment 2").withTooltip("Checkbox tooltip")).
         add(UI.PanelFactory.panel(rb3).withTooltip("RadioButton tooltip")).
 
         createPanel();
@@ -367,8 +380,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private JComponent createValidatorsPanel() {
       // JTextField component with browse button
       TextFieldWithBrowseButton tfbb = new TextFieldWithBrowseButton(e -> System.out.println("JTextField browse button pressed"));
-      new ComponentValidator(getDisposable()).withValidator(v ->
-          v.updateInfo(tfbb.getText().length() != 5 ? new ValidationInfo("Enter 5 symbols",  tfbb) : null)).
+      new ComponentValidator(getDisposable()).withValidator(() -> tfbb.getText().length() != 5 ? new ValidationInfo("Enter 5 symbols",  tfbb) : null).
         withOutlineProvider(ComponentValidator.CWBB_PROVIDER).
         andStartOnFocusLost().
         installOn(tfbb);
@@ -383,12 +395,12 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       // EditorTextField component with browse button
       EditorTextField editor = new EditorTextField();
       ComponentWithBrowseButton<EditorTextField> etfbb = new ComponentWithBrowseButton<>(editor, e -> System.out.println("JTextField browse button pressed"));
-      new ComponentValidator(getDisposable()).withValidator(v -> {
+      new ComponentValidator(getDisposable()).withValidator(() -> {
         try {
           new URL(etfbb.getChildComponent().getDocument().getText());
-          v.updateInfo(null);
+          return null;
         } catch (MalformedURLException mex) {
-          v.updateInfo(new ValidationInfo("Enter a valid URL", etfbb));
+          return new ValidationInfo("Enter a valid URL", etfbb);
         }
       }).withOutlineProvider(ComponentValidator.CWBB_PROVIDER).andStartOnFocusLost().installOn(etfbb);
 
@@ -406,10 +418,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       comboBox.addActionListener(l -> ComponentValidator.getInstance(comboBox).ifPresent(ComponentValidator::revalidate));
 
       new ComponentValidator(getDisposable())
-        .withValidator(v -> {
-          ValidationInfo vi = comboBox.getSelectedIndex() % 2 == 0 ? new ValidationInfo("Can't select odd items", comboBox) : null;
-          v.updateInfo(vi);
-        }).installOn(comboBox);
+        .withValidator(() -> comboBox.getSelectedIndex() % 2 == 0 ? new ValidationInfo("Can't select odd items", comboBox) : null)
+        .installOn(comboBox);
 
       // Panels factory
       return UI.PanelFactory.grid().
@@ -423,6 +433,64 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withLabel("&ComboBoxEditorTextField:").withComment("EditorComboBox editor")).
 
         createPanel();
+    }
+
+    private JComponent createMultilinePanel() {
+      JPanel panel = new JPanel(new GridBagLayout());
+      GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.LINE_START,
+                                                     GridBagConstraints.HORIZONTAL, JBUI.insets(10, 0, 0, 4), 0, 0);
+
+      panel.add(new JLabel("Label one:"), gc);
+
+      gc.gridx++;
+      panel.add(new JCheckBox("<html>Multiline<br/>html<br/>checkbox</html>"), gc);
+
+      gc.gridx++;
+      panel.add(new JCheckBox("<html>Single line html checkbox</html>"), gc);
+
+      gc.gridx++;
+      panel.add(new JCheckBox("Single line checkbox"), gc);
+
+      gc.gridx++;
+      panel.add(new JButton("Button 1"), gc);
+
+      gc.gridy++;
+      gc.gridx = 0;
+      panel.add(new JLabel("Label two:"), gc);
+
+      ButtonGroup bg = new ButtonGroup();
+      JRadioButton rb = new JRadioButton("<html>Multiline<br/>html<br/>radiobutton</html>");
+      bg.add(rb);
+      rb.setSelected(true);
+
+      gc.gridx++;
+      panel.add(rb, gc);
+
+      rb = new JRadioButton("<html>Single line html radiobutton</html>");
+      bg.add(rb);
+
+      gc.gridx++;
+      panel.add(rb, gc);
+
+      rb = new JRadioButton("Single line radiobutton");
+      bg.add(rb);
+
+      gc.gridx++;
+      panel.add(rb, gc);
+
+      gc.gridx++;
+      panel.add(new JButton("Button 2"), gc);
+
+      gc.gridy++;
+      gc.gridx = 0;
+      gc.anchor = GridBagConstraints.PAGE_END;
+      gc.fill = GridBagConstraints.BOTH;
+      gc.weightx = 1.0;
+      gc.weighty = 1.0;
+      gc.gridwidth = 5;
+      panel.add(new JPanel(), gc);
+
+      return JBUI.Panels.simplePanel().addToTop(panel);
     }
 
     private class ProgressTimerRequest implements Runnable {

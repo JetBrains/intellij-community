@@ -15,7 +15,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PrioritizedTask;
@@ -348,24 +347,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   @Override
   public JComponent createToolTip(MouseEvent e) {
     return myEditedNode != null ? null : super.createToolTip(e);
-  }
-
-  protected abstract static class RefreshDebuggerTreeCommand extends SuspendContextCommandImpl {
-    private final DebuggerContextImpl myDebuggerContext;
-
-    @Override
-    public Priority getPriority() {
-      return Priority.NORMAL;
-    }
-
-    public RefreshDebuggerTreeCommand(DebuggerContextImpl context) {
-      super(context.getSuspendContext());
-      myDebuggerContext = context;
-    }
-
-    public final DebuggerContextImpl getDebuggerContext() {
-      return myDebuggerContext;
-    }
   }
 
   public DebuggerContextImpl getDebuggerContext() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -73,7 +73,7 @@ public class IdeaNotNullHelper {
 
             // parameter annotations
             StructAnnotationParameterAttribute param_annotations =
-              (StructAnnotationParameterAttribute)mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS);
+              mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS);
             if (param_annotations != null) {
 
               List<List<AnnotationExprent>> param_annotations_lists = param_annotations.getParamAnnotations();
@@ -155,8 +155,7 @@ public class IdeaNotNullHelper {
     boolean is_notnull_check = false;
 
     // method annotation, refers to the return value
-    StructAnnotationAttribute attr =
-      (StructAnnotationAttribute)mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS);
+    StructAnnotationAttribute attr = mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS);
     if (attr != null) {
       List<AnnotationExprent> annotations = attr.getAnnotations();
 

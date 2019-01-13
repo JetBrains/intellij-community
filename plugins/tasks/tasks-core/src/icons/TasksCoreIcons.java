@@ -21,35 +21,117 @@ public final class TasksCoreIcons {
     return IconLoader.getIcon(path, clazz);
   }
 
-  public static final Icon Asana = load("/icons/asana.png"); // 16x16
-  public static final Icon Assembla = load("/icons/assembla.png"); // 16x16
-  public static final Icon AutoMode = load("/icons/autoMode.png"); // 16x16
-  public static final Icon Bug = load("/icons/bug.png"); // 16x16
-  public static final Icon Bugzilla = load("/icons/bugzilla.png"); // 16x16
-  public static final Icon Clock = load("/icons/clock.svg"); // 13x13
-  public static final Icon Feature = load("/icons/feature.png"); // 16x16
-  public static final Icon Fogbugz = load("/icons/fogbugz.png"); // 16x16
-  public static final Icon Gitlab = load("/icons/gitlab.svg"); // 16x16
-  public static final Icon Jira = load("/icons/jira.png"); // 16x16
-  public static final Icon Lighthouse = load("/icons/lighthouse.png"); // 16x16
-  public static final Icon Mantis = load("/icons/mantis.png"); // 16x16
+  /**
+   * 16x16
+   */
+  public static final Icon Asana = load("/icons/asana.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Assembla = load("/icons/assembla.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Bugzilla = load("/icons/bugzilla.svg");
+  /**
+   * 13x13
+   */
+  public static final Icon Clock = load("/icons/clock.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Fogbugz = load("/icons/fogbugz.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Gitlab = load("/icons/gitlab.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Jira = load("/icons/jira.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Lighthouse = load("/icons/lighthouse.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Mantis = load("/icons/mantis.svg");
 
   public final static class Pivotal {
-    public static final Icon Bug = load("/icons/pivotal/bug.png"); // 16x16
-    public static final Icon Chore = load("/icons/pivotal/chore.png"); // 16x16
-    public static final Icon Feature = load("/icons/pivotal/feature.png"); // 16x16
-    public static final Icon Release = load("/icons/pivotal/release.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Bug = load("/icons/pivotal/bug.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Chore = load("/icons/pivotal/chore.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Feature = load("/icons/pivotal/feature.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Release = load("/icons/pivotal/release.png");
 
   }
-  public static final Icon Pivotal = load("/icons/pivotal.png"); // 16x16
-  public static final Icon Redmine = load("/icons/redmine.png"); // 16x16
-  public static final Icon SavedContext = load("/icons/savedContext.png"); // 16x16
-  public static final Icon Sprintly = load("/icons/sprintly.png"); // 16x16
-  public static final Icon StartTimer = load("/icons/startTimer.png"); // 16x16
-  public static final Icon StopTimer = load("/icons/stopTimer.png"); // 16x16
-  public static final Icon Trac = load("/icons/trac.png"); // 16x16
-  public static final Icon Trello = load("/icons/trello.png"); // 16x16
-  public static final Icon Youtrack = load("/icons/youtrack.png"); // 16x16
+  /**
+   * 16x16
+   */
+  public static final Icon Pivotal = load("/icons/pivotal.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Redmine = load("/icons/redmine.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon SavedContext = load("/icons/savedContext.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Sprintly = load("/icons/sprintly.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon StartTimer = load("/icons/startTimer.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon StopTimer = load("/icons/stopTimer.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Trac = load("/icons/trac.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Trello = load("/icons/trello.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Youtrack = load("/icons/youtrack.svg");
+
+  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Resume */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon AutoMode = load("/actions/resume.svg", com.intellij.icons.AllIcons.class);
+
+  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.StartDebugger */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Bug = load("/actions/startDebugger.svg", com.intellij.icons.AllIcons.class);
+
+  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Favorite */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Feature = load("/nodes/favorite.svg", com.intellij.icons.AllIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Vendors.Github */
   @SuppressWarnings("unused")

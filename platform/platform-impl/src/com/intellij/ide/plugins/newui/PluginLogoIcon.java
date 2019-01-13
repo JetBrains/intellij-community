@@ -8,6 +8,7 @@ import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Objects;
 
 /**
  * @author Alexander Lobas
@@ -39,24 +40,22 @@ class PluginLogoIcon implements PluginLogoIconProvider {
     myPluginLogoError_40 = setSouthWest(logo_40, AllIcons.Plugins.ModifierInvalid);
     myPluginLogoJBError_40 = setSouthEastWest(logo_40, AllIcons.Plugins.ModifierJBLogo, AllIcons.Plugins.ModifierInvalid);
 
-    Icon disabledJBLogo = IconLoader.getDisabledIcon(AllIcons.Plugins.ModifierJBLogo);
-    assert disabledJBLogo != null;
+    Icon disabledJBLogo = getDisabledJBLogo();
 
     myPluginLogoDisabled_40 = logoDisabled_40;
     myPluginLogoDisabledJB_40 = setSouthEast(logoDisabled_40, disabledJBLogo);
     myPluginLogoDisabledError_40 = setSouthWest(logoDisabled_40, AllIcons.Plugins.ModifierInvalid);
     myPluginLogoDisabledJBError_40 = setSouthEastWest(logoDisabled_40, disabledJBLogo, AllIcons.Plugins.ModifierInvalid);
 
-    Icon jbLogo2x = IconUtil.scale(AllIcons.Plugins.ModifierJBLogo, null, 2);
-    Icon errorLogo2x = IconUtil.scale(AllIcons.Plugins.ModifierInvalid, null, 2);
+    Icon jbLogo2x = getJBLogo2x();
+    Icon errorLogo2x = getErrorLogo2x();
 
     myPluginLogo_80 = logo_80;
     myPluginLogoJB_80 = setSouthEast(logo_80, jbLogo2x);
     myPluginLogoError_80 = setSouthWest(logo_80, errorLogo2x);
     myPluginLogoJBError_80 = setSouthEastWest(logo_80, jbLogo2x, errorLogo2x);
 
-    Icon disabledJBLogo2x = IconLoader.getDisabledIcon(jbLogo2x);
-    assert disabledJBLogo2x != null;
+    Icon disabledJBLogo2x = getDisabledJBLogo2x(jbLogo2x);
 
     myPluginLogoDisabled_80 = logoDisabled_80;
     myPluginLogoDisabledJB_80 = setSouthEast(logoDisabled_80, disabledJBLogo2x);
@@ -72,6 +71,21 @@ class PluginLogoIcon implements PluginLogoIconProvider {
     layeredIcon.setIcon(southEast, 1, SwingConstants.SOUTH_EAST);
 
     return layeredIcon;
+  }
+
+  @NotNull
+  protected Icon getDisabledIcon(@NotNull Icon icon) {
+    return createDisabledIcon(icon);
+  }
+
+  @NotNull
+  protected static Icon createDisabledIcon(@NotNull Icon icon) {
+    return Objects.requireNonNull(IconLoader.getDisabledIcon(icon));
+  }
+
+  @NotNull
+  protected Icon getScaled2xIcon(@NotNull Icon icon) {
+    return IconUtil.scale(icon, null, 2f);
   }
 
   @NotNull
@@ -93,6 +107,26 @@ class PluginLogoIcon implements PluginLogoIconProvider {
     layeredIcon.setIcon(southWest, 2, SwingConstants.SOUTH_WEST);
 
     return layeredIcon;
+  }
+
+  @NotNull
+  protected Icon getDisabledJBLogo() {
+    return getDisabledIcon(AllIcons.Plugins.ModifierJBLogo);
+  }
+
+  @NotNull
+  protected Icon getJBLogo2x() {
+    return getScaled2xIcon(AllIcons.Plugins.ModifierJBLogo);
+  }
+
+  @NotNull
+  protected Icon getErrorLogo2x() {
+    return getScaled2xIcon(AllIcons.Plugins.ModifierInvalid);
+  }
+
+  @NotNull
+  protected Icon getDisabledJBLogo2x(@NotNull Icon jbLogo2x) {
+    return getDisabledIcon(jbLogo2x);
   }
 
   @NotNull

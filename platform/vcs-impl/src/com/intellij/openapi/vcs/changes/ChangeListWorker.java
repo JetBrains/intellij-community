@@ -94,7 +94,7 @@ public class ChangeListWorker {
   }
 
   @NotNull
-  private Map<ListData, ListData> copyListsDataFrom(@NotNull Collection<ListData> lists) {
+  private Map<ListData, ListData> copyListsDataFrom(@NotNull Collection<? extends ListData> lists) {
     ListData oldDefault = myDefault;
     List<String> oldIds = ContainerUtil.map(myLists, list -> list.id);
 
@@ -291,7 +291,7 @@ public class ChangeListWorker {
   }
 
   @NotNull
-  public List<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes) {
+  public List<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes) {
     return ContainerUtil.map(getAffectedListsData(changes), this::toChangeList);
   }
 
@@ -301,7 +301,7 @@ public class ChangeListWorker {
   }
 
   @NotNull
-  private List<ListData> getAffectedListsData(@NotNull Collection<Change> changes) {
+  private List<ListData> getAffectedListsData(@NotNull Collection<? extends Change> changes) {
     Set<ListData> result = new HashSet<>();
 
     for (Change change : changes) {
@@ -547,7 +547,7 @@ public class ChangeListWorker {
   }
 
   @Nullable
-  public MultiMap<LocalChangeList, Change> moveChangesTo(@NotNull String name, @NotNull List<Change> changes) {
+  public MultiMap<LocalChangeList, Change> moveChangesTo(@NotNull String name, @NotNull List<? extends Change> changes) {
     final ListData targetList = getDataByName(name);
     if (targetList == null) return null;
 
@@ -693,7 +693,7 @@ public class ChangeListWorker {
     }
   }
 
-  void setChangeLists(@NotNull Collection<LocalChangeListImpl> lists) {
+  void setChangeLists(@NotNull Collection<? extends LocalChangeListImpl> lists) {
     myIdx.clear();
     myChangeMappings.clear();
 
@@ -1035,8 +1035,8 @@ public class ChangeListWorker {
     }
 
     private void doneProcessingChanges(@NotNull ChangeListWorker.ListData list,
-                                       @NotNull List<Change> removedChanges,
-                                       @NotNull List<Change> addedChanges) {
+                                       @NotNull List<? super Change> removedChanges,
+                                       @NotNull List<? super Change> addedChanges) {
       OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.id);
 
       Set<Change> listChanges = new HashSet<>(myWorker.getChangesIn(list));

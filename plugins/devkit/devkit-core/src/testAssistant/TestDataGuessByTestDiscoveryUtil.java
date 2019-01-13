@@ -6,12 +6,14 @@ import com.intellij.execution.testDiscovery.TestDiscoveryProducer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -24,13 +26,13 @@ public class TestDataGuessByTestDiscoveryUtil {
   private static final Logger LOG = Logger.getInstance(TestDataGuessByTestDiscoveryUtil.class);
 
   @NotNull
-  static List<String> collectTestDataByExistingFiles(@NotNull PsiMethod method) {
+  static List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiMethod method) {
     if (!isEnabled()) return Collections.emptyList();
     PsiClass testClass = method.getContainingClass();
     if (testClass == null) return Collections.emptyList();
     String testClassQualifiedName = testClass.getQualifiedName();
     if (testClassQualifiedName == null) return Collections.emptyList();
-    List<String> testQName = Collections.singletonList(testClassQualifiedName + "." + method.getName());
+    List<Couple<String>> testQName = Collections.singletonList(Couple.of(testClassQualifiedName, method.getName()));
     try {
       Project project = method.getProject();
       AffectedPathConsumer consumer = new AffectedPathConsumer(project);
@@ -44,7 +46,7 @@ public class TestDataGuessByTestDiscoveryUtil {
   }
 
   @NotNull
-  static List<String> collectTestDataByExistingFiles(@NotNull PsiClass parametrizedTestClass) {
+  static List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiClass parametrizedTestClass) {
     if (!isEnabled()) return Collections.emptyList();
     String testClassQualifiedName = parametrizedTestClass.getQualifiedName();
     if (testClassQualifiedName == null) return Collections.emptyList();
@@ -86,8 +88,8 @@ public class TestDataGuessByTestDiscoveryUtil {
     }
 
     @NotNull
-    List<String> getTestData() {
-      return myTestData;
+    List<TestDataFile> getTestData() {
+      return ContainerUtil.mapNotNull(myTestData, f -> new TestDataFile.LazyResolved(f));
     }
   }
 

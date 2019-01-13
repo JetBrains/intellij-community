@@ -160,7 +160,7 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
       if (equalsMethod != null && !equalsMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
-      final String docCommentText = collapseWhitespace(getActualCommentText(aClass.getDocComment()));
+      final String docCommentText = StringUtil.collapseWhiteSpace(getActualCommentText(aClass.getDocComment()));
       if (StringUtil.containsIgnoreCase(docCommentText, "this class has a natural ordering that is inconsistent with equals")) {
         // see Comparable.compareTo() javadoc
         return;
@@ -174,25 +174,6 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
         .filter(e -> (e instanceof PsiDocToken) && ((PsiDocToken)e).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA)
         .map(PsiElement::getText)
         .collect(Collectors.joining());
-    }
-
-    private static String collapseWhitespace(String s) {
-      final StringBuilder result = new StringBuilder();
-      boolean space = false;
-      for (int i = 0, length = s.length(); i < length; i++) {
-        char ch = s.charAt(i);
-        if (StringUtil.isWhiteSpace(ch)) {
-          if (!space) {
-            result.append(' ');
-            space = true;
-          }
-        }
-        else {
-          result.append(ch);
-          space = false;
-        }
-      }
-      return result.toString();
     }
   }
 }

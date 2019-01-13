@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
+import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,11 +15,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.availability.PsiAvailabilityService;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
+
+import static com.intellij.xml.breadcrumbs.BreadcrumbsUtilEx.findProvider;
 
 public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   private final static Logger LOG = Logger.getInstance(PsiFileBreadcrumbsCollector.class);
@@ -39,6 +44,11 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   @Override
   public boolean handlesFile(@NotNull VirtualFile virtualFile) {
     return true;
+  }
+
+  @Override
+  public boolean isShownForFile(@NotNull Editor editor, @NotNull VirtualFile file) {
+    return BreadcrumbsUtilEx.findProvider(editor, file) != null;
   }
 
   @Override
@@ -87,21 +97,22 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   @Override
   public void updateCrumbs(@NotNull VirtualFile virtualFile,
                            @NotNull Editor editor,
+                           int offset,
                            ProgressIndicator progressIndicator,
                            @NotNull Consumer<Iterable<? extends Crumb>> consumer) {
-    int offset = editor.getCaretModel().getOffset();
     PsiAvailabilityService.getInstance(myProject).performWhenPsiAvailable(editor.getDocument(), () -> {
       consumer.consume(collectBreadcrumbs(virtualFile, editor, offset));
     }, progressIndicator);
   }
 
+  @NotNull
   private Iterable<Crumb> collectBreadcrumbs(VirtualFile file, Editor editor, int offset) {
-    BreadcrumbsProvider defaultInfoProvider = BreadcrumbsUtilEx.findProvider(editor, file);
+    BreadcrumbsProvider defaultInfoProvider = findProvider(editor, file);
 
     Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs =
-      getLineElements(offset, file, myProject, defaultInfoProvider, true);
+      getLineElements(editor, offset, file, myProject, defaultInfoProvider, true);
 
-    if (pairs == null) return null;
+    if (pairs == null) return ContainerUtil.emptyIterable();
 
     ArrayList<Crumb> result = new ArrayList<>(pairs.size());
     CrumbPresentation[] presentations = getCrumbPresentations(toPsiElementArray(pairs));
@@ -119,7 +130,7 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
 
   @Nullable
   private static CrumbPresentation[] getCrumbPresentations(final PsiElement[] elements) {
-    for (BreadcrumbsPresentationProvider provider : BreadcrumbsPresentationProvider.EP_NAME.getExtensions()) {
+    for (BreadcrumbsPresentationProvider provider : BreadcrumbsPresentationProvider.EP_NAME.getExtensionList()) {
       final CrumbPresentation[] presentations = provider.getCrumbPresentations(elements);
       if (presentations != null) {
         return presentations;
@@ -129,12 +140,13 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   }
 
   @Nullable
-  private static Collection<Pair<PsiElement, BreadcrumbsProvider>> getLineElements(int offset,
+  private static Collection<Pair<PsiElement, BreadcrumbsProvider>> getLineElements(Editor editor,
+                                                                                   int offset,
                                                                                    VirtualFile file,
                                                                                    Project project,
                                                                                    BreadcrumbsProvider defaultInfoProvider,
                                                                                    boolean checkSettings) {
-    PsiElement element = findFirstBreadcrumbedElement(offset, file, project, defaultInfoProvider, checkSettings);
+    PsiElement element = findStartElement(editor, offset, file, project, defaultInfoProvider, checkSettings);
     if (element == null) return null;
 
     LinkedList<Pair<PsiElement, BreadcrumbsProvider>> result = new LinkedList<>();
@@ -149,6 +161,41 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
       if (element instanceof PsiDirectory) break;
     }
     return result;
+  }
+
+  /**
+   * Finds first breadcrumb-rendering element, possibly shifting offset backwards, skipping whitespaces and grabbing previous element
+   * This logic solves inconsistency with brace matcher. For example,
+   * <pre><code>
+   *   class Foo {
+   *     public void bar() {
+   *
+   *     } &lt;caret&gt;
+   *   }
+   * </code></pre>
+   * will highlight bar's braces, looking backwards. So it should include it to breadcrumbs, too.
+   */
+  @Nullable
+  private static PsiElement findStartElement(Editor editor,
+                                             int offset,
+                                             VirtualFile file,
+                                             Project project,
+                                             BreadcrumbsProvider defaultInfoProvider,
+                                             boolean checkSettings) {
+    PsiElement middleElement = findFirstBreadcrumbedElement(offset, file, project, defaultInfoProvider, checkSettings);
+
+    // Let's simulate brace matcher logic of searching brace backwards (see `BraceHighlightingHandler.updateBraces`)
+    CharSequence chars = editor.getDocument().getCharsSequence();
+    int leftOffset = CharArrayUtil.shiftBackward(chars, offset - 1, "\t ");
+    leftOffset = leftOffset >= 0 ? leftOffset : offset - 1;
+
+    PsiElement leftElement = findFirstBreadcrumbedElement(leftOffset, file, project, defaultInfoProvider, checkSettings);
+    if (leftElement != null && (middleElement == null || PsiTreeUtil.isAncestor(middleElement, leftElement, true))) {
+      return leftElement;
+    }
+    else {
+      return middleElement;
+    }
   }
 
   @Nullable
@@ -217,8 +264,12 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   }
 
   @Nullable
-  public static PsiElement[] getLinePsiElements(int offset, VirtualFile file, Project project, BreadcrumbsProvider infoProvider) {
-    Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs = getLineElements(offset, file, project, infoProvider, false);
+  public static PsiElement[] getLinePsiElements(Editor editor,
+                                                int offset,
+                                                VirtualFile file,
+                                                Project project,
+                                                BreadcrumbsProvider infoProvider) {
+    Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs = getLineElements(editor, offset, file, project, infoProvider, false);
     return pairs == null ? null : toPsiElementArray(pairs);
   }
 }

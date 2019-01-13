@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.actions
 
 import com.intellij.notification.NotificationGroup
@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.settingsRepository.*
 
 internal val NOTIFICATION_GROUP = NotificationGroup.balloonGroup(PLUGIN_NAME)
@@ -23,11 +24,13 @@ internal abstract class SyncAction(private val syncType: SyncType) : DumbAwareAc
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    syncAndNotify(syncType, event.project)
+    runBlocking {
+      syncAndNotify(syncType, event.project)
+    }
   }
 }
 
-private fun syncAndNotify(syncType: SyncType, project: Project?) {
+private suspend fun syncAndNotify(syncType: SyncType, project: Project?) {
   try {
     val message = if (icsManager.syncManager.sync(syncType, project)) {
       icsMessage("sync.done.message")

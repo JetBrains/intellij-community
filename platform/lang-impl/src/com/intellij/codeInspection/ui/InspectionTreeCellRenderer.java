@@ -58,7 +58,7 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
       return;
     }
     if (value instanceof LoadingNode) {
-      append(((LoadingNode)value).getText());
+      append(LoadingNode.getText());
       return;
     }
     InspectionTreeNode node = (InspectionTreeNode)value;

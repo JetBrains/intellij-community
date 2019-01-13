@@ -4,23 +4,21 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.ide.util.TipUIUtil;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 
-public class ProductivityFeaturesTest extends PlatformTestCase {
+public class ProductivityFeaturesTest extends LightPlatformTestCase {
   private ProductivityFeaturesRegistry myRegistry;
   private FeatureUsageTracker myTracker;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    Application app = ApplicationManager.getApplication();
     myRegistry = ProductivityFeaturesRegistry.getInstance();
     ((ProductivityFeaturesRegistryImpl)myRegistry).prepareForTest();
     myTracker = FeatureUsageTracker.getInstance();
@@ -84,7 +82,7 @@ public class ProductivityFeaturesTest extends PlatformTestCase {
     try {
       Registry.get("ide.javafx.tips").setValue(false);//Don't test JavaFX case as is it triggers 'Thread leaked' failure
       TipUIUtil.Browser browser = TipUIUtil.createBrowser();
-      TipUIUtil.openTipInBrowser(featureDescriptor.getTipFileName(), browser, TestProductivityFeatureProvider.class);
+      TipUIUtil.openTipInBrowser(TipUIUtil.getTip(featureDescriptor.getTipFileName()), browser);
       //if (Registry.is("ide.javafx.tips")) {
       //  assertEquals("<html><body>Test Tip</body></html>", browser.getText());
       //}

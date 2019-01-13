@@ -273,7 +273,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         }
         catch (ExtensionNotApplicableException ignore) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug(adapter + " not loaded because reported that not applicable");
+            LOG.debug(adapter + " not loaded because it reported that not applicable");
           }
         }
         catch (ProcessCanceledException e) {
@@ -287,8 +287,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myExtensionAdapters = Collections.emptySet();
 
       if (extensionIndex != result.length) {
-        //noinspection unchecked
-        result = ArrayUtil.realloc(result, extensionIndex, size -> (T[])Array.newInstance(extensionClass, size));
+        result = Arrays.copyOf(result, extensionIndex);
       }
       return result;
     }

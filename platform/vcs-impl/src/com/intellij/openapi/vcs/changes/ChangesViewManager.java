@@ -83,7 +83,7 @@ import static java.util.stream.Collectors.toList;
 
 @State(
   name = "ChangesViewManager",
-  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public class ChangesViewManager implements ChangesViewI, ProjectComponent, PersistentStateComponent<ChangesViewManager.State> {
 
@@ -262,7 +262,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
   }
 
-  private void updateProgressComponent(@NotNull final Factory<JComponent> progress) {
+  private void updateProgressComponent(@NotNull final Factory<? extends JComponent> progress) {
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       if (myProgressLabel != null) {
@@ -399,7 +399,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   @Override
-  public void selectChanges(@NotNull List<Change> changes) {
+  public void selectChanges(@NotNull List<? extends Change> changes) {
     List<TreePath> paths = new ArrayList<>();
 
     for (Change change : changes) {
@@ -565,13 +565,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
 
     @NotNull
-    private List<Wrapper> wrap(@NotNull Stream<Change> changes, @NotNull Stream<VirtualFile> unversioned) {
+    private List<Wrapper> wrap(@NotNull Stream<? extends Change> changes, @NotNull Stream<? extends VirtualFile> unversioned) {
       return Stream.concat(changes.map(ChangeWrapper::new), unversioned.map(UnversionedFileWrapper::new)).collect(toList());
     }
   }
 
   private class MyChangeViewContent extends DnDActivateOnHoldTargetContent {
-  
+
     private MyChangeViewContent(JComponent component, @NotNull String displayName, boolean isLockable) {
       super(myProject, component, displayName, isLockable);
     }

@@ -143,11 +143,11 @@ public class SSHMain implements GitExternalApp {
     try {
       configureKnownHosts(c);
 
-      boolean useHttpProxy = Boolean.valueOf(System.getenv(GitSSHHandler.SSH_USE_PROXY_ENV));
+      boolean useHttpProxy = Boolean.parseBoolean(System.getenv(GitSSHHandler.SSH_USE_PROXY_ENV));
       if (useHttpProxy) {
         String proxyHost = System.getenv(GitSSHHandler.SSH_PROXY_HOST_ENV);
-        Integer proxyPort = Integer.valueOf(System.getenv(GitSSHHandler.SSH_PROXY_PORT_ENV));
-        boolean proxyAuthentication = Boolean.valueOf(System.getenv(GitSSHHandler.SSH_PROXY_AUTHENTICATION_ENV));
+        int proxyPort = Integer.parseInt(System.getenv(GitSSHHandler.SSH_PROXY_PORT_ENV));
+        boolean proxyAuthentication = Boolean.parseBoolean(System.getenv(GitSSHHandler.SSH_PROXY_AUTHENTICATION_ENV));
         String proxyUser = null;
         String proxyPassword = null;
         if (proxyAuthentication) {
@@ -199,7 +199,7 @@ public class SSHMain implements GitExternalApp {
     //log("authenticating... " + this);
     String lastSuccessfulMethod = myXmlRpcClient.getLastSuccessful(myHandlerNo, getUserHostString());
     //log("SSH: authentication methods: " + methods + " last successful method: " + lastSuccessfulMethod);
-    if (lastSuccessfulMethod != null && lastSuccessfulMethod.length() > 0 && methods.remove(lastSuccessfulMethod)) {
+    if (lastSuccessfulMethod != null && !lastSuccessfulMethod.isEmpty() && methods.remove(lastSuccessfulMethod)) {
       methods.addFirst(lastSuccessfulMethod);
     }
     for (String method : methods) {

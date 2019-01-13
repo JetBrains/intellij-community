@@ -18,6 +18,9 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -54,6 +57,24 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
     final JavaCommandLineState state = new JavaApplicationCommandLineState<JavaScratchConfiguration>(this, env) {
+      @Override
+      protected JavaParameters createJavaParameters() throws ExecutionException {
+        final JavaParameters params = super.createJavaParameters();
+        // After params are fully configured, additionally ensure JAVA_ENABLE_PREVIEW_PROPERTY is set,
+        // because the scratch is compiled with this feature if it is supported by the JDK
+        final Sdk jdk = params.getJdk();
+        if (jdk != null) {
+          final JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
+          if (version != null && version.getMaxLanguageLevel().isPreview()) {
+            final ParametersList vmOptions = params.getVMParametersList();
+            if (!vmOptions.hasParameter(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY)) {
+              vmOptions.add(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+            }
+          }
+        }
+        return params;
+      }
+
       @Override
       protected void setupJavaParameters(JavaParameters params) throws ExecutionException {
         super.setupJavaParameters(params);

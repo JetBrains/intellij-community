@@ -57,7 +57,24 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
   private static final CallMapper<AllowedValues> SPECIAL_CASES = new CallMapper<AllowedValues>()
     .register(CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
-              MagicConstantInspection::getCalendarGetValues);
+              MagicConstantInspection::getCalendarGetValues)
+    .register(CallMatcher.instanceCall("java.awt.Toolkit", "getMenuShortcutKeyMaskEx"),
+              // Support especially java.awt.Toolkit.getMenuShortcutKeyMaskEx which is annoying false-positive,
+              // until we can normally annotate Java9+ methods
+              call -> {
+                PsiMethod method = call.resolveMethod();
+                if (method != null) {
+                  PsiClass aClass = method.getContainingClass();
+                  if (aClass != null) {
+                    for (PsiMethod psiMethod : aClass.findMethodsByName("getMenuShortcutKeyMask", false)) {
+                      if (psiMethod.getParameterList().isEmpty()) {
+                        return getAllowedValues(psiMethod, PsiType.INT, null);
+                      }
+                    }
+                  }
+                }
+                return null;
+              });
 
   @Nls
   @NotNull
@@ -400,6 +417,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
   @Nullable
   static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type, @Nullable Set<? super PsiClass> visited) {
+    
     PsiManager manager = element.getManager();
     for (PsiAnnotation annotation : getAllAnnotations(element)) {
       if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {
@@ -775,8 +793,8 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
     ReplaceWithMagicConstantFix(@NotNull PsiExpression argument, @NotNull PsiAnnotationMemberValue... values) {
       super(argument);
-      myMemberValuePointers = Arrays.stream(values).map(
-        value -> SmartPointerManager.getInstance(argument.getProject()).createSmartPsiElementPointer(value)).collect(Collectors.toList());
+      myMemberValuePointers =
+        ContainerUtil.map(values, SmartPointerManager.getInstance(argument.getProject())::createSmartPsiElementPointer);
     }
 
     @Nls

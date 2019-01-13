@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.CommonBundle;
@@ -63,6 +49,7 @@ import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -72,9 +59,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author ven
@@ -123,12 +108,33 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
   public CoverageDataManagerImpl(@NotNull Project project) {
     myProject = project;
-    project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+    MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         chooseSuitesBundle(myCurrentSuitesBundle);
       }
     });
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectOpened(@NotNull Project project) {
+        if (project == myProject) {
+          EditorFactory.getInstance().addEditorFactoryListener(new CoverageEditorFactoryListener(), myProject);
+        }
+      }
+
+      @Override
+      public void projectClosing(@NotNull Project project) {
+        if (project != myProject) {
+          return;
+        }
+
+        synchronized (myLock) {
+          myIsProjectClosing = true;
+        }
+      }
+    });
+
     final CoverageViewSuiteListener coverageViewListener = createCoverageViewListener();
     if (coverageViewListener != null) {
       addSuiteListener(coverageViewListener, myProject);
@@ -138,13 +144,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   @Nullable
   protected CoverageViewSuiteListener createCoverageViewListener() {
     return new CoverageViewSuiteListener(this, myProject);
-  }
-
-
-  @Override
-  @NotNull @NonNls
-  public String getComponentName() {
-    return "CoverageDataManager";
   }
 
   @Override
@@ -265,7 +264,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     }
   }
 
-  private void deleteCachedCoverage(String coverageDataFileName, boolean deleteTraces) {
+  private static void deleteCachedCoverage(String coverageDataFileName, boolean deleteTraces) {
     FileUtil.delete(new File(coverageDataFileName));
     if (deleteTraces) {
       FileUtil.delete(getTracesDirectory(coverageDataFileName));
@@ -489,23 +488,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   @Override
-  public void projectOpened() {
-    EditorFactory.getInstance().addEditorFactoryListener(new CoverageEditorFactoryListener(), myProject);
-    myProject.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectClosing(@NotNull Project project) {
-        if (project != myProject) {
-          return;
-        }
-
-        synchronized (myLock) {
-          myIsProjectClosing = true;
-        }
-      }
-    });
-  }
-
-  @Override
   public <T> T doInReadActionIfProjectOpen(Computable<T> computation) {
     synchronized(myLock) {
       if (myIsProjectClosing) return null;
@@ -526,9 +508,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
       for (String testName : testNames) {
         final File file = new File(tracesDir, FileUtil.sanitizeFileName(testName) + ".tr");
         if (file.exists()) {
-          DataInputStream in = null;
-          try {
-            in = new DataInputStream(new FileInputStream(file));
+          try (DataInputStream in = new DataInputStream(new FileInputStream(file))) {
             int traceSize = in.readInt();
             for (int i = 0; i < traceSize; i++) {
               final String className = in.readUTF();
@@ -545,14 +525,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
           }
           catch (Exception e) {
             LOG.error(e);
-          }
-          finally {
-            try {
-              in.close();
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
           }
         }
       }
@@ -597,7 +569,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     renewCoverageData(suite);
   }
 
-  private File getTracesDirectory(final String fileName) {
+  private static File getTracesDirectory(final String fileName) {
     return new File(new File(fileName).getParentFile(), FileUtil.getNameWithoutExtension(new File(fileName)));
   }
 
@@ -605,7 +577,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   public void restoreMergedCoverage(@NotNull final CoverageSuitesBundle suite) {
     mySubCoverageIsActive = false;
     suite.restoreCoverageData();
-    renewCoverageData(suite); 
+    renewCoverageData(suite);
   }
 
   @Override
@@ -655,10 +627,10 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   @NotNull
-  private CoverageSuite createCoverageSuite(final CoverageEnabledConfiguration config,
-                                            final String name,
-                                            final CoverageRunner coverageRunner,
-                                            final DefaultCoverageFileProvider fileProvider) {
+  private static CoverageSuite createCoverageSuite(final CoverageEnabledConfiguration config,
+                                                   final String name,
+                                                   final CoverageRunner coverageRunner,
+                                                   final DefaultCoverageFileProvider fileProvider) {
     CoverageSuite suite = null;
     for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensions()) {
       if (coverageRunner.acceptsCoverageEngine(engine) && engine.isApplicableTo(config.getConfiguration())) {

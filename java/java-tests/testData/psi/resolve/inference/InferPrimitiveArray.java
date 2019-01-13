@@ -6,7 +6,7 @@ class Test {
     }
     
     void foo (List<double[]> l) {
-       <ref>extract(l);
+       <caret>extract(l);
     }
 }
 

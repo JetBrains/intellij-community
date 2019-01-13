@@ -45,7 +45,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   private final ChangeListManager myChangeListManager;
 
   public CustomChangelistTodosTreeBuilder(JTree tree, Project project, final String title,
-                                          final Collection<TodoItem> todoItems) {
+                                          final Collection<? extends TodoItem> todoItems) {
     super(tree, project);
     myProject = project;
     myTitle = title;
@@ -56,12 +56,12 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     initHelper();
   }
 
-  private void initMap(Collection<TodoItem> todoItems) {
+  private void initMap(Collection<? extends TodoItem> todoItems) {
     buildMap(todoItems);
     myIncludedFiles.addAll(myMap.keySet());
   }
 
-  private void buildMap(Collection<TodoItem> todoItems) {
+  private void buildMap(Collection<? extends TodoItem> todoItems) {
     myMap.clear();
     for (TodoItem todoItem : todoItems) {
       myMap.putValue(todoItem.getFile(), todoItem);

@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.PATH_NODE_BUILDER
 import javax.swing.tree.DefaultTreeModel
 
 class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
-  private val innerPolicy = ChangesGroupingPolicyFactory.getInstance(project)?.createGroupingPolicy(model)
+  private val innerPolicy: ChangesGroupingPolicy? = ChangesGroupingPolicyFactory.getInstance(project)?.createGroupingPolicy(model)
 
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
     DIRECTORY_POLICY.set(subtreeRoot, this)

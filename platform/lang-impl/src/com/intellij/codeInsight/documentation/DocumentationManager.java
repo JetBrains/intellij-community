@@ -208,7 +208,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myActionManager = manager;
     AnActionListener actionListener = new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         JBPopup hint = getDocInfoHint();
         if (hint != null) {
           if (action instanceof HintManagerImpl.ActionToIgnore) return;
@@ -723,12 +723,16 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   private ActionCallback cancelAndFetchDocInfo(@NotNull DocumentationComponent component, @NotNull DocumentationCollector provider) {
-    if (myToolWindow != null) {
-      Content content = myToolWindow.getContentManager().getSelectedContent();
-      if (content != null) content.setDisplayName(getTitle(provider.element, true));
-    }
+    updateToolWindowTabName(provider.element);
     myUpdateDocAlarm.cancelAllRequests();
     return doFetchDocInfo(component, provider);
+  }
+
+  void updateToolWindowTabName(@NotNull PsiElement element) {
+    if (myToolWindow != null) {
+      Content content = myToolWindow.getContentManager().getSelectedContent();
+      if (content != null) content.setDisplayName(getTitle(element, true));
+    }
   }
 
   private ActionCallback doFetchDocInfo(@NotNull DocumentationComponent component,
@@ -965,7 +969,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
           ExternalDocumentationHandler externalHandler = (ExternalDocumentationHandler)p;
           if (externalHandler.canFetchDocumentationLink(url)) {
-            cancelAndFetchDocInfo(component, new DocumentationCollector(psiElement, url, null, p) {
+            String ref = externalHandler.extractRefFromLink(url);
+            cancelAndFetchDocInfo(component, new DocumentationCollector(psiElement, url, ref, p) {
               @Override
               public String getDocumentation() {
                 return externalHandler.fetchExternalDocumentation(url, psiElement);

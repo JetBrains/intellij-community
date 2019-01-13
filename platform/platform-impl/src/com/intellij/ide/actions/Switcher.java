@@ -346,9 +346,9 @@ public class Switcher extends AnAction implements DumbAware {
       toolWindows = new JBList(twModel);
       toolWindows.addFocusListener(new MyToolWindowsListFocusListener());
       if (pinned) {
-        new NameFilteringListModel<ToolWindow>(toolWindows, window -> window.getStripeTitle(), s -> !mySpeedSearch.isPopupActive()
-                                                                                                || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
-                                                                                                || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null, mySpeedSearch);
+        new NameFilteringListModel<ToolWindow>(toolWindows, ToolWindow::getStripeTitle, s -> !mySpeedSearch.isPopupActive()
+                                                                                             || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
+                                                                                             || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null, mySpeedSearch);
       }
 
       toolWindows.setBorder(JBUI.Borders.empty(5, 5, 5, 20));
@@ -514,7 +514,7 @@ public class Switcher extends AnAction implements DumbAware {
 
         @Override
         public void valueChanged(@NotNull final ListSelectionEvent e) {
-          ApplicationManager.getApplication().invokeLater(() -> updatePathLabel());
+          ApplicationManager.getApplication().invokeLater(this::updatePathLabel);
         }
 
         private void updatePathLabel() {
@@ -532,18 +532,15 @@ public class Switcher extends AnAction implements DumbAware {
 
       files = new JBList(filesModel);
       if (pinned) {
-        new NameFilteringListModel<FileInfo>(files, info -> info.getNameForRendering(), s -> !mySpeedSearch.isPopupActive()
-                                                                                         || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
-                                                                                         || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null, mySpeedSearch);
+        new NameFilteringListModel<FileInfo>(files, FileInfo::getNameForRendering, s -> !mySpeedSearch.isPopupActive()
+                                                                                        || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
+                                                                                        || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null, mySpeedSearch);
       }
 
       files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-      files.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-        @Override
-        public void valueChanged(@NotNull ListSelectionEvent e) {
-          if (!files.isSelectionEmpty() && !toolWindows.isSelectionEmpty()) {
-            toolWindows.getSelectionModel().clearSelection();
-          }
+      files.getSelectionModel().addListSelectionListener(e -> {
+        if (!files.isSelectionEmpty() && !toolWindows.isSelectionEmpty()) {
+          toolWindows.getSelectionModel().clearSelection();
         }
       });
 
@@ -946,15 +943,11 @@ public class Switcher extends AnAction implements DumbAware {
         myPopup.cancel();
         final AnAction action = gotoFile;
         ApplicationManager.getApplication().invokeLater(() -> DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
-          final DataContext dataContext = new DataContext() {
-            @Nullable
-            @Override
-            public Object getData(@NotNull @NonNls String dataId) {
-              if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
-                return fileName;
-              }
-              return context.getData(dataId);
+          final DataContext dataContext = dataId -> {
+            if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
+              return fileName;
             }
+            return context.getData(dataId);
           };
           final AnActionEvent event =
             new AnActionEvent(e, dataContext, ActionPlaces.EDITOR_POPUP, new PresentationFactory().getPresentation(action),

@@ -81,5 +81,5 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   String getProjectGradleVersion();
 
   @Nullable
-  String getDefaultGroupId();
+  String getBuildSrcGroup();
 }

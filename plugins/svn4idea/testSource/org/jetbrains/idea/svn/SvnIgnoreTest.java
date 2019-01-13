@@ -14,8 +14,11 @@ import java.util.List;
 import java.util.Random;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.is;
 import static org.jetbrains.idea.svn.SvnPropertyKeys.SVN_IGNORE;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 public class SvnIgnoreTest extends SvnTestCase {
   @Override
@@ -43,7 +46,7 @@ public class SvnIgnoreTest extends SvnTestCase {
       current = createDirInCommand(current, "dir" + i);
       ignored.add(current);
       refreshChanges();
-      assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
+      assertNoChanges();
     }
     testOneFile(current, "file.txt");
 
@@ -100,13 +103,17 @@ public class SvnIgnoreTest extends SvnTestCase {
 
   private void testImpl(VirtualFile file) {
     refreshChanges();
-    assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
+    assertNoChanges();
 
     dirtyScopeManager.fileDirty(file);
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
 
-    assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
+    assertNoChanges();
     final FileStatus status = changeListManager.getStatus(file);
-    assertTrue(status.getText(), FileStatus.IGNORED.equals(status));
+    assertEquals(FileStatus.IGNORED, status);
+  }
+
+  private void assertNoChanges() {
+    assertThat(changeListManager.getDefaultChangeList().getChanges(), is(empty()));
   }
 }

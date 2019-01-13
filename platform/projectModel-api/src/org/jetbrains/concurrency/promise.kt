@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("Promises")
 package org.jetbrains.concurrency
 
@@ -12,6 +12,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.toMutableSmartList
 import org.jetbrains.concurrency.InternalPromiseUtil.MessageError
 import java.util.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
@@ -207,7 +208,7 @@ fun Logger.errorIfNotMessage(e: Throwable): Boolean {
       return true
     }
   }
-  else if (e !is ControlFlowException) {
+  else if (e !is ControlFlowException && e !is CancellationException) {
     error(e)
     return true
   }

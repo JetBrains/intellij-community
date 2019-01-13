@@ -1,8 +1,6 @@
 class X {
 
   void x() {
-    if ((switch (0) {
-        default -> true;
-    }).booleanValue()) {}
+    if (switch(0) {default -> true;}) {}
   }
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.scopes;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.ide.util.scopeChooser.ScopeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -9,8 +8,9 @@ import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 
-public class ScopeConfigurableTest extends CodeInsightTestCase {
+public class ScopeConfigurableTest extends LightCodeInsightTestCase {
   public void testModified() throws ConfigurationException {
     DependencyValidationManager manager = DependencyValidationManager.getInstance(getProject());
     final ScopeChooserConfigurable.ScopeChooserConfigurableState state = new ScopeChooserConfigurable.ScopeChooserConfigurableState();

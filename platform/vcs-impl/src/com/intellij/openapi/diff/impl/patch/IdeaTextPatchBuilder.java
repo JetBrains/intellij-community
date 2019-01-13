@@ -56,8 +56,8 @@ public class IdeaTextPatchBuilder {
   }
 
   private static void addConvertChanges(@NotNull Project project,
-                                        @NotNull Collection<Change> changes,
-                                        @NotNull List<BeforeAfter<AirContentRevision>> result,
+                                        @NotNull Collection<? extends Change> changes,
+                                        @NotNull List<? super BeforeAfter<AirContentRevision>> result,
                                         @Nullable VcsOutgoingChangesProvider<?> provider,
                                         boolean honorExcludedFromCommit) {
     Collection<Change> otherChanges = PartialChangesUtil.processPartialChanges(project, changes, false, (partialChanges, tracker) -> {

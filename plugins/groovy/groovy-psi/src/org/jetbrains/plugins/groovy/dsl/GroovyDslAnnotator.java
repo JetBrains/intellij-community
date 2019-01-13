@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -38,7 +37,7 @@ import static org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status.*;
 /**
  * @author peter
  */
-public class GroovyDslAnnotator implements Annotator, DumbAware {
+public class GroovyDslAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {

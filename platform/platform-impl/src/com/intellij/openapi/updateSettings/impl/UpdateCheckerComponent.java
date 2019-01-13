@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 
-import static com.intellij.openapi.application.PathManager.isSnap;
 import static java.lang.Math.max;
 
 /**
@@ -158,7 +157,7 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
   }
 
   private void snapPackageNotification(Application app) {
-    if (!isSnap() || !mySettings.isCheckNeeded()) return;
+    if (!mySettings.isCheckNeeded() || ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP) return;
 
     app.executeOnPooledThread(() -> {
       final BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();

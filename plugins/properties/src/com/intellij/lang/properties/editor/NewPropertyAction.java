@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.icons.AllIcons;
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
 * @author Dmitry Batkovich
@@ -74,7 +75,8 @@ class NewPropertyAction extends AnAction {
 
     final ResourceBundle bundle = resourceBundleEditor.getResourceBundle();
     final VirtualFile file = bundle.getDefaultPropertiesFile().getVirtualFile();
-    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file);
+    final ReadonlyStatusHandler.OperationStatus status =
+      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(file));
     if (status.hasReadonlyFiles()) {
       Messages.showErrorDialog(bundle.getProject(),
                                String.format("Resource bundle '%s' has read-only default properties file", bundle.getBaseName()),
@@ -98,7 +100,7 @@ class NewPropertyAction extends AnAction {
         prefix = group.getPrefix();
         separator = group.getSeparator();
       }
-      else if (selectedElement instanceof ResourceBundlePropertyStructureViewElement ||
+      else if (selectedElement instanceof PropertyStructureViewElement ||
                selectedElement instanceof ResourceBundleFileStructureViewElement) {
         prefix = null;
         separator = null;

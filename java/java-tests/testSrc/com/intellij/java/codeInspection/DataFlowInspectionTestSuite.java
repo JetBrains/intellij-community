@@ -20,6 +20,7 @@ import com.intellij.java.codeInsight.completion.SmartTypeCompletionDfaTest;
 import com.intellij.java.codeInsight.daemon.quickFix.*;
 import com.intellij.java.slicer.SliceBackwardTest;
 import com.intellij.java.slicer.SliceTreeTest;
+import com.siyeh.ig.redundancy.RedundantOperationOnEmptyContainerInspectionTest;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -35,6 +36,8 @@ import org.junit.runners.Suite;
   ContractCheckTest.class,
   HardcodedContractsTest.class,
   DataFlowRangeAnalysisTest.class,
+  OptionalGetWithoutIsPresentInspectionTest.class,
+  RedundantOperationOnEmptyContainerInspectionTest.class,
 
   ContractInferenceFromSourceTest.class,
   NullityInferenceFromSourceTestCase.DfaInferenceTest.class,

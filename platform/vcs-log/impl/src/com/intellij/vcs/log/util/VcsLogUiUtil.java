@@ -52,14 +52,14 @@ public class VcsLogUiUtil {
       };
     logData.getProgress().addProgressIndicatorListener(new VcsLogProgress.ProgressListener() {
       @Override
-      public void progressStarted(@NotNull Collection<VcsLogProgress.ProgressKey> keys) {
+      public void progressStarted(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
         if (matches(keys)) {
           progressStripe.startLoading();
         }
       }
 
       @Override
-      public void progressChanged(@NotNull Collection<VcsLogProgress.ProgressKey> keys) {
+      public void progressChanged(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
         if (matches(keys)) {
           progressStripe.startLoading();
         }
@@ -73,7 +73,7 @@ public class VcsLogUiUtil {
         progressStripe.stopLoading();
       }
 
-      private boolean matches(@NotNull Collection<VcsLogProgress.ProgressKey> keys) {
+      private boolean matches(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
         if (keys.contains(VcsLogData.DATA_PACK_REFRESH)) {
           return true;
         }

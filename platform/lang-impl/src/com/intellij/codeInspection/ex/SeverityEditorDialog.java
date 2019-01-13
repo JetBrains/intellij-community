@@ -11,7 +11,6 @@ import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -37,10 +36,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
 import static com.intellij.codeInsight.daemon.impl.SeverityRegistrar.SeverityBasedTextAttributes;
@@ -134,18 +131,12 @@ public class SeverityEditorDialog extends DialogWrapper {
 
           select(newSeverityBasedTextAttributes);
         }
-      }).setMoveUpAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          apply(myCurrentSelection);
-          ListUtil.moveSelectedItemsUp(myOptionsList);
-        }
-      }).setMoveDownAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          apply(myCurrentSelection);
-          ListUtil.moveSelectedItemsDown(myOptionsList);
-        }
+      }).setMoveUpAction(button -> {
+        apply(myCurrentSelection);
+        ListUtil.moveSelectedItemsUp(myOptionsList);
+      }).setMoveDownAction(button -> {
+        apply(myCurrentSelection);
+        ListUtil.moveSelectedItemsDown(myOptionsList);
       }).setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -169,55 +160,40 @@ public class SeverityEditorDialog extends DialogWrapper {
             select(newSeverityBasedTextAttributes);
           }
         }
-      }).setEditActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          return myCurrentSelection != null && !SeverityRegistrar.isDefaultSeverity(myCurrentSelection.getSeverity());
-        }
-      }).setEditActionName("Rename").createPanel();
-    ToolbarDecorator.findRemoveButton(leftPanel).addCustomUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(@NotNull AnActionEvent e) {
-        return !SeverityRegistrar.isDefaultSeverity(myOptionsList.getSelectedValue().getSeverity());
-      }
-    });
-    ToolbarDecorator.findUpButton(leftPanel).addCustomUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(@NotNull AnActionEvent e) {
-        boolean canMove = ListUtil.canMoveSelectedItemsUp(myOptionsList);
-        if (canMove) {
-          SeverityBasedTextAttributes pair =
-            myOptionsList.getSelectedValue();
-          if (pair != null && SeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
-            final int newPosition = myOptionsList.getSelectedIndex() - 1;
-            pair = myOptionsList.getModel().getElementAt(newPosition);
-            if (SeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
-              canMove = false;
-            }
+      }).setEditActionUpdater(e -> myCurrentSelection != null && !SeverityRegistrar.isDefaultSeverity(myCurrentSelection.getSeverity())).setEditActionName("Rename").createPanel();
+    ToolbarDecorator.findRemoveButton(leftPanel).addCustomUpdater(
+      e -> !SeverityRegistrar.isDefaultSeverity(myOptionsList.getSelectedValue().getSeverity()));
+    ToolbarDecorator.findUpButton(leftPanel).addCustomUpdater(e -> {
+      boolean canMove = ListUtil.canMoveSelectedItemsUp(myOptionsList);
+      if (canMove) {
+        SeverityBasedTextAttributes pair =
+          myOptionsList.getSelectedValue();
+        if (pair != null && SeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
+          final int newPosition = myOptionsList.getSelectedIndex() - 1;
+          pair = myOptionsList.getModel().getElementAt(newPosition);
+          if (SeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
+            canMove = false;
           }
         }
-
-        return canMove;
       }
+
+      return canMove;
     });
-    ToolbarDecorator.findDownButton(leftPanel).addCustomUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(@NotNull AnActionEvent e) {
-        boolean canMove = ListUtil.canMoveSelectedItemsDown(myOptionsList);
-        if (canMove) {
-          SeverityBasedTextAttributes pair =
-            myOptionsList.getSelectedValue();
-          if (pair != null && SeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
-            final int newPosition = myOptionsList.getSelectedIndex() + 1;
-            pair = myOptionsList.getModel().getElementAt(newPosition);
-            if (SeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
-              canMove = false;
-            }
+    ToolbarDecorator.findDownButton(leftPanel).addCustomUpdater(e -> {
+      boolean canMove = ListUtil.canMoveSelectedItemsDown(myOptionsList);
+      if (canMove) {
+        SeverityBasedTextAttributes pair =
+          myOptionsList.getSelectedValue();
+        if (pair != null && SeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
+          final int newPosition = myOptionsList.getSelectedIndex() + 1;
+          pair = myOptionsList.getModel().getElementAt(newPosition);
+          if (SeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
+            canMove = false;
           }
         }
-
-        return canMove;
       }
+
+      return canMove;
     });
 
     myPanel = new JPanel(new BorderLayout());
@@ -226,12 +202,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     myRightPanel = new JPanel(myCard);
     final JPanel disabled = new JPanel(new GridBagLayout());
     final JButton button = new JButton(InspectionsBundle.message("severities.default.settings.message"));
-    button.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        editColorsAndFonts();
-      }
-    });
+    button.addActionListener(e -> editColorsAndFonts());
     disabled.add(button,
                  new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.emptyInsets(), 0,
                                         0));

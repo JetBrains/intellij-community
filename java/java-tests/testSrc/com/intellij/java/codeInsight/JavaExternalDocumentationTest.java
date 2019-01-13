@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -46,7 +44,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JavaExternalDocumentationTest extends PlatformTestCase {
-
   public static final Pattern BASE_URL_PATTERN = Pattern.compile("(<base href=\")([^\"]*)");
   public static final Pattern IMG_URL_PATTERN = Pattern.compile("<img src=\"([^\"]*)");
 
@@ -71,9 +68,9 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
 
   public void testImagesInsideJavadocJar() throws Exception {
     String text = getDocumentationText("class Foo { com.jetbrains.<caret>Test field; }");
-    Matcher baseUrlmatcher = BASE_URL_PATTERN.matcher(text);
-    assertTrue(baseUrlmatcher.find());
-    String baseUrl = baseUrlmatcher.group(2);
+    Matcher baseUrlMatcher = BASE_URL_PATTERN.matcher(text);
+    assertTrue(baseUrlMatcher.find());
+    String baseUrl = baseUrlMatcher.group(2);
     Matcher imgMatcher = IMG_URL_PATTERN.matcher(text);
     assertTrue(imgMatcher.find());
     String relativeUrl = imgMatcher.group(1);
@@ -139,11 +136,11 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
     return jarFile;
   }
 
-  private String getDocumentationText(String sourceEditorText) throws Exception {
+  private String getDocumentationText(String sourceEditorText) {
     return getDocumentationText(myProject, sourceEditorText);
   }
 
-  public static String getDocumentationText(Project project, String sourceEditorText) throws Exception {
+  public static String getDocumentationText(Project project, String sourceEditorText) {
     int caretPosition = sourceEditorText.indexOf(EditorTestUtil.CARET_TAG);
     if (caretPosition >= 0) {
       sourceEditorText = sourceEditorText.substring(0, caretPosition) +
@@ -153,7 +150,7 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
     return getDocumentationText(psiFile, caretPosition);
   }
 
-  public static String getDocumentationText(@NotNull PsiFile psiFile, int caretPosition) throws InterruptedException {
+  public static String getDocumentationText(@NotNull PsiFile psiFile, int caretPosition) {
     Project project = psiFile.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     assertNotNull(document);
@@ -169,7 +166,7 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
     }
   }
 
-  public static String getDocumentationText(@NotNull Editor editor) throws InterruptedException {
+  public static String getDocumentationText(@NotNull Editor editor) {
     Project project = editor.getProject();
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
@@ -177,7 +174,12 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
     try {
       documentationManager.setDocumentationComponent(documentationComponent);
       documentationManager.showJavaDocInfo(editor, psiFile, false);
-      waitTillDone(documentationManager.getLastAction());
+      try {
+        waitTillDone(documentationManager.getLastAction());
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
       return documentationComponent.getText();
     }
     finally {

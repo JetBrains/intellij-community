@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" />
-    <orderEntry type="library" name="JUnit3" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.junit.rt" />
     <orderEntry type="module" module-name="intellij.java.compiler" />

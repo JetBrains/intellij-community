@@ -45,5 +45,6 @@
     <orderEntry type="module" module-name="intellij.jvm.analysis" />
     <orderEntry type="library" name="protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.json" />
+    <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
   </component>
 </module>

@@ -138,6 +138,7 @@
       <action id="EditorAddOrRemoveCaret" class="com.intellij.openapi.editor.actions.AddOrRemoveCaretDummyAction"/>
       <action id="EditorCreateRectangularSelection" class="com.intellij.openapi.editor.actions.CreateRectangularSelectionAction"/>
       <action id="EditorAddRectangularSelectionOnMouseDrag" class="com.intellij.openapi.editor.actions.AddRectangularSelectionOnMouseDragAction"/>
+      <action id="EditorCreateRectangularSelectionOnMouseDrag" class="com.intellij.openapi.editor.actions.CreateRectangularSelectionOnMouseDragAction"/>
       <action id="EditorCloneCaretBelow" class="com.intellij.openapi.editor.actions.CloneCaretBelow"/>
       <action id="EditorCloneCaretAbove" class="com.intellij.openapi.editor.actions.CloneCaretAbove"/>
       <action id="EditorToggleStickySelection" class="com.intellij.openapi.editor.actions.ToggleStickySelectionModeAction"/>
@@ -152,6 +153,8 @@
       <action id="EditorTextEnd" class="com.intellij.openapi.editor.actions.TextEndAction"/>
       <action id="EditorForwardParagraph" class="com.intellij.openapi.editor.actions.ForwardParagraphAction"/>
       <action id="EditorBackwardParagraph" class="com.intellij.openapi.editor.actions.BackwardParagraphAction"/>
+      <action id="EditorForwardParagraphWithSelection" class="com.intellij.openapi.editor.actions.ForwardParagraphWithSelectionAction"/>
+      <action id="EditorBackwardParagraphWithSelection" class="com.intellij.openapi.editor.actions.BackwardParagraphWithSelectionAction"/>
       <action id="EditorLineStartWithSelection" class="com.intellij.openapi.editor.actions.LineStartWithSelectionAction"/>
       <action id="EditorLineEndWithSelection" class="com.intellij.openapi.editor.actions.LineEndWithSelectionAction"/>
       <action id="EditorTextStartWithSelection" class="com.intellij.openapi.editor.actions.TextStartWithSelectionAction"/>
@@ -720,7 +723,7 @@
       <action id="FileChooser.GotoDesktop" class="com.intellij.openapi.fileChooser.actions.GotoDesktopDirAction"
         icon="AllIcons.Nodes.Desktop"/>
       <action id="FileChooser.GotoProject" class="com.intellij.openapi.fileChooser.actions.GotoProjectDirectory"
-        icon="AllIcons.Nodes.IdeaProject"/>
+        icon="AllIcons.Actions.ProjectDirectory"/>
       <separator/>
       <action id="FileChooser.NewFile" class="com.intellij.openapi.fileChooser.actions.NewFileAction"
         icon="AllIcons.Actions.New"/>
@@ -807,10 +810,6 @@
 
         <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI &amp;Inspector">
           <abbreviation value="uii"/>
-        </action>
-        <action id="ShowHeatMap" internal="true" description="Paints tool bar buttons and menus based on statistics" text="Show HeatMap"
-                class="com.intellij.internal.heatmap.actions.ShowHeatMapAction">
-          <abbreviation value="shm"/>
         </action>
         <action id="UiDropper" internal="true" class="com.intellij.internal.inspector.UiDropperAction" text="UI &amp;Dropper"/>
         <action id="HidpiInfo" internal="true" class="com.intellij.internal.HidpiInfo" text="Show &amp;HiDPI Info"/>
@@ -917,6 +916,7 @@
     <action id="CopySettingsPath" class="com.intellij.openapi.options.newEditor.CopySettingsPathAction"/>
 
     <action id="ShowFilterPopup" class="com.intellij.find.editorHeaderActions.ShowMoreOptions" text="Show Filter Popup"/>
+    <action id="ShowSearchHistory" class="com.intellij.find.actions.ShowSearchHistoryAction" text="Show Search History"/>
 
     <group id="TabsActions" text="Tabs">
       <action id="GoToTab1" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab1Action"/>

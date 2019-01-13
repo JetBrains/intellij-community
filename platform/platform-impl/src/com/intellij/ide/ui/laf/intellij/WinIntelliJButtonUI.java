@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.util.ui.*;
@@ -67,7 +66,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
   @Override
   public void paint(Graphics g, JComponent c) {
     if (UIUtil.isHelpButton(c)) {
-      Icon help = AllIcons.Windows.WinHelp;
+      Icon help = LafIconLookup.getIcon("winHelp");
       Insets i = c.getInsets();
       help.paintIcon(c, g, i.left, i.top + (c.getHeight() - help.getIconHeight()) / 2);
     } else if (c instanceof AbstractButton) {

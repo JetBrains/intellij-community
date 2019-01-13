@@ -5,6 +5,7 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/compatibilityResources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -55,7 +56,7 @@
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.tasks" exported="" />
-    <orderEntry type="library" name="http-client-3.1" level="project" />
+    <orderEntry type="module" module-name="intellij.tasks.compatibility" />
     <orderEntry type="module-library">
       <library name="commons-discovery" type="repository">
         <properties include-transitive-deps="false" maven-id="commons-discovery:commons-discovery:0.4" />
@@ -66,5 +67,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="javax.annotation-api" level="project" />
   </component>
 </module>

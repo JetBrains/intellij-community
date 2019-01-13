@@ -20,7 +20,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ReplaceAssignmentWithPostfixExpressionPredicate implements PsiElementPredicate {
@@ -54,17 +53,16 @@ class ReplaceAssignmentWithPostfixExpressionPredicate implements PsiElementPredi
     final PsiExpression rOperand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     if (ExpressionUtils.isLiteral(lOperand, 1)) {
-      if (!VariableAccessUtils.evaluatesToVariable(rOperand, variable)) {
+      if (!ExpressionUtils.isReferenceTo(rOperand, variable)) {
         return false;
       }
       return JavaTokenType.PLUS.equals(tokenType);
     }
     else if (ExpressionUtils.isLiteral(rOperand, 1)) {
-      if (!VariableAccessUtils.evaluatesToVariable(lOperand, variable)) {
+      if (!ExpressionUtils.isReferenceTo(lOperand, variable)) {
         return false;
       }
-      return !(!JavaTokenType.PLUS.equals(tokenType) &&
-               !JavaTokenType.MINUS.equals(tokenType));
+      return JavaTokenType.PLUS.equals(tokenType) || JavaTokenType.MINUS.equals(tokenType);
     }
     return false;
   }

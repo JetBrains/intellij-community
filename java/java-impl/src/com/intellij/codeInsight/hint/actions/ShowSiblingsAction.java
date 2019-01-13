@@ -3,7 +3,7 @@ package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
-import com.intellij.codeInsight.hint.PsiImplementationViewElement;
+import com.intellij.codeInsight.hint.PsiImplementationViewSession;
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
@@ -30,9 +30,9 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     if (project == null) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final Editor editor = getEditor(dataContext);
+    final Editor editor = PsiImplementationViewSession.getEditor(dataContext);
 
-    PsiElement element = getElement(project, file, editor, CommonDataKeys.PSI_ELEMENT.getData(dataContext));
+    PsiElement element = PsiImplementationViewSession.getElement(project, file, editor, CommonDataKeys.PSI_ELEMENT.getData(dataContext));
 
     if (element == null && file == null) return;
     PsiFile containingFile = element != null ? element.getContainingFile() : file;
@@ -77,9 +77,10 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
                             PsiFile file,
                             boolean invokedFromEditor,
                             @NotNull PsiElement element) {
-    final PsiElement[] impls = getSelfAndImplementations(editor, element, createImplementationsSearcher(), false);
+    final PsiElement[] impls = PsiImplementationViewSession
+      .getSelfAndImplementations(editor, element, PsiImplementationViewSession.createImplementationsSearcher(true), false);
     final String text = SymbolPresentationUtil.getSymbolPresentableText(element);
-    showImplementations(ContainerUtil.map(impls, PsiImplementationViewElement::new), project, text, editor, file, element, invokedFromEditor, invokedByShortcut);
+    showImplementations(new PsiImplementationViewSession(project, element, impls, text, editor, file), invokedFromEditor, invokedByShortcut);
   }
 
   @Override

@@ -796,7 +796,7 @@ public class HighlightUtil extends HighlightUtilBase {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
       }
     }
-    else if (expression != null && !plainRef) {
+    else if (expression != null && (!plainRef || ((PsiReferenceExpression)expression).resolve() instanceof PsiVariable)) {
       String message = JavaErrorMessages.message("value.break.unexpected");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
     }
@@ -810,8 +810,8 @@ public class HighlightUtil extends HighlightUtilBase {
       String message = JavaErrorMessages.message("continue.outside.loop");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
     }
-    
-    return checkContinueOutsideOfSwitchExpression(statement,statement.findContinuedStatement(), languageLevel);
+
+    return checkContinueOutsideOfSwitchExpression(statement, statement.findContinuedStatement(), languageLevel);
   }
 
   @Nullable
@@ -830,16 +830,15 @@ public class HighlightUtil extends HighlightUtilBase {
     return checkContinueOutsideOfSwitchExpression(statement, continuedStatement, level);
   }
 
-  private static HighlightInfo checkContinueOutsideOfSwitchExpression(@NotNull PsiContinueStatement statement,
+  private static HighlightInfo checkContinueOutsideOfSwitchExpression(PsiContinueStatement statement,
                                                                       PsiStatement continuedStatement,
-                                                                      @NotNull LanguageLevel level) {
+                                                                      LanguageLevel level) {
     if (Feature.ENHANCED_SWITCH.isSufficient(level)) {
       PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(statement);
       if (enclosing instanceof PsiSwitchExpression && PsiTreeUtil.isAncestor(continuedStatement, enclosing, true)) {
         String message = JavaErrorMessages.message("continue.outside.switch.expr");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
       }
-      return null;
     }
 
     return null;
@@ -2078,7 +2077,8 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiClass containingClass = referencedField.getContainingClass();
     if (containingClass == null) return null;
     if (expression.getContainingFile() != referencedField.getContainingFile()) return null;
-    if (expression.getTextRange().getStartOffset() >= referencedField.getTextRange().getEndOffset()) return null;
+    TextRange fieldRange = referencedField.getTextRange();
+    if (fieldRange == null || expression.getTextRange().getStartOffset() >= fieldRange.getEndOffset()) return null;
     // only simple reference can be illegal
     if (!acceptQualified && expression.getQualifierExpression() != null) return null;
     PsiField initField = findEnclosingFieldInitializer(expression);
@@ -3093,9 +3093,9 @@ public class HighlightUtil extends HighlightUtilBase {
     STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
     REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
     MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
-    RAW_LITERALS(LanguageLevel.JDK_12_PREVIEW, "feature.raw.literals"),
     ENHANCED_SWITCH(LanguageLevel.JDK_12_PREVIEW, "feature.enhanced.switch"),
-    SWITCH_EXPRESSION(LanguageLevel.JDK_12_PREVIEW, "feature.switch.expressions");
+    SWITCH_EXPRESSION(LanguageLevel.JDK_12_PREVIEW, "feature.switch.expressions"),
+    RAW_LITERALS(LanguageLevel.JDK_X, "feature.raw.literals");
 
     private final LanguageLevel level;
     private final String key;

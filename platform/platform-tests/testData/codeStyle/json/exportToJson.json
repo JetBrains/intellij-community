@@ -1,6 +1,6 @@
 [
   {
-    "language": "All",
+    "language": "all",
     "options": {
       "formatter_off_tag": "@formatter:off",
       "formatter_on_tag": "@formatter:on",

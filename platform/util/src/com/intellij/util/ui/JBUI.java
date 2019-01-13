@@ -1763,7 +1763,6 @@ public class JBUI {
       public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 3);
     }
 
-    //todo #UX-1 maybe move to popup
     public static class BigPopup {
       public static Color headerBackground() {
         return JBColor.namedColor("SearchEverywhere.Header.background", 0xf2f2f2);

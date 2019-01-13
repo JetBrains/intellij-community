@@ -330,7 +330,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
           }
         };
 
-        return new ListTableModel((new ColumnInfo[]{name, value}));
+        return new ListTableModel(name, value);
       }
 
       @Override

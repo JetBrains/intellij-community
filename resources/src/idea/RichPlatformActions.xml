@@ -34,7 +34,7 @@
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
     <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
-            icon="AllIcons.Nodes.Module">
+            icon="AllIcons.Actions.ModuleDirectory">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
     </action>
 
@@ -140,6 +140,14 @@
         <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"
                 text="Dump All Comments In Project"/>
         <action id="DumpScreenConfiguration" text="Dump Screen Configuration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
+      </group>
+
+      <separator/>
+      <group internal="true" text="Cached value profiler" popup="true">
+        <action id="TurnOnOffCachedValueProfilerAction" class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"
+                text="Turn on cached value profiler" internal="true"/>
+        <action id="DumpCachedValueProfilerInfoAction" class="com.intellij.internal.cachedValueProfiler.DumpCachedValueProfilerInfoAction"
+                text="Dump results" internal="true"/>
       </group>
 
       <separator/>

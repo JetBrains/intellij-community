@@ -17,15 +17,15 @@
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem" />
-    <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider" />
-    <fileIconProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupFileIconProvider" />
+    <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem"/>
+    <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider"/>
+    <fileIconProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupFileIconProvider"/>
 
     <runLineMarkerContributor language="JAVA" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataAsRelatedFileProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>
-    <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.navigation.DescriptionInspectionGotoRelatedProvider" />
+    <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.navigation.DescriptionInspectionGotoRelatedProvider"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.testAssistant.TestDataReferenceContributor"/>
     <getDataRule key="TestLocationData" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestLocationDataRule"/>
 
@@ -35,9 +35,12 @@
     <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>
 
-    <xmlStructureViewBuilderProvider implementation="org.jetbrains.idea.devkit.navigation.structure.PluginDescriptorXmlStructureViewBuilderProvider"/>
+    <xmlStructureViewBuilderProvider
+        implementation="org.jetbrains.idea.devkit.navigation.structure.PluginDescriptorXmlStructureViewBuilderProvider"/>
 
-    <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription" rootTagName="idea-plugin" stubVersion="10"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"
+                      rootTagName="idea-plugin"
+                      stubVersion="10"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
@@ -67,8 +70,8 @@
     <lang.documentationProvider language="XML"
                                 implementationClass="org.jetbrains.idea.devkit.references.extensions.ExtensionPointDocumentationProvider"/>
 
-    <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor" language="XML" />
-    <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ThemeJsonCompletionContributor" language="JSON" />
+    <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor"
+                            language="XML"/>
 
     <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity" applyToDialects="false"
                      groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
@@ -184,6 +187,10 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" isInternal="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UnregisteredNamedColorInspection"/>
+    <localInspection language="UAST" shortName="MissingRecentApi" displayName="Usage of IntelliJ API not available in older IDEs"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
@@ -238,6 +245,12 @@
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaHiDPIThemeFilter"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdater"/>
+    <postStartupActivity
+        implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdateStartupActivity"/>
+    <java.externalAnnotation.locationProvider
+        implementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.IdeExternalAnnotationsLocationProvider"/>
+
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
 
     <psi.referenceContributor
@@ -249,6 +262,17 @@
 
     <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
     <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
+
+    <!--cached value profiler-->
+    <fileTypeFactory implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileTypeFactory"/>
+    <fileEditorProvider implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileEditorProvider"/>
+
+    <!-- themes -->
+    <codeInsight.lineMarkerProvider language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ApplyThemeLineMarkerProvider"/>
+    <completion.contributor implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonCompletionContributor" language="JSON"/>
+    <spellchecker.support language="JSON"
+                          order="first"
+                          implementationClass="org.jetbrains.idea.devkit.themes.ThemeSpellcheckingStrategy"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>

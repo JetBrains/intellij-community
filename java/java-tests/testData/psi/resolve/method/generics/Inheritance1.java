@@ -11,6 +11,6 @@ class Test{
     }
 
     {
-        new A<Integer>().x.getT().<ref>byteValue();
+        new A<Integer>().x.getT().<caret>byteValue();
     }
 }

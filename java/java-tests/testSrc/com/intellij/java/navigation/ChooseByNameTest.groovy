@@ -15,7 +15,6 @@ import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-
 /**
  * @author peter
  */
@@ -402,7 +401,7 @@ class Intf {
 
     assert gotoFile("barindex") == [fooBarFile]
     assert gotoFile("fooindex") == [fooBarFile]
-    assert gotoFile("fbindex") == [fbFile, someFbFile, fooBarFile, fbSomeFile]
+    assert gotoFile("fbindex") == [fbFile, someFbFile, fbSomeFile, fooBarFile]
     assert gotoFile("fbhtml") == [fbFile, someFbFile, fbSomeFile, fooBarFile]
 
     // partial slashes
@@ -511,6 +510,12 @@ class Intf {
     myFixture.addClass('class Foo { }')
     def fooBar = myFixture.addClass('class FooBar { }')
     assert gotoClass('Foo B') == [fooBar]
+  }
+
+  void "test prefer filename match regardless of package match"() {
+    def f1 = addEmptyFile('resolve/ResolveCache.java')
+    def f2 = addEmptyFile('abc/ResolveCacheSettings.xml')
+    assert gotoFile('resolvecache') == [f1, f2]
   }
 
   private List<Object> gotoClass(String text, boolean checkboxState = false) {

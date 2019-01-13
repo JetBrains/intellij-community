@@ -42,16 +42,15 @@ class GitIgnoreChecker(val project: Project) : VcsIgnoreChecker {
 
     for (line in output) {
       //Output form: <source> <COLON> <linenum> <COLON> <pattern> <HT> <pathname>
-      val lineElements = line.split(":")
-      if (lineElements.size != 3) continue
+      val lineElements = line.split("\t")
+      if (lineElements.size != 2) continue
+      val path = lineElements[1]
 
-      val gitIgnoreRelPath = lineElements[0]
-      val patternWithPathname = lineElements[2].split("\t")
+      val prefixParts = lineElements[0].split(":")
+      if (prefixParts.size != 3) continue
 
-      if (patternWithPathname.size != 2) continue
-
-      val matchedPattern = patternWithPathname[0]
-      val path = patternWithPathname[1]
+      val gitIgnoreRelPath = prefixParts[0]
+      val matchedPattern = prefixParts[2]
 
       if (matchedPattern.startsWith("!")) continue //skip matching by negative pattern
 

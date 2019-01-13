@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.gradle;
 
 import com.intellij.execution.RunManager;
@@ -54,6 +54,9 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   private static final String LATEST_GRADLE_VERSION_KEY = "LATEST_GRADLE_VERSION_KEY";
   private static final String LATEST_UPDATING_TIME_KEY = "LATEST_UPDATING_TIME_KEY";
 
+  private static final String FALLBACK_VERSION = "0.4.1";
+  protected static final String HELP_COMMENT = "// See https://github.com/JetBrains/gradle-intellij-plugin/\n";
+
   private static class Lazy {
     static final ExecutorService EXECUTOR = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("UPDATE_GRADLE_PLUGIN_VERSIONS");
   }
@@ -88,7 +91,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
                          @NotNull ModifiableRootModel rootModel,
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {
-    String pluginVersion = PropertiesComponent.getInstance().getValue(LATEST_GRADLE_VERSION_KEY, "0.2.13");
+    String pluginVersion = PropertiesComponent.getInstance().getValue(LATEST_GRADLE_VERSION_KEY, FALLBACK_VERSION);
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
     String ideVersion;
     if (applicationInfo.isEAP()) {
@@ -113,7 +116,8 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
                                       String ideVersion) {
     buildScriptData
       .addPluginDefinitionInPluginsGroup("id 'org.jetbrains.intellij' version '" + pluginVersion + "'")
-      .addOther("intellij {\n    version '" + ideVersion + "'\n}\n")
+      .addOther(HELP_COMMENT +
+                "intellij {\n    version '" + ideVersion + "'\n}\n")
       .addOther("patchPluginXml {\n" +
                 "    changeNotes \"\"\"\n" +
                 "      Add change notes here.<br>\n" +
@@ -162,9 +166,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
       VirtualFile pluginXml = metaInf.createChildData(this, "plugin.xml");
       FileTemplateManager templateManager = FileTemplateManager.getInstance(project);
       FileTemplate template = templateManager.getJ2eeTemplate("gradleBasedPlugin.xml");
-      if (template == null) {
-        return false;
-      }
+
       Map<String, String> attributes = new HashMap<>();
       String groupId = projectId.getGroupId();
       String artifactId = projectId.getArtifactId();

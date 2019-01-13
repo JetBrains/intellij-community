@@ -29,5 +29,5 @@ public interface PermanentCommitsInfo<CommitId> {
   int getNodeId(@NotNull CommitId commitId);
 
   @NotNull
-  Set<Integer> convertToNodeIds(@NotNull Collection<CommitId> heads);
+  Set<Integer> convertToNodeIds(@NotNull Collection<? extends CommitId> heads);
 }

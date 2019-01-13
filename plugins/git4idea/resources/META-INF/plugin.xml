@@ -84,7 +84,8 @@
     <group id="GitRepositoryActions">
       <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="AllIcons.Vcs.Branch">
         <keyboard-shortcut first-keystroke="control shift BACK_QUOTE" keymap="$default" />
-        <keyboard-shortcut first-keystroke="control shift BACK_QUOTE" keymap="Mac OS X" remove="true" />
+        <keyboard-shortcut first-keystroke="meta shift BACK_QUOTE" keymap="Mac OS X" remove="true" />
+        <keyboard-shortcut first-keystroke="meta shift BACK_QUOTE" keymap="Mac OS X 10.5+" remove="true" />
       </action>
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag..."/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="AllIcons.Actions.ShowAsTree"/>
@@ -190,6 +191,8 @@
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
         implementation="git4idea.diff.GitSubmoduleDiffRequestProvider"/>
+    <vcsChangesViewRefresher implementation="git4idea.ignore.GitIgnoredFilesHolder$Provider"/>
+    <vcs.ignoredFilesHolder implementation="git4idea.ignore.GitIgnoredFilesHolder$Provider"/>
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
@@ -259,6 +262,7 @@
 
     <ignoredFileContentProvider implementation="git4idea.ignore.GitIgnoredFileContentProvider"/>
     <openapi.vcs.changes.vcsPreservingExecutor implementation="git4idea.util.GitPreservingExecutor"/>
+    <actionPromoter implementation="git4idea.actions.GitActionPromoter"/>
   </extensions>
 
   <extensionPoints>

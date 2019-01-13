@@ -62,7 +62,7 @@ public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
            "  void <caret>foo(Class<?>... cl) { }\n" +
            "}",
 
-           "foo-java.lang.Class...-", "foo-java.lang.Class<?>...-", "foo(java.lang.Class...)", "foo(java.lang.Class<?>...)");
+           "foo(java.lang.Class...)", "foo-java.lang.Class...-");
 
   }
 
@@ -72,7 +72,7 @@ public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
            "}\n" +
            "class Comparator<X>{}",
 
-           "sort-T:A-Comparator-", "sort-T:A-Comparator<? super T>-", "sort(T[], Comparator)", "sort(T[], Comparator<? super T>)");
+           "sort(T[],Comparator)", "sort-T:A-Comparator-", "sort(T[], Comparator)");
   }
 
   protected void doTest(String text, String... expected) {

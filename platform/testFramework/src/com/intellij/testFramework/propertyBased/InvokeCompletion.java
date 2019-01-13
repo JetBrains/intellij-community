@@ -110,7 +110,7 @@ public class InvokeCompletion extends ActionOnFile {
 
     String expectedVariant = leaf == null || leaf instanceof PsiPlainText ? null : myPolicy.getExpectedVariant(editor, file, leaf, ref);
     boolean prefixEqualsExpected = isPrefixEqualToExpectedVariant(caretOffset, leaf, ref, expectedVariant);
-    boolean shouldCheckDuplicates = myPolicy.shouldCheckDuplicates(editor, file, leaf);
+    boolean shouldCheckDuplicates = myPolicy.shouldCheckDuplicates(editor, file, file.findElementAt(caretOffset));
     long stampBefore = getDocument().getModificationStamp();
 
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);

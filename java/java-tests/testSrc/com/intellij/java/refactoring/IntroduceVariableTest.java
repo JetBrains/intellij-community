@@ -102,6 +102,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("i", true, true, true, "int"));
   }
 
+  public void testFunctionalExpressionInSwitch() {
+    doTest(new MockIntroduceVariableHandler("p", true, true, true, "java.util.function.Predicate<java.lang.String>"));
+  }
+
   public void testParenthizedOccurence() {
     doTest(new MockIntroduceVariableHandler("empty", true, true, true, "boolean"));
   }
@@ -271,6 +275,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
   }
 
+  public void testInsideTryWithResources() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "java.io.FileInputStream"));
+  }
+
   public void testInsideForLoop() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
   }
@@ -292,7 +300,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testGenericTypeMismatch() {
-    doTest(new MockIntroduceVariableHandler("i", true, true, false, "java.lang.String"));
+    doTest(new MockIntroduceVariableHandler("i", true, true, false, CommonClassNames.JAVA_LANG_OBJECT));
   }
 
   public void testGenericTypeMismatch1() {

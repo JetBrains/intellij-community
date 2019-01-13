@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 
-val log: Logger = logger(::log)
+val log: Logger = logger("#org.jetbrains.plugins.groovy.lang.resolve")
 
 @JvmField
 val NON_CODE: Key<Boolean?> = Key.create("groovy.process.non.code.members")

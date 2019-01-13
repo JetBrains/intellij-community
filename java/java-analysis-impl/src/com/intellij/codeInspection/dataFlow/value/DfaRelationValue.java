@@ -190,9 +190,10 @@ public class DfaRelationValue extends DfaValue {
           dfaRight instanceof DfaFactMapValue && !(dfaLeft instanceof DfaFactMapValue)) {
         return createCanonicalRelation(dfaLeft, relationType, dfaRight);
       }
-      if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue
-          || dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaBoxedValue) {
-        if (!(dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue)) {
+      if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaBinOpValue
+          || dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaBoxedValue || dfaRight instanceof DfaBinOpValue) {
+        if (!(dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaBinOpValue) ||
+            (dfaRight instanceof DfaBinOpValue && !(dfaLeft instanceof DfaBinOpValue))) {
           RelationType flipped = relationType.getFlipped();
           return flipped == null ? null : createCanonicalRelation(dfaRight, flipped, dfaLeft);
         }

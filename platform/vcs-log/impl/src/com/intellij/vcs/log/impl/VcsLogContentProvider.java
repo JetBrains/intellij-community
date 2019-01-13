@@ -49,7 +49,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @NotNull private final VcsProjectLog myProjectLog;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
-  @Nullable private Consumer<VcsLogUiImpl> myOnCreatedListener;
+  @Nullable private Consumer<? super VcsLogUiImpl> myOnCreatedListener;
 
   @Nullable private volatile VcsLogUiImpl myUi;
 
@@ -121,7 +121,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
    * @param consumer consumer to execute.
    */
   @CalledInAwt
-  public void executeOnMainUiCreated(@NotNull Consumer<VcsLogUiImpl> consumer) {
+  public void executeOnMainUiCreated(@NotNull Consumer<? super VcsLogUiImpl> consumer) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
     if (myUi == null) {

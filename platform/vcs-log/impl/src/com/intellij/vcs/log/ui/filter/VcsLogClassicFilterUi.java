@@ -174,9 +174,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   private static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
 
-    @NotNull private final Computable<JComponent> myComponentCreator;
+    @NotNull private final Computable<? extends JComponent> myComponentCreator;
 
-    FilterActionComponent(@NotNull Computable<JComponent> componentCreator) {
+    FilterActionComponent(@NotNull Computable<? extends JComponent> componentCreator) {
       myComponentCreator = componentCreator;
     }
 
@@ -230,7 +230,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   private static class TextFilterModel extends FilterModel<VcsLogTextFilter> {
     @Nullable private String myText;
 
-    TextFilterModel(NotNullComputable<VcsLogDataPack> dataPackProvider, @NotNull MainVcsLogUiProperties properties) {
+    TextFilterModel(NotNullComputable<? extends VcsLogDataPack> dataPackProvider, @NotNull MainVcsLogUiProperties properties) {
       super("text", dataPackProvider, properties);
     }
 
@@ -377,7 +377,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   private static class DateFilterModel extends FilterModel<VcsLogDateFilter> {
-    DateFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter, MainVcsLogUiProperties uiProperties) {
+    DateFilterModel(NotNullComputable<? extends VcsLogDataPack> dataPackGetter, MainVcsLogUiProperties uiProperties) {
       super("date", dataPackGetter, uiProperties);
     }
 
@@ -411,7 +411,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   private class UserFilterModel extends FilterModel<VcsLogUserFilter> {
-    UserFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter, MainVcsLogUiProperties uiProperties) {
+    UserFilterModel(NotNullComputable<? extends VcsLogDataPack> dataPackGetter, MainVcsLogUiProperties uiProperties) {
       super("user", dataPackGetter, uiProperties);
     }
 

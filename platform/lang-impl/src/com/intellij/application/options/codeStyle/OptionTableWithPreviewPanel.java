@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -938,7 +939,11 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+    TableCellEditor editor = myTreeTable.getCellEditor();
+    if (editor != null && !editor.stopCellEditing()) {
+      throw new ConfigurationException("Editing cannot be stopped");
+    }
     TreeModel treeModel = myTreeTable.getTree().getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     applyNode(root, settings);
@@ -946,6 +951,10 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
+    TableCellEditor editor = myTreeTable.getCellEditor();
+    if (editor != null) {
+      return true; // to allow stop editing in #apply
+    }
     TreeModel treeModel = myTreeTable.getTree().getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     if (isModified(root, settings)) {

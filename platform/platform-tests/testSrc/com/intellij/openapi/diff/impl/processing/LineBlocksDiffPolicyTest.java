@@ -22,7 +22,7 @@ import com.intellij.openapi.diff.impl.highlighting.Util;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import junit.framework.TestCase;
 
-public class LineBlocksDiffPolicyTest extends TestCase{
+public class LineBlocksDiffPolicyTest extends TestCase {
   public void test() throws FilesTooBigForDiffException {
     DiffPolicy.LineBlocks diffPolicy = new DiffPolicy.LineBlocks(ComparisonPolicy.DEFAULT);
     checkPolicy(diffPolicy, "abc\n123\n", "ABC\nXYZ\n");

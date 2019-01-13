@@ -18,19 +18,52 @@ public final class AntIcons {
     return IconLoader.getIcon(path, clazz);
   }
 
-  public static final Icon AntBuildXml = load("/icons/AntBuildXml.svg"); // 16x16
-  public static final Icon AntInstallation = load("/icons/antInstallation.png"); // 16x16
-  public static final Icon Build = load("/icons/build.svg"); // 16x16
-  public static final Icon LogDebug = load("/icons/logDebug.svg"); // 16x16
-  public static final Icon LogVerbose = load("/icons/logVerbose.svg"); // 16x16
-  public static final Icon Message = load("/icons/message.png"); // 16x16
-  public static final Icon MetaTarget = load("/icons/metaTarget.svg"); // 16x16
-  public static final Icon Target = load("/icons/target.png"); // 16x16
-  public static final Icon Task = load("/icons/task.svg"); // 16x16
-  public static final Icon Verbose = load("/icons/verbose.svg"); // 16x16
+  /**
+   * 16x16
+   */
+  public static final Icon AntBuildXml = load("/icons/AntBuildXml.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Build = load("/icons/build.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon LogDebug = load("/icons/logDebug.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon LogVerbose = load("/icons/logVerbose.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon MetaTarget = load("/icons/metaTarget.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Task = load("/icons/task.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon Verbose = load("/icons/verbose.svg");
+
+  /** @deprecated to be removed in IDEA 2020 - use AntIcons.Build */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon AntInstallation = AntIcons.Build;
+
+  /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Information */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Message = load("/general/information.svg", com.intellij.icons.AllIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Properties */
   @SuppressWarnings("unused")
   @Deprecated
   public static final Icon Properties = load("/actions/properties.svg", com.intellij.icons.AllIcons.class);
+
+  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Target */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Target = load("/nodes/target.svg", com.intellij.icons.AllIcons.class);
 }

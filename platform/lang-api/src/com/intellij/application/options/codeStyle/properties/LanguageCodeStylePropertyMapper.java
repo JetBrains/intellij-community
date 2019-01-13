@@ -4,8 +4,11 @@ package com.intellij.application.options.codeStyle.properties;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +39,16 @@ public class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMa
     return fieldsDescriptors;
   }
 
+  @NotNull
+  @Override
+  public String getLanguageDomainId() {
+    return myLanguage.getID().toLowerCase(Locale.ENGLISH);
+  }
+
   private List<CustomCodeStyleSettings> getCustomSettings() {
-    CodeStyleSettings rootSettings = new CodeStyleSettings();
     List<CustomCodeStyleSettings> customSettingsList = new ArrayList<>();
-    addCustomSettings(customSettingsList, rootSettings, CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList());
-    addCustomSettings(customSettingsList, rootSettings, LanguageCodeStyleSettingsProvider.getSettingsPagesProviders());
+    addCustomSettings(customSettingsList, getRootSettings(), CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList());
+    addCustomSettings(customSettingsList, getRootSettings(), LanguageCodeStyleSettingsProvider.getSettingsPagesProviders());
     return customSettingsList;
   }
 
@@ -49,8 +57,9 @@ public class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMa
                                  @NotNull List<? extends CodeStyleSettingsProvider> providerList) {
     for (CodeStyleSettingsProvider provider : providerList) {
       if (provider.getLanguage() == myLanguage) {
-        CustomCodeStyleSettings customSettings = provider.createCustomSettings(rootSettings);
-        if (customSettings != null) {
+        CustomCodeStyleSettings customSettingsTemplate = provider.createCustomSettings(rootSettings);
+        if (customSettingsTemplate != null) {
+          CustomCodeStyleSettings customSettings = rootSettings.getCustomSettings(customSettingsTemplate.getClass());
           list.add(customSettings);
         }
       }

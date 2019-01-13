@@ -3,7 +3,7 @@ class A{
  }
 
  void foo(){
-  <ref>foo("aaa", true);
+  <caret>foo("aaa", true);
  }
 
  void foo(String a, boolean b){

@@ -11,7 +11,8 @@ import java.awt.Font
 internal class GithubPullRequestDescriptionPanel : NonOpaquePanel() {
   var description: String? by equalVetoingObservable<String?>(
     null) {
-    isVisible = !it.isNullOrEmpty()
+    //'!it.isNullOrEmpty()' causes Kotlin compiler to fail here (KT-28847)
+    isVisible = it != null && !it.isEmpty()
     htmlPanel.update()
   }
 

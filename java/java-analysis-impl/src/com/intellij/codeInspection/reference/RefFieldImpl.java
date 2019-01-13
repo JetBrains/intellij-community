@@ -19,20 +19,29 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int USED_FOR_WRITING_MASK = 0x20000;
   private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0x40000;
 
-  RefFieldImpl(@NotNull RefElement owner, UField field, PsiElement psi, RefManager manager) {
+  RefFieldImpl(UField field, PsiElement psi, RefManager manager) {
     super(field, psi, manager);
     if (psi instanceof UElement) {
       LOG.error(new Exception("psi should not be uast element: " + psi));
     }
 
+    if (field instanceof UEnumConstant) {
+      putUserData(ENUM_CONSTANT, true);
+    }
+  }
+
+  @Override
+  protected void initialize() {
+    PsiElement psi = getPsiElement();
+    LOG.assertTrue(psi != null);
+    UField uElement = getUastElement();
+    LOG.assertTrue(uElement != null);
+    RefElement owner = RefMethodImpl.findParentRef(psi, uElement, myManager);
     ((WritableRefEntity)owner).add(this);
 
     if (owner instanceof RefClass && ((RefClass)owner).isInterface()) {
       setIsStatic(true);
       setIsFinal(true);
-    }
-    if (field instanceof UEnumConstant) {
-      putUserData(ENUM_CONSTANT, true);
     }
   }
 
@@ -71,7 +80,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
       setUsedForReading(true);
     }
     
-    setUsedQualifiedOutsidePackageFlag(refFrom, expressionFrom);
+    setForbidProtectedAccess(refFrom, expressionFrom);
     getRefManager().fireNodeMarkedReferenced(this, refFrom, referencedFromClassInitializer, forReading, forWriting, expressionFrom == null ? null : expressionFrom.getSourcePsi());
   }
 
@@ -180,9 +189,5 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   public boolean isSuspicious() {
     if (isEntry()) return false;
     return super.isSuspicious() || isUsedForReading() != isUsedForWriting();
-  }
-
-  @Override
-  protected void initialize() {
   }
 }

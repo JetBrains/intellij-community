@@ -29,6 +29,7 @@
     <orderEntry type="module" module-name="intellij.ant.jps" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" />
     <orderEntry type="module" module-name="intellij.properties.psi" />
+    <orderEntry type="library" name="NanoXML" level="project" />
   </component>
   <component name="copyright">
     <Base>

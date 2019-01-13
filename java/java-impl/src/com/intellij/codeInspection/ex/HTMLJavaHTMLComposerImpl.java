@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UDeclaration;
 import org.jetbrains.uast.UField;
 import org.jetbrains.uast.UMethod;
 
@@ -180,38 +181,34 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
       @Override
       public void visitMethod(@NotNull RefMethod method) {
-        final PsiModifierListOwner element = (PsiModifierListOwner)method.getUastElement().getJavaPsi();
-        if (element instanceof PsiClass) {
-          return;
+        UDeclaration uDecl = method.getUastElement();
+        if (!(uDecl instanceof UMethod)) return;
+        PsiMethod psiMethod = ((UMethod)uDecl).getJavaPsi();
+        PsiType returnType = psiMethod.getReturnType();
+
+        if (method.isStatic()) {
+          buf.append(InspectionsBundle.message("inspection.export.results.static"));
+          buf.append(HTMLComposerImpl.NBSP);
         }
-        PsiMethod psiMethod = (PsiMethod)element;
-        if (psiMethod != null) {
-          PsiType returnType = psiMethod.getReturnType();
-
-          if (method.isStatic()) {
-            buf.append(InspectionsBundle.message("inspection.export.results.static"));
-            buf.append(HTMLComposerImpl.NBSP);
-          }
-          else if (method.isAbstract()) {
-            buf.append(InspectionsBundle.message("inspection.export.results.abstract"));
-            buf.append(HTMLComposerImpl.NBSP);
-          }
-          buf.append(method.isConstructor()
-                     ? InspectionsBundle.message("inspection.export.results.constructor")
-                     : InspectionsBundle.message("inspection.export.results.method"));
-          buf.append(HTMLComposerImpl.NBSP).append(HTMLComposerImpl.CODE_OPENING);
-
-          if (returnType != null) {
-            buf.append(XmlStringUtil.escapeString(returnType.getPresentableText()));
-            buf.append(HTMLComposerImpl.NBSP);
-          }
-
-          buf.append(HTMLComposerImpl.B_OPENING);
-          buf.append(psiMethod.getName());
-          buf.append(HTMLComposerImpl.B_CLOSING);
-          appendMethodParameters(buf, psiMethod, true);
-          buf.append(HTMLComposerImpl.CODE_CLOSING);
+        else if (method.isAbstract()) {
+          buf.append(InspectionsBundle.message("inspection.export.results.abstract"));
+          buf.append(HTMLComposerImpl.NBSP);
         }
+        buf.append(method.isConstructor()
+                   ? InspectionsBundle.message("inspection.export.results.constructor")
+                   : InspectionsBundle.message("inspection.export.results.method"));
+        buf.append(HTMLComposerImpl.NBSP).append(HTMLComposerImpl.CODE_OPENING);
+
+        if (returnType != null) {
+          buf.append(XmlStringUtil.escapeString(returnType.getPresentableText()));
+          buf.append(HTMLComposerImpl.NBSP);
+        }
+
+        buf.append(HTMLComposerImpl.B_OPENING);
+        buf.append(psiMethod.getName());
+        buf.append(HTMLComposerImpl.B_CLOSING);
+        appendMethodParameters(buf, psiMethod, true);
+        buf.append(HTMLComposerImpl.CODE_CLOSING);
       }
 
       @Override

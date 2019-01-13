@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.replaceInProject;
 
@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.StatusBar;
@@ -161,7 +160,7 @@ public class ReplaceInProjectManager {
     findManager.getFindInProjectModel().copyFrom(findModel);
     final FindModel findModelCopy = findModel.clone();
 
-    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModel.isOpenInNewTab(), findModelCopy);
+    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModelCopy);
     final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
     processPresentation.setShowFindOptionsPrompt(findModel.isPromptOnReplace());
 
@@ -177,7 +176,7 @@ public class ReplaceInProjectManager {
     @NotNull
     @Override
     public String getLongDescriptiveName() {
-      UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(false, myFindModel);
+      UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myFindModel);
       return "Replace " + StringUtil.decapitalize(presentation.getToolwindowTitle()) + " with '" + myFindModel.getStringToReplace() + "'";
     }
 
@@ -303,7 +302,7 @@ public class ReplaceInProjectManager {
         putValue(LONG_DESCRIPTION, KeymapUtil.getKeystrokeText(altEnter));
         putValue(SHORT_DESCRIPTION, KeymapUtil.getKeystrokeText(altEnter));
       }
-      
+
       @Override
       public void actionPerformed(ActionEvent e) {
         replaceUsagesUnderCommand(replaceContext, replaceContext.getUsageView().getSelectedUsages());
@@ -401,6 +400,7 @@ public class ReplaceInProjectManager {
       myProject,
       null,
       indicator -> {
+        indicator.setIndeterminate(false);
         int processed = 0;
         VirtualFile lastFile = null;
 
@@ -550,7 +550,7 @@ public class ReplaceInProjectManager {
     }
 
     if (readOnlyFiles != null) {
-      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtilCore.toVirtualFileArray(readOnlyFiles));
+      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readOnlyFiles);
     }
 
     if (hasReadOnlyUsages(selectedUsages)) {

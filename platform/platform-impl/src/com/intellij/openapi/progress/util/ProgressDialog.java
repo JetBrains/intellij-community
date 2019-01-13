@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
@@ -81,8 +81,8 @@ class ProgressDialog implements Disposable {
   DialogWrapper myPopup;
   private final Window myParentWindow;
 
-  private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500, ModalityState.any(),this);
-  private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500, ModalityState.any(),this);
+  private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500, ModalityState.any(), this);
+  private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500, ModalityState.any(), this);
 
   ProgressDialog(@NotNull ProgressWindow progressWindow, boolean shouldShowBackground, String cancelText, @Nullable Window parentWindow) {
     myProgressWindow = progressWindow;

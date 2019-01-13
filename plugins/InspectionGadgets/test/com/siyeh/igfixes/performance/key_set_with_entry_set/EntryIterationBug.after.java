@@ -6,11 +6,12 @@ public class EntryIterationBug {
   private final Map<String, Double> map = new HashMap<>();
 
   public void merge(EntryIterationBug other) {
-    for (Map.Entry<String, Double> stringDoubleEntry : other.map.entrySet()) {
-      if (map.containsKey(stringDoubleEntry.getKey())) {
-        map.put(stringDoubleEntry.getKey(), map.get(stringDoubleEntry.getKey()) + stringDoubleEntry.getValue());
+    for (Map.Entry<String, Double> entry : other.map.entrySet()) {
+        String s = entry.getKey();
+        if (map.containsKey(s)) {
+        map.put(s, map.get(s) + entry.getValue());
       } else {
-        map.put(stringDoubleEntry.getKey(), stringDoubleEntry.getValue());
+        map.put(s, entry.getValue());
       }
     }
   }

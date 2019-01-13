@@ -11,7 +11,7 @@
     <orderEntry type="module" module-name="intellij.xml.psi" exported="" />
     <orderEntry type="module" module-name="intellij.xml.analysis" exported="" />
     <orderEntry type="module" module-name="intellij.xml.structureView" exported="" />
-    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
   </component>
   <component name="copyright">
     <Base>

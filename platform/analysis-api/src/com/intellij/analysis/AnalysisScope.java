@@ -68,8 +68,8 @@ public class AnalysisScope {
   private GlobalSearchScope myFilter;
   @Type protected int myType;
 
-  private CompactVirtualFileSet myVFiles;  // initial files and directories the scope is configured on
-  protected CompactVirtualFileSet myFilesSet;    // set of files (not directories) this scope consists of. calculated in initFilesSet()
+  private Set<VirtualFile> myVFiles;  // initial files and directories the scope is configured on
+  private Set<VirtualFile> myFilesSet; // set of files (not directories) this scope consists of. calculated in initFilesSet()
 
   private boolean myIncludeTestSource = true;
 
@@ -140,8 +140,9 @@ public class AnalysisScope {
     myModule = null;
     myModules = null;
     myScope = null;
-    myVFiles = new CompactVirtualFileSet(virtualFiles);
-    myVFiles.freeze();
+    CompactVirtualFileSet files = new CompactVirtualFileSet(virtualFiles);
+    files.freeze();
+    myVFiles = files;
     myType = VIRTUAL_FILES;
   }
 
@@ -154,32 +155,27 @@ public class AnalysisScope {
   }
 
   @NotNull
-  protected PsiElementVisitor createFileSearcher() {
+  protected PsiElementVisitor createFileSearcher(@NotNull Collection<? super VirtualFile> addTo) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
     }
-
     return new PsiElementVisitor() {
       @Override
       public void visitFile(@NotNull PsiFile file) {
         if (mySearchInLibraries || !(file instanceof PsiCompiledElement)) {
           final VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile == null) return;
-          if (isFilteredOut(virtualFile)) {
-            return;
+          if (virtualFile != null && !isFilteredOut(virtualFile) && shouldHighlightFile(file)) {
+            addTo.add(virtualFile);
           }
-          if (!shouldHighlightFile(file)) return;
-          CompactVirtualFileSet fileSet = myFilesSet;
-          if (fileSet == null) return;
-          fileSet.add(virtualFile);
         }
       }
     };
   }
 
   private boolean isFilteredOut(@NotNull VirtualFile virtualFile) {
-    if (myFilter != null && !myFilter.contains(virtualFile)) {
+    GlobalSearchScope filter = myFilter;
+    if (filter != null && !filter.contains(virtualFile)) {
       return true;
     }
     return !myIncludeTestSource && TestSourcesFilter.isTestSources(virtualFile, myProject);
@@ -205,7 +201,8 @@ public class AnalysisScope {
   }
 
   public boolean contains(@NotNull VirtualFile file) {
-    if (myFilesSet == null) {
+    Set<VirtualFile> fileSet = myFilesSet;
+    if (fileSet == null) {
       if (myType == CUSTOM) {
         // optimization
         if (myScope != null) return myScope.contains(file);
@@ -214,30 +211,28 @@ public class AnalysisScope {
         final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
         return index.isInContent(file) && !isFilteredOut(file);
       }
-      initFilesSet();
     }
 
-    return myFilesSet.contains(file);
+    return getFileSet().contains(file);
   }
 
-  protected void initFilesSet() {
+  @NotNull
+  protected Set<VirtualFile> createFilesSet() {
+    CompactVirtualFileSet fileSet = new CompactVirtualFileSet();
     switch (myType) {
       case FILE:
-        myFilesSet = new CompactVirtualFileSet();
-        myFilesSet.add(((PsiFileSystemItem)myElement).getVirtualFile());
-        myFilesSet.freeze();
+        fileSet.add(((PsiFileSystemItem)myElement).getVirtualFile());
+        fileSet.freeze();
         break;
       case DIRECTORY:
       case PROJECT:
       case MODULES:
       case MODULE:
       case CUSTOM:
-        myFilesSet = new CompactVirtualFileSet();
-        accept(createFileSearcher());
-        myFilesSet.freeze();
+        accept(createFileSearcher(fileSet));
+        fileSet.freeze();
         break;
       case VIRTUAL_FILES:
-        myFilesSet = new CompactVirtualFileSet();
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
         for (final VirtualFile vFile : myVFiles) {
           VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
@@ -246,15 +241,17 @@ public class AnalysisScope {
             public Result visitFileEx(@NotNull VirtualFile file) {
               boolean ignored = ReadAction.compute(() -> fileIndex.isExcluded(file));
               if (!ignored && !file.isDirectory()) {
-                myFilesSet.add(file);
+                fileSet.add(file);
               }
               return ignored ? SKIP_CHILDREN : CONTINUE;
             }
           });
         }
-        myFilesSet.freeze();
         break;
+      default:
+        throw new IllegalStateException("Invalid type: "+myType+"; can't create file set off it");
     }
+    return fileSet;
   }
 
 
@@ -273,10 +270,9 @@ public class AnalysisScope {
     });
   }
 
-  public boolean accept(@NotNull final Processor<VirtualFile> processor) {
+  public boolean accept(@NotNull final Processor<? super VirtualFile> processor) {
     if (myType == VIRTUAL_FILES) {
-      if (myFilesSet == null) initFilesSet();
-      return myFilesSet.process(file -> isFilteredOut(file) || processor.process(file));
+      return ((CompactVirtualFileSet)getFileSet()).process(file -> isFilteredOut(file) || processor.process(file));
     }
     final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (myScope instanceof GlobalSearchScope) {
@@ -321,6 +317,15 @@ public class AnalysisScope {
     }
 
     return projectFileIndex.iterateContent(createScopeIterator(processor, null));
+  }
+
+  @NotNull
+  private Collection<VirtualFile> getFileSet() {
+    Set<VirtualFile> fileSet = myFilesSet;
+    if (fileSet == null) {
+      myFilesSet = fileSet = createFilesSet();
+    }
+    return fileSet;
   }
 
   @NotNull
@@ -528,19 +533,19 @@ public class AnalysisScope {
   }
 
   public int getFileCount() {
-    if (myFilesSet == null) initFilesSet();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) { //clear text after building analysis scope set
       indicator.setText("");
       indicator.setText2("");
     }
-    return myFilesSet.size();
+    return getFileSet().size();
   }
 
   public void invalidate(){
     if (myType == VIRTUAL_FILES) {
-      myVFiles = new CompactVirtualFileSet(ContainerUtil.filter(myVFiles, virtualFile -> virtualFile != null && virtualFile.isValid()));
-      myVFiles.freeze();
+      CompactVirtualFileSet files = new CompactVirtualFileSet(ContainerUtil.filter(myVFiles, virtualFile -> virtualFile != null && virtualFile.isValid()));
+      files.freeze();
+      myVFiles = files;
     }
     else {
       myFilesSet = null;
@@ -663,7 +668,7 @@ public class AnalysisScope {
         return new GlobalSearchScope() {
           @Override
           public boolean contains(@NotNull VirtualFile file) {
-            return myFilesSet.contains(file);
+            return getFileSet().contains(file);
           }
 
           @Override
@@ -686,7 +691,7 @@ public class AnalysisScope {
     return myIncludeTestSource;
   }
 
-  public void setFilter(GlobalSearchScope filter) {
+  public void setFilter(@NotNull GlobalSearchScope filter) {
     myFilter = filter;
   }
 

@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.CommonBundle;
+import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationSettings;
@@ -14,7 +15,6 @@ import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -28,7 +28,10 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -66,7 +69,7 @@ import java.util.stream.Collectors;
 
 @State(name = "MavenProjectsManager")
 public class MavenProjectsManager extends MavenSimpleProjectComponent
-  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponent, Disposable, ProjectComponent {
+  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable, ProjectComponent {
   private static final int IMPORT_DELAY = 1000;
   private static final String NON_MANAGED_POM_NOTIFICATION_GROUP_ID = "Maven: non-managed pom.xml";
   private static final NotificationGroup NON_MANAGED_POM_NOTIFICATION_GROUP =
@@ -315,20 +318,22 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @Override
-  public void save() {
-    if (myProjectsTree != null) {
-      mySaveQueue.queue(new Update(MavenProjectsManager.this) {
-        @Override
-        public void run() {
-          try {
-            myProjectsTree.save(getProjectsTreeFile());
-          }
-          catch (IOException e) {
-            MavenLog.LOG.info(e);
-          }
-        }
-      });
+  public void doSave() {
+    if (myProjectsTree == null) {
+      return;
     }
+
+    mySaveQueue.queue(new Update(this) {
+      @Override
+      public void run() {
+        try {
+          myProjectsTree.save(getProjectsTreeFile());
+        }
+        catch (IOException e) {
+          MavenLog.LOG.info(e);
+        }
+      }
+    });
   }
 
   private Path getProjectsTreeFile() {
@@ -946,7 +951,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public void scheduleArtifactsDownloading(final Collection<MavenProject> projects,
                                            @Nullable final Collection<MavenArtifact> artifacts,
                                            final boolean sources, final boolean docs,
-                                           @Nullable final AsyncResult<MavenArtifactDownloader.DownloadResult> result) {
+                                           @Nullable final AsyncPromise<MavenArtifactDownloader.DownloadResult> result) {
     if (!sources && !docs) return;
 
     runWhenFullyOpen(() -> myArtifactsDownloadingProcessor
@@ -966,7 +971,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private Promise<List<Module>> scheduleImport() {
     final AsyncPromise<List<Module>> result = new AsyncPromise<>();
-    runWhenFullyOpen(() -> myImportingQueue.queue(new Update(MavenProjectsManager.this) {
+    runWhenFullyOpen(() -> myImportingQueue.queue(new Update(this) {
       @Override
       public void run() {
         result.setResult(importProjects());

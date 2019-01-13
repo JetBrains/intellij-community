@@ -14,6 +14,12 @@ public final class XsltDebuggerIcons {
     return IconLoader.getIcon(path, XsltDebuggerIcons.class);
   }
 
-  public static final Icon FilterWhitespace = load("/icons/filterWhitespace.png"); // 16x16
-  public static final Icon XmlComment = load("/icons/xmlComment.svg"); // 16x16
+  /**
+   * 16x16
+   */
+  public static final Icon FilterWhitespace = load("/icons/filterWhitespace.png");
+  /**
+   * 16x16
+   */
+  public static final Icon XmlComment = load("/icons/xmlComment.svg");
 }

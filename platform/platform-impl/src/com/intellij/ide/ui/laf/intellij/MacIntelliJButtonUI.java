@@ -1,13 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.UIUtilities;
+import com.intellij.util.ui.*;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -35,7 +31,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     int w = c.getWidth();
     int h = c.getHeight();
     if (UIUtil.isHelpButton(c)) {
-      Icon icon = AllIcons.Windows.WinHelp;
+      Icon icon = LafIconLookup.getIcon("help", false, c.hasFocus(), true);
       int x = (w - icon.getIconWidth()) / 2;
       int y = (h - icon.getIconHeight()) / 2;
       icon.paintIcon(c, g, x, y);
@@ -110,7 +106,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   @Override
   protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
     if (UIUtil.isHelpButton(c)) {
-      Icon icon = AllIcons.Windows.WinHelp;
+      Icon icon = LafIconLookup.getIcon("help");
       return new Dimension(icon.getIconWidth(), icon.getIconHeight());
     } else {
       Insets i = c.getInsets();

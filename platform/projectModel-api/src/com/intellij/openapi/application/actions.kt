@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Ref
 import java.lang.reflect.InvocationTargetException
 import javax.swing.SwingUtilities
 
@@ -12,15 +11,16 @@ inline fun <T> runWriteAction(crossinline runnable: () -> T): T {
 }
 
 inline fun <T> runUndoTransparentWriteAction(crossinline runnable: () -> T): T {
-  var result: T? = null
-  CommandProcessor.getInstance().runUndoTransparentAction {
-    result = ApplicationManager.getApplication().runWriteAction(Computable { runnable() })
+  return computeDelegated {
+    CommandProcessor.getInstance().runUndoTransparentAction {
+      ApplicationManager.getApplication().runWriteAction(Runnable { it(runnable()) })
+    }
   }
-  @Suppress("UNCHECKED_CAST")
-  return result as T
 }
 
-inline fun <T> runReadAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runReadAction(Computable { runnable() })
+inline fun <T> runReadAction(crossinline runnable: () -> T): T {
+  return ApplicationManager.getApplication().runReadAction(Computable { runnable() })
+}
 
 /**
  * @exclude Internal use only
@@ -32,10 +32,9 @@ fun <T> invokeAndWaitIfNeed(modalityState: ModalityState? = null, runnable: () -
       return runnable()
     }
     else {
+      @Suppress("UNCHECKED_CAST")
       try {
-        val resultRef = Ref.create<T>()
-        SwingUtilities.invokeAndWait { resultRef.set(runnable()) }
-        return resultRef.get()
+        return computeDelegated { SwingUtilities.invokeAndWait { it(runnable()) } }
       }
       catch (e: InvocationTargetException) {
         throw e.cause ?: e
@@ -46,10 +45,16 @@ fun <T> invokeAndWaitIfNeed(modalityState: ModalityState? = null, runnable: () -
     return runnable()
   }
   else {
-    val resultRef = Ref.create<T>()
-    app.invokeAndWait({ resultRef.set(runnable()) }, modalityState ?: ModalityState.defaultModalityState())
-    return resultRef.get()
+    return computeDelegated { app.invokeAndWait({ it (runnable()) }, modalityState ?: ModalityState.defaultModalityState()) }
   }
+}
+
+@PublishedApi
+internal inline fun <T> computeDelegated(executor: (setter: (T) -> Unit) -> Unit): T {
+  var resultRef: T? = null
+  executor { resultRef = it }
+  @Suppress("UNCHECKED_CAST")
+  return resultRef as T
 }
 
 inline fun runInEdt(modalityState: ModalityState? = null, crossinline runnable: () -> Unit) {

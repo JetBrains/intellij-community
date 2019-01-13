@@ -15,7 +15,6 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.propertyBased.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.Generator;
@@ -67,9 +66,7 @@ public class Java12SwitchExpressionSanityTest extends LightCodeInsightFixtureTes
         InvokeIntentionAroundSwitch anyIntentionInSwitchRange = new InvokeIntentionAroundSwitch(file, new JavaIntentionPolicy() {
           @Override
           protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
-            return super.shouldSkipByFamilyName(familyName) || 
-                   InspectionGadgetsBundle.message("auto.unboxing.make.unboxing.explicit.quickfix").equals(familyName)//IDEA-204106
-              ;
+            return super.shouldSkipByFamilyName(familyName);
           }
         });
 

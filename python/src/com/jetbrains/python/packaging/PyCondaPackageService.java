@@ -69,9 +69,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   public void removeChannel(@NotNull final String url) {
-    if (CONDA_CHANNELS.contains(url)) {
-      CONDA_CHANNELS.remove(url);
-    }
+    CONDA_CHANNELS.remove(url);
   }
 
   @Nullable

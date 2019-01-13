@@ -206,7 +206,7 @@ public class ProcessPopup  {
   }
 
 
-  private class ActiveContent extends JPanel implements Scrollable {
+  private static class ActiveContent extends JPanel implements Scrollable {
 
     private final JLabel myLabel = new JLabel("XXX");
 

@@ -83,7 +83,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
     return new Change(revision, contentRevision);
   }
 
-  private boolean canShowDiff(@NotNull List<Change> changes) {
+  private boolean canShowDiff(@NotNull List<? extends Change> changes) {
     return ContainerUtil.exists(changes, c -> getChangeWithLocal(c) != null);
   }
 

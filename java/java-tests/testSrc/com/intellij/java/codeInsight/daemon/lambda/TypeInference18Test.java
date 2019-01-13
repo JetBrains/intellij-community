@@ -16,18 +16,15 @@
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.ResolveTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.LightResolveTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class TypeInference18Test extends ResolveTestCase {
+public class TypeInference18Test extends LightResolveTestCase {
 
   public void testIDEA122406() throws Exception {
     doTest();
@@ -50,38 +47,21 @@ public class TypeInference18Test extends ResolveTestCase {
   }
 
   public void testCachedSubstitutionDuringOverloadResolution() throws Exception {
-    PsiReference ref = configureByFile("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + getTestName(false) + ".java");
+    PsiReference ref = findReferenceAtCaret("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + getTestName(false) + ".java");
     assertNotNull(ref);
     PsiMethodReferenceExpression methodCallExpression = PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethodReferenceExpression.class, false);
     assertNotNull(methodCallExpression);
     assertNotNull(methodCallExpression.resolve());
   }
 
-  private LanguageLevel myOldLanguageLevel;
-
+  @NotNull
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myOldLanguageLevel = LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(myOldLanguageLevel);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   private void doTestMethodCall() throws Exception {
-    PsiReference ref = configureByFile("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + getTestName(false) + ".java");
+    PsiReference ref = findReferenceAtCaret("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + getTestName(false) + ".java");
     assertNotNull(ref);
     PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethodCallExpression.class);
     assertNotNull(methodCallExpression);
@@ -89,14 +69,9 @@ public class TypeInference18Test extends ResolveTestCase {
   }
 
   private void doTest() throws Exception {
-    PsiReference ref = configureByFile("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + getTestName(false) + ".java");
+    PsiReference ref = findReferenceAtCaret("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + getTestName(false) + ".java");
     assertNotNull(ref);
     assertNotNull(ref.resolve());
-  }
-
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return IdeaTestUtil.getMockJdk18();
   }
 
   @Override

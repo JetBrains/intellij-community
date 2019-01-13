@@ -55,7 +55,7 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
   public GrStatement getThenBranch() {
     List<GrStatement> statements = new ArrayList<>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (GrStatement.class.isInstance(cur)) statements.add((GrStatement)cur);
+      if (cur instanceof GrStatement) statements.add((GrStatement)cur);
     }
 
     if (getCondition() == null && !statements.isEmpty()) return statements.get(0);

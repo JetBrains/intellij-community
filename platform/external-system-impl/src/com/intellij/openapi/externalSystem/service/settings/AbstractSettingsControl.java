@@ -7,26 +7,26 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractSettingsControl {
 
-  private @Nullable Project project;
+  private @Nullable Project myProject;
 
   AbstractSettingsControl(@Nullable Project project) {
-    this.project = project;
+    myProject = project;
   }
 
   AbstractSettingsControl() {
     this(null);
   }
 
-  protected void setProject(@Nullable Project project) {
-    this.project = project;
-  }
-
   @Nullable
   protected Project getProject() {
-    return project;
+    return myProject;
   }
 
-  void reset(@Nullable WizardContext wizardContext) {
-    project = wizardContext == null ? null : wizardContext.getProject();
+  protected void setProject(@Nullable Project project) {
+    myProject = project;
+  }
+
+  void reset(@Nullable WizardContext wizardContext, @Nullable Project project) {
+    myProject = wizardContext == null ? project : wizardContext.getProject();
   }
 }

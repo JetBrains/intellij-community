@@ -150,7 +150,7 @@ public abstract class InplaceRefactoring {
       final int exitCode = Messages.showYesNoDialog(project, message,
                                                     RefactoringBundle.getCannotRefactorMessage(null),
                                                     "Continue Started", "Cancel Started", Messages.getErrorIcon());
-      navigateToStarted(oldDocument, project, exitCode);
+      navigateToStarted(oldDocument, project, exitCode, startMarkAction.getCommandName());
     }
     else {
       CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.getCannotRefactorMessage(null), null);
@@ -322,8 +322,12 @@ public abstract class InplaceRefactoring {
       if (oldDocument != myEditor.getDocument()) {
         final int exitCode = Messages.showYesNoCancelDialog(myProject, e.getMessage(), getCommandName(),
                                                             "Navigate to Started", "Cancel Started", "Cancel", Messages.getErrorIcon());
-        if (exitCode == Messages.CANCEL) return true;
-        navigateToAlreadyStarted(oldDocument, exitCode);
+        if (exitCode == Messages.CANCEL) {
+          finish(true);
+        }
+        else {
+          navigateToAlreadyStarted(oldDocument, exitCode);
+        }
         return true;
       }
       else {
@@ -451,11 +455,27 @@ public abstract class InplaceRefactoring {
     return myCaretRangeMarker.isValid() ? myCaretRangeMarker.getEndOffset() : offset;
   }
 
-  protected void navigateToAlreadyStarted(Document oldDocument, @Messages.YesNoResult int exitCode) {
-    navigateToStarted(oldDocument, myProject, exitCode);
+  public void stopIntroduce(Editor editor) {
+    stopIntroduce(editor, myProject, getCommandName());
   }
 
-  private static void navigateToStarted(final Document oldDocument, final Project project, @Messages.YesNoResult final int exitCode) {
+  public static void stopIntroduce(Editor editor, Project project, final String commandName) {
+    final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+    if (templateState != null) {
+      final Runnable runnable = () -> templateState.gotoEnd(true);
+      CommandProcessor.getInstance().executeCommand(project, runnable, commandName, commandName);
+    }
+  }
+
+  protected void navigateToAlreadyStarted(Document oldDocument, @Messages.YesNoResult int exitCode) {
+    finish(true);
+    navigateToStarted(oldDocument, myProject, exitCode, getCommandName());
+  }
+
+  private static void navigateToStarted(final Document oldDocument,
+                                        final Project project,
+                                        @Messages.YesNoResult final int exitCode,
+                                        String commandName) {
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(oldDocument);
     if (file != null) {
       final VirtualFile virtualFile = file.getVirtualFile();
@@ -475,7 +495,7 @@ public abstract class InplaceRefactoring {
                 }
               }
               else if (exitCode > 0){
-                templateState.gotoEnd();
+                stopIntroduce(textEditor, project, commandName);
                 return;
               }
             }
@@ -615,12 +635,13 @@ public abstract class InplaceRefactoring {
       final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
       ApplicationManager.getApplication().runWriteAction(() -> {
         final TemplateState state = TemplateManagerImpl.getTemplateState(topLevelEditor);
-        assert state != null;
-        final int segmentsCount = state.getSegmentsCount();
-        final Document document = topLevelEditor.getDocument();
-        for (int i = 0; i < segmentsCount; i++) {
-          final TextRange segmentRange = state.getSegmentRange(i);
-          document.replaceString(segmentRange.getStartOffset(), segmentRange.getEndOffset(), myOldName);
+        if (state != null) {
+          final int segmentsCount = state.getSegmentsCount();
+          final Document document = topLevelEditor.getDocument();
+          for (int i = 0; i < segmentsCount; i++) {
+            final TextRange segmentRange = state.getSegmentRange(i);
+            document.replaceString(segmentRange.getStartOffset(), segmentRange.getEndOffset(), myOldName);
+          }
         }
       });
       if (!myProject.isDisposed() && myProject.isOpen()) {
@@ -649,8 +670,8 @@ public abstract class InplaceRefactoring {
       }
 
       myHighlighters = null;
-      myEditor.putUserData(INPLACE_RENAMER, null);
     }
+    myEditor.putUserData(INPLACE_RENAMER, null);
     if (myBalloon != null) {
            if (!isRestart()) {
              myBalloon.hide();

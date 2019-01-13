@@ -7,8 +7,6 @@ import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
@@ -527,8 +525,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       group.addAll(toolWindowGroup);
     }
 
-    final ActionPopupMenu popupMenu =
-      ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(POPUP_PLACE, group, new MenuItemPresentationFactory(true));
+    final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(POPUP_PLACE, group);
     popupMenu.getComponent().show(comp, x, y);
   }
 

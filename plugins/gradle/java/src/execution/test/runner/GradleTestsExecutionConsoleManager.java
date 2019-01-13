@@ -136,6 +136,7 @@ public class GradleTestsExecutionConsoleManager
               else {
                 testsRootNode.setFinished();
               }
+              resultsViewer.onBeforeTestingFinished(testsRootNode);
               resultsViewer.onTestingFinished(testsRootNode);
             });
           }

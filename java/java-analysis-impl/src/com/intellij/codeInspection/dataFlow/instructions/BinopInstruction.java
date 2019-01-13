@@ -32,7 +32,7 @@ import static com.intellij.psi.JavaTokenType.*;
 
 public class BinopInstruction extends BranchingInstruction implements ExpressionPushingInstruction {
   private static final TokenSet ourSignificantOperations =
-    TokenSet.create(EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, PLUS, MINUS, AND, PERC, DIV, ASTERISK, GTGT, GTGTGT);
+    TokenSet.create(EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, PLUS, MINUS, AND, PERC, DIV, ASTERISK, GTGT, GTGTGT, LTLT);
   private final IElementType myOperationSign;
   private final @Nullable PsiType myResultType;
   private final int myLastOperand;

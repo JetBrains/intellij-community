@@ -15,7 +15,7 @@
  */
 package com.intellij.ui;
 
-import com.intellij.icons.AllIcons.Ide.Notification.Shadow;
+import com.intellij.icons.AllIcons.Ide.Shadow;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.JBInsets;
@@ -51,17 +51,17 @@ public class NotificationBalloonShadowBorderProvider implements BalloonImpl.Shad
     int width = component.getWidth();
     int height = component.getHeight();
 
-    int topLeftWidth = Shadow.Top_left.getIconWidth();
-    int topLeftHeight = Shadow.Top_left.getIconHeight();
+    int topLeftWidth = Shadow.TopLeft.getIconWidth();
+    int topLeftHeight = Shadow.TopLeft.getIconHeight();
 
-    int topRightWidth = Shadow.Top_right.getIconWidth();
-    int topRightHeight = Shadow.Top_right.getIconHeight();
+    int topRightWidth = Shadow.TopRight.getIconWidth();
+    int topRightHeight = Shadow.TopRight.getIconHeight();
 
-    int bottomLeftWidth = Shadow.Bottom_left.getIconWidth();
-    int bottomLeftHeight = Shadow.Bottom_left.getIconHeight();
+    int bottomLeftWidth = Shadow.BottomLeft.getIconWidth();
+    int bottomLeftHeight = Shadow.BottomLeft.getIconHeight();
 
-    int bottomRightWidth = Shadow.Bottom_right.getIconWidth();
-    int bottomRightHeight = Shadow.Bottom_right.getIconHeight();
+    int bottomRightWidth = Shadow.BottomRight.getIconWidth();
+    int bottomRightHeight = Shadow.BottomRight.getIconHeight();
 
     int topWidth = Shadow.Top.getIconWidth();
 
@@ -79,10 +79,10 @@ public class NotificationBalloonShadowBorderProvider implements BalloonImpl.Shad
     drawLine(component, g, Shadow.Left, height, topLeftHeight, bottomLeftHeight, leftHeight, 0, false);
     drawLine(component, g, Shadow.Right, height, topRightHeight, bottomRightHeight, rightHeight, width - rightWidth, false);
 
-    Shadow.Top_left.paintIcon(component, g, 0, 0);
-    Shadow.Top_right.paintIcon(component, g, width - topRightWidth, 0);
-    Shadow.Bottom_right.paintIcon(component, g, width - bottomRightWidth, height - bottomRightHeight);
-    Shadow.Bottom_left.paintIcon(component, g, 0, height - bottomLeftHeight);
+    Shadow.TopLeft.paintIcon(component, g, 0, 0);
+    Shadow.TopRight.paintIcon(component, g, width - topRightWidth, 0);
+    Shadow.BottomRight.paintIcon(component, g, width - bottomRightWidth, height - bottomRightHeight);
+    Shadow.BottomLeft.paintIcon(component, g, 0, height - bottomLeftHeight);
   }
 
   private static void drawLine(@NotNull JComponent component,

@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -16,10 +17,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.BreakConverter;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +91,6 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       return;
     }
     CommentTracker commentTracker = new CommentTracker();
-    commentTracker.markUnchanged(switchExpression);
     final boolean isSwitchOnString = switchExpressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
     boolean useEquals = isSwitchOnString;
     if (!useEquals) {
@@ -116,18 +113,15 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     final boolean hadSideEffects;
     final String expressionText;
     final Project project = switchStatement.getProject();
-    if (allBranches.stream().mapToInt(br -> br.getCaseValues().size()).sum() > 1 &&
-        RemoveUnusedVariableUtil.checkSideEffects(switchExpression, null, new ArrayList<>())) {
+    int totalCases = allBranches.stream().mapToInt(br -> br.getCaseValues().size()).sum();
+    if (totalCases > 0) {
+      commentTracker.markUnchanged(switchExpression);
+    }
+    if (totalCases > 1 && RemoveUnusedVariableUtil.checkSideEffects(switchExpression, null, new ArrayList<>())) {
       hadSideEffects = true;
 
-      final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
-      final String variableName;
-      if (isSwitchOnString) {
-        variableName = javaCodeStyleManager.suggestUniqueVariableName("s", switchExpression, true);
-      }
-      else {
-        variableName = javaCodeStyleManager.suggestUniqueVariableName("i", switchExpression, true);
-      }
+      final String variableName = new VariableNameGenerator(switchExpression, VariableKind.LOCAL_VARIABLE)
+        .byExpression(switchExpression).byType(switchExpressionType).byName(isSwitchOnString ? "s" : "i").generate(true);
       expressionText = variableName;
       declarationString = switchExpressionType.getCanonicalText() + ' ' + variableName + " = " + switchExpression.getText() + ';';
     }
@@ -346,8 +340,13 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       if (bodyStatement instanceof PsiBlockStatement) {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)bodyStatement;
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-        for (PsiStatement statement : codeBlock.getStatements()) {
-          out.append(commentTracker.text(statement));
+        PsiElement start = PsiTreeUtil.skipWhitespacesForward(codeBlock.getFirstBodyElement());
+        PsiElement end = PsiTreeUtil.skipWhitespacesBackward(codeBlock.getLastBodyElement());
+        if (start != null && end != null && start != codeBlock.getRBrace()) {
+          for (PsiElement child = start; child != null; child = child.getNextSibling()) {
+            out.append(commentTracker.text(child));
+            if (child == end) break;
+          }
         }
       }
       else {

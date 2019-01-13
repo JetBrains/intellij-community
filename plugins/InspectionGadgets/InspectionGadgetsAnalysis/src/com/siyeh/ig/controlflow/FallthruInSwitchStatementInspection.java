@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -53,7 +54,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
   @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new FallthruInSwitchStatementFix();
+    return ((Boolean)infos[0]) ? new FallthruInSwitchStatementFix() : null;
   }
 
   @Override
@@ -74,7 +75,12 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
       final PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement)descriptor.getPsiElement();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
-      final PsiStatement breakStatement = factory.createStatementFromText("break;", labelStatement);
+      PsiSwitchBlock switchBlock = labelStatement.getEnclosingSwitchBlock();
+      String value = "";
+      if (switchBlock instanceof PsiSwitchExpression) {
+        value = " " + PsiTypesUtil.getDefaultValueOfType(((PsiSwitchExpression)switchBlock).getType()) + " ";
+      }
+      final PsiStatement breakStatement = factory.createStatementFromText("break" + value + ";", labelStatement);
       final PsiElement parent = labelStatement.getParent();
       parent.addBefore(breakStatement, labelStatement);
     }
@@ -87,7 +93,17 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
     @Override
     public void visitSwitchStatement(@NotNull PsiSwitchStatement switchStatement) {
       super.visitSwitchStatement(switchStatement);
-      final PsiCodeBlock body = switchStatement.getBody();
+      doCheckSwitchBlock(switchStatement);
+    }
+
+    @Override
+    public void visitSwitchExpression(PsiSwitchExpression expression) {
+      super.visitSwitchExpression(expression);
+      doCheckSwitchBlock(expression);
+    }
+
+    private void doCheckSwitchBlock(@NotNull PsiSwitchBlock switchBlock) {
+      final PsiCodeBlock body = switchBlock.getBody();
       if (body == null) {
         return;
       }
@@ -115,7 +131,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
           continue;
         }
         if (ControlFlowUtils.statementMayCompleteNormally(previousStatement)) {
-          registerError(statement);
+          registerError(statement, switchBlock instanceof PsiSwitchStatement || isOnTheFly());
         }
       }
     }

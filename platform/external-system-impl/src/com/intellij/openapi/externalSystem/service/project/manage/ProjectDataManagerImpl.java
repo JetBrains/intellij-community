@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -44,8 +45,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.function.Supplier;
-
-import static com.intellij.util.containers.ContainerUtil.map2Array;
 
 /**
  * Aggregates all {@link ProjectDataService#EP_NAME registered data services} and provides entry points for project data management.
@@ -434,7 +433,14 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     List<ProjectDataService<?, ?>> services = servicesByKey.get(dataNode.getKey());
     if (services != null) {
       try {
-        dataNode.prepareData(map2Array(services, ClassLoader.class, service -> service.getClass().getClassLoader()));
+        Set<ClassLoader> classLoaders = ContainerUtil.newLinkedHashSet();
+        for (ProjectDataService<?, ?> dataService : services) {
+          classLoaders.add(dataService.getClass().getClassLoader());
+        }
+        for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
+          classLoaders.add(manager.getClass().getClassLoader());
+        }
+        dataNode.prepareData(ContainerUtil.toArray(classLoaders, ClassLoader[]::new));
       }
       catch (Exception e) {
         LOG.debug(e);

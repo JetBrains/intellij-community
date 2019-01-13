@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -322,7 +322,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   }
 
   private static boolean needAlLeastOneAttribute(XmlTag tag) {
-    for (XmlTagRuleProvider ruleProvider : XmlTagRuleProvider.EP_NAME.getExtensions()) {
+    for (XmlTagRuleProvider ruleProvider : XmlTagRuleProvider.EP_NAME.getExtensionList()) {
       for (XmlTagRuleProvider.Rule rule : ruleProvider.getTagRule(tag)) {
         if (rule.needAtLeastOneAttribute(tag)) {
           return true;

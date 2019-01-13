@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -31,13 +31,18 @@ public abstract class RecentProjectsManager {
   /**
    * @param addClearListItem whether the "Clear List" action should be added to the end of the list.
    */
+  @NotNull
   public abstract AnAction[] getRecentProjectsActions(boolean addClearListItem);
 
+  @NotNull
   public AnAction[] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
     return getRecentProjectsActions(addClearListItem);
   }
 
-  public List<ProjectGroup> getGroups() {return Collections.emptyList();}
+  @NotNull
+  public List<ProjectGroup> getGroups() {
+    return Collections.emptyList();
+  }
 
   public void addGroup(@NotNull ProjectGroup group) {
   }

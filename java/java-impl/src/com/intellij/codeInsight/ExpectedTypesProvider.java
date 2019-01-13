@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -28,8 +29,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -123,8 +126,9 @@ public class ExpectedTypesProvider {
                                                     final boolean voidable, boolean usedAfter) {
     if (expr == null) return ExpectedTypeInfo.EMPTY_ARRAY;
     PsiElement parent = expr.getParent();
-    if (expr instanceof PsiFunctionalExpression && parent instanceof PsiExpressionStatement) {
-      final Collection<? extends PsiType> types = FunctionalInterfaceSuggester.suggestFunctionalInterfaces((PsiFunctionalExpression)expr);
+    PsiFunctionalExpression functionalExpression = extractFunctionalExpression(expr);
+    if (functionalExpression != null) {
+      final Collection<? extends PsiType> types = FunctionalInterfaceSuggester.suggestFunctionalInterfaces(functionalExpression);
       if (types.isEmpty()) {
         return ExpectedTypeInfo.EMPTY_ARRAY;
       }
@@ -144,6 +148,20 @@ public class ExpectedTypesProvider {
     return visitor.getResult();
   }
 
+  private static PsiFunctionalExpression extractFunctionalExpression(PsiExpression expr) {
+    PsiElement parent = expr.getParent();
+    if (expr instanceof PsiFunctionalExpression && parent instanceof PsiExpressionStatement && !(parent.getParent() instanceof PsiSwitchLabeledRuleStatement)) {
+      return (PsiFunctionalExpression)expr;
+    }
+    parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class);
+    if (parent instanceof PsiAssignmentExpression &&
+        parent.getParent() instanceof PsiExpressionStatement &&
+        PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getLExpression(), expr, false)) {
+      return ObjectUtils.tryCast(((PsiAssignmentExpression)parent).getRExpression(), PsiFunctionalExpression.class);
+    }
+    return null;
+  }
+  
   @NotNull
   public static PsiType[] processExpectedTypes(@NotNull ExpectedTypeInfo[] infos,
                                                @NotNull PsiTypeVisitor<? extends PsiType> visitor, @NotNull Project project) {
@@ -305,8 +323,29 @@ public class ExpectedTypesProvider {
 
     @Override
     public void visitExpressionStatement(PsiExpressionStatement statement) {
+      if (statement.getParent() instanceof PsiSwitchLabeledRuleStatement) {
+        PsiSwitchBlock block = ((PsiSwitchLabeledRuleStatement)statement.getParent()).getEnclosingSwitchBlock();
+        if (block instanceof PsiSwitchExpression) {
+          if (myForCompletion) {
+            myExpr = (PsiSwitchExpression)block;
+          }
+          block.getParent().accept(this);
+          return;
+        }
+      }
       if (myVoidable) {
         myResult.add(VOID_EXPECTED);
+      }
+    }
+
+    @Override
+    public void visitBreakStatement(PsiBreakStatement statement) {
+      PsiElement exitedElement = statement.findExitedElement();
+      if (exitedElement instanceof PsiSwitchExpression) {
+        if (myForCompletion) {
+          myExpr = (PsiExpression)exitedElement;
+        }
+        exitedElement.getParent().accept(this);
       }
     }
 
@@ -469,14 +508,26 @@ public class ExpectedTypesProvider {
 
     @Override
     public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-      myResult.add(createInfoImpl(PsiType.LONG, PsiType.INT));
-      if (!PsiUtil.isLanguageLevel5OrHigher(statement)) {
-        return;
-      }
+      processSwitchBlock(statement);
+    }
 
-      PsiManager manager = statement.getManager();
-      PsiClassType enumType = JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName("java.lang.Enum", statement.getResolveScope());
-      myResult.add(createInfoImpl(enumType, enumType));
+    @Override
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
+      processSwitchBlock(expression);
+    }
+
+    public void processSwitchBlock(@NotNull PsiSwitchBlock statement) {
+      myResult.add(createInfoImpl(PsiType.LONG, PsiType.INT));
+      LanguageLevel level = PsiUtil.getLanguageLevel(statement);
+      if (level.isAtLeast(LanguageLevel.JDK_1_5)) {
+        PsiClassType enumType = TypeUtils.getType(CommonClassNames.JAVA_LANG_ENUM, statement);
+        myResult.add(createInfoImpl(enumType, enumType));
+
+        if (level.isAtLeast(LanguageLevel.JDK_1_7)) {
+          PsiClassType stringType = TypeUtils.getStringType(statement);
+          myResult.add(createInfoImpl(stringType, stringType));
+        }
+      }
     }
 
     @Override

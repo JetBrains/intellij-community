@@ -206,15 +206,30 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     final Document[] documents = getUncommittedDocuments();
     for (Document document : documents) {
-      commitDocument(document);
+      if (isCommitted(document)) {
+        boolean success = doCommitWithoutReparse(document);
+        LOG.error("Committed document in uncommitted set: " + document + ", force-committed=" + success);
+      }
+      else if (!doCommit(document)) {
+        LOG.error("Couldn't commit " + document);
+      }
     }
 
+    assertEverythingCommitted();
+  }
+
+  private void assertEverythingCommitted() {
     LOG.assertTrue(!hasUncommitedDocuments(), myUncommittedDocuments);
+  }
+
+  @VisibleForTesting
+  public boolean doCommitWithoutReparse(@NotNull Document document) {
+    return finishCommitInWriteAction(document, Collections.emptyList(), Collections.emptyList(), true, true);
   }
 
   @Override
   public void performForCommittedDocument(@NotNull final Document doc, @NotNull final Runnable action) {
-    final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
+    Document document = getTopLevelDocument(doc);
     if (isCommitted(document)) {
       action.run();
     }
@@ -280,7 +295,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void commitDocument(@NotNull final Document doc) {
-    final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
+    final Document document = getTopLevelDocument(doc);
 
     if (isEventSystemEnabled(document)) {
       ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
@@ -424,17 +439,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private void doCommit(@NotNull final Document document) {
+  private boolean doCommit(@NotNull final Document document) {
     assert !myIsCommitInProgress : "Do not call commitDocument() from inside PSI change listener";
 
     // otherwise there are many clients calling commitAllDocs() on PSI childrenChanged()
-    if (getSynchronizer().isDocumentAffectedByTransactions(document)) return;
+    if (getSynchronizer().isDocumentAffectedByTransactions(document)) return false;
 
     final PsiFile psiFile = getPsiFile(document);
     if (psiFile == null) {
       myUncommittedDocuments.remove(document);
       runAfterCommitActions(document);
-      return; // the project must be closing or file deleted
+      return true; // the project must be closing or file deleted
     }
 
     Runnable runnable = () -> {
@@ -449,6 +464,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     };
 
     ApplicationManager.getApplication().runWriteAction(runnable);
+    return true;
   }
 
   // true if the PSI is being modified and events being sent
@@ -681,8 +697,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public long getLastCommittedStamp(@NotNull Document document) {
-    if (document instanceof DocumentWindow) document = ((DocumentWindow)document).getDelegate();
-    return getLastCommittedDocument(document).getModificationStamp();
+    return getLastCommittedDocument(getTopLevelDocument(document)).getModificationStamp();
   }
 
   @Override
@@ -727,7 +742,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     assert document instanceof DocumentImpl : document;
     UncommittedInfo info = myUncommittedInfos.get(document);
     if (info != null) {
-      return info.myEvents;
+      return new ArrayList<>(info.myEvents);
     }
     return Collections.emptyList();
 
@@ -737,13 +752,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @NotNull
   public Document[] getUncommittedDocuments() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    //noinspection UnnecessaryLocalVariable
     Document[] documents = myUncommittedDocuments.toArray(Document.EMPTY_ARRAY);
     return documents; // java.util.ConcurrentHashMap.keySet().toArray() guaranteed to return array with no nulls
   }
 
   boolean isInUncommittedSet(@NotNull Document document) {
-    if (document instanceof DocumentWindow) document = ((DocumentWindow)document).getDelegate();
-    return myUncommittedDocuments.contains(document);
+    return myUncommittedDocuments.contains(getTopLevelDocument(document));
   }
 
   @Override
@@ -753,10 +768,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public boolean isCommitted(@NotNull Document document) {
-    if (document instanceof DocumentWindow) document = ((DocumentWindow)document).getDelegate();
+    document = getTopLevelDocument(document);
     if (getSynchronizer().isInSynchronization(document)) return true;
     return (!(document instanceof DocumentEx) || !((DocumentEx)document).isInEventsHandling())
            && !isInUncommittedSet(document);
+  }
+
+  @NotNull
+  private static Document getTopLevelDocument(@NotNull Document document) {
+    return document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
   }
 
   @Override

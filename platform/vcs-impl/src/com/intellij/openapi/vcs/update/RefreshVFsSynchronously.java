@@ -42,7 +42,7 @@ public class RefreshVFsSynchronously {
     VfsUtil.markDirtyAndRefresh(false, false, false, ArrayUtil.toObjectArray(filesToRefresh, VirtualFile.class));
   }
 
-  private static void refreshDeletedOrReplaced(@NotNull Collection<File> deletedOrReplaced) {
+  private static void refreshDeletedOrReplaced(@NotNull Collection<? extends File> deletedOrReplaced) {
     Collection<VirtualFile> filesToRefresh = ContainerUtil.newHashSet();
     for (File file : deletedOrReplaced) {
       File parent = file.getParentFile();
@@ -65,15 +65,15 @@ public class RefreshVFsSynchronously {
     return vf == null || !vf.isValid() ? null : vf;
   }
 
-  public static void updateChangesForRollback(final List<Change> changes) {
+  public static void updateChangesForRollback(final List<? extends Change> changes) {
     updateChangesImpl(changes, RollbackChangeWrapper.ourInstance);
   }
 
-  public static void updateChanges(final Collection<Change> changes) {
+  public static void updateChanges(final Collection<? extends Change> changes) {
     updateChangesImpl(changes, DirectChangeWrapper.ourInstance);
   }
 
-  private static void updateChangesImpl(final Collection<Change> changes, final ChangeWrapper wrapper) {
+  private static void updateChangesImpl(final Collection<? extends Change> changes, final ChangeWrapper wrapper) {
     Collection<File> deletedOrReplaced = ContainerUtil.newHashSet();
     Collection<File> toRefresh = ContainerUtil.newHashSet();
     for (Change change : changes) {

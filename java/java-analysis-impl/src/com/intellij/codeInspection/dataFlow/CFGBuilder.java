@@ -121,6 +121,20 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instructions to load a special field value which qualifier is on the stack
+   * <p>
+   * Stack before: ... qualifier
+   * <p>
+   * Stack after: ... loaded_field
+   *
+   * @param descriptor a {@link SpecialField} which describes a field to get
+   * @return this builder
+   */
+  public CFGBuilder unwrap(@NotNull SpecialField descriptor) {
+    return add(new UnwrapSpecialFieldInstruction(descriptor));
+  }
+
+  /**
    * Generate instructions to push given variable value on stack for subsequent write.
    * <p>
    * Stack before: ...
@@ -675,7 +689,10 @@ public class CFGBuilder {
     }
     // Unknown function
     flushFields();
-    PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalExpression.getType());
+    myAnalyzer.addConditionalRuntimeThrow();
+    PsiType functionalInterfaceType = functionalExpression.getType();
+    myAnalyzer.addMethodThrows(LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType), null);
+    PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
     if (returnType != null) {
       push(getFactory().createTypeValue(returnType, DfaPsiUtil.getTypeNullability(returnType)));
     }

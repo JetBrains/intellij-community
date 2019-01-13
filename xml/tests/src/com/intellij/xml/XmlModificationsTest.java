@@ -7,27 +7,18 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
-public class XmlModificationsTest extends PsiTestCase {
-  private XmlElementFactory myFactory;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFactory = XmlElementFactory.getInstance(getProject());
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    myFactory = null;
-
-    super.tearDown();
+public class XmlModificationsTest extends LightPlatformTestCase {
+  @NotNull
+  private static XmlTag createTag(String s) {
+    return XmlElementFactory.getInstance(getProject()).createTagFromText(s);
   }
 
   public void testAddAttribute1() {
-    final XmlTag tag = myFactory.createTagFromText("<a></a>");
+    XmlTag tag = createTag("<a></a>");
     tag.setAttribute("b", "");
     assertEquals("<a b=\"\"></a>", tag.getText());
     tag.setAttribute("c", "");
@@ -35,7 +26,7 @@ public class XmlModificationsTest extends PsiTestCase {
   }
 
   public void testAddAttribute2() {
-    final XmlTag tag = myFactory.createTagFromText("<a/>");
+    XmlTag tag = createTag("<a/>");
     tag.setAttribute("b", "");
     assertEquals("<a b=\"\"/>", tag.getText());
     tag.setAttribute("c", "");
@@ -43,7 +34,7 @@ public class XmlModificationsTest extends PsiTestCase {
   }
 
   public void testAddSubTag1() {
-    final XmlTag tag = myFactory.createTagFromText("<a/>");
+    XmlTag tag = createTag("<a/>");
     tag.add(tag.createChildTag("b", "", null, false));
     assertEquals("<a><b/></a>", tag.getText());
   }
@@ -70,7 +61,7 @@ public class XmlModificationsTest extends PsiTestCase {
                                                                                                  "</application>\n" +
                                                                                                  "\n" +
                                                                                                  "</manifest>");
-    XmlTag subtag = myFactory.createTagFromText("<b/>");
+    XmlTag subtag = createTag("<b/>");
     try {
       file.getRootTag().addSubTag(subtag, true);
       fail();
@@ -81,7 +72,7 @@ public class XmlModificationsTest extends PsiTestCase {
   }
 
   public void testSetText() {
-    final XmlTag tag = myFactory.createTagFromText("<a>foo</a>");
+    XmlTag tag = createTag("<a>foo</a>");
     XmlText[] elements = tag.getValue().getTextElements();
     assertEquals(1, elements.length);
     elements[0].setValue("");

@@ -108,10 +108,6 @@ public abstract class ContractValue {
     return value ? IndependentValue.TRUE : IndependentValue.FALSE;
   }
 
-  public static ContractValue optionalValue(boolean present) {
-    return present ? IndependentValue.OPTIONAL_PRESENT : IndependentValue.OPTIONAL_ABSENT;
-  }
-
   public static ContractValue nullValue() {
     return IndependentValue.NULL;
   }
@@ -178,10 +174,6 @@ public abstract class ContractValue {
         return other == TRUE;
       }
     };
-    static final IndependentValue OPTIONAL_PRESENT =
-      new IndependentValue(factory -> DfaOptionalSupport.getOptionalValue(factory, true), "present");
-    static final IndependentValue OPTIONAL_ABSENT =
-      new IndependentValue(factory -> DfaOptionalSupport.getOptionalValue(factory, false), "empty");
     static final IndependentValue ZERO = new IndependentValue(factory -> factory.getInt(0), "0");
 
     private final Function<? super DfaValueFactory, ? extends DfaValue> mySupplier;

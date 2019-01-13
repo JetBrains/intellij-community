@@ -13,6 +13,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,6 +90,7 @@ public final class MacrosDialog extends DialogWrapper {
     setOKButtonText(IdeBundle.message("button.insert"));
 
     List<Macro> macros = new ArrayList<>(MacroManager.getInstance().getMacros());
+    macros = ContainerUtil.filter(macros, macro -> MacroFilter.GLOBAL.accept(macro));
     Collections.sort(macros, new Comparator<Macro>() {
       @Override
       public int compare(Macro macro1, Macro macro2) {

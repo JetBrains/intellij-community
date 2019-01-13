@@ -150,7 +150,7 @@ public class AsyncEditorLoader {
     final long docStamp;
     @NotNull final Runnable continuation;
 
-    public LoadEditorResult(long docStamp, @NotNull Runnable continuation) {
+    private LoadEditorResult(long docStamp, @NotNull Runnable continuation) {
       this.docStamp = docStamp;
       this.continuation = continuation;
     }

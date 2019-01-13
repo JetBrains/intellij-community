@@ -59,6 +59,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     if (dfaSource == dfaDest) {
       memState.push(dfaDest);
+      flushArrayOnUnknownAssignment(instruction, runner.getFactory(), dfaDest, memState);
       return nextInstruction(instruction, runner, memState);
     }
     if (!(dfaDest instanceof DfaVariableValue &&
@@ -159,11 +160,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         alwaysOutOfBounds = true;
       }
       DfaValue dfaLength = SpecialField.ARRAY_LENGTH.createValue(factory, array);
-      if(dfaLength != null) {
-        DfaValue indexLessThanLength = factory.createCondition(index, RelationType.LT, dfaLength);
-        if (!memState.applyCondition(indexLessThanLength)) {
-          alwaysOutOfBounds = true;
-        }
+      DfaValue indexLessThanLength = factory.createCondition(index, RelationType.LT, dfaLength);
+      if (!memState.applyCondition(indexLessThanLength)) {
+        alwaysOutOfBounds = true;
       }
     }
     processArrayAccess(arrayExpression, alwaysOutOfBounds);
@@ -512,13 +511,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (instruction.getContext() instanceof PsiMethodReferenceExpression && qualifierValue instanceof DfaVariableValue) {
       PsiMethod method = instruction.getTargetMethod();
-      SpecialField field = SpecialField.findSpecialField(method);
-      if (field != null) {
-        return field.createValue(factory, qualifierValue);
-      }
-      DfaVariableSource source = DfaExpressionFactory.getAccessedVariableOrGetter(method);
-      if (source != null) {
-        return factory.getVarFactory().createVariableValue(source, instruction.getResultType(), (DfaVariableValue)qualifierValue);
+      VariableDescriptor descriptor = DfaExpressionFactory.getAccessedVariableOrGetter(method);
+      if (descriptor != null) {
+        return descriptor.createValue(factory, qualifierValue, true);
       }
     }
 
@@ -661,14 +656,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue result = DfaUnknownValue.getInstance();
     PsiType type = instruction.getResultType();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
-      LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
-      LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
-      if (left != null && right != null) {
-        LongRangeSet resultRange = left.binOpFromToken(opSign, right, PsiType.LONG.equals(type));
-        if (resultRange != null) {
-          result = runner.getFactory().getFactValue(DfaFactType.RANGE, resultRange);
-        }
-      }
+      boolean isLong = PsiType.LONG.equals(type);
+      result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
     }
     if (result == DfaUnknownValue.getInstance() && JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
       result = runner.getFactory().createTypeValue(type, Nullability.NOT_NULL);

@@ -540,15 +540,15 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     );
 
     assertModules("server", "server.modules",
-                  "server.X", "server.X.main", "server.X.test",
-                  "server.Y", "server.Y.main", "server.Y.test",
+                  "server.modules.X", "server.modules.X.main", "server.modules.X.test",
+                  "server.modules.Y", "server.modules.Y.main", "server.modules.Y.test",
                   "server.api", "server.api.main", "server.api.test", "server.api.webapp");
 
-    assertModuleModuleDeps("server.X.main", "server.api.webapp");
-    assertModuleModuleDepScope("server.X.main", "server.api.webapp", DependencyScope.COMPILE);
+    assertModuleModuleDeps("server.modules.X.main", "server.api.webapp");
+    assertModuleModuleDepScope("server.modules.X.main", "server.api.webapp", DependencyScope.COMPILE);
 
-    assertModuleModuleDeps("server.Y.main", "server.api.webapp");
-    assertModuleModuleDepScope("server.Y.main", "server.api.webapp", DependencyScope.COMPILE);
+    assertModuleModuleDeps("server.modules.Y.main", "server.api.webapp");
+    assertModuleModuleDepScope("server.modules.Y.main", "server.api.webapp", DependencyScope.COMPILE);
   }
 
   @Test

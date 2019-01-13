@@ -4,6 +4,10 @@
 package org.jetbrains.intellij.build.images.sync
 
 internal class Changes(val includeRemoved: Boolean = true) {
+  enum class Type {
+    MODIFIED, ADDED, DELETED
+  }
+
   val added: MutableCollection<String> = mutableListOf()
   val modified: MutableCollection<String> = mutableListOf()
   val removed: MutableCollection<String> = mutableListOf()
@@ -18,5 +22,16 @@ internal class Changes(val includeRemoved: Boolean = true) {
     added.clear()
     modified.clear()
     removed.clear()
+  }
+
+  fun register(type: Type, changes: Collection<String>) {
+    added.removeAll(changes)
+    modified.removeAll(changes)
+    removed.removeAll(changes)
+    when (type) {
+      Type.ADDED -> added += changes
+      Type.MODIFIED -> modified += changes
+      Type.DELETED -> removed += changes
+    }
   }
 }

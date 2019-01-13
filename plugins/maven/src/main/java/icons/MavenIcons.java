@@ -18,22 +18,64 @@ public final class MavenIcons {
     return IconLoader.getIcon(path, clazz);
   }
 
-  public static final Icon ChildrenProjects = load("/images/childrenProjects.svg"); // 12x12
-  public static final Icon ExecuteMavenGoal = load("/images/executeMavenGoal.svg"); // 16x16
-  public static final Icon MavenLogo = load("/images/mavenLogo.svg"); // 16x16
-  public static final Icon MavenPlugin = load("/images/mavenPlugin.svg"); // 16x16
-  public static final Icon MavenProject = load("/images/mavenProject.svg"); // 16x16
-  public static final Icon ModulesClosed = load("/images/modulesClosed.svg"); // 16x16
-  public static final Icon ParentProject = load("/images/parentProject.svg"); // 12x12
-  public static final Icon Phase = load("/images/phase.png"); // 16x16
-  public static final Icon PhasesClosed = load("/images/phasesClosed.png"); // 16x16
-  public static final Icon PluginGoal = load("/images/pluginGoal.svg"); // 16x16
-  public static final Icon ProfilesClosed = load("/images/profilesClosed.svg"); // 16x16
-  public static final Icon ToolWindowMaven = load("/images/toolWindowMaven.svg"); // 13x13
-  public static final Icon UpdateFolders = load("/images/updateFolders.svg"); // 16x16
+  /**
+   * 12x12
+   */
+  public static final Icon ChildrenProjects = load("/images/childrenProjects.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon ExecuteMavenGoal = load("/images/executeMavenGoal.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon MavenPlugin = load("/images/mavenPlugin.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon MavenProject = load("/images/mavenProject.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon ModulesClosed = load("/images/modulesClosed.svg");
+  /**
+   * 12x12
+   */
+  public static final Icon ParentProject = load("/images/parentProject.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon PluginGoal = load("/images/pluginGoal.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon ProfilesClosed = load("/images/profilesClosed.svg");
+  /**
+   * 13x13
+   */
+  public static final Icon ToolWindowMaven = load("/images/toolWindowMaven.svg");
+  /**
+   * 16x16
+   */
+  public static final Icon UpdateFolders = load("/images/updateFolders.svg");
+
+  /** @deprecated to be removed in IDEA 2020 - use OpenapiIcons.RepositoryLibraryLogo */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon MavenLogo = load("/icons/repositoryLibraryLogo.svg", icons.OpenapiIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.OfflineMode */
   @SuppressWarnings("unused")
   @Deprecated
   public static final Icon OfflineMode = load("/actions/offlineMode.svg", com.intellij.icons.AllIcons.class);
+
+  /** @deprecated to be removed in IDEA 2020 - use ExternalSystemIcons.Task */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Phase = load("/icons/task.svg", icons.ExternalSystemIcons.class);
+
+  /** @deprecated to be removed in IDEA 2020 - use ExternalSystemIcons.TaskGroup */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon PhasesClosed = load("/icons/taskGroup.svg", icons.ExternalSystemIcons.class);
 }

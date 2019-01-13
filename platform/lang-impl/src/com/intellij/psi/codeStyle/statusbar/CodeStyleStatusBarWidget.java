@@ -27,7 +27,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
-import com.intellij.psi.codeStyle.IndentStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -41,6 +40,7 @@ import java.util.List;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
 public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implements CodeStyleSettingsListener {
+  public static final String WIDGET_ID = CodeStyleStatusBarWidget.class.getName();
 
   public CodeStyleStatusBarWidget(@NotNull Project project) {
     super(project);
@@ -201,7 +201,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   @NotNull
   @Override
   public String ID() {
-    return CodeStyleStatusBarWidget.class.getName();
+    return WIDGET_ID;
   }
 
   private static class MyWidgetState extends WidgetState {

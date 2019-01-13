@@ -13,15 +13,11 @@
             },
             "edge": {
               "version_added": true,
-              "notes": [
-                "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
-              ]
+              "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
             },
             "edge_mobile": {
               "version_added": true,
-              "notes": [
-                "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
-              ]
+              "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
             },
             "firefox": {
               "version_added": "4"
@@ -31,9 +27,7 @@
             },
             "ie": {
               "version_added": true,
-              "notes": [
-                "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
-              ]
+              "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
             },
             "opera": {
               "version_added": "9"
@@ -68,15 +62,11 @@
               },
               "edge": {
                 "version_added": true,
-                "notes": [
-                  "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
-                ]
+                "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
               },
               "edge_mobile": {
                 "version_added": true,
-                "notes": [
-                  "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
-                ]
+                "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
               },
               "firefox": {
                 "version_added": "4"
@@ -86,9 +76,7 @@
               },
               "ie": {
                 "version_added": true,
-                "notes": [
-                  "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
-                ]
+                "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
               },
               "opera": {
                 "version_added": "9"
@@ -171,15 +159,11 @@
               },
               "edge": {
                 "version_added": true,
-                "notes": [
-                  "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
-                ]
+                "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
               },
               "edge_mobile": {
                 "version_added": true,
-                "notes": [
-                  "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
-                ]
+                "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
               },
               "firefox": {
                 "version_added": "4"
@@ -189,9 +173,7 @@
               },
               "ie": {
                 "version_added": true,
-                "notes": [
-                  "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
-                ]
+                "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
               },
               "opera": {
                 "version_added": "9"

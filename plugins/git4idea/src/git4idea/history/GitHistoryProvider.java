@@ -99,7 +99,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
     return createSession(filePath, revisions, revisions.isEmpty() ? null : getFirstItem(revisions).getRevisionNumber());
   }
 
-  private VcsAbstractHistorySession createSession(final FilePath filePath, final List<VcsFileRevision> revisions,
+  private VcsAbstractHistorySession createSession(final FilePath filePath, final List<? extends VcsFileRevision> revisions,
                                                   @Nullable final VcsRevisionNumber number) {
     return new VcsAbstractHistorySession(revisions, number) {
       @Override
@@ -138,7 +138,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
   }
 
   @Override
-  public boolean getBaseVersionContent(FilePath filePath, Processor<String> processor, String beforeVersionId) throws VcsException {
+  public boolean getBaseVersionContent(FilePath filePath, Processor<? super String> processor, String beforeVersionId) throws VcsException {
     if (StringUtil.isEmptyOrSpaces(beforeVersionId) || filePath.getVirtualFile() == null) return false;
     // apply if base revision id matches revision
     final VirtualFile root = GitUtil.getGitRoot(filePath);

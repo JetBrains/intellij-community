@@ -17,7 +17,9 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
@@ -121,11 +123,29 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
     MultiMap<Double, PsiReference[]> map = new MultiMap<>();
     for (ProviderBinding.ProviderInfo<ProcessingContext> trinity : providers) {
       final PsiReference[] refs = getReferences(context, trinity);
+      if ((ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal())
+          && Registry.is("ide.check.reference.provider.target")) {
+        assertReferenceTarget(context, refs, trinity.provider);
+      }
       if (refs.length > 0) {
         map.putValue(trinity.priority, refs);
       }
     }
     return map;
+  }
+
+  private static void assertReferenceTarget(@NotNull PsiElement context,
+                                            PsiReference[] refs, PsiReferenceProvider provider) {
+    for (PsiReference reference : refs) {
+      if (reference == null) continue;
+      assert reference.getElement() == context : "reference " +
+                                                 reference +
+                                                 " was created for " +
+                                                 context +
+                                                 " but target " +
+                                                 reference.getElement() +
+                                                 ", provider " + provider;
+    }
   }
 
   @NotNull

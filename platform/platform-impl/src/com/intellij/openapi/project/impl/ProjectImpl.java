@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
@@ -9,12 +10,14 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ExtensionAreas;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -319,7 +322,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @Override
-  public void save(boolean isForce) {
+  public void save(boolean isForceSavingAllSettings) {
     if (!ApplicationManagerEx.getApplicationEx().isSaveAllowed()) {
       // no need to save
       return;
@@ -339,7 +342,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
 
     try {
-      StoreUtil.save(ServiceKt.getStateStore(this), this, isForce);
+      StoreUtil.saveSettings(this, isForceSavingAllSettings);
     }
     finally {
       mySavingInProgress.set(false);

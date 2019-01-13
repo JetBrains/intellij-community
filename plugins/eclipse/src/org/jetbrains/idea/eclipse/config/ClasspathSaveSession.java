@@ -1,15 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.config;
 
+import com.intellij.configurationStore.SaveSession;
+import com.intellij.configurationStore.SaveSessionProducer;
 import com.intellij.configurationStore.StorageUtilKt;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -25,11 +28,12 @@ import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Set;
 
-final class ClasspathSaveSession implements StateStorage.SaveSessionProducer, StateStorage.SaveSession, SafeWriteRequestor {
+final class ClasspathSaveSession implements SaveSessionProducer, SaveSession, SafeWriteRequestor {
   private final Map<String, Element> modifiedContent = new THashMap<>();
   private final Set<String> deletedContent = new THashSet<>();
 
@@ -86,7 +90,7 @@ final class ClasspathSaveSession implements StateStorage.SaveSessionProducer, St
 
   @Nullable
   @Override
-  public StateStorage.SaveSession createSaveSession() {
+  public SaveSession createSaveSession() {
     return modifiedContent.isEmpty() && deletedContent.isEmpty() ? null : this;
   }
 
@@ -94,16 +98,12 @@ final class ClasspathSaveSession implements StateStorage.SaveSessionProducer, St
   public void save() throws IOException {
     CachedXmlDocumentSet fileSet = EclipseClasspathStorageProvider.getFileCache(module);
 
-    WriteAction.run(() -> {
+    ThrowableRunnable<IOException> runnable = () -> {
       for (String key : modifiedContent.keySet()) {
         Element content = modifiedContent.get(key);
-        String path = fileSet.getParent(key) + '/' + key;
-        Writer writer = new OutputStreamWriter(StorageUtilKt.getOrCreateVirtualFile(this, Paths.get(path)).getOutputStream(this), CharsetToolkit.UTF8_CHARSET);
-        try {
+        VirtualFile virtualFile = StorageUtilKt.getOrCreateVirtualFile(Paths.get(fileSet.getParent(key) + '/' + key), this);
+        try (Writer writer = new OutputStreamWriter(virtualFile.getOutputStream(this), StandardCharsets.UTF_8)) {
           EclipseJDOMUtil.output(content, writer, module.getProject());
-        }
-        finally {
-          writer.close();
         }
       }
 
@@ -122,6 +122,16 @@ final class ClasspathSaveSession implements StateStorage.SaveSessionProducer, St
         }
       }
       deletedContent.clear();
-    });
+    };
+
+    Application app = ApplicationManager.getApplication();
+    // platform doesn't check isWriteAccessAllowed because wants to track all write action starter classes,
+    // but for our case more important to avoid write action start code execution for performance reasons
+    if (app.isWriteAccessAllowed()) {
+      runnable.run();
+    }
+    else {
+      WriteAction.run(runnable);
+    }
   }
 }

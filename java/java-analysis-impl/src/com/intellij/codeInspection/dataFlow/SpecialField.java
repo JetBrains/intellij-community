@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -10,7 +11,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import one.util.streamex.StreamEx;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,7 @@ import static com.intellij.psi.CommonClassNames.*;
  *
  * @author Tagir Valeev
  */
-public enum SpecialField implements DfaVariableSource {
+public enum SpecialField implements VariableDescriptor {
   ARRAY_LENGTH(null, "length", true) {
     @Override
     boolean isMyQualifierType(PsiType type) {
@@ -84,14 +85,23 @@ public enum SpecialField implements DfaVariableSource {
     );
 
     @Override
-    PsiPrimitiveType getType(DfaVariableValue variableValue) {
+    public PsiPrimitiveType getType(DfaVariableValue variableValue) {
       return PsiPrimitiveType.getUnboxedType(variableValue.getType());
     }
 
     @NotNull
     @Override
-    public DfaValue getDefaultValue(DfaValueFactory factory) {
+    public DfaValue getDefaultValue(DfaValueFactory factory, boolean forAccessor) {
       return DfaUnknownValue.getInstance();
+    }
+
+    @NotNull
+    @Override
+    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
+      if (qualifier instanceof DfaBoxedValue) {
+        return ((DfaBoxedValue)qualifier).getWrappedValue();
+      }
+      return super.createValue(factory, qualifier, forAccessor);
     }
 
     @Override
@@ -103,8 +113,46 @@ public enum SpecialField implements DfaVariableSource {
     boolean isMyAccessor(PsiMember accessor) {
       return accessor instanceof PsiMethod && UNBOXING_CALL.methodMatches((PsiMethod)accessor);
     }
+  },
+  OPTIONAL_VALUE(null, "value", true) {
+    @Override
+    public PsiType getType(DfaVariableValue variableValue) {
+      return OptionalUtil.getOptionalElementType(variableValue.getType());
+    }
+
+    @NotNull
+    @Override
+    public DfaValue getDefaultValue(DfaValueFactory factory, boolean forAccessor) {
+      return factory.getFactValue(DfaFactType.NULLABILITY, forAccessor ? DfaNullability.NOT_NULL : DfaNullability.NULLABLE);
+    }
+
+    @Override
+    boolean isMyQualifierType(PsiType type) {
+      return TypeUtils.isOptional(type);
+    }
+
+    @Override
+    public String getPresentationText(@NotNull DfaValue value, @Nullable PsiType type) {
+      if (value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == null) {
+        return "empty Optional";
+      }
+      if (value instanceof DfaFactMapValue) {
+        DfaNullability nullability = ((DfaFactMapValue)value).get(DfaFactType.NULLABILITY);
+        if (nullability == DfaNullability.NOT_NULL) {
+          return "present Optional";
+        }
+        return "";
+      }
+      return super.getPresentationText(value, type);
+    }
+
+    @Override
+    boolean isMyAccessor(PsiMember accessor) {
+      return accessor instanceof PsiMethod && OptionalUtil.OPTIONAL_GET.methodMatches((PsiMethod)accessor);
+    }
   };
 
+  private static final SpecialField[] VALUES = values();
   private final String myClassName;
   private final String myMethodName;
   private final boolean myFinal;
@@ -138,6 +186,10 @@ public enum SpecialField implements DfaVariableSource {
     return accessor instanceof PsiMethod && MethodUtils.methodMatches((PsiMethod)accessor, myClassName, null, myMethodName);
   }
 
+  public String getPresentationText(@NotNull DfaValue value, @Nullable PsiType type) {
+    return value.toString();
+  }
+
   /**
    * Finds a special field which corresponds to given accessor (method or field)
    * @param accessor accessor to find a special field for
@@ -147,7 +199,13 @@ public enum SpecialField implements DfaVariableSource {
   @Nullable
   public static SpecialField findSpecialField(PsiElement accessor) {
     if (!(accessor instanceof PsiMember)) return null;
-    return StreamEx.of(values()).findFirst(sf -> sf.isMyAccessor((PsiMember)accessor)).orElse(null);
+    PsiMember member = (PsiMember)accessor;
+    for (SpecialField sf : VALUES) {
+      if (sf.isMyAccessor(member)) {
+        return sf;
+      }
+    }
+    return null;
   }
 
   /**
@@ -157,19 +215,15 @@ public enum SpecialField implements DfaVariableSource {
    * @param qualifier a known qualifier value
    * @return a DfaValue which represents this special field
    */
-  public DfaValue createValue(DfaValueFactory factory, DfaValue qualifier) {
-    return createValue(factory, qualifier, null);
+  @Override
+  @NotNull
+  public final DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
+    return createValue(factory, qualifier, false);
   }
 
-  /**
-   * Returns a DfaValue which represents this special field
-   *
-   * @param factory a factory to create new values if necessary
-   * @param qualifier a known qualifier value
-   * @param targetType a type of created value
-   * @return a DfaValue which represents this special field
-   */
-  public DfaValue createValue(DfaValueFactory factory, DfaValue qualifier, PsiType targetType) {
+  @NotNull
+  @Override
+  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
     if (qualifier instanceof DfaVariableValue) {
       DfaVariableValue variableValue = (DfaVariableValue)qualifier;
       PsiModifierListOwner psiVariable = variableValue.getPsiVariable();
@@ -185,7 +239,7 @@ public enum SpecialField implements DfaVariableSource {
           }
         }
       }
-      return factory.getVarFactory().createVariableValue(this, targetType == null ? getType(variableValue) : targetType, variableValue);
+      return VariableDescriptor.super.createValue(factory, qualifier, forAccessor);
     }
     if(qualifier instanceof DfaFactMapValue) {
       SpecialFieldValue sfValue = ((DfaFactMapValue)qualifier).get(DfaFactType.SPECIAL_FIELD_VALUE);
@@ -202,21 +256,24 @@ public enum SpecialField implements DfaVariableSource {
         }
       }
     }
-    return getDefaultValue(factory);
+    return getDefaultValue(factory, forAccessor);
   }
 
   /**
    * Creates a DfaValue which describes any possible value this special field may have
    * 
    * @param factory {@link DfaValueFactory} to use
+   * @param forAccessor if true, the default value for accessor result should be returned 
+   *                    (may differ from internal representation of value) 
    * @return a default value, could be unknown
    */
   @NotNull
-  public DfaValue getDefaultValue(DfaValueFactory factory) {
+  public DfaValue getDefaultValue(DfaValueFactory factory, boolean forAccessor) {
     return factory.getFactValue(DfaFactType.RANGE, LongRangeSet.indexRange());
   }
 
-  PsiPrimitiveType getType(DfaVariableValue variableValue) {
+  @Override
+  public PsiType getType(DfaVariableValue variableValue) {
     return PsiType.INT;
   }
 
@@ -250,6 +307,17 @@ public enum SpecialField implements DfaVariableSource {
   }
 
   /**
+   * Returns a value from given SpecialFieldValue if it's bound to this special field
+   * @param sfValue {@link SpecialFieldValue} to extract the value from
+   * @return en extracted value, or null if argument is null or it's bound to different special field
+   */
+  @Contract("null -> null")
+  @Nullable
+  public DfaValue extract(@Nullable SpecialFieldValue sfValue) {
+    return sfValue != null && sfValue.getField() == this ? sfValue.getValue() : null;
+  }
+
+  /**
    * Returns a special field which corresponds to given qualifier type
    * (currently it's assumed that only one special field may exist for given qualifier type)
    * 
@@ -258,7 +326,7 @@ public enum SpecialField implements DfaVariableSource {
    */
   @Nullable
   public static SpecialField fromQualifierType(PsiType type) {
-    for (SpecialField value : SpecialField.values()) {
+    for (SpecialField value : VALUES) {
       if (value.isMyQualifierType(type)) {
         return value;
       }

@@ -280,7 +280,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
 
   @NotNull
   @Override
-  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests,
                                                @Nullable Collection<String> recursiveRoots,
                                                @Nullable Collection<String> flatRoots) {
     recursiveRoots = ObjectUtils.notNull(recursiveRoots, Collections.emptyList());

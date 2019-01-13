@@ -33,6 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
@@ -46,6 +47,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt;
@@ -590,21 +592,6 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     return JavaDocExternalFilter.filterInternalDocInfo(generator.generateDocInfo(docURLs));
   }
 
-  @Nullable
-  private static String fetchExternalJavadoc(final PsiElement element, String fromUrl, @NotNull JavaDocExternalFilter filter) {
-    try {
-      String externalDoc = filter.getExternalDocInfoForElement(fromUrl, element);
-      if (!StringUtil.isEmpty(externalDoc)) {
-        return externalDoc;
-      }
-    }
-    catch (ProcessCanceledException ignored) {}
-    catch (Exception e) {
-      LOG.warn(e);
-    }
-    return null;
-  }
-
   private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
     final PsiResolveHelper rh = JavaPsiFacade.getInstance(expr.getProject()).getResolveHelper();
     final CandidateInfo[] candidates = rh.getReferencedMethodCandidates(expr, true);
@@ -672,10 +659,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
         List<String> classUrls = findUrlForClass(aClass);
         if (classUrls != null) {
           urls = ContainerUtil.newSmartList();
-
-          final boolean useJava8Format = PsiUtil.isLanguageLevel8OrHigher(method);
-
-          final Set<String> signatures = getHtmlMethodSignatures(method, useJava8Format);
+          final Set<String> signatures = getHtmlMethodSignatures(method, PsiUtil.getLanguageLevel(method));
           for (String signature : signatures) {
             for (String classUrl : classUrls) {
               urls.add(classUrl + "#" + signature);
@@ -705,27 +689,30 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     }
   }
 
-  public static Set<String> getHtmlMethodSignatures(PsiMethod method, boolean java8FormatFirst) {
+  public static Set<String> getHtmlMethodSignatures(@NotNull PsiMethod method, @Nullable LanguageLevel preferredFormat) {
     final Set<String> signatures = new LinkedHashSet<>();
-    signatures.add(formatMethodSignature(method, true, java8FormatFirst));
-    signatures.add(formatMethodSignature(method, false, java8FormatFirst));
-
-    signatures.add(formatMethodSignature(method, true, !java8FormatFirst));
-    signatures.add(formatMethodSignature(method, false, !java8FormatFirst));
+    if (preferredFormat != null) signatures.add(formatMethodSignature(method, preferredFormat));
+    signatures.add(formatMethodSignature(method, LanguageLevel.JDK_10));
+    signatures.add(formatMethodSignature(method, LanguageLevel.JDK_1_8));
+    signatures.add(formatMethodSignature(method, LanguageLevel.JDK_1_5));
     return signatures;
   }
 
-  private static String formatMethodSignature(PsiMethod method, boolean raw, boolean java8Format) {
-    int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS;
-    int parameterOptions = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES;
-    if (raw) {
-      options |= PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE;
-      parameterOptions |= PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE;
-    }
+  private static String formatMethodSignature(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
+    boolean replaceConstructorWithInit = languageLevel.isAtLeast(LanguageLevel.JDK_10) && method.isConstructor();
+
+    int options = (replaceConstructorWithInit ? 0 : PsiFormatUtilBase.SHOW_NAME) | PsiFormatUtilBase.SHOW_PARAMETERS;
+    int parameterOptions = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES | PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE;
 
     String signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, parameterOptions, 999);
+    if (replaceConstructorWithInit) {
+      signature = "<init>" + signature;
+    }
 
-    if (java8Format) {
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_10)) {
+      signature = signature.replace(" ", "");
+    }
+    else if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       signature = signature.replaceAll("\\(|\\)|, ", "-").replaceAll("\\[]", ":A");
     }
 
@@ -847,8 +834,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   }
 
   @Override
-  public void promptToConfigureDocumentation(PsiElement element) {
-  }
+  public void promptToConfigureDocumentation(PsiElement element) { }
 
   @Nullable
   @Override
@@ -863,7 +849,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     return null;
   }
 
-  public static String fetchExternalJavadoc(PsiElement element, final Project project, final List<String> docURLs) {
+  public static String fetchExternalJavadoc(PsiElement element, Project project, List<String> docURLs) {
     return fetchExternalJavadoc(element, docURLs, new JavaDocExternalFilter(project));
   }
 
@@ -871,14 +857,22 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     if (docURLs != null) {
       for (String docURL : docURLs) {
         try {
-          final String javadoc = fetchExternalJavadoc(element, docURL, docFilter);
-          if (javadoc != null) return javadoc;
+          String externalDoc = docFilter.getExternalDocInfoForElement(docURL, element);
+          if (!StringUtil.isEmpty(externalDoc)) {
+            return externalDoc;
+          }
+        }
+        catch (ProcessCanceledException ignored) {
+          break;
         }
         catch (IndexNotReadyException e) {
           throw e;
         }
+        catch (HttpRequests.HttpStatusException e) {
+          LOG.info(e.getUrl() + ": " + e.getStatusCode());
+        }
         catch (Exception e) {
-          LOG.info(e); //connection problems should be ignored
+          LOG.info(e);
         }
       }
     }

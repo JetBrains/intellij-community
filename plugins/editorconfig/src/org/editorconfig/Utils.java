@@ -27,6 +27,7 @@ import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.plugincomponents.EditorConfigNotifier;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -37,6 +38,7 @@ import java.util.Map;
 public class Utils {
 
   public static final String FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support";
+  private static boolean ourIsFullSettingsSupportEnabledInTest;
 
   public static String configValueForKey(List<? extends OutPair> outPairs, String key) {
     for (OutPair outPair : outPairs) {
@@ -52,12 +54,17 @@ public class Utils {
     return currentSettings != null && currentSettings.getCustomSettings(EditorConfigSettings.class).ENABLED;
   }
 
-  public static boolean isFullSettingsSupport() {
-    return Registry.is(FULL_SETTINGS_SUPPORT_REG_KEY);
+  public static boolean isFullIntellijSettingsSupport() {
+    return
+      ourIsFullSettingsSupportEnabledInTest ||
+      Registry.is(FULL_SETTINGS_SUPPORT_REG_KEY) && !EditorConfigRegistry.shouldSupportCSharp();
   }
 
-  public static void setFullSettingsSupportEnabled(boolean enabled) {
-    Registry.get(FULL_SETTINGS_SUPPORT_REG_KEY).setValue(enabled);
+  @TestOnly
+  public static void setFullIntellijSettingsSupportEnabledInTest(boolean enabled) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ourIsFullSettingsSupportEnabledInTest = enabled;
+    }
   }
 
   public static void invalidConfigMessage(Project project, String configValue, String configKey, String filePath) {

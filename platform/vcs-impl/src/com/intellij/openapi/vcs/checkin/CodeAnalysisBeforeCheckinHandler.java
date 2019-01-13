@@ -141,7 +141,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
   @NotNull
   private ReturnResult runCodeAnalysis(@Nullable CommitExecutor commitExecutor) {
     final List<VirtualFile> files = CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(myCheckinPanel.getVirtualFiles(), myProject);
-    if (Registry.is("vcs.code.analysis.before.checkin.show.only.new", false)) {
+    if (files.size() <= Registry.intValue("vcs.code.analysis.before.checkin.show.only.new.threshold", 0)) {
       return runCodeAnalysisNew(commitExecutor, files);
     }
     return runCodeAnalysisOld(commitExecutor, files);
@@ -149,7 +149,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
   @NotNull
   private ReturnResult runCodeAnalysisNew(@Nullable CommitExecutor commitExecutor,
-                                          @NotNull List<VirtualFile> files) {
+                                          @NotNull List<? extends VirtualFile> files) {
     Ref<List<CodeSmellInfo>> codeSmells = Ref.create();
     Ref<Exception> exception = Ref.create();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -181,7 +181,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
   @NotNull
   private ReturnResult runCodeAnalysisOld(@Nullable CommitExecutor commitExecutor,
-                                          @NotNull List<VirtualFile> files) {
+                                          @NotNull List<? extends VirtualFile> files) {
     final List<CodeSmellInfo> codeSmells = CodeSmellDetector.getInstance(myProject).findCodeSmells(files);
     if (!codeSmells.isEmpty()) {
       return processFoundCodeSmells(codeSmells, commitExecutor);

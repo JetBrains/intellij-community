@@ -31,43 +31,18 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
   val pathsMap = mutableMapOf<Int, MaybeDeletedFilePath>()
 
   override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
-    val needToRepeat = removeTrivialMerges(controller, permanentGraphInfo)
+    val needToRepeat = removeTrivialMerges(controller, permanentGraphInfo, fileNamesData, this::reportTrivialMerges)
 
     pathsMap.putAll(refine(controller, startCommit, permanentGraphInfo))
 
     if (needToRepeat) {
       LOG.info("Some merge commits were not excluded from file history for ${startPath.path}")
-      removeTrivialMerges(controller, permanentGraphInfo)
+      removeTrivialMerges(controller, permanentGraphInfo, fileNamesData, this::reportTrivialMerges)
     }
   }
 
-  private fun removeTrivialMerges(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>): Boolean {
-    val trivialCandidates = TIntHashSet()
-    val nonTrivialMerges = TIntHashSet()
-    fileNamesData.forEach { _, commit, changes ->
-      if (changes.size() > 1) {
-        if (changes.containsValue(ChangeKind.NOT_CHANGED)) {
-          trivialCandidates.add(commit)
-        }
-        else {
-          nonTrivialMerges.add(commit)
-        }
-      }
-    }
-    // since this code can be executed before refine, there can be commits with several files changed in them
-    // if several files are changed in the merge commit, it can be trivial for one file, but not trivial for the other
-    // in this case we may need to repeat the process after refine
-    val needToRepeat = trivialCandidates.removeAll(nonTrivialMerges)
-
-    modifyGraph(controller) { collapsedGraph ->
-      val trivialMerges = hideTrivialMerges(collapsedGraph) { nodeId: Int ->
-        trivialCandidates.contains(permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId))
-      }
-      if (trivialMerges.isNotEmpty()) LOG.debug("Excluding ${trivialMerges.size} trivial merges from history for ${startPath.path}")
-      fileNamesData.removeAll(trivialMerges.map { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) })
-    }
-
-    return needToRepeat
+  private fun reportTrivialMerges(trivialMerges: Set<Int>) {
+    LOG.debug("Excluding ${trivialMerges.size} trivial merges from history for ${startPath.path}")
   }
 
   private fun refine(controller: LinearGraphController,
@@ -118,8 +93,42 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
   }
 }
 
-fun hideTrivialMerges(collapsedGraph: CollapsedGraph,
-                      isCandidateNodeId: (Int) -> Boolean): Set<Int> {
+fun removeTrivialMerges(controller: LinearGraphController,
+                        permanentGraphInfo: PermanentGraphInfo<Int>,
+                        fileNamesData: FileNamesData,
+                        report: (Set<Int>) -> Unit): Boolean {
+  val trivialCandidates = TIntHashSet()
+  val nonTrivialMerges = TIntHashSet()
+  fileNamesData.forEach { _, commit, changes ->
+    if (changes.size() > 1) {
+      if (changes.containsValue(ChangeKind.NOT_CHANGED)) {
+        trivialCandidates.add(commit)
+      }
+      else {
+        nonTrivialMerges.add(commit)
+      }
+    }
+  }
+  // since this code can be executed before refine, there can be commits with several files changed in them
+  // if several files are changed in the merge commit, it can be trivial for one file, but not trivial for the other
+  // in this case we may need to repeat the process after refine
+  val needToRepeat = trivialCandidates.removeAll(nonTrivialMerges)
+
+  if (!trivialCandidates.isEmpty) {
+    modifyGraph(controller) { collapsedGraph ->
+      val trivialMerges = hideTrivialMerges(collapsedGraph) { nodeId: Int ->
+        trivialCandidates.contains(permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId))
+      }
+      if (trivialMerges.isNotEmpty()) report(trivialMerges)
+      fileNamesData.removeAll(trivialMerges.map { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) })
+    }
+  }
+
+  return needToRepeat
+}
+
+internal fun hideTrivialMerges(collapsedGraph: CollapsedGraph,
+                               isCandidateNodeId: (Int) -> Boolean): Set<Int> {
   val result = mutableSetOf<Int>()
   val graph = LinearGraphUtils.asLiteLinearGraph(collapsedGraph.compiledGraph)
 
@@ -173,7 +182,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
     LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph).walk(row, this)
 
     pathsForCommits.forEach { commit, path ->
-      if (path != null && !namesData.affects(commit, path)) {
+      if (path != null && !namesData.affects(commit, path, true)) {
         excluded.add(commit)
       }
     }
@@ -195,14 +204,14 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
 
       currentPath = if (down) {
         val pathGetter = { parentIndex: Int ->
-          namesData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath.filePath)
+          namesData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
         }
         val path = findPathWithoutConflict(previousNodeId, pathGetter)
         path ?: pathGetter(permanentLinearGraph.getCorrespondingParent(previousNodeId, currentNodeId, visibilityBuffer))
       }
       else {
         val pathGetter = { parentIndex: Int ->
-          namesData.getPathInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath.filePath)
+          namesData.getPathInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
         }
         val path = findPathWithoutConflict(currentNodeId, pathGetter)
         // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
@@ -228,7 +237,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   }
 }
 
-abstract class FileNamesData(filePath: FilePath) {
+abstract class FileNamesData(startPaths: Collection<FilePath>) {
   // file -> (commitId -> (parent commitId -> change kind))
   private val affectedCommits = THashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
   private val commitToRename = MultiMap.createSmart<UnorderedPair<Int>, Rename>()
@@ -240,9 +249,11 @@ abstract class FileNamesData(filePath: FilePath) {
   val files: Set<FilePath>
     get() = affectedCommits.keys
 
+  constructor(startPath: FilePath) : this(listOf(startPath))
+
   init {
     val newPaths = THashSet<FilePath>(FILE_PATH_HASHING_STRATEGY)
-    newPaths.add(filePath)
+    newPaths.addAll(startPaths)
 
     while (newPaths.isNotEmpty()) {
       val commits = THashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
@@ -281,27 +292,59 @@ abstract class FileNamesData(filePath: FilePath) {
     return null
   }
 
-  fun getPathInParentRevision(commit: Int, parent: Int, childPath: FilePath): MaybeDeletedFilePath {
-    val commits = UnorderedPair(commit, parent)
-    val otherPath = commitToRename.get(commits).firstNotNull { rename -> rename.getOtherPath(commit, childPath) }
-    if (otherPath != null) return MaybeDeletedFilePath(otherPath)
+  fun getPathInParentRevision(commit: Int, parent: Int, childPath: MaybeDeletedFilePath): MaybeDeletedFilePath {
+    val childFilePath = childPath.filePath
+    val changeKind = affectedCommits[childFilePath]?.get(commit)?.get(parent) ?: return childPath
+    if (changeKind == ChangeKind.NOT_CHANGED) return childPath
 
-    val changes = affectedCommits[childPath]?.get(commit) ?: return MaybeDeletedFilePath(childPath)
-    return MaybeDeletedFilePath(childPath, changes[parent] == ChangeKind.ADDED)
+    val renames = commitToRename.get(UnorderedPair(commit, parent))
+    if (!childPath.deleted) {
+      val otherPath = renames.firstNotNull { rename -> rename.getOtherPath(commit, childFilePath) }
+      if (otherPath != null) return MaybeDeletedFilePath(otherPath)
+      return MaybeDeletedFilePath(childFilePath, changeKind == ChangeKind.ADDED)
+    }
+
+    if (changeKind == ChangeKind.REMOVED) {
+      // checking if this is actually an unrelated rename
+      if (renames.firstNotNull { rename -> rename.getOtherPath(parent, childFilePath) } != null) return childPath
+    }
+    return MaybeDeletedFilePath(childFilePath, changeKind != ChangeKind.REMOVED)
   }
 
-  fun getPathInChildRevision(commit: Int, parent: Int, parentPath: FilePath): MaybeDeletedFilePath {
-    val commits = UnorderedPair(commit, parent)
-    val otherPath = commitToRename.get(commits).firstNotNull { rename -> rename.getOtherPath(parent, parentPath) }
-    if (otherPath != null) return MaybeDeletedFilePath(otherPath)
+  fun getPathInChildRevision(commit: Int, parent: Int, parentPath: MaybeDeletedFilePath): MaybeDeletedFilePath {
+    val parentFilePath = parentPath.filePath
+    val changeKind = affectedCommits[parentFilePath]?.get(commit)?.get(parent) ?: return parentPath
+    if (changeKind == ChangeKind.NOT_CHANGED) return parentPath
 
-    val changes = affectedCommits[parentPath]?.get(commit) ?: return MaybeDeletedFilePath(parentPath)
-    return MaybeDeletedFilePath(parentPath, changes[parent] == ChangeKind.REMOVED)
+    val renames = commitToRename.get(UnorderedPair(commit, parent))
+    if (!parentPath.deleted) {
+      val otherPath = renames.firstNotNull { rename -> rename.getOtherPath(parent, parentFilePath) }
+      if (otherPath != null) return MaybeDeletedFilePath(otherPath)
+      return MaybeDeletedFilePath(parentFilePath, changeKind == ChangeKind.REMOVED)
+    }
+
+    if (changeKind == ChangeKind.ADDED) {
+      // checking if this is actually an unrelated rename
+      if (renames.firstNotNull { rename -> rename.getOtherPath(commit, parentFilePath) } != null) return parentPath
+    }
+    return MaybeDeletedFilePath(parentFilePath, changeKind != ChangeKind.ADDED)
   }
 
-  fun affects(commit: Int, path: MaybeDeletedFilePath): Boolean {
+  fun affects(commit: Int, path: MaybeDeletedFilePath, verify: Boolean = false): Boolean {
     val changes = affectedCommits[path.filePath]?.get(commit) ?: return false
-    if (path.deleted) return changes.containsValue(ChangeKind.REMOVED)
+    if (path.deleted) {
+      if (!changes.containsValue(ChangeKind.REMOVED)) return false
+      if (!verify) return true
+      for (parent in changes.keys()) {
+        if (commitToRename.get(UnorderedPair(commit, parent)).firstNotNull { rename ->
+            rename.getOtherPath(parent, path.filePath)
+          } != null) {
+          // this is a rename from path to something else, we should not match this commit
+          return false
+        }
+      }
+      return true
+    }
     return !changes.containsValue(ChangeKind.REMOVED)
   }
 
@@ -395,8 +438,8 @@ private class Rename(val filePath1: FilePath, val filePath2: FilePath, val commi
 
     other as Rename
 
-    if (FILE_PATH_HASHING_STRATEGY.equals(filePath1, other.filePath1)) return false
-    if (FILE_PATH_HASHING_STRATEGY.equals(filePath2, other.filePath2)) return false
+    if (!FILE_PATH_HASHING_STRATEGY.equals(filePath1, other.filePath1)) return false
+    if (!FILE_PATH_HASHING_STRATEGY.equals(filePath2, other.filePath2)) return false
     if (commit1 != other.commit1) return false
     if (commit2 != other.commit2) return false
 
@@ -421,7 +464,7 @@ class MaybeDeletedFilePath(val filePath: FilePath, val deleted: Boolean) {
 
     other as MaybeDeletedFilePath
 
-    if (FILE_PATH_HASHING_STRATEGY.equals(filePath, other.filePath)) return false
+    if (!FILE_PATH_HASHING_STRATEGY.equals(filePath, other.filePath)) return false
     if (deleted != other.deleted) return false
 
     return true

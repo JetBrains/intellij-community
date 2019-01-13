@@ -262,9 +262,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       if (usage instanceof MoveRenameUsageInfo && !(usage instanceof NonCodeUsageInfo) &&
           ((MoveRenameUsageInfo)usage).getReferencedElement() instanceof PsiClass) {
         PsiClass aClass = (PsiClass)((MoveRenameUsageInfo)usage).getReferencedElement();
-        if (!movedClasses.contains(aClass)) {
-          movedClasses.add(aClass);
-        }
+        movedClasses.add(aClass);
         if (aClass != null && aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
           if (PsiTreeUtil.getParentOfType(element, PsiImportStatement.class) != null) continue;
           PsiElement container = ConflictsUtil.getContainer(element);

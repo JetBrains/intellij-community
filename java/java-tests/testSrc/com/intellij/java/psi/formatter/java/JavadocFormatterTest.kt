@@ -1338,4 +1338,44 @@ public class Test {
 """
     )
   }
+
+  fun testIdea205110() {
+    doTextTest(
+      """
+      package com.test;
+
+      import java.util.HashMap;
+      import java.util.Map;
+
+      public class GeneralTest {
+
+          /**
+           * @return Map<String, string>
+           */
+          private Map<String, String> test() {
+              return new HashMap<>();
+          }
+
+      }
+      """.trimIndent(),
+
+      """
+      package com.test;
+
+      import java.util.HashMap;
+      import java.util.Map;
+
+      public class GeneralTest {
+
+          /**
+           * @return Map<String, string>
+           */
+          private Map<String, String> test() {
+              return new HashMap<>();
+          }
+
+      }
+      """.trimIndent()
+    )
+  }
 }

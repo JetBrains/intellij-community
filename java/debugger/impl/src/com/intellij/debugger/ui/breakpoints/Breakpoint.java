@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
@@ -282,6 +283,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   private void runAction(EvaluationContextImpl context, LocatableEvent event) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
+    if (getProperties().isTRACING_START() && Registry.is("debugger.call.tracing")) {
+      CallTracer.get(debugProcess).start(context.getSuspendContext().getThread());
+    }
+    if (getProperties().isTRACING_END() && Registry.is("debugger.call.tracing")) {
+      CallTracer.get(debugProcess).stop(event.thread());
+    }
     if (isLogEnabled() || isLogExpressionEnabled() || isLogStack()) {
       StringBuilder buf = new StringBuilder();
       if (myXBreakpoint.isLogMessage()) {

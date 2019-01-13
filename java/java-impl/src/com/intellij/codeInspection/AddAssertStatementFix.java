@@ -30,13 +30,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AddAssertStatementFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.AddAssertStatementFix");
-  private final SmartPsiElementPointer<PsiExpression> myExpressionToAssert;
   private final String myText;
 
-  public AddAssertStatementFix(@NotNull PsiExpression expressionToAssert) {
-    myExpressionToAssert = SmartPointerManager.getInstance(expressionToAssert.getProject()).createSmartPsiElementPointer(expressionToAssert);
-    LOG.assertTrue(PsiType.BOOLEAN.equals(expressionToAssert.getType()));
-    myText = expressionToAssert.getText();
+  public AddAssertStatementFix(@NotNull String text) {
+    myText = text;
   }
 
   @Override
@@ -47,8 +44,6 @@ public class AddAssertStatementFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiExpression expressionToAssert = myExpressionToAssert.getElement();
-    if (expressionToAssert == null) return;
     PsiElement element = descriptor.getPsiElement();
     PsiElement anchorElement = RefactoringUtil.getParentStatement(element, false);
     LOG.assertTrue(anchorElement != null);
@@ -63,12 +58,9 @@ public class AddAssertStatementFix implements LocalQuickFix {
 
     try {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-      @NonNls String text = "assert c;";
+      @NonNls String text = "assert " + myText + ";";
       PsiAssertStatement assertStatement = (PsiAssertStatement)factory.createStatementFromText(text, null);
-      final PsiExpression assertCondition = assertStatement.getAssertCondition();
-      assert assertCondition != null;
 
-      assertCondition.replace(expressionToAssert);
       final PsiElement parent = anchorElement.getParent();
       if (parent instanceof PsiCodeBlock) {
         parent.addBefore(assertStatement, anchorElement);

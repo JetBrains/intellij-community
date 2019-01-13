@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.0">
+    <deployment>
+        <exclusions>
+            <module name="org.hibernate"/>
+        </exclusions>
+    </deployment>
+</jboss-deployment-structure>

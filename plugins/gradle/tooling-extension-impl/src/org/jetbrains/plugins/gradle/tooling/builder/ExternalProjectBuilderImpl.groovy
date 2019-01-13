@@ -128,7 +128,14 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     for (Task task : project.getTasks()) {
       if (task instanceof Jar) {
         Jar jar = (Jar)task
-        artifacts.add(jar.getArchivePath())
+        try {
+          // TODO use getArchiveFile method since Gradle 5.1
+          artifacts.add(jar.getArchivePath())
+        }
+        catch (e) {
+          // TODO add reporting for such issues
+          project.getLogger().error("warning: [task $jar.path] $e.message")
+        }
       }
     }
     externalProject.setArtifacts(artifacts)

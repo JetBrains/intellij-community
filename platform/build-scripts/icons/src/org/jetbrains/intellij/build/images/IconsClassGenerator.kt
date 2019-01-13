@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -140,7 +140,15 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
   fun printStats() {
     println()
     println("Generated classes: ${processedClasses.get()}. Processed icons: ${processedIcons.get()}. Phantom icons: ${processedPhantom.get()}")
-    println("\nObsolete classes:\n${obsoleteClasses.joinToString("\n") }}")
+    if (obsoleteClasses.isNotEmpty()) {
+      println("\nObsolete classes:")
+      println(obsoleteClasses.joinToString("\n"))
+      println("\nObsolete class it is class for icons that cannot be found anymore. Possible reasons:")
+      println("1. Icons not located under resources root.\n   Solution - move icons to resources root or fix existing root type (must be \"resources\")")
+      println("2. Icons were removed but not class.\n   Solution - remove class.")
+      println("3. Icons located under resources root named \"compatibilityResources\". \"compatibilityResources\" for icons that not used externally as icon class fields, " +
+              "but maybe referenced directly by path.\n   Solution - remove class or move icons to another resources root")
+    }
   }
 
   fun getModifiedClasses(): List<ModifiedClass> = modifiedClasses
@@ -331,18 +339,15 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
     }
 
     val size = if (imageFile.toFile().exists()) imageSize(imageFile) else null
-    val comment: String
-    when {
-      size != null -> comment = " // ${size.width}x${size.height}"
-      image.phantom -> comment = ""
-      else -> error("Can't get icon size: $imageFile")
+    if (size != null) {
+      append(answer, "/**", level)
+      append(answer, " * ${size.width}x${size.height}", level)
+      append(answer, " */", level)
     }
-
+    else if (!image.phantom) error("Can't get icon size: $imageFile")
     val method = if (customLoad) "load" else "IconLoader.getIcon"
     val relativePath = rootPrefix + FileUtilRt.toSystemIndependentName(sourceRootFile.relativize(imageFile).toString())
-    append(answer,
-           "public static final Icon $iconName = $method(\"$relativePath\");$comment",
-           level)
+    append(answer, "public static final Icon $iconName = $method(\"$relativePath\");", level)
   }
 
   private fun append(answer: StringBuilder, text: String, level: Int) {

@@ -3,8 +3,8 @@ import java.util.Iterator;
 
 public class OneStatementBody {
     void foo(Iterator<Integer> it) {
-        for (Iterator<Integer> it1 = it; it1.hasNext(); ) {
-            Integer integer = it1.next();
+        for (Iterator<Integer> iter = it; iter.hasNext(); ) {
+            Integer integer = iter.next();
             System.out.println(integer);
         }
     }

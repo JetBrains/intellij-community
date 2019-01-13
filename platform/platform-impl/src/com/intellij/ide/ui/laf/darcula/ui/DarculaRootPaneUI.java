@@ -464,7 +464,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     }
   }
 
-  protected class DarculaRootLayout implements LayoutManager2 {
+  protected static class DarculaRootLayout implements LayoutManager2 {
     @Override
     public Dimension preferredLayoutSize(Container parent) {
       Dimension cpd, mbd, tpd;

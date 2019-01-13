@@ -86,6 +86,8 @@ deprecated: splitUp.png -> /general/arrowUp.svg; to be removed in IDEA 2020 - us
 deprecated: splitDown.png -> /general/arrowDown.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowDown
 deprecated: splitLeft.png -> /general/arrowLeft.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft
 deprecated: splitRight.png -> /general/arrowRight.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowRight
+deprecated: splitGlueH.png; to be removed in IDEA 2020
+deprecated: splitGlueV.png; to be removed in IDEA 2020
 deprecated: tab-white-center.png; to be removed in IDEA 2020
 deprecated: tab-white-left.png; to be removed in IDEA 2020
 deprecated: tab-white-right.png; to be removed in IDEA 2020

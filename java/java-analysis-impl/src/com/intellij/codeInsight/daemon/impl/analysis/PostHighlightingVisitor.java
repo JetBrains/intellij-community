@@ -19,8 +19,8 @@ import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -70,7 +70,7 @@ class PostHighlightingVisitor {
       // schedule optimise action at the time of session disposal, which is after all applyInformation() calls
       Disposable invokeFixLater = () -> {
         // later because should invoke when highlighting is finished
-        TransactionGuard.getInstance().submitTransactionLater(myProject, () -> {
+        AppUIExecutor.onUiThread().later().inTransaction(myProject).withDocumentsCommitted(myProject).submit(() -> {
           if (!myFile.isValid() || !myFile.isWritable()) return;
           IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true);
           if (optimizeImportsFix.isAvailable(myProject, null, myFile)) {

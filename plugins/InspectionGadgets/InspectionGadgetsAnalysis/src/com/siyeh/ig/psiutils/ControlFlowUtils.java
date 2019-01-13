@@ -427,46 +427,34 @@ public class ControlFlowUtils {
   public static boolean statementCompletesWithStatement(@NotNull PsiStatement containingStatement, @NotNull PsiStatement statement) {
     PsiElement statementToCheck = statement;
     while (true) {
-      if (statementToCheck.equals(containingStatement)) {
+      if (containingStatement.equals(statementToCheck)) {
         return true;
       }
       final PsiElement container = getContainingStatementOrBlock(statementToCheck);
-      if (container == null) {
-        return false;
-      }
-      if (container instanceof PsiLoopStatement) {
+      if (container == null || container instanceof PsiLoopStatement) {
         return false;
       }
       if (container instanceof PsiCodeBlock) {
-        if (statementToCheck instanceof PsiSwitchLabeledRuleStatement) {
-          return true;
-        }
         if (!statementIsLastInBlock((PsiCodeBlock)container, (PsiStatement)statementToCheck)) {
           return false;
         }
       }
       
       statementToCheck = container;
+      if (statementToCheck instanceof PsiSwitchLabeledRuleStatement) {
+        statementToCheck = PsiTreeUtil.getParentOfType(statementToCheck, PsiStatement.class);
+      }
     }
   }
 
   public static boolean blockCompletesWithStatement(@NotNull PsiCodeBlock body, @NotNull PsiStatement statement) {
     PsiElement statementToCheck = statement;
     while (true) {
-      if (statementToCheck == null) {
-        return false;
-      }
       final PsiElement container = getContainingStatementOrBlock(statementToCheck);
-      if (container == null) {
-        return false;
-      }
-      if (container instanceof PsiLoopStatement) {
+      if (container == null || container instanceof PsiLoopStatement) {
         return false;
       }
       if (container instanceof PsiCodeBlock) {
-        if (statementToCheck instanceof PsiSwitchLabeledRuleStatement) {
-          return true;
-        }
         if (!statementIsLastInBlock((PsiCodeBlock)container, (PsiStatement)statementToCheck)) {
           return false;
         }
@@ -477,12 +465,16 @@ public class ControlFlowUtils {
       }
       else {
         statementToCheck = container;
+        if (statementToCheck instanceof PsiSwitchLabeledRuleStatement) {
+          statementToCheck = PsiTreeUtil.getParentOfType(statementToCheck, PsiStatement.class);
+        }
       }
     }
   }
 
   @Nullable
-  private static PsiElement getContainingStatementOrBlock(@NotNull PsiElement statement) {
+  @Contract("null -> null")
+  private static PsiElement getContainingStatementOrBlock(@Nullable PsiElement statement) {
     return PsiTreeUtil.getParentOfType(statement, PsiStatement.class, PsiCodeBlock.class);
   }
 

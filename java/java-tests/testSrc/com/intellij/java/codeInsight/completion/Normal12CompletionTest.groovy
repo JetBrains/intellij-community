@@ -21,4 +21,6 @@ class Normal12CompletionTest extends NormalCompletionTestCase {
   void testSecondLabelInRuleSwitch() throws Throwable { doTest() }
   void testSwitchExpressionStart() throws Throwable { doTest() }
   void testBreakInSwitchExpression() throws Throwable { doTest() }
+  void testInsideBreakInSwitchExpression() throws Throwable { doTest() }
+  void testInsideRuleInSwitchExpression() throws Throwable { doTest() }
 }

@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
@@ -89,7 +90,7 @@ public class LeakHunter {
       UIUtil.pump();
     }
     PersistentEnumeratorBase.clearCacheForTests();
-    ApplicationManager.getApplication().runReadAction(() -> {
+    Runnable runnable = () -> {
       try (AccessToken ignored = ProhibitAWTEvents.start("checking for leaks")) {
         DebugReflectionUtil.walkObjects(10000, rootsSupplier.get(), suspectClass, Conditions.alwaysTrue(), (value, backLink) -> {
           @SuppressWarnings("unchecked")
@@ -100,7 +101,14 @@ public class LeakHunter {
           return true;
         });
       }
-    });
+    };
+    Application application = ApplicationManager.getApplication();
+    if (application == null) {
+      runnable.run();
+    }
+    else {
+      application.runReadAction(runnable);
+    }
   }
 
   /**

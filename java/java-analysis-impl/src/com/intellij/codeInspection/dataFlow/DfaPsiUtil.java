@@ -103,7 +103,7 @@ public class DfaPsiUtil {
       return inferParameterNullability((PsiParameter)owner);
     }
 
-    if (owner instanceof PsiMethod) {
+    if (owner instanceof PsiMethod && ((PsiMethod)owner).getParameterList().isEmpty()) {
       PsiField field = PropertyUtil.getFieldOfGetter((PsiMethod)owner);
       if (field != null && getElementNullability(resultType, field) == Nullability.NULLABLE) {
         return Nullability.NULLABLE;

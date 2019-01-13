@@ -290,9 +290,18 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
             (RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task;
           RunnerAndConfigurationSettings settings = runBeforeRun.getSettings();
           if (settings != null) {
-            runBeforeRunExecutorMap.put(task, RunManagerImpl.canRunConfiguration(settings, environment.getExecutor())
-                                              ? environment.getExecutor()
-                                              : DefaultRunExecutor.getRunExecutorInstance());
+            Executor executor = environment.getExecutor();
+            if (!RunManagerImpl.canRunConfiguration(settings, executor)) {
+                executor = DefaultRunExecutor.getRunExecutorInstance();
+                if (!RunManagerImpl.canRunConfiguration(settings, executor)) {
+                  // We should stop here as before run task cannot be executed at all (possibly it's invalid)
+                  if (onCancelRunnable != null) {
+                    onCancelRunnable.run();
+                    return;
+                  }
+                }
+            }
+            runBeforeRunExecutorMap.put(task, executor);
           }
         }
       }

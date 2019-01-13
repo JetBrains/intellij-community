@@ -11,7 +11,6 @@ import org.editorconfig.language.psi.EditorConfigOption
 import org.editorconfig.language.psi.EditorConfigRootDeclaration
 import org.editorconfig.language.psi.EditorConfigSection
 import java.util.regex.Pattern
-import kotlin.coroutines.experimental.buildSequence
 
 class EditorConfigInspectionSuppressor : InspectionSuppressor {
   private val suppressCommentPattern = "[#;]" + SuppressionUtil.COMMON_SUPPRESS_REGEXP
@@ -27,7 +26,7 @@ class EditorConfigInspectionSuppressor : InspectionSuppressor {
     return getCommentsBefore(parent).any { isSuppressedInComment(it.text, toolId) }
   }
 
-  private fun getCommentsBefore(element: PsiElement) = buildSequence<PsiElement> {
+  private fun getCommentsBefore(element: PsiElement) = sequence<PsiElement> {
     var item: PsiElement? = element
     loop@ while (item != null) {
       item = item.prevSibling

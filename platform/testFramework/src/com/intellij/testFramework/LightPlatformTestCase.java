@@ -635,17 +635,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @NotNull
-  protected final CodeStyleSettings getCurrentCodeStyleSettings() {
+  protected static CodeStyleSettings getCurrentCodeStyleSettings() {
     return CodeStyle.getSettings(getProject());
   }
 
   @NotNull
-  protected final CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
+  protected static CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
     return getCurrentCodeStyleSettings().getCommonSettings(language);
   }
 
   @NotNull
-  protected final <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass) {
+  protected static <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass) {
     return getCurrentCodeStyleSettings().getCustomSettings(settingsClass);
   }
 

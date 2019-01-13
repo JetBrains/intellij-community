@@ -721,7 +721,7 @@ public class PluginManagerConfigurableNew
 
     if (myShutdownCallback == null && myPluginsModel.createShutdownCallback) {
       myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(
-        () -> PluginManagerConfigurable.shutdownOrRestartApp(IdeBundle.message("update.notifications.title")), ModalityState.any());
+        () -> PluginManagerConfigurable.shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
     }
   }
 
@@ -801,11 +801,13 @@ public class PluginManagerConfigurableNew
       finally {
         ApplicationManager.getApplication().invokeLater(() -> {
           myTrendingPanel.stopLoading();
+          PluginLogo.startBatchMode();
 
           for (PluginsGroup group : groups) {
             myTrendingPanel.addGroup(group);
           }
 
+          PluginLogo.endBatchMode();
           myTrendingPanel.doLayout();
           myTrendingPanel.initialSelection();
         }, ModalityState.any());
@@ -832,6 +834,7 @@ public class PluginManagerConfigurableNew
       new PluginsGroupComponent(new PluginsListLayout(), new MultiSelectionEventHandler(), myNameListener, mySearchListener,
                                 descriptor -> new ListPluginComponent(myPluginsModel, descriptor, false));
     registerCopyProvider(panel);
+    PluginLogo.startBatchMode();
 
     PluginsGroup installing = new PluginsGroup("Installing");
     installing.descriptors.addAll(MyPluginModel.getInstallingPlugins());
@@ -905,6 +908,7 @@ public class PluginManagerConfigurableNew
       }
     });
 
+    PluginLogo.endBatchMode();
     return createScrollPane(panel, true);
   }
 
@@ -953,9 +957,11 @@ public class PluginManagerConfigurableNew
             group.descriptors.add(toUpdateDownloader.getDescriptor());
           }
 
+          PluginLogo.startBatchMode();
           group.sortByName();
           myUpdatesPanel.addGroup(group);
           group.titleWithCount();
+          PluginLogo.endBatchMode();
 
           myPluginsModel.setUpdateGroup(group);
         }
@@ -1492,7 +1498,8 @@ public class PluginManagerConfigurableNew
   }
 
   public static boolean forceHttps() {
-    return IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
+    return IdeaApplication.isLoaded() && !ApplicationManager.getApplication().isDisposed() &&
+           UpdateSettings.getInstance().canUseSecureConnection();
   }
 
   @NotNull
@@ -1533,8 +1540,7 @@ public class PluginManagerConfigurableNew
         if (plugin == null && PluginManagerCore.isModuleDependency(id)) {
           for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
             if (descriptor instanceof IdeaPluginDescriptorImpl) {
-              List<String> modules = ((IdeaPluginDescriptorImpl)descriptor).getModules();
-              if (modules != null && modules.contains(id.getIdString())) {
+              if (((IdeaPluginDescriptorImpl)descriptor).getModules().contains(id.getIdString())) {
                 plugin = descriptor;
                 break;
               }

@@ -28,5 +28,13 @@ public interface IndentedCommenter extends Commenter {
    */
   @Nullable
   Boolean forceIndentedLineComment();
-  
+
+  /**
+   * Used to override CodeStyleSettings#BLOCK_COMMENT_AT_FIRST_COLUMN option
+   * @return true or false to override, null to use settings option
+   */
+  @Nullable
+  default Boolean forceIndentedBlockComment() {
+    return forceIndentedLineComment();
+  };
 }

@@ -957,7 +957,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     putUserData(FocusModeModel.FOCUS_MODE_RANGES, null);
-    myFocusModeModel.clearFocusMode();
+    if (myFocusModeModel != null) {
+      myFocusModeModel.clearFocusMode();
+    }
   }
 
   /**
@@ -984,6 +986,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     isReleased = true;
     mySizeAdjustmentStrategy.cancelAllRequests();
+    cancelAutoResetForMouseSelectionState();
 
     myFoldingModel.dispose();
     mySoftWrapModel.release();
@@ -1039,7 +1042,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollPane.setRowHeaderView(myGutterComponent);
 
     myEditorComponent.setTransferHandler(new MyTransferHandler());
-    myEditorComponent.setAutoscrolls(true);
+    myEditorComponent.setAutoscrolls(false); // we have our own auto-scrolling code
 
     if (mayShowToolbar()) {
       JLayeredPane layeredPane = new JBLayeredPane() {
@@ -3742,12 +3745,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myDragOnGutterSelectionStartLine = EditorUtil.yPositionToLogicalLine(EditorImpl.this, e);
       }
 
-      // On some systems (for example on Linux) popup trigger is MOUSE_PRESSED event.
-      // But this trigger is always consumed by popup handler. In that case we have to
-      // also move caret.
-      if (event.isConsumed() && !(event.getMouseEvent().isPopupTrigger() || event.getArea() == EditorMouseEventArea.EDITING_AREA)) {
-        return;
-      }
+      if (event.isConsumed()) return;
 
       if (myCommandProcessor != null) {
         Runnable runnable = () -> {
@@ -3788,17 +3786,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
+      for (EditorMouseListener listener : myMouseListeners) {
+        listener.mouseReleased(event);
+        if (isReleased || event.isConsumed()) {
+          return;
+        }
+      }
+
       invokePopupIfNeeded(event);
       if (event.isConsumed()) {
         return;
-      }
-      for (EditorMouseListener listener : myMouseListeners) {
-        listener.mouseReleased(event);
-        if (isReleased) return;
-        if (event.isConsumed()) {
-          e.consume();
-          return;
-        }
       }
 
       if (myCommandProcessor != null) {
@@ -4019,7 +4016,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static boolean isColumnSelectionDragEvent(@NotNull MouseEvent e) {
-    return e.isAltDown() && !e.isShiftDown() && !e.isControlDown() && !e.isMetaDown();
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
   }
 
   private static boolean isToggleCaretEvent(@NotNull MouseEvent e) {
@@ -4042,7 +4039,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     MouseShortcut mouseShortcut = KeymapUtil.createMouseShortcut(e);
     String[] mappedActions = keymap.getActionIds(mouseShortcut);
     if (!ArrayUtil.contains(actionId, mappedActions)) return false;
-    if (mappedActions.length < 2) return true;
+    if (mappedActions.length < 2 || e.getID() == MouseEvent.MOUSE_DRAGGED /* 'normal' actions are not invoked on mouse drag */) return true;
     ActionManager actionManager = ActionManager.getInstance();
     for (String mappedActionId : mappedActions) {
       if (actionId.equals(mappedActionId)) continue;

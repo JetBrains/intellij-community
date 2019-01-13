@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.TestVcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
@@ -61,7 +60,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
     projectRoot = project.baseDir
     projectPath = projectRoot.path
 
-    changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerImpl
+    changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
     vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
 
     vcsNotifier = overrideService<VcsNotifier, TestVcsNotifier>(project)
@@ -128,9 +127,8 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   }
 
   protected fun updateChangeListManager() {
-    val changeListManager = ChangeListManager.getInstance(project)
     VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
-    changeListManager.ensureUpToDate(false)
+    changeListManager.ensureUpToDate()
   }
 
   private fun waitForPendingTasks() {

@@ -346,7 +346,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   private void appendDependsAfterInstall() {
     for (IdeaPluginDescriptor descriptor : InstalledPluginsState.getInstance().getInstalledPlugins()) {
-      if (myDownloaded.ui.findComponent(descriptor) != null) {
+      if (myDownloaded != null && myDownloaded.ui != null && myDownloaded.ui.findComponent(descriptor) != null) {
         continue;
       }
 
@@ -442,8 +442,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (result == null && PluginManagerCore.isModuleDependency(pluginId)) {
         result = ContainerUtil.find(allPlugins, d -> {
           if (d instanceof IdeaPluginDescriptorImpl) {
-            List<String> modules = ((IdeaPluginDescriptorImpl)d).getModules();
-            return modules != null && modules.contains(pluginId.getIdString());
+            return ((IdeaPluginDescriptorImpl)d).getModules().contains(pluginId.getIdString());
           }
           return false;
         });

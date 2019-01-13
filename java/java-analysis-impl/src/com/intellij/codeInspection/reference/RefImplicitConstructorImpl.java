@@ -91,4 +91,9 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
   public PsiFile getContainingFile() {
     return ((RefClassImpl)getOwnerClass()).getContainingFile();
   }
+
+  @Override
+  protected void initialize() {
+    throw new AssertionError("Should not be called!");
+  }
 }

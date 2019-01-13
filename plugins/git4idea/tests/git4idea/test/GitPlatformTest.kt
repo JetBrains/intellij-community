@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.util.ThrowableRunnable
@@ -212,6 +213,12 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected fun readDetails(hashes: List<String>): List<VcsFullCommitDetails> = VcsLogUtil.getDetails(logProvider, projectRoot, hashes)
 
   protected fun readDetails(hash: String) = readDetails(listOf(hash)).first()
+
+  protected fun commit(changes: Collection<Change>) {
+    val exceptions = vcs.checkinEnvironment!!.commit(changes.toList(), "comment")
+    exceptions?.forEach { fail("Exception during executing the commit: " + it.message) }
+    updateChangeListManager()
+  }
 
   protected fun `do nothing on merge`() {
     vcsHelper.onMerge {}

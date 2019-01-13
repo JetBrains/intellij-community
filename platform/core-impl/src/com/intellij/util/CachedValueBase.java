@@ -1,26 +1,16 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.util.CachedValueProfiler;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.ProfilingInfo;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.NotNullList;
 import gnu.trove.TLongArrayList;
@@ -40,15 +30,30 @@ public abstract class CachedValueBase<T> {
   private Data<T> computeData(@Nullable CachedValueProvider.Result<T> result) {
     T value = result == null ? null : result.getValue();
     Object[] dependencies = getDependencies(result);
+
+    Object[] inferredDependencies;
+    long[] inferredTimeStamps;
     if (dependencies == null) {
-      return new Data<>(value, null, null);
+      inferredDependencies = null;
+      inferredTimeStamps = null;
+    }
+    else {
+      TLongArrayList timeStamps = new TLongArrayList(dependencies.length);
+      List<Object> deps = new NotNullList<>(dependencies.length);
+      collectDependencies(timeStamps, deps, dependencies);
+
+      inferredDependencies = ArrayUtil.toObjectArray(deps);
+      inferredTimeStamps = timeStamps.toNativeArray();
     }
 
-    TLongArrayList timeStamps = new TLongArrayList(dependencies.length);
-    List<Object> deps = new NotNullList<>(dependencies.length);
-    collectDependencies(timeStamps, deps, dependencies);
+    if (result != null && CachedValueProfiler.canProfile()) {
+      ProfilingInfo profilingInfo = CachedValueProfiler.getInstance().getTemporaryInfo(result);
+      if (profilingInfo != null) {
+        return new ProfilingData<>(value, inferredDependencies, inferredTimeStamps, profilingInfo);
+      }
+    }
 
-    return new Data<>(value, ArrayUtil.toObjectArray(deps), timeStamps.toNativeArray());
+    return new Data<>(value, inferredDependencies, inferredTimeStamps);
   }
 
   @Nullable
@@ -96,19 +101,19 @@ public abstract class CachedValueBase<T> {
   }
 
   public boolean hasUpToDateValue() {
-    return getUpToDateOrNull(false) != null;
+    return getUpToDateOrNull() != null;
   }
 
   @Nullable
-  final Data<T> getUpToDateOrNull(boolean dispose) {
+  final Data<T> getUpToDateOrNull() {
     Data<T> data = getRawData();
 
     if (data != null) {
       if (isUpToDate(data)) {
         return data;
       }
-      if (dispose && data.value instanceof Disposable && compareAndClearData(data)) {
-        Disposer.dispose((Disposable)data.value);
+      if (data instanceof ProfilingData) {
+        ((ProfilingData<T>)data).myProfilingInfo.valueDisposed();
       }
     }
     return null;
@@ -183,37 +188,52 @@ public abstract class CachedValueBase<T> {
     Data<T> data = computeData(result);
     setData(data);
     valueUpdated(result.getDependencyItems());
-    return data.value;
+    return data.getValue();
   }
 
   protected void valueUpdated(@Nullable Object[] dependencies) {}
 
   public abstract boolean isFromMyProject(Project project);
 
-  protected static final class Data<T> implements Disposable {
-    final T value;
+  protected static class Data<T> {
+    private final T myValue;
     private final Object[] myDependencies;
     private final long[] myTimeStamps;
 
     Data(final T value, final Object[] dependencies, final long[] timeStamps) {
-      this.value = value;
+      myValue = value;
       myDependencies = dependencies;
       myTimeStamps = timeStamps;
     }
 
+    public T getValue() {
+      return myValue;
+    }
+  }
+
+  private static class ProfilingData<T> extends Data<T> {
+    @NotNull private final ProfilingInfo myProfilingInfo;
+
+    private ProfilingData(T value,
+                          Object[] dependencies,
+                          long[] timeStamps,
+                          @NotNull ProfilingInfo profilingInfo) {
+      super(value, dependencies, timeStamps);
+      myProfilingInfo = profilingInfo;
+    }
+
     @Override
-    public void dispose() {
-      if (value instanceof Disposable) {
-        Disposer.dispose((Disposable)value);
-      }
+    public T getValue() {
+      myProfilingInfo.valueUsed();
+      return super.getValue();
     }
   }
 
   @Nullable
   protected <P> T getValueWithLock(P param) {
-    Data<T> data = getUpToDateOrNull(true);
+    Data<T> data = getUpToDateOrNull();
     if (data != null) {
-      return data.value;
+      return data.getValue();
     }
 
     RecursionGuard.StackStamp stamp = RecursionManager.createGuard("cachedValue").markStack();
@@ -228,13 +248,12 @@ public abstract class CachedValueBase<T> {
         Data<T> toReturn = cacheOrGetData(alreadyComputed, reuse ? null : data);
         if (toReturn != null) {
           valueUpdated(toReturn.myDependencies);
-          return toReturn.value;
+          return toReturn.getValue();
         }
       }
     }
-    return data.value;
+    return data.getValue();
   }
 
   protected abstract <P> CachedValueProvider.Result<T> doCompute(P param);
-
 }

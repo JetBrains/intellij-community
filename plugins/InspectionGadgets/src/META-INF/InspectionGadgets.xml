@@ -875,8 +875,8 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.encapsulation.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.encapsulation.ProtectedInnerClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PublicField" bundle="com.siyeh.InspectionGadgetsBundle" key="public.field.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.encapsulation.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.encapsulation.PublicFieldInspection"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.encapsulation.issues" enabledByDefault="true"
+                     level="INFORMATION" implementationClass="com.siyeh.ig.encapsulation.PublicFieldInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PublicInnerClass" bundle="com.siyeh.InspectionGadgetsBundle" key="public.inner.class.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.encapsulation.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.encapsulation.PublicInnerClassInspection"/>
@@ -2536,6 +2536,10 @@
                      key="inspection.simplifiable.if.statement.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.SimplifiableIfStatementInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ArrayCanBeReplacedWithEnumValues" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="array.can.be.replaced.with.enum.values" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.style.ArrayCanBeReplacedWithEnumValuesInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"

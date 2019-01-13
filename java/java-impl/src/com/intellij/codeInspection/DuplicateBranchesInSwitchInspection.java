@@ -3,10 +3,11 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
@@ -54,7 +55,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
 
     void registerProblems(List<Branch> branches) {
       int size = branches.size();
-      if (size > 1 && size <= 20) {
+      if (size > 1) {
         boolean[] isDuplicate = new boolean[size];
 
         int defaultIndex = ContainerUtil.indexOf(branches, Branch::isDefault);
@@ -71,12 +72,14 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
           }
         }
 
+        int compareCount = 0;
         for (int index = 0; index < size - 1; index++) {
           if (isDuplicate[index]) continue;
           Branch branch = branches.get(index);
 
           for (int otherIndex = index + 1; otherIndex < size; otherIndex++) {
             if (isDuplicate[otherIndex]) continue;
+            if (++compareCount > 200) return; // avoid quadratic loop over too large list, but at least try to do something in that case
             Branch otherBranch = branches.get(otherIndex);
 
             if (areDuplicates(branch, otherBranch)) {
@@ -435,14 +438,66 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
 
     int hash() {
       int hash = myStatements.length;
-      // Don't want to hash the whole PSI tree in-depth because it's rather slow and is rarely needed.
       for (PsiStatement statement : myStatements) {
-        if (statement instanceof TreeElement) { // all known PSI statements are tree elements
-          short index = ((TreeElement)statement).getElementType().getIndex();
-          hash = hash * 31 + index;
+        hash = hash * 31 + hashElement(statement, 2); // Don't want to hash the whole PSI tree because it might be quite slow
+      }
+      return hash;
+    }
+
+    private static int hashElement(PsiElement element, int depth) {
+      if (element instanceof PsiExpression) {
+        return hashExpression((PsiExpression)element);
+      }
+      IElementType type = PsiUtilCore.getElementType(element);
+      int hash = type != null ? type.hashCode() : 0;
+      if (depth > 0) {
+        int count = 0;
+        for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+          if (child instanceof PsiWhiteSpace || child instanceof PsiComment ||
+              child instanceof PsiJavaToken) { // significant tokens are taken into account by getElementType()
+            continue;
+          }
+          hash = hash * 31 + hashElement(child, depth - 1);
+          count++;
+        }
+        if (count != 0) {
+          hash = hash * 31 + count;
         }
       }
       return hash;
+    }
+
+    private static int hashExpression(@Nullable PsiExpression expression) {
+      if (expression == null) {
+        return 0;
+      }
+      if (expression instanceof PsiParenthesizedExpression) {
+        return hashExpression(((PsiParenthesizedExpression)expression).getExpression());
+      }
+
+      short index = expression.getNode().getElementType().getIndex();
+      if (expression instanceof PsiReferenceExpression) {
+        return hashReference((PsiReferenceExpression)expression, index);
+      }
+      if (expression instanceof PsiMethodCallExpression) {
+        return hashReference(((PsiMethodCallExpression)expression).getMethodExpression(), index);
+      }
+      if (expression instanceof PsiNewExpression) {
+        PsiJavaCodeReferenceElement reference = ((PsiNewExpression)expression).getClassOrAnonymousClassReference();
+        if (reference != null) {
+          return hashReference(reference, index);
+        }
+      }
+      if (expression instanceof PsiAssignmentExpression) {
+        PsiExpression lExpression = ((PsiAssignmentExpression)expression).getLExpression();
+        PsiExpression rExpression = ((PsiAssignmentExpression)expression).getRExpression();
+        return ((hashExpression(lExpression) * 31) + hashExpression(rExpression)) * 31 + index;
+      }
+      return index;
+    }
+
+    private static int hashReference(@NotNull PsiJavaCodeReferenceElement reference, short index) {
+      return Objects.hashCode(reference.getReferenceName()) * 31 + index;
     }
 
     boolean isDefault() {
@@ -553,6 +608,11 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
         }
       }
       return false;
+    }
+
+    @Override
+    public String toString() {
+      return getSwitchLabelText();
     }
   }
 

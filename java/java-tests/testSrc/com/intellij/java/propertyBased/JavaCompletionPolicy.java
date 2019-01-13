@@ -85,7 +85,7 @@ class JavaCompletionPolicy extends CompletionPolicy {
         return false; // IDEA-178629
       }
     }
-    return true;
+    return super.shouldSuggestReferenceText(ref, target);
   }
 
   private static boolean isAdoptedOrphanPsiAfterClassEnd(PsiElement element) {
@@ -164,6 +164,9 @@ class JavaCompletionPolicy extends CompletionPolicy {
         if (parent.getParent() instanceof PsiModifierListOwner && PsiTreeUtil.getParentOfType(parent.getParent(), PsiCodeBlock.class, true, PsiClass.class) != null) {
           return false; // no modifiers for local classes/variables
         }
+      }
+      if (parent instanceof PsiSwitchLabelStatementBase && ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchBlock() == null) {
+        return false; // bad syntax
       }
     }
     if (leaf.textMatches(PsiKeyword.TRUE) || leaf.textMatches(PsiKeyword.FALSE)) {

@@ -179,7 +179,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     }
 
     @Override
-    public void apply(@NotNull List<FilePatch> remaining,
+    public void apply(@NotNull List<? extends FilePatch> remaining,
                       @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                       @Nullable LocalChangeList localList,
                       @Nullable String fileName,

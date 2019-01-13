@@ -180,13 +180,9 @@ public class PyCustomMember extends UserDataHolderBase {
     PyClass targetClass = null;
     if (myTypeName != null) {
 
-      final ParameterizedCachedValueProvider<PyClass, PsiElement> provider = new ParameterizedCachedValueProvider<PyClass, PsiElement>() {
-        @Override
-        public CachedValueProvider.Result<PyClass> compute(
-          final PsiElement param) {
-          final PyClass result = PyPsiFacade.getInstance(param.getProject()).createClassByQName(myTypeName, param);
-          return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
-        }
+      final ParameterizedCachedValueProvider<PyClass, PsiElement> provider = param -> {
+        final PyClass result = PyPsiFacade.getInstance(param.getProject()).createClassByQName(myTypeName, param);
+        return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
       };
       targetClass = CachedValuesManager.getManager(context.getProject()).getParameterizedCachedValue(this, RESOLVE,
                                                                                                      provider, false, context);

@@ -59,10 +59,6 @@ class CodeStyleTest {
             return ContainerUtil.concat(super.getKnownTagNames(), listOf("NewComponent-extra"))
           }
 
-          override fun readExternal(parentElement: Element?) {
-            super.readExternal(parentElement)
-          }
-
           override fun writeExternal(parentElement: Element?, parentSettings: CustomCodeStyleSettings) {
             super.writeExternal(parentElement, parentSettings)
             writeMain(parentElement)
@@ -97,7 +93,7 @@ class CodeStyleTest {
       }
     }
 
-    val disposable = Disposable() {}
+    val disposable = Disposable {}
     PlatformTestUtil.registerExtension(com.intellij.psi.codeStyle.CodeStyleSettingsProvider.EXTENSION_POINT_NAME,
                                        newProvider, disposable)
 
@@ -147,7 +143,7 @@ class CodeStyleTest {
     val expected = """
     <code_scheme name="testSchemeName" version="${CodeStyleSettings.CURR_VERSION}">
       <option name="RIGHT_MARGIN" value="64" />
-    </code_scheme>""".trimIndent();
+    </code_scheme>""".trimIndent()
 
     settings.readExternal(JDOMUtil.load(initial))
     settings.resetDeprecatedFields()

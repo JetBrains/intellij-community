@@ -247,8 +247,10 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
       uEditor.setColorsScheme(editor.getColorsScheme());
       uEditor.setBackgroundColor(backgroundColor);
+      uEditor.getSettings().setCaretRowShown(false);
 
-      DiffUtil.setEditorCodeStyle(myTracker.getProject(), uEditor, fileType);
+      uEditor.getSettings().setTabSize(editor.getSettings().getTabSize(editor.getProject()));
+      uEditor.getSettings().setUseTabCharacter(editor.getSettings().isUseTabCharacter(editor.getProject()));
 
       uEditor.setHighlighter(fragmentedHighlighter);
 

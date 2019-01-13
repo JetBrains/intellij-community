@@ -155,10 +155,10 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       ? ReadAction.compute(() -> collectExcludedRanges(allNodes, duplicateMatches.keySet(), patternCopy[0].getContainingFile()))
       : Collections.emptyList();
 
-    Bounds patternReplacementBounds = ReadAction.compute(() -> {
-      Bounds patternBounds = new Bounds(patternCopy[0], patternCopy[patternCopy.length - 1]);
+    ElementsRange patternReplacement = ReadAction.compute(() -> {
+      Bounds bounds = new Bounds(patternCopy[0], patternCopy[patternCopy.length - 1]);
       copyProcessor.doExtract();
-      return patternBounds;
+      return bounds.getElementsRange();
     });
     progress.increment(); // +2
 
@@ -183,8 +183,6 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       PsiMethod extractedMethod = copyProcessor.getExtractedMethod();
       return (PsiMethod)CodeStyleManager.getInstance(myProject).reformat(extractedMethod);
     });
-
-    ElementsRange patternReplacement = ReadAction.compute(() -> patternReplacementBounds.getElementsRange());
 
     Document refactoredDocument = ReadAction.compute(() -> {
       PsiFile refactoredFile = method.getContainingFile();
@@ -233,8 +231,8 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
     PsiElement anchorElement = myAnchor.getElement();
     if (anchorElement != null) {
-      int anchorOffset = anchorElement.getTextRange().getEndOffset();
-      int anchorLineNumber = myPatternDocument.getLineNumber(anchorOffset);
+      int anchorLineNumber = getLineNumberAfter(myPatternDocument, anchorElement.getTextRange());
+      int anchorOffset = myPatternDocument.getLineStartOffset(anchorLineNumber);
       Range diffRange = new Range(anchorLineNumber,
                                   anchorLineNumber,
                                   getStartLineNumber(refactoredDocument, methodRange),
@@ -255,7 +253,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
     DiffContentFactory contentFactory = DiffContentFactory.getInstance();
     DocumentContent oldContent = contentFactory.create(myProject, myPatternDocument);
-    DocumentContent newContent = contentFactory.create(myProject, refactoredDocument);
+    DocumentContent newContent = contentFactory.create(myProject, refactoredDocument.getText(), patternFile.getFileType(), false);
 
     myDiffRequest = new PreviewDiffRequest(linesBounds, oldContent, newContent, node -> myTree.selectNode(node));
     myDiffRequest.putUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER, getDiffComputer(diffRanges));

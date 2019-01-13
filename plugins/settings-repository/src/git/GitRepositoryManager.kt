@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.application.ApplicationManager
@@ -73,7 +73,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     }
   }
 
-  override fun getUpstream(): String? = repository.upstream
+  override fun getUpstream() = repository.upstream
 
   override fun setUpstream(url: String?, branch: String?) {
     repository.setUpstream(url, branch ?: Constants.MASTER)
@@ -89,7 +89,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     }
   }
 
-  override fun hasUpstream(): Boolean = getUpstream() != null
+  override fun hasUpstream() = getUpstream() != null
 
   override fun addToIndex(file: Path, path: String, content: ByteArray, size: Int) {
     repository.edit(AddLoadedFile(path, content, size, file.lastModified().toMillis()))
@@ -99,7 +99,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     repository.deletePath(path, isFile, false)
   }
 
-  override fun commit(indicator: ProgressIndicator?, syncType: SyncType?, fixStateIfCannotCommit: Boolean): Boolean {
+  override suspend fun commit(indicator: ProgressIndicator?, syncType: SyncType?, fixStateIfCannotCommit: Boolean): Boolean {
     lock.write {
       try {
         // will be reset if OVERWRITE_LOCAL, so, we should not fix state in this case
@@ -135,7 +135,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     }
   }
 
-  override fun getAheadCommitsCount(): Int = repository.getAheadCommitsCount()
+  override fun getAheadCommitsCount() = repository.getAheadCommitsCount()
 
   override fun push(indicator: ProgressIndicator?) {
     LOG.debug("Push")
@@ -193,7 +193,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
       override var definitelySkipPush = false
 
       // KT-8632
-      override fun merge(): UpdateResult? = lock.write {
+      override suspend fun merge(): UpdateResult? = lock.write {
         val committed = commit(pullTask.indicator)
         if (refToMerge == null) {
           definitelySkipPush = !committed && getAheadCommitsCount() == 0
@@ -204,13 +204,13 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     }
   }
 
-  override fun pull(indicator: ProgressIndicator?): UpdateResult? = Pull(this, indicator).pull()
+  override suspend fun pull(indicator: ProgressIndicator?) = Pull(this, indicator).pull()
 
-  override fun resetToTheirs(indicator: ProgressIndicator): UpdateResult = Reset(this, indicator).reset(true)
+  override suspend fun resetToTheirs(indicator: ProgressIndicator) = Reset(this, indicator).reset(true)
 
-  override fun resetToMy(indicator: ProgressIndicator, localRepositoryInitializer: (() -> Unit)?): UpdateResult = Reset(this, indicator).reset(false, localRepositoryInitializer)
+  override suspend fun resetToMy(indicator: ProgressIndicator, localRepositoryInitializer: (() -> Unit)?) = Reset(this, indicator).reset(false, localRepositoryInitializer)
 
-  override fun canCommit(): Boolean = repository.repositoryState.canCommit()
+  override fun canCommit() = repository.repositoryState.canCommit()
 
   fun renameDirectory(pairs: Map<String, String?>, commitMessage: String): Boolean {
     var addCommand: AddCommand? = null

@@ -220,7 +220,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     @Override
     public ThreeState fromString(@NotNull String value) {
       if (StringUtil.isEmpty(value)) return ThreeState.UNSURE;
-      return ThreeState.fromBoolean(Boolean.getBoolean(value));
+      return ThreeState.fromBoolean(Boolean.valueOf(value));
     }
 
     @Nullable

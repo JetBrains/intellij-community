@@ -237,6 +237,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         .forEach(name -> {knownNames.add(name); addPropertyVariant(name, schemaProperties.get(name), hasValue, insertComma);});
     }
 
+    // some schemas provide empty array / empty object in enum values...
+    private static final Set<String> filtered = ContainerUtil.set("[]", "{}", "[ ]", "{ }");
+
     private void suggestValues(JsonSchemaObject schema, boolean isSurelyValue) {
       suggestValuesForSchemaVariants(schema.getAnyOf(), isSurelyValue);
       suggestValuesForSchemaVariants(schema.getOneOf(), isSurelyValue);
@@ -245,7 +248,10 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (schema.getEnum() != null) {
         for (Object o : schema.getEnum()) {
           if (myInsideStringLiteral && !(o instanceof String)) continue;
-          addValueVariant(o.toString(), null);
+          String variant = o.toString();
+          if (!filtered.contains(variant)) {
+            addValueVariant(variant, null);
+          }
         }
       }
       else if (isSurelyValue) {

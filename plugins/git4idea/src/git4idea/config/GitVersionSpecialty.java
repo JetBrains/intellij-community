@@ -241,6 +241,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  ENV_GIT_OPTIONAL_LOCKS_ALLOWED {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 15, 0, 0));
+    }
+  },
+
   CACHEINFO_SUPPORTS_SINGLE_PARAMETER_FORM {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {

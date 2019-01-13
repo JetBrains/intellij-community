@@ -11,10 +11,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlFile;
@@ -30,27 +28,21 @@ import org.jetbrains.annotations.NotNull;
  */
 public class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
   private static final ParameterizedCachedValueImpl<TIntObjectHashMap<String>, PsiFile> ESCAPES = new ParameterizedCachedValueImpl<TIntObjectHashMap<String>, PsiFile>(
-    new ParameterizedCachedValueProvider<TIntObjectHashMap<String>, PsiFile>() {
-      @Override
-      public CachedValueProvider.Result<TIntObjectHashMap<String>> compute(PsiFile param) {
-        final XmlFile file = XmlUtil.findXmlFile(param, Html5SchemaProvider.getCharsDtdLocation());
-        assert file != null;
-        final TIntObjectHashMap<String> result = new TIntObjectHashMap<>();
-        XmlUtil.processXmlElements(file, new PsiElementProcessor() {
-          @Override
-          public boolean execute(@NotNull PsiElement element) {
-            if (element instanceof XmlEntityDecl) {
-              final String value = ((XmlEntityDecl)element).getValueElement().getValue();
-              final int key = Integer.parseInt(value.substring(2, value.length() - 1));
-              if (!result.containsKey(key)) {
-                result.put(key, ((XmlEntityDecl)element).getName());
-              }
-            }
-            return true;
+    param -> {
+      final XmlFile file = XmlUtil.findXmlFile(param, Html5SchemaProvider.getCharsDtdLocation());
+      assert file != null;
+      final TIntObjectHashMap<String> result = new TIntObjectHashMap<>();
+      XmlUtil.processXmlElements(file, element -> {
+        if (element instanceof XmlEntityDecl) {
+          final String value = ((XmlEntityDecl)element).getValueElement().getValue();
+          final int key = Integer.parseInt(value.substring(2, value.length() - 1));
+          if (!result.containsKey(key)) {
+            result.put(key, ((XmlEntityDecl)element).getName());
           }
-        }, true);
-        return new CachedValueProvider.Result<>(result, ModificationTracker.NEVER_CHANGED);
-      }
+        }
+        return true;
+      }, true);
+      return new CachedValueProvider.Result<>(result, ModificationTracker.NEVER_CHANGED);
     }) {
     @Override
     public boolean isFromMyProject(Project project) {

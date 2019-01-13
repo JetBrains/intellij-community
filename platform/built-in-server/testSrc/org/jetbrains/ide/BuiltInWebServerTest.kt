@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.google.common.net.UrlEscapers
@@ -16,6 +17,7 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import com.intellij.util.io.writeChild
 import io.netty.handler.codec.http.HttpResponseStatus
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
@@ -79,7 +81,7 @@ internal class HeavyBuiltInWebServerTest {
   val tempDirManager = TemporaryDirectory()
 
   @Test
-  fun `path outside of project`() {
+  fun `path outside of project`() = runBlocking {
     val projectDir = tempDirManager.newPath().resolve("foo/bar")
     val projectDirPath = projectDir.systemIndependentPath
     createHeavyProject("$projectDirPath/test.ipr").use { project ->
@@ -95,7 +97,7 @@ internal class HeavyBuiltInWebServerTest {
   }
 
   @Test
-  fun `file in hidden folder`() {
+  fun `file in hidden folder`() = runBlocking {
     val projectDir = tempDirManager.newPath().resolve("foo/bar")
     val projectDirPath = projectDir.systemIndependentPath
     createHeavyProject("$projectDirPath/test.ipr").use { project ->

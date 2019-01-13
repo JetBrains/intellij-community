@@ -2,9 +2,11 @@
 package com.jetbrains.python.inspections.stdlib
 
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.stdlib.DUNDER_POST_INIT
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
+import com.jetbrains.python.codeInsight.stdlib.parseStdDataclassParameters
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyReferenceExpression
@@ -32,5 +34,9 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
     return qualifier != null &&
            expression.referencedName in NAMEDTUPLE_SPECIAL_ATTRIBUTES &&
            PyNamedTupleTypeProvider.isNamedTuple(context.getType(qualifier), context)
+  }
+
+  override fun ignoreMethodParameters(function: PyFunction, context: TypeEvalContext): Boolean {
+    return function.name == DUNDER_POST_INIT && function.containingClass?.let { parseStdDataclassParameters(it, context) != null } == true
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,29 @@ package org.jetbrains.idea.devkit.navigation;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocator;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
 public class ExtensionDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedClassLineMarkerProviderBase {
+
+  @Override
+  public String getName() {
+    return "Declaration";
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon() {
+    return DevkitIcons.Gutter.Plugin;
+  }
+
   @Override
   protected void process(@NotNull PsiElement identifier,
                          @NotNull PsiClass psiClass,

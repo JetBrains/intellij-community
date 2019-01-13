@@ -408,6 +408,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (exprType instanceof PsiDisjunctionType) {
           exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
         }
+        if (!PsiTypesUtil.allTypeParametersResolved(myTargetMethod, exprType)) return false;
         JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
         String name = suggestUniqueParameterName(codeStyleManager, expression, exprType, existingNames);
         final ParameterInfoImpl newParameterInfo = new ParameterInfoImpl(-1, name, exprType, expression.getText().replace('\n', ' '));

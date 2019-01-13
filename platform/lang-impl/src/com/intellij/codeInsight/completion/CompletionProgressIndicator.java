@@ -491,12 +491,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     Disposer.dispose(myQueue);
     LookupManager.getInstance(getProject()).removePropertyChangeListener(myLookupManagerListener);
 
-    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
-    LOG.assertTrue(currentCompletion == this, currentCompletion + "!=" + this);
-
     CompletionServiceImpl
       .assertPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.Synchronous.class,
                    CompletionPhase.CommittingDocuments.class);
+
+    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
+    LOG.assertTrue(currentCompletion == this, currentCompletion + "!=" + this);
+
     CompletionPhase oldPhase = CompletionServiceImpl.getCompletionPhase();
     if (oldPhase instanceof CompletionPhase.CommittingDocuments) {
       LOG.assertTrue(((CompletionPhase.CommittingDocuments)oldPhase).isRestartingCompletion(), oldPhase);

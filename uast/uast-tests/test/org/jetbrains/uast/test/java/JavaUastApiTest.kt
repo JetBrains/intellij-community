@@ -75,6 +75,36 @@ class JavaUastApiTest : AbstractJavaUastTest() {
     }
   }
 
+
+  @Test
+  fun testCallExpressionAlternatives() {
+    doTest("Simple/CallExpression.java") { name, file ->
+      val index = file.psi.text.indexOf("format")
+      val callExpression = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), PsiCallExpression::class.java)!!
+
+      val javaUastLanguagePlugin = UastLanguagePlugin.byLanguage(callExpression.language)!!
+
+      javaUastLanguagePlugin.convertToAlternatives(callExpression, arrayOf(UCallExpression::class.java)).let {
+        assertEquals("format(\"q\")", it.joinToString(transform = UExpression::asRenderString))
+      }
+
+      javaUastLanguagePlugin.convertToAlternatives<UExpression>(callExpression, arrayOf(UQualifiedReferenceExpression::class.java,
+                                                                                        UCallExpression::class.java)).let {
+        assertEquals("String.format(\"q\"), format(\"q\")", it.joinToString(transform = UExpression::asRenderString))
+      }
+
+      javaUastLanguagePlugin.convertToAlternatives<UExpression>(callExpression, arrayOf(UCallExpression::class.java,
+                                                                                        UQualifiedReferenceExpression::class.java)).let {
+        assertEquals("format(\"q\"), String.format(\"q\")", it.joinToString(transform = UExpression::asRenderString))
+      }
+
+      javaUastLanguagePlugin.convertToAlternatives(callExpression, arrayOf(UExpression::class.java)).let {
+        assertEquals("String.format(\"q\"), format(\"q\")", it.joinToString(transform = UExpression::asRenderString))
+      }
+
+    }
+  }
+
   @Test
   fun testCallExpressionArguments() {
     doTest("Simple/CallExpression.java") { name, file ->

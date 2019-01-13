@@ -336,8 +336,10 @@ public class BuildManager implements Disposable {
 
     ShutDownTracker.getInstance().registerShutdownTask(this::stopListening);
 
-    ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> runCommand(myGCTask), 3, 180, TimeUnit.MINUTES);
-    Disposer.register(this, () -> future.cancel(false));
+    if (!IS_UNIT_TEST_MODE) {
+      ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> runCommand(myGCTask), 3, 180, TimeUnit.MINUTES);
+      Disposer.register(this, () -> future.cancel(false));
+    }
   }
 
   @Nullable
@@ -1958,6 +1960,7 @@ public class BuildManager implements Disposable {
     @Override
     public void cancel(RequestFuture<T> future) {
       myMessageDispatcher.cancelSession(future.getRequestID());
+      notifySessionTerminationIfNeeded(future.getRequestID(), null);
     }
   }
 }

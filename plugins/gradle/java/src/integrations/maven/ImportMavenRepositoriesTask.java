@@ -211,7 +211,7 @@ class ImportMavenRepositoriesTask {
 
     try {
       if (expression instanceof PsiLiteral) {
-        URI uri = new URI(String.valueOf(PsiLiteral.class.cast(expression).getValue()));
+        URI uri = new URI(String.valueOf(((PsiLiteral)expression).getValue()));
         if (uri.getScheme() != null && StringUtil.startsWith(uri.getScheme(), "http")) return uri;
       }
     }

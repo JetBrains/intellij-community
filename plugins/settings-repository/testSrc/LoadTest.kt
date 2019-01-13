@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.configurationStore.TestScheme
@@ -8,6 +8,7 @@ import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.configurationStore.serialize
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.toByteArray
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Repository
 import org.jetbrains.settingsRepository.ReadonlySource
@@ -28,7 +29,9 @@ class LoadTest : IcsTestCase() {
   }
 
   @Suppress("UNCHECKED_CAST")
-  private fun createSchemeManager(dirPath: String) = icsManager.schemeManagerFactory.value.create(dirPath, TestSchemesProcessor(), streamProvider = provider) as SchemeManagerImpl<TestScheme, TestScheme>
+  private fun createSchemeManager(dirPath: String): SchemeManagerImpl<TestScheme, TestScheme> {
+    return icsManager.schemeManagerFactory.value.create(dirPath, TestSchemesProcessor(), streamProvider = provider) as SchemeManagerImpl<TestScheme, TestScheme>
+  }
 
   @Test fun `load scheme`() {
     val localScheme = TestScheme("local")
@@ -73,7 +76,8 @@ class LoadTest : IcsTestCase() {
     assertThat(schemeManager.allSchemes).containsOnly(localScheme)
   }
 
-  @Test fun `load scheme from repo and read-only repo`() {
+  @Test
+  fun `load scheme from repo and read-only repo`() = runBlocking {
     val localScheme = TestScheme("local")
 
     provider.write("$dirName/local.xml", localScheme.serialize()!!.toByteArray())
@@ -82,7 +86,7 @@ class LoadTest : IcsTestCase() {
     val remoteRepository = tempDirManager.createRepository()
     remoteRepository
       .add("$dirName/Mac OS X from RubyMine.xml", remoteScheme.serialize()!!.toByteArray())
-      .commit("")
+      .commit("add")
 
     remoteRepository.useAsReadOnlySource {
       val schemeManager = createSchemeManager(dirName)
@@ -93,7 +97,7 @@ class LoadTest : IcsTestCase() {
 
       remoteRepository
         .delete("$dirName/Mac OS X from RubyMine.xml")
-        .commit("")
+        .commit("delete")
 
       icsManager.sync(SyncType.MERGE)
       assertThat(schemeManager.allSchemes).containsOnly(localScheme)

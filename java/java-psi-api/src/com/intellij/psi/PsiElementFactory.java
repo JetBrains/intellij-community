@@ -411,7 +411,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param type        the type of the variable to create.
    * @param initializer the initializer for the variable.
    * @param context     the context for dummy holder
-   * @return the variable instance.
+   * @return a newly created declaration statement which contains a variable.
    * @throws IncorrectOperationException if {@code name} is not a valid identifier or
    *                                     {@code type} is not a valid type.
    */
@@ -419,6 +419,21 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   PsiDeclarationStatement createVariableDeclarationStatement(@NonNls @NotNull String name, @NotNull PsiType type,
                                                              @Nullable PsiExpression initializer, @Nullable PsiElement context)
     throws IncorrectOperationException;
+
+  /**
+   * Creates a resource variable (which can be inserted into the resource list of try-with-resources statement)
+   * with the specified name, type and initializer
+   *
+   * @param name        the name of the variable to create.
+   * @param type        the type of the variable to create.
+   * @param initializer the initializer for the variable.
+   * @param context     the context for dummy holder
+   * @return the variable instance.
+   */
+  PsiResourceVariable createResourceVariable(@NonNls @NotNull String name,
+                                             @NotNull PsiType type,
+                                             @Nullable PsiExpression initializer,
+                                             @Nullable PsiElement context);
 
   /**
    * Creates a PSI element for the "&#64;param" JavaDoc tag.

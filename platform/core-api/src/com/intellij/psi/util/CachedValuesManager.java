@@ -99,6 +99,8 @@ public abstract class CachedValuesManager {
 
   /**
    * Utility method storing created cached values in a {@link UserDataHolder}.
+   * The passed cached value provider may only depend on the passed user data holder and longer-living system state (e.g. project/application components/services),
+   * see {@link CachedValue} documentation for more details.
    *
    * @param dataHolder holder to store the cached value, e.g. a PsiElement.
    * @param key key to store the cached value.
@@ -113,6 +115,8 @@ public abstract class CachedValuesManager {
 
   /**
    * Create a cached value with the given provider and non-tracked return value, store it in the first argument's user data. If it's already stored, reuse it.
+   * The passed cached value provider may only depend on the passed user data holder and longer-living system state (e.g. project/application components/services),
+   * see {@link CachedValue} documentation for more details.
    * @return The cached value
    */
   public <T> T getCachedValue(@NotNull UserDataHolder dataHolder, @NotNull CachedValueProvider<T> provider) {
@@ -121,6 +125,8 @@ public abstract class CachedValuesManager {
 
   /**
    * Create a cached value with the given provider and non-tracked return value, store it in PSI element's user data. If it's already stored, reuse it.
+   * The passed cached value provider may only depend on the passed PSI element and project/application components/services,
+   * see {@link CachedValue} documentation for more details.
    * @return The cached value
    */
   public static <T> T getCachedValue(@NotNull final PsiElement psi, @NotNull final CachedValueProvider<T> provider) {
@@ -129,6 +135,8 @@ public abstract class CachedValuesManager {
 
   /**
    * Create a cached value with the given provider and non-tracked return value, store it in PSI element's user data. If it's already stored, reuse it.
+   * The passed cached value provider may only depend on the passed PSI element and project/application components/services,
+   * see {@link CachedValue} documentation for more details.
    * @return The cached value
    */
   public static <T> T getCachedValue(@NotNull final PsiElement psi, @NotNull Key<CachedValue<T>> key, @NotNull final CachedValueProvider<T> provider) {

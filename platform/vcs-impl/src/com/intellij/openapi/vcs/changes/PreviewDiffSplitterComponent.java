@@ -36,7 +36,8 @@ public class PreviewDiffSplitterComponent extends JBSplitter {
 
   private void updateVisibility() {
     setSecondComponent(myDetailsOn ? myProcessor.getComponent() : null);
-    myFirstComponent.setBorder(myDetailsOn ? IdeBorderFactory.createBorder(SideBorder.RIGHT) : null);
+    myFirstComponent.setBorder(myDetailsOn ? IdeBorderFactory.createBorder(SideBorder.RIGHT|SideBorder.LEFT) :
+                                             IdeBorderFactory.createBorder(SideBorder.LEFT));
     JComponent secondComponent = getSecondComponent();
     if (secondComponent != null) {
       secondComponent.setMinimumSize(emptySize());

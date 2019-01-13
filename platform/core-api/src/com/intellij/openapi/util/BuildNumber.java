@@ -102,6 +102,19 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return builder.toString();
   }
 
+  /**
+   * Attempts to parse build number from the specified string.
+   * Returns {@code null} if the string is not a valid build number.
+   */
+  @Nullable
+  public static BuildNumber fromStringOrNull(@NotNull String version) {
+    try {
+      return fromString(version);
+    } catch (RuntimeException ignored) {
+      return null;
+    }
+  }
+
   public static BuildNumber fromString(String version) {
     return fromString(version, null, null);
   }

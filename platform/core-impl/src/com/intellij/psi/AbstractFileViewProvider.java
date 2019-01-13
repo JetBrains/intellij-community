@@ -330,7 +330,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   @Override
   public void rootChanged(@NotNull PsiFile psiFile) {
-    if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded()) {
+    if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded() && psiFile.isValid()) {
       setContent(new PsiFileContent((PsiFileImpl)psiFile, LocalTimeCounter.currentTime()));
     }
   }

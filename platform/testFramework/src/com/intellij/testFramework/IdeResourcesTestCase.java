@@ -32,7 +32,7 @@ import java.util.Set;
  *
  * @author gregsh
  */
-public abstract class IdeResourcesTestCase extends PlatformTestCase {
+public abstract class IdeResourcesTestCase extends LightPlatformTestCase {
 
   public void testFeatureTipsRegistered() {
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();

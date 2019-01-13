@@ -57,6 +57,8 @@ public class IdeaMenuUI extends BasicMenuUI{
     if (integer != null){
       myMaxGutterIconWidth = integer.intValue();
     }
+
+    selectionBackground = UIUtil.getListSelectionBackground(true);
   }
 
   @Override

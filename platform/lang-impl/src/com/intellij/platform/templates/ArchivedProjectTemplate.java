@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.facet.frameworks.beans.Artifact;
@@ -98,7 +98,7 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     return null;
   }
 
-  public void handleUnzippedDirectories(File dir, List<? super File> filesToRefresh) throws IOException {
+  public void handleUnzippedDirectories(@NotNull File dir, @NotNull List<? super File> filesToRefresh) throws IOException {
     filesToRefresh.add(dir);
   }
 

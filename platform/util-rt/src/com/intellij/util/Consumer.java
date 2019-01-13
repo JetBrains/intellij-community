@@ -15,6 +15,9 @@
  */
 package com.intellij.util;
 
+/**
+ * Please use {@link java.util.function.Consumer} instead
+ */
 public interface Consumer<T> {
   Consumer EMPTY_CONSUMER = new Consumer() {
     public void consume(Object t) { }

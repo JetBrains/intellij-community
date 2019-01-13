@@ -29,7 +29,7 @@ class EmptyMapLiteralType(private val literal: GrListOrMap) : GrMapType(literal)
   override fun getStringEntries(): LinkedHashMap<String, PsiType> = LinkedHashMap()
 
 
-  val resolveResult by lazyPub {
+  val resolveResult: DiamondResolveResult? by lazyPub {
     resolve()?.let {
       DiamondResolveResult(it, literal, ResolveState.initial())
     }

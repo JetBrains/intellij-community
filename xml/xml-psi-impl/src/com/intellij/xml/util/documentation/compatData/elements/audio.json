@@ -407,10 +407,12 @@
           "__compat": {
             "support": {
               "chrome": {
-                "version_added": "3"
+                "version_added": "3",
+                "notes": "Defaults to <code>metadata</code> in Chrome 64."
               },
               "chrome_android": {
-                "version_added": "18"
+                "version_added": "18",
+                "notes": "Defaults to <code>metadata</code> in Chrome 64."
               },
               "edge": {
                 "version_added": true
@@ -436,7 +438,8 @@
               },
               "opera": [
                 {
-                  "version_added": "15"
+                  "version_added": "15",
+                  "notes": "Defaults to <code>metadata</code> in Opera 51."
                 },
                 {
                   "alternative_name": "autobuffer",
@@ -446,7 +449,8 @@
               ],
               "opera_android": [
                 {
-                  "version_added": "15"
+                  "version_added": "15",
+                  "notes": "Defaults to <code>metadata</code> in Opera 51."
                 },
                 {
                   "alternative_name": "autobuffer",
@@ -464,7 +468,8 @@
                 "version_added": true
               },
               "webview_android": {
-                "version_added": "3"
+                "version_added": "3",
+                "notes": "Defaults to <code>metadata</code> in Chrome 64."
               }
             },
             "status": {

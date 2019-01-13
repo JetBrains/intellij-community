@@ -143,7 +143,8 @@ public class NewExprent extends Exprent {
     if (anonymous) {
       ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
 
-      if (!enumConst) {
+      // IDEA-204310 - avoid backtracking later on for lambdas (causes spurious imports)
+      if (!enumConst && (!lambda || DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS))) {
         String enclosing = null;
 
         if (!lambda && constructor != null) {

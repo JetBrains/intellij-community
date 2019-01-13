@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
+    <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.xml" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
@@ -32,5 +33,6 @@
     <orderEntry type="library" name="netty-handler" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
+    <orderEntry type="library" name="javax.annotation-api" level="project" />
   </component>
 </module>

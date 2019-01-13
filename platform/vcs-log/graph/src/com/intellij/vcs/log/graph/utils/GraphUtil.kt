@@ -5,6 +5,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import gnu.trove.TIntHashSet
+import kotlin.math.max
 
 /**
  * Get nodes reachable from the specified by down edges of the graph.
@@ -76,4 +78,42 @@ fun LiteLinearGraph.getCorrespondingParent(startNode: Int, endNode: Int, visited
   while (bfsWalks.isNotEmpty())
 
   return candidates[0]
+}
+
+/**
+ * Return a set of nodes that are reachable from the first node, but not from the second.
+ */
+fun LinearGraph.subgraphDifference(node1: Int, node2: Int): TIntHashSet {
+  val liteLinearGraph = LinearGraphUtils.asLiteLinearGraph(this)
+
+  val visited2 = BitSetFlags(nodesCount())
+  val bfsWalk2 = BfsWalk(node2, liteLinearGraph, visited2)
+  val visited1 = object : TIntHashSetFlags(nodesCount()) {
+    override fun get(index: Int): Boolean {
+      return super.get(index) || visited2[index] || bfsWalk2.currentNodes().contains(index)
+    }
+  }
+  val bfsWalk1 = BfsWalk(node1, liteLinearGraph, visited1)
+
+  var max1 = bfsWalk1.currentNodes().maxOrDefault()
+  var min2 = bfsWalk2.currentNodes().minOrDefault()
+  while (!bfsWalk1.isFinished()) {
+    if (max1 < min2) {
+      max1 = max(max1, bfsWalk1.step().maxOrDefault())
+    }
+    else {
+      bfsWalk2.step()
+      min2 = bfsWalk2.currentNodes().minOrDefault()
+    }
+  }
+
+  return visited1.data
+}
+
+private fun Iterable<Int>.minOrDefault(): Int {
+  return min() ?: Int.MAX_VALUE
+}
+
+private fun Iterable<Int>.maxOrDefault(): Int {
+  return max() ?: Int.MIN_VALUE
 }

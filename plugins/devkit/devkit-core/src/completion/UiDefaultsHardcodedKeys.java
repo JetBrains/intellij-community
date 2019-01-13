@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.completion;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.idea.devkit.themes.ThemeJsonCompletionContributor;
 
 import java.awt.*;
 import java.util.Set;
@@ -968,6 +969,7 @@ public final class UiDefaultsHardcodedKeys {
     "ToolTip.foreground",
     "ToolTip.foregroundInactive",
     "ToolTip.hideAccelerator",
+    "ToolTip.Actions.grayForeground",
     "ToolTipManager.enableToolTipMode",
     "ToolTipUI",
     "ToolWindow.Header.background",
@@ -1473,7 +1475,22 @@ public final class UiDefaultsHardcodedKeys {
     "WelcomeScreen.groupIconBorderColor",
     "WelcomeScreen.headerBackground",
     "WelcomeScreen.headerForeground",
-    "WelcomeScreen.separatorColor"
+    "WelcomeScreen.separatorColor",
+    "ToggleButton.borderColor",
+    "ToggleButton.buttonColor",
+    "ToggleButton.on.background",
+    "ToggleButton.on.foreground",
+    "ToggleButton.off.background",
+    "ToggleButton.off.foreground",
+    "Notification.linkForeground",
+    "HeaderColor.active",
+    "ToolTip.Actions.background",
+    "SpeedSearch.borderColor",
+    "SpeedSearch.foreground",
+    "SpeedSearch.background",
+    "SpeedSearch.errorForeground",
+    "DebuggerTabs.active.background",
+    "ToolTip.Actions.infoForeground"
   );
 
   public static final Set<String> ALL_KEYS = ContainerUtil.unmodifiableOrEmptySet(ContainerUtil.union(UI_DEFAULTS_KEYS, NAMED_COLORS));

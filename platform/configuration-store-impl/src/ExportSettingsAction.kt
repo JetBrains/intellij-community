@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.AbstractBundle
@@ -18,7 +18,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ServiceManagerImpl
-import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -176,7 +175,7 @@ fun getExportableComponentsMap(isOnlyExisting: Boolean,
   val fileToContent = THashMap<Path, String>()
 
   ServiceManagerImpl.processAllImplementationClasses(app) { aClass, pluginDescriptor ->
-    val stateAnnotation = StoreUtil.getStateSpec(aClass)
+    val stateAnnotation = getStateSpec(aClass)
     @Suppress("DEPRECATION")
     if (stateAnnotation == null || stateAnnotation.name.isEmpty() || ExportableComponent::class.java.isAssignableFrom(aClass)) {
       return@processAllImplementationClasses true

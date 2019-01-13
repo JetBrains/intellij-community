@@ -106,7 +106,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     if (customizer.buildZipArchive) {
-      buildWinZip(jreDirectoryPaths.findAll {it != null}, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)
+      buildWinZip(jreDirectoryPaths.findAll {it != null}, ".win", winDistPath)
     }
 
     if (arch != null && customizer.buildZipWithBundledOracleJre &&

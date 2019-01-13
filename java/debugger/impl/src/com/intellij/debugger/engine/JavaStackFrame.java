@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -305,7 +306,10 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
         Pair<Set<String>, Set<TextWithImports>> usedVars = EMPTY_USED_VARS;
         if (sourcePosition != null) {
-          usedVars = ReadAction.compute(() -> findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition));
+          usedVars = ReadAction.compute(
+            () -> DumbService.isDumb(debugProcess.getProject())
+                  ? EMPTY_USED_VARS
+                  : findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition));
         }
           // add locals
         if (myAutoWatchMode) {

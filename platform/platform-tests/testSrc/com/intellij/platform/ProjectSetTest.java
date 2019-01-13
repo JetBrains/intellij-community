@@ -52,7 +52,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
   }
 
   public void testProjectSetReader() throws IOException {
-    final Ref<List<Pair<String, String>>> ref = Ref.create();
+    final Ref<List<? extends Pair<String, String>>> ref = Ref.create();
     PlatformTestUtil.registerExtension(ProjectSetProcessor.EXTENSION_POINT_NAME, new ProjectSetProcessor() {
       @Override
       public String getId() {
@@ -60,7 +60,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
       }
 
       @Override
-      public void processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext) {
+      public void processEntries(@NotNull List<? extends Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext) {
         ref.set(entries);
       }
     }, getTestRootDisposable());
@@ -69,7 +69,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
     context.directory = getSourceRoot();
     readDescriptor(new File(getTestDataPath() + "descriptor.json"), context);
 
-    List<Pair<String, String>> entries = ref.get();
+    List<? extends Pair<String, String>> entries = ref.get();
     assertEquals(2, entries.size());
     assertEquals("git://foo.bar", entries.get(0).getSecond());
     assertEquals("{\"foo\":\"bar\"}", entries.get(1).getSecond());

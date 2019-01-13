@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -76,9 +76,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 /**
  * {@code GuiEditor} is a panel with border layout. It has palette at the north,
@@ -451,10 +449,10 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
     final ReadonlyStatusHandler.OperationStatus status;
     if (sourceFileToCheckOut != null) {
-      status = ReadonlyStatusHandler.getInstance(getProject()).ensureFilesWritable(myFile, sourceFileToCheckOut);
+      status = ReadonlyStatusHandler.getInstance(getProject()).ensureFilesWritable(Arrays.asList(myFile, sourceFileToCheckOut));
     }
     else {
-      status = ReadonlyStatusHandler.getInstance(getProject()).ensureFilesWritable(myFile);
+      status = ReadonlyStatusHandler.getInstance(getProject()).ensureFilesWritable(Collections.singletonList(myFile));
     }
     return !status.hasReadonlyFiles();
   }

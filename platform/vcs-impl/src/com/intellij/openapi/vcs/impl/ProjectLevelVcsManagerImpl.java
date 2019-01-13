@@ -193,7 +193,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  public void iterateVfUnderVcsRoot(VirtualFile file, Processor<VirtualFile> processor) {
+  public void iterateVfUnderVcsRoot(VirtualFile file, Processor<? super VirtualFile> processor) {
     VcsRootIterator.iterateVfUnderVcsRoot(myProject, file, processor);
   }
 
@@ -555,13 +555,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  public void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator) {
+  public void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator) {
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator);
   }
 
   @Override
   public void iterateVcsRoot(VirtualFile root,
-                             Processor<FilePath> iterator,
+                             Processor<? super FilePath> iterator,
                              @Nullable VirtualFileFilter directoryFilter) {
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator, directoryFilter);
   }

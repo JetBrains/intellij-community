@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -32,44 +33,59 @@ public class NST {
   private static final boolean ourHeadless = GraphicsEnvironment.isHeadless();
 
   static {
-    final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false) && !ourHeadless;
-    if (
-      isSupportedOS()
-      && isRegistryKeyEnabled
-      && Utils.isTouchBarServerRunning()
-    ) {
-      try {
-        loadLibrary();
-      } catch (Throwable e) {
-        LOG.error("Failed to load nst library for touchbar: ", e);
-      }
+    try {
+      final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false) && !ourHeadless;
+      if (
+        isSupportedOS()
+        && isRegistryKeyEnabled
+        && Utils.isTouchBarServerRunning()
+      ) {
+        try {
+          loadLibrary();
+        } catch (Throwable e) {
+          LOG.error("Failed to load nst library for touchbar: ", e);
+        }
+
+        if (ourNSTLibrary != null) {
+          // small check that loaded library works
+          try {
+            final ID test = ourNSTLibrary.createTouchBar("test", (uid) -> { return ID.NIL; }, null);
+            if (test == null || test == ID.NIL) {
+              LOG.error("Failed to create native touchbar object, result is null");
+              ourNSTLibrary = null;
+            } else {
+              ourNSTLibrary.releaseTouchBar(test);
+              LOG.info("nst library works properly, successfully created and released native touchbar object");
+            }
+          } catch (Throwable e) {
+            LOG.error("nst library was loaded, but can't be used: ", e);
+            ourNSTLibrary = null;
+          }
+        } else {
+          LOG.error("nst library wasn't loaded");
+        }
+      } else if (!isSupportedOS())
+        LOG.info("OS doesn't support touchbar, skip nst loading");
+      else if (ourHeadless)
+        LOG.info("The graphics environment is headless, skip nst loading");
+      else if (!isRegistryKeyEnabled)
+        LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
+      else
+        LOG.info("touchbar-server isn't running, skip nst loading");
+
 
       if (ourNSTLibrary != null) {
-        // small check that loaded library works
-        try {
-          final ID test = ourNSTLibrary.createTouchBar("test", (uid) -> { return ID.NIL; }, null);
-          if (test == null || test == ID.NIL) {
-            LOG.error("Failed to create native touchbar object, result is null");
-            ourNSTLibrary = null;
-          } else {
-            ourNSTLibrary.releaseTouchBar(test);
-            LOG.info("nst library works properly, successfully created and released native touchbar object");
-          }
-        } catch (Throwable e) {
-          LOG.error("nst library was loaded, but can't be used: ", e);
+        final String appId = Utils.getAppId();
+        if (appId == null || appId.isEmpty()) {
+          LOG.debug("can't obtain application id from NSBundle");
+        } else if (NSDefaults.isShowFnKeysEnabled(appId)) {
+          LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
           ourNSTLibrary = null;
         }
-      } else {
-        LOG.error("nst library wasn't loaded");
       }
-    } else if (!isSupportedOS())
-      LOG.info("OS doesn't support touchbar, skip nst loading");
-    else if (ourHeadless)
-      LOG.info("The graphics environment is headless, skip nst loading");
-    else if (!isRegistryKeyEnabled)
-      LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
-    else
-      LOG.info("touchbar-server isn't running, skip nst loading");
+    } catch (Throwable e) {
+      LOG.error(e);
+    }
   }
 
   static NSTLibrary loadLibrary() {

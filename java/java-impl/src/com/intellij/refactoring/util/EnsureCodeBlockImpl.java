@@ -43,10 +43,20 @@ class EnsureCodeBlockImpl {
           (parent instanceof PsiForStatement &&
            PsiTreeUtil.isAncestor(((PsiForStatement)parent).getInitialization(), expression, true) &&
            hasNameCollision(((PsiForStatement)parent).getInitialization(), grandParent))) {
-        expression = replace(expression, parent, (old, copy) -> {
-          PsiBlockStatement blockStatement = (PsiBlockStatement)old.replace(factory.createStatementFromText("{}", old));
-          return blockStatement.getCodeBlock().add(copy);
-        });
+        boolean addBreak = parent instanceof PsiExpressionStatement && grandParent instanceof PsiSwitchLabeledRuleStatement && 
+                           ((PsiSwitchLabeledRuleStatement)grandParent).getEnclosingSwitchBlock() instanceof PsiSwitchExpression;
+        if (addBreak) {
+          expression = replace(expression, parent, (old, copy) -> {
+            PsiBlockStatement block = (PsiBlockStatement)old.replace(factory.createStatementFromText("{break a;}", old));
+            PsiExpression copyExpression = ((PsiBreakStatement)block.getCodeBlock().getStatements()[0]).getExpression();
+            return Objects.requireNonNull(copyExpression).replace(((PsiExpressionStatement)copy).getExpression());
+          });
+        } else {
+          expression = replace(expression, parent, (old, copy) -> {
+            PsiBlockStatement blockStatement = (PsiBlockStatement)old.replace(factory.createStatementFromText("{}", old));
+            return blockStatement.getCodeBlock().add(copy);
+          });
+        }
         parent = RefactoringUtil.getParentStatement(expression, false);
       }
     }
@@ -80,24 +90,6 @@ class EnsureCodeBlockImpl {
     }
     if (parent instanceof PsiReturnStatement && condition != null) {
       return replace(expression, parent, (oldParent, copy) -> splitReturn((PsiReturnStatement)oldParent, condition, operand));
-    }
-    if (parent instanceof PsiSwitchLabeledRuleStatement) {
-      PsiStatement body = ((PsiSwitchLabeledRuleStatement)parent).getBody();
-      boolean addBreak = ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock() instanceof PsiSwitchExpression;
-      if (body instanceof PsiExpressionStatement && addBreak) {
-        PsiExpression resultExpression = ((PsiExpressionStatement)body).getExpression();
-        return replace(expression, body, (old, copy) -> {
-          PsiBlockStatement block = (PsiBlockStatement)old.replace(factory.createStatementFromText("{break a;}", resultExpression));
-          PsiExpression copyExpression = ((PsiBreakStatement)block.getCodeBlock().getStatements()[0]).getExpression();
-          return Objects.requireNonNull(copyExpression).replace(((PsiExpressionStatement)copy).getExpression());
-        });
-      }
-      else if (body instanceof PsiThrowStatement || body != null && !addBreak) {
-        return replace(expression, body, (old, copy) -> {
-          PsiBlockStatement block = (PsiBlockStatement)old.replace(factory.createStatementFromText("{}", body));
-          return block.getCodeBlock().add(copy);
-        });
-      }
     }
     return expression;
   }

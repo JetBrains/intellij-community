@@ -238,8 +238,13 @@ public class HgStatusCommand {
 
   @NotNull
   public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable List<VirtualFile> files) {
+    return getFiles(repo, files != null ? ObjectsConvertor.vf2fp(files): null);
+  }
+
+  @NotNull
+  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable Collection<FilePath> paths) {
     Collection<VirtualFile> resultFiles = new HashSet<>();
-    Set<HgChange> change = executeInCurrentThread(repo, files != null ? ObjectsConvertor.vf2fp(files) : null);
+    Set<HgChange> change = executeInCurrentThread(repo, paths);
     for (HgChange hgChange : change) {
       resultFiles.add(hgChange.afterFile().toFilePath().getVirtualFile());
     }

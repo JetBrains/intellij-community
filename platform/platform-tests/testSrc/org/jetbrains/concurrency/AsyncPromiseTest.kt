@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency
 
 import com.intellij.concurrency.JobScheduler
@@ -178,6 +178,13 @@ class AsyncPromiseTest {
     }
       .isInstanceOf(AssertionError::class.java)
       .hasCause(error)
+  }
+
+  @Test
+  fun `do not swallow exceptions - do not log CancellationException`() {
+    val promise = AsyncPromise<String>()
+    promise.cancel()
+    assertThat(promise.state).isEqualTo(Promise.State.REJECTED)
   }
 
   // this case quite tested by other tests, but better to have special test

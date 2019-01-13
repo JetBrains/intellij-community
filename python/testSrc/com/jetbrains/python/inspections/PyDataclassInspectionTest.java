@@ -21,6 +21,21 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-28506
+  public void testFrozenInheritance() {
+    doTest();
+  }
+
+  // PY-28506, PY-31762
+  public void testMutatingFrozenInInheritance() {
+    doTest();
+  }
+
+  // PY-28506, PY-31762
+  public void testMutatingFrozenInMixedInheritance() {
+    doTest();
+  }
+
   // PY-27398
   public void testOrderAndNotEq() {
     doTest();
@@ -38,6 +53,16 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-26354
   public void testAttrsFieldsOrder() {
+    doTest();
+  }
+
+  // PY-28506, PY-31762
+  public void testFieldsOrderInInheritance() {
+    doTest();
+  }
+
+  // PY-28506, PY-31762
+  public void testFieldsOrderInMixedInheritance() {
     doTest();
   }
 
@@ -92,6 +117,26 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
                  "print(Test > Test)");
   }
 
+  // PY-28506
+  public void testComparisonInStdInheritance() {
+    doTest();
+  }
+
+  // PY-28506
+  public void testComparisonForManuallyOrderedInStdInheritance() {
+    doTest();
+  }
+
+  // PY-31762
+  public void testComparisonInAttrsInheritance() {
+    doTest();
+  }
+
+  // PY-31762
+  public void testComparisonForManuallyOrderedInAttrsInheritance() {
+    doTest();
+  }
+
   // PY-27398
   public void testHelpersArgument() {
     doTest();
@@ -102,9 +147,33 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-28506
+  public void testHelpersArgumentInStdInheritance() {
+    doTest();
+  }
+
+  // PY-31762
+  public void testHelpersArgumentInAttrsInheritance() {
+    doTest();
+  }
+
   // PY-27398
   public void testAccessToInitVar() {
     doTest();
+  }
+
+  // PY-28506, PY-31762
+  public void testAccessToInitVarInHierarchy() {
+    doTest();
+  }
+
+  // PY-33445
+  public void testDontConsiderUnresolvedFieldsAsInitOnly() {
+    doTestByText("class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "a = A()\n" +
+                 "b = a.b");
   }
 
   // PY-27398
@@ -129,6 +198,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-26354
   public void testWrongDunderAttrsPostInitSignature() {
+    doTest();
+  }
+
+  // PY-28506
+  public void testWrongDunderPostInitSignatureInStdHierarchy() {
     doTest();
   }
 

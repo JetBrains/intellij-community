@@ -10,6 +10,6 @@ class CBase implements I {
 
 class C extends CBase implements J {
     {
-        super.<ref>clone();
+        super.<caret>clone();
     }
 }

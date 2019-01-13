@@ -10,11 +10,13 @@ import org.junit.Test;
 import org.junit.rules.ExternalResource;
 
 import java.awt.*;
+import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
+import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 import static com.intellij.util.ui.TestScaleHelper.loadImage;
 import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
@@ -42,11 +44,29 @@ public class SvgIconSizeTest {
      * Test overridden size.
      */
     URL url = new File(getSvgIconPath("20x10")).toURI().toURL();
-    Image image = SVGLoader.load(url, url.openStream(), 25, 15);
+    ScaleContext ctx = ScaleContext.create(SYS_SCALE.of(2));
+    double pixScale = ctx.getScale(PIX_SCALE);
+    Image image = SVGLoader.load(url, url.openStream(), ctx, 25, 15);
     assertNotNull(image);
     image = ImageUtil.toBufferedImage(image);
-    assertEquals("wrong image width", 25, image.getWidth(null));
-    assertEquals("wrong image height", 15, image.getHeight(null));
+    assertEquals("wrong image width", pixScale * 25, (double)image.getWidth(null));
+    assertEquals("wrong image height", pixScale * 15, (double)image.getHeight(null));
+
+    /*
+     * Test SVGLoader.getDocumentSize for SVG starting with <svg.
+     */
+    url = new File(getSvgIconPath("20x10")).toURI().toURL();
+    Dimension2D size = SVGLoader.getDocumentSize(url, url.openStream(), 1);
+    assertEquals("wrong svg doc width", 20d, size.getWidth());
+    assertEquals("wrong svg doc height", 10d, size.getHeight());
+
+    /*
+     * Test SVGLoader.getDocumentSize for SVG starting with <?xml.
+     */
+    url = new File(getSvgIconPath("xml_20x10")).toURI().toURL();
+    size = SVGLoader.getDocumentSize(url, url.openStream(), 1);
+    assertEquals("wrong svg doc width", 20d, size.getWidth());
+    assertEquals("wrong svg doc height", 10d, size.getHeight());
   }
 
   private static void test(ScaleContext ctx) {

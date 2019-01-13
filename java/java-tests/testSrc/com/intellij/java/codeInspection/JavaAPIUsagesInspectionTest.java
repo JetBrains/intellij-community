@@ -69,7 +69,7 @@ public class JavaAPIUsagesInspectionTest extends LightCodeInsightFixtureTestCase
   /*
   //todo exclude inheritors of ConcurrentMap#putIfAbsent
   public void testCollectSinceApiUsages() {
-    final String version = "9";
+    final String version = "12";
     final LinkedHashSet<String> notDocumented = new LinkedHashSet<String>();
     final ContentIterator contentIterator = new ContentIterator() {
       @Override
@@ -107,19 +107,10 @@ public class JavaAPIUsagesInspectionTest extends LightCodeInsightFixtureTestCase
         return true;
       }
     };
-    final VirtualFile srcFile = JarFileSystem.getInstance().findFileByPath("c:/tools/jdk9/lib/src.zip!/");
+    final VirtualFile srcFile = JarFileSystem.getInstance().findFileByPath("c:/tools/jdk12/lib/src.zip!/");
     assert srcFile != null;
     VfsUtilCore.iterateChildrenRecursively(srcFile, VirtualFileFilter.ALL, contentIterator);
 
     notDocumented.forEach(System.out::println);
-  }
-
-  @Override
-  protected void setUpJdk() {
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    final Sdk sdk = JavaSdk.getInstance().createJdk("9.0", "c:/tools/jdk9/", false);
-    for (Module module : modules) {
-      ModuleRootModificationUtil.setModuleSdk(module, sdk);
-    }
   }*/
 }

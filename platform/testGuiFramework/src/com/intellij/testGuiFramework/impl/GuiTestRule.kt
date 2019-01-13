@@ -49,7 +49,10 @@ import org.jdom.xpath.XPath
 import org.junit.Assert
 import org.junit.Assume
 import org.junit.AssumptionViolatedException
-import org.junit.rules.*
+import org.junit.rules.ExternalResource
+import org.junit.rules.RuleChain
+import org.junit.rules.TestRule
+import org.junit.rules.Timeout
 import org.junit.runner.Description
 import org.junit.runners.model.MultipleFailureException
 import org.junit.runners.model.Statement
@@ -135,8 +138,13 @@ class GuiTestRule : TestRule {
       return object : Statement() {
         @Throws(Throwable::class)
         override fun evaluate() {
-          Assume.assumeTrue("IDE error list is empty", GuiTestUtilKt.fatalErrorsFromIde().isEmpty())
-          assumeOnlyWelcomeFrameShowing()
+          try {
+            Assume.assumeTrue("IDE error list is empty", GuiTestUtilKt.fatalErrorsFromIde().isEmpty())
+            assumeOnlyWelcomeFrameShowing()
+          } catch (e: Exception) {
+            ScreenshotOnFailure.takeScreenshot("$myTestName.welcomeFrameCheckFail")
+            throw e
+          }
           setUp()
           val errors = ArrayList<Throwable>()
           try {
@@ -174,28 +182,29 @@ class GuiTestRule : TestRule {
       LOG.info("tearDown: check opened modal dialogs...")
       errors.addAll(checkForModalDialogs())
       LOG.info("tearDown: tearDown project")
-      errors.addAll(thrownFromRunning(Runnable { this.closeIdeProject() }))
+      errors.addAll(thrownFromRunning(Runnable { this.tearDownProject() }))
       LOG.info("tearDown: waiting for welcome frame (return if necessary)...")
       errors.addAll(thrownFromRunning(Runnable { this.returnToTheFirstStepOfWelcomeFrame() }))
       LOG.info("tearDown: collecting fatal errors from IDE...")
       errors.addAll(GuiTestUtilKt.fatalErrorsFromIde(currentTestDateStart)) //do not add fatal errors from previous tests
       LOG.info("tearDown: double checking return to the first step on a welcome frame")
-      if (!isWelcomeFrameFirstStep()) {
+      if (!isWelcomeFrameFirstStep() || anyIdeFrame(Timeouts.seconds01) != null) {
+        LOG.warn("tearDown: IDE cannot return to welcome frame, need to restart IDE")
+        ScreenshotOnFailure.takeScreenshot("$myTestName.thrownFromTearDown")
         GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AFTER_TEST,
                                                     "IDE cannot return to the Welcome frame")
         )
         //set last project creation path to null; avoid opening project of the failed test
         RecentProjectsManager.getInstance().lastProjectCreationLocation = null
-        LOG.warn("tearDown: IDE cannot return to welcome frame, need to restart IDE")
       }
       return errors.toList()
     }
 
-    private fun closeIdeProject() {
+    private fun tearDownProject() {
       try {
         val ideFrameFixture = IdeFrameFixture.find(robot(), null, null, Timeouts.seconds02)
         if (ideFrameFixture.target().isShowing)
-          ideFrameFixture.closeProject()
+          ideFrameFixture.closeProjectAndWaitWelcomeFrame()
       }
       catch (e: ComponentLookupException) {
         // do nothing because ideFixture is already closed
@@ -203,28 +212,15 @@ class GuiTestRule : TestRule {
     }
 
     private fun returnToTheFirstStepOfWelcomeFrame() {
-      val welcomeFrameFixture = WelcomeFrameFixture.find(robot(), Timeouts.seconds10)
-
-      fun isFirstStep(): Boolean {
-        return try {
-          val actionLink = with(welcomeFrameFixture) {
-            robot().finder().find(this@with.target() as Container) { it is ActionLink && it.text.contains("New Project") }
-          }
-          actionLink.isShowing ?: false
-        }
-        catch (componentLookupException: ComponentLookupException) {
-          false
-        }
-      }
       for (i in 0..3) {
-        if (!isFirstStep()) GuiTestUtil.invokeActionViaShortcut(Key.ESCAPE.name)
+        if (!isWelcomeFrameFirstStep()) GuiTestUtil.invokeActionViaShortcut(Key.ESCAPE.name)
       }
     }
 
     //find first page with such actions like "Create New Project" without timeout
     private fun isWelcomeFrameFirstStep(timeout: org.fest.swing.timing.Timeout = Timeouts.seconds01): Boolean {
       val createNewProjectAction = GuiTestUtilKt.ignoreComponentLookupException {
-        WelcomeFrameFixture.find(robot(), timeout).apply { findActionLinkByActionId("WelcomeScreen.CreateNewProject") }
+        WelcomeFrameFixture.find(robot(), timeout).apply { robot().finder().find(this@apply.target() as Container) { it is ActionLink && it.text.contains("New Project") } }
       }
       return createNewProjectAction?.target()?.isShowing ?: false
     }
@@ -293,16 +289,21 @@ class GuiTestRule : TestRule {
       return null
     }
 
-
     private fun assumeOnlyWelcomeFrameShowing() {
       var attemptsToReturnToWelcomeFrame = 0
       try {
         //if IDE started with a previous project we need to close it firstly; let's give few attempts for it
-        while (!isWelcomeFrameFirstStep(Timeouts.seconds10) && attemptsToReturnToWelcomeFrame++ <= 3 ) {
-          anyIdeFrame()?.apply { invokeMainMenu("CloseProject") }
-          ignoreComponentLookupException { returnToTheFirstStepOfWelcomeFrame() }
+        while (!isWelcomeFrameFirstStep(Timeouts.seconds01) && attemptsToReturnToWelcomeFrame++ <= 3 ) {
+          val someIdeFrame = anyIdeFrame(Timeouts.seconds01)
+          if (someIdeFrame != null) {
+            LOG.warn("Opened IDE frame (${someIdeFrame.target().title}) detected. Let's close active project.")
+            someIdeFrame.closeProject()
+          } else {
+            LOG.warn("Trying to return to the first step of the welcome frame")
+            ignoreComponentLookupException { returnToTheFirstStepOfWelcomeFrame() }
+          }
         }
-        WelcomeFrameFixture.find(robot(), Timeouts.seconds30)
+        WelcomeFrameFixture.find(robot(), Timeouts.seconds05)
       }
       catch (e: WaitTimedOutError) {
         throw AssumptionViolatedException("didn't find welcome frame", e)

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -30,7 +30,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   private final Map<String, List<T>> myExplicitExtensions = new THashMap<>(); // guarded by lock
   private final ConcurrentMap<String, List<T>> myCache = ContainerUtil.newConcurrentMap();
 
-  @NonNls private final String lock;
+  @NonNls protected final String lock;
 
   private final String myEpName;
   private final SimpleModificationTracker myTracker = new SimpleModificationTracker();
@@ -90,8 +90,9 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     Extensions.getRootArea().addAvailabilityListener(epName, myExtensionPointAvailabilityListener);
   }
 
-  public KeyedExtensionCollector(@NonNls @NotNull String epName, @NotNull Disposable parentDisposable) {
+  public KeyedExtensionCollector(@NonNls @NotNull String epName, @Nullable Disposable parentDisposable) {
     this(epName);
+    if (parentDisposable == null) return;
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
@@ -137,7 +138,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   /**
-   * @see #findSingle
+   * @see #findSingle(Object)
    */
   @NotNull
   public List<T> forKey(@NotNull KeyT key) {
@@ -171,7 +172,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     }
   }
 
-  private List<T> buildExtensionsFromExtensionPoint(@Nullable List<T> result, @NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean) {
+  protected List<T> buildExtensionsFromExtensionPoint(@Nullable List<T> result, @NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean) {
     final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
     if (point != null) {
       final KeyedLazyInstance<T>[] beans = point.getExtensions();
@@ -197,25 +198,29 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   @NotNull
-  protected final List<T> buildExtensions(@NotNull Set<String> keys) {
+  protected List<T> buildExtensions(@NotNull Set<String> keys) {
     synchronized (lock) {
-      List<T> result = null;
-      for (Map.Entry<String, List<T>> entry : myExplicitExtensions.entrySet()) {
-        String key = entry.getKey();
-        if (keys.contains(key)) {
-          List<T> list = entry.getValue();
-          if (result == null) {
-            result = new ArrayList<>(list);
-          }
-          else {
-            result.addAll(list);
-          }
+      List<T> result = buildExtensionsFromExplicitRegistration(null, key -> keys.contains(key));
+      result = buildExtensionsFromExtensionPoint(result, bean -> keys.contains(bean.getKey()));
+      return ContainerUtil.notNullize(result);
+    }
+  }
+
+  @Nullable
+  protected List<T> buildExtensionsFromExplicitRegistration(@Nullable List<T> result, Condition<String> isMyBean) {
+    for (Map.Entry<String, List<T>> entry : myExplicitExtensions.entrySet()) {
+      String key = entry.getKey();
+      if (isMyBean.value(key)) {
+        List<T> list = entry.getValue();
+        if (result == null) {
+          result = new ArrayList<>(list);
+        }
+        else {
+          result.addAll(list);
         }
       }
-
-      result = buildExtensionsFromExtensionPoint(result, bean -> keys.contains(bean.getKey()));
-      return result == null ? Collections.emptyList() : result;
     }
+    return result;
   }
 
   @Nullable

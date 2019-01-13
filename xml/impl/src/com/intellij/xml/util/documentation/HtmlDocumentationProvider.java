@@ -1,28 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util.documentation;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
-import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -33,11 +21,15 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
 import java.util.List;
@@ -50,13 +42,19 @@ import static com.intellij.codeInsight.documentation.DocumentationManager.ORIGIN
  * @author maxim
  */
 public class HtmlDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider {
+  private static final ExtensionPointName<DocumentationProvider> SCRIPT_PROVIDER_EP_NAME = ExtensionPointName.create("com.intellij.html.scriptDocumentationProvider");
+
   private DocumentationProvider myStyleProvider = null;
   private final boolean myUseStyleProvider;
-  private static DocumentationProvider ourScriptProvider;
 
   @NonNls public static final String ELEMENT_ELEMENT_NAME = "element";
   @NonNls public static final String NBSP = ":&nbsp;";
   @NonNls public static final String BR = "<br>";
+
+  private static final SynchronizedClearableLazy<DocumentationProvider> ourScriptProvider = new SynchronizedClearableLazy<>(() -> {
+    //noinspection CodeBlock2Expr
+    return ContainerUtil.getFirstItem(SCRIPT_PROVIDER_EP_NAME.getExtensionList());
+  });
 
   public HtmlDocumentationProvider() {
     this(true);
@@ -101,10 +99,11 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
       if (url.contains("#attr-")) return null;
     }
 
-    String mdn = MdnDocumentationUtil.fetchExternalDocumentation(docUrls, () -> null);
-    if (mdn != null) {
+    String mdnDoc = MdnDocumentationUtil.fetchExternalDocumentation(docUrls, () -> null);
+    if (mdnDoc != null) {
       String name = descriptor != null ? descriptor.getName() : ReadAction.compute(() -> SymbolPresentationUtil.getSymbolPresentableText(element));
-      return generateJavaDoc(descriptor, name, originalElement, mdn);
+      Map mdnCompatData = ReadAction.compute(() -> getCompatData(descriptor, originalElement));
+      return MdnDocumentationUtil.buildDoc(name, mdnDoc, mdnCompatData);
     }
     return null;
   }
@@ -213,8 +212,11 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
       result = styleProvider.generateDoc(element, originalElement);
     }
 
-    if (result == null && ourScriptProvider !=null) {
-      result = ourScriptProvider.generateDoc(element, originalElement);
+    if (result == null) {
+      DocumentationProvider scriptProvider = ourScriptProvider.getValue();
+      if (scriptProvider != null) {
+        result = scriptProvider.generateDoc(element, originalElement);
+      }
     }
 
     if (result == null && element instanceof XmlAttributeValue) {
@@ -230,7 +232,9 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     if (descriptor != null) {
       String description = descriptor.getDescription();
       if (!description.endsWith(".")) description += ".";
-      return generateJavaDoc(descriptor, descriptor.getName(), originalElement, description);
+
+      Map mdnData = ReadAction.compute(() -> getCompatData(descriptor, originalElement));
+      return MdnDocumentationUtil.buildDoc(descriptor.getName(), description, mdnData);
     }
     if (element instanceof XmlEntityDecl) {
       final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
@@ -238,40 +242,6 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
       return new XmlDocumentationProvider().findDocRightAfterElement(element, entityDecl.getName());
     }
     return null;
-  }
-
-  private static String generateJavaDoc(EntityDescriptor descriptor,
-                                        String name,
-                                        PsiElement element,
-                                        String description) {
-    StringBuilder buf = new StringBuilder();
-
-    buf.append(DocumentationMarkup.DEFINITION_START).append(name).append(DocumentationMarkup.DEFINITION_END);
-    buf.append(DocumentationMarkup.CONTENT_START);
-    buf.append(StringUtil.capitalize(description));
-    buf.append(DocumentationMarkup.CONTENT_END);
-
-    Map data = ReadAction.compute(() -> getCompatData(descriptor, element));
-    String compatibilityData = MdnDocumentationUtil.getFormattedCompatibilityData(data);
-
-    boolean deprecated = MdnDocumentationUtil.isDeprecated(data);
-    if (deprecated || !compatibilityData.isEmpty()) {
-      buf.append(DocumentationMarkup.SECTIONS_START);
-    }
-    if (deprecated) {
-      buf.append(DocumentationMarkup.SECTION_HEADER_START).append("Deprecated");
-      buf.append(DocumentationMarkup.SECTION_END);
-    }
-    if (!compatibilityData.isEmpty()) {
-      buf.append(DocumentationMarkup.SECTION_HEADER_START).append("Supported by:");
-      buf.append(DocumentationMarkup.SECTION_SEPARATOR).append(compatibilityData);
-      buf.append(DocumentationMarkup.SECTION_END);
-    }
-    if (deprecated || !compatibilityData.isEmpty()) {
-      buf.append(DocumentationMarkup.SECTIONS_END);
-    }
-
-    return buf.toString();
   }
 
   @Nullable
@@ -296,8 +266,11 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     if (result== null && styleProvider !=null) {
       result = styleProvider.getDocumentationElementForLookupItem(psiManager, object, element);
     }
-    if (result== null && ourScriptProvider !=null) {
-      result = ourScriptProvider.getDocumentationElementForLookupItem(psiManager, object, element);
+    if (result == null) {
+      DocumentationProvider scriptProvider = ourScriptProvider.getValue();
+      if (scriptProvider != null) {
+        result = scriptProvider.getDocumentationElementForLookupItem(psiManager, object, element);
+      }
     }
     if (result == null && object instanceof String && element != null) {
       result = XmlDocumentationProvider.findDeclWithName((String)object, element);
@@ -313,8 +286,8 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     if (result== null && styleProvider !=null) {
       result = styleProvider.getDocumentationElementForLink(psiManager, link, context);
     }
-    if (result== null && ourScriptProvider != null && !DumbService.isDumb(psiManager.getProject())) {
-      result = ourScriptProvider.getDocumentationElementForLink(psiManager, link,context);
+    if (result== null && ourScriptProvider.getValue() != null && !DumbService.isDumb(psiManager.getProject())) {
+      result = ourScriptProvider.getValue().getDocumentationElementForLink(psiManager, link, context);
     }
     return result;
   }
@@ -368,10 +341,17 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     return PsiTreeUtil.getParentOfType(context,XmlTag.class,false);
   }
 
-  public static void registerScriptDocumentationProvider(final DocumentationProvider provider) {
-    ourScriptProvider = provider;
+  @TestOnly
+  public static void registerScriptDocumentationProvider(@NotNull DocumentationProvider provider, @NotNull Disposable parentDisposable) {
+    ourScriptProvider.setValue(provider);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        ourScriptProvider.setValue(null);
+      }
+    });
   }
-  
+
   @Nullable
   private DocumentationProvider getStyleProvider() {
     if (!myUseStyleProvider) return null;

@@ -6,9 +6,12 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
@@ -182,17 +185,19 @@ public class JavaDocUtil {
           LOG.info(e);
         }
       }
-      PsiMethod[] methods = aClass.findMethodsByName(name, true);
 
-      PsiMethod found = null;
-      for (PsiMethod method : methods) {
-        TypeCompatibility compatibility = getTypeCompatibility(method, types);
-        if (compatibility == TypeCompatibility.NONE) continue;
+      MethodSignature methodSignature = MethodSignatureUtil.createMethodSignature(name, types, PsiTypeParameter.EMPTY_ARRAY,
+                                                                                  PsiSubstitutor.EMPTY, name.equals(aClass.getName()));
 
-        found = method;
-
-        if (compatibility == TypeCompatibility.EXACT) break;
+      final PsiMethod[] allMethods;
+      if (context != null) {
+        allMethods = PsiDocMethodOrFieldRef.getAllMethods(aClass, context);
       }
+      else {
+        allMethods = aClass.findMethodsByName(name, true);
+      }
+
+      PsiMethod found = PsiDocMethodOrFieldRef.findMethod(methodSignature, name, allMethods);
 
       if (found == null) return null;
 
@@ -204,33 +209,6 @@ public class JavaDocUtil {
       }
       return found;
     }
-  }
-
-  private static TypeCompatibility getTypeCompatibility(@NotNull PsiMethod method, @NotNull PsiType[] types) {
-
-    PsiParameter[] params = method.getParameterList().getParameters();
-    if (params.length != types.length) return TypeCompatibility.NONE;
-
-    TypeCompatibility compatibility = TypeCompatibility.EXACT;
-
-    for (int i = 0; i < params.length; i++) {
-      final PsiType paramType = params[i].getType();
-      final PsiType expectedType = types[i];
-
-      if (expectedType == null) continue;
-
-      boolean hasExactTypes = paramType.getCanonicalText().equals(expectedType.getCanonicalText()) ||
-                              TypeConversionUtil.erasure(paramType).getCanonicalText().equals(expectedType.getCanonicalText());
-      if ( compatibility == TypeCompatibility.EXACT && hasExactTypes) continue;
-
-      if (!hasExactTypes && !TypeConversionUtil.isAssignable(paramType, expectedType)) {
-        return TypeCompatibility.NONE;
-      }
-
-      compatibility = TypeCompatibility.ASSIGNABLE;
-    }
-
-    return compatibility;
   }
 
   @Nullable
@@ -440,11 +418,5 @@ public class JavaDocUtil {
 
   public static boolean isInsidePackageInfo(@Nullable PsiDocComment containingComment) {
     return containingComment != null && containingComment.getOwner() == null && containingComment.getParent() instanceof PsiJavaFile;
-  }
-
-  private enum TypeCompatibility {
-    NONE,
-    ASSIGNABLE,
-    EXACT
   }
 }

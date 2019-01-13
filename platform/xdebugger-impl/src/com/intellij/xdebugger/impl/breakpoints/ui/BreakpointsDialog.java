@@ -300,31 +300,18 @@ public class BreakpointsDialog extends DialogWrapper {
       .toListAndThen(DefaultActionGroup::new);
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(tree).
-      setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          JBPopupFactory.getInstance()
-            .createActionGroupPopup(null, breakpointTypes, DataManager.getInstance().getDataContext(button.getContextComponent()),
-                                    JBPopupFactory.ActionSelectionAid.NUMBERING, false)
-            .show(button.getPreferredPopupPoint());
-        }
-      }).
-      setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          myTreeController.removeSelectedBreakpoints(myProject);
-        }
-      }).
-      setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
-            if (item.allowedToRemove()) {
-              return true;
-            }
+      setAddAction(button -> JBPopupFactory.getInstance()
+        .createActionGroupPopup(null, breakpointTypes, DataManager.getInstance().getDataContext(button.getContextComponent()),
+                                JBPopupFactory.ActionSelectionAid.NUMBERING, false)
+        .show(button.getPreferredPopupPoint())).
+      setRemoveAction(button -> myTreeController.removeSelectedBreakpoints(myProject)).
+      setRemoveActionUpdater(e -> {
+        for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
+          if (item.allowedToRemove()) {
+            return true;
           }
-          return false;
         }
+        return false;
       }).
       setToolbarPosition(ActionToolbarPosition.TOP).
       setToolbarBorder(JBUI.Borders.empty());
@@ -385,7 +372,7 @@ public class BreakpointsDialog extends DialogWrapper {
     saveTreeState(dialogState);
     final List<XBreakpointGroupingRule> rulesEnabled = ContainerUtil.filter(myRulesEnabled, rule -> !rule.isAlwaysEnabled());
 
-    dialogState.setSelectedGroupingRules(new THashSet<>(ContainerUtil.map(rulesEnabled, rule -> rule.getId())));
+    dialogState.setSelectedGroupingRules(new THashSet<>(ContainerUtil.map(rulesEnabled, XBreakpointGroupingRule::getId)));
     getBreakpointManager().setBreakpointsDialogSettings(dialogState);
   }
 

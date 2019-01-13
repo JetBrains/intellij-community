@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.ActionStub;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -28,9 +28,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-public class ActionsWithInvalidTemplatePresentationTest extends PlatformTestCase {
+public class ActionsWithInvalidTemplatePresentationTest extends LightPlatformTestCase {
   private static final List<String> KNOWN_FALSE_POSITIVES = Arrays.asList(
     "InsertRubyInjection",
+    "InsertRubyInjectionWithoutOutput",
     "ClassTemplateNavigation"
   );
 

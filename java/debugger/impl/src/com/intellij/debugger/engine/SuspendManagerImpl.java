@@ -318,6 +318,6 @@ public class SuspendManagerImpl implements SuspendManager {
 
   public boolean hasPausedContext(SuspendContextImpl suspendContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return myEventContexts.contains(suspendContext);
+    return myPausedContexts.contains(suspendContext);
   }
 }

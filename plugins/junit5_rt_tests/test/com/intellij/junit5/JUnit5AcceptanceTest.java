@@ -167,6 +167,11 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
                                            "@Testable\n" +
                                            "class MyTests{}");
       assertTrue(JUnitUtil.isTestClass(customEngineTest));
+
+      PsiClass customEngineAnnotationOnSuper
+        = myFixture.addClass(
+                             "class MyCustomClass extends MyTests{}");
+      assertTrue(JUnitUtil.isTestClass(customEngineAnnotationOnSuper));
     });
   }
 }

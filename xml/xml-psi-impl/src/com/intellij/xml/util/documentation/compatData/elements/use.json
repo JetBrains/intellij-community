@@ -19,15 +19,11 @@
             },
             "firefox": {
               "version_added": "4",
-              "notes": [
-                "For years, Firefox has suffered from a bug whereby it doesn't completely follow the <code>use</code> cascading rules (see <a href='https://bugzil.la/265894'>bug 265894</a>). A fix is <a href='https://stackoverflow.com/questions/27866893/svg-fill-not-being-applied-in-firefox/27872310#27872310'>documented by Amelia Bellamy-Royds on StackOverflow</a>. The good news is that this is finally fixed as of Firefox 56."
-              ]
+              "notes": "For years, Firefox has suffered from a bug whereby it doesn't completely follow the <code>use</code> cascading rules (see <a href='https://bugzil.la/265894'>bug 265894</a>). A fix is <a href='https://stackoverflow.com/questions/27866893/svg-fill-not-being-applied-in-firefox/27872310#27872310'>documented by Amelia Bellamy-Royds on StackOverflow</a>. The good news is that this is finally fixed as of Firefox 56."
             },
             "firefox_android": {
               "version_added": "4",
-              "notes": [
-                "For years, Firefox has suffered from a bug whereby it doesn't completely follow the <code>use</code> cascading rules (see <a href='https://bugzil.la/265894'>bug 265894</a>). A fix is <a href='https://stackoverflow.com/questions/27866893/svg-fill-not-being-applied-in-firefox/27872310#27872310'>documented by Amelia Bellamy-Royds on StackOverflow</a>. The good news is that this is finally fixed as of Firefox 56."
-              ]
+              "notes": "For years, Firefox has suffered from a bug whereby it doesn't completely follow the <code>use</code> cascading rules (see <a href='https://bugzil.la/265894'>bug 265894</a>). A fix is <a href='https://stackoverflow.com/questions/27866893/svg-fill-not-being-applied-in-firefox/27872310#27872310'>documented by Amelia Bellamy-Royds on StackOverflow</a>. The good news is that this is finally fixed as of Firefox 56."
             },
             "ie": {
               "version_added": true

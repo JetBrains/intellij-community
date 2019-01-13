@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -12,8 +12,8 @@ import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.SmartList
 import com.intellij.util.io.systemIndependentPath
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -41,7 +41,7 @@ internal class ComponentStoreModificationTrackerTest {
   }
 
   @Test
-  fun `modification tracker`() {
+  fun `modification tracker`() = runBlocking<Unit> {
     @State(name = "modificationTrackerA", storages = [(Storage("a.xml"))])
     open class A : PersistentStateComponent<TestState>, SimpleModificationTracker() {
       var options = TestState()
@@ -102,7 +102,7 @@ internal class ComponentStoreModificationTrackerTest {
   }
 
   @Test
-  fun persistentStateComponentWithModificationTracker() {
+  fun persistentStateComponentWithModificationTracker() = runBlocking<Unit> {
     @State(name = "TestPersistentStateComponentWithModificationTracker", storages = [(Storage("b.xml"))])
     open class A : PersistentStateComponentWithModificationTracker<TestState> {
       var modificationCount = AtomicLong(0)
@@ -165,12 +165,12 @@ internal class ComponentStoreModificationTrackerTest {
     </application>""".trimIndent())
   }
 
-  private fun saveStore() {
-    componentStore.save(SmartList())
+  private suspend fun saveStore() {
+    componentStore.save()
   }
 }
 
-private class MyComponentStore(testAppConfigPath: Path) : ComponentStoreImpl() {
+private class MyComponentStore(testAppConfigPath: Path) : ChildlessComponentStore() {
   private class MyStorageManager(private val rootDir: Path) : StateStorageManagerImpl("application") {
     override val isUseXmlProlog = false
 

@@ -859,13 +859,14 @@ public class HighlightMethodUtil {
     registerThisSuperFixes(methodCall, highlightInfo, fixRange);
     CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, false);
     CastMethodArgumentFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
-    PermuteArgumentsFix.registerFix(highlightInfo, methodCall, methodCandidates, fixRange);
     AddTypeArgumentsFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     MethodReturnFixFactory.INSTANCE.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     WrapWithAdapterMethodCallFix.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     registerMethodAccessLevelIntentions(methodCandidates, methodCall, list, highlightInfo);
-    registerChangeMethodSignatureFromUsageIntentions(methodCandidates, list, highlightInfo, fixRange);
+    if (!PermuteArgumentsFix.registerFix(highlightInfo, methodCall, methodCandidates, fixRange)) {
+      registerChangeMethodSignatureFromUsageIntentions(methodCandidates, list, highlightInfo, fixRange);
+    }
     RemoveRedundantArgumentsFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
     ConvertDoubleToFloatFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
     WrapExpressionFix.registerWrapAction(methodCandidates, list.getExpressions(), highlightInfo);
@@ -1813,8 +1814,9 @@ public class HighlightMethodUtil {
       ChangeTypeArgumentsFix.registerIntentions(results, list, info, aClass);
       ConvertDoubleToFloatFix.registerIntentions(results, list, info, null);
     }
-    registerChangeMethodSignatureFromUsageIntentions(results, list, info, null);
-    PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
+    if (!PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list))) {
+      registerChangeMethodSignatureFromUsageIntentions(results, list, info, null);
+    }
     registerChangeParameterClassFix(constructorCall, list, info);
     QuickFixAction.registerQuickFixAction(info, getFixRange(list), QUICK_FIX_FACTORY.createSurroundWithArrayFix(constructorCall,null));
     ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, info);

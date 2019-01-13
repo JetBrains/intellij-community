@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileTypes.StdFileTypes
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeProvider2
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
@@ -29,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.*
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
@@ -41,8 +28,8 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
   protected val lock: ReentrantReadWriteLock = ReentrantReadWriteLock()
 
   override fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean) {
-    dir.resolve(path).directoryStreamIfExists({ filter(it.fileName.toString()) }) {
-      for (file in it) {
+    dir.resolve(path).directoryStreamIfExists({ filter(it.fileName.toString()) }) { fileStream ->
+      for (file in fileStream) {
         val attributes: BasicFileAttributes?
         try {
           attributes = file.basicAttributesIfExists()
@@ -155,7 +142,7 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
 
 var conflictResolver: ((files: List<VirtualFile>, mergeProvider: MergeProvider2) -> Unit)? = null
 
-fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider2): List<VirtualFile> {
+suspend fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider2): List<VirtualFile> {
   if (ApplicationManager.getApplication()!!.isUnitTestMode) {
     if (conflictResolver == null) {
       throw CannotResolveConflictInTestMode()
@@ -167,7 +154,7 @@ fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider2): L
   }
 
   var processedFiles: List<VirtualFile>? = null
-  invokeAndWaitIfNeed {
+  withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
     val fileMergeDialog = MultipleFileMergeDialog(null, files, mergeProvider, object : MergeDialogCustomizer() {
       override fun getMultipleFileDialogTitle() = "Settings Repository: Conflicts"
     })

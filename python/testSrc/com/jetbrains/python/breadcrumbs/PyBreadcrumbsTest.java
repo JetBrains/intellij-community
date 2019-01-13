@@ -15,16 +15,12 @@
  */
 package com.jetbrains.python.breadcrumbs;
 
-import com.google.common.collect.Lists;
-import com.intellij.psi.PsiElement;
-import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
+import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -196,28 +192,16 @@ public class PyBreadcrumbsTest extends PyTestCase {
 
     myFixture.configureByFile(testName + ".py");
 
-    final PyBreadcrumbsInfoProvider provider = new PyBreadcrumbsInfoProvider();
-    final String breadcrumbsAndTooltips = getBreadcrumbsAndTooltips(provider, elementsFromTopToCaret(provider));
+    final String breadcrumbsAndTooltips = getBreadcrumbsAndTooltips(myFixture.getBreadcrumbsAtCaret());
 
     assertSameLinesWithFile(getTestDataPath() + "/" + testName + "_crumbs.txt", breadcrumbsAndTooltips);
   }
 
   @NotNull
-  private List<PsiElement> elementsFromTopToCaret(@NotNull BreadcrumbsProvider provider) {
-    final List<PsiElement> fromElementToNullExcluded = StreamEx
-      .iterate(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), provider::getParent)
-      .takeWhile(Objects::nonNull)
-      .filter(provider::acceptElement)
-      .toList();
-
-    return Lists.reverse(fromElementToNullExcluded);
-  }
-
-  @NotNull
-  private static String getBreadcrumbsAndTooltips(@NotNull BreadcrumbsProvider provider, @NotNull List<PsiElement> elements) {
-    return elements
+  private static String getBreadcrumbsAndTooltips(List<Crumb> crumbs) {
+    return crumbs
       .stream()
-      .flatMap(element -> Stream.of("Crumb:", provider.getElementInfo(element), "Tooltip:", provider.getElementTooltip(element)))
+      .flatMap(crumb -> Stream.of("Crumb:", crumb.getText(), "Tooltip:", crumb.getTooltip()))
       .collect(Collectors.joining("\n"));
   }
 }

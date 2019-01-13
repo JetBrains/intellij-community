@@ -200,18 +200,23 @@ public class FunctionalInterfaceSuggester {
       if (interfaceMethod != null) {
         final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
         Project project = interface2Consider.getProject();
+        PsiType returnType = interfaceMethod.getReturnType();
         if (expression instanceof PsiLambdaExpression && ((PsiLambdaExpression)expression).hasFormalParameterTypes()) {
           PsiParameter[] functionalExprParameters = ((PsiLambdaExpression)expression).getParameterList().getParameters();
           if (parameters.length != functionalExprParameters.length) {
             return Collections.emptyList();
           }
 
-          final PsiType[] left = new PsiType[parameters.length];
-          final PsiType[] right = new PsiType[parameters.length];
+          final PsiType[] left = new PsiType[parameters.length + 1];
+          final PsiType[] right = new PsiType[parameters.length + 1];
           for (int i = 0; i < functionalExprParameters.length; i++) {
             left[i] = parameters[i].getType();
             right[i] = functionalExprParameters[i].getType();
           }
+
+          List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(((PsiLambdaExpression)expression));
+          left[parameters.length] = returnExpressions.isEmpty() ? PsiType.VOID : returnExpressions.get(0).getType();
+          right[parameters.length] = returnType;
 
           final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(project)
             .inferTypeArguments(interface2Consider.getTypeParameters(), left, right, PsiUtil.getLanguageLevel(expression));
@@ -247,7 +252,7 @@ public class FunctionalInterfaceSuggester {
                 }
 
                 left[parameters.length] = method.isConstructor() ? qualifierType : method.getReturnType();
-                right[parameters.length] = interfaceMethod.getReturnType();
+                right[parameters.length] = returnType;
 
                 final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(project)
                   .inferTypeArguments(interface2Consider.getTypeParameters(), left, right, PsiUtil.getLanguageLevel(expression));

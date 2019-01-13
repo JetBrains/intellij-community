@@ -72,4 +72,28 @@ class Switch {
             }
         }
     }
+
+    void f(int n) {
+        int a;
+        for (int i = 0; i < 10; i++) {
+            switch (n) {
+                case 1 -> a = 0;
+                default -> {
+                    continue;
+                }
+            }
+            System.out.println("a = " + a);
+        }
+    }
+
+    void g(int n) {
+        for (int i = 0; i < 10; i++) {
+            switch (n) {
+                case 1:
+                    continue;
+                default:
+                <warning descr="'continue' is unnecessary as the last statement in a loop">continue</warning>;
+            }
+        }
+    }
 }

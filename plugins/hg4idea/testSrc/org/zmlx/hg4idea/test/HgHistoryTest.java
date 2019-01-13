@@ -1,7 +1,7 @@
 package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.vcsUtil.VcsUtil;
@@ -99,7 +99,7 @@ public class HgHistoryTest extends HgSingleUserTest {
     //don't commit 
 
     refreshVfs();
-    ChangeListManager.getInstance(myProject).ensureUpToDate(false);
+    ChangeListManagerImpl.getInstanceImpl(myProject).ensureUpToDate();
     
     final VcsHistorySession session = getHistorySession(BFILE);
     final List<VcsFileRevision> revisions = session.getRevisionList();

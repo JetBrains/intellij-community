@@ -25,7 +25,7 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
     return builder.getTreeBuilt();
   }
 
-  private class Parsing {
+  private static class Parsing {
     private final PsiBuilder myBuilder;
 
     Parsing(PsiBuilder builder) {

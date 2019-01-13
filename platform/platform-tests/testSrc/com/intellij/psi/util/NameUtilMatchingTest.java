@@ -430,8 +430,9 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("smart8co", "smart18completion");
   }
 
-  public void testMatchOnlyAdjacentDigits() {
+  public void testDoNotAllowDigitsBetweenMatchingDigits() {
     assertDoesntMatch("*012", "001122");
+    assertMatches("012", "0a1_22");
   }
 
   public void testSpecialSymbols() {

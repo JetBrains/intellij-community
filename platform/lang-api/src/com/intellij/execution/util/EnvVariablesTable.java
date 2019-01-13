@@ -21,7 +21,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.util.containers.ContainerUtil;
@@ -95,7 +94,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         return environmentVariable.getDescription();
       }
 
-      @Nullable
+      @NotNull
       @Override
       public TableCellEditor getEditor(EnvironmentVariable variable) {
         StringWithNewLinesCellEditor editor = new StringWithNewLinesCellEditor();
@@ -104,7 +103,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       }
     };
 
-    return new ListTableModel((new ColumnInfo[]{name, value}));
+    return new ListTableModel(name, value);
   }
 
   public void editVariableName(final EnvironmentVariable environmentVariable) {

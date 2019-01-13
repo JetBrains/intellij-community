@@ -1,1 +1,4 @@
+deprecated: autoMode.png -> com.intellij.icons.AllIcons@/actions/resume.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Resume
+deprecated: bug.png -> com.intellij.icons.AllIcons@/actions/startDebugger.svg; to be removed in IDEA 2020 - use AllIcons.Actions.StartDebugger
+deprecated: feature.png -> com.intellij.icons.AllIcons@/nodes/favorite.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Favorite
 deprecated: github.png -> com.intellij.icons.AllIcons@/vcs/vendors/github.svg; to be removed in IDEA 2020 - use AllIcons.Vcs.Vendors.Github

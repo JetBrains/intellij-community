@@ -674,7 +674,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
   }
 
   // PY-30942
-  public void testUserPyInsteadStubPackage() {
+  public void testUserPyInsteadProvidedPyi() {
     final String path = "resolve/" + getTestName(false);
     myFixture.copyDirectoryToProject(path + "/pkg", "pkg");
     myFixture.configureByFile(path + "/main.py");
@@ -691,6 +691,26 @@ public class Py3ResolveTest extends PyResolveTestCase {
         final PsiFile file = element.getContainingFile();
         assertEquals("foo.py", file.getName());
         assertEquals("src", file.getParent().getParent().getName());
+      }
+    );
+  }
+
+  // PY-32963
+  public void testProvidedPyiInsteadStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + path + "/lib");
+    assertNotNull(libDir);
+
+    runWithAdditionalClassEntryInSdkRoots(
+      libDir,
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+
+        final PsiFile file = element.getContainingFile();
+        assertEquals("foo.pyi", file.getName());
+        assertEquals("pkg", file.getParent().getName());
       }
     );
   }
@@ -801,8 +821,9 @@ public class Py3ResolveTest extends PyResolveTestCase {
     );
   }
 
+  // TODO: this should be fixed after introducing an ability to check visited paths while resolving some qualified name
   // PY-30942
-  public void testNoInlinePackageInsteadStubPackage() {
+  public void _testNoInlinePackageInsteadStubPackage() {
     final String path = "resolve/" + getTestName(false);
     myFixture.configureByFile(path + "/main.py");
 
@@ -815,8 +836,9 @@ public class Py3ResolveTest extends PyResolveTestCase {
     );
   }
 
+  // TODO: this should be fixed after introducing an ability to check visited paths while resolving some qualified name
   // PY-30942
-  public void testNoInlinePackageInsteadStubPackageAnotherImport() {
+  public void _testNoInlinePackageInsteadStubPackageAnotherImport() {
     final String path = "resolve/" + getTestName(false);
     myFixture.configureByFile(path + "/main.py");
 

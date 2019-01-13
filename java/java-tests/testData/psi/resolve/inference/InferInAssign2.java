@@ -13,6 +13,6 @@ public class Seq<T> {
     }
 
     static void foo() {
-        Seq<String> s = <ref>cons("abc", nil());
+        Seq<String> s = <caret>cons("abc", nil());
     }
 }

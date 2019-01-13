@@ -12,10 +12,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
@@ -1892,4 +1889,15 @@ class Abc {
 
   void testNoSuggestionsAfterEnumConstant() { doAntiTest() }
 
+  void testPutCaretInsideParensInFixedPlusVarargOverloads() { doTest('\n') }
+
+  void "test default class in code fragment"() {
+    myFixture.addClass "class ABCD {}"
+    PsiJavaCodeReferenceCodeFragment fragment =
+      JavaCodeFragmentFactory.getInstance(getProject()).createReferenceCodeFragment("ABC<caret>", null, true, true)
+    fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE)
+    myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile())
+    myFixture.complete(CompletionType.BASIC)
+    assert myFixture.lookupElements.find { (it.lookupString == "ABCD") } != null
+  }
 }

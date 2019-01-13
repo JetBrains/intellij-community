@@ -262,7 +262,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     allProblems.addAll(falseSet);
     StreamEx.of(runner.getInstructions()).select(InstanceofInstruction.class).filter(visitor::isInstanceofRedundant).into(allProblems);
 
-    ProblemReporter reporter = new ProblemReporter(holder);
+    ProblemReporter reporter = new ProblemReporter(holder, scope);
 
     reportFailingCasts(reporter, visitor);
     reportUnreachableSwitchBranches(trueSet, falseSet, holder);
@@ -375,7 +375,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (parent instanceof PsiConditionalExpression) {
       return PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), expression, false);
     }
-    return false;
+    return PsiUtil.isAccessedForWriting(expression);
   }
 
   private void reportConstantReferenceValue(ProblemReporter reporter, PsiExpression ref, ConstantResult constant) {
@@ -448,7 +448,10 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
           }
         }
       }
-      reporter.registerProblem(expr, InspectionsBundle.message("dataflow.message.redundant.assignment"), createRemoveAssignmentFix(assignment));
+      String message = assignment != null && !assignment.getOperationTokenType().equals(JavaTokenType.EQ)
+                       ? InspectionsBundle.message("dataflow.message.redundant.update")
+                       : InspectionsBundle.message("dataflow.message.redundant.assignment");
+      reporter.registerProblem(expr, message, createRemoveAssignmentFix(assignment));
     });
   }
 
@@ -699,37 +702,16 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
              (!(psiAnchor instanceof PsiExpression) || PsiImplUtil.getSwitchLabel((PsiExpression)psiAnchor) == null) &&
              !isFlagCheck(psiAnchor)) {
       boolean evaluatesToTrue = trueSet.contains(instruction);
-      final PsiElement parent = psiAnchor.getParent();
-      if (parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getLExpression() == psiAnchor) {
-        reporter.registerProblem(
-          psiAnchor,
-          InspectionsBundle.message("dataflow.message.pointless.assignment.expression", Boolean.toString(evaluatesToTrue)),
-          createConditionalAssignmentFixes(evaluatesToTrue, (PsiAssignmentExpression)parent, reporter.isOnTheFly())
-        );
+      TextRange range =
+        instruction instanceof ExpressionPushingInstruction ? ((ExpressionPushingInstruction)instruction).getExpressionRange() : null;
+      if (range != null) {
+        // report rare cases like a == b == c where "a == b" part is constant
+        String message = InspectionsBundle.message("dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+        reporter.registerProblem(psiAnchor, range, message);
+        // do not add to reported anchors if only part of expression was reported
       }
-      else {
-        TextRange range =
-          instruction instanceof ExpressionPushingInstruction ? ((ExpressionPushingInstruction)instruction).getExpressionRange() : null;
-        if (range != null) {
-          // report rare cases like a == b == c where "a == b" part is constant
-          String message = InspectionsBundle.message("dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
-          reporter.registerProblem(psiAnchor, range, message);
-          // do not add to reported anchors if only part of expression was reported
-        }
-        else if (PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent()) instanceof PsiForeachStatement) {
-          // highlighted for-each iterated value means evaluatesToTrue == "collection is always empty"
-          if (!evaluatesToTrue) {
-            // loop on always non-empty collection -- nothing to report
-            return;
-          }
-          boolean array = psiAnchor instanceof PsiExpression && ((PsiExpression)psiAnchor).getType() instanceof PsiArrayType;
-          reporter.registerProblem(psiAnchor, array ?
-                                              InspectionsBundle.message("dataflow.message.loop.on.empty.array") :
-                                              InspectionsBundle.message("dataflow.message.loop.on.empty.collection"));
-        }
-        else if (!(psiAnchor instanceof PsiMethodReferenceExpression)) {
-          reportConstantBoolean(reporter, psiAnchor, evaluatesToTrue);
-        }
+      else if (!(psiAnchor instanceof PsiMethodReferenceExpression)) {
+        reportConstantBoolean(reporter, psiAnchor, evaluatesToTrue);
       }
     }
   }
@@ -741,6 +723,17 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (psiAnchor == null || shouldBeSuppressed(psiAnchor)) return;
     boolean isAssertion = isAssertionEffectively(psiAnchor, evaluatesToTrue);
     if (DONT_REPORT_TRUE_ASSERT_STATEMENTS && isAssertion) return;
+
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent());
+    if (parent instanceof PsiAssignmentExpression &&
+        PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getLExpression(), psiAnchor, false)) {
+      reporter.registerProblem(
+        psiAnchor,
+        InspectionsBundle.message("dataflow.message.pointless.assignment.expression", Boolean.toString(evaluatesToTrue)),
+        createConditionalAssignmentFixes(evaluatesToTrue, (PsiAssignmentExpression)parent, reporter.isOnTheFly())
+      );
+      return;
+    }
 
     List<LocalQuickFix> fixes = new ArrayList<>();
     if (!isCoveredBySurroundingFix(psiAnchor, evaluatesToTrue)) {
@@ -1105,9 +1098,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   private static class ProblemReporter {
     private final Set<PsiElement> myReportedAnchors = new HashSet<>();
     private final ProblemsHolder myHolder;
+    private final PsiElement myScope;
 
-    ProblemReporter(ProblemsHolder holder) {
+    ProblemReporter(ProblemsHolder holder, PsiElement scope) {
       myHolder = holder;
+      myScope = scope;
     }
 
     void registerProblem(PsiElement element, String message, LocalQuickFix... fixes) {
@@ -1132,6 +1127,12 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     }
 
     private boolean register(PsiElement element) {
+      // Suppress reporting for inlined simple methods
+      if (!PsiTreeUtil.isAncestor(myScope, element, false)) return false;
+      if (myScope instanceof PsiClass) {
+        PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
+        if (member instanceof PsiMethod && !((PsiMethod)member).isConstructor()) return false;
+      }
       if (!myReportedAnchors.add(element)) return false;
       if (element instanceof PsiParenthesizedExpression) {
         PsiExpression deparenthesized = PsiUtil.skipParenthesizedExprDown((PsiExpression)element);

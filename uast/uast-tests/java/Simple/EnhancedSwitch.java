@@ -1,7 +1,7 @@
 public class Main {
 
   private static String getString() {
-    var str = "abc";
+    var str = "baz";
 
     final String numericString =
       switch (str) {

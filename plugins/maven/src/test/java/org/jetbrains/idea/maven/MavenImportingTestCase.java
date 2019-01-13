@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.application.PathManager;
@@ -16,7 +14,6 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,11 +22,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -474,8 +471,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                                                                      List<MavenArtifact> artifacts) {
     final MavenArtifactDownloader.DownloadResult[] unresolved = new MavenArtifactDownloader.DownloadResult[1];
 
-    AsyncResult<MavenArtifactDownloader.DownloadResult> result = new AsyncResult<>();
-    result.doWhenDone((Consumer<MavenArtifactDownloader.DownloadResult>)unresolvedArtifacts -> unresolved[0] = unresolvedArtifacts);
+    AsyncPromise<MavenArtifactDownloader.DownloadResult> result = new AsyncPromise<>();
+    result.onSuccess(unresolvedArtifacts -> unresolved[0] = unresolvedArtifacts);
 
     myProjectsManager.scheduleArtifactsDownloading(projects, artifacts, true, true, result);
     myProjectsManager.waitForArtifactsDownloadingCompletion();

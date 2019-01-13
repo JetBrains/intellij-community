@@ -16,7 +16,6 @@ import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.artifact.JpsArtifactService
-import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -65,7 +64,7 @@ class CompilationContextImpl implements CompilationContext {
 
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
-    def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "", "JDK_18_x64"))
+    def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", null, "JDK_18_x64"))
     GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, gradleJdk)
     if (!options.isInDevelopmentMode) {
       setupCompilationDependencies(gradle, options)
@@ -137,7 +136,6 @@ class CompilationContextImpl implements CompilationContext {
 
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
-    pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinHome/kotlinc")
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtil.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
 
     JdkUtils.defineJdk(model.global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "${jdkDir(projectHome, options)}/1.6", "JDK_16_x64"))

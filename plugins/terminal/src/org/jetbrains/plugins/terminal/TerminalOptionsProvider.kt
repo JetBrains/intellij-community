@@ -17,14 +17,20 @@ import java.io.File
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
   private var myState = State()
 
-  var shellPath: String? by ValueWithDefault(State::myShellPath, myState) { defaultShellPath }
-
   override fun getState(): State? {
     return myState
   }
 
   override fun loadState(state: State) {
     myState = state
+  }
+
+  fun getShellPath(): String? {
+    return myState.myShellPath ?: defaultShellPath()
+  }
+
+  fun setShellPath(shellPath: String) {
+    myState.myShellPath = shellPath
   }
 
   fun closeSessionOnLogout(): Boolean {
@@ -120,26 +126,20 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState.envDataOptions.set(envData)
   }
 
-  val defaultShellPath: String
-    get() {
-      val shell = System.getenv("SHELL")
-
-      if (shell != null && File(shell).canExecute()) {
-        return shell
-      }
-
-      if (SystemInfo.isUnix) {
-        if (File("/bin/bash").exists()) {
-          return "/bin/bash"
-        }
-        else {
-          return "/bin/sh"
-        }
-      }
-      else {
-        return "cmd.exe"
-      }
+  private fun defaultShellPath(): String {
+    val shell = System.getenv("SHELL")
+    if (shell != null && File(shell).canExecute()) {
+      return shell
     }
+    if (SystemInfo.isUnix) {
+      val bashPath = "/bin/bash"
+      if (File(bashPath).exists()) {
+        return bashPath
+      }
+      return "/bin/sh"
+    }
+    return "cmd.exe"
+  }
 
   companion object {
     val instance: TerminalOptionsProvider

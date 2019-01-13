@@ -131,7 +131,7 @@ public abstract class GitHandler {
     myCommandLine.addParameter(command.name());
 
     myStdoutSuppressed = true;
-    mySilent = myCommand.lockingPolicy() == GitCommand.LockingPolicy.READ;
+    mySilent = myCommand.lockingPolicy() != GitCommand.LockingPolicy.WRITE;
   }
 
   @NotNull

@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -37,8 +36,6 @@ import java.awt.event.PaintEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -133,8 +130,8 @@ class ActionUpdater {
    */
   @NotNull
   List<AnAction> expandActionGroupWithTimeout(ActionGroup group, boolean hideDisabled) {
-    List<AnAction> result = withTimeout(Registry.intValue("actionSystem.update.timeout.ms"),
-                                        () -> expandActionGroup(group, hideDisabled));
+    List<AnAction> result = ProgressIndicatorUtils.withTimeout(Registry.intValue("actionSystem.update.timeout.ms"),
+                                                               () -> expandActionGroup(group, hideDisabled));
     try {
       return result != null ? result : expandActionGroup(group, hideDisabled, myCheapStrategy);
     }
@@ -191,22 +188,6 @@ class ActionUpdater {
     promise.onProcessed(__ -> Disposer.dispose(disposable));
   }
 
-  @Nullable
-  private static <T> T withTimeout(int timeoutMs, Computable<T> computable) {
-    ProgressManager.checkCanceled();
-    ProgressIndicatorBase progress = new ProgressIndicatorBase();
-    ScheduledFuture<?> cancelProgress = AppExecutorUtil.getAppScheduledExecutorService().schedule(progress::cancel, timeoutMs, TimeUnit.MILLISECONDS);
-    try {
-      return ProgressManager.getInstance().runProcess(computable, progress);
-    }
-    catch (ProcessCanceledException e) {
-      return null;
-    }
-    finally {
-      cancelProgress.cancel(false);
-    }
-  }
-
   private List<AnAction> doExpandActionGroup(ActionGroup group, boolean hideDisabled, UpdateStrategy strategy) {
     ProgressManager.checkCanceled();
     Presentation presentation = update(group, strategy);
@@ -215,29 +196,7 @@ class ActionUpdater {
     }
 
     List<AnAction> children = getGroupChildren(group, strategy);
-    List<List<AnAction>> expansions = ContainerUtil.map(children, child -> expandIfCheap(child, hideDisabled, strategy));
-    expandMoreExpensiveActions(children, expansions, hideDisabled, strategy);
-    return ContainerUtil.concat(expansions);
-  }
-
-  /**
-   * We try to update as many actions as possible first and cache their presentation so that even if we're interrupted by timeout,
-   * we show them all correctly
-   */
-  @Nullable
-  private List<AnAction> expandIfCheap(AnAction action, boolean hideDisabled, UpdateStrategy strategy) {
-    return strategy == myCheapStrategy ? null : withTimeout(1, () -> expandGroupChild(action, hideDisabled, strategy));
-  }
-
-  private void expandMoreExpensiveActions(List<AnAction> children,
-                                          List<List<AnAction>> expansions,
-                                          boolean hideDisabled,
-                                          UpdateStrategy strategy) {
-    for (int i = 0; i < children.size(); i++) {
-      if (expansions.get(i) == null) {
-        expansions.set(i, expandGroupChild(children.get(i), hideDisabled, strategy));
-      }
-    }
+    return ContainerUtil.concat(children, child -> expandGroupChild(child, hideDisabled, strategy));
   }
 
   private List<AnAction> getGroupChildren(ActionGroup group, UpdateStrategy strategy) {

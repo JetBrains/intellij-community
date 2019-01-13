@@ -15,43 +15,36 @@
  */
 package com.intellij.java.refactoring;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.testFramework.PsiTestUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
  * @author anna
  */
-public class DndMoveTest extends CodeInsightTestCase {
-  @NotNull
+public class DndMoveTest extends LightCodeInsightFixtureTestCase {
   @Override
-  protected String getTestRoot() {
-    return "/refactoring/dndMove/";
+  protected String getTestDataPath() {
+    return PathManagerEx.getTestDataPath() + "/refactoring/dndMove/";
   }
 
-  public void testPublicJavaClass() throws Exception {
-    doTest("d", () -> getJavaFacade().findClass("d.MyClass"), true);
+  public void testPublicJavaClass() {
+    doTest("d", () -> myFixture.findClass("d.MyClass"), true);
   }
 
-  public void testSecondJavaClass() throws Exception {
-    doTest("d", () -> getJavaFacade().findClass("d.Second"), false);
+  public void testSecondJavaClass() {
+    doTest("d", () -> myFixture.findClass("d.Second"), false);
   }
 
-  private void doTest(final String targetDirName, final Computable<PsiElement> source, final boolean expected) throws Exception {
-    String testName = getTestName(true);
-    String root = getTestDataPath() + getTestRoot() + testName;
-    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete, false);
-    PsiTestUtil.addSourceContentToRoots(myModule, rootDir);
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+  private void doTest(final String targetDirName, final Computable<PsiElement> source, final boolean expected) {
+    VirtualFile rootDir = myFixture.copyDirectoryToProject(getTestName(true), "");
     final VirtualFile child1 = rootDir.findChild(targetDirName);
     assertNotNull("File " + targetDirName + " not found", child1);
-    final PsiDirectory targetDirectory = myPsiManager.findDirectory(child1);
+    final PsiDirectory targetDirectory = getPsiManager().findDirectory(child1);
     assertEquals(expected, MoveHandler.isMoveRedundant(source.compute(), targetDirectory));
   }
 }

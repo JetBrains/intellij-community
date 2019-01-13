@@ -58,7 +58,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
     XmlSerializerUtil.copyBean(new ProjectViewSharedSettings(), ProjectViewSharedSettings.Companion.getInstance());
   }
 
-  @Bombed(user = "SAM", year = 2019, month = Calendar.JUNE, day = 1)
+  @Bombed(user = "SAM", month = Calendar.JUNE, day = 1)
   public void testStructure() {
     final Project project = getProject();
     final ProjectViewImpl view = (ProjectViewImpl)ProjectView.getInstance(project);

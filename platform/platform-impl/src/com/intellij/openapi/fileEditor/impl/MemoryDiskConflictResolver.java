@@ -12,9 +12,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -27,6 +26,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -34,6 +34,7 @@ import java.util.Set;
  */
 class MemoryDiskConflictResolver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.MemoryDiskConflictResolver");
+
   private final Set<VirtualFile> myConflicts = new LinkedHashSet<>();
   private Throwable myConflictAppeared;
 
@@ -67,7 +68,7 @@ class MemoryDiskConflictResolver {
   }
 
   private void processConflicts() {
-    ArrayList<VirtualFile> conflicts = new ArrayList<>(myConflicts);
+    List<VirtualFile> conflicts = new ArrayList<>(myConflicts);
     myConflicts.clear();
 
     for (VirtualFile file : conflicts) {
@@ -83,23 +84,22 @@ class MemoryDiskConflictResolver {
     if (myConflictAppeared != null) {
       Throwable trace = myConflictAppeared;
       myConflictAppeared = null;
-      throw new IllegalStateException("Unexpected memory-disk conflict in tests for " + file.getPath() + ", please use FileDocumentManager#reloadFromDisk or avoid VFS refresh", trace);
+      throw new IllegalStateException("Unexpected memory-disk conflict in tests for " + file.getPath() +
+                                      ", please use FileDocumentManager#reloadFromDisk or avoid VFS refresh", trace);
     }
-    
+
     String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
 
-    final DialogBuilder builder = new DialogBuilder();
+    DialogBuilder builder = new DialogBuilder();
     builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.CENTER));
     builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
     builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));
     builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")) {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final ProjectEx project = (ProjectEx)ProjectLocator.getInstance().guessProjectForFile(file);
-
-        FileType fileType = file.getFileType();
+        Project project = ProjectLocator.getInstance().guessProjectForFile(file);
         String fsContent = LoadTextUtil.loadText(file).toString();
-        DocumentContent content1 = DiffContentFactory.getInstance().create(project, fsContent, fileType);
+        DocumentContent content1 = DiffContentFactory.getInstance().create(project, fsContent, file.getFileType());
         DocumentContent content2 = DiffContentFactory.getInstance().create(project, document, file);
         String title = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
         String title1 = UIBundle.message("file.cache.conflict.diff.content.file.system.content");
@@ -124,5 +124,4 @@ class MemoryDiskConflictResolver {
     builder.setHelpId("reference.dialogs.fileCacheConflict");
     return builder.show() == 0;
   }
-
 }

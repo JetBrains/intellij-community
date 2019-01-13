@@ -450,6 +450,7 @@
     </extensionPoint>
 
     <extensionPoint name="macro" interface="com.intellij.ide.macro.Macro"/>
+    <extensionPoint name="macroFilter" interface="com.intellij.ide.macro.MacroFilter"/>
     <extensionPoint name="printOption" interface="com.intellij.codeEditor.printing.PrintOption"/>
 
     <extensionPoint name="indexPatternBuilder" interface="com.intellij.psi.impl.search.IndexPatternBuilder"/>
@@ -996,7 +997,7 @@
 
     <extensionPoint name="trafficLightRendererContributor" interface="com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor"/>
 
-    <extensionPoint name="fileBreadcrumbsCollector" interface="com.intellij.xml.breadcrumbs.FileBreadcrumbsCollector" area="IDEA_PROJECT"/>
+    <extensionPoint name="implementationViewSessionFactory" interface="com.intellij.codeInsight.hint.ImplementationViewSessionFactory"/>
   </extensionPoints>
 </idea-plugin>
 

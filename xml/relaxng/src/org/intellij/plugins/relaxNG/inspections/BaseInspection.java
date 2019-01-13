@@ -38,6 +38,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+
 public abstract class BaseInspection extends XmlSuppressableInspectionTool {
   @Override
   @Nls
@@ -148,7 +150,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
   private static void suppress(PsiFile file, @NotNull PsiElement location, String suppressComment, Function<? super String, String> replace) {
     final Project project = file.getProject();
     final VirtualFile vfile = file.getVirtualFile();
-    if (vfile == null || ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vfile).hasReadonlyFiles()) {
+    if (vfile == null || ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(vfile)).hasReadonlyFiles()) {
       return;
     }
 

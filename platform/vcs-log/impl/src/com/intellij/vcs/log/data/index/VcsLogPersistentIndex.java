@@ -590,7 +590,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       TroveUtil.processBatches(commits, BATCH_SIZE, batch -> {
         indicator.checkCanceled();
 
-        List<String> hashes = TroveUtil.map(batch, value -> myStorage.getCommitId(value).getHash().asString());
+        List<String> hashes = TroveUtil.map2List(batch, value -> myStorage.getCommitId(value).getHash().asString());
         myProviders.get(myRoot).readFullDetails(myRoot, hashes, detail -> {
           storeDetail(detail);
           myNewIndexedCommits.incrementAndGet();

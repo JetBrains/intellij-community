@@ -56,11 +56,11 @@ public class CodeStyleSchemeJsonExporter extends SchemeExporter<CodeStyleScheme>
 
 
   private static List<LanguagePropertyMapperDescriptor> getOptionDescriptors(@NotNull CodeStyleSettings settings,
-                                                                             @Nullable List<String> languageNames) {
+                                                                             @Nullable List<String> languageDomainIds) {
     List<LanguagePropertyMapperDescriptor> descriptors = ContainerUtil.newArrayList();
-    CodeStylePropertiesUtil.collectMappers(settings, (s, mapper) -> {
-      if (languageNames == null || languageNames.contains(s)) {
-        descriptors.add(new LanguagePropertyMapperDescriptor(s, mapper));
+    CodeStylePropertiesUtil.collectMappers(settings, mapper -> {
+      if (languageDomainIds == null || languageDomainIds.contains(mapper.getLanguageDomainId())) {
+        descriptors.add(new LanguagePropertyMapperDescriptor(mapper.getLanguageDomainId(), mapper));
       }
     });
     Collections.sort(descriptors, Comparator.comparing(o -> o.language));

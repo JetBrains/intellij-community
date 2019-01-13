@@ -2,6 +2,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
@@ -13,7 +14,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.DumpLookupElementWeights;
-import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -40,8 +40,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
-import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -317,25 +315,12 @@ public class EditorTestFixture {
   }
 
   public List<Crumb> getBreadcrumbsAtCaret() {
-    PsiElement element = getFile().findElementAt(myEditor.getCaretModel().getOffset());
-    if (element == null) {
-      return Collections.emptyList();
-    }
-    final Language language = element.getContainingFile().getLanguage();
-
-    final BreadcrumbsProvider provider = BreadcrumbsUtil.getInfoProvider(language);
-
-    if (provider == null) {
-      return Collections.emptyList();
-    }
+    FileBreadcrumbsCollector breadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myFile);
 
     List<Crumb> result = new ArrayList<>();
-    while (element != null) {
-      if (provider.acceptElement(element)) {
-        result.add(new Crumb.Impl(provider, element));
-      }
-      element = provider.getParent(element);
-    }
-    return ContainerUtil.reverse(result);
+    breadcrumbsCollector.updateCrumbs(myFile, myEditor, myEditor.getCaretModel().getOffset(), null, crumbs ->
+      ContainerUtil.addAll(result, crumbs));
+
+    return result;
   }
 }

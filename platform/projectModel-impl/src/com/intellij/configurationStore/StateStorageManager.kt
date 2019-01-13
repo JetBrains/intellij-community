@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
 import com.intellij.util.messages.Topic
+import kotlinx.coroutines.runBlocking
 
-val STORAGE_TOPIC: Topic<StorageManagerListener> = Topic("STORAGE_LISTENER", StorageManagerListener::class.java, Topic.BroadcastDirection.TO_PARENT)
+val STORAGE_TOPIC = Topic("STORAGE_LISTENER", StorageManagerListener::class.java, Topic.BroadcastDirection.TO_PARENT)
 
 interface StateStorageManager {
   val macroSubstitutor: PathMacroSubstitutor?
@@ -35,4 +36,15 @@ interface StorageCreator {
   val key: String
 
   fun create(storageManager: StateStorageManager): StateStorage
+}
+
+/**
+ * Low-level method to save component manager state store. Use it with care and only if you understand what are you doing.
+ * Intended for Java clients only. Do not use in Kotlin.
+ */
+@JvmOverloads
+fun saveComponentManager(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
+  runBlocking {
+    componentManager.stateStore.save(isForceSavingAllSettings = isForceSavingAllSettings)
+  }
 }

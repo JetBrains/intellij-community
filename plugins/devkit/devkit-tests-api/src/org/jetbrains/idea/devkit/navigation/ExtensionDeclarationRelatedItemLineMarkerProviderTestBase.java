@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -13,6 +12,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
+import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ExtensionDeclarationRelatedItemLineMarkerProviderTestBase extends JavaCodeInsightFixtureTestCase {
@@ -38,7 +38,7 @@ public abstract class ExtensionDeclarationRelatedItemLineMarkerProviderTestBase 
                              "<font color=" + color + ">[" + module.getName() + "]</font><br></body></html>";
 
     GutterMark gutter = myFixture.findGutter(file);
-    DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, AllIcons.Nodes.Plugin, "myEp");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, DevkitIcons.Gutter.Plugin, "myEp");
   }
 
   protected void doTestInvalidExtension(@NotNull String file) {

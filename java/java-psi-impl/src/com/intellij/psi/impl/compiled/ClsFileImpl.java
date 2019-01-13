@@ -633,7 +633,13 @@ public class ClsFileImpl extends PsiBinaryFileImpl
 
     @Override
     public void accept(FileContentPair innerClass, StubBuildingVisitor<FileContentPair> visitor) {
-      new ClassReader(innerClass.second).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+      try {
+        new ClassReader(innerClass.second).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+      } catch (Exception e) {  // workaround for bug in skipping annotations when first parameter of inner class is dropped (IDEA-204145) 
+        VirtualFile file = innerClass.first;
+        if (LOG.isDebugEnabled()) LOG.debug(String.valueOf(file), e);
+        else LOG.info(file + ": " + e.getMessage());
+      }
     }
   };
 

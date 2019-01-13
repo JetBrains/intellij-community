@@ -34,7 +34,7 @@ public class GoToChangePopupBuilder {
 
   public interface Chain extends DiffRequestChain {
     @NotNull
-    AnAction createGoToChangeAction(@NotNull Consumer<Integer> onSelected);
+    AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected);
   }
 
   @NotNull

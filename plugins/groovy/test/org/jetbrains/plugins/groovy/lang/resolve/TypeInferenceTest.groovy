@@ -11,12 +11,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 import static com.intellij.psi.CommonClassNames.*
+import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.allowNestedContext
+import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.allowNestedContextOnce
 
 /**
  * @author ven
@@ -217,6 +218,7 @@ class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   void testTraditionalForVar() {
+    allowNestedContext(2, testRootDisposable)
     assertTypeEquals(JAVA_LANG_INTEGER, "A.groovy")
   }
 
@@ -306,6 +308,7 @@ print fou<caret>nd''', 'java.util.HashSet<java.lang.String>')
   }
 
   void testInferArgumentTypeFromMethod1() {
+    allowNestedContextOnce(testRootDisposable)
     doTest('''\
 def bar(String s) {}
 
@@ -342,6 +345,7 @@ def foo(Integer a) {
   }
 
   void testInferArgumentTypeFromMethod4() {
+    allowNestedContext(2, testRootDisposable)
     doTest('''\
 def bar(String s) {}
 
@@ -581,6 +585,7 @@ def foo(ii) {
   }
 
   void testIndexProperty() {
+    allowNestedContextOnce(testRootDisposable)
     doTest('''\
 private void getCommonAncestor() {
     def c1 = [new File('a')]
@@ -591,7 +596,6 @@ private void getCommonAncestor() {
     }
 }
 ''', 'java.io.File')
-
   }
 
   void testWildcardClosureParam() {
@@ -736,6 +740,7 @@ class Any {
   }
 
   void testRecursionWithMaps() {
+    allowNestedContext(2, testRootDisposable)
     doTest('''
 def foo(Map map) {
   while(true)
@@ -745,6 +750,7 @@ def foo(Map map) {
   }
 
   void testRecursionWithLists() {
+    allowNestedContextOnce(testRootDisposable)
     doTest('''
 def foo(List list) {
   while(true)
@@ -949,12 +955,10 @@ class W {
   }
 
   void "test don't start inference for method parameter type"() {
-    TypeInferenceHelper.disallowNestedContext(testRootDisposable)
     doTest 'def bar(String ss) { <caret>ss }', 'java.lang.String'
   }
 
   void 'test closure param'() {
-    TypeInferenceHelper.disallowNestedContext(testRootDisposable)
     doTest '''\
 interface I { def foo(String s) }
 def bar(I i) {}
@@ -962,5 +966,26 @@ bar { var ->
   <caret>var
 }
 ''', 'java.lang.String'
+  }
+
+  void 'test assignment in cycle independent on index'() {
+    doTest '''\
+def foo
+for (def i = 1; i < 10; i++) {
+  foo = 2
+  <caret>foo
+}
+''', 'java.lang.Integer'
+  }
+
+  void 'test assignment in cycle depending on index'() {
+    allowNestedContextOnce(testRootDisposable)
+    doTest '''\
+def foo
+for (def i = 1; i < 10; i++) {
+  foo = i
+  <caret>foo
+}
+''', 'java.lang.Integer'
   }
 }

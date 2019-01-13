@@ -251,7 +251,7 @@ public class CyclicDependenciesBuilder{
       public Iterator<PsiPackage> getIn(PsiPackage psiPack) {
         final Set<PsiPackage> psiPackages = myPackageDependencies.get(psiPack);
         if (psiPackages == null) {     //for packs without java classes
-          return new HashSet<PsiPackage>().iterator();
+          return Collections.emptyIterator();
         }
         return psiPackages.iterator();
       }

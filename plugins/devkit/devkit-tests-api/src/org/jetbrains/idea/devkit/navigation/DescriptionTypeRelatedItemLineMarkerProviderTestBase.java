@@ -3,11 +3,11 @@ package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInspection.LocalInspectionEP;
-import com.intellij.icons.AllIcons;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
+import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class DescriptionTypeRelatedItemLineMarkerProviderTestBase extends JavaCodeInsightFixtureTestCase {
@@ -22,6 +22,6 @@ public abstract class DescriptionTypeRelatedItemLineMarkerProviderTestBase exten
   protected void doTestInspectionDescription(@NotNull String inspectionFile, @NotNull String descriptionFile) {
     myFixture.copyDirectoryToProject("inspectionDescriptions", "inspectionDescriptions");
     GutterMark gutter = myFixture.findGutter(inspectionFile);
-    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "Description", AllIcons.FileTypes.Html, descriptionFile);
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "Description", DevkitIcons.Gutter.DescriptionFile, descriptionFile);
   }
 }

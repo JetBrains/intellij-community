@@ -2,10 +2,10 @@
 package com.intellij.ide.projectWizard.kotlin.model
 
 import com.intellij.testGuiFramework.impl.jTree
-import com.intellij.testGuiFramework.util.logUIStep
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel
 import com.intellij.testGuiFramework.util.scenarios.checkLibraryPresent
 import com.intellij.testGuiFramework.util.scenarios.checkModule
+import com.intellij.testGuiFramework.util.step
 import org.fest.swing.exception.ComponentLookupException
 
 // Attention: it's supposed that Project Structure dialog is open both before the function
@@ -13,14 +13,15 @@ import org.fest.swing.exception.ComponentLookupException
 fun ProjectStructureDialogModel.checkFacetInOneModule(expectedFacet: FacetStructure, vararg path: String) {
   checkModule {
     with(guiTestCase) {
-      try {
-        jTree(*path).clickPath()
-        logUIStep("Check facet for module `${path.joinToString(" -> ")}`")
-        (this as KotlinGuiTestCase).checkFacetState(expectedFacet)
-      }
-      catch (e: ComponentLookupException) {
-        val errorMessage = "Kotlin facet for module `${path.joinToString(" -> ")}` not found"
-        throw IllegalStateException(errorMessage, e as Throwable)
+      step("Check facet for module `${path.joinToString(" -> ")}`") {
+        try {
+          jTree(*path).clickPath()
+          (this as KotlinGuiTestCase).checkFacetState(expectedFacet)
+        }
+        catch (e: ComponentLookupException) {
+          val errorMessage = "Kotlin facet for module `${path.joinToString(" -> ")}` not found"
+          throw IllegalStateException(errorMessage, e as Throwable)
+        }
       }
     }
   }

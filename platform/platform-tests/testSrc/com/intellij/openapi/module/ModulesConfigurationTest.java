@@ -1,10 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
+import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.ServiceKt;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -24,8 +22,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ModulesConfigurationTest extends PlatformTestCase {
-  private boolean isSaveAllowed;
-
   public void testAddRemoveModule() throws IOException, JDOMException {
     Pair<File, File> result = createProjectWithModule();
     File projectDir = result.getFirst();
@@ -80,30 +76,10 @@ public class ModulesConfigurationTest extends PlatformTestCase {
     return Pair.create(projectDir, moduleFile);
   }
 
-  private static void closeProject(Project project, boolean save) {
-    if (save) {
-      StoreUtil.save(ServiceKt.getStateStore(project), project, true);
+  private static void closeProject(@NotNull Project project, boolean isSave) {
+    if (isSave) {
+      StateStorageManagerKt.saveComponentManager(project, true);
     }
     ((ProjectManagerImpl)ProjectManager.getInstance()).forceCloseProject(project, true);
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    isSaveAllowed = ApplicationManagerEx.getApplicationEx().isSaveAllowed();
-    ApplicationManagerEx.getApplicationEx().setSaveAllowed(true);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      ApplicationManagerEx.getApplicationEx().setSaveAllowed(isSaveAllowed);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
   }
 }

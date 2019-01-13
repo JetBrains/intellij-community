@@ -39,7 +39,7 @@ class DistributionJARsBuilder {
   private final File patchedApplicationInfo
   private final LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish
 
-  DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo, 
+  DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo,
                           LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish = [:]) {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
@@ -584,6 +584,10 @@ class DistributionJARsBuilder {
                 if (layout.localizableResourcesJarName(moduleName) != null) {
                   ant.patternset(refid: resourceExcluded)
                 }
+                else {
+                  ant.exclude(name: "**/icon-robots.txt")
+                }
+
                 layout.moduleExcludes.get(moduleName)?.each {
                   //noinspection GrUnresolvedAccess
                   ant.exclude(name: it)
@@ -773,9 +777,12 @@ class DistributionJARsBuilder {
   private File createKeyMapWithAltClickReassignedToMultipleCarets() {
     def sourceFile = new File("${buildContext.getModuleOutputPath(buildContext.findModule("intellij.platform.resources"))}/keymaps/\$default.xml")
     String defaultKeymapContent = sourceFile.text
-    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", "")
+    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", 
+                                                        "<mouse-shortcut keystroke=\"to be alt shift button1\"/>")
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",
                                                         "<mouse-shortcut keystroke=\"alt button1\"/>")
+    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"to be alt shift button1\"/>", 
+                                                        "<mouse-shortcut keystroke=\"alt shift button1\"/>")
     def patchedKeyMapDir = new File(buildContext.paths.temp, "patched-keymap")
     def targetFile = new File(patchedKeyMapDir, "keymaps/\$default.xml")
     FileUtil.createParentDirs(targetFile)

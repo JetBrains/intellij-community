@@ -16,7 +16,6 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -87,7 +86,7 @@ public class TipUIUtil {
   }
 
   @Nullable
-  private static TipAndTrickBean getTip(String tipFileName) {
+  public static TipAndTrickBean getTip(String tipFileName) {
     TipAndTrickBean tip = TipAndTrickBean.findByFileName(tipFileName);
     if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
       tip = new TipAndTrickBean();
@@ -143,11 +142,6 @@ public class TipUIUtil {
       return getCantReadText(tip);
     }
 
-  }
-
-  @Deprecated
-  public static void openTipInBrowser(String tipFileName, TipUIUtil.Browser browser, Class providerClass) {
-    openTipInBrowser(getTip(tipFileName), browser);
   }
 
   public static void openTipInBrowser(@Nullable TipAndTrickBean tip, TipUIUtil.Browser browser) {
@@ -479,72 +473,6 @@ public class TipUIUtil {
     @Override
     public JComponent getComponent() {
       return this;
-    }
-  }
-  private static class JBHtmlFactory extends HTMLEditorKit.HTMLFactory {
-    private UIUtil.JBHtmlEditorKit myEditorKit;
-
-    private JBHtmlFactory(UIUtil.JBHtmlEditorKit editorKit) {
-      myEditorKit = editorKit;
-    }
-
-    @Override
-    public View create(Element elem) {
-      View view = super.create(elem);
-      if (view instanceof ImageView) {
-        String src = (String)view.getElement().getAttributes().getAttribute(HTML.Attribute.SRC);
-        final JEditorPane editor = ReflectionUtil.getField(HTMLEditorKit.HTMLFactory.class, myEditorKit, JEditorPane.class, "theEditor");
-        if (src != null && src.endsWith(".svg") && editor != null) {
-          final Ref<Image> image = new Ref<Image>();
-          try {
-            try {
-              if (!src.endsWith("_dark.svg") && isUnderDarcula()) {
-                image.set(SVGLoader.load(new URL(src.replace(".svg", "_dark.svg")), JBUI.isPixHiDPI(editor) ? 2f : 1f));
-              }
-            }
-            catch (IOException e) {
-              image.set(SVGLoader.load(new URL(src), JBUI.isPixHiDPI(editor) ? 2f : 1f));
-            }
-            return new ImageView(elem) {
-              @Override
-              public Image getImage() {
-                return image.get();
-              }
-
-              @Override
-              public void paint(Graphics g, Shape a) {
-                Rectangle bounds = a.getBounds();
-                int width = (int)super.getPreferredSpan(View.X_AXIS);
-                int height = (int)super.getPreferredSpan(View.Y_AXIS);
-                @SuppressWarnings("UndesirableClassUsage")
-                BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D graphics = image.createGraphics();
-                super.paint(graphics, new Rectangle(image.getWidth(), image.getHeight()));
-                drawImage(g, ImageUtil.ensureHiDPI(image, JBUI.ScaleContext.create(editor)), bounds.x, bounds.y, null);
-              }
-
-              @Override
-              public float getMaximumSpan(int axis) {
-                return super.getMaximumSpan(axis) / JBUI.sysScale(editor);
-              }
-
-              @Override
-              public float getMinimumSpan(int axis) {
-                return super.getMinimumSpan(axis) / JBUI.sysScale(editor);
-              }
-
-              @Override
-              public float getPreferredSpan(int axis) {
-                return super.getPreferredSpan(axis) / JBUI.sysScale(editor);
-              }
-            };
-          }
-          catch (IOException e) {
-            //ignore
-          }
-        }
-      }
-      return view;
     }
   }
 

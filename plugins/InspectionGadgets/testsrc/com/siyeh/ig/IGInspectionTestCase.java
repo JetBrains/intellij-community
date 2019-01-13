@@ -33,7 +33,7 @@ public abstract class IGInspectionTestCase extends InspectionTestCase {
 
   @Override
   public void doTest(@NotNull @NonNls final String folderName, @NotNull final LocalInspectionTool tool) {
-    super.doTest(folderName, new LocalInspectionToolWrapper(tool), "java 1.5");
+    super.doTest(folderName, new LocalInspectionToolWrapper(tool));
   }
 
 }

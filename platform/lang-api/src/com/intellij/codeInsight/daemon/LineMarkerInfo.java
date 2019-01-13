@@ -50,14 +50,12 @@ public class LineMarkerInfo<T extends PsiElement> {
    * @param element         the element for which the line marker is created.
    * @param range     the range (relative to beginning of file) with which the marker is associated
    * @param icon            the icon to show in the gutter for the line marker
-   * @param updatePass      the ID of the daemon pass during which the marker should be recalculated
    * @param tooltipProvider the callback to calculate the tooltip for the gutter icon
    * @param navHandler      the handler executed when the gutter icon is clicked
    */
   public LineMarkerInfo(@NotNull T element,
                         @NotNull TextRange range,
                         Icon icon,
-                        int updatePass,
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler,
                         @NotNull GutterIconRenderer.Alignment alignment) {
@@ -90,7 +88,21 @@ public class LineMarkerInfo<T extends PsiElement> {
   }
 
   /**
-   * @deprecated use {@link LineMarkerInfo#LineMarkerInfo(PsiElement, TextRange, Icon, int, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment)} instead
+   * @deprecated use {@link LineMarkerInfo#LineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment)} instead
+   */
+  @Deprecated
+  public LineMarkerInfo(@NotNull T element,
+                        @NotNull TextRange range,
+                        Icon icon,
+                        int updatePass,
+                        @Nullable Function<? super T, String> tooltipProvider,
+                        @Nullable GutterIconNavigationHandler<T> navHandler,
+                        @NotNull GutterIconRenderer.Alignment alignment) {
+    this(element, range, icon, tooltipProvider, navHandler, alignment);
+  }
+
+  /**
+   * @deprecated use {@link LineMarkerInfo#LineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment)} instead
    */
   @Deprecated
   public LineMarkerInfo(@NotNull T element,
@@ -104,7 +116,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   }
 
   /**
-   * @deprecated use {@link LineMarkerInfo#LineMarkerInfo(PsiElement, TextRange, Icon, int, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment)} instead
+   * @deprecated use {@link LineMarkerInfo#LineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment)} instead
    */
   @Deprecated
   public LineMarkerInfo(@NotNull T element,

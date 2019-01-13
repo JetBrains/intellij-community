@@ -14,7 +14,6 @@
       <option name="GROOVY" value="false" />
       <option name="GROOVY_STATEMENT" value="false" />
       <option name="JSON" value="false" />
-      <option name="KOTLIN" value="false" />
       <option name="OTHER" value="true" />
     </context>
   </template>
@@ -32,7 +31,6 @@
       <option name="GROOVY" value="false" />
       <option name="GROOVY_EXPRESSION" value="false" />
       <option name="JSON" value="false" />
-      <option name="KOTLIN" value="false" />
       <option name="OTHER" value="true" />
     </context>
   </template>

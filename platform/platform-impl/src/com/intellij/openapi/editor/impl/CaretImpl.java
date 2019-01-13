@@ -863,7 +863,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       newSelectionStartColumn = -1;
       newSelectionEndColumn = -1;
     }
-    clone.moveToLogicalPosition(new LogicalPosition(newLine, myLastColumnNumber), false, null, false, false);
+    clone.moveToLogicalPosition(new LogicalPosition(newLine, myLastColumnNumber, myLeansTowardsLargerOffsets), false, null, false, false);
     clone.myLastColumnNumber = myLastColumnNumber;
     clone.myDesiredX = myDesiredX >= 0 ? myDesiredX : getCurrentX();
     clone.myDesiredSelectionStartColumn = newSelectionStartColumn;

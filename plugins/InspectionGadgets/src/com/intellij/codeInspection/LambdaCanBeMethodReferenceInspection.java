@@ -269,7 +269,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(expression.getContainingFile());
     if (expression instanceof PsiInstanceOfExpression) {
       if (!isMethodReferenceArgCandidate(((PsiInstanceOfExpression)expression).getOperand())) return null;
-      return new MethodReferenceCandidate(expression, true, javaSettings.REPLACE_INSTANCEOF);
+      return new MethodReferenceCandidate(expression, true, javaSettings.REPLACE_INSTANCEOF_AND_CAST);
     }
     else if (expression instanceof PsiBinaryExpression) {
       PsiExpression comparedWithNull =
@@ -288,7 +288,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
         }
         PsiType type = typeElement.getType();
         if (type instanceof PsiPrimitiveType || PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter) return null;
-        return new MethodReferenceCandidate(expression, true, javaSettings.REPLACE_INSTANCEOF);
+        return new MethodReferenceCandidate(expression, true, javaSettings.REPLACE_INSTANCEOF_AND_CAST);
       }
     }
     return null;
@@ -593,7 +593,9 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiLambdaExpression) {
-        element = LambdaUtil.extractSingleExpressionFromBody(((PsiLambdaExpression)element).getBody());
+        MethodReferenceCandidate methodReferenceCandidate = extractMethodReferenceCandidateExpression(((PsiLambdaExpression)element).getBody());
+        if (methodReferenceCandidate == null) return;
+        element = methodReferenceCandidate.myExpression;
       }
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
       if (lambdaExpression == null) return;

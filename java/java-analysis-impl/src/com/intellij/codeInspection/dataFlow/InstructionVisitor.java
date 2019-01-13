@@ -154,14 +154,18 @@ public abstract class InstructionVisitor {
   public DfaInstructionState[] visitBox(BoxingInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
     DfaValue value = state.pop();
     DfaValueFactory factory = runner.getFactory();
+    if (value instanceof DfaBinOpValue) {
+      value = factory.getFactValue(DfaFactType.RANGE, state.getValueFact(value, DfaFactType.RANGE));
+    }
     DfaValue boxed = factory.getBoxedFactory().createBoxed(value, instruction.getTargetType());
     state.push(boxed == null ? factory.createTypeValue(instruction.getTargetType(), Nullability.NOT_NULL) : boxed);
     return nextInstruction(instruction, runner, state);
   }
 
-  public DfaInstructionState[] visitUnbox(UnboxingInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+  public DfaInstructionState[] visitUnwrapField(UnwrapSpecialFieldInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
     DfaValue value = state.pop();
-    state.push(runner.getFactory().getBoxedFactory().createUnboxed(value, instruction.getTargetType()));
+    DfaValue field = instruction.getSpecialField().createValue(runner.getFactory(), value);
+    state.push(field);
     return nextInstruction(instruction, runner, state);
   }
 

@@ -26,5 +26,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
+    <orderEntry type="library" name="NanoXML" level="project" />
   </component>
 </module>

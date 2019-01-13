@@ -8,9 +8,11 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import sun.misc.VMSupport;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Properties;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -18,6 +20,9 @@ import java.util.concurrent.TimeUnit;
  * @author egor
  */
 public class DebugAttachDetector {
+  private static final Logger LOG = Logger.getInstance(DebugAttachDetector.class);
+  private static Properties ourAgentProperties;
+
   private ScheduledFuture<?> myTask;
   private boolean myAttached;
   private boolean myReady;
@@ -33,8 +38,37 @@ public class DebugAttachDetector {
       return;
     }
 
+    Class<?> vmSupportClass = null;
+    try {
+      vmSupportClass = Class.forName("jdk.internal.vm.VMSupport");
+    }
+    catch (Exception e) {
+      try {
+        vmSupportClass = Class.forName("sun.misc.VMSupport");
+      }
+      catch (Exception ignored) {
+        LOG.warn("Unable to start DebugAttachDetector, VMSupport class not found");
+        return;
+      }
+    }
+
+    try {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      ourAgentProperties = (Properties)vmSupportClass.getMethod("getAgentProperties").invoke(null);
+    }
+    catch (NoSuchMethodException | InvocationTargetException ex) {
+      LOG.error(ex);
+    }
+    catch (IllegalAccessException ex) {
+      LOG.warn("Unable to start DebugAttachDetector, please add `--add-exports=java.base/jdk.internal.vm=ALL-UNNAMED` to VM options");
+    }
+
+    if (ourAgentProperties == null) {
+      return;
+    }
+
     myTask = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
-      String property = VMSupport.getAgentProperties().getProperty("sun.jdwp.listenerAddress");
+      String property = ourAgentProperties.getProperty("sun.jdwp.listenerAddress");
       boolean attached = property != null && property.isEmpty();
       if (!myReady) {
         myAttached = attached;

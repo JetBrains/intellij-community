@@ -380,7 +380,7 @@ public class StructMethod extends StructMember {
   }
 
   public StructLocalVariableTableAttribute getLocalVariableAttr() {
-    return (StructLocalVariableTableAttribute)getAttribute(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
+    return getAttribute(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
   }
 
   @Override

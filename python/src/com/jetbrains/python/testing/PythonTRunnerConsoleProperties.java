@@ -70,12 +70,13 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
     private static final String EMPTY_SUITE = PyBundle.message("runcfg.tests.empty_suite");
 
     @Override
-    public void onTestingFinished(@NotNull final SMTestProxy.SMRootTestProxy testsRoot) {
-      super.onTestingFinished(testsRoot);
+    public void onBeforeTestingFinished(@NotNull final SMTestProxy.SMRootTestProxy testsRoot) {
       if (testsRoot.isEmptySuite()) {
         testsRoot.setPresentation(EMPTY_SUITE);
         testsRoot.setTestFailed(EMPTY_SUITE, null, false);
       }
+      PySMTestProxyUtilsKt.calculateAndReturnMagnitude(testsRoot);
+      super.onBeforeTestingFinished(testsRoot);
     }
 
     @Override

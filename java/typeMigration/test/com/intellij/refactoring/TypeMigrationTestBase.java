@@ -4,17 +4,14 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Functions;
@@ -22,15 +19,12 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
 import java.util.Arrays;
 
 /**
  * @author anna
  */
-public abstract class TypeMigrationTestBase extends MultiFileTestCase {
+public abstract class TypeMigrationTestBase extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData";
@@ -141,19 +135,11 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   }
 
   public void start(final RulesProvider provider, final String className) {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        TypeMigrationTestBase.this.performAction(className, rootDir.getName(), provider);
-      }
-    });
+    doTest(() -> this.performAction(className, provider));
   }
 
-  private void performAction(String className, String rootDir, RulesProvider provider) throws Exception {
-    PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(getProject()));
-
-    assertNotNull("Class " + className + " not found", aClass);
-
+  private void performAction(String className, RulesProvider provider) throws Exception {
+    PsiClass aClass = myFixture.findClass(className);
     final PsiElement[] migrationElements = provider.victims(aClass);
     final PsiType migrationType = provider.migrationType(migrationElements[0]);
     final TypeMigrationRules rules = new TypeMigrationRules(getProject());
@@ -165,30 +151,9 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
 
     WriteCommandAction.runWriteCommandAction(null, () -> pr.performRefactoring(usages));
 
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting());
 
-    String itemName = className + ".items";
-    String patternName = getTestDataPath() + getTestRoot() + getTestName(true) + "/after/" + itemName;
-
-    File patternFile = new File(patternName);
-
-    if (!patternFile.exists()) {
-      try (PrintWriter writer = new PrintWriter(new FileOutputStream(patternFile))) {
-        writer.print(report);
-      }
-
-      System.err.println("Pattern not found, file " + patternName + " created.");
-
-      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(patternFile);
-    }
-
-    File graFile = new File(FileUtil.getTempDirectory() + File.separator + rootDir + File.separator + itemName);
-
-    try (PrintWriter writer = new PrintWriter(new FileOutputStream(graFile))) {
-      writer.print(report);
-    }
-
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(graFile);
-    FileDocumentManager.getInstance().saveAllDocuments();
+    myFixture.getTempDirFixture().createFile(className + ".items", report);
   }
 
   interface RulesProvider {
@@ -208,5 +173,11 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     TestTypeMigrationProcessor(final Project project, final PsiElement[] roots, final PsiType migrationType, final TypeMigrationRules rules) {
       super(project, roots, Functions.constant(migrationType), rules, true);
     }
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_6;
   }
 }

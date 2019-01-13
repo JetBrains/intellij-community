@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -10,14 +10,13 @@ import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.SmartList
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.writeChild
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import gnu.trove.THashMap
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.data.MapEntry
 import org.intellij.lang.annotations.Language
@@ -53,7 +52,8 @@ internal class ApplicationStoreTest {
     componentStore = MyComponentStore(testAppConfig.systemIndependentPath)
   }
 
-  @Test fun `stream provider save if several storages configured`() {
+  @Test
+  fun `stream provider save if several storages configured`() = runBlocking<Unit> {
     val component = SeveralStoragesConfigured()
 
     val streamProvider = MyStreamProvider()
@@ -85,15 +85,17 @@ internal class ApplicationStoreTest {
     assertThat(Paths.get(storageManager.expandMacros(fileSpec))).doesNotExist()
   }
 
-  @Test fun `remove deprecated storage on write`() {
+  @Test
+  fun `remove deprecated storage on write`() = runBlocking {
     doRemoveDeprecatedStorageOnWrite(SeveralStoragesConfigured())
   }
 
-  @Test fun `remove deprecated storage on write 2`() {
+  @Test
+  fun `remove deprecated storage on write 2`() = runBlocking {
     doRemoveDeprecatedStorageOnWrite(ActualStorageLast())
   }
 
-  private fun doRemoveDeprecatedStorageOnWrite(component: Foo) {
+  private suspend fun doRemoveDeprecatedStorageOnWrite(component: Foo) {
     val oldFile = writeConfig("old.xml", "<application>${createComponentData("old")}</application>")
     writeConfig("new.xml", "<application>${createComponentData("new")}</application>")
 
@@ -130,7 +132,8 @@ internal class ApplicationStoreTest {
     test(ExportableItem(Paths.get(rootConfigPath, "templates"), "Live templates (schemes)", RoamingType.DEFAULT))
   }
 
-  @Test fun `import settings`() {
+  @Test
+  fun `import settings`() = runBlocking<Unit> {
     testAppConfig.refreshVfs()
 
     val component = A()
@@ -173,7 +176,8 @@ internal class ApplicationStoreTest {
 
   private fun createComponentData(foo: String) = """<component name="A" foo="$foo" />"""
 
-  @Test fun `remove data from deprecated storage if another component data exists`() {
+  @Test
+  fun `remove data from deprecated storage if another component data exists`() = runBlocking<Unit> {
     val data = createComponentData("new")
     val oldFile = writeConfig("old.xml", """<application>
     <component name="OtherComponent" foo="old" />
@@ -210,7 +214,8 @@ internal class ApplicationStoreTest {
     }
   }
 
-  @Test fun `don't save if only format is changed`() {
+  @Test
+  fun `don't save if only format is changed`() = runBlocking<Unit> {
     val oldContent = """<application><component name="A" foo="old" deprecated="old"/></application>"""
     val file = writeConfig("a.xml", oldContent)
     val oldModificationTime = file.lastModified()
@@ -252,7 +257,8 @@ internal class ApplicationStoreTest {
     assertThat(component.options).isEqualTo(TestState("old"))
   }
 
-  @Test fun `do not check if only format changed for non-roamable storage`() {
+  @Test
+  fun `do not check if only format changed for non-roamable storage`() = runBlocking<Unit> {
     @State(name = "A", storages = [(Storage(value = "b.xml", roamingType = RoamingType.DISABLED))])
     class AWorkspace : A()
 
@@ -278,7 +284,8 @@ internal class ApplicationStoreTest {
     </application>""")
   }
 
-  @Test fun `other xml file as not-roamable without explicit roaming`() {
+  @Test
+  fun `other xml file as not-roamable without explicit roaming`() = runBlocking<Unit> {
     @State(name = "A", storages = [(Storage(value = Storage.NOT_ROAMABLE_FILE))])
     class AOther : A()
 
@@ -291,8 +298,8 @@ internal class ApplicationStoreTest {
     assertThat(testAppConfig.resolve(Storage.NOT_ROAMABLE_FILE)).doesNotExist()
   }
 
-  private fun saveStore() {
-    runInEdtAndWait { componentStore.save(SmartList()) }
+  private suspend fun saveStore() {
+    componentStore.save()
   }
 
   private fun writeConfig(fileName: String, @Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
@@ -309,12 +316,7 @@ internal class ApplicationStoreTest {
     }
 
     private fun getMap(roamingType: RoamingType): MutableMap<String, String> {
-      var map = data[roamingType]
-      if (map == null) {
-        map = THashMap<String, String>()
-        data.put(roamingType, map)
-      }
-      return map
+      return data.getOrPut(roamingType) { THashMap<String, String>() }
     }
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
@@ -329,7 +331,7 @@ internal class ApplicationStoreTest {
     }
   }
 
-  private class MyComponentStore(testAppConfigPath: String) : ComponentStoreImpl() {
+  private class MyComponentStore(testAppConfigPath: String) : ChildlessComponentStore() {
     override val storageManager = ApplicationStorageManager(ApplicationManager.getApplication())
 
     init {

@@ -77,7 +77,7 @@ public class SliceHandler implements CodeInsightActionHandler {
 
     Project myProject = element.getProject();
     AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
-    analysisUIOptions.save(storedSettingsBean.analysisUIOptions);
+    analysisUIOptions.loadState(storedSettingsBean.analysisUIOptions);
 
     List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(myProject, analysisScope,
                                                                         module, element);
@@ -88,7 +88,7 @@ public class SliceHandler implements CodeInsightActionHandler {
     }
 
     AnalysisScope scope = dialog.getScope(analysisUIOptions, analysisScope, myProject, module);
-    storedSettingsBean.analysisUIOptions.save(analysisUIOptions);
+    storedSettingsBean.analysisUIOptions.loadState(analysisUIOptions);
 
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.scope = scope;

@@ -119,7 +119,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
 
     @NotNull
     @Override
-    public AnAction createGoToChangeAction(@NotNull Consumer<Integer> onSelected) {
+    public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected) {
       return ChangeDiffRequestChain.createGoToChangeAction(this, onSelected);
     }
   }
@@ -154,7 +154,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     }
   }
 
-  private static int findSelfInList(@NotNull List<Change> changes, @NotNull FilePath filePath) {
+  private static int findSelfInList(@NotNull List<? extends Change> changes, @NotNull FilePath filePath) {
     int idx = -1;
     for (int i = 0; i < changes.size(); i++) {
       final Change change = changes.get(i);

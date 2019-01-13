@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.openapi.vcs.merge.MergeSession
@@ -53,7 +54,7 @@ internal abstract class GitTestCase : IcsTestCase() {
 
   class FileInfo(val name: String, val data: ByteArray)
 
-  protected fun addAndCommit(path: String): FileInfo {
+  protected suspend fun addAndCommit(path: String): FileInfo {
     val data = """<file path="$path" />""".toByteArray()
     provider.write(path, data)
     repositoryManager.commit()
@@ -90,11 +91,11 @@ internal abstract class GitTestCase : IcsTestCase() {
     remoteRepository.resetHard()
   }
 
-  protected fun sync(syncType: SyncType) {
+  protected suspend fun sync(syncType: SyncType) {
     icsManager.sync(syncType)
   }
 
-  protected fun createLocalAndRemoteRepositories(remoteBranchName: String? = null, initialCommit: Boolean = false) {
+  protected suspend fun createLocalAndRemoteRepositories(remoteBranchName: String? = null, initialCommit: Boolean = false) {
     createRemoteRepository(remoteBranchName, true)
     configureLocalRepository(remoteBranchName)
     if (initialCommit) {

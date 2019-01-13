@@ -123,7 +123,7 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
       }
       labels.apply {
         removeAll()
-        for (label in value.labels) add(GithubUIUtil.createIssueLabelLabel(label))
+        for (label in value.labels.orEmpty()) add(GithubUIUtil.createIssueLabelLabel(label))
       }
       assignees.apply {
         removeAll()

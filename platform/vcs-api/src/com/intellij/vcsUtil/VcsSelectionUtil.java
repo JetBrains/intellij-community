@@ -16,27 +16,21 @@ public class VcsSelectionUtil {
 
   @Nullable
   public static VcsSelection getSelection(VcsContext context) {
-
-    VcsSelection selectionFromEditor = getSelectionFromEditor(context);
-    if (selectionFromEditor != null) {
-      return selectionFromEditor;
-    }
-    for(VcsSelectionProvider provider: VcsSelectionProvider.EP_NAME.getExtensionList()) {
-      try {
-        final VcsSelection vcsSelection = provider.getSelection(context);
-        if (vcsSelection != null) return vcsSelection;
-      }
-      catch (IndexNotReadyException ignored) {
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static VcsSelection getSelectionFromEditor(VcsContext context) {
     Editor editor = context.getEditor();
     if (editor == null) return null;
+
     SelectionModel selectionModel = editor.getSelectionModel();
+    if (!selectionModel.hasSelection()) {
+      for (VcsSelectionProvider provider : VcsSelectionProvider.EP_NAME.getExtensionList()) {
+        try {
+          final VcsSelection vcsSelection = provider.getSelection(context);
+          if (vcsSelection != null) return vcsSelection;
+        }
+        catch (IndexNotReadyException ignored) {
+        }
+      }
+    }
+
     return new VcsSelection(editor.getDocument(), selectionModel);
   }
 }

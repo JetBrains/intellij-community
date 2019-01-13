@@ -2955,6 +2955,27 @@ public class StringUtil extends StringUtilRt {
     return equals(ts1, ts2);
   }
 
+  /**
+   * Collapses all white-space (including new lines) between non-white-space characters to a single space character.
+   * Leading and trailing white space is removed.
+   */
+  public static String collapseWhiteSpace(@NotNull CharSequence s) {
+    final StringBuilder result = new StringBuilder();
+    boolean space = false;
+    for (int i = 0, length = s.length(); i < length; i++) {
+      final char ch = s.charAt(i);
+      if (isWhiteSpace(ch)) {
+        if (!space) space = true;
+      }
+      else {
+        if (space && result.length() > 0) result.append(' ');
+        result.append(ch);
+        space = false;
+      }
+    }
+    return result.toString();
+  }
+
   @Contract(pure = true)
   public static boolean findIgnoreCase(@Nullable String toFind, @NotNull String... where) {
     for (String string : where) {

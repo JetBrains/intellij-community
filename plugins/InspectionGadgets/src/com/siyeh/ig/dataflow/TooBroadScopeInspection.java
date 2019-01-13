@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Objects;
 
 public class TooBroadScopeInspection extends BaseInspection {
 
@@ -387,7 +388,11 @@ public class TooBroadScopeInspection extends BaseInspection {
       CommentTracker tracker = new CommentTracker();
       if (commonParent instanceof PsiTryStatement) {
         PsiElement resourceReference = referenceElement.getParent();
-        PsiResourceVariable resourceVariable = createResourceVariable(project, variable, initializer != null ? tracker.markUnchanged(initializer) : null);
+        if (initializer != null) {
+          tracker.markUnchanged(initializer);
+        }
+        PsiResourceVariable resourceVariable = JavaPsiFacade.getElementFactory(project).createResourceVariable(
+          Objects.requireNonNull(variable.getName()), variable.getType(), initializer, variable);
         newDeclaration = resourceReference.getParent().addBefore(resourceVariable, resourceReference);
         resourceReference.delete();
       }
@@ -432,23 +437,6 @@ public class TooBroadScopeInspection extends BaseInspection {
       }
     }
 
-    private PsiResourceVariable createResourceVariable(@NotNull Project project, PsiLocalVariable variable, PsiExpression initializer) {
-      PsiTryStatement tryStatement = (PsiTryStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("try (X x = null){}", variable);
-      PsiResourceList resourceList = tryStatement.getResourceList();
-      assert resourceList != null;
-      PsiResourceVariable resourceVariable = (PsiResourceVariable)resourceList.iterator().next();
-      resourceVariable.getTypeElement().replace(variable.getTypeElement());
-      PsiIdentifier nameIdentifier = resourceVariable.getNameIdentifier();
-      assert nameIdentifier != null;
-      PsiIdentifier oldIdentifier = variable.getNameIdentifier();
-      assert oldIdentifier != null;
-      nameIdentifier.replace(oldIdentifier);
-      if (initializer != null) {
-        resourceVariable.setInitializer(initializer);
-      }
-      return resourceVariable;
-    }
-
     private void removeOldVariable(@NotNull PsiVariable variable, CommentTracker tracker) {
       final PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
       if (declaration == null) {
@@ -483,6 +471,11 @@ public class TooBroadScopeInspection extends BaseInspection {
         // remove final when PsiDeclarationFactory adds one by mistake
         newModifierList.setModifierProperty(PsiModifier.FINAL, variable.hasModifierProperty(PsiModifier.FINAL));
         GenerateMembersUtil.copyAnnotations(modifierList, newModifierList);
+      }
+      PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null && typeElement.isInferredType()) {
+        //restore 'var' for local variables
+        newVariable.getTypeElement().replace(factory.createTypeElementFromText("var", variable));
       }
       return newDeclaration;
     }

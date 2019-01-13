@@ -96,7 +96,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       }
     }
 
-    final MethodSignature methodSignature;
+    final PsiType[] parameterTypes;
     if (signature != null) {
       final List<PsiType> types = ContainerUtil.newArrayListWithCapacity(signature.length);
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(element.getProject());
@@ -108,17 +108,19 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
           types.add(PsiType.NULL);
         }
       }
-      methodSignature = MethodSignatureUtil.createMethodSignature(name, types.toArray(PsiType.createArray(types.size())),
-                                                                  PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY,
-                                                                  name.equals(scope.getName()));
+      parameterTypes = types.toArray(PsiType.createArray(types.size()));
     }
     else {
-      methodSignature = null;
+      parameterTypes = PsiType.EMPTY_ARRAY;
     }
 
-    for (PsiMethod method : getAllMethods(scope, this)) {
-      if (!method.getName().equals(name) ||
-          methodSignature != null && !MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY))) continue;
+    final MethodSignature methodSignature = MethodSignatureUtil.createMethodSignature(name, parameterTypes,
+                                                                                      PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY,
+                                                                                      name.equals(scope.getName()));
+
+    PsiMethod method = findMethod(methodSignature, name, getAllMethods(scope, this));
+
+    if (method != null) {
       return new MyReference(method) {
 
         @Override
@@ -138,14 +140,6 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     return null;
   }
-  
-   @NotNull 
-   private static PsiMethod[] getAllMethods(PsiElement scope, PsiElement place) {
-    final SmartList<PsiMethod> result = new SmartList<>();
-    scope.processDeclarations(new FilterScopeProcessor<>(ElementClassFilter.METHOD, result), ResolveState.initial(), null, place);
-    return result.toArray(PsiMethod.EMPTY_ARRAY);
-  }
-
 
   @Override
   public int getTextOffset() {
@@ -208,6 +202,25 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       }
     }
     return JavaResolveUtil.getContextClass(this);
+  }
+
+  @Nullable
+  public static PsiMethod findMethod(@NotNull MethodSignature methodSignature, @Nullable String name, @NotNull PsiMethod[] allMethods) {
+    for (PsiMethod method : allMethods) {
+      if (method.getName().equals(name) &&
+          MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY))) {
+        return method;
+      }
+    }
+
+    return null;
+  }
+
+  @NotNull
+  public static PsiMethod[] getAllMethods(PsiElement scope, PsiElement place) {
+    final SmartList<PsiMethod> result = new SmartList<>();
+    scope.processDeclarations(new FilterScopeProcessor<>(ElementClassFilter.METHOD, result), ResolveState.initial(), null, place);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   public class MyReference implements PsiJavaReference {

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
+import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -111,12 +112,8 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
       return false;
     }
 
-    BreadcrumbsProvider provider = BreadcrumbsUtilEx.findProvider(editor.getEditor(), file);
-    if (provider != null) {
-      return true;
-    }
     for (FileBreadcrumbsCollector collector : FileBreadcrumbsCollector.EP_NAME.getExtensions(editor.getEditor().getProject())) {
-      if (collector.handlesFile(file)) {
+      if (collector.handlesFile(file) && collector.isShownForFile(editor.getEditor(), file)) {
         return true;
       }
     }

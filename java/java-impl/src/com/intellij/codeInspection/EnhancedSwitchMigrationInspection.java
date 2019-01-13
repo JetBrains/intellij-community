@@ -323,12 +323,19 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       PsiStatement[] statements = branch.getStatements();
       if (statements.length != 1) return null;
       PsiReturnStatement returnStmt = tryCast(statements[0], PsiReturnStatement.class);
-      if (returnStmt == null) return null;
-      PsiExpression returnExpr = returnStmt.getReturnValue();
-      if (returnExpr == null) return null;
+      SwitchRuleResult result;
+      if (returnStmt == null) {
+        PsiThrowStatement throwStatement = tryCast(statements[0], PsiThrowStatement.class);
+        if (throwStatement == null) return null;
+        result = new SwitchStatementBranch(new PsiStatement[]{throwStatement});
+      } else {
+        PsiExpression returnExpr = returnStmt.getReturnValue();
+        if (returnExpr == null) return null;
+        result = new SwitchRuleExpressionResult(returnExpr);
+      }
       newBranches.add(new SwitchExpressionBranch(branch.isDefault(),
                                                  branch.getCaseExpressions(),
-                                                 new SwitchRuleExpressionResult(returnExpr),
+                                                 result,
                                                  branch.getUsedElements()));
     }
     if (!isExhaustive) {
@@ -413,11 +420,17 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     for (OldSwitchStatementBranch branch : branches) {
       if (!isConvertibleBranch(branch)) return null;
       if (branch.isFallthrough() && branch.getStatements().length == 0) continue;
-      PsiExpression rExpression = ExpressionUtils.getAssignmentTo(branch.getStatements()[0], variable);
-      if (rExpression == null) return null;
-      newBranches.add(
-        new SwitchExpressionBranch(branch.isDefault(), branch.getCaseExpressions(), new SwitchRuleExpressionResult(rExpression),
-                                   branch.getRelatedStatements()));
+      PsiStatement first = branch.getStatements()[0];
+      PsiExpression rExpression = ExpressionUtils.getAssignmentTo(first, variable);
+      SwitchRuleResult result;
+      if (rExpression == null) {
+        PsiThrowStatement throwStatement = tryCast(first, PsiThrowStatement.class);
+        if (throwStatement == null) return null;
+        result = new SwitchStatementBranch(new PsiStatement[]{throwStatement});
+      } else {
+        result = new SwitchRuleExpressionResult(rExpression);
+      }
+      newBranches.add(new SwitchExpressionBranch(branch.isDefault(), branch.getCaseExpressions(), result, branch.getRelatedStatements()));
     }
     if (!isExhaustive) {
       newBranches.add(new SwitchExpressionBranch(true,

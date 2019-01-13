@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.project.ProjectKt;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -27,7 +27,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ref.GCUtil;
 import org.jetbrains.annotations.NonNls;
@@ -430,7 +429,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
   public void testNoIncrementOnWorkspaceFileChange() {
     FixtureRuleKt.runInLoadComponentStateMode(myProject, () -> {
-      ProjectKt.getStateStore(myProject).save(new SmartList<>(), true);
+      StateStorageManagerKt.saveComponentManager(getProject(), true);
 
       PsiModificationTracker tracker = getTracker();
       long mc = tracker.getModificationCount();

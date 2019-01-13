@@ -15,15 +15,23 @@ internal val UPSOURCE_DEV_PROJECT_ID = System.getProperty("intellij.icons.upsour
 
 private fun upsourceGet(method: String, args: String): String {
   val params = if (args.isEmpty()) "" else "?params=${URLEncoder.encode(args, Charsets.UTF_8.name())}"
-  return get("$UPSOURCE/~rpc/$method$params") {
-    upsourceAuthAndLog(method, args)
+  return upsourceRetry {
+    get("$UPSOURCE/~rpc/$method$params") {
+      upsourceAuthAndLog(method, args)
+    }
   }
 }
 
-private fun upsourcePost(method: String, args: String) = post("$UPSOURCE/~rpc/$method", args) {
-  upsourceAuthAndLog(method, args)
-  addHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString())
+private fun upsourcePost(method: String, args: String) = upsourceRetry {
+  post("$UPSOURCE/~rpc/$method", args) {
+    upsourceAuthAndLog(method, args)
+    addHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString())
+  }
 }
+
+private fun <T> upsourceRetry(action: () -> T) = retry(action = action, secondsBeforeRetry = 60, doRetry = {
+  it.message?.contains("Upsource is down for maintenance") == true
+})
 
 private fun HttpRequestBase.upsourceAuthAndLog(method: String, args: String) {
   log("Calling Upsource '$method' with '$args'")
@@ -56,14 +64,12 @@ internal fun createReview(projectId: String, branch: String, head: String, commi
       }
     }
   }
-  @Suppress("ReplaceSingleLineLet")
-  val reviewId = upsourcePost("createReview", """{
+  val response = upsourcePost("createReview", """{
       "projectId" : "$projectId",
       "revisions" : [
         ${revisions.joinToString { "\"${it.revisionId}\"" }}
     ]}""")
-    .let { extract(it, Regex(""""reviewId":\{([^}]+)""")) }
-    .let { extract(it, Regex(""""reviewId":"([^,"]+)"""")) }
+  val reviewId = extract(response, Regex(""""reviewId":"([^,"]+)""""))
   // Revisions may be originated from many repositories
   // but Upsource cannot track more than one branch so any will suffice
   val branchHeadLabel = revisions.first().branchHeadLabel
@@ -74,10 +80,13 @@ internal fun createReview(projectId: String, branch: String, head: String, commi
       "reviewId" : "$reviewId"
     }
   }""")
-  val review = UpsourceReview(reviewId, projectId, "$UPSOURCE/$projectId/review/$reviewId")
-  postComment(projectId, review, "Please review changes and cherry-pick into $head (don't forget to delete tmp branch $branch)")
+  val review = UpsourceReview(reviewId, projectId, asUrl(reviewId, projectId))
+  val conf = System.getProperty("teamcity.buildConfName")
+  postComment(projectId, review, "$conf. Please review changes and cherry-pick into $head with `Delete the source branch` box checked")
   return review
 }
+
+private fun asUrl(reviewId: String, projectId: String) = "$UPSOURCE/$projectId/review/$reviewId"
 
 private fun getBranchRevisions(projectId: String, branch: String, commits: Collection<String>) = commits.parallelStream().map {
   val response = upsourceGet("getRevisionsListFiltered", """{
@@ -95,7 +104,7 @@ private fun getBranchRevisions(projectId: String, branch: String, commits: Colle
 
 internal fun addReviewer(projectId: String, review: Review, email: String) {
   try {
-    val userId = userId(email, projectId)
+    val userId = userId(email) ?: guessEmail(email).asSequence().map(::userId).filterNotNull().first()
     upsourcePost("addParticipantToReview", """{
       "reviewId" : {
         "projectId" : "$projectId",
@@ -113,9 +122,14 @@ internal fun addReviewer(projectId: String, review: Review, email: String) {
   }
 }
 
-private fun userId(email: String, projectId: String): String {
-  val invitation = upsourceGet("inviteUser", """{"projectId":"$projectId","email":"$email"}""")
-  return extract(invitation, Regex(""""userId":"([^,"]+)""""))
+private val HUB by lazy { System.getProperty("hub.url") }
+
+private fun userId(email: String): String? {
+  log("Calling Hub 'users' with '$email'")
+  val response = get("$HUB/api/rest/users?fields=id&top=1&query=email:$email+and+has:verifiedEmail") {
+    basicAuth(System.getProperty("upsource.user.name"), System.getProperty("upsource.user.password"))
+  }
+  return extractOrNull(response, Regex(""""id":"([^,"]+)""""))
 }
 
 private fun extract(json: String, regex: Regex) = extractOrNull(json, regex) ?: error(json)
@@ -144,7 +158,12 @@ internal fun getOpenIconsReviewTitles(projectId: String) = upsourceGet("getRevie
     "limit": ${Int.MAX_VALUE},
     "query" : "state: open and created-by: {Icons Sync Robot}"
   }""").run {
-  extractAll(this, Regex(""""title":"([^"]+)""""))
+  val reviews = extractAll(this, Regex(""""reviewId":"([^,"]+)""""))
+  val titles = extractAll(this, Regex(""""title":"([^"]+)""""))
+  if (reviews.size != titles.size) error("Size of ${reviews} != size of ${titles}")
+  reviews.withIndex().associate {
+    asUrl(it.value, projectId) to titles[it.index]
+  }
 }
 
 internal fun closeReview(projectId: String, review: Review) {

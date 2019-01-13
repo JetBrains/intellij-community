@@ -548,6 +548,7 @@ class Foo {{
 
   void "test anonymous class methods potentially used from outside"() {
     def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+@SuppressWarnings("ALL")
 class Foo {{
   Runnable r = new Runnable() {
     public void run() {

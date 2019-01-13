@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("PackageDirectoryMismatch")
 
 package com.intellij.ide.passwordSafe.impl
 
+import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.credentialStore.*
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.credentialStore.keePass.*
@@ -12,13 +13,11 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ShutDownTracker
-import com.intellij.util.Alarm
-import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.pooledThreadSingleAlarm
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.runAsync
@@ -122,7 +121,7 @@ open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafe
   // maybe in the future we will use native async, so, this method added here instead "if need, just use runAsync in your code"
   override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> = runAsync { get(attributes) }
 
-  open fun save() {
+  open suspend fun save() {
     val keePassCredentialStore = currentProviderIfComputed as? KeePassCredentialStore ?: return
     keePassCredentialStore.save(createMasterKeyEncryptionSpec())
   }
@@ -144,7 +143,7 @@ open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafe
 
 class PasswordSafeImpl(settings: PasswordSafeSettings /* public - backward compatibility */) : BasePasswordSafe(settings), SettingsSavingComponent {
   // SecureRandom (used to generate master password on first save) can be blocking on Linux
-  private val saveAlarm = SingleAlarm(Runnable {
+  private val saveAlarm = pooledThreadSingleAlarm(delay = 0) {
     val currentThread = Thread.currentThread()
     ShutDownTracker.getInstance().registerStopperThread(currentThread)
     try {
@@ -153,9 +152,9 @@ class PasswordSafeImpl(settings: PasswordSafeSettings /* public - backward compa
     finally {
       ShutDownTracker.getInstance().unregisterStopperThread(currentThread)
     }
-  }, 0, Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication())
+  }
 
-  override fun save() {
+  override suspend fun save() {
     val keePassCredentialStore = currentProviderIfComputed as? KeePassCredentialStore ?: return
     if (keePassCredentialStore.isNeedToSave()) {
       saveAlarm.request()

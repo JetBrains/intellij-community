@@ -63,6 +63,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.usageView.UsageViewUtil;
@@ -790,12 +791,10 @@ public class CtrlMouseHandler {
                                    ? null
                                    : new QuickDocHyperlinkListener(docInfo.docProvider, info.myElementAtPointer);
       Ref<Consumer<String>> newTextConsumerRef = new Ref<>();
-      JComponent label = HintUtil.createInformationLabel(docInfo.text, hyperlinkListener, null, newTextConsumerRef);
-      Consumer<String> newTextConsumer = newTextConsumerRef.get();
+      JComponent component = HintUtil.createInformationLabel(docInfo.text, hyperlinkListener, null, newTextConsumerRef);
+      component.setBorder(JBUI.Borders.empty(6, 6, 5, 6));
 
-      label.setBorder(JBUI.Borders.empty(6, 6, 5, 6));
-
-      final LightweightHint hint = new LightweightHint(label);
+      final LightweightHint hint = new LightweightHint(wrapInScrollPaneIfNeeded(component, editor));
 
       myHint = hint;
       hint.addHintListener(new HintListener() {
@@ -806,9 +805,34 @@ public class CtrlMouseHandler {
       });
 
       showHint(hint, editor);
+
+      Consumer<String> newTextConsumer = newTextConsumerRef.get();
       if (newTextConsumer != null) {
         updateOnPsiChanges(hint, info, newTextConsumer, docInfo.text, editor);
       }
+    }
+
+    @NotNull
+    private JComponent wrapInScrollPaneIfNeeded(@NotNull JComponent component, @NotNull Editor editor) {
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        Dimension preferredSize = component.getPreferredSize();
+        Dimension maxSize = getMaxPopupSize(editor);
+        if (preferredSize.width > maxSize.width || preferredSize.height > maxSize.height) {
+          // We expect documentation providers to exercise good judgement in limiting the displayed information,
+          // but in any case, we don't want the hint to cover the whole screen, so we also implement certain limiting here.
+          JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(component, true);
+          scrollPane.setPreferredSize(new Dimension(Math.min(preferredSize.width, maxSize.width),
+                                                    Math.min(preferredSize.height, maxSize.height)));
+          return scrollPane;
+        }
+      }
+      return component;
+    }
+
+    @NotNull
+    private Dimension getMaxPopupSize(@NotNull Editor editor) {
+      Rectangle rectangle = ScreenUtil.getScreenRectangle(editor.getContentComponent());
+      return new Dimension((int)(0.9 * Math.max(640, rectangle.width)), (int)(0.33 * Math.max(480, rectangle.height)));
     }
 
     private void updateOnPsiChanges(@NotNull LightweightHint hint,

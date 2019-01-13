@@ -1,21 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.OneTimeString
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.util.PathUtilRt
 import com.intellij.util.text.nullize
 import com.intellij.util.text.trimMiddle
+import kotlinx.coroutines.withContext
 import javax.swing.JPasswordField
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
-fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?, path: String?, sshKeyFile: String?): Credentials? {
+internal suspend fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?, path: String?, sshKeyFile: String?): Credentials? {
   if (ApplicationManager.getApplication()?.isUnitTestMode == true) {
     throw AssertionError("showAuthenticationForm called from tests")
   }
@@ -31,7 +33,7 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
 
   val message = if (sshKeyFile == null) icsMessage("log.in.to", uri.trimMiddle(50)) else "Enter your password for the SSH key \"${PathUtilRt.getFileName(sshKeyFile)}\":"
 
-  return invokeAndWaitIfNeed {
+  return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
     val userField = JTextField(username)
     val passwordField = JPasswordField(credentials?.password?.toString())
 

@@ -60,12 +60,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   @Override
   @Nullable
-  public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    return null;
-  }
-
-  @Override
-  @Nullable
   public String getHelpId() {
     return null;
   }

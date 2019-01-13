@@ -38,6 +38,7 @@ import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -91,6 +92,11 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
       if (call != null) {
         argumentList = call.getArgumentList();
+        if (argumentList != null && !argumentList.getTextRange().containsOffset(offset)) {
+          if (PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiParenthesizedExpression.class, false, PsiCall.class) != null) {
+            return null;
+          }
+        }
       }
     }
     return argumentList;
@@ -214,7 +220,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
               if (Registry.is("editor.completion.hints.virtual.comma")) {
                 int requiredParameters = varArgs ? parametersCount - 1 : parametersCount;
                 int actualParameters = ((PsiExpressionList)owner).getExpressionCount();
-                if (actualParameters < requiredParameters) return false;
+                if (actualParameters < requiredParameters && ((PsiCall)parent).resolveMethod() == null) return false;
               }
               else if (((PsiExpressionList)owner).isEmpty() &&
                        (parametersCount == 1 && !varArgs || parametersCount == 2 && varArgs) &&

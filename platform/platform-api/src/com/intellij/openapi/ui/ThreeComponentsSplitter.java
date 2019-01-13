@@ -25,7 +25,9 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -35,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.InvocationTargetException;
@@ -46,6 +50,7 @@ import java.util.Objects;
  * @author Vladimir Kondratyev
  */
 public class ThreeComponentsSplitter extends JPanel implements Disposable {
+  private static final Icon SplitGlueV = EmptyIcon.create(17, 6);
   private int myDividerWidth;
   /**
    *                        /------/
@@ -65,6 +70,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
   private final Divider myFirstDivider;
   private final Divider myLastDivider;
+  private EventDispatcher<ComponentListener> myDividerDispatcher;
 
   @Nullable private JComponent myFirstComponent;
   @Nullable private JComponent myInnerComponent;
@@ -79,28 +85,46 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.ThreeComponentsSplitter");
 
-  private class MyFocusTraversalPolicy extends FocusTraversalPolicy {
+  private class MyFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
 
     @Override
+    @SuppressWarnings("Duplicates")
     public Component getComponentAfter(Container aContainer, Component aComponent) {
+      Component comp;
       if (aComponent == myFirstComponent) {
-        return findChildToFocus(myInnerComponent);
+        comp = findChildToFocus(myInnerComponent);
       }
-      if (aComponent == myInnerComponent) {
-        return findChildToFocus(myLastComponent);
+      else if (aComponent == myInnerComponent) {
+        comp = findChildToFocus(myLastComponent);
       }
-      return findChildToFocus(myFirstComponent);
+      else {
+        comp = findChildToFocus(myFirstComponent);
+      }
+      if (comp == aComponent) {
+        // if focus is stuck on the component let it go further
+        return super.getComponentAfter(aContainer, aComponent);
+      }
+      return comp;
     }
 
     @Override
+    @SuppressWarnings("Duplicates")
     public Component getComponentBefore(Container aContainer, Component aComponent) {
+      Component comp;
       if (aComponent == myInnerComponent) {
-        return findChildToFocus(myFirstComponent);
+        comp = findChildToFocus(myFirstComponent);
       }
-      if (aComponent == myLastComponent) {
-        return findChildToFocus(myInnerComponent);
+      else if (aComponent == myLastComponent) {
+        comp = findChildToFocus(myInnerComponent);
       }
-      return findChildToFocus(myFirstComponent);
+      else {
+        comp = findChildToFocus(myFirstComponent);
+      }
+      if (comp == aComponent) {
+        // if focus is stuck on the component let it go further
+        return super.getComponentBefore(aContainer, aComponent);
+      }
+      return comp;
     }
 
     @Override
@@ -535,6 +559,22 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     return myMinSize;
   }
 
+  public void addDividerResizeListener(@NotNull ComponentListener listener) {
+    if (myDividerDispatcher == null) {
+      myDividerDispatcher = EventDispatcher.create(ComponentListener.class);
+    }
+    myDividerDispatcher.addListener(listener);
+  }
+
+  public void removeDividerResizeListener(@NotNull ComponentListener listener) {
+    if (myDividerDispatcher != null) {
+      myDividerDispatcher.removeListener(listener);
+      if (!myDividerDispatcher.hasListeners()) {
+        myDividerDispatcher = null;
+      }
+    }
+  }
+
   @Override
   public void dispose() {
     myLastComponent = null;
@@ -686,7 +726,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       int xMask = isVerticalSplit ? 1 : 0;
       int yMask = isVerticalSplit ? 0 : 1;
 
-      Icon glueIcon = isVerticalSplit ? AllIcons.General.SplitGlueV : AllIcons.General.ArrowSplitCenterH;
+      Icon glueIcon = isVerticalSplit ? SplitGlueV : AllIcons.General.ArrowSplitCenterH;
       int glueFill = isVerticalSplit ? GridBagConstraints.VERTICAL : GridBagConstraints.HORIZONTAL;
       add(new JLabel(glueIcon),
           new GridBagConstraints(0, 0, 1, 1, 0, 0, isVerticalSplit ? GridBagConstraints.EAST : GridBagConstraints.NORTH, glueFill, new Insets(0, 0, 0, 0), 0, 0));
@@ -858,6 +898,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
           }
           if (isInside(e.getPoint()) && myGlassPane != null) {
             myGlassPane.setCursor(getResizeCursor(), myListener);
+          }
+          if (myDragging && myDividerDispatcher != null) {
+            myDividerDispatcher.getMulticaster().componentResized(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
           }
           myWasPressedOnMe = false;
           myDragging = false;

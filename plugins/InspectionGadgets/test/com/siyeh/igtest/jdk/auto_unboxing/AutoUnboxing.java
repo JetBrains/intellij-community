@@ -115,5 +115,6 @@ public class AutoUnboxing {
       case A,B: break <warning descr="Auto-unboxing 'integer'">integer</warning>;
       case C: break <warning descr="Auto-unboxing 'integer'">integer</warning>;
     };
+    if ((switch(0) {default -> false;})) {}
   }
 }

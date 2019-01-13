@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StorageUtilKt;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.featureStatistics.fusCollectors.ProjectLifecycleUsageTriggerCollector;
@@ -20,7 +21,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -639,11 +639,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return true;
   }
 
-  // saveApp is ignored if saveProject is false
+  // isSaveApp is ignored if saveProject is false
   @SuppressWarnings("TestOnlyProblems")
   private boolean closeProject(@NotNull final Project project,
                                final boolean saveProject,
-                               final boolean saveApp,
+                               final boolean isSaveApp,
                                final boolean dispose,
                                boolean checkCanClose) {
     Application app = ApplicationManager.getApplication();
@@ -681,7 +681,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       if (saveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
         StoreUtil.saveProject(project, true);
-        if (saveApp) {
+        if (isSaveApp) {
           app.saveSettings(true);
         }
       }
@@ -716,7 +716,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public boolean closeAndDispose(@NotNull final Project project) {
-    return closeProject(project, true, true, true, true);
+    return closeProject(project, true /* save project */, false /* don't save app */, true /* dispose project */, true);
   }
 
   private void fireProjectClosing(@NotNull Project project) {
@@ -872,10 +872,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     message.append("\n\nRead-only files:\n");
     int count = 0;
-    VirtualFile[] files = notifications[0].myFiles;
+    List<VirtualFile> files = notifications[0].myFiles;
     for (VirtualFile file : files) {
       if (count == 10) {
-        message.append('\n').append("and ").append(files.length - count).append(" more").append('\n');
+        message.append('\n').append("and ").append(files.size() - count).append(" more").append('\n');
       }
       else {
         message.append(file.getPath()).append('\n');
@@ -887,9 +887,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   public static class UnableToSaveProjectNotification extends Notification {
     private Project myProject;
-    public VirtualFile[] myFiles;
 
-    public UnableToSaveProjectNotification(@NotNull final Project project, @NotNull VirtualFile[] readOnlyFiles) {
+    private List<VirtualFile> myFiles;
+
+    public void setFiles(@NotNull List<VirtualFile> files) {
+      myFiles = files;
+    }
+
+    public UnableToSaveProjectNotification(@NotNull final Project project, @NotNull List<VirtualFile> readOnlyFiles) {
       super("Project Settings", "Could not save project", "Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +
                                                            " <a href=\"\">Try to save project again</a>.", NotificationType.ERROR,
             (notification, event) -> {

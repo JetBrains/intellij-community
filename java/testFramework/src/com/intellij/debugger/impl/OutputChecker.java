@@ -7,6 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -91,12 +92,15 @@ public class OutputChecker {
     if (current == null || res.exists()) {
       current = res;
     }
-    if (JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_9)) {
-      File outFile = new File(outs, name + ".jdk9.out");
+    JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
+    int feature = version.getMaxLanguageLevel().toJavaVersion().feature;
+    do {
+      File outFile = new File(outs, name + ".jdk" + feature + ".out");
       if (outFile.exists()) {
         current = outFile;
+        break;
       }
-    }
+    } while (--feature > 6);
     return current;
   }
 

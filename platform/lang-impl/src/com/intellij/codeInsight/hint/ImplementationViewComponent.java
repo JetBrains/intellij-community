@@ -318,7 +318,7 @@ public class ImplementationViewComponent extends JPanel {
         files.add(new FileDescriptor(file, element));
       }
       else {
-        files.add(new FileDescriptor(file, element.getParentOrSelf()));
+        files.add(new FileDescriptor(file, element.getContainingMemberOrSelf()));
       }
       candidates.add(element);
     }

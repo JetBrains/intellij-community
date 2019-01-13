@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationAdapter;
@@ -82,7 +68,7 @@ public class VfsData {
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
-  
+
   private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
 
   private final ConcurrentIntObjectMap<Segment> mySegments = ContainerUtil.createConcurrentIntObjectMap();
@@ -219,7 +205,7 @@ public class VfsData {
 
     // <nameId, flags> pairs, "flags" part containing flags per se and modification stamp
     private final AtomicIntegerArray myIntArray = new AtomicIntegerArray(SEGMENT_SIZE * 2);
-    
+
     final VfsData vfsData;
 
     Segment(VfsData vfsData) {
@@ -304,12 +290,16 @@ public class VfsData {
     private volatile Set<CharSequence> myAdoptedNames;
 
     @NotNull
-    VirtualFileSystemEntry[] getFileChildren(int fileId, @NotNull VirtualDirectoryImpl parent) {
-      assert fileId > 0;
+    VirtualFileSystemEntry[] getFileChildren(@NotNull VirtualDirectoryImpl parent) {
       int[] ids = myChildrenIds;
       VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[ids.length];
       for (int i = 0; i < ids.length; i++) {
-        children[i] = assertNotNull(parent.mySegment.vfsData.getFileById(ids[i], parent));
+        int childId = ids[i];
+        VirtualFileSystemEntry child = parent.mySegment.vfsData.getFileById(childId, parent);
+        if (child == null) {
+          throw new AssertionError("No file for id " + childId + ", parentId = " + parent.myId);
+        }
+        children[i] = child;
       }
       return children;
     }

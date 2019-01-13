@@ -102,7 +102,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   }
 
   private void createActions(ToolbarDecorator decorator) {
-    final Consumer<BaseInjection> consumer = injection -> addInjection(injection);
+    final Consumer<BaseInjection> consumer = this::addInjection;
     final Factory<BaseInjection> producer = (NullableFactory<BaseInjection>)() -> {
       final InjInfo info = getSelectedInjection();
       return info == null? null : info.injection;
@@ -117,52 +117,26 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     Collections.sort(myAddActions,
                      (o1, o2) -> Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText()));
     decorator.disableUpDownActions();
-    decorator.setAddActionUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(@NotNull AnActionEvent e) {
-        return !myAddActions.isEmpty();
-      }
-    });
-    decorator.setAddAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        performAdd(button);
-      }
-    });
-    decorator.setRemoveActionUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(@NotNull AnActionEvent e) {
-        boolean enabled = false;
-        for (InjInfo info : getSelectedInjections()) {
-          if (!info.bundled) {
-            enabled = true;
-            break;
-          }
+    decorator.setAddActionUpdater(e -> !myAddActions.isEmpty());
+    decorator.setAddAction(this::performAdd);
+    decorator.setRemoveActionUpdater(e -> {
+      boolean enabled = false;
+      for (InjInfo info : getSelectedInjections()) {
+        if (!info.bundled) {
+          enabled = true;
+          break;
         }
-        return enabled;
       }
+      return enabled;
     });
-    decorator.setRemoveAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        performRemove();
-      }
-    });
+    decorator.setRemoveAction(button -> performRemove());
 
-    decorator.setEditActionUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(@NotNull AnActionEvent e) {
-        AnAction edit = getEditAction();
-        if (edit != null) edit.update(e);
-        return edit != null && edit.getTemplatePresentation().isEnabled();
-      }
+    decorator.setEditActionUpdater(e -> {
+      AnAction edit = getEditAction();
+      if (edit != null) edit.update(e);
+      return edit != null && edit.getTemplatePresentation().isEnabled();
     });
-    decorator.setEditAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        performEditAction();
-      }
-    });
+    decorator.setEditAction(button -> performEditAction());
     decorator.addExtraAction(new DumbAwareActionButton("Duplicate", "Duplicate", PlatformIcons.COPY_ICON) {
 
       @Override
@@ -211,13 +185,10 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     if (myInfos.length > 1) {
       AnActionButton shareAction = new DumbAwareActionButton("Move to IDE Scope", null, PlatformIcons.IMPORT_ICON) {
         {
-          addCustomUpdater(new AnActionButtonUpdater() {
-            @Override
-            public boolean isEnabled(@NotNull AnActionEvent e) {
-              CfgInfo cfg = getTargetCfgInfo(getSelectedInjections());
-              e.getPresentation().setText(cfg == getDefaultCfgInfo() ? "Move to IDE Scope" : "Move to Project Scope");
-              return cfg != null;
-            }
+          addCustomUpdater(e -> {
+            CfgInfo cfg = getTargetCfgInfo(getSelectedInjections());
+            e.getPresentation().setText(cfg == getDefaultCfgInfo() ? "Move to IDE Scope" : "Move to Project Scope");
+            return cfg != null;
           });
         }
 
@@ -454,7 +425,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     DefaultActionGroup group = new DefaultActionGroup(myAddActions);
 
     JBPopupFactory.getInstance().createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true,
-                                                        () -> updateCountLabel(), -1).show(e.getPreferredPopupPoint());
+                                                        this::updateCountLabel, -1).show(e.getPreferredPopupPoint());
   }
 
   @Override

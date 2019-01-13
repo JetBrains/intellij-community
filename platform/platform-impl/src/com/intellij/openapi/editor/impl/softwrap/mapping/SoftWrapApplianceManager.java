@@ -272,7 +272,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     myContext.tokenStartOffset = start;
     IterationState iterationState = new IterationState(myEditor, start, document.getTextLength(), null, false, false, true, false);
     TextAttributes attributes = iterationState.getMergedAttributes();
-    myContext.fontType = attributes.getFontType();
+    myContext.fontType = normalizeFontType(attributes.getFontType());
     myContext.rangeEndOffset = event.getMandatoryEndOffset();
 
     EditorPosition position = new EditorPosition(logical, start, myEditor);
@@ -320,7 +320,7 @@ public class SoftWrapApplianceManager implements Dumpable {
 
       iterationState.advance();
       attributes = iterationState.getMergedAttributes();
-      myContext.fontType = attributes.getFontType();
+      myContext.fontType = normalizeFontType(attributes.getFontType());
       myContext.tokenStartOffset = iterationState.getStartOffset();
       myOffset2fontType.fill(myContext.tokenStartOffset, iterationState.getEndOffset(), myContext.fontType);
     }
@@ -328,6 +328,12 @@ public class SoftWrapApplianceManager implements Dumpable {
       myStorage.remove(myContext.delayedSoftWrap);
     }
     event.setActualEndOffset(myContext.currentPosition.offset);
+  }
+
+  @JdkConstants.FontStyle
+  private static int normalizeFontType(int fontType) {
+    //noinspection MagicConstant
+    return fontType & 3;
   }
 
   // this method generates soft-wraps at some places just to ensure visual lines have limited width, to avoid related performance problems
@@ -1308,10 +1314,10 @@ public class SoftWrapApplianceManager implements Dumpable {
     }
 
     private int getInlaysPrefixWidth() {
-      return getInlaysPrefixWidthForOffset(currentPosition.offset);
+      return getInlaysWidthForOffset(currentPosition.offset);
     }
 
-    private int getInlaysPrefixWidthForOffset(int offset) {
+    private int getInlaysWidthForOffset(int offset) {
       while (inlayIndex < inlays.size() && inlays.get(inlayIndex).getOffset() < offset) inlayIndex++;
       while (inlayIndex > 0 && inlays.get(inlayIndex - 1).getOffset() >= offset) inlayIndex--;
       int width = 0;
@@ -1322,11 +1328,11 @@ public class SoftWrapApplianceManager implements Dumpable {
     }
 
     private int getInlaysSuffixWidth() {
-      int offset = currentPosition.offset;
-      return offset < text.length() && text.charAt(offset) != '\n' ||
-             offset > tokenEndOffset ||
-             offset == tokenEndOffset && nextIsFoldRegion
-             ? 0 : getInlaysPrefixWidthForOffset(offset + 1);
+      int nextOffset = currentPosition.offset + 1;
+      return nextOffset < text.length() && text.charAt(nextOffset) != '\n' ||
+             nextOffset > tokenEndOffset ||
+             nextOffset == tokenEndOffset && nextIsFoldRegion
+             ? 0 : getInlaysWidthForOffset(nextOffset);
     }
 
     /**

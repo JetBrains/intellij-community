@@ -50,7 +50,8 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     POINTERS_KEY = Key.create("SMART_POINTERS " + anonymize(project));
   }
 
-  private static String anonymize(Project project) {
+  @NotNull
+  private static String anonymize(@NotNull Project project) {
     return project.isDefault() ? "default" : String.valueOf(project.hashCode());
   }
 
@@ -79,6 +80,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
                                                                                        boolean forInjected) {
     ensureValid(element, containingFile);
     SmartPointerTracker.processQueue();
+    ensureMyProject(containingFile != null ? containingFile.getProject() : element.getProject());
     SmartPsiElementPointerImpl<E> pointer = getCachedPointer(element);
     if (pointer != null &&
         (!(pointer.getElementInfo() instanceof SelfElementInfo) || ((SelfElementInfo)pointer.getElementInfo()).isForInjected() == forInjected) &&
@@ -92,6 +94,12 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
     element.putUserData(CACHED_SMART_POINTER_KEY, new SoftReference<>(pointer));
     return pointer;
+  }
+
+  private void ensureMyProject(@NotNull Project project) {
+    if (project != myProject) {
+      throw new IllegalArgumentException("Element from alien project: "+anonymize(project)+" expected: "+anonymize(myProject));
+    }
   }
 
   private static void ensureValid(@NotNull PsiElement element, @Nullable PsiFile containingFile) {
@@ -156,7 +164,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     if (!(pointer instanceof SmartPsiElementPointerImpl) || myProject.isDisposed()) {
       return;
     }
-    PsiFile containingFile = pointer.getContainingFile();
+    ensureMyProject(pointer.getProject());
     int refCount = ((SmartPsiElementPointerImpl)pointer).incrementAndGetReferenceCount(-1);
     if (refCount == -1) {
       LOG.error("Double smart pointer removal");
@@ -172,20 +180,18 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       SmartPointerElementInfo info = ((SmartPsiElementPointerImpl)pointer).getElementInfo();
       info.cleanup();
 
-      if (containingFile == null) return;
-
-      if (containingFile.getProject() != myProject) {
-        throw new AssertionError("Project mismatch: " + anonymize(myProject) + "!=" + anonymize(containingFile.getProject()));
-      }
-
-      VirtualFile vFile = containingFile.getViewProvider().getVirtualFile();
-      SmartPointerTracker pointers = getTracker(vFile);
       SmartPointerTracker.PointerReference reference = ((SmartPsiElementPointerImpl)pointer).pointerReference;
-      if (pointers != null && reference != null) {
+      if (reference != null) {
         if (reference.get() != pointer) {
           throw new IllegalStateException("Reference points to " + reference.get());
         }
-        pointers.removeReference(reference, POINTERS_KEY);
+        if (reference.key != POINTERS_KEY) {
+          throw new IllegalStateException("Reference from wrong project: " + reference.key + " vs " + POINTERS_KEY);
+        }
+        SmartPointerTracker pointers = getTracker(reference.file);
+        if (pointers != null) {
+          pointers.removeReference(reference);
+        }
       }
     }
   }

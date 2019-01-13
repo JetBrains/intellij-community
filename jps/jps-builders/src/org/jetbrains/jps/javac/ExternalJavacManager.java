@@ -369,6 +369,14 @@ public class ExternalJavacManager extends ProcessAdapter {
   public void processTerminated(@NotNull ProcessEvent event) {
     final UUID processId = ((ExternalJavacProcessHandler)event.getProcessHandler()).getProcessId();
     myRunningProcesses.remove(processId);
+    if (myConnections.get(processId) == null) {
+      // only if connection has never been established
+      // otherwise we rely on the fact that ExternalJavacProcess always closes connection before shutdown and clean sessions on ChannelUnregister event
+      cleanSessions(processId);
+    }
+  }
+
+  private void cleanSessions(UUID processId) {
     synchronized (mySessions) {
       for (Iterator<Map.Entry<UUID, CompileSession>> it = mySessions.entrySet().iterator(); it.hasNext(); ) {
         final CompileSession session = it.next().getValue();
@@ -487,25 +495,19 @@ public class ExternalJavacManager extends ProcessAdapter {
 
   @ChannelHandler.Sharable
   private class CompilationRequestsHandler extends SimpleChannelInboundHandler<JavacRemoteProto.Message> {
-
     @Override
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-      super.channelRegistered(ctx);
-    }
-
-    @Override
-    public void channelActive(@NotNull ChannelHandlerContext ctx) throws Exception {
-      super.channelActive(ctx);
-    }
-
-    @Override
-    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-      final Channel channel = ctx.channel();
-      final UUID processId = channel.attr(PROCESS_ID_KEY).get();
-      if (processId != null) {
-        myConnections.remove(processId);
+    public void channelInactive(ChannelHandlerContext context) throws Exception {
+      try {
+        final Channel channel = context.channel();
+        final UUID processId = channel.attr(PROCESS_ID_KEY).get();
+        if (processId != null) {
+          cleanSessions(processId);
+          myConnections.remove(processId);
+        }
       }
-      super.channelUnregistered(ctx);
+      finally {
+        super.channelInactive(context);
+      }
     }
 
     @Override
@@ -539,9 +541,6 @@ public class ExternalJavacManager extends ProcessAdapter {
               final ExternalJavacProcessHandler process = myRunningProcesses.get(session.getProcessId());
               if (process != null) {
                 process.unlock();
-                // todo: submit running process GC task?
-                //if (process.isKeepProcessAlive()) {
-                //}
               }
             }
             else if (session.isCancelRequested()) {
@@ -675,9 +674,7 @@ public class ExternalJavacManager extends ProcessAdapter {
         }
         catch (InterruptedException ignored) {
         }
-        if (checkStopConditions()) {
-          break;
-        }
+        notifyCancelled();
       }
       return isTerminatedSuccessfully();
     }
@@ -686,28 +683,20 @@ public class ExternalJavacManager extends ProcessAdapter {
     @Override
     public Boolean get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, TimeoutException {
       if (!myDone.waitForUnsafe(unit.toMillis(timeout))) {
-        if (!checkStopConditions()) {
-          // if execution continues, just notify about timeout
-          throw new TimeoutException();
-        }
+        notifyCancelled();
+        // if execution continues, just notify about timeout
+        throw new TimeoutException();
       }
       return isTerminatedSuccessfully();
     }
 
-    private boolean checkStopConditions() {
-      if (!myRunningProcesses.containsKey(myProcessId)) {
-        // process terminated
-        setDone();
-        mySessions.remove(myId);
-        return true;
-      }
-      if (isCancelRequested()) {
+    private void notifyCancelled() {
+      if (isCancelRequested() && myRunningProcesses.containsKey(myProcessId)) {
         final Channel channel = myConnections.get(myProcessId);
         if (channel != null) {
           channel.writeAndFlush(JavacProtoUtil.toMessage(myId, JavacProtoUtil.createCancelRequest()));
         }
       }
-      return false;
     }
 
   }

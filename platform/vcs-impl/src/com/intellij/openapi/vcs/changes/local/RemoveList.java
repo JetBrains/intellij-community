@@ -25,7 +25,7 @@ public class RemoveList implements ChangeListCommand {
   }
 
   @Override
-  public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
+  public void doNotify(final EventDispatcher<? extends ChangeListListener> dispatcher) {
     if (myListCopy != null && myRemoved ) {
       ChangeListListener multicaster = dispatcher.getMulticaster();
       multicaster.changesMoved(myListCopy.getChanges(), myListCopy, myDefaultListCopy);

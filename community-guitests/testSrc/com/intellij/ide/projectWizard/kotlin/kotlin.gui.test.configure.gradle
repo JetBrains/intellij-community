@@ -1,5 +1,5 @@
 plugins {
-    id "de.undercouch.download" version "3.4.0"
+    id "de.undercouch.download" version "3.4.3"
 }
 
 import de.undercouch.gradle.tasks.download.Download
@@ -21,6 +21,7 @@ task downloadUpdateXml(type: Download, dependsOn: setBaseProperties) {
             project.ext.updateXmlName
     src url
     dest project.ext.updateXmlFile
+    timeout 5000
 }
 
 task updateXmlParsing(dependsOn: downloadUpdateXml) {
@@ -84,6 +85,7 @@ task downloadPluginZip(dependsOn: createPropertiesFile) {
             src project.ext.url
             dest project.ext.pluginInstallPath
             overwrite true
+            timeout 300000
         }
     }
 }

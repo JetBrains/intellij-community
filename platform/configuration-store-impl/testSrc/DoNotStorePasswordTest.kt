@@ -1,3 +1,5 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
@@ -5,12 +7,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import com.intellij.configurationStore.BaseXmlOutputter
+import com.intellij.configurationStore.getStateSpec
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.ServiceManagerImpl
-import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -32,7 +34,7 @@ class DoNotStorePasswordTest {
   @Test
   fun printPasswordComponents() {
     val processor = BiPredicate<Class<*>, PluginDescriptor?> { aClass, _ ->
-      val stateAnnotation = StoreUtil.getStateSpec(aClass)
+      val stateAnnotation = getStateSpec(aClass)
       if (stateAnnotation == null || stateAnnotation.name.isEmpty()) {
         return@BiPredicate true
       }

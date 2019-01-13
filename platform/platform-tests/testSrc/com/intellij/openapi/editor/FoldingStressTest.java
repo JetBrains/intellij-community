@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor;
 
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.util.text.StringUtil;
@@ -83,18 +82,15 @@ public class FoldingStressTest extends LightPlatformTestCase {
   }
 
   public void testRestoreManyFoldRegionsPerformance() {
-    LOG.debug("In stress test: " + ApplicationInfoImpl.isInStressTest());
     int N = 100_000;
     DocumentImpl doc = new DocumentImpl(StringUtil.repeat("x", N));
     Editor editor = EditorFactory.getInstance().createEditor(doc);
     try {
     FoldingModelEx model = (FoldingModelEx)editor.getFoldingModel();
     PlatformTestUtil.startPerformanceTest("restoring many fold regions", 1500, () -> model.runBatchFoldingOperation(() -> {
-      long t = System.nanoTime();
       for (int i = 0; i < N; i++) {
         addAndCollapseFoldRegion(model, i, i+1, "/*...*/");
       }
-      LOG.debug(""+(System.nanoTime() - t) / 1000000); // temporary code to investigate test blinking
     }))
       .setup(()-> model.runBatchFoldingOperation(model::clearFoldRegions))
       .assertTiming();

@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -29,6 +30,8 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
 
   private static final Map<String, String> ourReplacementMap = new HashMap<>();
 
+  private static final Set<String> ourAllowedInstanceCalls = new HashSet<>();
+
   static {
     ourReplacementMap.put(CommonClassNames.JAVA_LANG_INTEGER, "parseInt");
     ourReplacementMap.put(CommonClassNames.JAVA_LANG_LONG, "parseLong");
@@ -37,6 +40,15 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     ourReplacementMap.put(CommonClassNames.JAVA_LANG_DOUBLE, "parseDouble");
     ourReplacementMap.put(CommonClassNames.JAVA_LANG_SHORT, "parseShort");
     ourReplacementMap.put(CommonClassNames.JAVA_LANG_BYTE, "parseByte");
+
+    ourAllowedInstanceCalls.add("isInfinite");
+    ourAllowedInstanceCalls.add("isNaN");
+    ourAllowedInstanceCalls.add("byteValue");
+    ourAllowedInstanceCalls.add("shortValue");
+    ourAllowedInstanceCalls.add("intValue");
+    ourAllowedInstanceCalls.add("longValue");
+    ourAllowedInstanceCalls.add("floatValue");
+    ourAllowedInstanceCalls.add("doubleValue");
   }
 
   private static CallMatcher getValueOfMatcher() {
@@ -111,6 +123,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
 
     @Override
     public void visitLocalVariable(PsiLocalVariable variable) {
+      super.visitLocalVariable(variable);
       if (!TypeConversionUtil.isPrimitiveWrapper(variable.getType())) return;
       PsiExpression initializer = variable.getInitializer();
       BoxingInfo boxingInfo = new BoxingInfo(variable);
@@ -156,12 +169,19 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       return variables;
     }
 
+    private static boolean isAllowedInstanceCall(@NotNull PsiMethodCallExpression call) {
+      PsiMethod method = call.resolveMethod();
+      if (method == null) return false;
+      if (method.hasModifier(JvmModifier.STATIC)) return false;
+      return ourAllowedInstanceCalls.contains(call.getMethodExpression().getReferenceName());
+    }
+
     private static boolean referenceUseAllowUnboxing(@NotNull PsiReferenceExpression expression,
                                                      @NotNull BoxingInfo boxingInfo) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression).getParent();
       PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(expression);
       if (call != null) {
-        return TO_STRING.test(call) || HASH_CODE.test(call);
+        return TO_STRING.test(call) || HASH_CODE.test(call) || isAllowedInstanceCall(call);
       }
       if (parent instanceof PsiExpressionList) {
         PsiElement grandParent = parent.getParent();
@@ -336,18 +356,46 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       String qualifierTypeText = qualifierType.getCanonicalText();
       CommentTracker tracker = new CommentTracker();
       String qualifierText = tracker.text(qualifier);
+      String replacement = findStaticReplacement(call, qualifierText, qualifierTypeText);
+      if (replacement == null) return;
+      tracker.replaceAndRestoreComments(call, replacement);
+    }
+
+    private static String findStaticReplacement(PsiMethodCallExpression call, String qualifierText, String qualifierTypeText) {
       String methodNameText;
+      String callName = call.getMethodExpression().getReferenceName();
       if (HASH_CODE.test(call)) {
         methodNameText = "hashCode";
       }
       else if (TO_STRING.test(call)) {
         methodNameText = "toString";
       }
-      else {
-        return;
+      else if ("isInfinite".equals(callName)) {
+        methodNameText = "isInfinite";
       }
-      String callReplacementText = qualifierTypeText + "." + methodNameText + "(" + qualifierText + ")";
-      tracker.replaceAndRestoreComments(call, callReplacementText);
+      else if ("isNaN".equals(callName)) {
+        methodNameText = "isNaN";
+      } else {
+        methodNameText = null;
+      }
+      if (methodNameText != null) {
+        return qualifierTypeText + "." + methodNameText + "(" + qualifierText + ")";
+      }
+      String type;
+      if ("intValue".equals(callName)) {
+        type = "int";
+      } else if ("byteValue".equals(callName)) {
+        type = "byte";
+      } else if ("floatValue".equals(callName)) {
+        type = "float";
+      } else if ("doubleValue".equals(callName)) {
+        type = "double";
+      } else if ("shortValue".equals(callName)) {
+        type = "short";
+      } else {
+        return null;
+      }
+      return "(" + type + ")" + qualifierText;
     }
   }
 }

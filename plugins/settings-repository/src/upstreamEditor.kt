@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.ide.actions.ActionsCollector
@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.DialogManager
 import com.intellij.util.text.nullize
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.settingsRepository.actions.NOTIFICATION_GROUP
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -49,11 +50,13 @@ private class SyncAction(private val syncType: SyncType,
 
   override fun actionPerformed(event: ActionEvent) {
     dialogManager.performAction {
-      doSync()
+      runBlocking {
+        doSync()
+      }
     }
   }
 
-  private fun doSync(): List<ValidationInfo>? {
+  private suspend fun doSync(): List<ValidationInfo>? {
     val icsManager = icsManager
     ActionsCollector.getInstance().record("Ics.${getValue(Action.NAME)}", IcsManager::class.java)
     val isRepositoryWillBeCreated = !icsManager.repositoryManager.isRepositoryExists()

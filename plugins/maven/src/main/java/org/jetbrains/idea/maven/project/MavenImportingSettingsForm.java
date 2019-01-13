@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +48,8 @@ public class MavenImportingSettingsForm {
   private JCheckBox myExcludeTargetFolderCheckBox;
   private JTextField myDependencyTypes;
   private JCheckBox myStoreProjectFilesExternally;
+  private JBTextField myVMOptionsForImporter;
+  private ExternalSystemJdkComboBox myJdkForImporterComboBox;
 
   public MavenImportingSettingsForm(boolean isImportStep, boolean isCreatingNewProject) {
     mySearchRecursivelyCheckBox.setVisible(isImportStep);
@@ -119,6 +123,9 @@ public class MavenImportingSettingsForm {
     data.setDownloadDocsAutomatically(myDownloadDocsCheckBox.isSelected());
     data.setDownloadAnnotationsAutomatically(myDownloadAnnotationsCheckBox.isSelected());
 
+    data.setVmOptionsForImporter(myVMOptionsForImporter.getText());
+    data.setJdkForImporter(myJdkForImporterComboBox.getSelectedValue());
+
     data.setDependencyTypes(myDependencyTypes.getText());
   }
 
@@ -152,6 +159,9 @@ public class MavenImportingSettingsForm {
     myDownloadAnnotationsCheckBox.setSelected(data.isDownloadAnnotationsAutomatically());
 
     myDependencyTypes.setText(data.getDependencyTypes());
+
+    myVMOptionsForImporter.setText(data.getVmOptionsForImporter());
+    myJdkForImporterComboBox.refreshData(data.getJdkForImporter());
 
     updateControls();
   }

@@ -40,7 +40,7 @@ public class ExternalSystemRunConfigurationEditor extends SettingsEditor<Externa
   @Override
   protected void resetEditorFrom(@NotNull ExternalSystemRunConfiguration s) {
     myControl.setOriginalSettings(s.getSettings());
-    myControl.reset();
+    myControl.reset(s.getProject());
   }
 
   @Override

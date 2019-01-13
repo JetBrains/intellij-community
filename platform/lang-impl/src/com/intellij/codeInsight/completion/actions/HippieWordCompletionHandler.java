@@ -52,6 +52,10 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
+    if (!EditorModificationUtil.requestWriting(editor)) {
+      return;
+    }
+
     int caretOffset = editor.getCaretModel().getOffset();
     if (editor.isViewer() || editor.getDocument().getRangeGuard(caretOffset, caretOffset) != null) {
       editor.getDocument().fireReadOnlyModificationAttempt();

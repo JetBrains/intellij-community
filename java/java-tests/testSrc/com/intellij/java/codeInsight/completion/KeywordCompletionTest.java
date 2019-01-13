@@ -186,6 +186,11 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     testByCount(1, "package");
   }
 
+  public void testAfterWildcard() {
+    configureByTestName();
+    assertStringItems("extends", "super");
+  }
+
   private void doTest() {
     configureByTestName();
     checkResultByTestName();

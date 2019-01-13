@@ -49,6 +49,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull private final Project myProject;
   @Nullable private final String myPresetUrl; //taken from GitHandler, used if git does not provide url
   @NotNull private final GitAuthenticationGate myAuthenticationGate;
+  @NotNull private final GitAuthenticationMode myAuthenticationMode;
 
   private String myUnifiedUrl = null; //remote url with http schema and no username
   private String myPassword = null;
@@ -57,10 +58,14 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull private final DialogProvider myDialogProvider;
   @NotNull private AuthDataProvider myCurrentProvider;
 
-  GitHttpGuiAuthenticator(@NotNull Project project, @NotNull Collection<String> urls, @NotNull GitAuthenticationGate authenticationGate) {
+  GitHttpGuiAuthenticator(@NotNull Project project,
+                          @NotNull Collection<String> urls,
+                          @NotNull GitAuthenticationGate authenticationGate,
+                          @NotNull GitAuthenticationMode authenticationMode) {
     myProject = project;
     myPresetUrl = findFirstHttpUrl(urls);
     myAuthenticationGate = authenticationGate;
+    myAuthenticationMode = authenticationMode;
 
     myPasswordSafeProvider = new PasswordSafeProvider(GitRememberedInputs.getInstance(), PasswordSafe.getInstance());
     myDialogProvider = new DialogProvider(myProject, myPasswordSafeProvider);
@@ -152,10 +157,14 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull
   private List<AuthDataProvider> getProviders() {
     List<AuthDataProvider> delegates = new ArrayList<>();
-    delegates.add(myPasswordSafeProvider);
-    delegates.addAll(ContainerUtil.map(GitHttpAuthDataProvider.EP_NAME.getExtensions(),
-                                       (provider) -> new ExtensionAdapterProvider(myProject, provider)));
-    delegates.add(myDialogProvider);
+    if(myAuthenticationMode != GitAuthenticationMode.NONE) {
+      delegates.add(myPasswordSafeProvider);
+    }
+    if (myAuthenticationMode == GitAuthenticationMode.FULL) {
+      delegates.addAll(ContainerUtil.map(GitHttpAuthDataProvider.EP_NAME.getExtensions(),
+                                         (provider) -> new ExtensionAdapterProvider(myProject, provider)));
+      delegates.add(myDialogProvider);
+    }
     return delegates;
   }
 

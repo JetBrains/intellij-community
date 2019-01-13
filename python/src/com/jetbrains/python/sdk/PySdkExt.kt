@@ -129,8 +129,8 @@ val Sdk.associatedModule: Module?
   }
 
 fun Sdk.adminPermissionsNeeded(): Boolean {
-  val homePath = homePath ?: return false
-  return !Files.isWritable(Paths.get(homePath))
+  val pathToCheck = sitePackagesDirectory?.path ?: homePath ?: return false
+  return !Files.isWritable(Paths.get(pathToCheck))
 }
 
 fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
@@ -207,6 +207,9 @@ private val Sdk.associatedPathFromDotProject: String?
 
 private val Sdk.associatedPathFromAdditionalData: String?
   get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath
+
+private val Sdk.sitePackagesDirectory: VirtualFile?
+  get() = PythonSdkType.getSitePackagesDirectory(this)
 
 private fun Sdk.isLocatedInsideModule(module: Module?): Boolean {
   val homePath = homePath ?: return false

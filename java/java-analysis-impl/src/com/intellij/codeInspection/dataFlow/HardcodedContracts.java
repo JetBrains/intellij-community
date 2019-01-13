@@ -199,7 +199,7 @@ public class HardcodedContracts {
     }
     else if (TypeUtils.isOptional(owner)) {
       if (OptionalUtil.OPTIONAL_GET.methodMatches(method) || "orElseThrow".equals(methodName)) {
-        return Arrays.asList(optionalAbsentContract(fail()), trivialContract(returnNotNull()));
+        return Collections.singletonList(optionalAbsentContract(fail()));
       }
       else if ("isPresent".equals(methodName) && paramCount == 0) {
         return Arrays.asList(optionalAbsentContract(returnFalse()), trivialContract(returnTrue()));
@@ -229,7 +229,8 @@ public class HardcodedContracts {
   }
 
   static MethodContract optionalAbsentContract(ContractReturnValue returnValue) {
-    return singleConditionContract(ContractValue.qualifier(), RelationType.IS, ContractValue.optionalValue(false), returnValue);
+    return singleConditionContract(ContractValue.qualifier().specialField(SpecialField.OPTIONAL_VALUE), RelationType.EQ,
+                                   ContractValue.nullValue(), returnValue);
   }
 
   static MethodContract nonnegativeArgumentContract(int argNumber) {

@@ -290,6 +290,7 @@
     <!--suppress DeprecatedClassUsageInspection -->
     <extensionPoint name="settingsSummaryFactory" interface="com.intellij.settingsSummary.ProblemType"/> <!-- To be removed in IDEA 2020.1 -->
     <extensionPoint name="troubleInfoCollector" interface="com.intellij.troubleshooting.TroubleInfoCollector"/>
+    <extensionPoint name="generalTroubleInfoCollector" interface="com.intellij.troubleshooting.GeneralTroubleInfoCollector"/>
 
     <extensionPoint name="credentialStore" interface="com.intellij.credentialStore.CredentialStoreFactory"/>
 
@@ -329,5 +330,7 @@
     </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean"/>
+
+    <extensionPoint name="fileBreadcrumbsCollector" interface="com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector" area="IDEA_PROJECT"/>
   </extensionPoints>
 </idea-plugin>

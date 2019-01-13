@@ -6,6 +6,9 @@ deprecated: checkedBlack.png -> /actions/checked.svg; to be removed in IDEA 2020
 deprecated: checkedGrey.png -> /actions/checked.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Checked
 deprecated: checked_small.png -> /actions/checked.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Checked
 deprecated: checked_small_selected.png -> /actions/checked_selected.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Checked_selected
+deprecated: clean.png -> /actions/closeHovered.svg; to be removed in IDEA 2020 - use AllIcons.Actions.CloseHovered
+deprecated: cleanLight.png -> /actions/close.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Close
+deprecated: clear.png; to be removed in IDEA 2020
 deprecated: createFromUsage.png -> /actions/intentionBulb.svg; to be removed in IDEA 2020 - use AllIcons.Actions.IntentionBulb
 deprecated: createPatch.png; to be removed in IDEA 2020
 deprecated: delete.png -> /actions/cancel.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Cancel
@@ -25,7 +28,7 @@ deprecated: menu-find.png -> /actions/find.svg; to be removed in IDEA 2020 - use
 deprecated: menu-help.png -> /actions/help.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Help
 deprecated: menu-replace.png -> /actions/replace.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Replace
 deprecated: minimize.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
-deprecated: module.png -> /nodes/javaModuleRoot.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.JavaModuleRoot
+deprecated: module.png -> /nodes/Module.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Module
 deprecated: move-to-button-top.png -> /actions/move-to-button.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Move_to_button
 deprecated: moveToAnotherChangelist.png -> /actions/MoveTo2.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveTo2
 deprecated: moveToStandardPlace.png -> /actions/MoveTo2.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveTo2

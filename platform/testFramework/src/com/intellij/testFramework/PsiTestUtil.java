@@ -86,21 +86,20 @@ public class PsiTestUtil {
     assert vDir != null && vDir.isDirectory() : dir;
     PlatformTestCase.synchronizeTempDirVfs(vDir);
 
-    EdtTestUtil.runInEdtAndWait(() -> {
-      WriteAction.run(() -> {
-        if (rootPath != null) {
-          VirtualFile vDir1 = LocalFileSystem.getInstance().findFileByPath(rootPath.replace(File.separatorChar, '/'));
-          if (vDir1 == null) {
-            throw new Exception(rootPath + " not found");
-          }
-          VfsUtil.copyDirectory(null, vDir1, vDir, null);
+    EdtTestUtil.runInEdtAndWait(() -> WriteAction.run(() -> {
+      if (rootPath != null) {
+        VirtualFile vDir1 =
+          LocalFileSystem.getInstance().findFileByPath(rootPath.replace(File.separatorChar, '/'));
+        if (vDir1 == null) {
+          throw new Exception(rootPath + " not found");
         }
+        VfsUtil.copyDirectory(null, vDir1, vDir, null);
+      }
 
-        if (addProjectRoots) {
-          addSourceContentToRoots(module, vDir);
-        }
-      });
-    });
+      if (addProjectRoots) {
+        addSourceContentToRoots(module, vDir);
+      }
+    }));
     return vDir;
   }
 

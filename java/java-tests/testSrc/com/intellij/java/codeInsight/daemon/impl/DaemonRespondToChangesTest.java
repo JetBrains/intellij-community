@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.application.UtilKt;
@@ -26,6 +26,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionBase;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.configurationStore.StorageUtilKt;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -33,6 +34,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.lang.*;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -51,7 +53,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -127,6 +128,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author cdr
  */
 @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
+@HardwareAgentRequired
 @SkipSlowTestLocally
 public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/typing/";
@@ -1225,7 +1227,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       backspace();
     }).usesAllCPUCores().assertTiming();
   }
-                                                                                 
+
   public void testExpressionListsWithManyStringLiteralsHighlightingPerformance() {
     String listBody = StringUtil.join(Collections.nCopies(2000, "\"foo\""), ",\n");
     String text = "class S { " +
@@ -1354,14 +1356,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testApplyErrorInTheMiddle() {
-    String text = "class <caret>X { ";
+    StringBuilder text = new StringBuilder("class <caret>X { ");
     for (int i = 0; i < 100; i++) {
-      text += "\n    {\n" +
-              "//    String x = \"<zzzzzzzzzz/>\";\n" +
-              "    }";
+      text.append("\n    {\n" + "//    String x = \"<zzzzzzzzzz/>\";\n" + "    }");
     }
-    text += "\n}";
-    configureByText(StdFileTypes.JAVA, text);
+    text.append("\n}");
+    configureByText(StdFileTypes.JAVA, text.toString());
 
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);

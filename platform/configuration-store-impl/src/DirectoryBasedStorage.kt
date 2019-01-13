@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.createDir
@@ -7,7 +7,6 @@ import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.StateSplitter
 import com.intellij.openapi.components.StateSplitterEx
-import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -32,7 +31,7 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
 
   public override fun loadData(): StateMap = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
 
-  override fun createSaveSessionProducer(): StateStorage.SaveSessionProducer? = null
+  override fun createSaveSessionProducer(): SaveSessionProducer? = null
 
   override fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<in String>) {
     // todo reload only changed file, compute diff
@@ -78,6 +77,9 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
 open class DirectoryBasedStorage(private val dir: Path,
                                  @Suppress("DEPRECATION") splitter: StateSplitter,
                                  pathMacroSubstitutor: PathMacroSubstitutor? = null) : DirectoryBasedStorageBase(splitter, pathMacroSubstitutor) {
+  override val isUseVfsForWrite: Boolean
+    get() = true
+
   @Volatile
   private var cachedVirtualFile: VirtualFile? = null
 
@@ -95,7 +97,7 @@ open class DirectoryBasedStorage(private val dir: Path,
     cachedVirtualFile = dir
   }
 
-  override fun createSaveSessionProducer(): StateStorage.SaveSessionProducer? = if (checkIsSavingDisabled()) null else MySaveSession(this, getStorageData())
+  override fun createSaveSessionProducer(): SaveSessionProducer? = if (checkIsSavingDisabled()) null else MySaveSession(this, getStorageData())
 
   private class MySaveSession(private val storage: DirectoryBasedStorage, private val originalStates: StateMap) : SaveSessionBase() {
     private var copiedStorageData: MutableMap<String, Any>? = null

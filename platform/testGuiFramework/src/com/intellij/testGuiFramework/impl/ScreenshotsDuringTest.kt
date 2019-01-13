@@ -4,6 +4,7 @@ import com.intellij.openapi.util.io.FileUtil.ensureExists
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.testGuiFramework.framework.GuiTestPaths
 import com.intellij.testGuiFramework.util.ScreenshotTaker
+import com.intellij.testGuiFramework.util.logError
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.File
@@ -32,7 +33,7 @@ class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int 
       ensureExists(myFolder!!)
     }
     catch (e: IOException) {
-      println("Could not create folder $folderName")
+      logError("Could not create folder $folderName")
     }
 
     myExecutorService.scheduleAtFixedRate({ myScreenshotTaker.safeTakeScreenshotAndSave(File(myFolder, screenshotName)) },

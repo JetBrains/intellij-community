@@ -7,7 +7,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -147,11 +146,6 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
   @Override
   public PsiAnnotationOwner getOwner() {
     return myOwner;
-  }
-
-  @Override
-  public PsiMetaData getMetaData() {
-    return null;
   }
 
   public void addAttribute(PsiNameValuePair pair) {

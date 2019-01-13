@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -34,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -137,7 +136,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
   }
 
   public static void openFile(VirtualFile file, @NotNull Project project) {
-    NonProjectFileWritingAccessProvider.allowWriting(file);
+    NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
     PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);
   }
 

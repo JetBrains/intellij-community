@@ -7,7 +7,6 @@ import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.RepositoryArtifactDescription;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.io.HttpRequests;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +55,7 @@ public class BintrayEndpoint {
         request.getConnection();
       }
       catch (HttpRequests.HttpStatusException e) {
-        if (e.getStatusCode() == HttpResponseStatus.NOT_FOUND.code()) {
+        if (e.getStatusCode() == HttpURLConnection.HTTP_NOT_FOUND) {
           return null;
         }
         throw e;
@@ -82,7 +82,7 @@ public class BintrayEndpoint {
         return result;
       }
       catch (HttpRequests.HttpStatusException e) {
-        if (e.getStatusCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
+        if (e.getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
           return emptyList();
         }
         throw e;

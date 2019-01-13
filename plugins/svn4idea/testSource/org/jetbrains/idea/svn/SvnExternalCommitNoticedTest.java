@@ -42,7 +42,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
 
     checkin();
     refreshVfs();
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     assertNoChanges();
   }
 
@@ -58,7 +58,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     checkin();
 
     refreshVfs();
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     assertNoChanges();
   }
 
@@ -71,7 +71,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     runInAndVerifyIgnoreOutput("switch", branchUrl + "/root/target", tree.myTargetDir.getPath());
 
     refreshVfs();
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     assertStatus(tree.myS1File, FileStatus.SWITCHED);
     assertStatus(tree.myS2File, FileStatus.NOT_CHANGED);
     assertStatus(tree.mySourceDir, FileStatus.NOT_CHANGED);
@@ -90,7 +90,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     runInAndVerifyIgnoreOutput("switch", branchUrl, myWorkingCopyDir.getPath());
 
     refreshVfs();
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     vcs.getCopiesRefreshManager().waitCurrentRequest();
     infos = vcs.getSvnFileUrlMapping().getAllWcInfos();
     assertThat(map(infos, RootUrlInfo::getUrl), containsInAnyOrder(ar(parseUrl(branchUrl, false))));
@@ -112,7 +112,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     runInAndVerifyIgnoreOutput("ci", "-m", "test", externalDir.getPath());
 
     refreshVfs();
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     assertNoChanges();
   }
 

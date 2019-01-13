@@ -1,7 +1,7 @@
 class A {
   {
     Outer outer;
-    outer.new <ref>Inner(){};
+    outer.new <caret>Inner(){};
   }
 }
 

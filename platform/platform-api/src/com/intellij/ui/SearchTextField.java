@@ -16,6 +16,7 @@ package com.intellij.ui;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
@@ -133,17 +134,13 @@ public class SearchTextField extends JPanel {
     setHistoryPropertyName(historyPropertyName);
 
     if (historyPopupEnabled) {
-      myTextField.getActionMap().put("showHistory", new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (myNativeSearchPopup != null) {
-            myNativeSearchPopup.show(myTextField, 5, myTextField.getHeight());
-          } else if (myPopup == null || !myPopup.isVisible()) {
-            showPopup();
-          }
+      DumbAwareAction.create(event -> {
+        if (myNativeSearchPopup != null) {
+          myNativeSearchPopup.show(myTextField, 5, myTextField.getHeight());
+        } else if (myPopup == null || !myPopup.isVisible()) {
+          showPopup();
         }
-      });
-      myTextField.getInputMap().put(SHOW_HISTORY_KEYSTROKE, "showHistory");
+      }).registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ShowSearchHistory"), myTextField);
     } else if (historyPropertyName != null) {
       myTextField.getActionMap().put("showPrevHistoryItem", new AbstractAction() {
         @Override

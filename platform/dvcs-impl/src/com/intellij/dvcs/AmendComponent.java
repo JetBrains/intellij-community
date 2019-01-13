@@ -175,7 +175,7 @@ public abstract class AmendComponent {
   }
 
   @NotNull
-  protected abstract Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> files);
+  protected abstract Set<VirtualFile> getVcsRoots(@NotNull Collection<? extends FilePath> files);
 
   @Nullable
   protected abstract String getLastCommitMessage(@NotNull VirtualFile repo) throws VcsException;

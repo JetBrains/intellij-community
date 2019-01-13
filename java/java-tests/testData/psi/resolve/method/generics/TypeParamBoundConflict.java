@@ -15,7 +15,7 @@ class TestergenUser {
     public void context(Testergen test) {
         // the error is shown when x is called:
         Collection<Thing> t = null;
-        test.<ref>x(t);
+        test.<caret>x(t);
     }
 
 }

@@ -306,8 +306,15 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         labels = new JavaResolveResult[]{new CandidateInfo(labeled, PsiSubstitutor.EMPTY)};
       }
 
-      PsiElement context = PsiImplUtil.findEnclosingSwitchOrLoop(breakStatement);
-      if (!(context instanceof PsiSwitchExpression)) {
+      boolean insideSwitchExpression = false;
+      PsiElement context = breakStatement;
+      while ((context = PsiImplUtil.findEnclosingSwitchOrLoop(context.getParent())) != null) {
+        if (context instanceof PsiSwitchExpression) {
+          insideSwitchExpression = true;
+          break;
+        }
+      }
+      if (!insideSwitchExpression) {
         return labels;
       }
       else if (labels.length > 0) {

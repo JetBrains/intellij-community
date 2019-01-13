@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.AbstractBundle;
@@ -13,10 +13,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -34,8 +31,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -122,12 +119,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Deprecated
   public void setPath(@SuppressWarnings("unused") File path) { }
 
-  public void readExternal(@NotNull Element element, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
+  public void readExternal(@NotNull Element element, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver)
+    throws InvalidDataException, MalformedURLException {
     Application application = ApplicationManager.getApplication();
     readExternal(element, url, application != null && application.isUnitTestMode(), pathResolver);
   }
 
-  public void readExternal(@NotNull Element element, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
+  private void readExternal(@NotNull Element element, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver)
+    throws InvalidDataException, MalformedURLException {
     myAppComponents = Collections.emptyList();
     myProjectComponents = Collections.emptyList();
     myModuleComponents = Collections.emptyList();
@@ -138,20 +137,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return;
     }
 
-    JDOMXIncluder.resolveNonXIncludeElement(element, url.toExternalForm(), ignoreMissingInclude, pathResolver);
-    readExternal(JDOMUtil.internElement(element));
+    JDOMXIncluder.resolveNonXIncludeElement(element, url, ignoreMissingInclude, pathResolver);
+    readExternal(element);
   }
 
-  public void readExternal(@NotNull URL url) throws InvalidDataException, FileNotFoundException {
-    try {
-      readExternal(JDOMUtil.load(url), url, JDOMXIncluder.DEFAULT_PATH_RESOLVER);
-    }
-    catch (FileNotFoundException e) {
-      throw e;
-    }
-    catch (IOException | JDOMException e) {
-      throw new InvalidDataException(e);
-    }
+  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory) throws IOException, JDOMException {
+    readExternal(JDOMUtil.load(file, factory), file.toURI().toURL(), JDOMXIncluder.DEFAULT_PATH_RESOLVER);
   }
 
   // used in upsource
@@ -280,6 +271,17 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         }
         break;
 
+        case "module": {
+          String moduleName = child.getAttributeValue("value");
+          if (moduleName != null) {
+            if (myModules == null) {
+              myModules = new SmartList<>();
+            }
+            myModules.add(moduleName);
+          }
+        }
+        break;
+
         case OptimizedPluginBean.APPLICATION_COMPONENTS: {
           // because of x-pointer, maybe several application-components tag in document
           if (myAppComponents == Collections.<ComponentConfig>emptyList()) {
@@ -305,10 +307,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         }
         break;
       }
-    }
-
-    if (pluginBean.modules != null && !pluginBean.modules.isEmpty()) {
-      myModules = pluginBean.modules;
     }
   }
 
@@ -591,8 +589,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (!(o instanceof IdeaPluginDescriptorImpl)) return false;
 
     final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)o;
-
-    return myName == null ? pluginDescriptor.myName == null : myName.equals(pluginDescriptor.myName);
+    return Objects.equals(myName, pluginDescriptor.myName);
   }
 
   @Override
@@ -743,8 +740,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myAllowBundledUpdate;
   }
 
-  @Nullable
+  @NotNull
   public List<String> getModules() {
-    return myModules;
+    return ContainerUtil.notNullize(myModules);
   }
 }

@@ -13,10 +13,7 @@ import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.intention.impl.CreateClassInPackageInModuleFix;
-import com.intellij.codeInsight.intention.impl.ReplaceAssignmentWithComparisonFix;
-import com.intellij.codeInsight.intention.impl.RunRefactoringAction;
-import com.intellij.codeInsight.intention.impl.SameErasureButDifferentMethodsFix;
+import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
@@ -28,18 +25,17 @@ import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.InheritanceUtil;
@@ -666,34 +662,32 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createOptimizeImportsFix(final boolean onTheFly) {
-    final OptimizeImportsFix fix = new OptimizeImportsFix();
-
     return new IntentionAction() {
       @NotNull
       @Override
       public String getText() {
-        return fix.getText();
+        return QuickFixBundle.message("optimize.imports.fix");
       }
 
       @NotNull
       @Override
       public String getFamilyName() {
-        return fix.getFamilyName();
+        return QuickFixBundle.message("optimize.imports.fix");
       }
 
       @Override
       public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        return (!onTheFly || timeToOptimizeImports(file)) && fix.isAvailable(project, editor, file);
+        return (!onTheFly || timeToOptimizeImports(file)) && file instanceof PsiJavaFile && BaseIntentionAction.canModify(file);
       }
 
       @Override
       public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-        invokeOnTheFlyImportOptimizer(() -> fix.invoke(project, editor, file), file);
+        invokeOnTheFlyImportOptimizer(file);
       }
 
       @Override
       public boolean startInWriteAction() {
-        return fix.startInWriteAction();
+        return true;
       }
     };
   }
@@ -777,29 +771,22 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return OrderEntryFix.registerFixes(registrar, reference);
   }
 
-  private static void invokeOnTheFlyImportOptimizer(@NotNull final Runnable runnable, @NotNull final PsiFile file) {
+  private static void invokeOnTheFlyImportOptimizer(@NotNull PsiFile file) {
     final Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
-    final long stamp = document.getModificationStamp();
-    DumbService.getInstance(file.getProject()).smartInvokeLater(() -> {
-      if (project.isDisposed() || document.getModificationStamp() != stamp) return;
-      //no need to optimize imports on the fly during undo/redo
-      final UndoManager undoManager = UndoManager.getInstance(project);
-      if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-      String beforeText = file.getText();
-      final long oldStamp = document.getModificationStamp();
-      DocumentUtil.writeInRunUndoTransparentAction(runnable);
-      if (oldStamp != document.getModificationStamp()) {
-        String afterText = file.getText();
-        if (Comparing.strEqual(beforeText, afterText)) {
-          LOG.error("Import optimizer hasn't optimized any imports",
-                    new Throwable(file.getViewProvider().getVirtualFile().getPath()),
-                    AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile()));
-        }
+
+    String beforeText = file.getText();
+    long oldStamp = document.getModificationStamp();
+    DocumentUtil.writeInRunUndoTransparentAction(() -> JavaCodeStyleManager.getInstance(project).optimizeImports(file));
+    if (oldStamp != document.getModificationStamp()) {
+      String afterText = file.getText();
+      if (Comparing.strEqual(beforeText, afterText)) {
+        LOG.error("Import optimizer hasn't optimized any imports",
+                  new Throwable(file.getViewProvider().getVirtualFile().getPath()),
+                  AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile()));
       }
-    });
+    }
   }
 
   @NotNull
@@ -867,6 +854,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     // ignore unresolved imports errors
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
     final TextRange importsRange = importList == null ? TextRange.EMPTY_RANGE : importList.getTextRange();
+    //noinspection UnnecessaryLocalVariable
     boolean hasErrorsExceptUnresolvedImports = !DaemonCodeAnalyzerEx
       .processHighlights(document, file.getProject(), HighlightSeverity.ERROR, 0, document.getTextLength(), error -> {
         if (error.type instanceof LocalInspectionsPass.InspectionHighlightInfoType) return true;

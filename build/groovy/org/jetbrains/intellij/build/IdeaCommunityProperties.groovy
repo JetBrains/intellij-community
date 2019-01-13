@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileDynamic
@@ -51,6 +37,37 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
 
     mavenArtifacts.forIdeModules = true
+
+    versionCheckerConfig = [
+      "": 52,
+      "lib/idea_rt.jar": 47,
+      "lib/forms_rt.jar": 48,
+      "lib/annotations.jar": 49,
+      "lib/util.jar": 50,
+      "lib/rt/debugger-agent.jar": 50,
+      "lib/rt/debugger-agent-storage.jar": 50,
+      "lib/external-system-rt.jar": 50,
+      "lib/jshell-frontend.jar": 53,
+      "lib/sa-jdwp": -1,  // ignored
+      "plugins/Groovy/lib/groovy_rt.jar": 49,
+      "plugins/Groovy/lib/groovy-rt-constants.jar": 49,
+      "plugins/coverage/lib/coverage_rt.jar": 49,
+      "plugins/junit/lib/junit-rt.jar": 47,
+      "plugins/gradle/lib/gradle-tooling-extension-api.jar": 50,
+      "plugins/gradle/lib/gradle-tooling-extension-impl.jar": 50,
+      "plugins/maven/lib/maven-server-api.jar": 50,
+      "plugins/maven/lib/maven2-server-impl.jar": 50,
+      "plugins/maven/lib/maven3-server-common.jar": 50,
+      "plugins/maven/lib/maven30-server-impl.jar": 50,
+      "plugins/maven/lib/maven3-server-impl.jar": 50,
+      "plugins/maven/lib/artifact-resolver-m2.jar": 50,
+      "plugins/maven/lib/artifact-resolver-m3.jar": 50,
+      "plugins/maven/lib/artifact-resolver-m31.jar": 50,
+      "plugins/xpath/lib/rt/xslt-rt.jar": 48,
+      "plugins/xslt-debugger/lib/xslt-debugger-engine.jar": 49,
+      "plugins/xslt-debugger/lib/rt/xslt-debugger-engine-impl.jar": 49,
+      "plugins/cucumber-java/lib/cucumber-jvmFormatter.jar": 50
+    ]
   }
 
   @Override

@@ -29,11 +29,9 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.AnimatedIcon;
-import com.intellij.ui.BalloonLayoutImpl;
-import com.intellij.ui.Gray;
-import com.intellij.ui.InplaceButton;
-import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -52,8 +50,9 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.lang.ref.WeakReference;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.icons.AllIcons.Process.*;
 
@@ -78,6 +77,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private String myCurrentRequestor;
   private boolean myDisposed;
+  private WeakReference<Balloon> myLastShownBalloon;
 
   private final Set<InlineProgressIndicator> myDirtyIndicators = ContainerUtil.newIdentityTroveSet();
   private final Update myUpdateIndicators = new Update("UpdateIndicators", false, 1) {
@@ -508,6 +508,14 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       listener).createBalloon();
 
     SwingUtilities.invokeLater(() -> {
+      Balloon oldBalloon = SoftReference.dereference(myLastShownBalloon);
+      if (oldBalloon != null) {
+        balloon.setAnimationEnabled(false);
+        oldBalloon.setAnimationEnabled(false);
+        oldBalloon.hide();
+      }
+      myLastShownBalloon = new WeakReference<>(balloon);
+
       Component comp = this;
       if (comp.isShowing()) {
         int offset = comp.getHeight() / 2;

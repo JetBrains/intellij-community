@@ -64,4 +64,8 @@ public class RelaxedHtmlFromRngElementDescriptor extends DelegatingRelaxedHtmlEl
     }
     return false;
   }
+
+  public boolean isHtml() {
+    return isHtml;
+  }
 }

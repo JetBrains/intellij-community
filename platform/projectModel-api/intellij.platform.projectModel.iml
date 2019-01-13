@@ -9,7 +9,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" exported="" />
-    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
   </component>
 </module>

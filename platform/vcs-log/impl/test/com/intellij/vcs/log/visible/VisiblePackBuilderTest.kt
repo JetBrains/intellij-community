@@ -134,8 +134,8 @@ class VisiblePackBuilderTest {
         }
 
         override fun loadCommitsData(hashes: MutableList<Int>,
-                                     consumer: Consumer<MutableList<VcsFullCommitDetails>>,
-                                     errorConsumer: Consumer<Throwable>,
+                                     consumer: Consumer<in MutableList<VcsFullCommitDetails>>,
+                                     errorConsumer: Consumer<in Throwable>,
                                      indicator: ProgressIndicator?) {
         }
 
@@ -212,7 +212,7 @@ class VisiblePackBuilderTest {
 
     override fun getRefIndex(ref: VcsRef): Int = refsReversed[ref]!!
 
-    override fun iterateCommits(consumer: Function<CommitId, Boolean>) = throw UnsupportedOperationException()
+    override fun iterateCommits(consumer: Function<in CommitId, Boolean>) = throw UnsupportedOperationException()
 
     override fun flush() {
     }

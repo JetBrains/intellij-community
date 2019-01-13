@@ -123,12 +123,9 @@ public class RngElementDescriptor implements XmlElementDescriptor {
 
   @Override
   public final XmlElementDescriptor getElementDescriptor(final XmlTag childTag, XmlTag contextTag) {
-    final XmlElementDescriptor value = getCachedValue(childTag, this, DESCR_KEY, new ParameterizedCachedValueProvider<XmlElementDescriptor, RngElementDescriptor>() {
-      @Override
-      public CachedValueProvider.Result<XmlElementDescriptor> compute(RngElementDescriptor p) {
-        final XmlElementDescriptor descriptor = p.findElementDescriptor(childTag);
-        return CachedValueProvider.Result.create(descriptor, p.getDependencies(), childTag);
-      }
+    final XmlElementDescriptor value = getCachedValue(childTag, this, DESCR_KEY, p -> {
+      final XmlElementDescriptor descriptor = p.findElementDescriptor(childTag);
+      return CachedValueProvider.Result.create(descriptor, p.getDependencies(), childTag);
     });
     return value == NULL ? null : value;
   }
@@ -136,12 +133,9 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   @Override
   public final XmlAttributeDescriptor[] getAttributesDescriptors(@Nullable final XmlTag context) {
     if (context != null) {
-      return getCachedValue(context, this, ATTRS_KEY, new ParameterizedCachedValueProvider<XmlAttributeDescriptor[], RngElementDescriptor>() {
-        @Override
-        public CachedValueProvider.Result<XmlAttributeDescriptor[]> compute(RngElementDescriptor p) {
-          final XmlAttributeDescriptor[] value = p.collectAttributeDescriptors(context);
-          return CachedValueProvider.Result.create(value, p.getDependencies(), context);
-        }
+      return getCachedValue(context, this, ATTRS_KEY, p -> {
+        final XmlAttributeDescriptor[] value = p.collectAttributeDescriptors(context);
+        return CachedValueProvider.Result.create(value, p.getDependencies(), context);
       });
     } else {
       return collectAttributeDescriptors(null);

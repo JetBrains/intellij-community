@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots
 
 import com.intellij.openapi.application.runWriteAction
@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ModuleTestCase
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.*
 
@@ -22,7 +23,7 @@ import java.util.*
  * @author nik
  */
 class AutomaticModuleUnloaderTest : ModuleTestCase() {
-  fun `test unload simple module`() {
+  fun `test unload simple module`() = runBlocking {
     createModule("a")
     createModule("b")
     val moduleManager = ModuleManager.getInstance(project)
@@ -35,7 +36,7 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
     ModuleTestCase.assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, "a", "d")
   }
 
-  fun `test unload modules with dependencies between them`() {
+  fun `test unload modules with dependencies between them`() = runBlocking {
     createModule("a")
     createModule("b")
     doTest("a", listOf("c", "d"), { modules ->
@@ -45,7 +46,7 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
     },"a", "c", "d")
   }
 
-  fun `test do not unload module if loaded module depends on it`() {
+  fun `test do not unload module if loaded module depends on it`() = runBlocking {
     createModule("a")
     val b = createModule("b")
     ModuleRootModificationUtil.updateModel(b) {
@@ -54,7 +55,7 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
     doTest("a", listOf("d"), {}, "a")
   }
 
-  fun `test unload module if only unloaded module depends on it`() {
+  fun `test unload module if only unloaded module depends on it`() = runBlocking {
     val a = createModule("a")
     createModule("b")
     ModuleRootModificationUtil.updateModel(a) {
@@ -63,7 +64,7 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
     doTest("a", listOf("d"), {}, "a", "d")
   }
 
-  fun `test do not unload modules if loaded module depends on them transitively`() {
+  fun `test do not unload modules if loaded module depends on them transitively`() = runBlocking {
     createModule("a")
     val b = createModule("b")
     ModuleRootModificationUtil.updateModel(b) {
@@ -77,7 +78,7 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
     }, "a")
   }
 
-  fun `test unload module if loaded module transitively depends on it via previosly unloaded module`() {
+  fun `test unload module if loaded module transitively depends on it via previously unloaded module`() = runBlocking {
     val a = createModule("a")
     val b = createModule("b")
     ModuleRootModificationUtil.addDependency(a, b)
@@ -87,7 +88,7 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
     doTest("b", listOf("c"), {}, "b", "c")
   }
 
-  private fun doTest(initiallyUnloaded: String,
+  private suspend fun doTest(initiallyUnloaded: String,
                      newModulesName: List<String>,
                      setup: (Map<String, Module>) -> Unit,
                      vararg expectedUnloadedModules: String) {
@@ -101,7 +102,7 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
 
   }
 
-  private fun createNewModuleFiles(moduleNames: List<String>, setup: (Map<String, Module>) -> Unit): List<File> {
+  private suspend fun createNewModuleFiles(moduleNames: List<String>, setup: (Map<String, Module>) -> Unit): List<File> {
     val newModulesProjectDir = FileUtil.createTempDirectory("newModules", "")
     val moduleFiles = moduleNames.map { File(newModulesProjectDir, "$it.iml") }
     val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
@@ -114,7 +115,7 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
       }
       setup(ModuleManager.getInstance(project).modules.associateBy { it.name })
       modules.forEach {
-        it.stateStore.save(mutableListOf())
+        it.stateStore.save()
       }
     }
     finally {
@@ -124,10 +125,10 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
     return moduleFiles
   }
 
-  private fun reloadProjectWithNewModules(moduleFiles: List<File>) {
+  private suspend fun reloadProjectWithNewModules(moduleFiles: List<File>) {
     val moduleManager = ModuleManagerImpl.getInstanceImpl(myProject)
     val modulePaths = LinkedHashSet<ModulePath>()
-    moduleManager.modules.forEach { it.stateStore.save(mutableListOf()) }
+    moduleManager.modules.forEach { it.stateStore.save() }
     moduleManager.modules.mapTo(modulePaths) { ModulePath(it.moduleFilePath, null) }
     moduleManager.unloadedModuleDescriptions.mapTo(modulePaths) { (it as UnloadedModuleDescriptionImpl).modulePath }
     moduleFiles.mapTo(modulePaths) { ModulePath(FileUtil.toSystemIndependentName(it.absolutePath), null) }

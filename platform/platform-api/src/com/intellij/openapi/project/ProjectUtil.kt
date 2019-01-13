@@ -129,29 +129,30 @@ fun Project.guessProjectDir() : VirtualFile? {
   return LocalFileSystem.getInstance().findFileByPath(basePath!!)
 }
 
-fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator: String): String {
+@JvmOverloads
+fun Project.getProjectCacheFileName(isForceNameUse: Boolean = false, hashSeparator: String = ".", extensionWithDot: String = ""): String {
   val presentableUrl = presentableUrl
-  var name = if (forceNameUse || presentableUrl == null) {
-    name
-  }
-  else {
-    // lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was, user projects will not have long names as in our tests)
-    PathUtilRt.getFileName(presentableUrl).toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
+  var name = when {
+    isForceNameUse || presentableUrl == null -> name
+    else -> {
+      // lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was, user projects will not have long names as in our tests
+      PathUtilRt.getFileName(presentableUrl).toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
+    }
   }
 
   name = sanitizeFileName(name, isTruncate = false)
 
-  // do not use project.locationHash to avoid prefix for IPR projects (not required in our case because name in any case is prepended).
+  // do not use project.locationHash to avoid prefix for IPR projects (not required in our case because name in any case is prepended)
   val locationHash = Integer.toHexString((presentableUrl ?: name).hashCode())
 
   // trim to avoid "File name too long"
   name = name.trimMiddle(Math.min(name.length, 255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)
-  return "$name$hashSeparator${locationHash}"
+  return "$name$hashSeparator${locationHash}$extensionWithDot"
 }
 
 @JvmOverloads
-fun Project.getProjectCachePath(cacheName: String, forceNameUse: Boolean = false): Path {
-  return getProjectCachePath(appSystemDir.resolve(cacheName), forceNameUse)
+fun Project.getProjectCachePath(cacheDirName: String, isForceNameUse: Boolean = false, extensionWithDot: String = ""): Path {
+  return appSystemDir.resolve(cacheDirName).resolve(getProjectCacheFileName(isForceNameUse, extensionWithDot = extensionWithDot))
 }
 
 fun Project.getExternalConfigurationDir(): Path {

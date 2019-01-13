@@ -244,7 +244,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,

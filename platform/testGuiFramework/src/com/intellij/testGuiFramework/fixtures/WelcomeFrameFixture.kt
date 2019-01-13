@@ -3,10 +3,8 @@ package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.testGuiFramework.framework.Timeouts
-import com.intellij.testGuiFramework.impl.GuiRobotHolder
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt
-import com.intellij.testGuiFramework.impl.actionLink
-import com.intellij.testGuiFramework.impl.popupMenu
+import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.util.step
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
@@ -34,7 +32,7 @@ class WelcomeFrameFixture private constructor(robot: Robot,
   }
 
   fun findActionLinkByActionId(actionId: String): ActionLinkFixture {
-    return ActionLinkFixture.findByActionId(actionId, robot(), target())
+    return step("search '$actionId' action") {ActionLinkFixture.findByActionId(actionId, robot(), target()) }
   }
 
   fun findMessageDialog(title: String): MessagesFixture<*> {
@@ -50,13 +48,16 @@ class WelcomeFrameFixture private constructor(robot: Robot,
 
   companion object {
     fun find(robot: Robot, timeout: Timeout = Timeouts.minutes05): WelcomeFrameFixture {
-      try {
-        val welcomeFrame = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) {
-          Frame.getFrames().firstOrNull { it is FlatWelcomeFrame && it.isShowing() }
+      return step("search Welcome frame") {
+        try {
+          val welcomeFrame = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) {
+            Frame.getFrames().firstOrNull { it is FlatWelcomeFrame && it.isShowing() }
+          }
+          WelcomeFrameFixture(robot, welcomeFrame as FlatWelcomeFrame)
         }
-        return WelcomeFrameFixture(robot, welcomeFrame as FlatWelcomeFrame)
-      } catch (timeoutError: WaitTimedOutError) {
-        throw ComponentLookupException("Unable to find 'Welcome' window with timeout $timeout")
+        catch (timeoutError: WaitTimedOutError) {
+          throw ComponentLookupException("Unable to find 'Welcome' window with timeout $timeout")
+        }
       }
     }
 

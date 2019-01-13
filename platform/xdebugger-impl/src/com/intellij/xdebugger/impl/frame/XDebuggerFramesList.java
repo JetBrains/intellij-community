@@ -4,7 +4,6 @@ package com.intellij.xdebugger.impl.frame;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -23,7 +22,6 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,26 +81,22 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     myProject = project;
 
     doInit();
-    setDataProvider(new DataProvider() {
-      @Nullable
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        if (mySelectedFrame != null) {
-          if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-            return getFile(mySelectedFrame);
-          }
-          else if (CommonDataKeys.PSI_FILE.is(dataId)) {
-            VirtualFile file = getFile(mySelectedFrame);
-            if (file != null && file.isValid()) {
-              return PsiManager.getInstance(myProject).findFile(file);
-            }
+    setDataProvider(dataId -> {
+      if (mySelectedFrame != null) {
+        if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+          return getFile(mySelectedFrame);
+        }
+        else if (CommonDataKeys.PSI_FILE.is(dataId)) {
+          VirtualFile file = getFile(mySelectedFrame);
+          if (file != null && file.isValid()) {
+            return PsiManager.getInstance(myProject).findFile(file);
           }
         }
-        if (FRAMES_LIST.is(dataId)) {
-          return XDebuggerFramesList.this;
-        }
-        return null;
       }
+      if (FRAMES_LIST.is(dataId)) {
+        return XDebuggerFramesList.this;
+      }
+      return null;
     });
 
     // This is a workaround for the performance issue IDEA-187063
@@ -133,7 +127,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   @Override
   protected void onFrameChanged(final Object selectedValue) {
     if (mySelectedFrame != selectedValue) {
-      SwingUtilities.invokeLater(() -> repaint());
+      SwingUtilities.invokeLater(this::repaint);
       if (selectedValue instanceof XStackFrame) {
         mySelectedFrame = (XStackFrame)selectedValue;
       }

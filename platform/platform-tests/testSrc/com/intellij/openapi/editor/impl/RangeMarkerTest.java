@@ -1339,9 +1339,10 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       markers.add(marker);
     }
     PlatformTestUtil.startPerformanceTest(getTestName(false), 2000, ()->{
+      List<RangeMarker> overlaps = new ArrayList<>(10);
       for (int it=0;it<50;it++) {
         for (int i=1; i<doc.getTextLength()-1;i++) {
-          List<RangeMarker> overlaps = new ArrayList<>();
+          overlaps.clear();
           doc.processRangeMarkersOverlappingWith(i,i+1, rm->{
             overlaps.add(rm);
             return true;

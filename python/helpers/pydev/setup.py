@@ -137,11 +137,17 @@ def _replace_version_placeholder(version_str):
 version = _get_version_from_file()
 _replace_version_placeholder(version)
 
+here = os.path.abspath(os.path.dirname(__file__))
+try:
+    README = open(os.path.join(here, 'README.rst')).read()
+except IOError:
+    README = ''
 
 args = dict(
     name='pydevd-pycharm',
     version=version,
-    description = 'PyCharm Debugger (used in PyCharm and PyDev)',
+    description='PyCharm Debugger (used in PyCharm and PyDev)',
+    long_description=README,
     author='JetBrains, Fabio Zadrozny and others',
     url='https://github.com/JetBrains/intellij-community',
     license='Apache 2.0',
@@ -178,7 +184,7 @@ args = dict(
         'Environment :: Console',
         'Intended Audience :: Developers',
 
-        'Apache Software License (Apache License 2.0)',
+        'License :: OSI Approved :: Apache Software License',
 
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
@@ -203,7 +209,6 @@ args = dict(
     include_package_data=True,
     zip_safe=False,
 )
-
 
 args_with_binaries = args.copy()
 

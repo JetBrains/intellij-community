@@ -82,7 +82,6 @@ class CommunityStandaloneJpsBuilder {
           jpsLibrary(it)
         }
 
-        moduleLibrary("intellij.platform.jps.build.javac.rt", "optimizedFileManager.jar")
         jar("ant-jps-plugin.jar") { module("intellij.ant.jps") }
         include(additionalJars)
       }

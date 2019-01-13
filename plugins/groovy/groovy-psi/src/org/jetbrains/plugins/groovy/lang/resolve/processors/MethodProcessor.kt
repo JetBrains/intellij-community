@@ -12,13 +12,10 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
-import org.jetbrains.plugins.groovy.lang.resolve.BaseMethodResolveResult
-import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.*
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
-import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.impl.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
-import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
 
 class MethodProcessor(
   private val name: String,
@@ -51,16 +48,15 @@ class MethodProcessor(
   private val acceptMore: Boolean get() = myApplicable?.first.isNullOrEmpty()
 
   override fun execute(element: PsiElement, state: ResolveState): Boolean {
-    require(acceptMore) {
-      "Don't pass more methods if processor doesn't want to accept them"
+    if (!acceptMore) {
+      log.warn("Don't pass more methods if processor doesn't want to accept them")
+      return false
     }
     if (element !is PsiMethod) {
-      if (state[sorryCannotKnowElementKind] == true) {
-        return true
+      if (state[sorryCannotKnowElementKind] != true) {
+        log.warn("Unexpected element. ${elementInfo(element)}")
       }
-      else {
-        error("Unexpected element. ${elementInfo(element)}")
-      }
+      return true
     }
     if (name != getName(state, element)) return true
 

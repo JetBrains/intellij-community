@@ -133,6 +133,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
       else if (refElement instanceof RefMethod) {
         RefMethod refMethod = (RefMethod)refElement;
         if (refMethod.getOwnerClass().isFinal()) return null;
+        if (psiMember.hasModifierProperty(PsiModifier.PRIVATE)) return null;
         if (!isReportMethods()) return null;
         psiIdentifier = ((PsiMethod)psiMember).getNameIdentifier();
       }

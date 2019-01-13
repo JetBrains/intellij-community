@@ -319,7 +319,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
-      List<PsiDirectory> allElements = Arrays.asList(getSelectedDirectories());
+      PsiDirectory[] allElements = getSelectedDirectories();
       List<PsiElement> validElements = new ArrayList<>();
       for (PsiElement psiElement : allElements) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);

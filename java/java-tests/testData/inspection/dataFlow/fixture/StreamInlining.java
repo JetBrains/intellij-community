@@ -257,4 +257,11 @@ public class StreamInlining {
       System.out.println("found");
     }
   }
+  
+  void testImmediateCollection() {
+    String result = Collections.singleton(" foo ").stream().map(String::trim).findFirst().orElse(null);
+    if (<warning descr="Condition 'result == null' is always 'false'">result == null</warning>) {
+      System.out.println("impossible");
+    }
+  }
 }

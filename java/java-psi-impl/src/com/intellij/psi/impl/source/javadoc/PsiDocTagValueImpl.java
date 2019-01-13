@@ -36,7 +36,8 @@ public class PsiDocTagValueImpl extends CompositePsiElement implements PsiDocTag
 
   @Override
   public int getChildRole(@NotNull ASTNode child) {
-    if (child.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_COMMA) {
+    if (child.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_COMMA ||
+        child.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN && child.getTextLength() == 1 && child.getChars().charAt(0) == ',') {
       return ChildRole.COMMA;
     }
 

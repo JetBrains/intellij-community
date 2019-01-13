@@ -113,6 +113,13 @@ fun PsiElement?.toUElement(): UElement? =
 fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? =
   this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, cls) as T? }
 
+fun <T : UElement> PsiElement?.toUElementOfExpectedTypes(vararg clss: Class<out T>): T? =
+  this?.let {
+    ServiceManager.getService(project, UastContext::class.java)
+      .convertElementWithParent(this, if (clss.isNotEmpty()) clss else DEFAULT_TYPES_LIST) as T?
+  }
+
+
 inline fun <reified T : UElement> PsiElement?.toUElementOfType(): T? =
   this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, T::class.java) as T? }
 
@@ -141,3 +148,9 @@ fun <T : UElement> PsiElement?.getUastParentOfType(cls: Class<out T>, strict: Bo
 }
 
 inline fun <reified T : UElement> PsiElement?.getUastParentOfType(strict: Boolean = false): T? = getUastParentOfType(T::class.java, strict)
+
+@JvmField
+val DEFAULT_TYPES_LIST: Array<Class<out UElement>> = arrayOf(UElement::class.java)
+
+@JvmField
+val DEFAULT_EXPRESSION_TYPES_LIST: Array<Class<out UExpression>> = arrayOf(UExpression::class.java)

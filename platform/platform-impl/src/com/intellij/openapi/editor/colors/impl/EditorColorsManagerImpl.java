@@ -443,15 +443,16 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @Override
   public EditorColorsScheme getSchemeForCurrentUITheme() {
     LookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentLookAndFeel();
-    EditorColorsScheme scheme;
+    EditorColorsScheme scheme = null;
     if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
       UITheme theme = ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).getTheme();
-      String schemeName= theme.getEditorSchemeName();
-      scheme = getScheme(schemeName);
-      assert scheme != null :
-        "Theme " + theme.getName() + " refers to unknown color scheme " + schemeName;
+      String schemeName = theme.getEditorSchemeName();
+      if (schemeName != null) {
+        scheme = getScheme(schemeName);
+        assert scheme != null : "Theme " + theme.getName() + " refers to unknown color scheme " + schemeName;
+      }
     }
-    else {
+    if (scheme == null) {
       String schemeName = UIUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
       scheme = myDefaultColorSchemeManager.getScheme(schemeName);
       assert scheme != null :

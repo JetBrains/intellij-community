@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -57,6 +58,10 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
     }
 
     return ReferencesSearch.search(element, searchScope, false)
-      .anyMatch(reference -> !DeprecationInspectionBase.isElementInsideDeprecated(reference.getElement()));
+      .anyMatch(reference -> {
+        PsiElement referenceElement = reference.getElement();
+        return !DeprecationInspectionBase.isElementInsideDeprecated(referenceElement) && 
+               !PsiUtil.isInsideJavadocComment(referenceElement);
+      });
   }
 }

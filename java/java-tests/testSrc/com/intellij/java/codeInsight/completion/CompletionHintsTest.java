@@ -562,7 +562,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
       settings.setShowParameterNameHints(oldValue);
     }
   }
-  
+
   public void testLargeNumberOfParameters() {
     disableVirtualComma();
 
@@ -576,7 +576,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "    void m2() { mmm(<HINT text=\"a:\"/><caret>, <Hint text=\"b:\"/>, <Hint text=\"c:\"/>, <Hint text=\"d:\"/>, <Hint text=\"e:\"/>, <Hint text=\"f:\"/>); }\n" +
                           "}");
   }
-  
+
   public void testNestedContextIsNotDisposedOnTabbingOutToOuterContext() {
     disableVirtualComma();
 
@@ -1029,7 +1029,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { System.setProperty(<Hint text=\"key:\"/>\"a\", <HINT text=\"value:\"/>\"<caret>b\"); } }");
   }
 
-  public void testQuickDocForOverloadSelectedOnCompletion() throws Exception {
+  public void testQuickDocForOverloadSelectedOnCompletion() {
     disableVirtualComma();
 
     configureJava("class C { void m() { System.getPro<caret> } }");
@@ -1039,7 +1039,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     assertTrue(doc.contains("<code>null</code> if there is no property with that key"));
   }
 
-  public void testQuickDocForConstructorOverloadSelectedOnCompletion() throws Exception {
+  public void testQuickDocForConstructorOverloadSelectedOnCompletion() {
     configureJava("class C { void m() { new Strin<caret> } }");
     complete("String(byte[] bytes, String charsetName)");
     checkResultWithInlays("class C { void m() { new String(<HINT text=\"bytes:\"/><caret><Hint text=\",charsetName:\"/>) } }");
@@ -1676,6 +1676,21 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     showParameterInfo();
     methodOverloadUp();
     checkResultWithInlays("class C { void some(int a) {} void some(int a, int... b) {} void m() { some(<HINT text=\"a:\"/>1<caret>); } }");
+  }
+
+  public void testHideHintsForIncompleteCallIfOverloadMatches() {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    type("\"a");
+    home();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("<caret>class C { void m() { System.getProperty(\"a\") } }");
+  }
+
+  public void testConstructorInSmartCompletion() {
+    configureJava("class C { void m() { throw new <caret> } }");
+    completeSmart("Error(String message, Throwable cause)");
+    checkResultWithInlays("class C { void m() { throw new Error(<HINT text=\"message:\"/><caret><Hint text=\",cause:\"/>); } }");
   }
 
   private void checkResultWithInlays(String text) {

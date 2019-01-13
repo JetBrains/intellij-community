@@ -176,12 +176,14 @@ dojo
 draggable
 dtrace
 dumpfile
+dword
 dylib
 easymock
 ehcache
 elseif
 elsif
 endregion
+endian
 endif
 enum
 enums
@@ -411,6 +413,7 @@ mixin
 mkdir
 mlslabel
 mockito
+modeless
 mojo
 monad
 monoidal

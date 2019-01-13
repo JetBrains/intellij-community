@@ -262,7 +262,8 @@ public class ExternalJavacProcess {
                   }
                   finally {
                     myCanceled.remove(sessionId); // state cleanup
-                    if (!myKeepRunning) { // todo: also check that no other process is running
+                    if (!myKeepRunning) {
+                      // in this mode this is only one-time compilation process that should stop after build is complete
                       ExternalJavacProcess.this.stop();
                     }
                     Thread.interrupted(); // reset interrupted status

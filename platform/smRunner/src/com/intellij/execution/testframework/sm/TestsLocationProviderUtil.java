@@ -5,8 +5,6 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
@@ -29,16 +27,8 @@ public class TestsLocationProviderUtil {
   private TestsLocationProviderUtil() { }
 
   public static List<VirtualFile> findSuitableFilesFor(final String filePath, final Project project) {
-    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-
-    // at first let's try to find file as is, by it's real path
-    // and check that file belongs to current project
-    // this location provider designed for tests thus we will check only project content
-    // (we cannot check just sources or tests folders because RM doesn't use it
     final VirtualFile file = getByFullPath(filePath);
-    final boolean inProjectContent = file != null && (index.isInContent(file));
-
-    if (inProjectContent) {
+    if (file != null) {
       return Collections.singletonList(file);
     }
 

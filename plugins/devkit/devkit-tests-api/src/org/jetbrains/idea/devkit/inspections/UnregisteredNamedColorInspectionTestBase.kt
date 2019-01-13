@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections
 
 import org.jetbrains.idea.devkit.util.PsiUtil
 
 abstract class UnregisteredNamedColorInspectionTestBase : PluginModuleTestCase() {
+
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(UnregisteredNamedColorInspection())
@@ -30,5 +31,14 @@ abstract class UnregisteredNamedColorInspectionTestBase : PluginModuleTestCase()
         public static final Set<String> ALL_KEYS = Sets.union(UI_DEFAULTS_KEYS, NAMED_COLORS);
       }
     """.trimIndent())
+  }
+
+  override fun tearDown() {
+    try {
+      PsiUtil.markAsIdeaProject(myFixture.project, false)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 }

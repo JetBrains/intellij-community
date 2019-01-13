@@ -291,7 +291,7 @@ class CompilationPartsUtil {
 
     //region Prepare executor
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
-    messages.info("Will use up to $executorThreadsCount threads for packing and uploading")
+    messages.info("Will use up to $executorThreadsCount threads for downloading, verifying and unpacking")
 
     def executor = new NamedThreadPoolExecutor('Compile Parts', executorThreadsCount)
     executor.prestartAllCoreThreads()
@@ -386,35 +386,39 @@ class CompilationPartsUtil {
         messages.block("Mirror selection") {
           def head = new HttpHead(urlWithPrefix)
           head.setConfig(RequestConfig.custom().setRedirectsEnabled(false).build())
-          def response = httpClient.execute(head)
-          int statusCode = response.getStatusLine().getStatusCode()
-          def locationHeader = response.getFirstHeader("location")
-          if ((statusCode == HttpStatus.SC_MOVED_TEMPORARILY ||
-               statusCode == HttpStatus.SC_MOVED_PERMANENTLY ||
-               statusCode == HttpStatus.SC_TEMPORARY_REDIRECT ||
-               statusCode == HttpStatus.SC_SEE_OTHER)
-            && locationHeader != null) {
-            urlWithPrefix = locationHeader.getValue()
-            messages.info("Redirected to mirror: " + urlWithPrefix)
+          httpClient.execute(head).withCloseable { response ->
+            int statusCode = response.getStatusLine().getStatusCode()
+            def locationHeader = response.getFirstHeader("location")
+            if ((statusCode == HttpStatus.SC_MOVED_TEMPORARILY ||
+                 statusCode == HttpStatus.SC_MOVED_PERMANENTLY ||
+                 statusCode == HttpStatus.SC_TEMPORARY_REDIRECT ||
+                 statusCode == HttpStatus.SC_SEE_OTHER)
+              && locationHeader != null) {
+              urlWithPrefix = locationHeader.getValue()
+              messages.info("Redirected to mirror: " + urlWithPrefix)
+            }
+            else {
+              messages.info("Will use origin server: " + urlWithPrefix)
+            }
           }
-          else {
-            messages.info("Will use origin server: " + urlWithPrefix)
-          }
-          StreamUtil.closeStream(response)
         }
 
         toDownload.each { ctx ->
           executor.submit {
             FileUtil.ensureExists(ctx.jar.parentFile)
             def get = new HttpGet("${urlWithPrefix}${ctx.name}/${ctx.jar.name}")
-            def response = httpClient.execute(get)
-            assert response.getStatusLine().getStatusCode() == 200
-            def bis = new BufferedInputStream(response.getEntity().getContent())
-            def bos = new BufferedOutputStream(new FileOutputStream(ctx.jar))
-            FileUtil.copy(bis, bos)
-            StreamUtil.closeStream(bis)
-            StreamUtil.closeStream(bos)
-            StreamUtil.closeStream(response)
+            httpClient.execute(get).withCloseable { response ->
+              if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                messages.warning("Failed to fetch '${ctx.name}/${ctx.jar.name}', status code: ${response.getStatusLine().getStatusCode()}")
+              }
+              else {
+                new BufferedInputStream(response.getEntity().getContent()).withCloseable { bis ->
+                  new BufferedOutputStream(new FileOutputStream(ctx.jar)).withCloseable { bos ->
+                    FileUtil.copy(bis, bos)
+                  }
+                }
+              }
+            }
           }
         }
         executor.waitForAllComplete(messages)
@@ -625,7 +629,9 @@ class CompilationPartsUtil {
       if (!errors.isEmpty()) {
         messages.warning("Several (${errors.size()}) errors occured:")
         errors.each { Throwable t ->
-          messages.warning(t.message)
+          def writer = new StringWriter()
+          new PrintWriter(writer).withCloseable { t?.printStackTrace(it) }
+          messages.warning("${t.message}\n$writer" )
         }
         messages.error("Several (${errors.size()}) errors occured, see above")
         return true

@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.asJavaClassResult
 
 class EmptyListLiteralType(literal: GrListOrMap) : ListLiteralType(literal) {
 
-  val resolveResult by lazyPub {
+  val resolveResult: DiamondResolveResult? by lazyPub {
     resolve()?.let {
       DiamondResolveResult(it, literal, ResolveState.initial())
     }

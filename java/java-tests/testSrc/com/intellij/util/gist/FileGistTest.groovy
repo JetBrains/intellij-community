@@ -202,7 +202,7 @@ class FileGistTest extends LightCodeInsightFixtureTestCase {
     assert 1 == vfsGist.getFileData(project, vFile)
     assert 1 == psiGist.getFileData(psiFile)
 
-    ((GistManagerImpl)GistManager.instance).invalidateData()
+    GistManager.instance.invalidateData()
     assert 2 == vfsGist.getFileData(project, vFile)
     assert 2 == psiGist.getFileData(psiFile)
   }

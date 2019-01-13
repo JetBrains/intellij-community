@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.VisibilityWatcher;
 import com.intellij.psi.PsiDocumentManager;
@@ -57,7 +56,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -113,7 +111,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   private TodoTreeBuilder setupTreeStructure() {
     TodoTreeBuilder todoTreeBuilder = createTreeBuilder(myTree, myProject);
     TodoTreeStructure structure = todoTreeBuilder.getTodoTreeStructure();
-    StructureTreeModel structureTreeModel = new StructureTreeModel(structure, TodoTreeBuilder.MyComparator.ourInstance);
+    StructureTreeModel structureTreeModel = new StructureTreeModel(structure, TodoTreeBuilder.NODE_DESCRIPTOR_COMPARATOR);
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(structureTreeModel, myProject);
     myTree.setModel(asyncTreeModel);
     asyncTreeModel.addTreeModelListener(new MyExpandListener(todoTreeBuilder));

@@ -305,6 +305,7 @@ class TestingTasksImpl extends TestingTasks {
       "idea.system.path"                       : "$tempDir/system".toString(),
       "intellij.build.test.patterns"           : testPatterns,
       "intellij.build.test.groups"             : testGroups,
+      "intellij.build.test.sorter"             : System.getProperty("intellij.build.test.sorter"),
       "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
       "idea.coverage.enabled.build"            : System.getProperty("idea.coverage.enabled.build"),
       "teamcity.buildConfName"                 : System.getProperty("teamcity.buildConfName"),

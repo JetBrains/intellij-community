@@ -46,10 +46,10 @@ public class GitHistoryUtils {
    * in the repository using `git log` command.
    *
    * @param project        context project
-   * @param root           repository root
+   * @param root           git repository root
    * @param commitConsumer consumer for commits
    * @param parameters     additional parameters for `git log` command
-   * @throws VcsException
+   * @throws VcsException if there is a problem with running git
    */
   @SuppressWarnings("unused") // used externally
   public static void loadDetails(@NotNull Project project,
@@ -60,13 +60,14 @@ public class GitHistoryUtils {
   }
 
   /**
-   * Load commit information in a form of {@link TimedVcsCommit} (containing hash, parents and commit time) in the repository using `git log` command.
+   * Load commit information in a form of {@link TimedVcsCommit} (containing hash, parents and commit time)
+   * in the repository using `git log` command.
    *
    * @param project        context project
-   * @param root           repository root
+   * @param root           git repository root
    * @param commitConsumer consumer for commits
    * @param parameters     additional parameters for `git log` command
-   * @throws VcsException
+   * @throws VcsException if there is a problem with running git
    */
   public static void loadTimedCommits(@NotNull Project project,
                                       @NotNull VirtualFile root,
@@ -76,13 +77,32 @@ public class GitHistoryUtils {
   }
 
   /**
-   * Collect commit information in a form of {@link VcsCommitMetadata} (containing commit details, but no changes) for the specified hashes or references
+   * Collect commit information in a form of {@link TimedVcsCommit} (containing hash, parents and commit time)
+   * in the repository using `git log` command.
+   *
+   * @param project    context project
+   * @param root       git repository root
+   * @param parameters additional parameters for `git log` command
+   * @throws VcsException if there is a problem with running git
+   */
+  @SuppressWarnings("unused")
+  public static List<? extends TimedVcsCommit> collectTimedCommits(@NotNull Project project,
+                                                                   @NotNull VirtualFile root,
+                                                                   @NotNull String... parameters) throws VcsException {
+    List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
+    loadTimedCommits(project, root, commits::add, parameters);
+    return commits;
+  }
+
+  /**
+   * Collect commit information in a form of {@link VcsCommitMetadata} (containing commit details, but no changes)
+   * for the specified hashes or references.
    *
    * @param project context project
-   * @param root    repository root
+   * @param root    git repository root
    * @param hashes  hashes or references
    * @return a list of {@link VcsCommitMetadata} (one for each specified hash or reference) or null if something went wrong
-   * @throws VcsException
+   * @throws VcsException if there is a problem with running git
    */
   @Nullable
   public static List<? extends VcsCommitMetadata> collectCommitsMetadata(@NotNull Project project,
@@ -96,10 +116,17 @@ public class GitHistoryUtils {
   }
 
   /**
-   * <p>Get & parse git log detailed output with commits, their parents and their changes.</p>
-   * <p>
-   * <p>Warning: this is method is efficient by speed, but don't query too much, because the whole log output is retrieved at once,
-   * and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.</p>
+   * Collect commit information in a form of {@link GitCommit} (containing commit details and changes to commit parents)
+   * in the repository using `git log` command.
+   * <br/>
+   * Warning: this is method is efficient by speed, but don't query too much, because the whole log output is retrieved at once,
+   * and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.
+   *
+   * @param project    context project
+   * @param root       git repository root
+   * @param parameters additional parameters for `git log` command
+   * @return a list of {@link GitCommit}
+   * @throws VcsException if there is a problem with running git
    */
   @NotNull
   public static List<GitCommit> history(@NotNull Project project, @NotNull VirtualFile root, String... parameters)
@@ -111,6 +138,15 @@ public class GitHistoryUtils {
     return GitLogUtil.collectFullDetails(project, root, parameters);
   }
 
+  /**
+   * Create a proper list of parameters for `git log` command from a list of hashes.
+   *
+   * @param vcs    an instance of {@link GitVcs} class for the repository, could be obtained from the
+   *               corresponding {@link git4idea.repo.GitRepository} or from a project by calling {@code GitVcs.getInstance(project)}
+   * @param hashes a list of hashes to call `git log` for
+   * @return a list of parameters that could be fed to a `git log` command
+   * @throws VcsException if there is a problem with running git
+   */
   @NotNull
   public static String[] formHashParameters(@NotNull GitVcs vcs, @NotNull Collection<String> hashes) {
     List<String> parameters = ContainerUtil.newArrayList();
@@ -124,11 +160,11 @@ public class GitHistoryUtils {
   /**
    * Get current revision for the file under git in the current or specified branch.
    *
-   * @param project  a project
-   * @param filePath file path to the file which revision is to be retrieved.
-   * @param branch   name of branch or null if current branch wanted.
-   * @return revision number or null if the file is unversioned or new.
-   * @throws VcsException if there is a problem with running git.
+   * @param project  context project
+   * @param filePath file path to the file which revision is to be retrieved
+   * @param branch   name of branch or null if current branch wanted
+   * @return revision number or null if the file is unversioned or new
+   * @throws VcsException if there is a problem with running git
    */
   @Nullable
   public static VcsRevisionNumber getCurrentRevision(@NotNull Project project, @NotNull FilePath filePath,
@@ -182,10 +218,10 @@ public class GitHistoryUtils {
   }
 
   /**
-   * Get current revision for the file under git
+   * Get current revision for the file under git.
    *
-   * @param project  a project
-   * @param filePath a file path
+   * @param project  context project
+   * @param filePath file path to the file which revision is to be retrieved
    * @return a revision number or null if the file is unversioned or new
    * @throws VcsException if there is problem with running git
    */
@@ -262,7 +298,7 @@ public class GitHistoryUtils {
   }
 
   /**
-   * @deprecated To remove in IDEA 17
+   * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)}
    */
   @Deprecated
   @SuppressWarnings("unused")
@@ -274,7 +310,7 @@ public class GitHistoryUtils {
   }
 
   /**
-   * @deprecated To remove in IDEA 17
+   * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)}
    */
   @Deprecated
   @NotNull
@@ -300,5 +336,15 @@ public class GitHistoryUtils {
       rc.add(Pair.create(new SHAHash(record.getHash()), record.getDate()));
     }
     return rc;
+  }
+
+  /**
+   * @deprecated use {@link GitHistoryUtils#collectCommitsMetadata(Project, VirtualFile, String...)} instead.
+   */
+  @Deprecated
+  public static List<? extends VcsCommitMetadata> readLastCommits(@NotNull Project project,
+                                                                  @NotNull VirtualFile root,
+                                                                  @NotNull String... hashes) throws VcsException {
+    return collectCommitsMetadata(project, root, hashes);
   }
 }

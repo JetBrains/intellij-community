@@ -1,9 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.application.Topics;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.*;
+import com.intellij.ide.FrameStateListener;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.IdeTooltip;
+import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -584,7 +588,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     if (ApplicationManager.getApplication() != null) {
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
           @Override
-          public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+          public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
             if (myHideOnAction && !(action instanceof HintManagerImpl.ActionToIgnore)) {
               hide();
             }
@@ -707,15 +711,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           Icon icon = getCloseButton();
           int iconWidth = icon.getIconWidth();
           int iconHeight = icon.getIconHeight();
-          Rectangle r =
-            new Rectangle(lpBounds.x + lpBounds.width - iconWidth + (int)(iconWidth * 0.3), lpBounds.y - (int)(iconHeight * 0.3), iconWidth,
-                          iconHeight);
+          Insets borderInsets = getShadowBorderInsets();
 
-          Insets border = getShadowBorderInsets();
-          r.x -= border.left;
-          r.y -= border.top;
-
-          myCloseButton.setBounds(r);
+          myCloseButton.setBounds(lpBounds.x + lpBounds.width - iconWidth - borderInsets.right - JBUI.scale(8),
+                                  lpBounds.y + borderInsets.top + JBUI.scale(6), iconWidth, iconHeight);
         }
       };
     }
@@ -886,7 +885,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   public void startSmartFadeoutTimer(int delay) {
     mySmartFadeout = true;
     mySmartFadeoutDelay = delay;
-    FrameStateManager.getInstance().addListener(new FrameStateListener() {
+    Topics.subscribe(FrameStateListener.TOPIC, this, new FrameStateListener() {
       @Override
       public void onFrameDeactivated() {
         if (myFadeoutAlarm.getActiveRequestCount() > 0) {
@@ -897,7 +896,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           }
         }
       }
-    }, this);
+    });
   }
 
   public void startFadeoutTimer(final int fadeoutDelay) {

@@ -73,6 +73,7 @@ public class OptionalUtil {
       case OPTIONAL_DOUBLE:
         return PsiType.DOUBLE;
       case JAVA_UTIL_OPTIONAL:
+      case GUAVA_OPTIONAL:
         PsiType[] parameters = ((PsiClassType)type).getParameters();
         if (parameters.length != 1) return null;
         PsiType streamType = parameters[0];

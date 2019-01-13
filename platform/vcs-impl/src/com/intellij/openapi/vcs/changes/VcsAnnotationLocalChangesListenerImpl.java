@@ -102,7 +102,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     };
   }
 
-  private void checkByDirtyScope(Set<String> removed, Map<String, VcsRevisionNumber> refresh, Set<VirtualFile> files) {
+  private void checkByDirtyScope(Set<String> removed, Map<String, VcsRevisionNumber> refresh, Set<? extends VirtualFile> files) {
     for (String path : removed) {
       refreshForPath(path, null);
     }
@@ -184,7 +184,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     }
   }
 
-  private static void invalidateAnnotations(@NotNull Collection<FileAnnotation> annotations, boolean reload) {
+  private static void invalidateAnnotations(@NotNull Collection<? extends FileAnnotation> annotations, boolean reload) {
     getApplication().invokeLater(() -> {
       for (FileAnnotation annotation: annotations) {
         try {

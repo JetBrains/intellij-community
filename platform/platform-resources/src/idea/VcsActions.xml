@@ -258,10 +258,6 @@
       <action id="IncomingChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction"
               icon="AllIcons.Actions.Refresh"/>
       <reference ref="CommittedChanges.Details"/>
-      <!--
-      <action id="IncomingChanges.Get" class="com.intellij.openapi.vcs.changes.committed.GetCommittedChangelistAction"
-              icon="/actions/get.png"/>
-      -->
       <reference ref="Vcs.UpdateProject"/>
     </group>
 

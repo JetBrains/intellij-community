@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 /**
  * @author Gregory.Shrago
  */
@@ -286,19 +288,18 @@ public class DfaUtil {
   }
 
   public static boolean ignoreInitializer(PsiVariable variable) {
-    // Skip boolean constant fields as they usually used as control knobs to modify program logic
-    // it's better to analyze both true and false values even if it's predefined
-    PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
-    return initializer != null &&
-           variable instanceof PsiField &&
-           variable.hasModifierProperty(PsiModifier.FINAL) &&
-           variable.getType().equals(PsiType.BOOLEAN) &&
-           (ExpressionUtils.isLiteral(initializer, Boolean.TRUE) || ExpressionUtils.isLiteral(initializer, Boolean.FALSE));
+    if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.FINAL) && variable.getType().equals(PsiType.BOOLEAN)) {
+      // Skip boolean constant fields as they usually used as control knobs to modify program logic
+      // it's better to analyze both true and false values even if it's predefined
+      PsiLiteralExpression initializer = tryCast(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()), PsiLiteralExpression.class);
+      return initializer != null && initializer.getValue() instanceof Boolean;
+    }
+    return false;
   }
 
   static boolean isEffectivelyUnqualified(DfaVariableValue variableValue) {
     return variableValue.getQualifier() == null ||
-     variableValue.getQualifier().getSource() instanceof DfaExpressionFactory.ThisSource;
+     variableValue.getQualifier().getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor;
   }
 
   public static boolean hasImplicitImpureSuperCall(PsiClass aClass, PsiMethod constructor) {
@@ -336,7 +337,7 @@ public class DfaUtil {
   @Nullable
   public static Boolean evaluateCondition(@Nullable PsiExpression condition) {
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(condition);
-    return result == null ? null : ObjectUtils.tryCast(result.getExpressionValue(condition), Boolean.class);
+    return result == null ? null : tryCast(result.getExpressionValue(condition), Boolean.class);
   }
 
   public static boolean isComparedByEquals(PsiType type) {
@@ -354,7 +355,7 @@ public class DfaUtil {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
       if (value instanceof DfaBoxedValue ||
           (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType()))) {
-        return value.getFactory().getBoxedFactory().createUnboxed(value, ObjectUtils.tryCast(type, PsiPrimitiveType.class));
+        return SpecialField.UNBOX.createValue(value.getFactory(), value);
       }
     }
     return value;
