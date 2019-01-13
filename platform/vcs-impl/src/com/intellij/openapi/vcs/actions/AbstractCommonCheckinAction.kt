@@ -5,26 +5,29 @@ import com.intellij.configurationStore.saveDocumentsAndProjectSettings
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
-import com.intellij.util.ArrayUtil.isEmpty
-import com.intellij.util.ObjectUtils
-import com.intellij.util.containers.ContainerUtil.*
-import com.intellij.util.containers.stream
-import java.util.Arrays.asList
-import java.util.stream.Collectors.toSet
+import com.intellij.util.containers.ContainerUtil.concat
+
+private val LOG = logger<AbstractCommonCheckinAction>()
+
+private fun getChangesIn(project: Project, roots: Array<FilePath>): Set<Change> {
+  val manager = ChangeListManager.getInstance(project)
+  return roots.flatMap { manager.getChangesIn(it) }.toSet()
+}
 
 abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackground {
   public override fun actionPerformed(context: VcsContext) {
     LOG.debug("actionPerformed. ")
-    val project = ObjectUtils.notNull(context.project)
 
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not " + getMnemonicsFreeActionName(context) + " now")) {
+    val project = context.project!!
+
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not ${getMnemonicsFreeActionName(context)} now")) {
       LOG.debug("ChangeListManager is freezed. returning.")
     }
     else if (ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning) {
@@ -32,30 +35,31 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     }
     else {
       val roots = prepareRootsForCommit(getRoots(context), project)
-      ChangeListManager.getInstance(project)
-        .invokeAfterUpdate({ performCheckIn(context, project, roots) }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
-                           VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current())
+      ChangeListManager.getInstance(project).invokeAfterUpdate(
+        { performCheckIn(context, project, roots) }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
+        message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current())
     }
   }
 
   protected open fun performCheckIn(context: VcsContext, project: Project, roots: Array<FilePath>) {
     LOG.debug("invoking commit dialog after update")
-    val initialSelection = getInitiallySelectedChangeList(context, project)
+
     val selectedChanges = context.selectedChanges
-    val selectedChangesList = if (isEmpty(selectedChanges)) emptyList() else asList(*selectedChanges!!)
     val selectedUnversioned = context.selectedUnversionedFiles
     val changesToCommit: Collection<Change>
     val included: Collection<*>
-    if (!isEmpty(selectedChangesList) || !isEmpty(selectedUnversioned)) {
-      changesToCommit = selectedChangesList
-      included = concat(selectedChangesList, selectedUnversioned)
-    }
-    else {
+
+    if (selectedChanges.isNullOrEmpty() && selectedUnversioned.isEmpty()) {
       changesToCommit = getChangesIn(project, roots)
       included = changesToCommit
     }
+    else {
+      changesToCommit = selectedChanges.orEmpty().toList()
+      included = concat(changesToCommit, selectedUnversioned)
+    }
 
-    CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialSelection, getExecutor(project), null)
+    val initialChangeList = getInitiallySelectedChangeList(context, project)
+    CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialChangeList, getExecutor(project), null)
   }
 
   protected open fun prepareRootsForCommit(roots: Array<FilePath>, project: Project): Array<FilePath> {
@@ -64,29 +68,16 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     return DescindingFilesFilter.filterDescindingFiles(roots, project)
   }
 
-  protected open fun getMnemonicsFreeActionName(context: VcsContext): String? {
-    return getActionName(context)
-  }
+  protected open fun getMnemonicsFreeActionName(context: VcsContext): String? = getActionName(context)
 
-  protected open fun getExecutor(project: Project): CommitExecutor? {
-    return null
-  }
+  protected open fun getExecutor(project: Project): CommitExecutor? = null
 
   protected open fun getInitiallySelectedChangeList(context: VcsContext, project: Project): LocalChangeList? {
-    val result: LocalChangeList?
     val manager = ChangeListManager.getInstance(project)
-    val changeLists = context.selectedChangeLists
 
-    if (!isEmpty(changeLists)) {
-      // convert copy to real
-      result = manager.findChangeList(changeLists!![0].name)
-    }
-    else {
-      val changes = context.selectedChanges
-      result = if (!isEmpty(changes)) manager.getChangeList(changes!![0]) else manager.defaultChangeList
-    }
-
-    return result
+    context.selectedChangeLists?.firstOrNull()?.let { return manager.findChangeList(it.name) }
+    context.selectedChanges?.firstOrNull()?.let { return manager.getChangeList(it) }
+    return manager.defaultChangeList
   }
 
   protected abstract fun getActionName(dataContext: VcsContext): String?
@@ -105,21 +96,9 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
       presentation.isEnabled = false
     }
     else {
-      presentation.text = getActionName(vcsContext) + "..."
+      presentation.text = "${getActionName(vcsContext)}..."
       presentation.isEnabled = !ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning
       presentation.isVisible = true
-    }
-  }
-
-  companion object {
-
-    private val LOG = Logger.getInstance(AbstractCommonCheckinAction::class.java)
-
-    private fun getChangesIn(project: Project, roots: Array<FilePath>): Set<Change> {
-      val manager = ChangeListManager.getInstance(project)
-      return roots.stream()
-        .flatMap { path -> manager.getChangesIn(path).stream() }
-        .collect(toSet())
     }
   }
 }
