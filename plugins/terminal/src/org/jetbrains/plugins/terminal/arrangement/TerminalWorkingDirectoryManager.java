@@ -24,6 +24,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -81,12 +82,14 @@ public class TerminalWorkingDirectoryManager {
     data.myWorkingDirectory = content.getUserData(INITIAL_CWD_KEY);
     content.putUserData(INITIAL_CWD_KEY, null);
     dataRef.set(data);
-    TerminalView.getWidgetByContent(content).getTerminalPanel().addCustomKeyListener(listener);
+    JBTerminalWidget widget = Objects.requireNonNull(TerminalView.getWidgetByContent(content));
+    widget.getTerminalPanel().addCustomKeyListener(listener);
     myDataByContentMap.put(content, data);
   }
 
   private static void updateWorkingDirectory(@NotNull Content content, @NotNull Data data) {
     JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
+    if (widget == null) return;
     ProcessTtyConnector connector = ObjectUtils.tryCast(widget.getTtyConnector(), ProcessTtyConnector.class);
     if (connector == null) return;
     try {
@@ -118,7 +121,9 @@ public class TerminalWorkingDirectoryManager {
     if (data != null) {
       myDataByContentMap.remove(content);
       JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
-      widget.getTerminalPanel().removeCustomKeyListener(data.myKeyListener);
+      if (widget != null) {
+        widget.getTerminalPanel().removeCustomKeyListener(data.myKeyListener);
+      }
     }
   }
 

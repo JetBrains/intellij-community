@@ -77,10 +77,11 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
     TerminalArrangementState arrangementState = new TerminalArrangementState();
     ContentManager contentManager = terminalToolWindow.getContentManager();
     for (Content content : contentManager.getContents()) {
+      JBTerminalWidget terminalWidget = TerminalView.getWidgetByContent(content);
+      if (terminalWidget == null) continue;
       TerminalTabState tabState = new TerminalTabState();
       tabState.myTabName = content.getTabName();
       tabState.myWorkingDirectory = myWorkingDirectoryManager.getWorkingDirectory(content);
-      JBTerminalWidget terminalWidget = TerminalView.getWidgetByContent(content);
       String historyFilePath = terminalWidget.getCommandHistoryFilePath();
       tabState.myCommandHistoryFileName = historyFilePath != null ? PathUtil.getFileName(historyFilePath) : null;
       arrangementState.myTabStates.add(tabState);

@@ -64,7 +64,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -323,9 +322,14 @@ public class TerminalView {
     }
   }
 
-  @NotNull
+  @Nullable
   public static JBTerminalWidget getWidgetByContent(@NotNull Content content) {
-    return Objects.requireNonNull(content.getUserData(TERMINAL_WIDGET_KEY));
+    return content.getUserData(TERMINAL_WIDGET_KEY);
+  }
+
+  public void detachWidgetAndRemoveContent(@NotNull Content content) {
+    content.putUserData(TERMINAL_WIDGET_KEY, null);
+    myToolWindow.getContentManager().removeContent(content, true);
   }
 
   /**

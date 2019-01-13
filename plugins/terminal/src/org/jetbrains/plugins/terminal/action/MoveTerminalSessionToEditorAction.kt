@@ -16,15 +16,14 @@ class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuActionBase()
     val tabInfo = TabInfo(selectedContent!!.component)
       .setText(selectedContent.displayName)
     val terminalView = TerminalView.getInstance(e.project!!)
-    val terminalWidget = TerminalView.getWidgetByContent(selectedContent)
+    val terminalWidget = TerminalView.getWidgetByContent(selectedContent)!!
     val file = TerminalSessionVirtualFileImpl(tabInfo, terminalWidget, terminalView.terminalRunner.settingsProvider)
     tabInfo.setObject(file)
     file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, java.lang.Boolean.TRUE)
     val fileEditor = FileEditorManager.getInstance(e.project!!).openFile(file, true).first()
 
     terminalWidget.moveDisposable(fileEditor)
-
-    activeToolWindow.contentManager.removeContent(selectedContent, true)
+    terminalView.detachWidgetAndRemoveContent(selectedContent)
 
     file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null)
   }
