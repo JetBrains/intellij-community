@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
+import com.intellij.configurationStore.saveDocumentsAndProjectsAndApp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -24,7 +25,14 @@ import java.util.concurrent.atomic.AtomicInteger
 private val LOG = Logger.getInstance(SaveAndSyncHandler::class.java)
 
 class SaveAndSyncHandlerImpl(private val settings: GeneralSettings, fileDocumentManager: FileDocumentManager) : SaveAndSyncHandler(), Disposable {
-  private val generalSettingsListener: PropertyChangeListener
+  private val generalSettingsListener = PropertyChangeListener { e ->
+    if (e.propertyName == GeneralSettings.PROP_INACTIVE_TIMEOUT) {
+      val eventQueue = IdeEventQueue.getInstance()
+      eventQueue.removeIdleListener(idleListener)
+      eventQueue.addIdleListener(idleListener, (e.newValue as Int) * 1000)
+    }
+  }
+
   private val refreshDelayAlarm = SingleAlarm(Runnable { this.doScheduledRefresh() }, delay = 300, parentDisposable = this)
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
@@ -42,13 +50,6 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings, fileDocument
   init {
     IdeEventQueue.getInstance().addIdleListener(idleListener, settings.inactiveTimeout * 1000)
 
-    generalSettingsListener = PropertyChangeListener { e ->
-      if (GeneralSettings.PROP_INACTIVE_TIMEOUT == e.propertyName) {
-        val eventQueue = IdeEventQueue.getInstance()
-        eventQueue.removeIdleListener(idleListener)
-        eventQueue.addIdleListener(idleListener, (e.newValue as Int) * 1000)
-      }
-    }
     settings.addPropertyChangeListener(generalSettingsListener)
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
@@ -82,11 +83,10 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings, fileDocument
   }
 
   override fun saveProjectsAndDocuments() {
-    val app = ApplicationManager.getApplication()
-    if (!app.isDisposed &&
+    if (!ApplicationManager.getApplication().isDisposed &&
         settings.isSaveOnFrameDeactivation &&
         blockSaveOnFrameDeactivationCount.get() == 0) {
-      app.saveAll()
+      saveDocumentsAndProjectsAndApp(false)
     }
   }
 
