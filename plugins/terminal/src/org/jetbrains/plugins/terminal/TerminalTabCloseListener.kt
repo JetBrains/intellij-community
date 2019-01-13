@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
 
-class TerminalTabCloseListener(content: Content,
+class TerminalTabCloseListener(val content: Content,
                                val project: Project) : BaseContentCloseListener(content, project) {
   override fun disposeContent(content: Content) {
   }
@@ -18,7 +18,8 @@ class TerminalTabCloseListener(content: Content,
     if (modal || ApplicationManager.getApplication().isDisposeInProgress) {
       return true
     }
-    if (!TerminalView.getWidgetByContent(content).isSessionRunning) {
+    val widget = TerminalView.getWidgetByContent(content)
+    if (widget == null || !widget.isSessionRunning) {
       return true
     }
     val proxy = NopProcessHandler().apply { startNotify() }
@@ -26,5 +27,9 @@ class TerminalTabCloseListener(content: Content,
     proxy.putUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY, true)
     val result = TerminateRemoteProcessDialog.show(project, "Terminal ${content.displayName}", proxy)
     return result != null
+  }
+
+  override fun canClose(project: Project): Boolean {
+    return project === this.project && closeQuery(this.content, true)
   }
 }
