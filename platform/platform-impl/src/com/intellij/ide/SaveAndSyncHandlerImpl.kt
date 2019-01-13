@@ -12,7 +12,6 @@ import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.progress.ProgressManager
@@ -31,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG = Logger.getInstance(SaveAndSyncHandler::class.java)
 
-class SaveAndSyncHandlerImpl(private val settings: GeneralSettings, fileDocumentManager: FileDocumentManager) : SaveAndSyncHandler(), Disposable {
+class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyncHandler(), Disposable {
   private val generalSettingsListener = PropertyChangeListener { e ->
     if (e.propertyName == GeneralSettings.PROP_INACTIVE_TIMEOUT) {
       val eventQueue = IdeEventQueue.getInstance()
@@ -49,7 +48,7 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings, fileDocument
   private val idleListener = Runnable {
     if (settings.isAutoSaveIfInactive && canSyncOrSave()) {
       submitTransaction {
-        (fileDocumentManager as FileDocumentManagerImpl).saveAllDocuments(false)
+        doSaveAllDocuments()
       }
     }
   }
@@ -137,12 +136,16 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings, fileDocument
 
     coroutineScope {
       launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-        FileDocumentManager.getInstance().saveAllDocuments()
+        doSaveAllDocuments()
       }
       launch {
         saveProjectsAndApp(isForceSavingAllSettings = false)
       }
     }
+  }
+
+  private fun doSaveAllDocuments() {
+    (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
   }
 
   override fun scheduleRefresh() {
