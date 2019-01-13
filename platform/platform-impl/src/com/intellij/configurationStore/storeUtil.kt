@@ -66,6 +66,11 @@ fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: B
     notification.notify(componentManager as? Project)
   }
   finally {
+    val app = ApplicationManager.getApplication()
+    if (componentManager is Project && !app.isDisposed) {
+      app.messageBus.syncPublisher(ProjectEx.ProjectSaved.TOPIC).saved(componentManager)
+    }
+
     ShutDownTracker.getInstance().unregisterStopperThread(currentThread)
   }
 }
@@ -105,7 +110,7 @@ fun saveDocumentsAndProjectsAndApp(isForceSavingAllSettings: Boolean) {
  */
 internal fun saveProjectsAndApp(isForceSavingAllSettings: Boolean) {
   val start = System.currentTimeMillis()
-  ApplicationManager.getApplication().saveSettings(isForceSavingAllSettings)
+  saveSettings(ApplicationManager.getApplication(), isForceSavingAllSettings)
 
   val projectManager = ProjectManager.getInstance()
   if (projectManager is ProjectManagerEx) {

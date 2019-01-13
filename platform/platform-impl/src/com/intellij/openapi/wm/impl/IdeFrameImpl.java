@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.AppLifecycleListener;
@@ -274,9 +275,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
           if (myProject != null && myProject.isOpen()) {
             ProjectManagerEx.getInstanceEx().closeAndDispose(myProject);
           }
-          Application application = ApplicationManager.getApplication();
-          application.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed();
-          application.saveSettings(true);
+          Application app = ApplicationManager.getApplication();
+          app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed();
+          StoreUtil.saveSettings(app, true);
 
           WelcomeFrame.showIfNoProjectOpened();
         }

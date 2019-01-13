@@ -21,7 +21,7 @@ private const val FILE_STORAGE_DIR = "options"
 private const val DEFAULT_STORAGE_SPEC = "${PathManager.DEFAULT_OPTIONS_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}"
 
 class ApplicationStoreImpl(private val application: Application, pathMacroManager: PathMacroManager? = null) : ComponentStoreWithExtraComponents() {
-  override val storageManager: ApplicationStorageManager = ApplicationStorageManager(application, pathMacroManager)
+  override val storageManager = ApplicationStorageManager(application, pathMacroManager)
 
   // number of app components require some state, so, we load default state in test mode
   override val loadPolicy: StateLoadPolicy

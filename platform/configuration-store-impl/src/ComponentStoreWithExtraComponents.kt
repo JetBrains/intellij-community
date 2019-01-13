@@ -9,11 +9,29 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   @Suppress("DEPRECATION")
   private val settingsSavingComponents = ContainerUtil.createLockFreeCopyOnWriteList<SettingsSavingComponent>()
   private val asyncSettingsSavingComponents = ContainerUtil.createLockFreeCopyOnWriteList<com.intellij.configurationStore.SettingsSavingComponent>()
+
+  // todo do we really need this?
+  private val isSaveSettingsInProgress = AtomicBoolean()
+
+  override suspend fun save(isForceSavingAllSettings: Boolean) {
+    if (!isSaveSettingsInProgress.compareAndSet(false, true)) {
+      LOG.warn("save call is ignored because another save in progress", Throwable())
+      return
+    }
+
+    try {
+      super.save(isForceSavingAllSettings)
+    }
+    finally {
+      isSaveSettingsInProgress.set(false)
+    }
+  }
 
   override fun initComponent(component: Any, isService: Boolean) {
     @Suppress("DEPRECATION")

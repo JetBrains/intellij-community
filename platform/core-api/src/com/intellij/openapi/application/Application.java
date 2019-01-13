@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -140,15 +140,6 @@ public interface Application extends ComponentManager {
    * Saves application settings.
    */
   void saveSettings();
-
-  /**
-   * Saves application settings.
-   * If `isForce` is `false`, non-roamable component configuration will be saved only if more than 4 minutes have been passed after the last save.
-   * @param isForce Whether to force save non-roamable component configuration.
-   */
-  default void saveSettings(boolean isForce) {
-    saveSettings();
-  }
 
   /**
    * Exits the application, showing the exit confirmation prompt if it is enabled.

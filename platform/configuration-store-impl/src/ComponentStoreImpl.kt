@@ -31,6 +31,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.isNullOrEmpty
+import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
@@ -128,7 +129,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return componentName
   }
 
-  final override suspend fun save(isForceSavingAllSettings: Boolean) {
+  override suspend fun save(isForceSavingAllSettings: Boolean) {
     val result = SaveResult()
     doSave(result, isForceSavingAllSettings)
     result.throwIfErrored()
@@ -138,6 +139,10 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   internal suspend fun createSaveSessionManagerAndSaveComponents(saveResult: SaveResult, isForceSavingAllSettings: Boolean): SaveSessionProducerManager {
     return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      // todo should we call stopThreadPrioritizing? for some reasons stopThreadPrioritizing was not called by old code in ApplicationImpl/ProjectImpl save
+      // probably because stopThreadPrioritizing is called on start write action (see ApplicationImpl.stopThreadPrioritizing)
+      HeavyProcessLatch.INSTANCE.prioritizeUiActivity()
+
       val errors = SmartList<Throwable>()
       val manager = doCreateSaveSessionManagerAndSaveComponents(isForceSavingAllSettings, errors)
       saveResult.addErrors(errors)

@@ -43,14 +43,12 @@ import com.intellij.project.ProjectKt;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.*;
 import org.picocontainer.*;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
@@ -61,7 +59,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @TestOnly
   public static final String LIGHT_PROJECT_NAME = "light_temp";
 
-  private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
   private String myName;
   private final boolean myLight;
   private static boolean ourClassesAreLoaded;
@@ -335,19 +332,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       return;
     }
 
-    if (!mySavingInProgress.compareAndSet(false, true)) {
-      return;
-    }
-
-    HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-
-    try {
-      StoreUtil.saveSettings(this, isForceSavingAllSettings);
-    }
-    finally {
-      mySavingInProgress.set(false);
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectSaved.TOPIC).saved(this);
-    }
+    StoreUtil.saveSettings(this, isForceSavingAllSettings);
   }
 
   @Override

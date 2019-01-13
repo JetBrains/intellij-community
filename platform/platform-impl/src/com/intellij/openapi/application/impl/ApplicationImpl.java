@@ -111,7 +111,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private final Disposable myLastDisposable = Disposer.newDisposable(); // will be disposed last
 
-  private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
   private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
 
   private final ExecutorService ourThreadExecutorsService = PooledThreadExecutor.INSTANCE;
@@ -1430,18 +1429,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     saveSettings(false);
   }
 
-  @Override
-  public void saveSettings(boolean isForceSavingAllSettings) {
-    if (!mySaveAllowed || !mySaveSettingsIsInProgress.compareAndSet(false, true)) {
-      return;
-    }
-
-    HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-    try {
+  private void saveSettings(boolean isForceSavingAllSettings) {
+    if (mySaveAllowed) {
       StoreUtil.saveSettings(this, isForceSavingAllSettings);
-    }
-    finally {
-      mySaveSettingsIsInProgress.set(false);
     }
   }
 

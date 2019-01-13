@@ -1,7 +1,6 @@
 package com.intellij.configurationScript
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -28,10 +27,6 @@ internal class ConfigurationFileManager(project: Project) {
   private val clearableLazyValues = ContainerUtil.createConcurrentList<SynchronizedClearableLazy<*>>()
 
   private val yamlData = SynchronizedClearableLazy {
-    if (!Registry.`is`("run.manager.use.intellij.config.file", false)) {
-      return@SynchronizedClearableLazy null
-    }
-
     val file = findConfigurationFile(project) ?: return@SynchronizedClearableLazy null
     try {
       val inputStream = file.inputStreamIfExists() ?: return@SynchronizedClearableLazy null
@@ -56,10 +51,6 @@ internal class ConfigurationFileManager(project: Project) {
   }
 
   private fun addFileListener(project: Project) {
-    if (!Registry.`is`("run.manager.use.intellij.config.file", false)) {
-      return
-    }
-
     project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
         for (event in events) {

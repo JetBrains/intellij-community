@@ -2,10 +2,13 @@
 package com.intellij.ide
 
 import com.intellij.configurationStore.saveDocumentsAndProjectsAndApp
+import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -14,11 +17,15 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.util.SingleAlarm
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.beans.PropertyChangeListener
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -39,13 +46,16 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings, fileDocument
   @Volatile
   private var refreshSessionId: Long = 0
 
-  private val idleListener = {
+  private val idleListener = Runnable {
     if (settings.isAutoSaveIfInactive && canSyncOrSave()) {
       submitTransaction {
         (fileDocumentManager as FileDocumentManagerImpl).saveAllDocuments(false)
       }
     }
   }
+
+  private val isSaveAllowed: Boolean
+    get() = !ApplicationManager.getApplication().isDisposed && blockSaveOnFrameDeactivationCount.get() == 0
 
   init {
     IdeEventQueue.getInstance().addIdleListener(idleListener, settings.inactiveTimeout * 1000)
@@ -56,12 +66,25 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings, fileDocument
     busConnection.subscribe(FrameStateListener.TOPIC, object : FrameStateListener {
       override fun onFrameDeactivated() {
         LOG.debug("save(): enter")
-        submitTransaction {
-          if (canSyncOrSave()) {
-            saveProjectsAndDocuments()
-          }
-          LOG.debug("save(): exit")
+
+        if (!settings.isSaveOnFrameDeactivation) {
+          return
         }
+
+        if (canSyncOrSave()) {
+          if (isSaveInPooledThread) {
+            ApplicationManager.getApplication().executeOnPooledThread {
+              runBlocking { doSaveDocumentsAndProjectsAndApp() }
+            }
+          }
+          else {
+            submitTransaction {
+              doSaveDocumentsAndProjectsAndAppInEdt()
+            }
+          }
+        }
+
+        LOG.debug("save(): exit")
       }
 
       override fun onFrameActivated() {
@@ -70,6 +93,23 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings, fileDocument
         }
       }
     })
+  }
+
+  // well, currently it is not really scheduled - no alarm or something like that, but it will be addressed in turn
+  override fun scheduleSaveDocumentsAndProjectsAndApp() {
+    if (isSaveInPooledThread) {
+      ApplicationManager.getApplication().executeOnPooledThread {
+        runBlocking { doSaveDocumentsAndProjectsAndApp() }
+      }
+    }
+    else {
+      // to allow current activity to be finished without any noticeable delay
+      // even if `store.save.in.pooled.thread` will be set to `true` in one week, need to test if this behavior is ok for users,
+      // because obviously execution in pooled thread implies short delay before actual save
+      ApplicationManager.getApplication().invokeLater {
+        doSaveDocumentsAndProjectsAndAppInEdt()
+      }
+    }
   }
 
   override fun dispose() {
@@ -82,11 +122,26 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings, fileDocument
     return !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator()
   }
 
-  override fun saveProjectsAndDocuments() {
-    if (!ApplicationManager.getApplication().isDisposed &&
-        settings.isSaveOnFrameDeactivation &&
-        blockSaveOnFrameDeactivationCount.get() == 0) {
-      saveDocumentsAndProjectsAndApp(false)
+  // old implementation, used now if new implementation is not enabled by flag
+  private fun doSaveDocumentsAndProjectsAndAppInEdt() {
+    if (isSaveAllowed) {
+      saveDocumentsAndProjectsAndApp(isForceSavingAllSettings = false)
+    }
+  }
+
+  // new implementation, used only if enabled by flag
+  private suspend fun doSaveDocumentsAndProjectsAndApp() {
+    if (!isSaveAllowed) {
+      return
+    }
+
+    coroutineScope {
+      launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        FileDocumentManager.getInstance().saveAllDocuments()
+      }
+      launch {
+        saveProjectsAndApp(isForceSavingAllSettings = false)
+      }
     }
   }
 
@@ -160,3 +215,7 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings, fileDocument
     TransactionGuard.submitTransaction(this, Runnable { handler() })
   }
 }
+
+private val isSaveInPooledThread: Boolean
+  get() = ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("store.save.in.pooled.thread", false)
+
