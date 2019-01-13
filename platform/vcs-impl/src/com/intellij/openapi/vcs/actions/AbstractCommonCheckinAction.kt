@@ -22,6 +22,26 @@ private fun getChangesIn(project: Project, roots: Array<FilePath>): Set<Change> 
 }
 
 abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackground {
+  override fun update(vcsContext: VcsContext, presentation: Presentation) {
+    val project = vcsContext.project
+
+    if (project == null || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) {
+      presentation.isEnabledAndVisible = false
+    }
+    else if (!approximatelyHasRoots(vcsContext)) {
+      presentation.isEnabled = false
+    }
+    else {
+      presentation.text = "${getActionName(vcsContext)}..."
+      presentation.isEnabled = !ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning
+      presentation.isVisible = true
+    }
+  }
+
+  protected abstract fun approximatelyHasRoots(dataContext: VcsContext): Boolean
+
+  protected abstract fun getActionName(dataContext: VcsContext): String?
+
   public override fun actionPerformed(context: VcsContext) {
     LOG.debug("actionPerformed. ")
 
@@ -39,6 +59,16 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
         { performCheckIn(context, project, roots) }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
         message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current())
     }
+  }
+
+  protected open fun getMnemonicsFreeActionName(context: VcsContext): String? = getActionName(context)
+
+  protected abstract fun getRoots(dataContext: VcsContext): Array<FilePath>
+
+  protected open fun prepareRootsForCommit(roots: Array<FilePath>, project: Project): Array<FilePath> {
+    project.saveDocumentsAndProjectSettings()
+
+    return DescindingFilesFilter.filterDescindingFiles(roots, project)
   }
 
   protected open fun performCheckIn(context: VcsContext, project: Project, roots: Array<FilePath>) {
@@ -62,16 +92,6 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialChangeList, getExecutor(project), null)
   }
 
-  protected open fun prepareRootsForCommit(roots: Array<FilePath>, project: Project): Array<FilePath> {
-    project.saveDocumentsAndProjectSettings()
-
-    return DescindingFilesFilter.filterDescindingFiles(roots, project)
-  }
-
-  protected open fun getMnemonicsFreeActionName(context: VcsContext): String? = getActionName(context)
-
-  protected open fun getExecutor(project: Project): CommitExecutor? = null
-
   protected open fun getInitiallySelectedChangeList(context: VcsContext, project: Project): LocalChangeList? {
     val manager = ChangeListManager.getInstance(project)
 
@@ -80,25 +100,5 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     return manager.defaultChangeList
   }
 
-  protected abstract fun getActionName(dataContext: VcsContext): String?
-
-  protected abstract fun getRoots(dataContext: VcsContext): Array<FilePath>
-
-  protected abstract fun approximatelyHasRoots(dataContext: VcsContext): Boolean
-
-  override fun update(vcsContext: VcsContext, presentation: Presentation) {
-    val project = vcsContext.project
-
-    if (project == null || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) {
-      presentation.isEnabledAndVisible = false
-    }
-    else if (!approximatelyHasRoots(vcsContext)) {
-      presentation.isEnabled = false
-    }
-    else {
-      presentation.text = "${getActionName(vcsContext)}..."
-      presentation.isEnabled = !ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning
-      presentation.isVisible = true
-    }
-  }
+  protected open fun getExecutor(project: Project): CommitExecutor? = null
 }
