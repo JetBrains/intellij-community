@@ -42,7 +42,7 @@ open class FileBasedStorage(file: Path,
   @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   protected var lineSeparator: LineSeparator? = null
-  protected var blockSavingTheContent = false
+  protected var isBlockSavingTheContent = false
 
   @Volatile
   var file = file
@@ -75,7 +75,7 @@ open class FileBasedStorage(file: Path,
   protected open class FileSaveSession(storageData: StateMap, storage: FileBasedStorage) :
     XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {
     override fun save() {
-      if (storage.blockSavingTheContent) {
+      if (storage.isBlockSavingTheContent) {
         LOG.info("Save blocked for ${storage.fileSpec}")
       }
       else {
@@ -151,7 +151,7 @@ open class FileBasedStorage(file: Path,
   }
 
   override fun loadLocalData(): Element? {
-    blockSavingTheContent = false
+    isBlockSavingTheContent = false
     return runAndHandleExceptions { loadLocalDataUsingIo() }
   }
 
@@ -187,7 +187,7 @@ open class FileBasedStorage(file: Path,
   protected fun processReadException(e: Exception?) {
     val contentTruncated = e == null
 
-    blockSavingTheContent = !contentTruncated &&
+    isBlockSavingTheContent = !contentTruncated &&
       (PROJECT_FILE == fileSpec || fileSpec.startsWith(PROJECT_CONFIG_DIR) ||
        fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)
 
@@ -198,7 +198,7 @@ open class FileBasedStorage(file: Path,
     val app = ApplicationManager.getApplication()
     if (!app.isUnitTestMode && !app.isHeadlessEnvironment) {
       val reason = if (contentTruncated) "content truncated" else e!!.message
-      val action = if (blockSavingTheContent) "Please correct the file content" else "File content will be recreated"
+      val action = if (isBlockSavingTheContent) "Please correct the file content" else "File content will be recreated"
       Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
                    "Load Settings",
                    "Cannot load settings from file '$file': $reason\n$action",
