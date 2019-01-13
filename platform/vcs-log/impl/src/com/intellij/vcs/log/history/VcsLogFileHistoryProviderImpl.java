@@ -8,10 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.VcsLogContentUtil;
-import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.impl.VcsProjectLog;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -94,6 +91,7 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
     if (firstTime) {
       VcsLogFilterCollection filters = createFilters(path, hash, root);
       ui = VcsProjectLog.getInstance(project).getTabsManager().openAnotherLogTab(logManager, filters);
+      ui.getProperties().set(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES, true);
     }
     consumer.accept(ui, firstTime);
   }
