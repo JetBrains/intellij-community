@@ -115,4 +115,9 @@ public class ExternalProjectsViewAdapter implements ExternalProjectsView {
   public boolean getShowIgnored() {
     return delegate.getShowIgnored();
   }
+
+  @Override
+  public String getDisplayName(DataNode node) {
+    return delegate.getDisplayName(node);
+  }
 }
