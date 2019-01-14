@@ -31,7 +31,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.isNullOrEmpty
-import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
@@ -143,10 +142,6 @@ abstract class ComponentStoreImpl : IComponentStore {
       uiExecutor.inTransaction(it)
     }
     return withContext(uiExecutor.coroutineDispatchingContext()) {
-      // todo should we call stopThreadPrioritizing? for some reasons stopThreadPrioritizing was not called by old code in ApplicationImpl/ProjectImpl save
-      // probably because stopThreadPrioritizing is called on start write action (see ApplicationImpl.stopThreadPrioritizing)
-      HeavyProcessLatch.INSTANCE.prioritizeUiActivity()
-
       val errors = SmartList<Throwable>()
       val manager = doCreateSaveSessionManagerAndSaveComponents(isForceSavingAllSettings, errors)
       saveResult.addErrors(errors)

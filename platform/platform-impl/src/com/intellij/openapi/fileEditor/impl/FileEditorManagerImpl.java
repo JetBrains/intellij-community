@@ -840,7 +840,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         return;
       }
 
-      HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
       ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
       compositeRef.set(window.findFileComposite(file));

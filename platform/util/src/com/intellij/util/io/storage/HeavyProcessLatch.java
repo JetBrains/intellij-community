@@ -136,7 +136,9 @@ public class HeavyProcessLatch {
 
   /**
    * Gives current event processed on Swing thread higher priority
-   * by letting other threads to sleep a bit whenever they call checkCanceled.
+   * by letting other threads to sleep a bit whenever they call checkCanceled.<p></p>
+   *
+   * Don't call this method unless you're deep in Swing event dispatching internals.
    * @see #stopThreadPrioritizing()
    */
   public void prioritizeUiActivity() {
@@ -153,9 +155,11 @@ public class HeavyProcessLatch {
   }
 
   /**
-   * Removes priority from Swing thread, if present. Should be invoked before a thread starts waiting for other threads in idle mode,
-   * to ensure those other threads complete ASAP.
-   * @see #prioritizeUiActivity()
+   * Removes priority from Swing thread, if present. Should be invoked before UI thread starts waiting for other threads in idle mode,
+   * to ensure those other threads complete ASAP.<p></p>
+   *
+   * If possible, instead of calling this method prefer to move activity into background threads,
+   * so that UI thread doesn't need to block and wait.
    */
   public void stopThreadPrioritizing() {
     if (myUiActivityThread == null) return;
