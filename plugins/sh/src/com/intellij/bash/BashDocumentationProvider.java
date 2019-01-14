@@ -18,11 +18,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
 
 public class BashDocumentationProvider extends AbstractDocumentationProvider {
   private static final int TIMEOUT_IN_MILLISECONDS = 3 * 1000;
@@ -88,6 +90,16 @@ public class BashDocumentationProvider extends AbstractDocumentationProvider {
 
   @Nullable
   private static String wrapIntoHtml(@Nullable String s) {
-    return s == null ? null : "<html><body><pre>" + s + "</pre></body></html>";
+    if (s == null) return null;
+
+    Matcher m = URLUtil.URL_PATTERN.matcher(s);
+    StringBuffer sb = new StringBuffer("<html><body><pre>");
+    while (m.find()) {
+      String url = m.group(0);
+      m.appendReplacement(sb, "<a href='" + url + "'>" + url + "</a>");
+    }
+    m.appendTail(sb);
+    sb.append("</pre></body></html>");
+    return sb.toString();
   }
 }
