@@ -92,13 +92,20 @@ public class BashDocumentationProvider extends AbstractDocumentationProvider {
   private static String wrapIntoHtml(@Nullable String s) {
     if (s == null) return null;
 
-    Matcher m = URLUtil.URL_PATTERN.matcher(s);
     StringBuffer sb = new StringBuffer("<html><body><pre>");
-    while (m.find()) {
-      String url = m.group(0);
-      m.appendReplacement(sb, "<a href='" + url + "'>" + url + "</a>");
+    try {
+      Matcher m = URLUtil.URL_PATTERN.matcher(s);
+      while (m.find()) {
+        if (m.groupCount() > 0) {
+          String url = m.group(0);
+          m.appendReplacement(sb, "<a href='" + url + "'>" + url + "</a>");
+        }
+      }
+      m.appendTail(sb);
     }
-    m.appendTail(sb);
+    catch (Exception e) {
+      LOG.warn(e);
+    }
     sb.append("</pre></body></html>");
     return sb.toString();
   }
