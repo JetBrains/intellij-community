@@ -2,7 +2,6 @@
 package com.intellij.application.options;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -227,11 +226,11 @@ public class CodeStyle {
    * The method is supposed to be used in test's {@code setUp()} method. In production code use
    * {@link #doWithTemporarySettings(Project, CodeStyleSettings, Runnable)}.
    *
-   * @param project The project.
+   * @param project The project or {@code null} for default settings.
    * @param settings The settings to use temporarily with the project.
    */
   @TestOnly
-  public static void setTemporarySettings(@NotNull Project project, @NotNull CodeStyleSettings settings) {
+  public static void setTemporarySettings(@Nullable Project project, @NotNull CodeStyleSettings settings) {
     CodeStyleSettingsManager.getInstance(project).setTemporarySettings(settings);
   }
 
@@ -243,19 +242,12 @@ public class CodeStyle {
    * The method is supposed to be used in test's {@code tearDown()} method. In production code use
    * {@link #doWithTemporarySettings(Project, CodeStyleSettings, Runnable)}.
    *
-   * @param project The project to drop temporary settings for.
+   * @param project The project to drop temporary settings for or {@code null} for default settings.
    * @see #setTemporarySettings(Project, CodeStyleSettings)
    */
   @TestOnly
   public static void dropTemporarySettings(@Nullable Project project) {
-    if (project == null || project.isDefault()) {
-      return;
-    }
-
-    ProjectCodeStyleSettingsManager manager = ServiceManager.getServiceIfCreated(project, ProjectCodeStyleSettingsManager.class);
-    if (manager != null) {
-      manager.dropTemporarySettings();
-    }
+    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
   }
 
   /**
@@ -266,21 +258,21 @@ public class CodeStyle {
    * @param tempSettings  The temporary code style settings.
    * @param runnable      The runnable to execute with the temporary settings.
    */
-  @SuppressWarnings("TestOnlyProblems")
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings tempSettings,
                                              @NotNull Runnable runnable) {
-    CodeStyleSettings tempSettingsBefore = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
+    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
+    CodeStyleSettings tempSettingsBefore = settingsManager.getTemporarySettings();
     try {
-      setTemporarySettings(project, tempSettings);
+      settingsManager.setTemporarySettings(tempSettings);
       runnable.run();
     }
     finally {
       if (tempSettingsBefore != null) {
-        setTemporarySettings(project, tempSettingsBefore);
+        settingsManager.setTemporarySettings(tempSettingsBefore);
       }
       else {
-        dropTemporarySettings(project);
+        settingsManager.dropTemporarySettings();
       }
     }
   }
