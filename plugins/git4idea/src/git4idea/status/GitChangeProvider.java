@@ -191,8 +191,11 @@ public class GitChangeProvider implements ChangeProvider {
           baseRevisions.put(root, beforeRevisionNumber);
         }
 
-        builder.processChange(new Change(GitContentRevision.createRevision(vf, beforeRevisionNumber, myProject),
-                                         GitContentRevision.createRevision(vf, null, myProject), FileStatus.MODIFIED), gitKey);
+        Change change = new Change(GitContentRevision.createRevision(vf, beforeRevisionNumber, myProject),
+                                   GitContentRevision.createRevision(vf, null, myProject), FileStatus.MODIFIED);
+
+        LOG.debug("process in-memory change " + change);
+        builder.processChange(change, gitKey);
       }
     }
   }
