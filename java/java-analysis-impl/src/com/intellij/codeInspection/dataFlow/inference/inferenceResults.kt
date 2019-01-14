@@ -10,8 +10,6 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.gist.GistManager
@@ -154,9 +152,21 @@ data class MethodData(
   internal val bodyStart: Int,
   internal val bodyEnd: Int
 ) {
+
+  @Volatile
+  private var myDetachedBody: PsiCodeBlock? = null
+
   fun methodBody(method: PsiMethodImpl): () -> PsiCodeBlock = {
-    if (method.stub != null)
-      CachedValuesManager.getCachedValue(method) { CachedValueProvider.Result(getDetachedBody(method), method) }
+    if (method.stub != null) {
+      var detached = myDetachedBody
+      if (detached == null) {
+        detached = getDetachedBody(method)
+        myDetachedBody = detached
+      } else {
+        assert(detached.parent == method || detached.containingFile.context == method)
+      }
+      detached
+    }
     else
       method.body!!
   }
@@ -168,7 +178,7 @@ data class MethodData(
       return JavaPsiFacade.getElementFactory(method.project).createCodeBlockFromText(bodyText, method)
     }
     catch (e: Exception) {
-      GistManager.getInstance().invalidateData();
+      GistManager.getInstance().invalidateData()
       throw e
     }
   }
