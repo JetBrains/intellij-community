@@ -256,7 +256,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
     if (closeListenerMap != null) {
       CloseListener closeListener = closeListenerMap.remove(buildDescriptor.getId());
       if (closeListener != null) {
-        Disposer.dispose(closeListener);
+        closeListener.dispose();
         if (closeListenerMap.isEmpty()) {
           content.putUserData(CONTENT_CLOSE_LISTENERS, null);
         }
