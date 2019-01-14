@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
 import com.intellij.AppTopics;
@@ -57,9 +57,7 @@ import java.util.*;
  * @author gregsh
  */
 public class ConsoleHistoryController {
-
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
-
 
   private final static Map<LanguageConsoleView, ConsoleHistoryController> ourControllers =
     ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
@@ -134,22 +132,21 @@ public class ConsoleHistoryController {
   }
 
   public void install() {
-    class Listener implements ProjectEx.ProjectSaved, FileDocumentManagerListener {
+    ApplicationManager.getApplication().getMessageBus().connect(myConsole)
+      .subscribe(ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
+        @Override
+        public void saved(@NotNull Project project) {
+          saveHistory();
+        }
+      });
+    myConsole.getProject().getMessageBus().connect(myConsole).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void beforeDocumentSaving(@NotNull Document document) {
         if (document == myConsole.getEditorDocument()) {
           saveHistory();
         }
       }
-
-      @Override
-      public void saved(@NotNull Project project) {
-        saveHistory();
-      }
-    }
-    Listener listener = new Listener();
-    ApplicationManager.getApplication().getMessageBus().connect(myConsole).subscribe(ProjectEx.ProjectSaved.TOPIC, listener);
-    myConsole.getProject().getMessageBus().connect(myConsole).subscribe(AppTopics.FILE_DOCUMENT_SYNC, listener);
+    });
 
     ConsoleHistoryController original = ourControllers.put(myConsole, this);
     LOG.assertTrue(original == null,
@@ -204,7 +201,10 @@ public class ConsoleHistoryController {
   }
 
   private void saveHistory() {
-    if (myLastSaveStamp == getCurrentTimeStamp()) return;
+    if (myLastSaveStamp == getCurrentTimeStamp()) {
+      return;
+    }
+
     myHelper.setContent(myConsole.getEditorDocument().getText());
     myHelper.saveHistory();
     myLastSaveStamp = getCurrentTimeStamp();

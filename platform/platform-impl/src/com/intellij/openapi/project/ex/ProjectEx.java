@@ -9,7 +9,7 @@ public interface ProjectEx extends Project {
   interface ProjectSaved {
     Topic<ProjectSaved> TOPIC = Topic.create("SaveProjectTopic", ProjectSaved.class, Topic.BroadcastDirection.NONE);
 
-    void saved(@NotNull final Project project);
+    void saved(@NotNull Project project);
   }
 
   void init();
