@@ -183,7 +183,7 @@ class ChangesBuilder {
 
   fun rename(from: String, to: String) {
     PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.MODIFIED, from, to) {
-      it.isRenamed && from == it.beforeRevision.relativePath && to == it.afterRevision.relativePath
+      (it.isRenamed || it.isMoved) && from == it.beforeRevision.relativePath && to == it.afterRevision.relativePath
     }))
   }
 }

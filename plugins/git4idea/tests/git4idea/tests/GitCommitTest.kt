@@ -823,6 +823,69 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     }
   }
 
+  fun `test file to directory renames`() {
+    assumeTrue(Registry.`is`("git.force.commit.using.staging.area")) // known bug in "--only" implementation
+
+    tac("a_path", "file content 1")
+    tac("b_path", "file content 2")
+
+    rm("a_path")
+    rm("b_path")
+    touch("a_path/file1.txt", "file content 1")
+    touch("b_path/file2.txt", "file content 2")
+    git("add -A .")
+
+    val changes = assertChanges {
+      rename("a_path", "a_path/file1.txt")
+      rename("b_path", "b_path/file2.txt")
+    }
+
+    commit(listOf(changes[0]))
+
+    assertChanges {
+      rename("b_path", "b_path/file2.txt")
+    }
+    repo.assertStagedChanges {
+      rename("b_path", "b_path/file2.txt")
+    }
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      rename("a_path", "a_path/file1.txt")
+    }
+  }
+
+  fun `test directory to file renames`() {
+    tac("a_path/file1.txt", "file content 1")
+    tac("b_path/file2.txt", "file content 2")
+
+    rm("a_path/file1.txt")
+    rm("b_path/file2.txt")
+    rm("a_path")
+    rm("b_path")
+    touch("a_path", "file content 1")
+    touch("b_path", "file content 2")
+    git("add -A .")
+
+    val changes = assertChanges {
+      rename("a_path/file1.txt", "a_path")
+      rename("b_path/file2.txt", "b_path")
+    }
+
+    commit(listOf(changes[0]))
+
+    assertChanges {
+      rename("b_path/file2.txt", "b_path")
+    }
+    repo.assertStagedChanges {
+      rename("b_path/file2.txt", "b_path")
+    }
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      rename("a_path/file1.txt", "a_path")
+    }
+  }
+
+
   private fun `assume version where git reset returns 0 exit code on success `() {
     assumeTrue("Not testing: git reset returns 1 and fails the commit process in ${vcs.version}",
                vcs.version.isLaterOrEqual(GitVersion(1, 8, 2, 0)))

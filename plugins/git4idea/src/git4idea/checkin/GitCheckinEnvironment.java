@@ -923,18 +923,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                      final Collection<? extends FilePath> removed,
                                      final List<? super VcsException> exceptions) {
     boolean rc = true;
-    if (!added.isEmpty()) {
+    if (!removed.isEmpty()) {
       try {
-        GitFileUtils.addPathsForce(project, root, added);
+        GitFileUtils.deletePaths(project, root, removed, "--ignore-unmatch", "--cached", "-r");
       }
       catch (VcsException ex) {
         exceptions.add(ex);
         rc = false;
       }
     }
-    if (!removed.isEmpty()) {
+    if (!added.isEmpty()) {
       try {
-        GitFileUtils.deletePaths(project, root, removed, "--ignore-unmatch", "--cached");
+        GitFileUtils.addPathsForce(project, root, added);
       }
       catch (VcsException ex) {
         exceptions.add(ex);
