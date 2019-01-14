@@ -261,7 +261,11 @@ fun HttpRequest.isLocalOrigin(onlyAnyOrLoopback: Boolean = true, hostsOnly: Bool
 }
 
 private fun isTrustedChromeExtension(url: Url): Boolean {
-  return url.scheme == "chrome-extension" && (url.authority == "hmhgeddbohgjknpmjagkdomcpobmllji" || url.authority == "offnedcbhjldheanlbojaefbfbllddna")
+  return url.scheme == "chrome-extension" &&
+         (url.authority == "hmhgeddbohgjknpmjagkdomcpobmllji" ||
+          url.authority == "offnedcbhjldheanlbojaefbfbllddna" ||
+          System.getProperty("idea.trusted.chrome.extension.id")?.equals(url.authority) ?: false
+         )
 }
 
 private val Url.host: String?
