@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -13,6 +14,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.UIUtil;
@@ -163,11 +165,12 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     return null;
   }
 
-  public void addActionButtonListener(ActionButtonListener l) {
+  public void addActionButtonListener(ActionButtonListener l, Disposable parentDisposable) {
     myListeners.add(l);
+    Disposer.register(parentDisposable, () -> myListeners.remove(l));
   }
 
-  public boolean removeActinoButtonListener(ActionButtonListener l) {
+  public boolean removeActionButtonListener(ActionButtonListener l) {
     return myListeners.remove(l);
   }
 
