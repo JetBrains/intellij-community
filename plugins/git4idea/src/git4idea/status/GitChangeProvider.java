@@ -83,8 +83,8 @@ public class GitChangeProvider implements ChangeProvider {
           builder.processUnversionedFile(f);
           holder.unversioned(f);
         }
-        holder.feedBuilder(builder);
       }
+      holder.feedBuilder(builder);
     }
     catch (ProcessCanceledException pce) {
       if(pce.getCause() != null) throw new VcsException(pce.getCause().getMessage(), pce.getCause());
