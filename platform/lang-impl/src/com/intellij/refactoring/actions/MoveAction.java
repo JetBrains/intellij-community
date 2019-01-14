@@ -51,6 +51,11 @@ public class MoveAction extends BaseRefactoringAction {
   }
 
   @Override
+  protected boolean disableOnCompiledElement() {
+    return false;
+  }
+
+  @Override
   public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new MoveHandler();
   }
