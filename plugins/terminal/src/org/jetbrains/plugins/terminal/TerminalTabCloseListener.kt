@@ -5,7 +5,6 @@ import com.intellij.execution.TerminateRemoteProcessDialog
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.ui.BaseContentCloseListener
 import com.intellij.execution.ui.RunContentManagerImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
 
@@ -14,8 +13,8 @@ class TerminalTabCloseListener(val content: Content,
   override fun disposeContent(content: Content) {
   }
 
-  override fun closeQuery(content: Content, modal: Boolean): Boolean {
-    if (modal || ApplicationManager.getApplication().isDisposeInProgress) {
+  override fun closeQuery(content: Content, projectClosing: Boolean): Boolean {
+    if (projectClosing) {
       return true
     }
     val widget = TerminalView.getWidgetByContent(content)
