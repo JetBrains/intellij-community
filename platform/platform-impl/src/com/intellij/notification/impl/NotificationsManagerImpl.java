@@ -81,7 +81,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static final Color TEXT_COLOR = JBColor.namedColor("Notification.foreground", DEFAULT_TEXT_COLOR);
   public static final Color FILL_COLOR = JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(78, 80, 82)));
   public static final Color BORDER_COLOR = JBColor.namedColor("Notification.borderColor", new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205)));
-  private static final Color LINK_COLOR = JBColor.namedColor("Notification.linkForeground", JBUI.CurrentTheme.Link.linkColor());
 
   public NotificationsManagerImpl() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
@@ -373,7 +372,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       }
     };
     HTMLEditorKit kit = new UIUtil.JBWordWrapHtmlEditorKit();
-    kit.getStyleSheet().addRule("a {color: " + ColorUtil.toHtmlColor(LINK_COLOR) + "}");
+    kit.getStyleSheet().addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "}");
     text.setEditorKit(kit);
     text.setForeground(layoutData.textColor);
 
