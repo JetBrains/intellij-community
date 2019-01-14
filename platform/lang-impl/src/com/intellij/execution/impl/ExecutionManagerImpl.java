@@ -297,8 +297,9 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
                   // We should stop here as before run task cannot be executed at all (possibly it's invalid)
                   if (onCancelRunnable != null) {
                     onCancelRunnable.run();
-                    return;
                   }
+                  ExecutionUtil.handleExecutionError(environment, new ExecutionException("cannot start before run task '" + settings + "'."));
+                  return;
                 }
             }
             runBeforeRunExecutorMap.put(task, executor);
