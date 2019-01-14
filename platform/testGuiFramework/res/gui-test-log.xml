@@ -61,7 +61,7 @@
 
   <appender name="GUILOG" class="org.apache.log4j.RollingFileAppender">
     <param name="MaxFileSize" value="1Mb"/>
-    <param name="MaxBackupIndex" value="12"/>
+    <param name="MaxBackupIndex" value="25"/>
     <param name="File" value="$LOG_DIR$/gui-tests/gui-test.log"/>
     <param name="Encoding" value="UTF-8"/>
     <layout class="org.apache.log4j.PatternLayout">

@@ -700,7 +700,8 @@ object GuiTestUtil {
     }
     step("wait until label '$textLabel' has appeared, timeout = ${timeout.toPrintable()}") {
       com.intellij.testGuiFramework.impl.waitUntilFound(container, Component::class.java, timeout) {
-        logInfo("found component: isShowing=${it.isShowing}, isVisible=${it.isVisible}, isTextComponent()=${it.isTextComponent()}")
+        if(it.isTextComponent())
+          logInfo("found '${it.getComponentText()}' text component: isShowing=${it.isShowing}, isVisible=${it.isVisible}")
         it.isShowing && it.isVisible && it.isTextComponent() && it.getComponentText() == textLabel
       }
     }

@@ -269,6 +269,7 @@ fun JDialogFixture.waitForPageTransitionFinished(locationOnScreen: JDialogFixtur
     GuiTestUtilKt.waitUntil("wait when coordinates stop changing") {
       val currentCoord = locationOnScreen()
       val result = previousCoord == currentCoord
+      logInfo("current coordinates [${currentCoord.x}, ${currentCoord.y}], previous coordinates [${previousCoord.x}, ${previousCoord.y}]")
       previousCoord = currentCoord
       result
     }
@@ -311,13 +312,15 @@ fun NewProjectDialogModel.createGradleProject(
         step("set '$checkKotlinDsl' to '${gradleOptions.useKotlinDsl}'") {
           setCheckboxValue(checkKotlinDsl, gradleOptions.useKotlinDsl)
         }
-        step("select framework '${gradleOptions.framework}'") {
-          if (gradleOptions.framework.isNotEmpty()) {
+        if (gradleOptions.framework.isNotEmpty()) {
+          step("select framework '${gradleOptions.framework}'") {
             checkboxTree(gradleOptions.framework).check()
             if (gradleOptions.isJavaShouldNotBeChecked)
               checkboxTree(NewProjectDialogModel.Constants.libJava).uncheck()
           }
         }
+        else
+          logInfo("framework is empty, nothing to select")
         button(buttonNext).click()
         typeGroupAndArtifact(gradleOptions.group, gradleOptions.artifact)
         button(buttonNext).click()

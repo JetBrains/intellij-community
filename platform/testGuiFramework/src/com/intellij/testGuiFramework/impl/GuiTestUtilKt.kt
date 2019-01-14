@@ -10,6 +10,7 @@ import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.impl.GuiRobotHolder.robot
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
+import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.step
 import com.intellij.ui.EngravedLabel
 import org.fest.swing.core.ComponentMatcher
@@ -164,6 +165,7 @@ object GuiTestUtilKt {
                                                     timeout: Timeout = Timeouts.seconds30): BoundedComponent {
     return step("search component by nearby '$text' text") {
       val componentWithText = findComponentByText(robot, container, text, timeout)
+      logInfo("found component '${componentWithText::class.java.canonicalName}': '$componentWithText'")
       if (componentWithText is JLabel && componentWithText.labelFor != null) {
         val labeledComponent = componentWithText.labelFor
         if (componentType.isInstance(labeledComponent)) return@step labeledComponent as BoundedComponent
