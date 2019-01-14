@@ -39,15 +39,12 @@ public class NameSuggestionsField extends JPanel {
 
   private boolean myNonHumanChange = false;
 
-  private String[] myNameSuggestions;
-
   public NameSuggestionsField(Project project) {
     super(new BorderLayout());
     myProject = project;
     myComboBoxModel = new MyComboBoxModel();
     final ComboBox comboBox = new ComboBox(myComboBoxModel,-1);
     myComponent = comboBox;
-    myNameSuggestions = ArrayUtil.EMPTY_STRING_ARRAY;
     add(myComponent, BorderLayout.CENTER);
     setupComboBox(comboBox, StdFileTypes.JAVA);
   }
@@ -59,7 +56,6 @@ public class NameSuggestionsField extends JPanel {
   public NameSuggestionsField(String[] nameSuggestions, Project project, FileType fileType) {
     super(new BorderLayout());
     myProject = project;
-    myNameSuggestions = nameSuggestions;
     if (nameSuggestions == null || nameSuggestions.length <= 1) {
       myComponent = createTextFieldForName(nameSuggestions, fileType);
     }
@@ -173,15 +169,6 @@ public class NameSuggestionsField extends JPanel {
     }
   }
 
-  public void setEnteredName(String name) {
-    if (myComponent instanceof JComboBox) {
-      ((JComboBox)myComponent).getEditor().setItem(name);
-    }
-    else {
-      ((EditorTextField)myComponent).setText(name);
-    }
-  }
-
   public boolean hasSuggestions() {
     return myComponent instanceof JComboBox;
   }
@@ -198,10 +185,6 @@ public class NameSuggestionsField extends JPanel {
     EditorTextField field = new EditorTextField(text, myProject, fileType);
     field.selectAll();
     return field;
-  }
-
-  public String[] getNameSuggestions() {
-    return myNameSuggestions;
   }
 
   private static class MyComboBoxModel extends DefaultComboBoxModel {
