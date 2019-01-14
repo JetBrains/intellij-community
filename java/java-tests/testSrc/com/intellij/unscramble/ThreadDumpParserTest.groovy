@@ -171,6 +171,45 @@ java.util.concurrent.locks.LockSupport.park(Object) LockSupport.java:175
     assert threads.collect { it.daemon } == [false, false, false, true]
   }
 
+  void "test YourKit 2018 format"() {
+    def text = '''
+ApplicationImpl pooled thread 81  Waiting CPU usage on sample: 0ms
+  sun.misc.Unsafe.park(boolean, long) Unsafe.java (native)
+  java.util.concurrent.locks.LockSupport.parkNanos(Object, long) LockSupport.java:215
+  java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill(SynchronousQueue$TransferStack$SNode, boolean, long) SynchronousQueue.java:460
+  java.util.concurrent.SynchronousQueue$TransferStack.transfer(Object, boolean, long) SynchronousQueue.java:362
+  java.util.concurrent.SynchronousQueue.poll(long, TimeUnit) SynchronousQueue.java:941
+  java.util.concurrent.ThreadPoolExecutor.getTask() ThreadPoolExecutor.java:1066
+  java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor$Worker) ThreadPoolExecutor.java:1127
+  java.util.concurrent.ThreadPoolExecutor$Worker.run() ThreadPoolExecutor.java:617
+  java.lang.Thread.run() Thread.java:745
+
+ApplicationImpl pooled thread 82  Waiting CPU usage on sample: 0ms
+  sun.misc.Unsafe.park(boolean, long) Unsafe.java (native)
+  java.util.concurrent.locks.LockSupport.parkNanos(Object, long) LockSupport.java:215
+  java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill(SynchronousQueue$TransferStack$SNode, boolean, long) SynchronousQueue.java:460
+  java.util.concurrent.SynchronousQueue$TransferStack.transfer(Object, boolean, long) SynchronousQueue.java:362
+  java.util.concurrent.SynchronousQueue.poll(long, TimeUnit) SynchronousQueue.java:941
+  java.util.concurrent.ThreadPoolExecutor.getTask() ThreadPoolExecutor.java:1066
+  java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor$Worker) ThreadPoolExecutor.java:1127
+  java.util.concurrent.ThreadPoolExecutor$Worker.run() ThreadPoolExecutor.java:617
+  java.lang.Thread.run() Thread.java:745
+
+ApplicationImpl pooled thread 90  Waiting CPU usage on sample: 0ms
+  sun.misc.Unsafe.park(boolean, long) Unsafe.java (native)
+  java.util.concurrent.locks.LockSupport.parkNanos(Object, long) LockSupport.java:215
+  java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill(SynchronousQueue$TransferStack$SNode, boolean, long) SynchronousQueue.java:460
+  java.util.concurrent.SynchronousQueue$TransferStack.transfer(Object, boolean, long) SynchronousQueue.java:362
+  java.util.concurrent.SynchronousQueue.poll(long, TimeUnit) SynchronousQueue.java:941
+  java.util.concurrent.ThreadPoolExecutor.getTask() ThreadPoolExecutor.java:1066
+  java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor$Worker) ThreadPoolExecutor.java:1127
+  java.util.concurrent.ThreadPoolExecutor$Worker.run() ThreadPoolExecutor.java:617
+  java.lang.Thread.run() Thread.java:745
+'''
+    def threads = ThreadDumpParser.parse(text)
+    assert threads.collect { it.name } == ['ApplicationImpl pooled thread 81', 'ApplicationImpl pooled thread 82', 'ApplicationImpl pooled thread 90']
+  }
+
   void "test log is not a thread dump"() {
     def threads = ThreadDumpParser.parse("""\
 2017-05-11 15:37:22,031 [100664612]   INFO - krasa.visualvm.VisualVMContext - saving context: VisualVMContext{appId=322303893654749} 

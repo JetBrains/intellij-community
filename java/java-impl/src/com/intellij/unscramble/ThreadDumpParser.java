@@ -32,7 +32,7 @@ public class ThreadDumpParser {
   private static final Pattern ourThreadStartPattern = Pattern.compile("^\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?tid=[^\\s]+ nid=[^\\s]+|[Ii][Dd]=\\d+) ([^\\[]+)");
   private static final Pattern ourForcedThreadStartPattern = Pattern.compile("^Thread (\\d+): \\(state = (.+)\\)");
   private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(.+) \\[([A-Z_, ]*)]");
-  private static final Pattern ourYourkitThreadStartPattern2 = Pattern.compile("(.+) State: (.+) CPU usage on sample: .+");
+  private static final Pattern ourYourkitThreadStartPattern2 = Pattern.compile("(.+) (?:State:)? (.+) CPU usage on sample: .+");
   private static final Pattern ourThreadStatePattern = Pattern.compile("java\\.lang\\.Thread\\.State: (.+) \\((.+)\\)");
   private static final Pattern ourThreadStatePattern2 = Pattern.compile("java\\.lang\\.Thread\\.State: (.+)");
   private static final Pattern ourWaitingForLockPattern = Pattern.compile("- waiting (on|to lock) <(.+)>");
