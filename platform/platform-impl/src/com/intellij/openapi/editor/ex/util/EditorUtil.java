@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.ScrollingModelImpl;
+import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -72,8 +73,9 @@ public final class EditorUtil {
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
     if (editor instanceof EditorImpl) {
-      LogicalPosition lineEndPosition = editor.visualToLogicalPosition(new VisualPosition(line, Integer.MAX_VALUE));
-      int lineEndOffset = editor.logicalPositionToOffset(lineEndPosition);
+      EditorImpl editorImpl = (EditorImpl)editor;
+      int lineEndOffset = line >= editorImpl.getVisibleLineCount()
+                          ? editor.getDocument().getTextLength() : new VisualLinesIterator(editorImpl, line).getVisualLineEndOffset();
       return editor.offsetToVisualPosition(lineEndOffset, true, true).column;
     }
     Document document = editor.getDocument();
