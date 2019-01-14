@@ -618,6 +618,39 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     }
   }
 
+  fun `test commit with excluded added-deleted and added files`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac("a.txt", "file content")
+
+    overwrite("a.txt", "new content")
+
+    touch("b.txt", "new content")
+    touch("c.txt", "new content")
+    git("add -A b.txt c.txt")
+    rm("b.txt")
+
+    val changes = assertChanges {
+      modified("a.txt")
+      added("c.txt")
+    }
+
+    commit(listOf(changes[0]))
+
+    assertChanges {
+      added("c.txt")
+    }
+    if (Registry.`is`("git.force.commit.using.staging.area")) { // known bug in "--only" implementation
+      repo.assertStagedChanges {
+        added("c.txt")
+      }
+    }
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      modified("a.txt")
+    }
+  }
+
   fun `test commit with deleted-added file`() {
     `assume version where git reset returns 0 exit code on success `()
 

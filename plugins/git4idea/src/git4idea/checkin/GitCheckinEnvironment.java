@@ -302,17 +302,21 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       // Check what is staged besides our changes
       Collection<Change> stagedChanges = GitChangeUtils.getStagedChanges(myProject, root);
       LOG.debug("Found staged changes: " + GitUtil.getLogString(rootPath, stagedChanges));
+      Collection<ChangedPath> excludedStagedChanges = new ArrayList<>();
+      processExcludedPaths(stagedChanges, added, removed, (before, after) -> {
+        if (before != null || after != null) excludedStagedChanges.add(new ChangedPath(before, after));
+      });
 
-      // Reset staged changes which are not selected for commit
-      Collection<ChangedPath> excludedStagedChanges = mapNotNull(stagedChanges, change -> {
-        FilePath before = getBeforePath(change);
-        FilePath after = getAfterPath(change);
-        if (removed.contains(before)) before = null;
-        if (added.contains(after)) after = null;
-        return before != null || after != null ? new ChangedPath(before, after) : null;
+      // Find unstaged deletions, we might not be able to restore them after
+      Collection<Change> unstagedChanges = GitChangeUtils.getUnstagedChanges(myProject, root, false);
+      LOG.debug("Found unstaged changes: " + GitUtil.getLogString(rootPath, unstagedChanges));
+      Set<FilePath> excludedUnstagedDeletions = new HashSet<>();
+      processExcludedPaths(unstagedChanges, added, removed, (before, after) -> {
+        if (before != null && after == null) excludedUnstagedDeletions.add(before);
       });
 
       if (!excludedStagedChanges.isEmpty()) {
+        // Reset staged changes which are not selected for commit
         LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges));
         resetExcluded(myProject, root, excludedStagedChanges);
       }
@@ -338,7 +342,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       finally {
         // Stage back the changes unstaged before commit
         if (!excludedStagedChanges.isEmpty()) {
-          restoreExcluded(myProject, root, excludedStagedChanges);
+          restoreExcluded(myProject, root, excludedStagedChanges, excludedUnstagedDeletions);
         }
       }
     }
@@ -529,6 +533,19 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return files;
   }
 
+  private static void processExcludedPaths(@NotNull Collection<Change> changes,
+                                           @NotNull Set<FilePath> added,
+                                           @NotNull Set<FilePath> removed,
+                                           @NotNull PairConsumer<FilePath, FilePath> function) {
+    for (Change change : changes) {
+      FilePath before = getBeforePath(change);
+      FilePath after = getAfterPath(change);
+      if (removed.contains(before)) before = null;
+      if (added.contains(after)) after = null;
+      function.consume(before, after);
+    }
+  }
+
   @NotNull
   private static String getLogString(@NotNull String root, @NotNull Collection<? extends ChangedPath> changes) {
     return GitUtil.getLogString(root, changes, it -> it.beforePath, it -> it.afterPath);
@@ -710,7 +727,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   private static void restoreExcluded(@NotNull Project project,
                                       @NotNull VirtualFile root,
-                                      @NotNull Collection<? extends ChangedPath> changes) {
+                                      @NotNull Collection<? extends ChangedPath> changes,
+                                      @NotNull Set<FilePath> unstagedDeletions) {
     List<VcsException> restoreExceptions = new ArrayList<>();
 
     Set<FilePath> toAdd = new HashSet<>();
@@ -718,6 +736,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     for (ChangedPath change : changes) {
       if (addAsCaseOnlyRename(project, root, change, restoreExceptions)) continue;
+
+      if (change.beforePath == null && unstagedDeletions.contains(change.afterPath)) {
+        // we can't restore ADDED-DELETED files
+        LOG.info("Ignored added-deleted staged change in " + change.afterPath);
+        continue;
+      }
 
       addIfNotNull(toAdd, change.afterPath);
       addIfNotNull(toRemove, change.beforePath);
