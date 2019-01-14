@@ -16,6 +16,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
+import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectNameProvider
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -329,14 +330,6 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
   final override suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean) {
     coroutineScope {
       launch {
-        try {
-          saveProjectName()
-        }
-        catch (e: Throwable) {
-          LOG.error("Unable to store project name", e)
-        }
-      }
-      launch {
         // save modules before project
         val errors = SmartList<Throwable>()
         val moduleSaveSessions = saveModules(errors, isForceSavingAllSettings)
@@ -345,6 +338,22 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
         (saveSettingsSavingComponentsAndCommitComponents(result, isForceSavingAllSettings) as ProjectSaveSessionProducerManager)
           .saveWithAdditionalSaveSessions(moduleSaveSessions)
           .appendTo(result)
+      }
+
+      val projectSaved = project.messageBus.syncPublisher(ProjectEx.ProjectSaved.TOPIC)
+      launch {
+        try {
+          saveProjectName()
+        }
+        catch (e: Throwable) {
+          LOG.error("Unable to store project name", e)
+        }
+
+        projectSaved.duringSave(project)
+      }
+      launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        @Suppress("DEPRECATION")
+        projectSaved.saved(project)
       }
     }
   }

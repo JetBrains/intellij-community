@@ -41,6 +41,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SafeFileOutputStream;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -132,14 +133,15 @@ public class ConsoleHistoryController {
   }
 
   public void install() {
-    ApplicationManager.getApplication().getMessageBus().connect(myConsole)
+    MessageBusConnection busConnection = myConsole.getProject().getMessageBus().connect(myConsole);
+    busConnection
       .subscribe(ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
         @Override
-        public void saved(@NotNull Project project) {
-          saveHistory();
+        public void duringSave(@NotNull Project project) {
+          ApplicationManager.getApplication().invokeAndWait(() -> saveHistory());
         }
       });
-    myConsole.getProject().getMessageBus().connect(myConsole).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void beforeDocumentSaving(@NotNull Document document) {
         if (document == myConsole.getEditorDocument()) {

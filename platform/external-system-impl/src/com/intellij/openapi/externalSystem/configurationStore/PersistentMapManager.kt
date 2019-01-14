@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.DataWriter
@@ -14,15 +14,11 @@ import java.nio.file.Path
 private val LOG = logger<FileSystemExternalSystemStorage>()
 
 internal interface ExternalSystemStorage {
-  val isDirty: Boolean
-
   fun remove(name: String)
 
   fun read(name: String): Element?
 
   fun write(name: String, dataWriter: DataWriter?, filter: DataWriterFilter? = null)
-
-  fun forceSave()
 
   fun rename(oldName: String, newName: String)
 }
@@ -38,8 +34,6 @@ internal class ModuleFileSystemExternalSystemStorage(project: Project) : FileSys
 internal class ProjectFileSystemExternalSystemStorage(project: Project) : FileSystemExternalSystemStorage("project", project)
 
 internal abstract class FileSystemExternalSystemStorage(dirName: String, project: Project) : ExternalSystemStorage {
-  override val isDirty = false
-
   protected val dir: Path = ExternalProjectsDataStorage.getProjectConfigurationDir(project).resolve(dirName)
 
   var hasSomeData: Boolean
@@ -62,9 +56,6 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
   }
 
   protected open fun nameToPath(name: String): Path = dir.resolve(name)
-
-  override fun forceSave() {
-  }
 
   override fun remove(name: String) {
     if (!hasSomeData) {

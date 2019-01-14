@@ -66,11 +66,6 @@ fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: B
     notification.notify(componentManager as? Project)
   }
   finally {
-    val app = ApplicationManager.getApplication()
-    if (componentManager is Project && !app.isDisposed) {
-      app.messageBus.syncPublisher(ProjectEx.ProjectSaved.TOPIC).saved(componentManager)
-    }
-
     ShutDownTracker.getInstance().unregisterStopperThread(currentThread)
   }
 }

@@ -119,11 +119,11 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }, 10, ModalityState.stateForComponent(this));
     myParent.loaded();
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
-    MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect(this);
+    MessageBusConnection busConnection = project.getMessageBus().connect(this);
     busConnection.subscribe(ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
       @Override
-      public void saved(@NotNull Project project) {
-        executeSaveFileCommand();
+      public void duringSave(@NotNull Project project) {
+        ApplicationManager.getApplication().invokeAndWait(() -> executeSaveFileCommand());
       }
     });
 
