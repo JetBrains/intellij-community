@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.idea.IdeaApplication;
@@ -37,19 +37,15 @@ public class DialogAppender extends AppenderSkeleton {
 
   @Override
   protected synchronized void append(@NotNull LoggingEvent event) {
-    if (Main.isCommandLine()) return;
+    if (!event.getLevel().isGreaterOrEqual(Level.ERROR) || Main.isCommandLine()) {
+      return;  // the dialog appender doesn't deal with non-critical errors and is meaningless when there is no frame to show an error icon
+    }
 
-    boolean isLoaded = IdeaApplication.isLoaded();
-    if (isLoaded) {
+    if (IdeaApplication.isLoaded()) {
       LoggingEvent eventFromQueue;
       while ((eventFromQueue = myEarlyEvents.poll()) != null) {
         queueAppend(eventFromQueue);
       }
-    }
-
-    if (!event.getLevel().isGreaterOrEqual(Level.ERROR)) return;
-
-    if (isLoaded) {
       queueAppend(event);
     }
     else if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
