@@ -1,4 +1,4 @@
-// "Merge with 'case 1:'" "GENERIC_ERROR_OR_WARNING"
+// "Merge with 'case 1'" "GENERIC_ERROR_OR_WARNING"
 class C {
     int foo(int n) {
         int s = 0;

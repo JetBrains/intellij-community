@@ -1,4 +1,4 @@
-// "Merge with 'case A:'" "GENERIC_ERROR_OR_WARNING"
+// "Merge with 'case A'" "GENERIC_ERROR_OR_WARNING"
 enum T {
     A, B, C;
 
