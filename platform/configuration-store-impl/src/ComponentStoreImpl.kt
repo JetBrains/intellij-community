@@ -151,9 +151,9 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   @CalledInAwt
   internal fun doCreateSaveSessionManagerAndSaveComponents(isForce: Boolean, errors: MutableList<Throwable>): SaveSessionProducerManager {
-    val saveSessionProducerManager = createSaveSessionProducerManager()
-    saveComponents(isForce, saveSessionProducerManager, errors)
-    return saveSessionProducerManager
+    val saveManager = createSaveSessionProducerManager()
+    saveComponents(isForce, saveManager, errors)
+    return saveManager
   }
 
   @CalledInAwt
