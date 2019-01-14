@@ -4,7 +4,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.25"
+  id "com.jetbrains.python.envs" version "0.0.28"
 }
 
 /**
@@ -99,13 +99,13 @@ envs {
                true)
 
   createPython("py36_django2_1",
-               "3.6.6",
+               "3.6.7",
                ["django==2.1", "jinja2", "pandas"],
                "python3.6\npython3\ndjango\njinja2\npython34\npython36\npandas",
                true)
 
   createPython("py37",
-               "3.7.0",
+               "3.7.1",
                [],
                "python3.7",
                true)
