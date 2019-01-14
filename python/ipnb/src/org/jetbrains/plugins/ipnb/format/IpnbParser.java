@@ -1,4 +1,3 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.format;
 
 import com.google.common.collect.Lists;
@@ -21,7 +20,7 @@ import com.intellij.util.text.VersionComparatorUtil;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
@@ -575,7 +574,7 @@ public class IpnbParser {
             if (codemirrorModeMap.containsKey("version")) {
 
               String version = (String)codemirrorModeMap.get("version");
-              if (NumberUtils.isCreatable(version)) {
+              if (NumberUtils.isNumber(version)) {
                 try {
                   codemirrorModeMap.put("version", Integer.parseInt(version));
                 }

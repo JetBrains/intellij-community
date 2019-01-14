@@ -4,27 +4,26 @@ package com.intellij.ide.fileTemplates;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import org.apache.velocity.Template;
+import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.exception.MethodInvocationException;
 import org.apache.velocity.exception.ParseErrorException;
 import org.apache.velocity.exception.ResourceNotFoundException;
 import org.apache.velocity.runtime.RuntimeConstants;
+import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.RuntimeSingleton;
+import org.apache.velocity.runtime.log.LogSystem;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.node.SimpleNode;
 import org.apache.velocity.runtime.resource.Resource;
 import org.apache.velocity.runtime.resource.ResourceManager;
 import org.apache.velocity.runtime.resource.ResourceManagerImpl;
 import org.apache.velocity.runtime.resource.loader.ResourceLoader;
-import org.apache.velocity.util.ExtProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.Writer;
+import java.io.*;
 
 /**
  * Initializes Velocity when it's actually needed. All interaction with Velocity should go through this class.
@@ -44,23 +43,40 @@ class VelocityWrapper {
                                         ", ResourceManagerImpl in " + PathManager.getJarPathForClass(ResourceManagerImpl.class));
       }
 
+      LogSystem emptyLogSystem = new LogSystem() {
+        @Override
+        public void init(RuntimeServices runtimeServices) throws Exception {
+        }
+
+        @Override
+        public void logVelocityMessage(int i, String s) {
+          //todo[myakovlev] log somethere?
+        }
+      };
+      Velocity.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, emptyLogSystem);
       Velocity.setProperty(RuntimeConstants.INPUT_ENCODING, FileTemplate.ourEncoding);
       Velocity.setProperty(RuntimeConstants.PARSER_POOL_SIZE, 3);
       Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER, "includes");
       Velocity.setProperty("includes.resource.loader.instance", new ResourceLoader() {
         @Override
-        public void init(ExtProperties configuration) {
+        public void init(ExtendedProperties configuration) {
         }
 
         @Override
-        public Reader getResourceReader(String resourceName, String encoding) throws ResourceNotFoundException {
+        public InputStream getResourceStream(String resourceName) throws ResourceNotFoundException {
           FileTemplateManager templateManager = ourTemplateManager.get();
           if (templateManager == null) templateManager = FileTemplateManager.getDefaultInstance();
           final FileTemplate include = templateManager.getPattern(resourceName);
           if (include == null) {
             throw new ResourceNotFoundException("Template not found: " + resourceName);
           }
-          return new StringReader(include.getText());
+          final String text = include.getText();
+          try {
+            return new ByteArrayInputStream(text.getBytes(FileTemplate.ourEncoding));
+          }
+          catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+          }
         }
 
         @Override
@@ -82,15 +98,15 @@ class VelocityWrapper {
   }
 
   @NotNull
-  static SimpleNode parse(@NotNull Reader reader) throws ParseException {
-    return RuntimeSingleton.parse(reader, new Template());
+  static SimpleNode parse(@NotNull Reader reader, @NotNull String templateName) throws ParseException {
+    return RuntimeSingleton.parse(reader, templateName);
   }
 
-  static void evaluate(@Nullable Project project, Context context, @NotNull Writer writer, String templateContent)
+  static boolean evaluate(@Nullable Project project, Context context, @NotNull Writer writer, String templateContent)
     throws ParseErrorException, MethodInvocationException, ResourceNotFoundException {
     try {
       ourTemplateManager.set(project == null ? FileTemplateManager.getDefaultInstance() : FileTemplateManager.getInstance(project));
-      Velocity.evaluate(context, writer, "", templateContent);
+      return Velocity.evaluate(context, writer, "", templateContent);
     }
     finally {
       ourTemplateManager.set(null);
