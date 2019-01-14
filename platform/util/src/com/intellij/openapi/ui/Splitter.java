@@ -679,12 +679,4 @@ public class Splitter extends JPanel implements Splittable {
       mySwitchOrientationEnabled = switchOrientationEnabled;
     }
   }
-
-  public float getMinProp() {
-    return myMinProp;
-  }
-
-  public float getMaxProp() {
-    return myMaxProp;
-  }
 }

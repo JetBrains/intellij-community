@@ -215,10 +215,6 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
     this.myWide = wide;
   }
 
-  public boolean isWide() {
-    return this.myWide;
-  }
-
   public Object getEditorValue() {
     return myValue;
   }
