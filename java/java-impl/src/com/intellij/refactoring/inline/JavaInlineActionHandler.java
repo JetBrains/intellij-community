@@ -19,6 +19,11 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.refactoring.InlineActionHandler;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -29,5 +34,24 @@ public abstract class JavaInlineActionHandler extends InlineActionHandler {
     return l instanceof JavaLanguage ||
            l.equals(StdFileTypes.JSPX.getLanguage()) ||
            l.equals(StdFileTypes.JSP.getLanguage());
+  }
+
+  protected static boolean processConflicts(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflicts) {
+    if (conflicts.isEmpty()) return true;
+
+    ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
+    return conflictsDialog.showAndGet();
+  }
+
+  @FunctionalInterface
+  public interface ConflictProcessor {
+    /**
+     * Processes conflicts (possibly shows UI).
+     *
+     * @param project   project
+     * @param conflicts map with conflict messages and locations
+     * @return true if refactoring could proceed or false if refactoring should be cancelled
+     */
+    boolean processConflicts(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflicts);
   }
 }

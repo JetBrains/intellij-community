@@ -32,7 +32,9 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -51,10 +53,15 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
 
   @Override
   public void inlineElement(Project project, Editor editor, PsiElement element) {
+    inlineElement(project, editor, element, JavaInlineActionHandler::processConflicts);
+  }
+
+  public static void inlineElement(Project project, Editor editor, PsiElement element, ConflictProcessor conflictProcessor) {
     final PsiElement navigationElement = element.getNavigationElement();
     final PsiField field = (PsiField)(navigationElement instanceof PsiField ? navigationElement : element);
 
-    if (getInitializer(field) == null) {
+    PsiExpression initializer = getInitializer(field);
+    if (initializer == null) {
       String message = RefactoringBundle.message("no.initializer.present.for.the.field");
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
       return;
@@ -101,6 +108,10 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     }
 
     if ((!(element instanceof PsiCompiledElement) || reference == null) && !CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
+
+    MultiMap<PsiElement, String> conflicts = InlineUtil.changedBeforeLastAccess(initializer, field);
+    if (!conflictProcessor.processConflicts(project, conflicts)) return;
+
     PsiReferenceExpression refExpression = reference instanceof PsiReferenceExpression ? (PsiReferenceExpression)reference : null;
     InlineFieldDialog dialog = new InlineFieldDialog(project, field, refExpression);
     dialog.show();
