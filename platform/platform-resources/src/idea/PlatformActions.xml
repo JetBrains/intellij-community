@@ -855,6 +855,11 @@
         <action internal="true" id="RecordStateCollectors" class="com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction" text="Record State Collectors to Event Log"/>
       </group>
 
+      <group id="Internal.PMM" popup="true" text="PMM Utils">
+        <action id="ApplyFixedWindowSize" internal="true" class="com.intellij.internal.inspector.ApplyWindowSizeAction" text="Apply Specific Size"/>
+        <action id="ConfigureDefaultSize" internal="true" class="com.intellij.internal.inspector.ConfigureCustomSizeAction" text="Configure Default Size..."/>
+      </group>
+
       <action internal="true" id="ShowEditorHighlighterTokens" class="com.intellij.openapi.editor.actions.ShowEditorHighlighterTokensAction"
               text="Show Editor Highlighter Tokens"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
