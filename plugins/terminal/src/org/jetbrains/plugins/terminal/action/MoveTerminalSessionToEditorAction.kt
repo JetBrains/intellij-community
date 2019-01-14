@@ -9,18 +9,21 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.content.Content
 import com.intellij.ui.tabs.TabInfo
 import org.jetbrains.plugins.terminal.TerminalView
+import org.jetbrains.plugins.terminal.vfs.TerminalEditorWidgetListener
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl
 
 class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuActionBase(), DumbAware {
   override fun actionPerformed(e: AnActionEvent, activeToolWindow: ToolWindow, selectedContent: Content?) {
     val tabInfo = TabInfo(selectedContent!!.component)
       .setText(selectedContent.displayName)
-    val terminalView = TerminalView.getInstance(e.project!!)
+    val project = e.project!!
+    val terminalView = TerminalView.getInstance(project)
     val terminalWidget = TerminalView.getWidgetByContent(selectedContent)!!
     val file = TerminalSessionVirtualFileImpl(tabInfo, terminalWidget, terminalView.terminalRunner.settingsProvider)
     tabInfo.setObject(file)
     file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, java.lang.Boolean.TRUE)
-    val fileEditor = FileEditorManager.getInstance(e.project!!).openFile(file, true).first()
+    val fileEditor = FileEditorManager.getInstance(project).openFile(file, true).first()
+    terminalWidget.listener = TerminalEditorWidgetListener(project, file)
 
     terminalWidget.moveDisposable(fileEditor)
     terminalView.detachWidgetAndRemoveContent(selectedContent)
