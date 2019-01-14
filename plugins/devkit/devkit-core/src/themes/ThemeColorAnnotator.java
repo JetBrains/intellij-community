@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
@@ -89,10 +89,21 @@ public class ThemeColorAnnotator implements Annotator {
       return JBUI.scale(EmptyIcon.create(ICON_SIZE));
     }
 
+    @Override
+    public boolean isNavigateAction() {
+      return true;
+    }
+
+    @Nullable
+    @Override
+    public String getTooltipText() {
+      return "Choose Color";
+    }
+
     @Nullable
     @Override
     public AnAction getClickAction() {
-      return new AnAction() {
+      return new AnAction("Choose Color...") {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
