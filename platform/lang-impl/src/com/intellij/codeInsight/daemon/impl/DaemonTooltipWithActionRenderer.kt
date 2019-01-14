@@ -352,10 +352,6 @@ private fun getKeymapColor(): Color {
   return JBColor.namedColor("ToolTip.Actions.infoForeground", JBColor(0x99a4ad, 0x919191))
 }
 
-private fun getSettingsIconHoverBackgroundColor(): Color {
-  return JBColor.namedColor("tooltips.actions.settings.icon.background.color", JBColor(0xe9eac0, 0x44494c))
-}
-
 private fun getActionFont(): Font? {
   val toolTipFont = UIUtil.getToolTipFont()
   if (toolTipFont == null || SystemInfo.isWindows) return toolTipFont
