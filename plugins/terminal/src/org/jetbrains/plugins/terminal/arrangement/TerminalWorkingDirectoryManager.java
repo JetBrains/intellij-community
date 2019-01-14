@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.arrangement;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,7 +76,9 @@ public class TerminalWorkingDirectoryManager {
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER && TerminalArrangementManager.isAvailable()) {
           alarm.cancelAllRequests();
-          alarm.addRequest(() -> updateWorkingDirectory(content, dataRef.get()), MERGE_WAIT_MILLIS);
+          if (!alarm.isDisposed()) {
+            alarm.addRequest(() -> updateWorkingDirectory(content, dataRef.get()), MERGE_WAIT_MILLIS);
+          }
         }
       }
     };
@@ -84,6 +88,12 @@ public class TerminalWorkingDirectoryManager {
     dataRef.set(data);
     JBTerminalWidget widget = Objects.requireNonNull(TerminalView.getWidgetByContent(content));
     widget.getTerminalPanel().addCustomKeyListener(listener);
+    Disposer.register(content, new Disposable() {
+      @Override
+      public void dispose() {
+        widget.getTerminalPanel().removeCustomKeyListener(listener);
+      }
+    });
     myDataByContentMap.put(content, data);
   }
 
