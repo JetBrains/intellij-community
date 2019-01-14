@@ -5,11 +5,13 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.InspectionTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
@@ -26,6 +28,11 @@ public class DeprecationInspectionTest extends InspectionTestCase {
       super.configureModule(module, model, contentEntry);
       model.getModuleExtension(JavaModuleExternalPaths.class)
         .setExternalAnnotationUrls(new String[]{VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(getTestDataPath() + "/deprecation/" + getTestName(true) + "/extAnnotations"))});
+    }
+
+    @Override
+    public Sdk getSdk() {
+      return IdeaTestUtil.getMockJdk9();
     }
   };
 
