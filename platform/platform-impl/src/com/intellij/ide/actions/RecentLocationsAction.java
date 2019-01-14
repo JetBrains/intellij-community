@@ -1,8 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -187,11 +183,6 @@ public class RecentLocationsAction extends AnAction {
     editorsToRelease.addAll(ContainerUtil.map(items, item -> item.getEditor()));
 
     return items;
-  }
-
-  @NotNull
-  public static Collection<Editor> getEditors(List<RecentLocationItem> placeItems) {
-    return ContainerUtil.map(placeItems, item -> item.getEditor());
   }
 
   private static void updateModel(@NotNull Project project,
@@ -490,16 +481,16 @@ public class RecentLocationsAction extends AnAction {
                                                   boolean selected,
                                                   boolean hasFocus) {
       PlaceInfo placeInfo = value.getInfo();
-      EditorEx smallEditor = value.getEditor();
-      String text = smallEditor.getDocument().getText();
+      EditorEx editor = value.getEditor();
+      String text = editor.getDocument().getText();
 
       Iterable<TextRange> ranges = mySpeedSearch.matchingFragments(text);
 
       if (ranges != null) {
-        selectSearchResultsInEditor(smallEditor, ranges.iterator(), -1);
+        selectSearchResultsInEditor(editor, ranges.iterator(), -1);
       }
       else {
-        clearSelectionInEditor(smallEditor);
+        clearSelectionInEditor(editor);
       }
 
       String breadcrumb = getBreadcrumbs(myProject, placeInfo);
@@ -521,17 +512,16 @@ public class RecentLocationsAction extends AnAction {
         .addToCenter(titledSeparator)
         .addToRight(fileNameComponent);
 
-      JComponent editorComponent = smallEditor.getComponent();
+      JComponent editorComponent = editor.getComponent();
 
-      smallEditor.setBorder(BorderFactory.createEmptyBorder());
+      editor.setBorder(BorderFactory.createEmptyBorder());
       editorComponent.setBorder(BorderFactory.createEmptyBorder());
 
       JPanel editorPanel = new JPanel(new VerticalFlowLayout(0, 0));
       editorPanel.add(title);
       editorPanel.add(editorComponent);
 
-      updateBackground(smallEditor, title, titledSeparator, breadcrumbTextComponent,
-                       selected ? BACKGROUND_COLOR : UIUtil.getEditorPaneBackground());
+      updateBackground(editor, title, titledSeparator, breadcrumbTextComponent, selected, index);
 
       return editorPanel;
     }
@@ -568,15 +558,32 @@ public class RecentLocationsAction extends AnAction {
       return fileNameComponent;
     }
 
-    private static void updateBackground(@NotNull EditorEx smallEditor,
+    private static void updateBackground(@NotNull EditorEx editor,
                                          @NotNull JComponent title,
                                          @NotNull JComponent titledSeparator,
                                          @NotNull JComponent breadcrumbTextComponent,
-                                         @NotNull Color background) {
+                                         boolean selected,
+                                         int index) {
+      Color background = selected ? BACKGROUND_COLOR : editor.getColorsScheme().getDefaultBackground();
+      if (index % 2 == 1) {
+        background = adjustBackgroundColor(background);
+      }
       title.setBackground(background);
-      smallEditor.setBackgroundColor(background);
+      editor.setBackgroundColor(background);
       titledSeparator.setBackground(background);
       breadcrumbTextComponent.setBackground(background);
+    }
+
+    @NotNull
+    private static Color adjustBackgroundColor(@NotNull Color background) {
+      Color brighterColor = ColorUtil.brighter(background, 1);
+      if (!background.equals(brighterColor)) {
+        background = brighterColor;
+      }
+      else {
+        background = ColorUtil.hackBrightness(background, 1, 1/1.03F);
+      }
+      return background;
     }
 
     @Override
