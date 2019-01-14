@@ -7,7 +7,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.sun.javafx.application.PlatformImpl;
+import com.sun.javafx.webkit.Accessor;
+import com.sun.webkit.WebPage;
 import javafx.application.Platform;
+import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
@@ -29,9 +32,10 @@ public class JavaFxHtmlPanel implements Disposable {
   @Nullable
   private JFXPanel myPanel;
   @Nullable protected WebView myWebView;
+  private Color background;
 
   public JavaFxHtmlPanel() {
-    Color background = JBColor.background();
+    background = JBColor.background();
     myPanelWrapper = new JPanel(new BorderLayout());
     myPanelWrapper.setBackground(background);
 
@@ -42,6 +46,13 @@ public class JavaFxHtmlPanel implements Disposable {
 
       final WebEngine engine = myWebView.getEngine();
       registerListeners(engine);
+      engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
+        if (newValue == Worker.State.RUNNING) {
+            WebPage page = Accessor.getPageFor(engine);
+            page.setBackgroundColor(background.getRGB());
+          }
+        }
+      );
 
       javafx.scene.paint.Color fxColor = toFxColor(background);
       final Scene scene = new Scene(myWebView, fxColor);
@@ -73,9 +84,12 @@ public class JavaFxHtmlPanel implements Disposable {
   }
 
   public void setBackground(Color background) {
+    this.background = background;
     myPanelWrapper.setBackground(background);
     ApplicationManager.getApplication().invokeLater(() -> runFX(() -> {
-      myPanel.getScene().setFill(toFxColor(background));
+      if (myPanel != null) {
+        myPanel.getScene().setFill(toFxColor(background));
+      }
     }));
   }
 
