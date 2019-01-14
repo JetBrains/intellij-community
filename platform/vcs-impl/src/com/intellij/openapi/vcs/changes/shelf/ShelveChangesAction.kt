@@ -3,13 +3,9 @@
 package com.intellij.openapi.vcs.changes.shelf
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.actions.VcsContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.actions.AbstractCommitChangesAction
 
 class ShelveChangesAction : AbstractCommitChangesAction() {
-  override fun getActionName(dataContext: VcsContext): String = VcsBundle.message("shelve.changes.action")
-
   override fun getExecutor(project: Project): CommitExecutor = ShelveChangesCommitExecutor(project)
 }

@@ -33,7 +33,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
       presentation.isEnabled = false
     }
     else {
-      presentation.text = "${getActionName(vcsContext)}..."
+      getActionName(vcsContext)?.let { presentation.text = "$it..." }
       presentation.isEnabled = !ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning
       presentation.isVisible = true
     }
@@ -41,13 +41,13 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
 
   protected abstract fun approximatelyHasRoots(dataContext: VcsContext): Boolean
 
-  protected abstract fun getActionName(dataContext: VcsContext): String?
+  protected open fun getActionName(dataContext: VcsContext): String? = null
 
   public override fun actionPerformed(context: VcsContext) {
     LOG.debug("actionPerformed. ")
 
     val project = context.project!!
-    val actionName = getActionName(context)?.let { removeMnemonic(it) }
+    val actionName = getActionName(context)?.let { removeMnemonic(it) } ?: templatePresentation.text
     val isFreezedDialogTitle = actionName?.let { "Can not $it now" }
 
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(isFreezedDialogTitle)) {

@@ -3,13 +3,9 @@
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.actions.VcsContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor
 
 class CreatePatchAction : AbstractCommitChangesAction() {
-  override fun getActionName(dataContext: VcsContext): String = VcsBundle.message("create.patch.commit.action.title")
-
   override fun getExecutor(project: Project): CommitExecutor? = CreatePatchCommitExecutor.getInstance(project)
 }

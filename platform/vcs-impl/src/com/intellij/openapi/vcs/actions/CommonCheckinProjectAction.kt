@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions
 
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.vcsUtil.VcsUtil.getFilePath
@@ -14,6 +13,4 @@ open class CommonCheckinProjectAction : AbstractCommonCheckinAction() {
       .toTypedArray()
 
   override fun approximatelyHasRoots(dataContext: VcsContext): Boolean = true
-
-  override fun getActionName(dataContext: VcsContext): String = ActionsBundle.message("action.CheckinProject.text")
 }
