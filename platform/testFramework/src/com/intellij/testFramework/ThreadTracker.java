@@ -186,7 +186,8 @@ public class ThreadTracker {
       return true; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
     }
     if (isIdleApplicationPoolThread(stackTrace)) return true;
-    return isIdleCommonPoolThread(thread, stackTrace);
+    return isIdleCommonPoolThread(thread, stackTrace) ||
+           isCoroutineSchedulerPoolThread(thread, stackTrace);
   }
 
   private static boolean isWellKnownOffender(@NotNull String threadName) {
@@ -195,6 +196,7 @@ public class ThreadTracker {
 
   // true if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for next task
   private static boolean isIdleApplicationPoolThread(@NotNull StackTraceElement[] stackTrace) {
+    //noinspection UnnecessaryLocalVariable
     boolean insideTPEGetTask = Arrays.stream(stackTrace)
       .anyMatch(element -> element.getMethodName().equals("getTask")
                            && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
@@ -206,10 +208,22 @@ public class ThreadTracker {
     if (!ForkJoinWorkerThread.class.isAssignableFrom(thread.getClass())) {
       return false;
     }
+    //noinspection UnnecessaryLocalVariable
     boolean insideAwaitWork = Arrays.stream(stackTrace)
       .anyMatch(element -> element.getMethodName().equals("awaitWork")
                            && element.getClassName().equals("java.util.concurrent.ForkJoinPool"));
     return insideAwaitWork;
+  }
+
+  private static boolean isCoroutineSchedulerPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+    if (!"kotlinx.coroutines.scheduling.CoroutineScheduler".equals(thread.getClass().getName())) {
+      return false;
+    }
+    //noinspection UnnecessaryLocalVariable
+    boolean insideCpuWorkerIdle = Arrays.stream(stackTrace)
+      .anyMatch(element -> element.getMethodName().equals("cpuWorkerIdle")
+                           && element.getClassName().equals("kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"));
+    return insideCpuWorkerIdle;
   }
 
   public static void awaitJDIThreadsTermination(int timeout, @NotNull TimeUnit unit) {
