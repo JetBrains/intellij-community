@@ -36,9 +36,6 @@ open class CommonCheckinFilesAction : AbstractCommonCheckinAction() {
     return message(pluralize(messageKey, roots.size), checkinActionName)
   }
 
-  override fun getMnemonicsFreeActionName(context: VcsContext): String =
-    appendSubject(context, message("vcs.command.name.checkin.no.mnemonics"))
-
   override fun getInitiallySelectedChangeList(context: VcsContext, project: Project): LocalChangeList {
     val manager = ChangeListManager.getInstance(project)
     val defaultChangeList = manager.defaultChangeList

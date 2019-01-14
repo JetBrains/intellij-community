@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.actions
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 
 open class CommonCheckinProjectAction : AbstractCommonCheckinAction() {
@@ -17,6 +16,4 @@ open class CommonCheckinProjectAction : AbstractCommonCheckinAction() {
   override fun approximatelyHasRoots(dataContext: VcsContext): Boolean = true
 
   override fun getActionName(dataContext: VcsContext): String = ActionsBundle.message("action.CheckinProject.text")
-
-  override fun getMnemonicsFreeActionName(context: VcsContext): String = VcsBundle.message("vcs.command.name.checkin.no.mnemonics")
 }

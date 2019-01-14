@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.containers.ContainerUtil.concat
+import com.intellij.util.ui.UIUtil.removeMnemonic
 
 private val LOG = logger<AbstractCommonCheckinAction>()
 
@@ -46,8 +47,10 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     LOG.debug("actionPerformed. ")
 
     val project = context.project!!
+    val actionName = getActionName(context)?.let { removeMnemonic(it) }
+    val isFreezedDialogTitle = actionName?.let { "Can not $it now" }
 
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not ${getMnemonicsFreeActionName(context)} now")) {
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification(isFreezedDialogTitle)) {
       LOG.debug("ChangeListManager is freezed. returning.")
     }
     else if (ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning) {
@@ -61,7 +64,8 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     }
   }
 
-  protected open fun getMnemonicsFreeActionName(context: VcsContext): String? = getActionName(context)
+  @Deprecated("getActionName() will be used instead")
+  protected open fun getMnemonicsFreeActionName(context: VcsContext): String? = null
 
   protected abstract fun getRoots(dataContext: VcsContext): Array<FilePath>
 
