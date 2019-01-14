@@ -27,6 +27,7 @@ import org.junit.Test
 import org.picocontainer.MutablePicoContainer
 import org.picocontainer.defaults.InstanceComponentAdapter
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -97,7 +98,14 @@ internal class ApplicationStoreTest {
 
   private suspend fun doRemoveDeprecatedStorageOnWrite(component: Foo) {
     val oldFile = writeConfig("old.xml", "<application>${createComponentData("old")}</application>")
-    writeConfig("new.xml", "<application>${createComponentData("new")}</application>")
+
+    // test BOM
+    val out = ByteArrayOutputStream()
+    out.write(0xef)
+    out.write(0xbb)
+    out.write(0xbf)
+    out.write("<application>${createComponentData("new")}</application>".toByteArray())
+    testAppConfig.writeChild("new.xml", out.toByteArray())
 
     testAppConfig.refreshVfs()
 

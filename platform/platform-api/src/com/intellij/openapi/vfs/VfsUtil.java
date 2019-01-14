@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -12,10 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import gnu.trove.THashSet;
@@ -38,6 +35,16 @@ public class VfsUtil extends VfsUtilCore {
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
     file.setBinaryContent(text.getBytes(charset.name()));
+  }
+
+  @NotNull
+  public static byte[] toByteArray(@NotNull VirtualFile file, @NotNull String text) throws IOException {
+    if (text.isEmpty()) {
+      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+    }
+
+    Charset charset = file.getCharset();
+    return text.getBytes(charset.name());
   }
 
   /**

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
@@ -24,6 +25,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import java.io.ByteArrayOutputStream
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.attribute.PosixFilePermission
@@ -72,7 +74,7 @@ internal class ProjectStoreTest {
       val file = Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_FILE))
       file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
-      project.baseDir.refresh(false, true)
+      LocalFileSystem.getInstance().findFileByPath(project.basePath!!)!!.refresh(false, true)
       (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
@@ -88,7 +90,9 @@ internal class ProjectStoreTest {
 
   @Test
   fun fileBasedStorage() = runBlocking {
-    loadAndUseProjectInLoadComponentStateMode(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
+    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
+      it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path
+    }) { project ->
       test(project)
 
       assertThat(project.basePath).isEqualTo(PathUtil.getParentPath(project.projectFilePath!!))
@@ -102,7 +106,13 @@ internal class ProjectStoreTest {
     }
 
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
-      it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
+      // test BOM
+      val out = ByteArrayOutputStream()
+      out.write(0xef)
+      out.write(0xbb)
+      out.write(0xbf)
+      out.write(iprFileContent.toByteArray())
+      it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", out.toByteArray())
       it.path
     }) { project ->
       val store = project.stateStore
@@ -169,7 +179,7 @@ internal class ProjectStoreTest {
     project.stateStore.save()
 
     val file = Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_FILE))
-    assertThat(file).isRegularFile()
+    assertThat(file).isRegularFile
     // test exact string - xml prolog, line separators, indentation and so on must be exactly the same
     // todo get rid of default component states here
     assertThat(file.readText()).startsWith(iprFileContent.replace("customValue", "foo").replace("</project>", ""))

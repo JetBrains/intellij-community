@@ -19,9 +19,9 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
-import com.intellij.util.io.readChars
+import com.intellij.util.io.inputStreamSkippingBom
+import com.intellij.util.io.readCharSequence
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.util.loadElement
 import org.jdom.Element
 import org.jdom.JDOMException
 import java.io.IOException
@@ -172,21 +172,23 @@ open class FileBasedStorage(file: Path,
 
     if (!attributes.isRegularFile) {
       LOG.debug { "Document was not loaded for $fileSpec, not a file" }
+      return null
     }
     else if (attributes.size() == 0L) {
       processReadException(null)
+      return null
     }
-    else if (isUseUnixLineSeparator) {
+
+    if (isUseUnixLineSeparator) {
       // do not load the whole data into memory if no need to detect line separator
       lineSeparator = LineSeparator.LF
-      return loadElement(file)
+      return JDOMUtil.load(file.inputStreamSkippingBom().reader())
     }
     else {
-      val data = file.readChars()
+      val data = file.inputStreamSkippingBom().reader().readCharSequence(attributes.size().toInt())
       lineSeparator = detectLineSeparators(data, if (isUseXmlProlog) null else LineSeparator.LF)
       return JDOMUtil.load(data)
     }
-    return null
   }
 
   protected fun processReadException(e: Exception?) {
