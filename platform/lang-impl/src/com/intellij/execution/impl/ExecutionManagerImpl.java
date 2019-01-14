@@ -525,7 +525,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
   public Set<RunnerAndConfigurationSettings> getConfigurations(RunContentDescriptor descriptor) {
     Set<RunnerAndConfigurationSettings> result = new HashSet<>();
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
-      if (descriptor == trinity.first) result.add(trinity.second);
+      if (descriptor == trinity.first && trinity.second != null) result.add(trinity.second);
     }
     return result;
   }
