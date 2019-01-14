@@ -5,10 +5,10 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.ant.*;
 import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -89,8 +89,8 @@ public class GenerateAntBuildAction extends CompileActionBase {
     presentation.setEnabled(e.getProject() != null);
   }
 
-  private void generate(final Project project, final GenerationOptions genOptions) {
-    ApplicationManager.getApplication().saveAll();
+  private void generate(@NotNull Project project, final GenerationOptions genOptions) {
+    StoreUtil.saveDocumentsAndProjectSettings(project);
     final List<File> filesToRefresh = new ArrayList<>();
     final IOException[] _ex = new IOException[]{null};
     final List<File> _generated = new ArrayList<>();

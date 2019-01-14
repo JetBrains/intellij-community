@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -55,8 +56,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
@@ -85,7 +86,7 @@ public class CopiesPanel {
   private final static String CONFIGURE_BRANCHES = "CONFIGURE_BRANCHES";
   private final static String MERGE_FROM = "MERGE_FROM";
 
-  public CopiesPanel(final Project project) {
+  public CopiesPanel(@NotNull Project project) {
     myProject = project;
     myConnection = myProject.getMessageBus().connect(myProject);
     myVcs = SvnVcs.getInstance(myProject);
@@ -375,7 +376,7 @@ public class CopiesPanel {
     }
     final WorkingCopyFormat newFormat = dialog.getUpgradeMode();
     if (!wcInfo.getFormat().equals(newFormat)) {
-      ApplicationManager.getApplication().saveAll();
+      StoreUtil.saveDocumentsAndProjectSettings(myProject);
       final Task.Backgroundable task = new SvnFormatWorker(myProject, newFormat, wcInfo) {
         @Override
         public void onSuccess() {

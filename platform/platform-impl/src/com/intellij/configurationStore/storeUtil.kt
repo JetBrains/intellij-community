@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.CalledInAwt
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
 
@@ -127,4 +128,10 @@ fun saveProject(project: Project, isForceSavingAllSettings: Boolean) {
   else {
     project.save()
   }
+}
+
+@CalledInAwt
+fun Project.saveDocumentsAndProjectSettings() {
+  FileDocumentManager.getInstance().saveAllDocuments()
+  save()
 }

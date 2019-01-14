@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -11,7 +12,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -106,8 +106,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
         // all local changes are saved in prior and do not overwrite remote changes.
         // Also, there is a chance that save during update can break it -
         // we do disable auto saving during update, but still, there is a chance that save will occur.
-        FileDocumentManager.getInstance().saveAllDocuments();
-        project.save();
+        StoreUtil.saveDocumentsAndProjectSettings(project);
       }
 
       Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles);
