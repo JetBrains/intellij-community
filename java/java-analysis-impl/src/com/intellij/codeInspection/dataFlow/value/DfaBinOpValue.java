@@ -86,6 +86,7 @@ public class DfaBinOpValue extends DfaValue {
     }
     
     public DfaValue create(DfaValue left, DfaValue right, DfaMemoryState state, boolean isLong, IElementType tokenType) {
+      if (tokenType == null) return DfaUnknownValue.getInstance();
       BinOp op = BinOp.fromTokenType(tokenType);
       if (op != null) {
         DfaValue value = doCreate(left, right, state, isLong, op);
