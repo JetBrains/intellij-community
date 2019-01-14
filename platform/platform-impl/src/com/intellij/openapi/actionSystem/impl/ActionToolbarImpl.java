@@ -390,11 +390,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @NotNull
-  private ActionButton createToolbarButton(@NotNull AnAction action,
-                                           final ActionButtonLook look,
-                                           @NotNull String place,
-                                           @NotNull Presentation presentation,
-                                           @NotNull Dimension minimumSize) {
+  protected ActionButton createToolbarButton(@NotNull AnAction action,
+                                             final ActionButtonLook look,
+                                             @NotNull String place,
+                                             @NotNull Presentation presentation,
+                                             @NotNull Dimension minimumSize) {
     if (action.displayTextInToolbar()) {
       int mnemonic = KeyEvent.getExtendedKeyCodeForChar(action.getTemplatePresentation().getMnemonic());
 
