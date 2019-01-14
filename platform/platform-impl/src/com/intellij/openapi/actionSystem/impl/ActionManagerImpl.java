@@ -15,6 +15,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
@@ -30,6 +31,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -114,6 +116,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final MultiMap<String,String> myId2GroupId = new MultiMap<>();
   private final List<String> myNotRegisteredInternalActionIds = new ArrayList<>();
   private final List<AnActionListener> myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<ActionPopupMenuListener> myActionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final KeymapManagerEx myKeymapManager;
   private final DataManager myDataManager;
   private final List<Object/*ActionPopupMenuImpl|JBPopup*/> myPopups = new ArrayList<>();
@@ -1081,12 +1084,22 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return ArrayUtilRt.toStringArray(myPlugin2Id.get(pluginName));
   }
 
-  void addActionPopup(@NotNull Object /*ActionPopupMenuImpl|JBPopup*/menu) {
-    myPopups.add(menu);
+  public void addActionPopup(final Object menu) {
+    boolean added = myPopups.add(menu);
+    if (added && menu instanceof ActionPopupMenu) {
+      for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
+        listener.actionPopupMenuCreated((ActionPopupMenu)menu);
+      }
+    }
   }
 
-  void removeActionPopup(@NotNull Object /*ActionPopupMenuImpl|JBPopup*/ menu) {
-    myPopups.remove(menu);
+  void removeActionPopup(final Object menu) {
+    final boolean removed = myPopups.remove(menu);
+    if (removed && menu instanceof ActionPopupMenu) {
+      for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
+        listener.actionPopupMenuReleased((ActionPopupMenu)menu);
+      }
+    }
   }
 
   @Override
@@ -1114,6 +1127,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @Override
   public boolean isTransparentOnlyActionsUpdateNow() {
     return myTransparentOnlyUpdate;
+  }
+
+  @Override
+  public void addActionPopupMenuListener(ActionPopupMenuListener listener, Disposable parentDisposable) {
+    myActionPopupMenuListeners.add(listener);
+    Disposer.register(parentDisposable, () -> myActionPopupMenuListeners.remove(listener));
   }
 
   @Override
