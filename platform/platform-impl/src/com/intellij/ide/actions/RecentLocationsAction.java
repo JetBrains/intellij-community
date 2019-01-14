@@ -5,6 +5,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -20,8 +21,9 @@ import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
@@ -74,7 +76,6 @@ public class RecentLocationsAction extends AnAction {
   private static final Color TITLE_FOREGROUND_COLOR = UIUtil.getLabelForeground().darker();
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
-  private static final String NOT_SIGNIFICANT_LINE_REGEXP = "[^A-Za-z0-9]*";
   private static final int DEFAULT_POPUP_HEIGHT = JBUI.scale(700);
 
   @Override
@@ -108,7 +109,7 @@ public class RecentLocationsAction extends AnAction {
 
     ShowRecentLocationsRenderer renderer = new ShowRecentLocationsRenderer(project, speedSearch);
     list.setCellRenderer(renderer);
-    list.setEmptyText(IdeBundle.message("title.popup.recent.locations.empty"));
+    list.setEmptyText(IdeBundle.message("recent.locations.popup.empty.text"));
     ScrollingUtil.installActions(list);
     ScrollingUtil.ensureSelectionExists(list);
 
@@ -248,7 +249,7 @@ public class RecentLocationsAction extends AnAction {
     CustomShortcutSet set = CustomShortcutSet.fromString(SystemInfo.isMac ? "meta L" : "control L");
     action.registerCustomShortcutSet(set, listWithFilter);
     action.getTemplatePresentation()
-      .setText(IdeBundle.message("title.popup.recent.locations.text", KeymapUtil.getShortcutsText(set.getShortcuts())));
+      .setText(IdeBundle.message("recent.locations.title.text", KeymapUtil.getShortcutsText(set.getShortcuts())));
 
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, e.getDataContext());
     JComponent checkbox = action.createCustomComponent(action.getTemplatePresentation());
@@ -268,7 +269,7 @@ public class RecentLocationsAction extends AnAction {
   }
 
   private static void updateTitleText(@NotNull JLabel title, boolean state) {
-    title.setText(state ? IdeBundle.message("title.popup.recent.changed.locations") : IdeBundle.message("title.popup.recent.locations"));
+    title.setText(state ? IdeBundle.message("recent.locations.changed.locations") : IdeBundle.message("recent.locations.popup.title"));
   }
 
   @NotNull
@@ -360,49 +361,25 @@ public class RecentLocationsAction extends AnAction {
     int offset = rangeMarker.getStartOffset();
 
     String text = document.getText(TextRange.create(offset, rangeMarker.getEndOffset()));
-    List<String> lines = Arrays.asList(StringUtil.splitByLinesKeepSeparators(text));
-    StringBuilder stringBuilder = new StringBuilder();
-    int skipBeforeLines = getLinesToSkip(lines);
-    int skipAfterLines = getLinesToSkip(ContainerUtil.reverse(lines));
 
-    for (int i = 0; i < lines.size(); i++) {
-      if (i >= skipBeforeLines && i < lines.size() - skipAfterLines) {
-        stringBuilder.append(lines.get(i));
-      }
-    }
+    int newLinesBefore = StringUtil.countNewLines(
+      Objects.requireNonNull(StringUtil.substringBefore(text, StringUtil.trimLeading(text, '\n'))));
+    int newLinesAfter = StringUtil.countNewLines(
+      Objects.requireNonNull(StringUtil.substringAfter(text, StringUtil.trimTrailing(text, '\n'))));
 
-    text = stringBuilder.toString();
+    int firstLine = document.getLineNumber(rangeMarker.getStartOffset());
+    int firstLineAdjusted = firstLine + newLinesBefore;
 
-    int newLinesBefore = StringUtil.countNewLines(text) - StringUtil.countNewLines(StringUtil.trimLeading(text, '\n'));
-    text = StringUtil.trimLeading(text, '\n');
-    text = StringUtil.trimTrailing(text, '\n');
+    int lastLine = document.getLineNumber(rangeMarker.getEndOffset());
+    int lastLineAdjusted = lastLine - newLinesAfter;
 
-    if (StringUtil.isEmpty(text)) {
-      return null;
-    }
+    int startOffset = document.getLineStartOffset(firstLineAdjusted);
+    int endOffset = document.getLineEndOffset(lastLineAdjusted);
 
-    EditorEx smallEditor = createEditor(project, text, document.getLineNumber(offset) + skipBeforeLines + newLinesBefore, placeInfo);
+    EditorEx smallEditor = createEditor(project, document, placeInfo, TextRange.create(startOffset, endOffset));
     smallEditor.getGutterComponentEx().setPaintBackground(false);
 
     return smallEditor;
-  }
-
-  private static int getLinesToSkip(@NotNull List<String> lines) {
-    int skipLines = 0;
-    boolean matched = false;
-    for (String line : lines) {
-      if (matched) {
-        break;
-      }
-
-      if (line.matches(NOT_SIGNIFICANT_LINE_REGEXP)) {
-        skipLines++;
-      }
-      else {
-        matched = true;
-      }
-    }
-    return skipLines;
   }
 
   private static void initSearchActions(@NotNull Project project,
@@ -613,18 +590,46 @@ public class RecentLocationsAction extends AnAction {
   }
 
   @NotNull
-  private static EditorEx createEditor(@NotNull Project project, @NotNull String text, int startLineNumber, @NotNull PlaceInfo placeInfo) {
+  private static EditorEx createEditor(@NotNull Project project,
+                                       @NotNull Document document,
+                                       @NotNull PlaceInfo placeInfo,
+                                       @NotNull TextRange range) {
+    int startLineNumber = document.getLineNumber(range.getStartOffset());
+    String text = document.getText(range);
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument(text);
     EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument, project);
     editor.getGutterComponentEx().setLineNumberConvertor(index -> index + startLineNumber);
     fillEditorSettings(editor.getSettings());
-    setHighlighting(project, editor, placeInfo);
+    setHighlighting(project, editor, placeInfo, range);
 
     return editor;
   }
 
-  private static void setHighlighting(@NotNull Project project, @NotNull EditorEx editor, @NotNull PlaceInfo placeInfo) {
+  private static void setHighlighting(@NotNull Project project,
+                                      @NotNull EditorEx editor,
+                                      @NotNull PlaceInfo placeInfo,
+                                      @NotNull TextRange range) {
+    EditorColorsScheme colorsScheme = setupColorScheme(project, editor, placeInfo);
+
+    applySyntaxHighlighting(project, editor, placeInfo, colorsScheme);
+    applyHighlightingPasses(project, editor, placeInfo, colorsScheme, range);
+  }
+
+  @NotNull
+  private static EditorColorsScheme setupColorScheme(@NotNull Project project, @NotNull EditorEx editor, @NotNull PlaceInfo placeInfo) {
+    EditorColorsScheme colorsScheme = RecentLocationManager.getInstance(project).getColorScheme(placeInfo);
+    if (colorsScheme == null) {
+      colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    }
+    editor.setColorsScheme(colorsScheme);
+    return colorsScheme;
+  }
+
+  private static void applySyntaxHighlighting(@NotNull Project project,
+                                              @NotNull EditorEx editor,
+                                              @NotNull PlaceInfo placeInfo,
+                                              @NotNull EditorColorsScheme colorsScheme) {
     VirtualFile file = placeInfo.getFile();
 
     Language language = LanguageUtil.getLanguageForPsi(project, file);
@@ -633,14 +638,6 @@ public class RecentLocationsAction extends AnAction {
     }
 
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, null);
-
-    EditorColorsScheme colorsScheme = RecentLocationManager.getInstance(project).getColorScheme(placeInfo);
-    if (colorsScheme == null) {
-      colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    }
-
-    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(syntaxHighlighter, colorsScheme);
-
     LexerPosition lexerPosition = RecentLocationManager.getInstance(project).getLexerPosition(placeInfo);
     if (lexerPosition != null) {
       Lexer lexer = syntaxHighlighter.getHighlightingLexer();
@@ -652,9 +649,25 @@ public class RecentLocationsAction extends AnAction {
         //Sometimes CCE appears, ignore.
       }
     }
+    editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(syntaxHighlighter, colorsScheme));
+  }
 
-    editor.setHighlighter(highlighter);
-    editor.setColorsScheme(colorsScheme);
+  private static void applyHighlightingPasses(@NotNull Project project,
+                                              @NotNull EditorEx editor,
+                                              @NotNull PlaceInfo placeInfo,
+                                              @NotNull EditorColorsScheme colorsScheme, @NotNull TextRange range) {
+    for (HighlightInfo info : RecentLocationManager.getInstance(project).getHighlightInfos(placeInfo)) {
+      int startOffset = range.getStartOffset();
+      if (info.startOffset < startOffset || info.endOffset > range.getEndOffset()) {
+        continue;
+      }
+
+      editor.getMarkupModel().addRangeHighlighter(
+        info.startOffset - startOffset, info.endOffset - startOffset,
+        HighlighterLayer.SYNTAX,
+        colorsScheme.getAttributes(info.forcedTextAttributesKey),
+        HighlighterTargetArea.EXACT_RANGE);
+    }
   }
 
   private static void fillEditorSettings(@NotNull EditorSettings settings) {
