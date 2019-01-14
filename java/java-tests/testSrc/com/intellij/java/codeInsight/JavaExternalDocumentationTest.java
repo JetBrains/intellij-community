@@ -6,31 +6,32 @@ import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.JavadocOrderRootType;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,27 +44,28 @@ import java.net.URLConnection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class JavaExternalDocumentationTest extends PlatformTestCase {
+public class JavaExternalDocumentationTest extends LightPlatformTestCase {
+  private static final LightProjectDescriptor MY_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      super.configureModule(module, model, contentEntry);
+      final VirtualFile libClasses = getJarFile("library.jar");
+      final VirtualFile libJavadocJar = getJarFile("library-javadoc.jar");
+      final Library library = model.getModuleLibraryTable().createLibrary("myLib");
+      final Library.ModifiableModel libModel = library.getModifiableModel();
+      libModel.addRoot(libClasses, OrderRootType.CLASSES);
+      libModel.addRoot(libJavadocJar, JavadocOrderRootType.getInstance());
+      libModel.commit();
+    }
+  };
+  
   public static final Pattern BASE_URL_PATTERN = Pattern.compile("(<base href=\")([^\"]*)");
   public static final Pattern IMG_URL_PATTERN = Pattern.compile("<img src=\"([^\"]*)");
 
+  @NotNull
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    final VirtualFile libClasses = getJarFile("library.jar");
-    final VirtualFile libJavadocJar = getJarFile("library-javadoc.jar");
-
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary("myLib");
-      final Library.ModifiableModel model = library.getModifiableModel();
-      model.addRoot(libClasses, OrderRootType.CLASSES);
-      model.addRoot(libJavadocJar, JavadocOrderRootType.getInstance());
-      model.commit();
-
-      Module[] modules = ModuleManager.getInstance(myProject).getModules();
-      assertSize(1, modules);
-      ModuleRootModificationUtil.addDependency(modules[0], library);
-    });
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return MY_DESCRIPTOR;
   }
 
   public void testImagesInsideJavadocJar() throws Exception {
@@ -129,15 +131,15 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
 
   @NotNull
   public static VirtualFile getJarFile(String name) {
-    VirtualFile file = getVirtualFile(getDataFile(name));
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getDataFile(name));
     assertNotNull(file);
     VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(file);
     assertNotNull(jarFile);
     return jarFile;
   }
 
-  private String getDocumentationText(String sourceEditorText) {
-    return getDocumentationText(myProject, sourceEditorText);
+  private static String getDocumentationText(String sourceEditorText) {
+    return getDocumentationText(getProject(), sourceEditorText);
   }
 
   public static String getDocumentationText(Project project, String sourceEditorText) {
