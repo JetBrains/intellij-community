@@ -100,7 +100,7 @@ public class ActionStub extends AnAction{
       targetPresentation.setIcon(sourcePresentation.getIcon());
     }
     if (StringUtil.isEmpty(targetPresentation.getText()) && sourcePresentation.getText() != null) {
-      targetPresentation.setText(sourcePresentation.getText());
+      targetPresentation.setText(sourcePresentation.getTextWithMnemonic(), true);
     }
     if (targetPresentation.getDescription() == null && sourcePresentation.getDescription() != null) {
       targetPresentation.setDescription(sourcePresentation.getDescription());
