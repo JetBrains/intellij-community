@@ -4,7 +4,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.28"
+  id "com.jetbrains.python.envs" version "0.0.25"
 }
 
 /**
