@@ -468,6 +468,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/layout-inspector/intellij.android.layout-inspector.iml" filepath="$PROJECT_DIR$/../adt/idea/layout-inspector/intellij.android.layout-inspector.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/layoutlib/intellij.android.layoutlib.iml" filepath="$PROJECT_DIR$/../adt/idea/layoutlib/intellij.android.layoutlib.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/layoutlib/intellij.android.layoutlib-loader.iml" filepath="$PROJECT_DIR$/../adt/idea/layoutlib/intellij.android.layoutlib-loader.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/layoutlib/intellij.android.layoutlib-loader.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/layoutlib/intellij.android.layoutlib-loader.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.iml" filepath="$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable/intellij.android.observable.iml" filepath="$PROJECT_DIR$/../adt/idea/observable/intellij.android.observable.iml" />
