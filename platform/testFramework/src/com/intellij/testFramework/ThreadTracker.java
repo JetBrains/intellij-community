@@ -216,7 +216,7 @@ public class ThreadTracker {
   }
 
   private static boolean isCoroutineSchedulerPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
-    if (!"kotlinx.coroutines.scheduling.CoroutineScheduler".equals(thread.getClass().getName())) {
+    if (!"kotlinx.coroutines.scheduling.CoroutineScheduler$Worker".equals(thread.getClass().getName())) {
       return false;
     }
     //noinspection UnnecessaryLocalVariable
