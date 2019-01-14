@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -142,7 +143,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
   }
 
   override fun blockReloadingProjectOnExternalChanges() {
-    if (reloadBlockCount.getAndIncrement() == 0) {
+    if (reloadBlockCount.getAndIncrement() == 0 && !ApplicationInfoImpl.isInStressTest()) {
       blockStackTrace.set(ExceptionUtil.currentStackTrace())
     }
   }
