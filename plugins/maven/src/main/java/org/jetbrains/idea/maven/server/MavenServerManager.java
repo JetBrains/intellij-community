@@ -465,6 +465,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   @Nullable
   public static File getMavenHomeFile(@Nullable String mavenHome) {
     if (mavenHome == null) return null;
+    if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome)) {
+      return BundledMavenPathHolder.myBundledMaven2Home;
+    }
     if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome)) {
       return BundledMavenPathHolder.myBundledMaven3Home;
     }

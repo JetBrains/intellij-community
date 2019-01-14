@@ -56,7 +56,7 @@ public class MavenServerManagerTest extends MavenTestCase {
     });
   }
 
-  public void testOldMavenReplacedWithNew() throws RemoteException {
+  public void testOldMavenReplacedWithNew() {
     MavenServerManager serverManager = MavenServerManager.getInstance();
     MavenServerManager.State state = serverManager.getState();
     try {
