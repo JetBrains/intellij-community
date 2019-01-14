@@ -23,8 +23,10 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ProjectModelElement;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
@@ -43,13 +45,14 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleImpl");
 
   @NotNull private final Project myProject;
+  private final VirtualFilePointer myImlFilePointer;
   private volatile boolean isModuleAdded;
 
   private String myName;
 
   private final ModuleScopeProvider myModuleScopeProvider;
 
-  ModuleImpl(@NotNull String name, @NotNull Project project) {
+  ModuleImpl(@NotNull String name, @NotNull Project project, @NotNull String filePath) {
     super(project, "Module " + name);
 
     getPicoContainer().registerComponentInstance(Module.class, this);
@@ -58,6 +61,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
 
     myName = name;
+    myImlFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtilCore.pathToUrl(filePath), this, null);
   }
 
   @Override
@@ -121,7 +125,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   @Nullable
   public VirtualFile getModuleFile() {
-    return LocalFileSystem.getInstance().findFileByPath(getModuleFilePath());
+    return myImlFilePointer.getFile();
   }
 
   @Override
@@ -294,6 +298,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     myModuleScopeProvider.clearCache();
   }
 
+  @Override
   @SuppressWarnings("HardCodedStringLiteral")
   public String toString() {
     if (myName == null) return "Module (not initialized)";
@@ -334,12 +339,10 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     @Override
     @Nullable
     public ProjectModelExternalSource getExternalSource() {
-      if (state.options.size() > 1 || (state.options.size() == 1 && !state.options.containsKey(Module.ELEMENT_TYPE) /* unrealistic case, but just to be sure */)) {
+      if (state.options.size() > 1 || state.options.size() == 1 && !state.options.containsKey(Module.ELEMENT_TYPE) /* unrealistic case, but just to be sure */) {
         return null;
       }
-      else {
-        return ExternalProjectSystemRegistry.getInstance().getExternalSource(module);
-      }
+      return ExternalProjectSystemRegistry.getInstance().getExternalSource(module);
     }
 
     static final class State {
