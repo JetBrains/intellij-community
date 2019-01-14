@@ -58,7 +58,7 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
     }
 
     val commonCodeSmells = HashSet<CodeSmellInfo>()
-    runAnalysisAfterShelvingSync(project, progressIndicator) {
+    runAnalysisAfterShelvingSync(project, selectedFiles, progressIndicator) {
       VfsUtil.markDirtyAndRefresh(false, false, false, *files4Update)
       WriteAction.runAndWait<Exception> { PsiDocumentManagerImpl.getInstance(project).commitAllDocuments() }
       codeSmellDetector.findCodeSmells(selectedFiles.filter { it.exists() }).forEach { oldCodeSmell ->
@@ -74,9 +74,9 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
     return newCodeSmells.filter { !commonCodeSmells.contains(it) }
   }
 
-  private fun runAnalysisAfterShelvingSync(project: Project, progressIndicator: ProgressIndicator,  afterShelve: () -> Unit) {
-    val allVersionedRoots = ProjectLevelVcsManager.getInstance(project).allVersionedRoots.toList()
+  private fun runAnalysisAfterShelvingSync(project: Project, files: List<VirtualFile>, progressIndicator: ProgressIndicator,  afterShelve: () -> Unit) {
+    val versionedRoots = files.map { ProjectLevelVcsManager.getInstance(project).getVcsRootFor(it) }.filterNotNull().toSet()
     val message = VcsBundle.message("searching.for.code.smells.freezing.process")
-    VcsPreservingExecutor.executeOperation(project, allVersionedRoots, message, progressIndicator) { afterShelve() }
+    VcsPreservingExecutor.executeOperation(project, versionedRoots, message, progressIndicator) { afterShelve() }
   }
 }
