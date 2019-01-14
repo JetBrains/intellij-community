@@ -50,12 +50,7 @@ public class MavenWorkspaceSettingsComponent implements PersistentStateComponent
 
   private static void applyDefaults(MavenWorkspaceSettings settings) {
     if (StringUtil.isEmptyOrSpaces(settings.generalSettings.getMavenHome())) {
-      if (MavenServerManager.getInstance().isUsedMaven2ForProjectImport() && !ApplicationManager.getApplication().isUnitTestMode()) {
-        settings.generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_2);
-      }
-      else {
-        settings.generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
-      }
+      settings.generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
     }
     else {
       MavenServerManager.getInstance().setMavenHome(settings.generalSettings.getMavenHome());
