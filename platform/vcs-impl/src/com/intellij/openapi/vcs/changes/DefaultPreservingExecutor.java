@@ -43,9 +43,10 @@ public class DefaultPreservingExecutor {
   public void execute() {
     Runnable operation = () -> {
       LOG.debug("starting");
-      boolean savedSuccessfully = save();
-      LOG.debug("save result: " + savedSuccessfully);
-      if (savedSuccessfully) {
+      Ref<Boolean> savedSuccessfully = Ref.create();
+      ProgressManager.getInstance().executeNonCancelableSection(() -> savedSuccessfully.set(save()));
+      LOG.debug("save result: " + savedSuccessfully.get());
+      if (savedSuccessfully.get()) {
         try {
           LOG.debug("running operation");
           myOperation.run();
