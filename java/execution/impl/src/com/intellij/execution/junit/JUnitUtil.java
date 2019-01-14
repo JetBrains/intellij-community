@@ -248,7 +248,7 @@ public class JUnitUtil {
 
     for (final PsiMethod method : psiClass.getAllMethods()) {
       ProgressManager.checkCanceled();
-      if (isTestAnnotated(method)) return true;
+      if (isJUnit4TestAnnotated(method)) return true;
     }
 
     return false;
@@ -319,11 +319,15 @@ public class JUnitUtil {
   }
 
   public static boolean isTestAnnotated(final PsiMethod method, boolean includeCustom) {
-    if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, CHECK_HIERARCHY) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) {
+    if (isJUnit4TestAnnotated(method)) {
       return true;
     }
 
     return MetaAnnotationUtil.isMetaAnnotated(method, includeCustom ? TEST5_ANNOTATIONS : TEST5_JUPITER_ANNOTATIONS);
+  }
+
+  public static boolean isJUnit4TestAnnotated(PsiMethod method) {
+    return AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, CHECK_HIERARCHY) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method);
   }
 
 

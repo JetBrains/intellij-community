@@ -518,7 +518,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       final String methodName = data.getMethodName();
       final PsiMethod[] methods = psiClass.findMethodsByName(methodName, true);
       for (PsiMethod method : methods) {
-        if (JUnitUtil.isTestAnnotated(method)) {
+        if (JUnitUtil.isJUnit4TestAnnotated(method)) {
           return JUnitStarter.JUNIT4_PARAMETER;
         }
       }

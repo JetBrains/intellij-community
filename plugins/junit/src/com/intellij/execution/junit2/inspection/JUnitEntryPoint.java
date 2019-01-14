@@ -77,7 +77,10 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
     else if (member instanceof PsiMethod) {
       container = member.getContainingClass();
     }
-    if (container != null && JUnitUtil.isJUnit5TestClass(container, false)) {
+    if (container != null && 
+        JUnitUtil.isJUnit5TestClass(container, false) && 
+        !JUnitUtil.isJUnit4TestClass(container, false) && 
+        !JUnitUtil.isJUnit3TestClass(container)) {
       return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
     }
 
