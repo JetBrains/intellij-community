@@ -131,7 +131,10 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
   }
 
   @Nullable
-  public PsiVariable appendStatements(PsiStatement anchor, CommentTracker tracker, boolean introduceVariable, String replacementBlock) {
+  private static PsiVariable appendStatements(PsiStatement anchor,
+                                              CommentTracker tracker,
+                                              boolean introduceVariable,
+                                              String replacementBlock) {
     PsiElement parent = anchor.getParent();
     Project project = anchor.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -150,7 +153,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
   }
 
   @NotNull
-  public String generateReplacementBlock(List<String> calls, String target, String firstStatement) {
+  private static String generateReplacementBlock(List<String> calls, String target, String firstStatement) {
     final StringBuilder builder = new StringBuilder("{\n");
     if (firstStatement != null) {
       builder.append(firstStatement);
