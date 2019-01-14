@@ -1130,7 +1130,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void addActionPopupMenuListener(ActionPopupMenuListener listener, Disposable parentDisposable) {
+  public void addActionPopupMenuListener(@NotNull ActionPopupMenuListener listener, @NotNull Disposable parentDisposable) {
     myActionPopupMenuListeners.add(listener);
     Disposer.register(parentDisposable, () -> myActionPopupMenuListeners.remove(listener));
   }

@@ -93,6 +93,6 @@ public abstract class ActionManagerEx extends ActionManager {
    * Allows to receive notifications when popup menus created from action groups are shown and hidden.
    */
   @SuppressWarnings("unused")  // used in Rider
-  public abstract void addActionPopupMenuListener(ActionPopupMenuListener listener, Disposable parentDisposable);
+  public abstract void addActionPopupMenuListener(@NotNull ActionPopupMenuListener listener, @NotNull Disposable parentDisposable);
 }
 
