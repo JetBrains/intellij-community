@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GroovyParserUtils")
 @file:Suppress("UNUSED_PARAMETER", "LiftReturnOrAssignment")
 
@@ -258,29 +258,6 @@ fun parseApplication(builder: PsiBuilder, level: Int,
       refParser.parse(builder, nextLevel)
     }
     else -> applicationParser.parse(builder, nextLevel)
-  }
-}
-
-fun parseExpressionOrMapArgument(builder: PsiBuilder, level: Int, expression: Parser): Boolean {
-  val argumentMarker = builder.mark()
-  val labelMarker = builder.mark()
-  if (expression.parse(builder, level + 1)) {
-    if (T_COLON === builder.tokenType) {
-      labelMarker.done(ARGUMENT_LABEL)
-      builder.advanceLexer()
-      report_error_(builder, expression.parse(builder, level + 1))
-      argumentMarker.done(NAMED_ARGUMENT)
-    }
-    else {
-      labelMarker.drop()
-      argumentMarker.drop()
-    }
-    return true
-  }
-  else {
-    labelMarker.drop()
-    argumentMarker.rollbackTo()
-    return false
   }
 }
 

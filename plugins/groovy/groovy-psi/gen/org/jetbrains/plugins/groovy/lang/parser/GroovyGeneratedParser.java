@@ -1,3 +1,5 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.parser;
 
@@ -961,14 +963,43 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // spread_list_argument | named_argument | <<parseExpressionOrMapArgument expression>>
+  // spread_list_argument | named_argument | expression (map_argument_label map_argument)?
   static boolean argument(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "argument")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = spread_list_argument(b, l + 1);
     if (!r) r = named_argument(b, l + 1);
-    if (!r) r = parseExpressionOrMapArgument(b, l + 1, expression_parser_);
+    if (!r) r = argument_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // expression (map_argument_label map_argument)?
+  private static boolean argument_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "argument_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = expression(b, l + 1, -1);
+    r = r && argument_2_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (map_argument_label map_argument)?
+  private static boolean argument_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "argument_2_1")) return false;
+    argument_2_1_0(b, l + 1);
+    return true;
+  }
+
+  // map_argument_label map_argument
+  private static boolean argument_2_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "argument_2_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = map_argument_label(b, l + 1);
+    r = r && map_argument(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -978,7 +1009,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   public static boolean argument_label(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "argument_label")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, ARGUMENT_LABEL, "<argument label>");
+    Marker m = enter_section_(b, l, _COLLAPSE_, ARGUMENT_LABEL, "<argument label>");
     r = consumeTokenFast(b, IDENTIFIER);
     if (!r) r = string_literal_tokens(b, l + 1);
     if (!r) r = parsePrimitiveType(b, l + 1);
@@ -4304,6 +4335,32 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = p && consumeToken(b, T_RBRACK) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // ':' expression
+  public static boolean map_argument(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "map_argument")) return false;
+    if (!nextTokenIsFast(b, T_COLON)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _LEFT_, NAMED_ARGUMENT, null);
+    r = consumeTokenFast(b, T_COLON);
+    p = r; // pin = 1
+    r = r && expression(b, l + 1, -1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
+  // &':'
+  public static boolean map_argument_label(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "map_argument_label")) return false;
+    if (!nextTokenIsFast(b, T_COLON)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _LEFT_ | _AND_, ARGUMENT_LABEL, null);
+    r = consumeTokenFast(b, T_COLON);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   /* ********************************************************** */
@@ -8076,5 +8133,4 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   static final Parser T_RBRACK_parser_ = (b, l) -> consumeToken(b, T_RBRACK);
   static final Parser T_RPAREN_parser_ = (b, l) -> consumeToken(b, T_RPAREN);
   static final Parser capital_class_type_element_0_1_parser_ = (b, l) -> refWasCapitalized(b, l + 1);
-  static final Parser expression_parser_ = (b, l) -> expression(b, l + 1, -1);
 }
