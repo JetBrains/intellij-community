@@ -15,8 +15,7 @@
  */
 package git4idea.tests
 
-import com.intellij.openapi.vcs.Executor.overwrite
-import com.intellij.openapi.vcs.Executor.touch
+import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
@@ -78,6 +77,44 @@ class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
     assertEquals(4, changeListManager.allChanges.size)
   }
 
+  fun `test new rename forcing old file path refresh`() {
+    // 1. prepare roots and files
+    val repo = createRepository(project, projectPath)
+    cd(repo)
+
+    touch("a.txt", "some file content")
+    repo.addCommit("committed file structure")
+
+    rm("a.txt")
+    touch("b.txt", "some file content")
+
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.ensureUpToDate()
+
+    assertEquals(1, changeListManager.allChanges.size)
+    assertFileStatus("a.txt", FileStatus.DELETED)
+    assertFileStatus("b.txt", FileStatus.UNKNOWN)
+
+
+    git("add b.txt")
+
+    dirtyScopeManager.fileDirty(getFilePath("b.txt"))
+    changeListManager.ensureUpToDate()
+
+    assertEquals(2, changeListManager.allChanges.size)
+    assertFileStatus("a.txt", FileStatus.DELETED)
+    assertFileStatus("b.txt", FileStatus.ADDED)
+
+
+    git("add a.txt")
+
+    dirtyScopeManager.fileDirty(getFilePath("a.txt"))
+    changeListManager.ensureUpToDate()
+
+    assertEquals(1, changeListManager.allChanges.size)
+    assertFileStatus("b.txt", FileStatus.MODIFIED)
+  }
+
   private fun createSubRoot(parent: String, name: String) : GitRepository {
     val childRoot = File(parent, name)
     assertTrue(childRoot.mkdir())
@@ -89,8 +126,13 @@ class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
   }
 
   private fun assertFileStatus(relativePath: String, fileStatus: FileStatus) {
-    val change = changeListManager.getChange(getFilePath(relativePath))
-    assertEquals(fileStatus, change?.fileStatus ?: FileStatus.NOT_CHANGED)
+    if (fileStatus == FileStatus.UNKNOWN) {
+      assertTrue(changeListManager.isUnversioned(getVirtualFile(relativePath)))
+    }
+    else {
+      val change = changeListManager.getChange(getFilePath(relativePath))
+      assertEquals(fileStatus, change?.fileStatus ?: FileStatus.NOT_CHANGED)
+    }
   }
 
   private fun getVirtualFile(relativePath: String): VirtualFile {
