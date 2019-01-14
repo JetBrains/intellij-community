@@ -28,10 +28,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -53,6 +50,7 @@ import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
@@ -464,7 +462,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                          null,
                                          importingSettings.isDownloadSourcesAutomatically(),
                                          importingSettings.isDownloadDocsAutomatically(),
-                                         null);
+                                         (AsyncPromise<DownloadResult>)null);
           }
 
           if (!projectWithChanges.first.hasReadingProblems() && projectWithChanges.first.hasUnresolvedPlugins()) {
@@ -948,10 +946,27 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project, nativeMavenProject, myProjectsTree)));
   }
 
+  /**
+   * @deprecated Use {@link #scheduleArtifactsDownloading(Collection, Collection, boolean, boolean, AsyncPromise)}
+   */
+  @Deprecated
+  public void scheduleArtifactsDownloading(Collection<MavenProject> projects,
+                                           @Nullable Collection<MavenArtifact> artifacts,
+                                           boolean sources, boolean docs,
+                                           @Nullable AsyncResult<DownloadResult> result) {
+    AsyncPromise<DownloadResult> promise = null;
+    if (result != null) {
+      promise = (AsyncPromise<DownloadResult>)new AsyncPromise<DownloadResult>()
+        .onSuccess(it -> result.setDone(it))
+        .onError(it -> result.reject(it.getMessage()));
+    }
+    scheduleArtifactsDownloading(projects, artifacts, sources, docs, promise);
+  }
+
   public void scheduleArtifactsDownloading(final Collection<MavenProject> projects,
                                            @Nullable final Collection<MavenArtifact> artifacts,
                                            final boolean sources, final boolean docs,
-                                           @Nullable final AsyncPromise<MavenArtifactDownloader.DownloadResult> result) {
+                                           @Nullable final AsyncPromise<DownloadResult> result) {
     if (!sources && !docs) return;
 
     runWhenFullyOpen(() -> myArtifactsDownloadingProcessor
