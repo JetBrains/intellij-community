@@ -160,6 +160,8 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
           assert myProject != null;
           indicator.setIndeterminate(true);
           codeSmells.set(CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(myProject, files, indicator));
+          indicator.setText(VcsBundle.getString("before.checkin.waiting.for.smart.mode"));
+          DumbService.getInstance(myProject).waitForSmartMode();
         } catch (ProcessCanceledException e) {
           LOG.info("Code analysis canceled", e);
           exception.set(e);
