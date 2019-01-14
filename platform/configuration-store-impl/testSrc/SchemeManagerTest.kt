@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeFileTracker
@@ -71,9 +71,11 @@ internal class SchemeManagerTest {
 
     val scheme = manager.findSchemeByName("first")
     assertThat(scheme).isNotNull
+    @Suppress("SpellCheckingInspection")
     scheme!!.name = "Grünwald"
     manager.save()
 
+    @Suppress("SpellCheckingInspection")
     checkSchemes("2->second;Grünwald->Grünwald")
   }
 
@@ -206,6 +208,7 @@ internal class SchemeManagerTest {
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).isEmpty()
 
+    @Suppress("SpellCheckingInspection")
     val schemeName = "Grünwald и русский"
     val scheme = TestScheme(schemeName)
     schemeManager.setSchemes(listOf(scheme))
