@@ -332,7 +332,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
     }
     if (!TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(nominal), inferred, false)) {
-      if (resolved instanceof GrVariable && ((GrVariable)resolved).getTypeElementGroovy() != null) {
+      if (resolved instanceof GrVariable) {
+        if (((GrVariable)resolved).getTypeElementGroovy() != null) {
+          return nominal;
+        }
+      }
+      else if (resolved instanceof PsiVariable) {
         return nominal;
       }
     }

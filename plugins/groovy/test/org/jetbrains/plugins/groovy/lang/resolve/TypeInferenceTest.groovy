@@ -988,4 +988,27 @@ for (def i = 1; i < 10; i++) {
 }
 ''', 'java.lang.Integer'
   }
+
+  void 'test java field passed as argument to overloaded method'() {
+    fixture.addClass '''\
+public interface I {}
+'''
+    fixture.addClass '''\
+public class SuperClass {
+  public I myField;
+}
+'''
+    doTest '''\
+class A extends SuperClass {
+  
+  static void foo(I s) {}
+  static void foo(String s) {}
+  
+  def usage() {
+    foo(myField)
+    <caret>myField
+  }
+}
+''', 'I'
+  }
 }
