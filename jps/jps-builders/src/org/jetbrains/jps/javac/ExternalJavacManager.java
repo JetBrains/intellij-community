@@ -180,7 +180,11 @@ public class ExternalJavacManager extends ProcessAdapter {
   // returns true if all process handlers terminated
   @TestOnly
   public boolean waitForAllProcessHandlers(long time, @NotNull TimeUnit unit) {
-    for (ProcessHandler handler : myRunningProcesses.values()) {
+    final Collection<ExternalJavacProcessHandler> processes;
+    synchronized (myRunningProcesses) {
+      processes = new ArrayList<>(myRunningProcesses.values());
+    }
+    for (ProcessHandler handler : processes) {
       if (!handler.waitFor(unit.toMillis(time))) {
         return false;
       }
