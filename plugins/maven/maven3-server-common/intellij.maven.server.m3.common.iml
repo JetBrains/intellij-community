@@ -46,7 +46,9 @@
           <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/wagon-provider-api-2.8.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.ideaLibSources/maven-core-3.0.5-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">

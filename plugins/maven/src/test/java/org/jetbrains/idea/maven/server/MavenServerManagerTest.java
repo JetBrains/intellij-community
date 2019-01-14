@@ -15,7 +15,10 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.idea.maven.MavenTestCase;
 
 import java.rmi.RemoteException;
@@ -51,5 +54,27 @@ public class MavenServerManagerTest extends MavenTestCase {
       }
       result.cancel(true);
     });
+  }
+
+  public void testOldMavenReplacedWithNew() throws RemoteException {
+    MavenServerManager serverManager = MavenServerManager.getInstance();
+    MavenServerManager.State state = serverManager.getState();
+    try {
+
+      serverManager.loadState(givenMaven2LegacyState());
+      SimpleJavaParameters javaParameters = serverManager.new MavenServerCMDState().createJavaParameters();
+      String mavenVersion = javaParameters.getVMParametersList().getPropertyValue("idea.maven.embedder.version");
+      assertTrue(StringUtil.compareVersionNumbers(mavenVersion, "3") > 0);
+    }
+    finally {
+      serverManager.loadState(state);
+    }
+  }
+
+
+  private MavenServerManager.State givenMaven2LegacyState() {
+    MavenServerManager.State state = new MavenServerManager.State();
+    state.mavenHome = MavenServerManager.BUNDLED_MAVEN_2;
+    return state;
   }
 }
