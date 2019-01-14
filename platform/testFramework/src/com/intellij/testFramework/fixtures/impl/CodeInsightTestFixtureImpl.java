@@ -354,10 +354,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private static void assertFileEndsWithCaseSensitivePath(@Nullable File sourceFile) {
     if (sourceFile == null) return;
     try {
-      String sourceName = sourceFile.getName();
+      String sourceName = sourceFile.getPath();
       File realFile = sourceFile.getCanonicalFile();
-      String realFileName = realFile.getName();
-      if (sourceName.equalsIgnoreCase(realFileName) && !sourceName.equals(realFileName)) {
+      String realFileName = realFile.getPath();
+      if (!sourceName.equals(realFileName) && sourceName.equalsIgnoreCase(realFileName)) {
         fail("Please correct case-sensitivity of path to prevent test failure on case-sensitive file systems:\n" +
              "     path " + sourceFile.getPath() + "\n" +
              "real path " + realFile.getPath());
