@@ -39,19 +39,17 @@ class RetypeFileAction : AnAction() {
       val retypeOptionsDialog = RetypeOptionsDialog(project, editor)
       if (!retypeOptionsDialog.showAndGet()) return
       val scriptBuilder = if (retypeOptionsDialog.recordScript) StringBuilder() else null
-      val backgroundFileChangePeriod = if (retypeOptionsDialog.enableBackgroundChanges) retypeOptionsDialog.backgroundChangesDelay else -1
       val largeIndexFileCount = if (retypeOptionsDialog.enableLargeIndexing) retypeOptionsDialog.largeIndexFilesCount else -1
       latencyMap.clear()
       if (retypeOptionsDialog.isRetypeCurrentFile) {
         val session = RetypeSession(project, editor!!, retypeOptionsDialog.retypeDelay, scriptBuilder, retypeOptionsDialog.threadDumpDelay,
-                                    interfereFilesChangePeriod = backgroundFileChangePeriod.toLong(),
                                     restoreText = retypeOptionsDialog.restoreOriginalText,
                                     filesForIndexCount = largeIndexFileCount)
         session.start()
       }
       else {
         val queue = RetypeQueue(project, retypeOptionsDialog.retypeDelay, retypeOptionsDialog.threadDumpDelay, scriptBuilder,
-                                backgroundFileChangePeriod.toLong(), largeIndexFileCount, retypeOptionsDialog.restoreOriginalText)
+                                largeIndexFileCount, retypeOptionsDialog.restoreOriginalText)
         if (!collectSizeSampledFiles(project,
                                      retypeOptionsDialog.retypeExtension.removePrefix("."),
                                      retypeOptionsDialog.fileCount,
@@ -117,7 +115,6 @@ private class RetypeQueue(private val project: Project,
                           private val retypeDelay: Int,
                           private val threadDumpDelay: Int,
                           private val scriptBuilder: StringBuilder?,
-                          private val backgroundFileChangePeriod: Long,
                           private val largeIndexFileCount: Int,
                           private val restoreText: Boolean
 ) {
@@ -132,7 +129,7 @@ private class RetypeQueue(private val project: Project,
     val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file, 0), true) as EditorImpl
     selectFragmentToRetype(editor)
     val retypeSession = RetypeSession(project, editor, retypeDelay, scriptBuilder, threadDumpDelay, threadDumps,
-                                      interfereFilesChangePeriod = backgroundFileChangePeriod, restoreText = restoreText,
+                                      restoreText = restoreText,
                                       filesForIndexCount = largeIndexFileCount)
     if (files.isNotEmpty()) {
       retypeSession.startNextCallback = {

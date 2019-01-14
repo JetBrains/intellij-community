@@ -23,10 +23,6 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
     private set
   var threadDumpDelay: Int by propComponentProperty(project, 100)
     private set
-  var backgroundChangesDelay: Int by propComponentProperty(project, 100)
-    private set
-  var enableBackgroundChanges: Boolean by propComponentProperty(project, false)
-    private set
   var largeIndexFilesCount: Int by propComponentProperty(project, 50_000)
     private set
   var enableLargeIndexing: Boolean by propComponentProperty(project, false)
@@ -42,8 +38,6 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
 
   private val typeDelaySpinner = JBIntSpinner(retypeDelay, 0, 5000, 50)
   private val threadDumpDelaySpinner = JBIntSpinner(threadDumpDelay, 50, 5000, 50)
-  private val interfereFileChaneDelaySpinner = JBIntSpinner(backgroundChangesDelay, 50, 5000, 50)
-  private val interfereFileChangerEnabled = JBCheckBox(null, enableBackgroundChanges)
 
   private val largeIndexFileCountSpinner = JBIntSpinner(largeIndexFilesCount, 100, 1_000_000, 1_000)
   private val largeIndexEnabled = JBCheckBox(null, enableLargeIndexing)
@@ -59,11 +53,6 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
   init {
     init()
     title = "Retype Options"
-
-    interfereFileChangerEnabled.addItemListener {
-      interfereFileChaneDelaySpinner.isEnabled = it.stateChange == ItemEvent.SELECTED
-    }
-    interfereFileChaneDelaySpinner.isEnabled = interfereFileChangerEnabled.isSelected
 
     largeIndexEnabled.addItemListener {
       largeIndexFileCountSpinner.isEnabled = it.stateChange == ItemEvent.SELECTED
@@ -86,10 +75,6 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
       }
       row(label = JLabel("Thread dump capture delay (ms):")) {
         threadDumpDelaySpinner()
-      }
-      row(label = JLabel("Change files in background with period (ms):")) {
-        interfereFileChaneDelaySpinner()
-        interfereFileChangerEnabled()
       }
       row(label = JLabel("Create files for start background index (count of files):")) {
         largeIndexFileCountSpinner()
@@ -127,9 +112,6 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
     fileCount = fileCountSpinner.number
     retypeExtension = extensionTextField.text
     recordScript = recordCheckBox.isSelected
-
-    backgroundChangesDelay = interfereFileChaneDelaySpinner.number
-    enableBackgroundChanges = interfereFileChangerEnabled.isSelected
 
     largeIndexFilesCount = largeIndexFileCountSpinner.number
     enableLargeIndexing = largeIndexEnabled.isSelected

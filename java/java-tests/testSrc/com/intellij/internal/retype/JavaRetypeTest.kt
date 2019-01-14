@@ -9,8 +9,6 @@ import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
-import org.junit.Assert
-import java.io.File
 
 /**
  * @author yole
@@ -56,37 +54,6 @@ class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
 
   fun testBrokenClass() {
     doTestWithoutLookup()
-  }
-
-  fun ignoreTestInterfereFile() {
-    val filePath = "/retype/${getTestName(false)}.java"
-    val file = myFixture.configureByFile(filePath)
-    val retypeSession = RetypeSession(project, myFixture.editor as EditorImpl, 100, null, 0, interfereFilesChangePeriod = 10)
-    retypeSession.start()
-
-    val interfereFile = File(file.virtualFile.parent.path, RetypeSession.INTERFERE_FILE_NAME)
-    Assert.assertTrue(interfereFile.exists())
-
-    fun explicitWait(noLongerThanMillis: Long, runUntilFalse: () -> Boolean): Boolean {
-      val endMillis = System.currentTimeMillis() + noLongerThanMillis
-      var res: Boolean
-      do {
-        res = runUntilFalse()
-      }
-      while (!res && System.currentTimeMillis() <= endMillis)
-      return res
-    }
-
-    var firstCheckText = ""
-    Assert.assertTrue(explicitWait(1000L) {
-      firstCheckText = interfereFile.readText()
-      firstCheckText.isNotEmpty()
-    })
-
-    Assert.assertTrue(explicitWait(1000L) { firstCheckText != interfereFile.readText() })
-
-    retypeSession.stop(false)
-    Assert.assertTrue(explicitWait(100L) { !interfereFile.exists() })
   }
 
   private fun doTestWithLookup() {

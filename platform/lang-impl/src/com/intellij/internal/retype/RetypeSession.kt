@@ -36,7 +36,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
@@ -46,7 +45,6 @@ import org.intellij.lang.annotations.Language
 import java.awt.event.KeyEvent
 import java.io.File
 import java.util.*
-import kotlin.concurrent.timer
 
 fun String.toReadable() = replace(" ", "<Space>").replace("\n", "<Enter>").replace("\t", "<Tab>")
 
@@ -108,12 +106,6 @@ class RetypeLog {
   }
 }
 
-/**
- * @property interfereFilesChangePeriod Set period in milliseconds for changes in interfere file.
- * "Interfere file" - file that will be created near by retyped and it will be periodically changed.
- * After retype session this file will be deleted.
- * Pass negative value to disable this functionality.
- */
 class RetypeSession(
   private val project: Project,
   private val editor: EditorImpl,
@@ -121,7 +113,6 @@ class RetypeSession(
   private val scriptBuilder: StringBuilder?,
   private val threadDumpDelay: Int,
   private val threadDumps: MutableList<String> = mutableListOf(),
-  private val interfereFilesChangePeriod: Long = -1,
   private val filesForIndexCount: Int = -1,
   private val restoreText: Boolean = !ApplicationManager.getApplication().isUnitTestMode
 ) : Disposable {
@@ -182,8 +173,7 @@ class RetypeSession(
     val keyName = "${vFile?.name ?: "Unknown file"} (${document.textLength} chars)"
     currentLatencyRecordKey = LatencyDistributionRecordKey(keyName)
     latencyRecorderProperties.putAll(mapOf("Delay" to "$delayMillis ms",
-                                           "Thread dump delay" to "$threadDumpDelay ms",
-                                           "Interfere file change period" to if (interfereFilesChangePeriod <= 0) "disabled" else "$interfereFilesChangePeriod ms"
+                                           "Thread dump delay" to "$threadDumpDelay ms"
     ))
 
     scriptBuilder?.let {
@@ -201,7 +191,6 @@ class RetypeSession(
       ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false
     }
     CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly = false
-    runInterfereFileChanger()
     EditorNotifications.getInstance(project).updateNotifications(editor.virtualFile)
     retypePaused = false
     startLargeIndexing()
@@ -556,32 +545,6 @@ class RetypeSession(
         if (!threadDumpAlarm.isDisposed) {
           threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
         }
-      }
-    }
-  }
-
-  private fun runInterfereFileChanger() {
-    if (interfereFilesChangePeriod <= 0) return
-    stopInterfereFileChanger = false
-
-    val file = File(editor.virtualFile.parent.path, INTERFERE_FILE_NAME)
-    file.createNewFile()
-
-    val text = "// Text\n".repeat(500)
-    file.writeText(text)
-
-    // Increment this counter to make vision that something really changes.
-    var counter = 0
-    timer(period = interfereFilesChangePeriod) {
-      counter++
-      file.writeText("$text  Additional ${counter}")
-      if (stopInterfereFileChanger) {
-        file.delete()
-        cancel()
-      }
-
-      WriteCommandAction.runWriteCommandAction(project) {
-        VirtualFileManager.getInstance().syncRefresh()
       }
     }
   }
