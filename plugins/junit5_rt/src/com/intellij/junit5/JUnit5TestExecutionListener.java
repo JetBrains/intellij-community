@@ -165,11 +165,6 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   @Override
-  public void dynamicTestRegistered(TestIdentifier testIdentifier) {
-    myTestPlan.add(testIdentifier);
-  }
-
-  @Override
   public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
     final TestExecutionResult.Status status = testExecutionResult.getStatus();
     final Throwable throwableOptional = testExecutionResult.getThrowable().orElse(null);
