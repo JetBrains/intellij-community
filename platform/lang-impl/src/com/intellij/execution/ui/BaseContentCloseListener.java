@@ -65,6 +65,8 @@ public abstract class BaseContentCloseListener extends ContentManagerAdapter imp
     if (event.getContent() == myContent) {
       boolean canClose = closeQuery(myContent, Boolean.TRUE.equals(myProject.getUserData(PROJECT_DISPOSING)));
       if (!canClose) {
+        // Consume the event to reject the close request:
+        //   com.intellij.ui.content.impl.ContentManagerImpl.fireContentRemoveQuery
         event.consume();
       }
     }
