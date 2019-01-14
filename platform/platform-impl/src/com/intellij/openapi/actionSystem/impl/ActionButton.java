@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -92,7 +92,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myNoIconsInPopup = noIconsInPopup;
   }
 
-  void setMinimumButtonSize(@NotNull Dimension size) {
+  // used in Rider, please don't change visibility
+  public void setMinimumButtonSize(@NotNull Dimension size) {
     myMinimumButtonSize = JBDimension.create(size);
   }
 
@@ -183,7 +184,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-  private void showPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
+  // used in Rider, please don't change visibility
+  protected void showPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
     final ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
     ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {
       @Override
@@ -352,7 +354,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     paintDownArrowIfGroup(g);
   }
 
-  private void jComponentPaint(Graphics g) {
+  // used in Rider, please don't change visibility
+  protected void jComponentPaint(Graphics g) {
     super.paintComponent(g);
   }
 
@@ -394,6 +397,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       case MouseEvent.MOUSE_PRESSED:
         if (skipPress || !isButtonEnabled()) return;
         myMouseDown = true;
+        onMousePressed(e);
         ourGlobalMouseDown = true;
         repaint();
         break;
@@ -402,6 +406,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         if (skipPress || !isButtonEnabled()) return;
         myMouseDown = false;
         ourGlobalMouseDown = false;
+        onMouseReleased(e);
         if (myRollover) {
           performAction(e);
         }
@@ -423,6 +428,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         break;
     }
   }
+
+  @SuppressWarnings("unused")  // used in Rider
+  protected void onMouseReleased(@NotNull MouseEvent e) {
+    // Extension point
+  }
+
+  @SuppressWarnings("unused")  // used in Rider
+  protected void onMousePressed(@NotNull MouseEvent e) {
+    // Extension point
+  }
+
 
   private static boolean checkSkipPressForEvent(@NotNull MouseEvent e) {
     return e.isMetaDown() || e.getButton() != MouseEvent.BUTTON1;
