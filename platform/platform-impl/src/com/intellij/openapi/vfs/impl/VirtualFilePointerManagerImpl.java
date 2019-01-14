@@ -73,18 +73,15 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     private EventDescriptor(@NotNull VirtualFilePointerListener listener, @NotNull VirtualFilePointer[] pointers) {
       myListener = listener;
       myPointers = pointers;
+      if (pointers.length == 0) throw new IllegalArgumentException();
     }
 
     private void fireBefore() {
-      if (myPointers.length != 0) {
-        myListener.beforeValidityChanged(myPointers);
-      }
+      myListener.beforeValidityChanged(myPointers);
     }
 
     private void fireAfter() {
-      if (myPointers.length != 0) {
-        myListener.validityChanged(myPointers);
-      }
+      myListener.validityChanged(myPointers);
     }
   }
 
@@ -408,8 +405,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       if (toFirePointers.length != 0) {
         for (final VirtualFilePointerListener listener : myPointers.keySet()) {
           if (listener == NULL_LISTENER) continue;
-          List<VirtualFilePointer> filtered =
-            ContainerUtil.filter(toFirePointers, pointer -> ((VirtualFilePointerImpl)pointer).getListener() == listener);
+          List<VirtualFilePointer> filtered = ContainerUtil.filter(toFirePointers, pointer -> ((VirtualFilePointerImpl)pointer).getListener() == listener);
           if (!filtered.isEmpty()) {
             eventList.add(new EventDescriptor(listener, filtered.toArray(VirtualFilePointer.EMPTY_ARRAY)));
           }
@@ -457,6 +453,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   public void after(@NotNull final List<? extends VFileEvent> events) {
     ApplicationManager.getApplication().assertIsDispatchThread(); // guarantees no attempts to get read action lock under "this" lock
     incModificationCount();
+    VirtualFilePointer[] pointersToFireArray;
+    List<EventDescriptor> eventList;
 
     synchronized (this) {
       for (FilePointerPartNode node : myNodesToUpdateUrl) {
@@ -486,11 +484,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
           newNode.incrementUsageCount(useCount);
         }
       }
-    }
-
-    VirtualFilePointer[] pointersToFireArray;
-    List<EventDescriptor> eventList;
-    synchronized (this) {
       pointersToFireArray = toPointers(myNodesToFire);
       eventList = myEvents;
     }

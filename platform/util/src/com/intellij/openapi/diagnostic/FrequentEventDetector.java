@@ -21,6 +21,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.FixedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -113,6 +114,7 @@ public class FrequentEventDetector {
     }
   }
 
+  @TestOnly
   public static void disableUntil(@NotNull Disposable reenable) {
     enabled = false;
     Disposer.register(reenable, new Disposable() {
