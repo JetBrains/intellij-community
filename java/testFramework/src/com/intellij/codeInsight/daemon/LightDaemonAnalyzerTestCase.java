@@ -171,7 +171,11 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
       file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
     }
 
-    return CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, toIgnore, false);
+    return CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, toIgnore, canChangeDocumentDuringHighlighting());
+  }
+
+  private boolean canChangeDocumentDuringHighlighting() {
+    return annotatedWith(DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting.class);
   }
 
   protected List<HighlightInfo> doHighlighting(HighlightSeverity minSeverity) {
