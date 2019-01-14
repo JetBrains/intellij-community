@@ -862,23 +862,27 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     }
   }
 
+  private static final int INNER_ARRAYS_THRESHOLD = 1024; // max initial size, to avoid OOM on million-events processing
   @Override
   public void processEvents(@NotNull List<VFileEvent> events) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     int startIndex = 0;
-    List<Runnable> applyEvents = new ArrayList<>(events.size());
-    Set<String> files = new THashSet<>(events.size(), FileUtil.PATH_HASHING_STRATEGY);
-    Set<String> middleDirs = new THashSet<>(events.size(), FileUtil.PATH_HASHING_STRATEGY);
+    int cappedInitialSize = Math.min(events.size(), INNER_ARRAYS_THRESHOLD);
+    List<Runnable> applyEvents = new ArrayList<>(cappedInitialSize);
+    Set<String> files = new THashSet<>(cappedInitialSize, FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> middleDirs = new THashSet<>(cappedInitialSize, FileUtil.PATH_HASHING_STRATEGY);
+    List<VFileEvent> validated = new ArrayList<>(cappedInitialSize);
     while (startIndex != events.size()) {
       applyEvents.clear();
-      List<VFileEvent> validated = new ArrayList<>(events.size() - startIndex);
       files.clear();
       middleDirs.clear();
+      validated.clear();
       startIndex = groupAndValidate(events, startIndex, applyEvents, validated, files, middleDirs);
 
       if (!validated.isEmpty()) {
-        List<VFileEvent> toSend = Collections.unmodifiableList(validated);
+        // do defensive copy to cope with ill-written listeners that save passed list for later processing
+        List<VFileEvent> toSend = ContainerUtil.immutableList(validated.toArray(new VFileEvent[0]));
         myPublisher.before(toSend);
 
         applyEvents.forEach(Runnable::run);
