@@ -27,11 +27,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DialogAppender extends AppenderSkeleton {
   private static final ErrorLogger[] LOGGERS = {new DefaultIdeaErrorLogger()};
+  private static final int MAX_EARLY_LOGGING_EVENTS = 5;
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
 
-  private static final int MAX_EARLY_LOGGING_EVENTS = 5;
   private final Queue<LoggingEvent> myEarlyEvents = new ArrayDeque<>();
-
   private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
   private volatile Runnable myDialogRunnable;
 
@@ -42,10 +41,8 @@ public class DialogAppender extends AppenderSkeleton {
     }
 
     if (IdeaApplication.isLoaded()) {
-      LoggingEvent eventFromQueue;
-      while ((eventFromQueue = myEarlyEvents.poll()) != null) {
-        queueAppend(eventFromQueue);
-      }
+      LoggingEvent queued;
+      while ((queued = myEarlyEvents.poll()) != null) queueAppend(queued);
       queueAppend(event);
     }
     else if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
