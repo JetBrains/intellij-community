@@ -60,4 +60,5 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testTwoArraysDiff() { doTest(); }
   public void testModRange() { doTest(); }
   public void testBackPropagationMod() { doTest(); }
+  public void testArithmeticNoOp() { doTest(); }
 }

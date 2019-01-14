@@ -95,6 +95,16 @@ public class DfaBinOpValue extends DfaValue {
       }
       LongRangeSet leftRange = state.getValueFact(left, DfaFactType.RANGE);
       LongRangeSet rightRange = state.getValueFact(right, DfaFactType.RANGE);
+      if (tokenType.equals(JavaTokenType.ASTERISK)) {
+        if (LongRangeSet.point(1).equals(leftRange)) return right;
+        if (LongRangeSet.point(1).equals(rightRange)) return left;
+      }
+      if (tokenType.equals(JavaTokenType.DIV)) {
+        if (LongRangeSet.point(1).equals(rightRange)) return left;
+      }
+      if (tokenType.equals(JavaTokenType.GTGT) || tokenType.equals(JavaTokenType.LTLT) || tokenType.equals(JavaTokenType.GTGTGT)) {
+        if (LongRangeSet.point(0).equals(rightRange)) return left;
+      }
       if (leftRange != null && rightRange != null) {
         LongRangeSet result = leftRange.binOpFromToken(tokenType, rightRange, isLong);
         return myFactory.getFactValue(DfaFactType.RANGE, result);
