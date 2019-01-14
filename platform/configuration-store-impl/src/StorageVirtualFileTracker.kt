@@ -106,8 +106,10 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
             is VFileCopyEvent -> continue@eventLoop
           }
 
-          val componentManager = storage.storageManager.componentManager!!
-          componentManager.messageBus.syncPublisher(STORAGE_TOPIC).storageFileChanged(event, storage, componentManager)
+          if (isFireStorageFileChangedEvent(event)) {
+            val componentManager = storage.storageManager.componentManager!!
+            componentManager.messageBus.syncPublisher(STORAGE_TOPIC).storageFileChanged(event, storage, componentManager)
+          }
         }
       }
     })

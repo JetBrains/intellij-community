@@ -7,7 +7,6 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.async.inWriteAction
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
@@ -85,8 +84,7 @@ internal class ModuleStoreRenameTest {
         }
       }
     },
-    DisposeModulesRule(projectRule),
-    EdtRule()
+    DisposeModulesRule(projectRule)
   )
 
   // project structure
@@ -100,7 +98,10 @@ internal class ModuleStoreRenameTest {
 
     val oldName = module.name
     val newName = "foo"
-    runInEdtAndWait { projectRule.project.modifyModules { renameModule(module, newName) } }
+
+    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      projectRule.project.modifyModules { renameModule(module, newName) }
+    }
     assertRename(newName, oldFile)
     assertThat(oldModuleNames).containsOnly(oldName)
   }
@@ -149,7 +150,9 @@ internal class ModuleStoreRenameTest {
     val storage = module.storage
     val oldFile = storage.file
     val parentVirtualDir = storage.virtualFile!!.parent
-    runInEdtAndWait { runWriteAction { parentVirtualDir.rename(null, UUID.randomUUID().toString()) } }
+    withContext(AppUIExecutor.onUiThread().inWriteAction().coroutineDispatchingContext()) {
+      parentVirtualDir.rename(null, UUID.randomUUID().toString())
+    }
 
     val newFile = Paths.get(parentVirtualDir.path, "${module.name}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     try {
@@ -167,19 +170,22 @@ internal class ModuleStoreRenameTest {
   }
 
   @Test
-  @RunsInEdt
-  fun `rename module source root`() = runBlocking<Unit> {
+  fun `rename module source root`() = runBlocking<Unit>(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
     saveModules()
     val storage = module.storage
     val parentVirtualDir = storage.virtualFile!!.parent
     val src = VfsTestUtil.createDir(parentVirtualDir, "foo")
-    runWriteAction { PsiTestUtil.addSourceContentToRoots(module, src, false) }
+    withContext(AppUIExecutor.onUiThread().inWriteAction().coroutineDispatchingContext()) {
+      PsiTestUtil.addSourceContentToRoots(module, src, false)
+    }
     module.stateStore.save()
 
     val rootManager = module.rootManager as ModuleRootManagerComponent
     val stateModificationCount = rootManager.stateModificationCount
 
-    runWriteAction { src.rename(null, "bar.dot") }
+    withContext(AppUIExecutor.onUiThread().inWriteAction().coroutineDispatchingContext()) {
+      src.rename(null, "bar.dot")
+    }
 
     assertThat(stateModificationCount).isLessThan(rootManager.stateModificationCount)
   }

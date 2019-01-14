@@ -594,7 +594,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     doReloadProject(project);
   }
 
-  public static void doReloadProject(@NotNull Project project) {
+  protected static void doReloadProject(@NotNull Project project) {
     final Ref<Project> projectRef = Ref.create(project);
     ProjectReloadState.getInstance(project).onBeforeAutomaticProjectReload();
     ApplicationManager.getApplication().invokeLater(() -> {

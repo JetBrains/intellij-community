@@ -99,7 +99,7 @@ open class DirectoryBasedStorage(private val dir: Path,
 
   override fun createSaveSessionProducer(): SaveSessionProducer? = if (checkIsSavingDisabled()) null else MySaveSession(this, getStorageData())
 
-  private class MySaveSession(private val storage: DirectoryBasedStorage, private val originalStates: StateMap) : SaveSessionBase() {
+  private class MySaveSession(private val storage: DirectoryBasedStorage, private val originalStates: StateMap) : SaveSessionBase(), SaveSession {
     private var copiedStorageData: MutableMap<String, Any>? = null
 
     private val dirtyFileNames = SmartHashSet<String>()

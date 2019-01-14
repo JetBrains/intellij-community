@@ -74,13 +74,18 @@ open class FileBasedStorage(file: Path,
 
   protected open class FileSaveSession(storageData: StateMap, storage: FileBasedStorage) :
     XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {
-    override fun save() {
+
+    final override fun isSaveAllowed(): Boolean {
+      if (!super.isSaveAllowed()) {
+        return false
+      }
+
       if (storage.isBlockSavingTheContent) {
         LOG.info("Save blocked for ${storage.fileSpec}")
+        return false
       }
-      else {
-        super.save()
-      }
+
+      return true
     }
 
     override fun saveLocally(dataWriter: DataWriter?) {

@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.MultiMap
@@ -109,12 +108,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
   init {
     ApplicationManager.getApplication().messageBus.connect().subscribe(STORAGE_TOPIC, object : StorageManagerListener {
       override fun storageFileChanged(event: VFileEvent, storage: StateStorage, componentManager: ComponentManager) {
-        if (event is VFilePropertyChangeEvent) {
-          // ignore because doesn't affect content
-          return
-        }
-
-        if (event.requestor is SaveSession || event.requestor is StateStorage || event.requestor is ProjectManagerEx) {
+        if (event.requestor is ProjectManagerEx) {
           return
         }
 
