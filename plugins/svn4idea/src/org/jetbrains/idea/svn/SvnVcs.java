@@ -301,7 +301,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     MessageBusConnection busConnection = myProject.getMessageBus().connect();
     if (!myProject.isDefault()) {
       ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
-      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
+      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
+        @Override
+        public void directoryMappingChanged() {
+          myVcsListener.directoryMappingChanged();
+          myRootsToWorkingCopies.directoryMappingChanged();
+        }
+      });
     }
 
     SvnApplicationSettings.getInstance().svnActivated();
@@ -341,7 +347,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);*/
     });
 
-    busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myRootsToWorkingCopies);
+    // not allowed to subscribe to the same topic several times, see subscribing above
+    if (myProject.isDefault()) {
+      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myRootsToWorkingCopies);
+    }
 
     myLoadedBranchesStorage.activate();
   }
