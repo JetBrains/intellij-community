@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.lang.JavaVersion
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
@@ -15,11 +16,11 @@ import java.util.zip.ZipInputStream
  * </p>
  * <p>
  *   The config map contains pairs of path prefixes (relative to the check root) to version limits.
- *   The limits are class file major versions (<code>47</code> means Java 1.3, <code>52</code>  - Java 8, etc.);
- *   non-positive limits are ignored (making the check always pass).
+ *   The limits are Java version strings (<code>"1.3"</code>, <code>"8"</code> etc.);
+ *   empty strings are ignored (making the check always pass).
  *   The map must contain an empty path prefix (<code>""</code>) denoting the default version limit.
  * </p>
- * <p>Example: <code>["": 52, "lib/idea_rt.jar": 47]</code>.</p>
+ * <p>Example: <code>["": "1.8", "lib/idea_rt.jar": "1.3"]</code>.</p>
  */
 @CompileStatic
 class ClassVersionChecker {
@@ -37,11 +38,15 @@ class ClassVersionChecker {
   private int myJars, myClasses
   private List<String> myErrors
 
-  ClassVersionChecker(Map<String, Integer> config) {
-    myRules = config.entrySet().collect { new Rule(it.key, it.value) }.sort { -it.path.length() }.toList()
+  ClassVersionChecker(Map<String, String> config) {
+    myRules = config.entrySet().collect { new Rule(it.key, classVersion(it.value)) }.sort { -it.path.length() }.toList()
     if (myRules.isEmpty() || !myRules.last().path.isEmpty()) {
       throw new IllegalArgumentException("Invalid configuration: missing default version")
     }
+  }
+
+  static int classVersion(String version) {
+    version.isEmpty() ? -1 : JavaVersion.parse(version).feature + 44  // 1.1 = 45
   }
 
   void checkVersions(BuildContext buildContext, File root) {

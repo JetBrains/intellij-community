@@ -107,7 +107,7 @@ abstract class ProductProperties {
    * A {@link org.jetbrains.intellij.build.impl.ClassVersionChecker class version checker} config map
    * when .class file version verification inside {@link #buildCrossPlatformDistribution cross-platform distribution} is needed.
    */
-  Map<String, Integer> versionCheckerConfig = null
+  Map<String, String> versionCheckerConfig = null
 
   /**
    * Paths to properties files the content of which should be appended to idea.properties file

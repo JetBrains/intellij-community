@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.PlatformLayout
@@ -74,6 +74,36 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.java.debugger.streams",
     "intellij.android.smali",
     "intellij.statsCollector"
+  ]
+  protected static final Map<String, String> CE_CLASS_VERSIONS = [
+    "": "1.8",
+    "lib/idea_rt.jar": "1.3",
+    "lib/forms_rt.jar": "1.4",
+    "lib/annotations.jar": "1.5",
+    "lib/util.jar": "1.6",
+    "lib/rt/debugger-agent.jar": "1.6",
+    "lib/rt/debugger-agent-storage.jar": "1.6",
+    "lib/external-system-rt.jar": "1.6",
+    "lib/jshell-frontend.jar": "1.9",
+    "lib/sa-jdwp": "",  // ignored
+    "plugins/Groovy/lib/groovy_rt.jar": "1.5",
+    "plugins/Groovy/lib/groovy-rt-constants.jar": "1.5",
+    "plugins/coverage/lib/coverage_rt.jar": "1.5",
+    "plugins/junit/lib/junit-rt.jar": "1.3",
+    "plugins/gradle/lib/gradle-tooling-extension-api.jar": "1.6",
+    "plugins/gradle/lib/gradle-tooling-extension-impl.jar": "1.6",
+    "plugins/maven/lib/maven-server-api.jar": "1.6",
+    "plugins/maven/lib/maven2-server-impl.jar": "1.6",
+    "plugins/maven/lib/maven3-server-common.jar": "1.6",
+    "plugins/maven/lib/maven30-server-impl.jar": "1.6",
+    "plugins/maven/lib/maven3-server-impl.jar": "1.6",
+    "plugins/maven/lib/artifact-resolver-m2.jar": "1.6",
+    "plugins/maven/lib/artifact-resolver-m3.jar": "1.6",
+    "plugins/maven/lib/artifact-resolver-m31.jar": "1.6",
+    "plugins/xpath/lib/rt/xslt-rt.jar": "1.4",
+    "plugins/xslt-debugger/lib/xslt-debugger-engine.jar": "1.5",
+    "plugins/xslt-debugger/lib/rt/xslt-debugger-engine-impl.jar": "1.5",
+    "plugins/cucumber-java/lib/cucumber-jvmFormatter.jar": "1.6"
   ]
 
   BaseIdeaProperties() {

@@ -393,7 +393,7 @@ idea.fatal.error.notification=disabled
             def crossPlatformBuilder = new CrossPlatformDistributionBuilder(buildContext)
             def monsterZip = crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2], ".portable")
 
-            Map<String, Integer> checkerConfig = buildContext.productProperties.versionCheckerConfig
+            Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
             if (checkerConfig != null) {
               new ClassVersionChecker(checkerConfig).checkVersions(buildContext, new File(monsterZip))
             }
