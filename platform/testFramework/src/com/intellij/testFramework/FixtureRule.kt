@@ -225,8 +225,8 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-fun createHeavyProject(path: String, useDefaultProjectSettings: Boolean = false): Project {
-  return ProjectManagerEx.getInstanceEx().newProject(null, path, useDefaultProjectSettings, false)!!
+fun createHeavyProject(path: String, isUseDefaultProjectSettings: Boolean = false): Project {
+  return ProjectManagerEx.getInstanceEx().newProject(null, path, isUseDefaultProjectSettings, false)!!
 }
 
 suspend fun Project.use(task: suspend (Project) -> Unit) {
@@ -316,7 +316,10 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreat
       }
     }
 
-    val project = if (projectCreator == null) createHeavyProject(filePath, true) else ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
+    val project = when (projectCreator) {
+      null -> createHeavyProject(filePath, isUseDefaultProjectSettings = true)
+      else -> ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
+    }
     if (loadComponentState) {
       project.runInLoadComponentStateMode {
         project.use(task)

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -22,6 +23,12 @@ public abstract class ProjectManagerEx extends ProjectManager {
    */
   @Nullable
   public abstract Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
+
+  @TestOnly
+  @NotNull
+  public final Project newProject(@Nullable String projectName, @NotNull String filePath) {
+    return ObjectUtils.assertNotNull(newProject(projectName, filePath, false, false));
+  }
 
   @Nullable
   public abstract Project loadProject(@NotNull String filePath) throws IOException;

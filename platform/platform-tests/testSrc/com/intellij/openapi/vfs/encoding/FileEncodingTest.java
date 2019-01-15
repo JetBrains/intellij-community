@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.impl.ProjectUtil;
@@ -777,8 +777,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
       File temp = createTempDirectory();
       VirtualFile tempDir = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
 
-      final Project newProject =
-        ObjectUtils.assertNotNull(ProjectManagerEx.getInstanceEx().newProject("new", tempDir.getPath(), false, false));
+      final Project newProject = ProjectManagerEx.getInstanceEx().newProject("new", tempDir.getPath());
       Disposer.register(getTestRootDisposable(), () -> ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(newProject)));
       PlatformTestUtil.saveProject(newProject);
 

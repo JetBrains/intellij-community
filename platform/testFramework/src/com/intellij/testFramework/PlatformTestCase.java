@@ -272,8 +272,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     try {
       String projectName = FileUtilRt.getNameWithoutExtension(fileName);
-      Project project = ProjectManagerEx.getInstanceEx().newProject(projectName, path, false, false);
-      assert project != null;
+      Project project = ProjectManagerEx.getInstanceEx().newProject(projectName, path);
       project.putUserData(CREATION_PLACE, creationPlace);
       return project;
     }
