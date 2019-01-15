@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
 import com.intellij.ide.GeneralSettings;
@@ -46,7 +46,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   private static final Logger LOG = Logger.getInstance("#com.intellij.platform.PlatformProjectOpenProcessor");
 
   public enum Option {
-    FORCE_NEW_FRAME, REOPEN, TEMP_PROJECT
+    FORCE_NEW_FRAME, REOPEN, TEMP_PROJECT, DO_NOT_USE_DEFAULT_PROJECT
   }
 
   public static PlatformProjectOpenProcessor getInstance() {
@@ -84,7 +84,13 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   @Override
   public Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
     EnumSet<Option> options = EnumSet.noneOf(Option.class);
-    if (forceOpenInNewFrame) options.add(Option.FORCE_NEW_FRAME);
+    if (forceOpenInNewFrame) {
+      options.add(Option.FORCE_NEW_FRAME);
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // doesn't make sense to use default project in tests for heavy projects
+      options.add(Option.DO_NOT_USE_DEFAULT_PROJECT);
+    }
     return doOpenProject(virtualFile, projectToClose, -1, null, options);
   }
 
@@ -96,6 +102,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       options.add(PlatformProjectOpenProcessor.Option.TEMP_PROJECT);
       options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
     }
+
 
     return doOpenProject(file, null, line, null, options);
   }
@@ -124,7 +131,6 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     boolean dummyProject = false;
     String dummyProjectName = null;
     boolean forceOpenInNewFrame = options.contains(Option.FORCE_NEW_FRAME);
-    boolean isReopen = options.contains(Option.REOPEN);
     boolean tempProject = options.contains(Option.TEMP_PROJECT);
 
     if (!baseDir.isDirectory()) {
@@ -205,7 +211,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     if (PathKt.exists(projectDir)) {
       try {
         File baseDirIo = VfsUtilCore.virtualToIoFile(baseDir);
-        for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensions()) {
+        for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensionList()) {
           processor.refreshProjectFiles(baseDirIo);
         }
 
@@ -223,7 +229,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       }
     }
     else {
-      project = projectManager.newProject(dummyProject ? dummyProjectName : baseDir.getName(), baseDir.getPath(), true, dummyProject);
+      project = projectManager.newProject(dummyProject ? dummyProjectName : baseDir.getName(), baseDir.getPath(), !options.contains(Option.DO_NOT_USE_DEFAULT_PROJECT), dummyProject);
       newProject = true;
     }
 
