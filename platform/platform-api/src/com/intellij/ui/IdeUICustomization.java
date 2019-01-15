@@ -31,7 +31,7 @@ public class IdeUICustomization {
   }
 
   /**
-   * Returns the name of the "Close Project" action (with mnenonic if needed).
+   * Returns the name of the "Close Project" action (with mnemonic if needed).
    */
   public String getCloseProjectActionText() {
     return IdeBundle.message("action.close.project");
