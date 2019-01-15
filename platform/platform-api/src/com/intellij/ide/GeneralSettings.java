@@ -16,6 +16,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -267,11 +268,12 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     mySearchInBackground = searchInBackground;
   }
 
+  @SystemDependent
   public String getDefaultProjectDirectory() {
     return myDefaultProjectDirectory;
   }
 
-  public void setDefaultProjectDirectory(String defaultProjectDirectory) {
+  public void setDefaultProjectDirectory(@SystemDependent String defaultProjectDirectory) {
     myDefaultProjectDirectory = defaultProjectDirectory;
   }
 }
