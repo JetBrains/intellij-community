@@ -6,6 +6,7 @@ import com.intellij.ide.actions.CopyAction;
 import com.intellij.ide.actions.CutAction;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -178,11 +179,18 @@ public class NavBarListener
     final DialogWrapper dialog = DialogWrapper.findInstance(e.getOppositeComponent());
     shouldFocusEditor =  dialog != null;
     if (dialog != null) {
-      Disposer.register(dialog.getDisposable(), () -> {
+      Disposable parent = dialog.getDisposable();
+      Disposable onParentDispose = () -> {
         if (dialog.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) {
           shouldFocusEditor = false;
         }
-      });
+      };
+      if (Disposer.isDisposed(parent)) {
+        Disposer.dispose(onParentDispose);
+      }
+      else {
+        Disposer.register(parent, onParentDispose);
+      }
     }
 
     // required invokeLater since in current call sequence KeyboardFocusManager is not initialized yet
