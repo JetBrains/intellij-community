@@ -1064,8 +1064,15 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   fun copyTemplatesToProjectFromTemplate(project: Project) {
+    if (workspaceSchemeManager.isEmpty) {
+      return
+    }
+
     val otherRunManager = RunManagerImpl.getInstanceImpl(project)
     workspaceSchemeManagerProvider.copyIfNotExists(otherRunManager.workspaceSchemeManagerProvider)
+    otherRunManager.lock.write {
+      otherRunManager.templateIdToConfiguration.clear()
+    }
     otherRunManager.workspaceSchemeManager.reload()
   }
 }
