@@ -3,7 +3,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.CustomFrameRootPaneUI;
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.CustomFrameTitleButtons;
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.ResizableCustomFrameTitleButtons;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -40,7 +39,7 @@ public class CustomFrameTitlePane extends JPanel {
   private Window myWindow;
   private final JRootPane myRootPane;
   private int myState;
-  private final CustomFrameRootPaneUI rootPaneUI;
+  private final DarculaRootPaneUI rootPaneUI;
 
   private CustomFrameTitleButtons buttonPanes;
   private final JLabel titleLabel = new JLabel();
@@ -48,7 +47,7 @@ public class CustomFrameTitlePane extends JPanel {
   private final Color myInactiveForeground = UIManager.getColor("inactiveCaptionText");
   private Color myActiveForeground = null;
 
-  public CustomFrameTitlePane(JRootPane root, CustomFrameRootPaneUI ui) {
+  public CustomFrameTitlePane(JRootPane root, DarculaRootPaneUI ui) {
     this.myRootPane = root;
     rootPaneUI = ui;
 
