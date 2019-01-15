@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -124,8 +124,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
   }
 
   private static File getPathForJdkNamed(String name) {
-    File mockJdkCEPath = new File(PathManager.getHomePath(), "java/" + name);
-    return mockJdkCEPath.exists() ? mockJdkCEPath : new File(PathManager.getHomePath(), "community/java/" + name);
+    return new File(PathManager.getCommunityHomePath(), "java/" + name);
   }
 
   public static Sdk getWebMockJdk17() {
