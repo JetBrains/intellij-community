@@ -14,6 +14,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -465,7 +466,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   @Nullable
   public static File getMavenHomeFile(@Nullable String mavenHome) {
     if (mavenHome == null) return null;
-    if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome)) {
+    //will be removed after IDEA-205421
+    if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome) && ApplicationManager.getApplication().isUnitTestMode()) {
       return BundledMavenPathHolder.myBundledMaven2Home;
     }
     if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome)) {
