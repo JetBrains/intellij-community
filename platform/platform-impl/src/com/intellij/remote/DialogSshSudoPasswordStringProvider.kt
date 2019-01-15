@@ -2,7 +2,8 @@
 package com.intellij.remote
 
 import com.intellij.credentialStore.CredentialAttributes
-import com.intellij.credentialStore.askPassword
+import com.intellij.credentialStore.askCredentials
+import com.intellij.ide.passwordSafe.PasswordSafe
 
 class DialogSshSudoPasswordStringProvider : PasswordStringProvider {
   private val sshPath: String
@@ -21,11 +22,32 @@ class DialogSshSudoPasswordStringProvider : PasswordStringProvider {
     credentialAttributes = CredentialAttributes("IDEA sudo for ${sshPath}")
   }
 
-  override fun provide(allowCache: Boolean): String? {
-    return askPassword(project = null,
-                       dialogTitle = "Enter Sudo password",
-                       passwordFieldLabel = sshPath,
-                       attributes = credentialAttributes,
-                       resetPassword = !allowCache)
+  override fun provide(tryGetFromStore: Boolean, tellThatPreviousPasswordWasWrong: Boolean): PasswordStringProvider.PasswordResult? {
+    if (tryGetFromStore) {
+      val store = PasswordSafe.instance
+      store.get(credentialAttributes)?.let {
+        it.getPasswordAsString()?.let {
+          return PasswordStringProvider.PasswordResult(it, true)
+        }
+      }
+    }
+    val result = askCredentials(
+      project = null,
+      dialogTitle = "Enter Sudo password",
+      passwordFieldLabel = sshPath,
+      attributes = credentialAttributes,
+      error = if (tellThatPreviousPasswordWasWrong) "Sorry, try again." else null)
+    return if (result == null) {
+      // Pressed "Cancel"
+      null
+    }
+    else when (val password = result.credentials.getPasswordAsString()) {
+      null -> {
+        // Pressed "OK", but when user writes empty password (that is a correct password)
+        // [askCredentials] returns null instead of empty string.
+        PasswordStringProvider.PasswordResult("", false)
+      }
+      else -> PasswordStringProvider.PasswordResult(password, false)
+    }
   }
 }
