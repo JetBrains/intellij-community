@@ -501,6 +501,10 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       if (!allBranchRefsWillBeValid) return null;
       if (branch.isFallthrough() && branch.getStatements().length == 0) continue;
       PsiStatement[] statements = branch.getStatements();
+      if (statements.length == 1) {
+        PsiStatement first = statements[0];
+        if (!(first instanceof PsiExpressionStatement || first instanceof PsiBlockStatement || first instanceof PsiThrowStatement)) return null;
+      }
       switchRules.add(new SwitchExpressionBranch(branch.isDefault(), branch.getCaseExpressions(),
                                                  new SwitchStatementBranch(statements),
                                                  branch.getRelatedStatements()));
