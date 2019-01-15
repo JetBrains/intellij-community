@@ -18,8 +18,16 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
   private val LOG = Logger.getInstance("#com.jetbrains.python.run.PyVirtualEnvReader")
 
   companion object {
-    val virtualEnvVars: List<String> = listOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT", "_OLD_VIRTUAL_PROMPT", "_OLD_VIRTUAL_PYTHONHOME",
-                                              "_OLD_VIRTUAL_PATH", "CONDA_SHLVL", "CONDA_PROMPT_MODIFIER", "CONDA_PREFIX", "CONDA_DEFAULT_ENV")
+    private val virtualEnvVars = listOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT", "_OLD_VIRTUAL_PROMPT",
+                                        "_OLD_VIRTUAL_PYTHONHOME", "_OLD_VIRTUAL_PATH", "CONDA_SHLVL", "CONDA_PROMPT_MODIFIER",
+                                        "CONDA_PREFIX", "CONDA_DEFAULT_ENV")
+
+    /**
+     * Filter envs that are setup by the activate script, adding other variables from the different shell can break the actual shell.
+     */
+    fun filterVirtualEnvVars(env: Map<String, String>): Map<String, String> {
+      return env.filterKeys { k -> virtualEnvVars.any { it.equals(k, true) } }
+    }
   }
 
   // in case of Conda we need to pass an argument to an activate script that tells which exactly environment to activate

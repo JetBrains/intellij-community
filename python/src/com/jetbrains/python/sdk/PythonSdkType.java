@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -77,10 +76,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -928,21 +925,17 @@ public final class PythonSdkType extends SdkType {
 
   @NotNull
   public static Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
-    Map<String, String> env = Maps.newHashMap();
-
     PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
     if (reader.getActivate() != null) {
       try {
-        env.putAll(reader.readPythonEnv().entrySet().stream()
-                     .filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
-                     ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+        return Collections.unmodifiableMap(PyVirtualEnvReader.Companion.filterVirtualEnvVars(reader.readPythonEnv()));
       }
       catch (Exception e) {
         LOG.error("Couldn't read virtualenv variables", e);
       }
     }
 
-    return ImmutableMap.copyOf(env);
+    return Collections.emptyMap();
   }
 }
 

@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.EnvironmentUtil
-import com.jetbrains.python.run.PyVirtualEnvReader
 import com.jetbrains.python.run.findActivateScript
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
@@ -51,14 +50,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         }
         else {
           //for other shells we read envs from activate script by the default shell and pass them to the process
-          val reader = PyVirtualEnvReader(path)
-          reader.activate?.let {
-            // we add only envs that are setup by the activate script, because adding other variables from the different shell
-            // can break the actual shell
-            envs.putAll(reader.readPythonEnv().mapKeys { k -> k.key.toUpperCase() }.filterKeys { k ->
-              k in PyVirtualEnvReader.virtualEnvVars
-            })
-          }
+          envs.putAll(PythonSdkType.activateVirtualEnv(path))
         }
       }
     }
