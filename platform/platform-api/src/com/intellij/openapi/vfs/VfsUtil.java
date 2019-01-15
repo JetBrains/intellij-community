@@ -31,6 +31,11 @@ import java.util.*;
 
 public class VfsUtil extends VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
+  /**
+   * Specifies an average time span between a fs event (e.g. create/remove/change file) and
+   * when IDE gets notified about it by fsnotifier.
+   */
+  public static final long NOTIFICATION_DELAY_MILLIS = 300;
 
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
