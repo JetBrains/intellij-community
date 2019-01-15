@@ -27,6 +27,7 @@ import java.beans.PropertyChangeEvent;
  */
 public class DarculaRootPaneUI extends BasicRootPaneUI {
   protected JRootPane myRootPane;
+
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent comp) {
     return JBUI.isCustomFrameDecoration() ? new DarculaRootPaneUI() : createDefaultWindowsRootPaneUI();
@@ -35,7 +36,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   private static ComponentUI createDefaultWindowsRootPaneUI() {
     try {
       return (ComponentUI)Class.forName("com.sun.java.swing.plaf.windows.WindowsRootPaneUI").newInstance();
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       return new BasicRootPaneUI();
     }
   }
@@ -95,7 +97,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     int style = root.getWindowDecorationStyle();
 
     if (style == JRootPane.NONE) {
-      LookAndFeel.uninstallBorder(root);
+      uninstallBorder(root);
     }
     else {
       root.setBorder(JBUI.Borders.customLine(Gray._73, 1, 1, 1, 1));
@@ -150,6 +152,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
               Rectangle screenBounds = frame.getMaximizedBounds();
               Rectangle frameBounds = frame.getBounds();
+
+              if (screenBounds == null || frameBounds == null) return;
 
               int x = mouse.x - (frameBounds.width / 2);
 
@@ -221,11 +225,11 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     Lifetime lt = myLifetimeDefinition.getLifetime();
     RdIdeaKt.window(root).advise(lt, window -> {
                                    myWindow = window;
-                                   if(window != null) {
+                                   if (window != null) {
                                      RdIdeaKt.screenInfo(myWindow).advise(lt, screenInfo -> {
                                        if (window instanceof JFrame) {
-                                         ((JFrame)window).setMaximizedBounds(screenInfo == null ? null : screenInfo.getInnerBounds());
-                                         //((JFrame)window).setMaximizedBounds(null);
+                                         //((JFrame)window).setMaximizedBounds(screenInfo == null ? null : screenInfo.getInnerBounds());
+                                         ((JFrame)window).setMaximizedBounds(null);
                                        }
                                        return Unit.INSTANCE;
                                      });
@@ -237,8 +241,9 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
   @Override
   protected void uninstallListeners(JRootPane root) {
-    if(myLifetimeDefinition != null && !myLifetimeDefinition.isTerminated())
+    if (myLifetimeDefinition != null && !myLifetimeDefinition.isTerminated()) {
       myLifetimeDefinition.terminate();
+    }
 
     if (myWindow != null) {
       myWindow.removeWindowListener(myWindowListener);
