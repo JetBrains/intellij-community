@@ -1,8 +1,0 @@
-intellij.vcs.svn
-intellij.vcs.git
-intellij.platform.remoteServers.git
-intellij.vcs.github
-intellij.vcs.hg
-intellij.python.ipnb
-intellij.python.terminal
-intellij.terminal
