@@ -187,8 +187,18 @@ fun getExportableComponentsMap(isOnlyExisting: Boolean,
       return@processAllImplementationClasses true
     }
 
-    val additionalExportFile = getAdditionalExportFile(stateAnnotation, storageManager, ::isSkipFile)
-    val file = Paths.get(storageManager.expandMacros(storage.path))
+    val additionalExportFile: Path?
+    val file: Path
+
+    try {
+      additionalExportFile = getAdditionalExportFile(stateAnnotation, storageManager, ::isSkipFile)
+      file = Paths.get(storageManager.expandMacros(storage.path))
+    }
+    catch (e: UnknownMacroException) {
+      LOG.error("Cannot expand macro for component \"${stateAnnotation.name}\"", e)
+      return@processAllImplementationClasses true
+    }
+
     val isFileIncluded = !isSkipFile(file)
     if (isFileIncluded || additionalExportFile != null) {
       if (isComputePresentableNames && isOnlyExisting && additionalExportFile == null && file.fileName.toString().endsWith(".xml")) {

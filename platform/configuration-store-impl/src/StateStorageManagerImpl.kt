@@ -390,7 +390,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
           continue@matcherLoop
         }
       }
-      throw IllegalArgumentException("Unknown macro: $m in storage file spec: $path")
+      throw UnknownMacroException("Unknown macro: $m in storage file spec: $path")
     }
 
     var expanded = path
@@ -407,7 +407,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       }
     }
 
-    throw IllegalArgumentException("Unknown macro $macro")
+    throw UnknownMacroException("Unknown macro $macro")
   }
 
   fun collapseMacros(path: String): String {
@@ -447,3 +447,5 @@ internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: St
     return roamingType
   }
 }
+
+class UnknownMacroException(message: String) : RuntimeException(message)
