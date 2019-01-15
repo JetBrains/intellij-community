@@ -128,6 +128,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     return documentWindow == null ? offset : documentWindow.injectedToHost(offset);
   }
 
+  @Override
+  public int injectedToHost(@NotNull PsiElement injectedContext, int injectedOffset, boolean minHostOffset) {
+    DocumentWindow documentWindow = getDocumentWindow(injectedContext);
+    return documentWindow == null ? injectedOffset : documentWindow.injectedToHost(injectedOffset, minHostOffset);
+  }
+
   private static DocumentWindow getDocumentWindow(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;

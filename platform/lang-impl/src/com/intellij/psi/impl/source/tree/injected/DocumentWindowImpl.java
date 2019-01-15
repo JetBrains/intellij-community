@@ -646,6 +646,11 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     return offsetInLeftFragment;
   }
 
+  @Override
+  public int injectedToHost(int injectedOffset, boolean minHostOffset) {
+    return injectedToHost(injectedOffset, minHostOffset, true);
+  }
+
   private int injectedToHost(int offset, boolean preferLeftFragment, boolean skipEmptyShreds) {
     synchronized (myLock) {
       if (offset < myShreds.get(0).getPrefix().length()) {
@@ -659,7 +664,10 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
         if (currentRange == null) continue;
         int currentStart = currentRange.getStartOffset();
         int currentEnd = currentRange.getEndOffset();
-        if (skipEmptyShreds && currentStart == currentEnd && shred.getPrefix().isEmpty() && shred.getSuffix().isEmpty()) continue;
+        if (skipEmptyShreds && !preferLeftFragment &&
+            currentStart == currentEnd && shred.getPrefix().isEmpty() && shred.getSuffix().isEmpty()) {
+          continue;
+        }
         offset -= shred.getPrefix().length();
         if (offset < 0) {
           return preferLeftFragment ? prevEnd : currentStart - 1;
