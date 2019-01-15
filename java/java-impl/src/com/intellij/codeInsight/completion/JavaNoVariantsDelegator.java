@@ -190,7 +190,6 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
       JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
       if (classElement != null) {
         classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-        element = JavaClassNameCompletionContributor.highlightIfNeeded(classElement, parameters);
       }
 
       result.addElement(element);

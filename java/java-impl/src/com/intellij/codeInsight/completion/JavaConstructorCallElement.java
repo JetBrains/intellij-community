@@ -76,6 +76,12 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
     return myConstructor;
   }
 
+  @Nullable
+  @Override
+  public PsiElement getPsiElement() {
+    return myConstructor;
+  }
+
   @Override
   public boolean equals(Object o) {
     return this == o || super.equals(o) && myConstructor.equals(((JavaConstructorCallElement)o).myConstructor);
