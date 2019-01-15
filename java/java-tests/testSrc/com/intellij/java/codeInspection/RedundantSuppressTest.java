@@ -106,8 +106,8 @@ public class RedundantSuppressTest extends InspectionTestCase {
 
   public void testInjections() {
     MyTestInjector testInjector = new MyTestInjector(getPsiManager());
-    testInjector.injectAll(getTestRootDisposable());
-    
+    testInjector.injectAll(myFixture.getTestRootDisposable());
+
     doTest();
   }
 
