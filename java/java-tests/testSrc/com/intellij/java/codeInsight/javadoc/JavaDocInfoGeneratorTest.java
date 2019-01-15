@@ -94,7 +94,6 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   public void testDocumentationForJdkClassWithReferencesToClassesFromJavaLang() { doTestAtCaret(); }
   public void testDocumentationForUncheckedExceptionsInSupers() { doTestAtCaret(); }
   public void testDocumentationForGetterByField() { doTestAtCaret(); }
-  public void testCaretAtLinkInJavadoc() { doTestAtCaret(); }
   public void testParamInJavadoc() { doTestAtCaret(); }
   public void testLiteralInsideCode() { useJava8(); doTestClass(); }
   public void testSuperJavadocExactResolve() { doTestAtCaret(); }

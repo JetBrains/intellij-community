@@ -76,7 +76,6 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   @Override
   @NotNull
   public ThreeState isAcceptableReferencedElement(@NotNull final PsiElement element, final PsiElement referenceOrReferencedElement) {
-    if (referenceOrReferencedElement instanceof SyntheticElement) return ThreeState.NO;
     if (isEnumConstantReference(element, referenceOrReferencedElement)) return ThreeState.NO;
     return super.isAcceptableReferencedElement(element, referenceOrReferencedElement);
   }
