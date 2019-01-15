@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
 
@@ -66,15 +67,15 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       new RunConfigurationsSEContributor(project, contextComponent, () ->  mySearchEverywhereUI.getSearchField().getText())
     );
 
-    List<SearchEverywhereContributor> contributors = new ArrayList<>();
-    Map<String, String> contributorsNames = new LinkedHashMap<>();
+    List<SearchEverywhereContributor> contributors = new ArrayList<>(serviceContributors);
     myContributorFactories.forEach(factory -> {
       SearchEverywhereContributor contributor = factory.createContributor(initEvent);
       myContributorFilters.computeIfAbsent(contributor.getSearchProviderId(), s -> factory.createFilter(initEvent));
       contributors.add(contributor);
-      contributorsNames.put(contributor.getSearchProviderId(), contributor.getGroupName());
     });
     Collections.sort(contributors, Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
+    Map<String, String> contributorsNames = contributors.stream().collect(Collectors.toMap(c -> c.getSearchProviderId(), c -> c.getGroupName()));
+
     myContributorFilters.computeIfAbsent(ALL_CONTRIBUTORS_GROUP_ID,
                                          s -> {
                                            List<String> ids = ContainerUtil.map(contributors, c -> c.getSearchProviderId());
@@ -84,7 +85,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                                          }
     );
 
-    mySearchEverywhereUI = createView(myProject, serviceContributors, contributors, myContributorFilters);
+    mySearchEverywhereUI = createView(myProject, contributors, myContributorFilters);
     mySearchEverywhereUI.switchToContributor(selectedContributorID);
 
     myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
@@ -211,10 +212,9 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   private SearchEverywhereUI createView(Project project,
-                                        List<SearchEverywhereContributor> serviceContributors,
-                                        List<SearchEverywhereContributor> allContributors,
+                                        List<SearchEverywhereContributor> contributors,
                                         Map<String, SearchEverywhereContributorFilter<?>> contributorFilters) {
-    SearchEverywhereUI view = new SearchEverywhereUI(project, serviceContributors, allContributors, contributorFilters);
+    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors, contributorFilters);
 
     view.setSearchFinishedHandler(() -> {
       if (isShown()) {

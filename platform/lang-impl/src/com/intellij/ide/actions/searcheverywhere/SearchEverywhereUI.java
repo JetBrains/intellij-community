@@ -84,7 +84,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
   public static final int THROTTLING_TIMEOUT = 100;
 
-  private final List<? extends SearchEverywhereContributor> myServiceContributors;
   private final List<? extends SearchEverywhereContributor> myShownContributors;
   private final Map<String, SearchEverywhereContributorFilter<?>> myContributorFilters;
 
@@ -106,7 +105,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   private final SEListSelectionTracker mySelectionTracker;
 
   public SearchEverywhereUI(Project project,
-                            List<? extends SearchEverywhereContributor> serviceContributors,
                             List<? extends SearchEverywhereContributor> contributors,
                             Map<String, SearchEverywhereContributorFilter<?>> filters) {
     super(project);
@@ -119,7 +117,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       mySearcher = new MultiThreadSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run), equalityProviders);
     }
 
-    myServiceContributors = serviceContributors;
     myShownContributors  = contributors;
     myContributorFilters = filters;
 
@@ -879,7 +876,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       (SearchEverywhereContributorFilter<String>) myContributorFilters.get(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
 
     List<SearchEverywhereContributor<?>> contributors = new ArrayList<>();
-    myServiceContributors.forEach(contributor -> contributors.add(contributor));
     myShownContributors.stream()
                        .filter(contributor -> contributorsFilter.isSelected(contributor.getSearchProviderId()))
                        .forEach(contributor -> contributors.add(contributor));
