@@ -114,7 +114,9 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
         }
       }
 
-      AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()), modificationStamp);
+      AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor,
+                                                            DataManager.getInstance().getDataContext(originalEditor.getContentComponent()),
+                                                            modificationStamp);
 
       final CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
       if (completion != null) {
