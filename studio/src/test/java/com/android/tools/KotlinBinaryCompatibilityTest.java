@@ -26,7 +26,7 @@ public class KotlinBinaryCompatibilityTest {
   @Test
   public void testKotlinCompatibility() throws Exception {
     File problemsFile = verify(TestUtils.getWorkspaceFile("tools/idea/android-studio.tar.gz"));
-    assertAbout(FileSubject.FACTORY).that(problemsFile).doesNotExist();
+    assertAbout(FileSubject.files()).that(problemsFile).doesNotExist();
   }
 
   private static File verify(File gzippedTarFile) throws IOException, ArchiveException, InterruptedException {
@@ -52,7 +52,7 @@ public class KotlinBinaryCompatibilityTest {
     String productName = Files.readFirstLine(new File(tmpDir.getPath(), "/android-studio/build.txt"), Charsets.UTF_8);
     File kotlinDir = new File(outputDirs[0], productName + "/plugins/org.jetbrains.kotlin/").listFiles()[0];
 
-    assertAbout(FileSubject.FACTORY).that(new File(kotlinDir, "verification-verdict.txt")).exists();
+    assertAbout(FileSubject.files()).that(new File(kotlinDir, "verification-verdict.txt")).exists();
     return new File(kotlinDir, "compatibility-problems.txt");
   }
 

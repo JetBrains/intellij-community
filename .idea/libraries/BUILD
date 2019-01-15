@@ -34,8 +34,16 @@ java_library(
 java_library(
     name = "truth",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.34:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.34:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.42:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.42:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "truth-java8-extension",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/truth/extensions/truth-java8-extension/0.42:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/truth/extensions/truth-java8-extension/0.42:jar"],
 )
 
 # managed by go/iml_to_build
