@@ -24,6 +24,7 @@ public class HyperlinkAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    if (holder.isBatchMode()) return;
     for (PsiReference reference : element.getReferences()) {
       if (reference instanceof WebReference) {
         String message = holder.getCurrentAnnotationSession().getUserData(messageKey);
