@@ -16,11 +16,20 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiElementFilter;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ExceptionFilter implements Filter, DumbAware {
   private final ExceptionInfoCache myCache;
+  private PsiElementFilter myNextLineRefiner;
+  
+  private static final Pattern EXCEPTION_PATTERN = Pattern.compile("^Exception in thread \".+\" java\\.lang\\.(\\w+):");
 
   public ExceptionFilter(@NotNull final GlobalSearchScope scope) {
     myCache = new ExceptionInfoCache(scope);
@@ -29,6 +38,20 @@ public class ExceptionFilter implements Filter, DumbAware {
   @Override
   public Result applyFilter(final String line, final int textEndOffset) {
     ExceptionWorker worker = new ExceptionWorker(myCache);
-    return worker.execute(line, textEndOffset);
+    Result result = worker.execute(line, textEndOffset, myNextLineRefiner);
+    myNextLineRefiner = result == null ? getRefinerFromException(line) : worker.getLocationRefiner();
+    return result;
+  }
+
+  private static PsiElementFilter getRefinerFromException(String line) {
+    Matcher matcher = EXCEPTION_PATTERN.matcher(line);
+    if(!matcher.find()) return null;
+    String exceptionName = matcher.group(1);
+    if("ArrayIndexOutOfBoundsException".equals(exceptionName)) {
+      return element -> element instanceof PsiJavaToken &&
+                        element.textMatches("[") &&
+                        element.getParent() instanceof PsiArrayAccessExpression;
+    }
+    return null;
   }
 }

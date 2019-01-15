@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.ToIntFunction;
 
 /**
 * @author nik
@@ -45,11 +46,20 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
   private final List<? extends VirtualFile> myVirtualFiles;
   private final int myLineNumber;
   private final Project myProject;
+  private final ToIntFunction<? super PsiFile> myColumnFinder;
 
   MultipleFilesHyperlinkInfo(@NotNull List<? extends VirtualFile> virtualFiles, int lineNumber, @NotNull Project project) {
+    this(virtualFiles, lineNumber, project, null);
+  }
+
+  MultipleFilesHyperlinkInfo(@NotNull List<? extends VirtualFile> virtualFiles,
+                             int lineNumber,
+                             @NotNull Project project,
+                             @Nullable ToIntFunction<? super PsiFile> columnFinder) {
     myVirtualFiles = virtualFiles;
     myLineNumber = lineNumber;
     myProject = project;
+    myColumnFinder = columnFinder == null ? f -> 0 : columnFinder;
   }
 
   @Override
@@ -75,7 +85,8 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
     if (currentFiles.isEmpty()) return;
 
     if (currentFiles.size() == 1) {
-      new OpenFileHyperlinkInfo(myProject, currentFiles.get(0).getVirtualFile(), myLineNumber).navigate(project);
+      PsiFile file = currentFiles.get(0);
+      new OpenFileHyperlinkInfo(myProject, file.getVirtualFile(), myLineNumber, myColumnFinder.applyAsInt(file)).navigate(project);
     }
     else {
       JFrame frame = WindowManager.getInstance().getFrame(project);
@@ -86,7 +97,7 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
         .setTitle("Choose Target File")
         .setItemChosenCallback((selectedValue) -> {
           VirtualFile file = selectedValue.getVirtualFile();
-          new OpenFileHyperlinkInfo(myProject, file, myLineNumber).navigate(project);
+          new OpenFileHyperlinkInfo(myProject, file, myLineNumber, myColumnFinder.applyAsInt(selectedValue)).navigate(project);
         })
         .createPopup();
       if (hyperlinkLocationPoint != null) {
