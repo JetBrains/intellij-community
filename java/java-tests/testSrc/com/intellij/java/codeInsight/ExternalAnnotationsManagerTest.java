@@ -33,14 +33,37 @@ import org.jetbrains.idea.eclipse.util.PathUtil;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
+  private final DefaultLightProjectDescriptor myDescriptor = new DefaultLightProjectDescriptor() {
+    @Override
+    public Sdk getSdk() {
+      Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+      Sdk sdk = PsiTestUtil.addJdkAnnotations(jdk);
+      String home = jdk.getHomeDirectory().getParent().getPath();
+      VfsRootAccess.allowRootAccess(getTestRootDisposable(), home);
+      String toolsPath = home + "/lib/tools.jar!/";
+      VirtualFile toolsJar = JarFileSystem.getInstance().findFileByPath(toolsPath);
+
+      Sdk plusTools = PsiTestUtil.addRootsToJdk(sdk, OrderRootType.CLASSES, toolsJar);
+
+      Collection<String> utilClassPath = PathManager.getUtilClassPath();
+      VirtualFile[] files = StreamEx.of(utilClassPath)
+        .append(PathManager.getJarPathForClass(Range.class))
+        .map(path -> path.endsWith(".jar") ?
+                     JarFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path) + "!/") :
+                     LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path)))
+        .toArray(VirtualFile[]::new);
+
+      return PsiTestUtil.addRootsToJdk(plusTools, OrderRootType.CLASSES, files);
+    }
+  };
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return new ExternalAnnotationsTestProjectDescriptor(getTestName(false).contains("Android"));
+    return myDescriptor;
   }
 
   public void testBundledAnnotationXmlSyntax() {
@@ -61,11 +84,6 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
           return true;
         }
       });
-  }
-
-  public void _testAndroidAnnotationsXml() {
-    String root = PathManagerEx.getCommunityHomePath() + "/android/android/annotations";
-    findAnnotationsXmlAndCheckSyntax(root);
   }
 
   private static void checkSyntax(@NotNull VirtualFile file, @NotNull String assumedPackage) {
@@ -158,60 +176,6 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     }
     catch (NumberFormatException e) {
       fail("Parameter number is not an integer: '"+parameterNumberText+"'", psiFile, externalName);
-    }
-  }
-
-  private final class ExternalAnnotationsTestProjectDescriptor extends DefaultLightProjectDescriptor {
-    private final boolean myAndroid;
-
-    ExternalAnnotationsTestProjectDescriptor(boolean android) {
-      myAndroid = android;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      return o != null && getClass() == o.getClass() && myAndroid == ((ExternalAnnotationsTestProjectDescriptor)o).myAndroid;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myAndroid);
-    }
-
-    @Override
-    public Sdk getSdk() {
-      Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-      Sdk sdk = PsiTestUtil.addJdkAnnotations(jdk);
-      String home = jdk.getHomeDirectory().getParent().getPath();
-      VfsRootAccess.allowRootAccess(getTestRootDisposable(), home);
-      String toolsPath = home + "/lib/tools.jar!/";
-      VirtualFile toolsJar = JarFileSystem.getInstance().findFileByPath(toolsPath);
-
-      Sdk plusTools = PsiTestUtil.addRootsToJdk(sdk, OrderRootType.CLASSES, toolsJar);
-
-      Collection<String> utilClassPath = PathManager.getUtilClassPath();
-      VirtualFile[] files = StreamEx.of(utilClassPath)
-        .append(PathManager.getJarPathForClass(Range.class))
-        .map(path -> path.endsWith(".jar") ?
-                     JarFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path) + "!/") :
-                     LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path)))
-        .toArray(VirtualFile[]::new);
-
-      Sdk finalSdk = PsiTestUtil.addRootsToJdk(plusTools, OrderRootType.CLASSES, files);
-
-      if (myAndroid) {
-        //  some android classes are missing in IDEA, e.g. android.support.annotation.NonNull
-        VirtualFile lib = LocalFileSystem.getInstance().findFileByPath(PathManagerEx.getCommunityHomePath() + "/android/android/lib");
-        VirtualFile[] androidJars = Arrays.stream(lib.getChildren())
-          .map(file -> file.getName().endsWith(".jar") ?
-                       JarFileSystem.getInstance().getJarRootForLocalFile(file) :
-                       file)
-          .toArray(VirtualFile[]::new);
-
-        finalSdk = PsiTestUtil.addRootsToJdk(finalSdk, OrderRootType.CLASSES, androidJars);
-      }
-      return finalSdk;
     }
   }
 }
