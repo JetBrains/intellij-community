@@ -601,7 +601,7 @@ fun NewProjectDialogModel.checkDownloadingDialog() {
     val dialog = try {
       guiTestCase.dialog(
         title = progressDownloadingDialog,
-        timeout = Timeouts.seconds01,
+        timeout = Timeouts.seconds03,
         ignoreCaseTitle = true,
         predicate = Predicate.startWith
       )
