@@ -332,7 +332,7 @@ public class StringToConstraintsTransformerTest {
     String version = System.getProperty("java.runtime.version");
     if (version == null) return null;
 
-    String[] javaVersionElements = version.split("\\.|_|-b|\\+");
+    String[] javaVersionElements = version.split("\\.|_|-b|\\+|-");
 
     if (javaVersionElements.length > 3) {
       try {
