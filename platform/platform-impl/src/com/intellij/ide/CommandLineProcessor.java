@@ -160,7 +160,7 @@ public class CommandLineProcessor {
         arg = StringUtil.unquoteString(arg);
       }
       if (!new File(arg).isAbsolute()) {
-        arg = currentDirectory != null ? new File(currentDirectory, arg).getAbsolutePath() : new File(arg).getAbsolutePath();
+        arg = (currentDirectory != null ? new File(currentDirectory, arg) : new File(arg)).getAbsolutePath();
       }
 
       VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);
