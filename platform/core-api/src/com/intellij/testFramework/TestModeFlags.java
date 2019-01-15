@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -17,14 +17,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author yole
  */
 public class TestModeFlags {
-  private static final HashMap<Key<?>, Object> ourFlags = new HashMap<>();
+  private static final HashMap<String, Object> ourFlags = new HashMap<>();
   private static final List<TestModeFlagListener> ourListeners = new CopyOnWriteArrayList<>();
 
   @TestOnly
   public static <T> T set(Key<T> flag, T value) {
     //noinspection unchecked
-    T oldValue = (T)ourFlags.get(flag);
-    ourFlags.put(flag, value);
+    T oldValue = (T)ourFlags.get(flag.toString());
+    ourFlags.put(flag.toString(), value);
     for (TestModeFlagListener listener : ourListeners) {
       listener.testModeFlagChanged(flag, value);
     }
@@ -47,7 +47,7 @@ public class TestModeFlags {
 
   public static <T> T get(Key<T> flag) {
     //noinspection unchecked
-    return (T)ourFlags.get(flag);
+    return (T)ourFlags.get(flag.toString());
   }
 
   public static boolean is(Key<Boolean> flag) {
