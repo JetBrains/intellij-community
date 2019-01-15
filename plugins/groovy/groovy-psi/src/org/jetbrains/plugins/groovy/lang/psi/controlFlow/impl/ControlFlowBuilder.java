@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -533,15 +532,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
-    super.visitMethodCallExpression(methodCallExpression);
-    visitCall(methodCallExpression);
-  }
-
-  @Override
-  public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
-    super.visitApplicationStatement(applicationStatement);
-    visitCall(applicationStatement);
+  public void visitMethodCall(@NotNull GrMethodCall call) {
+    super.visitMethodCall(call);
+    visitCall(call);
   }
 
   @Override
