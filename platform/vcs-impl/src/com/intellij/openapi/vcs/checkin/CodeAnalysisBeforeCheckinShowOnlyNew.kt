@@ -33,6 +33,7 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
 
   @JvmStatic
   fun runAnalysis(project: Project, selectedFiles: List<VirtualFile>, progressIndicator: ProgressIndicator) : List<CodeSmellInfo> {
+    progressIndicator.isIndeterminate = false
     val codeSmellDetector = CodeSmellDetector.getInstance(project)
     val newCodeSmells = codeSmellDetector.findCodeSmells(selectedFiles)
     val location2CodeSmell = MultiMap<Pair<VirtualFile, Int>, CodeSmellInfo>()
