@@ -15,17 +15,19 @@
  */
 package git4idea.tests
 
-import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.Executor.overwrite
 import com.intellij.openapi.vcs.Executor.touch
-import com.intellij.openapi.vcs.VcsTestUtil
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import java.io.File
 
-class GitChangeProviderNestedRepositoriesTest : GitSingleRepoTest() {
+class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
   private lateinit var dirtyScopeManager: VcsDirtyScopeManager
 
   @Throws(Exception::class)
@@ -39,62 +41,63 @@ class GitChangeProviderNestedRepositoriesTest : GitSingleRepoTest() {
   // IDEA-149060
   fun `test changes in 3-level nested root`() {
     // 1. prepare roots and files
+    val repo = createRepository(project, projectPath)
     val childRepo = createSubRoot(projectPath, "child")
     val grandChildRepo = createSubRoot(childRepo.root.path, "grand")
 
     createFileStructure(repo.root, "a.txt")
     createFileStructure(childRepo.root, "in1.txt", "in2.txt", "grand/inin1.txt", "grand/inin2.txt")
-    cd(childRepo)
-    addCommit("committed file structure")
-    cd(grandChildRepo)
-    addCommit("committed file structure")
+    repo.addCommit("committed file structure")
+    childRepo.addCommit("committed file structure")
+    grandChildRepo.addCommit("committed file structure")
     refresh()
 
     // 2. make changes and make sure they are recognized
-    val atxt = getVirtualFile("a.txt")
-    VcsTestUtil.editFileInCommand(project, atxt, "123")
-    val in1 = getVirtualFile("child/in1.txt")
-    VcsTestUtil.editFileInCommand(project, in1, "321")
-    val in2 = getVirtualFile("child/in2.txt")
-    VcsTestUtil.editFileInCommand(project, in2, "321*")
-    val grin1 = getVirtualFile("child/grand/inin1.txt")
-    VcsTestUtil.editFileInCommand(project, grin1, "321*")
+    cd(repo)
+    overwrite("a.txt", "321")
+    overwrite("child/in1.txt", "321")
+    overwrite("child/in2.txt", "321")
+    overwrite("child/grand/inin1.txt", "321")
 
     dirtyScopeManager.markEverythingDirty()
     changeListManager.ensureUpToDate()
 
-    // 3. move changes
-    val newList = changeListManager.addChangeList("new", "new")
-    val change1 = changeListManager.getChange(in1)!!
-    val change2 = changeListManager.getChange(in2)!!
-    val change3 = changeListManager.getChange(grin1)!!
-    changeListManager.moveChangesTo(newList, change1, change2, change3)
+    assertFileStatus("a.txt", FileStatus.MODIFIED)
+    assertFileStatus("child/in1.txt", FileStatus.MODIFIED)
+    assertFileStatus("child/in2.txt", FileStatus.MODIFIED)
+    assertFileStatus("child/grand/inin1.txt", FileStatus.MODIFIED)
 
-    dirtyScopeManager.filesDirty(listOf(in1), listOf(repo.root))
+    // refresh parent root recursively
+    dirtyScopeManager.filePathsDirty(listOf(getFilePath("child/in1.txt")), listOf(VcsUtil.getFilePath(repo.root)))
     changeListManager.ensureUpToDate()
 
-    // 4. check that changes are in correct changelists
-    val list = changeListManager.getChangeList(in1)!!
-    assertEquals("new", list.name)
-    val list2 = changeListManager.getChangeList(in2)!!
-    assertEquals("new", list2.name)
-
-    val list3 = changeListManager.getChangeList(grin1)
-    assertNotNull("Change for ${VfsUtil.getRelativePath(grin1, projectRoot)} not found", list3)
-    assertEquals("new", list3!!.name)
+    assertFileStatus("a.txt", FileStatus.MODIFIED)
+    assertFileStatus("child/in1.txt", FileStatus.MODIFIED)
+    assertFileStatus("child/in2.txt", FileStatus.MODIFIED)
+    assertFileStatus("child/grand/inin1.txt", FileStatus.MODIFIED)
+    assertEquals(4, changeListManager.allChanges.size)
   }
 
   private fun createSubRoot(parent: String, name: String) : GitRepository {
     val childRoot = File(parent, name)
     assertTrue(childRoot.mkdir())
     val repo = createRepository(project, childRoot.path)
-    Executor.cd(parent)
-    touch(".gitignore", "child")
+    cd(repo)
+    touch(".gitignore", name)
     addCommit("gitignore")
     return repo
   }
 
-  private fun getVirtualFile(relativePath: String) : VirtualFile {
+  private fun assertFileStatus(relativePath: String, fileStatus: FileStatus) {
+    val change = changeListManager.getChange(getFilePath(relativePath))
+    assertEquals(fileStatus, change?.fileStatus ?: FileStatus.NOT_CHANGED)
+  }
+
+  private fun getVirtualFile(relativePath: String): VirtualFile {
     return VfsUtil.findFileByIoFile(File(projectPath, relativePath), true)!!
+  }
+
+  private fun getFilePath(relativePath: String): FilePath {
+    return VcsUtil.getFilePath(File(projectPath, relativePath))
   }
 }
