@@ -94,17 +94,17 @@ public class ProjectUtil {
    */
   @Nullable
   public static Project openOrImport(@NotNull @SystemIndependent String path, Project projectToClose, boolean forceOpenInNewFrame) {
+    Project existing = findAndFocusExistingProjectForPath(path);
+    if (existing != null) {
+      return existing;
+    }
+
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     if (virtualFile == null) {
       return null;
     }
 
     virtualFile.refresh(false, false);
-
-    Project existing = findAndFocusExistingProjectForPath(path);
-    if (existing != null) {
-      return existing;
-    }
 
     ProjectOpenProcessor strong = ProjectOpenProcessor.getStrongImportProvider(virtualFile);
     if (strong != null) {
