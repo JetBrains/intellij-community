@@ -97,9 +97,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
         normalizeDefaultProjectElement(defaultProject, element, Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR)))
       }
       else {
-        LOG.runAndLogException {
-          moveComponentConfiguration(defaultProject, element) { if (it == "workspace.xml") Paths.get(workspaceFilePath) else Paths.get(projectFilePath) }
-        }
+        moveComponentConfiguration(defaultProject, element) { if (it == "workspace.xml") Paths.get(workspaceFilePath) else Paths.get(projectFilePath) }
       }
     }
     (storageManager.getOrCreateStorage(PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
