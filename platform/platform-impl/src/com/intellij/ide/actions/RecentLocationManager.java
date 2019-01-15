@@ -2,8 +2,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.components.ProjectComponent;
@@ -32,11 +30,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -128,12 +123,11 @@ public class RecentLocationManager implements ProjectComponent {
 
     Document document = editor.getDocument();
     VirtualFile file = changePlace.getFile();
-    myItems.put(changePlace,
-                new PlaceInfoPersistentItem(getBreadcrumbs(project, editor, changePlace, line),
-                                            getRangeMarker(myItems, document, changePlace, line),
-                                            getLexerPosition(project, file),
-                                            editor.getColorsScheme(),
-                                            collectHighlightInfos(project, document, file)));
+    RangeMarker rangeMarker = getRangeMarker(document, line);
+    myItems.put(changePlace, new PlaceInfoPersistentItem(getBreadcrumbs(project, editor, changePlace, line),
+                                                         rangeMarker,
+                                                         getLexerPosition(project, file),
+                                                         editor.getColorsScheme()));
   }
 
   private static int getLineNumber(@NotNull IdeDocumentHistoryImpl.PlaceInfo changePlace) {
@@ -148,12 +142,8 @@ public class RecentLocationManager implements ProjectComponent {
   }
 
   @NotNull
-  private static RangeMarker getRangeMarker(@NotNull Map<IdeDocumentHistoryImpl.PlaceInfo, PlaceInfoPersistentItem> items,
-                                            @NotNull Document document,
-                                            @NotNull IdeDocumentHistoryImpl.PlaceInfo changePlace,
-                                            int line) {
-    PlaceInfoPersistentItem item = items.get(changePlace);
-    return item != null ? item.getRangeMarker() : document.createRangeMarker(getLinesRange(document, line));
+  private static RangeMarker getRangeMarker(@NotNull Document document, int line) {
+    return document.createRangeMarker(getLinesRange(document, line));
   }
 
   @Nullable
@@ -174,25 +164,10 @@ public class RecentLocationManager implements ProjectComponent {
     return position;
   }
 
-  @NotNull
-  private static Collection<HighlightInfo> collectHighlightInfos(@NotNull Project project,
-                                                                 @NotNull Document document,
-                                                                 @NotNull VirtualFile file) {
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if (psiFile == null) {
-      return ContainerUtil.emptyList();
-    }
-
-    CommonProcessors.CollectProcessor<HighlightInfo> processor = new CommonProcessors.CollectProcessor<>();
-    DaemonCodeAnalyzerEx.processHighlights(document, project, null, 0, document.getTextLength(), processor);
-
-    return processor.getResults();
-  }
-
   @Nullable
   private static Editor findEditor(@NotNull Project project, @NotNull IdeDocumentHistoryImpl.PlaceInfo changePlace) {
     JComponent component = FileEditorManagerEx.getInstanceEx(project).getPreferredFocusedComponent();
-    if (!component.isShowing() || !(component instanceof EditorComponentImpl)) {
+    if (component == null || !component.isShowing() || !(component instanceof EditorComponentImpl)) {
       return null;
     }
 
@@ -286,34 +261,20 @@ public class RecentLocationManager implements ProjectComponent {
     return item == null ? null : item.getScheme();
   }
 
-  @NotNull
-  Collection<HighlightInfo> getHighlightInfos(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo) {
-    PlaceInfoPersistentItem item = myItems.get(placeInfo);
-    return item == null ? ContainerUtil.emptyList() : item.getHighlightInfos();
-  }
-
   private static class PlaceInfoPersistentItem {
     private final Collection<Iterable<? extends Crumb>> myResult;
     @NotNull private final RangeMarker myRangeMarker;
     @Nullable private final LexerPosition myPosition;
     @NotNull private final EditorColorsScheme myScheme;
-    @NotNull private final Collection<HighlightInfo> myHighlightInfos;
 
     PlaceInfoPersistentItem(@NotNull Collection<Iterable<? extends Crumb>> crumbs,
                             @NotNull RangeMarker rangeMarker,
                             @Nullable LexerPosition position,
-                            @NotNull EditorColorsScheme scheme,
-                            @NotNull Collection<HighlightInfo> highlightInfos) {
+                            @NotNull EditorColorsScheme scheme) {
       myResult = crumbs;
       myRangeMarker = rangeMarker;
       myPosition = position;
       myScheme = scheme;
-      myHighlightInfos = highlightInfos;
-    }
-
-    @NotNull
-    private Collection<HighlightInfo> getHighlightInfos() {
-      return myHighlightInfos;
     }
 
     @NotNull
@@ -340,7 +301,7 @@ public class RecentLocationManager implements ProjectComponent {
   private static class RecentLocationFixedSizeHashMap extends LinkedHashMap<IdeDocumentHistoryImpl.PlaceInfo, PlaceInfoPersistentItem> {
     @Override
     protected boolean removeEldestEntry(Map.Entry<IdeDocumentHistoryImpl.PlaceInfo, PlaceInfoPersistentItem> eldest) {
-      return size() >= Registry.intValue("recent.locations.list.size", 10);
+      return size() > Registry.intValue("recent.locations.list.size", 10);
     }
   }
 }

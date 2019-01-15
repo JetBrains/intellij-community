@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -72,7 +71,7 @@ public class RecentLocationsAction extends AnAction {
   private static final Color TITLE_FOREGROUND_COLOR = UIUtil.getLabelForeground().darker();
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
-  private static final int DEFAULT_POPUP_HEIGHT = JBUI.scale(700);
+  private static final int DEFAULT_POPUP_WIDTH = JBUI.scale(700);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -129,7 +128,7 @@ public class RecentLocationsAction extends AnAction {
       .setMovable(true)
       .setShowBorder(false)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
-      .setMinSize(new Dimension(DEFAULT_POPUP_HEIGHT, JBUI.scale(100)))
+      .setMinSize(new Dimension(DEFAULT_POPUP_WIDTH, JBUI.scale(100)))
       .createPopup();
 
     project.getMessageBus().connect(popup).subscribe(ShowRecentChangedLocationListener.TOPIC, new ShowRecentChangedLocationListener() {
@@ -152,7 +151,7 @@ public class RecentLocationsAction extends AnAction {
 
     initSearchActions(project, list, popup, navigationRef);
 
-    popup.setSize(new Dimension(DEFAULT_POPUP_HEIGHT, JBUI.scale(mainPanel.getPreferredSize().height)));
+    popup.setSize(new Dimension(DEFAULT_POPUP_WIDTH, JBUI.scale(mainPanel.getPreferredSize().height)));
 
     showPopup(project, popup);
   }
@@ -303,19 +302,9 @@ public class RecentLocationsAction extends AnAction {
   }
 
   private static List<PlaceInfo> getPlaces(@NotNull Project project, boolean showChanged) {
-    List<PlaceInfo> infos = showChanged
-                            ? ContainerUtil.reverse(IdeDocumentHistory.getInstance(project).getChangePlaces())
-                            : ContainerUtil.reverse(IdeDocumentHistory.getInstance(project).getBackPlaces());
-
-    ArrayList<PlaceInfo> infosCopy = ContainerUtil.newArrayList();
-
-    for (PlaceInfo info : infos) {
-      if (infosCopy.stream().noneMatch(info1 -> IdeDocumentHistoryImpl.isSame(info, info1))) {
-        infosCopy.add(info);
-      }
-    }
-
-    return infosCopy;
+    return showChanged
+           ? ContainerUtil.reverse(IdeDocumentHistory.getInstance(project).getChangePlaces())
+           : ContainerUtil.reverse(IdeDocumentHistory.getInstance(project).getBackPlaces());
   }
 
   @NotNull
@@ -581,7 +570,7 @@ public class RecentLocationsAction extends AnAction {
         background = brighterColor;
       }
       else {
-        background = ColorUtil.hackBrightness(background, 1, 1/1.03F);
+        background = ColorUtil.hackBrightness(background, 1, 1 / 1.03F);
       }
       return background;
     }
@@ -600,27 +589,28 @@ public class RecentLocationsAction extends AnAction {
   private static EditorEx createEditor(@NotNull Project project,
                                        @NotNull Document document,
                                        @NotNull PlaceInfo placeInfo,
-                                       @NotNull TextRange range) {
-    int startLineNumber = document.getLineNumber(range.getStartOffset());
-    String text = document.getText(range);
+                                       @NotNull TextRange actualRange) {
+    int startLineNumber = document.getLineNumber(actualRange.getStartOffset());
+    String text = document.getText(actualRange);
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument(text);
     EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument, project);
     editor.getGutterComponentEx().setLineNumberConvertor(index -> index + startLineNumber);
     fillEditorSettings(editor.getSettings());
-    setHighlighting(project, editor, placeInfo, range);
+    setHighlighting(project, editor, document, placeInfo, actualRange);
 
     return editor;
   }
 
   private static void setHighlighting(@NotNull Project project,
                                       @NotNull EditorEx editor,
+                                      @NotNull Document document,
                                       @NotNull PlaceInfo placeInfo,
                                       @NotNull TextRange range) {
     EditorColorsScheme colorsScheme = setupColorScheme(project, editor, placeInfo);
 
     applySyntaxHighlighting(project, editor, placeInfo, colorsScheme);
-    applyHighlightingPasses(project, editor, placeInfo, colorsScheme, range);
+    applyHighlightingPasses(project, editor, document, colorsScheme, range);
   }
 
   @NotNull
@@ -661,20 +651,18 @@ public class RecentLocationsAction extends AnAction {
 
   private static void applyHighlightingPasses(@NotNull Project project,
                                               @NotNull EditorEx editor,
-                                              @NotNull PlaceInfo placeInfo,
-                                              @NotNull EditorColorsScheme colorsScheme, @NotNull TextRange range) {
-    for (HighlightInfo info : RecentLocationManager.getInstance(project).getHighlightInfos(placeInfo)) {
-      int startOffset = range.getStartOffset();
-      if (info.startOffset < startOffset || info.endOffset > range.getEndOffset()) {
-        continue;
-      }
-
+                                              @NotNull Document document,
+                                              @NotNull EditorColorsScheme colorsScheme,
+                                              @NotNull TextRange actualRange) {
+    DaemonCodeAnalyzerEx.processHighlights(document, project, null, actualRange.getStartOffset(), actualRange.getEndOffset(), info -> {
       editor.getMarkupModel().addRangeHighlighter(
-        info.startOffset - startOffset, info.endOffset - startOffset,
+        info.getActualStartOffset() - actualRange.getStartOffset(), info.getActualEndOffset() - actualRange.getStartOffset(),
         HighlighterLayer.SYNTAX,
         colorsScheme.getAttributes(info.forcedTextAttributesKey),
         HighlighterTargetArea.EXACT_RANGE);
-    }
+
+      return true;
+    });
   }
 
   private static void fillEditorSettings(@NotNull EditorSettings settings) {
