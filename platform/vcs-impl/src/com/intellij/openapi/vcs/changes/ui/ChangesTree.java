@@ -700,10 +700,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public Color getFileColorFor(Object object) {
     VirtualFile file;
     if (object instanceof FilePath) {
-      file = ((FilePath)object).getVirtualFile();
+      file = getVirtualFileFor((FilePath)object);
     }
     else if (object instanceof Change) {
-      file = ((Change)object).getVirtualFile();
+      file = getVirtualFileFor(ChangesUtil.getFilePath((Change)object));
     }
     else {
       file = ObjectUtils.tryCast(object, VirtualFile.class);
@@ -713,6 +713,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       return VfsPresentationUtil.getFileBackgroundColor(myProject, file);
     }
     return super.getFileColorFor(object);
+  }
+
+  @Nullable
+  private static VirtualFile getVirtualFileFor(@NotNull FilePath filePath) {
+    if (filePath.isNonLocal()) return null;
+    return ChangesUtil.findValidParentAccurately(filePath);
   }
 
   @Override
