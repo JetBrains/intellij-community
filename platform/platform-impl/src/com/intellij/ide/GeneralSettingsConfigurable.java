@@ -218,7 +218,6 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     private JBRadioButton myAskJBRadioButton;
     private TextFieldWithBrowseButton myProjectDirectoryTextField;
     private JPanel myProjectOpeningPanel;
-    private JPanel myProjectDirPanel;
     private JBLabel myProjectDirComment;
 
     MyComponent() {
@@ -230,9 +229,6 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
       myOpenProjectInSameWindow.setText(IdeBundle.message("radio.button.open.project.in.the.same.window", conceptName));
       myConfirmWindowToOpenProject.setText(IdeBundle.message("radio.button.confirm.window.to.open.project.in", conceptName));
       myProjectDirComment.setComponentStyle(UIUtil.ComponentStyle.SMALL);
-      if (PlatformUtils.isDataGrip()) {
-        myProjectDirPanel.setVisible(false);
-      }
     }
 
     private void createUIComponents() {
