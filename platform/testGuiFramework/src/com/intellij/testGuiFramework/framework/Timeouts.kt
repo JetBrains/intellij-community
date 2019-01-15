@@ -31,8 +31,8 @@ fun Timeout.wait() {
 
 fun Timeout.toPrintable(): String {
   return when {
-    this.duration() > 60000 -> "${this.duration() / 60000}(m)"
-    this.duration() > 1000 -> "${this.duration() / 1000}(s)"
-    else -> "${this.duration() / 1000}(ms)"
+    this.duration() >= 60000 -> "${this.duration() / 60000}(m)"
+    this.duration() >= 1000 -> "${this.duration() / 1000}(s)"
+    else -> "${this.duration()}(ms)"
   }
 }
