@@ -256,9 +256,11 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
           }
           if (PsiUtil.isAccessedForWriting(arrayAccessExpression)) {
             myWritten = true;
-            // compound writes like += are not considered as reads, because result result goes to the same array as well
           }
-          else if (PsiUtil.isAccessedForReading(arrayAccessExpression) && !goesToSameArray(arrayAccessExpression)) {
+          if (PsiUtil.isAccessedForReading(arrayAccessExpression) && !goesToSameArray(arrayAccessExpression) &&
+              // compound writes like += are not considered as reads, because result result goes to the same array as well
+              (!PsiUtil.isAccessedForWriting(arrayAccessExpression) || 
+               parent instanceof PsiExpression && !ExpressionUtils.isVoidContext((PsiExpression)parent))) {
             myRead = true;
           }
         }

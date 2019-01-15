@@ -145,6 +145,13 @@ class Test{
         array[0][1]++;
         System.out.println(array[0][1]);
     }
+    
+    void compoundReused() {
+      int[] arr1 = new int[1];
+      if(arr1[0]++ > 10) System.out.println("oops");
+      int[] arr2 = new int[1];
+      if((arr2[0]+=10) > 10) System.out.println("oops");
+    }
 
     void foo1() {
         final int[] <warning descr="Contents of array 'barzoom' are written to, but never read">barzoom</warning> = {};
