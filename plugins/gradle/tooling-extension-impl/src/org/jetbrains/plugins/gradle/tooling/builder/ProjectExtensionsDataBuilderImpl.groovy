@@ -60,7 +60,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       def convention = it as ExtensionContainer
       List<String> keyList =
         GradleVersion.current() >= GradleVersion.version("4.5")
-          ? convention.extensionsSchema.elements.collect { it["name"] as String }
+          ? convention.extensionsSchema.collect { it["name"] as String }
           : convention.schema.keySet().asList() as List<String>
 
       keyList.each { String name ->
