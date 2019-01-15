@@ -62,16 +62,6 @@ bind '"\e\e[D": backward-word'
 bind '"\e\O[C":forward-word'
 bind '"\e\O[D": backward-word'
 
-function generate_command_executed_sequence() {
-   printf '\e\7'
-}
-
-export -f generate_command_executed_sequence
-
-
-#generate escape sequence after command is executed to notify jediterm emulator
-trap "generate_command_executed_sequence" DEBUG
-
 if [ -n "$JEDITERM_USER_RCFILE" ]
 then
   source "$JEDITERM_USER_RCFILE"
