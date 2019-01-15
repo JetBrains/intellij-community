@@ -32,9 +32,9 @@ public class MessageType {
                                                           JBColor.namedColor("Notification.ToolWindow.errorBorderColor", new JBColor(0xd69696, 0x998a8a)));
 
   public static final MessageType INFO = new MessageType(AllIcons.General.NotificationInfo,
-                                                         JBColor.namedColor("Notification.ToolWindow.infoBackground", new JBColor(0xbaeeba, 0x33412E)),
-                                                         JBColor.namedColor("Notification.ToolWindow.infoForeground", UIUtil.getToolTipForeground()),
-                                                         JBColor.namedColor("Notification.ToolWindow.infoBorderColor", new JBColor(0xa0bf9d, 0x85997a)));
+                                                         JBColor.namedColor("Notification.ToolWindow.informativeBackground", new JBColor(0xbaeeba, 0x33412E)),
+                                                         JBColor.namedColor("Notification.ToolWindow.informativeForeground", UIUtil.getToolTipForeground()),
+                                                         JBColor.namedColor("Notification.ToolWindow.informativeBorderColor", new JBColor(0xa0bf9d, 0x85997a)));
 
   public static final MessageType WARNING = new MessageType(AllIcons.General.NotificationWarning,
                                                             JBColor.namedColor("Notification.ToolWindow.warningBackground", new JBColor(0xf9f78e, 0x5a5221)),

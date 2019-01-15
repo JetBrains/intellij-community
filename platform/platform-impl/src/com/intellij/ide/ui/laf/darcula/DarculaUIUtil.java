@@ -420,7 +420,7 @@ public class DarculaUIUtil {
   public static final JBValue COMPACT_HEIGHT = new JBValue.Float(20);
   public static final JBValue ARROW_BUTTON_WIDTH = new JBValue.Float(23);
   public static final JBValue LW = new JBValue.Float(1);
-  public static final JBValue BW = new JBValue.UIInteger("Border.width", 2);
+  public static final JBValue BW = new JBValue.UIInteger("Component.focusWidth", 2);
   public static final JBValue CELL_EDITOR_BW = new JBValue.UIInteger("CellEditor.border.width", 2);
   public static final JBValue BUTTON_ARC = new JBValue.UIInteger("Button.arc", 6);
   public static final JBValue COMPONENT_ARC = new JBValue.UIInteger("Component.arc", 5);

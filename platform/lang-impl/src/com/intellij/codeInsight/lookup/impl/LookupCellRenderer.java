@@ -59,7 +59,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   private static final Color SELECTED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionBackground", new Color(0, 82, 164));
   public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveBackground", new JBColor(0x6e8ea2, 0x55585a));
   public static final Color SELECTED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
-  private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionGrayForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
+  private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInfoForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
 
   private static final Color PREFIX_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchForeground", new JBColor(0xb000b0, 0xd17ad6));
   private static final Color SELECTED_PREFIX_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchSelectionForeground", new JBColor(0xf9eccc, 0xd17ad6));

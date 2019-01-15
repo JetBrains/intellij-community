@@ -73,11 +73,11 @@ public class OnOffButton extends JToggleButton {
   private static class DefaultOnOffButtonUI extends BasicToggleButtonUI {
     private static final Color BORDER_COLOR = JBColor.namedColor("ToggleButton.borderColor", new JBColor(Gray._192, Gray._80));
     private static final Color BUTTON_COLOR = JBColor.namedColor("ToggleButton.buttonColor", new JBColor(Gray._200, Gray._100));
-    private static final Color ON_BACKGROUND = JBColor.namedColor("ToggleButton.on.background", new JBColor(new Color(74, 146, 73), new Color(77, 105, 76)));
-    private static final Color ON_FOREGROUND = JBColor.namedColor("ToggleButton.on.foreground", new JBColor(() -> UIUtil.getListForeground(true)));
+    private static final Color ON_BACKGROUND = JBColor.namedColor("ToggleButton.onBackground", new JBColor(new Color(74, 146, 73), new Color(77, 105, 76)));
+    private static final Color ON_FOREGROUND = JBColor.namedColor("ToggleButton.onForeground", new JBColor(() -> UIUtil.getListForeground(true)));
 
-    private static final Color OFF_BACKGROUND = JBColor.namedColor("ToggleButton.off.background", new JBColor(() -> UIUtil.getPanelBackground()));
-    private static final Color OFF_FOREGROUND = JBColor.namedColor("ToggleButton.off.foreground", new JBColor(() -> UIUtil.getLabelDisabledForeground()));
+    private static final Color OFF_BACKGROUND = JBColor.namedColor("ToggleButton.offBackground", new JBColor(() -> UIUtil.getPanelBackground()));
+    private static final Color OFF_FOREGROUND = JBColor.namedColor("ToggleButton.offForeground", new JBColor(() -> UIUtil.getLabelDisabledForeground()));
 
     @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
     public static ComponentUI createUI(JComponent c) {

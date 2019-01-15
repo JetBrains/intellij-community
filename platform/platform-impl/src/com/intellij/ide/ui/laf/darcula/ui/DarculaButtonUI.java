@@ -106,10 +106,10 @@ public class DarculaButtonUI extends BasicButtonUI {
         float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
         float bw = isSmallComboButton(c) ? 0 : BW.getFloat();
 
-        if (!c.hasFocus() && !isSmallComboButton(c) && c.isEnabled() && UIManager.getBoolean("Button.darcula.paintShadow")) {
+        if (!c.hasFocus() && !isSmallComboButton(c) && c.isEnabled() && UIManager.getBoolean("Button.paintShadow")) {
           Color shadowColor = JBColor.namedColor("Button.shadowColor", JBColor.namedColor("Button.darcula.shadowColor", new Color(0xa6a6a680, true)));
-          int shadowWidth = JBUI.scale(JBUI.getInt("Button.darcula.shadowWidth", 2));
-          g2.setColor(isDefaultButton(c) ? JBColor.namedColor("Button.default.shadowColor", JBColor.namedColor("Button.darcula.defaultShadowColor", shadowColor)) : shadowColor);
+          int shadowWidth = JBUI.scale(JBUI.getInt("Button.shadowWidth", 2));
+          g2.setColor(isDefaultButton(c) ? JBColor.namedColor("Button.default.shadowColor", shadowColor) : shadowColor);
           g2.fill(new RoundRectangle2D.Float(bw, bw + shadowWidth, r.width - bw * 2, r.height - bw * 2, arc, arc));
         }
 
