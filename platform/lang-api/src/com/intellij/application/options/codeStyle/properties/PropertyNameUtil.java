@@ -13,19 +13,9 @@ class PropertyNameUtil {
   private final static Map<String, String> FIELD_TO_PROPERTY_NAME_MAP = ContainerUtilRt.newHashMap();
 
   static {
-    addMapping("SPACE_AFTER_SEMICOLON", "space_after_for_semicolon");
-    addMapping("SPACE_BEFORE_SEMICOLON", "space_before_for_semicolon");
-    addMapping("LPAREN", "left_paren");
-    addMapping("RPAREN", "right_paren");
     addMapping("JD", "javadoc");
-    addMapping("RBRACE", "right_brace");
-    addMapping("LBRACE", "left_brace");
     addMapping("INSTANCEOF", "instance_of");
-    addMapping("DOWHILE", "do_while");
     addMapping("PARM", "param");
-    addMapping("RIGHT_MARGIN", "max_line_length");
-    addMapping("TAB_SIZE", "tab_width");
-    addMapping("WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN", "wrap_on_typing");
   }
 
   private PropertyNameUtil() {
