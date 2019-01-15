@@ -125,7 +125,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
       final PsiReference[] refs = getReferences(context, trinity);
       if ((ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal())
           && Registry.is("ide.check.reference.provider.target")) {
-        assertReferenceTarget(context, refs, trinity.provider);
+        assertReferenceUnderlyingElement(context, refs, trinity.provider);
       }
       if (refs.length > 0) {
         map.putValue(trinity.priority, refs);
@@ -134,8 +134,8 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
     return map;
   }
 
-  private static void assertReferenceTarget(@NotNull PsiElement context,
-                                            PsiReference[] refs, PsiReferenceProvider provider) {
+  private static void assertReferenceUnderlyingElement(@NotNull PsiElement context,
+                                                       PsiReference[] refs, PsiReferenceProvider provider) {
     for (PsiReference reference : refs) {
       if (reference == null) continue;
       assert reference.getElement() == context : "reference " +
