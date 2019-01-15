@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -82,6 +82,7 @@ public class Utils {
     }
   }
 
+  @SuppressWarnings("SSBasedInspection")
   private static void tryDelete(Path path) throws IOException {
     for (int i = 0; i < 10; i++) {
       try {
@@ -170,6 +171,7 @@ public class Utils {
     }
   }
 
+  @SuppressWarnings("SSBasedInspection")
   public static void copyDirectory(Path from, Path to) throws IOException {
     Runner.logger().info(from + " -> " + to);
 
