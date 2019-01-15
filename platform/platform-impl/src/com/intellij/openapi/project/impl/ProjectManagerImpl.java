@@ -613,7 +613,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         return;
       }
 
-      ProjectUtil.openProject(presentableUrl, null, true);
+      ProjectUtil.openProject(Objects.requireNonNull(presentableUrl), null, true);
     }, ModalityState.NON_MODAL);
   }
 
