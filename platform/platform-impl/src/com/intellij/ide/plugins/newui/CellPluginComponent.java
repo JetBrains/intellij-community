@@ -33,7 +33,7 @@ import java.util.List;
  */
 public abstract class CellPluginComponent extends JPanel {
   public static final Color GRAY_COLOR = JBColor.namedColor("Label.infoForeground", new JBColor(Gray._120, Gray._135));
-  private static final Color HOVER_COLOR = JBColor.namedColor("Plugins.selectionBackground", new JBColor(0xF5F9FF, 0x36393B));
+  private static final Color HOVER_COLOR = JBColor.namedColor("Plugins.lightSelectionBackground", new JBColor(0xF5F9FF, 0x36393B));
 
   public final IdeaPluginDescriptor myPlugin;
 

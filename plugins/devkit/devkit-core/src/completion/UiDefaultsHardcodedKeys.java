@@ -1384,7 +1384,7 @@ public final class UiDefaultsHardcodedKeys {
     "Plugins.background",
     "Plugins.disabledForeground",
     "Plugins.eapTagBackground",
-    "Plugins.selectionBackground",
+    "Plugins.lightSelectionBackground",
     "Plugins.tagBackground",
     "Plugins.tagForeground",
     "Popup.Advertiser.background",
