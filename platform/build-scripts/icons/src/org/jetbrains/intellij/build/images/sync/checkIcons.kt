@@ -58,10 +58,12 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
   syncIconsRepo(context)
   val report = report(context, skippedDirs.size)
   when {
-    isUnderTeamCity() && context.isFail() -> context.doFail(report)
+    !isUnderTeamCity() -> log(report)
+    context.isFail() -> context.doFail(report)
     // partial sync shouldn't make build successful
-    context.devIconsCommitHashesToSync.isNotEmpty() &&
-    isUnderTeamCity() && isPreviousBuildFailed() -> context.doFail(report)
+    context.devIconsCommitHashesToSync.isNotEmpty() && isPreviousBuildFailed() -> context.doFail(report)
+    // reviews should be created
+    context.iconsCommitHashesToSync.isNotEmpty() && context.devReviews().isEmpty() -> context.doFail(report)
     else -> log(report)
   }
 }
