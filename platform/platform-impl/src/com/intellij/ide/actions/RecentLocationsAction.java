@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -285,7 +286,8 @@ public class RecentLocationsAction extends AnAction {
 
   @NotNull
   private static String getBreadcrumbs(@NotNull Project project, @NotNull PlaceInfo info) {
-    Collection<Iterable<? extends Crumb>> breadcrumbs = RecentLocationManager.getInstance(project).getBreadcrumbs(info);
+    Collection<Iterable<? extends Crumb>> breadcrumbs =
+      RecentLocationManager.getInstance(project).getBreadcrumbs(info, showChanged(project));
     if (breadcrumbs.isEmpty()) {
       return info.getFile().getName();
     }
@@ -302,9 +304,19 @@ public class RecentLocationsAction extends AnAction {
   }
 
   private static List<PlaceInfo> getPlaces(@NotNull Project project, boolean showChanged) {
-    return showChanged
-           ? ContainerUtil.reverse(IdeDocumentHistory.getInstance(project).getChangePlaces())
-           : ContainerUtil.reverse(IdeDocumentHistory.getInstance(project).getBackPlaces());
+    List<PlaceInfo> infos = showChanged
+                            ? ContainerUtil.reverse(IdeDocumentHistory.getInstance(project).getChangePlaces())
+                            : ContainerUtil.reverse(IdeDocumentHistory.getInstance(project).getBackPlaces());
+
+    ArrayList<PlaceInfo> infosCopy = ContainerUtil.newArrayList();
+
+    for (PlaceInfo info : infos) {
+      if (infosCopy.stream().noneMatch(info1 -> IdeDocumentHistoryImpl.isSame(info, info1))) {
+        infosCopy.add(info);
+      }
+    }
+
+    return infosCopy;
   }
 
   @NotNull
@@ -333,7 +345,7 @@ public class RecentLocationsAction extends AnAction {
 
   @Nullable
   private static EditorEx createEditor(@NotNull Project project, @NotNull PlaceInfo placeInfo) {
-    RangeMarker rangeMarker = RecentLocationManager.getInstance(project).getRangeMarker(placeInfo);
+    RangeMarker rangeMarker = RecentLocationManager.getInstance(project).getRangeMarker(placeInfo, showChanged(project));
     if (rangeMarker == null) {
       return null;
     }
@@ -615,7 +627,7 @@ public class RecentLocationsAction extends AnAction {
 
   @NotNull
   private static EditorColorsScheme setupColorScheme(@NotNull Project project, @NotNull EditorEx editor, @NotNull PlaceInfo placeInfo) {
-    EditorColorsScheme colorsScheme = RecentLocationManager.getInstance(project).getColorScheme(placeInfo);
+    EditorColorsScheme colorsScheme = RecentLocationManager.getInstance(project).getColorScheme(placeInfo, showChanged(project));
     if (colorsScheme == null) {
       colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     }
@@ -635,7 +647,7 @@ public class RecentLocationsAction extends AnAction {
     }
 
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, null);
-    LexerPosition lexerPosition = RecentLocationManager.getInstance(project).getLexerPosition(placeInfo);
+    LexerPosition lexerPosition = RecentLocationManager.getInstance(project).getLexerPosition(placeInfo, showChanged(project));
     if (lexerPosition != null) {
       Lexer lexer = syntaxHighlighter.getHighlightingLexer();
       try {

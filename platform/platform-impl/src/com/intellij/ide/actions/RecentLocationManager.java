@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -46,7 +47,8 @@ import java.util.Map;
 
 public class RecentLocationManager implements ProjectComponent {
   @NotNull private final Project myProject;
-  @NotNull private final Map<IdeDocumentHistoryImpl.PlaceInfo, PlaceInfoPersistentItem> myItems = new RecentLocationFixedSizeHashMap();
+  @NotNull private final Map<PlaceInfo, PlaceInfoPersistentItem> myRecentItems = new RecentLocationFixedSizeHashMap();
+  @NotNull private final Map<PlaceInfo, PlaceInfoPersistentItem> myChangedItems = new RecentLocationFixedSizeHashMap();
 
   @NotNull
   public static RecentLocationManager getInstance(@NotNull Project project) {
@@ -70,24 +72,30 @@ public class RecentLocationManager implements ProjectComponent {
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        List<IdeDocumentHistoryImpl.PlaceInfo> toRemove = ContainerUtil.filter(myItems.keySet(), placeInfo -> events.stream()
-          .anyMatch(event -> event.isFromRefresh() && placeInfo.getFile().equals(event.getFile())));
-
-        toRemove.forEach(placeInfo -> removePlace(placeInfo));
+        removeInvalidPlaces(events, myChangedItems);
+        removeInvalidPlaces(events, myRecentItems);
       }
     });
+  }
+
+  private static void removeInvalidPlaces(@NotNull List<? extends VFileEvent> events,
+                                          @NotNull Map<PlaceInfo, PlaceInfoPersistentItem> items) {
+    List<PlaceInfo> toRemove = ContainerUtil.filter(items.keySet(), placeInfo -> events.stream()
+      .anyMatch(event -> event.isFromRefresh() && placeInfo.getFile().equals(event.getFile())));
+
+    toRemove.forEach(placeInfo -> removePlace(placeInfo, items));
   }
 
   private void subscribeRecentPlaces(@NotNull MessageBusConnection connection) {
     connection.subscribe(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC, new IdeDocumentHistoryImpl.RecentPlacesListener() {
       @Override
-      public void recentPlacePushed(@NotNull IdeDocumentHistoryImpl.PlaceInfo changePlace) {
-        update(changePlace, myProject);
+      public void recentPlacePushed(@NotNull PlaceInfo changePlace) {
+        update(changePlace, myProject, myRecentItems);
       }
 
       @Override
-      public void recentPlaceRemoved(@NotNull IdeDocumentHistoryImpl.PlaceInfo changePlace) {
-        removePlace(changePlace);
+      public void recentPlaceRemoved(@NotNull PlaceInfo changePlace) {
+        removePlace(changePlace, myRecentItems);
       }
     });
   }
@@ -95,22 +103,24 @@ public class RecentLocationManager implements ProjectComponent {
   private void subscribeChangedPlaces(@NotNull MessageBusConnection connection) {
     connection.subscribe(IdeDocumentHistoryImpl.ChangePlacesListener.TOPIC, new IdeDocumentHistoryImpl.ChangePlacesListener() {
       @Override
-      public void changedPlacePushed(@NotNull IdeDocumentHistoryImpl.PlaceInfo changePlace) {
-        update(changePlace, myProject);
+      public void changedPlacePushed(@NotNull PlaceInfo changePlace) {
+        update(changePlace, myProject, myChangedItems);
       }
 
       @Override
-      public void changedPlaceRemoved(@NotNull IdeDocumentHistoryImpl.PlaceInfo changePlace) {
-        removePlace(changePlace);
+      public void changedPlaceRemoved(@NotNull PlaceInfo changePlace) {
+        removePlace(changePlace, myChangedItems);
       }
     });
   }
 
-  private void removePlace(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeToRemove) {
-    myItems.remove(placeToRemove);
+  private static void removePlace(@NotNull PlaceInfo placeToRemove, @NotNull Map<PlaceInfo, PlaceInfoPersistentItem> items) {
+    items.remove(placeToRemove);
   }
 
-  private void update(@NotNull IdeDocumentHistoryImpl.PlaceInfo changePlace, @NotNull Project project) {
+  private static void update(@NotNull PlaceInfo changePlace,
+                             @NotNull Project project,
+                             @NotNull Map<PlaceInfo, PlaceInfoPersistentItem> items) {
     Editor editor = findEditor(project, changePlace);
     if (editor == null) {
       return;
@@ -124,13 +134,13 @@ public class RecentLocationManager implements ProjectComponent {
     Document document = editor.getDocument();
     VirtualFile file = changePlace.getFile();
     RangeMarker rangeMarker = getRangeMarker(document, line);
-    myItems.put(changePlace, new PlaceInfoPersistentItem(getBreadcrumbs(project, editor, changePlace, line),
-                                                         rangeMarker,
-                                                         getLexerPosition(project, file),
-                                                         editor.getColorsScheme()));
+    items.put(changePlace, new PlaceInfoPersistentItem(getBreadcrumbs(project, editor, changePlace, line),
+                                                       rangeMarker,
+                                                       getLexerPosition(project, file),
+                                                       editor.getColorsScheme()));
   }
 
-  private static int getLineNumber(@NotNull IdeDocumentHistoryImpl.PlaceInfo changePlace) {
+  private static int getLineNumber(@NotNull PlaceInfo changePlace) {
     FileEditorState navigationState = changePlace.getNavigationState();
     if (!(navigationState instanceof TextEditorState)) {
       return -1;
@@ -165,7 +175,7 @@ public class RecentLocationManager implements ProjectComponent {
   }
 
   @Nullable
-  private static Editor findEditor(@NotNull Project project, @NotNull IdeDocumentHistoryImpl.PlaceInfo changePlace) {
+  private static Editor findEditor(@NotNull Project project, @NotNull PlaceInfo changePlace) {
     JComponent component = FileEditorManagerEx.getInstanceEx(project).getPreferredFocusedComponent();
     if (component == null || !component.isShowing() || !(component instanceof EditorComponentImpl)) {
       return null;
@@ -192,7 +202,7 @@ public class RecentLocationManager implements ProjectComponent {
   @NotNull
   private static Collection<Iterable<? extends Crumb>> getBreadcrumbs(@NotNull Project project,
                                                                       @NotNull Editor editor,
-                                                                      @NotNull IdeDocumentHistoryImpl.PlaceInfo changePlace,
+                                                                      @NotNull PlaceInfo changePlace,
                                                                       int line) {
     FileBreadcrumbsCollector collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, changePlace.getFile());
     Collection<Iterable<? extends Crumb>> result = ContainerUtil.emptyList();
@@ -238,26 +248,31 @@ public class RecentLocationManager implements ProjectComponent {
   }
 
   @NotNull
-  Collection<Iterable<? extends Crumb>> getBreadcrumbs(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo) {
-    PlaceInfoPersistentItem item = myItems.get(placeInfo);
+  private Map<PlaceInfo, PlaceInfoPersistentItem> getMap(boolean showChanged) {
+    return showChanged ? myChangedItems : myRecentItems;
+  }
+
+  @NotNull
+  Collection<Iterable<? extends Crumb>> getBreadcrumbs(@NotNull PlaceInfo placeInfo, boolean showChanged) {
+    PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
     return item == null ? ContainerUtil.emptyList() : item.getResult();
   }
 
   @Nullable
-  RangeMarker getRangeMarker(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo) {
-    PlaceInfoPersistentItem item = myItems.get(placeInfo);
+  RangeMarker getRangeMarker(@NotNull PlaceInfo placeInfo, boolean showChanged) {
+    PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
     return item == null ? null : item.getRangeMarker();
   }
 
   @Nullable
-  LexerPosition getLexerPosition(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo) {
-    PlaceInfoPersistentItem item = myItems.get(placeInfo);
+  LexerPosition getLexerPosition(@NotNull PlaceInfo placeInfo, boolean showChanged) {
+    PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
     return item == null ? null : item.getPosition();
   }
 
   @Nullable
-  EditorColorsScheme getColorScheme(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo) {
-    PlaceInfoPersistentItem item = myItems.get(placeInfo);
+  EditorColorsScheme getColorScheme(@NotNull PlaceInfo placeInfo, boolean showChanged) {
+    PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
     return item == null ? null : item.getScheme();
   }
 
@@ -298,9 +313,9 @@ public class RecentLocationManager implements ProjectComponent {
     }
   }
 
-  private static class RecentLocationFixedSizeHashMap extends LinkedHashMap<IdeDocumentHistoryImpl.PlaceInfo, PlaceInfoPersistentItem> {
+  private static class RecentLocationFixedSizeHashMap extends LinkedHashMap<PlaceInfo, PlaceInfoPersistentItem> {
     @Override
-    protected boolean removeEldestEntry(Map.Entry<IdeDocumentHistoryImpl.PlaceInfo, PlaceInfoPersistentItem> eldest) {
+    protected boolean removeEldestEntry(Map.Entry<PlaceInfo, PlaceInfoPersistentItem> eldest) {
       return size() > Registry.intValue("recent.locations.list.size", 10);
     }
   }
