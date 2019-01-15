@@ -315,11 +315,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public void save() {
-    save(false);
-  }
-
-  @Override
-  public void save(boolean isForceSavingAllSettings) {
     if (!ApplicationManagerEx.getApplicationEx().isSaveAllowed()) {
       // no need to save
       return;
@@ -332,7 +327,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       return;
     }
 
-    StoreUtil.saveSettings(this, isForceSavingAllSettings);
+    StoreUtil.saveSettings(this, false);
   }
 
   @Override

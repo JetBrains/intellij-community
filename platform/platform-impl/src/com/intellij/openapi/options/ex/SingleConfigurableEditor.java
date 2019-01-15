@@ -259,7 +259,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     myConfigurable = null;
 
     if (mySaveAllOnClose) {
-      SaveAndSyncHandler.getInstance().scheduleSaveDocumentsAndProjectsAndApp();
+      SaveAndSyncHandler.getInstance().scheduleSaveDocumentsAndProjectsAndApp(myProject);
     }
   }
 }

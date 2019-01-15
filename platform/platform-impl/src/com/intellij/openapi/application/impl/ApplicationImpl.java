@@ -10,6 +10,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
@@ -316,8 +317,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         catch (ProcessCanceledException e) {
           // ignore
         }
-        catch (Throwable t) {
-          LOG.error(t);
+        catch (Throwable e) {
+          PluginManager.processException(e);
         }
         finally {
           Thread.interrupted(); // reset interrupted status
@@ -339,8 +340,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         catch (ProcessCanceledException e) {
           // ignore
         }
-        catch (Throwable t) {
-          LOG.error(t);
+        catch (Throwable e) {
+          PluginManager.processException(e);
         }
         finally {
           Thread.interrupted(); // reset interrupted status
@@ -413,7 +414,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
             listener.beforeApplicationLoaded(this, effectiveConfigPath);
           }
           catch (Throwable e) {
-            LOG.error(e);
+            PluginManager.processException(e);
           }
         }
 
@@ -425,7 +426,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
             listener.beforeComponentsCreated();
           }
           catch (Throwable e) {
-            LOG.error(e);
+            PluginManager.processException(e);
           }
         }
       });
@@ -451,14 +452,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           listener.componentsInitialized();
         }
         catch (Throwable e) {
-          LOG.error(e);
+          PluginManager.processException(e);
         }
 
         try {
           initializedExtensionPoint.reset();
         }
         catch (Throwable e) {
-          LOG.error(e);
+          PluginManager.processException(e);
         }
       }
     };

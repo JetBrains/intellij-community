@@ -7,8 +7,10 @@ import com.intellij.diagnostic.IdeErrorsDialog
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -16,13 +18,16 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
@@ -31,6 +36,7 @@ private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stor
  * Do not use this method in tests, instead directly save using state store.
  */
 @JvmOverloads
+@CalledInAny
 fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
   val currentThread = Thread.currentThread()
   ShutDownTracker.getInstance().registerStopperThread(currentThread)
@@ -94,44 +100,64 @@ fun getStateSpec(originalClass: Class<*>): State? {
 }
 
 /**
+ * Save all unsaved documents, project and application settings. Must be called from EDT.
+ * Use with care because it blocks EDT. Any new usage should be reviewed.
+ *
  * @param isForceSavingAllSettings Whether to force save non-roamable component configuration.
  */
+@CalledInAwt
 fun saveDocumentsAndProjectsAndApp(isForceSavingAllSettings: Boolean) {
   FileDocumentManager.getInstance().saveAllDocuments()
-  saveProjectsAndApp(isForceSavingAllSettings)
+  doSaveProjectsAndApp(isForceSavingAllSettings)
 }
 
 /**
  * @param isForceSavingAllSettings Whether to force save non-roamable component configuration.
  */
-internal fun saveProjectsAndApp(isForceSavingAllSettings: Boolean) {
+@CalledInAny
+internal fun doSaveProjectsAndApp(isForceSavingAllSettings: Boolean, onlyProject: Project? = null) {
   val start = System.currentTimeMillis()
   saveSettings(ApplicationManager.getApplication(), isForceSavingAllSettings)
 
-  val projectManager = ProjectManager.getInstance()
-  if (projectManager is ProjectManagerEx) {
-    projectManager.flushChangedProjectFileAlarm()
+  ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm()
+  if (onlyProject == null) {
+    saveAllProjects(isForceSavingAllSettings)
   }
-
-  for (project in projectManager.openProjects) {
-    saveProject(project, isForceSavingAllSettings)
+  else {
+    saveSettings(onlyProject, isForceSavingAllSettings = true)
   }
 
   val duration = System.currentTimeMillis() - start
   LOG.info("saveProjectsAndApp took $duration ms")
 }
 
-fun saveProject(project: Project, isForceSavingAllSettings: Boolean) {
-  if (isForceSavingAllSettings && project is ProjectEx) {
-    project.save(true)
-  }
-  else {
-    project.save()
-  }
-}
-
+/**
+ * Save all unsaved documents and project settings. Must be called from EDT.
+ * Use with care because it blocks EDT. Any new usage should be reviewed.
+ */
 @CalledInAwt
 fun Project.saveDocumentsAndProjectSettings() {
   FileDocumentManager.getInstance().saveAllDocuments()
-  save()
+  saveSettings(this)
+}
+
+@CalledInAny
+internal fun saveAllProjects(isForceSavingAllSettings: Boolean) {
+  for (project in ProjectManager.getInstance().openProjects) {
+    saveSettings(project, isForceSavingAllSettings)
+  }
+}
+
+@CalledInAny
+internal suspend fun saveDocumentsAndProjectsAndApp(onlyProject: Project?,
+                                                    isForceSavingAllSettings: Boolean = false,
+                                                    isDocumentsSavingExplicit: Boolean = true) {
+  coroutineScope {
+    launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(isDocumentsSavingExplicit)
+    }
+    launch {
+      doSaveProjectsAndApp(isForceSavingAllSettings = isForceSavingAllSettings, onlyProject = onlyProject)
+    }
+  }
 }

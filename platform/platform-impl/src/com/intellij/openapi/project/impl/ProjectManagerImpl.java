@@ -681,7 +681,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       if (isSaveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
-        StoreUtil.saveProject(project, true);
+        StoreUtil.saveSettings(project, true);
         if (isSaveApp) {
           StoreUtil.saveSettings(app, true);
         }

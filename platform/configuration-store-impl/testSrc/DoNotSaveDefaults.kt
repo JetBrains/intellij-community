@@ -3,8 +3,10 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.ServiceManagerImpl
@@ -15,12 +17,12 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createOrLoadProject
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.io.getDirectoryTree
 import com.intellij.util.io.move
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -37,9 +39,8 @@ internal class DoNotSaveDefaultsTest {
   @Rule
   val tempDir = TemporaryDirectory()
 
-
   @Test
-  fun testApp() {
+  fun testApp() = runBlocking {
     val configDir = Paths.get(PathManager.getConfigPath())!!
     val newConfigDir = if (configDir.exists()) Paths.get(PathManager.getConfigPath() + "__old") else null
     if (newConfigDir != null) {
@@ -62,11 +63,11 @@ internal class DoNotSaveDefaultsTest {
     }
   }
 
-  private fun doTest(componentManager: ComponentManagerImpl) {
+  private suspend fun doTest(componentManager: ComponentManagerImpl) {
     val useModCountOldValue = System.getProperty("store.save.use.modificationCount")
 
     // wake up (edt, some configurables want read action)
-    runInEdtAndWait {
+    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       val picoContainer = componentManager.picoContainer
       ServiceManagerImpl.processAllImplementationClasses(componentManager) { clazz, _ ->
         val className = clazz.name
@@ -93,9 +94,7 @@ internal class DoNotSaveDefaultsTest {
 
     try {
       System.setProperty("store.save.use.modificationCount", "false")
-      runInEdtAndWait {
-        runBlocking { componentManager.stateStore.save() }
-      }
+      componentManager.stateStore.save()
     }
     finally {
       System.setProperty("store.save.use.modificationCount", useModCountOldValue ?: "false")

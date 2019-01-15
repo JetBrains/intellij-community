@@ -1,20 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
+import com.intellij.application.PooledScope
 import com.intellij.configurationStore.saveDocumentsAndProjectsAndApp
-import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,9 +21,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.util.SingleAlarm
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.beans.PropertyChangeListener
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -48,7 +45,7 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
   private val idleListener = Runnable {
     if (settings.isAutoSaveIfInactive && canSyncOrSave()) {
       submitTransaction {
-        doSaveAllDocuments()
+        (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
       }
     }
   }
@@ -72,8 +69,8 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
 
         if (canSyncOrSave()) {
           if (isSaveInPooledThread) {
-            ApplicationManager.getApplication().executeOnPooledThread {
-              runBlocking { doSaveDocumentsAndProjectsAndApp() }
+            PooledScope.launch {
+              doSaveDocumentsAndProjectsAndApp(onlyProject = null)
             }
           }
           else {
@@ -93,10 +90,10 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
   }
 
   // well, currently it is not really scheduled - no alarm or something like that, but it will be addressed in turn
-  override fun scheduleSaveDocumentsAndProjectsAndApp() {
+  override fun scheduleSaveDocumentsAndProjectsAndApp(project: Project?) {
     if (isSaveInPooledThread) {
-      ApplicationManager.getApplication().executeOnPooledThread {
-        runBlocking { doSaveDocumentsAndProjectsAndApp() }
+      PooledScope.launch {
+        doSaveDocumentsAndProjectsAndApp(project)
       }
     }
     else {
@@ -127,23 +124,10 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
   }
 
   // new implementation, used only if enabled by flag
-  private suspend fun doSaveDocumentsAndProjectsAndApp() {
-    if (!isSaveAllowed) {
-      return
+  private suspend fun doSaveDocumentsAndProjectsAndApp(onlyProject: Project?) {
+    if (isSaveAllowed) {
+      saveDocumentsAndProjectsAndApp(onlyProject, isDocumentsSavingExplicit = false)
     }
-
-    coroutineScope {
-      launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-        doSaveAllDocuments()
-      }
-      launch {
-        saveProjectsAndApp(isForceSavingAllSettings = false)
-      }
-    }
-  }
-
-  private fun doSaveAllDocuments() {
-    (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
   }
 
   override fun scheduleRefresh() {
