@@ -5,8 +5,10 @@ package com.intellij.openapi.vcs.checkin
 import com.intellij.codeInsight.CodeSmellInfo
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.Range
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -20,6 +22,7 @@ import com.intellij.openapi.vcs.changes.VcsPreservingExecutor
 import com.intellij.openapi.vcs.ex.compareLines
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.impl.PsiDocumentManagerImpl
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
@@ -36,8 +39,9 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
     val file2Changes = HashMap<VirtualFile, List<Range>>()
     val changeListManager = ChangeListManager.getInstance(project)
     val files4Update = ChangesUtil.getFilesFromChanges(changeListManager.allChanges)
+    val fileDocumentManager = FileDocumentManager.getInstance()
     newCodeSmells.forEach { codeSmellInfo ->
-      val virtualFile = FileDocumentManager.getInstance().getFile(codeSmellInfo.document) ?: return@forEach
+      val virtualFile = fileDocumentManager.getFile(codeSmellInfo.document) ?: return@forEach
       val unchanged = file2Changes.getOrPut(virtualFile) {
         try {
           val contentFromVcs = changeListManager.getChange(virtualFile)?.beforeRevision?.content ?: return@getOrPut emptyList()
@@ -62,7 +66,7 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
       VfsUtil.markDirtyAndRefresh(false, false, false, *files4Update)
       WriteAction.runAndWait<Exception> { PsiDocumentManagerImpl.getInstance(project).commitAllDocuments() }
       codeSmellDetector.findCodeSmells(selectedFiles.filter { it.exists() }).forEach { oldCodeSmell ->
-        val file = FileDocumentManager.getInstance().getFile(oldCodeSmell.document) ?: return@forEach
+        val file = fileDocumentManager.getFile(oldCodeSmell.document) ?: return@forEach
         location2CodeSmell[Pair(file, oldCodeSmell.startLine)].forEach inner@{ newCodeSmell ->
           if (oldCodeSmell.description == newCodeSmell.description) {
             commonCodeSmells.add(newCodeSmell)
@@ -71,7 +75,15 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
         }
       }
     }
-    return newCodeSmells.filter { !commonCodeSmells.contains(it) }
+    return newCodeSmells.filter { !commonCodeSmells.contains(it) }.map {
+      val file = fileDocumentManager.getFile(it.document) ?: return@map it
+      if (file.isValid) {
+        return@map it
+      }
+      val newFile = VirtualFileManager.getInstance().findFileByUrl(file.url) ?: return@map it
+      val document = ReadAction.compute<Document?, Exception> { fileDocumentManager.getDocument(newFile) } ?: return@map it
+      CodeSmellInfo(document, it.description, it.textRange, it.severity)
+    }
   }
 
   private fun runAnalysisAfterShelvingSync(project: Project, files: List<VirtualFile>, progressIndicator: ProgressIndicator,  afterShelve: () -> Unit) {
