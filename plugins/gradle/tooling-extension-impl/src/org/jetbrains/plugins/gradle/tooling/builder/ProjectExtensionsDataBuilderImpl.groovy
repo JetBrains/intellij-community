@@ -61,9 +61,11 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       List<String> keyList =
         GradleVersion.current() >= GradleVersion.version("4.5")
           ? convention.extensionsSchema.collect { it["name"] as String }
-          : convention.schema.keySet().asList() as List<String>
+          : GradleVersion.current() >= GradleVersion.version("3.5")
+            ? convention.schema.keySet().asList() as List<String>
+            : extractKeysViaReflection(convention)
 
-      keyList.each { String name ->
+      for (name in keyList) {
         def value = convention.findByName(name)
 
         if (value == null) return
@@ -81,6 +83,11 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       }
     }
     return result
+  }
+
+  private List<String> extractKeysViaReflection(ExtensionContainer convention) {
+    def m = convention.class.getMethod("getAsMap")
+    return (m.invoke(convention) as Map<String, Object>).keySet().asList() as List<String>
   }
 
   @Override
