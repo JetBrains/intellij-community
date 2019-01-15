@@ -78,7 +78,10 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         ApplicationManager.getApplication().isUnitTestMode()) return;
     try {
       //stop words
-      final String text = ResourceUtil.loadText(ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt"));
+      URL url = ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt");
+      if (url == null) return; // IDE does not provide /search/ignore.txt
+
+      String text = ResourceUtil.loadText(url);
       final String[] stopWords = text.split("[\\W]");
       ContainerUtil.addAll(myStopWords, stopWords);
     }
