@@ -28,6 +28,12 @@ class IdeFrameImplUndecorated extends IdeFrameImpl {
           setMaxBounds(state, state);
       }
     }));
+    addPropertyChangeListener("MSWSetWorkArea", e -> {
+      int state = getExtendedState();
+      if (hasMaxState(state)) {
+        setMaxBounds(state, state);
+      }
+    });
   }
 
   @Override
