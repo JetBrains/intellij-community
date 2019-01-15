@@ -124,7 +124,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
     for (ProviderBinding.ProviderInfo<ProcessingContext> trinity : providers) {
       final PsiReference[] refs = getReferences(context, trinity);
       if ((ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal())
-          && Registry.is("ide.check.reference.provider.target")) {
+          && Registry.is("ide.check.reference.provider.underlying.element")) {
         assertReferenceUnderlyingElement(context, refs, trinity.provider);
       }
       if (refs.length > 0) {

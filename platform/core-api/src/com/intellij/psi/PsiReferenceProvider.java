@@ -50,8 +50,8 @@ public abstract class PsiReferenceProvider {
    * @deprecated to attract attention and motivate to fix tests which fail these checks
    */
   @Deprecated
-  public static void disableTargetChecks(@NotNull Disposable parentDisposable) {
-    Registry.get("ide.check.reference.provider.target").setValue(false, parentDisposable);
+  public static void disableUnderlyingElementChecks(@NotNull Disposable parentDisposable) {
+    Registry.get("ide.check.reference.provider.underlying.element").setValue(false, parentDisposable);
   }
 
 }
