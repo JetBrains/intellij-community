@@ -3723,6 +3723,7 @@ public enum EnumApplyChannel {
   fun testIdeaIDEA198408() {
     getSettings().apply{
       ENUM_CONSTANTS_WRAP = WRAP_ALWAYS
+      KEEP_LINE_BREAKS = false
     }
     doTextTest(
         """
