@@ -34,6 +34,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.SystemIndependent;
 
 import javax.swing.*;
 import java.awt.*;
@@ -92,7 +93,7 @@ public class ProjectUtil {
    *         null otherwise
    */
   @Nullable
-  public static Project openOrImport(@NotNull String path, Project projectToClose, boolean forceOpenInNewFrame) {
+  public static Project openOrImport(@NotNull @SystemIndependent String path, Project projectToClose, boolean forceOpenInNewFrame) {
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     if (virtualFile == null) {
       return null;
