@@ -177,6 +177,10 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     return StringUtil.isEmpty(myComponent.getText()) && !myComponent.hasIcon();
   }
 
+  public boolean isActionEnabled() {
+    return actionEnabled;
+  }
+
   @TestOnly
   public void updateInTests(boolean immediately) {
     update();
@@ -224,7 +228,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
 
       myComponent.setVisible(true);
 
-      actionEnabled = state.actionEnabled && file != null && file.isWritable();
+      actionEnabled = state.actionEnabled && file != null && (!requiresWritableFile() || file.isWritable());
 
       String widgetText = state.text;
       String toolTipText = state.toolTip;
@@ -302,6 +306,10 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     public void setIcon(Icon icon) {
       this.icon = icon;
     }
+  }
+
+  protected boolean requiresWritableFile() {
+    return true;
   }
 
   @NotNull
