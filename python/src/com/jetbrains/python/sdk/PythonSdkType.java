@@ -715,7 +715,8 @@ public final class PythonSdkType extends SdkType {
       final SkeletonHeader header = readSkeletonHeader(originFile, pythonSdk);
       if (header != null) {
         final String binaryPath = header.getBinaryFile();
-        if (binaryPath.equals(SkeletonVersionChecker.BUILTIN_NAME)) {
+        // XXX Assume that all pre-generated stubs belong to the interpreter's stdlib -- might change in future with PY-32229
+        if (binaryPath.equals(SkeletonVersionChecker.BUILTIN_NAME) || binaryPath.equals(SkeletonVersionChecker.PREGENERATED)) {
           return true;
         }
         if (isRemote(pythonSdk)) {
