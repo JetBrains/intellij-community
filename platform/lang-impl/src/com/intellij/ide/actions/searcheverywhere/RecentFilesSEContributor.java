@@ -97,4 +97,9 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   public boolean isEmptyPatternSupported() {
     return true;
   }
+
+  @Override
+  public boolean isShownInSeparateTab() {
+    return false;
+  }
 }
