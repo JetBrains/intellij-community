@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -139,9 +140,20 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
           else if (entry instanceof LibraryOrderEntry) {
             final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
             final Library library = libraryOrderEntry.getLibrary();
-            if (library == null || library.getFiles(OrderRootType.CLASSES).length < library.getUrls(OrderRootType.CLASSES).length) {
+            if (library == null) {
               System.err.println(InspectionsBundle.message("offline.inspections.library.was.not.resolved",
                                                            libraryOrderEntry.getPresentableName(), module.getName()));
+            }
+            else {
+              Set<String> detectedUrls =
+                Arrays.stream(library.getFiles(OrderRootType.CLASSES)).map(file -> file.getUrl()).collect(Collectors.toSet());
+              HashSet<String> declaredUrls = new HashSet<>(Arrays.asList(library.getUrls(OrderRootType.CLASSES)));
+              declaredUrls.removeAll(detectedUrls);
+              if (!declaredUrls.isEmpty()) {
+                System.err.println(InspectionsBundle.message("offline.inspections.library.urls.were.not.resolved",
+                                                             StringUtil.join(declaredUrls, ", "),
+                                                             libraryOrderEntry.getPresentableName(), module.getName()));
+              }
             }
           }
         }
