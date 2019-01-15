@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author peter
@@ -35,6 +37,7 @@ public final class CompletionServiceImpl extends CompletionService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
   private static volatile CompletionPhase ourPhase = CompletionPhase.NoCompletion;
   private static Throwable ourPhaseTrace;
+  private static List<CompletionPhaseListener> ourCompletionPhaseListeners = new CopyOnWriteArrayList<>();
 
   @Nullable private CompletionProcess myApiCompletionProcess;
 
@@ -250,10 +253,20 @@ public final class CompletionServiceImpl extends CompletionService {
     if (oldIndicator != null && !(phase instanceof CompletionPhase.BgCalculation)) {
       LOG.assertTrue(!oldIndicator.isRunning() || oldIndicator.isCanceled(), "don't change phase during running completion: oldPhase=" + oldPhase);
     }
+    boolean isCompletionRunning = phase != CompletionPhase.NoCompletion && !(phase instanceof CompletionPhase.ZombiePhase) &&
+                                  !(phase instanceof CompletionPhase.ItemsCalculated);
+    for (CompletionPhaseListener listener : ourCompletionPhaseListeners) {
+      listener.completionPhaseChanged(isCompletionRunning);
+    }
 
     Disposer.dispose(oldPhase);
     ourPhase = phase;
     ourPhaseTrace = new Throwable();
+  }
+
+  public static void addCompletionPhaseListener(@NotNull CompletionPhaseListener listener, @NotNull Disposable parentDisposable) {
+    ourCompletionPhaseListeners.add(listener);
+    Disposer.register(parentDisposable, () -> ourCompletionPhaseListeners.remove(listener));
   }
 
   public static CompletionPhase getCompletionPhase() {

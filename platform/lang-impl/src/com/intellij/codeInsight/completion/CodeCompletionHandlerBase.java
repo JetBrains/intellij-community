@@ -390,9 +390,9 @@ public class CodeCompletionHandlerBase {
     try {
       AutoCompletionDecision decision = shouldAutoComplete(indicator, items, parameters);
       if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
-        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));
         indicator.getLookup().setCalculating(false);
         indicator.showLookup();
+        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));
       }
       else if (decision instanceof AutoCompletionDecision.InsertItem) {
         final Runnable restorePrefix = rememberDocumentState(indicator.getEditor());
