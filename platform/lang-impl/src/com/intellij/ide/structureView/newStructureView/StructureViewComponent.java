@@ -312,7 +312,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     TreeState state = myFileEditor == null ? null : myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
     if (state == null) {
       if (!Boolean.TRUE.equals(UIUtil.getClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY))) {
-        TreeUtil.expand(getTree(), 2);
+        TreeUtil.expand(getTree(), getMinimumExpandDepth(myTreeModel));
       }
     }
     else {
@@ -511,7 +511,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
     else {
       rebuild();
-      TreeUtil.expand(getTree(), 2);
+      TreeUtil.expand(getTree(), getMinimumExpandDepth(myTreeModel));
     }
   }
 
@@ -519,7 +519,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private void waitForRebuildAndExpand() {
     wait(rebuildAndUpdate());
     UIUtil.dispatchAllInvocationEvents();
-    wait(TreeUtil.promiseExpand(getTree(), 2));
+    wait(TreeUtil.promiseExpand(getTree(), getMinimumExpandDepth(myTreeModel)));
   }
 
   private static void wait(Promise<?> originPromise) {
@@ -714,6 +714,13 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   //  tree.revalidate();
   //  tree.repaint();
   //}
+
+  private static int getMinimumExpandDepth(@NotNull StructureViewModel structureViewModel) {
+    final StructureViewModel.ExpandInfoProvider provider =
+      ObjectUtils.tryCast(structureViewModel, StructureViewModel.ExpandInfoProvider.class);
+
+    return provider == null ? 2 : provider.getMinimumAutoExpandDepth();
+  }
 
   private static class MyNodeWrapper extends TreeElementWrapper
     implements NodeDescriptorProvidingKey, ValidateableNode {
