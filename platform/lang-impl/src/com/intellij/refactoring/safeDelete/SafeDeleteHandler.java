@@ -63,6 +63,11 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
 
   public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkDelegates,
                             @Nullable final Runnable successRunnable, @Nullable final  Runnable afterRefactoring) {
+    invoke(project, elements, module, checkDelegates, successRunnable, afterRefactoring, false);
+  }
+
+  public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkDelegates,
+                            @Nullable final Runnable successRunnable, @Nullable final  Runnable afterRefactoring, boolean silent) {
     for (PsiElement element : elements) {
       if (!SafeDeleteProcessor.validElement(element)) {
         return;
@@ -98,7 +103,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
 
     final PsiElement[] elementsToDelete = PsiUtilCore.toPsiElementArray(fullElementsSet);
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || silent) {
       RefactoringSettings settings = RefactoringSettings.getInstance();
       final SafeDeleteProcessor processor =
         SafeDeleteProcessor.createInstance(project, null, elementsToDelete, settings.SAFE_DELETE_SEARCH_IN_COMMENTS,
