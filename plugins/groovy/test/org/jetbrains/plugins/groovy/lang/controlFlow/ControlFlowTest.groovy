@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.controlFlow
 
 import com.intellij.openapi.editor.SelectionModel
@@ -12,10 +12,12 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author ven
  */
 class ControlFlowTest extends LightCodeInsightFixtureTestCase {
+
   final String basePath = TestUtils.testDataPath + "groovy/controlFlow/"
 
   void testAssignment() { doTest() }
@@ -141,9 +143,11 @@ class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   void testUnfinishedAssignment() { doTest() }
 
   void doTest() {
-    final List<String> input = TestUtils.readInput(testDataPath + getTestName(true) + ".test")
+    final path = getTestName(true) + ".test"
+    final List<String> input = TestUtils.readInput(testDataPath + path)
 
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, input.get(0))
+    final code = input.get(0)
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, code)
 
     final GroovyFile file = (GroovyFile)myFixture.file
     final SelectionModel model = myFixture.editor.selectionModel
@@ -152,7 +156,7 @@ class ControlFlowTest extends LightCodeInsightFixtureTestCase {
     final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner, false)
     final Instruction[] instructions = new ControlFlowBuilder(project).buildControlFlow(owner)
     final String cf = ControlFlowUtils.dumpControlFlow(instructions)
-    assertEquals(input.get(1).trim(), cf.trim())
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, code + "\n-----\n" + cf.trim())
+    myFixture.checkResultByFile(path)
   }
-
 }

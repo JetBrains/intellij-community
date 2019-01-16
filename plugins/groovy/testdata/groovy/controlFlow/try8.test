@@ -6,7 +6,7 @@ try {
 finally {
   b()
 }
-------
+-----
 0(1) element: null
 1(2) element: Open block
 2(3,12) THROW. element: NEW expression
