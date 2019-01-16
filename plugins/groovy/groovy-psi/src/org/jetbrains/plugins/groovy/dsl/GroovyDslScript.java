@@ -109,9 +109,9 @@ public class GroovyDslScript {
     return false;
   }
 
-  public boolean handleDslError(Throwable e) {
+  public void handleDslError(Throwable e) {
     if (project.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
-      return true;
+      throw new RuntimeException(e);
     }
     if (file != null) {
       DslErrorReporter.getInstance().invokeDslErrorPopup(e, project, file);
@@ -120,7 +120,6 @@ public class GroovyDslScript {
       LOG.info("Error when executing internal GDSL " + myPath, e);
       GdslUtil.stopGdsl();
     }
-    return false;
   }
 
   @Override
