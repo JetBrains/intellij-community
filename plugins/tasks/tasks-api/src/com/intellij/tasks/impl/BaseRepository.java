@@ -103,7 +103,7 @@ public abstract class BaseRepository extends TaskRepository {
       CredentialAttributes attributes = getAttributes();
       Credentials credentials = PasswordSafe.getInstance().get(attributes);
       if (credentials != null) {
-        myPassword = credentials.getPasswordAsString();
+        setPassword(credentials.getPasswordAsString());
       }
     }
     else {
