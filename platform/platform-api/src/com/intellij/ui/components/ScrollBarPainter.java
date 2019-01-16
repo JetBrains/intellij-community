@@ -33,26 +33,26 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
   private static final ColorKey TRACK_OPAQUE_BACKGROUND
     = key(0xFFF5F5F5, 0xFF3F4244, 0xFFF5F5F5, 0xFF3F4244, "ScrollBar.background");
   private static final ColorKey TRACK_BACKGROUND
-    = key(0x00808080, 0x00808080, 0x00808080, 0x00808080, "ScrollBar.NonOpaque.background");
+    = key(0x00808080, 0x00808080, 0x00808080, 0x00808080, "ScrollBar.Transparent.trackColor");
   private static final ColorKey TRACK_HOVERED_BACKGROUND
-    = key(0x1A808080, 0x1A808080, 0x1A808080, 0x1A808080, "ScrollBar.NonOpaque.Hovered.background");
+    = key(0x1A808080, 0x1A808080, 0x1A808080, 0x1A808080, "ScrollBar.Transparent.hoverTrackColor");
 
   private static final ColorKey THUMB_OPAQUE_FOREGROUND
-    = key(0x33595959, 0x47383838, 0x33000000, 0x59262626, "ScrollBar.Thumb.foreground");
+    = key(0x33595959, 0x47383838, 0x33000000, 0x59262626, "ScrollBar.thumbBorderColor");
   private static final ColorKey THUMB_OPAQUE_BACKGROUND
-    = key(0x33737373, 0x47A6A6A6, 0x33000000, 0x59808080, "ScrollBar.Thumb.background");
+    = key(0x33737373, 0x47A6A6A6, 0x33000000, 0x59808080, "ScrollBar.thumbColor");
   private static final ColorKey THUMB_OPAQUE_HOVERED_FOREGROUND
-    = key(0x47595959, 0x59383838, 0x80000000, 0x8C262626, "ScrollBar.Thumb.Hovered.foreground");
+    = key(0x47595959, 0x59383838, 0x80000000, 0x8C262626, "ScrollBar.hoverThumbBorderColor");
   private static final ColorKey THUMB_OPAQUE_HOVERED_BACKGROUND
-    = key(0x47737373, 0x59A6A6A6, 0x80000000, 0x8C808080, "ScrollBar.Thumb.Hovered.background");
+    = key(0x47737373, 0x59A6A6A6, 0x80000000, 0x8C808080, "ScrollBar.hoverThumbColor");
   private static final ColorKey THUMB_FOREGROUND
-    = key(0x33595959, 0x47383838, 0x00000000, 0x00262626, "ScrollBar.Thumb.NonOpaque.foreground");
+    = key(0x33595959, 0x47383838, 0x00000000, 0x00262626, "ScrollBar.Transparent.thumbBorderColor");
   private static final ColorKey THUMB_BACKGROUND
-    = key(0x33737373, 0x47A6A6A6, 0x00000000, 0x00808080, "ScrollBar.Thumb.NonOpaque.background");
+    = key(0x33737373, 0x47A6A6A6, 0x00000000, 0x00808080, "ScrollBar.Transparent.thumbColor");
   private static final ColorKey THUMB_HOVERED_FOREGROUND
-    = key(0x47595959, 0x59383838, 0x80000000, 0x8C262626, "ScrollBar.Thumb.NonOpaque.Hovered.foreground");
+    = key(0x47595959, 0x59383838, 0x80000000, 0x8C262626, "ScrollBar.Transparent.hoverThumbBorderColor");
   private static final ColorKey THUMB_HOVERED_BACKGROUND
-    = key(0x47737373, 0x59A6A6A6, 0x80000000, 0x8C808080, "ScrollBar.Thumb.NonOpaque.Hovered.background");
+    = key(0x47737373, 0x59A6A6A6, 0x80000000, 0x8C808080, "ScrollBar.Transparent.hoverThumbColor");
 
   protected ScrollBarPainter(@NotNull Supplier<? extends Component> supplier) {
     animator = new TwoWayAnimator(getClass().getName(), 11, 150, 125, 300, 125) {
