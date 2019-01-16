@@ -75,7 +75,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
 
   @Override
   public int getSortWeight() {
-    return 80;
+    return 350;
   }
 
   @Override
