@@ -32,7 +32,7 @@ public final class UIThemeProvider implements PluginAware {
     }
     catch (IOException e) {
       Logger.getInstance(getClass()).warn("error loading UITheme '" + path + "', " +
-                                          "pluginId=" + myDescriptor.getPluginId().getIdString(), e);
+                                          "pluginId=" + (myDescriptor != null ? myDescriptor.getPluginId().getIdString() : "(none)"), e);
       return null;
     }
   }
