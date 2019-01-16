@@ -138,8 +138,6 @@ iml_project(
         "//tools/adt/idea/project-system-gradle:intellij.android.projectSystem.gradle.tests",
         "//tools/adt/idea/project-system:intellij.android.projectSystem",
         "//tools/adt/idea/project-system:intellij.android.projectSystem.tests",
-        "//tools/adt/idea/resources-aar:intellij.android.resources-aar",
-        "//tools/adt/idea/resources-aar:intellij.android.resources-aar.tests",
         "//tools/adt/idea/rt:intellij.android.rt",
         "//tools/adt/idea/sdk-updates:intellij.android.sdkUpdates",
         "//tools/adt/idea/sdk-updates:intellij.android.sdkUpdates.tests",

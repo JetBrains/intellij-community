@@ -483,8 +483,6 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system-gradle/intellij.android.projectSystem.gradle.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system-gradle/intellij.android.projectSystem.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system-gradle/intellij.android.projectSystem.gradle.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system-gradle/intellij.android.projectSystem.gradle.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system/intellij.android.projectSystem.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system/intellij.android.projectSystem.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/resources-aar/intellij.android.resources-aar.iml" filepath="$PROJECT_DIR$/../adt/idea/resources-aar/intellij.android.resources-aar.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/resources-aar/intellij.android.resources-aar.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/resources-aar/intellij.android.resources-aar.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/rt/intellij.android.rt.iml" filepath="$PROJECT_DIR$/../adt/idea/rt/intellij.android.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-runtime-pipeline/intellij.android.runtimePipeline.iml" filepath="$PROJECT_DIR$/../adt/idea/android-runtime-pipeline/intellij.android.runtimePipeline.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.iml" filepath="$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.iml" />
