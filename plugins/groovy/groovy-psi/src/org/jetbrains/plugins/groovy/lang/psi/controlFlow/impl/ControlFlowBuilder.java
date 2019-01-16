@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
@@ -520,9 +519,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       else {
         final int type = PsiUtil.isLValue(refExpr) ? ReadWriteVariableInstruction.WRITE : ReadWriteVariableInstruction.READ;
         addNodeAndCheckPending(new ReadWriteVariableInstruction(name, refExpr, type));
-        if (refExpr.getParent() instanceof GrArgumentList && refExpr.getParent().getParent() instanceof GrCall) {
-          addNodeAndCheckPending(new ArgumentInstruction(refExpr));
-        }
       }
     }
 
@@ -534,18 +530,21 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   @Override
   public void visitMethodCall(@NotNull GrMethodCall call) {
     super.visitMethodCall(call);
+    addNodeAndCheckPending(new ArgumentsInstruction(call));
     visitCall(call);
   }
 
   @Override
   public void visitConstructorInvocation(@NotNull GrConstructorInvocation invocation) {
     super.visitConstructorInvocation(invocation);
+    addNodeAndCheckPending(new ArgumentsInstruction(invocation));
     visitCall(invocation);
   }
 
   @Override
   public void visitNewExpression(@NotNull GrNewExpression newExpression) {
     super.visitNewExpression(newExpression);
+    addNodeAndCheckPending(new ArgumentsInstruction(newExpression));
     visitCall(newExpression);
   }
 
