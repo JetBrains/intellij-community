@@ -10,7 +10,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -36,7 +36,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
@@ -183,7 +182,7 @@ public class TestDataGuessByExistingFilesUtil {
     Map<String, List<TestLocationDescriptor>> descriptorsByFileNames = new HashMap<>();
     Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(psiClass));
     Collection<String> fileNames = getAllFileNames(possibleFileName, gotoModel);
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    ProgressIndicator indicator = EmptyProgressIndicator.notNullize(ProgressManager.getInstance().getProgressIndicator());
     indicator.setText("Searching for \'" + test + "\' test data files...");
     indicator.setIndeterminate(false);
     int fileNamesCount = fileNames.size();
