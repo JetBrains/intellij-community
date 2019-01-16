@@ -95,12 +95,4 @@ public class MemoryAgentImpl implements MemoryAgent {
 
     return null;
   }
-
-  private static long parseLong(@Nullable Value value) {
-    if (value instanceof PrimitiveValue) {
-      return ((PrimitiveValue)value).longValue();
-    }
-
-    throw new IllegalArgumentException("Unexpected argument. Primitive value is expected");
-  }
 }
