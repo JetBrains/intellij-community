@@ -2,11 +2,9 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.MixedColorProducer;
 import com.intellij.ui.paint.RectanglePainter;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -14,12 +12,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import javax.swing.JScrollPane;
 
 import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.ui.components.DefaultScrollBarUI.isOpaque;
@@ -28,8 +24,8 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
   final Rectangle bounds = new Rectangle();
   final TwoWayAnimator animator;
 
-  private static final ColorKey TRACK_OPAQUE_BACKGROUND
-    = key(0xFFF5F5F5, 0xFF3F4244, 0xFFF5F5F5, 0xFF3F4244, "ScrollBar.background");
+  private static final ColorKey BACKGROUND = key(0xFFF5F5F5, 0xFF3F4244, "ScrollBar.background");
+
   private static final ColorKey TRACK_BACKGROUND
     = key(0x00808080, 0x00808080, 0x00808080, 0x00808080, "ScrollBar.Transparent.trackColor");
   private static final ColorKey TRACK_HOVERED_BACKGROUND
@@ -63,6 +59,11 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
   }
 
   @NotNull
+  private static ColorKey key(int light, int dark, @NotNull String name) {
+    return ColorKey.createColorKey(name, JBColor.namedColor(name, new JBColor(new Color(light, true), new Color(dark, true))));
+  }
+
+  @NotNull
   private static ColorKey key(int light, int dark, int lightMac, int darkMac, @NotNull String name) {
     return ColorKey.createColorKey(name, JBColor.namedColor(name, new JBColor(
       new Color(!isMac ? light : lightMac, true),
@@ -88,27 +89,7 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
   }
 
   static void setBackground(@NotNull Component component) {
-    component.setBackground(new JBColor(new NotNullProducer<Color>() {
-      private Color original;
-      private Color modified;
-
-      @NotNull
-      @Override
-      public Color produce() {
-        Container parent = component.getParent();
-        if (parent instanceof JScrollPane && ScrollSettings.isBackgroundFromView()) {
-          Color background = JBScrollPane.getViewBackground((JScrollPane)parent);
-          if (background != null) {
-            if (!background.equals(original)) {
-              modified = ColorUtil.shift(background, ColorUtil.isDark(background) ? 1.05 : 0.96);
-              original = background;
-            }
-            return modified;
-          }
-        }
-        return getColor(component, TRACK_OPAQUE_BACKGROUND);
-      }
-    }));
+    component.setBackground(new JBColor(() -> getColor(component, BACKGROUND)));
   }
 
   static final class Track extends ScrollBarPainter {
