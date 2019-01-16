@@ -110,6 +110,8 @@ public class LoadingOrder {
   }
 
   public static void sort(@NotNull final List<? extends Orderable> orderable) {
+    if (orderable.size() < 2) return;
+
     // our graph is pretty sparse so do benefit from the fact
     final Map<String, Orderable> map = ContainerUtil.newLinkedHashMap();
     final Map<Orderable, LoadingOrder> cachedMap = ContainerUtil.newLinkedHashMap();
@@ -119,10 +121,14 @@ public class LoadingOrder {
       String id = o.getOrderId();
       if (StringUtil.isNotEmpty(id)) map.put(id, o);
       LoadingOrder order = o.getOrder();
+      if (order == ANY) continue;
+
       cachedMap.put(o, order);
       if (order.myFirst) first.add(o);
       if (!order.myBefore.isEmpty()) hasBefore.add(o);
     }
+
+    if (cachedMap.isEmpty()) return;
 
     InboundSemiGraph<Orderable> graph = new InboundSemiGraph<Orderable>() {
       @NotNull
@@ -136,7 +142,7 @@ public class LoadingOrder {
       @NotNull
       @Override
       public Iterator<Orderable> getIn(Orderable n) {
-        LoadingOrder order = cachedMap.get(n);
+        LoadingOrder order = cachedMap.getOrDefault(n, ANY);
 
         Set<Orderable> predecessors = new LinkedHashSet<>();
         for (String id : order.myAfter) {
@@ -149,7 +155,7 @@ public class LoadingOrder {
         String id = n.getOrderId();
         if (StringUtil.isNotEmpty(id)) {
           for (Orderable o : hasBefore) {
-            LoadingOrder hisOrder = cachedMap.get(o);
+            LoadingOrder hisOrder = cachedMap.getOrDefault(o, ANY);
             if (hisOrder.myBefore.contains(id)) {
               predecessors.add(o);
             }
@@ -158,7 +164,7 @@ public class LoadingOrder {
 
         if (order.myLast) {
           for (Orderable o : orderable) {
-            LoadingOrder hisOrder = cachedMap.get(o);
+            LoadingOrder hisOrder = cachedMap.getOrDefault(o, ANY);
             if (!hisOrder.myLast) {
               predecessors.add(o);
             }
