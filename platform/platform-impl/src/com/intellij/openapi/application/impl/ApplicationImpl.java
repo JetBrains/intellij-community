@@ -1087,6 +1087,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void assertReadAccessAllowed() {
+
     if (!isReadAccessAllowed()) {
       LOG.error(
         "Read access is allowed from event dispatch thread or inside read-action only" +
@@ -1122,6 +1123,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private void assertIsDispatchThread(String message) {
+
     if (isDispatchThread()) return;
     throw new RuntimeExceptionWithAttachments(
       message,

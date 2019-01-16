@@ -48,6 +48,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
+import headless.HeadlessServer;
 import io.netty.util.internal.SystemPropertyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,6 +184,15 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
         return component == null ? super.getComponentBeforeImpl(focusCycleRoot, aComponent) : component;
       }
     });
+
+    if(HeadlessServer.isEnabled()) {
+      try {
+        HeadlessServer.startServer(this);
+      }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   private Component findNextFocusComponent() {

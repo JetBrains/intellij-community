@@ -118,9 +118,9 @@ class Win7TaskBar {
       return;
     }
 
-    WinDef.HWND handle = getHandle(frame);
-    mySetProgressState.invokeInt(new Object[]{myInterfacePointer, handle, isOk ? TBPF_NORMAL : TBPF_ERROR});
-    mySetProgressValue.invokeInt(new Object[]{myInterfacePointer, handle, new WinDef.ULONGLONG((long)(value * 100)), TOTAL_PROGRESS});
+    //WinDef.HWND handle = getHandle(frame);
+    //mySetProgressState.invokeInt(new Object[]{myInterfacePointer, handle, isOk ? TBPF_NORMAL : TBPF_ERROR});
+    //mySetProgressValue.invokeInt(new Object[]{myInterfacePointer, handle, new WinDef.ULONGLONG((long)(value * 100)), TOTAL_PROGRESS});
   }
 
   private static boolean isEnabled() {
@@ -132,7 +132,7 @@ class Win7TaskBar {
       return;
     }
 
-    mySetProgressState.invokeInt(new Object[]{myInterfacePointer, getHandle(frame), TBPF_NOPROGRESS});
+//    mySetProgressState.invokeInt(new Object[]{myInterfacePointer, getHandle(frame), TBPF_NOPROGRESS});
   }
 
   static void setOverlayIcon(IdeFrame frame, Object icon, boolean dispose) {
@@ -143,10 +143,10 @@ class Win7TaskBar {
     if (icon == null) {
       icon = Pointer.NULL;
     }
-    mySetOverlayIcon.invokeInt(new Object[]{myInterfacePointer, getHandle(frame), icon, Pointer.NULL});
-    if (dispose) {
-      User32.INSTANCE.DestroyIcon((WinDef.HICON)icon);
-    }
+    //mySetOverlayIcon.invokeInt(new Object[]{myInterfacePointer, getHandle(frame), icon, Pointer.NULL});
+    //if (dispose) {
+    //  User32.INSTANCE.DestroyIcon((WinDef.HICON)icon);
+    //}
   }
 
   static Object createIcon(byte[] ico) {

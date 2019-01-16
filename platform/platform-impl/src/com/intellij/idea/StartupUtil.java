@@ -23,12 +23,16 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
+import headless.HeadlessServer;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
+import ghostawt.GhostToolkit;
+import ghostawt.image.GhostGraphicsEnvironment;
+import ghostawt.sun.GFontManager;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
@@ -36,11 +40,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.BuiltInServer;
+import sun.font.FontManagerFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
@@ -82,11 +90,55 @@ public class StartupUtil {
     default void beforeImportConfigs() {}
   }
 
+  private static void unprotectField(Field field) throws Exception{
+    field.setAccessible(true);
+
+    Field modifiersField = Field.class.getDeclaredField("modifiers");
+
+    modifiersField.setAccessible(true);
+    modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+  }
+
+  private static void setupGraphicsEnvironment() throws Exception {
+    Field field =  GraphicsEnvironment.class.getDeclaredField("localEnv");
+
+    unprotectField(field);
+
+    field.set(null, new GhostGraphicsEnvironment());
+  }
+
+  private static void setupGhostToolkit() throws Exception  {
+    Field field =  Toolkit.class.getDeclaredField("toolkit");
+
+    unprotectField(field);
+
+    field.set(null, new GhostToolkit());
+  }
+
+  private static void setupFontManager() throws Exception  {
+    Field field =  FontManagerFactory.class.getDeclaredField("instance");
+
+    unprotectField(field);
+
+    field.set(null, new GFontManager());
+  }
+
   static void prepareAndStart(String[] args, AppStarter appStarter) {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     boolean newConfigFolder = false;
 
     checkHiDPISettings();
+
+    if(HeadlessServer.isEnabled()) {
+      try {
+        setupGhostToolkit();
+        setupGraphicsEnvironment();
+        setupFontManager();
+      }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
 
     if (!Main.isHeadless()) {
       AppUIUtil.updateFrameClass();
@@ -361,7 +413,7 @@ public class StartupUtil {
 
   private static void startLogging(final Logger log) {
     ShutDownTracker.getInstance().registerShutdownTask(() ->
-        log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"));
+                                                         log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"));
     log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
 
     ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
