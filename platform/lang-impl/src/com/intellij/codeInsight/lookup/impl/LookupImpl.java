@@ -117,7 +117,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   boolean myUpdating;
   private LookupUi myUi;
   private Integer myLastVisibleIndex;
-  private final AtomicInteger myDummyItemsCount = new AtomicInteger();
+  private final AtomicInteger myDummyItemCount = new AtomicInteger();
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger) {
     super(new JPanel(new BorderLayout()));
@@ -224,8 +224,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myList.ensureIndexIsVisible(index);
   }
 
-  public void setDummyItemsCount(int count) {
-    myDummyItemsCount.set(count);
+  public void setDummyItemCount(int count) {
+    myDummyItemCount.set(count);
   }
 
   public void repaintLookup(boolean onExplicitAction, boolean reused, boolean selectionVisible, boolean itemsChanged) {
@@ -435,7 +435,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       listModel.removeAll();
       if (!items.isEmpty()) {
         listModel.add(items);
-        addDummyItems(myDummyItemsCount.get());
+        addDummyItems(myDummyItemCount.get());
       }
       else {
         addEmptyItem(listModel);
