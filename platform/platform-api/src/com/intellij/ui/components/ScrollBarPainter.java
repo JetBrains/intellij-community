@@ -28,8 +28,6 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
   final Rectangle bounds = new Rectangle();
   final TwoWayAnimator animator;
 
-  private static final ColorKey TRACK_OPAQUE_FOREGROUND
-    = key(0xFFE6E6E6, 0xFF3F4244, 0xFFE6E6E6, 0xFF3F4244, "ScrollBar.foreground");
   private static final ColorKey TRACK_OPAQUE_BACKGROUND
     = key(0xFFF5F5F5, 0xFF3F4244, 0xFFF5F5F5, 0xFF3F4244, "ScrollBar.background");
   private static final ColorKey TRACK_BACKGROUND
@@ -87,10 +85,6 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
       Component component = supplier.get();
       return getColor(component, component != null && isOpaque(component) ? opaque : transparent);
     });
-  }
-
-  static void setForeground(@NotNull Component component) {
-    component.setForeground(new JBColor(() -> getColor(component, TRACK_OPAQUE_FOREGROUND)));
   }
 
   static void setBackground(@NotNull Component component) {

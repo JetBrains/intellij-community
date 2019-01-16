@@ -86,10 +86,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
     return SwingUtilities.isMiddleMouseButton(event);
   }
 
-  boolean isBorderNeeded(JComponent c) {
-    return false;
-  }
-
   boolean isTrackClickable() {
     return isOpaque(myScrollBar) || myTrack.animator.myValue > 0;
   }
@@ -189,7 +185,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
   public void installUI(JComponent c) {
     myScrollBar = (JScrollBar)c;
     ScrollBarPainter.setBackground(c);
-    ScrollBarPainter.setForeground(c);
     myScrollBar.setOpaque(false);
     myScrollBar.setFocusable(false);
     myScrollBar.addMouseListener(myListener);
@@ -289,32 +284,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
           int size = trailing.getPreferredSize().width;
           bounds.width -= size;
           trailing.setBounds(bounds.x + bounds.width, bounds.y, size, bounds.height);
-        }
-      }
-      if (parent instanceof JScrollPane && isBorderNeeded(c)) {
-        Color foreground = c.getForeground();
-        if (foreground != null && !foreground.equals(background)) {
-          g.setColor(foreground);
-          switch (alignment) {
-            case TOP:
-              bounds.height--;
-              g.drawLine(bounds.x, bounds.y + bounds.height, bounds.x + bounds.width, bounds.y + bounds.height);
-              break;
-            case LEFT:
-              bounds.width--;
-              g.drawLine(bounds.x + bounds.width, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height);
-              break;
-            case RIGHT:
-              g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
-              bounds.width--;
-              bounds.x++;
-              break;
-            case BOTTOM:
-              g.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y);
-              bounds.height--;
-              bounds.y++;
-              break;
-          }
         }
       }
       myTrack.bounds.setBounds(bounds);

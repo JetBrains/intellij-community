@@ -294,7 +294,6 @@ public class JBScrollPane extends JScrollPane {
     Corner(String pos) {
       myPos = pos;
       ScrollBarPainter.setBackground(this);
-      ScrollBarPainter.setForeground(this);
     }
 
     @Override
