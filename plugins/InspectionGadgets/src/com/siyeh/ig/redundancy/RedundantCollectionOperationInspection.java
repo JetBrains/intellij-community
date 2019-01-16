@@ -131,6 +131,9 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       if (indexOfArg == null) return;
       CommentTracker ct = new CommentTracker();
       String text = ct.text(indexOfArg);
+      if (PsiType.INT.equals(indexOfArg.getType())) {
+        text = "(" + CommonClassNames.JAVA_LANG_INTEGER + ")" + text;
+      }
       if (!PsiTreeUtil.isAncestor(call, removeArg, false)) {
         PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(removeArg, PsiDeclarationStatement.class);
         if (declaration == null) return;
