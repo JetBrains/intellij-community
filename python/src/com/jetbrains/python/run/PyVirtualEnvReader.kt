@@ -91,7 +91,7 @@ fun findActivateScript(sdkPath: String?, shellPath: String?): Pair<String, Strin
     return if (activate != null && activate.exists()) {
         Pair(activate.absolutePath, null)
     } else null
-  } else if (PythonSdkType.isCondaEnv(sdkPath)) {
+  } else if (PythonSdkType.isConda(sdkPath)) {
     val condaExecutable = PyCondaPackageService.getCondaExecutable(sdkPath!!)
 
     if (condaExecutable != null) {

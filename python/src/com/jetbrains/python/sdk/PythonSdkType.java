@@ -262,17 +262,15 @@ public final class PythonSdkType extends SdkType {
   }
 
   public static boolean isConda(@NotNull Sdk sdk) {
-    final String path = sdk.getHomePath();
-    return path != null && PyCondaPackageManagerImpl.isConda(sdk);
+    return PyCondaPackageManagerImpl.isConda(sdk);
+  }
+
+  public static boolean isConda(@Nullable String sdkPath) {
+    return PyCondaPackageManagerImpl.isConda(sdkPath);
   }
 
   public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
-    return isCondaEnv(sdk.getHomePath());
-  }
-
-  @Contract("null -> false")
-  public static boolean isCondaEnv(@Nullable String sdkPath) {
-    return sdkPath != null && PyCondaPackageManagerImpl.isCondaEnv(sdkPath);
+    return PyCondaPackageManagerImpl.isCondaVirtualEnv(sdk);
   }
 
   @Nullable

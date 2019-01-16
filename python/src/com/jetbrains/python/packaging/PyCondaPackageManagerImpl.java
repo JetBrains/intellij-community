@@ -184,11 +184,11 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     return packages;
   }
 
-  public static boolean isCondaVEnv(@NotNull final Sdk sdk) {
-    return isCondaEnv(sdk.getHomePath());
+  public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
+    return isCondaVirtualEnv(sdk.getHomePath());
   }
 
-  public static boolean isCondaEnv(@Nullable String sdkPath) {
+  public static boolean isCondaVirtualEnv(@Nullable String sdkPath) {
     final VirtualFile condaMeta = findCondaMeta(sdkPath);
     if (condaMeta == null) {
       return false;
@@ -198,13 +198,12 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   }
 
   // Conda virtual environment and system conda
-  public static boolean isConda(@NotNull final Sdk sdk) {
+  public static boolean isConda(@NotNull Sdk sdk) {
     return isConda(sdk.getHomePath());
   }
 
   public static boolean isConda(@Nullable String sdkPath) {
-    final VirtualFile condaMeta = findCondaMeta(sdkPath);
-    return condaMeta != null;
+    return findCondaMeta(sdkPath) != null;
   }
 
   @Nullable
