@@ -555,6 +555,49 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
+  public void testInheritedEnumMembers() {
+    myFixture.configureByText("a.java", "enum F { A,B,C}");
+
+    myFixture.testStructureView(svc -> {
+      svc.setActionActive(InheritedMembersNodeProvider.ID, true);
+      svc.setActionActive(PropertiesGrouper.ID, false);
+      svc.setActionActive(SuperTypesGrouper.ID, true);
+      svc.setActionActive(Sorter.ALPHA_SORTER_ID, true);
+
+      JTree tree = svc.getTree();
+      PlatformTestUtil.expandAll(tree);
+      PlatformTestUtil.assertTreeEqual(tree,
+                                       "-a.java\n" +
+                                       " -F\n" +
+                                       "  -Comparable\n" +
+                                       "   compareTo(T): int\n" +
+                                       "  -Enum\n" +
+                                       "   clone(): Object\n" +
+                                       "   compareTo(E): int\n" +
+                                       "   equals(Object): boolean\n" +
+                                       "   finalize(): void\n" +
+                                       "   getDeclaringClass(): Class<E>\n" +
+                                       "   hashCode(): int\n" +
+                                       "   name(): String\n" +
+                                       "   ordinal(): int\n" +
+                                       "   toString(): String\n" +
+                                       "   valueOf(Class<T>, String): T\n" +
+                                       "  -F\n" +
+                                       "   valueOf(String): F\n" +
+                                       "   values(): F[]\n" +
+                                       "  -Object\n" +
+                                       "   getClass(): Class<?>\n" +
+                                       "   notify(): void\n" +
+                                       "   notifyAll(): void\n" +
+                                       "   wait(): void\n" +
+                                       "   wait(long): void\n" +
+                                       "   wait(long, int): void\n" +
+                                       "  A: F\n" +
+                                       "  B: F\n" +
+                                       "  C: F");
+    });
+  }
+
   private void doTest(String classText, String expected) {
     doTest(classText, expected, false, false);
   }
