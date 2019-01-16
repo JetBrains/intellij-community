@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.util.text.StringUtil.newBombedCharSequence;
-
 public class TextSplitter extends BaseSplitter {
   private static final TextSplitter INSTANCE = new TextSplitter();
 
@@ -47,7 +45,7 @@ public class TextSplitter extends BaseSplitter {
   protected void doSplit(@NotNull String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
     final WordSplitter ws = WordSplitter.getInstance();
     try {
-      Matcher matcher = EXTENDED_WORD_AND_SPECIAL.matcher(newBombedCharSequence(text, 500));
+      Matcher matcher = EXTENDED_WORD_AND_SPECIAL.matcher(newBombedCharSequence(text));
 
       matcher.region(range.getStartOffset(), range.getEndOffset());
       while (matcher.find()) {

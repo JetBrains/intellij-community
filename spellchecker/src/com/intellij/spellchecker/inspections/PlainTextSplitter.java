@@ -29,12 +29,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.util.text.StringUtil.newBombedCharSequence;
 import static com.intellij.util.io.URLUtil.URL_PATTERN;
 
 public class PlainTextSplitter extends BaseSplitter {
   private static final PlainTextSplitter INSTANCE = new PlainTextSplitter();
-  public static final int DELAY = 500;
 
   public static PlainTextSplitter getInstance() {
     return INSTANCE;
@@ -60,10 +58,10 @@ public class PlainTextSplitter extends BaseSplitter {
     try {
       Matcher matcher;
       final String substring = range.substring(text).replace('\b', '\n').replace('\f', '\n');
-      if (Verifier.checkCharacterData(SPLIT_PATTERN.matcher(newBombedCharSequence(substring, DELAY)).replaceAll("")) != null) {
+      if (Verifier.checkCharacterData(SPLIT_PATTERN.matcher(newBombedCharSequence(substring)).replaceAll("")) != null) {
         return;
       }
-      matcher = SPLIT_PATTERN.matcher(newBombedCharSequence(range.substring(text), DELAY));
+      matcher = SPLIT_PATTERN.matcher(newBombedCharSequence(text, range));
 
       while (true) {
         checkCancelled();

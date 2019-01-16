@@ -94,7 +94,7 @@ public abstract class BaseSplitter implements Splitter {
     int till;
     boolean addLast = true;
     try {
-      Matcher matcher = toExclude.matcher(StringUtil.newBombedCharSequence(range.substring(text), 500));
+      Matcher matcher = toExclude.matcher(newBombedCharSequence(text, range));
       while (matcher.find()) {
         checkCancelled();
         TextRange found = matcherRange(range, matcher);
@@ -125,6 +125,24 @@ public abstract class BaseSplitter implements Splitter {
     catch (ProcessCanceledException e) {
       return Collections.singletonList(range);
     }
+  }
+
+  protected static CharSequence newBombedCharSequence(String text, TextRange range) {
+    return newBombedCharSequence(range.substring(text));
+  }
+
+  protected static CharSequence newBombedCharSequence(final String substring) {
+    final long myTime = System.currentTimeMillis() + 500;
+    return new StringUtil.BombedCharSequence(substring) {
+      @Override
+      protected void checkCanceled() {
+        if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+        long l = System.currentTimeMillis();
+        if (l >= myTime) {
+          throw new ProcessCanceledException();
+        }
+      }
+    };
   }
 
   public static void checkCancelled() {
