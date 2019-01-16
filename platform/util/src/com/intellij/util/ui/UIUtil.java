@@ -3223,6 +3223,12 @@ public class UIUtil {
 
     // With JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = getLabelFont();
+    if (SystemInfo.isMacOSElCapitan) {
+      // Text family should be used for relatively small sizes (<20pt), don't change to Display
+      // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
+      font = new Font(".SF NS Text", font.getStyle(), font.getSize());
+    }
+
     if (JBUI.SCALE_VERBOSE) {
       LOG.info(String.format("Label font: %s, %d", font.getFontName(), font.getSize()));
     }
