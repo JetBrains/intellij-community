@@ -345,7 +345,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void refresh() {
       myAmend.refresh();
-      restoreState();
+      myNextCommitAmend = false;
+      myShouldCommitSubrepos = false;
     }
 
     @Override
@@ -356,8 +357,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     @Override
     public void restoreState() {
-      myNextCommitAmend = false;
-      myShouldCommitSubrepos = false;
+      refresh();
     }
 
     @Override
