@@ -1229,6 +1229,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
         request.addRemoteRepository(artifactRepository);
       }
 
+      Maven3Sl4jLoggerWrapper.setCurrentWrapper(myConsoleWrapper);
       DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
       RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
 
@@ -1236,7 +1237,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
       // Don't try calling setLoggerFactory() removed by MRESOLVER-36 when Maven 3.6.0+ is used.
       // For more information and link to the MRESOLVER-36 see IDEA-201282.
-      Maven3Sl4jLoggerWrapper.setCurrentWrapper(myConsoleWrapper);
+
 
       // do not use request.getRemoteRepositories() here,
       // it can be broken after DefaultMaven#newRepositorySession => MavenRepositorySystem.injectMirror invocation
