@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
@@ -42,10 +43,10 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(annotations, copy.getRepeatAnnotations());
     assertEquals("Import tables do not match", original.getImportLayoutTable(), copy.getImportLayoutTable());
     assertEquals("On demand packages do not match", original.getPackagesToUseImportOnDemand(), copy.getPackagesToUseImportOnDemand());
-    assertEquals("Field type-to-name maps don not match", original.FIELD_TYPE_TO_NAME, copy.FIELD_TYPE_TO_NAME);
-    assertEquals("Static field type-to-name maps don not match", original.STATIC_FIELD_TYPE_TO_NAME, copy.STATIC_FIELD_TYPE_TO_NAME);
+    assertEquals("Field type-to-name maps do not match", original.FIELD_TYPE_TO_NAME, copy.FIELD_TYPE_TO_NAME);
+    assertEquals("Static field type-to-name maps do not match", original.STATIC_FIELD_TYPE_TO_NAME, copy.STATIC_FIELD_TYPE_TO_NAME);
 
-    copy.setRepeatAnnotations(Arrays.asList("anno1"));
+    copy.setRepeatAnnotations(Collections.singletonList("anno1"));
     assertNotSame("Changed repeated annotations should reflect the equality relation", original, copy);
   }
 
@@ -215,8 +216,6 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "prefer_longer_names = true\n" +
       "prefer_parameters_wrap = false\n" +
       "repeat_synchronized = true\n" +
-      "replace_cast = false\n" +
-      "replace_instance_of = false\n" +
       "replace_instance_of_and_cast = false\n" +
       "replace_null_check = true\n" +
       "resource_list_new_line_after_left_paren = false\n" +
