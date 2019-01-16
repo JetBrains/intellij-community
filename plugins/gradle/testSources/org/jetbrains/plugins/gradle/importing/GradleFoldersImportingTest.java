@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
@@ -36,7 +37,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testBaseJavaProject() throws Exception {
-
+    getCurrentExternalProjectSettings().setDelegatedBuild(ThreeState.NO);
     createDefaultDirs();
     importProject(
       "apply plugin: 'java'"
