@@ -14,6 +14,9 @@ if (bundledJreVersion == 8) {
 else if (bundledJreVersion == 9) {
   jreArtifactPrefix = 'jbsdk9'
 }
+else if (bundledJreVersion == 11) {
+  jreArtifactPrefix = 'jbsdk11'
+}  
 else {
   throw new IllegalArgumentException("Unable to determine bundled JRE artifact prefix by JRE version $bundledJreVersion")
 }
