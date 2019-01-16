@@ -932,7 +932,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
   }
 
-  private void doOK(boolean promptOnReplace) {
+  private void doOK(boolean openInFindWindow) {
     if (!canBeClosedImmediately()) {
       return;
     }
@@ -944,6 +944,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     if (validationInfo == null) {
       if (validateModel.isReplaceState() &&
+          !openInFindWindow &&
           myResultsPreviewTable.getRowCount() > 1 &&
           !ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
             myUsagesCount,
@@ -953,7 +954,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         return;
       }
       myHelper.getModel().copyFrom(validateModel);
-      myHelper.getModel().setPromptOnReplace(promptOnReplace);
+      myHelper.getModel().setPromptOnReplace(openInFindWindow);
       myHelper.doOKAction();
     }
     else {
