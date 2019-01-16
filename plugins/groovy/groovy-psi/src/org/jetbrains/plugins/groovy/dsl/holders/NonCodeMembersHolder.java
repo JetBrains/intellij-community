@@ -1,8 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl.holders;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -25,15 +27,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessMethods;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessProperties;
+
 /**
  * @author peter
  */
 public class NonCodeMembersHolder implements CustomMembersHolder {
 
+  private static final Logger LOG = Logger.getInstance(NonCodeMembersHolder.class);
+
   public static final Key<String> DOCUMENTATION = Key.create("GdslDocumentation");
   public static final Key<String> DOCUMENTATION_URL = Key.create("GdslDocumentationUrl");
 
-  private final List<PsiElement> myDeclarations = new ArrayList<>();
+  private final List<PsiVariable> myVariables = new ArrayList<>();
+  private final List<PsiMethod> myMethods = new ArrayList<>();
   private final List<ClosureDescriptor> myClosureDescriptors = new ArrayList<>();
 
   public static NonCodeMembersHolder generateMembers(List<Map> methods, final PsiFile place) {
@@ -64,21 +72,28 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
         }
       }
       else if (decltype == DeclarationType.VARIABLE) {
-        addDeclaration(createVariable(prop, place, manager));
+        myVariables.add(createVariable(prop, place, manager));
       }
       else {
         //declarationType == DeclarationType.METHOD
-        final PsiElement method = createMethod(prop, place, manager);
-        addDeclaration(method);
+        myMethods.add(createMethod(prop, place, manager));
       }
     }
   }
 
   public void addDeclaration(@NotNull PsiElement element) {
-    myDeclarations.add(element);
+    if (element instanceof PsiMethod) {
+      myMethods.add((PsiMethod)element);
+    }
+    else if (element instanceof PsiVariable) {
+      myVariables.add((PsiVariable)element);
+    }
+    else {
+      LOG.error("Unknown declaration: " + element);
+    }
   }
 
-  private static PsiElement createVariable(Map prop, PsiElement place, PsiManager manager) {
+  private static PsiVariable createVariable(Map prop, PsiElement place, PsiManager manager) {
     String name = String.valueOf(prop.get("name"));
     final String type = String.valueOf(prop.get("type"));
     return new GrLightVariable(manager, name, type, Collections.emptyList(), place.getContainingFile());
@@ -190,16 +205,24 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor _processor, ResolveState state) {
     for (PsiScopeProcessor each : MultiProcessor.allProcessors(_processor)) {
       String hint = ResolveUtil.getNameHint(each);
-      for (PsiElement declaration : myDeclarations) {
-        if (checkName(hint, declaration) && !each.execute(declaration, state)) return false;
+      ElementClassHint classHint = each.getHint(ElementClassHint.KEY);
+      if (shouldProcessMethods(classHint)) {
+        for (PsiMethod declaration : myMethods) {
+          if (checkName(hint, declaration) && !each.execute(declaration, state)) return false;
+        }
+      }
+      if (shouldProcessProperties(classHint)) {
+        for (PsiVariable declaration : myVariables) {
+          if (checkName(hint, declaration) && !each.execute(declaration, state)) return false;
+        }
       }
     }
     return true;
   }
 
-  private static boolean checkName(String hint, PsiElement declaration) {
-    if (hint != null && declaration instanceof PsiNamedElement && !isConstructor(declaration)) {
-      return hint.equals(((PsiNamedElement)declaration).getName());
+  private static boolean checkName(String hint, PsiNamedElement declaration) {
+    if (hint != null && !isConstructor(declaration)) {
+      return hint.equals(declaration.getName());
     }
     return true;
   }
