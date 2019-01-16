@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl.holders;
 
 import com.intellij.openapi.util.Key;
@@ -23,14 +23,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * @author peter
  */
 public class NonCodeMembersHolder implements CustomMembersHolder {
+
   public static final Key<String> DOCUMENTATION = Key.create("GdslDocumentation");
   public static final Key<String> DOCUMENTATION_URL = Key.create("GdslDocumentationUrl");
+
   private final List<PsiElement> myDeclarations = new ArrayList<>();
+  private final List<ClosureDescriptor> myClosureDescriptors = new ArrayList<>();
 
   public static NonCodeMembersHolder generateMembers(List<Map> methods, final PsiFile place) {
     Map<List<Map>, NonCodeMembersHolder> map = CachedValuesManager.getCachedValue(
@@ -54,9 +58,9 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
     for (Map prop : data) {
       final Object decltype = prop.get("declarationType");
       if (decltype == DeclarationType.CLOSURE) {
-        PsiElement closureDescriptor = createClosureDescriptor(prop, place, manager);
+        ClosureDescriptor closureDescriptor = createClosureDescriptor(prop);
         if (closureDescriptor != null) {
-          addDeclaration(closureDescriptor);
+          myClosureDescriptors.add(closureDescriptor);
         }
       }
       else if (decltype == DeclarationType.VARIABLE) {
@@ -81,8 +85,8 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   }
 
   @Nullable
-  private static PsiElement createClosureDescriptor(Map prop, PsiElement place, PsiManager manager) {
-    final ClosureDescriptor closure = new ClosureDescriptor(manager);
+  private static ClosureDescriptor createClosureDescriptor(Map prop) {
+    final ClosureDescriptor closure = new ClosureDescriptor();
 
     final Object method = prop.get("method");
     if (!(method instanceof Map)) return null;
@@ -101,17 +105,6 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
         closure.addParameter(typeName, String.valueOf(paramName));
       }
     }
-
-    Object doc = prop.get("doc");
-    if (doc instanceof String) {
-      closure.putUserData(DOCUMENTATION, (String)doc);
-    }
-
-    Object docUrl = prop.get("docUrl");
-    if (docUrl instanceof String) {
-      closure.putUserData(DOCUMENTATION_URL, (String)docUrl);
-    }
-
 
     return closure;
   }
@@ -213,5 +206,10 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
 
   private static boolean isConstructor(PsiElement declaration) {
     return declaration instanceof PsiMethod && ((PsiMethod)declaration).isConstructor();
+  }
+
+  @Override
+  public void consumeClosureDescriptors(GroovyClassDescriptor descriptor, Consumer<? super ClosureDescriptor> consumer) {
+    myClosureDescriptors.forEach(consumer);
   }
 }
