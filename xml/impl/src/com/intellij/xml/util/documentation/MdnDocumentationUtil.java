@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.platform.templates.github.DownloadUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +124,7 @@ public class MdnDocumentationUtil {
         if (!targetFile.exists()) {
           DownloadUtil.downloadAtomically(ProgressManager.getInstance().getProgressIndicator(), url + "?raw&summary", targetFile);
         }
-        String content = FileUtil.loadFile(targetFile);
+        String content = FileUtil.loadFile(targetFile, CharsetToolkit.UTF8_CHARSET);
         String mdnDecorated = decorate(fixLinks(content), url);
         if (text == null) {
           return mdnDecorated;
