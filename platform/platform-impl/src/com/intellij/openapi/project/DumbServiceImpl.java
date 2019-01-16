@@ -3,7 +3,6 @@ package com.intellij.openapi.project;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -35,7 +34,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
@@ -517,7 +515,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
         DumbModeTask task = null;
         while (true) {
-          Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask(task, visibleIndicator);
+          Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask(task);
           if (pair == null) break;
 
           task = pair.first;
@@ -570,7 +568,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Nullable
-  private Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable DumbModeTask prevTask, @NotNull ProgressIndicator indicator) {
+  private Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable DumbModeTask prevTask) {
     CompletableFuture<Pair<DumbModeTask, ProgressIndicatorEx>> result = new CompletableFuture<>();
     UIUtil.invokeLaterIfNeeded(() -> {
       if (myProject.isDisposed()) {
@@ -582,13 +580,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         Disposer.dispose(prevTask);
       }
 
-      if (PowerSaveMode.isEnabled() && Registry.is("pause.indexing.in.power.save.mode")) {
-        indicator.setText("Indexing paused during Power Save mode...");
-        runWhenPowerSaveModeChanges(() -> result.complete(pollTaskQueue()));
-        completeWhenProjectClosed(result);
-      } else {
-        result.complete(pollTaskQueue());
-      }
+      result.complete(pollTaskQueue());
     });
     return waitForFuture(result);
   }
@@ -628,25 +620,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       }
       return null;
     }
-  }
-
-  private void completeWhenProjectClosed(CompletableFuture<Pair<DumbModeTask, ProgressIndicatorEx>> result) {
-    ProjectManagerListener listener = new ProjectManagerListener() {
-      @Override
-      public void projectClosed(@NotNull Project project) {
-        result.completeExceptionally(new ProcessCanceledException());
-      }
-    };
-    ProjectManager.getInstance().addProjectManagerListener(myProject, listener);
-    result.thenAccept(p -> ProjectManager.getInstance().removeProjectManagerListener(myProject, listener));
-  }
-
-  private void runWhenPowerSaveModeChanges(Runnable r) {
-    MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(PowerSaveMode.TOPIC, () -> {
-      r.run();
-      connection.disconnect();
-    });
   }
 
   @Override
