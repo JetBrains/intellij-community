@@ -392,11 +392,16 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   protected void updatePreferredSize(JComponent c, Dimension size) {
-    if (!(c.getParent() instanceof JComboBox)) {
+    if (!isUnderComboBox(c)) {
       JBInsets.addTo(size, ((JTextComponent)c).getMargin());
       size.height = Math.max(size.height, getMinimumHeight(size.height));
       size.width = Math.max(size.width, MINIMUM_WIDTH.get());
     }
+  }
+
+  private static boolean isUnderComboBox(JComponent c) {
+    Component parent = c.getParent();
+    return parent instanceof JComboBox || (parent != null && parent.getParent() instanceof JComboBox);
   }
 
   protected int getMinimumHeight(int textHeight) {
