@@ -2,7 +2,6 @@
 package com.intellij.platform.templates;
 
 import com.intellij.configurationStore.JbXmlOutputter;
-import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -24,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.configurationStore.StoreUtilKt.getStateSpec;
 
 /**
  * @author Dmitry Avdeev
@@ -78,7 +79,7 @@ public class SystemFileProcessor extends ProjectTemplateFileProcessor {
               }
               Element element1 = state instanceof Element ? (Element)state : XmlSerializer.serialize(state);
               element.addContent(element1.cloneContent());
-              element.setAttribute("name", StoreUtil.getStateSpec((PersistentStateComponent)component).name());
+              element.setAttribute("name", getStateSpec((PersistentStateComponent)component).name());
             }
           }, ModalityState.defaultModalityState());
         }

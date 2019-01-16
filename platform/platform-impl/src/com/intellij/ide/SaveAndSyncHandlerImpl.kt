@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.application.PooledScope
+import com.intellij.configurationStore.StoreUtil
 import com.intellij.configurationStore.saveDocumentsAndProjectsAndApp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -119,7 +120,7 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
   // old implementation, used now if new implementation is not enabled by flag
   private fun doSaveDocumentsAndProjectsAndAppInEdt() {
     if (isSaveAllowed) {
-      saveDocumentsAndProjectsAndApp(isForceSavingAllSettings = false)
+      StoreUtil.saveDocumentsAndProjectsAndApp(isForceSavingAllSettings = false)
     }
   }
 

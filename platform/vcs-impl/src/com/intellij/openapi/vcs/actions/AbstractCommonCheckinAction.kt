@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions
 
-import com.intellij.configurationStore.saveDocumentsAndProjectSettings
+import com.intellij.configurationStore.StoreUtil
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.application.ModalityState
@@ -70,7 +70,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
   protected abstract fun getRoots(dataContext: VcsContext): Array<FilePath>
 
   protected open fun prepareRootsForCommit(roots: Array<FilePath>, project: Project): Array<FilePath> {
-    project.saveDocumentsAndProjectSettings()
+    StoreUtil.saveDocumentsAndProjectSettings(project)
 
     return DescindingFilesFilter.filterDescindingFiles(roots, project)
   }
