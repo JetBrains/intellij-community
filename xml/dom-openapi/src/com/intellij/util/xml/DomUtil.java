@@ -479,9 +479,9 @@ public class DomUtil {
   }
 
   public static Pair<TextRange, PsiElement> getProblemRange(final XmlTag tag) {
-    final PsiElement startToken = XmlTagUtil.getStartTagNameElement(tag);
+    PsiElement startToken = XmlTagUtil.getStartTagNameElement(tag);
     if (startToken == null) {
-      return Pair.create(tag.getTextRange(), (PsiElement)tag);
+      startToken = tag;
     }
 
     return Pair.create(startToken.getTextRange().shiftRight(-tag.getTextRange().getStartOffset()), (PsiElement)tag);
