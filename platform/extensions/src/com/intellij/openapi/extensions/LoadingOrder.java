@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.util.Couple;
@@ -105,8 +105,10 @@ public class LoadingOrder {
     return new LoadingOrder(AFTER_STR + id);
   }
 
-  public static void sort(@NotNull Orderable... orderable) {
-    sort(Arrays.asList(orderable));
+  public static void sort(@NotNull Orderable[] orderable) {
+    if (orderable.length > 1) {
+      sort(Arrays.asList(orderable));
+    }
   }
 
   public static void sort(@NotNull final List<? extends Orderable> orderable) {
