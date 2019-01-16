@@ -9,9 +9,12 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.included
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.includedUnderTag
 import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
@@ -34,6 +37,8 @@ class ChangesViewCommitPanel(val project: Project, private val changesView: Chan
     editorField.addSettingsProvider { it.setBorder(emptyLeft(3)) }
     editorField.setPlaceholder("Commit Message")
   }
+  private val legendCalculator = ChangeInfoCalculator()
+  private val legend = CommitLegendPanel(legendCalculator)
 
   init {
     val commitButton = object : JButton("Commit") {
@@ -41,6 +46,7 @@ class ChangesViewCommitPanel(val project: Project, private val changesView: Chan
     }
     val buttonPanel = simplePanel()
       .addToLeft(commitButton)
+      .addToRight(legend.component)
       .withBackground(getTreeBackground())
     val centerPanel = simplePanel(commitMessage).addToBottom(buttonPanel)
 
@@ -48,6 +54,7 @@ class ChangesViewCommitPanel(val project: Project, private val changesView: Chan
     withPreferredHeight(85)
 
     commitButton.addActionListener { doCommit() }
+    changesView.setInclusionListener { inclusionChanged() }
   }
 
   override fun getData(dataId: String) = commitMessage.getData(dataId)
@@ -58,10 +65,18 @@ class ChangesViewCommitPanel(val project: Project, private val changesView: Chan
 
   fun applyParameters(included: Collection<*>) {
     changesView.setIncludedChanges(included)
+    inclusionChanged()
     commitMessage.requestFocusInMessage()
   }
 
+  private fun inclusionChanged() {
+    //    TODO "all" numbers are not used in legend. Remove them from method, or add comment here
+    legendCalculator.update(emptyList(), getIncludedChanges(), 0, getIncludedUnversioned().size)
+    legend.update()
+  }
+
   private fun getIncludedChanges() = included(changesView).userObjects(Change::class.java)
+  private fun getIncludedUnversioned() = includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(VirtualFile::class.java)
 
   private fun doCommit() {
     //    TODO handlers
