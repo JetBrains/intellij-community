@@ -12,8 +12,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 
 class ProjectExcludesIgnoredFileProvider : IgnoredFileProvider {
 
-  override fun isIgnoredFile(project: Project, filePath: FilePath) =
-    ChangeListManagerImpl.getInstanceImpl(project).ignoredFilesComponent.isIgnoredFile(filePath)
+  override fun isIgnoredFile(project: Project, filePath: FilePath) = false //TODO implement option sync exclude -> ignore
 
   override fun getIgnoredFiles(project: Project) = getProjectExcludePathsRelativeTo(project)
 

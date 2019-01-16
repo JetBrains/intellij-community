@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +64,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     VirtualFile target = myProjectRoot.findChild("target");
     assertNotNull(target);
     if (!Registry.is("ide.hide.excluded.files")) {
-      assertTrue(ChangeListManager.getInstance(myProject).isIgnoredFile(target));
+      assertTrue(VcsIgnoreManager.getInstance(myProject).isPotentiallyIgnoredFile(target));
     }
   }
 

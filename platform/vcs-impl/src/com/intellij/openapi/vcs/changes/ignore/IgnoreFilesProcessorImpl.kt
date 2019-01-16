@@ -12,10 +12,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilesProcessorWithNotificationImpl
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
-import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider
-import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
-import com.intellij.openapi.vcs.changes.IgnoredFileProvider
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElementsToIgnoreBlock
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -36,6 +33,7 @@ class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disposable)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), AsyncVfsEventsListener, Disposable {
 
   private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
+  private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
   init {
     runReadAction {
@@ -51,7 +49,7 @@ class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disposable)
     val potentiallyIgnoredFiles =
       events.asSequence()
         .mapNotNull(::getAffectedFile)
-        .filter { changeListManager.isPotentiallyIgnoredFile(it) }
+        .filter(vcsIgnoreManager::isPotentiallyIgnoredFile)
         .toList()
 
     if (potentiallyIgnoredFiles.isEmpty()) return
@@ -149,7 +147,7 @@ class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disposable)
   override fun notificationTitle() = ""
   override fun notificationMessage(): String = VcsBundle.message("ignored.file.manage.with.files.message")
 
-  private fun shouldIgnore(file: VirtualFile) = changeListManager.isPotentiallyIgnoredFile(file)
+  private fun shouldIgnore(file: VirtualFile) = !changeListManager.isIgnoredFile(file)
 
   override fun needDoForCurrentProject() = VcsApplicationSettings.getInstance().MANAGE_IGNORE_FILES || super.needDoForCurrentProject()
 

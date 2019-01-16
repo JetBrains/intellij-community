@@ -19,6 +19,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -27,6 +28,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * @deprecated idea-level ignores will be removed
+ */
+@Deprecated
+@Ignore
 public class IgnoreIdeaLevelTest extends PlatformTestCase {
   private MockAbstractVcs myVcs;
   private ProjectLevelVcsManagerImpl myVcsManager;
