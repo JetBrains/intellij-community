@@ -64,6 +64,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -184,6 +185,10 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   @NonNls @NotNull
   public String getComponentName() {
     return "ChangesViewManager";
+  }
+
+  public void applyParameters(@NotNull Collection<?> included) {
+    if (myCommitPanel != null) myCommitPanel.applyParameters(included);
   }
 
   private JComponent createChangeViewComponent() {

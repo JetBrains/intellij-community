@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.containers.ContainerUtil.concat
 import com.intellij.util.ui.UIUtil.removeMnemonic
+import com.intellij.vcsUtil.VcsImplUtil.isNonModalCommit
 
 private val LOG = logger<AbstractCommonCheckinAction>()
 
@@ -92,8 +93,20 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
       included = concat(changesToCommit, selectedUnversioned)
     }
 
-    val initialChangeList = getInitiallySelectedChangeList(context, project)
-    CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialChangeList, getExecutor(project), null)
+    // TODO
+    //  parameters = DialogCommitWorkflowParameters(changesToCommit, included, executor)
+    //  workflow.apply(parameters)
+
+    val executor = getExecutor(project)
+    if (executor == null && isNonModalCommit()) {
+      val changesViewManager = ChangesViewManager.getInstance(project) as ChangesViewManager
+
+      changesViewManager.applyParameters(included)
+    }
+    else {
+      val initialChangeList = getInitiallySelectedChangeList(context, project)
+      CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialChangeList, executor, null)
+    }
   }
 
   protected open fun getInitiallySelectedChangeList(context: VcsContext, project: Project): LocalChangeList? {

@@ -56,6 +56,11 @@ class ChangesViewCommitPanel(val project: Project, private val changesView: Chan
     CommitAction().registerCustomShortcutSet(CTRL_ENTER, component)
   }
 
+  fun applyParameters(included: Collection<*>) {
+    changesView.setIncludedChanges(included)
+    commitMessage.requestFocusInMessage()
+  }
+
   private fun getIncludedChanges() = included(changesView).userObjects(Change::class.java)
 
   private fun doCommit() {
