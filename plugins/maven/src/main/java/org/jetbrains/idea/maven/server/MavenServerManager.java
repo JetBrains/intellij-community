@@ -89,6 +89,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private boolean myLoggerExported;
   private boolean myDownloadListenerExported;
   private State myState = new State();
+
   private static class BundledMavenPathHolder {
     private static final File myBundledMaven2Home;
     private static final File myBundledMaven3Home;
@@ -100,7 +101,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       if (pluginFileOrDir.isDirectory()) {
         File parentFile = getMavenPluginParentFile();
         myBundledMaven2Home = new File(parentFile, "maven2-server-impl/lib/maven2");
-        myBundledMaven3Home = new File(parentFile, "maven3-server-impl/lib/maven3");
+        myBundledMaven3Home = new File(parentFile, "maven36-server-impl/lib/maven3");
       }
       else {
         myBundledMaven2Home = new File(root, "maven2");
@@ -335,7 +336,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
         String mavenEmbedderDebugPort = System.getProperty("idea.maven.embedder.debug.port");
         if (mavenEmbedderDebugPort != null) {
-          params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" + mavenEmbedderDebugPort);
+          params.getVMParametersList()
+            .addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" + mavenEmbedderDebugPort);
         }
 
         String mavenEmbedderParameters = System.getProperty("idea.maven.embedder.parameters");
@@ -430,8 +432,11 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
           classpath.add(new File(root, "intellij.maven.server.m30.impl"));
         }
-        else {
+        else if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") < 0) {
           classpath.add(new File(root, "intellij.maven.server.m3.impl"));
+        }
+        else {
+          classpath.add(new File(root, "intellij.maven.server.m36.impl"));
         }
       }
     }
@@ -449,8 +454,11 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
           classpath.add(new File(root, "maven30-server-impl.jar"));
         }
-        else {
+        else if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") < 0) {
           classpath.add(new File(root, "maven3-server-impl.jar"));
+        }
+        else {
+          classpath.add(new File(root, "maven36-server-impl.jar"));
         }
       }
     }
@@ -548,7 +556,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     result.setGlobalSettingsFile(settings.getEffectiveGlobalSettingsIoFile());
     result.setLocalRepository(settings.getEffectiveLocalRepository());
     result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());
-    result.setSnapshotUpdatePolicy(settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
+    result.setSnapshotUpdatePolicy(
+      settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
     return result;
   }
 
@@ -621,7 +630,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
   @Nullable
   public static File getMavenHomeFile(@Nullable String mavenHome) {
-    if(mavenHome == null) return null;
+    if (mavenHome == null) return null;
     if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome)) {
       return BundledMavenPathHolder.myBundledMaven2Home;
     }
