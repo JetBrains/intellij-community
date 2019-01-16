@@ -96,7 +96,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       }
     }
 
-    final PsiType[] parameterTypes;
+    final MethodSignature methodSignature;
     if (signature != null) {
       final List<PsiType> types = ContainerUtil.newArrayListWithCapacity(signature.length);
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(element.getProject());
@@ -108,15 +108,13 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
           types.add(PsiType.NULL);
         }
       }
-      parameterTypes = types.toArray(PsiType.createArray(types.size()));
+      methodSignature = MethodSignatureUtil.createMethodSignature(name, types.toArray(PsiType.createArray(types.size())),
+                                                                  PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY,
+                                                                  name.equals(scope.getName()));
     }
     else {
-      parameterTypes = PsiType.EMPTY_ARRAY;
+      methodSignature = null;
     }
-
-    final MethodSignature methodSignature = MethodSignatureUtil.createMethodSignature(name, parameterTypes,
-                                                                                      PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY,
-                                                                                      name.equals(scope.getName()));
 
     PsiMethod method = findMethod(methodSignature, name, getAllMethods(scope, this));
 
@@ -205,10 +203,10 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   }
 
   @Nullable
-  public static PsiMethod findMethod(@NotNull MethodSignature methodSignature, @Nullable String name, @NotNull PsiMethod[] allMethods) {
+  public static PsiMethod findMethod(@Nullable MethodSignature methodSignature, @Nullable String name, @NotNull PsiMethod[] allMethods) {
     for (PsiMethod method : allMethods) {
       if (method.getName().equals(name) &&
-          MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY))) {
+          (methodSignature == null || MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY)))) {
         return method;
       }
     }
