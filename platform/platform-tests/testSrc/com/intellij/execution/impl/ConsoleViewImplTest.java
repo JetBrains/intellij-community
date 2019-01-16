@@ -15,13 +15,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -31,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.*;
 import com.intellij.util.Alarm;
@@ -469,6 +467,23 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       myConsole.flushDeferredText();
     }
     Assert.assertEquals(expectedText, myConsole.getText());
+  }
+
+  public void testBackspacePerformance() {
+    int nCopies = 10000;
+    String in = StringUtil.join(Collections.nCopies(nCopies, "\na\nb\bc"), "");
+    PlatformTestUtil.startPerformanceTest("print newlines with backspace", 5000, () -> {
+      for (int i = 0; i < 2; i++) {
+        myConsole.clear();
+        int printCount = ConsoleBuffer.getCycleBufferSize() / in.length();
+        for (int j = 0; j < printCount; j++) {
+          myConsole.print(in, ConsoleViewContentType.NORMAL_OUTPUT);
+        }
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        myConsole.waitAllRequests();
+        Assert.assertEquals(printCount * nCopies * "\na\nc".length(), myConsole.getContentSize());
+      }
+    }).assertTiming();
   }
 
   public void testBackspaceChangesHighlightingRanges1() {
