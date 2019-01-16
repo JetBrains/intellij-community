@@ -278,7 +278,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          }
                          RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(uClass.getSourcePsi());
                          refFrom.addReference(refClass, uClass.getSourcePsi(), decl, false, true, null);
-                         return false;
+                         return true;
                        }
 
                        @Override
