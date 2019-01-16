@@ -355,9 +355,7 @@ public class ExceptionWorker {
           }
           if (parent instanceof PsiNewExpression) {
             PsiJavaCodeReferenceElement ref = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();
-            if (ref != null && isTargetClass(ref.resolve())) {
-              return true;
-            }
+            return ref != null && isTargetClass(ref.resolve());
           }
         }
       }
@@ -365,9 +363,7 @@ public class ExceptionWorker {
         PsiElement parent = element.getParent();
         if (parent instanceof PsiReferenceExpression) {
           PsiElement target = ((PsiReferenceExpression)parent).resolve();
-          if (target instanceof PsiMethod && isTargetClass(((PsiMethod)target).getContainingClass())) {
-            return true;
-          }
+          return target instanceof PsiMethod && isTargetClass(((PsiMethod)target).getContainingClass());
         }
       }
       return false;
@@ -380,16 +376,14 @@ public class ExceptionWorker {
 
     private static boolean isTargetClass(PsiClass psiClass, String className) {
       if (psiClass == null) return false;
-      String name = psiClass.getQualifiedName();
-      if (className.equals(name)) return true;
-      if (StringUtil.getShortName(className).contains("$")) {
-        String prefix = StringUtil.substringBeforeLast(className, "$");
-        String suffix = StringUtil.substringAfterLast(className, "$");
-        PsiClass containingClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class, true);
-        return suffix != null && isTargetClass(containingClass, prefix) &&
-               ClassUtil.findNonQualifiedClassByIndex(suffix, containingClass, true) == psiClass;
-      }
-      return false;
+      if (className.equals(psiClass.getQualifiedName())) return true;
+      if (!StringUtil.getShortName(className).contains("$")) return false;
+      
+      String prefix = StringUtil.substringBeforeLast(className, "$");
+      String suffix = StringUtil.substringAfterLast(className, "$");
+      PsiClass containingClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class, true);
+      return suffix != null && isTargetClass(containingClass, prefix) &&
+             ClassUtil.findNonQualifiedClassByIndex(suffix, containingClass, true) == psiClass;
     }
   }
 
