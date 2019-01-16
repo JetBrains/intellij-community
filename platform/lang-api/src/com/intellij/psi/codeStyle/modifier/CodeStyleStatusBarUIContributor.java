@@ -8,6 +8,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public interface CodeStyleStatusBarUIContributor {
 
   /**
@@ -50,4 +52,12 @@ public interface CodeStyleStatusBarUIContributor {
    */
   @Nullable
   AnAction createDisableAction(@NotNull Project project);
+
+  /**
+   * @return An icon in the status bar representing a source of changes when modified code style settings are used for a file in editor. By
+   * default no icon is shown.
+   */
+  default Icon getIcon() {
+    return null;
+  }
 }
