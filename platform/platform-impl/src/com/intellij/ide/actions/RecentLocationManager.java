@@ -2,8 +2,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -19,15 +17,12 @@ import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -44,6 +39,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class RecentLocationManager implements ProjectComponent {
   @NotNull private final Project myProject;
@@ -132,11 +128,26 @@ public class RecentLocationManager implements ProjectComponent {
     }
 
     Document document = editor.getDocument();
-    VirtualFile file = changePlace.getFile();
-    RangeMarker rangeMarker = getRangeMarker(document, line);
+    TextRange range = getLinesRange(document, line);
+
+    String text = document.getText(TextRange.create(range.getStartOffset(), range.getEndOffset()));
+
+    int newLinesBefore = StringUtil.countNewLines(
+      Objects.requireNonNull(StringUtil.substringBefore(text, StringUtil.trimLeading(text, '\n'))));
+    int newLinesAfter = StringUtil.countNewLines(
+      Objects.requireNonNull(StringUtil.substringAfter(text, StringUtil.trimTrailing(text, '\n'))));
+
+    int firstLine = document.getLineNumber(range.getStartOffset());
+    int firstLineAdjusted = firstLine + newLinesBefore;
+
+    int lastLine = document.getLineNumber(range.getEndOffset());
+    int lastLineAdjusted = lastLine - newLinesAfter;
+
+    int startOffset = document.getLineStartOffset(firstLineAdjusted);
+    int endOffset = document.getLineEndOffset(lastLineAdjusted);
+
     items.put(changePlace, new PlaceInfoPersistentItem(getBreadcrumbs(project, editor, changePlace, line),
-                                                       rangeMarker,
-                                                       getLexerPosition(project, file),
+                                                       document.createRangeMarker(startOffset, endOffset),
                                                        editor.getColorsScheme()));
   }
 
@@ -149,29 +160,6 @@ public class RecentLocationManager implements ProjectComponent {
     Collection<Integer> lines = ((TextEditorState)navigationState).getCaretLines();
     Integer line = ContainerUtil.getFirstItem(lines);
     return line == null ? -1 : line;
-  }
-
-  @NotNull
-  private static RangeMarker getRangeMarker(@NotNull Document document, int line) {
-    return document.createRangeMarker(getLinesRange(document, line));
-  }
-
-  @Nullable
-  private static LexerPosition getLexerPosition(@NotNull Project project, @NotNull VirtualFile file) {
-    SyntaxHighlighter syntaxHighlighter =
-      SyntaxHighlighterFactory.getSyntaxHighlighter(FileTypeManager.getInstance().getFileTypeByFile(file), project, file);
-
-    LexerPosition position = null;
-    if (syntaxHighlighter != null) {
-      Lexer lexer = syntaxHighlighter.getHighlightingLexer();
-      try {
-        position = lexer.getCurrentPosition();
-      }
-      catch (Exception e) {
-        //Sometimes CCE appears, ignore.
-      }
-    }
-    return position;
   }
 
   @Nullable
@@ -265,12 +253,6 @@ public class RecentLocationManager implements ProjectComponent {
   }
 
   @Nullable
-  LexerPosition getLexerPosition(@NotNull PlaceInfo placeInfo, boolean showChanged) {
-    PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
-    return item == null ? null : item.getPosition();
-  }
-
-  @Nullable
   EditorColorsScheme getColorScheme(@NotNull PlaceInfo placeInfo, boolean showChanged) {
     PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
     return item == null ? null : item.getScheme();
@@ -279,16 +261,13 @@ public class RecentLocationManager implements ProjectComponent {
   private static class PlaceInfoPersistentItem {
     private final Collection<Iterable<? extends Crumb>> myResult;
     @NotNull private final RangeMarker myRangeMarker;
-    @Nullable private final LexerPosition myPosition;
     @NotNull private final EditorColorsScheme myScheme;
 
     PlaceInfoPersistentItem(@NotNull Collection<Iterable<? extends Crumb>> crumbs,
                             @NotNull RangeMarker rangeMarker,
-                            @Nullable LexerPosition position,
                             @NotNull EditorColorsScheme scheme) {
       myResult = crumbs;
       myRangeMarker = rangeMarker;
-      myPosition = position;
       myScheme = scheme;
     }
 
@@ -305,11 +284,6 @@ public class RecentLocationManager implements ProjectComponent {
     @NotNull
     private RangeMarker getRangeMarker() {
       return myRangeMarker;
-    }
-
-    @Nullable
-    private LexerPosition getPosition() {
-      return myPosition;
     }
   }
 

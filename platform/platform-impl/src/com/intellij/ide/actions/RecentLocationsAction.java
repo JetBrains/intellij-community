@@ -6,10 +6,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.editor.*;
@@ -17,14 +13,14 @@ import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -39,7 +35,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -61,8 +56,10 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
-import java.util.*;
 
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.COMPONENT_KEY;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
@@ -73,6 +70,7 @@ public class RecentLocationsAction extends AnAction {
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
   private static final int DEFAULT_POPUP_WIDTH = JBUI.scale(700);
+  private static final int MAX_POPUP_HEIGHT = JBUI.scale(1100);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -152,7 +150,7 @@ public class RecentLocationsAction extends AnAction {
 
     initSearchActions(project, list, popup, navigationRef);
 
-    popup.setSize(new Dimension(DEFAULT_POPUP_WIDTH, JBUI.scale(mainPanel.getPreferredSize().height)));
+    popup.setSize(new Dimension(DEFAULT_POPUP_WIDTH, Math.min(JBUI.scale(mainPanel.getPreferredSize().height), MAX_POPUP_HEIGHT)));
 
     showPopup(project, popup);
   }
@@ -346,32 +344,21 @@ public class RecentLocationsAction extends AnAction {
   @Nullable
   private static EditorEx createEditor(@NotNull Project project, @NotNull PlaceInfo placeInfo) {
     RangeMarker rangeMarker = RecentLocationManager.getInstance(project).getRangeMarker(placeInfo, showChanged(project));
-    if (rangeMarker == null) {
+    if (rangeMarker == null || !rangeMarker.isValid()) {
       return null;
     }
-    Document document = rangeMarker.getDocument();
-    int offset = rangeMarker.getStartOffset();
 
-    String text = document.getText(TextRange.create(offset, rangeMarker.getEndOffset()));
+    Document fileDocument = rangeMarker.getDocument();
+    EditorFactory editorFactory = EditorFactory.getInstance();
+    Document editorDocument =
+      editorFactory.createDocument(fileDocument.getText(TextRange.create(rangeMarker.getStartOffset(), rangeMarker.getEndOffset())));
+    EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument, project);
+    editor.getGutterComponentEx().setLineNumberConvertor(index -> index + fileDocument.getLineNumber(rangeMarker.getStartOffset()));
+    editor.getGutterComponentEx().setPaintBackground(false);
+    fillEditorSettings(editor.getSettings());
+    setHighlighting(project, editor, fileDocument, placeInfo, rangeMarker);
 
-    int newLinesBefore = StringUtil.countNewLines(
-      Objects.requireNonNull(StringUtil.substringBefore(text, StringUtil.trimLeading(text, '\n'))));
-    int newLinesAfter = StringUtil.countNewLines(
-      Objects.requireNonNull(StringUtil.substringAfter(text, StringUtil.trimTrailing(text, '\n'))));
-
-    int firstLine = document.getLineNumber(rangeMarker.getStartOffset());
-    int firstLineAdjusted = firstLine + newLinesBefore;
-
-    int lastLine = document.getLineNumber(rangeMarker.getEndOffset());
-    int lastLineAdjusted = lastLine - newLinesAfter;
-
-    int startOffset = document.getLineStartOffset(firstLineAdjusted);
-    int endOffset = document.getLineEndOffset(lastLineAdjusted);
-
-    EditorEx smallEditor = createEditor(project, document, placeInfo, TextRange.create(startOffset, endOffset));
-    smallEditor.getGutterComponentEx().setPaintBackground(false);
-
-    return smallEditor;
+    return editor;
   }
 
   private static void initSearchActions(@NotNull Project project,
@@ -597,32 +584,15 @@ public class RecentLocationsAction extends AnAction {
     }
   }
 
-  @NotNull
-  private static EditorEx createEditor(@NotNull Project project,
-                                       @NotNull Document document,
-                                       @NotNull PlaceInfo placeInfo,
-                                       @NotNull TextRange actualRange) {
-    int startLineNumber = document.getLineNumber(actualRange.getStartOffset());
-    String text = document.getText(actualRange);
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    Document editorDocument = editorFactory.createDocument(text);
-    EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument, project);
-    editor.getGutterComponentEx().setLineNumberConvertor(index -> index + startLineNumber);
-    fillEditorSettings(editor.getSettings());
-    setHighlighting(project, editor, document, placeInfo, actualRange);
-
-    return editor;
-  }
-
   private static void setHighlighting(@NotNull Project project,
                                       @NotNull EditorEx editor,
                                       @NotNull Document document,
                                       @NotNull PlaceInfo placeInfo,
-                                      @NotNull TextRange range) {
+                                      @NotNull RangeMarker rangeMarker) {
     EditorColorsScheme colorsScheme = setupColorScheme(project, editor, placeInfo);
 
-    applySyntaxHighlighting(project, editor, placeInfo, colorsScheme);
-    applyHighlightingPasses(project, editor, document, colorsScheme, range);
+    applySyntaxHighlighting(project, editor, placeInfo, colorsScheme, rangeMarker);
+    applyHighlightingPasses(project, editor, document, colorsScheme, rangeMarker);
   }
 
   @NotNull
@@ -638,37 +608,41 @@ public class RecentLocationsAction extends AnAction {
   private static void applySyntaxHighlighting(@NotNull Project project,
                                               @NotNull EditorEx editor,
                                               @NotNull PlaceInfo placeInfo,
-                                              @NotNull EditorColorsScheme colorsScheme) {
-    VirtualFile file = placeInfo.getFile();
+                                              @NotNull EditorColorsScheme colorsScheme,
+                                              @NotNull RangeMarker rangeMarker) {
+    EditorHighlighter editorHighlighter =
+      EditorHighlighterFactory.getInstance().createEditorHighlighter(placeInfo.getFile(), colorsScheme, project);
+    editorHighlighter.setText(rangeMarker.getDocument().getText(TextRange.create(0, rangeMarker.getEndOffset())));
+    int startOffset = rangeMarker.getStartOffset();
+    HighlighterIterator iterator = editorHighlighter.createIterator(startOffset);
 
-    Language language = LanguageUtil.getLanguageForPsi(project, file);
-    if (language == null) {
-      return;
-    }
+    while (!iterator.atEnd() && iterator.getEnd() <= rangeMarker.getEndOffset()) {
+      if (iterator.getStart() >= startOffset) {
+        editor.getMarkupModel().addRangeHighlighter(iterator.getStart() - startOffset,
+                                                    iterator.getEnd() - startOffset,
+                                                    HighlighterLayer.SYNTAX - 1,
+                                                    iterator.getTextAttributes(),
+                                                    HighlighterTargetArea.EXACT_RANGE);
+      }
 
-    SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, null);
-    LexerPosition lexerPosition = RecentLocationManager.getInstance(project).getLexerPosition(placeInfo, showChanged(project));
-    if (lexerPosition != null) {
-      Lexer lexer = syntaxHighlighter.getHighlightingLexer();
-      try {
-        lexer.start(editor.getDocument().getText());
-        lexer.restore(lexerPosition);
-      }
-      catch (Exception e) {
-        //Sometimes CCE appears, ignore.
-      }
+      iterator.advance();
     }
-    editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(syntaxHighlighter, colorsScheme));
   }
 
   private static void applyHighlightingPasses(@NotNull Project project,
                                               @NotNull EditorEx editor,
                                               @NotNull Document document,
                                               @NotNull EditorColorsScheme colorsScheme,
-                                              @NotNull TextRange actualRange) {
-    DaemonCodeAnalyzerEx.processHighlights(document, project, null, actualRange.getStartOffset(), actualRange.getEndOffset(), info -> {
+                                              @NotNull RangeMarker rangeMarker) {
+    int startOffset = rangeMarker.getStartOffset();
+    int endOffset = rangeMarker.getEndOffset();
+    DaemonCodeAnalyzerEx.processHighlights(document, project, null, startOffset, endOffset, info -> {
+      if (info.startOffset < startOffset || info.endOffset > endOffset) {
+        return true;
+      }
+
       editor.getMarkupModel().addRangeHighlighter(
-        info.getActualStartOffset() - actualRange.getStartOffset(), info.getActualEndOffset() - actualRange.getStartOffset(),
+        info.getActualStartOffset() - rangeMarker.getStartOffset(), info.getActualEndOffset() - rangeMarker.getStartOffset(),
         HighlighterLayer.SYNTAX,
         colorsScheme.getAttributes(info.forcedTextAttributesKey),
         HighlighterTargetArea.EXACT_RANGE);
