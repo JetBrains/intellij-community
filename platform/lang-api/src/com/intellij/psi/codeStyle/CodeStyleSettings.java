@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.application.options.codeStyle.OptionDescriptor;
+import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.UnknownElementCollector;
 import com.intellij.configurationStore.UnknownElementWriter;
 import com.intellij.lang.Language;
@@ -479,7 +479,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    * @deprecated Use get/setRightMargin() methods instead.
    */
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
-  @OptionDescriptor(externalName = "max_line_length")
+  @Property(externalName = "max_line_length")
   public int RIGHT_MARGIN = 120;
   /**
    * <b>Do not use this field directly since it doesn't reflect a setting for a specific language which may
@@ -487,7 +487,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    *
    * @see CommonCodeStyleSettings#WRAP_ON_TYPING
    */
-  @OptionDescriptor(externalName = "wrap_on_typing")
+  @Property(externalName = "wrap_on_typing")
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
 
 // endregion

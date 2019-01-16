@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
-import com.intellij.application.options.codeStyle.OptionDescriptor;
+import com.intellij.configurationStore.Property;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.ApiStatus;
@@ -63,7 +63,7 @@ public abstract class CodeStylePropertyAccessor<T> {
   protected abstract String asString(@NotNull T value);
 
   public String getPropertyName() {
-    OptionDescriptor descriptor = myField.getAnnotation(OptionDescriptor.class);
+    Property descriptor = myField.getAnnotation(Property.class);
     if (descriptor != null) {
       String externalName = descriptor.externalName();
       if (!StringUtil.isEmpty(externalName)) return externalName;
