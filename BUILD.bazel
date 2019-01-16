@@ -478,6 +478,7 @@ iml_project(
         "//tools/swing-testing/fest-swing",
         "//tools/vendor/google/android-apk",
         "//tools/vendor/google/android-ndk",
+        "//tools/vendor/google/cpp-integration-tests",
         "//tools/vendor/google/firebase",
         "//tools/vendor/google/games",
         "//tools/vendor/google/lldb-integration-tests",

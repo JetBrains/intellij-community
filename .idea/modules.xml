@@ -418,6 +418,7 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/third_party/intellij/plugin/testing/aswb.third_party.intellij.plugin.testing.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/third_party/intellij/plugin/testing/aswb.third_party.intellij.plugin.testing.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/connection-assistant/connection-assistant.iml" filepath="$PROJECT_DIR$/../adt/idea/connection-assistant/connection-assistant.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/connection-assistant/connection-assistant-test.iml" filepath="$PROJECT_DIR$/../adt/idea/connection-assistant/connection-assistant-test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/google/cpp-integration-tests/cpp-integration-tests.iml" filepath="$PROJECT_DIR$/../vendor/google/cpp-integration-tests/cpp-integration-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../data-binding/baseLibrary/db-baseLibrary.iml" filepath="$PROJECT_DIR$/../data-binding/baseLibrary/db-baseLibrary.iml" />
       <module fileurl="file://$PROJECT_DIR$/../data-binding/baseLibrarySupport/db-baseLibrarySupport.iml" filepath="$PROJECT_DIR$/../data-binding/baseLibrarySupport/db-baseLibrarySupport.iml" />
       <module fileurl="file://$PROJECT_DIR$/../data-binding/compiler/db-compiler.iml" filepath="$PROJECT_DIR$/../data-binding/compiler/db-compiler.iml" />
