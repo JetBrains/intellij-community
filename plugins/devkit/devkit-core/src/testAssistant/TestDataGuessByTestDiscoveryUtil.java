@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.testAssistant;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testDiscovery.TestDiscoveryProducer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
@@ -28,13 +29,14 @@ public class TestDataGuessByTestDiscoveryUtil {
   @NotNull
   static List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiMethod method) {
     if (!isEnabled()) return Collections.emptyList();
-    PsiClass testClass = method.getContainingClass();
+    PsiClass testClass = ReadAction.compute(() -> method.getContainingClass());
     if (testClass == null) return Collections.emptyList();
-    String testClassQualifiedName = testClass.getQualifiedName();
+    String testClassQualifiedName = ReadAction.compute(() -> testClass.getQualifiedName());
     if (testClassQualifiedName == null) return Collections.emptyList();
-    List<Couple<String>> testQName = Collections.singletonList(Couple.of(testClassQualifiedName, method.getName()));
+    List<Couple<String>> testQName =
+      Collections.singletonList(Couple.of(testClassQualifiedName, ReadAction.compute(() -> method.getName())));
     try {
-      Project project = method.getProject();
+      Project project = ReadAction.compute(() -> method.getProject());
       AffectedPathConsumer consumer = new AffectedPathConsumer(project);
       TestDiscoveryProducer.consumeAffectedPaths(project, testQName, consumer, (byte)0x0 /* TODO */);
       return consumer.getTestData();
@@ -48,9 +50,9 @@ public class TestDataGuessByTestDiscoveryUtil {
   @NotNull
   static List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiClass parametrizedTestClass) {
     if (!isEnabled()) return Collections.emptyList();
-    String testClassQualifiedName = parametrizedTestClass.getQualifiedName();
+    String testClassQualifiedName = ReadAction.compute(() -> parametrizedTestClass.getQualifiedName());
     if (testClassQualifiedName == null) return Collections.emptyList();
-    Project project = parametrizedTestClass.getProject();
+    Project project = ReadAction.compute(() -> parametrizedTestClass.getProject());
     try {
       AffectedPathConsumer consumer = new AffectedPathConsumer(project);
       TestDiscoveryProducer.consumeAffectedPaths(project, testClassQualifiedName, consumer, (byte)0x0 /* TODO */);

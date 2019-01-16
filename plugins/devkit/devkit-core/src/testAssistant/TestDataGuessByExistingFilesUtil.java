@@ -71,7 +71,7 @@ public class TestDataGuessByExistingFilesUtil {
       return Collections.emptyList();
     }
 
-    return buildDescriptorFromExistingTestData(psiMethod, testDataPath).restoreFiles();
+    return ReadAction.compute(() -> buildDescriptorFromExistingTestData(psiMethod, testDataPath).restoreFiles());
   }
 
   static List<TestDataFile> guessTestDataName(PsiMethod method) {
@@ -176,87 +176,79 @@ public class TestDataGuessByExistingFilesUtil {
     if (possibleFileName.isEmpty()) {
       return TestDataDescriptor.NOTHING_FOUND;
     }
-
     Project project = psiClass.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     GotoFileModel gotoModel = new GotoFileModel(project);
     String possibleFilePath = test.replace('$', '/');
     Map<String, List<TestLocationDescriptor>> descriptorsByFileNames = new HashMap<>();
-    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(psiClass));
-      Collection<String> fileNames = getAllFileNames(possibleFileName, gotoModel);
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      indicator.setIndeterminate(false);
-      ReadAction.run(() -> {
-        int fileNamesCount = fileNames.size();
-        double currentIndex = 0;
-        for (String name : fileNames) {
-          ProgressManager.checkCanceled();
-          Object[] elements = gotoModel.getElementsByName(name, false, name);
-          for (Object element : elements) {
-            if (!(element instanceof PsiFileSystemItem)) {
+    Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(psiClass));
+    Collection<String> fileNames = getAllFileNames(possibleFileName, gotoModel);
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    indicator.setText("Searching for \'" + test + "\' test data files...");
+    indicator.setIndeterminate(false);
+    int fileNamesCount = fileNames.size();
+    double currentIndex = 0;
+    for (String name : fileNames) {
+      ProgressManager.checkCanceled();
+      Object[] elements = gotoModel.getElementsByName(name, false, name);
+      for (Object element : elements) {
+        if (!(element instanceof PsiFileSystemItem)) {
+          continue;
+        }
+
+        PsiFileSystemItem psiFile = (PsiFileSystemItem)element;
+        if (normalizedTestDataPath != null) {
+          PsiFileSystemItem containingDirectory = psiFile.getParent();
+          if (containingDirectory != null) {
+            VirtualFile directoryVirtualFile = containingDirectory.getVirtualFile();
+            String normalizedDirPath = StringUtil.trimEnd(StringUtil.trimEnd(directoryVirtualFile.getPath(), "/"), "\\");
+            if (!normalizedDirPath.startsWith(normalizedTestDataPath)) {
               continue;
-            }
-
-            PsiFileSystemItem psiFile = (PsiFileSystemItem)element;
-            if (normalizedTestDataPath != null) {
-              PsiFileSystemItem containingDirectory = psiFile.getParent();
-              if (containingDirectory != null) {
-                VirtualFile directoryVirtualFile = containingDirectory.getVirtualFile();
-                String normalizedDirPath = StringUtil.trimEnd(StringUtil.trimEnd(directoryVirtualFile.getPath(), "/"), "\\");
-                if (!normalizedDirPath.startsWith(normalizedTestDataPath)) {
-                  continue;
-                }
-              }
-            }
-
-            VirtualFile file = psiFile.getVirtualFile();
-            if (file == null || fileIndex.isInSource(file) && !fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.RESOURCES)) {
-              continue;
-            }
-
-            String filePath = file.getPath();
-            if (!StringUtil.containsIgnoreCase(filePath, possibleFilePath) && !StringUtil.containsIgnoreCase(filePath, test)) {
-              continue;
-            }
-            String fileName = PathUtil.getFileName(filePath).toLowerCase();
-            int i = fileName.indexOf(possibleFileName.toLowerCase());
-            // Skip files that doesn't contain target test name and files that contain digit after target test name fragment.
-            // Example: there are tests with names 'testEnter()' and 'testEnter2()' and we don't want test data file 'testEnter2'
-            // to be matched to the test 'testEnter()'.
-            if (i < 0 || (i + possibleFileName.length() < fileName.length())
-                         && Character.isDigit(fileName.charAt(i + possibleFileName.length()))) {
-              continue;
-            }
-
-            List<TestLocationDescriptor> currentDescriptors = new SmartList<>();
-            VfsUtilCore.processFilesRecursively(file, f -> {
-              if (f.isDirectory()) return true;
-              TestLocationDescriptor current = TestLocationDescriptor.create(possibleFileName, f, project, module);
-              if (current != null) {
-                currentDescriptors.add(current);
-              }
-              return true;
-            });
-
-            if (!currentDescriptors.isEmpty()) {
-              List<TestLocationDescriptor> previousDescriptors = descriptorsByFileNames.get(name);
-              if (previousDescriptors == null) {
-                descriptorsByFileNames.put(name, currentDescriptors);
-                continue;
-              }
-              if (moreRelevantPath(currentDescriptors.get(0), previousDescriptors.get(0), psiClass)) {
-                descriptorsByFileNames.put(name, currentDescriptors);
-              }
             }
           }
-          indicator.setFraction(++currentIndex / fileNamesCount);
         }
-      });
-    }, DevKitBundle.message("testdata.searching"), true, project);
 
-    if (!completed) {
-      throw new ProcessCanceledException();
+        VirtualFile file = psiFile.getVirtualFile();
+        if (file == null || fileIndex.isInSource(file) && !fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.RESOURCES)) {
+          continue;
+        }
+
+        String filePath = file.getPath();
+        if (!StringUtil.containsIgnoreCase(filePath, possibleFilePath) && !StringUtil.containsIgnoreCase(filePath, test)) {
+          continue;
+        }
+        String fileName = PathUtil.getFileName(filePath).toLowerCase();
+        int i = fileName.indexOf(possibleFileName.toLowerCase());
+        // Skip files that doesn't contain target test name and files that contain digit after target test name fragment.
+        // Example: there are tests with names 'testEnter()' and 'testEnter2()' and we don't want test data file 'testEnter2'
+        // to be matched to the test 'testEnter()'.
+        if (i < 0 || (i + possibleFileName.length() < fileName.length())
+                     && Character.isDigit(fileName.charAt(i + possibleFileName.length()))) {
+          continue;
+        }
+
+        List<TestLocationDescriptor> currentDescriptors = new SmartList<>();
+        VfsUtilCore.processFilesRecursively(file, f -> {
+          if (f.isDirectory()) return true;
+          TestLocationDescriptor current = TestLocationDescriptor.create(possibleFileName, f, project, module);
+          if (current != null) {
+            currentDescriptors.add(current);
+          }
+          return true;
+        });
+
+        if (!currentDescriptors.isEmpty()) {
+          List<TestLocationDescriptor> previousDescriptors = descriptorsByFileNames.get(name);
+          if (previousDescriptors == null) {
+            descriptorsByFileNames.put(name, currentDescriptors);
+            continue;
+          }
+          if (moreRelevantPath(currentDescriptors.get(0), previousDescriptors.get(0), psiClass)) {
+            descriptorsByFileNames.put(name, currentDescriptors);
+          }
+        }
+      }
+      indicator.setFraction(++currentIndex / fileNamesCount);
     }
 
     List<TestLocationDescriptor> descriptors = ContainerUtil.flatten(descriptorsByFileNames.values());
@@ -429,8 +421,8 @@ public class TestDataGuessByExistingFilesUtil {
 
       TestLocationDescriptor that = (TestLocationDescriptor)o;
       if (startWithLowerCase != that.startWithLowerCase) return false;
-      if (pathPrefix != null ? !pathPrefix.equals(that.pathPrefix) : that.pathPrefix != null) return false;
-      if (pathSuffix != null ? !pathSuffix.equals(that.pathSuffix) : that.pathSuffix != null) return false;
+      if (!Objects.equals(pathPrefix, that.pathPrefix)) return false;
+      if (!Objects.equals(pathSuffix, that.pathSuffix)) return false;
 
       return true;
     }
@@ -453,7 +445,7 @@ public class TestDataGuessByExistingFilesUtil {
     @NotNull
     public List<TestDataFile> restoreFiles() {
       return ContainerUtil.mapNotNull(myDescriptors, d -> {
-        VirtualFile file = VirtualFileManager.getInstance().findFileById(d.matchedVFileId);
+        VirtualFile file = ReadAction.compute(() -> VirtualFileManager.getInstance().findFileById(d.matchedVFileId));
         return file == null ? null : new TestDataFile.Existing(file);
       });
     }
