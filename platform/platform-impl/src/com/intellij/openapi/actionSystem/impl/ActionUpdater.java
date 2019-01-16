@@ -164,7 +164,7 @@ class ActionUpdater {
               promise.setResult(result);
               return null;
             });
-          });
+          }, indicator);
           if (!success) {
             ProgressIndicatorUtils.yieldToPendingWriteActions();
           }
