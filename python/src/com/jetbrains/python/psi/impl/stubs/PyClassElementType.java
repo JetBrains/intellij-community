@@ -12,7 +12,6 @@ import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,10 +24,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author max
  */
-public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> {
-
-  @Nullable
-  private List<PyCustomClassStubType> myCustomStubTypes;
+public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
+  implements PyCustomizableStubElementType<PyClass, PyCustomClassStub, PyCustomClassStubType<? extends PyCustomClassStub>> {
 
   public PyClassElementType() {
     this("CLASS_DECLARATION");
@@ -52,12 +49,6 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
   @Override
   @NotNull
   public PyClassStub createStub(@NotNull final PyClass psi, final StubElement parentStub) {
-    final PyCustomClassStub customStub = StreamEx
-      .of(getCustomStubTypes())
-      .map(type -> type.createStub(psi))
-      .findFirst(Objects::nonNull)
-      .orElse(null);
-
     return new PyClassStubImpl(psi.getName(),
                                parentStub,
                                getSuperClassQNames(psi),
@@ -67,7 +58,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
                                psi.getOwnSlots(),
                                PyPsiUtils.strValue(psi.getDocStringExpression()),
                                getStubElementType(),
-                               customStub);
+                               createCustomStub(psi));
   }
 
   @NotNull
@@ -160,19 +151,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     final String docString = pyClassStub.getDocString();
     dataStream.writeUTFFast(docString != null ? docString : "");
 
-    serializeCustomStub(pyClassStub, dataStream);
-  }
-
-  private static void serializeCustomStub(@NotNull PyClassStub stub, @NotNull StubOutputStream stream) throws IOException {
-    final PyCustomClassStub customStub = stub.getCustomStub(PyCustomClassStub.class);
-
-    final boolean hasCustomStub = customStub != null;
-    stream.writeBoolean(hasCustomStub);
-
-    if (hasCustomStub) {
-      stream.writeName(customStub.getTypeClass().getCanonicalName());
-      customStub.serialize(stream);
-    }
+    serializeCustomStub(pyClassStub.getCustomStub(PyCustomClassStub.class), dataStream);
   }
 
   @Override
@@ -212,21 +191,6 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
                                getStubElementType(), customStub);
   }
 
-  @Nullable
-  private PyCustomClassStub deserializeCustomStub(@NotNull StubInputStream stream) throws IOException {
-    if (stream.readBoolean()) {
-      final String typeName = stream.readNameString();
-      for (PyCustomClassStubType type : getCustomStubTypes()) {
-        if (type.getClass().getCanonicalName().equals(typeName)) {
-          return type.deserializeStub(stream);
-        }
-      }
-      throw new IOException("Unknown custom class stub type " + typeName);
-    }
-
-    return null;
-  }
-
   @Override
   public void indexStub(@NotNull final PyClassStub stub, @NotNull final IndexSink sink) {
     final String name = stub.getName();
@@ -253,10 +217,8 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
   }
 
   @NotNull
-  private List<PyCustomClassStubType> getCustomStubTypes() {
-    if (myCustomStubTypes == null) {
-      myCustomStubTypes = PyCustomClassStubType.EP_NAME.getExtensionList();
-    }
-    return myCustomStubTypes;
+  @Override
+  public List<PyCustomClassStubType<? extends PyCustomClassStub>> getExtensions() {
+    return PyCustomClassStubType.EP_NAME.getExtensionList();
   }
 }
