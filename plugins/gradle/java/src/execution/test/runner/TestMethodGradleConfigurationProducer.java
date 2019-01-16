@@ -15,6 +15,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
@@ -95,7 +97,8 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     if (!StringUtil.equals(projectPath, configuration.getSettings().getExternalProjectPath())) {
       return false;
     }
-    if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(module))) return false;
+    VirtualFile source = psiMethod.getContainingFile().getVirtualFile();
+    if (!hasTasksInConfiguration(source, context.getProject(), configuration.getSettings())) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
     final String testFilter = createTestFilter(contextLocation, containingClass, psiMethod);
@@ -105,39 +108,42 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
   @Override
   public void onFirstRun(@NotNull final ConfigurationFromContext fromContext, @NotNull final ConfigurationContext context, @NotNull final Runnable performRunnable) {
     final PsiMethod psiMethod = (PsiMethod)fromContext.getSourceElement();
-    final PsiClass containingClass = psiMethod.getContainingClass();
+    final PsiClass psiClass = psiMethod.getContainingClass();
     final InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
-        if (!StringUtil.equals(
-          ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId(),
-          GradleConstants.SYSTEM_ID.toString())) {
-          return;
-        }
-
-        ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
-        if (!applyTestMethodConfiguration(configuration, context, psiMethod, ArrayUtil.toObjectArray(classes, PsiClass.class))) return;
-        super.runForClasses(classes, method, context, performRunnable);
+        chooseTestClassConfiguration(fromContext, context, performRunnable, psiMethod, ArrayUtil.toObjectArray(classes, PsiClass.class));
       }
 
       @Override
-      protected void runForClass(PsiClass aClass,
-                                 PsiMethod psiMethod,
-                                 ConfigurationContext context,
-                                 Runnable performRunnable) {
-        if (!StringUtil.equals(
-          ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId(),
-          GradleConstants.SYSTEM_ID.toString())) {
-          return;
-        }
-
-        ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
-        if (!applyTestMethodConfiguration(configuration, context, psiMethod, aClass)) return;
-        super.runForClass(aClass, psiMethod, context, performRunnable);
+      protected void runForClass(PsiClass aClass, PsiMethod psiMethod, ConfigurationContext context, Runnable performRunnable) {
+        chooseTestClassConfiguration(fromContext, context, performRunnable, psiMethod, aClass);
       }
     };
-    if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass)) return;
-    super.onFirstRun(fromContext, context, performRunnable);
+    if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, psiMethod, psiClass)) return;
+    if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) return;
+    chooseTestClassConfiguration(fromContext, context, performRunnable, psiMethod, psiClass);
+  }
+
+  private static void chooseTestClassConfiguration(@NotNull ConfigurationFromContext fromContext,
+                                                   @NotNull ConfigurationContext context,
+                                                   @NotNull Runnable performRunnable,
+                                                   @NotNull PsiMethod psiMethod,
+                                                   @NotNull PsiClass... classes) {
+    String systemId = ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId();
+    if (!StringUtil.equals(systemId, GradleConstants.SYSTEM_ID.toString())) return;
+    TasksChooser tasksChooser = new TasksChooser() {
+      @Override
+      protected void choosesTasks(@NotNull List<? extends Map<String, ? extends List<String>>> tasks) {
+        ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
+        ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
+        Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilter(context.getLocation(), psiClass, psiMethod);
+        if (!applyTestConfiguration(settings, context.getProject(), tasks, classes, createFilter)) return;
+        configuration.setName((classes.length == 1 ? classes[0].getName() + "." : "") + psiMethod.getName());
+        performRunnable.run();
+      }
+    };
+    tasksChooser.runTaskChoosing(context, classes);
   }
 
   private static boolean applyTestMethodConfiguration(@NotNull ExternalSystemRunConfiguration configuration,
@@ -146,12 +152,8 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
                                                       @NotNull PsiClass... containingClasses) {
     final Project project = context.getProject();
     final ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
-    final Function1<PsiClass, String> createFilter = (psiClass) ->
-      createTestFilter(context.getLocation(), psiClass, psiMethod);
-    if (!applyTestConfiguration(settings, project, containingClasses, createFilter)) {
-      return false;
-    }
-
+    final Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilter(context.getLocation(), psiClass, psiMethod);
+    if (!applyTestConfiguration(settings, project, containingClasses, createFilter)) return false;
     configuration.setName((containingClasses.length == 1 ? containingClasses[0].getName() + "." : "") + psiMethod.getName());
     return true;
   }
