@@ -26,7 +26,7 @@ abstract class LiveTemplateTestCase extends LightCodeInsightFixtureTestCase {
   @Override
   protected void tearDown() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
     if (state != null) {
       WriteCommandAction.runWriteCommandAction project, {
         state.gotoEnd()

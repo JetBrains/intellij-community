@@ -298,7 +298,7 @@ class A {
 }
 '''
     TemplateManagerImpl.setTemplateTesting(testRootDisposable)
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = true
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = true
     try {
       doAction "Create method 'passClass' in 'A'"
       myFixture.type('\t')
@@ -315,7 +315,7 @@ class A {
 '''
     }
     finally {
-      CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+      CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
     }
   }
 }

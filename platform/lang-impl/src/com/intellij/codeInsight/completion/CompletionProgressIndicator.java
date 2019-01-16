@@ -190,7 +190,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   void duringCompletion(CompletionInitializationContext initContext, CompletionParameters parameters) {
     if (isAutopopupCompletion() && shouldPreselectFirstSuggestion(parameters)) {
-      myLookup.setFocusDegree(CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS
+      myLookup.setFocusDegree(CodeInsightSettings.getInstance().isSelectAutopopupSuggestionsByChars()
                               ? LookupImpl.FocusDegree.FOCUSED
                               : LookupImpl.FocusDegree.SEMI_FOCUSED);
     }
@@ -237,7 +237,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     advertiseTabReplacement(parameters);
     if (isAutopopupCompletion()) {
-      if (shouldPreselectFirstSuggestion(parameters) && !CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS) {
+      if (shouldPreselectFirstSuggestion(parameters) && !CodeInsightSettings.getInstance().isSelectAutopopupSuggestionsByChars()) {
         advertiseCtrlDot();
       }
       advertiseCtrlArrows();

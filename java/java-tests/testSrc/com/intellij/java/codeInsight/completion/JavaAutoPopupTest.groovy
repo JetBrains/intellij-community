@@ -518,7 +518,7 @@ class Foo {
   }
 
   void "test vertical arrows in semi-focused lookup"() {
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
     UISettings.getInstance()setSortLookupElementsLexicographically(true)
 
     String toType = "fo"
@@ -1360,7 +1360,7 @@ class Foo {{
   }
 
   void "test two non-imported classes when space does not select first autopopup item"() {
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
 
     myFixture.addClass("package foo; public class Abcdefg {}")
     myFixture.addClass("package bar; public class Abcdefg {}")
@@ -1443,7 +1443,7 @@ class Foo {{
   }
 
   void testPackageQualifier() {
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
 
     myFixture.addClass("package com.too; public class Util {}")
     myFixture.configureByText 'a.java', 'class Foo { void foo(Object command) { <caret> }}'
@@ -1486,12 +1486,12 @@ class Foo {
   @Override
   protected void setUp() {
     super.setUp()
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = true
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = true
   }
 
   @Override
   protected void tearDown() {
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
     UISettings.getInstance()setSortLookupElementsLexicographically(false)
 
@@ -1582,7 +1582,7 @@ class ListConfigKey {
 
   void testPreselectMostRelevantInTheMiddleAlpha() {
     UISettings.getInstance().setSortLookupElementsLexicographically(true)
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
 
     myFixture.configureByText 'a.java', '''
 class Foo {
