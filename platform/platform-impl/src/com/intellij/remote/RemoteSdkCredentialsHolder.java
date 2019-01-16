@@ -22,7 +22,14 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
   }
 
   public static String constructSshCredentialsSdkFullPath(@NotNull RemoteSdkCredentials cred) {
-    return getCredentialsString(cred) + cred.getInterpreterPath();
+    StringBuilder builder = new StringBuilder();
+    if (cred.isRunAsRootViaSudo()) {
+      builder.append("sudo+");
+    }
+    return builder
+      .append(getCredentialsString(cred))
+      .append(cred.getInterpreterPath())
+      .toString();
   }
 
   /**
