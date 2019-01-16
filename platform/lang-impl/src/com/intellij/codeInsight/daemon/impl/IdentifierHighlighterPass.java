@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.highlighting.*;
 import com.intellij.find.FindManager;
@@ -12,16 +13,14 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
@@ -218,6 +217,36 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     final boolean virtSpace = TargetElementUtil.inVirtualSpace(myEditor, myEditor.getCaretModel().getOffset());
     final List<HighlightInfo> infos = virtSpace ? Collections.emptyList() : getHighlights();
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
+    doAdditionalCodeBlockHighlighting();
+  }
+
+  /**
+   * Does additional work on code block markers highlighting: <ul>
+   * <li>Draws vertical line covering the scope on the gutter by {@link BraceHighlightingHandler#lineMarkFragment(com.intellij.openapi.editor.ex.EditorEx, com.intellij.openapi.editor.Document, int, int, boolean)}</li>
+   * <li>Schedules preview of the block start if necessary by {@link BraceHighlightingHandler#showScopeHint(Editor, com.intellij.util.Alarm, int, int, com.intellij.util.IntIntFunction)}</li>
+   * </ul>
+   *
+   * In brace matching case this is done from {@link BraceHighlightingHandler#highlightBraces(com.intellij.openapi.util.TextRange, com.intellij.openapi.util.TextRange, boolean, boolean, com.intellij.openapi.fileTypes.FileType)}
+   */
+  private void doAdditionalCodeBlockHighlighting() {
+    if (!CodeInsightSettings.getInstance().HIGHLIGHT_SCOPE ||
+        myCodeBlockMarkerRanges.size() < 2 ||
+        myDocument == null ||
+        !(myEditor instanceof EditorEx)) {
+      return;
+    }
+    ArrayList<TextRange> markers = new ArrayList<>(myCodeBlockMarkerRanges);
+    Collections.sort(markers, Segment.BY_START_OFFSET_THEN_END_OFFSET);
+    TextRange leftBraceRange = markers.get(0);
+    TextRange rightBraceRange = markers.get(markers.size() - 1);
+    final int startLine = myEditor.offsetToLogicalPosition(leftBraceRange.getStartOffset()).line;
+    final int endLine = myEditor.offsetToLogicalPosition(rightBraceRange.getEndOffset()).line;
+    if (endLine - startLine > 0) {
+      BraceHighlightingHandler.lineMarkFragment((EditorEx)myEditor, myDocument, startLine, endLine, true);
+    }
+
+    BraceHighlightingHandler.showScopeHint(
+      myEditor, BraceHighlighter.getAlarm(), leftBraceRange.getStartOffset(), leftBraceRange.getEndOffset(), null);
   }
 
   private List<HighlightInfo> getHighlights() {
@@ -236,8 +265,10 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     for (TextRange range: myWriteAccessRanges) {
       ContainerUtil.addIfNotNull(result, createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE, existingMarkupTooltips));
     }
-    myCodeBlockMarkerRanges.forEach(
-      it -> ContainerUtil.addIfNotNull(result, createHighlightInfo(it, ELEMENT_UNDER_CARET_STRUCTURAL, existingMarkupTooltips)));
+    if (CodeInsightSettings.getInstance().HIGHLIGHT_BRACES) {
+      myCodeBlockMarkerRanges.forEach(
+        it -> ContainerUtil.addIfNotNull(result, createHighlightInfo(it, ELEMENT_UNDER_CARET_STRUCTURAL, existingMarkupTooltips)));
+    }
 
     return result;
   }
