@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -400,7 +400,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       descriptorUpdater.setKeyDescriptor(keyPair.second);
       descriptorUpdater.setValueDescriptor(valuePair.second);
 
-      return DescriptorUpdater.constructLabelText(keyPair.first.compute(), valuePair.first.compute());
+      return DescriptorUpdater.constructLabelText(keyPair.first.compute(), keyPair.second, valuePair.first.compute(), valuePair.second);
     }
 
     private Pair<Computable<String>, ValueDescriptorImpl> createValueComputable(final EvaluationContext evaluationContext,
@@ -501,17 +501,32 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
     @Override
     public void labelChanged() {
-      myTargetDescriptor.setValueLabel(constructLabelText(getDescriptorLabel(myKeyDescriptor), getDescriptorLabel(myValueDescriptor)));
+      myTargetDescriptor.setValueLabel(
+        constructLabelText(getDescriptorLabel(myKeyDescriptor), myKeyDescriptor, getDescriptorLabel(myValueDescriptor), myValueDescriptor));
       myDelegate.labelChanged();
     }
 
-    static String constructLabelText(final String keylabel, final String valueLabel) {
+    static String constructLabelText(String keylabel,
+                                     ValueDescriptorImpl keyDescriptor,
+                                     String valueLabel,
+                                     ValueDescriptorImpl valueDescriptor) {
       StringBuilder sb = new StringBuilder();
-      sb.append('\"').append(keylabel).append("\" -> ");
+      sb.append(wrapIfNeeded(keylabel, keyDescriptor));
+      sb.append(" -> ");
       if (!StringUtil.isEmpty(valueLabel)) {
-        sb.append('\"').append(valueLabel).append('\"');
+        sb.append(wrapIfNeeded(valueLabel, valueDescriptor));
       }
       return sb.toString();
+    }
+
+    private static String wrapIfNeeded(String label, ValueDescriptorImpl descriptor) {
+      Renderer lastRenderer = descriptor.getLastRenderer();
+      if (descriptor.isString() ||
+          lastRenderer instanceof ToStringRenderer ||
+          (lastRenderer instanceof CompoundTypeRenderer && !(lastRenderer instanceof UnboxableTypeRenderer))) {
+        label = StringUtil.wrapWithDoubleQuote(label);
+      }
+      return label;
     }
 
     private static String getDescriptorLabel(final ValueDescriptorImpl keyDescriptor) {
