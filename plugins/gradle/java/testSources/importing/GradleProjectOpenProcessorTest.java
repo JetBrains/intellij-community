@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -12,12 +12,12 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -46,7 +46,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.exe
  * @author Vladislav.Soroka
  */
 public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
-
   private final List<Sdk> removedSdks = new SmartList<>();
 
   /**
@@ -254,8 +253,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
 
   private static void closeProject(final Project project) {
     if (project != null && !project.isDisposed()) {
-      ProjectManager.getInstance().closeProject(project);
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project, true);
     }
   }
 }

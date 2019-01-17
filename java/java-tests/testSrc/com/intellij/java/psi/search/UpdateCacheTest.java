@@ -68,7 +68,7 @@ public class UpdateCacheTest extends PsiTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      ProjectManager.getInstance().closeProject(myProject);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(myProject, false);
     }
     catch (Throwable e) {
       addSuppressedException(e);
