@@ -129,7 +129,7 @@ public class RefreshWorker {
         long upToDateLength = attributes.length;
 
         if (currentTimestamp != upToDateTimestamp || currentLength != upToDateLength) {
-          scheduleUpdateContent(file);
+          scheduleUpdateContent(file, currentTimestamp, upToDateTimestamp, currentLength, upToDateLength);
         }
       }
 
@@ -369,9 +369,15 @@ public class RefreshWorker {
     myEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
   }
 
-  private void scheduleUpdateContent(@NotNull VirtualFile file) {
-    if (LOG.isTraceEnabled()) LOG.trace("update file=" + file);
-    myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
+  private void scheduleUpdateContent(@NotNull VirtualFile file, long oldTimestamp, long newTimestamp, long oldLength, long newLength) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+        "update file=" + file +
+        (oldTimestamp != newTimestamp ? ", oldtimestamp=" + oldTimestamp + ", newtimestamp=" + newTimestamp : "") +
+        (oldLength != newLength ? ", oldlength=" + oldLength + ", length=" + newLength : "")
+      );
+    }
+    myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength, true));
   }
 
   private void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory) {

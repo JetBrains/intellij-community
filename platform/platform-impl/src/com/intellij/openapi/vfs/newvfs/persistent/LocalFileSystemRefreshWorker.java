@@ -289,9 +289,15 @@ class LocalFileSystemRefreshWorker {
       myFileEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
     }
 
-    private void addUpdateContentEvent(@NotNull VirtualFile file) {
-      if (LOG.isTraceEnabled()) LOG.trace("update file=" + file);
-      myFileEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
+    private void addUpdateContentEvent(@NotNull VirtualFile file, long oldTimestamp, long newTimestamp, long oldLength, long newLength) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(
+          "update file=" + file +
+          (oldTimestamp != newTimestamp ? ", oldtimestamp=" + oldTimestamp + ", newtimestamp=" + newTimestamp : "") +
+          (oldLength != newLength ? ", oldlength=" + oldLength + ", length=" + newLength : "")
+        );
+      }
+      myFileEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength, true));
     }
 
     private void addCreationEvent(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory) {
@@ -332,9 +338,13 @@ class LocalFileSystemRefreshWorker {
         }
 
         if (!attrs.isDirectory()) {
-          if (myPersistence.getTimeStamp(child) != attrs.lastModifiedTime().toMillis() ||
-              myPersistence.getLastRecordedLength(child) != attrs.size()) {
-            addUpdateContentEvent(child);
+          long oldTimestamp = myPersistence.getTimeStamp(child);
+          long newTimestamp = attrs.lastModifiedTime().toMillis();
+          long oldLength = myPersistence.getLastRecordedLength(child);
+          long newLength = attrs.size();
+          
+          if (oldTimestamp != newTimestamp || oldLength != newLength) {
+            addUpdateContentEvent(child, oldTimestamp, newTimestamp, oldLength, newLength);
             child.markClean();
             return FileVisitResult.CONTINUE;
           }
