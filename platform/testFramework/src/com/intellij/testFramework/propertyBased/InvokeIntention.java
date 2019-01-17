@@ -283,7 +283,7 @@ public class InvokeIntention extends ActionOnFile {
   }
 
   @NotNull
-  private static List<HighlightInfo> highlightErrors(Project project, Editor editor) {
+  static List<HighlightInfo> highlightErrors(Project project, Editor editor) {
     List<HighlightInfo> infos = RehighlightAllEditors.highlightEditor(editor, project);
     return ContainerUtil.filter(infos, i -> i.getSeverity() == HighlightSeverity.ERROR);
   }
