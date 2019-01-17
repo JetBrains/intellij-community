@@ -96,7 +96,7 @@ public final class PythonSdkType extends SdkType {
 
   private static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
   @NonNls private static final String SKELETONS_TOPIC = "Skeletons";
-  private static final String[] DIRS_WITH_BINARY = {"", "bin", "Scripts"};
+  private static final String[] DIRS_WITH_BINARY = {"", "bin", "Scripts", "net45"};
   private static final String[] UNIX_BINARY_NAMES = {"jython", "pypy", "python", "python3"};
   private static final String[] WIN_BINARY_NAMES = {"jython.bat", "ipy.exe", "pypy.exe", "python.exe", "python3.exe"};
 
