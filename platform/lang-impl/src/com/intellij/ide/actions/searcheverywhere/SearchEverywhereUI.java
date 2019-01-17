@@ -493,13 +493,13 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     stopSearching();
 
     myResultsList.setEmptyText(IdeBundle.message("label.choosebyname.searching"));
-    String pattern = getSearchPattern();
-    updateViewType(pattern.isEmpty() ? ViewType.SHORT : ViewType.FULL);
-    String matcherString = mySelectedTab.getContributor()
-                                        .map(contributor -> contributor.filterControlSymbols(pattern))
-                                        .orElse(pattern);
+    String rawPattern = getSearchPattern();
+    updateViewType(rawPattern.isEmpty() ? ViewType.SHORT : ViewType.FULL);
+    String namePattern = mySelectedTab.getContributor()
+                                      .map(contributor -> contributor.filterControlSymbols(rawPattern))
+                                      .orElse(rawPattern);
 
-    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + matcherString, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher matcher = NameUtil.buildCompoundMatcher("*" + rawPattern, "*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE);
     MatcherHolder.associateMatcher(myResultsList, matcher);
 
     Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
@@ -523,12 +523,12 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     myListModel.expireResults();
     contributors.forEach(contributor -> myListModel.setHasMore(contributor, false));
     String commandPrefix = SearchTopHitProvider.getTopHitAccelerator();
-    if (pattern.startsWith(commandPrefix)) {
-      String typedCommand = pattern.split(" ")[0].substring(commandPrefix.length());
+    if (rawPattern.startsWith(commandPrefix)) {
+      String typedCommand = rawPattern.split(" ")[0].substring(commandPrefix.length());
       List<SearchEverywhereCommandInfo> commands = getCommandsForCompletion(contributors, typedCommand);
 
       if (!commands.isEmpty()) {
-        if (pattern.contains(" ")) {
+        if (rawPattern.contains(" ")) {
           // important point!!!
           // since contributors set is backed with contributorsMap
           // removing elements from contributors leads to removing
@@ -546,7 +546,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         }
       }
     }
-    mySearchProgressIndicator = mySearcher.search(contributorsMap, pattern, isUseNonProjectItems(), c -> myContributorFilters.get(c.getSearchProviderId()));
+    mySearchProgressIndicator = mySearcher.search(contributorsMap, rawPattern, isUseNonProjectItems(), c -> myContributorFilters.get(c.getSearchProviderId()));
   }
 
   private void initSearchActions() {

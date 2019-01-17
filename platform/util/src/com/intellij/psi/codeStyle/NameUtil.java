@@ -440,6 +440,14 @@ public class NameUtil {
     return buildMatcher(pattern).withCaseSensitivity(options).build();
   }
 
+  public static MinusculeMatcher buildCompoundMatcher(@NotNull String pattern,
+                                                      @NotNull String fallbackPattern,
+                                                      @NotNull MatchingCaseSensitivity options) {
+    return pattern.equals(fallbackPattern) ?
+           buildMatcher(pattern, options) :
+           new CompoundMatcher(buildMatcher(pattern, options), buildMatcher(fallbackPattern, options));
+  }
+
   @NotNull
   public static String capitalizeAndUnderscore(@NotNull String name) {
     return splitWords(name, '_', new Function<String, String>() {

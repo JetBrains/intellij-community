@@ -219,6 +219,14 @@ public class MinusculeMatcher implements Matcher {
     return new String(myPattern);
   }
 
+  protected String getHardSeparators() {
+    return myHardSeparators;
+  }
+
+  protected NameUtil.MatchingCaseSensitivity getOptions() {
+    return myOptions;
+  }
+
   @Nullable
   public FList<TextRange> matchingFragments(@NotNull String name) {
     if (name.length() < myMinNameLength) {
