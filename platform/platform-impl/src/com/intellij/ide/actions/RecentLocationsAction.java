@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -356,8 +357,14 @@ public class RecentLocationsAction extends AnAction {
     Document editorDocument =
       editorFactory.createDocument(fileDocument.getText(TextRange.create(rangeMarker.getStartOffset(), rangeMarker.getEndOffset())));
     EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument, project);
-    editor.getGutterComponentEx().setLineNumberConvertor(index -> index + fileDocument.getLineNumber(rangeMarker.getStartOffset()));
-    editor.getGutterComponentEx().setPaintBackground(false);
+
+    EditorGutterComponentEx gutterComponentEx = editor.getGutterComponentEx();
+    gutterComponentEx.setLineNumberConvertor(index -> index + fileDocument.getLineNumber(rangeMarker.getStartOffset()));
+    gutterComponentEx.setPaintBackground(false);
+    JScrollPane scrollPane = editor.getScrollPane();
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+
     fillEditorSettings(editor.getSettings());
     setHighlighting(project, editor, fileDocument, placeInfo, rangeMarker);
 
@@ -471,8 +478,12 @@ public class RecentLocationsAction extends AnAction {
                                                   int index,
                                                   boolean selected,
                                                   boolean hasFocus) {
-      PlaceInfo placeInfo = value.getInfo();
       EditorEx editor = value.getEditor();
+      if (myProject.isDisposed() || editor.isDisposed()) {
+        return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+      }
+
+      PlaceInfo placeInfo = value.getInfo();
       String text = editor.getDocument().getText();
 
       Iterable<TextRange> ranges = mySpeedSearch.matchingFragments(text);
