@@ -40,7 +40,7 @@ public class CommandLineProcessor {
   private CommandLineProcessor() { }
 
   @Nullable
-  private static Project doOpenFileOrProject(@NotNull VirtualFile file) {
+  private static Project doOpenFileOrProject(VirtualFile file) {
     String path = file.getPath();
     if (ProjectKt.isValidProjectPath(path) || ProjectOpenProcessor.getImportProvider(file) != null) {
       Project project = ProjectUtil.openOrImport(path, null, true);
