@@ -5,7 +5,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsStateService;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -80,19 +80,7 @@ public class StatisticsJobsScheduler implements ApplicationComponent {
       });
     }
 
-    JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
-      final StatisticsService statisticsService = StatisticsUploadAssistant.getApprovedGroupsStatisticsService();
-      if (StatisticsUploadAssistant.isSendAllowed() && StatisticsUploadAssistant.isTimeToSend()) {
-        runStatisticsServiceWithDelay(statisticsService, SEND_STATISTICS_DELAY_IN_MIN);
-
-        // TODO: to be removed in 2018.1
-        runStatisticsServiceWithDelay(StatisticsUploadAssistant.getOldStatisticsService(), 2 * SEND_STATISTICS_DELAY_IN_MIN);
-      }
-
-      if (FeatureUsageLogger.INSTANCE.isEnabled() && StatisticsUploadAssistant.isTimeToSendEventLog()) {
-        runStatisticsServiceWithDelay(StatisticsUploadAssistant.getEventLogStatisticsService(), 3 * SEND_STATISTICS_DELAY_IN_MIN);
-      }
-    }, SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, StatisticsUploadAssistant.getSendPeriodInMillis(), TimeUnit.MILLISECONDS);
+    JobScheduler.getScheduler().schedule(() -> FUStatisticsStateService.clearLegacyCaches(), 1, TimeUnit.MINUTES);
   }
 
   private static void runStatisticsServiceWithDelay(@NotNull final StatisticsService statisticsService, int delayInMin) {
