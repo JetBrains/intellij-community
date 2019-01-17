@@ -18,8 +18,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -30,12 +33,18 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
+import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
@@ -46,6 +55,8 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   @NotNull private final LocalChangeListDiffRequest myLocalRequest;
   @NotNull private final String myChangelistId;
   @NotNull private final String myChangelistName;
+
+  private ExcludeAllCheckboxPanel myExcludeAllCheckboxPanel;
 
   private final boolean myAllowExcludeChangesFromCommit;
 
@@ -80,6 +91,18 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   @Nullable
   public PartialLocalLineStatusTracker getPartialTracker() {
     return ObjectUtils.tryCast(myLocalRequest.getLineStatusTracker(), PartialLocalLineStatusTracker.class);
+  }
+
+  @NotNull
+  @Override
+  protected List<JComponent> createTitles() {
+    List<JComponent> titles = DiffUtil.createTextTitles(myRequest, getEditors());
+    assert titles.size() == 2;
+
+    myExcludeAllCheckboxPanel = new ExcludeAllCheckboxPanel();
+    JPanel titleWithCheckbox = JBUI.Panels.simplePanel(titles.get(1)).addToLeft(myExcludeAllCheckboxPanel);
+
+    return DiffUtil.createSyncHeightComponents(ContainerUtil.list(titles.get(0), titleWithCheckbox));
   }
 
   @NotNull
@@ -207,6 +230,11 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     return apply(new CompareData(changes, isContentsEqual));
   }
 
+  @Override
+  protected void onAfterRediff() {
+    super.onAfterRediff();
+    myExcludeAllCheckboxPanel.refresh();
+  }
 
   private class MySimpleDiffChange extends SimpleDiffChange {
     @NotNull private final String myChangelistId;
@@ -449,6 +477,76 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       selectedLines.set(startLine, startLine == endLine ? startLine + 1 : endLine);
     }
     return selectedLines;
+  }
+
+  private class ExcludeAllCheckboxPanel extends JPanel {
+    private final ThreeStateCheckBox myCheckbox;
+
+    private ExcludeAllCheckboxPanel() {
+      myCheckbox = new ThreeStateCheckBox();
+      myCheckbox.setFocusable(false);
+      myCheckbox.addActionListener(e -> toggleState());
+
+      add(myCheckbox);
+      myCheckbox.setVisible(false);
+
+      getEditor2().getGutterComponentEx().addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent e) {
+          ApplicationManager.getApplication().invokeLater(() -> updateLayout(), ModalityState.any());
+        }
+      });
+    }
+
+    @Override
+    public void doLayout() {
+      Dimension size = myCheckbox.getPreferredSize();
+      EditorGutterComponentEx gutter = getEditor2().getGutterComponentEx();
+      int gutterWidth = gutter.getLineMarkerFreePaintersAreaOffset();
+      int iconAreaWidth = gutter.getIconsAreaWidth();
+
+      int y = (getHeight() - size.height) / 2;
+      int gap = (iconAreaWidth - AllIcons.Diff.GutterCheckBox.getIconWidth()) / 2;
+      int x = gutterWidth - gap - size.width;
+      myCheckbox.setBounds(Math.max(0, x), Math.max(0, y), size.width, size.height);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = myCheckbox.getPreferredSize();
+      EditorGutterComponentEx gutter = getEditor2().getGutterComponentEx();
+      int gutterWidth = gutter.getLineMarkerFreePaintersAreaOffset();
+      return new Dimension(Math.max(gutterWidth + JBUI.scale(2), size.width), size.height);
+    }
+
+    private void updateLayout() {
+      invalidate();
+      myPanel.validate();
+      myPanel.repaint();
+    }
+
+    private void toggleState() {
+      PartialLocalLineStatusTracker tracker = getPartialTracker();
+      if (tracker != null && tracker.isValid()) {
+        ExclusionState exclusionState = tracker.getExcludedFromCommitState(myChangelistId);
+        getPartialTracker().setExcludedFromCommit(exclusionState == ExclusionState.ALL_INCLUDED);
+        refresh();
+        rediff();
+      }
+    }
+
+    public void refresh() {
+      PartialLocalLineStatusTracker tracker = getPartialTracker();
+      if (tracker != null && tracker.isValid()) {
+        ExclusionState exclusionState = tracker.getExcludedFromCommitState(myChangelistId);
+        myCheckbox.setState(PartialChangesUtil.convertExclusionState(exclusionState));
+        myCheckbox.setVisible(true);
+      }
+      else {
+        myCheckbox.setState(ThreeStateCheckBox.State.DONT_CARE);
+        myCheckbox.setVisible(false);
+      }
+    }
   }
 
   private static class TrackerData {

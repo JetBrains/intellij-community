@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.ex.ExclusionState;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,6 +17,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,6 +180,19 @@ public class PartialChangesUtil {
     else {
       LOG.warn(new Throwable(String.format("Active changelist was changed during the operation. Expected: %s -> %s, actual default: %s",
                                            targetChangeList.getName(), oldDefaultList.getName(), defaultChangeList.getName())));
+    }
+  }
+
+  @NotNull
+  public static ThreeStateCheckBox.State convertExclusionState(@NotNull ExclusionState exclusionState) {
+    if (exclusionState == ExclusionState.ALL_INCLUDED) {
+      return ThreeStateCheckBox.State.SELECTED;
+    }
+    else if (exclusionState == ExclusionState.ALL_EXCLUDED) {
+      return ThreeStateCheckBox.State.NOT_SELECTED;
+    }
+    else {
+      return ThreeStateCheckBox.State.DONT_CARE;
     }
   }
 }
