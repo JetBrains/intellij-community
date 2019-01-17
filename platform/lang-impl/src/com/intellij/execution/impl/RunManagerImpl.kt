@@ -761,7 +761,14 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         }
 
         if (old != null) {
-          LOG.error("Template $key already registered, old: $old, new: $settings")
+          val message = "Template $key already registered, old: $old, new: $settings"
+          // https://youtrack.jetbrains.com/issue/IDEA-205510
+          if (old.configuration.id == "AndroidRunConfigurationType") {
+            LOG.warn(message)
+          }
+          else {
+            LOG.error(message)
+          }
         }
       }
     }
