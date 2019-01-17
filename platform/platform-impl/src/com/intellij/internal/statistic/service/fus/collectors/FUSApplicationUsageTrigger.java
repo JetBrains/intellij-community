@@ -6,7 +6,8 @@ import com.intellij.openapi.components.*;
 import org.jetbrains.annotations.NotNull;
 
 @State(name = "FUSApplicationUsageTrigger",
-  storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
+  storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
+)
 final public class FUSApplicationUsageTrigger extends AbstractUsageTrigger<ApplicationUsageTriggerCollector>
   implements PersistentStateComponent<AbstractUsageTrigger.State> {
 

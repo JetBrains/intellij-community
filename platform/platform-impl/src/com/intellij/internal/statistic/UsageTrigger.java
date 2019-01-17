@@ -20,7 +20,7 @@ import java.util.Set;
 @State(
   name = "UsageTrigger",
   storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
     @Storage(value = "statistics.application.usages.xml", roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
@@ -70,7 +70,6 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
   }
 
   public void loadState(@NotNull final State state) {
-    myState = state;
   }
 
   final static class MyCollector extends UsagesCollector {
