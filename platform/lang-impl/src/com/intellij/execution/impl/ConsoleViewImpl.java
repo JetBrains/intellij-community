@@ -773,60 +773,43 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return prefix;
   }
 
+  // convert all "a\bc" sequences to "c", not crossing the line boundaries in the process
   private static void normalizeBackspaceCharacters(@NotNull StringBuilder text) {
     int ind = StringUtil.indexOf(text, BACKSPACE);
     if (ind < 0) {
       return;
     }
-    int i = 0;
     int guardLength = 0;
-    int oldLength = text.length();
     int newLength = 0;
-    while (i < oldLength) {
-      LineSeparator lineSeparator = StringUtil.getLineSeparatorAt(text, i);
-      if (lineSeparator != null) {
-        int sepLength = lineSeparator.getSeparatorString().length();
-        copyString(lineSeparator.getSeparatorString(), sepLength, text, newLength);
-        newLength += sepLength;
-        guardLength = newLength;
-        i += sepLength;
-      }
-      else {
-        char ch = text.charAt(i);
-        final boolean append;
-        if (ch == BACKSPACE) {
-          assert guardLength <= newLength;
-          if (guardLength == newLength) {
-            // Backspace is the first char in a new line:
-            // Keep backspace at the first line (guardLength == 0) as it might be in the middle of the actual line,
-            // handle it later (see getBackspacePrefixLength).
-            // Otherwise (for non-first lines), skip backspace as it can't be interpreted if located right after line ending.
-            append = guardLength == 0;
-          }
-          else {
-            append = text.charAt(newLength - 1) == BACKSPACE;
-            if (!append) {
-              newLength--; // interpret \b: delete prev char
-            }
-          }
+    for (int i = 0; i < text.length(); i++) {
+      char ch = text.charAt(i);
+      final boolean append;
+      if (ch == BACKSPACE) {
+        assert guardLength <= newLength;
+        if (guardLength == newLength) {
+          // Backspace is the first char in a new line:
+          // Keep backspace at the first line (guardLength == 0) as it might be in the middle of the actual line,
+          // handle it later (see getBackspacePrefixLength).
+          // Otherwise (for non-first lines), skip backspace as it can't be interpreted if located right after line ending.
+          append = guardLength == 0;
         }
         else {
-          append = true;
+          append = text.charAt(newLength - 1) == BACKSPACE;
+          if (!append) {
+            newLength--; // interpret \b: delete prev char
+          }
         }
-        if (append) {
-          text.setCharAt(newLength, ch);
-          newLength++;
-        }
-        i++;
+      }
+      else {
+        append = true;
+      }
+      if (append) {
+        text.setCharAt(newLength, ch);
+        newLength++;
+        if (ch == '\r' || ch == '\n') guardLength = newLength;
       }
     }
     text.setLength(newLength);
-  }
-
-  private static void copyString(@NotNull String src, int srcCount, @NotNull StringBuilder dest, int destStartOffset) {
-    for (int i = 0; i < srcCount; i++) {
-      dest.setCharAt(destStartOffset + i, src.charAt(i));
-    }
   }
 
   private void createTokenRangeHighlighter(@NotNull ConsoleViewContentType contentType,
