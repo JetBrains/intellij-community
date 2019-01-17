@@ -93,11 +93,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   protected void processConsistentText(String text, final Key outputType, boolean tcLikeFakeOutput) {
-    if (USE_CYCLE_BUFFER && text.length() > myCycleBufferSize && myCycleBufferSize > OutputLineSplitter.SM_MESSAGE_PREFIX) {
+    if (USE_CYCLE_BUFFER && text.length() > myCycleBufferSize && myCycleBufferSize > OutputLineSplitter.Companion.getSM_MESSAGE_PREFIX()) {
       final StringBuilder builder = new StringBuilder(myCycleBufferSize);
-      builder.append(text, 0, myCycleBufferSize - OutputLineSplitter.SM_MESSAGE_PREFIX);
+      builder.append(text, 0, myCycleBufferSize - OutputLineSplitter.Companion.getSM_MESSAGE_PREFIX());
       builder.append(ELLIPSIS);
-      builder.append(text, text.length() - OutputLineSplitter.SM_MESSAGE_PREFIX + ELLIPSIS.length(), text.length());
+      builder.append(text, text.length() - OutputLineSplitter.Companion.getSM_MESSAGE_PREFIX() + ELLIPSIS.length(), text.length());
       text = builder.toString();
     }
 
