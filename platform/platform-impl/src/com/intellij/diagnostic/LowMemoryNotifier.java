@@ -5,8 +5,8 @@ import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerColl
 import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector.LIFECYCLE_APP;
 import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC;
 
 public class LowMemoryNotifier implements Disposable {
@@ -36,8 +37,8 @@ public class LowMemoryNotifier implements Disposable {
       @Override
       public void uiFreezeFinished(int lengthInSeconds) {
         String lengthGrouped = groupLength(lengthInSeconds);
-        FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.freeze",
-                                                         FUSUsageContext.create("timeSecondsGrouped", lengthGrouped));
+        FeatureUsageLogger.INSTANCE.log(LIFECYCLE_APP, "ide.freeze", StatisticsUtilKt.createData(null, FUSUsageContext
+          .create("timeSecondsGrouped", lengthGrouped)));
 
         FeatureUsageLogger.INSTANCE.log(AppLifecycleUsageTriggerCollector.LIFECYCLE,
                                         "ide.freeze", Collections.singletonMap("durationSeconds", lengthInSeconds));

@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 /**
  * <ol>
- * <li> Statistics service ({@link FUStatisticsService}) collects data ONLY from approved  usages collectors ({@link com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector})
  * <li> Approved collectors could be requested online.
  * <li> This service ({@link FUStatisticsWhiteListGroupsService}) connects to online JB service and requests "approved" UsagesCollectors(groups).
  * <li> Online JB service  returns  result in json file format:

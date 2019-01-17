@@ -172,11 +172,6 @@
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
-    <action internal="true" id="CollectFUStatistics" class="com.intellij.internal.statistic.actions.CollectFUStatisticsAction"
-            text="Collect Statistics from Collector...">
-      <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
-    </action>
-
     <!-- Help -->
     <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction">
       <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="ShowTips"/>

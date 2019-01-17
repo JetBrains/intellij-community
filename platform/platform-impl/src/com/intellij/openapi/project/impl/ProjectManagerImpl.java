@@ -13,7 +13,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
@@ -672,8 +672,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     //Here could be false positives iff checkCanClose && !ensureCouldCloseIfUnableToSave(project)
     //but this saving should be before saving project
-    FUSProjectUsageTrigger.getInstance(project).trigger(ProjectLifecycleUsageTriggerCollector.class, "project.closed");
-
+    FeatureUsageLogger.INSTANCE.log(ProjectLifecycleUsageTriggerCollector.GROUP_ID, "project.closed", StatisticsUtilKt.createData(project, null));
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
@@ -779,7 +778,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.debug("projectOpened");
     }
 
-    FUSProjectUsageTrigger.getInstance(project).trigger(ProjectLifecycleUsageTriggerCollector.class, "project.opened");
+    FeatureUsageLogger.INSTANCE.log(ProjectLifecycleUsageTriggerCollector.GROUP_ID, "project.opened", StatisticsUtilKt.createData(project, null));
     FeatureUsageLogger.INSTANCE.log(AppLifecycleUsageTriggerCollector.LIFECYCLE, "project.opened");
 
     myBusPublisher.projectOpened(project);

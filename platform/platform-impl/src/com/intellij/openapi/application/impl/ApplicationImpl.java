@@ -16,7 +16,6 @@ import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
@@ -81,6 +80,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector.LIFECYCLE_APP;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
@@ -810,10 +811,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       lifecycleListener.appWillBeClosed(restart);
 
-      FUSApplicationUsageTrigger usageTrigger = FUSApplicationUsageTrigger.getInstance();
-      usageTrigger.trigger(AppLifecycleUsageTriggerCollector.class, "ide.close");
+      FeatureUsageLogger.INSTANCE.log(LIFECYCLE_APP, "ide.close");
       if (restart) {
-        usageTrigger.trigger(AppLifecycleUsageTriggerCollector.class, "ide.close.restart");
+        FeatureUsageLogger.INSTANCE.log(LIFECYCLE_APP, "ide.close.restart");
       }
       FeatureUsageLogger.INSTANCE.log(AppLifecycleUsageTriggerCollector.LIFECYCLE, "app.closed", Collections.singletonMap("restart", restart));
 

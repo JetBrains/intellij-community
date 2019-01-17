@@ -21,12 +21,12 @@ import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.EventLogStatisticsService;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
-import com.intellij.internal.statistic.service.fus.FUStatisticsService;
 import com.intellij.util.Time;
 
 public class StatisticsUploadAssistant {
   private static final String IDEA_SUPPRESS_REPORT_STATISTICS = "idea.suppress.statistics.report";
   public static final Object LOCK = new Object();
+  private static EventLogStatisticsService logStatisticsService = new EventLogStatisticsService();
 
   private StatisticsUploadAssistant(){}
 
@@ -61,11 +61,7 @@ public class StatisticsUploadAssistant {
     UsageStatisticsPersistenceComponent.getInstance().setSentTime(System.currentTimeMillis());
   }
 
-  public static StatisticsService getApprovedGroupsStatisticsService() {
-    return new FUStatisticsService();
-  }
-
   public static StatisticsService getEventLogStatisticsService() {
-    return new EventLogStatisticsService();
+    return logStatisticsService;
   }
 }
