@@ -5,6 +5,7 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.completion.LookupElementListPresenter;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
@@ -160,6 +161,13 @@ public abstract class LookupArranger implements WeighingContext {
   public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> items,
                                                                                boolean hideSingleValued) {
     return Collections.emptyMap();
+  }
+
+  /**
+   * Called when the prefix has been truncated farther than the additional prefix typed while the lookup was visible.
+   */
+  public void prefixTruncated(@NotNull LookupImpl lookup, int hideOffset) {
+    lookup.hideLookup(false);
   }
 
   public static class DefaultArranger extends LookupArranger {
