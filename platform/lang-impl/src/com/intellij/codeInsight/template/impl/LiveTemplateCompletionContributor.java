@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.*;
@@ -9,7 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PatternCondition;
@@ -17,6 +17,7 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,23 +36,16 @@ import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filter
  * @author peter
  */
 public class LiveTemplateCompletionContributor extends CompletionContributor {
-  private static boolean ourShowTemplatesInTests = false;
+  private static Key<Boolean> ourShowTemplatesInTests = Key.create("ShowTemplatesInTests");
 
   @TestOnly
   public static void setShowTemplatesInTests(boolean show, @NotNull Disposable parentDisposable) {
-    ourShowTemplatesInTests = show;
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourShowTemplatesInTests = false;
-      }
-    });
+    TestModeFlags.set(ourShowTemplatesInTests, show, parentDisposable);
   }
 
   public static boolean shouldShowAllTemplates() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return ourShowTemplatesInTests;
+      return TestModeFlags.is(ourShowTemplatesInTests);
     }
     return Registry.is("show.live.templates.in.completion");
   }
