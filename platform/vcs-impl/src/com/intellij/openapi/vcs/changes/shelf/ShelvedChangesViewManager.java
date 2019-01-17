@@ -16,6 +16,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -77,6 +78,7 @@ import java.util.stream.Collectors;
 import static com.intellij.icons.AllIcons.Vcs.Patch_applied;
 import static com.intellij.openapi.actionSystem.Anchor.AFTER;
 import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.createAppliedTextPatch;
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -305,6 +307,15 @@ public class ShelvedChangesViewManager implements Disposable {
   @Override
   public void dispose() {
     myUpdateQueue.cancelAllUpdates();
+  }
+
+  public void updateOnVcsMappingsChanged() {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ChangesGroupingSupport treeGroupingSupport = myTree.getGroupingSupport();
+      if (treeGroupingSupport.isAvailable(REPOSITORY_GROUPING) && treeGroupingSupport.get(REPOSITORY_GROUPING)) {
+        myTree.rebuildTree();
+      }
+    }, myProject.getDisposed());
   }
 
   public void selectShelvedList(@NotNull ShelvedChangeList list) {
