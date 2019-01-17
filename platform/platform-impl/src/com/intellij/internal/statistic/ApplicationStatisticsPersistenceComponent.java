@@ -16,12 +16,14 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 @State(
   name = "StatisticsApplicationUsages",
   storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
     @Storage(value = "statistics.application.usages.xml", roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
@@ -62,30 +64,6 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
 
   @Override
   public void loadState(@NotNull Element element) {
-    for (Element groupElement : element.getChildren(GROUP_TAG)) {
-      GroupDescriptor groupDescriptor = GroupDescriptor.create(groupElement.getAttributeValue(GROUP_NAME_ATTR));
-      List<Element> projectsList = groupElement.getChildren(PROJECT_TAG);
-      for (Element projectElement : projectsList) {
-        String projectId = projectElement.getAttributeValue(PROJECT_ID_ATTR);
-        String frameworks = projectElement.getAttributeValue(VALUES_ATTR);
-        if (!StringUtil.isEmptyOrSpaces(projectId) && !StringUtil.isEmptyOrSpaces(frameworks)) {
-          Set<UsageDescriptor> frameworkDescriptors = new THashSet<>();
-          for (String key : StringUtil.split(frameworks, TOKENIZER)) {
-            UsageDescriptor descriptor = getUsageDescriptor(key);
-            if (descriptor != null) {
-              frameworkDescriptors.add(descriptor);
-            }
-          }
-          long collectionTime;
-          try {
-            collectionTime = Long.valueOf(projectElement.getAttributeValue(COLLECTION_TIME_TAG));
-          } catch (NumberFormatException ignored) {
-            collectionTime = 0;
-          }
-          getApplicationData(groupDescriptor).put(projectId, new CollectedUsages(frameworkDescriptors, collectionTime));
-        }
-      }
-    }
   }
 
   @Override
