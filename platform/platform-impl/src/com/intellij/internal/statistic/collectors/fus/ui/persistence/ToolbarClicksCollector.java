@@ -20,7 +20,7 @@ import java.util.Map;
 @State(
   name = "ToolbarClicksCollector",
   storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
     @Storage(value = "statistics.toolbar.clicks.xml", roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
@@ -38,7 +38,6 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
   }
 
   public void loadState(@NotNull final ClicksState state) {
-    myState = state;
   }
 
   public static void record(@NotNull AnAction action, String place) {
