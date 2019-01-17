@@ -26,7 +26,7 @@ import java.util.Set;
 @State(
   name = "ActionsCollector",
   storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
     @Storage(value = "statistics.actions.xml", roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
@@ -86,6 +86,5 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
 
   @Override
   public void loadState(@NotNull State state) {
-    myState = state;
   }
 }

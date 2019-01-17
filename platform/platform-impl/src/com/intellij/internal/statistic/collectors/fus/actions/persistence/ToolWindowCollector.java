@@ -29,7 +29,7 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
 @State(
   name = "ToolWindowCollector",
   storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED)
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
   }
 )
 public class ToolWindowCollector implements PersistentStateComponent<ToolWindowCollector.State> {
@@ -123,7 +123,6 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
 
   @Override
   public void loadState(@NotNull State state) {
-    myState = state;
   }
 
   public final static class State {

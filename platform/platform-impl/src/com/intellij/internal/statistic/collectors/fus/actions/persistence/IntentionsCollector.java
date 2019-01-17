@@ -15,7 +15,10 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -23,7 +26,7 @@ import java.util.*;
 @State(
   name = "IntentionsCollector",
   storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
     @Storage(value = "statistics.intentions.xml", roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
@@ -38,7 +41,6 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
 
   @Override
   public void loadState(@NotNull State state) {
-    myState = state;
   }
 
   private static final List<String> PREFIXES_TO_STRIP = Arrays.asList("com.intellij.codeInsight.",
