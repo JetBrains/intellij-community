@@ -369,7 +369,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
 
   @ApiStatus.Experimental
   @NotNull
-  public AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull CodeStyleSettings settings) {
+  public final AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull CodeStyleSettings settings) {
     return new LanguageCodeStylePropertyMapper(settings, getLanguage(), getExternalLanguageId());
   }
 }

@@ -17,13 +17,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @ApiStatus.Experimental
-public class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMapper {
+public final class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMapper {
   private @NotNull final Language myLanguage;
   private @NotNull final String myLanguageDomainId;
-
-  public LanguageCodeStylePropertyMapper(@NotNull CodeStyleSettings settings, @NotNull Language language) {
-    this (settings, language, null);
-  }
 
   public LanguageCodeStylePropertyMapper(@NotNull CodeStyleSettings settings,
                                          @NotNull Language language,
