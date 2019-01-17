@@ -24,7 +24,7 @@ public class DocumentUndoProvider implements Disposable {
 
   private final Project myProject;
 
-  DocumentUndoProvider(Project project) {
+  DocumentUndoProvider(@Nullable Project project) {
     myProject = project;
 
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyEditorDocumentListener(), this);

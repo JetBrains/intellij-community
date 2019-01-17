@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.ide.ProjectGroup;
@@ -45,11 +45,11 @@ public class RecentProjectsTest extends PlatformTestCase {
     String p3 = createAndOpenProject("p3");
     String p4 = createAndOpenProject("p4");
 
-    RecentProjectsManager mgr = RecentProjectsManager.getInstance();
+    RecentProjectsManager manager = RecentProjectsManager.getInstance();
     ProjectGroup g1 = new ProjectGroup("g1");
     ProjectGroup g2 = new ProjectGroup("g2");
-    mgr.addGroup(g1);
-    mgr.addGroup(g2);
+    manager.addGroup(g1);
+    manager.addGroup(g2);
 
     g1.addProject(p1);
     g1.addProject(p2);
@@ -120,7 +120,8 @@ public class RecentProjectsTest extends PlatformTestCase {
     Assert.assertEquals(Arrays.asList(groups), recentGroups);
   }
 
-  private String createAndOpenProject(String name) throws IOException, JDOMException {
+  @NotNull
+  private String createAndOpenProject(@NotNull String name) throws IOException, JDOMException {
     Project project = null;
     try {
       File path = createTempDir(name);
