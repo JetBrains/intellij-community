@@ -1,14 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.xmlb.Accessor
-import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.OptionTag
-import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Transient
 import javax.swing.SwingConstants
 
@@ -24,19 +21,17 @@ class UISettingsState : BaseState() {
       get() = Math.round(UIUtil.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale)
   }
 
-  // These font properties should not be set in the default ctor,
-  // so that to make the serialization logic judge if a property
-  // should be stored or shouldn't by the provided filter only.
-  @get:Property(filter = FontFilter::class)
+
   @get:OptionTag("FONT_FACE")
+  @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontFace"))
   var fontFace by string()
 
-  @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SIZE")
+  @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontSize"))
   var fontSize by property(defFontSize)
 
-  @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SCALE")
+  @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontScale"))
   var fontScale by property(0f)
 
   @get:OptionTag("RECENT_FILES_LIMIT")
@@ -170,19 +165,6 @@ class UISettingsState : BaseState() {
   var sortBookmarks by property(false)
   @get:OptionTag("PIN_FIND_IN_PATH_POPUP")
   var pinFindInPath by property(false)
-
-  private class FontFilter : SerializationFilter {
-    override fun accepts(accessor: Accessor, bean: Any): Boolean {
-      val settings = bean as UISettingsState
-      val fontData = systemFontFaceAndSize
-      if ("fontFace" == accessor.name) {
-        return fontData.first != settings.fontFace
-      }
-      // fontSize/fontScale should either be stored in pair or not stored at all
-      // otherwise the fontSize restore logic gets broken (see loadState)
-      return !(fontData.second == settings.fontSize && 1f == settings.fontScale)
-    }
-  }
 
   @Suppress("FunctionName")
   fun _incrementModificationCount() = incrementModificationCount()
