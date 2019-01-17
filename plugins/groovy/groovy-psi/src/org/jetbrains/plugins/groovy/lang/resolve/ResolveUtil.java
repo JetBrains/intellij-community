@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.lang.java.beans.PropertyKind;
@@ -544,8 +544,16 @@ public class ResolveUtil {
     if (params1.length != params2.length) return false;
 
     for (int i = 0; i < params2.length; i++) {
-      PsiType type1 = TypeConversionUtil.erasure(substitutor1.substitute(params1[i].getType()));
-      PsiType type2 = TypeConversionUtil.erasure(substitutor2.substitute(params2[i].getType()));
+      PsiType pType1 = params1[i].getType();
+      if (pType1 instanceof PsiEllipsisType) {
+        pType1 = ((PsiEllipsisType)pType1).getComponentType().createArrayType();
+      }
+      PsiType pType2 = params2[i].getType();
+      if (pType2 instanceof PsiEllipsisType) {
+        pType2 = ((PsiEllipsisType)pType2).getComponentType().createArrayType();
+      }
+      PsiType type1 = TypeConversionUtil.erasure(substitutor1.substitute(pType1));
+      PsiType type2 = TypeConversionUtil.erasure(substitutor2.substitute(pType2));
       if (!type1.equals(type2)) return false;
     }
 

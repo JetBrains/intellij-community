@@ -1,13 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
-import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.filterSameSignatureCandidates
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.canBeApplicable
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.inapplicable
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyOverloadResolver
 
 /**
  * Applicable results and a flag whether overload should be selected.
@@ -49,32 +50,43 @@ fun List<GroovyMethodResult>.correctStaticScope(): List<GroovyMethodResult> {
   }
 }
 
-fun chooseOverloads(candidates: List<GroovyMethodResult>, context: GrMethodComparator.Context): List<GroovyMethodResult> {
+fun chooseOverloads(candidates: List<GroovyMethodResult>): List<GroovyMethodResult> {
   if (candidates.size <= 1) return candidates
 
   val results = SmartList<GroovyMethodResult>()
-  val itr = candidates.iterator()
 
-  results.add(itr.next())
-
-  outer@
-  while (itr.hasNext()) {
-    val resolveResult = itr.next()
-    val iterator = results.iterator()
-    while (iterator.hasNext()) {
-      val otherResolveResult = iterator.next()
-      val res = GrMethodComparator.compareMethods(resolveResult, otherResolveResult, context)
-      if (res > 0) {
-        continue@outer
+  var minResult: GroovyMethodResult? = null
+  for (candidate in candidates) {
+    if (minResult == null) {
+      minResult = candidate
+      results += candidate
+    }
+    else {
+      val comparisonResult = compare(minResult, candidate)
+      if (comparisonResult > 0) {
+        minResult = candidate
+        results.clear()
+        results += candidate
       }
-      else if (res < 0) {
-        iterator.remove()
+      else if (comparisonResult == 0) {
+        results += candidate
       }
     }
-    results.add(resolveResult)
   }
 
   return results
+}
+
+private val overloadResolverEp = ExtensionPointName.create<GroovyOverloadResolver>("org.intellij.groovy.overloadResolver")
+
+private fun compare(left: GroovyMethodResult, right: GroovyMethodResult): Int {
+  for (resolver in overloadResolverEp.extensions) {
+    val result = resolver.compare(left, right)
+    if (result != 0) {
+      return result
+    }
+  }
+  return 0
 }
 
 /**
