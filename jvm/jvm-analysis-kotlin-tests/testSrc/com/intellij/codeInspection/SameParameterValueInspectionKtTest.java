@@ -5,7 +5,7 @@ import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspecti
 import com.intellij.psi.PsiModifier;
 import com.intellij.testFramework.InspectionTestCase;
 
-public class SameParameterValueInspectionJvmTest extends InspectionTestCase {
+public class SameParameterValueInspectionKtTest extends InspectionTestCase {
   private final SameParameterValueInspection myGlobalTool = new SameParameterValueInspection();
 
   @Override

@@ -4,7 +4,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection;
 import com.intellij.testFramework.InspectionTestCase;
 
-public class SameReturnValueInspectionTest extends InspectionTestCase {
+public class SameReturnValueInspectionKtTest extends InspectionTestCase {
   private final SameReturnValueInspection myGlobalTool = new SameReturnValueInspection();
 
   @Override

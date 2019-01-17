@@ -4,7 +4,7 @@ import com.intellij.java.codeInspection.AbstractUnusedDeclarationTest;
 import com.intellij.java.codeInspection.UnusedDeclarationTest;
 import com.intellij.openapi.application.ex.PathManagerEx;
 
-public class UnusedDeclarationJvmTest extends AbstractUnusedDeclarationTest {
+public class UnusedDeclarationKtTest extends AbstractUnusedDeclarationTest {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath(UnusedDeclarationTest.class) + "/inspection/jvm";
