@@ -1,12 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
-import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.internal.statistic.service.fus.FUStatisticsSettingsService;
 import com.intellij.internal.statistic.service.fus.beans.FSContent;
 import com.intellij.internal.statistic.service.fus.beans.FSSession;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -21,7 +18,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Map;
 import java.util.Set;
 
 // persists ProjectUsagesCollector data between user sessions (project + IJ build)
@@ -39,25 +35,7 @@ public class FUStatisticsPersistence {
   // 3.  method requests actual "approved" usages collectors (see FUStatisticsWhiteListGroupsService) to be invoked.
   //     if FUStatisticsWhiteListGroupsService is OFFLINE the data will NOT collected.
   // 4. collected data are persisted in system cache. one file for one project session. the session is pair: project + IJ build number
-  public static String persistProjectUsages(@NotNull Project project) {
-    Set<String> groups = FUStatisticsSettingsService.getInstance().getApprovedGroups();
-    if (groups.isEmpty() && !ApplicationManagerEx.getApplicationEx().isInternal()) return null;
-    FUStatisticsAggregator aggregator = FUStatisticsAggregator.create();
-    Map<String, Set<UsageDescriptor>> usages = aggregator.getProjectUsages(project, groups);
-    if (usages.isEmpty()) return null;
-
-    FUSession fuSession = FUSession.create(project);
-
-    FSContent content = FSContent.create();
-    FUStatisticsAggregator.writeContent(content, fuSession, usages);
-
-    String gsonContent = content.asJsonString();
-
-    String fileName = getFileName(fuSession);
-    File directory = getStatisticsSystemCacheDirectory();
-
-    persistToFile(gsonContent, new File(directory, "/" + fileName));
-    return fileName;
+  public static void persistProjectUsages(@NotNull Project project) {
   }
 
   @NotNull
@@ -110,6 +88,25 @@ public class FUStatisticsPersistence {
     }
   }
 
+  public static void clearLegacyStates() {
+    deleteCaches(getStatisticsSystemCacheDirectory());
+    deleteCaches(Paths.get(PathManager.getSystemPath()).resolve("event-log").toFile());
+  }
+
+  private static void deleteCaches(@Nullable File dir) {
+    if (dir != null && dir.exists()) {
+      try {
+        final boolean delete = FileUtil.delete(dir);
+        if (!delete) {
+          LOG.info("Failed deleting legacy caches");
+        }
+      }
+      catch (Exception e) {
+        LOG.info(e);
+      }
+    }
+  }
+
   @NotNull
   private static String getFileName(@NotNull FUSession session) {
      return session.hashCode() +"."+ FILE_EXTENSION;
@@ -130,21 +127,6 @@ public class FUStatisticsPersistence {
         allSessions.addAll(sessions);
       }
     }  catch (Exception e) {
-      LOG.info(e);
-    }
-  }
-  public static void persistDataFromCollectors(@NotNull String content) {
-    persistToFile(content, getPersistenceStateFile());
-  }
-
-  public static void persistSentData(@NotNull String sentContent) {
-    persistToFile(sentContent, getSentDataFile());
-  }
-
-  public static void persistToFile(@NotNull String sentContent, File file) {
-    try {
-      FileUtil.writeToFile(file, sentContent);
-    } catch (IOException e) {
       LOG.info(e);
     }
   }
