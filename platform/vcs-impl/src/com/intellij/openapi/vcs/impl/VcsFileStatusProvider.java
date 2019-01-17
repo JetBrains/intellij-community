@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
@@ -159,8 +160,12 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
 
     FileStatus status = changeListManager.getStatus(file);
     if (status == FileStatus.HIJACKED) {
-      VcsCurrentRevisionProxy beforeRevision = VcsCurrentRevisionProxy.create(file, myProject);
-      return beforeRevision == null ? null : new BaseContentImpl(beforeRevision);
+      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
+      DiffProvider diffProvider = vcs != null ? vcs.getDiffProvider() : null;
+      if (diffProvider != null) {
+        VcsRevisionNumber currentRevision = diffProvider.getCurrentRevision(file);
+        return currentRevision == null ? null : new HijackedBaseContent(diffProvider, file, currentRevision);
+      }
     }
 
     return null;
@@ -199,26 +204,59 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
     @Nullable
     @Override
     public String loadContent() {
-      try {
-        if (myContentRevision instanceof ByteBackedContentRevision) {
-          byte[] revisionContent = ((ByteBackedContentRevision)myContentRevision).getContentAsBytes();
-          FilePath filePath = myContentRevision.getFile();
+      return loadContentRevision(myContentRevision);
+    }
+  }
 
-          if (revisionContent != null) {
-            Charset charset = DiffContentFactoryImpl.guessCharset(revisionContent, filePath);
-            return CharsetToolkit.decodeString(revisionContent, charset);
-          }
-          else {
-            return null;
-          }
+  private static class HijackedBaseContent implements BaseContent {
+    @NotNull private final DiffProvider myDiffProvider;
+    @NotNull private final VirtualFile myFile;
+    @NotNull private final VcsRevisionNumber myRevision;
+
+    HijackedBaseContent(@NotNull DiffProvider diffProvider,
+                        @NotNull VirtualFile file,
+                        @NotNull VcsRevisionNumber revision) {
+      myDiffProvider = diffProvider;
+      myFile = file;
+      myRevision = revision;
+    }
+
+    @NotNull
+    @Override
+    public VcsRevisionNumber getRevisionNumber() {
+      return myRevision;
+    }
+
+    @Nullable
+    @Override
+    public String loadContent() {
+      ContentRevision contentRevision = myDiffProvider.createFileContent(myRevision, myFile);
+      if (contentRevision == null) return null;
+      return loadContentRevision(contentRevision);
+    }
+  }
+
+  @Nullable
+  private static String loadContentRevision(@NotNull ContentRevision contentRevision) {
+    try {
+      if (contentRevision instanceof ByteBackedContentRevision) {
+        byte[] revisionContent = ((ByteBackedContentRevision)contentRevision).getContentAsBytes();
+        FilePath filePath = contentRevision.getFile();
+
+        if (revisionContent != null) {
+          Charset charset = DiffContentFactoryImpl.guessCharset(revisionContent, filePath);
+          return CharsetToolkit.decodeString(revisionContent, charset);
         }
         else {
-          return myContentRevision.getContent();
+          return null;
         }
       }
-      catch (VcsException ex) {
-        return null;
+      else {
+        return contentRevision.getContent();
       }
+    }
+    catch (VcsException ex) {
+      return null;
     }
   }
 }
