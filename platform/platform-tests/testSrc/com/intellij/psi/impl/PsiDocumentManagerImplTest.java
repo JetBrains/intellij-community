@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockPsiFile;
 import com.intellij.openapi.application.ApplicationManager;
@@ -244,7 +243,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       });
     }
     finally {
-      ProjectUtil.closeAndDispose(alienProject);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject, true);
     }
   }
 
@@ -390,7 +389,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       assertTrue("Still not committed: " + alienDocument, alienDocManager.isCommitted(alienDocument));
     }
     finally {
-      ProjectUtil.closeAndDispose(alienProject);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject, true);
     }
   }
 
