@@ -60,7 +60,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     myModule = module;
   }
 
-  public CompilerModuleExtensionImpl(@NotNull CompilerModuleExtensionImpl source, final boolean writable) {
+  private CompilerModuleExtensionImpl(@NotNull CompilerModuleExtensionImpl source, final boolean writable) {
     this(source.myModule);
     myWritable = writable;
     myCompilerOutput = source.myCompilerOutput;
@@ -118,7 +118,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   @Nullable
-  protected VirtualFilePointer getOutputPathValue(Element element, String tag, final boolean createPointer) {
+  private VirtualFilePointer getOutputPathValue(Element element, String tag, final boolean createPointer) {
     final Element outputPathChild = element.getChild(tag);
     VirtualFilePointer vptr = null;
     if (outputPathChild != null && createPointer) {
@@ -129,7 +129,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   @Nullable
-  protected static String getOutputPathValue(@NotNull Element element, @NotNull String tag) {
+  private static String getOutputPathValue(@NotNull Element element, @NotNull String tag) {
     final Element outputPathChild = element.getChild(tag);
     if (outputPathChild != null) {
       return outputPathChild.getAttributeValue(ATTRIBUTE_URL);
@@ -195,7 +195,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
 
   @NotNull
   private VirtualFilePointer createPointer(@NotNull String url) {
-    return VirtualFilePointerManager.getInstance().create(url, this, null);
+    return VirtualFilePointerManager.getInstance().create(url, this, ProjectRootManagerImpl.getInstanceImpl(getProject()).getRootsValidityChangedListener());
   }
 
   @Override
