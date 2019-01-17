@@ -198,5 +198,5 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
 }
 
 private val isSaveInPooledThread: Boolean
-  get() = ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("store.save.in.pooled.thread", false)
+  get() = ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("store.save.in.pooled.thread", true)
 
