@@ -138,15 +138,26 @@ public class WSLUtil {
   }
 
   /**
-   * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL or null if path is unmappable.
-   *         For example, {@code getWindowsPath("/mnt/c/Users/file.txt") returns "c:\Users\file.txt"}
+   * @deprecated in order to make custom wsl mount paths work, use {@link WSLUtil#getWindowsPath(java.lang.String, java.lang.String)} or
+   * {@link WSLDistribution#getWslPath(java.lang.String)}
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
   @Nullable
   public static String getWindowsPath(@NotNull String wslPath) {
-    if (!wslPath.startsWith(WSLDistribution.WSL_MNT_ROOT)) {
+    return getWindowsPath(wslPath, WSLDistribution.DEFAULT_WSL_MNT_ROOT);
+  }
+
+  /**
+   * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL or null if path is unmappable.
+   * For example, {@code getWindowsPath("/mnt/c/Users/file.txt") returns "c:\Users\file.txt"}
+   */
+  @Nullable
+  public static String getWindowsPath(@NotNull String wslPath, @NotNull String mntRoot) {
+    if (!wslPath.startsWith(mntRoot)) {
       return null;
     }
-    int driveLetterIndex = WSLDistribution.WSL_MNT_ROOT.length();
+    int driveLetterIndex = mntRoot.length();
     if (driveLetterIndex >= wslPath.length() || !Character.isLetter(wslPath.charAt(driveLetterIndex))) {
       return null;
     }
