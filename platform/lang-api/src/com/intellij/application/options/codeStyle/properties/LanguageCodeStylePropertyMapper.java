@@ -49,6 +49,11 @@ public class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMa
   }
 
   @NotNull
+  public Language getLanguage() {
+    return myLanguage;
+  }
+
+  @NotNull
   @Override
   public String getLanguageDomainId() {
     return myLanguageDomainId;
