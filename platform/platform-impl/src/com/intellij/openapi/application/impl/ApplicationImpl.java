@@ -10,7 +10,6 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
@@ -84,6 +83,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector.LIFECYCLE_APP;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
+  // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
 
   final ReadMostlyRWLock myLock;
@@ -319,7 +319,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           // ignore
         }
         catch (Throwable e) {
-          PluginManager.processException(e);
+          LOG.error(e);
         }
         finally {
           Thread.interrupted(); // reset interrupted status
@@ -342,7 +342,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           // ignore
         }
         catch (Throwable e) {
-          PluginManager.processException(e);
+          LOG.error(e);
         }
         finally {
           Thread.interrupted(); // reset interrupted status
@@ -415,7 +415,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
             listener.beforeApplicationLoaded(this, effectiveConfigPath);
           }
           catch (Throwable e) {
-            PluginManager.processException(e);
+            LOG.error(e);
           }
         }
 
@@ -427,7 +427,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
             listener.beforeComponentsCreated();
           }
           catch (Throwable e) {
-            PluginManager.processException(e);
+            LOG.error(e);
           }
         }
       });
@@ -453,14 +453,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           listener.componentsInitialized();
         }
         catch (Throwable e) {
-          PluginManager.processException(e);
+          LOG.error(e);
         }
 
         try {
           initializedExtensionPoint.reset();
         }
         catch (Throwable e) {
-          PluginManager.processException(e);
+          LOG.error(e);
         }
       }
     };
