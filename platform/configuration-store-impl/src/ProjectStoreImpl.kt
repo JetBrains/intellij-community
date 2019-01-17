@@ -6,7 +6,6 @@ import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.async.coroutineDispatchingContext
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
@@ -38,6 +37,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.CalledInAny
 import java.nio.file.AccessDeniedException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -285,7 +285,7 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
     } ?: PathUtilRt.getFileName(baseDir).replace(":", "")
   }
 
-  private fun saveProjectName() {
+  private suspend fun saveProjectName() {
     if (!isDirectoryBased) {
       return
     }
@@ -299,7 +299,7 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
 
     val basePath = projectBasePath
 
-   fun doSave() {
+    fun doSave() {
       if (currentProjectName == PathUtilRt.getFileName(basePath)) {
         // name equals to base path name - just remove name
         nameFile.delete()
@@ -313,10 +313,7 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
       doSave()
     }
     catch (e: AccessDeniedException) {
-      val status = runReadAction {
-        ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(
-          listOf(LocalFileSystem.getInstance().refreshAndFindFileByPath(nameFile.systemIndependentPath)))
-      }
+      val status = ensureFilesWritable(project, listOf(LocalFileSystem.getInstance().refreshAndFindFileByPath(nameFile.systemIndependentPath)!!))
       if (status.hasReadonlyFiles()) {
         throw e
       }
@@ -399,3 +396,10 @@ private class PlatformProjectStoreClassProvider : ProjectStoreClassProvider {
 }
 
 private fun composeFileBasedProjectWorkSpacePath(filePath: String) = "${FileUtilRt.getNameWithoutExtension(filePath)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}"
+
+@CalledInAny
+internal suspend fun ensureFilesWritable(project: Project, files: Collection<VirtualFile>): ReadonlyStatusHandler.OperationStatus {
+  return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+    ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files)
+  }
+}
