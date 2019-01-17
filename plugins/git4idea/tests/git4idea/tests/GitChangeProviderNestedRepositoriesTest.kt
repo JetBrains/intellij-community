@@ -119,7 +119,7 @@ class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
     val childRoot = File(parent, name)
     assertTrue(childRoot.mkdir())
     val repo = createRepository(project, childRoot.path)
-    cd(repo)
+    cd(parent)
     touch(".gitignore", name)
     addCommit("gitignore")
     return repo
