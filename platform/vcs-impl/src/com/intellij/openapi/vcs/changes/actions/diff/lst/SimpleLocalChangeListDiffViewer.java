@@ -255,7 +255,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         Icon icon = myIsExcludedFromCommit ? AllIcons.Diff.GutterCheckBox : AllIcons.Diff.GutterCheckBoxSelected;
         return new DiffGutterRenderer(icon, "Include into commit") {
           @Override
-          protected void performAction(@NotNull AnActionEvent e) {
+          protected void handleMouseClick() {
             if (!isValid()) return;
 
             PartialLocalLineStatusTracker tracker = getViewer().getPartialTracker();
