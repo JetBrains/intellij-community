@@ -20,6 +20,8 @@ import java.util.Set;
  * <li> permitted: true/false. statistics could be stopped remotely. if false UsageCollectors won't be started
  * </ul>
  */
+@Deprecated
+/** @deprecated to be removed in 2019.1 */
 public class FUStatisticsSettingsService extends StatisticsConnectionService {
   private static final String APPROVED_GROUPS_SERVICE = "white-list-service";
   public  static FUStatisticsSettingsService getInstance() {return  new FUStatisticsSettingsService();}
@@ -42,6 +44,10 @@ public class FUStatisticsSettingsService extends StatisticsConnectionService {
     }
     final BuildNumber build = ApplicationInfo.getInstance().getBuild();
     return FUStatisticsWhiteListGroupsService.getApprovedGroups(getProductRelatedUrl(approvedGroupsServiceUrl), toReportedBuild(build));
+  }
+  @Nullable
+  public String getDictionaryServiceUrl() {
+    return null;
   }
 
   @NotNull
