@@ -18,8 +18,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 @State(
   name = "MainMenuCollector",
   storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
     @Storage(value = "statistics.main_menu.xml", roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
@@ -43,7 +43,6 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
 
   @Override
   public void loadState(@NotNull State state) {
-    myState = state;
   }
 
   public void record(@NotNull AnAction action) {
