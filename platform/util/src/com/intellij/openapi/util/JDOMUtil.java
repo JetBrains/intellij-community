@@ -813,4 +813,27 @@ public class JDOMUtil {
   public static Element internElement(@NotNull Element element) {
     return ourJDOMInterner.internElement(element);
   }
+
+  /**
+   * Not required if you use XmlSerializator.
+   */
+  @NotNull
+  public static String removeControlChars(@NotNull String text) {
+    StringBuilder result = null;
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      if (!Verifier.isXMLCharacter(c)) {
+        if (result == null) {
+          result = new StringBuilder(text.length());
+          result.append(text, 0, i);
+        }
+        continue;
+      }
+
+      if (result != null) {
+        result.append(c);
+      }
+    }
+    return result == null ? text : result.toString();
+  }
 }
