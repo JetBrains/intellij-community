@@ -7,6 +7,11 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.io.File
 
 private val vcsPattern = """(?<=mapping directory=").*(?=" vcs="Git")""".toRegex()
+private val jme by lazy {
+  JpsMacroExpander(emptyMap()).apply {
+    addFileHierarchyReplacements("MAVEN_REPOSITORY", File(System.getProperty("user.home"), ".m2/repository"))
+  }
+}
 
 /**
  * @param project idea project root
@@ -15,11 +20,9 @@ private val vcsPattern = """(?<=mapping directory=").*(?=" vcs="Git")""".toRegex
 internal fun vcsRoots(project: File): List<File> {
   val vcsXml = project.resolve("${PathMacroUtil.DIRECTORY_STORE_NAME}/vcs.xml")
   return if (vcsXml.exists()) {
-    val jme = JpsMacroExpander(emptyMap()).apply {
-      addFileHierarchyReplacements(PathMacroUtil.PROJECT_DIR_MACRO_NAME, project)
-    }
+    jme.addFileHierarchyReplacements(PathMacroUtil.PROJECT_DIR_MACRO_NAME, project)
     vcsPattern.findAll(vcsXml.readText())
-      .map { jme.substitute(it.value, SystemInfo.isFileSystemCaseSensitive) }
+      .map { expandJpsMacro(it.value) }
       .map {
         val file = File(it)
         if (file.exists()) file else File(project, it)
@@ -33,3 +36,5 @@ internal fun vcsRoots(project: File): List<File> {
     listOf(project)
   }
 }
+
+internal fun expandJpsMacro(text: String) = jme.substitute(text, SystemInfo.isFileSystemCaseSensitive)

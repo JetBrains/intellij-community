@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
+import java.io.OutputStream
+import java.io.PrintStream
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -101,4 +103,36 @@ internal fun guessEmail(invalidEmail: String): Collection<String> {
   )
   if (domain != "jetbrains.com") guesses += "$username@jetbrains.com"
   return guesses
+}
+
+internal inline fun <T> protectStdErr(block: () -> T): T {
+  val err = System.err
+  return try {
+    block()
+  }
+  finally {
+    System.setErr(err)
+  }
+}
+
+private val mutedStream = PrintStream(object : OutputStream() {
+  override fun write(b: ByteArray) {}
+  override fun write(b: ByteArray, off: Int, len: Int) {}
+  override fun write(b: Int) {}
+})
+
+internal inline fun <T> muteStdOut(block: () -> T): T {
+  val out = System.out
+  System.setOut(mutedStream)
+  return try {
+    block()
+  }
+  finally {
+    System.setOut(out)
+  }
+}
+
+internal inline fun <T> muteStdErr(block: () -> T): T = protectStdErr {
+  System.setErr(mutedStream)
+  return block()
 }

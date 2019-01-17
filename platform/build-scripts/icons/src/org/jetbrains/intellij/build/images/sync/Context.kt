@@ -11,6 +11,10 @@ import java.util.function.Consumer
 
 internal class Context(private val errorHandler: Consumer<String> = Consumer { error(it) },
                        private val devIconsVerifier: Consumer<Collection<File>>? = null) {
+  companion object {
+    const val iconsCommitHashesToSyncArg = "sync.icons.commits"
+  }
+
   val devRepoDir: File
   val iconsRepoDir: File
   val iconsRepoName: String
@@ -52,9 +56,9 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     val failIfSyncDevIconsRequiredArg = "fail.if.sync.dev.icons.required"
     val assignInvestigationArg = "assign.investigation"
     val notifySlackArg = "notify.slack"
-    val iconsCommitHashesToSyncArg = "sync.icons.commits"
-    val devIconsCommitHashesToSyncArg = "sync.dev.icons.commits"
-    println("""
+    val devIconsSyncAllArg = "sync.dev.icons.all"
+    @Suppress("unused")
+    fun usage() = println("""
       |Usage: -D$devRepoArg=<devRepoDir> -D$iconsRepoArg=<iconsRepoDir> [-Doption=...]
       |Options:
       |* `$iconsRepoArg` - designers' repo
@@ -69,7 +73,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       |* `$assignInvestigationArg` - assign investigation if required
       |* `$notifySlackArg` - notify slack channel if required
       |* `$iconsCommitHashesToSyncArg` - commit hashes in designers' repo to sync icons from, implies $syncDevIconsArg
-      |* `$devIconsCommitHashesToSyncArg` - commit hashes in developers' repo to sync icons from, implies $syncIconsArg
+      |* `$devIconsSyncAllArg` - sync all changes from developers' repo to designers' repo, implies $syncIconsArg
     """.trimMargin())
 
     fun bool(arg: String) = System.getProperty(arg)?.toBoolean() ?: false
@@ -99,13 +103,12 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     notifySlack = bool(notifySlackArg)
     iconsCommitHashesToSync = commits(iconsCommitHashesToSyncArg)
     doSyncRemovedIconsInDev = bool(syncRemovedIconsInDevArg) || iconsCommitHashesToSync.isNotEmpty()
-    devIconsCommitHashesToSync = commits(devIconsCommitHashesToSyncArg)
-      // if empty then read TeamCity provided changes
-      .takeIf { it.isNotEmpty() } ?: System.getProperty("teamcity.build.changedFiles.file")
+    // read TeamCity provided changes
+    devIconsCommitHashesToSync = System.getProperty("teamcity.build.changedFiles.file")
       // if icons sync is required
       ?.takeIf { doSyncIconsRepo }
       // or full check is not required
-      ?.takeIf { System.getProperty(devIconsCommitHashesToSyncArg)?.let(String::trim) != "*" }
+      ?.takeIf { !bool(devIconsSyncAllArg) }
       // or it is not scheduled build which is always full check
       ?.takeIf { !isScheduled() }
       ?.let(::File)

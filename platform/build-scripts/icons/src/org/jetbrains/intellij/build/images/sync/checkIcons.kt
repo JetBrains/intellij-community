@@ -9,8 +9,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
 import java.io.IOException
-import java.io.OutputStream
-import java.io.PrintStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Consumer
@@ -57,15 +55,13 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
   }
   syncIconsRepo(context)
   val report = report(context, skippedDirs.size)
-  when {
-    !isUnderTeamCity() -> log(report)
-    context.isFail() -> context.doFail(report)
-    // partial sync shouldn't make build successful
-    context.devIconsCommitHashesToSync.isNotEmpty() && isPreviousBuildFailed() -> context.doFail(report)
-    // reviews should be created
-    context.iconsCommitHashesToSync.isNotEmpty() && context.devReviews().isEmpty() -> context.doFail(report)
-    else -> log(report)
-  }
+  if (isUnderTeamCity() &&
+      (context.isFail() ||
+       // partial sync shouldn't make build successful
+       context.devIconsCommitHashesToSync.isNotEmpty() && isPreviousBuildFailed() ||
+       // reviews should be created
+       context.iconsCommitHashesToSync.isNotEmpty() && context.devReviews().isEmpty())) context.doFail(report)
+  else log(report)
 }
 
 private enum class SearchType { MODIFIED, REMOVED_BY_DEV, REMOVED_BY_DESIGNERS }
@@ -218,25 +214,8 @@ catch (e: IOException) {
   emptySet<File>()
 }
 
-private inline fun <T> protectStdErr(block: () -> T): T {
-  val err = System.err
-  return try {
-    block()
-  }
-  finally {
-    System.setErr(err)
-  }
-}
-
-private val mutedStream = PrintStream(object : OutputStream() {
-  override fun write(b: ByteArray) {}
-  override fun write(b: ByteArray, off: Int, len: Int) {}
-  override fun write(b: Int) {}
-})
-
-private fun isValidIcon(file: Path) = protectStdErr {
+private fun isValidIcon(file: Path) = muteStdErr {
   try {
-    System.setErr(mutedStream)
     // image
     Files.exists(file) && isImage(file) && imageSize(file)?.let { size ->
       val pixels = if (file.fileName.toString().contains("@2x")) 64 else 32

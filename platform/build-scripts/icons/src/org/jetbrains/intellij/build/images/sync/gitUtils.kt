@@ -9,7 +9,7 @@ import java.util.stream.Stream
 private val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?: "git").also {
   val noGitFound = "Git is not found, please specify path to git executable in TEAMCITY_GIT_PATH or GIT or add it to PATH"
   try {
-    val gitVersion = execute(File(System.getProperty("user.dir")), it, "--version")
+    val gitVersion = execute(null, it, "--version")
     if (gitVersion.isBlank()) error(noGitFound)
     log(gitVersion)
   }
