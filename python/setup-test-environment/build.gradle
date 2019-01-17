@@ -4,7 +4,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.25"
+  id "com.jetbrains.python.envs" version "0.0.30"
 }
 
 /**
@@ -99,13 +99,13 @@ envs {
                true)
 
   createPython("py36_django2_1",
-               "3.6.7",
+               "3.6.8",
                ["django==2.1", "jinja2", "pandas"],
                "python3.6\npython3\ndjango\njinja2\npython34\npython36\npandas",
                true)
 
   createPython("py37",
-               "3.7.1",
+               "3.7.2",
                [],
                "python3.7",
                true)
@@ -118,7 +118,7 @@ envs {
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) { // Only windows needs ironPython
 
-    ironpython "ironpython", "32" // For some reason x64 is buggy and leads to StackOverflow when called with ensurepip
+    ironpython "ironpython"
 
     project.tasks.create("Misc for ironpython") { //"Misc" will be launched by "build"
       shouldRunAfter 'build_envs'
