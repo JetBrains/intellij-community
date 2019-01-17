@@ -94,7 +94,7 @@ internal class DoNotSaveDefaultsTest {
 
     try {
       System.setProperty("store.save.use.modificationCount", "false")
-      componentManager.stateStore.save()
+      componentManager.stateStore.save(isForceSavingAllSettings = true)
     }
     finally {
       System.setProperty("store.save.use.modificationCount", useModCountOldValue ?: "false")
