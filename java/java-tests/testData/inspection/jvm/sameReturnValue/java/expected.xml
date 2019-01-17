@@ -6,5 +6,12 @@
     <problem_class>Method returns the same value</problem_class>
     <description>Method always returns &lt;code&gt;0&lt;/code&gt;</description>
   </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>10</line>
+    <problem_class>Method returns the same value</problem_class>
+    <description>Method always returns &lt;code&gt;0&lt;/code&gt;</description>
+  </problem>
 </problems>
 
