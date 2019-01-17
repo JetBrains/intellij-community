@@ -816,6 +816,8 @@ public class JDOMUtil {
 
   /**
    * Not required if you use XmlSerializator.
+   *
+   * @see XmlStringUtil#escapeIllegalXmlChars(String)
    */
   @NotNull
   public static String removeControlChars(@NotNull String text) {
