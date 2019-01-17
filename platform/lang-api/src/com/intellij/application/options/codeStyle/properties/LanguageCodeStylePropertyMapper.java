@@ -12,17 +12,26 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 @ApiStatus.Experimental
 public class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMapper {
   private @NotNull final Language myLanguage;
+  private @NotNull final String myLanguageDomainId;
 
   public LanguageCodeStylePropertyMapper(@NotNull CodeStyleSettings settings, @NotNull Language language) {
+    this (settings, language, null);
+  }
+
+  public LanguageCodeStylePropertyMapper(@NotNull CodeStyleSettings settings,
+                                         @NotNull Language language,
+                                         @Nullable String languageDomainId) {
     super(settings);
     myLanguage = language;
-   }
+    myLanguageDomainId = languageDomainId == null ? myLanguage.getID().toLowerCase(Locale.ENGLISH) : languageDomainId;
+  }
 
   @NotNull
   @Override
@@ -42,7 +51,7 @@ public class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMa
   @NotNull
   @Override
   public String getLanguageDomainId() {
-    return myLanguage.getID().toLowerCase(Locale.ENGLISH);
+    return myLanguageDomainId;
   }
 
   private List<CustomCodeStyleSettings> getCustomSettings() {

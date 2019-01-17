@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -60,6 +61,14 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   @Nullable
   public String getLanguageName() {
     return null;
+  }
+
+  /**
+   * @return Language ID to be used in external formats like Json and .editorconfig. Must consist only of low case 'a'..'z' characters.
+   */
+  @NotNull
+  public String getExternalLanguageId() {
+    return getLanguage().getID().toLowerCase(Locale.ENGLISH);
   }
 
   /**
@@ -361,6 +370,6 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   @ApiStatus.Experimental
   @NotNull
   public AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull CodeStyleSettings settings) {
-    return new LanguageCodeStylePropertyMapper(settings, getLanguage());
+    return new LanguageCodeStylePropertyMapper(settings, getLanguage(), getExternalLanguageId());
   }
 }
