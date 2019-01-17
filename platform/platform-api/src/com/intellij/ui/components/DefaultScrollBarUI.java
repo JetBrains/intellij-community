@@ -248,7 +248,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
   public void paint(Graphics g, JComponent c) {
     Alignment alignment = Alignment.get(c);
     if (alignment != null && g instanceof Graphics2D) {
-      Container parent = c.getParent();
       Color background = !isOpaque(c) ? null : c.getBackground();
       if (background != null) {
         g.setColor(background);
@@ -286,9 +285,24 @@ class DefaultScrollBarUI extends ScrollBarUI {
           trailing.setBounds(bounds.x + bounds.width, bounds.y, size, bounds.height);
         }
       }
+      // do not set track size bigger that expected thickness
+      if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
+        int offset = bounds.width - getThickness();
+        if (offset > 0) {
+          bounds.width -= offset;
+          if (alignment == Alignment.RIGHT) bounds.x += offset;
+        }
+      }
+      else {
+        int offset = bounds.height - getThickness();
+        if (offset > 0) {
+          bounds.height -= offset;
+          if (alignment == Alignment.BOTTOM) bounds.y += offset;
+        }
+      }
       myTrack.bounds.setBounds(bounds);
       updateThumbBounds();
-      if (!isOpaque(c)) paintTrack((Graphics2D)g, c);
+      paintTrack((Graphics2D)g, c);
       // process additional drawing on the track
       RegionPainter<Object> track = UIUtil.getClientProperty(c, JBScrollBar.TRACK);
       if (track != null && myTrack.bounds.width > 0 && myTrack.bounds.height > 0) {

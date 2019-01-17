@@ -26,6 +26,10 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
 
   private static final ColorKey BACKGROUND = key(0xFFF5F5F5, 0xFF3F4244, "ScrollBar.background");
 
+  private static final ColorKey TRACK_OPAQUE_BACKGROUND
+    = key(0x00808080, 0x00808080, 0x00808080, 0x00808080, "ScrollBar.trackColor");
+  private static final ColorKey TRACK_OPAQUE_HOVERED_BACKGROUND
+    = key(0x00808080, 0x00808080, 0x00808080, 0x00808080, "ScrollBar.hoverTrackColor");
   private static final ColorKey TRACK_BACKGROUND
     = key(0x00808080, 0x00808080, 0x00808080, 0x00808080, "ScrollBar.Transparent.trackColor");
   private static final ColorKey TRACK_HOVERED_BACKGROUND
@@ -98,8 +102,8 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
     Track(@NotNull Supplier<? extends Component> supplier) {
       super(supplier);
       fillProducer = new MixedColorProducer(
-        getColor(supplier, TRACK_BACKGROUND),
-        getColor(supplier, TRACK_HOVERED_BACKGROUND));
+        getColor(supplier, TRACK_BACKGROUND, TRACK_OPAQUE_BACKGROUND),
+        getColor(supplier, TRACK_HOVERED_BACKGROUND, TRACK_OPAQUE_HOVERED_BACKGROUND));
     }
 
     @Override

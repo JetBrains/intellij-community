@@ -657,6 +657,8 @@ public final class UiDefaultsHardcodedKeys {
     "RootPane.questionDialogBorder",
     "RootPane.warningDialogBorder",
     "RootPaneUI",
+    "ScrollBar.hoverTrackColor",
+    "ScrollBar.trackColor",
     "ScrollBar.Transparent.hoverTrackColor",
     "ScrollBar.Transparent.trackColor",
     "ScrollBar.hoverThumbColor",
