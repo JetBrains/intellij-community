@@ -225,7 +225,9 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
         button(buttonNext).click()
         if (template.isNotEmpty()) {
           waitForPageTransitionFinished {
-            checkbox(checkCreateProjectFromTemplate).target().locationOnScreen
+            val cmp = checkbox(checkCreateProjectFromTemplate).target()
+            logInfo("found component ${cmp.hashCode().toString(16)}")
+              cmp.locationOnScreen
           }
           val templateCheckbox = checkbox(checkCreateProjectFromTemplate)
           if (!templateCheckbox.isSelected)
@@ -264,10 +266,11 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
  * */
 fun JDialogFixture.waitForPageTransitionFinished(locationOnScreen: JDialogFixture.() -> Point) {
   step("wait for page transition") {
-    var previousCoord = locationOnScreen()
+    var previousCoord = step("calculate original location") { locationOnScreen() }
     robot().waitForIdle()
     GuiTestUtilKt.waitUntil("wait when coordinates stop changing") {
-      val currentCoord = locationOnScreen()
+      val currentCoord = step("calculate location in progress") { locationOnScreen() }
+//      val currentCoord = GuiTestUtilKt.computeOnEdt { locationOnScreen() }!!
       val result = previousCoord == currentCoord
       logInfo("current coordinates [${currentCoord.x}, ${currentCoord.y}], previous coordinates [${previousCoord.x}, ${previousCoord.y}]")
       previousCoord = currentCoord
@@ -283,7 +286,9 @@ fun NewProjectDialogModel.typeGroupAndArtifact(group: String, artifact: String) 
     step("set group and artifact for gradle/maven project") {
       with(connectDialog()) {
         waitForPageTransitionFinished {
-          textfield(textGroupId).target().locationOnScreen
+          val cmp = textfield(textGroupId).target()
+          logInfo("found component ${cmp.hashCode().toString(16)}")
+            cmp.locationOnScreen
         }
         step("fill GroupId with `$group`") {
           textfield(textGroupId).click()
@@ -326,7 +331,9 @@ fun NewProjectDialogModel.createGradleProject(
         button(buttonNext).click()
         step("set gradle options") {
           waitForPageTransitionFinished {
-            checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title).target().locationOnScreen
+            val cmp =checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title).target()
+            logInfo("found component ${cmp.hashCode().toString(16)}")
+            cmp.locationOnScreen
           }
           val useAutoImport = checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title)
           if (useAutoImport.isSelected != gradleOptions.useAutoImport) {
@@ -364,7 +371,9 @@ fun NewProjectDialogModel.typeProjectNameAndLocation(projectPath: String) {
   with(guiTestCase) {
     with(connectDialog()) {
       waitForPageTransitionFinished {
-        textfield(textProjectLocation).target().locationOnScreen
+        val cmp = textfield(textProjectLocation).target()
+        logInfo("found component ${cmp.hashCode().toString(16)}")
+          cmp.locationOnScreen
       }
       step("fill Project location with `$projectPath`") {
         textfield(textProjectLocation).click()
@@ -458,7 +467,9 @@ fun NewProjectDialogModel.createKotlinMPProject(
       button(buttonNext).click()
       val gradleJvm = "Gradle JVM:"
       waitForPageTransitionFinished {
-        combobox(gradleJvm).target().locationOnScreen
+        val cmp = combobox(gradleJvm).target()
+        logInfo("found component ${cmp.hashCode().toString(16)}")
+          cmp.locationOnScreen
       }
       if (projectSdk.isNotEmpty()) selectSdk(projectSdk, gradleJvm)
       button(buttonNext).click()
