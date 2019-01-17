@@ -103,6 +103,10 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
       return;
     }
 
+    if (myRawData == null) {
+      throw new IllegalStateException(String.format("Data node of key '%s' does not contain raw or prepared data", myKey));
+    }
+
     try {
       myData = getSerializer().readData(myRawData, loaders);
       assert myData != null;
