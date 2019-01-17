@@ -471,7 +471,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testBackspacePerformance() {
     int nCopies = 10000;
-    String in = StringUtil.join(Collections.nCopies(nCopies, "\na\nb\bc"), "");
+    String in = StringUtil.repeat("\na\nb\bc", nCopies);
     PlatformTestUtil.startPerformanceTest("print newlines with backspace", 5000, () -> {
       for (int i = 0; i < 2; i++) {
         myConsole.clear();
