@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -25,6 +24,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +105,7 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
         myCompilerTester.tearDown();
       }
       PathMacros.getInstance().setMacro(PathMacrosImpl.MAVEN_REPOSITORY, oldMacroValue);
-      ProjectManagerEx.getInstanceEx().forceCloseProject(myProject, true);
+      PlatformTestUtil.forceCloseProjectWithoutSaving(myProject);
       myProject = null;
       InspectionProfileImpl.INIT_INSPECTIONS = false;
     }

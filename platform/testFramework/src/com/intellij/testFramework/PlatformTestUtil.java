@@ -594,6 +594,12 @@ public class PlatformTestUtil {
     }
   }
 
+  public static void forceCloseProjectWithoutSaving(@NotNull Project project) {
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project, false /* do not dispose */);
+    // explicitly dispose because `dispose` option for forceCloseProject doesn't work todo why?
+    getApplication().runWriteAction(() -> Disposer.dispose(project));
+  }
+
   public static void saveProject(@NotNull Project project) {
     saveProject(project, false);
   }

@@ -6,12 +6,12 @@ import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import kotlin.Unit;
 
 import java.io.File;
@@ -38,7 +38,7 @@ public class ModuleLoadingStressTest extends PlatformTestCase {
 
     String projectFilePath = myProject.getProjectFilePath();
     String moduleName = myModule.getName();
-    ProjectManagerEx.getInstanceEx().forceCloseProject(myProject, true);
+    PlatformTestUtil.forceCloseProjectWithoutSaving(myProject);
 
     myProject = ProjectManager.getInstance().loadAndOpenProject(projectFilePath);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();

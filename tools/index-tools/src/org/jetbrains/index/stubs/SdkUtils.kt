@@ -6,12 +6,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ui.UIUtil
 import java.io.File
 
@@ -44,7 +44,7 @@ fun openProjectWithSdk(projectPath: String,
   catch (e: Throwable) {
     if (project != null) {
       UIUtil.invokeAndWaitIfNeeded(Runnable {
-        ProjectManagerEx.getInstanceEx().forceCloseProject(project, true)
+        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
       })
     }
     throw e
