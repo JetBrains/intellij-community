@@ -246,7 +246,10 @@ public class HgStatusCommand {
     Collection<VirtualFile> resultFiles = new HashSet<>();
     Set<HgChange> change = executeInCurrentThread(repo, paths);
     for (HgChange hgChange : change) {
-      resultFiles.add(hgChange.afterFile().toFilePath().getVirtualFile());
+      VirtualFile file = hgChange.afterFile().toFilePath().getVirtualFile();
+      if (file != null) {
+        resultFiles.add(file);
+      }
     }
     return resultFiles;
   }
