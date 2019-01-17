@@ -27,30 +27,42 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
   private static final ColorKey BACKGROUND = key(0xFFF5F5F5, 0xFF3F4244, "ScrollBar.background");
 
   private static final ColorKey TRACK_OPAQUE_BACKGROUND
-    = key(0x00808080, 0x00808080, 0x00808080, 0x00808080, "ScrollBar.trackColor");
+    = isMac ? key(0x00808080, 0x00808080, "ScrollBar.Mac.trackColor")
+            : key(0x00808080, 0x00808080, "ScrollBar.trackColor");
   private static final ColorKey TRACK_OPAQUE_HOVERED_BACKGROUND
-    = key(0x00808080, 0x00808080, 0x00808080, 0x00808080, "ScrollBar.hoverTrackColor");
+    = isMac ? key(0x00808080, 0x00808080, "ScrollBar.Mac.hoverTrackColor")
+            : key(0x00808080, 0x00808080, "ScrollBar.hoverTrackColor");
   private static final ColorKey TRACK_BACKGROUND
-    = key(0x00808080, 0x00808080, 0x00808080, 0x00808080, "ScrollBar.Transparent.trackColor");
+    = isMac ? key(0x00808080, 0x00808080, "ScrollBar.Mac.Transparent.trackColor")
+            : key(0x00808080, 0x00808080, "ScrollBar.Transparent.trackColor");
   private static final ColorKey TRACK_HOVERED_BACKGROUND
-    = key(0x1A808080, 0x1A808080, 0x1A808080, 0x1A808080, "ScrollBar.Transparent.hoverTrackColor");
+    = isMac ? key(0x1A808080, 0x1A808080, "ScrollBar.Mac.Transparent.hoverTrackColor")
+            : key(0x1A808080, 0x1A808080, "ScrollBar.Transparent.hoverTrackColor");
 
   private static final ColorKey THUMB_OPAQUE_FOREGROUND
-    = key(0x33595959, 0x47383838, 0x33000000, 0x59262626, "ScrollBar.thumbBorderColor");
+    = isMac ? key(0x33000000, 0x59262626, "ScrollBar.Mac.thumbBorderColor")
+            : key(0x33595959, 0x47383838, "ScrollBar.thumbBorderColor");
   private static final ColorKey THUMB_OPAQUE_BACKGROUND
-    = key(0x33737373, 0x47A6A6A6, 0x33000000, 0x59808080, "ScrollBar.thumbColor");
+    = isMac ? key(0x33000000, 0x59808080, "ScrollBar.Mac.thumbColor")
+            : key(0x33737373, 0x47A6A6A6, "ScrollBar.thumbColor");
   private static final ColorKey THUMB_OPAQUE_HOVERED_FOREGROUND
-    = key(0x47595959, 0x59383838, 0x80000000, 0x8C262626, "ScrollBar.hoverThumbBorderColor");
+    = isMac ? key(0x80000000, 0x8C262626, "ScrollBar.Mac.hoverThumbBorderColor")
+            : key(0x47595959, 0x59383838, "ScrollBar.hoverThumbBorderColor");
   private static final ColorKey THUMB_OPAQUE_HOVERED_BACKGROUND
-    = key(0x47737373, 0x59A6A6A6, 0x80000000, 0x8C808080, "ScrollBar.hoverThumbColor");
+    = isMac ? key(0x80000000, 0x8C808080, "ScrollBar.Mac.hoverThumbColor")
+            : key(0x47737373, 0x59A6A6A6, "ScrollBar.hoverThumbColor");
   private static final ColorKey THUMB_FOREGROUND
-    = key(0x33595959, 0x47383838, 0x00000000, 0x00262626, "ScrollBar.Transparent.thumbBorderColor");
+    = isMac ? key(0x00000000, 0x00262626, "ScrollBar.Mac.Transparent.thumbBorderColor")
+            : key(0x33595959, 0x47383838, "ScrollBar.Transparent.thumbBorderColor");
   private static final ColorKey THUMB_BACKGROUND
-    = key(0x33737373, 0x47A6A6A6, 0x00000000, 0x00808080, "ScrollBar.Transparent.thumbColor");
+    = isMac ? key(0x00000000, 0x00808080, "ScrollBar.Mac.Transparent.thumbColor")
+            : key(0x33737373, 0x47A6A6A6, "ScrollBar.Transparent.thumbColor");
   private static final ColorKey THUMB_HOVERED_FOREGROUND
-    = key(0x47595959, 0x59383838, 0x80000000, 0x8C262626, "ScrollBar.Transparent.hoverThumbBorderColor");
+    = isMac ? key(0x80000000, 0x8C262626, "ScrollBar.Mac.Transparent.hoverThumbBorderColor")
+            : key(0x47595959, 0x59383838, "ScrollBar.Transparent.hoverThumbBorderColor");
   private static final ColorKey THUMB_HOVERED_BACKGROUND
-    = key(0x47737373, 0x59A6A6A6, 0x80000000, 0x8C808080, "ScrollBar.Transparent.hoverThumbColor");
+    = isMac ? key(0x80000000, 0x8C808080, "ScrollBar.Mac.Transparent.hoverThumbColor")
+            : key(0x47737373, 0x59A6A6A6, "ScrollBar.Transparent.hoverThumbColor");
 
   protected ScrollBarPainter(@NotNull Supplier<? extends Component> supplier) {
     animator = new TwoWayAnimator(getClass().getName(), 11, 150, 125, 300, 125) {
@@ -65,13 +77,6 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
   @NotNull
   private static ColorKey key(int light, int dark, @NotNull String name) {
     return ColorKey.createColorKey(name, JBColor.namedColor(name, new JBColor(new Color(light, true), new Color(dark, true))));
-  }
-
-  @NotNull
-  private static ColorKey key(int light, int dark, int lightMac, int darkMac, @NotNull String name) {
-    return ColorKey.createColorKey(name, JBColor.namedColor(name, new JBColor(
-      new Color(!isMac ? light : lightMac, true),
-      new Color(!isMac ? dark : darkMac, true))));
   }
 
   @NotNull
