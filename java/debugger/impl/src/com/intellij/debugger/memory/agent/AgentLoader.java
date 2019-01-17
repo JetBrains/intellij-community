@@ -22,20 +22,25 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class AgentLoader {
+  public static final MemoryAgent DEFAULT_PROXY = new MyDisabledMemoryAgent();
   private static final Logger LOG = Logger.getInstance(AgentLoader.class);
-  private static final MemoryAgent DEFAULT_PROXY = new MyDisabledMemoryAgent();
 
   @NotNull
   public MemoryAgent load(@NotNull EvaluationContextImpl evaluationContext, @NotNull VirtualMachineProxy virtualMachine) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       ClassType classType = ensureClassLoaded(evaluationContext, virtualMachine);
-      return classType == null ? DEFAULT_PROXY : new MemoryAgentImpl(evaluationContext, classType);
+      if (classType != null) {
+        MemoryAgentImpl agent = new MemoryAgentImpl(evaluationContext.getDebugProcess(), classType);
+        agent.initializeCapabilities();
+        return agent.isLoaded() ? agent : DEFAULT_PROXY;
+      }
     }
     catch (EvaluateException e) {
-      LOG.error("Could not load proxy class", e);
-      return DEFAULT_PROXY;
+      LOG.info("Could not load proxy class", e);
     }
+
+    return DEFAULT_PROXY;
   }
 
   @Nullable
@@ -69,6 +74,11 @@ public class AgentLoader {
   }
 
   private static class MyDisabledMemoryAgent implements MemoryAgent {
+    @Override
+    public boolean isLoaded() {
+      return false;
+    }
+
     @Override
     public boolean canEvaluateObjectSize() {
       return false;

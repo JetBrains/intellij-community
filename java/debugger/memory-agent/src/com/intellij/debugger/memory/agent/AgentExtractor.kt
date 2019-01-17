@@ -14,8 +14,7 @@ class AgentExtractor {
     return@let if (SystemInfo.is32Bit) PlatformType.WINDOWS32 else PlatformType.WINDOWS64
   }
 
-  fun extract(): File? {
-    // TODO: assert not EDT
+  fun extract(): File {
     val file = FileUtil.createTempFile("${platform.prefix}memory_agent", platform.suffix, true)
     val agentFileName = "${platform.prefix}memory_agent${platform.suffix}"
     val inputStream = AgentExtractor::class.java.classLoader.getResourceAsStream("bin/$agentFileName")

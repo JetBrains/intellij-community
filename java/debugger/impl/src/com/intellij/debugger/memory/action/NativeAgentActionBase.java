@@ -2,20 +2,17 @@
 package com.intellij.debugger.memory.action;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.JavaValue;
-import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.managerThread.DebuggerCommand;
+import com.intellij.debugger.memory.agent.MemoryAgent;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class NativeAgentActionBase extends DebuggerTreeAction {
@@ -24,20 +21,19 @@ public abstract class NativeAgentActionBase extends DebuggerTreeAction {
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     Project project = node.getTree().getProject();
-    XValue container = node.getValueContainer();
-    XDebugSession currentSession = XDebuggerManager.getInstance(project).getCurrentSession();
-    XSuspendContext suspendContext = currentSession != null ? currentSession.getSuspendContext() : null;
-    DebugProcessImpl debugProcess =
-      suspendContext instanceof SuspendContextImpl ? ((SuspendContextImpl)suspendContext).getDebugProcess() : null;
-    if (debugProcess == null) return;
+    DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(project);
+    ObjectReference reference = getObjectReference(node);
+    if (debugProcess == null || reference == null) return;
     debugProcess.getManagerThread().invokeCommand(new DebuggerCommand() {
       @Override
       public void action() {
-        if (container instanceof JavaValue) {
-          EvaluationContextImpl evaluationContext = debugProcess.getDebuggerContext().createEvaluationContext();
-          if (evaluationContext == null) return;
-          Value value = ((JavaValue)container).getDescriptor().getValue();
-          perform(evaluationContext, (ObjectReference)value, node);
+        MemoryAgent memoryAgent = debugProcess.getMemoryAgent();
+        LOG.assertTrue(memoryAgent != null);
+        try {
+          perform(memoryAgent, reference, node);
+        }
+        catch (EvaluateException ex) {
+          XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification("Action failed", NotificationType.ERROR);
         }
       }
 
@@ -51,15 +47,20 @@ public abstract class NativeAgentActionBase extends DebuggerTreeAction {
   @Override
   protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     if (!super.isEnabled(node, e)) return false;
-    XValue container = node.getValueContainer();
-    if (container instanceof JavaValue) {
-      if (((JavaValue)container).getDescriptor().getValue() instanceof ObjectReference) return true;
+    DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(node.getTree().getProject());
+    MemoryAgent memoryAgent = debugProcess == null ? null : debugProcess.getMemoryAgent();
+    if (memoryAgent == null || !memoryAgent.isLoaded()) {
+      e.getPresentation().setVisible(false);
+      return false;
     }
+    ObjectReference reference = getObjectReference(node);
 
-    return false;
+    return reference != null && isEnabled(memoryAgent);
   }
 
-  protected abstract void perform(@NotNull EvaluationContextImpl evaluationContext,
+  protected abstract boolean isEnabled(@NotNull MemoryAgent agent);
+
+  protected abstract void perform(@NotNull MemoryAgent agent,
                                   @NotNull ObjectReference reference,
-                                  @NotNull XValueNodeImpl node);
+                                  @NotNull XValueNodeImpl node) throws EvaluateException;
 }

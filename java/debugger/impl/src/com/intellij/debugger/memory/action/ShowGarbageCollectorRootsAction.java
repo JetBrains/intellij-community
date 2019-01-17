@@ -3,14 +3,13 @@ package com.intellij.debugger.memory.action;
 
 import com.intellij.debugger.actions.JavaReferringObjectsValue;
 import com.intellij.debugger.engine.JavaValue;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.memory.agent.AgentLoader;
-import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.debugger.engine.ReferringObjectsProvider;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XInspectDialog;
@@ -20,11 +19,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShowGarbageCollectorRootsAction extends NativeAgentActionBase {
   @Override
-  protected void perform(@NotNull EvaluationContextImpl evaluationContext,
+  protected void perform(@NotNull MemoryAgent memoryAgent,
                          @NotNull ObjectReference reference,
-                         @NotNull XValueNodeImpl node) {
-    VirtualMachineProxyImpl virtualMachineProxy = evaluationContext.getDebugProcess().getVirtualMachineProxy();
-    MemoryAgent memoryAgent = new AgentLoader().load(evaluationContext, virtualMachineProxy);
+                         @NotNull XValueNodeImpl node) throws EvaluateException {
     ReferringObjectsProvider roots = memoryAgent.canFindGcRoots() ? memoryAgent.findGcRoots(reference) : null;
     if (roots == null) {
       XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification("This feature is unavailable", NotificationType.INFORMATION);
@@ -34,14 +31,20 @@ public class ShowGarbageCollectorRootsAction extends NativeAgentActionBase {
       () -> {
         XDebuggerTree tree = node.getTree();
         JavaValue javaValue = (JavaValue)node.getValueContainer();
+        XDebugSession session = javaValue.getEvaluationContext().getDebugProcess().getSession().getXDebugSession();
         JavaReferringObjectsValue value = new JavaReferringObjectsValue(javaValue, roots, false);
         XInspectDialog dialog =
           new XInspectDialog(tree.getProject(), tree.getEditorsProvider(), tree.getSourcePosition(), StringUtil.notNullize(node.getName()),
                              value, tree.getValueMarkers(),
-                             evaluationContext.getDebugProcess().getSession().getXDebugSession(), false);
+                             session, false);
         dialog.setTitle("Paths to GC Roots");
         dialog.show();
       }
     );
+  }
+
+  @Override
+  protected boolean isEnabled(@NotNull MemoryAgent agent) {
+    return agent.canFindGcRoots();
   }
 }
