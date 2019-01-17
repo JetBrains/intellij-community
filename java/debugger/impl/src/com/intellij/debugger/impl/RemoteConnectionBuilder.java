@@ -5,7 +5,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.AsyncStacksUtils;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.memory.agent.MemoryAgentManager;
+import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.GetJPDADialog;
@@ -124,7 +124,7 @@ public class RemoteConnectionBuilder {
       }
 
       if (myMemoryAgent) {
-        MemoryAgentManager.addMemoryAgent(parameters);
+        MemoryAgentUtil.addMemoryAgent(parameters);
       }
 
       final Sdk jdk = parameters.getJdk();

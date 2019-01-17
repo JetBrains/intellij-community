@@ -20,8 +20,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
-public class MemoryAgentManager {
-  private static final Logger LOG = Logger.getInstance(MemoryAgentManager.class);
+public class MemoryAgentUtil {
+  private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
 
   public static void addMemoryAgent(JavaParameters parameters) {
     if (!Registry.is("debugger.enable.memory.agent")) {
