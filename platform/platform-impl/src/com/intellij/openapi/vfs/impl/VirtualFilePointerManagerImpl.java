@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -442,7 +443,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   synchronized void assertConsistency() {
-    if (IS_UNDER_UNIT_TEST) {
+    if (IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest()) {
       for (FilePointerPartNode root : myPointers.values()) {
         root.checkConsistency();
       }
