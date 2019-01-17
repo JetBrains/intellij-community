@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
@@ -687,7 +687,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
     }
 
-    assertTrue(ProjectManagerEx.getInstanceEx().closeAndDispose(ourProject));
+    assertTrue(ProjectManagerEx.getInstanceEx().forceCloseProject(ourProject, true));
     assertTrue(ourProject.isDisposed());
 
     // project may be disposed but empty folder may still be there

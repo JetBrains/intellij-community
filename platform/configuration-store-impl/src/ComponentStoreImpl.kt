@@ -8,7 +8,6 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
-import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.ComponentManagerImpl
@@ -221,28 +220,28 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   @TestOnly
-  override fun saveApplicationComponent(component: PersistentStateComponent<*>) {
+  @CalledInAwt
+  override fun saveComponent(component: PersistentStateComponent<*>) {
     val stateSpec = getStateSpec(component)
-    LOG.info("saveApplicationComponent is called for ${stateSpec.name}")
-    val externalizationSession = createSaveSessionProducerManager()
-    commitComponent(externalizationSession, ComponentInfoImpl(component, stateSpec), null)
+    LOG.info("saveComponent is called for ${stateSpec.name}")
+    val saveManager = createSaveSessionProducerManager()
+    commitComponent(saveManager, ComponentInfoImpl(component, stateSpec), null)
     val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(stateSpec.storages).path)).toAbsolutePath().toString()
-    runUndoTransparentWriteAction {
-      val saveResult = SaveResult()
-      val newDisposable = Disposer.newDisposable()
-      try {
-        VfsRootAccess.allowRootAccess(newDisposable, absolutePath)
-        runBlocking {
-          val isSomethingChanged = externalizationSession.save().isChanged
-          if (!isSomethingChanged) {
-            LOG.info("saveApplicationComponent is called for ${stateSpec.name} but nothing to save")
-          }
+    val newDisposable = Disposer.newDisposable()
+    try {
+      VfsRootAccess.allowRootAccess(newDisposable, absolutePath)
+      runBlocking {
+        val saveResult = saveManager.save()
+        saveResult.throwIfErrored()
+
+        val isSomethingChanged = saveResult.isChanged
+        if (!isSomethingChanged) {
+          LOG.info("saveApplicationComponent is called for ${stateSpec.name} but nothing to save")
         }
       }
-      finally {
-        Disposer.dispose(newDisposable)
-      }
-      saveResult.throwIfErrored()
+    }
+    finally {
+      Disposer.dispose(newDisposable)
     }
   }
 

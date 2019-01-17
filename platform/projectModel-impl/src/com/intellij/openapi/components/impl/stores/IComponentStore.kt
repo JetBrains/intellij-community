@@ -27,7 +27,7 @@ interface IComponentStore {
   suspend fun save(isForceSavingAllSettings: Boolean = false)
 
   @TestOnly
-  fun saveApplicationComponent(component: PersistentStateComponent<*>)
+  fun saveComponent(component: PersistentStateComponent<*>)
 }
 
 data class SaveSessionAndFile(val session: SaveSession, val file: VirtualFile)

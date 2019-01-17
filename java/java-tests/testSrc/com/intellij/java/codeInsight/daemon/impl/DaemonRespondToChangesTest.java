@@ -1564,7 +1564,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       return;
     }
     finally {
-      ProjectManagerEx.getInstanceEx().closeAndDispose(alienProject);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject, true);
     }
     fail("must throw PCE");
   }

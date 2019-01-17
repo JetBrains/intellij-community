@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -10,8 +10,9 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 
-public class LanguageLevelComboTest extends LightPlatformTestCase {
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
+public class LanguageLevelComboTest extends LightPlatformTestCase {
   private Project myProject;
   private LanguageLevelCombo myCombo;
 
@@ -31,7 +32,7 @@ public class LanguageLevelComboTest extends LightPlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      ProjectManagerEx.getInstanceEx().closeAndDispose(myProject);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(myProject, true);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -42,8 +43,8 @@ public class LanguageLevelComboTest extends LightPlatformTestCase {
   }
 
   public void testDefaultLanguageLevelForBrokenSdk() {
-    assertEquals("default", myCombo.getSelectedItem());
-    assertNull(myCombo.getSelectedLevel());
+    assertThat(myCombo.getSelectedItem()).isEqualTo("default");
+    assertThat(myCombo.getSelectedLevel()).isNull();
   }
 
   public void testPreserveLanguageLevel() {

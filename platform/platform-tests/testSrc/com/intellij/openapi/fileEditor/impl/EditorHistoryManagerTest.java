@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -12,9 +11,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.messages.MessageBusConnection;
@@ -38,7 +37,6 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
     assertNotNull(virtualFile);
 
     useRealFileEditorManager();
-    allowComponentStateSaving();
 
     openProjectPerformTaskCloseProject(dir, project -> {
       Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
@@ -74,12 +72,6 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
     });
   }
 
-  private void allowComponentStateSaving() {
-    boolean saveAllowedBefore = ApplicationManagerEx.getApplicationEx().isSaveAllowed();
-    ApplicationManagerEx.getApplicationEx().setSaveAllowed(true);
-    Disposer.register(getTestRootDisposable(), () -> ApplicationManagerEx.getApplicationEx().setSaveAllowed(saveAllowedBefore));
-  }
-
   private void useRealFileEditorManager() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
     connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
@@ -97,9 +89,10 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
     try {
       assertTrue(myProjectManager.openProject(project));
       task.accept(project);
+      ProjectKt.getStateStore(project).saveComponent(EditorHistoryManager.getInstance(project));
     }
     finally {
-      myProjectManager.closeAndDispose(project);
+      myProjectManager.forceCloseProject(project, true);
     }
     UIUtil.dispatchAllInvocationEvents();
   }
