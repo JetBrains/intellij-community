@@ -70,7 +70,6 @@ public class RecentLocationsAction extends AnAction {
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
   private static final int DEFAULT_POPUP_WIDTH = JBUI.scale(700);
-  private static final int MAX_POPUP_HEIGHT = JBUI.scale(1100);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -150,7 +149,7 @@ public class RecentLocationsAction extends AnAction {
 
     initSearchActions(project, list, popup, navigationRef);
 
-    popup.setSize(new Dimension(DEFAULT_POPUP_WIDTH, Math.min(JBUI.scale(mainPanel.getPreferredSize().height), MAX_POPUP_HEIGHT)));
+    popup.setSize(new Dimension(DEFAULT_POPUP_WIDTH, JBUI.scale(mainPanel.getPreferredSize().height)));
 
     showPopup(project, popup);
   }
@@ -225,6 +224,10 @@ public class RecentLocationsAction extends AnAction {
     topPanel.add(title, BorderLayout.WEST);
     topPanel.add(checkbox, BorderLayout.EAST);
     topPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
+
+    WindowMoveListener moveListener = new WindowMoveListener(topPanel);
+    topPanel.addMouseListener(moveListener);
+    topPanel.addMouseMotionListener(moveListener);
 
     return topPanel;
   }
