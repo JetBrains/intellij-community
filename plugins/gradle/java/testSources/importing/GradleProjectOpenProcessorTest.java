@@ -18,6 +18,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -253,7 +254,8 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
 
   private static void closeProject(final Project project) {
     if (project != null && !project.isDisposed()) {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(project, true);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project, false);
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
     }
   }
 }
