@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -101,7 +101,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
         indicator.checkCanceled()
 
         indicator.text2 = "Acquiring commit message"
-        val commitMessage = invokeAndWaitIfNeed {
+        val commitMessage = invokeAndWaitIfNeeded {
           val dialog = GithubMergeCommitMessageDialog(project,
                                                       "Merge Pull Request",
                                                       "Merge pull request #${pullRequest}",
@@ -182,7 +182,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
 
         indicator.text2 = "Acquiring commit message"
         val body = "* " + StringUtil.join(commits, { it.subject }, "\n\n* ")
-        val commitMessage = invokeAndWaitIfNeed {
+        val commitMessage = invokeAndWaitIfNeeded {
           val dialog = GithubMergeCommitMessageDialog(project,
                                                       "Merge Pull Request",
                                                       "Merge pull request #${pullRequest}",

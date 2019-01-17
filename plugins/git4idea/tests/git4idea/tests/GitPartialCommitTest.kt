@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.tests
 
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
@@ -198,7 +198,7 @@ class GitPartialCommitTest : GitSingleRepoTest() {
   private fun assertChanges(changes: ChangesBuilder.() -> Unit): List<Change> {
     return changeListManager.assertChanges(changes)
   }
-  
+
   private fun assertCommittedContent(fileName: String, expectedContent: String, useFilters: Boolean = false) {
     val actualContent = repo.gitAsBytes("cat-file" +
                                         (if (useFilters) " --filters" else " -p") +
@@ -207,7 +207,7 @@ class GitPartialCommitTest : GitSingleRepoTest() {
   }
 
   private fun withTrackedDocument(fileName: String, newContent: String, task: (Document, PartialLocalLineStatusTracker) -> Unit) {
-    invokeAndWaitIfNeed {
+    invokeAndWaitIfNeeded {
       val lstm = LineStatusTrackerManager.getInstance(project) as LineStatusTrackerManager
 
       val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(child(fileName))!!
