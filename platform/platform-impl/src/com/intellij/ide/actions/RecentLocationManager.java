@@ -64,6 +64,24 @@ public class RecentLocationManager implements ProjectComponent {
     subscribeOnExternalChange(connection);
   }
 
+  @NotNull
+  Collection<Iterable<? extends Crumb>> getBreadcrumbs(@NotNull PlaceInfo placeInfo, boolean showChanged) {
+    PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
+    return item == null ? ContainerUtil.emptyList() : item.getResult();
+  }
+
+  @Nullable
+  RangeMarker getRangeMarker(@NotNull PlaceInfo placeInfo, boolean showChanged) {
+    PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
+    return item == null ? null : item.getRangeMarker();
+  }
+
+  @Nullable
+  EditorColorsScheme getColorScheme(@NotNull PlaceInfo placeInfo, boolean showChanged) {
+    PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
+    return item == null ? null : item.getScheme();
+  }
+
   private void subscribeOnExternalChange(@NotNull MessageBusConnection connection) {
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
@@ -238,24 +256,6 @@ public class RecentLocationManager implements ProjectComponent {
   @NotNull
   private Map<PlaceInfo, PlaceInfoPersistentItem> getMap(boolean showChanged) {
     return showChanged ? myChangedItems : myRecentItems;
-  }
-
-  @NotNull
-  Collection<Iterable<? extends Crumb>> getBreadcrumbs(@NotNull PlaceInfo placeInfo, boolean showChanged) {
-    PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
-    return item == null ? ContainerUtil.emptyList() : item.getResult();
-  }
-
-  @Nullable
-  RangeMarker getRangeMarker(@NotNull PlaceInfo placeInfo, boolean showChanged) {
-    PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
-    return item == null ? null : item.getRangeMarker();
-  }
-
-  @Nullable
-  EditorColorsScheme getColorScheme(@NotNull PlaceInfo placeInfo, boolean showChanged) {
-    PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
-    return item == null ? null : item.getScheme();
   }
 
   private static class PlaceInfoPersistentItem {

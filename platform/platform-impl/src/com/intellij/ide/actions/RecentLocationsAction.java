@@ -9,7 +9,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -37,18 +36,18 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.*;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,15 +58,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.COMPONENT_KEY;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
 public class RecentLocationsAction extends AnAction {
-  private static final JBColor BACKGROUND_COLOR = JBColor.namedColor("Table.lightSelectionBackground", new JBColor(0xE9EEF5, 0x464A4D));
-  private static final Color TITLE_FOREGROUND_COLOR = UIUtil.getLabelForeground().darker();
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
   private static final int DEFAULT_POPUP_WIDTH = JBUI.scale(700);
@@ -80,14 +76,14 @@ public class RecentLocationsAction extends AnAction {
       return;
     }
 
-    boolean changed = showChanged(project);
+    boolean showChanged = showChanged(project);
 
     final Ref<List<RecentLocationItem>> changedPlaces = Ref.create();
     final Ref<List<RecentLocationItem>> navigationPlaces = Ref.create();
     Collection<Editor> editorsToRelease = ContainerUtil.newArrayList();
 
     JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(
-      cacheAndGetItems(project, changed, changedPlaces, navigationPlaces, editorsToRelease)));
+      cacheAndGetItems(project, showChanged, changedPlaces, navigationPlaces, editorsToRelease)));
     ListWithFilter<RecentLocationItem> listWithFilter = createListWithFilter(project, list);
     listWithFilter.setBorder(BorderFactory.createEmptyBorder());
 
@@ -101,14 +97,14 @@ public class RecentLocationsAction extends AnAction {
         }
       });
 
-    ShowRecentLocationsRenderer renderer = new ShowRecentLocationsRenderer(project, speedSearch);
+    RecentLocationsRenderer renderer = new RecentLocationsRenderer(project, speedSearch);
     list.setCellRenderer(renderer);
     list.setEmptyText(IdeBundle.message("recent.locations.popup.empty.text"));
     ScrollingUtil.installActions(list);
     ScrollingUtil.ensureSelectionExists(list);
 
-    JLabel title = createTitle(changed);
-    JPanel topPanel = createTopPanel(createCheckbox(project, listWithFilter, e, changed), title);
+    JLabel title = createTitle(showChanged);
+    JPanel topPanel = createTopPanel(createCheckbox(project, listWithFilter, e, showChanged), title);
     JPanel mainPanel = createMainPanel(listWithFilter, topPanel);
 
     Ref<Boolean> navigationRef = Ref.create(false);
@@ -155,6 +151,34 @@ public class RecentLocationsAction extends AnAction {
     showPopup(project, popup);
   }
 
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(getEventProject(e) != null);
+  }
+
+  @NotNull
+  static String getBreadcrumbs(@NotNull Project project, @NotNull PlaceInfo info) {
+    Collection<Iterable<? extends Crumb>> breadcrumbs =
+      RecentLocationManager.getInstance(project).getBreadcrumbs(info, showChanged(project));
+    if (breadcrumbs.isEmpty()) {
+      return info.getFile().getName();
+    }
+
+    Iterable<? extends Crumb> crumbs = ContainerUtil.getFirstItem(breadcrumbs);
+
+    if (crumbs == null) {
+      return info.getFile().getName();
+    }
+
+    String breadcrumbsText = StringUtil.join(ContainerUtil.map(crumbs, crumb -> crumb.getText()), " > ");
+
+    return StringUtil.shortenTextWithEllipsis(breadcrumbsText, 50, 0);
+  }
+
+  static void clearSelectionInEditor(@NotNull Editor editor) {
+    editor.getSelectionModel().removeSelection(true);
+  }
+
   private static void showPopup(@NotNull Project project, @NotNull JBPopup popup) {
     Point savedLocation = DimensionService.getInstance().getLocation(LOCATION_SETTINGS_KEY, project);
     Window recentFocusedWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
@@ -167,13 +191,13 @@ public class RecentLocationsAction extends AnAction {
   }
 
   @NotNull
-  public static List<RecentLocationItem> cacheAndGetItems(@NotNull Project project,
-                                                          boolean changed,
-                                                          @NotNull Ref<List<RecentLocationItem>> changedPlaces,
-                                                          @NotNull Ref<List<RecentLocationItem>> navigationPlaces,
-                                                          @NotNull Collection<Editor> editorsToRelease) {
-    List<RecentLocationItem> items = getPlaceLinePairs(project, changed);
-    Ref<List<RecentLocationItem>> places = changed ? changedPlaces : navigationPlaces;
+  private static List<RecentLocationItem> cacheAndGetItems(@NotNull Project project,
+                                                           boolean showChanged,
+                                                           @NotNull Ref<List<RecentLocationItem>> changedPlaces,
+                                                           @NotNull Ref<List<RecentLocationItem>> navigationPlaces,
+                                                           @NotNull Collection<Editor> editorsToRelease) {
+    List<RecentLocationItem> items = getPlaceLinePairs(project, showChanged);
+    Ref<List<RecentLocationItem>> places = showChanged ? changedPlaces : navigationPlaces;
     if (places.get() == null) {
       places.set(items);
     }
@@ -254,15 +278,17 @@ public class RecentLocationsAction extends AnAction {
   }
 
   @NotNull
-  private static JLabel createTitle(boolean changed) {
+  private static JLabel createTitle(boolean showChanged) {
     JLabel title = new JLabel();
     title.setBorder(BorderFactory.createEmptyBorder());
-    updateTitleText(title, changed);
+    updateTitleText(title, showChanged);
     return title;
   }
 
-  private static void updateTitleText(@NotNull JLabel title, boolean state) {
-    title.setText(state ? IdeBundle.message("recent.locations.changed.locations") : IdeBundle.message("recent.locations.popup.title"));
+  private static void updateTitleText(@NotNull JLabel title, boolean showChanged) {
+    title.setText(showChanged
+                  ? IdeBundle.message("recent.locations.changed.locations")
+                  : IdeBundle.message("recent.locations.popup.title"));
   }
 
   @NotNull
@@ -284,25 +310,6 @@ public class RecentLocationsAction extends AnAction {
 
       return breadcrumb + " " + value.getInfo().getFile().getName() + " " + editor.getDocument().getText();
     };
-  }
-
-  @NotNull
-  private static String getBreadcrumbs(@NotNull Project project, @NotNull PlaceInfo info) {
-    Collection<Iterable<? extends Crumb>> breadcrumbs =
-      RecentLocationManager.getInstance(project).getBreadcrumbs(info, showChanged(project));
-    if (breadcrumbs.isEmpty()) {
-      return info.getFile().getName();
-    }
-
-    Iterable<? extends Crumb> crumbs = ContainerUtil.getFirstItem(breadcrumbs);
-
-    if (crumbs == null) {
-      return info.getFile().getName();
-    }
-
-    String breadcrumbsText = StringUtil.join(ContainerUtil.map(crumbs, crumb -> crumb.getText()), " > ");
-
-    return StringUtil.shortenTextWithEllipsis(breadcrumbsText, 50, 0);
   }
 
   private static List<PlaceInfo> getPlaces(@NotNull Project project, boolean showChanged) {
@@ -339,7 +346,7 @@ public class RecentLocationsAction extends AnAction {
         break;
       }
 
-      caretsList.add(new RecentLocationItem(placeInfo, editor));
+      caretsList.add(new RecentLocationItem(editor, placeInfo));
     }
 
     return caretsList;
@@ -400,201 +407,27 @@ public class RecentLocationsAction extends AnAction {
     popup.closeOk(null);
   }
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(getEventProject(e) != null);
-  }
-
-  public static boolean showChanged(@NotNull Project project) {
+  private static boolean showChanged(@NotNull Project project) {
     return PropertiesComponent.getInstance(project).getBoolean(SHOW_RECENT_CHANGED_LOCATIONS, false);
   }
 
-  private static class RecentLocationItem {
-    private final PlaceInfo myInfo;
-    private final EditorEx myEditor;
+  static class RecentLocationItem {
+    @NotNull private final PlaceInfo myInfo;
+    @NotNull private final EditorEx myEditor;
 
-    RecentLocationItem(PlaceInfo info, EditorEx editor) {
+    RecentLocationItem(@NotNull EditorEx editor, @NotNull PlaceInfo info) {
       myInfo = info;
       myEditor = editor;
     }
 
+    @NotNull
     PlaceInfo getInfo() {
       return myInfo;
     }
 
+    @NotNull
     EditorEx getEditor() {
       return myEditor;
-    }
-  }
-
-  public static void clearSelectionInEditor(@NotNull Editor editor) {
-    editor.getSelectionModel().removeSelection(true);
-  }
-
-  public static void selectSearchResultsInEditor(@NotNull Editor editor,
-                                                 @NotNull Iterator<TextRange> resultIterator,
-                                                 int caretShiftFromSelectionStart) {
-    if (!editor.getCaretModel().supportsMultipleCarets()) {
-      return;
-    }
-    ArrayList<CaretState> caretStates = new ArrayList<>();
-    while (resultIterator.hasNext()) {
-      TextRange findResult = resultIterator.next();
-
-      int caretOffset = getCaretPosition(findResult, caretShiftFromSelectionStart);
-
-      int selectionStartOffset = findResult.getStartOffset();
-      int selectionEndOffset = findResult.getEndOffset();
-      EditorActionUtil.makePositionVisible(editor, caretOffset);
-      EditorActionUtil.makePositionVisible(editor, selectionStartOffset);
-      EditorActionUtil.makePositionVisible(editor, selectionEndOffset);
-      caretStates.add(new CaretState(editor.offsetToLogicalPosition(caretOffset),
-                                     editor.offsetToLogicalPosition(selectionStartOffset),
-                                     editor.offsetToLogicalPosition(selectionEndOffset)));
-    }
-    if (caretStates.isEmpty()) {
-      return;
-    }
-    editor.getCaretModel().setCaretsAndSelections(caretStates);
-  }
-
-  private static int getCaretPosition(TextRange findResult, int caretShiftFromSelectionStart) {
-    return caretShiftFromSelectionStart < 0
-           ? findResult.getEndOffset() : Math.min(findResult.getStartOffset() + caretShiftFromSelectionStart, findResult.getEndOffset());
-  }
-
-  private static class ShowRecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem> {
-    private final Project myProject;
-    private final SpeedSearch mySpeedSearch;
-
-    private ShowRecentLocationsRenderer(@NotNull Project project, @NotNull SpeedSearch speedSearch) {
-      myProject = project;
-      mySpeedSearch = speedSearch;
-    }
-
-    @Override
-    public Component getListCellRendererComponent(JList<? extends RecentLocationItem> list,
-                                                  RecentLocationItem value,
-                                                  int index,
-                                                  boolean selected,
-                                                  boolean hasFocus) {
-      EditorEx editor = value.getEditor();
-      if (myProject.isDisposed() || editor.isDisposed()) {
-        return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-      }
-
-      PlaceInfo placeInfo = value.getInfo();
-      String text = editor.getDocument().getText();
-
-      Iterable<TextRange> ranges = mySpeedSearch.matchingFragments(text);
-
-      if (ranges != null) {
-        selectSearchResultsInEditor(editor, ranges.iterator(), -1);
-      }
-      else {
-        clearSelectionInEditor(editor);
-      }
-
-      String breadcrumb = getBreadcrumbs(myProject, placeInfo);
-      JComponent breadcrumbTextComponent;
-      JComponent fileNameComponent;
-      if (Registry.is("recent.locations.show.breadcrumbs", true)) {
-        breadcrumbTextComponent = createBreadcrumbsComponent(list, breadcrumb, selected);
-        fileNameComponent = createFileNameComponent(list, placeInfo, breadcrumb, selected);
-      }
-      else {
-        breadcrumbTextComponent = new JPanel();
-        fileNameComponent = new JPanel();
-      }
-
-      JComponent titledSeparator = new TitledSeparator();
-      JComponent title = JBUI.Panels
-        .simplePanel()
-        .addToLeft(breadcrumbTextComponent)
-        .addToCenter(titledSeparator)
-        .addToRight(fileNameComponent);
-
-      JComponent editorComponent = editor.getComponent();
-
-      editor.setBorder(BorderFactory.createEmptyBorder());
-      editorComponent.setBorder(BorderFactory.createEmptyBorder());
-
-      JPanel editorPanel = new JPanel(new VerticalFlowLayout(0, 0));
-      editorPanel.add(title);
-      editorPanel.add(editorComponent);
-
-      updateBackground(editor, title, titledSeparator, breadcrumbTextComponent, selected, index);
-
-      return editorPanel;
-    }
-
-    @NotNull
-    public SimpleColoredComponent createBreadcrumbsComponent(@NotNull JList<? extends RecentLocationItem> list,
-                                                             @NotNull String breadcrumb,
-                                                             boolean selected) {
-      SimpleColoredComponent breadcrumbTextComponent = new SimpleColoredComponent();
-      breadcrumbTextComponent.setForeground(TITLE_FOREGROUND_COLOR);
-      breadcrumbTextComponent.append(breadcrumb);
-      Iterable<TextRange> breadCrumbRanges = mySpeedSearch.matchingFragments(breadcrumb);
-      if (breadCrumbRanges != null) {
-        SpeedSearchUtil.applySpeedSearchHighlighting(list, breadcrumbTextComponent, true, selected);
-      }
-
-      return breadcrumbTextComponent;
-    }
-
-    @NotNull
-    public SimpleColoredComponent createFileNameComponent(@NotNull JList<? extends RecentLocationItem> list,
-                                                          @NotNull PlaceInfo placeInfo, @NotNull String breadcrumb, boolean selected) {
-      SimpleColoredComponent fileNameComponent = new SimpleColoredComponent();
-      fileNameComponent.setForeground(TITLE_FOREGROUND_COLOR);
-      if (!StringUtil.equals(breadcrumb, placeInfo.getFile().getName())) {
-        fileNameComponent.append(placeInfo.getFile().getName());
-        fileNameComponent.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 2));
-        Iterable<TextRange> fileNameRanges = mySpeedSearch.matchingFragments(placeInfo.getFile().getName());
-        if (fileNameRanges != null) {
-          SpeedSearchUtil.applySpeedSearchHighlighting(list, fileNameComponent, true, selected);
-        }
-      }
-
-      return fileNameComponent;
-    }
-
-    private static void updateBackground(@NotNull EditorEx editor,
-                                         @NotNull JComponent title,
-                                         @NotNull JComponent titledSeparator,
-                                         @NotNull JComponent breadcrumbTextComponent,
-                                         boolean selected,
-                                         int index) {
-      Color background = selected ? BACKGROUND_COLOR : editor.getColorsScheme().getDefaultBackground();
-      if (index % 2 == 1) {
-        background = adjustBackgroundColor(background);
-      }
-      title.setBackground(background);
-      editor.setBackgroundColor(background);
-      titledSeparator.setBackground(background);
-      breadcrumbTextComponent.setBackground(background);
-    }
-
-    @NotNull
-    private static Color adjustBackgroundColor(@NotNull Color background) {
-      Color brighterColor = ColorUtil.brighter(background, 1);
-      if (!background.equals(brighterColor)) {
-        background = brighterColor;
-      }
-      else {
-        background = ColorUtil.hackBrightness(background, 1, 1 / 1.03F);
-      }
-      return background;
-    }
-
-    @Override
-    protected void customizeCellRenderer(@NotNull JList<? extends RecentLocationItem> list,
-                                         RecentLocationItem value,
-                                         int index,
-                                         boolean selected,
-                                         boolean hasFocus) {
-
     }
   }
 
