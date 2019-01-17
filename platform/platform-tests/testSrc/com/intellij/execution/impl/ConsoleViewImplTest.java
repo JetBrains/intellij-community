@@ -484,7 +484,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         }
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         myConsole.waitAllRequests();
-        Assert.assertEquals(printCount * nCopies * "\na\nc".length(), myConsole.getContentSize());
+        Assert.assertEquals((long) printCount * nCopies * "\na\nc".length(), myConsole.getContentSize());
       }
     }).assertTiming();
   }
