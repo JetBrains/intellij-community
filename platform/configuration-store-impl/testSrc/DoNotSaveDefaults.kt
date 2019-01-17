@@ -64,8 +64,6 @@ internal class DoNotSaveDefaultsTest {
   }
 
   private suspend fun doTest(componentManager: ComponentManagerImpl) {
-    val useModCountOldValue = System.getProperty("store.save.use.modificationCount")
-
     // wake up (edt, some configurables want read action)
     withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       val picoContainer = componentManager.picoContainer
@@ -90,8 +88,8 @@ internal class DoNotSaveDefaultsTest {
     propertyComponent.unsetValue("CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2")
     propertyComponent.unsetValue("ts.lib.d.ts.version")
     propertyComponent.unsetValue("nodejs_interpreter_path.stuck_in_default_project")
-    propertyComponent.unsetValue("tasks.pass.word.conversion.enforced")
 
+    val useModCountOldValue = System.getProperty("store.save.use.modificationCount")
     try {
       System.setProperty("store.save.use.modificationCount", "false")
       componentManager.stateStore.save(isForceSavingAllSettings = true)
