@@ -756,11 +756,12 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       // do not register unknown RC type templates (it is saved in any case in the scheme manager, so, not lost on save)
       if (factory !== UnknownConfigurationType.getInstance()) {
         val key = getFactoryKey(factory)
-        lock.write {
-          val old = templateIdToConfiguration.put(key, settings)
-          if (old != null) {
-            LOG.error("Template $key already registered, old: $old, new: $settings")
-          }
+        val old = lock.write {
+          templateIdToConfiguration.put(key, settings)
+        }
+
+        if (old != null) {
+          LOG.error("Template $key already registered, old: $old, new: $settings")
         }
       }
     }
