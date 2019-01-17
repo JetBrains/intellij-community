@@ -170,6 +170,10 @@ public abstract class LookupArranger implements WeighingContext {
     lookup.hideLookup(false);
   }
 
+  public boolean isCompletion() {
+    return false;
+  }
+
   public static class DefaultArranger extends LookupArranger {
     @Override
     public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {

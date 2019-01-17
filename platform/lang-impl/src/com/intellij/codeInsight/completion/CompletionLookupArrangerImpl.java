@@ -544,6 +544,11 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     lookup.hideLookup(false);
   }
 
+  @Override
+  public boolean isCompletion() {
+    return true;
+  }
+
   private static class EmptyClassifier extends Classifier<LookupElement> {
 
     private EmptyClassifier() {

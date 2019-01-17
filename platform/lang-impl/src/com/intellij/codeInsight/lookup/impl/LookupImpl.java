@@ -1013,7 +1013,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public boolean isCompletion() {
-    return myArranger instanceof CompletionLookupArrangerImpl;
+    return myArranger.isCompletion();
   }
 
   @Override
