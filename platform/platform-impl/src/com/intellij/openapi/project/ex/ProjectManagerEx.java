@@ -61,6 +61,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @NotNull
   public abstract Collection<Project> closeTestProject(@NotNull Project project);
 
+  /**
+   * The project and the app settings will be not saved.
+   */
   @TestOnly
   public abstract boolean forceCloseProject(@NotNull Project project, boolean dispose);
 

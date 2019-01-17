@@ -423,7 +423,7 @@ public class ExecutionHelper {
 
       private final Runnable myProcessThread = () -> {
         try {
-          final boolean finished = processHandler.waitFor(1000 * mode.getTimeout());
+          final boolean finished = processHandler.waitFor(1000L * mode.getTimeout());
           if (!finished) {
             mode.getTimeoutCallback().consume(mode, presentableCmdline);
             processHandler.destroyProcess();

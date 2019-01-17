@@ -68,3 +68,11 @@ class A {
     }
   }
 }
+class TestConstant {
+  static final byte NONE = 0;
+  byte x;
+  
+  TestConstant() {
+    x = NONE;
+  }
+}

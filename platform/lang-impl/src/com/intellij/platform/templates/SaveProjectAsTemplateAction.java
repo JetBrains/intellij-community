@@ -122,9 +122,7 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
                                  boolean shouldEscape) {
     final Map<String, String> parameters = computeParameters(project, replaceParameters);
     indicator.setText("Saving project...");
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      StoreUtil.saveProject(project, true);
-    });
+    StoreUtil.saveSettings(project, true);
     indicator.setText("Processing project files...");
     ZipOutputStream stream = null;
     try {

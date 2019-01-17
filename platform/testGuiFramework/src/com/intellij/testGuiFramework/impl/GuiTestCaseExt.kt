@@ -13,8 +13,6 @@ import com.intellij.testGuiFramework.util.*
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.exception.WaitTimedOutError
-import org.fest.swing.timing.Condition
-import org.fest.swing.timing.Pause
 import org.hamcrest.Matcher
 import org.junit.Assert.assertTrue
 import org.junit.rules.ErrorCollector
@@ -269,14 +267,19 @@ fun GuiTestCase.mavenReimport() {
       toolwindow(id = "Maven") {
         content(tabName = "") {
           step("search when button 'Reimport All Maven Projects' becomes enable and click it") {
-            val button = actionButton("Reimport All Maven Projects")
-            Pause.pause(object : Condition("Wait for button Reimport All Maven Projects to be enabled.") {
-              override fun test(): Boolean {
-                return button.isEnabled
-              }
-            }, Timeouts.minutes02)
+            val reimportAction = "Reimport All Maven Projects"
+            val showDepAction = "Show UML Diagram" // but tooltip says "Show Dependencies"
+            GuiTestUtilKt.waitUntil("Wait for button '$reimportAction' to be enabled.", timeout = Timeouts.minutes02) {
+              actionButton(reimportAction, timeout = Timeouts.seconds30).isEnabled
+            }
+            try {
+              actionButton(showDepAction, timeout = Timeouts.minutes01)
+            }
+            catch (ignore: ComponentLookupException) {
+              logInfo("Maven reimport: not found 'Show Dependencies' button after 1 min waiting")
+            }
             robot().waitForIdle()
-            button.click()
+            actionButton(reimportAction).click()
             robot().waitForIdle()
           }
         }

@@ -145,8 +145,6 @@
 
     <!--<extensionPoint name="expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
 
-    <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
-
     <extensionPoint name="library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector"/>
 
   </extensionPoints>

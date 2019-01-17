@@ -8,6 +8,9 @@ class PathPrefixTreeMapImpl<V>(
   private val removeLastSlash: Boolean = true
 ) : PathPrefixTreeMap<V>, PrefixTreeMapImpl<String, V>(FileUtil.PATH_HASHING_STRATEGY) {
 
+  override val paths: List<String>
+    get() = keys.map { it.joinToString(pathSeparator) }
+
   override operator fun get(path: String): V? = get(path.toPrefixList())
 
   override operator fun set(path: String, value: V): V? = set(path.toPrefixList(), value)
@@ -17,6 +20,9 @@ class PathPrefixTreeMapImpl<V>(
   override fun contains(path: String): Boolean = contains(path.toPrefixList())
 
   override fun getAllDescendants(path: String): List<V> = getAllDescendants(path.toPrefixList())
+
+  override fun getAllAncestorKeys(path: String): List<String> = getAllAncestorKeys(path.toPrefixList())
+    .map { it.joinToString(pathSeparator) }
 
   private fun String.toPrefixList(): List<String> {
     val path = if (removeLastSlash) removeSuffix(pathSeparator) else this

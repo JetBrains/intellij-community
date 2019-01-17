@@ -16,7 +16,7 @@ return url
 5(6) element: Catch clause
 6(7) WRITE e
 7(8) READ e
-8(9) ARGUMENT element: Reference expression
+8(9) ARGUMENTS element: NEW expression
 9(13) THROW. element: THROW statement
 10(11) End element: IF statement
 11(12) READ url

@@ -48,10 +48,10 @@ public class LowMemoryNotifier implements Disposable {
         final long currentTime = System.currentTimeMillis();
         if (currentTime - myPreviousLoggedUIResponse >= UI_RESPONSE_LOGGING_INTERVAL_MS) {
           myPreviousLoggedUIResponse = currentTime;
-          FeatureUsageLogger.INSTANCE.log(PERFORMANCE, "ui.latency", Collections.singletonMap("duration.ms", latencyMs));
+          FeatureUsageLogger.INSTANCE.log(PERFORMANCE, "ui.latency", Collections.singletonMap("duration_ms", latencyMs));
         }
         if (latencyMs >= TOLERABLE_UI_LATENCY) {
-          FeatureUsageLogger.INSTANCE.log(PERFORMANCE, "ui.lagging", Collections.singletonMap("duration.ms", latencyMs));
+          FeatureUsageLogger.INSTANCE.log(PERFORMANCE, "ui.lagging", Collections.singletonMap("duration_ms", latencyMs));
         }
       }
 

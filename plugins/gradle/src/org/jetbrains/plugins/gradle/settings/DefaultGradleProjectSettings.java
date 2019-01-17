@@ -18,8 +18,8 @@ import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 @State(name = "DefaultGradleProjectSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class DefaultGradleProjectSettings implements PersistentStateComponent<DefaultGradleProjectSettings.MyState> {
   private boolean myMigrated;
-  private boolean myDelegatedBuild;
-  @NotNull private TestRunner myTestRunner = TestRunner.PLATFORM;
+  private boolean myDelegatedBuild = true;
+  @NotNull private TestRunner myTestRunner = TestRunner.GRADLE;
 
   @NotNull
   public TestRunner getTestRunner() {

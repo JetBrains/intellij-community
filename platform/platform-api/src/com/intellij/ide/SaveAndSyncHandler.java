@@ -3,7 +3,9 @@ package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Kirill Likhodedov
@@ -15,11 +17,11 @@ public abstract class SaveAndSyncHandler {
   }
 
   /**
-   * Schedule to save documents, all opened projects and application.
+   * Schedule to save documents, all opened projects (or only passed project if not null) and application.
    *
    * Save is not performed immediately and not finished on method call return.
    */
-  public abstract void scheduleSaveDocumentsAndProjectsAndApp();
+  public abstract void scheduleSaveDocumentsAndProjectsAndApp(@Nullable Project project);
 
   @SuppressWarnings("MethodMayBeStatic")
   @Deprecated

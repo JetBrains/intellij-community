@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +31,8 @@ public final class UIThemeProvider implements PluginAware {
       return UITheme.loadFromJson(loader.getResourceAsStream(path), id, loader);
     }
     catch (IOException e) {
-      Logger.getInstance(getClass()).warn(e);
+      Logger.getInstance(getClass()).warn("error loading UITheme '" + path + "', " +
+                                          "pluginId=" + (myDescriptor != null ? myDescriptor.getPluginId().getIdString() : "(none)"), e);
       return null;
     }
   }

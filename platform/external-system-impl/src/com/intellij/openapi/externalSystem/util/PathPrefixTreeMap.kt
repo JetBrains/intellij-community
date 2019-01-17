@@ -8,6 +8,11 @@ package com.intellij.openapi.externalSystem.util
 interface PathPrefixTreeMap<V> : PrefixTreeMap<String, V> {
 
   /**
+   * @see PrefixTreeMap.keys
+   */
+  val paths: List<String>
+
+  /**
    * @see PrefixTreeMap.get
    */
   operator fun get(path: String): V?
@@ -31,4 +36,9 @@ interface PathPrefixTreeMap<V> : PrefixTreeMap<String, V> {
    * @see PrefixTreeMap.getAllDescendants
    */
   fun getAllDescendants(path: String): List<V>
+
+  /**
+   * @see PrefixTreeMap.getAllAncestorKeys
+   */
+  fun getAllAncestorKeys(path: String): List<String>
 }

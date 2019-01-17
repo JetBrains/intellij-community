@@ -808,7 +808,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
       assertEquals(US_ASCII, file.getCharset());
     }
     finally {
-      ProjectUtil.closeAndDispose(newEncodingProject);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(newEncodingProject, true);
     }
   }
 

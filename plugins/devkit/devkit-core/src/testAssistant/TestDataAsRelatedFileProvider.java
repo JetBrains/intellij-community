@@ -28,8 +28,8 @@ public class TestDataAsRelatedFileProvider extends GotoRelatedProvider {
     PsiElement ctxElement = uMethod == null ? NavigateToTestDataAction.findParametrizedClass(context) : uMethod.getSourcePsi();
     if (ctxElement == null) return Collections.emptyList();
 
-    List<TestDataFile> testDataFiles = NavigateToTestDataAction.findTestDataFiles(context);
-    return testDataFiles == null || testDataFiles.isEmpty()
+    List<TestDataFile> testDataFiles = NavigateToTestDataAction.findTestDataFiles(context, project, false);
+    return testDataFiles.isEmpty()
            ? Collections.emptyList()
            : Collections.singletonList(new TestDataRelatedItem(ctxElement, editor, testDataFiles));
   }

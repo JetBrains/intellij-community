@@ -103,6 +103,8 @@
                     interface="com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver"/>
     <extensionPoint qualifiedName="com.intellij.java.externalAnnotation.locationProvider"
                     interface="com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider"/>
+
+    <extensionPoint qualifiedName="com.intellij.vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -21,6 +21,10 @@ public final class GithubIcons {
   /**
    * 16x16
    */
+  public static final Icon Close = load("/org/jetbrains/plugins/github/close.svg");
+  /**
+   * 16x16
+   */
   public static final Icon DefaultAvatar = load("/org/jetbrains/plugins/github/defaultAvatar.svg");
   /**
    * 16x16

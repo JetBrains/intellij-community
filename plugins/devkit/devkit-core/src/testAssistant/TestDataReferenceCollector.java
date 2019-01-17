@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
@@ -47,7 +48,7 @@ public class TestDataReferenceCollector {
 
   @NotNull
   List<TestDataFile> collectTestDataReferences(@NotNull final PsiMethod method, boolean collectByExistingFiles) {
-    myContainingClass = method.getContainingClass();
+    myContainingClass = ReadAction.compute(() -> method.getContainingClass());
     List<TestDataFile> result = collectTestDataReferences(method, new HashMap<>(), new HashSet<>());
     if (!myFoundTestDataParameters) {
       myLogMessages.add("Found no parameters annotated with @TestDataFile");

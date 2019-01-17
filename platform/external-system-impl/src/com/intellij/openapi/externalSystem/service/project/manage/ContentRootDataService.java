@@ -60,7 +60,9 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.pathToUrl;
 
@@ -295,7 +297,8 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         }
         logUnitTest("Adding source folder listener to watch [" + root.getPath() + "] for creation in project [hashCode=" + module.getProject().hashCode() + "]");
         String url = pathToUrl(root.getPath());
-        sourceFolderManager.addSourceFolder(module, url, sourceRootType);
+        String packagePrefix = StringUtil.notNullize(root.getPackagePrefix());
+        sourceFolderManager.addSourceFolder(module, url, sourceRootType, packagePrefix);
         return;
       }
     }

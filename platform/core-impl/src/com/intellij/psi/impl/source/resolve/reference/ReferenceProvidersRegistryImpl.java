@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.registry.Registry;
@@ -208,5 +209,13 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
       if (aDouble.doubleValue() > maxPriority) maxPriority = aDouble.doubleValue();
     }
     return maxPriority;
+  }
+
+  /**
+   * @deprecated to attract attention and motivate to fix tests which fail these checks
+   */
+  @Deprecated
+  public static void disableUnderlyingElementChecks(@NotNull Disposable parentDisposable) {
+    Registry.get("ide.check.reference.provider.underlying.element").setValue(false, parentDisposable);
   }
 }

@@ -1,16 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
@@ -142,8 +143,7 @@ class ActionUpdater {
 
   CancellablePromise<List<AnAction>> expandActionGroupAsync(ActionGroup group, boolean hideDisabled) {
     AsyncPromise<List<AnAction>> promise = new AsyncPromise<>();
-    ProgressIndicator indicator = new ProgressIndicatorBase(true);
-    indicator.setModalityProgress(indicator);
+    ProgressIndicator indicator = new EmptyProgressIndicator();
     promise.onError(__ -> {
       indicator.cancel();
       ActionUpdateEdtExecutor.computeOnEdt(() -> {
@@ -164,7 +164,7 @@ class ActionUpdater {
               promise.setResult(result);
               return null;
             });
-          }, indicator);
+          }, new SensitiveProgressWrapper(indicator));
           if (!success) {
             ProgressIndicatorUtils.yieldToPendingWriteActions();
           }

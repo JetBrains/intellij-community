@@ -15,7 +15,9 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +99,17 @@ public class VfsTestUtil {
   }
 
   public static void deleteFile(@NotNull VirtualFile file) {
-    UtilKt.deleteFile(file);
+    try {
+      WriteAction.runAndWait(new ThrowableRunnable<Throwable>() {
+        @Override
+        public void run() throws Throwable {
+          file.delete(null);
+        }
+      });
+    }
+    catch (Throwable throwable) {
+      ExceptionUtilRt.rethrow(throwable);
+    }
   }
 
   public static void clearContent(@NotNull final VirtualFile file) {

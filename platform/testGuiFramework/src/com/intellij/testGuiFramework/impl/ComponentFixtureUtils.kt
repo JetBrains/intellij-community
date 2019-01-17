@@ -480,7 +480,7 @@ inline fun <reified ComponentType : Component, ContainerComponentType : Containe
   }
   catch (e: WaitTimedOutError) {
     throw ComponentLookupException(
-      "Unable to find ${ComponentType::class.java.name} ${if (this?.target() != null) "in container ${this.target()}" else ""} in ${timeout.toPrintable()} seconds")
+      "Unable to find ${ComponentType::class.java.name} ${if (this?.target() != null) "in container ${this.target()}" else ""} in ${timeout.toPrintable()}")
   }
 }
 
@@ -494,7 +494,7 @@ fun <ComponentType : Component> findComponentWithTimeout(container: Container?,
   }
   catch (e: WaitTimedOutError) {
     throw ComponentLookupException(
-      "Unable to find ${componentClass.simpleName} ${if (container != null) "in container $container" else ""} in $timeout seconds")
+      "Unable to find ${componentClass.simpleName} ${if (container != null) "in container $container" else ""} in ${timeout.toPrintable()}")
   }
 }
 

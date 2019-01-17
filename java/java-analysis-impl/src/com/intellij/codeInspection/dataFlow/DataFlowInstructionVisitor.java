@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -95,7 +96,8 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     Object value = ((DfaConstValue)dest).getValue();
 
     PsiType type = var.getType();
-    boolean isDefaultValue = Objects.equals(PsiTypesUtil.getDefaultValue(type), value) || Long.valueOf(0L).equals(value) && PsiType.INT.equals(type);
+    boolean isDefaultValue = Objects.equals(PsiTypesUtil.getDefaultValue(type), value) ||
+                             Long.valueOf(0L).equals(value) && TypeConversionUtil.isIntegralNumberType(type);
     if (!isDefaultValue) return false;
     PsiMethod method = PsiTreeUtil.getParentOfType(rExpression, PsiMethod.class);
     return method != null && method.isConstructor();

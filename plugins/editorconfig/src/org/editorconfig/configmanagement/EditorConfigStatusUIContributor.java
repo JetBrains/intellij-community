@@ -2,6 +2,7 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.icons.AllIcons;
 import com.intellij.psi.codeStyle.IndentStatusBarUIContributor;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.util.PropertiesComponent;
@@ -25,6 +26,7 @@ import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 public class EditorConfigStatusUIContributor extends IndentStatusBarUIContributor {
@@ -152,4 +154,8 @@ public class EditorConfigStatusUIContributor extends IndentStatusBarUIContributo
     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(null);
   }
 
+  @Override
+  public Icon getIcon() {
+    return AllIcons.Nodes.Editorconfig;
+  }
 }

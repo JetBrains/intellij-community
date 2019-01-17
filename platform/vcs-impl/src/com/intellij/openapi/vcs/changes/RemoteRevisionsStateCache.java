@@ -105,7 +105,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
   public boolean updateStep() {
     final MultiMap<VcsRoot, String> dirty = new MultiMap<>();
     final long oldPoint = System.currentTimeMillis() - (myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0 ?
-                                                        myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000 : DISCRETE);
+                                                        myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000L : DISCRETE);
 
     synchronized (myLock) {
       // just copies myQueries MultiMap to dirty MultiMap

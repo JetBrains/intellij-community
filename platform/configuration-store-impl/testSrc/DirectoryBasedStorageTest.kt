@@ -1,28 +1,28 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.async.coroutineDispatchingContext
+import com.intellij.openapi.application.async.inWriteAction
 import com.intellij.openapi.components.MainConfigurationStateSplitter
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.runInEdtAndWait
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 
-private fun SaveSessionProducer.save() {
-  runInEdtAndWait {
-    createSaveSession()!!.save()
+private suspend fun StateStorageBase<*>.setStateAndSave(componentName: String, state: String?) {
+  val saveSessionProducer = createSaveSessionProducer()!!
+  saveSessionProducer.setState(null, componentName, if (state == null) Element("state") else JDOMUtil.load(state))
+  withContext(AppUIExecutor.onUiThread().inWriteAction().coroutineDispatchingContext()) {
+    saveSessionProducer.createSaveSession()!!.save()
   }
-}
-
-private fun StateStorageBase<*>.setStateAndSave(componentName: String, state: String?) {
-  val externalizationSession = createSaveSessionProducer()!!
-  externalizationSession.setState(null, componentName, if (state == null) Element("state") else JDOMUtil.load(state))
-  externalizationSession.save()
 }
 
 internal class TestStateSplitter : MainConfigurationStateSplitter() {
@@ -30,7 +30,7 @@ internal class TestStateSplitter : MainConfigurationStateSplitter() {
 
   override fun getSubStateTagName() = "sub"
 
-  override fun getSubStateFileName(element: Element) = element.getAttributeValue("name")
+  override fun getSubStateFileName(element: Element): String = element.getAttributeValue("name")
 }
 
 internal class DirectoryBasedStorageTest {
@@ -47,7 +47,7 @@ internal class DirectoryBasedStorageTest {
   val ruleChain = RuleChain(tempDirManager)
 
   @Test
-  fun save() {
+  fun save() = runBlocking<Unit> {
     val dir = tempDirManager.newPath(refreshVfs = true)
     val storage = DirectoryBasedStorage(dir, TestStateSplitter())
 

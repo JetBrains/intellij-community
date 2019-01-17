@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.template
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -20,13 +20,13 @@ abstract class LiveTemplateTestCase extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() {
     super.setUp()
-    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable())
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable())
   }
 
   @Override
   protected void tearDown() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
     if (state != null) {
       WriteCommandAction.runWriteCommandAction project, {
         state.gotoEnd()

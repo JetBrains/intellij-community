@@ -974,8 +974,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       // if "schedule with fixed rate" is used, then after waking up from stand-by mode, events are generated for inactive period
       // it does not make sense
       myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(myRefresnRunnable,
-                                                                 myState.getRefreshInterval()*60, myState.getRefreshInterval()*60,
-                                                                 TimeUnit.SECONDS);
+                                                                    myState.getRefreshInterval() * 60L,
+                                                                    myState.getRefreshInterval() * 60L,
+                                                                    TimeUnit.SECONDS);
     }
   }
 

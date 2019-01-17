@@ -74,7 +74,7 @@ public class AttachToProcessAction extends AnAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
 
-        List<AttachItem> allItems = getTopLevelItems(indicator, project);
+        List<AttachItem> allItems = ContainerUtil.immutableList(getTopLevelItems(indicator, project));
 
         ApplicationManager.getApplication().invokeLater(() -> {
           AttachListStep step = new AttachListStep(allItems, XDebuggerBundle.message("xdebugger.attach.popup.title.default"), project);
@@ -119,15 +119,18 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @NotNull
-  protected List<AttachItem> getTopLevelItems(@NotNull ProgressIndicator indicator, @NotNull Project project) {
-    List<AttachToProcessItem> localAttachToProcessItems = collectAttachProcessItems(
-      project, LocalAttachHost.INSTANCE, indicator
-    );
-    List<AttachItem> remoteAttachToProcessItems = collectAttachHostsItems(
-      project, indicator
-    );
+  protected List<? extends AttachItem> getTopLevelItems(@NotNull ProgressIndicator indicator, @NotNull Project project) {
+    List<AttachItem> attachHostItems = collectAttachHostsItems(project, indicator);
 
-    return ContainerUtil.concat(remoteAttachToProcessItems, localAttachToProcessItems);
+    // If any of hosts available, fold local PIDs into "Local Host" subgroup
+    if (!attachHostItems.isEmpty()) {
+      AttachItem localHostGroupItem = new AttachHostItem(
+        LocalAttachHostPresentationGroup.INSTANCE, false, LocalAttachHost.INSTANCE, project, new UserDataHolderBase());
+      attachHostItems.add(localHostGroupItem);
+      doUpdateFirstInGroup(attachHostItems);
+      return attachHostItems;
+    }
+    return collectAttachProcessItems(project, LocalAttachHost.INSTANCE, indicator);
   }
 
   private static void doUpdateFirstInGroup(@NotNull List<? extends AttachItem> items) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiClassType
@@ -1010,5 +1010,20 @@ class A extends SuperClass {
   }
 }
 ''', 'I'
+  }
+
+  void 'test no soe argument instruction in cycle'() {
+    allowNestedContext(3, testRootDisposable)
+    doTest '''\
+static <U> void foo(U[] a, U[] b) {}
+
+String prevParent = null
+while (condition) {
+  String parent = null
+  foo(parent, prevParent)
+  prevParent = parent
+}
+<caret>prevParent
+''', 'java.lang.String'
   }
 }

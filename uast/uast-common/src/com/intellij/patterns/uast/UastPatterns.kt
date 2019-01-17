@@ -35,6 +35,8 @@ fun injectionHostUExpression(strict: Boolean = true): UExpressionPattern<UExpres
     return@filterWithContext requestedPsi is PsiLanguageInjectionHost
   }
 
+fun injectionHostOrReferenceExpression(): UExpressionPattern.Capture<UExpression> =
+  uExpression().filter { it is UReferenceExpression || it.isInjectionHost() }
 
 fun callExpression(): UCallExpressionPattern = UCallExpressionPattern()
 
@@ -69,27 +71,23 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
 
   fun filter(filter: (T) -> Boolean): Self = filterWithContext { t, processingContext -> filter(t) }
 
-  fun inCall(callPattern: ElementPattern<UCallExpression>): Self =
-    filter { it.getUCallExpression()?.let { callPattern.accepts(it) } ?: false }
+  open fun inCall(callPattern: ElementPattern<UCallExpression>): Self =
+    throw UnsupportedOperationException("implemented only for UExpressionPatterns")
 
-  fun callParameter(parameterIndex: Int, callPattern: ElementPattern<UCallExpression>): Self =
-    filter { isCallExpressionParameter(it, parameterIndex, callPattern) }
+  open fun callParameter(parameterIndex: Int, callPattern: ElementPattern<UCallExpression>): Self =
+    throw UnsupportedOperationException("implemented only for UExpressionPatterns")
 
-  fun constructorParameter(parameterIndex: Int, classFQN: String): Self = callParameter(parameterIndex, callExpression().constructor(classFQN))
+  open fun constructorParameter(parameterIndex: Int, classFQN: String): Self = throw UnsupportedOperationException(
+    "implemented only for UExpressionPatterns")
 
-  fun setterParameter(methodPattern: ElementPattern<out PsiMethod>): Self = filter {
-    isPropertyAssignCall(it, methodPattern) ||
-    isCallExpressionParameter(it, 0, callExpression().withAnyResolvedMethod(methodPattern))
-  }
+  open fun setterParameter(methodPattern: ElementPattern<out PsiMethod>): Self = throw UnsupportedOperationException(
+    "implemented only for UExpressionPatterns")
 
-  fun methodCallParameter(parameterIndex: Int, methodPattern: ElementPattern<out PsiMethod>): Self =
-    callParameter(parameterIndex, callExpression().withAnyResolvedMethod(methodPattern))
+  open fun methodCallParameter(parameterIndex: Int, methodPattern: ElementPattern<out PsiMethod>): Self =
+    throw UnsupportedOperationException("implemented only for UExpressionPatterns")
 
-  fun arrayAccessParameterOf(receiverClassPattern: ElementPattern<PsiClass>): Self = filter { self ->
-    val aae: UArrayAccessExpression = self.uastParent as? UArrayAccessExpression ?: return@filter false
-    val receiverClass = (aae.receiver.getExpressionType() as? PsiClassType)?.resolve() ?: return@filter false
-    receiverClassPattern.accepts(receiverClass)
-  }
+  open fun arrayAccessParameterOf(receiverClassPattern: ElementPattern<PsiClass>): Self = throw UnsupportedOperationException(
+    "implemented only for UExpressionPatterns")
 
   fun withUastParent(parentPattern: ElementPattern<out UElement>): Self = filter { it.uastParent?.let { parentPattern.accepts(it) } ?: false }
 
@@ -98,12 +96,12 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
 
 private val constructorOrMethodCall = setOf(UastCallKind.CONSTRUCTOR_CALL, UastCallKind.METHOD_CALL)
 
-private fun isCallExpressionParameter(argumentExpression: UElement,
+private fun isCallExpressionParameter(argumentExpression: UExpression,
                                       parameterIndex: Int,
                                       callPattern: ElementPattern<UCallExpression>): Boolean {
   val call = argumentExpression.uastParent.getUCallExpression(searchLimit = 2) as? UCallExpressionEx ?: return false
   if (call.kind !in constructorOrMethodCall) return false
-  return call.getArgumentForParameter(parameterIndex) == argumentExpression && callPattern.accepts(call)
+  return call.getArgumentForParameter(parameterIndex) == unwrapPolyadic(argumentExpression) && callPattern.accepts(call)
 }
 
 private val GUARD = RecursionManager.createGuard("isPropertyAssignCall")
@@ -132,11 +130,13 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
 
   fun withMethodName(methodName : String): UCallExpressionPattern = withMethodName(string().equalTo(methodName))
 
-  fun withAnyResolvedMethod(method: ElementPattern<out PsiMethod>): UCallExpressionPattern = filter { uCallExpression ->
-    when (uCallExpression) {
-      is UMultiResolvable -> uCallExpression.multiResolve().any { method.accepts(it.element) }
-      else -> uCallExpression.resolve().let { method.accepts(it) }
-    }
+  fun withAnyResolvedMethod(method: ElementPattern<out PsiMethod>): UCallExpressionPattern = withResolvedMethod(method, true)
+
+  fun withResolvedMethod(method: ElementPattern<out PsiMethod>, multiResolve: Boolean): UCallExpressionPattern = filter { uCallExpression ->
+    if (multiResolve && uCallExpression is UMultiResolvable)
+      uCallExpression.multiResolve().any { method.accepts(it.element) }
+    else
+      uCallExpression.resolve().let { method.accepts(it) }
   }
 
   fun withMethodName(namePattern: ElementPattern<String>): UCallExpressionPattern = filter { it.methodName?.let { namePattern.accepts(it) } ?: false }
@@ -175,6 +175,30 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
 
   fun annotationParams(@NonNls annotationQualifiedName: String, @NonNls parameterNames: ElementPattern<String>): Self =
     annotationParams(qualifiedNamePattern(StandardPatterns.string().equalTo(annotationQualifiedName)), parameterNames)
+
+  override fun inCall(callPattern: ElementPattern<UCallExpression>): Self =
+    filter { it.getUCallExpression()?.let { callPattern.accepts(it) } ?: false }
+
+  override fun callParameter(parameterIndex: Int, callPattern: ElementPattern<UCallExpression>): Self =
+    filter { isCallExpressionParameter(it, parameterIndex, callPattern) }
+
+  override fun constructorParameter(parameterIndex: Int, classFQN: String): Self = callParameter(parameterIndex,
+                                                                                                 callExpression().constructor(classFQN))
+
+  override fun setterParameter(methodPattern: ElementPattern<out PsiMethod>): Self = filter {
+    isPropertyAssignCall(it, methodPattern) ||
+    isCallExpressionParameter(it, 0, callExpression().withAnyResolvedMethod(methodPattern))
+  }
+
+  @JvmOverloads
+  fun methodCallParameter(parameterIndex: Int, methodPattern: ElementPattern<out PsiMethod>, multiResolve: Boolean = true): Self =
+    callParameter(parameterIndex, callExpression().withResolvedMethod(methodPattern, multiResolve))
+
+  override fun arrayAccessParameterOf(receiverClassPattern: ElementPattern<PsiClass>): Self = filter { self ->
+    val aae: UArrayAccessExpression = unwrapPolyadic(self).uastParent as? UArrayAccessExpression ?: return@filter false
+    val receiverClass = (aae.receiver.getExpressionType() as? PsiClassType)?.resolve() ?: return@filter false
+    receiverClassPattern.accepts(receiverClass)
+  }
 
   open class Capture<T : UExpression>(clazz: Class<T>) : UExpressionPattern<T, UExpressionPattern.Capture<T>>(clazz)
 }

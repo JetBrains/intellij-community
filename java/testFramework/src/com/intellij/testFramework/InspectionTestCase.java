@@ -28,7 +28,6 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -59,7 +58,6 @@ import java.util.List;
 @SuppressWarnings("HardCodedStringLiteral")
 public abstract class InspectionTestCase extends LightCodeInsightFixtureTestCase {
   private static final boolean MIGRATE_TEST = false;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.InspectionTestCase");
   private static final DefaultLightProjectDescriptor ourDescriptor = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
@@ -129,7 +127,7 @@ public abstract class InspectionTestCase extends LightCodeInsightFixtureTestCase
 
   protected GlobalInspectionContextImpl runTool(@NotNull final String testName,
                                                 @NotNull InspectionToolWrapper toolWrapper,
-                                                List<InspectionToolWrapper<?, ?>> tools) {
+                                                List<? extends InspectionToolWrapper<?, ?>> tools) {
     VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(getTestDataPath(), testName));
     assertNotNull(projectDir);
 

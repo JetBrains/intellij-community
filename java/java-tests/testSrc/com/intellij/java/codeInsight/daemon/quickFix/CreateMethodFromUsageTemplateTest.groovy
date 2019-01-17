@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -32,7 +32,7 @@ class SomeOuterClassWithLongName {
     }
 }
 """
-    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+    TemplateManagerImpl.setTemplateTesting(testRootDisposable)
     doAction("Create method 'addSubGroup' in 'Group in PropertyDescriptorWithVeryLongName in SomeOuterClassWithLongName'")
     def state = TemplateManagerImpl.getTemplateState(getEditor())
     //skip void return type
@@ -84,7 +84,7 @@ class Usage {
 
 }
 """
-    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+    TemplateManagerImpl.setTemplateTesting(testRootDisposable)
     doAction("Create method 'getInstance' in 'Singleton'")
     assert LookupManager.getActiveLookup(editor)?.currentItem?.lookupString == 'Singleton'
   }
@@ -102,7 +102,7 @@ class Usage {
 
 }
 """
-    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+    TemplateManagerImpl.setTemplateTesting(testRootDisposable)
     doAction("Create method 'getInstance' in 'Singleton'")
     def state = TemplateManagerImpl.getTemplateState(getEditor())
 
@@ -128,7 +128,7 @@ class A {
     }
 }
 """
-    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+    TemplateManagerImpl.setTemplateTesting(testRootDisposable)
     doAction("Create method 'foo' in 'A'")
     TemplateManagerImpl.getTemplateState(getEditor()).gotoEnd(false)
 
@@ -159,7 +159,7 @@ class A {
     }
 }
 """
-    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+    TemplateManagerImpl.setTemplateTesting(testRootDisposable)
     doAction("Create method 'foo' in 'A'")
     def state = TemplateManagerImpl.getTemplateState(getEditor())
 
@@ -197,7 +197,7 @@ class A {
       }
   }
   """
-      TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+      TemplateManagerImpl.setTemplateTesting(testRootDisposable)
       doAction("Create method 'foo' in 'A'")
       def state = TemplateManagerImpl.getTemplateState(getEditor())
     
@@ -257,7 +257,7 @@ public class InvalidClass {
     }
 '''
 
-    TemplateManagerImpl.setTemplateTesting project, testRootDisposable
+    TemplateManagerImpl.setTemplateTesting testRootDisposable
     doAction "Create read-only property 'foo' in 'InvalidClass'"
     TemplateManagerImpl.getTemplateState editor gotoEnd false
 
@@ -297,8 +297,8 @@ class A {
     }
 }
 '''
-    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = true
+    TemplateManagerImpl.setTemplateTesting(testRootDisposable)
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = true
     try {
       doAction "Create method 'passClass' in 'A'"
       myFixture.type('\t')
@@ -315,7 +315,7 @@ class A {
 '''
     }
     finally {
-      CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+      CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
     }
   }
 }

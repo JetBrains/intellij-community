@@ -211,6 +211,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         JBPopup hint = getDocInfoHint();
         if (hint != null) {
+          if (LookupManager.getActiveLookup(myEditor) != null) return; // let the lookup manage all the actions
           if (action instanceof HintManagerImpl.ActionToIgnore) return;
           if (action instanceof ScrollingUtil.ScrollingAction) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;

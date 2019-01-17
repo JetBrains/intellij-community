@@ -788,7 +788,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       LineSeparator lineSeparator = StringUtil.getLineSeparatorAt(text, i);
       if (lineSeparator != null) {
         int sepLength = lineSeparator.getSeparatorString().length();
-        text.replace(newLength, newLength + sepLength, lineSeparator.getSeparatorString());
+        copyString(lineSeparator.getSeparatorString(), sepLength, text, newLength);
         newLength += sepLength;
         guardLength = newLength;
         i += sepLength;
@@ -823,6 +823,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
     text.setLength(newLength);
+  }
+
+  private static void copyString(@NotNull String src, int srcCount, @NotNull StringBuilder dest, int destStartOffset) {
+    for (int i = 0; i < srcCount; i++) {
+      dest.setCharAt(destStartOffset + i, src.charAt(i));
+    }
   }
 
   private void createTokenRangeHighlighter(@NotNull ConsoleViewContentType contentType,

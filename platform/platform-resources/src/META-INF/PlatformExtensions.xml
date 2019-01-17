@@ -584,7 +584,7 @@
       <description>Makes legacy Ubuntu distribution (bash.exe) available</description>
     </experimentalFeature>
 
-    <experimentalFeature id="linux.native.menu" requireRestart="true">
+    <experimentalFeature id="linux.native.menu" percentOfUsers="100" requireRestart="true">
       <description>Intergation with global menu in Linux</description>
     </experimentalFeature>
 

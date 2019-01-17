@@ -136,7 +136,7 @@ public abstract class BaseSplitter implements Splitter {
     return new StringUtil.BombedCharSequence(substring) {
       @Override
       protected void checkCanceled() {
-        if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+        //todo[anna] if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
         long l = System.currentTimeMillis();
         if (l >= myTime) {
           throw new ProcessCanceledException();

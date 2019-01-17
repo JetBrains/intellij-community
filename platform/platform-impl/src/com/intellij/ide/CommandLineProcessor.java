@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,12 +40,12 @@ public class CommandLineProcessor {
   private CommandLineProcessor() { }
 
   @Nullable
-  private static Project doOpenFileOrProject(@NotNull VirtualFile file) {
+  private static Project doOpenFileOrProject(VirtualFile file) {
     String path = file.getPath();
     if (ProjectKt.isValidProjectPath(path) || ProjectOpenProcessor.getImportProvider(file) != null) {
       Project project = ProjectUtil.openOrImport(path, null, true);
       if (project == null) {
-        Messages.showErrorDialog("Cannot open project '" + path + "'", "Cannot Open Project");
+        Messages.showErrorDialog("Cannot open project '" + FileUtil.toSystemDependentName(path) + "'", "Cannot Open Project");
       }
       return project;
     }
