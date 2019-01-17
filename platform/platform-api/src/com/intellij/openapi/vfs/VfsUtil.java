@@ -31,9 +31,9 @@ import java.util.*;
 
 public class VfsUtil extends VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
+
   /**
-   * Specifies an average time span between a fs event (e.g. create/remove/change file) and
-   * when IDE gets notified about it by fsnotifier.
+   * Specifies an average delay between a file system event and a moment the IDE gets pinged about it by fsnotifier.
    */
   public static final long NOTIFICATION_DELAY_MILLIS = 300;
 
