@@ -13,6 +13,12 @@
     <appStarter implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
 
     <applicationService serviceImplementation="com.intellij.execution.wsl.WSLDistributionService"/>
+    <experimentalFeature id="wsl.close.process.input" percentOfUsers="0">
+      <description>Forces closing of WSL process input stream to prevent process zombification. See
+        https://github.com/Microsoft/WSL/issues/2592
+        Required for Windows 10 version prior 1803
+      </description>
+    </experimentalFeature>
 
     <applicationService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
                         serviceImplementation="com.intellij.configurationStore.ApplicationStoreImpl"/>
