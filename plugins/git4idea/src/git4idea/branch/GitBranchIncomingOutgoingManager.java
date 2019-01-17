@@ -174,14 +174,15 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
       trackInfoList.forEach(info -> {
         GitRemoteBranch remoteBranch = info.getRemoteBranch();
         Hash localHashForRemoteBranch = branchesCollection.getHash(remoteBranch);
+        Hash localHash = branchesCollection.getHash(info.getLocalBranch());
+
         if (localHashForRemoteBranch == null) return;
 
         if (StringUtil.equals(remoteBranchName, addRefsHeadsPrefixIfNeeded(remoteBranch.getNameForRemoteOperations()))) {
           if (!localHashForRemoteBranch.equals(remoteHash)) {
             result.put(info.getLocalBranch(), localHashForRemoteBranch);
           }
-          else if (!Objects.equals(localHashForRemoteBranch, branchesCollection.getHash(info.getLocalBranch())) &&
-                   hasCommitsForBranch(repository, info.getLocalBranch(), true)) {
+          else if (hasCommitsForBranch(repository, info.getLocalBranch(), localHash, localHashForRemoteBranch, true)) {
             result.put(info.getLocalBranch(), localHashForRemoteBranch);
           }
         }
@@ -251,26 +252,32 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     GitBranchesCollection branchesCollection = gitRepository.getBranches();
     for (GitLocalBranch branch : branchesCollection.getLocalBranches()) {
       GitPushTarget pushTarget = GitPushSupport.getPushTargetIfExist(gitRepository, branch);
-      Hash remoteHash = pushTarget != null ? branchesCollection.getHash(pushTarget.getBranch()) : null;
-      if (remoteHash != null && !Objects.equals(branchesCollection.getHash(branch), remoteHash)) {
-        if (hasCommitsForBranch(gitRepository, branch, false)) {
-          branchesToPush.put(branch, remoteHash);
-        }
+      Hash localHashForRemoteBranch = pushTarget != null ? branchesCollection.getHash(pushTarget.getBranch()) : null;
+      Hash localHash = branchesCollection.getHash(branch);
+      if (hasCommitsForBranch(gitRepository, branch, localHash, localHashForRemoteBranch, false)) {
+        branchesToPush.put(branch, localHashForRemoteBranch);
       }
     }
     return branchesToPush;
   }
 
-  private boolean hasCommitsForBranch(@NotNull GitRepository repository, @NotNull GitLocalBranch localBranch, boolean incoming) {
+  private boolean hasCommitsForBranch(@NotNull GitRepository repository,
+                                      @NotNull GitLocalBranch localBranch,
+                                      @Nullable Hash localBranchHash, @Nullable Hash localHashForRemoteBranch,
+                                      boolean incoming) {
     if (!supportsIncomingOutgoing()) return false;
+    if (localHashForRemoteBranch == null || Objects.equals(localBranchHash, localHashForRemoteBranch)) return false;
 
-    //run git rev-list --count localName@{push}..localName for outgoing or
+    //run git rev-list --count pushTargetForBranch_or_hash..localName for outgoing ( @{push} can be used only for equal branch names)
+    //see git-push help -> simple push strategy
     //git rev-list --count localName..localName@{u} for incoming
 
     GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REV_LIST);
     handler.setSilent(true);
     String branchName = localBranch.getName();
-    handler.addParameters("--count", incoming ? branchName + ".." + branchName + "@{u}" : branchName + "@{push}.." + branchName);
+    handler.addParameters("--count", incoming
+                                     ? branchName + ".." + branchName + "@{u}"
+                                     : localHashForRemoteBranch.asString() + ".." + branchName);
     try {
       String output = myGit.runCommand(handler).getOutputOrThrow().trim();
       return !StringUtil.startsWithChar(output, '0');
