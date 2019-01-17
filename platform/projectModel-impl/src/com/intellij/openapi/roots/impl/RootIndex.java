@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Function;
@@ -313,7 +312,7 @@ public class RootIndex {
       myProject = project;
       myRootInfo = rootInfo;
       myAllRoots = myRootInfo.getAllRoots();
-      int cacheSize = Math.max(25, (myAllRoots.size() / 100) * 2);
+      int cacheSize = Math.max(25, myAllRoots.size() / 100 * 2);
       myCache = new SynchronizedSLRUCache<VirtualFile, List<OrderEntry>>(cacheSize, cacheSize) {
         @NotNull
         @Override
@@ -578,16 +577,6 @@ public class RootIndex {
   private static String getPackageNameForSubdir(@Nullable String parentPackageName, @NotNull String subdirName) {
     if (parentPackageName == null) return null;
     return parentPackageName.isEmpty() ? subdirName : parentPackageName + "." + subdirName;
-  }
-
-  boolean resetOnEvents(@NotNull List<? extends VFileEvent> events) {
-    for (VFileEvent event : events) {
-      VirtualFile file = event.getFile();
-      if (file == null || file.isDirectory()) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Nullable("returns null only if dir is under ignored folder")

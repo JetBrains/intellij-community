@@ -25,7 +25,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.changes.IgnoredFileProvider;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl;
@@ -41,7 +40,6 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -185,13 +183,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
   }
 
-  private boolean isDirVcsIgnored(@NotNull File dir) {
-    for (IgnoredFileProvider extension : IgnoredFileProvider.IGNORE_FILE.getExtensions()) {
-      if (extension.isIgnoredFile(myProject, VcsUtil.getFilePath(dir, true))) return true;
-    }
-    return false;
-  }
-
   @NotNull
   private Pair<Set<String>, Set<String>> getAllRoots() {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -229,12 +220,12 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
     Disposer.dispose(oldDisposable); // dispose after the re-creating container to keep virtual file pointers from disposing and re-creating back
 
-    // module roots already fire validity change events
+    // module roots already fire validity change events, see usages of ProjectRootManagerComponent.getRootsValidityChangedListener
     addRootsFromModulesTo(recursiveDirs, files);
     return Pair.create(recursiveDirs, files);
   }
 
-  private void addRootsFromModulesTo(@NotNull Set<? super String> recursive, @NotNull Set<? super String> flat) {
+  private void addRootsFromModulesTo(@NotNull Set<? super String> recursivePaths, @NotNull Set<? super String> flatPaths) {
     Set<String> urls = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
 
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
@@ -253,13 +244,13 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     for (String url : urls) {
       String protocol = VirtualFileManager.extractProtocol(url);
       if (protocol == null || StandardFileSystems.FILE_PROTOCOL.equals(protocol)) {
-        recursive.add(extractLocalPath(url));
+        recursivePaths.add(extractLocalPath(url));
       }
       else if (StandardFileSystems.JAR_PROTOCOL.equals(protocol)) {
-        flat.add(extractLocalPath(url));
+        flatPaths.add(extractLocalPath(url));
       }
       else if (StandardFileSystems.JRT_PROTOCOL.equals(protocol)) {
-        recursive.add(extractLocalPath(url));
+        recursivePaths.add(extractLocalPath(url));
       }
     }
   }
@@ -298,7 +289,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
   @Override
   public void markRootsForRefresh() {
-    Set<String> paths = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> paths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
     addRootsFromModulesTo(paths, paths);
 
     LocalFileSystem fs = LocalFileSystem.getInstance();

@@ -55,7 +55,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }, project);
   }
 
-  protected void subscribeToFileChanges() {
+  private void subscribeToFileChanges() {
     myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       @Override
       public void fileTypesChanged(@NotNull FileTypeEvent event) {
@@ -74,14 +74,25 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         RootIndex rootIndex = myRootIndex;
-        if (rootIndex != null && rootIndex.resetOnEvents(events)) {
+        if (rootIndex != null && shouldResetOnEvents(events)) {
           myRootIndex = null;
         }
       }
     });
   }
 
-  protected void dispatchPendingEvents() {
+  private static boolean shouldResetOnEvents(@NotNull List<? extends VFileEvent> events) {
+    for (VFileEvent event : events) {
+      VirtualFile file = event.getFile();
+      if (file == null || file.isDirectory()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
+  private void dispatchPendingEvents() {
     myConnection.deliverImmediately();
   }
 

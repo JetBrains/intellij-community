@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.or;
-
 /**
  * @author peter
  */
@@ -119,7 +117,7 @@ public class PackageDirectoryCache {
     for (Map.Entry<String, Collection<VirtualFile>> entry : info.mySubPackages.getValue().entrySet()) {
       final String shortName = entry.getKey();
       final Collection<VirtualFile> directories = entry.getValue();
-      if (or(directories, scope::contains)) {
+      if (ContainerUtil.exists(directories, scope::contains)) {
         result.add(shortName);
       }
     }
