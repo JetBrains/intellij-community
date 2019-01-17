@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineLocalHandler;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -363,13 +365,13 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     List<String> expected = new ArrayList<>(Arrays.asList(rest));
     expected.add(conflict);
 
-    prepareTest(LanguageLevel.JDK_1_7);
-
-    PsiLocalVariable element = getTarget(myEditor);
-    InlineLocalHandler.invoke(getProject(), myEditor, element, null, (project, conflicts) -> {
-      assertSameElements(expected, conflicts.values());
-      return true;
-    });
+    try {
+      doTest(false);
+      fail("Conflict weren't found");
+    } catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      Collection<String> actual = e.getMessages();
+      assertSameElements(expected, actual);
+    }
   }
 
   private String prepareTest(LanguageLevel languageLevel) {
