@@ -80,6 +80,7 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension {
     }
   }
 
+  @NotNull
   @Override
   public ModuleExtension getModifiableModel(boolean writable) {
     return new MavenSourceFoldersModuleExtension();
