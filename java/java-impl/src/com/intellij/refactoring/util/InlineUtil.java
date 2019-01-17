@@ -49,6 +49,24 @@ public class InlineUtil {
 
   private InlineUtil() {}
 
+  /**
+   * Replace variable with its initializer for every variable reference.
+   *
+   * @return references after replacement
+   */
+  @NotNull
+  public static Collection<PsiElement> inlineVariable(@NotNull PsiVariable variable, @NotNull PsiExpression initializer) {
+    final Collection<PsiElement> replacedElements = new ArrayList<>();
+    final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
+
+    for (PsiReference reference : references) {
+      final PsiExpression expression = inlineVariable(variable, initializer, (PsiJavaCodeReferenceElement)reference);
+      replacedElements.add(expression);
+    }
+
+    return replacedElements;
+  }
+
   @NotNull
   public static PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) throws IncorrectOperationException {
     return inlineVariable(variable, initializer, ref, null);

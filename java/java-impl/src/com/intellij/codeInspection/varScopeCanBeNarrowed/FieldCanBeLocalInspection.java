@@ -323,20 +323,24 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   private static class ConvertFieldToLocalQuickFix extends BaseConvertToLocalQuickFix<PsiField> {
-    @Nullable
+    @NotNull
     @Override
-    protected PsiElement moveDeclaration(@NotNull final Project project, @NotNull final PsiField variable) {
+    protected List<PsiElement> moveDeclaration(@NotNull final Project project, @NotNull final PsiField variable) {
       final Map<PsiCodeBlock, Collection<PsiReference>> refs = new HashMap<>();
-      if (!groupByCodeBlocks(ReferencesSearch.search(variable).findAll(), refs)) return null;
-      PsiElement element = null;
+      final List<PsiElement> newDeclarations = new ArrayList<>();
+      if (!groupByCodeBlocks(ReferencesSearch.search(variable).findAll(), refs)) return newDeclarations;
+
+      PsiElement declaration;
       for (Collection<PsiReference> psiReferences : refs.values()) {
-        element = super.moveDeclaration(project, variable, psiReferences, false);
+        declaration = super.moveDeclaration(project, variable, psiReferences, false);
+        if (declaration != null) newDeclarations.add(declaration);
       }
-      if (element != null) {
-        final PsiElement finalElement = element;
-        ApplicationManager.getApplication().runWriteAction(() -> deleteSourceVariable(project, variable, finalElement));
+
+      if (!newDeclarations.isEmpty()) {
+        final PsiElement lastDeclaration = newDeclarations.get(newDeclarations.size() - 1);
+        ApplicationManager.getApplication().runWriteAction(() -> deleteSourceVariable(project, variable, lastDeclaration));
       }
-      return element;
+      return newDeclarations;
     }
 
     private static boolean groupByCodeBlocks(final Collection<? extends PsiReference> allReferences, Map<PsiCodeBlock, Collection<PsiReference>> refs) {
