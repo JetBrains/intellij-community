@@ -395,9 +395,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
 
   @Override
   public long getLength(@NotNull VirtualFile file) {
-    return mustReloadContent(file) ?
-           reloadLengthFromDelegate(file, getDelegate(file)) :
-           getLastRecordedLength(file);
+    long length = getLengthIfUpToDate(file);
+    return length == -1 ? reloadLengthFromDelegate(file, getDelegate(file)) : length;
   }
 
   @Override
@@ -484,11 +483,12 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     boolean reloadFromDelegate;
     boolean outdated;
     int fileId;
-    long length = -1L;
+    long length;
 
     synchronized (myInputLock) {
       fileId = getFileId(file);
-      outdated = checkFlag(fileId, MUST_RELOAD_CONTENT) || (length = FSRecords.getLength(fileId)) == -1L;
+      length = getLengthIfUpToDate(file);
+      outdated = length == -1;
       reloadFromDelegate = outdated || (contentStream = readContent(file)) == null;
     }
 
@@ -546,7 +546,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   public InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
     synchronized (myInputLock) {
       InputStream contentStream;
-      if (mustReloadContent(file) || FileUtilRt.isTooLarge(file.getLength()) || (contentStream = readContent(file)) == null) {
+      if (getLengthIfUpToDate(file) == -1 || FileUtilRt.isTooLarge(file.getLength()) || (contentStream = readContent(file)) == null) {
         NewVirtualFileSystem delegate = getDelegate(file);
         long len = reloadLengthFromDelegate(file, delegate);
         InputStream nativeStream = delegate.getInputStream(file);
@@ -600,9 +600,10 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     }
   }
 
-  private static boolean mustReloadContent(@NotNull VirtualFile file) {
+  // returns last recorded length or -1 if must reload from delegate
+  private static long getLengthIfUpToDate(@NotNull VirtualFile file) {
     int fileId = getFileId(file);
-    return checkFlag(fileId, MUST_RELOAD_CONTENT) || FSRecords.getLength(fileId) == -1L;
+    return checkFlag(fileId, MUST_RELOAD_CONTENT) ? -1 : FSRecords.getLength(fileId);
   }
 
   @Override
