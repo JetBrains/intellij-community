@@ -393,7 +393,7 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public ReadOnlyLockAction(@NotNull DiffContext context) {
-      super("Disable editing", null, AllIcons.Nodes.Padlock);
+      super("Disable editing", null, AllIcons.Diff.Lock);
       myContext = context;
       mySettings = getTextSettings(context);
     }
