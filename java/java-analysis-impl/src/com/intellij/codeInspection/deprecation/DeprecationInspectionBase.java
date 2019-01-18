@@ -20,6 +20,8 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -219,6 +221,14 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     PsiExpressionList arguments = call.getArgumentList();
     PsiMethodCallExpression suggestedCall = (PsiMethodCallExpression)elementFactory
       .createExpressionFromText(qualifierText + suggestedReplacement.getName() + arguments.getText(), call);
+
+    PsiType type = ExpectedTypeUtils.findExpectedType(call, true);
+    if (type != null && !type.equals(PsiType.VOID)) {
+      PsiType suggestedCallType = suggestedCall.getType();
+      if (!ExpressionUtils.isVoidContext(call) && suggestedCallType != null && !TypeConversionUtil.isAssignable(type, suggestedCallType)) {
+        return false;
+      }
+    }
 
     MethodCandidateInfo result = ObjectUtils.tryCast(suggestedCall.resolveMethodGenerics(), MethodCandidateInfo.class);
     return result != null && result.isApplicable();
