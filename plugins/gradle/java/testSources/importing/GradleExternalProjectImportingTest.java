@@ -5,7 +5,6 @@ import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ExternalTask;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 
 import java.io.File;
@@ -24,8 +23,8 @@ public class GradleExternalProjectImportingTest extends GradleImportingTestCase 
 
     assertModules("project");
 
-    ExternalProject externalProject = ExternalProjectDataCache.getInstance(myProject).getRootExternalProject(GradleConstants.SYSTEM_ID,
-                                                                                                             new File(getProjectPath()));
+    ExternalProject externalProject = ExternalProjectDataCache.getInstance(myProject).getRootExternalProject(
+      new File(getProjectPath()));
     ExternalTask task = externalProject.getTasks().get("myJar");
     assertEquals(":myJar", task.getQName());
 
