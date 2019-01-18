@@ -53,7 +53,7 @@ public class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
     PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)factory.createStatementFromText(text, null);
     declarationStatement = (PsiDeclarationStatement)codeStyleManager.reformat(declarationStatement);
 
-    declarationStatement = (PsiDeclarationStatement)container.addAfter(declarationStatement, statements[statements.length - 1]);
+    declarationStatement = (PsiDeclarationStatement)addAfter(declarationStatement, container, statements);
 
     final PsiVariable variable = (PsiVariable)declarationStatement.getDeclaredElements()[0];
 
@@ -71,8 +71,8 @@ public class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
 
     makeVariablesFinal(body, body);
 
-    final int textOffset = variable.getNameIdentifier().getTextOffset();
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+    final int textOffset = variable.getNameIdentifier().getTextOffset();
     editor.getCaretModel().moveToOffset(textOffset);
     editor.getSelectionModel().removeSelection();
     new VariableInplaceRenamer(variable, editor){
