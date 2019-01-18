@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -24,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+
+import static com.intellij.util.containers.ContainerUtil.find;
 
 public class ChangesViewContentManager implements ChangesViewContentI {
   public static final String TOOLWINDOW_ID = ToolWindowId.VCS;
@@ -203,14 +206,12 @@ public class ChangesViewContentManager implements ChangesViewContentI {
     selectContent(tabName, false);
   }
 
-  public void selectContent(@NotNull String tabName, boolean requestFocus) {
-    if (myContentManager == null) return;
-    for(Content content: myContentManager.getContents()) {
-      if (content.getDisplayName().equals(tabName)) {
-        myContentManager.setSelectedContent(content, requestFocus);
-        break;
-      }
-    }
+  @NotNull
+  public ActionCallback selectContent(@NotNull String tabName, boolean requestFocus) {
+    if (myContentManager == null) return ActionCallback.REJECTED;
+
+    Content content = find(myContentManager.getContents(), it -> it.getDisplayName().equals(tabName));
+    return content != null ? myContentManager.setSelectedContentCB(content, requestFocus) : ActionCallback.REJECTED;
   }
 
   private class MyVcsListener implements VcsListener {

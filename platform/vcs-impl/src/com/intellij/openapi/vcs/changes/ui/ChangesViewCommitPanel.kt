@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.included
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.includedUnderTag
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
@@ -64,9 +65,17 @@ class ChangesViewCommitPanel(val project: Project, private val changesView: Chan
   }
 
   fun applyParameters(included: Collection<*>) {
-    changesView.setIncludedChanges(included)
-    inclusionChanged()
-    commitMessage.requestFocusInMessage()
+    ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)?.activate {
+      changesView.setIncludedChanges(included)
+      inclusionChanged()
+
+//    TODO Looks like we need to ensure corresponding node/nodes is expanded, or even selected??
+
+      val contentManager = ChangesViewContentManager.getInstance(project) as ChangesViewContentManager
+      contentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES, true).doWhenDone {
+        commitMessage.requestFocusInMessage()
+      }
+    }
   }
 
   private fun inclusionChanged() {
@@ -85,6 +94,8 @@ class ChangesViewCommitPanel(val project: Project, private val changesView: Chan
 
     committer.addResultHandler(DefaultCommitResultHandler(committer))
     committer.runCommit(DIALOG_TITLE, false)
+
+    //    TODO we need some event "after commit" 1) probably clear commit message; 2) update commit legend/exclude committed changes from tree
   }
 
   private inner class CommitAction : DumbAwareAction() {
