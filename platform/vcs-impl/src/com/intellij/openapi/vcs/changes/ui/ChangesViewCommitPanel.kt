@@ -6,9 +6,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.CTRL_ENTER
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.included
@@ -78,6 +80,10 @@ class ChangesViewCommitPanel(val project: Project, private val changesView: Chan
     }
   }
 
+
+  /*TODO inclusion does not work with partial changes. When file is included in one changelist -> it is also included in the other.
+          Looks like we need to provide custom strategy to set
+  */
   private fun inclusionChanged() {
     //    TODO "all" numbers are not used in legend. Remove them from method, or add comment here
     legendCalculator.update(emptyList(), getIncludedChanges(), 0, getIncludedUnversioned().size)
@@ -95,9 +101,22 @@ class ChangesViewCommitPanel(val project: Project, private val changesView: Chan
     val committer = SimpleCommitter(project, getIncludedChanges(), commitMessage.comment, emptyList(), FunctionUtil.nullConstant())
 
     committer.addResultHandler(DefaultCommitResultHandler(committer))
+    committer.addResultHandler(UiCommitHandler(committer))
     committer.runCommit(DIALOG_TITLE, false)
+  }
 
-    //    TODO we need some event "after commit" 1) probably clear commit message; 2) update commit legend/exclude committed changes from tree
+  private inner class UiCommitHandler(private val committer: AbstractCommitter) : CommitResultHandler {
+    override fun onSuccess(message: String) {
+      runInEdt {
+        changesView.excludeChanges(committer.changes)
+        commitMessage.setCommitMessage(null)
+
+        changesView.requestFocus()
+      }
+    }
+
+    //    TODO probably we need to also exclude some changes here???
+    override fun onFailure() = Unit
   }
 
   private inner class CommitAction : DumbAwareAction() {
