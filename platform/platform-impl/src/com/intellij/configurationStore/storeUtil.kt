@@ -23,7 +23,6 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -90,8 +89,6 @@ private fun cancelScheduledSave() {
 
 @CalledInAny
 private suspend fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
-  val currentThread = Thread.currentThread()
-  ShutDownTracker.getInstance().registerStopperThread(currentThread)
   try {
     componentManager.stateStore.save(isForceSavingAllSettings = isForceSavingAllSettings)
   }
@@ -121,9 +118,6 @@ private suspend fun saveSettings(componentManager: ComponentManager, isForceSavi
                    NotificationType.ERROR)
     }
     notification.notify(componentManager as? Project)
-  }
-  finally {
-    ShutDownTracker.getInstance().unregisterStopperThread(currentThread)
   }
 }
 
