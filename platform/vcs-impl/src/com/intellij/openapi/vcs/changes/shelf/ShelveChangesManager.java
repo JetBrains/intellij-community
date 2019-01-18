@@ -525,18 +525,18 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (dvcsUsedInProject() && VcsConfiguration.getInstance(myProject).INCLUDE_TEXT_INTO_SHELF) {
       final Set<Change> big = SelectFilesToAddTextsToPatchPanel.getBig(textChanges);
-      final ArrayList<FilePath> toKeep = new ArrayList<>();
+      Map<FilePath, ContentRevision> toKeep = new HashMap<>();
       for (Change change : textChanges) {
         if (change.getBeforeRevision() == null || change.getAfterRevision() == null) continue;
         if (big.contains(change)) continue;
-        FilePath filePath = ChangesUtil.getFilePath(change);
-        final AbstractVcs vcs = vcsManager.getVcsFor(filePath);
+        FilePath filePath = change.getBeforeRevision().getFile();
+        AbstractVcs vcs = vcsManager.getVcsFor(filePath);
         if (vcs != null && VcsType.distributed.equals(vcs.getType())) {
-          toKeep.add(filePath);
+          toKeep.put(filePath, change.getBeforeRevision());
         }
       }
       commitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, true);
-      commitContext.putUserData(BaseRevisionTextPatchEP.ourBaseRevisionPaths, toKeep);
+      commitContext.putUserData(BaseRevisionTextPatchEP.ourBaseRevisions, toKeep);
     }
   }
 
