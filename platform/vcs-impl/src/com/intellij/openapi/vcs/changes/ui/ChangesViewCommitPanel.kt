@@ -80,10 +80,6 @@ class ChangesViewCommitPanel(val project: Project, private val changesView: Chan
     }
   }
 
-
-  /*TODO inclusion does not work with partial changes. When file is included in one changelist -> it is also included in the other.
-          Looks like we need to provide custom strategy to set
-  */
   private fun inclusionChanged() {
     //    TODO "all" numbers are not used in legend. Remove them from method, or add comment here
     legendCalculator.update(emptyList(), getIncludedChanges(), 0, getIncludedUnversioned().size)
