@@ -9,6 +9,9 @@ public interface EventLogSettingsService {
   @Nullable
   String getServiceUrl();
 
+  @Nullable
+  String getDictionaryServiceUrl();
+
   int getPermittedTraffic();
 
   @NotNull
