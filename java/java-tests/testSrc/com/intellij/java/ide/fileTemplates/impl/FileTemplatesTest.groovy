@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.ide.fileTemplates.impl
 
 import com.intellij.ide.fileTemplates.CreateFromTemplateHandler
@@ -164,7 +164,7 @@ class FileTemplatesTest extends IdeaTestCase {
 
   void testFileNameTrimming() {
     CreateFromTemplateHandler handler = new DefaultCreateFromTemplateHandler()
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), CreateFromTemplateHandler.EP_NAME, handler, getTestRootDisposable());
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), CreateFromTemplateHandler.EP_NAME, handler, getTestRootDisposable())
     FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(name, "txt")
     disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)
     template.setText('${FILE_NAME}')

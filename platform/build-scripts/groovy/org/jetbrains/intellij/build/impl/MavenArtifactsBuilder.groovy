@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -137,7 +137,7 @@ class MavenArtifactsBuilder {
     def words = NameUtil.splitNameIntoWords(s)
     def result = new ArrayList<String>()
     for (int i = 0; i < words.length; i++) {
-      String next;
+      String next
       if (i < words.length - 1 && Character.isDigit(words[i + 1].charAt(0))) {
         next = words[i] + words[i+1]
         i++
