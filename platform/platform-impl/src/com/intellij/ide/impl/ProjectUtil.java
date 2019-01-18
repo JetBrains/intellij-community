@@ -77,10 +77,7 @@ public class ProjectUtil {
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(path));
   }
 
-  /**
-   * @param project cannot be null
-   */
-  public static boolean closeAndDispose(@NotNull final Project project) {
+  public static boolean closeAndDispose(@NotNull Project project) {
     return ProjectManagerEx.getInstanceEx().closeAndDispose(project);
   }
 
