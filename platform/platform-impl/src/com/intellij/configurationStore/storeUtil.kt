@@ -2,10 +2,13 @@
 package com.intellij.configurationStore
 
 import com.intellij.diagnostic.IdeErrorsDialog
+import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.SaveAndSyncHandlerImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.async.coroutineDispatchingContext
@@ -43,6 +46,9 @@ class StoreUtil private constructor() {
     @JvmStatic
     @CalledInAny
     fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
+      if (componentManager is Application) {
+        cancelScheduledSave()
+      }
       runBlocking {
         com.intellij.configurationStore.saveSettings(componentManager, isForceSavingAllSettings)
       }
@@ -68,12 +74,18 @@ class StoreUtil private constructor() {
     @CalledInAwt
     @JvmStatic
     fun saveDocumentsAndProjectsAndApp(isForceSavingAllSettings: Boolean) {
+      cancelScheduledSave()
+
       FileDocumentManager.getInstance().saveAllDocuments()
       runBlocking {
         saveProjectsAndApp(isForceSavingAllSettings)
       }
     }
   }
+}
+
+private fun cancelScheduledSave() {
+  (SaveAndSyncHandler.getInstance() as? SaveAndSyncHandlerImpl)?.cancelScheduledSave()
 }
 
 @CalledInAny
@@ -165,7 +177,7 @@ private suspend fun saveAllProjects(isForceSavingAllSettings: Boolean) {
 }
 
 @CalledInAny
-internal suspend fun saveDocumentsAndProjectsAndApp(onlyProject: Project?,
+internal suspend fun saveDocumentsAndProjectsAndApp(onlyProject: Project? = null,
                                                     isForceSavingAllSettings: Boolean = false,
                                                     isDocumentsSavingExplicit: Boolean = true) {
   coroutineScope {

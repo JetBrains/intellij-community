@@ -28,7 +28,7 @@ class SingleAlarm @JvmOverloads constructor(private val task: Runnable,
   }
 
   @JvmOverloads
-  fun request(forceRun: Boolean = false) {
+  fun request(forceRun: Boolean = false, delay: Int = this@SingleAlarm.delay) {
     if (isEmpty) {
       addRequest(if (forceRun) 0 else delay)
     }

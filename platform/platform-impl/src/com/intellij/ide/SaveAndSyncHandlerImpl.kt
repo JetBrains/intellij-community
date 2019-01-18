@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
-import com.intellij.application.PooledScope
 import com.intellij.concurrency.JobScheduler
-import com.intellij.configurationStore.StoreUtil
 import com.intellij.configurationStore.saveDocumentsAndProjectsAndApp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -19,13 +17,13 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.util.SingleAlarm
-import kotlinx.coroutines.launch
+import com.intellij.util.pooledThreadSingleAlarm
+import kotlinx.coroutines.runBlocking
 import java.beans.PropertyChangeListener
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -38,6 +36,14 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
   private val blockSyncOnFrameActivationCount = AtomicInteger()
   @Volatile
   private var refreshSessionId = -1L
+
+  private val saveAlarm = pooledThreadSingleAlarm(delay = 300, parentDisposable = this) {
+    if (isSaveAllowed) {
+      runBlocking {
+        saveDocumentsAndProjectsAndApp(isDocumentsSavingExplicit = false)
+      }
+    }
+  }
 
   private val isSaveAllowed: Boolean
     get() = !ApplicationManager.getApplication().isDisposed && blockSaveOnFrameDeactivationCount.get() == 0
@@ -86,14 +92,9 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
         }
 
         if (canSyncOrSave()) {
-          if (isSaveInPooledThread) {
-            PooledScope.launch {
-              doSaveDocumentsAndProjectsAndApp(onlyProject = null)
-            }
-          }
-          else {
-            doSaveDocumentsAndProjectsAndAppInEdt()
-          }
+          // do not cancel if there is already request - opposite to scheduleSaveDocumentsAndProjectsAndApp,
+          // on frame deactivation better to save as soon as possible
+          saveAlarm.request(delay = 100)
         }
 
         LOG.debug("save(): exit")
@@ -109,19 +110,12 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
 
   // well, currently it is not really scheduled - no alarm or something like that, but it will be addressed in turn
   override fun scheduleSaveDocumentsAndProjectsAndApp(project: Project?) {
-    if (isSaveInPooledThread) {
-      PooledScope.launch {
-        doSaveDocumentsAndProjectsAndApp(project)
-      }
-    }
-    else {
-      // to allow current activity to be finished without any noticeable delay
-      // even if `store.save.in.pooled.thread` will be set to `true` in one week, need to test if this behavior is ok for users,
-      // because obviously execution in pooled thread implies short delay before actual save
-      ApplicationManager.getApplication().invokeLater {
-        doSaveDocumentsAndProjectsAndAppInEdt()
-      }
-    }
+    // todo respect that only specified project can be saved
+    saveAlarm.cancelAndRequest()
+  }
+
+  fun cancelScheduledSave() {
+    saveAlarm.cancel()
   }
 
   override fun dispose() {
@@ -132,20 +126,6 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
 
   private fun canSyncOrSave(): Boolean {
     return !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator()
-  }
-
-  // old implementation, used now if new implementation is not enabled by flag
-  private fun doSaveDocumentsAndProjectsAndAppInEdt() {
-    if (isSaveAllowed) {
-      StoreUtil.saveDocumentsAndProjectsAndApp(isForceSavingAllSettings = false)
-    }
-  }
-
-  // new implementation, used only if enabled by flag
-  private suspend fun doSaveDocumentsAndProjectsAndApp(onlyProject: Project?) {
-    if (isSaveAllowed) {
-      saveDocumentsAndProjectsAndApp(onlyProject, isDocumentsSavingExplicit = false)
-    }
   }
 
   override fun scheduleRefresh() {
@@ -213,7 +193,3 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
     TransactionGuard.submitTransaction(this, Runnable { handler() })
   }
 }
-
-private val isSaveInPooledThread: Boolean
-  get() = ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("store.save.in.pooled.thread", true)
-
