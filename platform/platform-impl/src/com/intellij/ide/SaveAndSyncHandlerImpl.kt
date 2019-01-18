@@ -38,15 +38,13 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
   private var refreshSessionId = -1L
 
   private val saveAlarm = pooledThreadSingleAlarm(delay = 300, parentDisposable = this) {
-    if (isSaveAllowed) {
+    val app = ApplicationManager.getApplication()
+    if (app != null && !app.isDisposed && !app.isDisposeInProgress && blockSaveOnFrameDeactivationCount.get() == 0) {
       runBlocking {
         saveDocumentsAndProjectsAndApp(isDocumentsSavingExplicit = false)
       }
     }
   }
-
-  private val isSaveAllowed: Boolean
-    get() = !ApplicationManager.getApplication().isDisposed && blockSaveOnFrameDeactivationCount.get() == 0
 
   override fun initComponent() {
     // add listeners after 10 seconds - doesn't make sense to listen earlier
