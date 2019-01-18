@@ -12,8 +12,8 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.impl.stubs.PyDataclassStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveUtil
-import com.jetbrains.python.psi.stubs.PyClassStub
 import com.jetbrains.python.psi.stubs.PyDataclassStub
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
@@ -42,17 +42,21 @@ private val DECORATOR_AND_TYPE_AND_PARAMETERS = listOf(
 
 
 fun parseStdDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
-  val stub = cls.stub
-
-  return if (stub == null) parseDataclassParametersFromAST(cls, context, decoratorAndTypeAndMarkedCallee(cls.project, Type.STD))
-  else parseDataclassParametersFromStub(stub, PyDataclassParameters.Type.STD)
+  return parseDataclassParameters(cls, context)?.takeIf { it.type == Type.STD }
 }
 
 fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
-  val stub = cls.stub
+  return PyUtil.getNullableParameterizedCachedValue(cls, context) {
+    val stub = cls.stub
 
-  return if (stub == null) parseDataclassParametersFromAST(cls, context, decoratorAndTypeAndMarkedCallee(cls.project, null))
-  else parseDataclassParametersFromStub(stub, null)
+    if (it.maySwitchToAST(cls)) {
+      parseDataclassParametersFromAST(cls, it, decoratorAndTypeAndMarkedCallee(cls.project))
+    }
+    else {
+      val dataclassStub = if (stub == null) PyDataclassStubImpl.create(cls) else stub.getCustomStub(PyDataclassStub::class.java)
+      parseDataclassParametersFromStub(dataclassStub)
+    }
+  }
 }
 
 fun resolvesToOmittedDefault(expression: PyExpression, type: PyDataclassParameters.Type): Boolean {
@@ -72,16 +76,12 @@ fun resolvesToOmittedDefault(expression: PyExpression, type: PyDataclassParamete
  * It should be used only to map arguments to parameters and
  * determine what settings dataclass has.
  */
-private fun decoratorAndTypeAndMarkedCallee(project: Project,
-                                            type: Type?): List<Triple<PyKnownDecoratorUtil.KnownDecorator, PyDataclassParameters.Type, List<PyCallableParameter>>> {
+private fun decoratorAndTypeAndMarkedCallee(project: Project): List<Triple<PyKnownDecoratorUtil.KnownDecorator, PyDataclassParameters.Type, List<PyCallableParameter>>> {
   val generator = PyElementGenerator.getInstance(project)
   val ellipsis = generator.createEllipsis()
 
-  return DECORATOR_AND_TYPE_AND_PARAMETERS.mapNotNull {
-    if (type != null && it.second != type) {
-      null
-    }
-    else if (it.second == Type.STD) {
+  return DECORATOR_AND_TYPE_AND_PARAMETERS.map {
+    if (it.second == Type.STD) {
       val parameters = mutableListOf(PyCallableParameterImpl.psi(generator.createSingleStarParameter()))
       parameters.addAll(it.third.map { name -> PyCallableParameterImpl.nonPsi(name, null, ellipsis) })
 
@@ -123,16 +123,14 @@ private fun parseDataclassParametersFromAST(cls: PyClass,
   return null
 }
 
-private fun parseDataclassParametersFromStub(stub: PyClassStub, type: PyDataclassParameters.Type?): PyDataclassParameters? {
-  val dataclassStub = stub.getCustomStub(PyDataclassStub::class.java) ?: return null
-
-  return dataclassStub.let {
+private fun parseDataclassParametersFromStub(stub: PyDataclassStub?): PyDataclassParameters? {
+  return stub?.let {
     PyDataclassParameters(
       it.initValue(), it.reprValue(), it.eqValue(), it.orderValue(), it.unsafeHashValue(), it.frozenValue(),
       null, null, null, null, null, null,
       Type.valueOf(it.type), emptyMap()
     )
-  }.takeIf { type == null || it.type == type }
+  }
 }
 
 private fun toMarkedCallee(parameters: List<PyCallableParameter>): PyCallExpression.PyMarkedCallee {
