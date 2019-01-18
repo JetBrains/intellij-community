@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,8 +101,15 @@ public final class TextEditorState implements FileEditorState {
   }
 
   @NotNull
+  @Contract(pure = true)
   public Collection<Integer> getCaretLines() {
     return ContainerUtil.map(CARETS, caret -> caret.LINE);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public Collection<Integer> getCaretColumns() {
+    return ContainerUtil.map(CARETS, caret -> caret.COLUMN);
   }
 
   @Override

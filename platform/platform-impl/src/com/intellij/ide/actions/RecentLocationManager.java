@@ -5,6 +5,7 @@ import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
@@ -67,7 +68,7 @@ public class RecentLocationManager implements ProjectComponent {
   @NotNull
   Collection<Iterable<? extends Crumb>> getBreadcrumbs(@NotNull PlaceInfo placeInfo, boolean showChanged) {
     PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
-    return item == null ? ContainerUtil.emptyList() : item.getResult();
+    return item == null ? ContainerUtil.emptyList() : item.getCrumbs();
   }
 
   @Nullable
@@ -140,14 +141,13 @@ public class RecentLocationManager implements ProjectComponent {
       return;
     }
 
-    int line = getLineNumber(changePlace);
-    if (line == -1) {
+    LogicalPosition logicalPosition = getLogicalPosition(changePlace);
+    if (logicalPosition == null) {
       return;
     }
 
     Document document = editor.getDocument();
-    TextRange range = getLinesRange(document, line);
-
+    TextRange range = getLinesRange(document, logicalPosition.line);
     String text = document.getText(TextRange.create(range.getStartOffset(), range.getEndOffset()));
 
     int newLinesBefore = StringUtil.countNewLines(
@@ -164,20 +164,25 @@ public class RecentLocationManager implements ProjectComponent {
     int startOffset = document.getLineStartOffset(firstLineAdjusted);
     int endOffset = document.getLineEndOffset(lastLineAdjusted);
 
-    items.put(changePlace, new PlaceInfoPersistentItem(getBreadcrumbs(project, editor, changePlace, line),
+    items.put(changePlace, new PlaceInfoPersistentItem(getBreadcrumbs(project, editor, changePlace, logicalPosition),
                                                        document.createRangeMarker(startOffset, endOffset),
                                                        editor.getColorsScheme()));
   }
 
-  private static int getLineNumber(@NotNull PlaceInfo changePlace) {
+  @Nullable
+  private static LogicalPosition getLogicalPosition(@NotNull PlaceInfo changePlace) {
     FileEditorState navigationState = changePlace.getNavigationState();
     if (!(navigationState instanceof TextEditorState)) {
-      return -1;
+      return null;
     }
 
     Collection<Integer> lines = ((TextEditorState)navigationState).getCaretLines();
     Integer line = ContainerUtil.getFirstItem(lines);
-    return line == null ? -1 : line;
+
+    Collection<Integer> caretColumns = ((TextEditorState)navigationState).getCaretColumns();
+    Integer column = ContainerUtil.getFirstItem(caretColumns);
+
+    return line != null && column != null ? new LogicalPosition(line, column) : null;
   }
 
   @Nullable
@@ -209,13 +214,16 @@ public class RecentLocationManager implements ProjectComponent {
   private static Collection<Iterable<? extends Crumb>> getBreadcrumbs(@NotNull Project project,
                                                                       @NotNull Editor editor,
                                                                       @NotNull PlaceInfo changePlace,
-                                                                      int line) {
+                                                                      @NotNull LogicalPosition logicalPosition) {
     FileBreadcrumbsCollector collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, changePlace.getFile());
     Collection<Iterable<? extends Crumb>> result = ContainerUtil.emptyList();
     if (collector != null) {
       CollectConsumer<Iterable<? extends Crumb>> consumer = new CollectConsumer<>();
-      int lineStartOffset = editor.getDocument().getLineStartOffset(line);
-      collector.updateCrumbs(changePlace.getFile(), editor, lineStartOffset, new ProgressIndicatorBase(), consumer);
+      collector.updateCrumbs(changePlace.getFile(),
+                             editor,
+                             editor.logicalPositionToOffset(logicalPosition),
+                             new ProgressIndicatorBase(),
+                             consumer);
       result = consumer.getResult();
     }
     return result;
@@ -259,14 +267,14 @@ public class RecentLocationManager implements ProjectComponent {
   }
 
   private static class PlaceInfoPersistentItem {
-    private final Collection<Iterable<? extends Crumb>> myResult;
+    @NotNull private final Collection<Iterable<? extends Crumb>> myCrumbs;
     @NotNull private final RangeMarker myRangeMarker;
     @NotNull private final EditorColorsScheme myScheme;
 
     PlaceInfoPersistentItem(@NotNull Collection<Iterable<? extends Crumb>> crumbs,
                             @NotNull RangeMarker rangeMarker,
                             @NotNull EditorColorsScheme scheme) {
-      myResult = crumbs;
+      myCrumbs = crumbs;
       myRangeMarker = rangeMarker;
       myScheme = scheme;
     }
@@ -277,8 +285,8 @@ public class RecentLocationManager implements ProjectComponent {
     }
 
     @NotNull
-    private Collection<Iterable<? extends Crumb>> getResult() {
-      return myResult;
+    private Collection<Iterable<? extends Crumb>> getCrumbs() {
+      return myCrumbs;
     }
 
     @NotNull
