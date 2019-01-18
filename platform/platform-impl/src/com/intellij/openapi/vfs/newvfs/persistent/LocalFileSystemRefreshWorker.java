@@ -288,6 +288,10 @@ class LocalFileSystemRefreshWorker {
         }
 
         checkCancelled(child);
+        
+        if (!child.isDirty()) {
+          return FileVisitResult.CONTINUE;
+        }
 
         boolean oldIsDirectory = child.isDirectory();
         boolean oldIsSymlink = child.is(VFileProperty.SYMLINK);
@@ -356,7 +360,7 @@ class LocalFileSystemRefreshWorker {
     }
 
     boolean acceptsFileName(String name) {
-      return !VfsUtil.isBadName(name) && (myChildrenWeAreInterested == null || myChildrenWeAreInterested.contains(name));
+      return !VfsUtil.isBadName(name);
     }
 
     public void visit(VirtualFile fileOrDir) {
@@ -365,13 +369,23 @@ class LocalFileSystemRefreshWorker {
       try {
         Path path = Paths.get(fileOrDir.getPath());
         if (fileOrDir.isDirectory()) {
-          Files.walkFileTree(path, EnumSet.noneOf(FileVisitOption.class), 1, this);
+          if (myChildrenWeAreInterested == null) {
+            Files.walkFileTree(path, EnumSet.noneOf(FileVisitOption.class), 1, this);
+          } else {
+            for(String child:myChildrenWeAreInterested) {
+              try {
+                Path subpath = path.resolve(child).toRealPath(LinkOption.NOFOLLOW_LINKS);
+                BasicFileAttributes attributes = Files.readAttributes(subpath, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+                visitFile(subpath, attributes);
+              } catch (IOException ignore) {}
+            }
+          }
         }
         else {
-          visitFile(path, Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS));
+          visitFile(path.toRealPath(LinkOption.NOFOLLOW_LINKS), Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS));
         }
       }
-      catch (AccessDeniedException ignore) {
+      catch (AccessDeniedException | NoSuchFileException ignore) {
       }
       catch (IOException ex) {
         LOG.error(ex);
