@@ -41,10 +41,10 @@ class ChangesViewCommitPanel(val project: Project, private val changesView: Chan
   private val legendCalculator = ChangeInfoCalculator()
   private val legend = CommitLegendPanel(legendCalculator)
 
+  private val commitButton = object : JButton("Commit") {
+    override fun isDefaultButton() = true
+  }
   init {
-    val commitButton = object : JButton("Commit") {
-      override fun isDefaultButton() = true
-    }
     val buttonPanel = simplePanel()
       .addToLeft(commitButton)
       .addToRight(legend.component)
@@ -82,6 +82,8 @@ class ChangesViewCommitPanel(val project: Project, private val changesView: Chan
     //    TODO "all" numbers are not used in legend. Remove them from method, or add comment here
     legendCalculator.update(emptyList(), getIncludedChanges(), 0, getIncludedUnversioned().size)
     legend.update()
+
+    commitButton.isEnabled = getIncludedChanges().isNotEmpty() || getIncludedUnversioned().isNotEmpty()
   }
 
   private fun getIncludedChanges() = included(changesView).userObjects(Change::class.java)
