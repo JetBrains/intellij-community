@@ -88,6 +88,11 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   }
 
   @Override
+  void paintTrack(Graphics2D g, JComponent c) {
+    if (myTrack.animator.myValue > 0 && myThumb.animator.myValue > 0 || isOpaque(c)) super.paintTrack(g, c);
+  }
+
+  @Override
   void paintThumb(Graphics2D g, JComponent c) {
     if (isOpaque(c)) {
       paint(myThumb, g, c, true);
