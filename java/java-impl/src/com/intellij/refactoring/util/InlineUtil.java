@@ -35,7 +35,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CommentTracker;
-import one.util.streamex.StreamEx;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -487,30 +487,25 @@ public class InlineUtil {
    * referenced variables are changed after variable initialization and before last usage of variable.
    * If so, referenced value change returned with appropriate error message.
    *
+   * @param conflicts map for found conflicts
    * @param initializer variable initializer
    * @return found changes and errors
    */
-  @NotNull
-  public static MultiMap<PsiElement, String> changedBeforeLastAccess(@NotNull PsiExpression initializer, @NotNull PsiVariable variable) {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+  public static void getChangedBeforeLastAccessConflicts(@NotNull MultiMap<PsiElement, String> conflicts,
+                                                         @NotNull PsiExpression initializer,
+                                                         @NotNull PsiVariable variable) {
 
-    Set<PsiVariable> referencedVars = StreamEx.ofTree((PsiElement)initializer, e -> StreamEx.of(e.getChildren()))
-      .select(PsiReferenceExpression.class)
-      .map(expression -> expression.resolve())
-      .select(PsiVariable.class)
-      .filter(var -> var instanceof PsiLocalVariable || var instanceof PsiParameter || var instanceof PsiField)
-      .toSet();
-
-    if (referencedVars.isEmpty()) return conflicts;
+    Set<PsiVariable> referencedVars = VariableAccessUtils.collectUsedVariables(initializer);
+    if (referencedVars.isEmpty()) return;
 
     PsiElement scope = PsiUtil.getTopLevelEnclosingCodeBlock(initializer, null);
-    if (scope == null) return conflicts;
+    if (scope == null) return;
 
     ControlFlow flow = createControlFlow(scope);
-    if (flow == null) return conflicts;
+    if (flow == null) return;
 
     int start = flow.getEndOffset(initializer);
-    if (start < 0) return conflicts;
+    if (start < 0) return;
 
     Map<PsiElement, PsiVariable> writePlaces = ControlFlowUtil.getWritesBeforeReads(flow, referencedVars, Collections.singleton(variable), start);
 
@@ -519,8 +514,6 @@ public class InlineUtil {
       String message = RefactoringBundle.message("variable.0.is.changed.before.last.access", writePlaceEntry.getValue().getName(), readVarName);
       conflicts.putValue(writePlaceEntry.getKey(), message);
     }
-
-    return conflicts;
   }
 
   @Nullable

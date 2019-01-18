@@ -169,7 +169,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       return;
     }
 
-    MultiMap<PsiElement, String> conflicts = InlineUtil.changedBeforeLastAccess(defToInline, local);
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    InlineUtil.getChangedBeforeLastAccessConflicts(conflicts, defToInline, local);
+
     if (!ConflictsUtil.processConflicts(project, conflicts)) return;
 
     final Ref<Boolean> inlineAll = new Ref<>(true);

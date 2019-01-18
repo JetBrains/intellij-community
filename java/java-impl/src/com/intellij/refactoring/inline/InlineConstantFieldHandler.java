@@ -106,7 +106,9 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
 
     if ((!(element instanceof PsiCompiledElement) || reference == null) && !CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
 
-    MultiMap<PsiElement, String> conflicts = InlineUtil.changedBeforeLastAccess(initializer, field);
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    InlineUtil.getChangedBeforeLastAccessConflicts(conflicts, initializer, field);
+
     if (!ConflictsUtil.processConflicts(project, conflicts)) return;
 
     PsiReferenceExpression refExpression = reference instanceof PsiReferenceExpression ? (PsiReferenceExpression)reference : null;

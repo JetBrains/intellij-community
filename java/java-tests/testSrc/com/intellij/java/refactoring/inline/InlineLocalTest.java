@@ -306,9 +306,9 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   public void testPrivateOverload() { doTest(true); }
 
   public void testAssignedVarsUpdatedBeforeRead() {
-    doTestConflict("Variable p2 is changed before last access to variable f.",
-                   "Variable p1 is changed before last access to variable f.",
-                   "Variable p2 is changed before last access to variable f.");
+    doTestConflict("Variable `p2` is changed before last access to variable `f`.",
+                   "Variable `p1` is changed before last access to variable `f`.",
+                   "Variable `p2` is changed before last access to variable `f`.");
   }
 
   public void testAssignedVarUpdatedAfterRead() {
@@ -316,15 +316,15 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   }
 
   public void testAssignmentAndReassignmentInLoop() {
-    doTestConflict("Variable replacement is changed before last access to variable original.");
+    doTestConflict("Variable `replacement` is changed before last access to variable `original`.");
   }
 
   public void testLoopReassignment() {
-    doTestConflict("Variable replacement is changed before last access to variable original.");
+    doTestConflict("Variable `replacement` is changed before last access to variable `original`.");
   }
 
   public void testOuterLoopReassignment() {
-    doTestConflict("Variable replacement is changed before last access to variable original.");
+    doTestConflict("Variable `replacement` is changed before last access to variable `original`.");
   }
 
   public void testUnusedReassignmentInLoop() {
