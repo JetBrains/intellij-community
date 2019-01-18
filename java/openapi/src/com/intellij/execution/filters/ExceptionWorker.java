@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -369,21 +370,16 @@ public class ExceptionWorker {
       return false;
     }
 
-    private boolean isTargetClass(PsiElement psiClass) {
-      if (!(psiClass instanceof PsiClass)) return false;
-      return isTargetClass((PsiClass)psiClass, myClassName);
-    }
-
-    private static boolean isTargetClass(PsiClass psiClass, String className) {
-      if (psiClass == null) return false;
-      if (className.equals(psiClass.getQualifiedName())) return true;
-      if (!StringUtil.getShortName(className).contains("$")) return false;
-      
-      String prefix = StringUtil.substringBeforeLast(className, "$");
-      String suffix = StringUtil.substringAfterLast(className, "$");
-      PsiClass containingClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class, true);
-      return suffix != null && isTargetClass(containingClass, prefix) &&
-             ClassUtil.findNonQualifiedClassByIndex(suffix, containingClass, true) == psiClass;
+    private boolean isTargetClass(PsiElement maybeClass) {
+      if (!(maybeClass instanceof PsiClass)) return false;
+      PsiClass declaredClass = (PsiClass)maybeClass;
+      String declaredName = declaredClass.getQualifiedName();
+      if (myClassName.equals(declaredName)) return true;
+      PsiClass calledClass = ClassUtil.findPsiClass(maybeClass.getManager(), myClassName, declaredClass, true);
+      if (calledClass == null) {
+        calledClass = ClassUtil.findPsiClass(maybeClass.getManager(), myClassName, null, true);
+      }
+      return calledClass == declaredClass || declaredName != null && InheritanceUtil.isInheritor(calledClass, false, declaredName);
     }
   }
 
@@ -400,6 +396,7 @@ public class ExceptionWorker {
     public int applyAsInt(PsiFile file) {
       Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
       if (document == null || document.getLineCount() <= myLineNumber) return 0;
+      if (!PsiDocumentManager.getInstance(file.getProject()).isCommitted(document)) return 0;
       int startOffset = document.getLineStartOffset(myLineNumber);
       int endOffset = document.getLineEndOffset(myLineNumber);
       PsiElement element = file.findElementAt(startOffset);
