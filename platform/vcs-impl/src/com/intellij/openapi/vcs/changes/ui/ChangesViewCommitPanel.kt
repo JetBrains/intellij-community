@@ -44,6 +44,11 @@ class ChangesViewCommitPanel(val project: Project, private val changesView: Chan
   private val legend = CommitLegendPanel(legendCalculator)
 
   private val commitButton = object : JButton("Commit") {
+    init {
+      background = getTreeBackground()
+      isEnabled = false
+    }
+
     override fun isDefaultButton() = true
   }
   init {
