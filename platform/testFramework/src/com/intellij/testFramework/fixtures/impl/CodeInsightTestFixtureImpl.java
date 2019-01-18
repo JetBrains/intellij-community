@@ -1431,7 +1431,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(hostVFile));
   }
 
-  private long collectAndCheckHighlighting(@NotNull ExpectedHighlightingData data) {
+  public long collectAndCheckHighlighting(@NotNull ExpectedHighlightingData data) {
     final Project project = getProject();
     EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
 
