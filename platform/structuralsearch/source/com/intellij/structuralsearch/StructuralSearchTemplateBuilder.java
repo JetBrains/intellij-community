@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -71,7 +71,7 @@ public class StructuralSearchTemplateBuilder {
     return myBuilder;
   }
 
-  private void replaceElement(@Nullable PsiElement element, PlaceholderCount count, boolean preferOriginal) {
+  void replaceElement(@Nullable PsiElement element, PlaceholderCount count, boolean preferOriginal) {
     if (element == null) {
       return;
     }
@@ -84,7 +84,7 @@ public class StructuralSearchTemplateBuilder {
     private final String myOriginalText;
     private final boolean myPreferOriginal;
 
-    private MyExpression(String placeholder, PsiElement original, boolean preferOriginal) {
+    MyExpression(String placeholder, PsiElement original, boolean preferOriginal) {
       myPlaceholder = placeholder;
       myOriginalText = original.getText();
       myPreferOriginal = preferOriginal;
