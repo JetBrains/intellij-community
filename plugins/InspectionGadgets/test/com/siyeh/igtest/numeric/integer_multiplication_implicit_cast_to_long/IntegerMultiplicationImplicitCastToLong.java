@@ -1,6 +1,15 @@
 package com.siyeh.igtest.numeric.integer_multiplication_implicit_cast_to_long;
 
 public class IntegerMultiplicationImplicitCastToLong {
+    void rightArgOfShift(int step) {
+        // Shift operations are not subjected to binary promotion (JLS 15.19), operands are promoted separately using unary promotion rules
+        long l = 1L << (step * 8);
+    }
+    
+    void testConcat(int step) {
+        String res = "Result: "+(1L + <warning descr="1000*step: integer multiplication implicitly cast to long">1000*step</warning>);
+    }
+    
     public void foo() {
         int x = 65336;
         final long val = <warning descr="65336 * x: integer multiplication implicitly cast to long">65336 * x</warning>;
@@ -28,5 +37,21 @@ public class IntegerMultiplicationImplicitCastToLong {
     void overflowShift(byte b1, byte b2, byte b3, byte b4) {
         long value = (b1 << 24) | (b2 << 16) | (b3 << 8) | (b4 << 0);
         long value2 = <warning descr="b1 << 25: integer shift implicitly cast to long">b1 << 25</warning>;
+    }
+
+    private static final int OFFSET1 = 24;
+    private static final int OFFSET2 = 16;
+    private static final int OFFSET3 = 8;
+
+    void overflowShiftArray(byte[] bytes) {
+        long value = (bytes[0] << OFFSET1) & 0xFF000000;
+        value += (bytes[1] << OFFSET2) & 0xFF0000;
+        value += (bytes[2] << OFFSET3) & 0xFF00;
+        System.out.println(value);
+    }
+    
+    void overflowShiftMask(int val) {
+        long l1 = (val & 255) << 16;
+        long l2 = (val & 255) << 8;
     }
 }
