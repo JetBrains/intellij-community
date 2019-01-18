@@ -486,11 +486,11 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/resources-aar/intellij.android.resources-aar.iml" filepath="$PROJECT_DIR$/../adt/idea/resources-aar/intellij.android.resources-aar.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/resources-aar/intellij.android.resources-aar.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/resources-aar/intellij.android.resources-aar.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/rt/intellij.android.rt.iml" filepath="$PROJECT_DIR$/../adt/idea/rt/intellij.android.rt.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-runtime-pipeline/intellij.android.runtimePipeline.iml" filepath="$PROJECT_DIR$/../adt/idea/android-runtime-pipeline/intellij.android.runtimePipeline.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.iml" filepath="$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/smali/intellij.android.smali.iml" filepath="$PROJECT_DIR$/../adt/idea/smali/intellij.android.smali.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-test-framework/intellij.android.testFramework.iml" filepath="$PROJECT_DIR$/../adt/idea/android-test-framework/intellij.android.testFramework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-transport/intellij.android.transport.iml" filepath="$PROJECT_DIR$/../adt/idea/android-transport/intellij.android.transport.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/updater-ui/intellij.android.updater.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/updater-ui/intellij.android.updater.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/wizard/intellij.android.wizard.iml" filepath="$PROJECT_DIR$/../adt/idea/wizard/intellij.android.wizard.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/wizard-model/intellij.android.wizard.model.iml" filepath="$PROJECT_DIR$/../adt/idea/wizard-model/intellij.android.wizard.model.iml" />
