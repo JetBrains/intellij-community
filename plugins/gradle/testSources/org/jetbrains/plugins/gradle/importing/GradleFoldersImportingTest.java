@@ -135,6 +135,26 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  public void testCustomSourceSetsAreImported() throws Exception {
+    createDefaultDirs();
+    createProjectSubFile("src/generated/java/G.java");
+
+    importProject("" +
+                  "apply plugin: 'java'\n" +
+                  "apply plugin: 'idea'\n" +
+                  "\n" +
+                  "sourceSets {\n" +
+                  "  generated\n" +
+                  "}");
+
+    assertModules("project", "project.main", "project.test", "project.generated");
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertSources("project", "src/generated/java", "src/main/java");
+    assertTestSources("project", "src/test/java");
+  }
+
+  @Test
   @TargetVersions("4.7+")
   public void testResourceFoldersWithIdeaPlugin() throws Exception {
     createProjectSubDirs("src/main/java",
