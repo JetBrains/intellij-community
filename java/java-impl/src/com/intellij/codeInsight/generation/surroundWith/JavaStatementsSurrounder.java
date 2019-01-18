@@ -24,13 +24,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 abstract class JavaStatementsSurrounder implements Surrounder {
   @Override
   public boolean isApplicable(@NotNull PsiElement[] elements) {
-    return true;
+    return ContainerUtil.find(elements, PsiSwitchLabelStatementBase.class::isInstance) == null;
   }
 
   @Override
