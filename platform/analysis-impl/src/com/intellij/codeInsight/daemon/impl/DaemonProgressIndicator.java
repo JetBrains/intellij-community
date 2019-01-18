@@ -51,12 +51,16 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public final void cancel() {
+    if (isCanceled()) return;
+
     myTraceableDisposable.kill("Daemon Progress Canceled");
     super.cancel();
     Disposer.dispose(this);
   }
 
   public void cancel(@NotNull Throwable cause) {
+    if (isCanceled()) return;
+
     myCancellationCause = cause;
     myTraceableDisposable.killExceptionally(cause);
     super.cancel();
