@@ -84,6 +84,7 @@ public abstract class InplaceRefactoring {
   protected static final Stack<InplaceRefactoring> ourRenamersStack = new Stack<>();
   public static final Key<InplaceRefactoring> INPLACE_RENAMER = Key.create("EditorInplaceRenamer");
   public static final Key<Boolean> INTRODUCE_RESTART = Key.create("INTRODUCE_RESTART");
+  private static boolean ourShowBalloonInHeadlessMode = false;
 
   protected PsiNamedElement myElementToRename;
   protected final Editor myEditor;
@@ -218,7 +219,7 @@ public abstract class InplaceRefactoring {
       final PsiFile containingFile = myElementToRename.getContainingFile();
       if (!file.equals(containingFile.getVirtualFile())) {
         final PsiFile topLevelFile = PsiManager.getInstance(myProject).findFile(file);
-        return topLevelFile == null ? ProjectScope.getProjectScope(myElementToRename.getProject()) 
+        return topLevelFile == null ? ProjectScope.getProjectScope(myElementToRename.getProject())
                                     : new LocalSearchScope(topLevelFile);
       }
       return new LocalSearchScope(containingFile);
@@ -849,7 +850,7 @@ public abstract class InplaceRefactoring {
     if (component == null) return;
     Dimension size = component.getPreferredSize();
     if (size.height == 0 && size.width == 0) return;
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    if (!ourShowBalloonInHeadlessMode && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null).setSmallVariant(true);
 
     Color borderColor = UIManager.getColor("InplaceRefactoringPopup.borderColor");
@@ -895,6 +896,14 @@ public abstract class InplaceRefactoring {
     if (!isRestart()) {
       releaseResources();
     }
+  }
+
+  public static boolean isShowBalloonInHeadlessMode() {
+    return ourShowBalloonInHeadlessMode;
+  }
+
+  public static void setShowBalloonInHeadlessMode(boolean showBalloonInHeadlessMode) {
+    ourShowBalloonInHeadlessMode = showBalloonInHeadlessMode;
   }
 
   private abstract class MyTemplateListener extends TemplateEditingAdapter {
