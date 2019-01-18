@@ -98,6 +98,10 @@ class UastContext(val project: Project) : UastLanguagePlugin {
     val containingElement = this.uastParent ?: throw IllegalStateException("At least UFile should have a language")
     return containingElement.getLanguage()
   }
+
+  override fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: Array<out Class<out T>>): T? {
+    return findPlugin(element)?.convertElementWithParent(element, requiredTypes)
+  }
 }
 
 /**
