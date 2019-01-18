@@ -57,5 +57,6 @@
     <orderEntry type="library" name="Java Compatibility" level="project" />
     <orderEntry type="library" name="javax.activation-api" level="project" />
     <orderEntry type="library" name="commons-compress" level="project" />
+    <orderEntry type="library" name="javax.activation" level="project" />
   </component>
 </module>
