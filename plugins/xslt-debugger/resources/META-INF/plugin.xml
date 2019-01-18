@@ -6,7 +6,6 @@
     Interactive XSLT Debugger. Allows debugging of XSLT stylesheets in IntelliJ IDEA.
   ]]></description>
 
-  <version>1.4</version>
   <vendor>JetBrains</vendor>
   <idea-version since-build="96.1"/>
 

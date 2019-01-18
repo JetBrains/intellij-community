@@ -13,7 +13,6 @@
          <p>Numerous plugins depend on the Git Integration plugin.</p>
       ]]>
    </description>
-  <version>8.1</version>
   <category>VCS Integration</category>
   <vendor>JetBrains</vendor>
 

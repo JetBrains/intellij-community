@@ -6,7 +6,6 @@
   <id>com.intellij.tasks</id>
   <name>Task Management</name>
   <description>Enables task and context management</description>
-  <version>1.0</version>
   <vendor>JetBrains</vendor>
 
   <!--fake dependency for Web IDE-->

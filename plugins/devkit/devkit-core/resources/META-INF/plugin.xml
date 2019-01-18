@@ -1,7 +1,6 @@
 <idea-plugin>
   <name>Plugin DevKit</name>
   <id>DevKit</id>
-  <version>1.0</version>
 
   <description>
     IntelliJ Platform plugin development kit.

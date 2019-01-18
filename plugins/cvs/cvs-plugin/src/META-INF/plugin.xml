@@ -1,7 +1,6 @@
 <idea-plugin>
   <name>CVS Integration</name>
   <id>CVS</id>
-  <version>11</version>
   <vendor>JetBrains</vendor>
   <resource-bundle>com.intellij.cvsSupport2.CvsBundle</resource-bundle>
   <category>VCS Integration</category>

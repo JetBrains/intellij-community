@@ -1,7 +1,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <name>JavaFX</name>
   <id>org.jetbrains.plugins.javaFX</id>
-  <version>1.0</version>
   <vendor>JetBrains</vendor>
   <description>
       <![CDATA[
