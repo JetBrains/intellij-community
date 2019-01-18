@@ -222,6 +222,7 @@ public class PackageChooserDialog extends PackageChooser {
 
   @Override
   public PsiPackage getSelectedPackage(){
+    if (getExitCode() == CANCEL_EXIT_CODE) return null;
     return getTreeSelection();
   }
 
