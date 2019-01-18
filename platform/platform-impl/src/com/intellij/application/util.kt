@@ -32,9 +32,9 @@ inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
  *
  * @see com.intellij.openapi.application.Application.executeOnPooledThread
  */
-val pooledThreadContext: CoroutineContext = ApplicationThreadPoolDispatcher().plus(CoroutineExceptionHandler { _, throwable ->
+val pooledThreadContext: CoroutineContext = ApplicationThreadPoolDispatcher() + CoroutineExceptionHandler { _, throwable ->
   Logger.getInstance("#com.intellij.application.impl.ApplicationImpl").error(throwable)
-})
+}
 
 object PooledScope : CoroutineScope {
   override val coroutineContext = pooledThreadContext
