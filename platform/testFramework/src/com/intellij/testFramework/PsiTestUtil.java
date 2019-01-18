@@ -288,7 +288,12 @@ public class PsiTestUtil {
     ModuleRootModificationUtil.updateModel(module, model -> ref.set(addLibrary(module, model, libName, libPath, jarArr)));
     Disposer.register(parent, () -> {
       Library library = ref.get();
-      ModuleRootModificationUtil.updateModel(module, model -> model.removeOrderEntry(model.findLibraryOrderEntry(library)));
+      ModuleRootModificationUtil.updateModel(module, model -> {
+        LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
+        if (entry != null) {
+          model.removeOrderEntry(entry);
+        }
+      });
       WriteCommandAction.runWriteCommandAction(null, ()-> {
         LibraryTable table = ProjectLibraryTable.getInstance(module.getProject());
         LibraryTable.ModifiableModel model = table.getModifiableModel();
@@ -310,7 +315,7 @@ public class PsiTestUtil {
 
   public static void addProjectLibrary(ModifiableRootModel model, String libName, List<String> classesRootPaths) {
     List<VirtualFile> roots = getLibraryRoots(classesRootPaths);
-    addProjectLibrary(model, libName, roots, Collections.emptyList());
+    addProjectLibrary(model, libName, roots, Collections.emptyList(), Collections.emptyList());
   }
 
   public static void addProjectLibrary(Module module, String libName, VirtualFile... classesRoots) {
@@ -318,8 +323,17 @@ public class PsiTestUtil {
   }
 
   public static Library addProjectLibrary(Module module, String libName, List<? extends VirtualFile> classesRoots, List<? extends VirtualFile> sourceRoots) {
+    return addProjectLibrary(module, libName, classesRoots, sourceRoots, Collections.emptyList());
+  }
+
+  public static Library addProjectLibrary(Module module,
+                                          String libName,
+                                          List<? extends VirtualFile> classesRoots,
+                                          List<? extends VirtualFile> sourceRoots,
+                                          List<? extends VirtualFile> javaDocRoots) {
     Ref<Library> result = Ref.create();
-    ModuleRootModificationUtil.updateModel(module, model -> result.set(addProjectLibrary(model, libName, classesRoots, sourceRoots)));
+    ModuleRootModificationUtil.updateModel(
+      module, model -> result.set(addProjectLibrary(model, libName, classesRoots, sourceRoots, javaDocRoots)));
     return result.get();
   }
 
@@ -327,7 +341,8 @@ public class PsiTestUtil {
   private static Library addProjectLibrary(ModifiableRootModel model,
                                            String libName,
                                            List<? extends VirtualFile> classesRoots,
-                                           List<? extends VirtualFile> sourceRoots) {
+                                           List<? extends VirtualFile> sourceRoots,
+                                           List<? extends VirtualFile> javaDocs) {
     LibraryTable libraryTable = ProjectLibraryTable.getInstance(model.getProject());
     return WriteAction.computeAndWait(() -> {
       Library library = libraryTable.createLibrary(libName);
@@ -338,6 +353,9 @@ public class PsiTestUtil {
         }
         for (VirtualFile root : sourceRoots) {
           libraryModel.addRoot(root, OrderRootType.SOURCES);
+        }
+        for (VirtualFile root : javaDocs) {
+          libraryModel.addRoot(root, JavadocOrderRootType.getInstance());
         }
         libraryModel.commit();
       }
@@ -379,7 +397,7 @@ public class PsiTestUtil {
       assert root != null : "Library root folder not found: " + path + "!/";
       classesRoots.add(root);
     }
-    return addProjectLibrary(model, libName, classesRoots, Collections.emptyList());
+    return addProjectLibrary(model, libName, classesRoots, Collections.emptyList(), Collections.emptyList());
   }
 
   public static void addLibrary(Module module,

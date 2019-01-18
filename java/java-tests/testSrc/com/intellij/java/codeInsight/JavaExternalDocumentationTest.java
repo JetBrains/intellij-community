@@ -11,11 +11,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.JavadocOrderRootType;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -31,6 +26,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,21 +37,20 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JavaExternalDocumentationTest extends LightPlatformTestCase {
   private static final LightProjectDescriptor MY_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      super.configureModule(module, model, contentEntry);
+    protected void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
+      super.createContentEntry(module, srcRoot);
       final VirtualFile libClasses = getJarFile("library.jar");
       final VirtualFile libJavadocJar = getJarFile("library-javadoc.jar");
-      final Library library = model.getModuleLibraryTable().createLibrary("myLib");
-      final Library.ModifiableModel libModel = library.getModifiableModel();
-      libModel.addRoot(libClasses, OrderRootType.CLASSES);
-      libModel.addRoot(libJavadocJar, JavadocOrderRootType.getInstance());
-      libModel.commit();
+      PsiTestUtil.addProjectLibrary(module, "myLib", Collections.singletonList(libClasses),
+                                    Collections.emptyList(),
+                                    Collections.singletonList(libJavadocJar));
     }
   };
   
