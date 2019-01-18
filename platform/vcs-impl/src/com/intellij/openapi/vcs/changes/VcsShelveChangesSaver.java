@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.google.common.base.Stopwatch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.createSystemShelvedChangeListName;
 
 public class VcsShelveChangesSaver {
@@ -94,10 +96,12 @@ public class VcsShelveChangesSaver {
   }
 
   protected void doRollback(@NotNull Collection<? extends VirtualFile> rootsToSave) {
+    Stopwatch stopwatch = Stopwatch.createStarted();
     Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
     List<Change> changes4Rollback = ContainerUtil
       .filter(myChangeManager.getAllChanges(), change -> rootsSet.contains(myVcsManager.getVcsRootFor(ChangesUtil.getFilePath(change))));
 
     new RollbackWorker(myProject, myStashMessage, true).doRollback(changes4Rollback, true);
+    LOG.debug(String.format("Rollback after shelving %d %s took %s", rootsToSave.size(), pluralize("root", rootsToSave.size()), stopwatch));
   }
 }

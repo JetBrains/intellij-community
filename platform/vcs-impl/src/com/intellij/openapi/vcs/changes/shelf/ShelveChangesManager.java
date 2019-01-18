@@ -65,6 +65,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameForUnshelve;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 import static com.intellij.util.ObjectUtils.*;
@@ -459,6 +460,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
       ProgressManager.checkCanceled();
       mySchemeManager.addScheme(changeList, false);
 
+      LOG.debug(String.format("shelving %d %s took %s", changes.size(), pluralize("file", changes.size()), stopwatch));
       if (rollback) {
         rollbackChangesAfterShelve(changes);
       }
@@ -466,7 +468,6 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     finally {
       notifyStateChanged();
     }
-    LOG.debug(String.format("shelving %d %s took %s", changes.size(), StringUtil.pluralize("file", changes.size()), stopwatch));
     return changeList;
   }
 
@@ -510,10 +511,12 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   private void rollbackChangesAfterShelve(@NotNull Collection<? extends Change> changes) {
+    Stopwatch stopwatch = Stopwatch.createStarted();
     final String operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(myProject, changes));
     boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
     new RollbackWorker(myProject, operationName, modalContext).
       doRollback(changes, true, false, null, VcsBundle.message("shelve.changes.action"));
+    LOG.debug(String.format("rollback after shelving %d %s took %s", changes.size(), pluralize("file", changes.size()), stopwatch));
   }
 
   @NotNull
@@ -932,7 +935,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
     if (!failedChangeLists.isEmpty()) {
       VcsNotifier.getInstance(myProject).notifyError("Shelf Failed", String
-        .format("Shelving changes for %s [%s] failed", StringUtil.pluralize("changelist", failedChangeLists.size()),
+        .format("Shelving changes for %s [%s] failed", pluralize("changelist", failedChangeLists.size()),
                 StringUtil.join(failedChangeLists, ",")));
     }
     return result;
