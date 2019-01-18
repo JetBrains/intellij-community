@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.google.common.base.Stopwatch;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
@@ -426,6 +427,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                          final boolean rollback,
                                          boolean markToBeDeleted,
                                          boolean honorExcludedFromCommit) throws IOException, VcsException {
+    Stopwatch stopwatch = Stopwatch.createStarted();
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null) {
       progressIndicator.setText(VcsBundle.message("shelve.changes.progress.title"));
@@ -486,6 +488,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     changeList.setName(schemePatchDir.getName());
     ProgressManager.checkCanceled();
     mySchemeManager.addScheme(changeList, false);
+    LOG.debug(String.format("shelving %d %s took %s", changes.size(), StringUtil.pluralize("file", changes.size()), stopwatch));
     return changeList;
   }
 
