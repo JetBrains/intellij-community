@@ -53,7 +53,8 @@ class Connection(val loginModel: LoginModel, connectionLifetime: Lifetime) {
                     val userId = call.parameters[USER_ID_PARAMETER]!!
                     val token = call.parameters[TOKEN_PARAMETER]!!
 
-                    loginModel.signIn(userId, token, "")
+                    // TODO: implement the new scheme
+                    // loginModel.signIn(userId, token, "")
 
                     call.respondRedirect("success")
                 }
