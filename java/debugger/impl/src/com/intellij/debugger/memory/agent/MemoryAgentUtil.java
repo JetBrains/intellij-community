@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,7 +55,8 @@ public class MemoryAgentUtil {
     }
 
     LOG.info("Memory agent extracting took " + (System.currentTimeMillis() - start) + " ms");
-    parametersList.add("-agentpath:" + extractedAgent.getAbsolutePath());
+    String path = JavaExecutionUtil.handleSpacesInAgentPath(extractedAgent.getAbsolutePath(), "debugger-memory-agent", null);
+    parametersList.add("-agentpath:" + path);
   }
 
   public static void loadAgentProxy(@NotNull DebugProcessImpl debugProcess, @NotNull Consumer<MemoryAgent> agentLoaded) {
