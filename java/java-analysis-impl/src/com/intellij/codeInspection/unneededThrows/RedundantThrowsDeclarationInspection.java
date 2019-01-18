@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -71,6 +72,9 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
 
       PsiElement psiMethod = refMethod.getPsiElement();
       if (!(psiMethod instanceof PsiMethod)) return null;
+
+      if (((PsiMethod)psiMethod).hasModifier(JvmModifier.NATIVE)) return null;
+
       PsiReferenceList list = ((PsiMethod)psiMethod).getThrowsList();
       PsiClassType[] throwsList = list.getReferencedTypes();
       PsiJavaCodeReferenceElement[] throwsRefs = list.getReferenceElements();
