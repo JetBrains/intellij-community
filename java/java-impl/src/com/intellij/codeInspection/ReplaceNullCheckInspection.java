@@ -147,7 +147,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         CommentTracker tracker = new CommentTracker();
         PsiExpression requireCall =
           createRequireExpression(tracker, context.myNullExpr, project, context.myReferenceExpression, context.myNullExpr);
-        result = tracker.replace(context.myTernary, requireCall);
+        result = tracker.replaceAndRestoreComments(context.myTernary, requireCall);
       } else return;
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
