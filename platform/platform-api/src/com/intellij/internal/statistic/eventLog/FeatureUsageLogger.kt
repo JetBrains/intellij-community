@@ -64,9 +64,10 @@ object FeatureUsageLogger {
 
   /**
    * use [log] with FeatureUsageGroup instead
+   * @deprecated
    */
   fun log(groupId: String, action: String) {
-    return ourLogger.log(FeatureUsageGroup(groupId, 0), action, true)
+    return ourLogger.log(FeatureUsageGroup(groupId, 1), action, true)
   }
 
   fun getLogFiles() : List<File> {
