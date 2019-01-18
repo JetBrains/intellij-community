@@ -99,9 +99,11 @@ class UastContext(val project: Project) : UastLanguagePlugin {
     return containingElement.getLanguage()
   }
 
-  override fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: Array<out Class<out T>>): T? {
-    return findPlugin(element)?.convertElementWithParent(element, requiredTypes)
-  }
+  override fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: Array<out Class<out T>>): T? =
+    findPlugin(element)?.convertElementWithParent(element, requiredTypes)
+
+  override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> =
+    findPlugin(element)?.convertToAlternatives(element, requiredTypes) ?: emptySequence()
 }
 
 /**
