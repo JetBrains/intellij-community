@@ -116,7 +116,7 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
     final ExternalProjectDataCache externalProjectDataCache = ExternalProjectDataCache.getInstance(project);
     assert externalProjectDataCache != null;
     final ExternalProject externalRootProject =
-      externalProjectDataCache.getRootExternalProject(new File(gradleProjectPath));
+      externalProjectDataCache.getRootExternalProject(gradleProjectPath);
     if (externalRootProject == null) {
       LOG.debug("Root external project was not yep imported for the project path: " + gradleProjectPath);
       return false;
