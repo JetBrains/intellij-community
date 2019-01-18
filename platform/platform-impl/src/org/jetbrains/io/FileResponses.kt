@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io
 
+import com.intellij.util.PathUtilRt
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.DefaultFileRegion
@@ -12,9 +13,6 @@ import java.io.RandomAccessFile
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import javax.activation.MimetypesFileTypeMap
-
-private val FILE_MIMETYPE_MAP = MimetypesFileTypeMap()
 
 fun flushChunkedResponse(channel: Channel, isKeepAlive: Boolean) {
   val future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
@@ -25,7 +23,7 @@ fun flushChunkedResponse(channel: Channel, isKeepAlive: Boolean) {
 
 object FileResponses {
   fun getContentType(path: String): String {
-    return FILE_MIMETYPE_MAP.getContentType(path)
+    return fileExtToMimeType.getOrDefault(PathUtilRt.getFileExt(path), "application/octet-stream")
   }
 
   @JvmOverloads
