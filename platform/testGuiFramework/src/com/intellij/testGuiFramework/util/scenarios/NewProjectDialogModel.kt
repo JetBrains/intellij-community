@@ -585,6 +585,7 @@ fun NewProjectDialogModel.selectProjectGroup(group: NewProjectDialogModel.Groups
       val list: JListFixture = jList(groupJava)
       assertGroupPresent(group)
       step("click '$group'") { list.clickItem(group.toString()) }
+      list.requireSelection(group.toString())
     }
     waitLoadingTemplates()
   }
