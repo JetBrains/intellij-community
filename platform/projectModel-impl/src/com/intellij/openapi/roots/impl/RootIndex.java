@@ -49,7 +49,7 @@ public class RootIndex {
   private final Map<VirtualFile, DirectoryInfo> myRootInfos = ContainerUtil.newHashMap();
   private final ConcurrentBitSet myNonInterestingIds = new ConcurrentBitSet();
   @NotNull private final Project myProject;
-  private final PackageDirectoryCache myPackageDirectoryCache;
+  final PackageDirectoryCache myPackageDirectoryCache;
   private OrderEntryGraph myOrderEntryGraph;
 
   public RootIndex(@NotNull Project project) {

@@ -52,6 +52,11 @@ public class PackageDirectoryCache {
     }
   }
 
+  void clear() {
+    myNonExistentPackages.clear();
+    myDirectoriesByPackageNameCache.clear();
+  }
+
   public void onLowMemory() {
     myNonExistentPackages.clear();
   }
@@ -86,7 +91,7 @@ public class PackageDirectoryCache {
       }
 
       for (VirtualFile file : myRootsByPackagePrefix.get(packageName)) {
-        if (file.isDirectory()) {
+        if (file.isDirectory() && file.isValid()) {
           result.add(file);
         }
       }

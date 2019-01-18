@@ -2,6 +2,7 @@
 package com.intellij.java.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
@@ -987,5 +988,25 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
       String actualName = myIndex.getPackageName(dir);
       assertEquals("Invalid package name for dir " + dir + ": " + packageName, packageName, actualName);
     }
+  }
+
+  public void testUnrelatedDirectoriesCreationMustNotLeadToDirectoryIndexRebuildToImproveCheckoutPerformance() {
+    VirtualFile root = ModuleRootManager.getInstance(myModule).getContentRoots()[0];
+    WriteAction.run(()->ModuleRootModificationUtil.updateModel(myModule, model -> {
+      ContentEntry rootEntry = model.getContentEntries()[0];
+      for (int i=0;i<10_000;i++) {
+        VirtualFile src = createChildDirectory(root, "extsrc" + i);
+        rootEntry.addSourceFolder(src, false);
+      }
+    }));
+
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(getProject());
+    PlatformTestUtil.startPerformanceTest("dir creation must not lead to dirindex rebuild", 30_000, ()->{
+      for (int i=0; i<5_000; i++) {
+        VirtualFile xxx = createChildDirectory(root, "xxx");
+        assertFalse(fileIndex.isInSource(xxx));
+        delete(xxx);
+      }
+    }).assertTiming();
   }
 }
