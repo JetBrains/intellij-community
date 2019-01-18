@@ -16,13 +16,12 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
@@ -31,6 +30,7 @@ import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -73,71 +73,36 @@ public class PyIndexingTest extends PyTestCase {
   }
 
   public void testTodoIndexInLibs() {
-    Sdk sdk = PythonSdkType.findPythonSdk(myFixture.getModule());
+    final String libraryWithTodoName = "numbers.py";
+    final List<VirtualFile> indexFiles = getTodoFiles(myFixture.getProject());
 
-    PsiFile file = myFixture.addFileToProject("libs/smtpd.py", "# TODO: fix it");
-    VirtualFile root = sdk.getRootProvider().getFiles(OrderRootType.CLASSES)[0];
-    VirtualFile libsRoot = file.getVirtualFile().getParent();
+    // project file in the TodoIndex
+    assertTrue(indexFiles.stream().anyMatch((x) -> "a.py".equals(x.getName())));
 
-    ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
-    ContentEntry[] entries = modifiableModel.getContentEntries();
+    // no library files in the TodoIndex
+    assertFalse(indexFiles.stream().anyMatch((x) -> libraryWithTodoName.equals(x.getName())));
 
-    modifiableModel.clear();
-    modifiableModel.addContentEntry(myFixture.findFileInTempDir("project"));
+    final Module module = myFixture.getModule();
+    final Sdk sdk = PythonSdkType.findPythonSdk(module);
 
-    SdkModificator sdkModificator = sdk.getSdkModificator();
-    sdkModificator.addRoot(libsRoot, OrderRootType.CLASSES);
+    final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(sdk);
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      modifiableModel.commit();
-      sdkModificator.commitChanges();
-    });
-
+    ModuleRootModificationUtil.addContentRoot(module, libDir);
     try {
-      List<VirtualFile> indexFiles = getTodoFiles(myFixture.getProject());
-
-      // project file in the TodoIndex
-      assertTrue(indexFiles.stream().anyMatch((x) -> "a.py".equals(x.getName())));
-
-      // no library files in the TodoIndex
-      assertFalse(indexFiles.stream().anyMatch((x) -> "smtpd.py".equals(x.getName())));
-
-      ModuleRootModificationUtil.addContentRoot(myFixture.getModule(), libsRoot);
       // mock sdk doesn't fire events
       FileBasedIndex.getInstance().requestRebuild(TodoIndex.NAME);
       FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, myFixture.getProject(), null);
-
-      indexFiles = getTodoFiles(myFixture.getProject());
-
+      final List<VirtualFile> updatedIndexFiles = getTodoFiles(myFixture.getProject());
       // but if it is added as a content root - it should be in the TodoIndex
-      assertTrue(indexFiles.stream().anyMatch((x) -> "smtpd.py".equals(x.getName())));
+      assertTrue(updatedIndexFiles.stream().anyMatch((x) -> libraryWithTodoName.equals(x.getName())));
     }
     finally {
-      // revert changes to sdk roots
-      SdkModificator modificator = sdk.getSdkModificator();
-      modificator.removeRoot(libsRoot, OrderRootType.CLASSES);
-      modificator.addRoot(root, OrderRootType.CLASSES);
-
-      ModifiableRootModel m = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
-
-      m.clear();
-
-      for (ContentEntry e : entries) {
-        final ContentEntry newEntry = m.addContentEntry(e.getFile());
-        for (SourceFolder folder : e.getSourceFolders()) {
-          newEntry.addSourceFolder(folder.getFile(), folder.isTestSource());
+      ModuleRootModificationUtil.updateModel(module, model -> {
+        for (ContentEntry entry : model.getContentEntries()) {
+          if (libDir.equals(entry.getFile())) {
+            model.removeContentEntry(entry);
+          }
         }
-        for (ExcludeFolder folder : e.getExcludeFolders()) {
-          newEntry.addExcludeFolder(folder.getFile());
-        }
-        for (String pattern : e.getExcludePatterns()) {
-          newEntry.addExcludePattern(pattern);
-        }
-      }
-
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        modificator.commitChanges();
-        m.commit();
       });
     }
   }
