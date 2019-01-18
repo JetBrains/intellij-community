@@ -287,10 +287,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       }
 
       private boolean isQuitAppOnCloseTheOnlyProjectWindow() {
-        if (SystemPropertyUtil.getBoolean("idea.show.welcome.screen", false)) {
-          return true;
-        }
-        return !SystemInfo.isMacSystemMenu || !GeneralSettings.getInstance().isShowWelcomeScreen();
+        return !SystemPropertyUtil.getBoolean("idea.show.welcome.screen", SystemInfo.isMacSystemMenu || GeneralSettings.getInstance().isShowWelcomeScreen());
       }
     });
   }
