@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.application.PooledScope
+import com.intellij.concurrency.JobScheduler
 import com.intellij.configurationStore.StoreUtil
 import com.intellij.configurationStore.saveDocumentsAndProjectsAndApp
 import com.intellij.openapi.Disposable
@@ -9,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -16,6 +18,7 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
@@ -24,40 +27,54 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.util.SingleAlarm
 import kotlinx.coroutines.launch
 import java.beans.PropertyChangeListener
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG = Logger.getInstance(SaveAndSyncHandler::class.java)
 
-class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyncHandler(), Disposable {
-  private val generalSettingsListener = PropertyChangeListener { e ->
-    if (e.propertyName == GeneralSettings.PROP_INACTIVE_TIMEOUT) {
-      val eventQueue = IdeEventQueue.getInstance()
-      eventQueue.removeIdleListener(idleListener)
-      eventQueue.addIdleListener(idleListener, (e.newValue as Int) * 1000)
-    }
-  }
-
+class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyncHandler(), Disposable, BaseComponent {
   private val refreshDelayAlarm = SingleAlarm(Runnable { this.doScheduledRefresh() }, delay = 300, parentDisposable = this)
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
   @Volatile
-  private var refreshSessionId: Long = 0
-
-  private val idleListener = Runnable {
-    if (settings.isAutoSaveIfInactive && canSyncOrSave()) {
-      submitTransaction {
-        (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
-      }
-    }
-  }
+  private var refreshSessionId = -1L
 
   private val isSaveAllowed: Boolean
     get() = !ApplicationManager.getApplication().isDisposed && blockSaveOnFrameDeactivationCount.get() == 0
 
-  init {
-    IdeEventQueue.getInstance().addIdleListener(idleListener, settings.inactiveTimeout * 1000)
+  override fun initComponent() {
+    // add listeners after 10 seconds - doesn't make sense to listen earlier
+    JobScheduler.getScheduler().schedule(Runnable {
+      ApplicationManager.getApplication().invokeLater { addListeners() }
+    }, 30, TimeUnit.SECONDS)
+  }
+
+  private fun addListeners() {
+    val idleListener = Runnable {
+      if (settings.isAutoSaveIfInactive && canSyncOrSave()) {
+        submitTransaction {
+          (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+        }
+      }
+    }
+
+    var disposable: Disposable? = null
+
+    fun addIdleListener() {
+      IdeEventQueue.getInstance().addIdleListener(idleListener, settings.inactiveTimeout * 1000)
+      disposable = Disposable { IdeEventQueue.getInstance().removeIdleListener(idleListener) }
+      Disposer.register(this, disposable!!)
+    }
+
+    val generalSettingsListener = PropertyChangeListener { e ->
+      if (e.propertyName == GeneralSettings.PROP_INACTIVE_TIMEOUT) {
+        disposable?.let { Disposer.dispose(it) }
+        addIdleListener()
+      }
+    }
 
     settings.addPropertyChangeListener(generalSettingsListener)
+    Disposer.register(this, Disposable { settings.removePropertyChangeListener(generalSettingsListener) })
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
     busConnection.subscribe(FrameStateListener.TOPIC, object : FrameStateListener {
@@ -108,9 +125,9 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
   }
 
   override fun dispose() {
-    RefreshQueue.getInstance().cancelSession(refreshSessionId)
-    settings.removePropertyChangeListener(generalSettingsListener)
-    IdeEventQueue.getInstance().removeIdleListener(idleListener)
+    if (refreshSessionId != -1L) {
+      RefreshQueue.getInstance().cancelSession(refreshSessionId)
+    }
   }
 
   private fun canSyncOrSave(): Boolean {

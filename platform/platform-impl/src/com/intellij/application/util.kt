@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application
 
-import com.intellij.ide.plugins.PluginManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -35,14 +33,7 @@ inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
  * @see com.intellij.openapi.application.Application.executeOnPooledThread
  */
 val pooledThreadContext: CoroutineContext = ApplicationThreadPoolDispatcher().plus(CoroutineExceptionHandler { _, throwable ->
-  // otherwise not possible to test - will be "Start Failed: Internal error" because in tests app not yet started / not created
-  val app = ApplicationManager.getApplication()
-  if (app == null || app.isUnitTestMode) {
-    Logger.getInstance("#com.intellij.application.impl.ApplicationImpl").error(throwable)
-  }
-  else {
-    PluginManager.processException(throwable)
-  }
+  Logger.getInstance("#com.intellij.application.impl.ApplicationImpl").error(throwable)
 })
 
 object PooledScope : CoroutineScope {
