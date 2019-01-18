@@ -3,7 +3,6 @@ package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,8 +17,9 @@ public class CatchBlockMover extends LineMover {
     if (!(file instanceof PsiJavaFile)) return false;
     if (!super.checkAvailable(editor, file, info, down)) return false;
 
-    int startOffset = editor.logicalPositionToOffset(new LogicalPosition(info.toMove.startLine, 0));
-    int endOffset = editor.logicalPositionToOffset(new LogicalPosition(info.toMove.endLine, 0));
+    final Document document = editor.getDocument();
+    int startOffset = document.getLineStartOffset(info.toMove.startLine);
+    int endOffset = document.getLineEndOffset(info.toMove.endLine);
     PsiElement element = file.findElementAt(startOffset);
     if (element == null) return false;
     PsiKeyword keyword = null;
@@ -54,7 +54,6 @@ public class CatchBlockMover extends LineMover {
                                     ? PsiTreeUtil.getNextSiblingOfType(lastToMove, PsiCatchSection.class)
                                     : PsiTreeUtil.getPrevSiblingOfType(firstToMove, PsiCatchSection.class);
     if (sibling == null) return info.prohibitMove();
-    final Document document = editor.getDocument();
 
     info.toMove = new LineRange(firstToMove, lastToMove, document);
     info.toMove2 = new LineRange(sibling, sibling, document);
