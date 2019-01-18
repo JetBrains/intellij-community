@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
+import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.lang.jvm.JvmTypeDeclaration;
 import com.intellij.lang.jvm.JvmTypeParameter;
 import com.intellij.lang.jvm.types.JvmSubstitutor;
@@ -43,5 +44,12 @@ public class JvmPsiConversionHelperImpl implements JvmPsiConversionHelper {
       result = result.put(psiTypeParameter, psiType);
     }
     return result;
+  }
+
+  @NotNull
+  @Override
+  public PsiMethod convertMethod(@NotNull JvmMethod method) {
+    if (method instanceof PsiMethod) return (PsiMethod)method;
+    throw new RuntimeException("TODO");
   }
 }
