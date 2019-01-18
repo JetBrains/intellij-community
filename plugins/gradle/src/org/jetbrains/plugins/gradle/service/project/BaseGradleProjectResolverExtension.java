@@ -274,8 +274,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public void populateModuleContentRoots(@NotNull IdeaModule gradleModule,
                                          @NotNull DataNode<ModuleData> ideModule) {
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
-    if (resolverCtx.isResolveModulePerSourceSet()) {
-      assert externalProject != null;
+    if (externalProject != null) {
       addExternalProjectContentRoots(gradleModule, ideModule, externalProject);
     }
 
@@ -313,9 +312,6 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           if (externalProject == null) {
             populateContentRoot(contentRootIndex, ExternalSystemSourceType.SOURCE, gradleContentRoot.getSourceDirectories());
             populateContentRoot(contentRootIndex, ExternalSystemSourceType.TEST, gradleContentRoot.getTestDirectories());
-          }
-          else {
-            addExternalProjectContentRoots(gradleModule, ideModule, externalProject);
           }
         }
 
