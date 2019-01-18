@@ -773,6 +773,7 @@ public class LongRangeSetTest {
 
   void checkShl(LongRangeSet arg, LongRangeSet shiftSize, boolean isLong, String expected) {
     LongRangeSet result = arg.shiftLeft(shiftSize, isLong);
+    //noinspection IntegerMultiplicationImplicitCastToLong -- possible overflow is intended
     checkBinOp(arg, shiftSize, result, x -> true, (a, b) -> isLong ? a << b : ((int)a << (int)b), expected, "<<");
   }
 
