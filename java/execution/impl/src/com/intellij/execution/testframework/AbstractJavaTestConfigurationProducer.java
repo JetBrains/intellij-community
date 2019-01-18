@@ -135,40 +135,42 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
                                  boolean checkIsTest,
                                  PsiElementProcessor.CollectElements<PsiElement> collectingProcessor) {
     for (PsiElement psiElement : psiElements) {
-      psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiMember.class, false);
-      if (psiElement instanceof PsiClassOwner) {
-        final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
-        for (PsiClass aClass : classes) {
-          if ((!checkIsTest && isRequiredVisibility(aClass) || checkIsTest && isTestClass(aClass)) &&
-              !collectingProcessor.execute(aClass)) {
-            return;
+      if (psiElement instanceof PsiDirectory) {
+        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)psiElement);
+        if (aPackage != null && !collectingProcessor.execute(aPackage)) {
+          return;
+        }
+      }
+      else {
+        psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiMember.class, false);
+        if (psiElement instanceof PsiClassOwner) {
+          final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
+          for (PsiClass aClass : classes) {
+            if ((!checkIsTest && isRequiredVisibility(aClass) || checkIsTest && isTestClass(aClass)) &&
+                !collectingProcessor.execute(aClass)) {
+              return;
+            }
           }
         }
-      }
-      else if (psiElement instanceof PsiClass) {
-        if ((!checkIsTest && isRequiredVisibility((PsiClass)psiElement) ||
-             checkIsTest && isTestClass((PsiClass)psiElement)) &&
-            !collectingProcessor.execute(psiElement)) {
-          return;
-        }
-      }
-      else if (psiElement instanceof PsiMethod) {
-        if (checkIsTest && isTestMethod(checkAbstract, (PsiMethod)psiElement) && !collectingProcessor.execute(psiElement)) {
-          return;
-        }
-        if (!checkIsTest) {
-          final PsiClass containingClass = ((PsiMethod)psiElement).getContainingClass();
-          if (containingClass != null &&
-              isRequiredVisibility(containingClass) &&
+        else if (psiElement instanceof PsiClass) {
+          if ((!checkIsTest && isRequiredVisibility((PsiClass)psiElement) ||
+               checkIsTest && isTestClass((PsiClass)psiElement)) &&
               !collectingProcessor.execute(psiElement)) {
             return;
           }
         }
-      }
-      else if (psiElement instanceof PsiDirectory) {
-        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)psiElement);
-        if (aPackage != null && !collectingProcessor.execute(aPackage)) {
-          return;
+        else if (psiElement instanceof PsiMethod) {
+          if (checkIsTest && isTestMethod(checkAbstract, (PsiMethod)psiElement) && !collectingProcessor.execute(psiElement)) {
+            return;
+          }
+          if (!checkIsTest) {
+            final PsiClass containingClass = ((PsiMethod)psiElement).getContainingClass();
+            if (containingClass != null &&
+                isRequiredVisibility(containingClass) &&
+                !collectingProcessor.execute(psiElement)) {
+              return;
+            }
+          }
         }
       }
     }
