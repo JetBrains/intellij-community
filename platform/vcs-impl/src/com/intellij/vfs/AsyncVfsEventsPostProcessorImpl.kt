@@ -17,11 +17,8 @@ package com.intellij.vfs
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -30,6 +27,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.CalledInBackground
+import org.jetbrains.annotations.TestOnly
 
 class AsyncVfsEventsPostProcessorImpl : AsyncVfsEventsPostProcessor, Disposable {
   private val LOG = logger<AsyncVfsEventsPostProcessorImpl>()
@@ -72,6 +70,15 @@ class AsyncVfsEventsPostProcessorImpl : AsyncVfsEventsPostProcessor, Disposable 
       catch(e: Throwable) {
         LOG.error(e)
       }
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    @TestOnly
+    fun waitEventsProcessed() {
+      assert(ApplicationManager.getApplication().isUnitTestMode)
+      (AsyncVfsEventsPostProcessor.getInstance() as AsyncVfsEventsPostProcessorImpl).queue.waitFor()
     }
   }
 }
