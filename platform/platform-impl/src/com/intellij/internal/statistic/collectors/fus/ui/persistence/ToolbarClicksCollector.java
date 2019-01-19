@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.utils.PluginInfo;
-import com.intellij.internal.statistic.utils.StatisticsUtilKt;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -52,9 +52,9 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
   }
 
   public static void record(@NotNull AnAction action, String place) {
-    final PluginInfo info = StatisticsUtilKt.getPluginInfo(action.getClass());
+    final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
 
-    final boolean isDevelopedByJB = info.getType().isDevelopedByJetBrains();
+    final boolean isDevelopedByJB = info.isDevelopedByJetBrains();
     final String key = isDevelopedByJB ? toReportedId(action) : DEFAULT_ID;
 
     final FeatureUsageDataBuilder builder = new FeatureUsageDataBuilder().addPluginInfo(info);

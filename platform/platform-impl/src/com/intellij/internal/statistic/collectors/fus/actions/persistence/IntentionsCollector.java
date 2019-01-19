@@ -11,7 +11,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.utils.PluginInfo;
-import com.intellij.internal.statistic.utils.StatisticsUtilKt;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,9 +49,10 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
 
   private static final List<String> PREFIXES_TO_STRIP = Arrays.asList("com.intellij.codeInsight.",
                                                                       "com.intellij.");
+
   public void record(@NotNull IntentionAction action, @NotNull Language language) {
     final Class<?> clazz = getOriginalHandlerClass(action);
-    final PluginInfo info = StatisticsUtilKt.getPluginInfo(clazz);
+    final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(clazz);
 
     final Map<String, Object> data = new FeatureUsageDataBuilder().
       addFeatureContext(FUSUsageContext.OS_CONTEXT).
@@ -59,7 +60,7 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
       addLanguage(language).
       createData();
 
-    final String id = info.getType().isSafeToReport() ? toReportedId(clazz) : DEFAULT_ID;
+    final String id = info.isSafeToReport() ? toReportedId(clazz) : DEFAULT_ID;
     FeatureUsageLogger.INSTANCE.log(GROUP, id, data);
   }
 
@@ -71,7 +72,8 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
       if (delegate != action) {
         return getOriginalHandlerClass(delegate);
       }
-    } else if (action instanceof QuickFixWrapper) {
+    }
+    else if (action instanceof QuickFixWrapper) {
       LocalQuickFix fix = ((QuickFixWrapper)action).getFix();
       if (fix != action) {
         handler = fix;

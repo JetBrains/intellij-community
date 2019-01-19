@@ -10,7 +10,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.utils.PluginInfo;
-import com.intellij.internal.statistic.utils.StatisticsUtilKt;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -34,6 +34,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   private static final String DEFAULT_ID = "third.party.plugin.action";
 
   private static final HashMap<String, String> ourPrefixesBlackList = new HashMap<>();
+
   static {
     ourPrefixesBlackList.put("RemoteTool_", "Remote External Tool");
     ourPrefixesBlackList.put("Tool_", "External Tool");
@@ -50,13 +51,13 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     boolean isContextMenu = event != null && event.isFromContextMenu();
     final String place = event != null ? event.getPlace() : "";
 
-    final PluginInfo info = StatisticsUtilKt.getPluginInfo(context);
+    final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(context);
     final FeatureUsageDataBuilder builder = new FeatureUsageDataBuilder().
       addFeatureContext(FUSUsageContext.OS_CONTEXT).
       addPluginInfo(info).
       addData("context_menu", isContextMenu);
 
-    final boolean isDevelopedByJB = info.getType().isDevelopedByJetBrains();
+    final boolean isDevelopedByJB = info.isDevelopedByJetBrains();
     if (isContextMenu && isDevelopedByJB) {
       builder.addPlace(place);
     }
