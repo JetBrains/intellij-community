@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Runnable
 import kotlin.coroutines.CoroutineContext
 
@@ -34,10 +33,6 @@ inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
  */
 val pooledThreadContext: CoroutineContext = ApplicationThreadPoolDispatcher() + CoroutineExceptionHandler { _, throwable ->
   Logger.getInstance("#com.intellij.application.impl.ApplicationImpl").error(throwable)
-}
-
-object PooledScope : CoroutineScope {
-  override val coroutineContext = pooledThreadContext
 }
 
 // no need to implement isDispatchNeeded - Kotlin correctly uses the same thread if coroutines executes sequentially,

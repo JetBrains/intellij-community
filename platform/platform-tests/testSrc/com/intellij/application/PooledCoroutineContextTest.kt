@@ -2,6 +2,7 @@
 package com.intellij.application
 
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -13,7 +14,7 @@ class PooledCoroutineContextTest {
     val errorMessage = "don't swallow me"
     // cannot use assertThatThrownBy here, because AssertJ doesn't support Kotlin coroutines
     try {
-      PooledScope.launch {
+      GlobalScope.launch(pooledThreadContext) {
         throw RuntimeException(errorMessage)
       }.join()
     }
