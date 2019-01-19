@@ -24,59 +24,95 @@ class FeatureUsageSettingsEventsTest {
   }
 
   @Test
-  fun projectNameToHash() {
-    val printer = TestFeatureUsageSettingsEventsPrinter()
+  fun `project name to hash`() {
+    val printer = TestFeatureUsageSettingsEventsPrinter(true)
     assertNotNull(printer.toHash(projectRule.project))
   }
 
   @Test
-  fun noProjectNameToHash() {
-    val printer = TestFeatureUsageSettingsEventsPrinter()
+  fun `no project name to hash`() {
+    val printer = TestFeatureUsageSettingsEventsPrinter(true)
     assertNull(printer.toHash(null))
   }
 
   @Test
-  fun recordAllDefaultApplicationComponent() {
+  fun `record all default application component with enabled default recording`() {
     val component = TestComponent()
     val spec = getStateSpec(component)
-    val printer = TestFeatureUsageSettingsEventsPrinter()
+    val printer = TestFeatureUsageSettingsEventsPrinter(true)
     printer.logConfigurationState(spec.name, component.state, null)
     assertDefaultState(printer, false, false)
   }
 
   @Test
-  fun recordDefaultApplicationComponent() {
+  fun `record all default application component with disabled default recording`() {
     val component = TestComponent()
     val spec = getStateSpec(component)
-    val printer = TestFeatureUsageSettingsEventsPrinter()
+    val printer = TestFeatureUsageSettingsEventsPrinter(false)
+    printer.logConfigurationState(spec.name, component.state, null)
+    assertDefaultWithoutDefaultRecording(printer, false, false)
+  }
+
+  @Test
+  fun `record default application component with enabled default recording`() {
+    val component = TestComponent()
+    val spec = getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter(true)
     printer.logDefaultConfigurationState(spec.name, ComponentState::class.java, null)
     assertDefaultState(printer, false, false)
   }
 
   @Test
-  fun recordAllDefaultComponent() {
+  fun `record default application component with disabled default recording`() {
     val component = TestComponent()
     val spec = getStateSpec(component)
-    val printer = TestFeatureUsageSettingsEventsPrinter()
+    val printer = TestFeatureUsageSettingsEventsPrinter(false)
+    printer.logDefaultConfigurationState(spec.name, ComponentState::class.java, null)
+    assertDefaultWithoutDefaultRecording(printer, false, false)
+  }
+
+  @Test
+  fun `record all default component with enabled default recording`() {
+    val component = TestComponent()
+    val spec = getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter(true)
     printer.logConfigurationState(spec.name, component.state, projectRule.project)
     assertDefaultState(printer, true, false)
   }
 
   @Test
-  fun recordDefaultComponent() {
+  fun `record all default component with disabled default recording`() {
     val component = TestComponent()
     val spec = getStateSpec(component)
-    val printer = TestFeatureUsageSettingsEventsPrinter()
+    val printer = TestFeatureUsageSettingsEventsPrinter(false)
+    printer.logConfigurationState(spec.name, component.state, projectRule.project)
+    assertDefaultWithoutDefaultRecording(printer, true, false)
+  }
+
+  @Test
+  fun `record default component with enabled default recording`() {
+    val component = TestComponent()
+    val spec = getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter(true)
     printer.logDefaultConfigurationState(spec.name, ComponentState::class.java, projectRule.project)
     assertDefaultState(printer, true, false)
   }
 
   @Test
-  fun recordDefaultMultiComponent() {
+  fun `record default component with disabled default recording`() {
+    val component = TestComponent()
+    val spec = getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter(false)
+    printer.logDefaultConfigurationState(spec.name, ComponentState::class.java, projectRule.project)
+    assertDefaultWithoutDefaultRecording(printer, true, false)
+  }
+
+  @Test
+  fun `record default multi component with enabled default recording`() {
     val component = TestComponent()
     component.loadState(MultiComponentState())
     val spec = getStateSpec(component)
-    val printer = TestFeatureUsageSettingsEventsPrinter()
+    val printer = TestFeatureUsageSettingsEventsPrinter(true)
     printer.logDefaultConfigurationState(spec.name, MultiComponentState::class.java, projectRule.project)
 
     val withProject = true
@@ -87,40 +123,91 @@ class FeatureUsageSettingsEventsTest {
   }
 
   @Test
-  fun recordComponentForDefaultProject() {
+  fun `record default multi component with disabled default recording`() {
+    val component = TestComponent()
+    component.loadState(MultiComponentState())
+    val spec = getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter(false)
+    printer.logDefaultConfigurationState(spec.name, MultiComponentState::class.java, projectRule.project)
+
+    assertEquals(1, printer.result.size)
+    assertDefaultWithoutDefaultRecording(printer, true, false)
+  }
+
+  @Test
+  fun `record component for default project with enabled default recording`() {
     val component = TestComponent()
     val spec = getStateSpec(component)
-    val printer = TestFeatureUsageSettingsEventsPrinter()
+    val printer = TestFeatureUsageSettingsEventsPrinter(true)
     printer.logConfigurationState(spec.name, component.state, ProjectManager.getInstance().defaultProject)
     assertDefaultState(printer, false, true)
   }
 
   @Test
-  fun recordNotDefaultApplicationComponent() {
+  fun `record component for default project with disabled default recording`() {
+    val component = TestComponent()
+    val spec = getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter(false)
+    printer.logConfigurationState(spec.name, component.state, ProjectManager.getInstance().defaultProject)
+    assertDefaultWithoutDefaultRecording(printer, false, true)
+  }
+
+  @Test
+  fun `record not default application component with enabled default recording`() {
     val component = TestComponent()
     component.loadState(ComponentState(bool = true))
     val spec = getStateSpec(component)
-    val printer = TestFeatureUsageSettingsEventsPrinter()
+    val printer = TestFeatureUsageSettingsEventsPrinter(true)
     printer.logConfigurationState(spec.name, component.state, null)
     assertNotDefaultState(printer, false, false)
   }
 
   @Test
-  fun recordNotDefaultComponent() {
+  fun `record not default application component with disabled default recording`() {
     val component = TestComponent()
     component.loadState(ComponentState(bool = true))
     val spec = getStateSpec(component)
-    val printer = TestFeatureUsageSettingsEventsPrinter()
+    val printer = TestFeatureUsageSettingsEventsPrinter(false)
+    printer.logConfigurationState(spec.name, component.state, null)
+
+    val withProject = false
+    val defaultProject = false
+    assertEquals(2, printer.result.size)
+    assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, withProject, defaultProject)
+  }
+
+  @Test
+  fun `record not default component with enabled default recording`() {
+    val component = TestComponent()
+    component.loadState(ComponentState(bool = true))
+    val spec = getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter(true)
     printer.logConfigurationState(spec.name, component.state, projectRule.project)
     assertNotDefaultState(printer, true, false)
   }
 
   @Test
-  fun recordPartiallyNotDefaultMultiComponent() {
+  fun `record not default component with disabled default recording`() {
+    val component = TestComponent()
+    component.loadState(ComponentState(bool = true))
+    val spec = getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter(false)
+    printer.logConfigurationState(spec.name, component.state, projectRule.project)
+
+    val withProject = true
+    val defaultProject = false
+    assertEquals(2, printer.result.size)
+    assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, withProject, defaultProject)
+  }
+
+  @Test
+  fun `record partially not default multi component with enabled default recording`() {
     val component = TestComponent()
     component.loadState(MultiComponentState(bool = true, secondBool = true))
     val spec = getStateSpec(component)
-    val printer = TestFeatureUsageSettingsEventsPrinter()
+    val printer = TestFeatureUsageSettingsEventsPrinter(true)
     printer.logConfigurationState(spec.name, component.state, projectRule.project)
 
     val withProject = true
@@ -131,11 +218,26 @@ class FeatureUsageSettingsEventsTest {
   }
 
   @Test
-  fun recordNotDefaultMultiComponent() {
+  fun `record partially not default multi component with disabled default recording`() {
+    val component = TestComponent()
+    component.loadState(MultiComponentState(bool = true, secondBool = true))
+    val spec = getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter(false)
+    printer.logConfigurationState(spec.name, component.state, projectRule.project)
+
+    val withProject = true
+    val defaultProject = false
+    assertEquals(2, printer.result.size)
+    assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, withProject, defaultProject)
+  }
+
+  @Test
+  fun `record not default multi component with enabled default recording`() {
     val component = TestComponent()
     component.loadState(MultiComponentState(bool = true, secondBool = false))
     val spec = getStateSpec(component)
-    val printer = TestFeatureUsageSettingsEventsPrinter()
+    val printer = TestFeatureUsageSettingsEventsPrinter(true)
     printer.logConfigurationState(spec.name, component.state, projectRule.project)
 
     val withProject = true
@@ -143,7 +245,29 @@ class FeatureUsageSettingsEventsTest {
     assertEquals(2, printer.result.size)
     assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, withProject, defaultProject)
     assertNotDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", false, withProject, defaultProject)
+  }
 
+  @Test
+  fun `record not default multi component with disabled default recording`() {
+    val component = TestComponent()
+    component.loadState(MultiComponentState(bool = true, secondBool = false))
+    val spec = getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter(false)
+    printer.logConfigurationState(spec.name, component.state, projectRule.project)
+
+    val withProject = true
+    val defaultProject = false
+    assertEquals(3, printer.result.size)
+    assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", false, withProject, defaultProject)
+  }
+
+  private fun assertDefaultWithoutDefaultRecording(printer: TestFeatureUsageSettingsEventsPrinter,
+                                                   withProject: Boolean,
+                                                   defaultProject: Boolean) {
+    assertEquals(1, printer.result.size)
+    assertInvokedRecorded(printer.result[0], withProject, defaultProject)
   }
 
   private fun assertNotDefaultState(printer: TestFeatureUsageSettingsEventsPrinter, withProject: Boolean, defaultProject: Boolean) {
@@ -205,7 +329,28 @@ class FeatureUsageSettingsEventsTest {
     }
   }
 
-  private class TestFeatureUsageSettingsEventsPrinter : FeatureUsageSettingsEventPrinter() {
+  private fun assertInvokedRecorded(event: LoggedComponentStateEvents,
+                                    withProject: Boolean,
+                                    defaultProject: Boolean) {
+    assertEquals("settings", event.group.id)
+    assertTrue(event.group.version > 0)
+    assertEquals("MyTestComponent", event.id)
+
+    var size = 1
+    if (withProject) size++
+    if (defaultProject) size++
+
+    assertEquals(size, event.data.size)
+    assertTrue { event.data["invoked"] == true }
+    if (withProject) {
+      assertTrue { event.data.containsKey("project") }
+    }
+    if (defaultProject) {
+      assertTrue { event.data["default_project"] == true }
+    }
+  }
+
+  private class TestFeatureUsageSettingsEventsPrinter(recordDefault: Boolean) : FeatureUsageSettingsEventPrinter(recordDefault) {
     val result: MutableList<LoggedComponentStateEvents> = ArrayList()
 
     override fun logConfig(group: FeatureUsageGroup, eventId: String, data: Map<String, Any>) {
@@ -215,6 +360,15 @@ class FeatureUsageSettingsEventsTest {
     fun getOptionByName(name: String): LoggedComponentStateEvents {
       for (event in result) {
         if (event.data.containsKey("name") && event.data["name"] == name) {
+          return event
+        }
+      }
+      throw RuntimeException("Failed to find event")
+    }
+
+    fun getInvokedEvent(): LoggedComponentStateEvents {
+      for (event in result) {
+        if (event.data.containsKey("invoked") && event.data["invoked"] == true) {
           return event
         }
       }
