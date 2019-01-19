@@ -8,6 +8,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.containers.ContainerUtil
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.prefs.Preferences
@@ -24,14 +25,23 @@ object EventLogConfiguration {
   val build: String = ApplicationInfo.getInstance().build.asBuildNumber()
 
   private val salt: String = getOrGenerateSalt()
+  private val anonymizedCache = ContainerUtil.newHashMap<String, String>()
 
   fun anonymize(data: String): String {
-    if (StringUtil.isEmptyOrSpaces(data)) return data
+    if (StringUtil.isEmptyOrSpaces(data)) {
+      return data
+    }
+
+    if (anonymizedCache.containsKey(data)) {
+      return anonymizedCache[data] ?: ""
+    }
 
     val hasher = Hashing.sha256().newHasher()
     hasher.putString(salt, StandardCharsets.UTF_8)
     hasher.putString(data, StandardCharsets.UTF_8)
-    return hasher.hash().toString()
+    val result = hasher.hash().toString()
+    anonymizedCache[data] = result
+    return result
   }
 
   private fun String.shortedUUID(): String {
