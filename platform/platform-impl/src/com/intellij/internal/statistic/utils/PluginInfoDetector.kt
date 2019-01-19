@@ -12,7 +12,7 @@ import com.intellij.openapi.extensions.PluginId
  * so API from it may be reported
  */
 fun getPluginInfo(clazz: Class<*>): PluginInfo {
-  val pluginId = PluginManagerCore.getPluginByClassName(clazz.name) ?: return PluginInfo(PluginType.PLATFORM, null)
+  val pluginId = PluginManagerCore.getPluginByClassName(clazz.name) ?: return platformPlugin
   return getPluginInfoById(pluginId)
 }
 
@@ -21,7 +21,7 @@ fun getPluginInfo(clazz: Class<*>): PluginInfo {
  * so API from it may be reported
  */
 fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
-  if (pluginId == null) return PluginInfo(PluginType.UNKNOWN, null)
+  if (pluginId == null) return unknownPlugin
 
   return getPluginInfoByDescriptor(PluginManager.getPlugin(pluginId))
 }
@@ -31,7 +31,7 @@ fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
  * so API from it may be reported
  */
 fun getPluginInfoByDescriptor(plugin: IdeaPluginDescriptor?): PluginInfo {
-  if (plugin == null) return PluginInfo(PluginType.UNKNOWN, null)
+  if (plugin == null) return unknownPlugin
 
   val id = plugin.pluginId.idString
   if (PluginManagerMain.isDevelopedByJetBrains(plugin)) {
@@ -50,7 +50,7 @@ fun getPluginInfoByDescriptor(plugin: IdeaPluginDescriptor?): PluginInfo {
     PluginInfo(PluginType.LISTED, id)
   }
   else {
-    PluginInfo(PluginType.NOT_LISTED, null)
+    notListedPlugin
   }
 }
 
@@ -80,3 +80,7 @@ class PluginInfo(val type: PluginType, val id: String?) {
     return type.isSafeToReport()
   }
 }
+
+val platformPlugin: PluginInfo = PluginInfo(PluginType.PLATFORM, null)
+val unknownPlugin: PluginInfo = PluginInfo(PluginType.UNKNOWN, null)
+val notListedPlugin: PluginInfo = PluginInfo(PluginType.NOT_LISTED, null)

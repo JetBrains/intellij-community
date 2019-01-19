@@ -3,11 +3,13 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.facet.ui.FacetDependentToolWindow;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
+import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
-import com.intellij.internal.statistic.utils.StatisticsUtilKt;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowEP;
@@ -19,11 +21,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import static com.intellij.internal.statistic.beans.ConvertUsagesUtil.escapeDescriptorName;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowActivationSource.ACTIVATION;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowActivationSource.CLICK;
+import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
+import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getUnknownPlugin;
 import static com.intellij.openapi.wm.ToolWindowId.*;
 
 /**
@@ -36,45 +40,46 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
   }
 )
 public class ToolWindowCollector implements PersistentStateComponent<ToolWindowCollector.State> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("toolwindow.v2", 1);
-  private static final String UNKNOWN = "unknown_by_";
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("toolwindow", 1);
+  private static final String UNKNOWN = "unknown";
 
   public static ToolWindowCollector getInstance() {
     return ServiceManager.getService(ToolWindowCollector.class);
   }
 
-  public static final Set<String> ourToolwindowWhitelist = new HashSet<>();
+  public static final Map<String, PluginInfo> ourToolwindowWhitelist = new HashMap<>();
   static {
-    ourToolwindowWhitelist.add(COMMANDER);
-    ourToolwindowWhitelist.add(MESSAGES_WINDOW);
-    ourToolwindowWhitelist.add(PROJECT_VIEW);
-    ourToolwindowWhitelist.add(STRUCTURE_VIEW);
-    ourToolwindowWhitelist.add(FAVORITES_VIEW);
-    ourToolwindowWhitelist.add(ANT_BUILD);
-    ourToolwindowWhitelist.add(DEBUG);
-    ourToolwindowWhitelist.add(RUN);
-    ourToolwindowWhitelist.add(BUILD);
-    ourToolwindowWhitelist.add(FIND);
-    ourToolwindowWhitelist.add(CVS);
-    ourToolwindowWhitelist.add(HIERARCHY);
-    ourToolwindowWhitelist.add(INSPECTION);
-    ourToolwindowWhitelist.add(TODO_VIEW);
-    ourToolwindowWhitelist.add(DEPENDENCIES);
-    ourToolwindowWhitelist.add(VCS);
-    ourToolwindowWhitelist.add(MODULES_DEPENDENCIES);
-    ourToolwindowWhitelist.add(DUPLICATES);
-    ourToolwindowWhitelist.add(EXTRACT_METHOD);
-    ourToolwindowWhitelist.add(DOCUMENTATION);
-    ourToolwindowWhitelist.add(TASKS);
-    ourToolwindowWhitelist.add(DATABASE_VIEW);
-    ourToolwindowWhitelist.add(PREVIEW);
-    ourToolwindowWhitelist.add(RUN_DASHBOARD);
+    ourToolwindowWhitelist.put(COMMANDER, getPlatformPlugin());
+    ourToolwindowWhitelist.put(MESSAGES_WINDOW, getPlatformPlugin());
+    ourToolwindowWhitelist.put(PROJECT_VIEW, getPlatformPlugin());
+    ourToolwindowWhitelist.put(STRUCTURE_VIEW, getPlatformPlugin());
+    ourToolwindowWhitelist.put(FAVORITES_VIEW, getPlatformPlugin());
+    ourToolwindowWhitelist.put(ANT_BUILD, getPlatformPlugin());
+    ourToolwindowWhitelist.put(DEBUG, getPlatformPlugin());
+    ourToolwindowWhitelist.put(RUN, getPlatformPlugin());
+    ourToolwindowWhitelist.put(BUILD, getPlatformPlugin());
+    ourToolwindowWhitelist.put(FIND, getPlatformPlugin());
+    ourToolwindowWhitelist.put(CVS, getPlatformPlugin());
+    ourToolwindowWhitelist.put(HIERARCHY, getPlatformPlugin());
+    ourToolwindowWhitelist.put(INSPECTION, getPlatformPlugin());
+    ourToolwindowWhitelist.put(TODO_VIEW, getPlatformPlugin());
+    ourToolwindowWhitelist.put(DEPENDENCIES, getPlatformPlugin());
+    ourToolwindowWhitelist.put(VCS, getPlatformPlugin());
+    ourToolwindowWhitelist.put(MODULES_DEPENDENCIES, getPlatformPlugin());
+    ourToolwindowWhitelist.put(DUPLICATES, getPlatformPlugin());
+    ourToolwindowWhitelist.put(EXTRACT_METHOD, getPlatformPlugin());
+    ourToolwindowWhitelist.put(DOCUMENTATION, getPlatformPlugin());
+    ourToolwindowWhitelist.put(TASKS, getPlatformPlugin());
+    ourToolwindowWhitelist.put(DATABASE_VIEW, getPlatformPlugin());
+    ourToolwindowWhitelist.put(PREVIEW, getPlatformPlugin());
+    ourToolwindowWhitelist.put(RUN_DASHBOARD, getPlatformPlugin());
   }
 
   public ToolWindowCollector() {
     for (ToolWindowWhitelistEP extension : ToolWindowWhitelistEP.EP_NAME.getExtensions()) {
-      if (StatisticsUtilKt.isDevelopedByJetBrains(extension.getPluginId())) {
-        ourToolwindowWhitelist.add(extension.id);
+      final PluginInfo info = PluginInfoDetectorKt.getPluginInfoById(extension.getPluginId());
+      if (info.isDevelopedByJetBrains()) {
+        ourToolwindowWhitelist.put(extension.id, info);
       }
     }
 
@@ -84,36 +89,54 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
   }
 
   public void recordActivation(String toolWindowId) {
-    record(toolWindowId, "Activation");
+    record(toolWindowId, ACTIVATION);
   }
 
   //todo[kb] provide a proper way to track activations by clicks
   public void recordClick(String toolWindowId) {
-    record(toolWindowId, "Click");
+    record(toolWindowId, CLICK);
   }
 
-  private void record(@Nullable String toolWindowId, @NotNull String source) {
+  private void record(@Nullable String toolWindowId, @NotNull ToolWindowActivationSource source) {
     if (toolWindowId == null) return;
 
-    final boolean isWhitelisted = ourToolwindowWhitelist.contains(toolWindowId) || isDevelopedByJetBrains(toolWindowId);
-    final String key = escapeDescriptorName(isWhitelisted ? toolWindowId + " by " + source : UNKNOWN + source);
-    FeatureUsageLogger.INSTANCE.log(GROUP, key, FUSUsageContext.OS_CONTEXT.getData());
+    final PluginInfo info = getPluginInfo(toolWindowId);
+    final String key = escapeDescriptorName(info.isDevelopedByJetBrains() ? toolWindowId: UNKNOWN);
+
+    final FeatureUsageDataBuilder builder = new FeatureUsageDataBuilder().
+      addPluginInfo(info).
+      addFeatureContext(FUSUsageContext.OS_CONTEXT);
+
+    if (source != ACTIVATION) {
+      builder.addData("source", StringUtil.toLowerCase(source.name()));
+    }
+    FeatureUsageLogger.INSTANCE.log(GROUP, key, builder.createData());
   }
 
-  public static boolean isDevelopedByJetBrains(@NotNull String toolWindowId) {
-    boolean isByJB = isDevelopedByJetBrains(toolWindowId, ToolWindowEP.EP_NAME.getExtensions());
-    isByJB = isByJB || isDevelopedByJetBrains(toolWindowId, LibraryDependentToolWindow.EXTENSION_POINT_NAME.getExtensions());
-    isByJB = isByJB || isDevelopedByJetBrains(toolWindowId, FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensions());
-    return isByJB;
+  @NotNull
+  private static PluginInfo getPluginInfo(@NotNull String toolWindowId) {
+    if (ourToolwindowWhitelist.containsKey(toolWindowId)) {
+      return ourToolwindowWhitelist.get(toolWindowId);
+    }
+
+    PluginInfo info = getPluginInfo(toolWindowId, ToolWindowEP.EP_NAME.getExtensions());
+    if (info == null) {
+      info = getPluginInfo(toolWindowId, LibraryDependentToolWindow.EXTENSION_POINT_NAME.getExtensions());
+    }
+    if (info == null) {
+      info = getPluginInfo(toolWindowId, FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensions());
+    }
+    return info != null ? info : getUnknownPlugin();
   }
 
-  public static boolean isDevelopedByJetBrains(@NotNull String toolWindowId, @NotNull ToolWindowEP[] toolWindows) {
+  @Nullable
+  public static PluginInfo getPluginInfo(@NotNull String toolWindowId, @NotNull ToolWindowEP[] toolWindows) {
     for (ToolWindowEP ep : toolWindows) {
       if (StringUtil.equals(toolWindowId, ep.id)) {
-        return StatisticsUtilKt.isDevelopedByJetBrains(ep.getPluginId());
+        return PluginInfoDetectorKt.getPluginInfoById(ep.getPluginId());
       }
     }
-    return false;
+    return null;
   }
 
   private State myState = new State();
@@ -126,6 +149,10 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
 
   @Override
   public void loadState(@NotNull State state) {
+  }
+
+  enum ToolWindowActivationSource {
+    ACTIVATION, CLICK
   }
 
   public final static class State {
