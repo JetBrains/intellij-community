@@ -31,7 +31,7 @@ public class GradleEditorTabTitleProvider implements EditorTabTitleProvider, Dum
   public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
     if (GradleConstants.DEFAULT_SCRIPT_NAME.equals(file.getName()) || GradleConstants.KOTLIN_DSL_SCRIPT_NAME.equals(file.getName())) {
       Module module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(file);
-      return module == null ? null : module.getName();
+      return module == null ? null : String.format("%s (%s)", file.getName(), module.getName());
     }
 
     return null;
