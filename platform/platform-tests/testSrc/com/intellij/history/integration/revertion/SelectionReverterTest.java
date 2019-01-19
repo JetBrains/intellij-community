@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -70,7 +71,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
   }
 
   public void testChangeSetName() throws Exception {
-    long time = new Date(2001, 1, 11, 12, 30).getTime();
+    long time = new Date(2001, Calendar.FEBRUARY, 11, 12, 30).getTime();
     Clock.setTime(time);
 
     setBinaryContent(f, "one".getBytes(StandardCharsets.UTF_8));

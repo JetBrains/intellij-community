@@ -124,8 +124,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
                                     final FileStatusManager manager,
                                     final FileIndexFacade excludedFileIndex,
                                     ProjectManager projectManager,
-                                    DefaultVcsRootPolicy defaultVcsRootPolicy,
-                                    VcsFileListenerContextHelper vcsFileListenerContextHelper) {
+                                    DefaultVcsRootPolicy defaultVcsRootPolicy) {
     myProject = project;
     mySerialization = new ProjectLevelVcsManagerSerialization();
     myOptionsAndConfirmations = new OptionsAndConfirmations();
@@ -155,9 +154,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myVcsHistoryCache = new VcsHistoryCache();
     myContentRevisionCache = new ContentRevisionCache();
-    VcsListener vcsListener = () -> {
-      myVcsHistoryCache.clearHistory();
-    };
+    VcsListener vcsListener = () -> myVcsHistoryCache.clearHistory();
     myExcludedIndex = excludedFileIndex;
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
@@ -416,7 +413,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }, ModalityState.defaultModalityState());
   }
 
-  private Content getOrCreateConsoleContent(final ContentManager contentManager) {
+  private void getOrCreateConsoleContent(final ContentManager contentManager) {
     final String displayName = VcsBundle.message("vcs.console.toolwindow.display.name");
     Content content = contentManager.findContent(displayName);
     if (content == null) {
@@ -442,7 +439,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       }
       myPendingOutput.clear();
     }
-    return content;
   }
 
   private void printToConsole(@NotNull String message, @NotNull ConsoleViewContentType contentType) {

@@ -1,10 +1,10 @@
 package com.intellij.util;
 
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.util.EventListener;
 
-public class EventDispatcherTest extends PlatformTestCase {
+public class EventDispatcherTest extends LightPlatformTestCase {
   private StringBuffer myBuffer;
   private PendingEventDispatcher<Listener> myDispatcher;
 
@@ -22,6 +22,7 @@ public class EventDispatcherTest extends PlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     myDispatcher = null;
+    myBuffer = null;
     super.tearDown();
   }
 
