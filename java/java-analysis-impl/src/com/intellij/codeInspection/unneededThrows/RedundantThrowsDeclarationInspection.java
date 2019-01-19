@@ -93,7 +93,8 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
           if (psiManager.areElementsEquivalent(s, throwsResolvedType)) {
             if (problems == null) problems = new ArrayList<>(1);
 
-            if (refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) {
+            RefClass ownerClass = refMethod.getOwnerClass();
+            if (refMethod.isAbstract() || ownerClass != null && ownerClass.isInterface()) {
               problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
                 "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), new MyQuickFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                                            false));
