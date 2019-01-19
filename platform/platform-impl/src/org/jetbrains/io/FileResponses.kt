@@ -23,7 +23,7 @@ fun flushChunkedResponse(channel: Channel, isKeepAlive: Boolean) {
 
 object FileResponses {
   fun getContentType(path: String): String {
-    return fileExtToMimeType.getOrDefault(PathUtilRt.getFileExt(path), "application/octet-stream")
+    return PathUtilRt.getFileExtension(path)?.let { fileExtToMimeType.get(it) } ?: "application/octet-stream"
   }
 
   @JvmOverloads

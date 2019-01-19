@@ -22,10 +22,14 @@ public class PathUtilTest {
 
   @Test
   public void fileExt() {
-    assertThat(PathUtilRt.getFileExt("foo.html")).isEqualTo("html");
-    assertThat(PathUtilRt.getFileExt("foo.html/")).isEqualTo("html");
-    assertThat(PathUtilRt.getFileExt("/foo.html/")).isEqualTo("html");
-    assertThat(PathUtilRt.getFileExt("/bar/foo.html/")).isEqualTo("html");
+    assertThat(PathUtilRt.getFileExtension("foo.html")).isEqualTo("html");
+    assertThat(PathUtilRt.getFileExtension("foo.html/")).isEqualTo("html");
+    assertThat(PathUtilRt.getFileExtension("/foo.html/")).isEqualTo("html");
+    assertThat(PathUtilRt.getFileExtension("/bar/foo.html/")).isEqualTo("html");
+    assertThat(PathUtilRt.getFileExtension("")).isNull();
+    assertThat(PathUtilRt.getFileExtension("foo")).isNull();
+    assertThat(PathUtilRt.getFileExtension("foo.or.bar/bar")).isNull();
+    assertThat(PathUtilRt.getFileExtension("foo.")).isEmpty();
   }
 
   @Test

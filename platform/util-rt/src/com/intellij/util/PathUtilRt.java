@@ -26,16 +26,16 @@ public class PathUtilRt {
     return path.substring(getLastIndexOfPathSeparator(path, end) + 1, end);
   }
 
-  @NotNull
-  public static String getFileExt(@Nullable String path) {
+  @Nullable
+  public static String getFileExtension(@Nullable String path) {
     if (StringUtilRt.isEmpty(path)) {
-      return "";
+      return null;
     }
 
     int end = getEnd(path);
     int start = getLastIndexOfPathSeparator(path, end) + 1;
     int index = StringUtilRt.lastIndexOf(path, '.', Math.max(start, 0), end);
-    return index < 0 ? "" : path.substring(index + 1, end);
+    return index < 0 ? null : path.substring(index + 1, end);
   }
 
   private static int getEnd(@NotNull String path) {
