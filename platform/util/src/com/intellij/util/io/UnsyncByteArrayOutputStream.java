@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
@@ -99,5 +100,10 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
   @NotNull
   public ByteArraySequence toByteArraySequence() {
     return new ByteArraySequence(myBuffer, 0, myCount);
+  }
+
+  @NotNull
+  public InputStream toInputStream() {
+    return new UnsyncByteArrayInputStream(myBuffer, 0, myCount);
   }
 }

@@ -282,7 +282,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
             previousRecord = readValueId(id);
           }
 
-          long headerRecord = myValueStorage.appendBytes(bytes.getInternalBuffer(), 0, bytes.size(), previousRecord);
+          long headerRecord = myValueStorage.appendBytes(bytes.toByteArraySequence(), previousRecord);
 
           if (myDirectlyStoreLongFileOffsetMode) {
             ((PersistentBTreeEnumerator<Key>)myEnumerator).putNonNegativeValue(key, headerRecord);
@@ -407,7 +407,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       appenderStream.setOut(bytes);
       myValueExternalizer.save(appenderStream, value);
       appenderStream.setOut(null);
-      newValueOffset = myValueStorage.appendBytes(bytes.getInternalBuffer(), 0, bytes.size(), 0);
+      newValueOffset = myValueStorage.appendBytes(bytes.toByteArraySequence(), 0);
     }
 
     myEnumerator.lockStorage();

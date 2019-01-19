@@ -1253,7 +1253,7 @@ public class FSRecords {
     DataInputStream stream = getContentStorage().readStream(contentId);
     if (useCompressionUtil) {
       byte[] bytes = CompressionUtil.readCompressed(stream);
-      stream = new DataInputStream(new ByteArrayInputStream(bytes));
+      stream = new DataInputStream(new UnsyncByteArrayInputStream(bytes));
     }
 
     return stream;
@@ -1308,7 +1308,7 @@ public class FSRecords {
           if (inlineAttributes && attrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
             byte[] b = new byte[attrAddressOrSize];
             attrRefs.readFully(b);
-            return new DataInputStream(new ByteArrayInputStream(b));
+            return new DataInputStream(new UnsyncByteArrayInputStream(b));
           }
           page = inlineAttributes ? attrAddressOrSize - MAX_SMALL_ATTR_SIZE : attrAddressOrSize;
           break;
@@ -1488,7 +1488,7 @@ public class FSRecords {
       super.close();
 
       final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
-      writeBytes(new ByteArraySequence(_out.getInternalBuffer(), 0, _out.size()));
+      writeBytes(_out.toByteArraySequence());
     }
 
     private void writeBytes(ByteArraySequence bytes) {
@@ -1528,7 +1528,7 @@ public class FSRecords {
           try (DataOutputStream outputStream = new DataOutputStream(out)) {
             CompressionUtil.writeCompressed(outputStream, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
           }
-          newBytes = new ByteArraySequence(out.getInternalBuffer(), 0, out.size());
+          newBytes = out.toByteArraySequence();
         }
         else {
           newBytes = bytes;
@@ -1615,10 +1615,10 @@ public class FSRecords {
             out = stream;
             writeRecordHeader(DbConnection.getAttributeId(myAttribute.getId()), myFileId, this);
             write(_out.getInternalBuffer(), 0, _out.size());
-            getAttributesStorage().writeBytes(page, new ByteArraySequence(stream.getInternalBuffer(), 0, stream.size()), myAttribute.isFixedSize());
+            getAttributesStorage().writeBytes(page, stream.toByteArraySequence(), myAttribute.isFixedSize());
           }
           else {
-            getAttributesStorage().writeBytes(page, new ByteArraySequence(_out.getInternalBuffer(), 0, _out.size()), myAttribute.isFixedSize());
+            getAttributesStorage().writeBytes(page, _out.toByteArraySequence(), myAttribute.isFixedSize());
           }
         }
       });
@@ -1681,7 +1681,7 @@ public class FSRecords {
                     // update inplace when new attr has the same size
                     int remaining = attrRefs.available();
                     storage.replaceBytes(recordId, remainingAtStart - remaining,
-                                         new ByteArraySequence(_out.getInternalBuffer(), 0, _out.size()));
+                                         _out.toByteArraySequence());
                     return;
                   }
                   attrRefs.skipBytes(attrAddressOrSize);

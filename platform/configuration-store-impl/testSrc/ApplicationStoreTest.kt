@@ -165,7 +165,7 @@ internal class ApplicationStoreTest {
     val exportedData = BufferExposingByteArrayOutputStream()
     exportSettings(setOf(componentPath, additionalPath), exportedData, configPath)
 
-    val relativePaths = getPaths(ByteArrayInputStream(exportedData.internalBuffer, 0, exportedData.size()))
+    val relativePaths = getPaths(exportedData.toInputStream())
     assertThat(relativePaths).containsOnly("a.xml", "foo/", "foo/bar.icls", "IntelliJ IDEA Global Settings")
 
     fun <B> Path.to(that: B) = MapEntry.entry(this, that)

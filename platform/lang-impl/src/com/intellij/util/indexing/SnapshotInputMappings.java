@@ -437,7 +437,7 @@ class SnapshotInputMappings<Key, Value, Input> {
   }
 
   private void saveContents(int id, BufferExposingByteArrayOutputStream out) throws IOException {
-    ByteArraySequence byteSequence = new ByteArraySequence(out.getInternalBuffer(), 0, out.size());
+    ByteArraySequence byteSequence = out.toByteArraySequence();
     if (SharedIndicesData.ourFileSharedIndicesEnabled) {
       if (SharedIndicesData.DO_CHECKS) {
         synchronized (myContents) {

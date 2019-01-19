@@ -372,7 +372,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     public void close() throws IOException {
       super.close();
       final BufferExposingByteArrayOutputStream byteStream = getByteStream();
-      myStorage.writeBytes(myRecordId, new ByteArraySequence(byteStream.getInternalBuffer(), 0, byteStream.size()), myFixedSize);
+      myStorage.writeBytes(myRecordId, byteStream.toByteArraySequence(), myFixedSize);
     }
 
     protected BufferExposingByteArrayOutputStream getByteStream() {
@@ -397,7 +397,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     public void close() throws IOException {
       super.close();
       final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
-      appendBytes(myRecordId, new ByteArraySequence(_out.getInternalBuffer(), 0, _out.size()));
+      appendBytes(myRecordId, _out.toByteArraySequence());
     }
   }
 }
