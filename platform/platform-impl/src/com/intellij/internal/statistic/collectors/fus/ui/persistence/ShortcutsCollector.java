@@ -23,12 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static java.awt.event.InputEvent.ALT_GRAPH_MASK;
-import static java.awt.event.InputEvent.ALT_MASK;
-import static java.awt.event.InputEvent.BUTTON1_MASK;
-import static java.awt.event.InputEvent.CTRL_MASK;
-import static java.awt.event.InputEvent.META_MASK;
-import static java.awt.event.InputEvent.SHIFT_MASK;
+import static java.awt.event.InputEvent.*;
 import static java.awt.event.KeyEvent.*;
 
 /**
@@ -69,7 +64,11 @@ public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCol
          return "Touchbar";
 
        final KeyStroke keystroke = KeyStroke.getKeyStrokeForEvent((KeyEvent)inputEvent);
-       return keystroke != null ? getShortcutText(new KeyboardShortcut(keystroke, null)) : "Unknown";
+       if (keystroke == null) {
+         return "Unknown";
+       }
+       final String shortcut = getShortcutText(new KeyboardShortcut(keystroke, null));
+       return event.isDoubleInputEvent() ? shortcut + "+" + shortcut : shortcut;
       }
     }
     return null;

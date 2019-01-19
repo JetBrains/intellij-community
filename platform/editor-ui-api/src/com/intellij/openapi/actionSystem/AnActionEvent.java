@@ -33,6 +33,7 @@ public class AnActionEvent implements PlaceProvider<String> {
   private static final Map<String, String> ourInjectedIds = new HashMap<>();
   private final boolean myIsContextMenuAction;
   private final boolean myIsActionToolbar;
+  private boolean myIsDoubleInputEvent;
 
   /**
    * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
@@ -86,12 +87,22 @@ public class AnActionEvent implements PlaceProvider<String> {
   public static AnActionEvent createFromAnAction(@NotNull AnAction action,
                                                  @Nullable InputEvent event,
                                                  @NotNull String place,
-                                                 @NotNull DataContext dataContext) {
+                                                 @NotNull DataContext dataContext,
+                                                 boolean isDoubleInputEvent) {
     int modifiers = event == null ? 0 : event.getModifiers();
     Presentation presentation = action.getTemplatePresentation().clone();
     AnActionEvent anActionEvent = new AnActionEvent(event, dataContext, place, presentation, ActionManager.getInstance(), modifiers);
     anActionEvent.setInjectedContext(action.isInInjectedContext());
+    anActionEvent.setDoubleInputEvent(isDoubleInputEvent);
     return anActionEvent;
+  }
+
+  @NotNull
+  public static AnActionEvent createFromAnAction(@NotNull AnAction action,
+                                                 @Nullable InputEvent event,
+                                                 @NotNull String place,
+                                                 @NotNull DataContext dataContext) {
+    return createFromAnAction(action, event, place, dataContext, false);
   }
 
   @NotNull
@@ -263,6 +274,14 @@ public class AnActionEvent implements PlaceProvider<String> {
 
   public boolean isInInjectedContext() {
     return myWorksInInjected;
+  }
+
+  void setDoubleInputEvent(boolean isDoubleInputEvent) {
+    myIsDoubleInputEvent = isDoubleInputEvent;
+  }
+
+  public boolean isDoubleInputEvent() {
+    return myIsDoubleInputEvent;
   }
 
   public void accept(@NotNull AnActionEventVisitor visitor) {

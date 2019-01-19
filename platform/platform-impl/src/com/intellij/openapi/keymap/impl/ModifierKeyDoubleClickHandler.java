@@ -3,7 +3,6 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -242,14 +241,13 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
         AnAction action = myActionManagerEx.getAction(myActionId);
         if (action == null) return false;
         DataContext context = DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner());
-        AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.MAIN_MENU, context);
+        AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.MAIN_MENU, context, true);
         action.update(anActionEvent);
         if (!anActionEvent.getPresentation().isEnabled()) return false;
 
         myActionManagerEx.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         action.actionPerformed(anActionEvent);
         myActionManagerEx.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
-        ActionsCollector.getInstance().record("DoubleShortcut", action.getClass(), anActionEvent);
         return true;
       }
       finally {
