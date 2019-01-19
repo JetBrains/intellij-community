@@ -349,8 +349,8 @@ class LineStatusTrackerManager(
 
   private fun canGetBaseRevisionFor(virtualFile: VirtualFile?): Boolean {
     if (isDisposed) return false
-    if (virtualFile == null || virtualFile is LightVirtualFile || !virtualFile.isValid) return false
-    if (virtualFile.fileType.isBinary || FileUtilRt.isTooLarge(virtualFile.length)) return false
+    if (virtualFile == null || virtualFile is LightVirtualFile) return false
+    if (runReadAction { !virtualFile.isValid || virtualFile.fileType.isBinary || FileUtilRt.isTooLarge(virtualFile.length) }) return false
     if (!statusProvider.isSupported(virtualFile)) return false
 
     val status = FileStatusManager.getInstance(project).getStatus(virtualFile)
