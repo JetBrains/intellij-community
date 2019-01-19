@@ -334,6 +334,10 @@ public abstract class AnAction implements PossiblyDumbAware {
     return getTemplatePresentation().toString();
   }
 
+  public final boolean isGlobal() {
+    return myIsGlobal;
+  }
+
   void markAsGlobal() {
     myIsGlobal = true;
   }
