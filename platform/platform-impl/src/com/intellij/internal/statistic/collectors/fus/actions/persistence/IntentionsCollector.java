@@ -5,11 +5,12 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
-import com.intellij.internal.statistic.utils.PluginType;
+import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.*;
@@ -31,7 +32,9 @@ import java.util.Map;
   value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
 )
 public class IntentionsCollector implements PersistentStateComponent<IntentionsCollector.State> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("statistics.actions.intentions", 1);
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("intentions", 1);
+  private static final String DEFAULT_ID = "third.party.intention";
+
   private State myState = new State();
 
   @Nullable
@@ -47,19 +50,26 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
   private static final List<String> PREFIXES_TO_STRIP = Arrays.asList("com.intellij.codeInsight.",
                                                                       "com.intellij.");
   public void record(@NotNull IntentionAction action, @NotNull Language language) {
-    String id = getIntentionId(action);
+    final Class<?> clazz = getOriginalHandlerClass(action);
+    final PluginInfo info = StatisticsUtilKt.getPluginInfo(clazz);
 
-    String key = language.getID() + " " + id;
-    FeatureUsageLogger.INSTANCE.log(GROUP, key, FUSUsageContext.OS_CONTEXT.getData());
+    final Map<String, Object> data = new FeatureUsageDataBuilder().
+      addFeatureContext(FUSUsageContext.OS_CONTEXT).
+      addPluginInfo(info).
+      addLanguage(language).
+      createData();
+
+    final String id = info.getType().isSafeToReport() ? toReportedId(clazz) : DEFAULT_ID;
+    FeatureUsageLogger.INSTANCE.log(GROUP, id, data);
   }
 
   @NotNull
-  private static String getIntentionId(@NotNull IntentionAction action) {
+  private static Class getOriginalHandlerClass(@NotNull IntentionAction action) {
     Object handler = action;
     if (action instanceof IntentionActionDelegate) {
       IntentionAction delegate = ((IntentionActionDelegate)action).getDelegate();
       if (delegate != action) {
-        return getIntentionId(delegate);
+        return getOriginalHandlerClass(delegate);
       }
     } else if (action instanceof QuickFixWrapper) {
       LocalQuickFix fix = ((QuickFixWrapper)action).getFix();
@@ -67,20 +77,14 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
         handler = fix;
       }
     }
+    return handler.getClass();
+  }
 
-    final Class<?> clazz = handler.getClass();
-    final PluginType type = StatisticsUtilKt.getPluginType(clazz);
-    if (!type.isSafeToReport()) {
-      return type.name();
-    }
-
+  @NotNull
+  private static String toReportedId(Class<?> clazz) {
     String fqn = clazz.getName();
     for (String prefix : PREFIXES_TO_STRIP) {
       fqn = StringUtil.trimStart(fqn, prefix);
-    }
-
-    if (!type.isPlatformOrJBBundled()) {
-      fqn = "[!]" + fqn;
     }
     return fqn;
   }
