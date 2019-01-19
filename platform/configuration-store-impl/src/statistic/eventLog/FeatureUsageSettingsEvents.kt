@@ -13,10 +13,10 @@ import org.jdom.Element
 import java.util.*
 
 private val LOG = Logger.getInstance("com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter")
-private val GROUP = FeatureUsageGroup("settings", 1)
+private val GROUP = FeatureUsageGroup("settings", 2)
 
 object FeatureUsageSettingsEvents {
-  val printer = FeatureUsageSettingsEventPrinter(true)
+  val printer = FeatureUsageSettingsEventPrinter(false)
 
   fun logDefaultConfigurationState(componentName: String, stateSpec: State, clazz: Class<*>, project: Project?) {
     if (stateSpec.reportStatistic && FeatureUsageLogger.isEnabled()) {
