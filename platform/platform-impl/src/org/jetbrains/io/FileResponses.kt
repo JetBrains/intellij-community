@@ -2,6 +2,7 @@
 package org.jetbrains.io
 
 import com.intellij.util.PathUtilRt
+import gnu.trove.THashMap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.DefaultFileRegion
@@ -19,6 +20,22 @@ fun flushChunkedResponse(channel: Channel, isKeepAlive: Boolean) {
   if (!isKeepAlive) {
     future.addListener(ChannelFutureListener.CLOSE)
   }
+}
+
+private val fileExtToMimeType by lazy {
+  val map = THashMap<String, String>(1100)
+  FileResponses.javaClass.getResourceAsStream("/mime-types.csv").bufferedReader().useLines {
+    for (line in it) {
+      if (line.isBlank()) {
+        continue
+      }
+
+      val commaIndex = line.indexOf(',')
+      // don't check negative commaIndex - resource expected to contain only valid data as it is not user supplied
+      map.put(line.substring(0, commaIndex), line.substring(commaIndex + 1))
+    }
+  }
+  map
 }
 
 object FileResponses {
