@@ -2,11 +2,11 @@
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
-import com.intellij.internal.statistic.utils.PluginType;
+import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -28,6 +28,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext.OS_CONTEXT;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -39,7 +41,7 @@ import java.util.stream.Collectors;
   }
 )
 public class MainMenuCollector implements PersistentStateComponent<MainMenuCollector.State> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("statistics.actions.main.menu.v2", 1);
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("main.menu", 1);
   private static final String GENERATED_ON_RUNTIME_ITEM = "generated.on.runtime";
 
   private State myState = new State();
@@ -55,8 +57,8 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
 
   public void record(@NotNull AnAction action) {
     try {
-      final PluginType type = StatisticsUtilKt.getPluginType(action.getClass());
-      if (!type.isDevelopedByJetBrains()) {
+      final PluginInfo info = StatisticsUtilKt.getPluginInfo(action.getClass());
+      if (!info.getType().isDevelopedByJetBrains()) {
         return;
       }
 
@@ -71,8 +73,8 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
       }
 
       if (!StringUtil.isEmpty(path)) {
-        String key = ConvertUsagesUtil.escapeDescriptorName(path);
-        FeatureUsageLogger.INSTANCE.log(GROUP, key, FUSUsageContext.OS_CONTEXT.getData());
+        final Map<String, Object> data = new FeatureUsageDataBuilder().addFeatureContext(OS_CONTEXT).addPluginInfo(info).createData();
+        FeatureUsageLogger.INSTANCE.log(GROUP, ConvertUsagesUtil.escapeDescriptorName(path), data);
       }
     }
     catch (Exception ignore) {
