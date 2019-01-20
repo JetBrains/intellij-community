@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
-import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
+import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -61,7 +61,7 @@ return null;
     try {
       FileDocumentManager.getInstance().saveAllDocuments();
       UITheme theme = UITheme.loadFromJson(json.getInputStream(), "Temp theme", null);
-      LafManager.getInstance().setCurrentLookAndFeel(new UIThemeBasedLookAndFeelInfo(theme));
+      LafManager.getInstance().setCurrentLookAndFeel(new TempUIThemeBasedLookAndFeelInfo(theme));
       LafManager.getInstance().updateUI();
     }
     catch (IOException ignore) {}

@@ -246,14 +246,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public Element getState() {
     Element element = new Element("state");
-    if (myCurrentLaf != null) {
-      String className = myCurrentLaf.getClassName();
+    UIManager.LookAndFeelInfo laf = myCurrentLaf;
+    if (laf instanceof TempUIThemeBasedLookAndFeelInfo) {
+      laf = ((TempUIThemeBasedLookAndFeelInfo)laf).getPreviousLaf();
+    }
+    if (laf != null) {
+      String className = laf.getClassName();
       if (className != null) {
         Element child = new Element(ELEMENT_LAF);
         child.setAttribute(ATTRIBUTE_CLASS_NAME, className);
 
-        if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
-          child.setAttribute(ATTRIBUTE_THEME_NAME, ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().getId());
+        if (laf instanceof UIThemeBasedLookAndFeelInfo) {
+          child.setAttribute(ATTRIBUTE_THEME_NAME, ((UIThemeBasedLookAndFeelInfo)laf).getTheme().getId());
         }
         element.addContent(child);
       }
