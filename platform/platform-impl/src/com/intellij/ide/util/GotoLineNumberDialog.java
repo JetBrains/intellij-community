@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.PatternUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +19,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class GotoLineNumberDialog extends DialogWrapper {
-  private final Pattern myPattern = PatternUtil.compileSafe("\\s*(\\d+)?\\s*(?:[,:]?\\s*(\\d+)?)?\\s*", null);
+
+  private static final Pattern NUMBER = Pattern.compile("\\d+");
+  private static final Pattern OPERATOR = Pattern.compile("[-+]");
+  private static final Pattern SEPARATOR = Pattern.compile("[,:]");
 
   private JTextField myField;
   private JTextField myOffsetField;
@@ -50,12 +52,63 @@ public abstract class GotoLineNumberDialog extends DialogWrapper {
 
   @Nullable
   protected final Coordinates getCoordinates() {
-    Matcher m = myPattern.matcher(getText());
-    if (!m.matches()) return null;
+    return getCoordinates(getLine(), getColumn(), getText());
+  }
 
-    int l = StringUtil.parseInt(m.group(1), getLine() + 1);
-    int c = StringUtil.parseInt(m.group(2), -1);
-    return l > 0 ? new Coordinates(l - 1, Math.max(0, c - 1)) : null;
+  @Nullable
+  static Coordinates getCoordinates(int line, int column, @NotNull String input) {
+    String loc = input.replaceAll("\\s+", "");
+    int end = loc.length();
+    if (end == 0) return null;
+
+    Matcher number = NUMBER.matcher(loc);
+    Matcher operator = OPERATOR.matcher(loc);
+    Matcher separator = SEPARATOR.matcher(loc);
+    int pos = 0;
+
+    int newColumn = 0;
+
+    // Parse the absolute line number.
+    if (number.region(pos, end).lookingAt()) {
+      pos = number.end();
+      line = StringUtil.parseInt(number.group(), line + 1) - 1;
+    }
+
+    // Parse optional relative line counts like "+5" or "-20".
+    while (operator.region(pos, end).lookingAt()) {
+      pos = operator.end();
+      if (!number.region(pos, end).lookingAt()) return null;
+      pos = number.end();
+      int rhs = StringUtil.parseInt(number.group(), 0);
+      line += operator.group().equals("+") ? rhs : -rhs;
+    }
+
+    if (separator.region(pos, end).lookingAt()) {
+      pos = separator.end();
+
+      // Parse the absolute column number.
+      if (number.region(pos, end).lookingAt()) {
+        pos = number.end();
+        column = StringUtil.parseInt(number.group(), 1) - 1;
+        newColumn = column;
+      }
+
+      // Parse optional relative column counts like "+5" or "-20".
+      while (operator.region(pos, end).lookingAt()) {
+        pos = operator.end();
+        if (!number.region(pos, end).lookingAt()) return null;
+        pos = number.end();
+        int rhs = StringUtil.parseInt(number.group(), 0);
+        column += operator.group().equals("+") ? rhs : -rhs;
+        newColumn = column;
+      }
+    }
+
+    if (separator.region(pos, end).lookingAt()) {
+      pos = separator.end();
+    }
+
+    return pos == end ? new Coordinates(Math.max(line, 0), Math.max(newColumn, 0)) : null;
   }
 
   protected abstract int getLine();
