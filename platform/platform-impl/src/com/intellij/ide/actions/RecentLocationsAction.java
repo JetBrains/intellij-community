@@ -39,8 +39,10 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.WindowMoveListener;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -49,11 +51,11 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -106,7 +108,7 @@ public class RecentLocationsAction extends AnAction {
     ScrollingUtil.ensureSelectionExists(list);
 
     JLabel title = createTitle(showChanged);
-    JPanel topPanel = createTopPanel(createCheckbox(project, listWithFilter, e, showChanged), title);
+    JPanel topPanel = createHeaderPanel(title, createCheckbox(project, listWithFilter, e, showChanged));
     JPanel mainPanel = createMainPanel(listWithFilter, topPanel);
 
     Ref<Boolean> navigationRef = Ref.create(false);
@@ -123,7 +125,6 @@ public class RecentLocationsAction extends AnAction {
       })
       .setResizable(true)
       .setMovable(true)
-      .setShowBorder(false)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
       .setMinSize(new Dimension(DEFAULT_POPUP_WIDTH, JBUI.scale(100)))
       .createPopup();
@@ -230,27 +231,18 @@ public class RecentLocationsAction extends AnAction {
   private static JPanel createMainPanel(@NotNull ListWithFilter listWithFilter, @NotNull JPanel topPanel) {
     JPanel mainPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
     mainPanel.add(topPanel);
-    JLabel line = createLine();
-    mainPanel.add(line);
     mainPanel.add(listWithFilter);
     mainPanel.setBorder(BorderFactory.createEmptyBorder());
     return mainPanel;
   }
 
   @NotNull
-  private static JLabel createLine() {
-    JLabel line = new JLabel();
-    Border bottom = JBUI.Borders.customLine(JBUI.CurrentTheme.Popup.separatorTextColor(), 0, 0, 1, 0);
-    line.setBorder(bottom);
-    return line;
-  }
-
-  @NotNull
-  private static JPanel createTopPanel(@NotNull JComponent checkbox, @NotNull JLabel title) {
-    JPanel topPanel = new JPanel(new BorderLayout());
+  private static JPanel createHeaderPanel(@NotNull JLabel title, @NotNull JComponent checkbox) {
+    JPanel topPanel = new NonOpaquePanel(new BorderLayout());
     topPanel.add(title, BorderLayout.WEST);
     topPanel.add(checkbox, BorderLayout.EAST);
-    topPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
+    topPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    topPanel.setBackground(JBUI.CurrentTheme.Popup.headerBackground(true));
 
     WindowMoveListener moveListener = new WindowMoveListener(topPanel);
     topPanel.addMouseListener(moveListener);
@@ -275,14 +267,15 @@ public class RecentLocationsAction extends AnAction {
     action.getTemplatePresentation().putClientProperty(COMPONENT_KEY, checkbox);
     action.setSelected(event, changed);
     checkbox.setBorder(BorderFactory.createEmptyBorder());
+    checkbox.setForeground(UIUtil.getContextHelpForeground());
 
     return checkbox;
   }
 
   @NotNull
   private static JLabel createTitle(boolean showChanged) {
-    JLabel title = new JLabel();
-    title.setBorder(BorderFactory.createEmptyBorder());
+    JBLabel title = new JBLabel();
+    title.setFont(title.getFont().deriveFont(Font.BOLD));
     updateTitleText(title, showChanged);
     return title;
   }

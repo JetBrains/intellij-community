@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.CaretState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -23,9 +24,10 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import static com.intellij.ide.actions.RecentLocationsAction.getBreadcrumbs;
+
 class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem> {
   private static final JBColor BACKGROUND_COLOR = JBColor.namedColor("Table.lightSelectionBackground", new JBColor(0xE9EEF5, 0x464A4D));
-  private static final Color TITLE_FOREGROUND_COLOR = UIUtil.getLabelForeground().darker();
 
   @NotNull private final Project myProject;
   @NotNull private final SpeedSearch mySpeedSearch;
@@ -46,47 +48,51 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
       return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
     }
 
-    Color background = selected ? BACKGROUND_COLOR : editor.getColorsScheme().getDefaultBackground();
-    if (index % 2 == 1) {
-      background = adjustBackgroundColor(background);
-    }
-
-    IdeDocumentHistoryImpl.PlaceInfo placeInfo = value.getInfo();
-    String breadcrumb = RecentLocationsAction.getBreadcrumbs(myProject, placeInfo);
-
-    JComponent title = JBUI.Panels
-      .simplePanel()
-      .addToLeft(createBreadcrumbsComponent(list, mySpeedSearch, breadcrumb, background, selected))
-      .addToCenter(createTitledSeparator(background))
-      .addToRight(createFileNameComponent(list, mySpeedSearch, breadcrumb, placeInfo, selected))
-      .withBackground(background);
-
+    Color defaultBackground = editor.getColorsScheme().getDefaultBackground();
+    String breadcrumbs = getBreadcrumbs(myProject, value.getInfo());
     JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
-    panel.add(title);
+    panel.add(createTitleComponent(list, mySpeedSearch, breadcrumbs, value.getInfo(), defaultBackground, selected));
 
     String text = editor.getDocument().getText();
     if (!StringUtil.isEmpty(text)) {
-      addEditorComponent(panel, editor, text, background, mySpeedSearch);
+      panel.add(setupEditorComponent(editor, text, mySpeedSearch, selected ? BACKGROUND_COLOR : defaultBackground));
     }
 
     return panel;
   }
 
   @NotNull
-  private static JComponent createTitledSeparator(@NotNull Color background) {
-    JComponent titledSeparator = new TitledSeparator();
+  private static JComponent createTitleComponent(@NotNull JList<? extends RecentLocationItem> list,
+                                                 @NotNull SpeedSearch speedSearch,
+                                                 @NotNull String breadcrumb,
+                                                 @NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo,
+                                                 @NotNull Color background,
+                                                 boolean selected) {
+    JComponent title = JBUI.Panels
+      .simplePanel()
+      .addToLeft(createTitleTextComponent(list, speedSearch, placeInfo, breadcrumb, selected))
+      .addToCenter(createTitledSeparator(background));
+
+    title.setBorder(BorderFactory.createEmptyBorder(2, 0, 1, 0));
+    title.setBackground(background);
+
+    return title;
+  }
+
+  @NotNull
+  private static TitledSeparator createTitledSeparator(@NotNull Color background) {
+    TitledSeparator titledSeparator = new TitledSeparator();
+    titledSeparator.setBorder(BorderFactory.createEmptyBorder());
     titledSeparator.setBackground(background);
     return titledSeparator;
   }
 
-  private static void addEditorComponent(@NotNull JPanel panel,
-                                         @NotNull EditorEx editor,
-                                         @NotNull String text,
-                                         @NotNull Color background,
-                                         @NotNull SpeedSearch speedSearch) {
-    editor.setBackgroundColor(background);
+  @NotNull
+  private static JComponent setupEditorComponent(@NotNull EditorEx editor,
+                                                 @NotNull String text,
+                                                 @NotNull SpeedSearch speedSearch,
+                                                 @NotNull Color backgroundColor) {
     Iterable<TextRange> ranges = speedSearch.matchingFragments(text);
-
     if (ranges != null) {
       selectSearchResultsInEditor(editor, ranges.iterator());
     }
@@ -94,49 +100,43 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
       RecentLocationsAction.clearSelectionInEditor(editor);
     }
 
-    JComponent editorComponent = editor.getComponent();
-    editorComponent.setBorder(BorderFactory.createEmptyBorder());
-    panel.add(editorComponent);
+    editor.setBackgroundColor(backgroundColor);
+    editor.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
-    editor.setBorder(BorderFactory.createEmptyBorder());
+    return editor.getComponent();
   }
 
   @NotNull
-  private static SimpleColoredComponent createBreadcrumbsComponent(@NotNull JList<? extends RecentLocationItem> list,
-                                                                   @NotNull SpeedSearch speedSearch,
-                                                                   @NotNull String breadcrumb,
-                                                                   @NotNull Color background,
-                                                                   boolean selected) {
-    SimpleColoredComponent breadcrumbTextComponent = new SimpleColoredComponent();
-    breadcrumbTextComponent.setForeground(TITLE_FOREGROUND_COLOR);
-    breadcrumbTextComponent.setBackground(background);
-    breadcrumbTextComponent.append(breadcrumb);
-    Iterable<TextRange> breadCrumbRanges = speedSearch.matchingFragments(breadcrumb);
-    if (breadCrumbRanges != null) {
-      SpeedSearchUtil.applySpeedSearchHighlighting(list, breadcrumbTextComponent, true, selected);
+  private static SimpleColoredComponent createTitleTextComponent(@NotNull JList<? extends RecentLocationItem> list,
+                                                                 @NotNull SpeedSearch speedSearch,
+                                                                 @NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo,
+                                                                 @NotNull String breadcrumbText,
+                                                                 boolean selected) {
+    SimpleColoredComponent titleTextComponent = new SimpleColoredComponent();
+    titleTextComponent.append(breadcrumbText);
+
+    String text = breadcrumbText;
+    String fileName = placeInfo.getFile().getName();
+    if (!StringUtil.equals(breadcrumbText, fileName)) {
+      text += " " + fileName;
+      titleTextComponent.append(" ");
+      titleTextComponent.append(fileName, createLabelDisabledForegroundAttributes());
     }
 
-    return breadcrumbTextComponent;
+    if (speedSearch.matchingFragments(text) != null) {
+      SpeedSearchUtil.applySpeedSearchHighlighting(list, titleTextComponent, false, selected);
+    }
+
+    titleTextComponent.setBorder(BorderFactory.createEmptyBorder());
+
+    return titleTextComponent;
   }
 
   @NotNull
-  private static SimpleColoredComponent createFileNameComponent(@NotNull JList<? extends RecentLocationItem> list,
-                                                                @NotNull SpeedSearch speedSearch,
-                                                                @NotNull String breadcrumb,
-                                                                @NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo,
-                                                                boolean selected) {
-    SimpleColoredComponent fileNameComponent = new SimpleColoredComponent();
-    fileNameComponent.setForeground(TITLE_FOREGROUND_COLOR);
-    if (!StringUtil.equals(breadcrumb, placeInfo.getFile().getName())) {
-      fileNameComponent.append(placeInfo.getFile().getName());
-      fileNameComponent.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 2));
-      Iterable<TextRange> fileNameRanges = speedSearch.matchingFragments(placeInfo.getFile().getName());
-      if (fileNameRanges != null) {
-        SpeedSearchUtil.applySpeedSearchHighlighting(list, fileNameComponent, true, selected);
-      }
-    }
-
-    return fileNameComponent;
+  private static SimpleTextAttributes createLabelDisabledForegroundAttributes() {
+    TextAttributes textAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes();
+    textAttributes.setForegroundColor(UIUtil.getLabelDisabledForeground());
+    return SimpleTextAttributes.fromTextAttributes(textAttributes);
   }
 
   @Override
@@ -145,18 +145,6 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
                                        int index,
                                        boolean selected,
                                        boolean hasFocus) {
-  }
-
-  @NotNull
-  private static Color adjustBackgroundColor(@NotNull Color background) {
-    Color brighterColor = ColorUtil.brighter(background, 1);
-    if (!background.equals(brighterColor)) {
-      background = brighterColor;
-    }
-    else {
-      background = ColorUtil.hackBrightness(background, 1, 1 / 1.03F);
-    }
-    return background;
   }
 
   private static void selectSearchResultsInEditor(@NotNull Editor editor, @NotNull Iterator<TextRange> resultIterator) {
