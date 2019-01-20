@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.util.DiffPlaces;
@@ -39,6 +39,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
@@ -99,6 +100,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final List<CommitExecutorAction> myExecutorActions;
 
   @NotNull private final CommitOptionsPanel myCommitOptions;
+  //TODO this is model data
   @NotNull private final CommitContext myCommitContext;
   @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
   @NotNull private final CommitDialogChangesBrowser myBrowser;
@@ -260,7 +262,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myHandlers.addAll(createCheckinHandlers(myProject, this, myCommitContext));
 
     setTitle(myShowVcsCommit ? DIALOG_TITLE : getExecutorPresentableText(myExecutors.get(0)));
-    myCommitActionName = getCommitActionName(myAffectedVcses);
+    myCommitActionName = VcsImplUtil.getCommitActionName(myAffectedVcses);
     myExecutorActions = createExecutorActions(myExecutors);
     if (myShowVcsCommit) {
       myCommitAction = new CommitAction(myCommitActionName);
@@ -689,18 +691,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   public String getCommitActionName() {
     return myCommitActionName;
-  }
-
-  @NotNull
-  private static String getCommitActionName(@NotNull Collection<? extends AbstractVcs<?>> affectedVcses) {
-    Set<String> names = map2SetNotNull(affectedVcses, vcs -> {
-      CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
-      return checkinEnvironment != null ? checkinEnvironment.getCheckinOperationName() : null;
-    });
-    if (names.size() == 1) {
-      return notNull(getFirstItem(names));
-    }
-    return VcsBundle.getString("commit.dialog.default.commit.operation.name");
   }
 
   private boolean checkComment() {

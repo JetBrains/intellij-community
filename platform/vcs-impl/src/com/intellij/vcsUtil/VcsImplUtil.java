@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcsUtil;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
 import com.intellij.openapi.vcs.changes.IgnoredFileGenerator;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,6 +25,12 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Set;
+
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
 
 /**
  * <p>{@link VcsUtil} extension that needs access to the {@code intellij.platform.vcs.impl} module.</p>
@@ -64,6 +71,18 @@ public class VcsImplUtil {
 
   public static boolean isNonModalCommit() {
     return Registry.is("vcs.non.modal.commit");
+  }
+
+  @NotNull
+  public static String getCommitActionName(@NotNull Collection<? extends AbstractVcs<?>> affectedVcses) {
+    Set<String> names = map2SetNotNull(affectedVcses, vcs -> {
+      CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+      return checkinEnvironment != null ? checkinEnvironment.getCheckinOperationName() : null;
+    });
+    if (names.size() == 1) {
+      return notNull(getFirstItem(names));
+    }
+    return VcsBundle.getString("commit.dialog.default.commit.operation.name");
   }
 
   public static void proposeUpdateIgnoreFile(@NotNull Project project,

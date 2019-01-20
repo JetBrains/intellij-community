@@ -187,6 +187,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return "ChangesViewManager";
   }
 
+  @Nullable
+  public ChangesViewCommitPanel getCommitPanel() {
+    return myCommitPanel;
+  }
+
   public void applyParameters(@NotNull Collection<?> included) {
     if (myCommitPanel != null) myCommitPanel.applyParameters(included);
   }
