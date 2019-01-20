@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -47,10 +46,46 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
       return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
     }
 
-    IdeDocumentHistoryImpl.PlaceInfo placeInfo = value.getInfo();
-    String text = editor.getDocument().getText();
+    Color background = selected ? BACKGROUND_COLOR : editor.getColorsScheme().getDefaultBackground();
+    if (index % 2 == 1) {
+      background = adjustBackgroundColor(background);
+    }
 
-    Iterable<TextRange> ranges = mySpeedSearch.matchingFragments(text);
+    IdeDocumentHistoryImpl.PlaceInfo placeInfo = value.getInfo();
+    String breadcrumb = RecentLocationsAction.getBreadcrumbs(myProject, placeInfo);
+
+    JComponent title = JBUI.Panels
+      .simplePanel()
+      .addToLeft(createBreadcrumbsComponent(list, mySpeedSearch, breadcrumb, background, selected))
+      .addToCenter(createTitledSeparator(background))
+      .addToRight(createFileNameComponent(list, mySpeedSearch, breadcrumb, placeInfo, selected))
+      .withBackground(background);
+
+    JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
+    panel.add(title);
+
+    String text = editor.getDocument().getText();
+    if (!StringUtil.isEmpty(text)) {
+      addEditorComponent(panel, editor, text, background, mySpeedSearch);
+    }
+
+    return panel;
+  }
+
+  @NotNull
+  private static JComponent createTitledSeparator(@NotNull Color background) {
+    JComponent titledSeparator = new TitledSeparator();
+    titledSeparator.setBackground(background);
+    return titledSeparator;
+  }
+
+  private static void addEditorComponent(@NotNull JPanel panel,
+                                         @NotNull EditorEx editor,
+                                         @NotNull String text,
+                                         @NotNull Color background,
+                                         @NotNull SpeedSearch speedSearch) {
+    editor.setBackgroundColor(background);
+    Iterable<TextRange> ranges = speedSearch.matchingFragments(text);
 
     if (ranges != null) {
       selectSearchResultsInEditor(editor, ranges.iterator());
@@ -59,47 +94,24 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
       RecentLocationsAction.clearSelectionInEditor(editor);
     }
 
-    String breadcrumb = RecentLocationsAction.getBreadcrumbs(myProject, placeInfo);
-    JComponent breadcrumbTextComponent;
-    JComponent fileNameComponent;
-    if (Registry.is("recent.locations.show.breadcrumbs", true)) {
-      breadcrumbTextComponent = createBreadcrumbsComponent(list, breadcrumb, selected);
-      fileNameComponent = createFileNameComponent(list, placeInfo, breadcrumb, selected);
-    }
-    else {
-      breadcrumbTextComponent = new JPanel();
-      fileNameComponent = new JPanel();
-    }
-
-    JComponent titledSeparator = new TitledSeparator();
-    JComponent title = JBUI.Panels
-      .simplePanel()
-      .addToLeft(breadcrumbTextComponent)
-      .addToCenter(titledSeparator)
-      .addToRight(fileNameComponent);
-
     JComponent editorComponent = editor.getComponent();
+    editorComponent.setBorder(BorderFactory.createEmptyBorder());
+    panel.add(editorComponent);
 
     editor.setBorder(BorderFactory.createEmptyBorder());
-    editorComponent.setBorder(BorderFactory.createEmptyBorder());
-
-    JPanel editorPanel = new JPanel(new VerticalFlowLayout(0, 0));
-    editorPanel.add(title);
-    editorPanel.add(editorComponent);
-
-    updateBackground(editor, title, titledSeparator, breadcrumbTextComponent, selected, index);
-
-    return editorPanel;
   }
 
   @NotNull
-  public SimpleColoredComponent createBreadcrumbsComponent(@NotNull JList<? extends RecentLocationItem> list,
-                                                           @NotNull String breadcrumb,
-                                                           boolean selected) {
+  private static SimpleColoredComponent createBreadcrumbsComponent(@NotNull JList<? extends RecentLocationItem> list,
+                                                                   @NotNull SpeedSearch speedSearch,
+                                                                   @NotNull String breadcrumb,
+                                                                   @NotNull Color background,
+                                                                   boolean selected) {
     SimpleColoredComponent breadcrumbTextComponent = new SimpleColoredComponent();
     breadcrumbTextComponent.setForeground(TITLE_FOREGROUND_COLOR);
+    breadcrumbTextComponent.setBackground(background);
     breadcrumbTextComponent.append(breadcrumb);
-    Iterable<TextRange> breadCrumbRanges = mySpeedSearch.matchingFragments(breadcrumb);
+    Iterable<TextRange> breadCrumbRanges = speedSearch.matchingFragments(breadcrumb);
     if (breadCrumbRanges != null) {
       SpeedSearchUtil.applySpeedSearchHighlighting(list, breadcrumbTextComponent, true, selected);
     }
@@ -108,16 +120,17 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
   }
 
   @NotNull
-  public SimpleColoredComponent createFileNameComponent(@NotNull JList<? extends RecentLocationItem> list,
-                                                        @NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo,
-                                                        @NotNull String breadcrumb,
-                                                        boolean selected) {
+  private static SimpleColoredComponent createFileNameComponent(@NotNull JList<? extends RecentLocationItem> list,
+                                                                @NotNull SpeedSearch speedSearch,
+                                                                @NotNull String breadcrumb,
+                                                                @NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo,
+                                                                boolean selected) {
     SimpleColoredComponent fileNameComponent = new SimpleColoredComponent();
     fileNameComponent.setForeground(TITLE_FOREGROUND_COLOR);
     if (!StringUtil.equals(breadcrumb, placeInfo.getFile().getName())) {
       fileNameComponent.append(placeInfo.getFile().getName());
       fileNameComponent.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 2));
-      Iterable<TextRange> fileNameRanges = mySpeedSearch.matchingFragments(placeInfo.getFile().getName());
+      Iterable<TextRange> fileNameRanges = speedSearch.matchingFragments(placeInfo.getFile().getName());
       if (fileNameRanges != null) {
         SpeedSearchUtil.applySpeedSearchHighlighting(list, fileNameComponent, true, selected);
       }
@@ -132,22 +145,6 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
                                        int index,
                                        boolean selected,
                                        boolean hasFocus) {
-  }
-
-  private static void updateBackground(@NotNull EditorEx editor,
-                                       @NotNull JComponent title,
-                                       @NotNull JComponent titledSeparator,
-                                       @NotNull JComponent breadcrumbTextComponent,
-                                       boolean selected,
-                                       int index) {
-    Color background = selected ? BACKGROUND_COLOR : editor.getColorsScheme().getDefaultBackground();
-    if (index % 2 == 1) {
-      background = adjustBackgroundColor(background);
-    }
-    title.setBackground(background);
-    editor.setBackgroundColor(background);
-    titledSeparator.setBackground(background);
-    breadcrumbTextComponent.setBackground(background);
   }
 
   @NotNull
