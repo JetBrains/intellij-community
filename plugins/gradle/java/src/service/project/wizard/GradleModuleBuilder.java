@@ -49,13 +49,16 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinBuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.service.settings.GradleProjectSettingsControl;
+import org.jetbrains.plugins.gradle.settings.DefaultGradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
@@ -226,6 +229,8 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
 
     final Project project = module.getProject();
     if (myWizardContext.isCreatingNewProject()) {
+      preventOldSettingsMigration(project);
+
       getExternalProjectSettings().setExternalProjectPath(rootProjectPath);
       AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID);
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);
@@ -263,6 +268,15 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
       // execute when current dialog is closed
       ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, runnable);
     }
+  }
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
+  private static void preventOldSettingsMigration(Project project) {
+    DefaultGradleProjectSettings.MyState state = new DefaultGradleProjectSettings.MyState();
+    state.isMigrated = true;
+    state.delegatedBuild = true;
+    state.testRunner = TestRunner.GRADLE;
+    DefaultGradleProjectSettings.getInstance(project).loadState(state);
   }
 
   @Override
