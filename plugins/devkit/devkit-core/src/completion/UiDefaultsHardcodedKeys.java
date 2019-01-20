@@ -1496,7 +1496,6 @@ public final class UiDefaultsHardcodedKeys {
     "ToggleButton.onForeground",
     "ToggleButton.offBackground",
     "ToggleButton.offForeground",
-    "Notification.linkForeground",
     "HeaderColor.active",
     "ToolTip.Actions.background",
     "SpeedSearch.borderColor",
