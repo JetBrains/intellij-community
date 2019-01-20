@@ -99,7 +99,7 @@ public class VirtualFilePointersTreeTest extends LightPlatformTestCase {
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
   }
 
-  private void assertPointersUnder(LightVirtualFile file, String childName, VirtualFilePointer... pointers) {
+  private void assertPointersUnder(@NotNull LightVirtualFile file, @NotNull String childName, @NotNull VirtualFilePointer... pointers) {
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(file, childName), pointers);
   }
 
