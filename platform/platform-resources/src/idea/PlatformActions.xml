@@ -17,6 +17,7 @@
   <actions>
     <action id="QuickActionPopup" text="Show Quick Actions Popup" class="com.intellij.ui.switcher.ShowQuickActionPopupAction"/>
     <action id="RunConfigurationTemplatesForNewProjects" class="com.intellij.execution.actions.EditRunConfigurationTemplatesForNewProjectsAction"/>
+    <action id="CopyAboutInfo" text="Copy About Information" class="com.intellij.ide.actions.CopyAboutInfoAction"/>
 
     <group id="Other.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Others -->
     <group id="Vcs.KeymapGroup" text="Version Control Systems"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->

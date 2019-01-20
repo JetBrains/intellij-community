@@ -122,38 +122,17 @@ public class AboutPopup {
     catch (Exception ignore) { }
   }
 
-  private static class InfoSurface extends JPanel {
-    private final Color myColor;
-    private final Color myLinkColor;
-    private final Icon myImage;
-    private final boolean myShowDebugInfo;
-    private Font myFont;
-    private Font myBoldFont;
-    private final List<AboutBoxLine> myLines = new ArrayList<>();
+  static class AboutInformation {
+    private final List<InfoSurface.AboutBoxLine> myLines = new ArrayList<>();
     private final StringBuilder myInfo = new StringBuilder();
-    private final List<Link> myLinks = new ArrayList<>();
-    private Link myActiveLink;
-    private boolean myShowCopy = false;
-    private float myShowCopyAlpha;
-    private final Alarm myAlarm = new Alarm();
 
-    InfoSurface(Icon image, final boolean showDebugInfo) {
+    public AboutInformation() {
       ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
-
-      myImage = image;
-      //noinspection UseJBColor
-      myColor = Color.white;
-      myLinkColor = appInfo.getAboutLinkColor() != null ? appInfo.getAboutLinkColor() : JBUI.CurrentTheme.Link.linkColor();
-      myShowDebugInfo = showDebugInfo;
-
-      setOpaque(false);
-      setBackground(myColor);
-      setFocusable(true);
 
       String appName = appInfo.getFullApplicationName();
       String edition = ApplicationNamesInfo.getInstance().getEditionName();
       if (edition != null) appName += " (" + edition + ")";
-      myLines.add(new AboutBoxLine(appName, true));
+      myLines.add(new InfoSurface.AboutBoxLine(appName, true));
       appendLast();
 
       String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
@@ -164,47 +143,98 @@ public class AboutPopup {
       }
       buildDate += DateFormatUtil.formatAboutDialogDate(cal.getTime());
       buildInfo += IdeBundle.message("about.box.build.date", buildDate);
-      myLines.add(new AboutBoxLine(buildInfo));
+      myLines.add(new InfoSurface.AboutBoxLine(buildInfo));
       appendLast();
 
-      myLines.add(new AboutBoxLine(""));
+      myLines.add(new InfoSurface.AboutBoxLine(""));
 
       LicensingFacade la = LicensingFacade.getInstance();
       if (la != null) {
-        myLines.add(new AboutBoxLine(la.getLicensedToMessage(), true));
+        myLines.add(new InfoSurface.AboutBoxLine(la.getLicensedToMessage(), true));
         appendLast();
         for (String message : la.getLicenseRestrictionsMessages()) {
-          myLines.add(new AboutBoxLine(message));
+          myLines.add(new InfoSurface.AboutBoxLine(message));
           appendLast();
         }
       }
 
-      myLines.add(new AboutBoxLine(""));
+      myLines.add(new InfoSurface.AboutBoxLine(""));
 
       Properties properties = System.getProperties();
       String javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
       String arch = properties.getProperty("os.arch", "");
-      myLines.add(new AboutBoxLine(IdeBundle.message("about.box.jre", javaVersion, arch)));
+      myLines.add(new InfoSurface.AboutBoxLine(IdeBundle.message("about.box.jre", javaVersion, arch)));
       appendLast();
 
       String vmVersion = properties.getProperty("java.vm.name", "unknown");
       String vmVendor = properties.getProperty("java.vendor", "unknown");
-      myLines.add(new AboutBoxLine(IdeBundle.message("about.box.vm", vmVersion, vmVendor)));
+      myLines.add(new InfoSurface.AboutBoxLine(IdeBundle.message("about.box.vm", vmVersion, vmVendor)));
       appendLast();
 
-      myLines.add(new AboutBoxLine(""));
-      myLines.add(new AboutBoxLine(""));
-      myLines.add(new AboutBoxLine(IdeBundle.message("about.box.powered.by") + " ").keepWithNext());
+      myLines.add(new InfoSurface.AboutBoxLine(""));
+      myLines.add(new InfoSurface.AboutBoxLine(""));
+      myLines.add(new InfoSurface.AboutBoxLine(IdeBundle.message("about.box.powered.by") + " ").keepWithNext());
 
       final String thirdPartyLibraries = loadThirdPartyLibraries();
       if (thirdPartyLibraries != null) {
-        myLines.add(new AboutBoxLine(IdeBundle.message("about.box.open.source.software"),
+        myLines.add(new InfoSurface.AboutBoxLine(IdeBundle.message("about.box.open.source.software"),
                                      () -> showOpenSoftwareSources(thirdPartyLibraries)));
       }
       else {
         // When compiled from sources, third-party-libraries.html file isn't generated, so window can't be shown
-        myLines.add(new AboutBoxLine(IdeBundle.message("about.box.open.source.software")));
+        myLines.add(new InfoSurface.AboutBoxLine(IdeBundle.message("about.box.open.source.software")));
       }
+    }
+
+    private void appendLast() {
+      myInfo.append(myLines.get(myLines.size() - 1).getText()).append("\n");
+    }
+
+    public String getText() {
+      return myInfo.toString() + SystemInfo.getOsNameAndVersion();
+    }
+
+    @Nullable
+    private static String loadThirdPartyLibraries() {
+      final File thirdPartyLibrariesFile = new File(PathManager.getHomePath(), THIRD_PARTY_LIBRARIES_FILE_PATH);
+      if (thirdPartyLibrariesFile.isFile()) {
+        try {
+          return FileUtil.loadFile(thirdPartyLibrariesFile);
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
+      }
+      return null;
+    }
+  }
+
+  private static class InfoSurface extends JPanel {
+    private final Color myColor;
+    private final Color myLinkColor;
+    private final Icon myImage;
+    private final boolean myShowDebugInfo;
+    private final AboutInformation myAboutInformation;
+    private Font myFont;
+    private Font myBoldFont;
+    private final List<Link> myLinks = new ArrayList<>();
+    private Link myActiveLink;
+    private boolean myShowCopy = false;
+    private float myShowCopyAlpha;
+    private final Alarm myAlarm = new Alarm();
+
+    InfoSurface(Icon image, final boolean showDebugInfo) {
+      ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
+      myAboutInformation = new AboutInformation();
+      myImage = image;
+      //noinspection UseJBColor
+      myColor = Color.white;
+      myLinkColor = appInfo.getAboutLinkColor() != null ? appInfo.getAboutLinkColor() : JBUI.CurrentTheme.Link.linkColor();
+      myShowDebugInfo = showDebugInfo;
+
+      setOpaque(false);
+      setBackground(myColor);
+      setFocusable(true);
 
       addMouseListener(new MouseAdapter() {
         @Override
@@ -291,26 +321,8 @@ public class AboutPopup {
       });
     }
 
-    @Nullable
-    private static String loadThirdPartyLibraries() {
-      final File thirdPartyLibrariesFile = new File(PathManager.getHomePath(), THIRD_PARTY_LIBRARIES_FILE_PATH);
-      if (thirdPartyLibrariesFile.isFile()) {
-        try {
-          return FileUtil.loadFile(thirdPartyLibrariesFile);
-        }
-        catch (IOException e) {
-          LOG.warn(e);
-        }
-      }
-      return null;
-    }
-
     private Rectangle getCopyIconArea() {
       return new Rectangle(getCopyIconCoord(), JBUI.size(16));
-    }
-
-    private void appendLast() {
-      myInfo.append(myLines.get(myLines.size() - 1).getText()).append("\n");
     }
 
     @Override
@@ -338,7 +350,7 @@ public class AboutPopup {
         myFont = labelFont.deriveFont(Font.PLAIN, labelSize);
         myBoldFont = labelFont.deriveFont(Font.BOLD, labelSize + 1);
         try {
-          renderer.render(0, 0, myLines);
+          renderer.render(0, 0, myAboutInformation.myLines);
           break;
         }
         catch (TextRenderer.OverflowException ignore) { }
@@ -413,7 +425,7 @@ public class AboutPopup {
     }
 
     public String getText() {
-      return myInfo.toString() + SystemInfo.getOsNameAndVersion();
+      return myAboutInformation.getText();
     }
 
     private class TextRenderer {
