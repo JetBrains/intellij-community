@@ -267,11 +267,11 @@
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileEditorProvider"/>
 
     <!-- themes -->
-    <codeInsight.lineMarkerProvider language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ApplyThemeLineMarkerProvider"/>
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonCompletionContributor" language="JSON"/>
     <spellchecker.support language="JSON"
                           order="first"
                           implementationClass="org.jetbrains.idea.devkit.themes.ThemeSpellcheckingStrategy"/>
+    <editorNotificationProvider implementation="org.jetbrains.idea.devkit.themes.ThemeEditorToolbar"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>
@@ -346,6 +346,11 @@
     <action class="org.jetbrains.idea.devkit.actions.MigrateModuleNamesInSourcesAction" id="ReplaceModuleNamesInSources" internal="true">
       <add-to-group group-id="FindMenuGroup" anchor="last"/>
     </action>
+
+    <!-- Theme Toolbar -->
+    <group id="DevKit.ThemeEditorToolbar">
+      <action class="org.jetbrains.idea.devkit.themes.ApplyThemeAction" id="DevKit.ApplyTheme" text="Apply Theme" icon="AllIcons.Actions.Execute"/>
+    </group>
 
   </actions>
 
