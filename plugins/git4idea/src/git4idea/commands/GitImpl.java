@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -22,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -114,7 +101,8 @@ public class GitImpl extends GitImplBase {
     for (String relPath : output.split("\u0000")) {
       if (!fileStatusPrefix.isEmpty() && !relPath.startsWith(fileStatusPrefix)) continue;
 
-      VirtualFile f = root.findFileByRelativePath(relPath.substring(fileStatusPrefix.length()));
+      String relativePath = relPath.substring(fileStatusPrefix.length());
+      VirtualFile f = VfsUtil.findFileByIoFile(new File(root.getPath(), relativePath), true);
       if (f == null) {
         // files was created on disk, but VirtualFile hasn't yet been created,
         // when the GitChangeProvider has already been requested about changes.
