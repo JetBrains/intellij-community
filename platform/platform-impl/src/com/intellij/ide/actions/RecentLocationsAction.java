@@ -44,6 +44,7 @@ import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
@@ -59,6 +60,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.COMPONENT_KEY;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
@@ -354,28 +356,51 @@ public class RecentLocationsAction extends AnAction {
 
   @Nullable
   private static EditorEx createEditor(@NotNull Project project, @NotNull PlaceInfo placeInfo) {
-    RangeMarker rangeMarker = RecentLocationManager.getInstance(project).getRangeMarker(placeInfo, showChanged(project));
-    if (rangeMarker == null || !rangeMarker.isValid()) {
+    RangeMarker positionOffset = RecentLocationManager.getInstance(project).getPositionOffset(placeInfo, showChanged(project));
+    if (positionOffset == null || !positionOffset.isValid()) {
       return null;
     }
+    assert positionOffset.getStartOffset() == positionOffset.getEndOffset();
 
-    Document fileDocument = rangeMarker.getDocument();
+    Document fileDocument = positionOffset.getDocument();
+    int lineNumber = fileDocument.getLineNumber(positionOffset.getStartOffset());
+    TextRange actualTextRange = getTrimmedRange(fileDocument, lineNumber);
     EditorFactory editorFactory = EditorFactory.getInstance();
-    Document editorDocument =
-      editorFactory.createDocument(fileDocument.getText(TextRange.create(rangeMarker.getStartOffset(), rangeMarker.getEndOffset())));
+    Document editorDocument = editorFactory.createDocument(fileDocument.getText(actualTextRange));
     EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument, project);
 
     EditorGutterComponentEx gutterComponentEx = editor.getGutterComponentEx();
-    gutterComponentEx.setLineNumberConvertor(index -> index + fileDocument.getLineNumber(rangeMarker.getStartOffset()));
+    int linesShift = fileDocument.getLineNumber(actualTextRange.getStartOffset());
+    gutterComponentEx.setLineNumberConvertor(index -> index + linesShift);
     gutterComponentEx.setPaintBackground(false);
     JScrollPane scrollPane = editor.getScrollPane();
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
     fillEditorSettings(editor.getSettings());
-    setHighlighting(project, editor, fileDocument, placeInfo, rangeMarker);
+    setHighlighting(project, editor, fileDocument, placeInfo, actualTextRange);
 
     return editor;
+  }
+
+  @NotNull
+  private static TextRange getTrimmedRange(@NotNull Document document, int lineNumber) {
+    TextRange range = getLinesRange(document, lineNumber);
+    String text = document.getText(TextRange.create(range.getStartOffset(), range.getEndOffset()));
+
+    int newLinesBefore = StringUtil.countNewLines(Objects.requireNonNull(StringUtil.substringBefore(text, StringUtil.trimLeading(text))));
+    int newLinesAfter = StringUtil.countNewLines(Objects.requireNonNull(StringUtil.substringAfter(text, StringUtil.trimTrailing(text))));
+
+    int firstLine = document.getLineNumber(range.getStartOffset());
+    int firstLineAdjusted = firstLine + newLinesBefore;
+
+    int lastLine = document.getLineNumber(range.getEndOffset());
+    int lastLineAdjusted = lastLine - newLinesAfter;
+
+    int startOffset = document.getLineStartOffset(firstLineAdjusted);
+    int endOffset = document.getLineEndOffset(lastLineAdjusted);
+
+    return TextRange.create(startOffset, endOffset);
   }
 
   private static void initSearchActions(@NotNull Project project,
@@ -411,6 +436,32 @@ public class RecentLocationsAction extends AnAction {
     return PropertiesComponent.getInstance(project).getBoolean(SHOW_RECENT_CHANGED_LOCATIONS, false);
   }
 
+  @NotNull
+  public static TextRange getLinesRange(@NotNull Document document, int line) {
+    int lineCount = document.getLineCount();
+    if (lineCount == 0) {
+      return TextRange.EMPTY_RANGE;
+    }
+
+    int beforeAfterLinesCount = Registry.intValue("recent.locations.lines.before.and.after", 2);
+
+    int before = Math.min(beforeAfterLinesCount, line);
+    int after = Math.min(beforeAfterLinesCount, lineCount - line);
+
+    int linesBefore = before + beforeAfterLinesCount - after;
+    int linesAfter = after + beforeAfterLinesCount - before;
+
+    int startLine = Math.max(line - linesBefore, 0);
+    int endLine = Math.min(line + linesAfter, lineCount - 1);
+
+    int startOffset = document.getLineStartOffset(startLine);
+    int endOffset = document.getLineEndOffset(endLine);
+
+    return startOffset <= endOffset
+           ? TextRange.create(startOffset, endOffset)
+           : TextRange.create(DocumentUtil.getLineTextRange(document, line));
+  }
+
   static class RecentLocationItem {
     @NotNull private final PlaceInfo myInfo;
     @NotNull private final EditorEx myEditor;
@@ -435,11 +486,11 @@ public class RecentLocationsAction extends AnAction {
                                       @NotNull EditorEx editor,
                                       @NotNull Document document,
                                       @NotNull PlaceInfo placeInfo,
-                                      @NotNull RangeMarker rangeMarker) {
+                                      @NotNull TextRange textRange) {
     EditorColorsScheme colorsScheme = setupColorScheme(project, editor, placeInfo);
 
-    applySyntaxHighlighting(project, editor, placeInfo, colorsScheme, rangeMarker);
-    applyHighlightingPasses(project, editor, document, colorsScheme, rangeMarker);
+    applySyntaxHighlighting(project, editor, document, colorsScheme, textRange, placeInfo);
+    applyHighlightingPasses(project, editor, document, colorsScheme, textRange);
   }
 
   @NotNull
@@ -454,16 +505,17 @@ public class RecentLocationsAction extends AnAction {
 
   private static void applySyntaxHighlighting(@NotNull Project project,
                                               @NotNull EditorEx editor,
-                                              @NotNull PlaceInfo placeInfo,
+                                              @NotNull Document document,
                                               @NotNull EditorColorsScheme colorsScheme,
-                                              @NotNull RangeMarker rangeMarker) {
+                                              @NotNull TextRange textRange,
+                                              @NotNull PlaceInfo placeInfo) {
     EditorHighlighter editorHighlighter =
       EditorHighlighterFactory.getInstance().createEditorHighlighter(placeInfo.getFile(), colorsScheme, project);
-    editorHighlighter.setText(rangeMarker.getDocument().getText(TextRange.create(0, rangeMarker.getEndOffset())));
-    int startOffset = rangeMarker.getStartOffset();
+    editorHighlighter.setText(document.getText(TextRange.create(0, textRange.getEndOffset())));
+    int startOffset = textRange.getStartOffset();
     HighlighterIterator iterator = editorHighlighter.createIterator(startOffset);
 
-    while (!iterator.atEnd() && iterator.getEnd() <= rangeMarker.getEndOffset()) {
+    while (!iterator.atEnd() && iterator.getEnd() <= textRange.getEndOffset()) {
       if (iterator.getStart() >= startOffset) {
         editor.getMarkupModel().addRangeHighlighter(iterator.getStart() - startOffset,
                                                     iterator.getEnd() - startOffset,
@@ -480,7 +532,7 @@ public class RecentLocationsAction extends AnAction {
                                               @NotNull EditorEx editor,
                                               @NotNull Document document,
                                               @NotNull EditorColorsScheme colorsScheme,
-                                              @NotNull RangeMarker rangeMarker) {
+                                              @NotNull TextRange rangeMarker) {
     int startOffset = rangeMarker.getStartOffset();
     int endOffset = rangeMarker.getEndOffset();
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, startOffset, endOffset, info -> {

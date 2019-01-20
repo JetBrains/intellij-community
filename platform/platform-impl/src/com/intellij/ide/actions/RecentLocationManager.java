@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
@@ -20,16 +19,12 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -40,7 +35,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class RecentLocationManager implements ProjectComponent {
   @NotNull private final Project myProject;
@@ -72,9 +66,9 @@ public class RecentLocationManager implements ProjectComponent {
   }
 
   @Nullable
-  RangeMarker getRangeMarker(@NotNull PlaceInfo placeInfo, boolean showChanged) {
+  RangeMarker getPositionOffset(@NotNull PlaceInfo placeInfo, boolean showChanged) {
     PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
-    return item == null ? null : item.getRangeMarker();
+    return item == null ? null : item.getPositionOffset();
   }
 
   @Nullable
@@ -146,26 +140,9 @@ public class RecentLocationManager implements ProjectComponent {
       return;
     }
 
-    Document document = editor.getDocument();
-    TextRange range = getLinesRange(document, logicalPosition.line);
-    String text = document.getText(TextRange.create(range.getStartOffset(), range.getEndOffset()));
-
-    int newLinesBefore = StringUtil.countNewLines(
-      Objects.requireNonNull(StringUtil.substringBefore(text, StringUtil.trimLeading(text, '\n'))));
-    int newLinesAfter = StringUtil.countNewLines(
-      Objects.requireNonNull(StringUtil.substringAfter(text, StringUtil.trimTrailing(text, '\n'))));
-
-    int firstLine = document.getLineNumber(range.getStartOffset());
-    int firstLineAdjusted = firstLine + newLinesBefore;
-
-    int lastLine = document.getLineNumber(range.getEndOffset());
-    int lastLineAdjusted = lastLine - newLinesAfter;
-
-    int startOffset = document.getLineStartOffset(firstLineAdjusted);
-    int endOffset = document.getLineEndOffset(lastLineAdjusted);
-
+    int offset = editor.logicalPositionToOffset(logicalPosition);
     items.put(changePlace, new PlaceInfoPersistentItem(getBreadcrumbs(project, editor, changePlace, logicalPosition),
-                                                       document.createRangeMarker(startOffset, endOffset),
+                                                       editor.getDocument().createRangeMarker(offset, offset),
                                                        editor.getColorsScheme()));
   }
 
@@ -230,52 +207,20 @@ public class RecentLocationManager implements ProjectComponent {
   }
 
   @NotNull
-  private static Pair<Integer, Integer> getBoundLineNumbers(@NotNull Document document, int line) {
-    int lineCount = document.getLineCount();
-    if (lineCount == 0) {
-      return Pair.create(0, 0);
-    }
-
-    int beforeAfterLinesCount = Registry.intValue("recent.locations.lines.before.and.after", 2);
-    int before = Math.min(beforeAfterLinesCount, line);
-    int after = Math.min(beforeAfterLinesCount, lineCount - line - 1);
-
-    int linesBefore = before + beforeAfterLinesCount - after;
-    int linesAfter = after + beforeAfterLinesCount - before;
-
-    int start = Math.max(line - linesBefore, 0);
-    int end = Math.min(line + linesAfter, lineCount - 1);
-
-    return Pair.create(start, end);
-  }
-
-  @NotNull
-  private static TextRange getLinesRange(@NotNull Document document, int line) {
-    Pair<Integer, Integer> lines = getBoundLineNumbers(document, line);
-
-    int startOffset = DocumentUtil.getLineTextRange(document, lines.getFirst()).getStartOffset();
-    int endOffset = DocumentUtil.getLineTextRange(document, lines.getSecond()).getEndOffset();
-
-    return startOffset <= endOffset
-           ? TextRange.create(startOffset, endOffset)
-           : TextRange.create(DocumentUtil.getLineTextRange(document, line));
-  }
-
-  @NotNull
   private Map<PlaceInfo, PlaceInfoPersistentItem> getMap(boolean showChanged) {
     return showChanged ? myChangedItems : myRecentItems;
   }
 
   private static class PlaceInfoPersistentItem {
     @NotNull private final Collection<Iterable<? extends Crumb>> myCrumbs;
-    @NotNull private final RangeMarker myRangeMarker;
+    @NotNull private final RangeMarker myPositionOffset;
     @NotNull private final EditorColorsScheme myScheme;
 
     PlaceInfoPersistentItem(@NotNull Collection<Iterable<? extends Crumb>> crumbs,
-                            @NotNull RangeMarker rangeMarker,
+                            @NotNull RangeMarker positionOffset,
                             @NotNull EditorColorsScheme scheme) {
       myCrumbs = crumbs;
-      myRangeMarker = rangeMarker;
+      myPositionOffset = positionOffset;
       myScheme = scheme;
     }
 
@@ -290,8 +235,8 @@ public class RecentLocationManager implements ProjectComponent {
     }
 
     @NotNull
-    private RangeMarker getRangeMarker() {
-      return myRangeMarker;
+    private RangeMarker getPositionOffset() {
+      return myPositionOffset;
     }
   }
 
