@@ -65,7 +65,7 @@ import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea .maven.model.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.jetbrains.idea.maven.server.embedder.*;
 import org.sonatype.aether.RepositorySystemSession;
@@ -354,7 +354,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
               break;
             }
           }
-          catch (ProfileActivationException e) {
+          catch (Exception e) {
             Maven3ServerGlobals.getLogger().warn(e);
           }
         }

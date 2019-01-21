@@ -1,0 +1,7 @@
+org.apache.maven.archetype:archetype-common:2.2
+org.apache.maven.archetype:archetype-сatalog:2.2
+org.apache.maven:maven-compat:3.0.5
+org.apache.maven.shared:maven-dependency-tree:1.2
+org.sonatype.nexus:nexus-indexer:3.0.4
+org.sonatype.nexus:nexus-indexer-artifact:1.0.1
+org.apache.maven:maven-model-builder:3.3.9

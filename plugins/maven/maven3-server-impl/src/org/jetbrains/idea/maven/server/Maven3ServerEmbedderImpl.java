@@ -380,7 +380,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
               break;
             }
           }
-          catch (ProfileActivationException e) {
+          catch (Exception e) {
             Maven3ServerGlobals.getLogger().warn(e);
           }
         }

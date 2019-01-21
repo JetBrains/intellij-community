@@ -506,6 +506,11 @@ public class MavenEmbedder {
     container.setClassWorld(new ClassWorld("plexus.core", embedderSettings.getClass().getClassLoader()));
     container.setLoggerManager(new BaseLoggerManager() {
       @Override
+      public void setThresholds(int i) {
+        setThreshold(i);
+      }
+
+      @Override
       protected Logger createLogger(final String s) {
         return logger;
       }
