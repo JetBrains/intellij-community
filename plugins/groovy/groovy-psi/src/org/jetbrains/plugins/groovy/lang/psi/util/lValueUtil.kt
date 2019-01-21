@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GroovyLValueUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.util
@@ -31,23 +31,20 @@ fun GrExpression.isLValue(): Boolean {
   }
 }
 
-class RValue(val argument: Argument)
-
 /**
  * @return non-null result iff this expression is an l-value
  */
-fun GrExpression.getRValue(): RValue? {
+fun GrExpression.getRValue(): Argument? {
   val parent = parent
   return when {
-    parent is GrTuple -> RValue(UnknownArgument)
+    parent is GrTuple -> UnknownArgument
     parent is GrAssignmentExpression && parent.lValue === this -> {
-      val argument = if (parent.isOperatorAssignment) {
+      if (parent.isOperatorAssignment) {
         ExpressionArgument(parent)
       }
       else {
         parent.rValue?.let(::ExpressionArgument) ?: UnknownArgument
       }
-      RValue(argument)
     }
     else -> null
   }
