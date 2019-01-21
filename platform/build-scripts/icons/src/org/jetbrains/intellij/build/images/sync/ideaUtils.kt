@@ -2,9 +2,13 @@
 package org.jetbrains.intellij.build.images.sync
 
 import com.intellij.openapi.util.SystemInfo
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.serialization.JpsMacroExpander
+import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.io.File
+import java.io.IOException
 
 private val vcsPattern = """(?<=mapping directory=").*(?=" vcs="Git")""".toRegex()
 private val jme by lazy {
@@ -38,3 +42,16 @@ internal fun vcsRoots(project: File): List<File> {
 }
 
 internal fun expandJpsMacro(text: String) = jme.substitute(text, SystemInfo.isFileSystemCaseSensitive)
+
+internal fun searchTestRoots(project: String) = try {
+  JpsSerializationManager.getInstance()
+    .loadModel(project, null)
+    .project.modules.flatMap {
+    it.getSourceRoots(JavaSourceRootType.TEST_SOURCE) +
+    it.getSourceRoots(JavaResourceRootType.TEST_RESOURCE)
+  }.mapTo(mutableSetOf()) { it.file }
+}
+catch (e: IOException) {
+  e.printStackTrace()
+  emptySet<File>()
+}

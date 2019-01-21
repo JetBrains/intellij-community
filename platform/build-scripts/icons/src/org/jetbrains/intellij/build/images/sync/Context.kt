@@ -38,7 +38,6 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   var iconsCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
   val iconsCommitHashesToSync: MutableSet<String>
   val devIconsCommitHashesToSync: MutableSet<String>
-  lateinit var devIconsFilter: (File) -> Boolean
   /**
    * commits to review id
    */
@@ -128,7 +127,14 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   }
 
   val byDesigners = Changes(includeRemoved = doSyncRemovedIconsInDev)
-
+  val devIconsFilter: (File) -> Boolean by lazy {
+    val skipDirsRegex = skipDirsPattern?.toRegex()
+    val testRoots = searchTestRoots(devRepoRoot.absolutePath)
+    log("Found ${testRoots.size} test roots")
+    return@lazy { file: File ->
+      filterDevIcon(file, testRoots, skipDirsRegex, this)
+    }
+  }
 
   fun devChanges() = byDev.all()
   fun iconsChanges() = byDesigners.all()

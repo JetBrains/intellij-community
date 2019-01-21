@@ -138,15 +138,19 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
     .filter(context.devIconsFilter)
     .map { it.toRelativeString(context.devRepoRoot) }.toList()
   ArrayList(context.devIconsCommitHashesToSync).mapNotNull { commit ->
-    devRepoVcsRoots.asSequence()
-      .map { repo -> callSafely { commitInfo(repo, commit) } }
-      .filterNotNull().firstOrNull()
-      .apply {
-        if (this == null) {
-          log("No repo is found for $commit, skipping")
-          context.devIconsCommitHashesToSync.remove(commit)
-        }
+    devRepoVcsRoots.asSequence().map { repo ->
+      try {
+        commitInfo(repo, commit)
       }
+      catch (ignored: Exception) {
+        null
+      }
+    }.filterNotNull().firstOrNull().apply {
+      if (this == null) {
+        log("No repo is found for $commit, skipping")
+        context.devIconsCommitHashesToSync.remove(commit)
+      }
+    }
   }.sortedBy { it.timestamp }.forEach {
     val commit = it.hash
     val before = context.devChanges().size
@@ -173,17 +177,10 @@ private fun readIconsRepo(context: Context) = protectStdErr {
 }
 
 private fun readDevRepo(context: Context, devRepoVcsRoots: List<File>) = protectStdErr {
-  val testRoots = searchTestRoots(context.devRepoRoot.absolutePath)
-  log("Found ${testRoots.size} test roots")
   if (context.skipDirsPattern != null) {
     log("Using pattern ${context.skipDirsPattern} to skip dirs")
   }
-  val skipDirsRegex = context.skipDirsPattern?.toRegex()
-  context.devIconsFilter = { file: File ->
-    filterDevIcon(file, testRoots, skipDirsRegex, context)
-  }
-  val devIcons = if (devRepoVcsRoots.size == 1
-                     && devRepoVcsRoots.contains(context.devRepoRoot)) {
+  val devIcons = if (devRepoVcsRoots.size == 1 && devRepoVcsRoots.contains(context.devRepoRoot)) {
     // read icons from devRepoRoot
     listGitObjects(context.devRepoRoot, context.devRepoDir, context.devIconsFilter)
   }
@@ -195,26 +192,13 @@ private fun readDevRepo(context: Context, devRepoVcsRoots: List<File>) = protect
   devIcons.toMutableMap()
 }
 
-private fun filterDevIcon(file: File, testRoots: Set<File>, skipDirsRegex: Regex?, context: Context): Boolean {
+internal fun filterDevIcon(file: File, testRoots: Set<File>, skipDirsRegex: Regex?, context: Context): Boolean {
   val path = file.toPath()
   if (doSkip(file, testRoots, skipDirsRegex)) return false
   return Files.exists(path) && isValidIcon(path) ||
          // if not exists then check respective icon in icons repo
          !Files.exists(path) && isValidIcon(context.iconsRepoDir.resolve(file.toRelativeString(context.devRepoRoot)).toPath()) ||
          IconRobotsDataReader.isSyncForced(file)
-}
-
-private fun searchTestRoots(devRepoDir: String) = try {
-  JpsSerializationManager.getInstance()
-    .loadModel(devRepoDir, null)
-    .project.modules.flatMap {
-    it.getSourceRoots(JavaSourceRootType.TEST_SOURCE) +
-    it.getSourceRoots(JavaResourceRootType.TEST_RESOURCE)
-  }.mapTo(mutableSetOf()) { it.file }
-}
-catch (e: IOException) {
-  e.printStackTrace()
-  emptySet<File>()
 }
 
 private fun isValidIcon(file: Path) = muteStdErr {
