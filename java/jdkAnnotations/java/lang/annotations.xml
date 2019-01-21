@@ -49,6 +49,9 @@
       <val name="flagsFromClass" val="java.lang.reflect.Modifier.class" />
     </annotation>
   </item>
+  <item name='java.lang.Class java.io.InputStream getResourceAsStream(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.lang.Class java.lang.Class&lt;?&gt; forName(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>

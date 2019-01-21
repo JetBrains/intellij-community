@@ -22,7 +22,7 @@ import static com.intellij.util.ObjectUtils.notNull;
  */
 @SuppressWarnings("UseJBColor")
 public class JBColor extends Color {
-  public final static Color PanelBackground = namedColor("Panel.background", 0xffffff);
+  public static final Color PanelBackground = namedColor("Panel.background", 0xffffff);
 
   private static class Lazy {
     private static volatile boolean DARK = UIUtil.isUnderDarcula();
@@ -47,11 +47,13 @@ public class JBColor extends Color {
     func = function;
   }
 
+  @NotNull
   public static JBColor namedColor(@NotNull String propertyName, int defaultValueRGB) {
     return namedColor(propertyName, new Color(defaultValueRGB));
   }
 
 
+  @NotNull
   public static JBColor namedColor(@NotNull final String propertyName, @NotNull final Color defaultColor) {
     return new JBColor(new NotNullProducer<Color>() {
       @NotNull

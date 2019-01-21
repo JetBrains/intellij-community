@@ -321,7 +321,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     }
 
     @Nullable
-    BufferedImage getImage(Graphics2D g, Color color, double height) {
+    BufferedImage getImage(@NotNull Graphics2D g, Color color, double height) {
       ConcurrentHashMap<Integer, BufferedImage> cache = UIUtil.isJreHiDPI(g) ? myHiDPICache : myNormalCache;
       int key = Objects.hash(color.getRGB(), JBUI.sysScale(g), height);
       BufferedImage image = cache.get(key);
@@ -333,7 +333,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     }
 
     @Nullable
-    BufferedImage createImage(Graphics2D g, Paint paint, double height) {
+    BufferedImage createImage(@NotNull Graphics2D g, Paint paint, double height) {
       double period = getPeriod(height);
       int width = (int)period << (paint instanceof Color ? 8 : 1);
       if (width <= 0 || height <= 0) return null;
