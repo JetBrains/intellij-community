@@ -874,7 +874,7 @@ public final class PythonSdkType extends SdkType {
     return false;
   }
 
-  public static boolean isRunAsRootViaSudo(Sdk sdk) {
+  public static boolean isRunAsRootViaSudo(@NotNull Sdk sdk) {
     SdkAdditionalData data = sdk.getSdkAdditionalData();
     return data instanceof PyRemoteSdkAdditionalDataBase && ((PyRemoteSdkAdditionalDataBase)data).isRunAsRootViaSudo();
   }
