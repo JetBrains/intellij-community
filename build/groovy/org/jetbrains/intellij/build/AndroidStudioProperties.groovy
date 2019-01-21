@@ -264,6 +264,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       }
     }
 
+    buildContext.ant.copy(todir: "$androidPluginLib/layoutlib/data") {
+      fileset(file: "$root/bazel-genfiles/tools/adt/idea/resources-aar/framework_res.jar")
+    }
+
     // TODO: This extra copying is unfortunate, but our TemplateManager doesn't seem to handle the default resources.jar packaging (which
     // works out just fine for the rest of Intellij, see lib/resources.jar).
     buildContext.ant.copy(todir: "$androidPluginLib/templates") {
