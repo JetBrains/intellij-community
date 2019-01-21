@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalStateComponent;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
@@ -111,15 +112,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     final String originModuleFilePath = getModuleFilePath();
     LOG.assertTrue(originModuleFilePath != null);
 
-    String moduleName;
-    if (myProjectId == null) {
-      moduleName = getName();
-    }
-    else {
-      moduleName = getExternalProjectSettings().isUseQualifiedModuleNames() && StringUtil.isNotEmpty(myProjectId.getGroupId())
-                   ? (myProjectId.getGroupId() + '.' + myProjectId.getArtifactId())
-                   : myProjectId.getArtifactId();
-    }
+    String moduleName = myProjectId == null ? getName() : myProjectId.getArtifactId();
     Project contextProject = myWizardContext.getProject();
     String projectFileDirectory = null;
     if (myWizardContext.isCreatingNewProject() || contextProject == null || contextProject.getBasePath() == null) {
@@ -225,7 +218,12 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     }
 
     // it will be set later in any case, but save is called immediately after project creation, so, to ensure that it will be properly saved as external system module
-    ExternalSystemModulePropertyManager.getInstance(module).setExternalId(GradleConstants.SYSTEM_ID);
+    ExternalSystemModulePropertyManager modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module);
+    modulePropertyManager.setExternalId(GradleConstants.SYSTEM_ID);
+    // set linked project path to be able to map the module with the module data obtained from the import
+    ExternalStateComponent moduleState = modulePropertyManager.getState();
+    moduleState.setRootProjectPath(rootProjectPath);
+    moduleState.setLinkedProjectPath(rootProjectPath);
 
     final Project project = module.getProject();
     if (myWizardContext.isCreatingNewProject()) {
