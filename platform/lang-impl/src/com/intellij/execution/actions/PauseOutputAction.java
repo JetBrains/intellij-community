@@ -45,18 +45,14 @@ public class PauseOutputAction extends ToggleAction implements DumbAware {
       ConsoleView consoleView = getConsoleView(event);
       if (consoleView == null || !consoleView.canPause()) {
         presentation.setEnabled(false);
-        return;
-      }
-      if (!consoleView.hasDeferredOutput()) {
-        presentation.setEnabled(false);
-      }
-      else {
+      } else {
         RunContentDescriptor descriptor = StopAction.getRecentlyStartedContentDescriptor(event.getDataContext());
         ProcessHandler handler = descriptor != null ? descriptor.getProcessHandler() : null;
         if (handler != null && !handler.isProcessTerminated()) {
           presentation.setEnabled(true);
-        }
-        else {
+        } else if (consoleView.hasDeferredOutput()) {
+          presentation.setEnabled(true);
+        } else {
           presentation.setEnabled(false);
         }
       }
