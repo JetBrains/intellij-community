@@ -105,7 +105,7 @@ public class ImageLoader implements Serializable {
       }
       Image image = loadImpl(url, stream, scale);
       if (image != null && cacheKey != null &&
-          image.getWidth(null) * image.getHeight(null) * 4 <= CACHED_IMAGE_MAX_SIZE)
+          4L * image.getWidth(null) * image.getHeight(null) <= CACHED_IMAGE_MAX_SIZE)
       {
         ourCache.put(cacheKey, image);
       }

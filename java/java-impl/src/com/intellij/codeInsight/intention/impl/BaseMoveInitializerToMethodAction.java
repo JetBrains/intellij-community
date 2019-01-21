@@ -37,9 +37,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
- * refactored from {@link com.intellij.codeInsight.intention.impl.MoveInitializerToConstructorAction}
+ * refactored from {@link MoveInitializerToConstructorAction}
  *
  * @author Danila Ponomarenko
  */
@@ -83,7 +84,10 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     if (methodsToAddInitialization.isEmpty()) return;
 
     final List<PsiExpressionStatement> assignments = addFieldAssignments(field, methodsToAddInitialization);
-    field.getInitializer().delete();
+    PsiExpression initializer = field.getInitializer();
+    if (initializer != null) {
+      initializer.delete();
+    }
 
     if (!assignments.isEmpty()) {
       highlightRExpression((PsiAssignmentExpression)assignments.get(0).getExpression(), project, editor);
@@ -131,7 +135,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     initializer = RefactoringUtil.convertInitializerToNormalExpression(initializer, field.getType());
 
     final PsiAssignmentExpression expression = (PsiAssignmentExpression)statement.getExpression();
-    expression.getRExpression().replace(initializer);
+    Objects.requireNonNull(expression.getRExpression()).replace(Objects.requireNonNull(initializer));
 
     final PsiElement newStatement = codeBlock.addBefore(statement, findFirstFieldUsage(codeBlock.getStatements(), field));
     replaceWithQualifiedReferences(newStatement, newStatement, factory);

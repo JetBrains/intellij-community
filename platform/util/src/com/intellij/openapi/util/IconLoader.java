@@ -789,7 +789,7 @@ public final class IconLoader {
         Image image = loadFromUrl(ctx, isDark());
         icon = checkIcon(image, CachedImageIcon.this);
 
-        if (icon != null && icon.getIconWidth() * icon.getIconHeight() * 4 < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
+        if (icon != null && 4L * icon.getIconWidth() * icon.getIconHeight() < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
           scaledIconsCache.put(key(ctx), new SoftReference<ImageIcon>(icon));
         }
         return icon;
