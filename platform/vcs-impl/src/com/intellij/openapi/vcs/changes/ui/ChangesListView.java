@@ -56,7 +56,9 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     setDragEnabled(true);
 
     if (showCheckboxes) {
-      setInclusionHashingStrategy(ChangeListChange.HASHING_STRATEGY);
+      // TODO Ctrl + K does not select anything with this strategy - as there are Change vs ChangeListChange
+      // TODO Need to add additional support for partial changes anyway - like in MultipleLocalChangeListsBrowser (particularly getNodeState())
+      // setInclusionHashingStrategy(ChangeListChange.HASHING_STRATEGY);
     }
   }
 
