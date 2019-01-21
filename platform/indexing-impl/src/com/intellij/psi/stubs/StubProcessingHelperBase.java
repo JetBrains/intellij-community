@@ -144,7 +144,7 @@ public abstract class StubProcessingHelperBase {
   private void inconsistencyDetected(@Nullable ObjectStubTree stubTree, @NotNull PsiFileWithStubSupport psiFile) {
     try {
       StubTextInconsistencyException.checkStubTextConsistency(psiFile);
-      LOG.error(StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch("PSI and index do not match.", stubTree, psiFile));
+      LOG.error(StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null));
     }
     finally {
       onInternalError(psiFile.getVirtualFile());

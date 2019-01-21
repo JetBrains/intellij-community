@@ -196,10 +196,9 @@ final class FileTrees {
       });
     }
     catch (Throwable e) {
-      LOG.error(e);
       myFile.clearContent(PsiFileImpl.STUB_PSI_MISMATCH);
       myFile.rebuildStub();
-      throw StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(e.getMessage(), stubTree, myFile);
+      throw StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, myFile, e);
     }
   }
 
