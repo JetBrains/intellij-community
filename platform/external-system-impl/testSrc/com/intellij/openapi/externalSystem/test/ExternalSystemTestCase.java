@@ -157,7 +157,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   @Override
   public void tearDown() throws Exception {
     new RunAll(
-      () -> PathKt.delete(ProjectUtil.getExternalConfigurationDir(myProject)),
+      () -> {
+        if (myProject != null && !myProject.isDisposed()) {
+          PathKt.delete(ProjectUtil.getExternalConfigurationDir(myProject));
+        }
+      },
       () -> EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures()),
       () -> myProject = null,
       () -> PathKt.delete(myTestDir.toPath()),
