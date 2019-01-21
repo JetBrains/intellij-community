@@ -30,6 +30,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+import static com.intellij.openapi.editor.markup.EffectType.LINE_UNDERSCORE;
 import static com.intellij.openapi.editor.markup.HighlighterTargetArea.EXACT_RANGE;
 
 public class FocusModeModel {
@@ -138,7 +139,7 @@ public class FocusModeModel {
     Color foreground = Registry.getColor(ColorUtil.isDark(background) ?
                                          "editor.focus.mode.color.dark" :
                                          "editor.focus.mode.color.light", Color.GRAY);
-    TextAttributes attributes = new TextAttributes(foreground, background, background, null, Font.PLAIN);
+    TextAttributes attributes = new TextAttributes(foreground, background, background, LINE_UNDERSCORE, Font.PLAIN);
     myEditor.putUserData(FOCUS_MODE_ATTRIBUTES, attributes);
 
     MarkupModel markupModel = myEditor.getMarkupModel();
