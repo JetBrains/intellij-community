@@ -65,7 +65,7 @@ class ChangesViewCommitPanel(
   val workflow = ChangesViewCommitWorkflow(project)
   //  TODO handlers
   //  TODO vcses
-  val commitOptionsPanel = CommitOptionsPanel(this, emptyList(), vcsManager.allActiveVcss.toList())
+  val commitOptionsPanel = CommitOptionsPanel(this, emptyList(), vcsManager.allActiveVcss.toList(), workflow.additionalDataConsumer)
 
   init {
     val buttonPanel = simplePanel()

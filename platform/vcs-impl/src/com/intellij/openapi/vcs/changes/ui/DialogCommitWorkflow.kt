@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.NullableFunction
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.UIUtil.addBorder
@@ -70,13 +69,9 @@ open class DialogCommitWorkflow(
     return true
   }
 
-  protected open fun doCommit(changeList: LocalChangeList,
-                              changes: List<Change>,
-                              commitMessage: String,
-                              handlers: List<CheckinHandler>,
-                              additionalData: NullableFunction<Any, Any>) {
+  protected open fun doCommit(changeList: LocalChangeList, changes: List<Change>, commitMessage: String, handlers: List<CheckinHandler>) {
     LOG.debug("Do actual commit")
-    val committer = SingleChangeListCommitter(project, changeList, changes, commitMessage, handlers, additionalData, vcsToCommit,
+    val committer = SingleChangeListCommitter(project, changeList, changes, commitMessage, handlers, additionalDataHolder, vcsToCommit,
                                               DIALOG_TITLE, isDefaultChangeListFullyIncluded)
 
     committer.addResultHandler(resultHandler ?: DefaultCommitResultHandler(committer))

@@ -4,13 +4,21 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.PseudoMap
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
+import com.intellij.util.NullableFunction
+import com.intellij.util.PairConsumer
 
 private val LOG = logger<AbstractCommitWorkflow>()
 
 abstract class AbstractCommitWorkflow(val project: Project) {
   val commitContext: CommitContext = CommitContext()
+
+  // TODO Unify with CommitContext
+  private val additionalData = PseudoMap<Any, Any>()
+  val additionalDataConsumer: PairConsumer<Any, Any> get() = additionalData
+  val additionalDataHolder: NullableFunction<Any, Any> get() = additionalData
 
   fun wrapIntoCheckinMetaHandlers(runnable: Runnable, handlers: List<CheckinHandler>): Runnable {
     var result = runnable
