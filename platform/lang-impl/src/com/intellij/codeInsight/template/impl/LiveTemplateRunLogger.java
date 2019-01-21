@@ -4,7 +4,6 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.lang.Language;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +15,7 @@ class LiveTemplateRunLogger {
   static void log(@NotNull TemplateImpl template, @NotNull Language language) {
     String key = template.getKey();
     String groupName = template.getGroupName();
-    if (StringUtil.isNotEmpty(key) && StringUtil.isNotEmpty(groupName)) {
+    if (TemplateSettings.getInstance().isStatisticsSafeTemplate(key, groupName)) {
       Map<String, Object> data = ContainerUtil.newHashMap();
       data.put("fileLanguage", language.getID());
       data.put("groupName", groupName);

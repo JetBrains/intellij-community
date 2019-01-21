@@ -331,9 +331,9 @@ public class TemplateState implements Disposable {
     }
   }
 
-  public void start(@NotNull TemplateImpl template,
-                    @Nullable final PairProcessor<? super String, ? super String> processor,
-                    @Nullable Map<String, String> predefinedVarValues) {
+  void start(@NotNull TemplateImpl template,
+             @Nullable PairProcessor<? super String, ? super String> processor,
+             @Nullable Map<String, String> predefinedVarValues) {
     LOG.assertTrue(!myStarted, "Already started");
     myStarted = true;
 
@@ -1080,7 +1080,7 @@ public class TemplateState implements Disposable {
     }
   }
 
-  public boolean isDisposed() {
+  boolean isDisposed() {
     return myDocument == null;
   }
 
@@ -1413,7 +1413,7 @@ public class TemplateState implements Disposable {
     }
   }
 
-  public Map getProperties() {
+  Map getProperties() {
     return myProperties;
   }
 

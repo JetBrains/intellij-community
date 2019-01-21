@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.AbstractBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -18,6 +19,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
@@ -92,6 +94,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private final SchemeManager<TemplateGroup> mySchemeManager;
 
   private State myState = new State();
+  private final Set<Pair<String, String>> myStatisticsSafeTemplates = new HashSet<>();
 
   static final class ShortcutConverter extends Converter<Character> {
     @NotNull
@@ -483,12 +486,25 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
     if (inputStream != null) {
       TemplateGroup group = readTemplateFile(JDOMUtil.load(inputStream), getDefaultTemplateName(defTemplate), true, registerTemplate, provider.getClass().getClassLoader());
-      if (group != null && group.getReplace() != null) {
-        for (TemplateImpl template : myTemplates.get(group.getReplace())) {
-          removeTemplate(template);
+      if (group != null) {
+        if (group.getReplace() != null) {
+          for (TemplateImpl template : myTemplates.get(group.getReplace())) {
+            removeTemplate(template);
+          }
+        }
+        if (PluginInfoDetectorKt.getPluginInfo(provider.getClass()).isSafeToReport()) {
+          for (TemplateImpl template : group.getElements()) {
+            myStatisticsSafeTemplates.add(Pair.create(template.getKey(), template.getGroupName()));
+          }
         }
       }
     }
+  }
+
+  public boolean isStatisticsSafeTemplate(String key, String groupName) {
+    return StringUtil.isNotEmpty(key) &&
+           StringUtil.isNotEmpty(groupName) &&
+           myStatisticsSafeTemplates.contains(Pair.create(key, groupName));
   }
 
   private static String getDefaultTemplateName(String defTemplate) {
