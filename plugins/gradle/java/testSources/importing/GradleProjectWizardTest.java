@@ -26,6 +26,7 @@ import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -127,6 +128,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
       }
       else if (step instanceof GradleModuleWizardStep) {
         SelectExternalProjectDialog projectDialog = new SelectExternalProjectDialog(GradleConstants.SYSTEM_ID, project, null);
+        Disposer.register(getTestRootDisposable(), projectDialog.getDisposable());
         JComponent component = projectDialog.getPreferredFocusedComponent();
         ProjectNode projectNode = (ProjectNode)((SimpleTree)component).getNodeFor(0);
         assertEquals(projectName, projectNode.getName());
