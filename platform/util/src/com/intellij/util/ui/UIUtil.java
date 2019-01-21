@@ -2321,39 +2321,42 @@ public class UIUtil {
     g.setComposite(X_RENDER_ACTIVE.getValue() ? AlphaComposite.SrcOver : AlphaComposite.Src);
   }
 
-  /** @see #pump() */
+  /**
+   * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
+   * @see #pump()
+   */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
+    assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
+    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    Method dispatchEventMethod;
+    try {
+      dispatchEventMethod = eventQueue.getClass().getDeclaredMethod("dispatchEvent", AWTEvent.class);
+    }
+    catch (NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    }
     for (int i = 1; ; i++) {
-      AWTEvent event = dispatchInvocationEvent();
+      AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
+      try {
+        event = eventQueue.getNextEvent();
+        if (event instanceof InvocationEvent) {
+          dispatchEventMethod.invoke(eventQueue, event);
+        }
+      }
+      catch (InvocationTargetException e) {
+        ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
 
       if (i % 10000 == 0) {
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println("Suspiciously many (" + i + ") AWT events, last dispatched " + event);
       }
     }
-  }
-
-  @TestOnly
-  public static AWTEvent dispatchInvocationEvent() {
-    assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
-    final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    AWTEvent event = eventQueue.peekEvent();
-    if (event == null) return null;
-    try {
-      event = eventQueue.getNextEvent();
-      if (event instanceof InvocationEvent) {
-        eventQueue.getClass().getDeclaredMethod("dispatchEvent", AWTEvent.class).invoke(eventQueue, event);
-      }
-    }
-    catch (InvocationTargetException e) {
-      ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    return event;
   }
 
   private static Thread getEventQueueThread() {
