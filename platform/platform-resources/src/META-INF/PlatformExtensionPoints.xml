@@ -198,6 +198,7 @@
 
     <extensionPoint name="editorNavigation" interface="com.intellij.openapi.editor.EditorNavigationDelegate"/>
 
+    <extensionPoint name="statistics.usagesCollector" interface="com.intellij.internal.statistic.UsagesCollector"/>
     <extensionPoint name="statistics.applicationUsagesCollector" interface="com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector"/>
     <extensionPoint name="statistics.projectUsagesCollector" interface="com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector"/>
 
