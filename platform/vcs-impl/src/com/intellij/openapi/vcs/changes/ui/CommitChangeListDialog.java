@@ -724,7 +724,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     Ref<CheckinHandler.ReturnResult> compoundResultRef = Ref.create();
     Runnable proceedRunnable = () -> {
       FileDocumentManager.getInstance().saveAllDocuments();
-      compoundResultRef.set(runBeforeCheckinHandlers(executor));
+      compoundResultRef.set(runBeforeCheckinHandlers(executor, myHandlers));
     };
 
     Runnable runnable = myWorkflow.wrapIntoCheckinMetaHandlers(proceedRunnable, myHandlers);
@@ -733,27 +733,20 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
-  private CheckinHandler.ReturnResult runBeforeCheckinHandlers(@Nullable CommitExecutor executor) {
-    for (CheckinHandler handler : myHandlers) {
-      if (!handler.acceptExecutor(executor)) continue;
-      LOG.debug("CheckinHandler.beforeCheckin: " + handler);
-      CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myWorkflow.getAdditionalDataConsumer());
-      if (result == CheckinHandler.ReturnResult.COMMIT) continue;
-      if (result == CheckinHandler.ReturnResult.CANCEL) {
-        restartUpdate();
-        return CheckinHandler.ReturnResult.CANCEL;
-      }
+  private CheckinHandler.ReturnResult runBeforeCheckinHandlers(@Nullable CommitExecutor executor, List<? extends CheckinHandler> handlers) {
+    CheckinHandler.ReturnResult result = myWorkflow.runBeforeCheckinHandlers(executor, handlers);
 
-      if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
-        ChangeList changeList = myBrowser.getSelectedChangeList();
-        moveToFailedList(myProject, changeList, getCommitMessage(), getIncludedChanges(),
-                         message("commit.dialog.rejected.commit.template", changeList.getName()));
-        doCancelAction();
-        return CheckinHandler.ReturnResult.CLOSE_WINDOW;
-      }
+    if (result == CheckinHandler.ReturnResult.CANCEL) {
+      restartUpdate();
+    }
+    else if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
+      ChangeList changeList = myBrowser.getSelectedChangeList();
+      moveToFailedList(myProject, changeList, getCommitMessage(), getIncludedChanges(),
+                       message("commit.dialog.rejected.commit.template", changeList.getName()));
+      doCancelAction();
     }
 
-    return CheckinHandler.ReturnResult.COMMIT;
+    return result;
   }
 
   private boolean saveDialogState() {

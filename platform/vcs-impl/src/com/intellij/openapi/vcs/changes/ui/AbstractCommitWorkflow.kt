@@ -4,8 +4,10 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.PseudoMap
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CheckinHandler.ReturnResult.COMMIT
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.util.NullableFunction
 import com.intellij.util.PairConsumer
@@ -19,6 +21,17 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   private val additionalData = PseudoMap<Any, Any>()
   val additionalDataConsumer: PairConsumer<Any, Any> get() = additionalData
   val additionalDataHolder: NullableFunction<Any, Any> get() = additionalData
+
+  fun runBeforeCheckinHandlers(executor: CommitExecutor?, handlers: List<CheckinHandler>): CheckinHandler.ReturnResult {
+    handlers.asSequence().filter { it.acceptExecutor(executor) }.forEach { handler ->
+      LOG.debug("CheckinHandler.beforeCheckin: $handler")
+
+      val result = handler.beforeCheckin(executor, additionalDataConsumer)
+      if (result != COMMIT) return result
+    }
+
+    return COMMIT
+  }
 
   fun wrapIntoCheckinMetaHandlers(runnable: Runnable, handlers: List<CheckinHandler>): Runnable {
     var result = runnable
