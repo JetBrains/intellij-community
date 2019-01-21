@@ -16,6 +16,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer
+import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.*
 import org.jetbrains.plugins.groovy.util.get
@@ -412,6 +413,24 @@ private fun castOperandCheckInner(builder: PsiBuilder): Boolean {
     }
   }
   return false
+}
+
+fun isParametrizedClosure(builder: PsiBuilder, level: Int): Boolean {
+  return builder.lookahead {
+    isParametrizedClosureInner(this, level)
+  }
+}
+
+private fun isParametrizedClosureInner(builder: PsiBuilder, level: Int): Boolean {
+  if (!consumeTokenFast(builder, T_LBRACE)) return false
+  GroovyGeneratedParser.mb_nl(builder, level)
+  return closure_header_with_arrow(builder, level)
+}
+
+fun isParametrizedLambda(builder: PsiBuilder, level: Int): Boolean {
+  return builder.lookahead {
+    parenthesized_lambda_expression_head(builder, level)
+  }
 }
 
 private val explicitLeftMarker = Key.create<Marker>("groovy.parse.left.marker")

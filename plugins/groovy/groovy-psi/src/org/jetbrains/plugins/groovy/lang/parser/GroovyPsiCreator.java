@@ -204,6 +204,7 @@ public class GroovyPsiCreator {
     if (elem == ENUM_CONSTANT_INITIALIZER) return new GrEnumConstantInitializerImpl(node);
     if (elem == ARRAY_DECLARATION) return new GrArrayDeclarationImpl(node);
     if (elem == ARRAY_INITIALIZER) return new GrArrayInitializerImpl(node);
+    if (elem == LAMBDA_EXPRESSION) return new GrLambdaExpressionImpl(node);
 
     //Paths
     if (elem == REFERENCE_EXPRESSION) return new GrReferenceExpressionImpl(node);
