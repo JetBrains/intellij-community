@@ -1378,6 +1378,7 @@ public final class UiDefaultsHardcodedKeys {
     "Panel.background",
     "ParameterInfo.background",
     "ParameterInfo.borderColor",
+    "ParameterInfo.currentOverloadBackground",
     "ParameterInfo.currentParameterForeground",
     "ParameterInfo.disabledForeground",
     "ParameterInfo.foreground",
