@@ -44,7 +44,7 @@ import java.util.Set;
 
 public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public static final String POSTFIX_TEMPLATE_ID = "POSTFIX_TEMPLATE_ID";
-  private static final FeatureUsageGroup USAGE_GROUP = new FeatureUsageGroup("statistics.postfix.templates", 1);
+  private static final FeatureUsageGroup USAGE_GROUP = new FeatureUsageGroup("completion.postfix", 1);
   private static final Logger LOG = Logger.getInstance(PostfixLiveTemplate.class);
 
   @NotNull
