@@ -18,6 +18,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -48,6 +49,8 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     if (element instanceof PsiCompiledElement) return false;
     final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiMember.class, PsiCodeBlock.class, PsiDocComment.class);
     if (field == null || hasUnsuitableModifiers(field)) return false;
+    // Doesn't work for Groovy
+    if (field.getLanguage() != JavaLanguage.INSTANCE) return false;
     PsiExpression initializer = field.getInitializer();
     if (initializer == null || initializer.getNextSibling() instanceof PsiErrorElement) return false;
     PsiClass psiClass = field.getContainingClass();
