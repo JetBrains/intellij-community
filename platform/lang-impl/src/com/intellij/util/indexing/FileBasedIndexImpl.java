@@ -65,7 +65,6 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.gist.GistManager;
-import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.io.DataOutputStream;
@@ -2495,18 +2494,15 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   @TestOnly
   public void waitForVfsEventsExecuted(long timeout, @NotNull TimeUnit unit) throws Exception {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    // wait in the other thread to be able to handle invokeLater() which myChangedFilesCollector.myVfsEventsExecutor issues
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    long deadline = System.nanoTime() + unit.toNanos(timeout);
+    while (System.nanoTime() < deadline) {
       try {
-        ((BoundedTaskExecutor)myChangedFilesCollector.myVfsEventsExecutor).waitAllTasksExecuted(timeout, unit);
+        ((BoundedTaskExecutor)myChangedFilesCollector.myVfsEventsExecutor).waitAllTasksExecuted(1, TimeUnit.MILLISECONDS);
+        return;
       }
-      catch (Exception e) {
-        throw new RuntimeException(e);
+      catch (TimeoutException e) {
+        UIUtil.dispatchAllInvocationEvents();
       }
-    });
-    while (!future.isDone()) {
-      UIUtil.dispatchAllInvocationEvents();
     }
-    future.get();
   }
 }
