@@ -257,7 +257,7 @@ public abstract class DfaFactType<T> extends Key<T> {
     @NotNull
     @Override
     public String getName(SpecialFieldValue fact) {
-      return fact == null ? super.getName(null) : StringUtil.wordsToBeginFromUpperCase(fact.getField().getMethodName());
+      return fact == null ? super.getName(null) : StringUtil.wordsToBeginFromUpperCase(fact.getField().toString());
     }
 
     @Nullable

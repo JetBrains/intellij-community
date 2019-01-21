@@ -96,7 +96,7 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
           lengthField = SpecialField.COLLECTION_SIZE;
           message = InspectionsBundle.message("inspection.redundant.operation.on.empty.collection.message");
         } else if (InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP)) {
-          lengthField = SpecialField.MAP_SIZE;
+          lengthField = SpecialField.COLLECTION_SIZE;
           message = InspectionsBundle.message("inspection.redundant.operation.on.empty.map.message");
         } else {
           return null;

@@ -10,7 +10,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +26,7 @@ import static com.intellij.psi.CommonClassNames.*;
  * @author Tagir Valeev
  */
 public enum SpecialField implements VariableDescriptor {
-  ARRAY_LENGTH(null, "length", true) {
+  ARRAY_LENGTH("length", true) {
     @Override
     boolean isMyQualifierType(PsiType type) {
       return type instanceof PsiArrayType;
@@ -59,10 +58,24 @@ public enum SpecialField implements VariableDescriptor {
       return null;
     }
   },
-  STRING_LENGTH(JAVA_LANG_STRING, "length", true) {
+  STRING_LENGTH("length", true) {
     @Override
     DfaValue fromInitializer(DfaValueFactory factory, PsiExpression initializer) {
       return fromConstant(factory, ExpressionUtils.computeConstantExpression(initializer));
+    }
+
+    @Override
+    boolean isMyQualifierType(PsiType type) {
+      return TypeUtils.isJavaLangString(type);
+    }
+
+    @Override
+    boolean isMyAccessor(PsiMember accessor) {
+      if (!(accessor instanceof PsiMethod) || !"length".equals(accessor.getName()) || !((PsiMethod)accessor).getParameterList().isEmpty()) {
+        return false;
+      }
+      PsiClass containingClass = accessor.getContainingClass();
+      return containingClass != null && JAVA_LANG_STRING.equals(containingClass.getQualifiedName());
     }
 
     @Override
@@ -70,9 +83,36 @@ public enum SpecialField implements VariableDescriptor {
       return obj instanceof String ? factory.getInt(((String)obj).length()) : null;
     }
   },
-  COLLECTION_SIZE(JAVA_UTIL_COLLECTION, "size", false),
-  MAP_SIZE(JAVA_UTIL_MAP, "size", false),
-  UNBOX(null, "value", true) {
+  COLLECTION_SIZE("size", false) {
+    private final CallMatcher SIZE_METHODS = CallMatcher.anyOf(CallMatcher.instanceCall(JAVA_UTIL_COLLECTION, "size").parameterCount(0),
+                                                               CallMatcher.instanceCall(JAVA_UTIL_MAP, "size").parameterCount(0));
+    private final CallMatcher MAP_COLLECTIONS = CallMatcher.instanceCall(JAVA_UTIL_MAP, "keySet", "entrySet", "values")
+      .parameterCount(0);
+
+    @Override
+    boolean isMyQualifierType(PsiType type) {
+      return InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP) || InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION);
+    }
+
+    @Override
+    boolean isMyAccessor(PsiMember accessor) {
+      return accessor instanceof PsiMethod && SIZE_METHODS.methodMatches((PsiMethod)accessor);
+    }
+
+    @NotNull
+    @Override
+    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
+      if (qualifier instanceof DfaVariableValue) {
+        DfaVariableValue var = (DfaVariableValue)qualifier;
+        PsiModifierListOwner owner = var.getPsiVariable();
+        if (var.getQualifier() != null && owner instanceof PsiMethod && MAP_COLLECTIONS.methodMatches((PsiMethod)owner)) {
+          return super.createValue(factory, var.getQualifier(), forAccessor);
+        }
+      }
+      return super.createValue(factory, qualifier, forAccessor);
+    }
+  },
+  UNBOX("value", true) {
     private final CallMatcher UNBOXING_CALL = CallMatcher.anyOf(
       CallMatcher.exactInstanceCall(JAVA_LANG_INTEGER, "intValue").parameterCount(0),
       CallMatcher.exactInstanceCall(JAVA_LANG_LONG, "longValue").parameterCount(0),
@@ -114,7 +154,7 @@ public enum SpecialField implements VariableDescriptor {
       return accessor instanceof PsiMethod && UNBOXING_CALL.methodMatches((PsiMethod)accessor);
     }
   },
-  OPTIONAL_VALUE(null, "value", true) {
+  OPTIONAL_VALUE("value", true) {
     @Override
     public PsiType getType(DfaVariableValue variableValue) {
       return OptionalUtil.getOptionalElementType(variableValue.getType());
@@ -153,13 +193,11 @@ public enum SpecialField implements VariableDescriptor {
   };
 
   private static final SpecialField[] VALUES = values();
-  private final String myClassName;
-  private final String myMethodName;
+  private final String myTitle;
   private final boolean myFinal;
 
-  SpecialField(String className, String methodName, boolean isFinal) {
-    myClassName = className;
-    myMethodName = methodName;
+  SpecialField(String title, boolean isFinal) {
+    myTitle = title;
     myFinal = isFinal;
   }
 
@@ -167,14 +205,8 @@ public enum SpecialField implements VariableDescriptor {
   public boolean isStable() {
     return myFinal;
   }
-
-  public String getMethodName() {
-    return myMethodName;
-  }
   
-  boolean isMyQualifierType(PsiType type) {
-    return InheritanceUtil.isInheritor(type, myClassName);
-  }
+  abstract boolean isMyQualifierType(PsiType type);
 
   /**
    * Checks whether supplied accessor (field or method) can be used to read this special field
@@ -182,9 +214,7 @@ public enum SpecialField implements VariableDescriptor {
    * @param accessor accessor to test to test
    * @return true if supplied accessor can be used to read this special field
    */
-  boolean isMyAccessor(PsiMember accessor) {
-    return accessor instanceof PsiMethod && MethodUtils.methodMatches((PsiMethod)accessor, myClassName, null, myMethodName);
-  }
+  abstract boolean isMyAccessor(PsiMember accessor);
 
   public String getPresentationText(@NotNull DfaValue value, @Nullable PsiType type) {
     return value.toString();
@@ -336,6 +366,6 @@ public enum SpecialField implements VariableDescriptor {
   
   @Override
   public String toString() {
-    return myMethodName;
+    return myTitle;
   }
 }
