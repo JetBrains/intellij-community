@@ -6,19 +6,26 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
 import com.intellij.openapi.vfs.VirtualFileManager
 
 class ProjectExcludesIgnoredFileProvider : IgnoredFileProvider {
 
-  override fun isIgnoredFile(project: Project, filePath: FilePath) = false //TODO implement option sync exclude -> ignore
+  override fun isIgnoredFile(project: Project, filePath: FilePath) =
+    !Registry.`is`("ide.hide.excluded.files") &&
+    filePath.virtualFile?.let { file ->
+      val projectFileIndex = ProjectFileIndex.getInstance(project)
+      //should check only excluded files but not already ignored (e.g. .git directory)
+      (projectFileIndex.isExcluded(file) && !projectFileIndex.isUnderIgnored(file))
+    } ?: false
 
-  override fun getIgnoredFiles(project: Project) = getProjectExcludePathsRelativeTo(project)
+  override fun getIgnoredFiles(project: Project) = getProjectExcludePaths(project)
 
   override fun getIgnoredGroupDescription() = "Project exclude paths"
 
-  private fun getProjectExcludePathsRelativeTo(project: Project): Set<IgnoredFileDescriptor> {
+  private fun getProjectExcludePaths(project: Project): Set<IgnoredFileDescriptor> {
     val excludes = sortedSetOf(ChangesComparator.getVirtualFileComparator(false))
 
     val fileIndex = ProjectFileIndex.SERVICE.getInstance(project)

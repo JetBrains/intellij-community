@@ -18,6 +18,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.project.stateStore
+import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.UsefulTestCase
 import git4idea.GitUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
@@ -466,16 +468,15 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     assertFalse(subdirGitIgnore.exists())
   }
 
-  private fun assertGitignoreValid(ignoreFile: File, gitIgnoreExpectedContent: String) {
-    val projectCharset = EncodingProjectManager.getInstance(project).defaultCharset
-    val gitIgnoreExpectedContentList = gitIgnoreExpectedContent.trimIndent().lines()
-
-    assertTrue(ignoreFile.exists())
-    val generatedGitIgnoreContent = ignoreFile.readText(projectCharset)
-    assertFalse("Generated ignore file is empty", generatedGitIgnoreContent.isBlank())
-    assertFalse("Generated ignore file content should be system-independent", generatedGitIgnoreContent.contains('\\'))
-    assertContainsOrdered(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
-  }
-
   private fun VirtualFile.findOrCreateDir(dirName: String) = this.findChild(dirName) ?: createChildDirectory(this, dirName)
+}
+
+internal fun assertGitignoreValid(ignoreFile: File, gitIgnoreExpectedContent: String) {
+  val gitIgnoreExpectedContentList = gitIgnoreExpectedContent.trimIndent().lines()
+
+  UsefulTestCase.assertExists(ignoreFile)
+  val generatedGitIgnoreContent = ignoreFile.readText()
+  PlatformTestCase.assertFalse("Generated ignore file is empty", generatedGitIgnoreContent.isBlank())
+  PlatformTestCase.assertFalse("Generated ignore file content should be system-independent", generatedGitIgnoreContent.contains('\\'))
+  PlatformTestCase.assertContainsOrdered(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
 }

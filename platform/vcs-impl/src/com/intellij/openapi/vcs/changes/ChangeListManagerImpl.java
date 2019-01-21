@@ -343,6 +343,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+
+  /**
+   * @deprecated will be removed with idea-level ignores. Excludes will be added to ignore file in {@link VcsIgnoreFilesChecker}
+   */
+  @Deprecated
   void convertExcludedToIgnored() {
     for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
       for (String url : policy.getExcludeUrlsForProject()) {
