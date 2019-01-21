@@ -27,7 +27,7 @@ import static com.intellij.ui.ColorUtil.toHex;
 public final class GutterTooltipHelper {
   private static final JBColor BORDER_COLOR = JBColor.namedColor("GutterTooltip.borderColor", HintUtil.INFORMATION_BORDER_COLOR);
   private static final JBColor CONTEXT_HELP_FOREGROUND
-    = JBColor.namedColor("GutterTooltip.ContextHelp.foreground", new JBColor(0x787878, 0x878787));
+    = JBColor.namedColor("GutterTooltip.infoForeground", new JBColor(0x787878, 0x878787));
 
   private GutterTooltipHelper() {
   }
