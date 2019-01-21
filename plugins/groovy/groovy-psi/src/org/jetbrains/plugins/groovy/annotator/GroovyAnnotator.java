@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.ClassUtil;
@@ -87,6 +87,7 @@ import java.util.*;
 import static com.intellij.psi.util.PsiTreeUtil.findChildOfType;
 import static com.intellij.util.ArrayUtil.contains;
 import static org.jetbrains.plugins.groovy.annotator.UtilKt.*;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.mayContainTypeArguments;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.findScriptField;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isFieldDeclaration;
 
@@ -109,6 +110,11 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitTypeArgumentList(@NotNull GrTypeArgumentList typeArgumentList) {
     PsiElement parent = typeArgumentList.getParent();
     if (!(parent instanceof GrReferenceElement)) return;
+
+    if (parent instanceof GrCodeReferenceElement && !mayContainTypeArguments((GrCodeReferenceElement)parent)) {
+      myHolder.createErrorAnnotation(typeArgumentList, GroovyBundle.message("type.argument.list.is.not.allowed.here"));
+      return;
+    }
 
     final GroovyResolveResult resolveResult = ((GrReferenceElement)parent).advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
