@@ -2371,7 +2371,7 @@ static usage(Object a) { <caret>foo(a) }
     assert method.parameterList.parameters.first().type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
   }
 
-  void 'test List vs Object[] param with null argument'() {
+  void 'test List vs Object array param with null argument'() {
     def method = resolveByText '''\
 def foo(List l) {}
 def foo(Object[] o) {}
