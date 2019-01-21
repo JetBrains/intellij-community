@@ -26,6 +26,11 @@ import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 public abstract class CustomTargetExpressionStubType<T extends CustomTargetExpressionStub>
   implements PyCustomStubType<PyTargetExpression, T> {
 
+  /**
+   * @deprecated It is our internal API, try to avoid using it.
+   * It is planned to be removed sooner or later, so please don't rely on this EP.
+   */
+  @Deprecated
   public static final ExtensionPointName<CustomTargetExpressionStubType<? extends CustomTargetExpressionStub>> EP_NAME =
     ExtensionPointName.create("Pythonid.customTargetExpressionStubType");
 

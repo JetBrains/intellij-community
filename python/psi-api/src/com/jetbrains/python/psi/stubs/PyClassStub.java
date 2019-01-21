@@ -22,7 +22,6 @@ package com.jetbrains.python.psi.stubs;
 import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.impl.stubs.PyCustomClassStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,15 +68,12 @@ public interface PyClassStub extends NamedStub<PyClass> {
   }
 
   /**
-   * @param stubClass custom stub class
-   * @param <T>       custom stub class
-   * @return saved stub if it is an instance of passed class or null.
-   * @apiNote This method will be marked as abstract in 2019.2.
-   * @see PyCustomClassStub
-   * @see com.jetbrains.python.psi.impl.stubs.PyCustomClassStubType
+   * @deprecated It is our internal API, try to avoid using it.
+   * It is planned to be removed sooner or later, so please don't rely on this method.
    */
+  @Deprecated
   @Nullable
-  default <T extends PyCustomClassStub> T getCustomStub(@NotNull Class<T> stubClass) {
+  default <T> T getCustomStub(@NotNull Class<T> stubClass) {
     return null;
   }
 }

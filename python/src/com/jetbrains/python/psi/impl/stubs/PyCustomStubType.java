@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public interface PyCustomStubType<Psi extends PyElement, Stub extends PyCustomStub> {
+interface PyCustomStubType<Psi extends PyElement, Stub extends PyCustomStub> {
 
   /**
    * @param psi element to create stub for

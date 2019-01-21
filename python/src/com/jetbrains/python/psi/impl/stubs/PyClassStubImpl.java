@@ -140,7 +140,7 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
 
   @Nullable
   @Override
-  public <T extends PyCustomClassStub> T getCustomStub(@NotNull Class<T> stubClass) {
+  public <T> T getCustomStub(@NotNull Class<T> stubClass) {
     return ObjectUtils.tryCast(myCustomStub, stubClass);
   }
 
