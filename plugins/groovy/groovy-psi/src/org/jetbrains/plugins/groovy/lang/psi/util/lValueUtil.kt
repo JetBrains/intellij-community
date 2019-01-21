@@ -3,10 +3,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util
 
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets.POSTFIX_UNARY_OP_SET
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.UnknownArgument
@@ -27,6 +25,7 @@ fun GrExpression.isLValue(): Boolean {
   return when (parent) {
     is GrTuple -> true
     is GrAssignmentExpression -> this == parent.lValue
+    is GrUnaryExpression -> parent.operationTokenType in POSTFIX_UNARY_OP_SET
     else -> false
   }
 }
@@ -46,6 +45,7 @@ fun GrExpression.getRValue(): Argument? {
         parent.rValue?.let(::ExpressionArgument) ?: UnknownArgument
       }
     }
+    parent is GrUnaryExpression && parent.operationTokenType in POSTFIX_UNARY_OP_SET -> ExpressionArgument(parent)
     else -> null
   }
 }
