@@ -6,7 +6,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -39,8 +38,7 @@ public class ToggleFocusViewModeAction extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) return;
 
-    EditorUtil.reinitSettings();
-    DaemonCodeAnalyzer.getInstance(e.getProject()).settingsChanged();
     EditorFactory.getInstance().refreshAllEditors();
+    DaemonCodeAnalyzer.getInstance(project).restart();
   }
 }
