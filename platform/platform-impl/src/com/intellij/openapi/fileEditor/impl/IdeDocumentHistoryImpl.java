@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -383,7 +384,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public List<PlaceInfo> getChangePlaces() {
-    return myChangePlaces;
+    return ContainerUtil.immutableList(myChangePlaces);
   }
 
   @Override
@@ -479,16 +480,17 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   private void putLastOrMerge(@NotNull LinkedList<PlaceInfo> list, @NotNull PlaceInfo next, int limit) {
     MessageBus messageBus = myProject.getMessageBus();
+    RecentlyVisitedPlacesListener listener = messageBus.syncPublisher(RecentlyVisitedPlacesListener.TOPIC);
     if (!list.isEmpty()) {
       PlaceInfo prev = list.getLast();
       if (isSame(prev, next)) {
         PlaceInfo removed = list.removeLast();
-        messageBus.syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(removed);
+        listener.recentPlaceRemoved(removed);
       }
     }
 
     list.add(next);
-    messageBus.syncPublisher(RecentPlacesListener.TOPIC).recentPlacePushed(next);
+    listener.recentPlaceAdded(next);
     if (list.size() > limit) {
       list.removeFirst();
     }
@@ -545,7 +547,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   @Override
   @NotNull
   public List<PlaceInfo> getBackPlaces() {
-    return myBackPlaces;
+    return ContainerUtil.immutableList(myBackPlaces);
   }
 
   @Override
@@ -567,18 +569,24 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return false;
   }
 
-  public interface ChangePlacesListener {
-    Topic<ChangePlacesListener> TOPIC = Topic.create("ChangePlacesListener", ChangePlacesListener.class);
+  /**
+   * {@link RecentlyChangedPlacesListener} listens recently changed place adding and removing events.
+   */
+  public interface RecentlyChangedPlacesListener {
+    Topic<RecentlyChangedPlacesListener> TOPIC = Topic.create("RecentlyChangedPlacesListener", RecentlyChangedPlacesListener.class);
 
-    void changedPlacePushed(@NotNull PlaceInfo changePlace);
+    void changedPlaceAdded(@NotNull PlaceInfo changePlace);
 
     void changedPlaceRemoved(@NotNull PlaceInfo changePlace);
   }
 
-  public interface RecentPlacesListener {
-    Topic<RecentPlacesListener> TOPIC = Topic.create("RecentPlacesListener", RecentPlacesListener.class);
+  /**
+   * {@link RecentlyVisitedPlacesListener} listens recently viewed place adding and removing events.
+   */
+  public interface RecentlyVisitedPlacesListener {
+    Topic<RecentlyVisitedPlacesListener> TOPIC = Topic.create("RecentlyVisitedPlacesListener", RecentlyVisitedPlacesListener.class);
 
-    void recentPlacePushed(@NotNull PlaceInfo changePlace);
+    void recentPlaceAdded(@NotNull PlaceInfo changePlace);
 
     void recentPlaceRemoved(@NotNull PlaceInfo changePlace);
   }

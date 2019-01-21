@@ -96,9 +96,9 @@ public class RecentLocationManager implements ProjectComponent {
   }
 
   private void subscribeRecentPlaces(@NotNull MessageBusConnection connection) {
-    connection.subscribe(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC, new IdeDocumentHistoryImpl.RecentPlacesListener() {
+    connection.subscribe(IdeDocumentHistoryImpl.RecentlyVisitedPlacesListener.TOPIC, new IdeDocumentHistoryImpl.RecentlyVisitedPlacesListener() {
       @Override
-      public void recentPlacePushed(@NotNull PlaceInfo changePlace) {
+      public void recentPlaceAdded(@NotNull PlaceInfo changePlace) {
         update(changePlace, myProject, myRecentItems);
       }
 
@@ -110,9 +110,9 @@ public class RecentLocationManager implements ProjectComponent {
   }
 
   private void subscribeChangedPlaces(@NotNull MessageBusConnection connection) {
-    connection.subscribe(IdeDocumentHistoryImpl.ChangePlacesListener.TOPIC, new IdeDocumentHistoryImpl.ChangePlacesListener() {
+    connection.subscribe(IdeDocumentHistoryImpl.RecentlyChangedPlacesListener.TOPIC, new IdeDocumentHistoryImpl.RecentlyChangedPlacesListener() {
       @Override
-      public void changedPlacePushed(@NotNull PlaceInfo changePlace) {
+      public void changedPlaceAdded(@NotNull PlaceInfo changePlace) {
         update(changePlace, myProject, myChangedItems);
       }
 
