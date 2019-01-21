@@ -11,6 +11,7 @@ import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -231,8 +232,10 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
                                      @NotNull final PsiElement context) {
     if (template.isBuiltin()) {
       PostfixTemplateProvider provider = template.getProvider();
-      String action = provider != null ? provider.getId() + "/" + template.getId() : template.getId();
-      FeatureUsageLogger.INSTANCE.log(USAGE_GROUP, action, StatisticsUtilKt.createData(context.getProject(), null));
+      if (PluginInfoDetectorKt.getPluginInfo(provider != null ? provider.getClass() : template.getClass()).getType().isSafeToReport()) {
+        String action = provider != null ? provider.getId() + "/" + template.getId() : template.getId();
+        FeatureUsageLogger.INSTANCE.log(USAGE_GROUP, action, StatisticsUtilKt.createData(context.getProject(), null));
+      }
     }
     if (template.startInWriteAction()) {
       ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance()
