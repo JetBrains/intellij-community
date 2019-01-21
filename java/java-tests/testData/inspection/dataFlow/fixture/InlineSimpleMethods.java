@@ -32,4 +32,24 @@ class Scratch {
   private boolean hasData() {
     return data != null && data.length > 0;
   }
+  
+  int[] array;
+
+  private int readValue() {
+    return array[0];
+  }
+  
+  void testArraySize() {
+    if(readValue() > 0 && <warning descr="Condition 'array.length > 0' is always 'true' when reached">array.length > 0</warning>) {}
+  }
+  
+  Object element;
+  
+  private String getString() {
+    return ((String)element);
+  }
+  
+  void testGetString() {
+    if(!getString().isEmpty() && <warning descr="Condition 'element instanceof String' is always 'true' when reached">element instanceof String</warning>) {}
+  }
 }
