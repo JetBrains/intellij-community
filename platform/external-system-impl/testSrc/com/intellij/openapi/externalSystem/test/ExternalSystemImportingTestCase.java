@@ -569,6 +569,26 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     });
   }
 
+  @Nullable
+  protected SourceFolder findSource(@NotNull String moduleName, @NotNull String sourcePath) {
+    return findSource(getRootManager(moduleName), sourcePath);
+  }
+
+  @Nullable
+  protected SourceFolder findSource(@NotNull ModuleRootModel moduleRootManager, @NotNull String sourcePath) {
+    ContentEntry[] contentRoots = moduleRootManager.getContentEntries();
+    Module module = moduleRootManager.getModule();
+    String rootUrl = getAbsolutePath(ExternalSystemApiUtil.getExternalProjectPath(module));
+    for (ContentEntry contentRoot : contentRoots) {
+      for (SourceFolder f : contentRoot.getSourceFolders()) {
+        String folderPath = getAbsolutePath(f.getUrl());
+        String rootPath = getAbsolutePath(rootUrl + "/" + sourcePath);
+        if (folderPath.equals(rootPath)) return f;
+      }
+    }
+    return null;
+  }
+
   //protected void assertProblems(String... expectedProblems) {
   //  final List<String> actualProblems = new ArrayList<String>();
   //  UIUtil.invokeAndWaitIfNeeded(new Runnable() {

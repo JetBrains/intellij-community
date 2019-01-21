@@ -281,6 +281,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
 
     PathPrefixTreeMap<ContentRootData> contentRootIndex = new PathPrefixTreeMapImpl<>();
+    for (DataNode<ContentRootData> contentRootDataNode : ExternalSystemApiUtil.findAll(ideModule, ProjectKeys.CONTENT_ROOT)) {
+      ContentRootData contentRootData = contentRootDataNode.getData();
+      contentRootIndex.set(contentRootData.getRootPath(), contentRootData);
+    }
+
     DomainObjectSet<? extends IdeaContentRoot> contentRoots = gradleModule.getContentRoots();
     if (contentRoots == null) return;
     for (IdeaContentRoot gradleContentRoot : contentRoots) {
@@ -332,8 +337,15 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         }
       }
     }
+    Set<String> existsContentRoots = new LinkedHashSet<>();
+    for (DataNode<ContentRootData> contentRootDataNode : ExternalSystemApiUtil.findAll(ideModule, ProjectKeys.CONTENT_ROOT)) {
+      ContentRootData contentRootData = contentRootDataNode.getData();
+      existsContentRoots.add(contentRootData.getRootPath());
+    }
     for (ContentRootData ideContentRoot : contentRootIndex.getValues()) {
-      ideModule.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
+      if (!existsContentRoots.contains(ideContentRoot.getRootPath())) {
+        ideModule.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
+      }
     }
   }
 
