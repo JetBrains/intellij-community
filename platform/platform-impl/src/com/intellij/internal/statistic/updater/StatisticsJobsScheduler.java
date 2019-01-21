@@ -39,7 +39,8 @@ public class StatisticsJobsScheduler implements BaseComponent {
   private static final int SEND_EVENT_LOG_DELAY_IN_MILLIS = 2 * 60 * 60 * 1000;
   private static final int SEND_STATISTICS_DELAY_IN_MIN = 10;
 
-  public static final int LOG_APPLICATION_STATES_DELAY_IN_MIN = 15;
+  public static final int LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN = 15;
+  public static final int LOG_APPLICATION_STATES_DELAY_IN_MIN = 24 * 60;
   public static final int LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN = 30;
   public static final int LOG_PROJECTS_STATES_DELAY_IN_MIN = 12 * 60;
 
@@ -78,7 +79,9 @@ public class StatisticsJobsScheduler implements BaseComponent {
 
   private static void runStatesLogging() {
     if (!StatisticsUploadAssistant.isSendAllowed()) return;
-    JobScheduler.getScheduler().schedule(() -> FUStateUsagesLogger.create().logApplicationStates(), LOG_APPLICATION_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
+    JobScheduler.getScheduler().scheduleWithFixedDelay(() -> FUStateUsagesLogger.create().logApplicationStates(),
+                                                       LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN,
+                                                       LOG_APPLICATION_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
