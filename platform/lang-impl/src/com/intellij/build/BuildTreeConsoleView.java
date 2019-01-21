@@ -429,12 +429,10 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     final Update update = new Update(node) {
       @Override
       public void run() {
-        myTreeModel.invalidate(node, true).then(path -> {
-          if (node.isAutoExpandNode() && node.getChildCount() > 0) {
-            myTreeModel.expand(node, myTree, p -> {});
-          }
-          return path;
-        });
+        if (node.isAutoExpandNode() && node.getChildCount() > 0) {
+          myTreeModel.expand(node, myTree, p -> {});
+        }
+        myTreeModel.invalidate(node, true);
       }
     };
     myLaterInvocator.queue(update);
