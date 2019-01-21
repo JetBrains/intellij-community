@@ -181,17 +181,25 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
       trace.logPerformance("Data import total", System.currentTimeMillis() - allStartTime);
     }
     catch (Throwable t) {
-      runFinalTasks(synchronous, onFailureImportTasks);
-      dispose(modelsProvider, project, synchronous);
-      ExceptionUtil.rethrowAllAsUnchecked(t);
+      try {
+        runFinalTasks(project, synchronous, onFailureImportTasks);
+        dispose(modelsProvider, project, synchronous);
+      }
+      finally {
+        //noinspection ConstantConditions
+        ExceptionUtil.rethrowAllAsUnchecked(t);
+      }
     }
-    runFinalTasks(synchronous, onSuccessImportTasks);
+    runFinalTasks(project, synchronous, onSuccessImportTasks);
   }
 
-  private static void runFinalTasks(boolean synchronous, List<Runnable> tasks) {
-    Runnable runnable = () -> {
-      for (Runnable task : ContainerUtil.reverse(tasks)) {
-        task.run();
+  private static void runFinalTasks(@NotNull Project project, boolean synchronous, List<Runnable> tasks) {
+    Runnable runnable = new DisposeAwareProjectChange(project) {
+      @Override
+      public void execute() {
+        for (Runnable task : ContainerUtil.reverse(tasks)) {
+          task.run();
+        }
       }
     };
     if (synchronous) {
