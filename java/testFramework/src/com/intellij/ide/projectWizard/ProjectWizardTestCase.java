@@ -128,15 +128,24 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
   @Nullable
   protected Module createModuleFromTemplate(String group, String name, @Nullable Consumer<? super Step> adjuster) throws IOException {
-    runWizard(group, name, getProject(), adjuster);
-    return createModuleFromWizard();
+    return createModuleFromTemplate(group, name, getProject(), adjuster);
   }
 
-  protected Module createModuleFromWizard() {
-    return new NewModuleAction().createModuleFromWizard(myProject, null, myWizard);
+  @Nullable
+  protected Module createModuleFromTemplate(String group, String name, @NotNull Project project, @Nullable Consumer<? super Step> adjuster)
+    throws IOException {
+    runWizard(group, name, project, adjuster);
+    return createModuleFromWizard(project);
   }
 
-  protected void runWizard(@NotNull String group, @Nullable final String name, Project project, @Nullable final Consumer<? super Step> adjuster) throws IOException {
+  protected Module createModuleFromWizard(@NotNull Project project) {
+    return new NewModuleAction().createModuleFromWizard(project, null, myWizard);
+  }
+
+  protected void runWizard(@NotNull String group,
+                           @Nullable final String name,
+                           @Nullable Project project,
+                           @Nullable final Consumer<? super Step> adjuster) throws IOException {
     createWizard(project);
     ProjectTypeStep step = (ProjectTypeStep)myWizard.getCurrentStepObject();
     if (!step.setSelectedTemplate(group, name)) {
@@ -170,7 +179,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     myWizard.doFinishAction();
   }
 
-  protected void createWizard(Project project) throws IOException {
+  protected void createWizard(@Nullable Project project) throws IOException {
     File directory = FileUtil.createTempDirectory(getName(), "new", false);
     myFilesToDelete.add(directory);
     if (myWizard != null) {
