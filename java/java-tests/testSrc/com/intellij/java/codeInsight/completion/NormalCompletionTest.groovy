@@ -461,12 +461,12 @@ public class Outer {
 
   void testLocalClassTwice() throws Throwable {
     configure()
-    assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo'
+    assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo', 'ZipOutputStream'
   }
 
   void testLocalTopLevelConflict() throws Throwable {
     configure()
-    assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo'
+    assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo', 'ZipOutputStream'
   }
 
   void testFinalBeforeMethodCall() throws Throwable {
@@ -1899,5 +1899,19 @@ class Abc {
     myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile())
     myFixture.complete(CompletionType.BASIC)
     assert myFixture.lookupElements.find { (it.lookupString == "ABCD") } != null
+  }
+
+  void "test after new editing prefix back and forth when sometimes there are expected type suggestions and sometimes not"() {
+    myFixture.addClass("class Super {}")
+    myFixture.addClass("class Sub extends Super {}")
+    myFixture.addClass("package foo; public class SubOther {}")
+    myFixture.configureByText('a.java', "class C { Super s = new SubO<caret>x }")
+
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'SubOther'
+    myFixture.type('\b')
+    myFixture.assertPreferredCompletionItems 0, 'Sub'
+    myFixture.type('O')
+    myFixture.assertPreferredCompletionItems 0, 'SubOther'
   }
 }
