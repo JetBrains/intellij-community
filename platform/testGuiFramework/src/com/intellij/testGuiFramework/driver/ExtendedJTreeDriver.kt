@@ -286,6 +286,8 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
       false
     }
   }
+
+  fun isPathSelected(tree: JTree, path: TreePath): Boolean = GuiTestUtilKt.computeOnEdt {  tree.isPathSelected(path) }!!
 } // end of class
 
 
