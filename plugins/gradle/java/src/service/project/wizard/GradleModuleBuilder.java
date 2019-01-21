@@ -16,7 +16,10 @@ import com.intellij.openapi.externalSystem.ExternalStateComponent;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
@@ -230,6 +233,12 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);
       //noinspection unchecked
       settings.linkProject(getExternalProjectSettings());
+      // update external projects data to be able to add child modules before the initial import finish
+      ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, project.getName(), myWizardContext.getProjectFileDirectory(),
+                                                getExternalProjectSettings().getExternalProjectPath());
+      DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
+      ExternalProjectsManagerImpl.getInstance(project).updateExternalProjectData(
+        new InternalExternalProjectInfo(GradleConstants.SYSTEM_ID, getExternalProjectSettings().getExternalProjectPath(), projectDataNode));
     }
     else {
       FileDocumentManager.getInstance().saveAllDocuments();
