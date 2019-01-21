@@ -179,6 +179,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "generate_final_locals = false\n" +
       "generate_final_parameters = false\n" +
       "if_brace_force = never\n" +
+      "imports_layout = *,blank_line,javax.**,java.**,blank_line,static *\n" +
       "indent_case_from_switch = true\n" +
       "indent_size = 4\n" +
       "indent_style = space\n" +
@@ -209,6 +210,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "method_parameters_wrap = normal\n" +
       "modifier_list_wrap = false\n" +
       "names_count_to_use_import_on_demand = 3\n" +
+      "packages_to_use_import_on_demand = java.awt.*,javax.swing.*\n" +
       "parameter_annotation_wrap = off\n" +
       "parentheses_expression_new_line_after_left_paren = false\n" +
       "parentheses_expression_right_paren_on_new_line = false\n" +
@@ -328,6 +330,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     mapper.setProperty("brace_style", "next_line");
     mapper.setProperty("indent_size", "2");
     mapper.setProperty("javadoc_align_param_comments", "true");
+    mapper.setProperty("imports_layout", "com.jetbrains.*,blank_line, org.eclipse.bar , static  ** , static org.eclipse.foo.**");
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     final JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     assertTrue(commonJavaSettings.ALIGN_GROUP_FIELD_DECLARATIONS);
@@ -335,6 +338,12 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(CommonCodeStyleSettings.NEXT_LINE, commonJavaSettings.BRACE_STYLE);
     assertEquals(2, commonJavaSettings.getIndentOptions().INDENT_SIZE);
     assertTrue(javaSettings.JD_ALIGN_PARAM_COMMENTS);
+    PackageEntryTable importsTable = javaSettings.getImportLayoutTable();
+    assertEquals(new PackageEntry(false, "com.jetbrains", false), importsTable.getEntryAt(0));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, importsTable.getEntryAt(1));
+    assertEquals(new PackageEntry(false, "org.eclipse.bar", false), importsTable.getEntryAt(2));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, importsTable.getEntryAt(3));
+    assertEquals(new PackageEntry(true, "org.eclipse.foo", true), importsTable.getEntryAt(4));
   }
 
   private static boolean isPrimitiveOrString(Class type) {
