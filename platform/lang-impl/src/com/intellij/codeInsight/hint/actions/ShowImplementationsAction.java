@@ -17,11 +17,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -79,7 +79,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     boolean isInvokedFromEditor = CommonDataKeys.EDITOR.getData(dataContext) != null;
 
     for (ImplementationViewSessionFactory factory: ImplementationViewSessionFactory.EP_NAME.getExtensionList() ) {
-      ImplementationViewSession session = factory.createSession(dataContext, project, invokedByShortcut);
+      ImplementationViewSession session = factory.createSession(dataContext, project, isSearchDeep(), isIncludeAlwaysSelf());
       if (session != null) {
         showImplementations(session, isInvokedFromEditor, invokedByShortcut);
       }
@@ -88,8 +88,10 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
   private void updateElementImplementations(final Object lookupItemObject, ImplementationViewSession session) {
     ImplementationViewSession newSession = session.getFactory().createSessionForLookupElement(session.getProject(),
-                                                                                              session.getEditor(), session.getFile(), lookupItemObject, isSearchDeep());
+                                                                                              session.getEditor(), session.getFile(), lookupItemObject, isSearchDeep(),
+                                                                                              isIncludeAlwaysSelf());
     if (newSession != null) {
+      Disposer.dispose(session);
       showImplementations(newSession, false, false);
     }
   }
@@ -107,14 +109,13 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE);
     }
 
-    PsiFile file = session.getFile();
+    VirtualFile virtualFile = session.getFile();
     int index = 0;
-    if (invokedFromEditor && file != null && impls.size() > 1) {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      final PsiFile containingFile = impls.get(0).getContainingFile();
-      if (virtualFile != null && containingFile != null && virtualFile.equals(containingFile.getVirtualFile())) {
-        final PsiFile secondContainingFile = impls.get(1).getContainingFile();
-        if (secondContainingFile != containingFile) {
+    if (invokedFromEditor && virtualFile != null && impls.size() > 1) {
+      final VirtualFile containingFile = impls.get(0).getContainingFile();
+      if (virtualFile.equals(containingFile)) {
+        final VirtualFile secondContainingFile = impls.get(1).getContainingFile();
+        if (secondContainingFile != null && !secondContainingFile.equals(containingFile)) {
           index = 1;
         }
       }
@@ -163,6 +164,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
           if (task != null) {
             task.cancelTask();
           }
+          Disposer.dispose(session);
           return Boolean.TRUE;
         })
         .createPopup();
@@ -187,7 +189,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
 
     if (!session.needUpdateInBackground()) return;  // already found
-    final ImplementationsUpdaterTask task = new ImplementationsUpdaterTask(session, title, isIncludeAlwaysSelf(), component);
+    final ImplementationsUpdaterTask task = new ImplementationsUpdaterTask(session, title, component);
     task.init(popup, new ImplementationViewComponentUpdater(component, session.elementRequiresIncludeSelf() ? 1 : 0), usageView);
 
     myTaskRef = new WeakReference<>(task);
@@ -230,21 +232,18 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
   }
 
-  private class ImplementationsUpdaterTask extends BackgroundUpdaterTask {
+  private static class ImplementationsUpdaterTask extends BackgroundUpdaterTask {
     private final String myCaption;
     private final ImplementationViewSession mySession;
-    private final boolean myIncludeSelf;
     private final ImplementationViewComponent myComponent;
     private List<ImplementationViewElement> myElements;
 
     private ImplementationsUpdaterTask(ImplementationViewSession session,
                                        final String caption,
-                                       boolean includeSelf,
                                        ImplementationViewComponent component) {
       super(session.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS, null);
       myCaption = caption;
       mySession = session;
-      myIncludeSelf = includeSelf;
       myComponent = component;
     }
 
@@ -257,7 +256,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     @Override
     public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
-      myElements = mySession.searchImplementationsInBackground(indicator, isSearchDeep(), myIncludeSelf, this::updateComponent);
+      myElements = mySession.searchImplementationsInBackground(indicator, this::updateComponent);
     }
 
     @Override

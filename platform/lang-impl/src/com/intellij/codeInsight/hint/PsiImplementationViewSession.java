@@ -39,17 +39,24 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
   @Nullable private final PsiElement myElement;
   private final PsiElement[] myImpls;
   private final String myText;
-  private final Editor myEditor;
-  @Nullable private final PsiFile myFile;
+  @Nullable private final Editor myEditor;
+  @Nullable private final VirtualFile myFile;
+  private final boolean myIsSearchDeep;
+  private final boolean myAlwaysIncludeSelf;
 
-  public PsiImplementationViewSession(@NotNull Project project, @Nullable PsiElement element, PsiElement[] impls, String text, Editor editor,
-                                      @Nullable PsiFile file) {
+  public PsiImplementationViewSession(@NotNull Project project, @Nullable PsiElement element, PsiElement[] impls, String text,
+                                      @Nullable Editor editor,
+                                      @Nullable VirtualFile file,
+                                      boolean isSearchDeep,
+                                      boolean alwaysIncludeSelf) {
     myProject = project;
     myElement = element;
     myImpls = impls;
     myText = text;
     myEditor = editor;
     myFile = file;
+    myIsSearchDeep = isSearchDeep;
+    myAlwaysIncludeSelf = alwaysIncludeSelf;
   }
 
   @NotNull
@@ -63,7 +70,6 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
     return myProject;
   }
 
-  @Override
   @Nullable
   public PsiElement getElement() {
     return myElement;
@@ -80,12 +86,13 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
   }
 
   @Override
+  @Nullable
   public Editor getEditor() {
     return myEditor;
   }
 
   @Nullable
-  public PsiFile getFile() {
+  public VirtualFile getFile() {
     return myFile;
   }
 
@@ -97,6 +104,10 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
   @Override
   public boolean needUpdateInBackground() {
     return myElement != null;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @NotNull
@@ -181,14 +192,12 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
   @NotNull
   @Override
   public List<ImplementationViewElement> searchImplementationsInBackground(@NotNull ProgressIndicator indicator,
-                                                                           boolean isSearchDeep,
-                                                                           boolean includeSelf,
                                                                            @NotNull final Processor<PsiElement> processor) {
     final ImplementationSearcher.BackgroundableImplementationSearcher implementationSearcher =
       new ImplementationSearcher.BackgroundableImplementationSearcher() {
         @Override
         protected boolean isSearchDeep() {
-          return isSearchDeep;
+          return myIsSearchDeep;
         }
 
         @Override
@@ -205,7 +214,7 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
         }
       };
     PsiElement[] psiElements;
-    if (!includeSelf) {
+    if (!myAlwaysIncludeSelf) {
       psiElements = getSelfAndImplementations(myEditor, myElement, implementationSearcher, false);
     }
     else {
@@ -214,6 +223,7 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
     return ContainerUtil.map(psiElements, PsiImplementationViewElement::new);
   }
 
+  @Nullable
   public static Editor getEditor(@NotNull DataContext dataContext) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
@@ -235,7 +245,8 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
   @Nullable
   public static PsiImplementationViewSession create(@NotNull DataContext dataContext,
                                                      Project project,
-                                                     boolean searchDeep) {
+                                                     boolean searchDeep,
+                                                     boolean alwaysIncludeSelf) {
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     Editor editor = getEditor(dataContext);
 
@@ -291,7 +302,9 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
       }
     }
 
-    return new PsiImplementationViewSession(project, element, impls, text, editor, file);
+    return new PsiImplementationViewSession(project, element, impls, text, editor,
+                                            file != null ? file.getVirtualFile() : null,
+                                            searchDeep, alwaysIncludeSelf);
   }
 
   public static PsiElement getElement(@NotNull Project project, PsiFile file, Editor editor, PsiElement element) {

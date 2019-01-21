@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -80,7 +80,7 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     final PsiElement[] impls = PsiImplementationViewSession
       .getSelfAndImplementations(editor, element, PsiImplementationViewSession.createImplementationsSearcher(true), false);
     final String text = SymbolPresentationUtil.getSymbolPresentableText(element);
-    showImplementations(new PsiImplementationViewSession(project, element, impls, text, editor, file), invokedFromEditor, invokedByShortcut);
+    showImplementations(new PsiImplementationViewSession(project, element, impls, text, editor, file != null ? file.getVirtualFile() : null, true, false), invokedFromEditor, invokedByShortcut);
   }
 
   @Override
