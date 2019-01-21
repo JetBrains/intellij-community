@@ -40,7 +40,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.GithubPullRequestsComponentFactory"/>
 
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider"/>
-    <projectConfigurable parentId="project.propVCSSupport.Mappings" instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
+    <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500" instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
     <statistics.applicationUsagesCollector
         implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
   </extensions>
