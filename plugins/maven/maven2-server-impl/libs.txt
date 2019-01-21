@@ -1,0 +1,11 @@
+org.apache.maven.archetype:archetype-common:2.0
+commons-beanutils:commons-beanutils:1.8.3
+org.apache.maven.shared:maven-dependency-tree:1.2
+org.apache.maven.mercury:mercury-artifact:1.0-alpha-6
+org.sonatype.nexus:nexus-indexer:1.2.3
+org.codehaus.plexus:plexus-utils:1.5.5
+#org.codehaus.plexus:plexus-utils:3.0.22
+#org.codehaus.plexus:plexus-component-api:1.0-alpha-33
+#org.codehaus.plexus:plexus-classworlds:1.2-alpha-10
+classworlds:classworlds:1.1
+org.jetbrains.intellij.deps.maven2:maven-uber:2.2.1
