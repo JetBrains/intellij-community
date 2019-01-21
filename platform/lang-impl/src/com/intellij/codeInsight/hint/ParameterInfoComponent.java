@@ -57,8 +57,9 @@ public class ParameterInfoComponent extends JPanel {
   private static final Color DISABLED_COLOR = JBColor.namedColor("ParameterInfo.disabledForeground", new JBColor(0xA8A8A8, 0x777777));
   private static final Color CONTEXT_HELP_FOREGROUND = JBColor.namedColor("ParameterInfo.infoForeground", new JBColor(0x787878, 0x878787));
   static final Color BORDER_COLOR = JBColor.namedColor("ParameterInfo.borderColor", HintUtil.INFORMATION_BORDER_COLOR);
+  private static final Color SEPARATOR_COLOR = JBColor.namedColor("ParameterInfo.lineSeparatorColor", BORDER_COLOR);
   private static final Border EMPTY_BORDER = JBUI.Borders.empty(2, 10);
-  private static final Border BOTTOM_BORDER = new CompoundBorder(JBUI.Borders.customLine(BORDER_COLOR, 0, 0, 1, 0), EMPTY_BORDER);
+  private static final Border BOTTOM_BORDER = new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), EMPTY_BORDER);
 
   protected int myWidthLimit = 500;
 
