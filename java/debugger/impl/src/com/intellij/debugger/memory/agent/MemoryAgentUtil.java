@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.memory.agent.extractor.AgentExtractor;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;

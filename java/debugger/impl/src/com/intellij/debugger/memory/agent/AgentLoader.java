@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.ClassLoadingUtils;
+import com.intellij.debugger.memory.agent.extractor.ProxyExtractor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.ClassType;
