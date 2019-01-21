@@ -405,17 +405,22 @@ public class PlatformTestUtil {
   }
 
   /**
-   * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}.
+   * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}, ignores and removes all other events from the queue.
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
-  public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
+  public static void dispatchAllInvocationEventsInIdeEventQueue() {
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
-      AWTEvent event1 = eventQueue.getNextEvent();
-      if (event1 instanceof InvocationEvent) {
-        eventQueue.dispatchEvent(event1);
+      try {
+        event = eventQueue.getNextEvent();
+        if (event instanceof InvocationEvent) {
+          eventQueue.dispatchEvent(event);
+        }
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
       }
     }
   }
