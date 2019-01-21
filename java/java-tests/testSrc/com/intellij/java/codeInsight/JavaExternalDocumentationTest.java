@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -37,20 +39,17 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JavaExternalDocumentationTest extends LightPlatformTestCase {
   private static final LightProjectDescriptor MY_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
-    protected void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
-      super.createContentEntry(module, srcRoot);
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      super.configureModule(module, model, contentEntry);
       final VirtualFile libClasses = getJarFile("library.jar");
       final VirtualFile libJavadocJar = getJarFile("library-javadoc.jar");
-      PsiTestUtil.addProjectLibrary(module, "myLib", Collections.singletonList(libClasses),
-                                    Collections.emptyList(),
-                                    Collections.singletonList(libJavadocJar));
+      PsiTestUtil.newLibrary("myLib").classesRoot(libClasses).javaDocRoot(libJavadocJar).addTo(model);
     }
   };
   

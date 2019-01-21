@@ -274,6 +274,16 @@ public class PsiTestUtil {
     Registry.get("ide.check.structural.psi.text.consistency.in.tests").setValue(false, parentDisposable);
   }
 
+  /**
+   * Creates a builder for new library for the test project. After all the roots are added,
+   * an {@code addTo} method must be called to actually create a library
+   * @param name a name for the library
+   * @return new {@link LibraryBuilder}.
+   */
+  public static LibraryBuilder newLibrary(String name) {
+    return new LibraryBuilder(name);
+  }
+
   public static void addLibrary(Module module, String libPath) {
     File file = new File(libPath);
     String libName = file.getName();
@@ -323,17 +333,9 @@ public class PsiTestUtil {
   }
 
   public static Library addProjectLibrary(Module module, String libName, List<? extends VirtualFile> classesRoots, List<? extends VirtualFile> sourceRoots) {
-    return addProjectLibrary(module, libName, classesRoots, sourceRoots, Collections.emptyList());
-  }
-
-  public static Library addProjectLibrary(Module module,
-                                          String libName,
-                                          List<? extends VirtualFile> classesRoots,
-                                          List<? extends VirtualFile> sourceRoots,
-                                          List<? extends VirtualFile> javaDocRoots) {
     Ref<Library> result = Ref.create();
     ModuleRootModificationUtil.updateModel(
-      module, model -> result.set(addProjectLibrary(model, libName, classesRoots, sourceRoots, javaDocRoots)));
+      module, model -> result.set(addProjectLibrary(model, libName, classesRoots, sourceRoots, Collections.emptyList())));
     return result.get();
   }
 
@@ -517,5 +519,102 @@ public class PsiTestUtil {
       manager.commitDocument(document);
       checker.accept(manager.getPsiFile(document));
     }
+  }
+  
+  public static class LibraryBuilder {
+    private final String myName;
+    private final List<VirtualFile> myClassesRoots = new ArrayList<>();
+    private final List<VirtualFile> mySourceRoots = new ArrayList<>();
+    private final List<VirtualFile> myJavaDocRoots = new ArrayList<>();
+    
+    private LibraryBuilder(String name) {
+      myName = name;
+    }
+
+    /**
+     * Add a classes root for the future library. 
+     * @param root root to add
+     * @return this builder
+     */
+    public LibraryBuilder classesRoot(VirtualFile root) {
+      myClassesRoots.add(root);
+      return this;
+    }
+
+    /**
+     * Add a classes root for the future library. 
+     * @param rootPath root to add
+     * @return this builder
+     */
+    public LibraryBuilder classesRoot(String rootPath) {
+      myClassesRoots.add(VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(rootPath))));
+      return this;
+    }
+
+    /**
+     * Add a source root for the future library. 
+     * @param root root to add
+     * @return this builder
+     */
+    public LibraryBuilder sourceRoot(VirtualFile root) {
+      mySourceRoots.add(root);
+      return this;
+    }
+
+    /**
+     * Add a source root for the future library. 
+     * @param rootPath root to add
+     * @return this builder
+     */
+    public LibraryBuilder sourceRoot(String rootPath) {
+      mySourceRoots.add(VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(rootPath))));
+      return this;
+    }
+
+    /**
+     * Add a javadoc root for the future library. 
+     * @param root root to add
+     * @return this builder
+     */
+    public LibraryBuilder javaDocRoot(VirtualFile root) {
+      myJavaDocRoots.add(root);
+      return this;
+    }
+
+    /**
+     * Add a javadoc root for the future library. 
+     * @param rootPath root to add
+     * @return this builder
+     */
+    public LibraryBuilder javaDocRoot(String rootPath) {
+      myJavaDocRoots.add(VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(rootPath))));
+      return this;
+    }
+
+    /**
+     * Creates the actual library and registers it within given {@link ModifiableRootModel}. Presumably this method
+     * is called inside {@link ModuleRootModificationUtil#updateModel(Module, com.intellij.util.Consumer)}.
+     * 
+     * @param model a model to register the library in.
+     * @return a library
+     */
+    public Library addTo(ModifiableRootModel model) {
+      return addProjectLibrary(model, myName, myClassesRoots, mySourceRoots, myJavaDocRoots);
+    }
+
+    /**
+     * Creates the actual library and registers it within given {@link Module}. Do not call this inside 
+     * {@link LightProjectDescriptor#configureModule(Module, ModifiableRootModel, ContentEntry)}; 
+     * use {@link #addTo(ModifiableRootModel)} instead.
+     * 
+     * @param module a module to register the library in.
+     * @return a library
+     */
+    public Library addTo(Module module) {
+      Ref<Library> result = Ref.create();
+      ModuleRootModificationUtil.updateModel(module, model -> result.set(addTo(model)));
+      return result.get();
+    }
+    
   }
 }
