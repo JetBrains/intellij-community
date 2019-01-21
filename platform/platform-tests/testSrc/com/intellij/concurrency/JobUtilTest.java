@@ -83,7 +83,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     });
     assertTrue(b);
     long elapsed = System.currentTimeMillis() - start;
-    int expected = (9950 + (things.size() - 9950) * 1000) / JobSchedulerImpl.getJobPoolParallelism();
+    long expected = (9950 + (things.size() - 9950) * 1000L) / JobSchedulerImpl.getJobPoolParallelism();
     String message = "Elapsed: " + elapsed + "; expected: " + expected + "; parallelism=" + JobSchedulerImpl.getJobPoolParallelism() + "; current cores=" + Runtime.getRuntime().availableProcessors();
     assertTrue(message, elapsed <= 2 * expected);
   }
