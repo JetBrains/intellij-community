@@ -105,8 +105,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final List<CommitExecutorAction> myExecutorActions;
 
   @NotNull private final CommitOptionsPanel myCommitOptions;
-  //TODO this is model data
-  @NotNull private final CommitContext myCommitContext;
   @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
   @NotNull private final CommitDialogChangesBrowser myBrowser;
   @NotNull private final JComponent myBrowserBottomPanel = createHorizontalBox();
@@ -252,7 +250,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   CommitChangeListDialog(@NotNull DialogCommitWorkflow workflow) {
     super(workflow.getProject(), true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
-    myCommitContext = new CommitContext();
     myWorkflow = workflow;
     myProject = myWorkflow.getProject();
     myVcsConfiguration = notNull(VcsConfiguration.getInstance(myProject));
@@ -265,7 +262,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       throw new IllegalArgumentException("nothing found to execute commit with");
     }
 
-    myHandlers.addAll(createCheckinHandlers(myProject, this, myCommitContext));
+    myHandlers.addAll(createCheckinHandlers(myProject, this, myWorkflow.getCommitContext()));
 
     setTitle(myShowVcsCommit ? DIALOG_TITLE : getExecutorPresentableText(myExecutors.get(0)));
     myCommitActionName = VcsImplUtil.getCommitActionName(myAffectedVcses);
@@ -575,7 +572,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     saveComments(true);
 
     if (session instanceof CommitSessionContextAware) {
-      ((CommitSessionContextAware)session).setContext(myCommitContext);
+      ((CommitSessionContextAware)session).setContext(myWorkflow.getCommitContext());
     }
 
     ensureDataIsActual(() -> {

@@ -3,12 +3,15 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 
 private val LOG = logger<AbstractCommitWorkflow>()
 
 abstract class AbstractCommitWorkflow(val project: Project) {
+  val commitContext: CommitContext = CommitContext()
+
   fun wrapIntoCheckinMetaHandlers(runnable: Runnable, handlers: List<CheckinHandler>): Runnable {
     var result = runnable
     handlers.filterIsInstance<CheckinMetaHandler>().forEach {
