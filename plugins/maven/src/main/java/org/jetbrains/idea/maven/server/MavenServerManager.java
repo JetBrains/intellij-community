@@ -459,11 +459,12 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
       classpath.add(new File(root, "intellij.maven.server.m2.impl"));
       addDir(classpath, new File(parentFile, "maven2-server-impl/lib"));
-      addRepositoryLibraries(classpath, new File(parentFile, "maven2-server-impl/test-libs.txt"));
+      addRepositoryLibrariesDev(classpath, new File(parentFile, "maven2-server-impl/test-libs.txt"));
     }
     else {
       classpath.add(new File(root, "intellij.maven.server.m3.common"));
       addDir(classpath, new File(parentFile, "maven3-server-common/lib"));
+      addRepositoryLibrariesDev(classpath, new File(parentFile, "maven3-server-common/test-libs.txt"));
 
       if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
         classpath.add(new File(root, "intellij.maven.server.m30.impl"));
@@ -477,12 +478,12 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     }
   }
 
-  private static void addRepositoryLibraries(List<File> classpath, File list) {
+  private static void addRepositoryLibrariesDev(List<File> classpath, File list) {
     try {
       File mavenRepo = MavenUtil.resolveLocalRepository(null, null, null);
       List<String> dependencies = FileUtil.loadLines(list);
       for(String dependency : dependencies) {
-        if(dependency.startsWith("#")){
+        if(StringUtil.isEmptyOrSpaces(dependency) || StringUtil.startsWithChar(dependency, '#')){
           continue;
         }
         String[] artifactData = dependency.split(":");
@@ -492,6 +493,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         File jar = new File(jarDir, artifactData[1] + "-" + artifactData[2] + ".jar");
         if (jar.exists()) {
           classpath.add(jar);
+        } else {
+          MavenLog.LOG.warn("File " + jar + " not found!");
         }
       }
     } catch(IOException e){
