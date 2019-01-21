@@ -563,9 +563,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     static String constructLabelText(String keylabel,
-                                     ValueDescriptorImpl keyDescriptor,
+                                     @Nullable ValueDescriptorImpl keyDescriptor,
                                      String valueLabel,
-                                     ValueDescriptorImpl valueDescriptor) {
+                                     @Nullable ValueDescriptorImpl valueDescriptor) {
       StringBuilder sb = new StringBuilder();
       sb.append(wrapIfNeeded(keylabel, keyDescriptor));
       sb.append(" -> ");
@@ -575,12 +575,14 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       return sb.toString();
     }
 
-    private static String wrapIfNeeded(String label, ValueDescriptorImpl descriptor) {
-      Renderer lastRenderer = descriptor.getLastRenderer();
-      if (descriptor.isString() ||
-          lastRenderer instanceof ToStringRenderer ||
-          (lastRenderer instanceof CompoundTypeRenderer && !(lastRenderer instanceof UnboxableTypeRenderer))) {
-        label = StringUtil.wrapWithDoubleQuote(label);
+    private static String wrapIfNeeded(String label, @Nullable ValueDescriptorImpl descriptor) {
+      if (descriptor != null) {
+        Renderer lastRenderer = descriptor.getLastRenderer();
+        if (descriptor.isString() ||
+            lastRenderer instanceof ToStringRenderer ||
+            (lastRenderer instanceof CompoundTypeRenderer && !(lastRenderer instanceof UnboxableTypeRenderer))) {
+          label = StringUtil.wrapWithDoubleQuote(label);
+        }
       }
       return label;
     }
