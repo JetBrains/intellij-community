@@ -218,6 +218,13 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(recursiveDirUrls, true);
     files.forEach(path -> container.add(VfsUtilCore.pathToUrl(path)));
 
+    // changes in files provided by this method should be watched manually because no-one's bothered to setup correct pointers for them
+    for (DirectoryIndexExcludePolicy excludePolicy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(getProject())) {
+      for (String url : excludePolicy.getExcludeUrlsForProject()) {
+        container.add(url);
+      }
+    }
+
     Disposer.dispose(oldDisposable); // dispose after the re-creating container to keep virtual file pointers from disposing and re-creating back
 
     // module roots already fire validity change events, see usages of ProjectRootManagerComponent.getRootsValidityChangedListener

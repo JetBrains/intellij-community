@@ -24,14 +24,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author traff
@@ -47,16 +45,16 @@ public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolic
 
   @NotNull
   @Override
-  public VirtualFile[] getExcludeRootsForProject() {
-    List<VirtualFile> result = Lists.newArrayList();
+  public String[] getExcludeUrlsForProject() {
+    List<String> result = new ArrayList<>();
     for (VirtualFile root : ProjectRootManager.getInstance(myProject).getContentRoots()) {
       VirtualFile file = root.findChild(".tox");
       if (file != null) {
-        result.add(file);
+        result.add(file.getUrl());
       }
     }
 
-    return result.toArray(VirtualFile.EMPTY_ARRAY);
+    return ArrayUtil.toStringArray(result);
   }
 
   @Nullable

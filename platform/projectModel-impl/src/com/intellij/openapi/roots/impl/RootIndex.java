@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.CollectionQuery;
@@ -202,7 +203,8 @@ public class RootIndex {
       }
     }
     for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
-      info.excludedFromProject.addAll(ContainerUtil.filter(policy.getExcludeRootsForProject(), file -> ensureValid(file, policy)));
+      List<VirtualFile> files = ContainerUtil.mapNotNull(policy.getExcludeUrlsForProject(), url -> VirtualFileManager.getInstance().findFileByUrl(url));
+      info.excludedFromProject.addAll(ContainerUtil.filter(files, file -> ensureValid(file, policy)));
 
       Function<Sdk, List<VirtualFile>> fun = policy.getExcludeSdkRootsStrategy();
 
