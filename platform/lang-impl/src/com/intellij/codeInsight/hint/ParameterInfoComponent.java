@@ -53,8 +53,8 @@ public class ParameterInfoComponent extends JPanel {
 
   private static final Color BACKGROUND = JBColor.namedColor("ParameterInfo.background", HintUtil.getInformationColor());
   private static final Color FOREGROUND = JBColor.namedColor("ParameterInfo.foreground", new JBColor(0x1D1D1D, 0xBBBBBB));
-  private static final Color HIGHLIGHTED_COLOR = JBColor.namedColor("ParameterInfo.highlightedColor", new JBColor(0x1D1D1D, 0xE8E8E8));
-  private static final Color DISABLED_COLOR = JBColor.namedColor("ParameterInfo.disabledColor", new JBColor(0xA8A8A8, 0x777777));
+  private static final Color HIGHLIGHTED_COLOR = JBColor.namedColor("ParameterInfo.currentParameterForeground", new JBColor(0x1D1D1D, 0xE8E8E8));
+  private static final Color DISABLED_COLOR = JBColor.namedColor("ParameterInfo.disabledForeground", new JBColor(0xA8A8A8, 0x777777));
   private static final Color CONTEXT_HELP_FOREGROUND = JBColor.namedColor("ParameterInfo.infoForeground", new JBColor(0x787878, 0x878787));
   static final Color BORDER_COLOR = JBColor.namedColor("ParameterInfo.borderColor", HintUtil.INFORMATION_BORDER_COLOR);
   private static final Border EMPTY_BORDER = JBUI.Borders.empty(2, 10);
