@@ -8,13 +8,12 @@ import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
-import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
@@ -72,15 +71,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector.LIFECYCLE_APP;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
   // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
@@ -810,12 +806,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
 
       lifecycleListener.appWillBeClosed(restart);
-
-      FeatureUsageLogger.INSTANCE.log(LIFECYCLE_APP, "ide.close");
-      if (restart) {
-        FeatureUsageLogger.INSTANCE.log(LIFECYCLE_APP, "ide.close.restart");
-      }
-      FeatureUsageLogger.INSTANCE.log(AppLifecycleUsageTriggerCollector.LIFECYCLE, "app.closed", Collections.singletonMap("restart", restart));
+      LifecycleUsageTriggerCollector.onIdeClose(restart);
 
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {

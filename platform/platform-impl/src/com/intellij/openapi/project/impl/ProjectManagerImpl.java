@@ -5,15 +5,12 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
-import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
-import com.intellij.featureStatistics.fusCollectors.ProjectLifecycleUsageTriggerCollector;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
@@ -670,9 +667,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
-    //Here could be false positives iff checkCanClose && !ensureCouldCloseIfUnableToSave(project)
-    //but this saving should be before saving project
-    FeatureUsageLogger.INSTANCE.log(ProjectLifecycleUsageTriggerCollector.GROUP_ID, "project.closed", StatisticsUtilKt.createData(project, null));
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
@@ -778,9 +772,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.debug("projectOpened");
     }
 
-    FeatureUsageLogger.INSTANCE.log(ProjectLifecycleUsageTriggerCollector.GROUP_ID, "project.opened", StatisticsUtilKt.createData(project, null));
-    FeatureUsageLogger.INSTANCE.log(AppLifecycleUsageTriggerCollector.LIFECYCLE, "project.opened");
-
+    LifecycleUsageTriggerCollector.onProjectOpened(project);
     myBusPublisher.projectOpened(project);
     // https://jetbrains.slack.com/archives/C5E8K7FL4/p1495015043685628
     // projectOpened in the project components is called _after_ message bus event projectOpened for ages
@@ -799,7 +791,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.debug("projectClosed");
     }
 
-    FeatureUsageLogger.INSTANCE.log(AppLifecycleUsageTriggerCollector.LIFECYCLE, "project.closed");
+    LifecycleUsageTriggerCollector.onProjectClosed(project);
 
     myBusPublisher.projectClosed(project);
     // see "why is called after message bus" in the fireProjectOpened

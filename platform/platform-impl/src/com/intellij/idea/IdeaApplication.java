@@ -4,10 +4,10 @@ package com.intellij.idea;
 import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -372,7 +372,7 @@ public class IdeaApplication {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(PluginManager::reportPluginError);
 
-        FeatureUsageLogger.INSTANCE.log("lifecycle", "app.started");
+        LifecycleUsageTriggerCollector.onIdeStart();
       });
     }
 

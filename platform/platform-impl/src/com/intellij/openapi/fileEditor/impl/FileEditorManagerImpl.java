@@ -2,16 +2,13 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
-import com.intellij.featureStatistics.fusCollectors.ProjectLifecycleUsageTriggerCollector;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -1498,8 +1495,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
               Long startTime = myProject.getUserData(ProjectImpl.CREATION_TIME);
               if (startTime != null) {
                 long time = (currentTime - startTime.longValue()) / 1000000;
-                FeatureUsageLogger.INSTANCE.log(ProjectLifecycleUsageTriggerCollector.GROUP_ID, "project.open.time."+(time/1000), StatisticsUtilKt.createData(myProject, null));
-                FeatureUsageLogger.INSTANCE.log(AppLifecycleUsageTriggerCollector.LIFECYCLE, "project.opening.finished", Collections.singletonMap("time.ms", time));
+                LifecycleUsageTriggerCollector.onProjectOpenFinished(myProject, time);
 
                 LOG.info("Project opening took " + time + " ms");
                 PluginManagerCore.dumpPluginClassStatistics();
