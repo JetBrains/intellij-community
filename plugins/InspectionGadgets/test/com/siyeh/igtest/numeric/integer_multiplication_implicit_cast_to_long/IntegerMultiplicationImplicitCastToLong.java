@@ -54,4 +54,8 @@ public class IntegerMultiplicationImplicitCastToLong {
         long l1 = (val & 255) << 16;
         long l2 = (val & 255) << 8;
     }
+    
+    int explicitCast(int a, long b) {
+        return (int)(a * 300 + b); 
+    }
 }
