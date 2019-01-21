@@ -3356,6 +3356,22 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-32113
+  public void testAssertionFunctionFromOuterScope() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("B",
+                   "class B: pass\n" +
+                   "\n" +
+                   "def g_b():\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "def main() -> None:\n" +
+                   "    assert isinstance(g_b, B)\n" +
+                   "    expr = g_b")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
