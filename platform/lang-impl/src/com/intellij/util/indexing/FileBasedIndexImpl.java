@@ -2497,7 +2497,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     long deadline = System.nanoTime() + unit.toNanos(timeout);
     while (System.nanoTime() < deadline) {
       try {
-        ((BoundedTaskExecutor)myChangedFilesCollector.myVfsEventsExecutor).waitAllTasksExecuted(1, TimeUnit.MILLISECONDS);
+        ((BoundedTaskExecutor)myChangedFilesCollector.myVfsEventsExecutor).waitAllTasksExecuted(100, TimeUnit.MILLISECONDS);
         return;
       }
       catch (TimeoutException e) {
