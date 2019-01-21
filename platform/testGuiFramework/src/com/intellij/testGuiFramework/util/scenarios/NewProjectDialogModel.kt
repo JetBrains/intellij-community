@@ -43,7 +43,7 @@ import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.timing.Pause
-import java.awt.Point
+import java.awt.Component
 import java.io.Serializable
 
 class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase) {
@@ -225,9 +225,7 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
         button(buttonNext).click()
         if (template.isNotEmpty()) {
           waitForPageTransitionFinished {
-            val cmp = checkbox(checkCreateProjectFromTemplate).target()
-            logInfo("found component ${cmp.hashCode().toString(16)}")
-              cmp.locationOnScreen
+            checkbox(checkCreateProjectFromTemplate).target()
           }
           val templateCheckbox = checkbox(checkCreateProjectFromTemplate)
           if (!templateCheckbox.isSelected)
@@ -259,18 +257,18 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
 /**
  * Waits for transition animation finished
  * When transition animation occurs components on the appearing page
- * change their [locationOnScreen] coordinates and at the same time their [x] and [y]
+ * change their [movedComponent] coordinates and at the same time their [x] and [y]
  * coordinates are kept unchanged.
  *
- * @param locationOnScreen - function calculated 1 coordinate of locationOnScreen property of a moving component
+ * @param movedComponent - function calculated 1 coordinate of movedComponent property of a moving component
  * */
-fun JDialogFixture.waitForPageTransitionFinished(locationOnScreen: JDialogFixture.() -> Point) {
+fun JDialogFixture.waitForPageTransitionFinished(movedComponent: JDialogFixture.() -> Component) {
   step("wait for page transition") {
-    var previousCoord = step("calculate original location") { locationOnScreen() }
+    val component = movedComponent()
+    var previousCoord = step("calculate original location") { GuiTestUtilKt.computeOnEdt { component.locationOnScreen }!! }
     robot().waitForIdle()
     GuiTestUtilKt.waitUntil("wait when coordinates stop changing") {
-      val currentCoord = step("calculate location in progress") { locationOnScreen() }
-//      val currentCoord = GuiTestUtilKt.computeOnEdt { locationOnScreen() }!!
+      val currentCoord = step("calculate location in progress") { GuiTestUtilKt.computeOnEdt { component.locationOnScreen }!! }
       val result = previousCoord == currentCoord
       logInfo("current coordinates [${currentCoord.x}, ${currentCoord.y}], previous coordinates [${previousCoord.x}, ${previousCoord.y}]")
       previousCoord = currentCoord
@@ -286,9 +284,7 @@ fun NewProjectDialogModel.typeGroupAndArtifact(group: String, artifact: String) 
     step("set group and artifact for gradle/maven project") {
       with(connectDialog()) {
         waitForPageTransitionFinished {
-          val cmp = textfield(textGroupId).target()
-          logInfo("found component ${cmp.hashCode().toString(16)}")
-            cmp.locationOnScreen
+          textfield(textGroupId).target()
         }
         step("fill GroupId with `$group`") {
           textfield(textGroupId).click()
@@ -331,9 +327,7 @@ fun NewProjectDialogModel.createGradleProject(
         button(buttonNext).click()
         step("set gradle options") {
           waitForPageTransitionFinished {
-            val cmp =checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title).target()
-            logInfo("found component ${cmp.hashCode().toString(16)}")
-            cmp.locationOnScreen
+            checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title).target()
           }
           val useAutoImport = checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title)
           if (useAutoImport.isSelected != gradleOptions.useAutoImport) {
@@ -371,9 +365,7 @@ fun NewProjectDialogModel.typeProjectNameAndLocation(projectPath: String) {
   with(guiTestCase) {
     with(connectDialog()) {
       waitForPageTransitionFinished {
-        val cmp = textfield(textProjectLocation).target()
-        logInfo("found component ${cmp.hashCode().toString(16)}")
-          cmp.locationOnScreen
+        textfield(textProjectLocation).target()
       }
       step("fill Project location with `$projectPath`") {
         textfield(textProjectLocation).click()
@@ -467,9 +459,7 @@ fun NewProjectDialogModel.createKotlinMPProject(
       button(buttonNext).click()
       val gradleJvm = "Gradle JVM:"
       waitForPageTransitionFinished {
-        val cmp = combobox(gradleJvm).target()
-        logInfo("found component ${cmp.hashCode().toString(16)}")
-          cmp.locationOnScreen
+        combobox(gradleJvm).target()
       }
       if (projectSdk.isNotEmpty()) selectSdk(projectSdk, gradleJvm)
       button(buttonNext).click()
