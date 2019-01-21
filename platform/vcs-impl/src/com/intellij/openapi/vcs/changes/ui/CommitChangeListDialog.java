@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
@@ -547,7 +546,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       try {
         DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
         stopUpdate();
-        CheckinHandler.ReturnResult result = performBeforeCommitChecks(executor);
+        CheckinHandler.ReturnResult result = myWorkflow.performBeforeCommitChecks(executor, myHandlers, myBrowser.getSelectedChangeList());
         if (result == CheckinHandler.ReturnResult.CANCEL) {
           restartUpdate();
         }
@@ -599,7 +598,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
       DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
       stopUpdate();
-      CheckinHandler.ReturnResult result = performBeforeCommitChecks(commitExecutor);
+      CheckinHandler.ReturnResult result =
+        myWorkflow.performBeforeCommitChecks(commitExecutor, myHandlers, myBrowser.getSelectedChangeList());
       if (result == CheckinHandler.ReturnResult.CANCEL) {
         restartUpdate();
       }
@@ -735,19 +735,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void restartUpdate() {
     myUpdateDisabled = false;
     myUpdateButtonsRunnable.run();
-  }
-
-  @NotNull
-  private CheckinHandler.ReturnResult performBeforeCommitChecks(@Nullable CommitExecutor executor) {
-    Ref<CheckinHandler.ReturnResult> compoundResultRef = Ref.create();
-    Runnable proceedRunnable = () -> {
-      FileDocumentManager.getInstance().saveAllDocuments();
-      compoundResultRef.set(myWorkflow.runBeforeCheckinHandlers(executor, myHandlers));
-    };
-
-    Runnable runnable = myWorkflow.wrapIntoCheckinMetaHandlers(proceedRunnable, myHandlers);
-    myWorkflow.doRunBeforeCommitChecks(myBrowser.getSelectedChangeList(), runnable);
-    return notNull(compoundResultRef.get(), CheckinHandler.ReturnResult.CANCEL);
   }
 
   private boolean saveDialogState() {

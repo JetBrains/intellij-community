@@ -2,9 +2,12 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.PseudoMap
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandler.ReturnResult.COMMIT
@@ -22,7 +25,23 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   val additionalDataConsumer: PairConsumer<Any, Any> get() = additionalData
   val additionalDataHolder: NullableFunction<Any, Any> get() = additionalData
 
-  fun runBeforeCheckinHandlers(executor: CommitExecutor?, handlers: List<CheckinHandler>): CheckinHandler.ReturnResult {
+  fun performBeforeCommitChecks(executor: CommitExecutor?,
+                                handlers: List<CheckinHandler>,
+                                changeList: LocalChangeList): CheckinHandler.ReturnResult {
+    val compoundResultRef = Ref.create<CheckinHandler.ReturnResult>()
+    val proceedRunnable = Runnable {
+      FileDocumentManager.getInstance().saveAllDocuments()
+      compoundResultRef.set(runBeforeCheckinHandlers(executor, handlers))
+    }
+
+    val runnable = wrapIntoCheckinMetaHandlers(proceedRunnable, handlers)
+    doRunBeforeCommitChecks(changeList, runnable)
+    return compoundResultRef.get() ?: CheckinHandler.ReturnResult.CANCEL
+  }
+
+  abstract fun doRunBeforeCommitChecks(changeList: LocalChangeList, checks: Runnable)
+
+  private fun runBeforeCheckinHandlers(executor: CommitExecutor?, handlers: List<CheckinHandler>): CheckinHandler.ReturnResult {
     handlers.asSequence().filter { it.acceptExecutor(executor) }.forEach { handler ->
       LOG.debug("CheckinHandler.beforeCheckin: $handler")
 
@@ -33,12 +52,13 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     return COMMIT
   }
 
-  fun wrapIntoCheckinMetaHandlers(runnable: Runnable, handlers: List<CheckinHandler>): Runnable {
+  private fun wrapIntoCheckinMetaHandlers(runnable: Runnable, handlers: List<CheckinHandler>): Runnable {
     var result = runnable
     handlers.filterIsInstance<CheckinMetaHandler>().forEach {
       val previousResult = result
       result = Runnable {
         LOG.debug("CheckinMetaHandler.runCheckinHandlers: $it")
+
         it.runCheckinHandlers(previousResult)
       }
     }

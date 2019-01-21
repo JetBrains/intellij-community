@@ -54,7 +54,7 @@ open class DialogCommitWorkflow(
   protected open fun prepareCommit(unversionedFiles: List<VirtualFile>, browser: CommitDialogChangesBrowser): Boolean =
     ScheduleForAdditionAction.addUnversioned(project, unversionedFiles, browser)
 
-  protected open fun doRunBeforeCommitChecks(changeList: LocalChangeList, checks: Runnable) =
+  override fun doRunBeforeCommitChecks(changeList: LocalChangeList, checks: Runnable) =
     PartialChangesUtil.runUnderChangeList(project, changeList, checks)
 
   protected open fun canExecute(executor: CommitExecutor, changes: Collection<Change>): Boolean {

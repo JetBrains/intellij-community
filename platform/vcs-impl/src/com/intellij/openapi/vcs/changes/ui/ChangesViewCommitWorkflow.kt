@@ -3,7 +3,10 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.changes.LocalChangeList
 
 class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
   val affectedVcses: Set<AbstractVcs<*>> = emptySet()
+
+  override fun doRunBeforeCommitChecks(changeList: LocalChangeList, checks: Runnable) = checks.run()
 }
