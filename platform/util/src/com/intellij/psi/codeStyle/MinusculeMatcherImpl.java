@@ -5,12 +5,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Iterator;
 
 /**
  * Tells whether a string matches a specific pattern. Allows for lowercase camel-hump matching.
@@ -19,8 +16,8 @@ import java.util.Iterator;
  * @see NameUtil#buildMatcher(String)
  *
  * @author peter
-*/
-public class MinusculeMatcher implements Matcher {
+ */
+class MinusculeMatcherImpl extends MinusculeMatcher {
   private final char[] myPattern;
   private final String myHardSeparators;
   private final NameUtil.MatchingCaseSensitivity myOptions;
@@ -42,7 +39,7 @@ public class MinusculeMatcher implements Matcher {
    * @param hardSeparators A string of characters (empty by default). Lowercase humps don't work for parts separated by any of these characters.
    * Need either an explicit uppercase letter or the same separator character in prefix
    */
-  MinusculeMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
+  MinusculeMatcherImpl(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
     myOptions = options;
     myPattern = StringUtil.trimEnd(pattern, "* ").toCharArray();
     myHardSeparators = hardSeparators;
@@ -111,14 +108,7 @@ public class MinusculeMatcher implements Matcher {
     return ranges.prepend(TextRange.from(from, length));
   }
 
-  public int matchingDegree(@NotNull String name) {
-    return matchingDegree(name, false);
-  }
-
-  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch) {
-    return matchingDegree(name, valueStartCaseMatch, matchingFragments(name));
-  }
-
+  @Override
   public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<TextRange> fragments) {
     if (fragments == null) return Integer.MIN_VALUE;
     if (fragments.isEmpty()) return 0;
@@ -199,34 +189,13 @@ public class MinusculeMatcher implements Matcher {
     return 0;
   }
 
-  public boolean isStartMatch(@NotNull String name) {
-    FList<TextRange> fragments = matchingFragments(name);
-    return fragments != null && isStartMatch(fragments);
-  }
-
-  public static boolean isStartMatch(@NotNull Iterable<TextRange> fragments) {
-    Iterator<TextRange> iterator = fragments.iterator();
-    return !iterator.hasNext() || iterator.next().getStartOffset() == 0;
-  }
-
   @Override
-  public boolean matches(@NotNull String name) {
-    return matchingFragments(name) != null;
-  }
-
   @NotNull
   public String getPattern() {
     return new String(myPattern);
   }
 
-  protected String getHardSeparators() {
-    return myHardSeparators;
-  }
-
-  protected NameUtil.MatchingCaseSensitivity getOptions() {
-    return myOptions;
-  }
-
+  @Override
   @Nullable
   public FList<TextRange> matchingFragments(@NotNull String name) {
     if (name.length() < myMinNameLength) {
@@ -588,7 +557,7 @@ public class MinusculeMatcher implements Matcher {
   @NonNls
   @Override
   public String toString() {
-    return "MinusculeMatcher{myPattern=" + new String(myPattern) + ", myOptions=" + myOptions + '}';
+    return "MinusculeMatcherImpl{myPattern=" + new String(myPattern) + ", myOptions=" + myOptions + '}';
   }
 
 }

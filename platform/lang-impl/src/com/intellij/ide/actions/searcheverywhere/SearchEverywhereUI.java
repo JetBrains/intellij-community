@@ -499,7 +499,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
                                       .map(contributor -> contributor.filterControlSymbols(rawPattern))
                                       .orElse(rawPattern);
 
-    MinusculeMatcher matcher = NameUtil.buildCompoundMatcher("*" + rawPattern, "*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher matcher = NameUtil.buildMatcherWithFallback("*" + rawPattern, "*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE);
     MatcherHolder.associateMatcher(myResultsList, matcher);
 
     Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();

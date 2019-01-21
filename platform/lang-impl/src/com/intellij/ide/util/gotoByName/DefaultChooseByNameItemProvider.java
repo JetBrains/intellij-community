@@ -251,7 +251,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     String fullRawPattern = buildFullPattern(base, parameters.getCompletePattern());
     String fullNamePattern = buildFullPattern(base, base.transformPattern(parameters.getCompletePattern()));
 
-    return NameUtil.buildCompoundMatcher(fullRawPattern, fullNamePattern, NameUtil.MatchingCaseSensitivity.NONE);
+    return NameUtil.buildMatcherWithFallback(fullRawPattern, fullNamePattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   @NotNull

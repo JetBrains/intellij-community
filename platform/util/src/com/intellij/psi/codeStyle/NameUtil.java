@@ -425,7 +425,7 @@ public class NameUtil {
     }
 
     public MinusculeMatcher build() {
-      return Registry.is("ide.completion.typo.tolerance") ? new FixingLayoutTypoTolerantMatcher(pattern, caseSensitivity, separators)
+      return Registry.is("ide.completion.typo.tolerance") ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators)
                                                           : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
     }
   }
@@ -440,12 +440,12 @@ public class NameUtil {
     return buildMatcher(pattern).withCaseSensitivity(options).build();
   }
 
-  public static MinusculeMatcher buildCompoundMatcher(@NotNull String pattern,
-                                                      @NotNull String fallbackPattern,
-                                                      @NotNull MatchingCaseSensitivity options) {
+  public static MinusculeMatcher buildMatcherWithFallback(@NotNull String pattern,
+                                                          @NotNull String fallbackPattern,
+                                                          @NotNull MatchingCaseSensitivity options) {
     return pattern.equals(fallbackPattern) ?
            buildMatcher(pattern, options) :
-           new CompoundMatcher(buildMatcher(pattern, options), buildMatcher(fallbackPattern, options));
+           new MatcherWithFallback(buildMatcher(pattern, options), buildMatcher(fallbackPattern, options));
   }
 
   @NotNull
