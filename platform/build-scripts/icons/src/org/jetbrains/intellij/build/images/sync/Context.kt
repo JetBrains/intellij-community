@@ -32,8 +32,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val byCommit = mutableMapOf<String, Changes>()
   val consistent: MutableCollection<String> = mutableListOf()
   var createdReviews: Collection<Review> = emptyList()
-  lateinit var icons: Map<String, GitObject>
-  lateinit var devIcons: Map<String, GitObject>
+  var icons: Map<String, GitObject> = emptyMap()
+  var devIcons: Map<String, GitObject> = emptyMap()
   var devCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
   var iconsCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
   val iconsCommitHashesToSync: MutableSet<String>

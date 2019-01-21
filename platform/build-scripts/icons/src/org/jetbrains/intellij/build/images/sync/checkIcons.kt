@@ -17,6 +17,7 @@ import java.util.stream.Stream
 import kotlin.streams.toList
 
 fun main(args: Array<String>) = try {
+  if (args.isNotEmpty()) System.setProperty(Context.iconsCommitHashesToSyncArg, args.joinToString())
   checkIcons()
 }
 catch (e: Throwable) {
@@ -26,15 +27,17 @@ catch (e: Throwable) {
 internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<String> = Consumer { println(it) }) {
   logger = loggerImpl
   context.iconsRepo = findGitRepoRoot(context.iconsRepoDir)
-  context.icons = readIconsRepo(context)
   context.devRepoRoot = findGitRepoRoot(context.devRepoDir)
   val devRepoVcsRoots = vcsRoots(context.devRepoRoot)
-  context.devIcons = readDevRepo(context, devRepoVcsRoots)
   callWithTimer("Searching for changed icons..") {
     when {
       context.iconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDesigners(context)
       context.devIconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDev(context, devRepoVcsRoots)
-      else -> searchForAllChangedIcons(context, devRepoVcsRoots)
+      else -> {
+        context.icons = readIconsRepo(context)
+        context.devIcons = readDevRepo(context, devRepoVcsRoots)
+        searchForAllChangedIcons(context, devRepoVcsRoots)
+      }
     }
   }
   syncDevRepo(context)

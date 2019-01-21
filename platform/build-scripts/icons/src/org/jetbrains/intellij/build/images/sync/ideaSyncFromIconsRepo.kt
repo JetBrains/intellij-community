@@ -10,7 +10,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 
 fun main(args: Array<String>) {
-  if (args.isNotEmpty()) System.setProperty(Context.iconsCommitHashesToSyncArg, args.joinToString())
   echo("Syncing icons..")
   checkIcons()
   echo("Generating classes..")
