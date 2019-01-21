@@ -730,7 +730,7 @@ public final class PythonSdkType extends SdkType {
         originPath = binaryPath;
       }
       if (originFile != null) {
-        originFile = ObjectUtils.notNull(originFile.getCanonicalFile(), vFile);
+        originFile = ObjectUtils.notNull(originFile.getCanonicalFile(), originFile);
         originPath = originFile.getPath();
       }
       
