@@ -10,12 +10,13 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
 import java.nio.charset.StandardCharsets
+import java.security.SecureRandom
 import java.util.*
 import java.util.prefs.Preferences
 
 object EventLogConfiguration {
   private val LOG = Logger.getInstance(EventLogConfiguration::class.java)
-  private const val SALT_PREFERENCE_KEY = "event_log_salt"
+  private const val SALT_PREFERENCE_KEY = "feature_usage_event_log_salt"
 
   val sessionId: String = UUID.randomUUID().toString().shortedUUID()
 
@@ -24,7 +25,7 @@ object EventLogConfiguration {
 
   val build: String = ApplicationInfo.getInstance().build.asBuildNumber()
 
-  private val salt: String = getOrGenerateSalt()
+  private val salt: ByteArray = getOrGenerateSalt()
   private val anonymizedCache = ContainerUtil.newHashMap<String, String>()
 
   fun anonymize(data: String): String {
@@ -37,7 +38,7 @@ object EventLogConfiguration {
     }
 
     val hasher = Hashing.sha256().newHasher()
-    hasher.putString(salt, StandardCharsets.UTF_8)
+    hasher.putBytes(salt)
     hasher.putString(data, StandardCharsets.UTF_8)
     val result = hasher.hash().toString()
     anonymizedCache[data] = result
@@ -61,15 +62,16 @@ object EventLogConfiguration {
     return Math.abs(this.hashCode()) % 256
   }
 
-  private fun getOrGenerateSalt(): String {
+  private fun getOrGenerateSalt(): ByteArray {
     val companyName = ApplicationInfoImpl.getShadowInstance().shortCompanyName
     val name = if (StringUtil.isEmptyOrSpaces(companyName)) "jetbrains" else companyName.toLowerCase(Locale.US)
     val prefs = Preferences.userRoot().node(name)
 
-    var salt = prefs.get(SALT_PREFERENCE_KEY, null)
-    if (StringUtil.isEmptyOrSpaces(salt)) {
-      salt = UUID.randomUUID().toString()
-      prefs.put(SALT_PREFERENCE_KEY, salt)
+    var salt = prefs.getByteArray(SALT_PREFERENCE_KEY, null)
+    if (salt == null) {
+      salt = ByteArray(32)
+      SecureRandom().nextBytes(salt)
+      prefs.putByteArray(SALT_PREFERENCE_KEY, salt)
       LOG.info("Generating salt for the device")
     }
     return salt
