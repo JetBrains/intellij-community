@@ -131,13 +131,12 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
       RootType scratchRootType = RootType.forFile(PsiUtilCore.getVirtualFile(directory));
       ModuleFileIndex moduleFileIndex =
         rootElement instanceof Module ? ModuleRootManager.getInstance((Module)rootElement).getFileIndex() : null;
-      directory.processChildren(child -> {
+      return directory.processChildren(child -> {
         VirtualFile childFile = PsiUtilCore.getVirtualFile(child);
         if (childFile != null && scratchRootType != null && scratchRootType.isIgnored(project, childFile)) return true;
         if (childFile != null && moduleFileIndex != null && !moduleFileIndex.isInContent(childFile)) return true;
         return processor.process(child);
       });
-      return true;
     });
   }
 
