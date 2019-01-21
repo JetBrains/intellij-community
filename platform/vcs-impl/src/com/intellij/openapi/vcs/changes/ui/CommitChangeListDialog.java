@@ -24,7 +24,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
-import com.intellij.openapi.vcs.checkin.*;
+import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
+import com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.ui.CommitMessage;
@@ -69,6 +72,8 @@ import static com.intellij.util.ui.UIUtil.*;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.*;
 
+// TODO Extract all model methods to workflow
+// TODO Convert dialog to kotlin
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, DataProvider {
   private static final Logger LOG = getInstance(CommitChangeListDialog.class);
 
@@ -191,6 +196,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                       @Nullable String comment,
                                       @Nullable CommitResultHandler customResultHandler,
                                       boolean cancelIfNoChanges) {
+    //TODO Could just move it to DialogCommitWorkflow.create() factory method for now
     ChangeListManager manager = ChangeListManager.getInstance(project);
     LocalChangeList defaultList = manager.getDefaultChangeList();
     List<LocalChangeList> changeLists = manager.getChangeListsCopy();
@@ -724,7 +730,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       compoundResultRef.set(runBeforeCheckinHandlers(executor));
     };
 
-    Runnable runnable = wrapIntoCheckinMetaHandlers(proceedRunnable);
+    Runnable runnable = myWorkflow.wrapIntoCheckinMetaHandlers(proceedRunnable, myHandlers);
     myWorkflow.doRunBeforeCommitChecks(myBrowser.getSelectedChangeList(), runnable);
     return notNull(compoundResultRef.get(), CheckinHandler.ReturnResult.CANCEL);
   }
@@ -751,20 +757,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     return CheckinHandler.ReturnResult.COMMIT;
-  }
-
-  private Runnable wrapIntoCheckinMetaHandlers(Runnable runnable) {
-    for (CheckinHandler handler : myHandlers) {
-      if (handler instanceof CheckinMetaHandler) {
-        CheckinMetaHandler metaHandler = (CheckinMetaHandler)handler;
-        Runnable previousRunnable = runnable;
-        runnable = () -> {
-          LOG.debug("CheckinMetaHandler.runCheckinHandlers: " + handler);
-          metaHandler.runCheckinHandlers(previousRunnable);
-        };
-      }
-    }
-    return runnable;
   }
 
   private boolean saveDialogState() {
