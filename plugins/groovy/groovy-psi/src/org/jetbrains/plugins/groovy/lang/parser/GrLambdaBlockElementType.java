@@ -2,10 +2,8 @@
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.parser.GrCodeBlockElementType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrLambdaBlockImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrLambdaBlockImpl;
 
 public class GrLambdaBlockElementType extends GrCodeBlockElementType {
 

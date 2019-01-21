@@ -938,19 +938,17 @@ array_declaration ::= mandatory_expression optional_expression* { consumeTokenMe
 private mandatory_expression ::= '[' expression ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 private optional_expression ::= '[' expression? ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 
-private priority1_2 ::= method_call_expression | lazy_closure  | parenthesized_lambda_expression | list_or_map
+private priority1_2 ::= method_call_expression | lazy_closure | parenthesized_lambda_expression | list_or_map
 constructor_call_expression ::= &('this' | 'super') unqualified_reference_expression call_tail
 method_call_expression ::= expression call_tail
 private call_tail ::= call_argument_list (mb_nl lazy_closure)* | empty_argument_list <<closureArgumentSeparator lazy_closure+>>
 
-lambda_expression ::=  lambda_expression_base | clear_variants_and_fail { extends = expression }
+lambda_expression ::=  lambda_expression_base | clear_variants_and_fail
 private lambda_expression_base ::= lambda_expression_head mb_nl lambda_body { pin = 1 }
 private lambda_expression_head ::= lambda_parameter_list mb_nl '->' { consumeTokenMethod = 'consumeTokenFast' }
 private lambda_parameter_list ::= parenthesized_lambda_parameter_list | single_lambda_parameter_list
 
-parenthesized_lambda_expression ::= parenthesized_lambda_expression_base | clear_variants_and_fail {
-  elementType = lambda_expression
-}
+parenthesized_lambda_expression ::= parenthesized_lambda_expression_base | clear_variants_and_fail { elementType = lambda_expression }
 private parenthesized_lambda_expression_base ::= parenthesized_lambda_expression_head mb_nl lambda_body { pin = 1 }
 private parenthesized_lambda_expression_head ::= parenthesized_lambda_parameter_list mb_nl '->'
 {
@@ -965,7 +963,7 @@ single_lambda_parameter ::= IDENTIFIER {
   elementType = parameter
 }
 
-private lambda_body ::=  (!<<isParametrizedClosure>> lazy_lambda_block) | expression_or_application
+private lambda_body ::=  (!<<isParameterizedClosure>> lazy_lambda_block) | expression_or_application
 
 lazy_lambda_block ::=  <<parseBlockLazy lambda_block 'LAMBDA_BLOCK'>> {
   elementType = lambda_block
@@ -1144,7 +1142,7 @@ fake argument_list ::=
 
 empty_argument_list ::= { elementType = argument_list }
 
-call_argument_list ::= !<<isParametrizedLambda>> (empty_parens | non_empty_argument_list)
+call_argument_list ::= !<<isParameterizedLambda>> (empty_parens | non_empty_argument_list)
 {
   elementType = argument_list
 }

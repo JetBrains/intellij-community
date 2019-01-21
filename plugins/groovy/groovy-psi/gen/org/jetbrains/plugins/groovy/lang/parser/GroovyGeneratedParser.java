@@ -1625,7 +1625,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // !<<isParametrizedLambda>> (empty_parens | non_empty_argument_list)
+  // !<<isParameterizedLambda>> (empty_parens | non_empty_argument_list)
   public static boolean call_argument_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "call_argument_list")) return false;
     boolean r;
@@ -1636,12 +1636,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // !<<isParametrizedLambda>>
+  // !<<isParameterizedLambda>>
   private static boolean call_argument_list_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "call_argument_list_0")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NOT_);
-    r = !isParametrizedLambda(b, l + 1);
+    r = !isParameterizedLambda(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -4351,7 +4351,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (!<<isParametrizedClosure>> lazy_lambda_block) | expression_or_application
+  // (!<<isParameterizedClosure>> lazy_lambda_block) | expression_or_application
   static boolean lambda_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambda_body")) return false;
     boolean r;
@@ -4362,7 +4362,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // !<<isParametrizedClosure>> lazy_lambda_block
+  // !<<isParameterizedClosure>> lazy_lambda_block
   private static boolean lambda_body_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambda_body_0")) return false;
     boolean r;
@@ -4373,12 +4373,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // !<<isParametrizedClosure>>
+  // !<<isParameterizedClosure>>
   private static boolean lambda_body_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambda_body_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NOT_);
-    r = !isParametrizedClosure(b, l + 1);
+    r = !isParameterizedClosure(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

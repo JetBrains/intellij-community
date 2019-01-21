@@ -415,19 +415,19 @@ private fun castOperandCheckInner(builder: PsiBuilder): Boolean {
   return false
 }
 
-fun isParametrizedClosure(builder: PsiBuilder, level: Int): Boolean {
+fun isParameterizedClosure(builder: PsiBuilder, level: Int): Boolean {
   return builder.lookahead {
-    isParametrizedClosureInner(this, level)
+    isParameterizedClosureInner(this, level)
   }
 }
 
-private fun isParametrizedClosureInner(builder: PsiBuilder, level: Int): Boolean {
+private fun isParameterizedClosureInner(builder: PsiBuilder, level: Int): Boolean {
   if (!consumeTokenFast(builder, T_LBRACE)) return false
   GroovyGeneratedParser.mb_nl(builder, level)
   return closure_header_with_arrow(builder, level)
 }
 
-fun isParametrizedLambda(builder: PsiBuilder, level: Int): Boolean {
+fun isParameterizedLambda(builder: PsiBuilder, level: Int): Boolean {
   return builder.lookahead {
     parenthesized_lambda_expression_head(builder, level)
   }
