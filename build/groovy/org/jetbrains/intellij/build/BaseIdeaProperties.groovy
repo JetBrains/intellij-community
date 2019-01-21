@@ -22,6 +22,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
   protected static final List<String> JAVA_IMPLEMENTATION_MODULES = [
     "intellij.java.compiler.impl",
     "intellij.java.debugger.impl",
+    "intellij.java.debugger.memory.agent",
     "intellij.xml.dom.impl",
     "intellij.java.execution.impl",
     "intellij.platform.externalSystem.impl",
