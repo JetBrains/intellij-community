@@ -15,10 +15,10 @@ import com.intellij.util.SystemProperties
 
 open class CloseProjectWindowHelper {
   protected open val isMacSystemMenu: Boolean
-    get() = if (SystemProperties.`is`("idea.CloseProjectWindowHelper.ignore.isMacSystemMenu")) false else SystemInfo.isMacSystemMenu
+    get() = SystemProperties.getBooleanProperty("idea.test.isMacSystemMenu", SystemInfo.isMacSystemMenu)
 
   private val isShowWelcomeScreen: Boolean
-    get() = isMacSystemMenu || isShowWelcomeScreenFromSettings
+    get() = isMacSystemMenu && isShowWelcomeScreenFromSettings
 
   protected open val isShowWelcomeScreenFromSettings
     get() = GeneralSettings.getInstance().isShowWelcomeScreen
