@@ -430,7 +430,7 @@ public class RecentLocationsAction extends AnAction {
   }
 
   @NotNull
-  public static TextRange getLinesRange(@NotNull Document document, int line) {
+  private static TextRange getLinesRange(@NotNull Document document, int line) {
     int lineCount = document.getLineCount();
     if (lineCount == 0) {
       return TextRange.EMPTY_RANGE;
@@ -453,26 +453,6 @@ public class RecentLocationsAction extends AnAction {
     return startOffset <= endOffset
            ? TextRange.create(startOffset, endOffset)
            : TextRange.create(DocumentUtil.getLineTextRange(document, line));
-  }
-
-  static class RecentLocationItem {
-    @NotNull private final PlaceInfo myInfo;
-    @NotNull private final EditorEx myEditor;
-
-    RecentLocationItem(@NotNull EditorEx editor, @NotNull PlaceInfo info) {
-      myInfo = info;
-      myEditor = editor;
-    }
-
-    @NotNull
-    PlaceInfo getInfo() {
-      return myInfo;
-    }
-
-    @NotNull
-    EditorEx getEditor() {
-      return myEditor;
-    }
   }
 
   private static void setHighlighting(@NotNull Project project,
@@ -574,6 +554,26 @@ public class RecentLocationsAction extends AnAction {
       update(AnActionEvent.createFromAnAction(this, e.getInputEvent(), ActionPlaces.UNKNOWN, e.getDataContext()));
 
       myProject.getMessageBus().syncPublisher(ShowRecentChangedLocationListener.TOPIC).showChangedLocation(state);
+    }
+  }
+
+  static class RecentLocationItem {
+    @NotNull private final PlaceInfo myInfo;
+    @NotNull private final EditorEx myEditor;
+
+    RecentLocationItem(@NotNull EditorEx editor, @NotNull PlaceInfo info) {
+      myInfo = info;
+      myEditor = editor;
+    }
+
+    @NotNull
+    PlaceInfo getInfo() {
+      return myInfo;
+    }
+
+    @NotNull
+    EditorEx getEditor() {
+      return myEditor;
     }
   }
 
