@@ -2359,8 +2359,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private void waitForDaemon() {
     long deadline = System.currentTimeMillis() + 60_000;
     while (!daemonIsWorkingOrPending()) {
-      if (System.currentTimeMillis() > deadline) fail("Too long waiting for daemon to start");
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      if (System.currentTimeMillis() > deadline) fail("Too long waiting for daemon to start");
     }
     while (daemonIsWorkingOrPending()) {
       if (System.currentTimeMillis() > deadline) {
