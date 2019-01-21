@@ -40,7 +40,7 @@ class TreeBasedEvaluator(
 
   private val resultCache = mutableMapOf<UExpression, UEvaluationInfo>()
 
-  private val maxAnalyzeDepth get() = Registry.intValue("uast.evaluator.depth.limit", 10)
+  private val maxAnalyzeDepth get() = Registry.intValue("uast.evaluator.depth.limit", 15)
 
   override fun analyze(method: UMethod, state: UEvaluationState) {
     method.uastBody?.accept(DepthLimitingEvaluatorVisitor(maxAnalyzeDepth, this::EvaluatingVisitor), state)
