@@ -1454,7 +1454,6 @@ public final class UiDefaultsHardcodedKeys {
     "Table.lightSelectionInactiveForeground",
     "Table.stripeColor",
     "TitlePane.background",
-    "ToolTip.actions.background",
     "ToolWindow.Button.hoverBackground",
     "ToolWindow.Button.selectedBackground",
     "ToolWindow.Button.selectedForeground",
