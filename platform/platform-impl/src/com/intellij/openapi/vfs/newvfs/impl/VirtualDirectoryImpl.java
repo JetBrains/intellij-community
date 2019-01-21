@@ -324,13 +324,17 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (!isValid()) {
       throw new InvalidVirtualFileAccessException(this);
     }
-    NewVirtualFileSystem delegate = getFileSystem();
-    final boolean caseSensitive = delegate.isCaseSensitive();
     if (allChildrenLoaded()) {
-      assertConsistency(caseSensitive, "");
       return getArraySafely();
     }
 
+    return loadAllChildren();
+  }
+
+  @NotNull
+  private VirtualFile[] loadAllChildren() {
+    NewVirtualFileSystem delegate = getFileSystem();
+    boolean caseSensitive = delegate.isCaseSensitive();
     synchronized (myData) {
       final boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
       final FSRecords.NameId[] childrenIds = ourPersistence.listAll(this);
