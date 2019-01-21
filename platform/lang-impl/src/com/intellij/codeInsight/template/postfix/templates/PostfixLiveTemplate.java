@@ -9,10 +9,11 @@ import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLooku
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 public class PostfixLiveTemplate extends CustomLiveTemplateBase {
@@ -227,14 +229,19 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return result;
   }
 
+  private static final String THIRD_PARTY_PLUGIN_POSTFIX_TEMPLATE_ID = "third.party.plugin.postfix.template";
+
   private static void expandTemplate(@NotNull final PostfixTemplate template,
                                      @NotNull final Editor editor,
                                      @NotNull final PsiElement context) {
     if (template.isBuiltin()) {
       PostfixTemplateProvider provider = template.getProvider();
-      if (PluginInfoDetectorKt.getPluginInfo(provider != null ? provider.getClass() : template.getClass()).getType().isSafeToReport()) {
-        String action = provider != null ? provider.getId() + "/" + template.getId() : template.getId();
-        FeatureUsageLogger.INSTANCE.log(USAGE_GROUP, action, StatisticsUtilKt.createData(context.getProject(), null));
+      PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(provider != null ? provider.getClass() : template.getClass());
+      if (pluginInfo.getType().isSafeToReport()) {
+        String templateId = provider != null ? provider.getId() + "/" + template.getId() : template.getId();
+        String id = pluginInfo.getType().isDevelopedByJetBrains() ? templateId : THIRD_PARTY_PLUGIN_POSTFIX_TEMPLATE_ID;
+        Map<String, Object> data = new FeatureUsageDataBuilder().addProject(context.getProject()).addPluginInfo(pluginInfo).createData();
+        FeatureUsageLogger.INSTANCE.log(USAGE_GROUP, id, data);
       }
     }
     if (template.startInWriteAction()) {
