@@ -11,6 +11,7 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
 import com.sun.javafx.application.PlatformImpl;
@@ -585,7 +586,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
   private static GlobalMenuLib _loadLibrary() {
     try {
-      if (!SystemInfo.isLinux || Registry.is("linux.native.menu.force.disable"))
+      if (!SystemInfo.isLinux || Registry.is("linux.native.menu.force.disable") || PlatformUtils.isCLion())
         return null;
       if (!Experiments.isFeatureEnabled("linux.native.menu"))
         return null;
