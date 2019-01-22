@@ -236,6 +236,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   @Nullable
   public AbstractVcs getVcsFor(@NotNull VirtualFile file) {
+    if (myProject.isDisposed()) return null;
+
     final String vcsName = myMappings.getVcsFor(file);
     if (vcsName == null || vcsName.isEmpty()) {
       return null;
@@ -250,6 +252,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
    * cases, we could explicitly specify context (i.e. {@link Module}) to get correct result.
    */
   AbstractVcs<?> getVcsFor(@NotNull VirtualFile file, @Nullable Object matchContext) {
+    if (myProject.isDisposed()) return null;
+
     VcsDirectoryMapping mapping = myMappings.getMappingFor(file, matchContext);
     String vcsName = mapping != null ? nullize(mapping.getVcs()) : null;
 
@@ -259,6 +263,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   @Nullable
   public AbstractVcs getVcsFor(@NotNull FilePath file) {
+    if (myProject.isDisposed()) return null;
+
     final VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
     return ReadAction.compute(() -> {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !myProject.isInitialized()) return null;
@@ -272,8 +278,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   @Nullable
-  public VirtualFile getVcsRootFor(@Nullable final VirtualFile file) {
-    if (file == null) return null;
+  public VirtualFile getVcsRootFor(@Nullable VirtualFile file) {
+    if (file == null || myProject.isDisposed()) return null;
     final VcsDirectoryMapping mapping = myMappings.getMappingFor(file);
     if (mapping == null) {
       return null;
@@ -288,7 +294,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   @Nullable
   public VcsRoot getVcsRootObjectFor(@Nullable VirtualFile file) {
-    if (file == null) return null;
+    if (file == null || myProject.isDisposed()) return null;
     final VcsDirectoryMapping mapping = myMappings.getMappingFor(file);
     if (mapping == null) return null;
 
@@ -311,7 +317,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public VcsRoot getVcsRootObjectFor(@Nullable FilePath file) {
-    if (file == null) return null;
+    if (file == null || myProject.isDisposed()) return null;
 
     VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
     return vFile != null ? getVcsRootObjectFor(vFile) : null;
@@ -489,7 +495,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   @Nullable
-  public VcsDirectoryMapping getDirectoryMappingFor(final FilePath path) {
+  public VcsDirectoryMapping getDirectoryMappingFor(@Nullable FilePath path) {
+    if (path == null || myProject.isDisposed()) return null;
+
     VirtualFile vFile = ChangesUtil.findValidParentAccurately(path);
     if (vFile != null) {
       return myMappings.getMappingFor(vFile);
@@ -498,13 +506,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  public void setDirectoryMapping(final String path, final String activeVcsName) {
+  public void setDirectoryMapping(@NotNull String path, @Nullable String activeVcsName) {
     if (myMappingsLoaded) return;            // ignore per-module VCS settings if the mapping table was loaded from .ipr
     myHaveLegacyVcsConfiguration = true;
     myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
-  public void setAutoDirectoryMapping(String path, String activeVcsName) {
+  public void setAutoDirectoryMapping(@NotNull String path, @NotNull String activeVcsName) {
     final List<VirtualFile> defaultRoots = myMappings.getDefaultRoots();
     if (defaultRoots.size() == 1 && StringUtil.isEmpty(myMappings.haveDefaultMapping())) {
       myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
@@ -512,12 +520,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myMappings.setMapping(path, activeVcsName);
   }
 
-  public void removeDirectoryMapping(VcsDirectoryMapping mapping) {
+  public void removeDirectoryMapping(@NotNull VcsDirectoryMapping mapping) {
     myMappings.removeDirectoryMapping(mapping);
   }
 
   @Override
-  public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
+  public void setDirectoryMappings(@NotNull List<VcsDirectoryMapping> items) {
     myHaveLegacyVcsConfiguration = true;
     myMappings.setDirectoryMappings(items);
   }
@@ -760,6 +768,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
   }
 
+  /**
+   * @return VCS name for default mapping, if any
+   */
+  @Nullable
   @Override
   public String haveDefaultMapping() {
     return myMappings.haveDefaultMapping();
