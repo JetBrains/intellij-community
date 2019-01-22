@@ -38,7 +38,8 @@ class CommitOptionsPanel(
 ) : BorderLayoutPanel(), Disposable {
   private val myPerVcsOptionsPanels = mutableMapOf<AbstractVcs<*>, JPanel>()
   private val myAdditionalComponents = mutableListOf<RefreshableOnComponent>()
-  private val myCheckinChangeListSpecificComponents = mutableSetOf<CheckinChangeListSpecificComponent>()
+
+  private val changeListSpecificComponents get() = myAdditionalComponents.filterIsInstance<CheckinChangeListSpecificComponent>()
 
   val isEmpty = init(vcses)
 
@@ -57,10 +58,10 @@ class CommitOptionsPanel(
       panel.isVisible = affectedVcses.contains(vcs)
     }
 
-    myCheckinChangeListSpecificComponents.forEach { it.onChangeListSelected(changeList) }
+    changeListSpecificComponents.forEach { it.onChangeListSelected(changeList) }
   }
 
-  fun saveChangeListComponentsState() = myCheckinChangeListSpecificComponents.forEach { it.saveState() }
+  fun saveChangeListComponentsState() = changeListSpecificComponents.forEach { it.saveState() }
 
   override fun dispose() {
   }
@@ -74,9 +75,6 @@ class CommitOptionsPanel(
         vcsCommitOptions.add(vcsOptions)
         myPerVcsOptionsPanels[vcs] = vcsOptions
         myAdditionalComponents.add(options)
-        if (options is CheckinChangeListSpecificComponent) {
-          myCheckinChangeListSpecificComponents.add(options)
-        }
         hasVcsOptions = true
       }
     }
@@ -122,9 +120,6 @@ class CommitOptionsPanel(
   private fun addCheckinHandlerComponent(component: RefreshableOnComponent, container: JComponent) {
     container.add(component.component)
     myAdditionalComponents.add(component)
-    if (component is CheckinChangeListSpecificComponent) {
-      myCheckinChangeListSpecificComponents.add(component)
-    }
   }
 
   companion object {
