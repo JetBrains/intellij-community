@@ -739,7 +739,7 @@ public class InferenceSession {
         return inferenceVariable;
       }
       if (targetType instanceof PsiClassType) {
-        if (hasUncheckedBounds(inferenceVariable, (PsiClassType)targetType) ||
+        if (hasUncheckedBounds(inferenceVariable, (PsiClassType)targetType, this) ||
             hasWildcardParameterization(inferenceVariable, (PsiClassType)targetType)) {
           return inferenceVariable;
         }
@@ -761,13 +761,15 @@ public class InferenceSession {
     return false;
   }
 
-  private static boolean hasUncheckedBounds(InferenceVariable inferenceVariable, PsiClassType targetType) {
+  private static boolean hasUncheckedBounds(InferenceVariable inferenceVariable,
+                                            PsiClassType targetType,
+                                            InferenceSession session) {
     if (!targetType.isRaw()) {
       final InferenceBound[] boundTypes = {InferenceBound.EQ, InferenceBound.LOWER};
       for (InferenceBound inferenceBound : boundTypes) {
         final List<PsiType> bounds = inferenceVariable.getBounds(inferenceBound);
         for (PsiType bound : bounds) {
-          if (TypeCompatibilityConstraint.isUncheckedConversion(targetType, bound)) {
+          if (TypeCompatibilityConstraint.isUncheckedConversion(targetType, bound, session)) {
             return true;
           }
         }
