@@ -40,7 +40,8 @@ public class NonStaticFinalLoggerInspection extends BaseInspection {
   public String loggerClassName = "java.util.logging.Logger" + ',' +
                                   "org.slf4j.Logger" + ',' +
                                   "org.apache.commons.logging.Log" + ',' +
-                                  "org.apache.log4j.Logger";
+                                  "org.apache.log4j.Logger" + ',' +
+                                  "org.apache.logging.log4j.Logger";
 
   @Override
   public JComponent createOptionsPanel() {
