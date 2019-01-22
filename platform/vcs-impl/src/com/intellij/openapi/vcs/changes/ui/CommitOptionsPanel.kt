@@ -22,7 +22,6 @@ import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.util.Collections.unmodifiableList
 import javax.swing.Box
-import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -36,90 +35,96 @@ class CommitOptionsPanel(
   vcses: Collection<AbstractVcs<*>>,
   private val additionalData: PairConsumer<Any, Any>
 ) : BorderLayoutPanel(), Disposable {
-  private val myPerVcsOptionsPanels = mutableMapOf<AbstractVcs<*>, JPanel>()
-  private val myAdditionalComponents = mutableListOf<RefreshableOnComponent>()
 
-  private val changeListSpecificComponents get() = myAdditionalComponents.filterIsInstance<CheckinChangeListSpecificComponent>()
+  private val vcsOptions = mutableMapOf<AbstractVcs<*>, RefreshableOnComponent>()
+  private val beforeOptions = mutableListOf<RefreshableOnComponent>()
+  private val afterOptions = mutableListOf<RefreshableOnComponent>()
+  private val allOptions get() = vcsOptions.values + beforeOptions + afterOptions
+  private val changeListSpecificOptions get() = allOptions.filterIsInstance<CheckinChangeListSpecificComponent>()
 
-  val isEmpty: Boolean get() = myAdditionalComponents.isEmpty()
-  val additionalComponents: List<RefreshableOnComponent> get() = unmodifiableList(myAdditionalComponents)
+  private val actionName get() = removeMnemonic(myCommitPanel.commitActionName)
+
+  private val perVcsOptionsPanels = mutableMapOf<AbstractVcs<*>, JPanel>()
+  private val vcsOptionsPanel = simplePanel()
+  private val beforeOptionsPanel = simplePanel()
+  private val afterOptionsPanel = simplePanel()
+
+  val isEmpty: Boolean get() = allOptions.isEmpty()
+  val additionalComponents: List<RefreshableOnComponent> get() = unmodifiableList(allOptions)
 
   init {
-    init(vcses)
+    val optionsBox = Box.createVerticalBox().apply {
+      add(Box.createVerticalBox().apply {
+        add(vcsOptionsPanel)
+        add(Box.createVerticalGlue())
+      })
+      add(beforeOptionsPanel)
+      add(afterOptionsPanel)
+      add(Box.createVerticalGlue())
+    }
+    val optionsPane = createScrollPane(simplePanel().addToTop(optionsBox), true)
+    addToCenter(optionsPane).withBorder(JBUI.Borders.emptyLeft(10))
+
+    buildVcsOptions(vcses)
+    buildBeforeOptions()
+    buildAfterOptions()
   }
 
-  fun saveState() = myAdditionalComponents.forEach { it.saveState() }
-
-  fun restoreState() = myAdditionalComponents.forEach { it.restoreState() }
-
-  fun refresh() = myAdditionalComponents.forEach { it.refresh() }
+  fun saveState() = allOptions.forEach { it.saveState() }
+  fun restoreState() = allOptions.forEach { it.restoreState() }
+  fun refresh() = allOptions.forEach { it.refresh() }
+  fun saveChangeListComponentsState() = changeListSpecificOptions.forEach { it.saveState() }
 
   fun onChangeListSelected(changeList: LocalChangeList, unversionedFiles: List<VirtualFile>) {
     val affectedVcses =
       getAffectedVcses(changeList.changes, myCommitPanel.project) + getAffectedVcsesForFiles(unversionedFiles, myCommitPanel.project)
-    for ((vcs, panel) in myPerVcsOptionsPanels) {
+    for ((vcs, panel) in perVcsOptionsPanels) {
       panel.isVisible = affectedVcses.contains(vcs)
     }
 
-    changeListSpecificComponents.forEach { it.onChangeListSelected(changeList) }
+    changeListSpecificOptions.forEach { it.onChangeListSelected(changeList) }
   }
-
-  fun saveChangeListComponentsState() = changeListSpecificComponents.forEach { it.saveState() }
 
   override fun dispose() {
   }
 
-  private fun init(vcses: Collection<AbstractVcs<*>>) {
-    var hasVcsOptions = false
-    val vcsCommitOptions = Box.createVerticalBox()
-    for (vcs in vcses.sortedWith(VCS_COMPARATOR)) {
+  private fun buildVcsOptions(vcses: Collection<AbstractVcs<*>>) {
+    vcsOptions.clear()
+    vcses.sortedWith(VCS_COMPARATOR).forEach { vcs ->
       vcs.checkinEnvironment?.createAdditionalOptionsPanel(myCommitPanel, additionalData)?.let { options ->
-        val vcsOptions = verticalPanel(vcs.displayName).apply { add(options.component) }
-        vcsCommitOptions.add(vcsOptions)
-        myPerVcsOptionsPanels[vcs] = vcsOptions
-        myAdditionalComponents.add(options)
-        hasVcsOptions = true
+        vcsOptions[vcs] = options
       }
     }
 
-    var beforeVisible = false
-    var afterVisible = false
-    val actionName = removeMnemonic(myCommitPanel.commitActionName)
-    val beforeOptions = verticalPanel(message("border.standard.checkin.options.group", actionName))
-    val afterOptions = verticalPanel(message("border.standard.after.checkin.options.group", actionName))
-    for (handler in myHandlers) {
-      handler.beforeCheckinConfigurationPanel?.let {
-        beforeVisible = true
-        addCheckinHandlerComponent(it, beforeOptions)
-      }
-      handler.getAfterCheckinConfigurationPanel(this)?.let {
-        afterVisible = true
-        addCheckinHandlerComponent(it, afterOptions)
-      }
+    perVcsOptionsPanels.clear()
+    vcsOptionsPanel.removeAll()
+    vcsOptions.forEach { vcs, options ->
+      val panel = verticalPanel(vcs.displayName).apply { add(options.component) }
+      vcsOptionsPanel.add(panel)
+      perVcsOptionsPanels[vcs] = panel
     }
-
-    val optionsBox = Box.createVerticalBox()
-    if (hasVcsOptions) {
-      vcsCommitOptions.add(Box.createVerticalGlue())
-      optionsBox.add(vcsCommitOptions)
-    }
-
-    if (beforeVisible) {
-      optionsBox.add(beforeOptions)
-    }
-
-    if (afterVisible) {
-      optionsBox.add(afterOptions)
-    }
-
-    optionsBox.add(Box.createVerticalGlue())
-    val optionsPane = createScrollPane(simplePanel().addToTop(optionsBox), true)
-    addToCenter(optionsPane).withBorder(JBUI.Borders.emptyLeft(10))
   }
 
-  private fun addCheckinHandlerComponent(component: RefreshableOnComponent, container: JComponent) {
-    container.add(component.component)
-    myAdditionalComponents.add(component)
+  private fun buildBeforeOptions() {
+    beforeOptions.clear()
+    beforeOptions.addAll(myHandlers.mapNotNull { it.beforeCheckinConfigurationPanel })
+
+    val panel = verticalPanel(message("border.standard.checkin.options.group", actionName))
+    beforeOptions.forEach { panel.add(it.component) }
+
+    beforeOptionsPanel.removeAll()
+    beforeOptionsPanel.add(panel)
+  }
+
+  private fun buildAfterOptions() {
+    afterOptions.clear()
+    afterOptions.addAll(myHandlers.mapNotNull { it.getAfterCheckinConfigurationPanel(this) })
+
+    val panel = verticalPanel(message("border.standard.after.checkin.options.group", actionName))
+    afterOptions.forEach { panel.add(it.component) }
+
+    afterOptionsPanel.removeAll()
+    afterOptionsPanel.add(panel)
   }
 
   companion object {
