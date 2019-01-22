@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
 /**
@@ -29,12 +15,6 @@ public abstract class Wrap {
    */
   public abstract void ignoreParentWraps();
 
-  private static WrapFactory myFactory;
-
-  static void setFactory(WrapFactory factory) {
-    myFactory = factory;
-  }
-
   /**
    * Creates a block wrap setting of the legacy representation of specified wrap type (see {@link WrapType#getLegacyRepresentation()}).
    *
@@ -44,7 +24,7 @@ public abstract class Wrap {
    * @see #createWrap(WrapType, boolean)
    */
   public static Wrap createWrap(final int type, final boolean wrapFirstElement) {
-    return myFactory.createWrap(WrapType.byLegacyRepresentation(type), wrapFirstElement);
+    return Formatter.getInstance().createWrap(WrapType.byLegacyRepresentation(type), wrapFirstElement);
   }
 
   /**
@@ -82,7 +62,7 @@ public abstract class Wrap {
    * @return                 the wrap setting instance.
    */
   public static Wrap createWrap(final WrapType type, final boolean wrapFirstElement) {
-    return myFactory.createWrap(type, wrapFirstElement);
+    return Formatter.getInstance().createWrap(type, wrapFirstElement);
   }
 
   /**
@@ -98,6 +78,6 @@ public abstract class Wrap {
    * @see #ignoreParentWraps()
    */
   public static Wrap createChildWrap(final Wrap parentWrap, final WrapType wrapType, final boolean wrapFirstElement) {
-    return myFactory.createChildWrap(parentWrap, wrapType, wrapFirstElement);
+    return Formatter.getInstance().createChildWrap(parentWrap, wrapType, wrapFirstElement);
   }
 }

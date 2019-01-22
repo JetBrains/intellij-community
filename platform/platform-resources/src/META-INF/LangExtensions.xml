@@ -209,6 +209,8 @@
     <applicationService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
                         serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
 
+    <applicationService serviceInterface="com.intellij.formatting.Formatter" serviceImplementation="com.intellij.formatting.FormatterImpl"/>
+
     <applicationService serviceInterface="com.intellij.codeInsight.editorActions.TabOutScopesTracker"
                         serviceImplementation="com.intellij.codeInsight.editorActions.TabOutScopesTrackerImpl"/>
 

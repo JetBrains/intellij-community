@@ -1,11 +1,6 @@
 <idea-plugin>
   <application-components>
     <component>
-      <interface-class>com.intellij.formatting.FormatterEx</interface-class>
-      <implementation-class>com.intellij.formatting.FormatterImpl</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.util.indexing.FileBasedIndex</interface-class>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexImpl</implementation-class>
     </component>

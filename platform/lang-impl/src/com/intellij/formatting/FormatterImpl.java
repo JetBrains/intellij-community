@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.formatting;
 
@@ -41,7 +41,7 @@ public class FormatterImpl extends FormatterEx
              AlignmentFactory,
              SpacingFactory,
              FormattingModelFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatterImpl");
+  private static final Logger LOG = Logger.getInstance(FormatterImpl.class);
 
   private final AtomicReference<FormattingProgressTask> myProgressTask = new AtomicReference<>();
 
@@ -59,14 +59,6 @@ public class FormatterImpl extends FormatterEx
   private final IndentImpl myNormalIndentRelativeToDirectParent = new IndentImpl(Indent.Type.NORMAL, false, true);
   private final IndentImpl myNormalIndentNotRelativeToDirectParent = new IndentImpl(Indent.Type.NORMAL, false, false);
   private final SpacingImpl myReadOnlySpacing = new SpacingImpl(0, 0, 0, true, false, true, 0, false, 0);
-
-  public FormatterImpl() {
-    Indent.setFactory(this);
-    Wrap.setFactory(this);
-    Alignment.setFactory(this);
-    Spacing.setFactory(this);
-    FormattingModelProvider.setFactory(this);
-  }
 
   @Override
   public Alignment createAlignment(boolean applyToNonFirstBlocksOnLine, @NotNull Alignment.Anchor anchor) {
