@@ -372,6 +372,10 @@ public class RecentLocationsAction extends AnAction {
     Document fileDocument = positionOffset.getDocument();
     int lineNumber = fileDocument.getLineNumber(positionOffset.getStartOffset());
     TextRange actualTextRange = getTrimmedRange(fileDocument, lineNumber);
+    if (actualTextRange.isEmpty()) {
+      return null;
+    }
+
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument(fileDocument.getText(actualTextRange));
     EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument, project);
