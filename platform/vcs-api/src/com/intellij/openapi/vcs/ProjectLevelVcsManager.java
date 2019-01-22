@@ -238,6 +238,7 @@ public abstract class ProjectLevelVcsManager {
   /**
    * This method can be used only when initially loading the project configuration!
    */
+  @Deprecated
   public abstract void setDirectoryMapping(final String path, final String activeVcsName);
 
   public abstract void setDirectoryMappings(final List<VcsDirectoryMapping> items);

@@ -52,6 +52,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
@@ -436,10 +437,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return updateInfoTree;
   }
 
-  public void cleanupMappings() {
-    myMappings.cleanupMappings();
-  }
-
   @Override
   public List<VcsDirectoryMapping> getDirectoryMappings() {
     return myMappings.getDirectoryMappings();
@@ -468,15 +465,21 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
+  @Deprecated
   public void setDirectoryMapping(@NotNull String path, @Nullable String activeVcsName) {
     if (myMappingsLoaded) return;            // ignore per-module VCS settings if the mapping table was loaded from .ipr
     myHaveLegacyVcsConfiguration = true;
     myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
+  @Deprecated
   public void setAutoDirectoryMapping(@NotNull String path, @Nullable String activeVcsName) {
-    myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
-    myMappings.setMapping(path, activeVcsName);
+    setAutoDirectoryMappings(ContainerUtil.append(myMappings.getDirectoryMappings(), new VcsDirectoryMapping(path, activeVcsName)));
+  }
+
+  public void setAutoDirectoryMappings(@NotNull List<VcsDirectoryMapping> mappings) {
+    myMappings.setDirectoryMappings(mappings);
+    myMappings.cleanupMappings();
   }
 
   public void removeDirectoryMapping(@NotNull VcsDirectoryMapping mapping) {
