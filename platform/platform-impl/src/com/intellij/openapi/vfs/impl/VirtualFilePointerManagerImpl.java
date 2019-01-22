@@ -382,6 +382,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         }
         else if (event instanceof VFileCreateEvent) {
           final VFileCreateEvent createEvent = (VFileCreateEvent)event;
+          // when a new empty directory "/a/b" is created, there's no need to fire any deeper pointers like "/a/b/c/d.txt" - they're not created yet
+          // OTOH when refresh found a new directory "/a/b" which is non-empty, we must fire deeper pointers because they may exist already
           boolean fireSubdirectoryPointers = createEvent.isDirectory() && !isEmptyDir(createEvent.getPath());
           addRelevantPointers(createEvent.getParent(), true, createEvent.getChildName(), toFireEvents, fireSubdirectoryPointers);
         }
