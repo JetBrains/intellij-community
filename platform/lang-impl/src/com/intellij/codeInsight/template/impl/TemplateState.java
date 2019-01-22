@@ -1413,7 +1413,7 @@ public class TemplateState implements Disposable {
     }
   }
 
-  Map getProperties() {
+  public Map getProperties() {
     return myProperties;
   }
 
