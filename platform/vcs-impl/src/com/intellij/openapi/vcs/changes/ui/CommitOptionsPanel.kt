@@ -26,13 +26,12 @@ import javax.swing.JPanel
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
+import kotlin.properties.Delegates.observable
 
 private val VCS_COMPARATOR = compareBy<AbstractVcs<*>, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
 
 class CommitOptionsPanel(
   private val myCommitPanel: CheckinProjectPanel,
-  private val myHandlers: Collection<CheckinHandler>,
-  vcses: Collection<AbstractVcs<*>>,
   private val additionalData: PairConsumer<Any, Any>
 ) : BorderLayoutPanel(), Disposable {
 
@@ -52,6 +51,25 @@ class CommitOptionsPanel(
   val isEmpty: Boolean get() = allOptions.isEmpty()
   val additionalComponents: List<RefreshableOnComponent> get() = unmodifiableList(allOptions)
 
+  var handlers: Collection<CheckinHandler> by observable(emptyList()) { _, oldValue, newValue ->
+    if (oldValue != newValue) {
+      buildBeforeOptions(newValue)
+      buildAfterOptions(newValue)
+
+      revalidate()
+      repaint()
+    }
+  }
+
+  var vcses: Collection<AbstractVcs<*>> by observable(emptyList()) { _, oldValue, newValue ->
+    if (oldValue != newValue) {
+      buildVcsOptions(newValue)
+
+      revalidate()
+      repaint()
+    }
+  }
+
   init {
     val optionsBox = Box.createVerticalBox().apply {
       add(Box.createVerticalBox().apply {
@@ -64,10 +82,6 @@ class CommitOptionsPanel(
     }
     val optionsPane = createScrollPane(simplePanel().addToTop(optionsBox), true)
     addToCenter(optionsPane).withBorder(JBUI.Borders.emptyLeft(10))
-
-    buildVcsOptions(vcses)
-    buildBeforeOptions()
-    buildAfterOptions()
   }
 
   fun saveState() = allOptions.forEach { it.saveState() }
@@ -105,9 +119,9 @@ class CommitOptionsPanel(
     }
   }
 
-  private fun buildBeforeOptions() {
+  private fun buildBeforeOptions(handlers: Collection<CheckinHandler>) {
     beforeOptions.clear()
-    beforeOptions.addAll(myHandlers.mapNotNull { it.beforeCheckinConfigurationPanel })
+    beforeOptions.addAll(handlers.mapNotNull { it.beforeCheckinConfigurationPanel })
 
     val panel = verticalPanel(message("border.standard.checkin.options.group", actionName))
     beforeOptions.forEach { panel.add(it.component) }
@@ -116,9 +130,9 @@ class CommitOptionsPanel(
     beforeOptionsPanel.add(panel)
   }
 
-  private fun buildAfterOptions() {
+  private fun buildAfterOptions(handlers: Collection<CheckinHandler>) {
     afterOptions.clear()
-    afterOptions.addAll(myHandlers.mapNotNull { it.getAfterCheckinConfigurationPanel(this) })
+    afterOptions.addAll(handlers.mapNotNull { it.getAfterCheckinConfigurationPanel(this) })
 
     val panel = verticalPanel(message("border.standard.after.checkin.options.group", actionName))
     afterOptions.forEach { panel.add(it.component) }

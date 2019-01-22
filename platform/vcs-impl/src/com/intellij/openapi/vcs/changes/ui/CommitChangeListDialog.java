@@ -282,8 +282,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     mySplitter = new Splitter(true);
-    myCommitOptions =
-      new CommitOptionsPanel(this, myHandlers, myShowVcsCommit ? myAffectedVcses : emptySet(), myWorkflow.getAdditionalDataConsumer());
+    myCommitOptions = new CommitOptionsPanel(this, myWorkflow.getAdditionalDataConsumer());
     myWarningLabel = new JBLabel();
 
     JPanel mainPanel = new JPanel(new MyOptionsLayout(mySplitter, myCommitOptions, JBUI.scale(150), JBUI.scale(400)));
@@ -314,6 +313,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       initComment(myWorkflow.getInitialCommitMessage());
     }
 
+    myCommitOptions.setHandlers(myHandlers);
+    myCommitOptions.setVcses(myShowVcsCommit ? myAffectedVcses : emptySet());
     restoreState();
 
     myWarningLabel.setForeground(JBColor.RED);

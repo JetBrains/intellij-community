@@ -11,6 +11,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitResultHandler
@@ -65,7 +67,8 @@ class ChangesViewCommitPanel(
   val workflow = ChangesViewCommitWorkflow(project)
   //  TODO handlers
   //  TODO vcses
-  val commitOptionsPanel = CommitOptionsPanel(this, emptyList(), vcsManager.allActiveVcss.toList(), workflow.additionalDataConsumer)
+  private var areOptionsSet = false
+  val commitOptionsPanel = CommitOptionsPanel(this, workflow.additionalDataConsumer)
 
   init {
     val buttonPanel = simplePanel()
@@ -79,6 +82,18 @@ class ChangesViewCommitPanel(
 
     commitButton.addActionListener { doCommit() }
     changesView.setInclusionListener { inclusionChanged() }
+
+    project.messageBus.connect().subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
+      runInEdt {
+        if (!areOptionsSet) {
+          areOptionsSet = true
+
+          commitOptionsPanel.vcses = vcsManager.allActiveVcss.toList()
+          commitOptionsPanel.handlers = CommitChangeListDialog.createCheckinHandlers(project, this, workflow.commitContext)
+          restoreState()
+        }
+      }
+    })
   }
 
   override fun getData(dataId: String) = commitMessage.getData(dataId)

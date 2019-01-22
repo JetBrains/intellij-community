@@ -34,8 +34,11 @@ class ShowCommitOptionsAction : DumbAwareAction() {
           .createBalloon()
     */
 
-    val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(optionsPanel, null).createPopup()
-    popup.showInBestPositionFor(e.dataContext)
+    val popup =
+      JBPopupFactory.getInstance().createComponentPopupBuilder(optionsPanel, null)
+        .setRequestFocus(true)
+        .createPopup()
+    popup.showCenteredInCurrentWindow(commitPanel.project)
   }
 
   private fun getCommitPanel(e: AnActionEvent): ChangesViewCommitPanel? {
