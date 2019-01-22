@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.themes;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.DumbAware;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ThemeEditorToolbar extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("ThemeEditorToolbar");
+
   @NotNull
   @Override
   public Key<EditorNotificationPanel> getKey() {
@@ -36,19 +36,9 @@ public class ThemeEditorToolbar extends EditorNotifications.Provider<EditorNotif
       panel.removeAll();
       DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("DevKit.ThemeEditorToolbar");
       panel.add(ActionManager.getInstance().createActionToolbar("ThemeEditor", group, true).getComponent());
-      DataManager.registerDataProvider(panel, new DataProvider() {
-        @Nullable
-        @Override
-        public Object getData(@NotNull String dataId) {
-          if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-            return fileEditor.getFile();
-          }
-          return null;
-        }
-      });
+      DataManager.registerDataProvider(panel, dataId -> CommonDataKeys.VIRTUAL_FILE.is(dataId) ? fileEditor.getFile() : null);
       return panel;
     }
     return null;
   }
-
 }
