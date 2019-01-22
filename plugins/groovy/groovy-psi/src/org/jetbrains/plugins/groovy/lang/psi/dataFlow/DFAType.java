@@ -9,7 +9,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.NegatingGotoInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -42,7 +41,7 @@ public class DFAType {
       myNegated = negated;
     }
 
-    Mixin negate() {
+    private Mixin negate() {
       return new Mixin(ID, myType, myCondition, !myNegated);
     }
 
@@ -97,24 +96,26 @@ public class DFAType {
     return true;
   }
 
+  @Contract("-> new")
+  @NotNull
+  public DFAType copy() {
+    final DFAType type = new DFAType(primary);
+    type.mixins.addAll(mixins);
+    return type;
+  }
+
   @Contract("_ -> new")
   @NotNull
-  public DFAType negate(@NotNull Instruction instruction) {
-    final DFAType type = new DFAType(primary);
-
-    type.mixins.addAll(mixins);
-
-    for (NegatingGotoInstruction negation: instruction.getNegatingGotoInstruction()) {
-      final Set<ConditionInstruction> conditionsToNegate = negation.getCondition().getDependentConditions();
-
-      for (ListIterator<Mixin> iterator = type.mixins.listIterator(); iterator.hasNext(); ) {
-        Mixin mixin = iterator.next();
-        if (conditionsToNegate.contains(mixin.myCondition)) {
-          iterator.set(mixin.negate());
-        }
+  public DFAType negate(@NotNull NegatingGotoInstruction negation) {
+    DFAType result = copy();
+    final Set<ConditionInstruction> conditionsToNegate = negation.getCondition().getDependentConditions();
+    for (ListIterator<Mixin> iterator = result.mixins.listIterator(); iterator.hasNext(); ) {
+      Mixin mixin = iterator.next();
+      if (conditionsToNegate.contains(mixin.myCondition)) {
+        iterator.set(mixin.negate());
       }
     }
-    return type;
+    return result;
   }
 
   @Nullable

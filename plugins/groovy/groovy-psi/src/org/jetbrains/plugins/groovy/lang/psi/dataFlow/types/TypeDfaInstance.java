@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.NegatingGotoInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentsInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
@@ -47,6 +48,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     else if (instruction instanceof ArgumentsInstruction) {
       handleArguments(state, (ArgumentsInstruction)instruction);
     }
+    else if (instruction instanceof NegatingGotoInstruction) {
+      handleNegation(state, (NegatingGotoInstruction)instruction);
+    }
   }
 
   private void handleMixin(@NotNull final TypeDfaState state, @NotNull final MixinTypeInstruction instruction) {
@@ -57,7 +61,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(myFlow);
       assert originalInstr != null && !originalInstr.isWrite();
 
-      final DFAType original = state.getOrCreateVariableType(varName).negate(originalInstr);
+      DFAType original = state.getOrCreateVariableType(varName);
       original.addMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
       return original;
     });
@@ -83,7 +87,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private void handleArgument(TypeDfaState state, ArgumentsInstruction instruction, String variableName, Collection<Argument> arguments) {
     updateVariableType(state, instruction, variableName, () -> {
-      final DFAType result = state.getOrCreateVariableType(variableName).negate(instruction);
+      final DFAType result = state.getOrCreateVariableType(variableName);
       final GroovyResolveResult[] results = instruction.getElement().multiResolve(false);
       for (GroovyResolveResult variant : results) {
         if (!(variant instanceof GroovyMethodResult)) continue;
@@ -121,10 +125,16 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         type = computation.compute();
       }
       else {
-        type = TypeInferenceHelper.doInference(state.getBindings(instruction), computation);
+        type = TypeInferenceHelper.doInference(state.getBindings(), computation);
       }
     }
     state.putType(variableName, type);
+  }
+
+  private static void handleNegation(@NotNull TypeDfaState state, @NotNull NegatingGotoInstruction negation) {
+    for (Map.Entry<String, DFAType> entry : state.getVarTypes().entrySet()) {
+      entry.setValue(entry.getValue().negate(negation));
+    }
   }
 
   @Override
