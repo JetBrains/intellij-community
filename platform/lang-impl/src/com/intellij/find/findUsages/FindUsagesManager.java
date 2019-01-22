@@ -364,7 +364,10 @@ public class FindUsagesManager {
       }
       try {
         for (final PsiElement element : elements) {
-          handler.processElementUsages(element, usageInfoProcessor, optionsClone);
+          if (!handler.processElementUsages(element, usageInfoProcessor, optionsClone)) {
+            return;
+          }
+          
           for (CustomUsageSearcher searcher : CustomUsageSearcher.EP_NAME.getExtensionList()) {
             try {
               searcher.processElementUsages(element, processor, optionsClone);
