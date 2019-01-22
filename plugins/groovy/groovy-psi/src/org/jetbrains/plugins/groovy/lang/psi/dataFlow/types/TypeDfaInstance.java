@@ -57,11 +57,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(myFlow);
       assert originalInstr != null && !originalInstr.isWrite();
 
-      DFAType original = state.getVariableType(varName);
-      if (original == null) {
-        original = DFAType.create(null);
-      }
-      original = original.negate(originalInstr);
+      final DFAType original = state.getOrCreateVariableType(varName).negate(originalInstr);
       original.addMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
       return original;
     });
