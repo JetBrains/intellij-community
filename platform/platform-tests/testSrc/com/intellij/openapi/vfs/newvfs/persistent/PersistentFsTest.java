@@ -360,7 +360,7 @@ public class PersistentFsTest extends PlatformTestCase {
     checkEvents("Before:[VFileCreateEvent->xx.created, VFileDeleteEvent->file.txt]\n" +
                 "After:[VFileCreateEvent->xx.created, VFileDeleteEvent->file.txt]\n",
                 new VFileDeleteEvent(this, vFile, false),
-                new VFileCreateEvent(this, vFile.getParent(), "xx.created", false, false),
+                new VFileCreateEvent(this, vFile.getParent(), "xx.created", false, false, false),
                 new VFileDeleteEvent(this, vFile, false));
   }
   
@@ -377,8 +377,8 @@ public class PersistentFsTest extends PlatformTestCase {
                 "Before:[VFileDeleteEvent->c]\n" +
                 "After:[VFileDeleteEvent->c]\n",
                 new VFileDeleteEvent(this, vFile, false),
-                new VFileCreateEvent(this, vFile.getParent(), "xx.created", false, false),
-                new VFileCreateEvent(this, vFile.getParent(), "xx.created2", false, false),
+                new VFileCreateEvent(this, vFile.getParent(), "xx.created", false, false, false),
+                new VFileCreateEvent(this, vFile.getParent(), "xx.created2", false, false, false),
                 new VFileDeleteEvent(this, vFile.getParent(), false));
   }
 

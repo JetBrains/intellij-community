@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 public class VFileCreateEvent extends VFileEvent {
   @NotNull private final VirtualFile myParent;
   private final boolean myDirectory;
+  private final boolean myEmptyDirectory;
   @NotNull private final String myChildName;
   private final FileAttributes myAttributes;
   private VirtualFile myCreatedFile;
@@ -23,12 +24,14 @@ public class VFileCreateEvent extends VFileEvent {
                           @NotNull VirtualFile parent,
                           @NotNull String childName,
                           final boolean isDirectory,
-                          final boolean isFromRefresh) {
+                          final boolean isFromRefresh,
+                          boolean isEmptyDirectory) {
     super(requestor, isFromRefresh);
     myChildName = childName;
     myParent = parent;
     myDirectory = isDirectory;
     myAttributes = null;
+    myEmptyDirectory = isEmptyDirectory;
   }
 
   public VFileCreateEvent(Object requestor,
@@ -41,6 +44,7 @@ public class VFileCreateEvent extends VFileEvent {
     myParent = parent;
     myDirectory = attributes.isDirectory();
     myAttributes = attributes;
+    myEmptyDirectory = isEmptyDirectory;
   }
 
   @NotNull
@@ -50,6 +54,13 @@ public class VFileCreateEvent extends VFileEvent {
 
   public boolean isDirectory() {
     return myDirectory;
+  }
+
+  /**
+   * @return true if the newly created file is a directory which has no children.
+   */
+  public boolean isEmptyDirectory() {
+    return isDirectory() && myEmptyDirectory;
   }
 
   @NotNull

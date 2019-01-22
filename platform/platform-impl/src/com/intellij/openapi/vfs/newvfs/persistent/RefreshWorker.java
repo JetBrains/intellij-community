@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -192,7 +193,7 @@ public class RefreshWorker {
           String name = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
-            myHelper.scheduleCreation(dir, name, childAttributes);
+            myHelper.scheduleCreation(dir, name, Paths.get(dir.getPath(), name), childAttributes);
           }
           else {
             if (LOG.isTraceEnabled()) LOG.trace("[+] fs=" + fs + " dir=" + dir + " name=" + name);
@@ -276,7 +277,7 @@ public class RefreshWorker {
           String name = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
-            myHelper.scheduleCreation(dir, name, childAttributes);
+            myHelper.scheduleCreation(dir, name, Paths.get(dir.getPath(), name), childAttributes);
           }
         }
 
@@ -341,7 +342,7 @@ public class RefreshWorker {
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       myHelper.scheduleDeletion(child);
-      myHelper.scheduleCreation(parent, child.getName(), childAttributes);
+      myHelper.scheduleCreation(parent, child.getName(), Paths.get(parent.getPath(), child.getName()), childAttributes);
       return true;
     }
 

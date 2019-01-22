@@ -34,6 +34,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -247,7 +251,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     final FileAttributes attributes = delegate.getAttributes(fake);
     if (attributes == null) return null;
     final String realName = delegate.getCanonicallyCasedName(fake);
-    final VFileCreateEvent event = new VFileCreateEvent(null, this, realName, attributes, true);
+    boolean isDirectory = attributes.isDirectory();
+    boolean isEmptyDirectory = isDirectory && !hasChildren(Paths.get(fake.getPath()));
+
+    final VFileCreateEvent event = new VFileCreateEvent(null, this, realName, attributes, true, isEmptyDirectory);
     RefreshQueue.getInstance().processSingleEvent(event);
     return findChild(realName);
   }
@@ -691,6 +698,19 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (key != null && newMap.get(key) instanceof PsiCachedValue) {
         throw new AssertionError("Don't store CachedValue in VFS user data, since it leads to memory leaks");
       }
+    }
+  }
+
+  /**
+   * @return true if {@code path} represents a directory which has children.
+   */
+  public static boolean hasChildren(@NotNull Path path) {
+    // make sure to not load all children
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+      return stream.iterator().hasNext();
+    }
+    catch (IOException | SecurityException e) {
+      return false;
     }
   }
 }

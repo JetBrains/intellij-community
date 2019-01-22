@@ -34,11 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -357,14 +352,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private List<FilePointerPartNode> myNodesToUpdateUrl = Collections.emptyList();
   private List<FilePointerPartNode> myNodesToFire = Collections.emptyList();
 
-  private static boolean isEmptyDir(@NotNull String path) {
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(path))) {
-      return !stream.iterator().hasNext();
-    }
-    catch (IOException e) {
-      return false;
-    }
-  }
   @Override
   public void before(@NotNull final List<? extends VFileEvent> events) {
     ApplicationManager.getApplication().assertIsDispatchThread(); // guarantees no attempts to get read action lock under "this" lock
@@ -384,7 +371,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
           final VFileCreateEvent createEvent = (VFileCreateEvent)event;
           // when a new empty directory "/a/b" is created, there's no need to fire any deeper pointers like "/a/b/c/d.txt" - they're not created yet
           // OTOH when refresh found a new directory "/a/b" which is non-empty, we must fire deeper pointers because they may exist already
-          boolean fireSubdirectoryPointers = createEvent.isDirectory() && !isEmptyDir(createEvent.getPath());
+          boolean fireSubdirectoryPointers = createEvent.isDirectory() && !createEvent.isEmptyDirectory();
           addRelevantPointers(createEvent.getParent(), true, createEvent.getChildName(), toFireEvents, fireSubdirectoryPointers);
         }
         else if (event instanceof VFileCopyEvent) {

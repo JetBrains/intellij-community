@@ -7,8 +7,10 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,9 +46,11 @@ class VfsEventGenerationHelper {
     myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength, true));
   }
 
-  void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, @NotNull FileAttributes attributes) {
+  void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, @NotNull Path path, @NotNull FileAttributes attributes, boolean isDirectory) {
+    boolean isEmptyDir = isDirectory && !VirtualDirectoryImpl.hasChildren(path);
+
     if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " attr=" + attributes);
-    myEvents.add(new VFileCreateEvent(null, parent, childName, attributes, true));
+    myEvents.add(new VFileCreateEvent(null, parent, childName, attributes, true, isEmptyDir));
   }
 
   void scheduleDeletion(@NotNull VirtualFile file) {
