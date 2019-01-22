@@ -435,5 +435,6 @@
     <extensionPoint
         qualifiedName="editorconfig.optionDescriptorProvider"
         interface="org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider"/>
+    <extensionPoint qualifiedName="editorconfig.exportProvider" interface="org.editorconfig.settings.EditorConfigExportProvider"/>
   </extensionPoints>
 </idea-plugin>

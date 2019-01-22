@@ -4,6 +4,7 @@ import com.intellij.application.options.GeneralCodeStyleOptionsProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -44,10 +45,16 @@ public class EditorConfigConfigurable extends CodeStyleSettingsProvider implemen
     panel.setAlignmentY(Component.TOP_ALIGNMENT);
     result.add(panel);
     final JButton export = new JButton(EditorConfigBundle.message("config.export"));
+    // export.setVisible(EditorConfigExportProviderEP.shouldShowExportButton());
     export.addActionListener((event) -> {
       final Component parent = UIUtil.findUltimateParent(result);
+
       if (parent instanceof IdeFrame) {
-        Utils.export(((IdeFrame)parent).getProject());
+        Project project = ((IdeFrame) parent).getProject();
+        if (project != null) {
+          if (EditorConfigExportProviderEP.tryExportViaProviders(project)) return;
+          Utils.export(project);
+        }
       }
     });
     export.setAlignmentY(Component.TOP_ALIGNMENT);
