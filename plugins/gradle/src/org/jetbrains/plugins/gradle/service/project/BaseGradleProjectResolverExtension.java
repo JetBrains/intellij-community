@@ -265,6 +265,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (externalProject != null) {
       addExternalProjectContentRoots(gradleModule, ideModule, externalProject);
+    } else if (resolverCtx.isResolveModulePerSourceSet()) {
+      LOG.error("External Project model is missing for module-per-sourceSet import mode. Please, check import log for error messages.");
     }
 
     DomainObjectSet<? extends IdeaContentRoot> contentRoots = gradleModule.getContentRoots();
