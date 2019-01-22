@@ -277,6 +277,11 @@ public class ActionUtil {
       runnable.run();
     }
   }
+  @NotNull
+  public static AnActionEvent createEmptyEvent() {
+    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null);
+  }
+
 
   @NotNull
   public static List<AnAction> getActions(@NotNull JComponent component) {

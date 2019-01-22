@@ -15,8 +15,7 @@
  */
 package com.intellij.execution.util;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.ContainerUtil;
@@ -69,7 +68,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
                     if (myElements.isEmpty() || !ListTableWithButtons.this.isEmpty(myElements.get(myElements.size() - 1))) {
                       AnActionButton addButton = ToolbarDecorator.findAddButton(myPanel);
                       if (addButton != null) {
-                        addButton.actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null));
+                        addButton.actionPerformed(ActionUtil.createEmptyEvent());
                       }
                       return;
                     }

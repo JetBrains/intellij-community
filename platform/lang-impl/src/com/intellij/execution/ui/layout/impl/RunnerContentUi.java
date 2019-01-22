@@ -11,6 +11,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.*;
@@ -1253,7 +1254,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (AnAction action : myMinimizedViewActions.getChildren(null)) {
       Content content = ((RestoreViewAction)action).getContent();
       if (key.equals(content.getUserData(ViewImpl.ID))) {
-        action.actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null));
+        action.actionPerformed(ActionUtil.createEmptyEvent());
         return;
       }
     }
