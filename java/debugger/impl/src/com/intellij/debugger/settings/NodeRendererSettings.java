@@ -4,6 +4,7 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.JavaValuePresentation;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -32,6 +33,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.Debugger;
@@ -509,6 +511,29 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       public ExpressionEvaluator getEvaluator(Project project) throws EvaluateException {
         return super.getEvaluator(project);
       }
+    }
+
+    @Nullable
+    @Override
+    public XValuePresentation getPresentation(ValueDescriptorImpl descriptor) {
+      return new JavaValuePresentation(descriptor) {
+        @NotNull
+        @Override
+        public String getSeparator() {
+          return "";
+        }
+
+        @Override
+        public boolean isShowName() {
+          return false;
+        }
+
+        @Nullable
+        @Override
+        public String getType() {
+          return null;
+        }
+      };
     }
   }
 
