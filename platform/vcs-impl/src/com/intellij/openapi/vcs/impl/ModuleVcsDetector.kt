@@ -73,30 +73,27 @@ class ModuleVcsDetector(private val myProject: Project,
         // here we put the project <-> vcs mapping, and removing all inside-project-roots mappings
         // (i.e. keeping all other mappings)
         val rootPaths = roots.map { it.path }.toSet()
-        val redundantMappings = myVcsManager.directoryMappings.filter { it.directory in rootPaths }
+        val additionalMappings = myVcsManager.directoryMappings.filter { it.directory !in rootPaths }
 
-        myVcsManager.setAutoDirectoryMapping("", vcs.name)
-        redundantMappings.forEach { myVcsManager.removeDirectoryMapping(it) }
-        myVcsManager.cleanupMappings()
+        myVcsManager.setAutoDirectoryMappings(additionalMappings + VcsDirectoryMapping("", vcs.name))
       }
     }
     else if (tryMapPieces) {
-      rootVcses.forEach { (root, vcs) -> myVcsManager.setAutoDirectoryMapping(root.path, vcs.name) }
-      myVcsManager.cleanupMappings()
+      val newMappings = rootVcses.map { (root, vcs) -> VcsDirectoryMapping(root.path, vcs.name) }
+      myVcsManager.setAutoDirectoryMappings(myVcsManager.directoryMappings + newMappings)
     }
   }
 
   private fun autoDetectModuleVcsMapping(module: Module) {
-    var mappingsUpdated = false
+    val newMappings = mutableListOf<VcsDirectoryMapping>()
     for (file in module.rootManager.contentRoots) {
       val vcs = myVcsManager.findVersioningVcs(file)
       if (vcs != null && vcs !== myVcsManager.getVcsFor(file)) {
-        myVcsManager.setAutoDirectoryMapping(file.path, vcs.name)
-        mappingsUpdated = true
+        newMappings.add(VcsDirectoryMapping(file.path, vcs.name))
       }
     }
-    if (mappingsUpdated) {
-      myVcsManager.cleanupMappings()
+    if (newMappings.isNotEmpty()) {
+      myVcsManager.setAutoDirectoryMappings(myVcsManager.directoryMappings + newMappings)
     }
   }
 
