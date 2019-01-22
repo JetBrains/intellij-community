@@ -41,9 +41,12 @@ class CommitOptionsPanel(
 
   private val changeListSpecificComponents get() = myAdditionalComponents.filterIsInstance<CheckinChangeListSpecificComponent>()
 
-  val isEmpty = init(vcses)
-
+  val isEmpty: Boolean get() = myAdditionalComponents.isEmpty()
   val additionalComponents: List<RefreshableOnComponent> get() = unmodifiableList(myAdditionalComponents)
+
+  init {
+    init(vcses)
+  }
 
   fun saveState() = myAdditionalComponents.forEach { it.saveState() }
 
@@ -66,7 +69,7 @@ class CommitOptionsPanel(
   override fun dispose() {
   }
 
-  private fun init(vcses: Collection<AbstractVcs<*>>): Boolean {
+  private fun init(vcses: Collection<AbstractVcs<*>>) {
     var hasVcsOptions = false
     val vcsCommitOptions = Box.createVerticalBox()
     for (vcs in vcses.sortedWith(VCS_COMPARATOR)) {
@@ -95,8 +98,6 @@ class CommitOptionsPanel(
       }
     }
 
-    if (!hasVcsOptions && !beforeVisible && !afterVisible) return true
-
     val optionsBox = Box.createVerticalBox()
     if (hasVcsOptions) {
       vcsCommitOptions.add(Box.createVerticalGlue())
@@ -114,7 +115,6 @@ class CommitOptionsPanel(
     optionsBox.add(Box.createVerticalGlue())
     val optionsPane = createScrollPane(simplePanel().addToTop(optionsBox), true)
     addToCenter(optionsPane).withBorder(JBUI.Borders.emptyLeft(10))
-    return false
   }
 
   private fun addCheckinHandlerComponent(component: RefreshableOnComponent, container: JComponent) {
