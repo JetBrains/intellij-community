@@ -145,7 +145,12 @@ public class TestsUIUtil {
     final MessageType type = testResultPresentation.getType();
 
     if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), windowId)) {
-      toolWindowManager.notifyByBalloon(windowId, type, balloonText, null, null);
+      String displayId = "Test Results: " + windowId;
+      NotificationGroup group = NotificationGroup.findRegisteredGroup(displayId);
+      if (group == null) {
+        group = NotificationGroup.toolWindowGroup(displayId, windowId);
+      }
+      group.createNotification(balloonText, type).notify(project);
     }
 
     NOTIFICATION_GROUP.createNotification(balloonText, type).notify(project);
