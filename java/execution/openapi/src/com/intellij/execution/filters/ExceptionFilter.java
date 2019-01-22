@@ -91,8 +91,7 @@ public class ExceptionFilter implements Filter, DumbAware {
   /**
    * Returns a substring of {@code line} from {@code from} to {@code to} position after heuristically checking that
    * given substring could be an exception class name. Currently all names which are not very long, consist of 
-   * alphanumeric symbols, have at least one dot and not two adjacent dots are considered to be possible 
-   * exception names by this method.
+   * Java identifier symbols and have at least one dot are considered to be possible exception names by this method.
    * 
    * @param line line to extract exception name from
    * @param from start index
@@ -102,13 +101,9 @@ public class ExceptionFilter implements Filter, DumbAware {
   private static String getExceptionFromMessage(String line, int from, int to) {
     if (to - from > 200) return null;
     boolean hasDot = false;
-    char prev = '.';
     for(int i= from; i<to; i++) {
       char c = line.charAt(i);
-      if ((c < 'A' || c > 'Z') && (c < 'a' || c > 'z') && (prev == '.' || ((c < '0' || c > '9') && c != '.'))) {
-        return null;
-      }
-      prev = c;
+      if (c != '.' && !Character.isJavaIdentifierPart(c)) return null;
       hasDot |= c == '.';
     }
     if (!hasDot) return null;
