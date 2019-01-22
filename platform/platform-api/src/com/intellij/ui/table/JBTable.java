@@ -206,8 +206,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           final Object value = getValueAt(row, column);
           final Component component = renderer.getTableCellRendererComponent(this, value, true, true, row, column);
           if (component != null) {
-            final Dimension size = component.getPreferredSize();
+            Dimension size = component.getPreferredSize();
             result = Math.max(size.height, result);
+            if (component instanceof JLabel && ((JLabel)component).getText().isEmpty()) {
+              ((JLabel)component).setText("Jj");
+              size = component.getPreferredSize();
+              result = Math.max(size.height, result);
+            }
           }
         }
       }
