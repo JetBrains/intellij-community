@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -43,6 +43,8 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor1, @Nullable TIntFunction lineNumberConvertor2);
 
   public abstract void setShowDefaultGutterPopup(boolean show);
+
+  public abstract void setCanCloseAnnotations(boolean canCloseAnnotations);
 
   public abstract void setGutterPopupGroup(@Nullable ActionGroup group);
   
