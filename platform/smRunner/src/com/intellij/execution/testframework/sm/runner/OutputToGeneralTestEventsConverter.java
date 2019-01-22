@@ -37,7 +37,6 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private final OutputLineSplitter mySplitter;
 
   private volatile GeneralTestEventsProcessor myProcessor;
-  private boolean myPendingLineBreakFlag;
   private Runnable myTestingStartedHandler;
   private boolean myFirstTestingStartedEvent = true;
   private static final String ELLIPSIS = "<...>";
@@ -51,9 +50,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     myTestFrameworkName = testFrameworkName;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
     mySplitter = new OutputLineSplitter() {
+      @SuppressWarnings("deprecation") // For backward compatibility (fix in 2020)
       @Override
-      protected void onTextAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
-        processConsistentText(text, outputType, tcLikeFakeOutput);
+      protected void onTextAvailable(@NotNull String text, @NotNull Key outputType) {
+        processConsistentText(text, outputType, false);
       }
     };
   }
@@ -78,21 +78,18 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   /**
-   * Flashes the rest of stdout text buffer after output has been stopped
+   * Will be removed in 2020
+   *
+   * @deprecated use {@link #processConsistentText(String, Key)} instead
    */
-  @Override
-  public void flushBufferOnProcessTermination(int exitCode) {
-    mySplitter.flush();
-    if (myPendingLineBreakFlag) {
-      fireOnUncapturedLineBreak();
-    }
+  @Deprecated
+  protected void processConsistentText(@NotNull final String text,
+                                       final Key<?> outputType,
+                                       @SuppressWarnings("unused") final boolean tcLikeFakeOutput) {
+    processConsistentText(text, outputType);
   }
 
-  private void fireOnUncapturedLineBreak() {
-    fireOnUncapturedOutput("\n", ProcessOutputTypes.STDOUT);
-  }
-
-  protected void processConsistentText(String text, final Key outputType, boolean tcLikeFakeOutput) {
+  protected void processConsistentText(@NotNull String text, final Key<?> outputType) {
     if (USE_CYCLE_BUFFER && text.length() > myCycleBufferSize && myCycleBufferSize > OutputLineSplitterKt.SM_MESSAGE_PREFIX) {
       final StringBuilder builder = new StringBuilder(myCycleBufferSize);
       builder.append(text, 0, myCycleBufferSize - OutputLineSplitterKt.SM_MESSAGE_PREFIX);
@@ -103,36 +100,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
     try {
       if (!processServiceMessages(text, outputType, myServiceMessageVisitor)) {
-        if (myPendingLineBreakFlag) {
-          // output type for line break isn't important
-          // we may use any, e.g. current one
-          fireOnUncapturedLineBreak();
-          myPendingLineBreakFlag = false;
-        }
-        // Filters \n
-        String outputToProcess = text;
-        if (tcLikeFakeOutput && text.endsWith("\n")) {
-          // ServiceMessages protocol requires that every message
-          // should start with new line, so such behaviour may led to generating
-          // some number of useless \n.
-          //
-          // IDEA process handler flush output by size or line break
-          // So:
-          //  1. "a\n\nb\n" -> ["a\n", "\n", "b\n"]
-          //  2. "a\n##teamcity[..]\n" -> ["a\n", "#teamcity[..]\n"]
-          // We need distinguish 1) and 2) cases, in 2) first linebreak is redundant and must be ignored
-          // in 2) linebreak must be considered as output
-          // output will be in TestOutput message
-          // Lets set myPendingLineBreakFlag if we meet "\n" and then ignore it or apply depending on
-          // next output chunk
-          myPendingLineBreakFlag = true;
-          outputToProcess = outputToProcess.substring(0, outputToProcess.length() - 1);
-        }
         //fire current output
-        fireOnUncapturedOutput(outputToProcess, outputType);
-      }
-      else {
-        myPendingLineBreakFlag = false;
+        fireOnUncapturedOutput(text, outputType);
       }
     }
     catch (ParseException e) {

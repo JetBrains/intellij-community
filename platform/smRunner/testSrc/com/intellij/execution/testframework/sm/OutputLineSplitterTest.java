@@ -84,7 +84,7 @@ public final class OutputLineSplitterTest extends PlatformTestCase {
 
     mySplitter = new OutputLineSplitter() {
       @Override
-      protected void onTextAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
+      protected void onTextAvailable(@NotNull String text, @NotNull Key outputType) {
         final ProcessOutputType baseOutputType = ((ProcessOutputType)outputType).getBaseOutputType();
         synchronized (myOutput) {
           final List<String> list = myOutput.computeIfAbsent(baseOutputType, key -> new ArrayList<>());

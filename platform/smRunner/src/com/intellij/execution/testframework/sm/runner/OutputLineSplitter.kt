@@ -58,7 +58,7 @@ abstract class OutputLineSplitter() {
     }
     else {
       // Everything but stdout
-      onTextAvailable(text, outputType, false)
+      onTextAvailable(text, outputType)
     }
   }
 
@@ -84,7 +84,7 @@ abstract class OutputLineSplitter() {
       }
 
       val chunkText = builder.toString()
-      onTextAvailable(chunkText, chunk.key, true)
+      onTextAvailable(chunkText, chunk.key)
     }
   }
 
@@ -93,14 +93,14 @@ abstract class OutputLineSplitter() {
    * For stdout [text] is either TC message that starts from [ServiceMessage.SERVICE_MESSAGE_START] and ends with new line
    * or chunk of process output
    */
-  protected open fun onTextAvailable(text: String, outputType: Key<*>, tcLikeFakeOutput: Boolean) {
+  protected open fun onTextAvailable(text: String, outputType: Key<*>) {
     @Suppress("DEPRECATION") //For backward compatibility
-    onLineAvailable(text, outputType, tcLikeFakeOutput)
+    onLineAvailable(text, outputType, false)
   }
 
   @Deprecated(
     message = "Use onTextAvailable instead, will be removed in 2020",
-    replaceWith = ReplaceWith("onTextAvailable(text, outputType, tcLikeFakeOutput)"))
+    replaceWith = ReplaceWith("onTextAvailable(text, outputType)"))
   protected open fun onLineAvailable(text: String, outputType: Key<*>, tcLikeFakeOutput: Boolean) {
     throw NotImplementedError("Use onTextAvailable instead")
   }
