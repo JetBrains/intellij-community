@@ -136,6 +136,7 @@ public class PluginManagerConfigurableNew
   private Map<String, List<IdeaPluginDescriptor>> myCustomRepositoriesMap;
   private final Object myRepositoriesLock = new Object();
   private List<String> myAllTagSorted;
+  private Map<String, List<IdeaPluginDescriptor>> mySuggestCache;
 
   private boolean myIgnoreFocusFromBackButton;
 
@@ -1033,7 +1034,7 @@ public class PluginManagerConfigurableNew
           return;
         }
 
-        List<IdeaPluginDescriptor> result = loadSuggestPlugins(query);
+        List<IdeaPluginDescriptor> result = getSuggestPlugins(query);
         if (result.isEmpty()) {
           hidePopup();
           return;
@@ -1085,6 +1086,23 @@ public class PluginManagerConfigurableNew
         };
 
         myPopup.createAndShow(callback, renderer, async);
+      }
+
+      @NotNull
+      private List<IdeaPluginDescriptor> getSuggestPlugins(@NotNull String query) {
+        if (mySuggestCache == null) {
+          mySuggestCache = new HashMap<>();
+        }
+
+        List<IdeaPluginDescriptor> result = mySuggestCache.get(query);
+        if (result == null) {
+          result = loadSuggestPlugins(query);
+          if (!query.isEmpty() && !result.isEmpty()) {
+            mySuggestCache.put(query, result);
+          }
+        }
+
+        return result;
       }
 
       @NotNull
@@ -1313,6 +1331,8 @@ public class PluginManagerConfigurableNew
       myAllRepositoriesMap = null;
       myCustomRepositoriesMap = null;
     }
+
+    mySuggestCache = null;
 
     myPluginUpdatesService.recalculateUpdates();
 
