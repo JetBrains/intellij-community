@@ -9,6 +9,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.ContentFilterable
+import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
@@ -299,8 +300,15 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
 
       ExternalSourceDirectorySet generatedDirectorySet = null
-      if(generatedSourceDirs && !generatedSourceDirs.isEmpty()) {
+      def hasExplicitlyDefinedGeneratedSources = generatedSourceDirs && !generatedSourceDirs.isEmpty()
+      FileCollection generatedSourcesOutput = sourceSet.output.hasProperty("generatedSourcesDirs") ? sourceSet.output.generatedSourcesDirs : null
+      def hasAnnotationProcessorClasspath = sourceSet.hasProperty("annotationProcessorPath") && !sourceSet.annotationProcessorPath.isEmpty()
+      if (hasExplicitlyDefinedGeneratedSources || hasAnnotationProcessorClasspath) {
+
         def files = new HashSet<File>()
+        if (hasAnnotationProcessorClasspath && generatedSourcesOutput != null) {
+          files.addAll(generatedSourcesOutput.files)
+        }
         for(File file : generatedSourceDirs) {
           if(javaDirectorySet.srcDirs.contains(file)) {
             files.add(file)
