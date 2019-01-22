@@ -58,6 +58,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -153,6 +155,13 @@ public class RecentLocationsAction extends AnAction {
     popup.setSize(new Dimension(DEFAULT_POPUP_WIDTH, JBUI.scale(mainPanel.getPreferredSize().height)));
 
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
+
+    list.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusLost(FocusEvent e) {
+        popup.cancel();
+      }
+    });
 
     showPopup(project, popup);
   }
