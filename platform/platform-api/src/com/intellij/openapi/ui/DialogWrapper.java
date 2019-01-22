@@ -2159,6 +2159,10 @@ public abstract class DialogWrapper {
     return myDisposable;
   }
 
+  public boolean isDisposed() {
+    return myDisposed;
+  }
+
   /**
    * @see Adapter
    */
