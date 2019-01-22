@@ -50,7 +50,8 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
   public String loggerNamesString = "java.util.logging.Logger" + ',' +
                                     "org.slf4j.Logger" + ',' +
                                     "org.apache.commons.logging.Log" + ',' +
-                                    "org.apache.log4j.Logger";
+                                    "org.apache.log4j.Logger" + ',' +
+                                    "org.apache.logging.log4j.Logger";
   /**
    * @noinspection PublicField
    */
