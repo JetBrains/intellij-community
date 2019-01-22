@@ -170,8 +170,7 @@ class CommunityRepositoryModules {
         "nexus-indexer-1.2.3.jar"
       ].each {withResource("maven2-server-impl/lib/$it", "lib/maven2-server-lib")}
       doNotCopyModuleLibrariesAutomatically([
-        "intellij.maven.server.m2.impl", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
-        "intellij.maven.artifactResolver.common", "intellij.maven.artifactResolver.m2", "intellij.maven.artifactResolver.m3", "intellij.maven.artifactResolver.m31"
+        "intellij.maven.artifactResolver.m2", "intellij.maven.server.m2.impl"
       ])
     },
     plugin("intellij.gradle") {

@@ -1,0 +1,41 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+buildscript {
+  repositories {
+    maven { url "https://cache-redirector.jetbrains.com/plugins.gradle.org" }
+  }
+  dependencies {
+    classpath "de.undercouch:gradle-download-task:3.2.0"
+  }
+}
+apply plugin: "de.undercouch.download"
+
+import de.undercouch.gradle.tasks.download.Download
+
+
+def communityPluginsDir = project.file("../../plugins")
+def mavenServerLibDir = "$communityPluginsDir/maven/maven36-server-impl/lib/"
+def mavenDistName = "apache-maven-$bundledMavenVersion"
+
+task downloadMavenDistribution(type: Download) {
+  src "http://mirror.linux-ia64.org/apache/maven/maven-3/3.6.0/binaries/$mavenDistName-bin.zip"
+  dest "$mavenServerLibDir/$mavenDistName-bin.zip"
+  onlyIf { !dest.exists() }
+}
+
+task unpackMavenDistribution(dependsOn: downloadMavenDistribution, type: Copy) {
+  from zipTree(downloadMavenDistribution.outputs.files.singleFile)
+  into "$mavenServerLibDir/maven3"
+  onlyIf { (!destinationDir.exists()) || destinationDir.list() == null || destinationDir.list().length == 0 }
+}
+
+//there is no frienly way to unpack gradle zip without parent dir
+task setupBundledMaven(dependsOn: unpackMavenDistribution, type: Copy) {
+  def unzippedDir = new File("$mavenServerLibDir/maven3/$mavenDistName")
+  from fileTree(unzippedDir)
+  into "$mavenServerLibDir/maven3/"
+  onlyIf { unzippedDir.exists() && !new File("$mavenServerLibDir/maven3/bin").exists() }
+  doLast() {
+    unzippedDir.deleteDir()
+  }
+}
