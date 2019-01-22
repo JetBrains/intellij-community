@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -25,10 +26,10 @@ public class HtmlCompatibilityData {
       URL resource = HtmlCompatibilityData.class.getResource("compatData/elements/" + key + ".json");
       if (resource == null) return null;
       try {
-        Object json = new Gson().fromJson(new InputStreamReader(resource.openStream()), Object.class);
+        Object json = new Gson().fromJson(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8), Object.class);
         Object tagHolder = ((Map)json).get("html");
-        if (tagHolder == null) ((Map)json).get("svg");
-        if (tagHolder == null) ((Map)json).get("mathml");
+        if (tagHolder == null) tagHolder = ((Map)json).get("svg");
+        if (tagHolder == null) tagHolder = ((Map)json).get("mathml");
         if (tagHolder == null) {
           ourTagsCache.put(key, null);
           return null;
@@ -74,7 +75,8 @@ public class HtmlCompatibilityData {
       if (attributeData != null) return (Map)attributeData;
     }
     if (ourGlobalAttributesCache.get() == null) {
-      Object json = new Gson().fromJson(new InputStreamReader(HtmlCompatibilityData.class.getResourceAsStream("compatData/global_attributes.json")), Object.class);
+      Object json = new Gson().fromJson(new InputStreamReader(HtmlCompatibilityData.class.getResourceAsStream("compatData/global_attributes.json"),
+                                                              StandardCharsets.UTF_8), Object.class);
       Object html = ((Map)json).get("html");
       Object globalAttributes = ((Map)html).get("global_attributes");
       ourGlobalAttributesCache.set((Map)globalAttributes);
