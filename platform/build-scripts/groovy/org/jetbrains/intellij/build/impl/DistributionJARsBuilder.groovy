@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
@@ -243,7 +243,8 @@ class DistributionJARsBuilder {
   }
 
   List<String> getModulesForPluginsToPublish() {
-    platformModules + (pluginsToPublish.collect { it.key.moduleJars.values() }.flatten() as List<String>)
+    def enabledModulesSet = enabledPluginModules
+    platformModules + (pluginsToPublish.collect { it.key.getActualModules(enabledModulesSet).values() }.flatten() as List<String>)
   }
 
   void reorderJARs(String loadingOrderFilePath) {
