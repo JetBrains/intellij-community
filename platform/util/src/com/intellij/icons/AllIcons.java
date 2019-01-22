@@ -5401,6 +5401,10 @@ public class AllIcons {
     /**
      * 16x16
      */
+    public static final Icon Ignore_file = IconLoader.getIcon("/vcs/ignore_file.svg");
+    /**
+     * 16x16
+     */
     public static final Icon Merge = IconLoader.getIcon("/vcs/merge.svg");
     /**
      * 16x16
