@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
 import groovy.transform.CompileStatic
@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.junit.Test
 
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_SOURCE_SET
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER
 import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.getDelegatesToInfo
 
 @CompileStatic
@@ -26,7 +27,7 @@ class GradleSourceSetsTest extends GradleHighlightingBaseTest implements Resolve
     doTest('sourceSets { <caret> }') {
       def closure = elementUnderCaret(GrClosableBlock)
       def delegatesToInfo = getDelegatesToInfo(closure)
-      assert delegatesToInfo.typeToDelegate.equalsToText("org.gradle.api.internal.tasks.DefaultSourceSetContainer")
+      assert delegatesToInfo.typeToDelegate.equalsToText(GRADLE_API_SOURCE_SET_CONTAINER)
       assert delegatesToInfo.strategy == 1
     }
   }
@@ -36,7 +37,7 @@ class GradleSourceSetsTest extends GradleHighlightingBaseTest implements Resolve
     doTest('sourceSets { <caret>main }') {
       def ref = elementUnderCaret(GrReferenceExpression)
       assert ref.resolve() != null
-      assert ref.type.equalsToText("org.gradle.api.internal.tasks.DefaultSourceSet")
+      assert ref.type.equalsToText(GRADLE_API_SOURCE_SET)
     }
   }
 
