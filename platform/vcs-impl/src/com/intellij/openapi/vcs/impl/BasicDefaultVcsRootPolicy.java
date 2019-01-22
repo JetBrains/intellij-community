@@ -18,11 +18,10 @@ import java.util.List;
  * @author yole
  */
 public class BasicDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
-  private final Project myProject;
   private final VirtualFile myBaseDir;
 
-  public BasicDefaultVcsRootPolicy(Project project) {
-    myProject = project;
+  public BasicDefaultVcsRootPolicy(@NotNull Project project) {
+    super(project);
     myBaseDir = project.getBaseDir();
   }
 
