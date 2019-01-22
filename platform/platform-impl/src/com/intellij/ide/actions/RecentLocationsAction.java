@@ -544,6 +544,7 @@ public class RecentLocationsAction extends AnAction {
     settings.setFoldingOutlineShown(false);
     settings.setAdditionalColumnsCount(0);
     settings.setAdditionalLinesCount(0);
+    settings.setRightMarginShown(false);
   }
 
   private static class RecentLocationsCheckboxAction extends CheckboxAction {
